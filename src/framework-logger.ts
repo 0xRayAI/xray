@@ -13,6 +13,48 @@ export function generateJobId(prefix: string = 'job'): string {
   return `${prefix}-${timestamp}-${random}`;
 }
 
+// Global job context for correlation across all framework operations
+let currentJobContext: JobContext | null = null;
+
+export function getCurrentJobId(): string | null {
+  return currentJobContext?.jobId || null;
+}
+
+export function setCurrentJobContext(jobId?: string): JobContext {
+  currentJobContext = new JobContext(jobId);
+  console.log(`🤖 [JOB-CONTEXT] Switched to job: ${currentJobContext.jobId}`);
+  return currentJobContext;
+}
+
+export function withJobContext<T>(
+  operation: () => Promise<T> | T,
+  jobId?: string
+): Promise<T> {
+  const originalContext = currentJobContext;
+  const jobContext = setCurrentJobContext(jobId);
+  try {
+    const result = operation();
+    if (result instanceof Promise) {
+      return result.finally(async () => {
+        // Auto-complete job on operation finish
+        await jobContext.complete(true).catch(console.error);
+        // Restore original context
+        currentJobContext = originalContext;
+      });
+    } else {
+      // Sync operation - complete immediately
+      jobContext.complete(true).catch(console.error);
+      currentJobContext = originalContext;
+      return Promise.resolve(result);
+    }
+  } catch (error) {
+    // Error occurred - complete job with failure
+    jobContext.complete(false, { error: String(error) }).catch(console.error);
+    currentJobContext = originalContext;
+    throw error;
+  }
+}
+
 /**
  * Job context for tracking work sessions
  */
@@ -23,8 +65,8 @@ export class JobContext {
   public agentUsed?: string;
   public operationType?: string;
 
-  constructor(prefix: string = 'job') {
-    this.jobId = generateJobId(prefix);
+  constructor(jobId?: string) {
+    this.jobId = jobId || generateJobId();
     this.startTime = Date.now();
   }
 
