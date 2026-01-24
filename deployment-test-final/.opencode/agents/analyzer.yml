@@ -1,7 +1,7 @@
 name: analyzer
 description: "System Analyzer agent for comprehensive log analysis, performance monitoring, and continuous improvement recommendations"
 version: "1.0.0"
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # Analysis Configuration

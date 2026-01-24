@@ -1,7 +1,7 @@
 name: frontend-ui-ux-engineer
 description: "Frontend UI/UX Engineer agent for user interface and experience design"
 version: "1.0.0"
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # State Management Configuration

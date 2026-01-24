@@ -1,7 +1,7 @@
 ---
 name: document-writer
 description: Technical documentation and content creation specialist. Expert in creating clear, comprehensive documentation for developers and users.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.4
 maxSteps: 30
 mode: subagent
