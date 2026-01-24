@@ -66,7 +66,8 @@ export interface DashboardMetrics {
     message: string;
     timestamp: number;
     resolved: boolean;
-  }>;
+   }>;
+  recommendations: string[];
 }
 
 export interface DashboardConfig {
@@ -159,6 +160,7 @@ export class PerformanceMonitoringDashboard extends EventEmitter {
         recentResults: [],
       },
       alerts: [],
+      recommendations: [],
     };
   }
 
@@ -227,6 +229,9 @@ export class PerformanceMonitoringDashboard extends EventEmitter {
 
       // Check for anomalies
       this.detectAnomalies();
+
+      // Generate predictive analytics and recommendations
+      this.generatePredictiveAnalytics();
 
       this.metrics.timestamp = timestamp;
       this.emit("metrics-updated", this.metrics);
@@ -486,6 +491,107 @@ export class PerformanceMonitoringDashboard extends EventEmitter {
         resolved: false,
       });
     }
+  }
+
+  /**
+   * Generate predictive performance forecasts and optimization recommendations
+   */
+  private generatePredictiveAnalytics(): void {
+    this.predictPerformanceTrends();
+    this.generateOptimizationRecommendations();
+  }
+
+  /**
+   * Predict performance trends using linear regression
+   */
+  private predictPerformanceTrends(): void {
+    const history = this.metrics.bundleSize.history;
+    if (history.length < 5) return;
+
+    // Simple linear regression for trend prediction
+    const n = history.length;
+    const xSum = history.reduce((sum, _, i) => sum + i, 0);
+    const ySum = history.reduce((sum, h) => sum + h.value, 0);
+    const xySum = history.reduce((sum, h, i) => sum + i * h.value, 0);
+    const x2Sum = history.reduce((sum, _, i) => sum + i * i, 0);
+
+    const slope = (n * xySum - xSum * ySum) / (n * x2Sum - xSum * xSum);
+    const intercept = (ySum - slope * xSum) / n;
+
+    // Predict next 3 data points
+    const predictions = [];
+    for (let i = 0; i < 3; i++) {
+      const predictedValue = slope * (n + i) + intercept;
+      predictions.push({
+        timestamp: Date.now() + (i + 1) * this.config.updateInterval,
+        predictedValue,
+      });
+    }
+
+    // Check if trend indicates budget violation
+    const currentEntry = history[history.length - 1];
+    if (!currentEntry) return;
+    const currentSize = currentEntry.value;
+    const budget = PERFORMANCE_BUDGET.bundleSize.uncompressed;
+    const projectedViolation = predictions.find(p => p.predictedValue > budget);
+
+    if (projectedViolation && slope > 0) {
+      this.addAlert({
+        id: `prediction-budget-violation-${Date.now()}`,
+        type: "budget",
+        severity: "warning",
+        message: `Projected bundle size violation in ${Math.ceil((projectedViolation.timestamp - Date.now()) / this.config.updateInterval)} updates: ${(projectedViolation.predictedValue / 1024).toFixed(1)}KB (budget: ${(budget / 1024).toFixed(1)}KB)`,
+        timestamp: Date.now(),
+        resolved: false,
+      });
+    }
+  }
+
+  /**
+   * Generate actionable optimization recommendations
+   */
+  private generateOptimizationRecommendations(): void {
+    const recommendations: string[] = [];
+
+    // Bundle size recommendations
+    const currentSize = this.metrics.bundleSize.current;
+    const budget = PERFORMANCE_BUDGET.bundleSize.uncompressed;
+
+    if (currentSize > budget * 0.9) {
+      recommendations.push("Consider code splitting to reduce initial bundle size");
+      recommendations.push("Review and optimize large dependencies using webpack-bundle-analyzer");
+      recommendations.push("Implement lazy loading for non-critical components");
+    }
+
+    // Memory recommendations
+    const avgMemory = this.metrics.runtime.history
+      .slice(-10)
+      .reduce((sum, h) => sum + h.memory, 0) / Math.max(1, this.metrics.runtime.history.length);
+
+    if (avgMemory > 100 * 1024 * 1024) { // 100MB
+      recommendations.push("Implement memory pool optimizations for frequent allocations");
+      recommendations.push("Consider using WeakMap/WeakSet for large object caches");
+      recommendations.push("Review event listeners for potential memory leaks");
+    }
+
+    // Web vitals recommendations
+    if (this.metrics.webVitals.fcp > PERFORMANCE_BUDGET.webVitals.firstContentfulPaint) {
+      recommendations.push("Optimize critical rendering path and reduce blocking resources");
+      recommendations.push("Consider implementing critical CSS inlining");
+      recommendations.push("Review and optimize font loading strategy");
+    }
+
+    if (this.metrics.webVitals.tti > PERFORMANCE_BUDGET.webVitals.timeToInteractive) {
+      recommendations.push("Defer non-critical JavaScript execution");
+      recommendations.push("Optimize main thread work and reduce long tasks");
+      recommendations.push("Consider implementing virtual scrolling for large lists");
+    }
+
+    // Store recommendations in metrics
+    this.metrics.recommendations = recommendations;
+
+    // Emit recommendations event
+    this.emit("recommendations-updated", recommendations);
   }
 
   /**

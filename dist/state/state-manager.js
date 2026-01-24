@@ -1,4 +1,4 @@
-import { frameworkLogger, generateJobId } from "../framework-logger";
+import { frameworkLogger } from "../framework-logger.js";
 export class StringRayStateManager {
     store = new Map();
     persistencePath;
@@ -6,67 +6,10 @@ export class StringRayStateManager {
     writeQueue = new Map();
     initialized = false;
     earlyOperationsQueue = []; // Queue keys that need persistence after init
-    // Enterprise features
-    enterpriseConfig;
-    distributedManager; // DistributedStateManager
-    stateVersions = new Map();
-    stateAuditLog = [];
-    backupTimer;
-    isDistributedMode = false;
-    constructor(persistencePath = ".opencode/state", persistenceEnabled = true, enterpriseConfig = {}) {
+    constructor(persistencePath = ".opencode/state", persistenceEnabled = true) {
         this.persistencePath = persistencePath;
         this.persistenceEnabled = persistenceEnabled;
-        this.enterpriseConfig = {
-            distributedMode: false,
-            conflictResolution: "version-based",
-            backupInterval: 3600000, // 1 hour
-            maxBackups: 10,
-            encryptionEnabled: false,
-            auditLogging: true,
-            ...enterpriseConfig,
-        };
-        this.initializeEnterpriseFeatures();
         this.initializePersistence();
-    }
-    async initializeEnterpriseFeatures() {
-        // Initialize backup system
-        if (this.enterpriseConfig.backupInterval > 0) {
-            this.startBackupSystem();
-        }
-    }
-    startBackupSystem() {
-        this.backupTimer = setInterval(() => {
-            this.createStateBackup();
-        }, this.enterpriseConfig.backupInterval);
-    }
-    async createStateBackup() {
-        try {
-            const fs = await import("fs");
-            const path = await import("path");
-            const backupDir = path.join(path.dirname(this.persistencePath), "backups");
-            if (!fs.existsSync(backupDir)) {
-                fs.mkdirSync(backupDir, { recursive: true });
-            }
-            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-            const backupPath = path.join(backupDir, `state-backup-${timestamp}.json`);
-            const stateData = Object.fromEntries(this.store);
-            fs.writeFileSync(backupPath, JSON.stringify(stateData, null, 2));
-            // Clean up old backups
-            const backups = fs.readdirSync(backupDir)
-                .filter(f => f.startsWith("state-backup-"))
-                .sort()
-                .reverse();
-            if (backups.length > this.enterpriseConfig.maxBackups) {
-                const toDelete = backups.slice(this.enterpriseConfig.maxBackups);
-                toDelete.forEach(backup => {
-                    fs.unlinkSync(path.join(backupDir, backup));
-                });
-            }
-            frameworkLogger.log("state-manager", "state backup created", "info", { backupPath });
-        }
-        catch (error) {
-            frameworkLogger.log("state-manager", "state backup failed", "error", { error });
-        }
     }
     async initializePersistence() {
         if (!this.persistenceEnabled) {
@@ -169,132 +112,42 @@ export class StringRayStateManager {
     }
     get(key) {
         const value = this.store.get(key);
-        // Handle enterprise audit logging
-        if (this.enterpriseConfig.auditLogging) {
-            this.logStateOperation("get", key);
-        }
-        // Handle corruption: treat null values as undefined (corrupted state)
-        if (value === null) {
-            frameworkLogger.log("state-manager", "detected corrupted state (null value)", "info", { key }, undefined, generateJobId('state-corruption'));
-            return undefined;
-        }
+        frameworkLogger.log("state-manager", "get operation", "info", {
+            key,
+            hasValue: value !== undefined,
+        });
         return value;
     }
     set(key, value) {
-        // Version management for conflict resolution
-        const currentVersion = this.stateVersions.get(key) || 0;
-        const newVersion = currentVersion + 1;
-        this.stateVersions.set(key, newVersion);
+        const jobId = `state-set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // Store in memory immediately, even if persistence isn't ready yet
         this.store.set(key, value);
-        // Handle enterprise features
-        if (this.enterpriseConfig.auditLogging) {
-            this.logStateOperation("set", key, value, newVersion);
+        // If initialized, schedule persistence
+        if (this.initialized && this.persistenceEnabled) {
+            this.schedulePersistence(key);
         }
-        // Handle distributed synchronization
-        this.handleDistributedSync("set", key, value, newVersion);
-        // Queue persistence
-        this.schedulePersistence(key);
+        else if (!this.initialized) {
+            // Queue for persistence once initialized
+            if (!this.earlyOperationsQueue.includes(key)) {
+                this.earlyOperationsQueue.push(key);
+            }
+            frameworkLogger.log("state-manager", "set called before initialization, queued for persistence", "debug", { jobId, key });
+        }
+        frameworkLogger.log("state-manager", "set operation", "success", { jobId, key });
     }
     clear(key) {
-        // Version management for conflict resolution
-        const currentVersion = this.stateVersions.get(key) || 0;
-        const newVersion = currentVersion + 1;
-        this.stateVersions.set(key, newVersion);
-        this.store.delete(key);
-        // Handle enterprise features
-        if (this.enterpriseConfig.auditLogging) {
-            this.logStateOperation("clear", key, undefined, newVersion);
-        }
-        // Handle distributed synchronization
-        this.handleDistributedSync("clear", key, undefined, newVersion);
-        // Queue persistence
-        this.schedulePersistence(key);
-    }
-    /**
-     * Clear all state (for testing purposes)
-     */
-    clearAll() {
-        this.store.clear();
-        this.stateVersions.clear();
-        this.stateAuditLog.length = 0;
-        // Handle distributed sync if needed
-        if (this.isDistributedMode && this.distributedManager) {
-            // Note: This would need to be implemented in distributed manager
-        }
-        frameworkLogger.log("state-manager", "cleared all state", "info");
-    }
-    async handleDistributedSync(operation, key, value, version) {
-        if (!this.isDistributedMode)
+        // Ensure persistence is initialized
+        if (!this.initialized) {
+            frameworkLogger.log("state-manager", "clear called before initialization", "error", { key });
             return;
-        try {
-            // Lazy load distributed manager to avoid import issues
-            // Distributed features temporarily disabled due to compilation issues
-            // TODO: Re-enable when advanced-features are properly implemented
-            if (!this.distributedManager && this.enterpriseConfig.redisUrl) {
-                frameworkLogger.log("state-manager", "distributed features not yet implemented", "info", {
-                    redisUrl: this.enterpriseConfig.redisUrl.substring(0, 20) + "..."
-                });
-            }
-            if (this.distributedManager) {
-                if (operation === "set") {
-                    await this.distributedManager.set(key, value);
-                }
-                else {
-                    await this.distributedManager.delete(key);
-                }
-            }
         }
-        catch (error) {
-            frameworkLogger.log("state-manager", "distributed sync failed", "error", { key, operation, error });
+        const existed = this.store.has(key);
+        this.store.delete(key);
+        // Immediately persist the deletion
+        if (this.persistenceEnabled && existed) {
+            this.persistToDisk();
         }
-    }
-    logStateOperation(operation, key, value, version) {
-        const auditEntry = {
-            timestamp: Date.now(),
-            operation,
-            key,
-        };
-        if (this.enterpriseConfig.instanceId) {
-            auditEntry.userId = this.enterpriseConfig.instanceId;
-        }
-        this.stateAuditLog.push(auditEntry);
-        // Keep only last 1000 audit entries
-        if (this.stateAuditLog.length > 1000) {
-            this.stateAuditLog = this.stateAuditLog.slice(-1000);
-        }
-    }
-    /**
-     * Enterprise method: Get state version for conflict resolution
-     */
-    getStateVersion(key) {
-        return this.stateVersions.get(key) || 0;
-    }
-    /**
-     * Enterprise method: Get audit log for compliance
-     */
-    getAuditLog(limit = 100) {
-        return this.stateAuditLog.slice(-limit);
-    }
-    /**
-     * Enterprise method: Resolve state conflicts
-     */
-    resolveConflict(key, localValue, remoteValue, localVersion, remoteVersion) {
-        switch (this.enterpriseConfig.conflictResolution) {
-            case "last-write-wins":
-                return remoteVersion > localVersion ? remoteValue : localValue;
-            case "version-based":
-                return remoteVersion > localVersion ? remoteValue : localValue;
-            case "manual":
-            default:
-                // Return local value by default, log conflict for manual resolution
-                frameworkLogger.log("state-manager", "state conflict detected", "error", {
-                    key,
-                    localVersion,
-                    remoteVersion,
-                    resolution: "manual-intervention-required"
-                });
-                return localValue;
-        }
+        frameworkLogger.log("state-manager", "clear operation", existed ? "success" : "info", { key, existed });
     }
     // New method to check if persistence is enabled
     isPersistenceEnabled() {

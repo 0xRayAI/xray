@@ -161,6 +161,9 @@ export class CrossLanguageBridge extends EventEmitter {
             "info",
           );
 
+          // CRITICAL FIX: Remove all listeners to prevent memory leaks
+          this.ws!.removeAllListeners();
+
           // Auto-reconnect if not manually closed
           if (this.reconnectAttempts < this.maxReconnectAttempts) {
             setTimeout(

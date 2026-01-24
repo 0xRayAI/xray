@@ -68,7 +68,21 @@ To discover all available capabilities, use the framework-help system:
 - **Test Coverage >85%**: Maintain comprehensive behavioral test coverage
 - **Performance Budget**: Bundle size <2MB (gzipped <700KB)
 
-For complete codex documentation, see: .strray/codex.json`;
+For complete codex documentation, see: .strray/codex.json
+
+### 🔒 Critical Spawn Governance (All Agents)
+
+**MANDATORY: All agents must follow these spawn governance rules:**
+
+- **Maximum 2 subagents total** across all operations within a single agent session
+- **No nested subagent spawning** - subagents cannot spawn their own subagents
+- **Solo agents (librarian)** can spawn 0 subagents - they are terminal agents
+- **Always check spawn authorization** before creating new agents via agentSpawnGovernor
+- **Report spawn attempts** to monitoring system before execution
+- **Terminate gracefully** if spawn limits exceeded - do not attempt workarounds
+- **Single level only** - coordinator agents can spawn workers, but workers cannot spawn more agents
+
+**Violation of these rules will result in immediate system shutdown to prevent infinite loops.**`;
 
       const limitCheck = tokenManager.checkLimits(fullContent);
       let finalContent = fullContent;

@@ -31,6 +31,12 @@ import { memoryMonitor } from "./monitoring/memory-monitor";
  * when processes are interrupted mid-operation
  */
 function setupGracefulShutdown(): void {
+  // Prevent duplicate listeners
+  if ((process as any)._strrayShutdownSetup) {
+    return;
+  }
+  (process as any)._strrayShutdownSetup = true;
+
   let isShuttingDown = false;
 
   process.on("SIGINT", async () => {
@@ -117,6 +123,7 @@ export class BootOrchestrator {
   private stateManager: StringRayStateManager;
   private processorManager: ProcessorManager;
   private config: BootSequenceConfig;
+  private memoryMonitorListener?: (alert: any) => void;
 
   constructor(
     config: Partial<BootSequenceConfig> = {},
@@ -636,10 +643,15 @@ export class BootOrchestrator {
       // Log recommendations
       alert.details.recommendations.forEach((rec: string) => {
         frameworkLogger.log("boot-orchestrator", `💡 ${rec}`, "info");
-      });
-    });
+       });
+     });
 
-    // Log initial memory status
+     // Attach the listener to the memory monitor (prevent duplicates)
+     if (this.memoryMonitorListener && !memoryMonitor.listeners("alert").includes(this.memoryMonitorListener)) {
+       memoryMonitor.on("alert", this.memoryMonitorListener);
+     }
+
+     // Log initial memory status
     const initialStats = memoryMonitor.getCurrentStats();
     frameworkLogger.log(
       "boot-orchestrator",

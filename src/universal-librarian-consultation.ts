@@ -13,6 +13,7 @@ export interface SystemAction {
   complexity: "low" | "medium" | "high" | "critical";
   files?: string[];
   components?: string[];
+  metadata?: { triggeredBy?: string; [key: string]: unknown };
 }
 
 export interface LibrarianConsultationResult {
@@ -52,6 +53,28 @@ export class UniversalLibrarianConsultation {
         complexity: action.complexity,
       },
     );
+
+    // Prevent recursive consultation loops (librarian operations triggering more librarian consultations)
+    if (this.isLibrarianOperation(action)) {
+      await frameworkLogger.log(
+        "universal-librarian-consultation",
+        "pre-action-consultation-skipped",
+        "info",
+        {
+          reason: "librarian operation detected - skipping to prevent recursion",
+          actionType: action.type,
+          scope: action.scope,
+        },
+      );
+
+      return {
+        approved: true,
+        documentationImpact: "none",
+        versionUpdates: [],
+        recommendations: [],
+        pairProgrammingRequired: false,
+      };
+    }
 
     const documentationImpact = this.assessDocumentationImpact(action);
     const versionUpdates = await this.determineVersionUpdates(action);
@@ -111,6 +134,18 @@ export class UniversalLibrarianConsultation {
         documentationUpdated: true,
         versionsUpdated: true,
       },
+    );
+  }
+
+  /**
+   * Check if this action is related to librarian operations (to prevent recursion)
+   */
+  private isLibrarianOperation(action: SystemAction): boolean {
+    return (
+      action.scope === "documentation" ||
+      action.type === "rule-modification" && action.description.includes("librarian") ||
+      action.metadata?.triggeredBy === "librarian" ||
+      action.description.includes("librarian consultation")
     );
   }
 

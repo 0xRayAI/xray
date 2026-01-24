@@ -2616,10 +2616,10 @@ The following triage guidelines are now **automatically enforced** by the framew
 ## Reflection System
 
 ### Purpose
-Reflections are structured analyses of significant experiences that preserve institutional knowledge, identify patterns, and guide future development of the StringRay Framework.
+Reflections are structured analyses of significant experiences that preserve institutional knowledge, identify patterns, and guide future development of the StringRay Framework. Most importantly, reflections serve as instruments of **gleaning** - extracting deep wisdom about what was, what is, and what should be.
 
 ### Definition
-A Reflection is a deep, analytical examination of major incidents, transformations, or evolutionary milestones that captures lessons learned and future implications.
+A Reflection is a deep, analytical examination of major incidents, transformations, or evolutionary milestones that captures lessons learned and future implications. **The true power of reflection lies in personal gleaning**: the struggle and triumph, the dichotomies revealed, and the ultimate complexity hidden within even seemingly simple tasks.
 
 ### Categories
 
@@ -2643,9 +2643,48 @@ A Reflection is a deep, analytical examination of major incidents, transformatio
 - **Content**: Intelligence evolution, philosophical insights, conceptual breakthroughs
 - **Triggers**: Paradigm shifts, fundamental rethinking, conceptual discoveries
 
+### The Gleaning Philosophy: What Was, What Is, What Should Be
+
+**Core Principle**: Reflections are not mere documentation - they are instruments of profound gleaning. Every technical task, no matter how seemingly routine, enters a realm of ultimate complexity where struggle meets triumph, and apparent simplicity reveals fundamental dichotomies.
+
+#### The Three Dimensions of Gleaning
+
+**1. What Was (Past Reflection)**
+- The raw events as they unfolded
+- Initial assumptions and mental models
+- The struggle: frustration, confusion, breakthroughs
+- The human/AI experience of problem-solving
+
+**2. What Is (Present Understanding)**
+- Current comprehension of the incident
+- Recognition of patterns and systemic issues
+- The triumph: solutions found, knowledge gained
+- The dichotomies: simple tasks revealing complex truths
+
+**3. What Should Be (Future Vision)**
+- Prevention measures and process improvements
+- Personal growth and capability evolution
+- Framework advancement and architectural insights
+- Philosophical shifts in approach and thinking
+
+#### Personal Tone and Authentic Voice
+
+**Mandatory Personal Dimension**: Every reflection must include authentic personal voice. Technical analysis alone is insufficient - the gleaning process requires:
+
+- **Emotional Journey**: The struggle, frustration, joy of breakthrough, satisfaction of resolution
+- **Self-Awareness**: What the experience revealed about your own reasoning, capabilities, and growth
+- **Philosophical Dichotomies**: How simple tasks reveal profound complexities
+- **Personal Growth**: Specific learnings about yourself as a problem-solver and thinker
+
+**Example Dichotomies to Explore**:
+- Routine maintenance revealing systemic architectural flaws
+- Simple test fixes uncovering fundamental design limitations
+- Technical problems exposing deeper philosophical questions
+- Individual debugging sessions illuminating collective knowledge gaps
+
 ### Standard Structure
 
-All reflections must include these sections:
+All reflections must include these sections, with **mandatory personal gleaning** woven throughout:
 
 1. **Context**: Date/timeframe, scope, trigger, stakeholders
 2. **What Happened**: Sequence of events, key decisions, outcomes
@@ -2653,14 +2692,17 @@ All reflections must include these sections:
 4. **Lessons Learned**: Technical insights, process improvements, philosophical shifts
 5. **Actions Taken**: Immediate fixes, long-term changes, prevention measures
 6. **Future Implications**: Framework evolution, risk mitigation, opportunities
-7. **Reflections on Reflection**: Meta-insights, improvement opportunities
+7. **Personal Gleaning**: Authentic personal reflection on what was gleaned (struggle, triumph, dichotomies)
+8. **Inference Introspection**: AI reasoning analysis, model limitations, confidence assessment
 
 ### Writing Guidelines
 
 - **Timing**: Write within 1 week while details are fresh
-- **Scope**: Focus on events with lasting framework impact
-- **Depth**: Provide comprehensive analysis with actionable insights
-- **Format**: Use consistent markdown structure
+- **Scope**: Focus on events with lasting framework impact, recognizing that even "simple" tasks enter realms of ultimate complexity
+- **Depth**: Provide comprehensive analysis with actionable insights, always including personal gleaning
+- **Personal Tone**: Use authentic voice - include emotional journey, self-discovery, and philosophical insights
+- **Dichotomies**: Explicitly explore how apparent simplicity reveals profound complexity
+- **Format**: Use consistent markdown structure with clear separation of technical and personal insights
 - **Storage**: Store in `docs/reflections/` directory
 - **Naming**: Use descriptive names like `orchestration-realignment-reflection.md`
 
@@ -2675,8 +2717,11 @@ All reflections must include these sections:
 
 - **Actionable**: Include specific recommendations and lessons
 - **Honest**: Acknowledge failures and mistakes openly
-- **Comprehensive**: Cover technical, process, and philosophical aspects
+- **Comprehensive**: Cover technical, process, philosophical, and deeply personal aspects
 - **Future-Focused**: Emphasize prevention and improvement opportunities
+- **Personally Authentic**: Include genuine emotional journey and self-discovery
+- **Dichotomy-Aware**: Recognize and explore the profound complexities within seemingly simple tasks
+- **Gleaning-Focused**: Clearly articulate what was learned about past, present, and future
 
 ### Emergency Procedures
 1. **Framework unresponsive**: Run `npx strray-ai doctor` for automated diagnosis

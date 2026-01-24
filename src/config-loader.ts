@@ -32,9 +32,23 @@ export interface SisyphusOrchestratorConfig {
   progress_persistence: boolean;
 }
 
+export interface AutonomousReportingConfig {
+  enabled: boolean;
+  interval_minutes: number;
+  auto_schedule: boolean;
+  include_health_assessment: boolean;
+  include_agent_activities: boolean;
+  include_pipeline_operations: boolean;
+  include_critical_issues: boolean;
+  include_recommendations: boolean;
+  report_retention_days: number;
+  notification_channels: string[]; // ["console", "file", "webhook"]
+}
+
 export interface StringRayConfig {
   multi_agent_orchestration: MultiAgentOrchestrationConfig;
   sisyphus_orchestrator: SisyphusOrchestratorConfig;
+  autonomous_reporting: AutonomousReportingConfig;
   disabled_agents: string[];
 }
 
@@ -95,6 +109,9 @@ export class StringRayConfigLoader {
       sisyphus_orchestrator: this.parseSisyphusConfig(
         configData.sisyphus_orchestrator,
       ),
+      autonomous_reporting: this.parseAutonomousReportingConfig(
+        configData.autonomous_reporting,
+      ),
       disabled_agents: Array.isArray(configData.disabled_agents)
         ? configData.disabled_agents
         : [],
@@ -150,6 +167,28 @@ export class StringRayConfigLoader {
   }
 
   /**
+   * Parse autonomous reporting configuration
+   */
+  private parseAutonomousReportingConfig(config: any): AutonomousReportingConfig {
+    return {
+      enabled: config?.enabled ?? false,
+      interval_minutes: Math.max(5, Math.min(1440, config?.interval_minutes ?? 60)), // 5min to 24hrs
+      auto_schedule: config?.auto_schedule ?? false,
+      include_health_assessment: config?.include_health_assessment ?? true,
+      include_agent_activities: config?.include_agent_activities ?? true,
+      include_pipeline_operations: config?.include_pipeline_operations ?? true,
+      include_critical_issues: config?.include_critical_issues ?? true,
+      include_recommendations: config?.include_recommendations ?? true,
+      report_retention_days: Math.max(1, Math.min(365, config?.report_retention_days ?? 30)),
+      notification_channels: Array.isArray(config?.notification_channels)
+        ? config.notification_channels.filter((ch: string) =>
+            ["console", "file", "webhook"].includes(ch)
+          )
+        : ["console"],
+    };
+  }
+
+  /**
    * Get default configuration
    */
   private getDefaultConfig(): StringRayConfig {
@@ -170,6 +209,18 @@ export class StringRayConfigLoader {
         max_retries: 3,
         backoff_strategy: "exponential",
         progress_persistence: true,
+      },
+      autonomous_reporting: {
+        enabled: false, // Disabled by default for performance
+        interval_minutes: 60,
+        auto_schedule: false,
+        include_health_assessment: true,
+        include_agent_activities: true,
+        include_pipeline_operations: true,
+        include_critical_issues: true,
+        include_recommendations: true,
+        report_retention_days: 30,
+        notification_channels: ["console"],
       },
       disabled_agents: [],
     };

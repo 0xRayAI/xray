@@ -55,24 +55,21 @@ Specialized agent for comprehensive codebase exploration, documentation retrieva
 - **Recommendations**: Suggestions for further investigation or implementation approaches
 - **Documentation Links**: References to relevant documentation and resources`,
   temperature: 0.4,
-  tools: {
+   tools: {
     include: [
       "read",
       "grep",
       "lsp_*",
       "run_terminal_cmd",
-      "background_task",
-      "lsp_goto_definition",
-      "lsp_find_references",
       "project-analysis_*",
-      "librarian_*",
-      // Skill invocation tools for comprehensive analysis
-      "invoke-skill",
-      "skill-code-review",
-      "skill-security-audit",
-      "skill-performance-optimization",
-      "skill-testing-strategy",
-      "skill-project-analysis",
+      // Removed: background_task, invoke-skill, skill-* tools to prevent spawning cascades
+      // Librarian is a solo agent - it should not spawn other agents
+    ],
+    exclude: [
+      "background_task", // Prevents async spawning
+      "invoke-skill",    // Prevents skill-based spawning
+      "skill-*",         // Prevents all skill invocation
+      "call_omo_agent",  // Prevents direct agent spawning
     ],
   },
   permission: {

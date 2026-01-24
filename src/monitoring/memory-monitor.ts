@@ -54,7 +54,7 @@ export class MemoryMonitor extends EventEmitter {
   private maxHistorySize = 1000;
   private leakDetectionEnabled = true;
   private lastLeakCheck = Date.now();
-  private leakCheckInterval = 5 * 60 * 1000;
+  private leakCheckInterval = 60 * 1000; // CRITICAL FIX: Check every minute instead of 5 minutes
 
   constructor(config: Partial<MemoryMonitorConfig> = {}) {
     super();
@@ -62,11 +62,11 @@ export class MemoryMonitor extends EventEmitter {
     this.config = {
       checkInterval: 30000,
       alertThresholds: {
-        warning: 200,
-        critical: 400,
+        warning: 50, // CRITICAL FIX: Lower warning threshold to 50MB
+        critical: 100, // CRITICAL FIX: Lower critical threshold to 100MB
         leakDetection: {
-          growthRate: 10,
-          sustainedPeriod: 10,
+          growthRate: 5, // CRITICAL FIX: Lower leak detection threshold to 5MB/min
+          sustainedPeriod: 2, // CRITICAL FIX: Shorter sustained period (2 minutes)
         },
       },
       enableFrameworkLogging: true,
@@ -206,7 +206,7 @@ export class MemoryMonitor extends EventEmitter {
       if (timeSpanMinutes >= sustainedPeriod) {
         this.emitAlert({
           type: "leak_detected",
-          severity: "medium",
+          severity: growthRate > 50 ? "critical" : "high", // CRITICAL FIX: More aggressive alerting
           message: `Potential memory leak detected: ${growthRate.toFixed(2)}MB/min growth rate over ${timeSpanMinutes.toFixed(1)} minutes`,
           details: {
             currentUsage: endUsage,
