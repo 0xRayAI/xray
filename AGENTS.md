@@ -21,6 +21,28 @@ StringRay AI v1.1.1 is an enterprise AI orchestration platform that implements s
 - **Enterprise Security**: Comprehensive validation and monitoring
 - **Performance Optimization**: Sub-millisecond response times with intelligent caching
 
+## 🎯 CRITICAL AGENT DEVELOPMENT RULE: Mandatory File Reading Protocol
+
+**MANDATORY AGENT DEVELOPMENT RULE (MANDATORY - ZERO TOLERANCE):**
+
+All agents must ALWAYS read the ENTIRE file contents before making ANY edit or change. Use the `read` tool to digest complete file content, then apply precise edits based on understanding of the entire file context. Never use partial context or editing without full file visibility.
+
+**BEFORE making ANY edit to a file, agents MUST:**
+1. **ALWAYS** read the ENTIRE file using the `read` tool
+2. **FULLY** understand the complete file context and structure
+3. **VERIFY** import/export patterns, variable scoping, and function dependencies
+4. **Only THEN** apply precise, targeted edits
+
+**NEVER perform ANY of these PROHIBITED operations:**
+- ❌ Edit files without first reading their complete contents
+- ❌ Make changes based on partial/contextual file reading
+- ❌ Use edit operations without full file understanding
+- ❌ Report file changes without actually verifying them
+- ❌ Claim edits were made without using the edit tool
+
+**CRITICAL EDITING REQUIREMENT (ENFORCED):**
+BEFORE making ANY edit to a file, agents MUST read the ENTIRE file using the `read` tool. This ensures full context understanding, prevents regressions, and maintains code integrity. Edit operations based on partial reading are strictly forbidden and will result in immediate failure.
+
 ## Agent Capabilities Matrix
 
 | Agent | Role | Complexity Threshold | Primary Tools | Conflict Strategy |

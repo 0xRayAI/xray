@@ -2,7 +2,7 @@ import type { AgentConfig } from "./types";
 
 export const architect: AgentConfig = {
   name: "architect",
-  model: "opencode/grok-code",
+  model: "opencode/grok-code-fast-1",
   description:
     "StringRay Framework architect with comprehensive architectural rule enforcement, state management, delegation, and system design capabilities. Specialized in preventing architectural violations and ensuring system integrity.",
   mode: "subagent",

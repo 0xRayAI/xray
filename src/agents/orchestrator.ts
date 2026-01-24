@@ -2,7 +2,7 @@ import type { AgentConfig } from "./types";
 
 export const orchestrator: AgentConfig = {
   name: "orchestrator",
-  model: "opencode/grok-code",
+  model: "opencode/grok-code-fast-1",
   description:
     "StringRay Framework orchestrator with multi-agent orchestration and coordination, workflow management, and enterprise task orchestration - Advanced Enterprise Coordinator",
   mode: "subagent",

@@ -144,54 +144,5 @@
       "enabled": true
     }
   },
-  "agent": {
-    "orchestrator": {
-      "model": "opencode/grok-code",
-      "mode": "primary"
-    },
-    "enhanced-orchestrator": {
-      "model": "opencode/grok-code",
-      "mode": "subagent"
-    },
-    "enforcer": {
-      "model": "opencode/grok-code",
-      "mode": "primary"
-    },
-    "architect": {
-      "model": "opencode/grok-code",
-      "mode": "subagent"
-    },
-    "test-architect": {
-      "model": "opencode/grok-code",
-      "mode": "subagent"
-    },
-    "bug-triage-specialist": {
-      "model": "opencode/grok-code",
-      "mode": "subagent"
-    },
-    "code-reviewer": {
-      "model": "opencode/grok-code",
-      "mode": "subagent"
-    },
-    "security-auditor": {
-      "model": "opencode/grok-code",
-      "mode": "subagent"
-    },
-    "refactorer": {
-      "model": "opencode/grok-code",
-      "mode": "subagent"
-    },
-    "Sisyphus": {
-      "disable": true
-    },
-    "Planner-Sisyphus": {
-      "disable": true
-    },
-    "Build": {
-      "disable": true
-    },
-    "Plan": {
-      "disable": true
-    }
-  }
+
 }

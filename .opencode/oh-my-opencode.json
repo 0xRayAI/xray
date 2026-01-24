@@ -1,8 +1,19 @@
-{
-  "model": "opencode/grok-code",
-   "plugin": [
-     "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"
-   ],
+ {
+   "model": "opencode/grok-code",
+   "model_routing": {
+     "*": "opencode/grok-code",
+     "enforcer": "opencode/grok-code",
+     "architect": "opencode/grok-code",
+     "orchestrator": "opencode/grok-code",
+     "bug-triage-specialist": "opencode/grok-code",
+     "code-reviewer": "opencode/grok-code",
+     "security-auditor": "opencode/grok-code",
+     "refactorer": "opencode/grok-code",
+     "test-architect": "opencode/grok-code"
+   },
+   // "plugin": [
+   //   "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"
+   // ],
   "disabled_agents": [
     "Sisyphus",
     "Planner-Sisyphus",
@@ -12,24 +23,10 @@
   "sisyphus_agent": {
     "disabled": true
   },
-  "disabled_mcps": [
-    "global-everything",
-    "global-git",
-    "global-sqlite"
-  ],
-  "settings": {
-    "multi_agent_orchestration": {
-      "enabled": true,
-      "max_concurrent_agents": 5,
-      "coordination_model": "async-multi-agent"
-    }
-  },
-  "claude_code": {
-    "mcp": false,
-    "commands": true,
-    "skills": true,
-    "agents": true,
-    "hooks": true,
-    "plugins": true
-  }
+   "disabled_mcps": [
+     "global-everything",
+     "global-git",
+     "global-sqlite"
+   ]
+}
 }

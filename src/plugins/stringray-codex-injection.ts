@@ -137,8 +137,48 @@ For complete codex documentation, see: .strray/codex.json
 
 };
 
+// Lightweight bypass for simple interactions
+function isSimpleInteraction(input: any): boolean {
+  if (!input || typeof input !== 'object') return false;
+
+  // Check messages for simple greetings/chats
+  if (input.messages && Array.isArray(input.messages)) {
+    const lastMessage = input.messages[input.messages.length - 1];
+    if (lastMessage && lastMessage.content) {
+      const content = String(lastMessage.content).toLowerCase().trim();
+      // Detect basic greetings and chat
+      if (content.match(/^(hi|hello|hey|sup|yo|howdy|greeting|chat|how are you|what'?s up)$/i)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 // Export a function that returns the plugin hooks object
 export function stringrayPlugin(input: any) {
+    // Fast path for simple interactions - skip full framework activation
+    if (isSimpleInteraction(input)) {
+      return {
+        config: () => {}, // No-op for simple interactions
+        "experimental.chat.system.transform": (messages: any[], context: any) => {
+          // Insert minimal welcome message for simple interactions
+          const lightMessage = {
+            role: "system",
+            content: "Hello! I'm the StrRay Agentic Framework. Ready to help with development tasks."
+          };
+          if (context && context.system && Array.isArray(context.system)) {
+            context.system.unshift(lightMessage);
+          }
+          return messages;
+        },
+        "tool.execute.before": () => {},
+        "tool.execute.after": () => {}
+      };
+    }
+
+    // Full framework activation for complex requests
     return pluginHooks;
 }
 
