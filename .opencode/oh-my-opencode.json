@@ -1,18 +1,18 @@
- {
-   "model": "openrouter/x-ai/grok-code-fast-1",
-   "model_routing": {
-     "*": "openrouter/x-ai/grok-code-fast-1",
-     "enforcer": "opencode/grok-code",
-     "architect": "opencode/grok-code",
-     "orchestrator": "opencode/grok-code",
-     "bug-triage-specialist": "opencode/grok-code",
-     "code-reviewer": "opencode/grok-code",
-     "security-auditor": "opencode/grok-code",
-     "refactorer": "opencode/grok-code",
-     "test-architect": "opencode/grok-code"
-   },
-   "plugin": [
-      "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/main/schema.json",
+  "model_routing": {
+    "enforcer": "openrouter/deepseek/deepseek-v3.2",
+    "*": "openrouter/deepseek/deepseek-v3.2",
+    "architect": "opencode/grok-code",
+    "orchestrator": "opencode/grok-code",
+    "bug-triage-specialist": "opencode/grok-code",
+    "code-reviewer": "opencode/grok-code",
+    "security-auditor": "opencode/grok-code",
+    "refactorer": "opencode/grok-code",
+    "test-architect": "opencode/grok-code"
+  },
+  "plugin": [
+    "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"
   ],
   "disabled_agents": [
     "Sisyphus",
@@ -23,10 +23,9 @@
   "sisyphus_agent": {
     "disabled": true
   },
-   "disabled_mcps": [
-     "global-everything",
-     "global-git",
-     "global-sqlite"
-   ]
-  }
+  "disabled_mcps": [
+    "global-everything",
+    "global-git",
+    "global-sqlite"
+  ]
 }

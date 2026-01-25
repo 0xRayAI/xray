@@ -21,13 +21,13 @@ fi
 echo ""
 echo "1.2 NPM Pack Tarball Creation and Validation"
 echo "Running: npm pack --dry-run"
-if npm pack --dry-run > pack-output.txt 2>&1; then
+if npm pack --dry-run > logs/deployment/pack-output.txt 2>&1; then
     echo "✅ NPM pack dry-run successful"
     echo "Pack output (first 20 lines):"
-    head -20 pack-output.txt
+    head -20 logs/deployment/pack-output.txt
 else
     echo "❌ NPM pack dry-run failed"
-    head -20 pack-output.txt
+    head -20 logs/deployment/pack-output.txt
     exit 1
 fi
 
@@ -55,7 +55,7 @@ fi
 echo ""
 echo "1.4 Dry-run Publish Validation"
 echo "Running: npm publish --dry-run"
-if npm publish --dry-run > publish-dry-run.txt 2>&1; then
+if npm publish --dry-run > logs/deployment/publish-dry-run.txt 2>&1; then
     echo "✅ NPM publish dry-run successful"
     echo "Publish dry-run output (first 20 lines):"
     head -20 publish-dry-run.txt

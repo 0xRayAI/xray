@@ -111,11 +111,11 @@ create_package() {
     cd "$PROJECT_ROOT"
 
     # Redirect npm pack output to avoid timeout from verbose output
-    npm pack > /tmp/npm-pack.log 2>&1
+    npm pack > ../logs/deployment/npm-pack.log 2>&1
 
     if [[ ! -f "$PACKAGE_NAME" ]]; then
         log_error "Package creation failed"
-        cat /tmp/npm-pack.log
+        cat ../logs/deployment/npm-pack.log
         exit 1
     fi
 
@@ -155,9 +155,9 @@ EOF
 
     # Explicitly run postinstall script (may be skipped by npm in some environments)
     log_info "Running postinstall script..."
-    if ! npx strray-ai install > /tmp/postinstall.log 2>&1; then
+    if ! npx strray-ai install > ../logs/deployment/postinstall.log 2>&1; then
         log_warning "Postinstall script failed or was skipped - this may be expected in test environments"
-        cat /tmp/postinstall.log
+        cat ../logs/deployment/postinstall.log
     fi
 
     # Verify installation
@@ -179,15 +179,15 @@ run_tests() {
     # Test 1: Plugin loading (Phase 4 - Full Framework Initialization)
     log_info "Running plugin loading test (Phase 4 - allowing full framework initialization)..."
     # Use standalone test script that handles timeouts properly
-    if bash "../scripts/test-full-plugin-no-timeout.sh" --basic-only > /tmp/plugin-test.log 2>&1; then
+    if bash "../scripts/test-full-plugin-no-timeout.sh" --basic-only > ../logs/deployment/plugin-test.log 2>&1; then
         log_success "Plugin loading test: PASSED (plugin loads without errors)"
     else
         log_error "Plugin loading test: FAILED"
         echo "=== PLUGIN TEST LOG ==="
-        cat /tmp/plugin-test.log
+        cat ../logs/deployment/plugin-test.log
         # For deployment testing, we'll be more lenient - plugin loading is the key requirement
         # Codex injection can fail in test environments but plugin must load
-        if grep -q "Plugin loaded successfully" /tmp/plugin-test.log; then
+        if grep -q "Plugin loaded successfully" ../logs/deployment/plugin-test.log; then
             log_warning "Plugin loads but codex injection may have issues in test environment - acceptable for deployment"
             log_success "Plugin loading test: PASSED (with warnings)"
         else
@@ -222,11 +222,11 @@ run_tests() {
         console.error('❌ Plugin validation error:', error.message);
         process.exit(1);
       }
-    " > /tmp/core-test.log 2>&1; then
+    " > ../logs/deployment/core-test.log 2>&1; then
         log_success "Core functionality test: PASSED"
     else
         log_error "Core functionality test: FAILED"
-        cat /tmp/core-test.log
+        cat ../logs/deployment/core-test.log
         exit 1
     fi
 
@@ -267,11 +267,11 @@ run_tests() {
       } else {
         process.exit(1);
       }
-    " > /tmp/structure-test.log 2>&1; then
+    " > ../logs/deployment/structure-test.log 2>&1; then
         log_success "Framework structure validation: PASSED"
     else
         log_error "Framework structure validation: FAILED"
-        cat /tmp/structure-test.log
+        cat ../logs/deployment/structure-test.log
         exit 1
     fi
 
@@ -299,11 +299,11 @@ run_tests() {
       } else {
         process.exit(1);
       }
-    " > /tmp/package-test.log 2>&1; then
+    " > ../logs/deployment/package-test.log 2>&1; then
         log_success "Package integrity test: PASSED"
     else
         log_error "Package integrity test: FAILED"
-        cat /tmp/package-test.log
+        cat ../logs/deployment/package-test.log
         exit 1
     fi
 

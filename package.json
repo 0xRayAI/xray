@@ -14,8 +14,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:all": "npm run build && npm run build:plugin",
-    "build:plugin": "tsc --project tsconfig.plugin.json && mkdir -p dist/plugin/plugins && cp .opencode/plugin/strray-codex-injection.ts dist/plugin/plugins/ && cp .opencode/plugin/strray-codex-injection.js dist/plugin/plugins/ 2>/dev/null || echo 'JS file not found, will be compiled'",
+    "build:all": "npm run build",
+    "build:plugin": "tsc --project tsconfig.json && mkdir -p dist/plugin/plugins && cp .opencode/plugin/strray-codex-injection.ts dist/plugin/plugins/ && cp .opencode/plugin/strray-codex-injection.js dist/plugin/plugins/ 2>/dev/null || echo 'JS file not found, will be compiled'",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run prepare-consumer && npm run build:all",
     "postinstall": "node scripts/postinstall.cjs",

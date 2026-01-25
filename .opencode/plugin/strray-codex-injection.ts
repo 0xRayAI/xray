@@ -68,11 +68,12 @@ function spawnPromise(
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      stdio: ["ignore", "inherit", "pipe"],
+      stdio: ["ignore", "inherit", "pipe"], // Original working stdio - stdout to terminal (ASCII visible)
     });
-    const stdout = "";
+    let stdout = "";
     let stderr = "";
 
+    // Capture stderr only (stdout goes to inherit/terminal)
     if (child.stderr) {
       child.stderr.on("data", (data) => {
         stderr += data.toString();
@@ -81,7 +82,7 @@ function spawnPromise(
 
     child.on("close", (code) => {
       if (code === 0) {
-        resolve({ stdout: "", stderr });
+        resolve({ stdout, stderr });
       } else {
         reject(new Error(`Process exited with code ${code}: ${stderr}`));
       }

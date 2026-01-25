@@ -6,7 +6,7 @@ async function generatePhase1Report() {
   const config = {
     type: "full-analysis",
     outputFormat: "markdown",
-    outputPath: "./PHASE_1_COMPLETION_REPORT.md",
+    outputPath: "./reports/phase1/PHASE_1_COMPLETION_REPORT.md",
     detailedMetrics: true,
     includeCharts: false,
     timeRange: { lastHours: 24 },

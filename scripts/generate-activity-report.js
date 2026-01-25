@@ -8,7 +8,7 @@ async function generateActivityReport() {
     timeRange: { lastHours: 2 }, // Last 2 hours
     outputFormat: 'markdown',
     detailedMetrics: true,
-    outputPath: './ACTIVITY_REPORT_PIPELINE_INTEGRATION.md'
+    outputPath: './reports/activity/ACTIVITY_REPORT_PIPELINE_INTEGRATION.md'
   };
 
   try {
