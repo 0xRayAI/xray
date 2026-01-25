@@ -54,7 +54,7 @@ export const defaultConfig: PostProcessorConfig = {
     enabled: true,
     autoGenerate: true,
     reportThreshold: 50, // Auto-generate reports for complexity scores >= 50
-    reportDir: ".opencode/reports",
+    reportDir: "./reports",
     retentionDays: 30,
   },
 };
