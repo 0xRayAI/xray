@@ -14,7 +14,7 @@ const { spawn } = require("child_process");
 // Delegate to the unified orchestrator
 const args = process.argv.slice(2);
 const orchestratorArgs = [
-  "scripts/ci-cd-orchestrator.cjs",
+  "scripts/node/ci-cd-orchestrator.cjs",
   "--monitor",
   ...args,
 ];

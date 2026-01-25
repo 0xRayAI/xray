@@ -7,7 +7,7 @@
  * Validates MCP server registration, plugin loading, and tool availability
  */
 
-import { spawn } from "child_process";
+import { spawn } from "node";
 import fs from "fs";
 import path from "path";
 
