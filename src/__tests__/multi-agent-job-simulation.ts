@@ -4,6 +4,8 @@
 import { jobCorrelationManager } from '../job-correlation-manager.js';
 
 // Simulate complex enterprise test class
+// Remove the import to fix compilation issues
+// import { AgentConfig } from '../types.js';
 export class EnterpriseMultiAgentTestSuite {
   constructor() {}
 

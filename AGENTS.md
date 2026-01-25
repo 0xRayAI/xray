@@ -43,6 +43,84 @@ All agents must ALWAYS read the ENTIRE file contents before making ANY edit or c
 **CRITICAL EDITING REQUIREMENT (ENFORCED):**
 BEFORE making ANY edit to a file, agents MUST read the ENTIRE file using the `read` tool. This ensures full context understanding, prevents regressions, and maintains code integrity. Edit operations based on partial reading are strictly forbidden and will result in immediate failure.
 
+## 🔧 CRITICAL SYSTEM DEVELOPMENT RULES
+
+### **MANDATORY SYSTEM Rule #59A: Command Output Review & Course Correction**
+
+**CRITICAL SYSTEM DEVELOPMENT RULE - IMMEDIATE ACTION REQUIRED:**
+
+ALL agents MUST immediately review ALL command outputs, identify ANY errors or issues, and automatically add a TODO item for course correction. No exceptions. Every command output MUST be reviewed before proceeding to any further actions.
+
+**MANDATORY REQUIREMENTS:**
+1. **Review ALL Command Outputs Immediately** - Every `bash` or tool call output must be read and analyzed
+2. **Identify Issues Automatically** - Look for errors, warnings, exceptions, failures, or unexpected results
+3. **Add TODO for Course Correction** - When issues found, immediately add a TODO item to fix them
+4. **Prioritize Fixes** - Critical errors (build failures, import errors, module not found) get PRIORITY HIGH
+5. **Block Further Progress** - Do not proceed with other tasks until errors are addressed
+
+**ENFORCEMENT:** This rule is enforced through systematic review. Violation of this rule will result in code errors and system failures that must be immediately corrected.
+
+### **MANDATORY SYSTEM Rule #59B: File Verification Before Import/Usage**
+
+**CRITICAL SYSTEM DEVELOPMENT RULE - IMPORT VALIDATION:**
+
+ALL agents MUST verify file paths and extensions before creating imports or references. Node.js/Microsoft-style import resolution must be followed exactly.
+
+**MANDATORY REQUIREMENTS:**
+1. **Check File Existence** - Use `ls`, `find`, or `read` to verify target file exists
+2. **Verify Import Paths** - Ensure relative paths (`../../file.ts`) match actual directory structure
+3. **File Extensions Matter** - TypeScript files need `.ts` extension, don't import `.js` for `.ts` files
+4. **Module Resolution Awareness** - Understand Node.js ESM vs CommonJS, TypeScript path mapping
+
+### **MANDATORY SYSTEM Rule #59C: Agent Work Completion Confirmation**
+
+**CRITICAL SYSTEM DEVELOPMENT RULE - WORK VERIFICATION:**
+
+ALL agents MUST verify their changes actually took effect before declaring task completion. No exceptions. Post-change verification is mandatory to prevent reporting false success.
+
+**MANDATORY REQUIREMENTS:**
+1. **Verify Changes Applied** - Use `read` tool to confirm edits were made exactly as intended
+2. **Check File Content** - Validate the actual file content contains expected modifications
+3. **Test Compilation** - If code changes, run compilation to verify no syntax errors
+4. **Confirm No Regressions** - Ensure existing functionality remains intact
+5. **Report Actual Status** - Only declare success after confirmed verification
+
+**ENFORCEMENT:** Violation results in immediate task failure. Agents must never declare "completed" without verification.
+
+### **MANDATORY SYSTEM Rule #59C: Agent Work Completion Confirmation**
+
+**CRITICAL SYSTEM DEVELOPMENT RULE - WORK VERIFICATION:**
+
+ALL agents MUST verify their changes actually took effect before declaring task completion. No exceptions. Post-change verification is mandatory to prevent reporting false success and undetectable failures.
+
+**MANDATORY REQUIREMENTS:**
+1. **Verify Changes Applied** - Use `read` tool to confirm edits were made exactly as intended
+2. **Check File Content** - Validate the actual file content contains expected modifications
+3. **Test Compilation** - If code changes, run compilation to verify no syntax errors introduced
+4. **Confirm No Regressions** - Ensure existing functionality remains intact
+5. **Report Actual Status** - Only declare success after confirmed verification (no false positives)
+6. **Verification Must Be Observable** - Log verification steps so failures are detectable
+
+**PROHIBITED BEHAVIORS:**
+- ✅ **Allowed**: Declare success only after verification confirms changes worked
+- ❌ **Forbidden**: Declare success without checking if changes actually took effect
+- ❌ **Forbidden**: Use subjective indicators (assumption, belief, "looks correct")
+- ❌ **Forbidden**: Skip verification when changes are "trivial" or "obvious"
+- ❌ **Forbidden**: Accept incomplete success metrics (only check positive changes, ignore regressions)
+- ❌ **Forbidden**: Continue to next task when verification fails
+
+**ENFORCEMENT:** Systematic verification required. Any task declared "completed" must include proof of successful verification. False completion reports result in workflow failures and revision requirements.
+
+**VERIFICATION PROTOCOL:**
+1. Pre-change: Establish baseline with `read` or relevant check
+2. Apply changes: Execute the intended modification
+3. Post-change: Use `read` to verify exact changes are present
+4. Regression test: Ensure no unintended modifications occurred
+5. Compilation check: Verify no new syntax/build errors introduced
+6. Log completion: Only then declare task truly "completed"
+
+**--------**
+
 ## Agent Capabilities Matrix
 
 | Agent | Role | Complexity Threshold | Primary Tools | Conflict Strategy |

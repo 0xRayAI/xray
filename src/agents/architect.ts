@@ -1,8 +1,9 @@
 import type { AgentConfig } from "./types";
+import { modelRouter } from '../strray/model-router';
 
 export const architect: AgentConfig = {
   name: "architect",
-  model: "opencode/grok-code-fast-1",
+  get model() { return modelRouter.getValidatedModel('architect'); },
   description:
     "StringRay Framework architect with comprehensive architectural rule enforcement, state management, delegation, and system design capabilities. Specialized in preventing architectural violations and ensuring system integrity.",
   mode: "subagent",

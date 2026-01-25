@@ -47,7 +47,8 @@ interface SessionValidation {
   timestamp: number;
 }
 
-interface PerformanceMetrics {
+// Local PerformanceMetrics that doesn't conflict
+interface LocalPerformanceMetrics {
   initializationTime: number;
   orchestrationLatency: number;
   agentCoordinationTime: number;

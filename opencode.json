@@ -4,6 +4,7 @@
     "auto": false,
     "prune": false
   },
+  "model": "openrouter/x-ai/grok-code-fast-1",
   "mcp": {
     "context7": {
       "enabled": false
@@ -144,5 +145,54 @@
       "enabled": true
     }
   },
-
+  "agent": {
+    "orchestrator": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "enhanced-orchestrator": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "enforcer": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "primary"
+    },
+    "architect": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "test-architect": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "bug-triage-specialist": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "code-reviewer": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "security-auditor": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "refactorer": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+      "mode": "subagent"
+    },
+    "Sisyphus": {
+      "disable": true
+    },
+    "Planner-Sisyphus": {
+      "disable": true
+    },
+    "Build": {
+      "disable": true
+    },
+    "Plan": {
+      "disable": true
+    }
+  }
 }

@@ -1,8 +1,10 @@
 import type { AgentConfig } from "./types";
 
+import { modelRouter } from '../strray/model-router';
+
 export const bugTriageSpecialist: AgentConfig = {
   name: "bug-triage-specialist",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('bug-triage-specialist'); },
   description:
     "StringRay Framework bug triage specialist with systematic error investigation and surgical fixes",
   mode: "subagent",

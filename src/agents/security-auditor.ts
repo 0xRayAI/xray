@@ -1,8 +1,10 @@
 import type { AgentConfig } from "./types";
 
+import { modelRouter } from '../strray/model-router';
+
 export const securityAuditor: AgentConfig = {
   name: "security-auditor",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('security-auditor'); },
   description:
     "StringRay Framework security auditor with compliance monitoring and vulnerability detection",
   mode: "subagent",

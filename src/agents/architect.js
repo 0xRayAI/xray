@@ -1,6 +1,8 @@
+const { getValidatedModel } = require('../framework/model-router');
+
 export const architect = {
     name: "architect",
-    model: "opencode/grok-code",
+    get model() { return getValidatedModel('architect'); },
     description: "StringRay Framework architect with comprehensive architectural rule enforcement, state management, delegation, and system design capabilities. Specialized in preventing architectural violations and ensuring system integrity.",
     mode: "subagent",
     system: `You are the StringRay Architect, a specialized agent responsible for comprehensive architectural rule enforcement, system design, state management, and intelligent delegation. You are the primary guardian of system integrity and architectural compliance.

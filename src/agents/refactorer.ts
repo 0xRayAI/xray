@@ -1,8 +1,10 @@
 import type { AgentConfig } from "./types";
 
+import { modelRouter } from '../strray/model-router';
+
 export const refactorer: AgentConfig = {
   name: "refactorer",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('refactorer'); },
   description:
     "StringRay Framework refactorer with technical debt elimination and code consolidation capabilities",
   mode: "subagent",

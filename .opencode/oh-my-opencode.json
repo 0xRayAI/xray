@@ -1,7 +1,7 @@
  {
-   "model": "opencode/grok-code",
+   "model": "openrouter/x-ai/grok-code-fast-1",
    "model_routing": {
-     "*": "opencode/grok-code",
+     "*": "openrouter/x-ai/grok-code-fast-1",
      "enforcer": "opencode/grok-code",
      "architect": "opencode/grok-code",
      "orchestrator": "opencode/grok-code",
@@ -11,9 +11,9 @@
      "refactorer": "opencode/grok-code",
      "test-architect": "opencode/grok-code"
    },
-   // "plugin": [
-   //   "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"
-   // ],
+   "plugin": [
+      "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"
+  ],
   "disabled_agents": [
     "Sisyphus",
     "Planner-Sisyphus",
@@ -28,5 +28,5 @@
      "global-git",
      "global-sqlite"
    ]
-}
+  }
 }

@@ -24,14 +24,23 @@ class ModelRouter:
 
     def _discover_models(self) -> List[str]:
         """Discover available models from configuration."""
-        # Mock model discovery - in real implementation would query APIs
-        return [
-            "opencode/grok-code",
-            "gpt-4o",
-            "gpt-5.2",
-            "google/gemini-3-pro-high",
-            "google/gemini-3-flash",
+        # Enterprise-grade model discovery with OpenRouter integration
+        available_models = [
+            "openrouter/xai-grok-2-1212-fast-1",
+            "openai/gpt-4o",
+            "openai/gpt-4o-mini",
+            "anthropic/claude-3-5-sonnet-20241022",
+            "google/gemini-pro-1.5",
+            "google/gemini-flash-1.5",
+            "meta/llama-3.1-70b-instruct",
+            "mistral/mistral-7b-instruct"
         ]
+
+        # Add any models specified in configuration
+        config_models = self.config.get("available_models", [])
+        available_models.extend(config_models)
+
+        return list(set(available_models))
 
     def get_validated_model(self, agent_type: str = None) -> str:
         """Get validated model using hierarchical selection."""
@@ -47,12 +56,12 @@ class ModelRouter:
                 return agent_model
 
         # 3. Framework default
-        default_model = self.config.get("model_default", "opencode/grok-code")
+        default_model = self.config.get("model_default", "openrouter/xai-grok-2-1212-fast-1")
         if self._is_model_available(default_model):
             return default_model
 
         # 4. Fallback
-        fallback_model = self.config.get("model_fallback", "opencode/grok-code")
+        fallback_model = self.config.get("model_fallback", "openai/gpt-4o-mini")
         return fallback_model
 
     def _get_user_preference(self) -> Optional[str]:

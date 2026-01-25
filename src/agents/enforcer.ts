@@ -1,8 +1,10 @@
 import type { AgentConfig } from "./types";
 
+import { modelRouter } from '../strray/model-router';
+
 export const enforcer: AgentConfig = {
   name: "enforcer",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('enforcer'); },
   description:
     "StringRay Framework enforcer with error handling, compliance monitoring, and systematic validation - Advanced Error Preventer",
   mode: "subagent",
