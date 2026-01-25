@@ -108,14 +108,14 @@ npm link
 strray init my-project
 
 # This creates:
-# - .strray/ directory with configuration
+# - .opencode/strray/ directory with configuration
 # - Basic project structure
 # - Default agent configurations
 ```
 
 ### Manual Configuration
 
-Create `.strray/config.json` in your project root:
+Create `.opencode/strray/config.json` in your project root:
 
 ```json
 {
@@ -142,7 +142,7 @@ Create `.strray/config.json` in your project root:
   },
   "logging": {
     "level": "info",
-    "file": ".strray/logs/framework.log"
+    "file": ".opencode/strray/logs/framework.log"
   }
 }
 ```
@@ -157,7 +157,7 @@ Create `.env` file in project root:
 # oh-my-opencode Configuration
 STRRAY_ENV=development
 STRRAY_LOG_LEVEL=info
-STRRAY_CACHE_DIR=.strray/cache
+STRRAY_CACHE_DIR=.opencode/strray/cache
 
 # Tool API Keys (optional)
 GITHUB_TOKEN=your_github_token
@@ -183,7 +183,7 @@ DEBUG=strray:*
 ```json
 {
   "strray.enable": true,
-  "strray.configPath": ".strray/config.json",
+  "strray.configPath": ".opencode/strray/config.json",
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "typescript.preferences.importModuleSpecifier": "relative"
@@ -225,7 +225,7 @@ cd existing-project
 strray init --existing
 
 # This adds:
-# - .strray/ configuration directory
+# - .opencode/strray/ configuration directory
 # - strray.config.js configuration file
 # - Integration with existing package.json
 ```
@@ -251,10 +251,10 @@ strray config set agents.architect.permissions "read,write,bash,analyze"
 
 ### Custom Agent Development
 
-Create custom agents in `.strray/agents/`:
+Create custom agents in `.opencode/strray/agents/`:
 
 ```javascript
-// .strray/agents/custom-agent.js
+// .opencode/strray/agents/custom-agent.js
 module.exports = {
   name: "custom-agent",
   description: "Custom development agent",

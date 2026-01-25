@@ -307,7 +307,7 @@ node node_modules/strray-ai/scripts/postinstall.cjs
 ### Documentation
 - [Framework Architecture](./README_STRRAY_INTEGRATION.md)
 - [Agent Capabilities](./docs/agents/)
-- [Codex Compliance](./.strray/codex.json)
+- [Codex Compliance](./.opencode/strray/codex.json)
 - [API Reference](./api/API_REFERENCE.md)
 
 ### Community & Support

@@ -89,8 +89,8 @@ strray validate --pre-commit
 
 ```bash
 # Create backup of current configuration
-cp .strray/config.json .strray/config.backup.json
-cp .strray/hooks/ .strray/hooks.backup/ -r
+cp .opencode/strray/config.json .opencode/strray/config.backup.json
+cp .opencode/strray/hooks/ .opencode/strray/hooks.backup/ -r
 ```
 
 ### Step 2: Update Configuration Structure
@@ -121,8 +121,8 @@ strray test-hooks
 
 ```bash
 # Remove old configuration files
-rm .strray/config.backup.json
-rm -rf .strray/hooks.backup/
+rm .opencode/strray/config.backup.json
+rm -rf .opencode/strray/hooks.backup/
 ```
 
 ## Troubleshooting Migration Issues
@@ -135,7 +135,7 @@ rm -rf .strray/hooks.backup/
 
 ```bash
 # Restore from backup
-cp .strray/config.backup.json .strray/config.json
+cp .opencode/strray/config.backup.json .opencode/strray/config.json
 
 # Run diagnostic
 strray diagnose-config

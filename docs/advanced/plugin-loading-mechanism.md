@@ -51,7 +51,7 @@ export default async function strrayCodexPlugin(input: {
 
 - **When**: Before LLM receives system prompt
 - **Purpose**: Inject Universal Development Codex v1.1.1 terms
-- **Mechanism**: Loads codex from `.strray/agents_template.md` and `AGENTS.md`
+- **Mechanism**: Loads codex from `.opencode/strray/agents_template.md` and `AGENTS.md`
 - **Output**: Prepends formatted codex context to system messages
 
 #### Pre-Execution Validation (`tool.execute.before`)
@@ -124,7 +124,7 @@ interface ComplexityMetrics {
 - Framework settings and permissions
 - oh-my-opencode-specific parameters
 
-**StrRay Configuration** (`.strray/config.json`):
+**StrRay Configuration** (`.opencode/strray/config.json`):
 
 - Multi-agent orchestration settings
 - Codex enforcement levels
@@ -185,7 +185,7 @@ Plugins are registered through oh-my-opencode's configuration system. The framew
 ### Common Issues
 
 1. **Plugin Not Loading**: Check file exists at `.opencode/plugin/strray-codex-injection.ts`
-2. **Codex Not Injecting**: Verify `.strray/agents_template.md` and `AGENTS.md` exist
+2. **Codex Not Injecting**: Verify `.opencode/strray/agents_template.md` and `AGENTS.md` exist
 3. **Validation Failing**: Check Python script at `.opencode/scripts/validate-codex.py`
 4. **MCP Servers Down**: Verify server files in `.opencode/mcps/`
 

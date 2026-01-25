@@ -614,7 +614,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ## 7. Configuration & State Management
 
 **Configuration Hierarchy:**
-- Global settings (`.strray/config.json`)
+- Global settings (`.opencode/strray/config.json`)
 - Project overrides (`.opencode/oh-my-opencode.json`)
 - Runtime state (`src/state/state-manager.ts`)
 
@@ -655,7 +655,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 }
 ```
 
-#### Complete .strray/config.json Template
+#### Complete .opencode/strray/config.json Template
 ```json
 {
   "framework": {
@@ -987,7 +987,7 @@ User Input → Complexity Analysis → Rule Validation → Agent Routing → Exe
 
 **CI/CD Enforcement (59)**: Zero-tolerance blocking for pipeline compliance.
 
-Full codex details: [.strray/codex.json](.strray/codex.json)
+Full codex details: [.opencode/strray/codex.json](.opencode/strray/codex.json)
 
 ### 3.2 Complexity Scoring
 
@@ -1133,7 +1133,7 @@ Parallel analysis → Results → Majority vote consensus → Final report
 ### 3.6 Agent Operational Procedures
 
 **Initialization Sequence**:
-1. Load codex context from `.strray/codex.json`
+1. Load codex context from `.opencode/strray/codex.json`
 2. Initialize tool permissions based on agent capabilities
 3. Establish MCP server connections for assigned tools
 4. Validate session state and configuration
@@ -1368,7 +1368,7 @@ npm publish --tag latest
 | **5. Claude Override**      | MCP Exclusion    | `.claude/.mcp.json`                | Disable problematic global MCP servers | Clean MCP environment | Plugin loading     |
 | **6. MCP Registration**     | Server Registry  | `.mcp.json`                        | Register 28 MCP servers                | Servers available     | Claude override    |
 | **7. Agent Initialization** | Agent System     | `src/agents/`                      | Load 8 specialized agents              | Agents ready          | Plugin loading     |
-| **8. Context Loading**      | Codex System     | `.strray/codex.json`               | Load 59 codex terms                    | Validation active     | Plugin loading     |
+| **8. Context Loading**      | Codex System     | `.opencode/strray/codex.json`               | Load 59 codex terms                    | Validation active     | Plugin loading     |
 | **9. State Manager**        | Persistence      | `src/state/state-manager.ts`       | Initialize state management            | State ready           | Context loading    |
 | **10. Orchestrator**        | Coordination     | `src/orchestrator.ts`              | Load task orchestration                | Delegation ready      | State manager      |
 | **11. Delegation System**   | Routing          | `src/delegation/`                  | Setup complexity analysis              | Routing active        | Orchestrator       |
@@ -1384,7 +1384,7 @@ npm publish --tag latest
    - Registers MCP servers for StrRay agents
 
 2. **Context Loader** (`src/core/context-loader.ts` + `src/core/config-loader.ts`)
-   - Loads codex terms from `.strray/codex.json` and `codex.json`
+   - Loads codex terms from `.opencode/strray/codex.json` and `codex.json`
    - Provides validation and enforcement mechanisms
    - Integrates with TypeScript plugin system
 
@@ -2152,7 +2152,7 @@ When codex rules are violated, the system automatically attempts fixes:
 
 ```
 strray-framework/
-├── .strray/               # Framework configuration
+├── .opencode/strray/               # Framework configuration
 │   ├── codex.json         # Universal Development Codex (59 terms)
 │   ├── config.json        # Framework settings
 │   └── agents_template.md # Agent documentation
@@ -2239,7 +2239,7 @@ npm run test:mcp-connectivity      # MCP validation
 |-------|---------|----------|
 | Plugin not loading | Agent commands fail | Run `node node_modules/strray-ai/scripts/postinstall.cjs` |
 | Agent commands not working | @ commands unrecognized | Check oh-my-opencode configuration |
-| Codex validation errors | Unexpected blocking | Review codex terms in `.strray/codex.json` |
+| Codex validation errors | Unexpected blocking | Review codex terms in `.opencode/strray/codex.json` |
 | MCP connectivity fails | Server connection errors | Run `node scripts/test:mcp-connectivity.js` |
 | Token limit errors | "maximum prompt length exceeded" | Context will be automatically pruned (TokenManager active) |
 | Performance issues | Slow response times | Check complexity analysis thresholds |
@@ -2277,7 +2277,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 - [Plugin Loading Mechanism](docs/advanced/plugin-loading-mechanism.md) - Plugin system details
 - [Deployment Reflections](docs/reflections/) - Framework evolution insights
 - [Documentation Reorganization](docs/DOCUMENTATION_REORGANIZATION_PLAN.md) - Organization strategy
-- [Universal Development Codex](.strray/codex.json) - Complete 59-term codex reference
+- [Universal Development Codex](.opencode/strray/codex.json) - Complete 59-term codex reference
 - [API Reference](#appendix-a-api-reference) - Complete API documentation
 - [Configuration Templates](#appendix-b-configuration-templates) - Copy-paste configuration examples
 - [Troubleshooting Guide](#appendix-c-troubleshooting-guide) - Common issues and solutions
@@ -2289,9 +2289,9 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 #### Critical File Path Reference
 
 **Configuration Files**:
-- **Codex Terms**: `.strray/codex.json` - Universal Development Codex (59 terms)
-- **Framework Config**: `.strray/config.json` - Framework settings and thresholds
-- **Agent Templates**: `.strray/agents_template.md` - Agent documentation templates
+- **Codex Terms**: `.opencode/strray/codex.json` - Universal Development Codex (59 terms)
+- **Framework Config**: `.opencode/strray/config.json` - Framework settings and thresholds
+- **Agent Templates**: `.opencode/strray/agents_template.md` - Agent documentation templates
 - **OpenCode Config**: `.opencode/oh-my-opencode.json` - oh-my-opencode plugin configuration
 - **MCP Registry**: `.mcp.json` - MCP server registration (28 servers)
 - **Claude Override**: `.claude/.mcp.json` - MCP server exclusions
@@ -2445,7 +2445,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 - **framework**: Core framework settings and feature flags
 - **pipelines**: Agent orchestration and complexity thresholds
 
-### Complete .strray/config.json Template
+### Complete .opencode/strray/config.json Template
 ```json
 {
   "framework": {
@@ -2494,7 +2494,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 1. **Check rule enforcer**: Verify `frameworkLogger.log` calls are working
 2. **Verify codex injection**: Check plugin initialization logs for codex loading
 3. **Test with simple violation**: Add `console.log()` to trigger console.log rule
-4. **Check codex file**: Ensure `.strray/codex.json` exists and is valid
+4. **Check codex file**: Ensure `.opencode/strray/codex.json` exists and is valid
 
 #### JobId Missing from Logs
 **Symptoms**: Activity log entries lack jobId prefixes, traceability issues
@@ -2531,7 +2531,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 #### Configuration Errors
 **Symptoms**: Framework fails to start, invalid configuration messages
 **Solutions**:
-1. **Validate JSON syntax**: Check `.opencode/oh-my-opencode.json` and `.strray/config.json`
+1. **Validate JSON syntax**: Check `.opencode/oh-my-opencode.json` and `.opencode/strray/config.json`
 2. **Use configuration templates**: Replace with validated templates from Appendix B
 3. **Check file permissions**: Ensure configuration files are readable
 4. **Reset to defaults**: Remove custom configurations and use framework defaults
@@ -2600,8 +2600,8 @@ The following triage guidelines are now **automatically enforced** by the framew
 - **Enforcement**: Requires new rules to be added/reinforced in codex.json first, then loaded by enforcer
 - **Validation**: RuleEnforcer must dynamically load all 59+ codex terms; manual rule additions in code are prohibited
 - **Rationale**: Codex is the single source of truth for development rules; enforcer is the inference engine that loads and enforces them
-- **Version Requirement**: Codex version must be updated when new rules are added (update "version" field in .strray/codex.json)
-- **Workflow**: Add/modify rules in .strray/codex.json → update version → enforcer auto-loads → rule mappings auto-generated → violations auto-remediated
+- **Version Requirement**: Codex version must be updated when new rules are added (update "version" field in .opencode/strray/codex.json)
+- **Workflow**: Add/modify rules in .opencode/strray/codex.json → update version → enforcer auto-loads → rule mappings auto-generated → violations auto-remediated
 
 ## Reflection System
 

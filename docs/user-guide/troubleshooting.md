@@ -115,7 +115,7 @@ tail -50 logs/framework/activity.log
 **Symptoms**: Framework starts but codex terms not applied
 
 **Possible Causes**:
-- Missing .strray/codex.json file
+- Missing .opencode/strray/codex.json file
 - Corrupted codex data
 - Version mismatches
 
@@ -123,14 +123,14 @@ tail -50 logs/framework/activity.log
 
 1. **Verify Codex File**:
    ```bash
-   ls -la .strray/codex.json
+   ls -la .opencode/strray/codex.json
    # File should exist and be readable
    ```
 
 2. **Validate Codex Content**:
    ```bash
    # Check codex has required terms
-   grep '"number":' .strray/codex.json | wc -l  # Should show 59
+   grep '"number":' .opencode/strray/codex.json | wc -l  # Should show 59
    ```
 
 3. **Check Framework Logs**:

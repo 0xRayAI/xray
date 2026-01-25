@@ -52,7 +52,7 @@ The plugin automatically configures the following agents:
 
 ### Advanced Configuration
 
-Create `.strray/config.json` for advanced settings:
+Create `.opencode/strray/config.json` for advanced settings:
 
 ```json
 {

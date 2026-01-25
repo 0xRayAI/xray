@@ -293,7 +293,7 @@ node scripts/boot-check.cjs
 
 3. **Test Codex Loading:**
    ```bash
-   ls -la .strray/codex.json AGENTS.md
+   ls -la .opencode/strray/codex.json AGENTS.md
    ```
 
 ## Deployment Checklist
@@ -360,7 +360,7 @@ node scripts/boot-check.cjs
 
 **Check:**
 
-- .strray/codex.json or AGENTS.md exists
+- .opencode/strray/codex.json or AGENTS.md exists
 - Plugin's system transform hook is called
 - Codex parsing doesn't fail with syntax errors
 

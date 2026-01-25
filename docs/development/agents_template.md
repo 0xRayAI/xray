@@ -127,7 +127,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 - `agents/` - Individual agent configurations (.md descriptions + .yml specs)
 - `src/core/` - TypeScript core with manager classes and orchestration
 
-#### `.strray/` Directory (Configuration Repository)
+#### `.opencode/strray/` Directory (Configuration Repository)
 
 - **Purpose**: Centralized configuration for codex terms, agent templates, and context loading
 - **Codex Management**: `codex.json` contains detailed enforcement rules and metadata
@@ -149,7 +149,7 @@ Framework initializes in strict dependency order via orchestrator-first boot:
    - Registers MCP servers for StrRay agents
 
 2. **Context Loader** (`src/core/context-loader.ts` + `src/core/config-loader.ts`)
-   - Loads codex terms from `.strray/codex.json` and `codex.json`
+   - Loads codex terms from `.opencode/strray/codex.json` and `codex.json`
    - Provides validation and enforcement mechanisms
    - Integrates with TypeScript plugin system
 
@@ -1220,9 +1220,9 @@ Framework initializes in strict dependency order:
 ### Configuration Files
 
 - **`.opencode/oh-my-opencode.json`**: Main framework configuration with plugin declarations
-- **`.strray/codex.json`**: 45 detailed codex terms with enforcement levels
+- **`.opencode/strray/codex.json`**: 45 detailed codex terms with enforcement levels
 - **`.opencode/enforcer-config.json`**: Enforcer-specific threshold settings
-- **`.opencode/.strray/workflow_state.json`**: Workflow state persistence
+- **`.opencode/.opencode/strray/workflow_state.json`**: Workflow state persistence
 
 ### Agent Configuration System
 
