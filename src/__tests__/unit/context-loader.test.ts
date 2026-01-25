@@ -4,7 +4,7 @@ import {
   strRayContextLoader,
   CodexContext,
   CodexTerm,
-} from "../../context-loader";
+} from "../../core/context-loader";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -190,7 +190,7 @@ describe("StringRayContextLoader", () => {
 
     it("should load context from first available file", async () => {
       mockFs.existsSync.mockImplementation((path: string) =>
-        path.includes(".strray/codex.json"),
+        path.includes(".opencode/strray/codex.json"),
       );
 
       const result = await loader.loadCodexContext("/test/project");
@@ -299,7 +299,7 @@ describe("StringRayContextLoader", () => {
 
     it("should load context from first available file", async () => {
       mockFs.existsSync.mockImplementation((path: string) =>
-        path.includes(".strray/codex.json"),
+        path.includes(".opencode/strray/codex.json"),
       );
 
       const result = await loader.loadCodexContext("/test/project");

@@ -8,7 +8,7 @@
  * @author StringRay Framework Team
  */
 
-import { frameworkLogger, generateJobId } from "../framework-logger";
+import { frameworkLogger, generateJobId } from "../core/framework-logger";
 
 import { TokenManager } from "../utils/token-manager";
 
@@ -68,7 +68,7 @@ To discover all available capabilities, use the framework-help system:
 - **Test Coverage >85%**: Maintain comprehensive behavioral test coverage
 - **Performance Budget**: Bundle size <2MB (gzipped <700KB)
 
-For complete codex documentation, see: .strray/codex.json
+For complete codex documentation, see: .opencode/strray/codex.json
 
 ### 🔒 Critical Spawn Governance (All Agents)
 

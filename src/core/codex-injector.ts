@@ -56,7 +56,7 @@ const codexCache = new Map<string, CodexContextEntry[]>();
  * Codex file locations to search
  */
 const CODEX_FILE_LOCATIONS = [
-  ".strray/codex.json",
+  ".opencode/strray/codex.json",
   "codex.json",
   "src/codex.json",
   "docs/agents/codex.json",
@@ -197,7 +197,7 @@ export function createStringRayCodexInjectorHook() {
             );
           } else {
             await frameworkLogger.log('codex-injector', '-no-codex-files-found-checked-strray-codex-json-co', 'info', { message: 
-              "⚠️  No codex files found. Checked: .strray/codex.json, codex.json, src/codex.json, docs/agents/codex.json",
+              "⚠️  No codex files found. Checked: .opencode/strray/codex.json, codex.json, src/codex.json, docs/agents/codex.json",
              });
             await frameworkLogger.log(
               "codex-injector",

@@ -3,8 +3,8 @@
  * Ensures librarian is involved in all major system actions for documentation and versioning
  */
 
-import { frameworkLogger } from "./framework-logger";
-import { RuleEnforcer } from "./enforcement/rule-enforcer";
+import { frameworkLogger } from "../core/framework-logger";
+import { RuleEnforcer } from "../enforcement/rule-enforcer";
 
 export interface SystemAction {
   type: "code-change" | "rule-modification" | "architectural-change" | "configuration-update" | "documentation-update";
@@ -180,7 +180,7 @@ export class UniversalLibrarianConsultation {
 
     if (action.type === "rule-modification" || action.scope === "framework") {
       updates.push({
-        file: ".strray/codex.json",
+        file: ".opencode/strray/codex.json",
         field: "version",
         oldVersion: "1.1.1",
         newVersion: "1.1.2",

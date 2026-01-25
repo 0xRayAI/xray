@@ -9,8 +9,8 @@
  * @since 2026-01-24
  */
 
-import { frameworkLogger, generateJobId } from "./framework-logger.js";
-import { strRayConfigLoader } from "./config-loader.js";
+import { frameworkLogger, generateJobId } from "../core/framework-logger";
+import { strRayConfigLoader } from "../core/config-loader";
 
 export interface DiagnosticReport {
   reportId: string;
@@ -146,7 +146,7 @@ export class AutonomousReportGenerator {
     if (!config.autonomous_reporting.enabled) {
       throw new Error(
         "Autonomous reporting is disabled in configuration. " +
-        "Enable it in .strray/config.json by setting autonomous_reporting.enabled to true."
+        "Enable it in .opencode/strray/config.json by setting autonomous_reporting.enabled to true."
       );
     }
 

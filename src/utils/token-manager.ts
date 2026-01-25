@@ -16,7 +16,7 @@ export interface ContextPruningConfig {
 export class TokenManager {
   private config: TokenLimits & { contextPruning: ContextPruningConfig };
 
-  constructor(configPath: string = path.join(process.cwd(), '.strray', 'config.json')) {
+  constructor(configPath: string = path.join(process.cwd(), '.opencode/strray', 'config.json')) {
     this.config = this.loadConfig(configPath);
   }
 

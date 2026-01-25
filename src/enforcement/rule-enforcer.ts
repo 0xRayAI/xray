@@ -118,7 +118,7 @@ export class RuleEnforcer {
       const fs = await import('fs');
       const path = await import('path');
 
-      const codexPath = path.join(process.cwd(), '.strray', 'codex.json');
+      const codexPath = path.join(process.cwd(), '.opencode/strray', 'codex.json');
       const codexContent = fs.readFileSync(codexPath, 'utf8');
       const codexData = JSON.parse(codexContent);
 

@@ -196,7 +196,7 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
 
     // Setup mock codex data
     const mockCodex = MockCodexGenerator.createCompleteCodex();
-    mockFs.addFile('/test/project/.strray/codex.json', mockCodex);
+    mockFs.addFile('/test/project/.opencode/strray/codex.json', mockCodex);
     mockFs.addFile('/test/project/codex.json', mockCodex);
   });
 

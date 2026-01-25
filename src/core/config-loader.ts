@@ -59,11 +59,11 @@ export class StringRayConfigLoader {
   private lastLoadTime: number = 0;
 
   constructor(configPath?: string) {
-    this.configPath = configPath || ".strray/config.json";
+    this.configPath = configPath || ".opencode/strray/config.json";
   }
 
   /**
-   * Load StringRay configuration from .strray/strray-config.json
+   * Load StringRay configuration from .opencode/strray/config.json
    */
   public loadConfig(): StringRayConfig {
     const now = Date.now();

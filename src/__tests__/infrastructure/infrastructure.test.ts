@@ -20,7 +20,7 @@ describe("StringRay Infrastructure Tests", () => {
       const requiredDirs = [
         "src",
         ".opencode",
-        ".strray",
+        ".opencode/strray",
       ];
 
       for (const dir of requiredDirs) {
@@ -32,7 +32,7 @@ describe("StringRay Infrastructure Tests", () => {
     it("should have required configuration files", () => {
       const requiredFiles = [
         ".opencode/oh-my-opencode.json",
-        ".strray/codex.json",
+        ".opencode/strray/codex.json",
         "package.json",
         "vitest.config.ts",
       ];
@@ -46,7 +46,7 @@ describe("StringRay Infrastructure Tests", () => {
     it("should have readable configuration files", () => {
       const configFiles = [
         ".opencode/oh-my-opencode.json",
-        ".strray/codex.json",
+        ".opencode/strray/codex.json",
         "package.json",
       ];
 

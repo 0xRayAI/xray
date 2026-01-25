@@ -5,7 +5,7 @@ import {
   StringRayConfig,
   MultiAgentOrchestrationConfig,
   SisyphusOrchestratorConfig,
-} from "../../config-loader";
+} from "../../core/config-loader";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -68,7 +68,7 @@ describe("StringRayConfigLoader", () => {
   describe("constructor", () => {
     it("should use default path when no configPath provided", () => {
       const loader = new StringRayConfigLoader();
-      expect((loader as any).configPath).toBe(".strray/config.json");
+      expect((loader as any).configPath).toBe(".opencode/strray/config.json");
     });
 
     it("should use provided configPath", () => {

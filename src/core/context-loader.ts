@@ -78,7 +78,7 @@ export class StringRayContextLoader {
   private codexFilePaths: string[] = [];
 
   private constructor() {
-    this.codexFilePaths = [".strray/codex.json", "codex.json"];
+    this.codexFilePaths = [".opencode/strray/codex.json", "codex.json"];
   }
 
   /**

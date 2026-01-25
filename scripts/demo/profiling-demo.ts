@@ -114,7 +114,7 @@ async function simulateAgentOperations() {
 
   console.log("\n🎉 Profiling demo completed successfully!");
   console.log(
-    "📊 Check the .strray/profiles/ directory for performance reports",
+    "📊 Check the .opencode/strray/profiles/ directory for performance reports",
   );
 
   // Cleanup
