@@ -25,6 +25,7 @@ class HookMetricsCollector {
     this.metricsFile = path.join(
       process.cwd(),
       ".opencode",
+      "hooks",
       "hook-metrics.json",
     );
     this.loadMetrics();

@@ -9,8 +9,6 @@
     "global-everything": { "enabled": false },
     "global-filesystem": { "enabled": false },
     "global-git": { "enabled": false },
-    "global-sqlite": { "enabled": false },
-    "grep_app": { "enabled": false },
     "orchestrator": {
       "type": "local",
       "command": ["node", "./node_modules/strray-ai/dist/plugin/mcps/orchestrator.server.js"],
@@ -90,48 +88,30 @@
   "agent": {
     "orchestrator": {
       "mode": "subagent",
-      "temperature": 0.15,
-      "maxTokens": 4096
     },
     "enhanced-orchestrator": {
       "mode": "subagent",
-      "temperature": 0.15,
-      "maxTokens": 4096
     },
     "enforcer": {
       "mode": "primary",
-      "temperature": 0.05,
-      "maxTokens": 600
     },
     "architect": {
       "mode": "subagent",
-      "temperature": 0.1,
-      "maxTokens": 800
     },
     "test-architect": {
       "mode": "subagent",
-      "temperature": 0.15,
-      "maxTokens": 4096
     },
     "bug-triage-specialist": {
       "mode": "subagent",
-      "temperature": 0.1,
-      "maxTokens": 3072
     },
     "code-reviewer": {
       "mode": "subagent",
-      "temperature": 0.1,
-      "maxTokens": 800
     },
     "security-auditor": {
       "mode": "subagent",
-      "temperature": 0.1,
-      "maxTokens": 3072
     },
     "refactorer": {
       "mode": "subagent",
-      "temperature": 0.1,
-      "maxTokens": 800
     },
     "Sisyphus": { "disable": true },
     "Planner-Sisyphus": { "disable": true },

@@ -41,7 +41,7 @@ This guide explains how to configure and update AI models in the StrRay framewor
 
 ### 2. Framework Settings: Python ConfigManager
 
-**Location**: `src/strray/config/manager.py`
+**Location**: `src/core/config-loader.ts`
 
 **Purpose**: Comprehensive framework configuration loaded at runtime
 

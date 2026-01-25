@@ -114,8 +114,8 @@ All agents operate in subagent mode with full tool access and automatic delegati
 **Purpose**: Boot sequence and component activation
 **Entry Point**: `src/boot-orchestrator.ts`
 **Components**:
-- `src/strray-init.ts` - Framework initialization
-- `src/strray-activation.ts` - Component activation
+- `src/core/strray-init.ts` - Framework initialization
+- `src/core/strray-activation.ts` - Component activation
 - `src/codex-injector.ts` - Codex injection system
 - `src/mcp-client.ts` - MCP server connections
 
@@ -1383,7 +1383,7 @@ npm publish --tag latest
    - Injects codex terms into all agent system prompts
    - Registers MCP servers for StrRay agents
 
-2. **Context Loader** (`src/context-loader.ts` + `src/strray/core/context_loader.py`)
+2. **Context Loader** (`src/core/context-loader.ts` + `src/core/config-loader.ts`)
    - Loads codex terms from `.strray/codex.json` and `codex.json`
    - Provides validation and enforcement mechanisms
    - Integrates with TypeScript plugin system
@@ -1694,14 +1694,14 @@ The StringRay framework generates comprehensive logs and reports across all pipe
 
 #### Framework Boot Sequence Logging
 
-**Phase 1: StringRay Initialization** (`src/strray-init.ts`)
+**Phase 1: StringRay Initialization** (`src/core/strray-init.ts`)
 ```
 🚀 StringRay framework activation starting...
 ✅ StringRay framework initialized successfully
 ❌ StringRay framework initialization failed (if error)
 ```
 
-**Phase 2: Framework Activation** (`src/strray-activation.ts`)
+**Phase 2: Framework Activation** (`src/core/strray-activation.ts`)
 ```
 🔄 StringRay Framework Activation Sequence:
 ├── Codex injection activated

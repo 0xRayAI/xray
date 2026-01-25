@@ -13,7 +13,7 @@ StrRay Framework is now **directly integrated** into oh-my-opencode's core rathe
 
 ### Core Integration Points
 
-1. **src/strray-activation.ts**: Handles framework component activation in correct order
+1. **src/core/strray-activation.ts**: Handles framework component activation in correct order
 2. **.opencode/init.sh**: Auto-initializes StrRay during oh-my-opencode startup
 3. **src/index.ts**: Exports StrRay components and auto-activates framework
 4. **Boot Orchestrator**: Initializes all components in dependency order

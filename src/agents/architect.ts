@@ -1,5 +1,5 @@
 import type { AgentConfig } from "./types";
-import { modelRouter } from '../strray/model-router';
+import { modelRouter } from '../core/model-router';
 
 export const architect: AgentConfig = {
   name: "architect",

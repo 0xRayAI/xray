@@ -21575,7 +21575,7 @@ The Framework is Enterprise-Grade, But I'm Operating Like a Senior Engineer
 5. Removed Dead Config - Eliminated unused StrRay settings from oh-my-opencode.json to maintain schema compliance
 6. Relocated Framework Config - Moved all StrRay configuration to src/strray/config/manager.py with proper runtime defaults
 7. Updated Framework Loading - Modified src/boot-orchestrator.ts to load StrRay config from Python ConfigManager
-8. Fixed Model Routing - Updated src/strray/model_router.py to properly use model_routing from oh-my-opencode.json
+8. Fixed Model Routing - Updated src/core/model-router.ts to properly use model_routing from oh-my-opencode.json
 9. Updated Documentation - Modified docs/StrRay_MODEL_CONFIG.md to reflect the new hybrid configuration architecture
    New Configuration Architecture:
    oh-my-opencode.json (Schema-compliant, minimal):

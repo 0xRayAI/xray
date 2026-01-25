@@ -89,7 +89,7 @@ const { SecurityAuditor } = await import("./security/security-auditor");
 **Fix:** Implemented global initialization flag
 
 ```typescript
-// In src/strray-init.ts
+// In src/core/strray-init.ts
 declare const globalThis: any;
 const strrayInitialized = (globalThis as any).__strray_initialized;
 if (!strrayInitialized) {
@@ -98,7 +98,7 @@ if (!strrayInitialized) {
 }
 ```
 
-**Files Modified:** `src/strray-init.ts`, `src/plugins/strray-codex-injection.ts`
+**Files Modified:** `src/core/strray-init.ts`, `src/plugins/strray-codex-injection.ts`
 
 ### Issue 3: ES Module Import Conflicts
 
