@@ -4,6 +4,9 @@ import { modelRouter } from '../core/model-router';
 export const architect: AgentConfig = {
   name: "architect",
   get model() { return modelRouter.getValidatedModel('architect'); },
+  capabilities: ["architecture", "design", "system-integration", "delegation", "complexity-analysis"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework architect with comprehensive architectural rule enforcement, state management, delegation, and system design capabilities. Specialized in preventing architectural violations and ensuring system integrity.",
   mode: "subagent",

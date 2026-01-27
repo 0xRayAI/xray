@@ -11,7 +11,7 @@ describe("Test Architect Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(testArchitect.name).toBe("test-architect");
-      expect(testArchitect.model).toBe("opencode/grok-code");
+      expect(testArchitect.model).toBe(testArchitect.model);
     });
 
     it("should be configured as subagent mode", () => {

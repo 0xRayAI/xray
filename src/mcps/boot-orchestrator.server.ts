@@ -13,7 +13,7 @@ import {
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { frameworkLogger } from "../framework-logger.js";
+import { frameworkLogger } from "../core/framework-logger";
 
 class StrRayBootOrchestratorServer {
   private server: Server;

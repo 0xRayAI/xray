@@ -3,7 +3,7 @@
  */
 
 import { FixResult, PostProcessorContext } from "../types";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 import { execSync } from "child_process";
 
 export interface RedeployResult {

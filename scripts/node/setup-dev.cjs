@@ -11,7 +11,7 @@ const path = require("path");
 console.log('🔧 StrRay Development Setup: Transforming consumer paths to development paths...');
 
 // Get the package root (where this script is located)
-const packageRoot = path.join(__dirname, "..");
+const packageRoot = path.join(__dirname, "../..");
 
 function updatePathsInFile(filePath) {
   try {

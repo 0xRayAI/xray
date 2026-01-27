@@ -10,7 +10,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "./framework-logger";
+import { frameworkLogger } from "../core/framework-logger"
 // Dynamic imports for cross-environment compatibility
 let extractCodexMetadata: any;
 let StringRayContextLoader: any;
@@ -20,12 +20,10 @@ async function initializeImports() {
   if (importsInitialized) return;
 
   try {
-    // Try import with .js extension first (for Node.js/test environment)
-    ({ extractCodexMetadata } = await import("./utils/codex-parser.js"));
+    ({ extractCodexMetadata } = await import("../utils/codex-parser.js"));
     ({ StringRayContextLoader } = await import("./context-loader.js"));
   } catch (error) {
-    // Fallback to import without .js extension (for oh-my-opencode plugin environment)
-    ({ extractCodexMetadata } = await import("./utils/codex-parser"));
+    ({ extractCodexMetadata } = await import("../utils/codex-parser"));
     ({ StringRayContextLoader } = await import("./context-loader"));
   }
 

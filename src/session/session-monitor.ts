@@ -11,7 +11,7 @@
 import { StringRayStateManager } from "../state/state-manager";
 import { SessionCoordinator } from "../delegation/session-coordinator";
 import { SessionCleanupManager } from "./session-cleanup-manager";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 
 export interface SessionHealth {
   sessionId: string;

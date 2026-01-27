@@ -5,6 +5,9 @@ import { modelRouter } from '../core/model-router';
 export const enforcer: AgentConfig = {
   name: "enforcer",
   get model() { return modelRouter.getValidatedModel('enforcer'); },
+  capabilities: ["error-prevention", "compliance-monitoring", "systematic-validation", "codex-enforcement", "security-policy"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework enforcer with error handling, compliance monitoring, and systematic validation - Advanced Error Preventer",
   mode: "subagent",

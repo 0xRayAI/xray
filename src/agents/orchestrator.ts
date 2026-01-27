@@ -5,6 +5,9 @@ import { modelRouter } from '../core/model-router';
 export const orchestrator: AgentConfig = {
   name: "orchestrator",
   get model() { return modelRouter.getValidatedModel('orchestrator'); },
+  capabilities: ["multi-agent-orchestration", "workflow-management", "task-delegation", "conflict-resolution", "session-management"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework orchestrator with multi-agent orchestration and coordination, workflow management, and enterprise task orchestration - Advanced Enterprise Coordinator",
   mode: "subagent",

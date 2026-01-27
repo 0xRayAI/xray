@@ -11,7 +11,7 @@ describe("Refactorer Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(refactorer.name).toBe("refactorer");
-      expect(refactorer.model).toBe("opencode/grok-code");
+      expect(refactorer.model).toBe("claude-sonnet-4");
     });
 
     it("should be configured as subagent mode", () => {

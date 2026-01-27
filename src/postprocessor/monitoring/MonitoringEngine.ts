@@ -3,7 +3,7 @@
  */
 
 import { StringRayStateManager } from "../../state/state-manager";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 import { SessionMonitor } from "../../session/session-monitor";
 import { MonitoringResult } from "../types";
 

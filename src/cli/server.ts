@@ -16,7 +16,7 @@ const getSecurityMiddleware = async () => {
   if (!securityMiddleware) {
     try {
       const { securityHeadersMiddleware } =
-        await import("./security/security-headers");
+        await import("../security/security-headers");
       securityMiddleware = securityHeadersMiddleware.getExpressMiddleware();
     } catch (error) {
       console.warn(

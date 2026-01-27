@@ -12,8 +12,8 @@ import {
   BootOrchestrator,
   BootSequenceConfig,
   BootResult,
-} from "../../boot-orchestrator";
-import { StringRayContextLoader } from "../../context-loader";
+} from "../../core/boot-orchestrator";
+import { StringRayContextLoader } from "../../core/context-loader";
 import { StringRayStateManager } from "../../state/state-manager";
 
 describe("BootOrchestrator", () => {

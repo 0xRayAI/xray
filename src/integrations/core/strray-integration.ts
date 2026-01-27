@@ -13,7 +13,7 @@ import { StringRayOrchestrator, TaskDefinition } from "../../orchestrator";
 import { securityHardeningSystem } from "../../security/security-hardening-system";
 import { enterpriseMonitoringSystem } from "../../monitoring/enterprise-monitoring-system";
 import { performanceSystem } from "../../performance/performance-system-orchestrator";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 
 // Framework detection and capabilities
 export enum SupportedFramework {

@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { modelRouter } from '../core/model-router';
 
 export interface TokenLimits {
   maxPromptTokens: number;
@@ -26,7 +27,7 @@ export class TokenManager {
       return config.token_management || {
         maxPromptTokens: 240000,
         warningThreshold: 200000,
-        modelLimits: { 'opencode/grok-code': 256000 },
+        modelLimits: { 'opencode/grok-code': modelRouter.getValidatedModel('opencode/grok-code') },
         contextPruning: {
           enabled: true,
           aggressivePruning: false,
@@ -38,7 +39,7 @@ export class TokenManager {
       return {
         maxPromptTokens: 240000,
         warningThreshold: 200000,
-        modelLimits: { 'opencode/grok-code': 256000 },
+        modelLimits: { 'opencode/grok-code': Number(modelRouter.getValidatedModel('opencode/grok-code')) || 256000 },
         contextPruning: {
           enabled: true,
           aggressivePruning: false,

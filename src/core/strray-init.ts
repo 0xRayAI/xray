@@ -7,7 +7,7 @@
 
 // Import and activate StringRay framework during oh-my-opencode startup
 import { activateStringRayFramework } from "./strray-activation";
-import { frameworkLogger } from "./framework-logger";
+import { frameworkLogger } from "../core/framework-logger"
 
 // Initialize StringRay framework when oh-my-opencode starts
 export async function initializeStringRay(): Promise<void> {

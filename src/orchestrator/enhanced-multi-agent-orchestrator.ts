@@ -4,12 +4,13 @@
  */
 
 import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger"
 import {
   ComplexityAnalyzer,
   ComplexityMetrics,
 } from "../delegation/complexity-analyzer";
 import { createAgentDelegator } from "../delegation/agent-delegator";
+import { strRayConfigLoader } from "../core/config-loader";
 
 export interface AgentSpawnRequest {
   agentType: string;
@@ -60,7 +61,7 @@ export class EnhancedMultiAgentOrchestrator {
   ) {
     this.stateManager = stateManager || new StringRayStateManager();
     this.complexityAnalyzer = new ComplexityAnalyzer();
-    this.agentDelegator = createAgentDelegator(this.stateManager);
+    this.agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
 
     this.state = {
       activeAgents: new Map(),

@@ -5,7 +5,7 @@
  * notifications, cleanup, and reporting.
  */
 
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 
 export interface SuccessHandlerConfig {
   successConfirmation?: boolean;

@@ -14,7 +14,7 @@ import * as path from "path";
 import {
   parseCodexContent,
   detectContentFormat,
-} from "./utils/codex-parser";
+} from "../utils/codex-parser";
 
 /**
  * Codex term structure

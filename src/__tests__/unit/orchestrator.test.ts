@@ -10,10 +10,12 @@
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import {
   StringRayOrchestrator,
+  OrchestrationResult,
   OrchestratorConfig,
+} from "../../core/orchestrator";
+import {
   TaskDefinition,
-  TaskResult,
-} from "../../orchestrator";
+} from "../../agents/types";
 
 describe("StringRayOrchestrator", () => {
   let orchestrator: StringRayOrchestrator;
@@ -43,7 +45,12 @@ describe("StringRayOrchestrator", () => {
   test.skip("should execute single task successfully", async () => {
     const task: TaskDefinition = {
       id: "test-task-1",
+      type: "exploration",
       description: "Test task",
+      complexity: 3,
+      priority: "medium",
+      createdAt: new Date(),
+      status: "pending",
       subagentType: "explore",
     };
 
@@ -60,14 +67,19 @@ describe("StringRayOrchestrator", () => {
   });
 
   test("should handle task execution failures", async () => {
-    // Mock the delegateToSubagent method to throw an error
-    const mockDelegate = vi
-      .spyOn(orchestrator as any, "delegateToSubagent")
+    // Mock the executeTask method to throw an error
+    const mockExecute = vi
+      .spyOn(orchestrator, "executeTask")
       .mockRejectedValue(new Error("Task failed"));
 
     const task: TaskDefinition = {
       id: "failing-task",
+      type: "exploration",
       description: "Failing task",
+      complexity: 3,
+      priority: "medium",
+      createdAt: new Date(),
+      status: "pending",
       subagentType: "explore",
     };
 
@@ -79,21 +91,31 @@ describe("StringRayOrchestrator", () => {
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(1);
     expect(result[0].success).toBe(false);
-    expect(result[0].error).toContain("Task failed");
+    expect(result[0].errors).toContain("Task failed");
 
-    mockDelegate.mockRestore();
+    mockExecute.mockRestore();
   });
 
   test.skip("should execute complex multi-step tasks", async () => {
     const tasks: TaskDefinition[] = [
       {
         id: "step-1",
+        type: "exploration",
         description: "First task",
+        complexity: 3,
+        priority: "medium",
+        createdAt: new Date(),
+        status: "pending",
         subagentType: "explore",
       },
       {
         id: "step-2",
+        type: "documentation",
         description: "Second task",
+        complexity: 3,
+        priority: "medium",
+        createdAt: new Date(),
+        status: "pending",
         subagentType: "librarian",
       },
     ];
@@ -118,16 +140,24 @@ describe("StringRayOrchestrator", () => {
     const tasks: TaskDefinition[] = [
       {
         id: "dependent-task",
+        type: "exploration",
         description: "Depends on completed task",
+        complexity: 3,
+        priority: "medium",
+        createdAt: new Date(),
+        status: "pending",
         subagentType: "explore",
         dependencies: ["non-existent-task"],
       },
     ];
 
-    // Should throw error for circular/unresolvable dependencies
-    await expect(
-      orchestrator.executeComplexTask("Dependency test", tasks),
-    ).rejects.toThrow();
+    const result = await orchestrator.executeComplexTask("Dependency test", tasks);
+    
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toHaveLength(1);
+    expect(result[0].success).toBe(false);
+    expect(result[0].errors).toContain("Missing dependencies: non-existent-task");
   });
 
   test("should handle task timeouts", async () => {
@@ -150,7 +180,12 @@ describe("StringRayOrchestrator", () => {
 
     const task: TaskDefinition = {
       id: "slow-task",
+      type: "exploration",
       description: "Slow task",
+      complexity: 3,
+      priority: "medium",
+      createdAt: new Date(),
+      status: "pending",
       subagentType: "explore",
     };
 
@@ -168,7 +203,12 @@ describe("StringRayOrchestrator", () => {
   test.skip("should limit concurrent task execution", async () => {
     const tasks: TaskDefinition[] = Array.from({ length: 5 }, (_, i) => ({
       id: `task-${i}`,
+      type: "exploration",
       description: `Task ${i}`,
+      complexity: 3,
+      priority: "medium",
+      createdAt: new Date(),
+      status: "pending",
       subagentType: "explore",
     }));
 

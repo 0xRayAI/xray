@@ -9,7 +9,7 @@
  */
 
 import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 import { ProcessorRegistration } from "./processor-types";
 
 export interface ProcessorConfig {
@@ -772,7 +772,7 @@ export class ProcessorManager {
         const { agent, skill } = agentSkill;
 
         // Call the skill invocation MCP server to delegate to the agent/skill
-        const { mcpClientManager } = await import('../mcp-client.js');
+        const { mcpClientManager } = await import("../mcps/mcp-client")
         const result = await mcpClientManager.callServerTool(
           "skill-invocation",
           "invoke-skill",

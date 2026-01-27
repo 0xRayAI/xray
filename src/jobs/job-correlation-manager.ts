@@ -1,7 +1,7 @@
 // Framework Job Correlation Fix Implementation
 // Global Job Context Integration for Framework-wide Job Tracking
 
-import { setCurrentJobContext, withJobContext, getCurrentJobId } from './framework-logger.js';
+import { setCurrentJobContext, withJobContext, getCurrentJobId } from "../core/framework-logger"
 
 /**
  * Framework Job Correlation Manager

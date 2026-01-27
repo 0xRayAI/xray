@@ -7,7 +7,7 @@ import { StringRayOrchestrator } from "../orchestrator";
 import { enhancedMultiAgentOrchestrator } from "../orchestrator/enhanced-multi-agent-orchestrator";
 import { createAgentDelegator } from "../delegation/agent-delegator";
 import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 
 interface TestResult {
   testName: string;

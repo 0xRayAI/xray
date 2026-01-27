@@ -10,7 +10,7 @@
 
 import { StringRayStateManager } from "../state/state-manager";
 import { DelegationResult } from "./agent-delegator";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 
 export interface SessionContext {
   sessionId: string;
@@ -152,9 +152,11 @@ export class SessionCoordinator {
 
     session.activeDelegations.set(delegationId, delegation);
 
-    delegation.agents.forEach((agentName) => {
-      session.coordinationState.activeAgents.add(agentName);
-    });
+    if (delegation.agents && Array.isArray(delegation.agents)) {
+      delegation.agents.forEach((agentName: string) => {
+        session.coordinationState.activeAgents.add(agentName);
+      });
+    }
 
     this.stateManager.set(
       `session:${sessionId}:delegations:${delegationId}`,

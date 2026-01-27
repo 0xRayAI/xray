@@ -5,6 +5,9 @@ import { modelRouter } from '../core/model-router';
 export const securityAuditor: AgentConfig = {
   name: "security-auditor",
   get model() { return modelRouter.getValidatedModel('security-auditor'); },
+  capabilities: ["vulnerability-detection", "compliance-monitoring", "threat-analysis", "security-validation", "audit-trail-management"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework security auditor with compliance monitoring and vulnerability detection",
   mode: "subagent",

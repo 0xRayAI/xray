@@ -18,128 +18,41 @@
     "build:plugin": "tsc && mkdir -p dist/plugin/plugins && cp ./src/plugins/strray-codex-injection.ts dist/plugin/plugins/ 2>/dev/null || echo 'JS file not found, will be compiled'",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run prepare-consumer && npm run build:all",
-    "postinstall": "node scripts/node/postinstall.cjs",
-    "setup-dev": "node scripts/node/setup-dev.cjs",
-    "prepare-consumer": "node scripts/prepare-consumer.cjs",
-    "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
-    "test:unit": "vitest run",
-    "test:integration": "node scripts/test-consumer-readiness.mjs && node scripts/test-mcp-functionality.mjs",
-    "test:e2e": "node scripts/node/validation/validate-mcp-connectivity.js && node scripts/node/validation/validate-oh-my-opencode-integration.js && node scripts/node/validation/validate-external-processes.js",
-    "test:comprehensive": "./scripts/bash/validate-stringray-framework.sh",
-    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:comprehensive",
-    "test:coverage": "vitest run --coverage",
-    "test:security-audit": "node scripts/node/validation/validate-mcp-connectivity.js",
-    "test:dependency-scan": "node scripts/node/test-consumer-readiness.mjs",
-    "test:npm-install": "./scripts/test-npm-install.sh",
-    "test:plugin-deploy": "./scripts/bash/deploy-stringray-plugin.sh",
-    "self-direction:activate": "node scripts/activate-self-direction.js",
-    "self-direction:status": "node -e \"console.log(JSON.stringify(require('./src/self-direction-activation.js').selfDirectionSystem.getStatus(), null, 2))\"",
-    "report:generate": "node scripts/node/generate-autonomous-report.cjs",
-    "report:schedule": "node scripts/node/generate-autonomous-report.cjs --schedule 60",
-    "report:status": "node scripts/node/generate-autonomous-report.cjs --status",
-    "deploy": "./scripts/deploy.sh",
-    "deploy:patch": "./scripts/deploy.sh patch",
-    "deploy:minor": "./scripts/deploy.sh minor",
-    "deploy:major": "./scripts/deploy.sh major",
-    "deploy:dry-run": "./scripts/deploy.sh patch true",
-    "ci-install": "npm install --ignore-scripts"
+    "test:batch": "npm test",
+    "test:unit": "npm test -- src/__tests__/unit/boot-orchestrator.test.ts src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts src/__tests__/unit/state-manager-persistence.test.ts src/__tests__/unit/context-loader.test.ts",
+    "test:core-framework": "npm test -- src/__tests__/unit/agent-delegator.test.ts src/__tests__/unit/self-direction-activation.test.ts src/__tests__/unit/ast-code-parser.test.ts src/__tests__/unit/orchestrator.test.ts",
+    "test:security": "npm test -- src/__tests__/unit/security/security-hardener.test.ts src/__tests__/unit/security-security-headers.test.ts src/__tests__/unit/security-security-auditor.test.ts",
+    "test:performance": "npm test -- src/__tests__/unit/monitoring.test.ts src/__tests__/unit/performance-system.test.ts src/__tests__/unit/benchmark.test.ts src/__tests__/unit/analytics.test.ts",
+    "test:session-management": "npm test -- src/__tests__/unit/session-state-manager.test.ts src/__tests__/unit/session-security-validator.test.ts src/__tests__/unit/session-coordination-validator.test.ts src/__tests__/unit/session-migration-validator.test.ts src/__tests__/unit/session-migration-logic.test.ts src/__tests__/unit/session-health-monitoring.test.ts",
+    "test:code-analysis": "npm test -- src/__tests__/unit/codebase-context-analyzer.test.ts src/__tests__/unit/dependency-graph-builder.test.ts src/__tests__/unit/rule-enforcer.test.ts src/__tests__/unit/codex-parser.test.ts src/__tests__/unit/codex-injector.test.ts",
+    "test:processors": "npm test -- src/__tests__/unit/processor-activation.test.ts",
+    "test:miscellaneous": "npm test -- src/__tests__/unit/blocked-test.test.ts",
+    "test:quick": "npm test -- src/__tests__/integration/boot-orchestrator.integration.test.ts src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts",
+    "test:comprehensive": "npm run test:unit && npm run test:core-framework && npm run test:security && npm run test:performance && npm run test:session-management && npm run test:code-analysis && npm run test:processors && npm run test:miscellaneous",
+    "test:integration-all": "npm test -- src/__tests__/integration/",
+    "test:performance-all": "npm test -- src/__tests__/performance/ src/__tests__/unit/performance-system.test.ts src/__tests__/unit/benchmark.test.ts src/__tests__/unit/analytics.test.ts",
+    "test:agents-all": "npm test -- src/__tests__/agents/",
+    "test:infrastructure": "npm test -- src/__tests__/infrastructure/",
+    "test:root": "npm test -- src/__tests__/server.test.ts src/__tests__/test-processor.ts src/__tests__/test-integration.ts",
+    "test:full-suite": "npm run test:integration-all && npm run test:performance-all && npm run test:agents-all && npm run test:infrastructure && npm run test:root"
   },
-  "keywords": [
-    "ai",
-    "agent",
-    "orchestration",
-    "codex",
-    "development",
-    "automation",
-    "typescript",
-    "framework"
-  ],
-  "author": "StrRay Framework Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/htafolla/stringray.git"
-  },
-  "bugs": {
-    "url": "https://github.com/htafolla/stringray/issues"
-  },
-  "homepage": "https://stringray.dev",
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "peerDependencies": {
-    "oh-my-opencode": "^2.12.0"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.2",
-    "@opencode-ai/sdk": "^1.0.0",
-    "commander": "^12.0.0",
-    "structlog": "^1.0.0",
-    "zod": "^3.23.0"
-  },
+  "postinstall": "node scripts/node/postinstall.cjs",
+  "setup-dev": "node scripts/node/setup-dev.cjs",
+  "prepare-consumer": "node scripts/prepare-consumer.cjs",
+  "typecheck": "tsc --noEmit",
+  "test": "vitest run",
+  "lint": "eslint src",
+  "lint:fix": "eslint src --fix",
+  "test:unit": "vitest run",
+  "test:integration": "node scripts/test-consumer-readiness.mjs && node scripts/test-mcp-functionality.mjs",
+  "test:e2e": "node scripts/node/validation/validate-mcp-connectivity.js && node scripts/node/validation/validate-oh-my-opencode-integration.js && node scripts/node/validation/validate-external-processes.js",
+  "test:comprehensive": "./scripts/bash/validate-stringray-framework.sh",
+  "test:coverage": "vitest run --coverage",
   "devDependencies": {
-    "@types/express": "^4.17.25",
-    "@types/node": "^20.0.0",
-    "@types/yaml": "^1.9.6",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "@vitejs/plugin-react": "^4.7.0",
-    "@vitest/coverage-v8": "^2.0.0",
-    "eslint": "^9.0.0",
-    "jsdom": "^25.0.0",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vite": "^6.4.1",
-    "vitest": "^2.0.0"
-  },
-  "files": [
-    "opencode.json",
-    ".opencode/",
-    ".strray/",
-    "dist/plugin/",
-    "scripts/postinstall.cjs"
-  ],
-  "exclude": [
-    ".opencode/state"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/plugin/index.d.ts",
-      "import": "./dist/plugin/index.js"
-    },
-    "./dist/plugin/orchestrator.js": "./dist/plugin/src/orchestrator.js",
-    "./dist/plugin/processors/processor-manager.js": "./dist/plugin/src/processors/processor-manager.js",
-    "./dist/plugin/state/state-manager.js": "./dist/plugin/src/state/state-manager.js",
-    "./dist/plugin/agents/index.js": "./dist/plugin/agents/index.js",
-    "./dist/plugin/*": "./dist/plugin/*",
-    "./agents": {
-      "types": "./dist/agents/index.d.ts",
-      "import": "./dist/agents/index.js"
-    },
-    "./orchestrator": {
-      "types": "./dist/orchestrator.d.ts",
-      "import": "./dist/orchestrator.js"
-    },
-    "./codex": {
-      "types": "./dist/codex-injector.d.ts",
-      "import": "./dist/codex-injector.js"
-    },
-    "./memory-monitor": {
-      "types": "./dist/monitoring/memory-monitor.d.ts",
-      "import": "./dist/monitoring/memory-monitor.js"
-    },
-    "./memory-pools": {
-      "types": "./dist/utils/memory-pool.d.ts",
-      "import": "./dist/utils/memory-pool.js"
-    },
-    "./memory-regression": {
-      "types": "./dist/testing/memory-regression-suite.d.ts",
-      "import": "./dist/testing/memory-regression-suite.js"
-    }
+    "@eslint/js": "^9.39.2",
+    "@types/express": "^5.0.6",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0"
   }
 }

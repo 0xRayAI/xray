@@ -5,7 +5,7 @@
  * Implements intelligent test optimization and refactoring for enterprise reliability
  */
 
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 import {
   RuleValidationContext,
   RuleValidationResult,

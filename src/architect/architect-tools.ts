@@ -6,7 +6,7 @@
 import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer";
 import { ASTCodeParser } from "../delegation/ast-code-parser";
 import { DependencyGraphBuilder } from "../delegation/dependency-graph-builder";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 import * as fs from "fs";
 import * as path from "path";
 

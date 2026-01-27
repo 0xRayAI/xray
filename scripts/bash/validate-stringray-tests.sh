@@ -142,20 +142,20 @@ print_step "5" "Install StringRay Package"
 run_cmd "cd '$TEST_DIR' && npm install '$PROJECT_DIR/$PACKAGE_FILE'"
 
 print_step "6" "Run Postinstall Configuration"
-run_cmd "cd '$TEST_DIR' && node node_modules/strray-ai/scripts/postinstall.cjs"
+run_cmd "cd '$TEST_DIR' && node node_modules/strray-ai/scripts/node/postinstall.cjs"
 
 # 6. Copy integration test files
 print_step "6" "Copy Integration Test Files"
-# Core integration tests (from src/__tests__/integration/)
+# Core integration tests (from src/__tests__/integration/) - use .ts files
 TEST_FILES=(
-    "test-complexity-analysis.mjs"
-    "test-manual-orchestrator.mjs"
-    "test-orchestrator-led.mjs"
-    "test-corrected-max.mjs"
-    "test-max-complexity.mjs"
-    "test-ultra-complex.mjs"
+    "test-complexity-analysis.test.ts"
+    "test-manual-orchestrator.test.ts"
+    "test-orchestrator-led.test.ts"
+    "test-corrected-max.test.ts"
+    "test-max-complexity.test.ts"
+    "test-ultra-complex.test.ts"
 )
-# Additional validation tests (from scripts/)
+# Additional validation tests (from scripts/mjs/)
 ADDITIONAL_TESTS=(
     "test-consumer-readiness.mjs"
     "test-skills-mcp-integration.mjs"

@@ -5,6 +5,9 @@ import { modelRouter } from '../core/model-router';
 export const bugTriageSpecialist: AgentConfig = {
   name: "bug-triage-specialist",
   get model() { return modelRouter.getValidatedModel('bug-triage-specialist'); },
+  capabilities: ["debugging", "error-analysis", "root-cause", "fix-validation"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework bug triage specialist with systematic error investigation and surgical fixes",
   mode: "subagent",

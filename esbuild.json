@@ -1,0 +1,6 @@
+{
+  "bundle": false,
+  "format": "cjs",
+  "platform": "node",
+  "export": "cjs"
+}

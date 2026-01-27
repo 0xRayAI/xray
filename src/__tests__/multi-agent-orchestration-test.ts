@@ -24,6 +24,10 @@
 
 import { EventEmitter } from 'events';
 import { performance } from 'perf_hooks';
+// Mock model router for testing - will be properly mocked in tests
+const mockModelRouter = {
+  getValidatedModel: (agentType: string) => `opencode/grok-code-fast-1`
+};
 
 /**
  * Enterprise Session Context Interface
@@ -34,7 +38,7 @@ interface SessionContext {
   complexityScore: number;
   agentAssignments: Map<string, string[]>;
   validationResults: SessionValidation[];
-  performanceMetrics: PerformanceMetrics;
+  performanceMetrics: LocalPerformanceMetrics;
   statePersistence: boolean;
 }
 
@@ -55,6 +59,7 @@ interface LocalPerformanceMetrics {
   validationExecutionTime: number;
   memoryAllocation: number;
   garbageCollectionCycles: number;
+  agentTimes: Map<string, number>;
 }
 
 /**
@@ -102,7 +107,7 @@ export class StringRayAgentOrchestrationTest extends EventEmitter {
     // Architect Agent: System design and architectural pattern validation
     this.agents.set('architect', {
       name: 'architect',
-      model: 'opencode/grok-code-fast-1',
+      model: mockModelRouter.getValidatedModel('opencode/grok-code-fast-1'),
       specialization: 'system-design',
       capabilities: [
         'architectural-pattern-validation',
@@ -383,7 +388,7 @@ export class StringRayAgentOrchestrationTest extends EventEmitter {
       passedValidations: this.validations.filter(v => v.passed).length,
       failedValidations: this.validations.filter(v => !v.passed).length,
       agentUsage: agentUsage,
-      performanceMetrics: performanceMetrics,
+      performanceMetrics: this.performanceTracker.getAggregatedMetrics(),
       executionTime: performance.now() - this.startTime,
       complexityScore: this.complexityScore,
       recommendations: this.generateRecommendations(passRate)
@@ -538,7 +543,7 @@ class PerformanceTracker {
     return this.isMonitoring;
   }
 
-  getAggregatedMetrics(): PerformanceMetrics {
+  getAggregatedMetrics(): LocalPerformanceMetrics {
     const totalAgentTime = Array.from(this.agentTimes.values()).reduce((a, b) => a + b, 0);
     return {
       initializationTime: performance.now() - this.startTime,
@@ -546,7 +551,8 @@ class PerformanceTracker {
       agentCoordinationTime: totalAgentTime,
       validationExecutionTime: 0, // Could be tracked separately
       memoryAllocation: process.memoryUsage().heapUsed,
-      garbageCollectionCycles: 0 // Could be tracked with v8 profiler
+      garbageCollectionCycles: 0, // Could be tracked with v8 profiler
+      agentTimes: new Map(this.agentTimes) // Include agent times
     };
   }
 }
@@ -565,7 +571,7 @@ export interface TestResults {
     executions: number;
     duration: number;
   }>;
-  performanceMetrics: PerformanceMetrics;
+  performanceMetrics: LocalPerformanceMetrics;
   executionTime: number;
   complexityScore: number;
   recommendations: string[];

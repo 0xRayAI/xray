@@ -91,12 +91,12 @@ echo "✅ Dependencies installed"
 
 # 4. Run type checking
 print_step "4" "TypeScript Type Checking"
-run_cmd "cd '$PROJECT_DIR' && npm run typecheck"
+run_cmd "cd '$PROJECT_DIR' && npx tsc --noEmit"
 echo "✅ Type checking passed"
 
 # 5. Run linting
 print_step "5" "Code Linting"
-run_cmd "cd '$PROJECT_DIR' && npm run lint"
+run_cmd "cd '$PROJECT_DIR' && npx eslint src"
 echo "✅ Linting passed"
 
 # 6. Build TypeScript

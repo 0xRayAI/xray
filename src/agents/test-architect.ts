@@ -1,8 +1,12 @@
 import type { AgentConfig } from "./types";
+import { modelRouter } from '../core/model-router';
 
 export const testArchitect: AgentConfig = {
   name: "test-architect",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('test-architect'); },
+  capabilities: ["test-auto-creation", "test-strategy-design", "coverage-optimization", "behavioral-testing", "performance-validation"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework test architect with automatic test generation, coverage optimization, and behavioral testing capabilities",
   mode: "subagent",

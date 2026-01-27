@@ -10,6 +10,7 @@ export declare class StringRayStateManager implements StateManager {
     private writeQueue;
     private initialized;
     private earlyOperationsQueue;
+    static readonly VERSION = "1.1.1";
     constructor(persistencePath?: string, persistenceEnabled?: boolean);
     private initializePersistence;
     private persistToDisk;
@@ -18,6 +19,7 @@ export declare class StringRayStateManager implements StateManager {
     get<T>(key: string): T | undefined;
     set<T>(key: string, value: T): void;
     clear(key: string): void;
+    clearAll(): void;
     isPersistenceEnabled(): boolean;
     getPersistenceStats(): {
         enabled: boolean;
@@ -25,6 +27,17 @@ export declare class StringRayStateManager implements StateManager {
         keysInMemory: number;
         pendingWrites: number;
     };
+    getStateVersion(): string;
+    getAuditLog(): Array<{
+        timestamp: Date;
+        operation: string;
+        key: string;
+    }>;
+    resolveConflict(conflict: {
+        key: string;
+        value1: unknown;
+        value2: unknown;
+    }): unknown;
 }
 export { StringRayStateManager as StrRayStateManager };
 //# sourceMappingURL=state-manager.d.ts.map

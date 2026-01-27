@@ -6,7 +6,7 @@
  */
 
 import { performanceSystem } from "../performance/index";
-import { strRayOrchestrator } from "../orchestrator";
+import { strRayOrchestrator } from "../core/orchestrator";
 
 export class MetricsEndpoint {
   private metrics: Map<string, number> = new Map();

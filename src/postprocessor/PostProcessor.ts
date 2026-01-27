@@ -9,7 +9,7 @@
  */
 
 import * as path from "path";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 import { StringRayStateManager } from "../state/state-manager";
 import { SessionMonitor } from "../session/session-monitor";
 import { GitHookTrigger } from "./triggers/GitHookTrigger";
@@ -19,7 +19,7 @@ import { PostProcessorMonitoringEngine } from "./monitoring/MonitoringEngine";
 import { FailureAnalysisEngine } from "./analysis/FailureAnalysisEngine";
 import { AutoFixEngine } from "./autofix/AutoFixEngine";
 import { FixValidator } from "./autofix/FixValidator";
-import { mcpClientManager } from "../mcp-client";
+import { mcpClientManager } from "../mcps/mcp-client";
 import { RedeployCoordinator } from "./redeploy/RedeployCoordinator";
 import { EscalationEngine } from "./escalation/EscalationEngine";
 import { SuccessHandler } from "./success/SuccessHandler";

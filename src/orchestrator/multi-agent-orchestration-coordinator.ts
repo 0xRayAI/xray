@@ -8,12 +8,14 @@
  * @since 2026-01-23
  */
 
-import { StringRayOrchestrator, TaskDefinition } from "../orchestrator";
+import { StringRayOrchestrator } from "../core/orchestrator";
+import { TaskDefinition } from "../agents/types";
 import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator";
 import { createAgentDelegator } from "../delegation/agent-delegator";
 import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 import { ComplexityAnalyzer } from "../delegation/complexity-analyzer";
+import { strRayConfigLoader } from "../core/config-loader";
 
 export interface OrchestrationWorkflow {
   id: string;
@@ -63,7 +65,7 @@ export class MultiAgentOrchestrationCoordinator {
     this.stateManager = stateManager || new StringRayStateManager();
     this.strRayOrchestrator = new StringRayOrchestrator();
     this.enhancedOrchestrator = new EnhancedMultiAgentOrchestrator();
-    this.agentDelegator = createAgentDelegator(this.stateManager);
+    this.agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
     this.complexityAnalyzer = new ComplexityAnalyzer();
 
     this.coordinationMetrics = {
@@ -290,36 +292,44 @@ export class MultiAgentOrchestrationCoordinator {
     // Use different orchestration strategies based on complexity
     if (executionPlan.recommendedStrategy === "single-agent") {
       // Simple workflow - use StringRay orchestrator
-      const result = await this.strRayOrchestrator.executeComplexTask(
-        workflow.description,
-        workflow.tasks,
-        sessionId,
-      );
+      const task: TaskDefinition = {
+        id: `workflow-${workflow.id}`,
+        type: 'simple',
+        description: workflow.description,
+        complexity: 50,
+        priority: 'medium',
+        createdAt: new Date(),
+        status: 'pending',
+        dependencies: [],
+        subagentType: 'orchestrator'
+      };
+      
+      const result = await this.strRayOrchestrator.executeComplexTask(task.description, [task]);
 
-      taskResults.push(...result);
-      coordinationEvents += result.length;
+      taskResults.push(result);
+      coordinationEvents += 1;
       agentsUsed.push(...resourceAllocation.allocatedAgents);
     } else {
       // Complex workflow - use enhanced multi-agent orchestrator
       const coordinationPromises = workflow.tasks.map(async (task) => {
         coordinationEvents++;
 
+const agentType = task.subagentType || 'default-agent';
         const agentRequest = {
-          agentType: task.subagentType,
-          task: task.description,
+          agentType,
+          task: task.description || task.id,
           context: {
-            ...workflow.context,
             taskId: task.id,
             workflowId: workflow.id,
             sessionId,
           },
           priority: (task.priority as "low" | "medium" | "high" | "critical") || "medium",
-          dependencies: task.dependencies?.map(depId => `agent_${depId}`) || [],
+          dependencies: task.dependencies?.map((depId: string) => `agent_${depId}`) || [],
         };
 
         try {
           const spawnedAgent = await this.enhancedOrchestrator.spawnAgent(agentRequest);
-          agentsUsed.push(task.subagentType);
+          agentsUsed.push(agentType);
 
           // Wait for completion
           return new Promise((resolve) => {
@@ -540,15 +550,16 @@ export class MultiAgentOrchestrationCoordinator {
     ];
 
     workflow.tasks.forEach(task => {
-      if (!validAgentTypes.includes(task.subagentType)) {
-        errors.push(`Invalid agent type: ${task.subagentType} for task ${task.id}`);
+      const agentType = task.subagentType || 'default-agent';
+      if (!validAgentTypes.includes(agentType)) {
+        errors.push(`Invalid agent type: ${agentType} for task ${task.id}`);
       }
     });
 
     // Check for missing dependencies
     const allTaskIds = new Set(workflow.tasks.map(t => t.id));
     workflow.tasks.forEach(task => {
-      task.dependencies?.forEach(dep => {
+      task.dependencies?.forEach((dep: string) => {
         if (!allTaskIds.has(dep)) {
           errors.push(`Task ${task.id} references non-existent dependency: ${dep}`);
         }

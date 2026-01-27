@@ -5,8 +5,8 @@
  * during oh-my-opencode initialization.
  */
 
-import { frameworkLogger } from "./framework-logger";
-import { ensureCriticalComponents } from "./architectural-integrity";
+import { frameworkLogger } from "../core/framework-logger"
+import { ensureCriticalComponents } from "../architect/architectural-integrity";
 
 export interface StringRayActivationConfig {
   enableOrchestrator: boolean;
@@ -105,7 +105,7 @@ async function activateCodexInjection(jobId: string): Promise<void> {
   );
 
   const { createStringRayCodexInjectorHook } =
-    await import("./codex-injector.js");
+    await import("./codex-injector");
   const hook = createStringRayCodexInjectorHook();
 
   (globalThis as any).strRayHooks = (globalThis as any).strRayHooks || [];
@@ -121,7 +121,7 @@ async function activateCodexInjection(jobId: string): Promise<void> {
 async function activateHooks(jobId: string): Promise<void> {
   // Temporarily disabled hooks activation to prevent import errors
   // frameworkLogger.log("stringray-activation", "activating StringRay hooks", "info", { jobId });
-  // const { loadHooks } = await import("./index.js");
+  // const { loadHooks } = await import("./index");
   // await loadHooks();
   // frameworkLogger.log("stringray-activation", "StringRay hooks activated", "success", { jobId });
 }
@@ -134,7 +134,7 @@ async function activateBootOrchestrator(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { bootOrchestrator } = await import("./boot-orchestrator.js");
+  const { bootOrchestrator } = await import("./boot-orchestrator");
 
   await bootOrchestrator.executeBootSequence();
 
@@ -154,7 +154,7 @@ async function activateStateManagement(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { StringRayStateManager } = await import("./state/state-manager.js");
+  const { StringRayStateManager } = await import("../state/state-manager");
   const stateManager = new StringRayStateManager();
 
   // Store the state manager instance globally for framework use
@@ -176,10 +176,10 @@ async function activateOrchestrator(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { strRayOrchestrator } = await import("./orchestrator.js");
+  const { strRayOrchestrator } = await import("./orchestrator");
 
   // Also activate the multi-agent orchestration coordinator
-  const { multiAgentOrchestrationCoordinator } = await import("./orchestrator/multi-agent-orchestration-coordinator.js");
+  const { multiAgentOrchestrationCoordinator } = await import("../orchestrator/multi-agent-orchestration-coordinator");
 
   frameworkLogger.log(
     "stringray-activation",
@@ -198,8 +198,8 @@ async function activateProcessors(jobId: string): Promise<void> {
   );
 
   const { ProcessorManager } =
-    await import("./processors/processor-manager.js");
-  const { StringRayStateManager } = await import("./state/state-manager.js");
+    await import("../processors/processor-manager");
+  const { StringRayStateManager } = await import("../state/state-manager");
 
   const stateManager = new StringRayStateManager();
   const processorManager = new ProcessorManager(stateManager);
@@ -223,7 +223,7 @@ async function activatePostProcessor(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { PostProcessor } = await import("./postprocessor/PostProcessor.js");
+  const { PostProcessor } = await import("../postprocessor/PostProcessor");
 
   // Get existing state manager (should be initialized by boot orchestrator)
   const stateManager = (globalThis as any).strRayStateManager as any;

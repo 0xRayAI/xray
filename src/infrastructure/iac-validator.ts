@@ -12,7 +12,7 @@ import { z } from "zod";
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 
 // ============================================================================
 // Schema Validation Types

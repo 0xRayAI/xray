@@ -10,7 +10,7 @@
  */
 
 // Framework core imports
-import { frameworkLogger, generateJobId } from "./framework-logger";
+import { frameworkLogger, generateJobId } from "../core/framework-logger";
 
 export interface SelfDirectionConfig {
   monitoringInterval: number;      // Self-monitoring frequency
@@ -291,6 +291,16 @@ export class SelfDirectionSystem {
       activeLearning: this.activeLearning,
       config: this.config,
       componentsHealth: {
+        metricsCollector: true,
+        analytics: true,
+        streaming: true,
+        scaling: true,
+        loadBalancer: true,
+        metaAnalysis: true,
+        inference: true,
+        selfReflection: true,
+        learningLoops: true,
+        evolutionValidation: true,
         monitoring: true,
         reporting: true,
         assessment: true,

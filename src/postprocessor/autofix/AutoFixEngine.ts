@@ -9,7 +9,7 @@ import {
   PostProcessorContext,
 } from "../types";
 import { execSync } from "child_process";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 import * as fs from "fs";
 import * as path from "path";
 

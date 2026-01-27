@@ -7,12 +7,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { ASTCodeParser } from "../../delegation/ast-code-parser";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 
 // Mock external dependencies
 vi.mock("fs");
 vi.mock("path");
-vi.mock("../../framework-logger");
+vi.mock("../../core/framework-logger", () => ({
+  frameworkLogger: {
+    log: vi.fn()
+  }
+}));
 
 describe("ASTCodeParser", () => {
   let parser: ASTCodeParser;
@@ -209,6 +213,7 @@ describe("ASTCodeParser", () => {
         testContent,
         "typescript",
         "/test/patterns.ts",
+        "test-job-id",
       );
 
       expect(patterns.length).toBeGreaterThan(0);
@@ -310,8 +315,7 @@ describe("ASTCodeParser", () => {
 
     it("should log ast-grep availability status", async () => {
       // Constructor should log availability
-      const mockLogger = vi.mocked(frameworkLogger);
-      expect(mockLogger.log).toHaveBeenCalled();
+      expect(frameworkLogger.log).toHaveBeenCalled();
     });
   });
 

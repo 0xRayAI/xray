@@ -9,7 +9,7 @@
  */
 
 import * as path from "path";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 import {
   CodebaseContextAnalyzer,
   FileInfo,

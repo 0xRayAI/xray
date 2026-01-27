@@ -2,7 +2,7 @@
 // This module writes to the activity log with job ID correlation
 
 import { promises as fs } from 'fs';
-import { getCurrentJobId } from './framework-logger.js';
+import { getCurrentJobId } from "../core/framework-logger"
 
 export interface ActivityLogEntry {
   timestamp: string;

@@ -8,8 +8,8 @@
  * @since 2026-01-07
  */
 
-import { EnhancedMultiAgentOrchestrator } from "./orchestrator/enhanced-multi-agent-orchestrator";
-import { frameworkLogger } from "./framework-logger";
+import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator";
+import { frameworkLogger } from "../core/framework-logger";
 import { universalLibrarianConsultation, SystemAction } from "./universal-librarian-consultation";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
@@ -509,7 +509,7 @@ export class StringRayOrchestrator {
    */
   private async delegateToSubagent(task: TaskDefinition): Promise<any> {
     // Import complexity analyzer for delegation decisions
-    const { complexityAnalyzer } = await import("./delegation/complexity-analyzer");
+    const { complexityAnalyzer } = await import("../delegation/complexity-analyzer");
 
     // Analyze task complexity to determine delegation strategy
     const complexityMetrics = complexityAnalyzer.analyzeComplexity("task-execution", {

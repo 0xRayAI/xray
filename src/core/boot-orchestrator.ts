@@ -9,22 +9,23 @@
  */
 
 import { StringRayContextLoader } from "./context-loader";
-import { StringRayStateManager } from "./state/state-manager";
-import { ProcessorManager } from "./processors/processor-manager";
-import { pathResolver } from "./utils/path-resolver";
+import { StringRayStateManager } from "../state/state-manager";
+import { ProcessorManager } from "../processors/processor-manager";
+import { pathResolver } from "../utils/path-resolver";
 // Path configuration - can be overridden by environment or use path resolver
 const AGENTS_BASE_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
 import {
   createAgentDelegator,
   createSessionCoordinator,
-} from "./delegation/index";
-import { createSessionCleanupManager } from "./session/session-cleanup-manager";
-import { createSessionMonitor } from "./session/session-monitor";
-import { createSessionStateManager } from "./session/session-state-manager";
-import { securityHardener } from "./security/security-hardener";
-import { securityHeadersMiddleware } from "./security/security-headers";
-import { frameworkLogger } from "./framework-logger";
-import { memoryMonitor } from "./monitoring/memory-monitor";
+} from "../delegation/index";
+import { createSessionCleanupManager } from "../session/session-cleanup-manager";
+import { createSessionMonitor } from "../session/session-monitor";
+import { createSessionStateManager } from "../session/session-state-manager";
+import { securityHardener } from "../security/security-hardener";
+import { securityHeadersMiddleware } from "../security/security-headers";
+import { frameworkLogger } from "../core/framework-logger"
+import { memoryMonitor } from "../monitoring/memory-monitor";
+import { strRayConfigLoader } from "./config-loader";
 
 /**
  * Set up graceful interruption handling to prevent JSON parsing errors
@@ -155,7 +156,7 @@ export class BootOrchestrator {
    */
   private async initializeDelegationSystem(): Promise<boolean> {
     try {
-      const agentDelegator = createAgentDelegator(this.stateManager);
+      const agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
       this.stateManager.set("delegation:agent_delegator", agentDelegator);
 
       const sessionCoordinator = createSessionCoordinator(this.stateManager);
@@ -182,11 +183,11 @@ export class BootOrchestrator {
        // Import orchestrator dynamically to ensure it's loaded first
        let orchestratorModule;
        try {
-         orchestratorModule = await import("./orchestrator.js");
+         orchestratorModule = await import("../core/orchestrator");
        } catch (jsError) {
          // Fallback to TypeScript import for testing/development
          try {
-           orchestratorModule = await import("./orchestrator");
+           orchestratorModule = await import("../core/orchestrator");
          } catch (tsError) {
            console.error("❌ Failed to load orchestrator from both .js and .ts:", { jsError, tsError });
            return false;
@@ -471,7 +472,7 @@ export class BootOrchestrator {
         // Try import with .js extension first (for Node.js/test environment)
         let CodexInjector;
         try {
-          ({ CodexInjector } = await import("./codex-injector.js"));
+          ({ CodexInjector } = await import("./codex-injector"));
         } catch (error) {
           // Fallback to import without .js extension (for oh-my-opencode plugin environment)
           ({ CodexInjector } = await import("./codex-injector"));

@@ -9,7 +9,7 @@
  */
 
 import { EventEmitter } from "events";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";

@@ -12,7 +12,7 @@ import { EventEmitter } from "events";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import { securityHardeningSystem } from "./security-hardening-system";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 
 export interface User {
   id: string;

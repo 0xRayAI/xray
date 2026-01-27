@@ -6,6 +6,7 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { modelRouter } from "../../../core/model-router";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -82,7 +83,7 @@ class StrRayModelHealthCheckServer {
   }
 
   private async handleModelHealthCheck(args: any) {
-    const models = args.models || ["opencode/grok-code"];
+    const models = args.models || modelRouter.getValidatedModels();
     const includeCompatibility = args.compatibility !== false;
     const includePerformance = args.performance !== false;
 

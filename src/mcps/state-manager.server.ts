@@ -12,7 +12,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs";
 import path from "path";
-import { frameworkLogger, generateJobId } from "../framework-logger.js";
+import { frameworkLogger, generateJobId } from "../core/framework-logger";
 
 class StrRayStateManagerServer {
   private server: Server;

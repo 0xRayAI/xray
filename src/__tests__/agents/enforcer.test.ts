@@ -10,9 +10,12 @@ describe("Enforcer Agent Configuration", () => {
   });
 
   describe("Basic Configuration", () => {
-    it("should have correct name and model", () => {
+it("should have correct name and model", () => {
       expect(enforcer.name).toBe("enforcer");
-      expect(enforcer.model).toBe("opencode/grok-code");
+      expect(enforcer.model).toBeDefined();
+      expect(typeof enforcer.model).toBe("string");
+      const validModels = ["claude-opus-4", "claude-sonnet-4", "claude-haiku-4"];
+      expect(validModels).toContain(enforcer.model as string);
     });
 
     it("should be configured as subagent mode", () => {

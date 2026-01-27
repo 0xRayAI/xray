@@ -375,7 +375,7 @@ export class PerformanceRegressionTester {
         description: "Measure core module import performance",
         testFunction: async () => {
           const start = performance.now();
-          await import("../index.js");
+          await import("../core/index");
           const duration = performance.now() - start;
           if (duration > PERFORMANCE_BUDGET.runtime.startupTime) {
             throw new Error(

@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 import { StringRayStateManager } from "../../state/state-manager";
 
 describe("StringRay Infrastructure Tests", () => {
@@ -141,7 +141,7 @@ describe("StringRay Infrastructure Tests", () => {
 
   describe("Plugin Infrastructure", () => {
     it("should have plugin configuration", () => {
-      const pluginFile = ".opencode/plugin/strray-codex-injection.ts";
+      const pluginFile = "dist/plugin/plugins/strray-codex-injection.ts";
       expect(fs.existsSync(pluginFile)).toBe(true);
     });
 

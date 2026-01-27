@@ -136,7 +136,7 @@ describe("StringRayStateManager - Persistence Features", () => {
       expect(stateManager.get("boolean")).toBe(true);
       expect(stateManager.get("object")).toEqual({ nested: "value" });
       expect(stateManager.get("array")).toEqual([1, 2, 3]);
-      expect(stateManager.get("null")).toBe(undefined); // Corruption detection converts null to undefined
+      expect(stateManager.get("null")).toBe(null);
       expect(stateManager.get("undefined")).toBe(undefined);
     });
 

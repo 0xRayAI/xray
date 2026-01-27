@@ -1,9 +1,13 @@
 import { AgentConfig } from "./types";
+import { modelRouter } from '../core/model-router';
 import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer";
 
 export const librarian: AgentConfig = {
   name: "librarian",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('librarian'); },
+  capabilities: ["codebase-exploration", "documentation-retrieval", "pattern-recognition", "search-optimization", "context-building"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "Codebase and documentation search specialist. Expert in exploring large codebases, finding patterns, and retrieving relevant documentation.",
   mode: "subagent",

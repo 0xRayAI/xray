@@ -13,7 +13,7 @@ import { PerformanceBudgetEnforcer } from "./performance-budget-enforcer";
 import { PerformanceRegressionTester } from "./performance-regression-tester";
 import { PerformanceMonitoringDashboard } from "./performance-monitoring-dashboard";
 import { PerformanceCIGates } from "./performance-ci-gates";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger";
 
 export interface PerformanceSystemConfig {
   budgetEnforcement: {

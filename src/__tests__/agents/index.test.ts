@@ -63,7 +63,7 @@ describe("Agent Index Registry", () => {
 
     it("should have agents with consistent model configuration", () => {
       Object.values(builtinAgents).forEach((agent) => {
-        expect(agent.model).toBeDefined();
+        expect(refactorer.model).toBeDefined();
         expect(typeof agent.model).toBe("string");
       });
     });

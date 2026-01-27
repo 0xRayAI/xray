@@ -11,7 +11,7 @@ describe("Bug Triage Specialist Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(bugTriageSpecialist.name).toBe("bug-triage-specialist");
-      expect(bugTriageSpecialist.model).toBe("opencode/grok-code");
+      expect(bugTriageSpecialist.model).toBe("claude-sonnet-4");
     });
 
     it("should be configured as subagent mode", () => {
