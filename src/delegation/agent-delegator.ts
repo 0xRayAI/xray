@@ -8,10 +8,10 @@
  * @since 2026-01-07
  */
 
-import { ComplexityAnalyzer, ComplexityMetrics, ComplexityScore } from './complexity-analyzer';
-import { StringRayStateManager } from '../state/state-manager';
-import { strRayConfigLoader } from '../core/config-loader';
-import { frameworkLogger } from '../core/framework-logger';
+import { ComplexityAnalyzer, ComplexityMetrics, ComplexityScore } from './complexity-analyzer.js';
+import { StringRayStateManager } from '../state/state-manager.js';
+import { strRayConfigLoader } from '../core/config-loader.js';
+import { frameworkLogger } from '../core/framework-logger.js';
 
 export interface AgentCapability {
   name: string;
@@ -271,8 +271,8 @@ export class AgentDelegator {
         agents.push({ name: 'refactorer', confidence: 0.85, role: 'refactoring' });
       } else       if (metrics.operationType === 'create' && operation !== 'design') {
         agents.push({ name: 'architect', confidence: 0.85, role: 'design' });
-      } else if (operation === 'review' && agents.length === 1) {
-        // Add additional agent for review tasks
+      } else if (operation === 'review' && agents.length === 0) {
+        // Add code-reviewer for review tasks if not already added
         agents.push({ name: 'code-reviewer', confidence: 0.8, role: 'review' });
       } else if (complexityScore.level === 'moderate' || metrics.dependencies > 3) {
         agents.push({ name: 'code-reviewer', confidence: 0.8, role: 'review' });

@@ -12,9 +12,9 @@ import {
   AgentDelegator,
   DelegationRequest,
   createAgentDelegator,
-} from "../../delegation/agent-delegator";
-import { StringRayStateManager } from "../../state/state-manager";
-import { strRayConfigLoader } from "../../config-loader";
+} from "../../delegation/agent-delegator.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { strRayConfigLoader } from "../../config-loader.js";
 
 describe("AgentDelegator", () => {
   let stateManager: StringRayStateManager;
@@ -224,7 +224,7 @@ describe("AgentDelegator", () => {
       expect(typeof result).toBe("object");
     });
 
-    it.skip("should handle agent execution errors", async () => {
+    it("should handle agent execution errors", async () => {
       const request: DelegationRequest = {
         operation: "test",
         description: "Failing test",
@@ -237,10 +237,13 @@ describe("AgentDelegator", () => {
       stateManager.set("agent:test-architect", mockAgent);
 
       const delegation = await agentDelegator.analyzeDelegation(request);
+      const result = await agentDelegator.executeDelegation(delegation, request);
 
-      await expect(
-        agentDelegator.executeDelegation(delegation, request),
-      ).rejects.toThrow("Execution failed");
+      // executeDelegation catches errors and returns them in the result
+      expect(result.success).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.length).toBeGreaterThan(0);
+      expect(result.errors?.[0]).toContain("Execution failed");
     });
   });
 
@@ -358,7 +361,7 @@ describe("AgentDelegator", () => {
       expect(result.agents.length).toBeGreaterThan(0);
     });
 
-    it.skip("should resolve multi-agent conflicts", async () => {
+    it("should resolve multi-agent conflicts", async () => {
       const request: DelegationRequest = {
         operation: "refactor",
         description: "Conflict test",
@@ -393,15 +396,17 @@ describe("AgentDelegator", () => {
       expect(delegation).toBeDefined();
       expect(delegation.strategy).toBeDefined();
 
-       // Should return result based on strategy
-       expect(result).toBeDefined();
-       if (delegation.strategy === "multi-agent") {
-         expect(typeof result).toBe("object");
-         expect(result).toBeDefined();
-       } else {
-         expect(typeof result).toBe("object");
-         expect(result).toBeDefined();
-       }
+      const result = await agentDelegator.executeDelegation(delegation, request);
+
+      // Should return result based on strategy
+      expect(result).toBeDefined();
+      if (delegation.strategy === "multi-agent") {
+        expect(typeof result).toBe("object");
+        expect(result).toBeDefined();
+      } else {
+        expect(typeof result).toBe("object");
+        expect(result).toBeDefined();
+      }
     });
 
     it("should consolidate orchestrator results", async () => {
@@ -543,7 +548,7 @@ await agentDelegator.analyzeDelegation(request1);
       expect(metrics.failedDelegations).toBe(0);
     });
 
-    it.skip("should track failed executions", async () => {
+    it("should track failed executions", async () => {
       const mockAgent = {
         execute: vi.fn().mockRejectedValue(new Error("Test failure")),
       };
@@ -556,10 +561,7 @@ await agentDelegator.analyzeDelegation(request1);
       };
 
       const delegation = await agentDelegator.analyzeDelegation(request);
-
-      await expect(
-        agentDelegator.executeDelegation(delegation, request),
-      ).rejects.toThrow();
+      await agentDelegator.executeDelegation(delegation, request);
 
       const metrics = agentDelegator.getDelegationMetrics();
       expect(metrics.failedDelegations).toBe(1);
@@ -756,7 +758,7 @@ await agentDelegator.analyzeDelegation(request1);
       expect(delegation.agents.length).toBeGreaterThan(0);
     });
 
-    it.skip("should match multiple agents for complex multi-disciplinary tasks", async () => {
+    it("should match multiple agents for complex multi-disciplinary tasks", async () => {
       const request: DelegationRequest = {
         operation: "full-stack",
         description:
@@ -838,8 +840,10 @@ await agentDelegator.analyzeDelegation(request1);
       );
 
       const selectedAgents = delegations.flatMap((d) => d.agents);
+      // Simple operations get 1 agent each (review -> code-reviewer, design -> architect)
+      // Total should be 2 agents for 2 simple requests
       expect(selectedAgents.length).toBe(2);
-      expect(new Set(selectedAgents).size).toBeGreaterThan(0);
+      expect(new Set(selectedAgents).size).toBe(2); // Different agents for different operations
     });
 
     it("should optimize agent selection for response time", async () => {
@@ -881,32 +885,39 @@ await agentDelegator.analyzeDelegation(request1);
     });
 
     it("should track delegation success rates", async () => {
-      const mockAgent = {
+      // Clear any previous metrics to ensure clean state
+      stateManager.set('delegation_metrics', []);
+
+      // Ensure enforcer agent is properly mocked for format operations
+      const mockEnforcer = {
         execute: vi.fn().mockResolvedValue({
           success: true,
-          result: "Success",
+          result: "format completed",
           confidence: 0.9,
         }),
       };
-      stateManager.set("agent:test-architect", mockAgent);
+      stateManager.set("agent:enforcer", mockEnforcer);
 
       const requests = Array(3)
         .fill(null)
         .map((_, i) => ({
-          operation: "test",
-          description: `Test ${i}`,
-          context: { files: [`test${i}.ts`] },
+          operation: "format",
+          description: `Format ${i}`,
+          context: { files: [`test${i}.ts`], changeVolume: 5 },
         }));
 
       for (const request of requests) {
         const delegation = await agentDelegator.analyzeDelegation(request);
+        // Format operation with simple context gets enforcer agent
+        expect(delegation.agents.length).toBeGreaterThan(0);
         await agentDelegator.executeDelegation(delegation, request);
       }
 
       const metrics = agentDelegator.getDelegationMetrics();
+      // Should have 3 execution delegations (not analysis-only)
+      expect(metrics.totalDelegations).toBe(3);
       expect(metrics.successfulDelegations).toBe(3);
       expect(metrics.failedDelegations).toBe(0);
-      expect(metrics.totalDelegations).toBe(3);
     });
 
     it("should optimize for high-throughput scenarios", async () => {
