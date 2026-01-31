@@ -6,10 +6,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { AgentDelegator } from "../../delegation/agent-delegator";
 import { StringRayStateManager } from "../../state/state-manager";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 
 // Mock external dependencies
-vi.mock("../../framework-logger");
+vi.mock("../../core/framework-logger");
 
 describe("Context Providers Integration", () => {
   let agentDelegator: AgentDelegator;

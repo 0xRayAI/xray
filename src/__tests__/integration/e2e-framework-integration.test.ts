@@ -8,8 +8,8 @@ import {
   beforeAll,
   afterAll,
 } from "vitest";
-import { BootOrchestrator } from "../../boot-orchestrator";
-import { StringRayOrchestrator } from "../../orchestrator";
+import { BootOrchestrator } from "../../core/boot-orchestrator";
+import { StringRayOrchestrator } from "../../core/orchestrator";
 import {
   createSessionCoordinator,
   SessionCoordinator,

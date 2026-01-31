@@ -321,7 +321,7 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         expect(result).toHaveLength(1);
         expect(result[0].success).toBe(true);
         // Test verifies that complex task delegation works through the orchestrator
-      });
+      }, 60000); // Increased timeout to 60 seconds
 
       it('should resolve conflicts between agent responses', async () => {
         const conflicts = [

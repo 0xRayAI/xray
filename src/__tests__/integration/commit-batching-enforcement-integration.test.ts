@@ -12,10 +12,10 @@ import {
   runPreCommitValidation,
   qualityGateCheck,
 } from "../../enforcement/enforcer-tools";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger";
 
 // Mock external dependencies
-vi.mock("../../framework-logger");
+vi.mock("../../core/framework-logger");
 
 describe.skip("Commit Batching + Enforcement Integration", () => {
   let batcher: IntelligentCommitBatcher;

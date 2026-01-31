@@ -8,7 +8,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { createStringRayCodexInjectorHook } from "../../codex-injector";
+import { createStringRayCodexInjectorHook } from "../../core/codex-injector";
 
 interface CodexInjectorHook {
   name: "strray-codex-injector";
