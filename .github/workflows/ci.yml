@@ -200,7 +200,7 @@ jobs:
       - name: Run comprehensive tests
         run: |
           cd test-install
-          node node_modules/strray-ai/scripts/test:mcp-connectivity
-          node node_modules/strray-ai/scripts/test:oh-my-opencode-integration
-          node node_modules/strray-ai/scripts/test:postinstall-config
-          node node_modules/strray-ai/scripts/test:external-processes
+          node node_modules/strray-ai/scripts/validate-mcp-connectivity.js
+          node node_modules/strray-ai/scripts/validate-oh-my-opencode-integration.cjs
+          node node_modules/strray-ai/scripts/validate-postinstall-config.js
+          node node_modules/strray-ai/scripts/validate-external-processes.js
