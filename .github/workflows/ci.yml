@@ -47,10 +47,10 @@ jobs:
         run: npm run postinstall
 
       - name: Validate postinstall files
-        run: node scripts/test-postinstall-files.mjs
+        run: node scripts/mjs/test-postinstall-files.mjs
 
       - name: Setup CI paths
-        run: node scripts/setup-ci-paths.cjs
+        run: node scripts/node/setup-ci-paths.cjs
 
       - name: TypeScript type check
         run: npm run typecheck
