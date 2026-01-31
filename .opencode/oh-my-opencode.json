@@ -65,5 +65,43 @@
     "frontend-ui-ux-engineer": {
       "model": "openrouter/xai-grok-2-1212-fast-1"
     }
+  },
+  "mcpServers": {
+    "explore": {
+      "command": "node",
+      "args": [
+        "dist/plugin/mcps/knowledge-skills/project-analysis.server.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "document-writer": {
+      "command": "node",
+      "args": [
+        "dist/plugin/mcps/knowledge-skills/documentation-generation.server.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "frontend-ui-ux-engineer": {
+      "command": "node",
+      "args": [
+        "dist/plugin/mcps/knowledge-skills/ui-ux-design.server.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "librarian": {
+      "command": "node",
+      "args": [
+        "dist/plugin/mcps/knowledge-skills/project-analysis.server.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
   }
 }

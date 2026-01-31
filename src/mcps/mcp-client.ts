@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface MCPTool {
   name: string;
@@ -619,13 +619,37 @@ export class MCPClientManager {
          timeout: 15000,
        },
        "skill-invocation": {
-         serverName: "skill-invocation",
-         command: "node",
-         args: [
-           `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/skill-invocation.server.js`,
-         ],
-         timeout: 30000,
-       },
+          serverName: "skill-invocation",
+          command: "node",
+          args: [
+            `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/skill-invocation.server.js`,
+          ],
+          timeout: 30000,
+        },
+        "explore": {
+          serverName: "explore",
+          command: "node",
+          args: [
+            `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/project-analysis.server.js`,
+          ],
+          timeout: 25000,
+        },
+        "document-writer": {
+          serverName: "document-writer",
+          command: "node",
+          args: [
+            `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/documentation-generation.server.js`,
+          ],
+          timeout: 45000,
+        },
+        "frontend-ui-ux-engineer": {
+          serverName: "frontend-ui-ux-engineer",
+          command: "node",
+          args: [
+            `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/ui-ux-design.server.js`,
+          ],
+          timeout: 35000,
+        },
     };
 
     return (
