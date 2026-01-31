@@ -40,7 +40,8 @@ const OFFICIAL_VERSIONS = {
 function findFiles(
   dir,
   extensions,
-  ignoreDirs = ["node_modules", ".git", "dist", "build"],
+  ignoreDirs = ["node_modules", ".git", "dist", "build", ".opencode", "temp", "test-install", "ci-deploy", "test-config"],
+  ignoreFiles = ["package-lock.json", "package.json", ".opencode.json"],
 ) {
   const files = [];
 
@@ -57,7 +58,9 @@ function findFiles(
         }
       } else {
         const ext = path.extname(item);
-        if (extensions.includes(ext)) {
+        const basename = path.basename(item);
+        // Skip ignored files and check extension
+        if (!ignoreFiles.includes(basename) && extensions.includes(ext)) {
           files.push(fullPath);
         }
       }
@@ -161,7 +164,21 @@ async function standardizeVersions() {
   let totalFilesUpdated = 0;
   let totalChanges = 0;
 
+  // Additional safety: protected files that should never be modified
+  const PROTECTED_FILES = [
+    "package-lock.json",
+    "package.json",
+    ".opencode.json",
+    "oh-my-opencode.json",
+  ];
+
   for (const file of files) {
+    // Skip protected files as an additional safety measure
+    if (PROTECTED_FILES.some(protectedFile => file.includes(protectedFile))) {
+      console.log(`⏭️ Skipping protected file: ${file}`);
+      continue;
+    }
+
     try {
       const content = fs.readFileSync(file, "utf8");
       let updatedContent = content;
