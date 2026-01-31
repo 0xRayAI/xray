@@ -22,9 +22,7 @@ export class RefactoringLoggingProcessor {
     }
   }
 
-  async execute(
-    context: any,
-  ): Promise<{
+  async execute(context: any): Promise<{
     logged: boolean;
     success: boolean;
     message: string;
