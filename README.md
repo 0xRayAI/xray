@@ -236,6 +236,35 @@ StringRay includes a fully functional CI/CD pipeline with automated testing, bui
 - ✅ **ESLint Validation**: Code quality and style enforcement
 - ✅ **Security Scanning**: Automated vulnerability detection
 - ✅ **Plugin Packaging**: Automated npm package building and validation
+- ✅ **Self-Healing**: Autonomous monitoring and auto-fix capabilities
+
+#### 🤖 Autonomous CI/CD Monitoring & Auto-Fix
+
+StringRay features a sophisticated self-healing CI/CD system:
+
+**Monitoring Agent** (`.github/workflows/ci-cd-monitor.yml`):
+- Monitors all CI/CD pipelines 24/7
+- Detects failures in real-time
+- Triggers auto-fix when needed
+
+**Auto-Fix Agent** (`scripts/ci-cd-auto-fix.cjs`):
+- Automatically fixes common CI/CD failures:
+  - Missing dependencies (MCP SDK, platform-specific binaries)
+  - TypeScript type errors
+  - Prettier formatting issues
+  - Script path mismatches
+  - Corrupted package-lock.json
+  - Missing npm scripts
+- Validates fixes before committing
+- Commits and pushes automatically
+- Triggers new CI/CD pipeline
+
+**Architecture**:
+```
+CI/CD Failure → Monitor Detects → Auto-Fix Agent → Validates → Commits → New Pipeline
+```
+
+The system can recover from most common CI/CD issues without human intervention!
 
 ### Publishing to npm
 

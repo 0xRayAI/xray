@@ -45,6 +45,7 @@
 | refactorer                | Debt                              | Refactor      | read, grep, lsp_rename                     | Majority vote     |
 | test-architect            | Testing                           | Tests         | read, grep, lsp_*                          | Expert priority   |
 | librarian                 | Codebase exploration & docs       | Analysis      | project-analysis_*                         | N/A (solo)        |
+| **ci-cd-auto-fix**        | **Autonomous pipeline healing**   | **CI/CD**     | **exec, fs, git**                          | **Auto-recovery** |
 
 ## Complexity Analysis (Summary)
 Metrics: File count (0-20), Change volume (0-25), Operation (multiplier: create 1.0, debug 2.0), Dependencies (0-15), Risk (multiplier: low 0.8, critical 1.6), Duration (0-15).  
