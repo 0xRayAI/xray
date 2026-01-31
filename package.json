@@ -85,5 +85,8 @@
     "@typescript-eslint/parser": "^8.54.0",
     "@vitest/coverage-v8": "^2.1.9",
     "vitest": "^2.1.9"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.30.1"
   }
 }
