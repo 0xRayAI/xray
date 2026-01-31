@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { StringRayStateManager } from "../../state/state-manager";
-import { SessionCoordinator } from "../../delegation/session-coordinator";
-import { SessionCleanupManager } from "../../session/session-cleanup-manager";
-import { SessionMonitor } from "../../session/session-monitor";
-import { setupStandardMocks, waitForDebounce } from "../utils/test-utils";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { SessionCoordinator } from "../../delegation/session-coordinator.js";
+import { SessionCleanupManager } from "../../session/session-cleanup-manager.js";
+import { SessionMonitor } from "../../session/session-monitor.js";
+import { setupStandardMocks, waitForDebounce } from "../utils/test-utils.js";
 
 describe("Session Monitoring Integration", () => {
   let stateManager: StringRayStateManager;

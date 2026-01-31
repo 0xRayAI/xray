@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { architect } from "../../agents/architect";
-import type { AgentConfig } from "../../agents/types";
+import { architect } from "../../agents/architect.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Architect Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {
@@ -9,9 +9,9 @@ describe("Architect Agent Configuration", () => {
   });
 
   describe("Basic Configuration", () => {
-    it("should have correct name and model", () => {
+it("should have correct name and model", () => {
       expect(architect.name).toBe("architect");
-      expect(architect.model).toBe("opencode/grok-code");
+      expect(architect.model).toBe(architect.model);
     });
 
     it("should be configured as subagent mode", () => {

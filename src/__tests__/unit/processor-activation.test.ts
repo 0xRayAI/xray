@@ -15,9 +15,9 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
   ProcessorManager,
   ProcessorResult,
-} from "../../processors/processor-manager";
-import { StringRayStateManager } from "../../state/state-manager";
-import { setupStandardMocks } from "../utils/test-utils";
+} from "../../processors/processor-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { setupStandardMocks } from "../utils/test-utils.js";
 
 describe("Processor Activation", () => {
   let processorManager: ProcessorManager;

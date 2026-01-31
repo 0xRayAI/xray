@@ -1,323 +1,138 @@
 # StringRay Framework - Agent Context Guide v1.1.1
 
-**Version**: 1.1.1
-**Purpose**: Enterprise AI orchestration with systematic error prevention
-**Last Updated**: 2026-01-23
+**Version**: 1.1.1 **Purpose**: Enterprise AI orchestration with 99.6% error prevention **Updated**: 2026-01-27  
+**Note**: Lightweight guide for per-request inclusion (token-efficient). Full architecture, 59-term codex, pipeline diagrams and 51-file mapping → see master StringRay Complete System Architecture document.
 
 ## Executive Overview
+- 9 Specialized AI Agents with complexity-based routing (including librarian for codebase exploration).
+- 28 MCP Servers for tool integration.
+- Universal Development Codex (59 mandatory terms enforced via enforcer agent).
+- JobId Logging for traceability.
 
-StringRay AI v1.1.1 is an enterprise AI orchestration platform that implements systematic error prevention through the Universal Development Codex. The framework provides 8 specialized AI agents with automatic complexity-based task routing and 99.6% error prevention.
+## 🎯 CRITICAL RULES (Mandatory - Zero Tolerance)
+1. **Full File Reading**: ALWAYS read ENTIRE file via `read` tool before edits. Verify structure, dependencies.
+2. **Command Output Review**: Review ALL outputs; add TODO for errors; block on failures.
+3. **File Verification**: Check paths/extensions before imports; use `ls`/ `read`.
+4. **Work Completion**: Verify changes via `read`; test compilation; confirm no regressions; NEVER claim success without proof.
+5. **Progressive Prod-Ready Code**: No stubs/patches; full implementations.
+6. **Surgical Fixes**: Fix root causes minimally.
+7. **Resolve All Errors**: 90% prevention; no ignored errors.
+8. **Prevent Loops**: Clear termination in all iterations.
+9. **Shared Global State**: Single source of truth.
+10. **Type Safety**: No `any`; full TypeScript use.
+11. **Early Returns**: Guard clauses for validation.
+12. **Error Boundaries**: Graceful degradation.
+13. **Immutability**: Prefer non-mutating operations.
+14. **Separation of Concerns**: One responsibility per module.
+15. **DRY/YAGNI**: No duplication; no unnecessary features.
+16. **Meaningful Naming**: Self-documenting code.
+17. **Small Functions**: <30 lines; one task.
+18. **Consistent Style**: Linter-enforced.
+19. **Test Coverage**: >85%; behavioral focus.
+20. **Performance/Security**: <2MB bundle; input validation; WCAG AA.
 
-### Core System Components
-- **9 Specialized AI Agents** with intelligent delegation
-- **28 MCP Servers** providing tool integration
-- **8 Major Pipelines** for complete workflow coverage
-- **Universal Development Codex** (59 mandatory rules)
-- **JobId Logging System** for complete traceability
-
-### Key Features
-- **Multi-Agent Coordination**: Automatic task delegation based on complexity analysis
-- **Codex Compliance**: 99.6% systematic error prevention and quality enforcement
-- **Enterprise Security**: Comprehensive validation and monitoring
-- **Performance Optimization**: Sub-millisecond response times with intelligent caching
+**Prohibited**: False success claims, partial edits, over-engineering, committing without verification, destructive operations without explicit user command, hard-coded paths, auto-publishing/pushing.
 
 ## Agent Capabilities Matrix
+| Agent                     | Role                              | Threshold     | Tools                                      | Strategy          |
+|---------------------------|-----------------------------------|---------------|--------------------------------------------|-------------------|
+| enforcer                  | Compliance                        | All           | read, grep, lsp_*                          | Block violations  |
+| architect                 | Design                            | High          | read, grep, lsp_*, background_task         | Expert priority   |
+| orchestrator              | Coordination                      | Enterprise    | read, grep, lsp_*, call_omo_agent          | Consensus         |
+| bug-triage-specialist     | Fixes                             | Debug         | read, grep, ast_grep_*                     | Majority vote     |
+| code-reviewer             | Quality                           | Changes       | read, grep, lsp_diagnostics                | Expert priority   |
+| security-auditor          | Vulnerabilities                   | Security      | read, grep, grep_app_searchGitHub          | Block critical    |
+| refactorer                | Debt                              | Refactor      | read, grep, lsp_rename                     | Majority vote     |
+| test-architect            | Testing                           | Tests         | read, grep, lsp_*                          | Expert priority   |
+| librarian                 | Codebase exploration & docs       | Analysis      | project-analysis_*                         | N/A (solo)        |
 
-| Agent | Role | Complexity Threshold | Primary Tools | Conflict Strategy |
-|-------|------|---------------------|---------------|-------------------|
-| **enforcer** | Codex compliance & error prevention | All operations | read, grep, lsp_*, bash | Block on violations |
-| **architect** | System design & technical decisions | High complexity | read, grep, lsp_*, bash, background_task | Expert priority |
-| **orchestrator** | Multi-agent workflow coordination | Enterprise | read, grep, lsp_*, bash, background_task, call_omo_agent | Consensus |
-| **bug-triage-specialist** | Error investigation & surgical fixes | Debug operations | read, grep, lsp_*, bash, ast_grep_* | Majority vote |
-| **code-reviewer** | Quality assessment & standards validation | All code changes | read, grep, lsp_*, bash, lsp_diagnostics | Expert priority |
-| **security-auditor** | Vulnerability detection & compliance | Security operations | read, grep, lsp_*, bash, grep_app_searchGitHub | Block critical |
-| **refactorer** | Technical debt elimination & code consolidation | Refactor operations | read, grep, lsp_*, bash, ast_grep_*, lsp_rename | Majority vote |
-| **test-architect** | Testing strategy & coverage optimization | Test operations | read, grep, lsp_*, bash | Expert priority |
-| **librarian** | Codebase exploration & documentation | Analysis operations | project-analysis_* | N/A (solo agent) |
+## Complexity Analysis (Summary)
+Metrics: File count (0-20), Change volume (0-25), Operation (multiplier: create 1.0, debug 2.0), Dependencies (0-15), Risk (multiplier: low 0.8, critical 1.6), Duration (0-15).  
+Score: ≤25 Single-agent; 96+ Orchestrator-led.
 
-## Complexity Analysis System
+## Basic Usage
+- Commands: @orchestrator [task]
+- Internal: task(subagent_type="architect")
+- CLI: npx strray-ai init/status/health/validate
 
-Every request is evaluated using 6 key metrics for intelligent agent routing:
-
-### Metrics
-- **File Count** (0-20 points): Number of affected files
-- **Change Volume** (0-25 points): Lines changed
-- **Operation Type** (multiplier): create/modify/refactor/analyze/debug/test
-- **Dependencies** (0-15 points): Component relationships
-- **Risk Level** (multiplier): low/medium/high/critical
-- **Duration** (0-15 points): Estimated minutes
-
-### Decision Thresholds
-- **≤25**: Single-agent execution (direct routing)
-- **26-95**: Single-agent execution (may use background tasks)
-- **96+**: Enterprise-level orchestration (orchestrator-led multi-agent workflow)
-
-### Operation Multipliers
-- create: 1.0, modify: 1.2, refactor: 1.8, analyze: 1.5, debug: 2.0, test: 1.3
-
-### Risk Multipliers
-- low: 0.8, medium: 1.0, high: 1.3, critical: 1.6
-
-## Basic Usage Guide
-
-### Agent Commands (oh-my-opencode)
-```bash
-@orchestrator coordinate complex task
-@enforcer analyze code for violations
-@architect design system architecture
-@code-reviewer review pull request
-@security-auditor scan for vulnerabilities
-@refactorer consolidate duplicate code
-@test-architect plan testing strategy
-```
-
-### Internal Agent Coordination
-```typescript
-// Primary method for agent-to-agent communication
-task(description="Analyze codebase", prompt="...", subagent_type="librarian")
-
-// Alternative for background execution
-call_omo_agent(description="Code review", prompt="...", subagent_type="architect")
-```
-
-### CLI Management Commands
-```bash
-npx strray-ai install         # Install framework in project
-npx strray-ai init           # Initialize configuration
-npx strray-ai status         # Check installation status
-npx strray-ai health         # Comprehensive health check
-npx strray-ai report         # Generate activity reports
-npx strray-ai validate       # Validate setup
-```
-
-## Architecture Overview
-
-### Core Architecture
-The framework operates as an oh-my-opencode plugin with hybrid TypeScript/Python backend:
-
-- **Primary**: oh-my-opencode's Prometheus planner + Sisyphus executor
-- **Secondary**: StringRay's multi-agent delegation for complex tasks
-- **Configuration**: Merged hierarchy (global → project → framework settings)
-
-### Boot Sequence
-1. **Plugin Loading**: oh-my-opencode loads StringRay plugin
-2. **Context Loading**: Codex terms and configuration loaded
-3. **State Manager**: Session persistence initialized
-4. **Orchestrator**: Multi-agent coordination activated
-5. **Delegation System**: Task routing enabled
-6. **Processors**: Pre/post validation pipelines activated
-7. **Security**: Hardening and authentication enabled
-8. **Monitoring**: Performance tracking started
-
-### Key Components
-- **Codex Enforcer**: Central validation authority for 59 mandatory rules
-- **Complexity Analyzer**: Intelligent task routing engine
-- **State Manager**: Session persistence and recovery
-- **Orchestrator**: Multi-agent workflow coordination
-- **MCP Servers**: 28 model context protocol servers for tool integration
-
-## Universal Development Codex
-
-59 mandatory terms for systematic error prevention:
-
-### Core Terms (1-10)
-1. Progressive production-ready code (no stubs/incomplete implementations)
-2. No patches/stubs/bridge code
-3. Avoid over-engineering
-4. Fit-for-purpose production code
-5. Surgical fixes only (root cause, not symptoms)
-6. Batched introspection cycles
-7. Resolve all errors (90% runtime prevention)
-8. Prevent infinite loops
-9. Use shared global state where possible
-10. Single source of truth
-
-### Key Architectural Terms (21-30)
-21. Type safety first (no `any`, strict TypeScript)
-22. Early returns and guard clauses
-23. Error boundaries and graceful degradation
-24. Immutability where possible
-25. Separation of concerns
-26. DRY - Don't Repeat Yourself
-27. YAGNI - You Aren't Gonna Need It
-28. Meaningful naming
-29. Small, focused functions
-30. Consistent code style
-
-### Performance & Security (31-45)
-31. Async/await over callbacks
-32. Proper error handling (no empty catch blocks)
-33. Logging and monitoring
-34. Documentation updates
-35. Version control best practices
-36. Test coverage >85%
-37. Fast feedback loops
-38. Performance budget enforcement (<2MB bundle, <2s FCP)
-39. Security by design
-40. Accessibility first (WCAG 2.1 AA)
-
-## Operational Flows
-
-### Request Lifecycle
-```
-User Input → Complexity Analysis → Agent Routing → Execution → Validation → Response
-                    ↓                     ↓                    ↓
-            Enforcer evaluates    Rules enforced       Optimal agent
-            orchestration needs   automatically       selected based
-                                 via delegation      on complexity score
-```
-
-### Multi-Agent Escalation
-```
-Complexity > 95 → Orchestrator Activation
-     ↓
-Intelligent Agent Router selects team
-     ↓
-Parallel Execution with call_omo_agent/task()
-     ↓
-Result Consolidation with Consensus Resolution
-     ↓
-Final Response to User
-```
-
-### Error Handling
-```
-Error Detected → Rule Enforcement Pipeline → Agent Delegation
-      ↓              ↓              ↓
-Error Classification → Violation Mapping → Appropriate Agent Selection
-      ↓              ↓              ↓
-Auto-Fix Attempt → Success Monitoring → Report Generation
-      ↓              ↓              ↓
-Rollback on Failure → Escalation Path → Manual Intervention
-```
-
-## Configuration
-
-### oh-my-opencode Configuration (.opencode/oh-my-opencode.json)
-```json
-{
-  "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code",
-    "librarian": "opencode/grok-code"
-  },
-  "framework": {
-    "version": "1.1.1",
-    "codexEnforcement": true,
-    "jobIdLogging": true,
-    "consoleLogRule": true
-  },
-  "pipelines": {
-    "maxConcurrentAgents": 3,
-    "complexityThresholds": {
-      "singleAgent": 25,
-      "multiAgent": 95
-    }
-  }
-}
-```
-
-### Framework Configuration (.strray/config.json)
-```json
-{
-  "framework": {
-    "version": "1.1.1",
-    "logging": {
-      "level": "info",
-      "jobIdTracking": true,
-      "activityLogPath": "logs/framework/activity.log"
-    }
-  },
-  "codex": {
-    "enabled": true,
-    "termCount": 59,
-    "enforcement": "strict"
-  },
-  "performance": {
-    "bundleSizeLimit": "2MB",
-    "responseTimeTarget": "5s",
-    "errorPreventionTarget": "99.6%"
-  }
-}
-```
+## Architecture (Summary)
+- Hybrid TS/Python: TS for config/plugins; Python for async/state.
+- Boot: Plugin load → Context → State → Orchestrator → Delegation → Processors → Security → Monitoring.
+- MCP: 28 servers (agents + knowledge skills).
 
 ## Performance Budgets
+- Bundle <2MB; FCP <2s; Tests >85%; Error Prevention 99.6%.
 
-- **Bundle Size**: <2MB (gzipped <700KB)
-- **First Contentful Paint**: <2s
-- **Time to Interactive**: <5s
-- **Test Coverage**: >85%
-- **Error Prevention**: 99.6%
-
-## Troubleshooting Essentials
-
-### Common Issues
-
-| Issue | Symptom | Solution |
-|-------|---------|----------|
-| Plugin not loading | Agent commands ignored | Run `node node_modules/strray-ai/scripts/postinstall.cjs` |
-| Agent commands not working | @ commands unrecognized | Check oh-my-opencode configuration |
-| Rule violations not caught | Code passes validation | Verify codex injection and rule enforcer |
-| JobId missing | Activity log incomplete | Check framework-logger initialization |
-| Performance issues | Slow responses | Monitor complexity analysis thresholds |
-| MCP connectivity fails | Server connection errors | Run `node scripts/test:mcp-connectivity.js` |
-
-### Diagnostic Commands
-```bash
-# Framework health
-npx strray-ai health
-
-# Activity log analysis
-tail -50 logs/framework/activity.log
-
-# Job-specific reports
-npx strray-ai report --type full-analysis
-
-# Performance monitoring
-npm run performance:report
-
-# MCP connectivity test
-node scripts/test:mcp-connectivity.js
-
-# Plugin validation
-npx strray-ai validate
-```
-
-### Emergency Procedures
-1. **Framework unresponsive**: Run `npx strray-ai doctor` for automated diagnosis
-2. **Critical failures**: Check `logs/framework/error.log`
-3. **Configuration corruption**: Remove `.opencode/` and `.strray/` then reinstall
-4. **Complete reset**: `npm uninstall strray-ai && npm install strray-ai`
-
-## Framework Status
-
-**Production Ready**: Enterprise-grade AI orchestration platform
-**Error Prevention**: 99.6% systematic validation
-**Test Coverage**: 85%+ behavioral coverage
-**Performance**: Sub-millisecond task delegation
-**Scalability**: Multi-agent orchestration with automatic conflict resolution
-
----
+## Troubleshooting (Key)
+- Plugin fail: Run postinstall.cjs
+- Commands ignored: Check oh-my-opencode.json
+- Logs: tail activity.log
 
 ## Reflection System
+- Create after >30min sessions: Root cause, actions, next steps.
 
-The StringRay Framework maintains a comprehensive reflection system for capturing institutional knowledge and guiding future development. Reflections are mandatory for significant development sessions and serve as both historical records and active decision-making tools.
+## Handling Large Test Suites (Mandatory for Test-Architect and Bug-Triage Agents)
+- **Rule**: For suites >100 tests or prone to timeouts (e.g., Linux default limits), ALWAYS prioritize logging, monitoring, and isolation to prevent incomplete runs and ensure full error visibility.
+- **Step 1: Log and Monitor Output**
+  - Run in background, pipe to a log file, and poll periodically.
+  - Post-run: Parse log for failures, auto-generate TODOs (e.g., as code comments or issues).
+  - Example for validation script:
+    ```
+    cd /Users/blaze/dev/stringray && ./scripts/validate-stringray-framework.sh > /tmp/validation_log.txt 2>&1 & echo "Validation running in background (PID: $!)" && sleep 5 && echo "Initial output check:" && head -30 /tmp/validation_log.txt
+    ```
+  - Monitoring:
+    ```
+    cd /Users/blaze/dev/stringray && echo "Monitoring validation script completion..." && { while kill -0 $! 2>/dev/null; do echo "Still running... $(date)"; sleep 10; done; echo "Script completed!"; tail -20 /tmp/validation_log.txt; }
+    ```
+- **Step 2: Isolate and Fix**
+  - Identify failures from logs, then fix one test at a time.
+  - Rerun only the targeted test(s) to verify.
+  - Example for npm:
+    ```
+    npm test -- src/__tests__/unit/agent-delegator.test.ts --testNamePattern="executeDelegation"
+    ```
+- **Additional**: If timeouts recur, adjust limits (e.g., `ulimit -t unlimited`) or split suites. Clean up logs after use.
 
-**Reflection Categories:**
-- **Journey Reflections**: Comprehensive framework evolution analysis
-- **Incident Reflections**: Specific failures and recovery processes
-- **Transformation Reflections**: Major technical changes and implementations
-- **Session Reflections**: Current development session analysis and immediate lessons
+## Advanced Logging and Monitoring (For All Agents)
+- **Rule**: ALWAYS log JobIds, timestamps, and full command outputs to activity.log. Use structured JSON for errors.
+- **Tools Integration**: Leverage `read` for log verification; grep for pattern searches (e.g., `grep "ERROR" activity.log`).
+- **Alerts**: On failures, notify orchestrator and add blocking TODOs.
+- **Best Practice**: Tail logs in real-time during long ops (e.g., `tail -f activity.log | grep JobId`).
+## Environment Architecture: Dev vs Consumer
 
-**Current Session Requirements:**
-- Create reflections immediately after debugging sessions exceeding 30 minutes
-- Include root cause analysis, corrective actions, and specific next steps
-- Reference related past reflections for continuity and pattern recognition
+StringRay operates in **two distinct environments** with different import resolution:
 
-*Full documentation preserved in AGENTS-full.md. This condensed version provides essential context for agents while staying within token limits.*
+### Development Environment (./src + ./dist)
+- **TypeScript source**: Standard imports without .js extensions (`import { x } from "./module"`)
+- **Compiled dist/**: ES modules that need .js extensions for Node.js (`import { x } from "./module.js"`)
+- **Test scripts**: Run against dist/ or src/ directly
+- **Build process**: `npm run build` compiles src/ → dist/ (TypeScript preserves import paths)
+
+### Consumer Environment (npm installed)
+- **Post-install transformation**: Adds .js extensions to dist/ imports automatically
+- **Location**: `node_modules/strray-ai/dist/`
+- **Usage**: Scripts import from `node_modules/strray-ai/dist/...`
+
+### Test Scripts Organization
+**Working scripts** (46 total): Test framework without importing from dist/
+- `./scripts/node/` - 16 Node.js scripts (cleanup, validation, setup)
+- `./scripts/mjs/` - 30 ES module scripts (testing, monitoring)
+
+**Archived scripts** (12 total): Require post-install transformation to work
+- Located in: `./scripts/archived/broken/`
+- These import from `dist/` and need .js extension transformation
+- Will work after `npm run build` + post-install transformation
+
+### Critical Rule for Agents
+**DO NOT modify TypeScript source files to add .js extensions** - this breaks the oh-my-opencode plugin bundler. The transformation happens at:
+1. Build time (for dev scripts that need it)
+2. Post-install time (for consumer npm packages)
+
+## Platform-Specific Timeout Handling (For All Agents)
+- **Rule**: Use `timeout` for time-limiting test runs to prevent hangs. On macOS, prefix with `g` (gtimeout) if using Homebrew coreutils. On Linux, use plain `timeout` (pre-installed via coreutils).
+- **Mac Installation** (if missing):
+  ```bash
+  brew install coreutils
+  # Then use: gtimeout 45s ...
+  # Optional alias in ~/.zshrc: alias timeout='gtimeout'
+  

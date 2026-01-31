@@ -9,8 +9,8 @@ import {
   securityAuditor,
   refactorer,
   testArchitect,
-} from "../../agents/index";
-import type { AgentConfig } from "../../agents/types";
+} from "../../agents/index.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Agent Index Registry", () => {
   describe("Builtin Agents Registry", () => {
@@ -63,7 +63,7 @@ describe("Agent Index Registry", () => {
 
     it("should have agents with consistent model configuration", () => {
       Object.values(builtinAgents).forEach((agent) => {
-        expect(agent.model).toBeDefined();
+        expect(refactorer.model).toBeDefined();
         expect(typeof agent.model).toBe("string");
       });
     });

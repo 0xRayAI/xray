@@ -1,0 +1,1 @@
+cp .opencode/plugin/strray-codex-injection.ts dist/plugin/strray-codex-injection.js

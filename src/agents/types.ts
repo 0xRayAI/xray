@@ -17,6 +17,21 @@ export interface PermissionConfig {
   [key: string]: any;
 }
 
+export interface TaskDefinition {
+  id: string;
+  type: string;
+  description: string;
+  complexity: number;
+  priority: "high" | "medium" | "low";
+  createdAt: Date;
+  assignedAgent?: string;
+  status: "pending" | "running" | "completed" | "failed";
+  result?: any;
+  error?: string;
+  dependencies?: string[];
+  subagentType?: string;
+}
+
 export interface AgentConfig {
   name: string;
   model: string;
@@ -31,4 +46,7 @@ export interface AgentConfig {
   prompt_append?: string;
   disable?: boolean;
   color?: string;
+  capabilities: string[];
+  maxComplexity: number;
+  enabled: boolean;
 }

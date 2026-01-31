@@ -17,9 +17,9 @@ import {
   PluginReport,
   SearchFacets,
   MarketplaceFilters,
-} from "./marketplace-types";
-import { securityHardeningSystem } from "../../security/security-hardening-system";
-import { enterpriseMonitoringSystem } from "../../monitoring/enterprise-monitoring-system";
+} from "./marketplace-types.js";
+import { securityHardeningSystem } from "../../security/security-hardening-system.js";
+import { enterpriseMonitoringSystem } from "../../monitoring/enterprise-monitoring-system.js";
 
 /**
  * Enterprise-grade marketplace service with comprehensive plugin management

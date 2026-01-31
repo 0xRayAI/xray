@@ -34,7 +34,7 @@ export class AdvancedProfiler extends EventEmitter {
   private profilingEnabled: boolean = true;
   private profileStoragePath: string;
 
-  constructor(storagePath: string = "./.strray/profiles") {
+  constructor(storagePath: string = "./.opencode/strray/profiles") {
     super();
     this.profileStoragePath = storagePath;
     this.ensureStorageDirectory();

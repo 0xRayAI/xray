@@ -8,7 +8,7 @@
  * @since 2026-01-11
  */
 
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 

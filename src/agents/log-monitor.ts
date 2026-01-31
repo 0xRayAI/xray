@@ -1,8 +1,12 @@
-import type { AgentConfig } from "./types";
+import type { AgentConfig } from "./types.js";
+import { modelRouter } from '../core/model-router.js';
 
 export const logMonitorAgent: AgentConfig = {
   name: "log-monitor",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('log-monitor'); },
+  capabilities: ["real-time-monitoring", "anomaly-detection", "health-assessment", "performance-analysis", "alert-generation"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework log monitor with real-time monitoring, anomaly detection, and health reporting - Advanced System Health Analyst",
   mode: "subagent",

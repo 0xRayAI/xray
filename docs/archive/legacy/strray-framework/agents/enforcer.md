@@ -1,7 +1,7 @@
 ---
 name: enforcer
 description: Automated framework compliance auditor and periodic introspection enforcer. Triggers on compliance checks, threshold violations, or scheduled audits.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.2
 tools:
   Bash: true

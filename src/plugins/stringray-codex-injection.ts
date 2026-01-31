@@ -8,9 +8,9 @@
  * @author StringRay Framework Team
  */
 
-import { frameworkLogger, generateJobId } from "../framework-logger";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 
-import { TokenManager } from "../utils/token-manager";
+import { TokenManager } from "../utils/token-manager.js";
 
 const tokenManager = new TokenManager();
 
@@ -68,7 +68,21 @@ To discover all available capabilities, use the framework-help system:
 - **Test Coverage >85%**: Maintain comprehensive behavioral test coverage
 - **Performance Budget**: Bundle size <2MB (gzipped <700KB)
 
-For complete codex documentation, see: .strray/codex.json`;
+For complete codex documentation, see: .opencode/strray/codex.json
+
+### 🔒 Critical Spawn Governance (All Agents)
+
+**MANDATORY: All agents must follow these spawn governance rules:**
+
+- **Maximum 2 subagents total** across all operations within a single agent session
+- **No nested subagent spawning** - subagents cannot spawn their own subagents
+- **Solo agents (librarian)** can spawn 0 subagents - they are terminal agents
+- **Always check spawn authorization** before creating new agents via agentSpawnGovernor
+- **Report spawn attempts** to monitoring system before execution
+- **Terminate gracefully** if spawn limits exceeded - do not attempt workarounds
+- **Single level only** - coordinator agents can spawn workers, but workers cannot spawn more agents
+
+**Violation of these rules will result in immediate system shutdown to prevent infinite loops.**`;
 
       const limitCheck = tokenManager.checkLimits(fullContent);
       let finalContent = fullContent;
@@ -123,8 +137,48 @@ For complete codex documentation, see: .strray/codex.json`;
 
 };
 
+// Lightweight bypass for simple interactions
+function isSimpleInteraction(input: any): boolean {
+  if (!input || typeof input !== 'object') return false;
+
+  // Check messages for simple greetings/chats
+  if (input.messages && Array.isArray(input.messages)) {
+    const lastMessage = input.messages[input.messages.length - 1];
+    if (lastMessage && lastMessage.content) {
+      const content = String(lastMessage.content).toLowerCase().trim();
+      // Detect basic greetings and chat
+      if (content.match(/^(hi|hello|hey|sup|yo|howdy|greeting|chat|how are you|what'?s up)$/i)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 // Export a function that returns the plugin hooks object
 export function stringrayPlugin(input: any) {
+    // Fast path for simple interactions - skip full framework activation
+    if (isSimpleInteraction(input)) {
+      return {
+        config: () => {}, // No-op for simple interactions
+        "experimental.chat.system.transform": (messages: any[], context: any) => {
+          // Insert minimal welcome message for simple interactions
+          const lightMessage = {
+            role: "system",
+            content: "Hello! I'm the StrRay Agentic Framework. Ready to help with development tasks."
+          };
+          if (context && context.system && Array.isArray(context.system)) {
+            context.system.unshift(lightMessage);
+          }
+          return messages;
+        },
+        "tool.execute.before": () => {},
+        "tool.execute.after": () => {}
+      };
+    }
+
+    // Full framework activation for complex requests
     return pluginHooks;
 }
 

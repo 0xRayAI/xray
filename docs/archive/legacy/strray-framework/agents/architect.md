@@ -1,7 +1,7 @@
 ---
 name: architect
 description: Complex planning and consolidation strategies for architectural design and dependency mapping. Use for system design, refactoring planning, and pattern selection.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.3
 tools:
   Read: true

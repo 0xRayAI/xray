@@ -3,7 +3,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { vi } from "vitest";
-import { CodexContext, CodexTerm } from "../../context-loader";
+import { CodexContext, CodexTerm } from "../../context-loader.js";
 
 /**
  * Mock file system utilities for testing

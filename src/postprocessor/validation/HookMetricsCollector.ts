@@ -6,7 +6,7 @@
  */
 
 import * as fs from "fs";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../framework-logger.js";
 import * as path from "path";
 
 interface HookMetrics {
@@ -25,6 +25,7 @@ class HookMetricsCollector {
     this.metricsFile = path.join(
       process.cwd(),
       ".opencode",
+      "hooks",
       "hook-metrics.json",
     );
     this.loadMetrics();

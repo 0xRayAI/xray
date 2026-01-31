@@ -7,15 +7,15 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   IntelligentCommitBatcher,
   createIntelligentCommitBatcher,
-} from "../../orchestrator/intelligent-commit-batcher";
+} from "../../orchestrator/intelligent-commit-batcher.js";
 import {
   runPreCommitValidation,
   qualityGateCheck,
-} from "../../enforcement/enforcer-tools";
-import { frameworkLogger } from "../../framework-logger";
+} from "../../enforcement/enforcer-tools.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 // Mock external dependencies
-vi.mock("../../framework-logger");
+vi.mock("../../core/framework-logger");
 
 describe.skip("Commit Batching + Enforcement Integration", () => {
   let batcher: IntelligentCommitBatcher;

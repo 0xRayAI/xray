@@ -723,23 +723,28 @@ export class LiveMetricsCollector extends EventEmitter {
    */
   private startBufferManagement(): void {
     setInterval(() => {
-      const cutoffTime = Date.now() - this.config.retentionPeriod;
-      const initialLength = this.metricsBuffer.length;
+      // Use immediately invoked async function to handle async logging
+      (async () => {
+        const cutoffTime = Date.now() - this.config.retentionPeriod;
+        const initialLength = this.metricsBuffer.length;
 
-      this.metricsBuffer = this.metricsBuffer.filter(
-        (metric) => metric.timestamp > cutoffTime,
-      );
-
-      const removed = initialLength - this.metricsBuffer.length;
-      if (removed > 0) {
-        await frameworkLogger.log(
-          "live-metrics-collector",
-          "buffer-cleaned",
-          "info",
-          { metricsRemoved: removed },
+        this.metricsBuffer = this.metricsBuffer.filter(
+          (metric) => metric.timestamp > cutoffTime,
         );
-        this.stats.bufferSize = this.metricsBuffer.length;
-      }
+
+        const removed = initialLength - this.metricsBuffer.length;
+        if (removed > 0) {
+          await frameworkLogger.log(
+            "live-metrics-collector",
+            "buffer-cleaned",
+            "info",
+            { metricsRemoved: removed },
+          );
+          this.stats.bufferSize = this.metricsBuffer.length;
+        }
+      })().catch((error) => {
+        console.error("Error in buffer management:", error);
+      });
     }, 60000); // Clean up every minute
   }
 
@@ -898,11 +903,14 @@ export class LiveMetricsCollector extends EventEmitter {
    */
   updateConfig(newConfig: Partial<MetricsCollectionConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    await frameworkLogger.log(
+    // Fire-and-forget logging to avoid async issues
+    frameworkLogger.log(
       "live-metrics-collector",
       "config-updated",
       "info",
-    );
+    ).catch((error) => {
+      console.error("Error logging config update:", error);
+    });
     this.emit("config-updated", { ...this.config });
   }
 }

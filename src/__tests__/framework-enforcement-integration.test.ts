@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 
-vi.mock("../framework-logger", () => ({
+vi.mock("../core/framework-logger", () => ({
   frameworkLogger: {
     log: vi.fn().mockResolvedValue(undefined),
     getRecentLogs: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock("../framework-logger", () => ({
   },
 }));
 
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Type the mocked functions
 const mockGetRecentLogs = frameworkLogger.getRecentLogs as any;

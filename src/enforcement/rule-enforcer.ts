@@ -3,7 +3,7 @@
  * Enforces development rules and validates component creation
  */
 
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js"
 
 export interface RuleDefinition {
   id: string;
@@ -118,7 +118,7 @@ export class RuleEnforcer {
       const fs = await import('fs');
       const path = await import('path');
 
-      const codexPath = path.join(process.cwd(), '.strray', 'codex.json');
+      const codexPath = path.join(process.cwd(), '.opencode/strray', 'codex.json');
       const codexContent = fs.readFileSync(codexPath, 'utf8');
       const codexData = JSON.parse(codexContent);
 
@@ -721,7 +721,7 @@ export class RuleEnforcer {
         const { agent, skill } = agentSkill;
 
         // Call the skill invocation MCP server to delegate to the agent/skill
-        const { mcpClientManager } = await import('../mcp-client.js');
+        const { mcpClientManager } = await import("../mcps/mcp-client")
         const result = await mcpClientManager.callServerTool(
           "skill-invocation",
           "invoke-skill",

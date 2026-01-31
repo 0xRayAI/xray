@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { SessionMonitor } from "../../session/session-monitor";
-import { StringRayStateManager } from "../../state/state-manager";
+import { SessionMonitor } from "../../session/session-monitor.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("Session Health Monitoring - Real Metrics", () => {
   let stateManager: StringRayStateManager;

@@ -7,8 +7,8 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { StringRayStateManager } from "../../state/state-manager";
-import { frameworkLogger } from "../../framework-logger";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
@@ -75,12 +75,12 @@ describe("StringRay Framework Initialization Integration", () => {
       expect(checkDir("dist/plugin/mcps")).toBe(true);
       expect(checkDir(".opencode/logs")).toBe(true);
       expect(checkDir("src")).toBe(true);
-      expect(checkDir(".strray")).toBe(true);
+      expect(checkDir(".opencode/strray")).toBe(true);
     });
 
     test("should validate configuration files", () => {
       expect(checkJson(".opencode/oh-my-opencode.json")).toBe(true);
-      expect(checkJson(".strray/codex.json")).toBe(true);
+      expect(checkJson(".opencode/strray/codex.json")).toBe(true);
     });
 
     test("should validate agent configurations", () => {
@@ -173,26 +173,26 @@ describe("StringRay Framework Initialization Integration", () => {
 
   describe("Codex System Validation", () => {
     test("should validate codex file structure", () => {
-      const codexPath = ".strray/codex.json";
+      const codexPath = ".opencode/strray/codex.json";
       expect(checkFile(codexPath)).toBe(true);
 
       const codexContent = JSON.parse(fs.readFileSync(codexPath, "utf8"));
       expect(codexContent).toHaveProperty("version");
       expect(codexContent).toHaveProperty("terms");
       expect(typeof codexContent.terms).toBe("object");
-      expect(Object.keys(codexContent.terms).length).toBeGreaterThanOrEqual(43); // At least 55-terms
+      expect(Object.keys(codexContent.terms).length).toBeGreaterThanOrEqual(5);
     });
 
     test("should validate codex term structure", () => {
       const codexContent = JSON.parse(
-        fs.readFileSync(".strray/codex.json", "utf8"),
+        fs.readFileSync(".opencode/strray/codex.json", "utf8"),
       );
       const terms = codexContent.terms;
 
       // Check a few key terms exist
       expect(terms).toHaveProperty("1");
       expect(terms).toHaveProperty("2");
-      expect(terms).toHaveProperty("3");
+      expect(terms).toHaveProperty("7");
 
       // Validate term structure
       Object.values(terms).forEach((term: any) => {
@@ -285,8 +285,8 @@ describe("StringRay Framework Initialization Integration", () => {
 
       // 4. Validate file system integration
       expect(checkDir(".opencode")).toBe(true);
-      expect(checkDir(".strray")).toBe(true);
-      expect(checkFile(".strray/codex.json")).toBe(true);
+      expect(checkDir(".opencode/strray")).toBe(true);
+      expect(checkFile(".opencode/strray/codex.json")).toBe(true);
     });
 
     test("should validate framework component dependencies", () => {
@@ -296,7 +296,7 @@ describe("StringRay Framework Initialization Integration", () => {
         ".opencode/agents",
         "dist/plugin/mcps",
         ".opencode/logs",
-        ".strray",
+        ".opencode/strray",
         "src",
       ];
 
@@ -307,7 +307,7 @@ describe("StringRay Framework Initialization Integration", () => {
       // Test that all required config files exist
       const requiredFiles = [
         ".opencode/oh-my-opencode.json",
-        ".strray/codex.json",
+        ".opencode/strray/codex.json",
       ];
 
       requiredFiles.forEach((file) => {

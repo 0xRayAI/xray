@@ -5,7 +5,7 @@
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { frameworkLogger, generateJobId } from "../framework-logger.js";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,

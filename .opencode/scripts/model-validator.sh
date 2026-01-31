@@ -45,7 +45,7 @@ echo -e "${GREEN}✓ Model configuration loaded${NC}"
 DEFAULT_MODEL=$(python3 -c "
 import json
 config = json.load(open('$CONFIG_FILE'))
-print(config.get('model_default', 'opencode/grok-code'))
+print(config.get('model_default', 'openrouter/xai-grok-2-1212-fast-1'))
 ")
 
 FALLBACK_MODELS=$(python3 -c "
@@ -91,7 +91,7 @@ echo "========================="
 # Check default model
 echo -n "Default model ($DEFAULT_MODEL): "
 case $DEFAULT_MODEL in
-    "opencode/grok-code")
+    "openrouter/xai-grok-2-1212-fast-1")
         echo -e "${GREEN}✓ Available${NC}"
         ;;
     "gpt-4o"|"gpt-5.2")
@@ -110,7 +110,7 @@ echo "Fallback models:"
 for model in $FALLBACK_MODELS; do
     echo -n "  $model: "
     case $model in
-        "opencode/grok-code"|"gpt-4o"|"gpt-5.2"|"google/gemini-3-pro-high"|"google/gemini-3-flash")
+        "openrouter/xai-grok-2-1212-fast-1"|"gpt-4o"|"gpt-5.2"|"google/gemini-3-pro-high"|"google/gemini-3-flash")
             echo -e "${GREEN}✓ Available${NC}"
             ;;
         *)
@@ -126,7 +126,7 @@ echo "======================"
 echo "$AGENT_MODELS" | while IFS=: read -r agent model; do
     echo -n "$agent ($model): "
     case $model in
-        "opencode/grok-code"|"gpt-4o"|"gpt-5.2"|"google/gemini-3-pro-high"|"google/gemini-3-flash")
+        "openrouter/xai-grok-2-1212-fast-1"|"gpt-4o"|"gpt-5.2"|"google/gemini-3-pro-high"|"google/gemini-3-flash")
             echo -e "${GREEN}✓ Valid${NC}"
             ;;
         *)

@@ -1,7 +1,7 @@
 ---
 name: refactorer
 description: Improves code structure, eliminates technical debt, and consolidates logic. Triggers on debt, cleanup, optimize, consolidate.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.3
 tools:
   Read: true

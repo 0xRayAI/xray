@@ -80,7 +80,7 @@
 
   "agents": {
     "enforcer": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "compliance-monitoring",
         "threshold-enforcement",
@@ -89,7 +89,7 @@
       "triggers": ["file-changes", "schedule", "deployment"]
     },
     "architect": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "design-review",
         "architecture-validation",
@@ -98,7 +98,7 @@
       "triggers": ["code-reviews", "new-features"]
     },
     "orchestrator": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "task-coordination",
         "multi-agent-orchestration",
@@ -107,7 +107,7 @@
       "triggers": ["complex-tasks", "integration-events"]
     },
     "bug-triage-specialist": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "error-analysis",
         "root-cause-identification",
@@ -116,7 +116,7 @@
       "triggers": ["test-failures", "error-reports"]
     },
     "code-reviewer": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "code-quality-assessment",
         "best-practice-validation",
@@ -125,12 +125,12 @@
       "triggers": ["pull-requests", "code-commits"]
     },
     "refactorer": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": ["code-modernization", "debt-reduction", "consolidation"],
       "triggers": ["legacy-code-detection", "complexity-alerts"]
     },
     "security-auditor": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "vulnerability-detection",
         "threat-analysis",
@@ -139,7 +139,7 @@
       "triggers": ["security-scans", "dependency-updates"]
     },
     "test-architect": {
-      "model": "opencode/grok-code",
+      "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "test-strategy-design",
         "coverage-optimization",

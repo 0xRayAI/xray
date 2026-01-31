@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Reviews code quality, best practices, and framework compliance. Triggers after code changes or before commits.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.1
 tools:
   Read: true

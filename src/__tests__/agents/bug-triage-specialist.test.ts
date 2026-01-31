@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { bugTriageSpecialist } from "../../agents/bug-triage-specialist";
-import type { AgentConfig } from "../../agents/types";
+import { bugTriageSpecialist } from "../../agents/bug-triage-specialist.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Bug Triage Specialist Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {
@@ -11,7 +11,7 @@ describe("Bug Triage Specialist Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(bugTriageSpecialist.name).toBe("bug-triage-specialist");
-      expect(bugTriageSpecialist.model).toBe("opencode/grok-code");
+      expect(bugTriageSpecialist.model).toBe("claude-sonnet-4");
     });
 
     it("should be configured as subagent mode", () => {

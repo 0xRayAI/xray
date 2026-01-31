@@ -8,24 +8,24 @@ import {
   beforeAll,
   afterAll,
 } from "vitest";
-import { BootOrchestrator } from "../../boot-orchestrator";
-import { StringRayOrchestrator } from "../../orchestrator";
+import { BootOrchestrator } from "../../core/boot-orchestrator.js";
+import { StringRayOrchestrator } from "../../core/orchestrator.js";
 import {
   createSessionCoordinator,
   SessionCoordinator,
-} from "../../delegation/session-coordinator";
+} from "../../delegation/session-coordinator.js";
 import {
   createAgentDelegator,
   AgentDelegator,
-} from "../../delegation/agent-delegator";
-import { ProcessorManager } from "../../processors/processor-manager";
-import { StringRayStateManager } from "../../state/state-manager";
-import { SecurityAuditor } from "../../security/security-auditor";
-import { createSessionMonitor } from "../../session/session-monitor";
-import { createSessionCleanupManager } from "../../session/session-cleanup-manager";
-import { createSessionStateManager } from "../../session/session-state-manager";
-import { securityHardener } from "../../security/security-hardener";
-import { securityHeadersMiddleware } from "../../security/security-headers";
+} from "../../delegation/agent-delegator.js";
+import { ProcessorManager } from "../../processors/processor-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { SecurityAuditor } from "../../security/security-auditor.js";
+import { createSessionMonitor } from "../../session/session-monitor.js";
+import { createSessionCleanupManager } from "../../session/session-cleanup-manager.js";
+import { createSessionStateManager } from "../../session/session-state-manager.js";
+import { securityHardener } from "../../security/security-hardener.js";
+import { securityHeadersMiddleware } from "../../security/security-headers.js";
 import * as fs from "fs";
 import * as path from "path";
 

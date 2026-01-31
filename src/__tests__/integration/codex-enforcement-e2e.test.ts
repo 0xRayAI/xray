@@ -5,7 +5,7 @@
  * Tests the complete pipeline: operation → processor → rule enforcer → blocking
  */
 
-import { ruleEnforcer } from "../../enforcement/rule-enforcer";
+import { ruleEnforcer } from "../../enforcement/rule-enforcer.js";
 
 describe("Codex Enforcement E2E", () => {
   describe("Over-Engineering Detection", () => {

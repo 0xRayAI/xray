@@ -89,7 +89,7 @@ const { SecurityAuditor } = await import("./security/security-auditor");
 **Fix:** Implemented global initialization flag
 
 ```typescript
-// In src/strray-init.ts
+// In src/core/strray-init.ts
 declare const globalThis: any;
 const strrayInitialized = (globalThis as any).__strray_initialized;
 if (!strrayInitialized) {
@@ -98,7 +98,7 @@ if (!strrayInitialized) {
 }
 ```
 
-**Files Modified:** `src/strray-init.ts`, `src/plugins/strray-codex-injection.ts`
+**Files Modified:** `src/core/strray-init.ts`, `src/plugins/strray-codex-injection.ts`
 
 ### Issue 3: ES Module Import Conflicts
 
@@ -126,14 +126,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 {
   "plugin": ["oh-my-opencode", "dist/plugin/plugins/strray-codex-injection.js"],
   "agent": {
-    "orchestrator": { "model": "opencode/grok-code" },
-    "enforcer": { "model": "opencode/grok-code" },
-    "architect": { "model": "opencode/grok-code" },
-    "code-reviewer": { "model": "opencode/grok-code" },
-    "security-auditor": { "model": "opencode/grok-code" },
-    "refactorer": { "model": "opencode/grok-code" },
-    "test-architect": { "model": "opencode/grok-code" },
-    "bug-triage-specialist": { "model": "opencode/grok-code" }
+    "orchestrator": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "enforcer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "code-reviewer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "security-auditor": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "refactorer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "test-architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "bug-triage-specialist": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }
 }
 ```
@@ -293,7 +293,7 @@ node scripts/boot-check.cjs
 
 3. **Test Codex Loading:**
    ```bash
-   ls -la .strray/codex.json AGENTS.md
+   ls -la .opencode/strray/codex.json AGENTS.md
    ```
 
 ## Deployment Checklist
@@ -360,7 +360,7 @@ node scripts/boot-check.cjs
 
 **Check:**
 
-- .strray/codex.json or AGENTS.md exists
+- .opencode/strray/codex.json or AGENTS.md exists
 - Plugin's system transform hook is called
 - Codex parsing doesn't fail with syntax errors
 

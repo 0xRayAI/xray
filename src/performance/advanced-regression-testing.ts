@@ -27,7 +27,7 @@ import {
   RegressionTestResult,
   PerformanceBaseline,
   RegressionTestSuite,
-} from "./performance-regression-tester";
+} from "./performance-regression-tester.js";
 
 export interface StatisticalAnalysis {
   mean: number;

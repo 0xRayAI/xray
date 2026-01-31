@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { StringRayStateManager } from "../../state/state-manager";
-import { createSessionCoordinator } from "../../delegation/session-coordinator";
-import { createSessionCleanupManager } from "../../session/session-cleanup-manager";
-import { createSessionMonitor } from "../../session/session-monitor";
-import { createSessionStateManager } from "../../session/session-state-manager";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { createSessionCoordinator } from "../../delegation/session-coordinator.js";
+import { createSessionCleanupManager } from "../../session/session-cleanup-manager.js";
+import { createSessionMonitor } from "../../session/session-monitor.js";
+import { createSessionStateManager } from "../../session/session-state-manager.js";
 
 describe("Session Lifecycle Management", () => {
   let stateManager: StringRayStateManager;

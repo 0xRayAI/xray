@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   StringRayOrchestrator,
   TaskDefinition,
-} from "../../../orchestrator";
+} from "../../../orchestrator/orchestrator.js";
 
 describe("Basic Orchestrator Functionality", () => {
   let orchestrator: StringRayOrchestrator;

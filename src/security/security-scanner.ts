@@ -7,12 +7,12 @@
 
 import { exec } from "child_process";
 import { promises as fs } from "fs";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 import { promisify } from "util";
 import {
   promptSecurityValidator,
   PromptSecurityValidator,
-} from "./prompt-security-validator";
+} from "./prompt-security-validator.js";
 
 const execAsync = promisify(exec);
 

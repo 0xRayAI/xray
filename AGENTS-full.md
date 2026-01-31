@@ -2,7 +2,7 @@
 
 **Version**: 1.1.1
 **Purpose**: Enterprise AI orchestration with systematic error prevention
-**Last Updated**: 2026-01-23
+**Last Updated**: 2026-01-22
 **System Complexity**: 51 core files, 8 interconnected pipelines, 338 logging points
 
 ## Table of Contents
@@ -46,13 +46,13 @@
 
 ### 1.1 System Architecture
 
-StringRay Framework v1.1.1 is a comprehensive enterprise AI orchestration platform with **systematic error prevention** and **complexity-based task routing**. The system consists of **8 interconnected pipelines** spanning **51 core files** with **338 logging points** for complete traceability.
+StringRay AI v1.1.1 is a comprehensive enterprise AI orchestration platform with **systematic error prevention** and **complexity-based task routing**. The system consists of **8 interconnected pipelines** spanning **51 core files** with **338 logging points** for complete traceability.
 
 #### Core System Components:
-- **12 Specialized AI Agents** (10 active, 2 disabled) with automatic delegation
-- **29 MCP Server implementations** providing tool integration
+- **9 Specialized AI Agents** with automatic delegation
+- **28 MCP Servers** providing tool integration
 - **8 Major Pipelines** for complete workflow coverage
-- **Universal Development Codex** (55-60 mandatory rules)
+- **Universal Development Codex** (59 mandatory rules)
 - **JobId Logging System** for complete traceability
 - **Console.log Enforcement** for production hygiene
 
@@ -114,8 +114,8 @@ All agents operate in subagent mode with full tool access and automatic delegati
 **Purpose**: Boot sequence and component activation
 **Entry Point**: `src/boot-orchestrator.ts`
 **Components**:
-- `src/strray-init.ts` - Framework initialization
-- `src/strray-activation.ts` - Component activation
+- `src/core/strray-init.ts` - Framework initialization
+- `src/core/strray-activation.ts` - Component activation
 - `src/codex-injector.ts` - Codex injection system
 - `src/mcp-client.ts` - MCP server connections
 
@@ -359,7 +359,7 @@ User Request → boot-orchestrator → agent-delegator → rule-enforcer → Pos
 ### 4.1 Master Pipeline Tree
 
 ```
-StringRay Framework v1.1.1
+StringRay AI v1.1.1
 ├── Framework Initialization Pipeline
 │   ├── Boot Orchestrator (boot-orchestrator.ts)
 │   ├── Framework Activation (strray-activation.ts)
@@ -493,24 +493,19 @@ Data Flow: User Input → Framework Processing → Agent Execution → Validatio
 
 ### 5.1 Agent Matrix
 
-**12 Specialized AI Agents (10 active, 2 disabled) with Automatic Complexity-Based Routing:**
+**9 Specialized AI Agents with Automatic Complexity-Based Routing:**
 
-| Agent | Role | Complexity Threshold | Primary Pipeline | Key Tools | Status | Conflict Strategy |
-|-------|------|---------------------|------------------|-----------|--------|-------------------|
-| **enforcer** | Codex compliance & error prevention | All operations | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash` | Active | Block on violations |
-| **architect** | System design & technical decisions | High complexity | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `background_task` | Active | Expert priority |
-| **orchestrator** | Multi-agent workflow coordination | Enterprise | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `background_task`, `call_omo_agent` | Active | Consensus |
-| **bug-triage-specialist** | Error investigation & fixes | Debug operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `ast_grep_*` | Active | Majority vote |
-| **code-reviewer** | Quality assessment & standards | All code changes | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash`, `lsp_diagnostics` | Active | Expert priority |
-| **security-auditor** | Vulnerability detection | Security operations | Security & Monitoring | `read`, `grep`, `lsp_*`, `bash`, `grep_app_searchGitHub` | Active | Block critical |
-| **refactorer** | Technical debt elimination | Refactor operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `ast_grep_*`, `lsp_rename` | Active | Majority vote |
-| **test-architect** | Testing strategy & coverage | Test operations | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash` | Active | Expert priority |
-| **librarian** | Codebase exploration & documentation | Analysis operations | Agent Delegation | `project-analysis_*` | Disabled | N/A (solo agent) |
-| **oracle** | Strategic guidance & complex problem-solving | High complexity | Agent Delegation | `read`, `grep`, `lsp_*`, `background_task` | Disabled | Expert priority |
-| **multimodal-looker** | Media file analysis & interpretation | Analysis operations | Agent Delegation | `project-analysis_*` | Active | N/A (solo agent) |
-| **frontend-ui-ux-engineer** | Frontend development & UI/UX implementation | Medium complexity | Agent Delegation | `read`, `grep`, `lsp_*`, `bash` | Active | Expert priority |
-| **document-writer** | Technical documentation & content creation | Medium complexity | Agent Delegation | `read`, `grep`, `lsp_*` | Active | Expert priority |
-| **explore** | Codebase exploration & pattern analysis | Analysis operations | Agent Delegation | `read`, `grep`, `ast_grep_*` | Active | N/A (solo agent) |
+| Agent | Role | Complexity Threshold | Primary Pipeline | Key Tools | Conflict Strategy |
+|-------|------|---------------------|------------------|-----------|-------------------|
+| **enforcer** | Codex compliance & error prevention | All operations | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash` | Block on violations |
+| **architect** | System design & technical decisions | High complexity | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `background_task` | Expert priority |
+| **orchestrator** | Multi-agent workflow coordination | Enterprise | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `background_task`, `call_omo_agent` | Consensus |
+| **bug-triage-specialist** | Error investigation & fixes | Debug operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `ast_grep_*` | Majority vote |
+| **code-reviewer** | Quality assessment & standards | All code changes | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash`, `lsp_diagnostics` | Expert priority |
+| **security-auditor** | Vulnerability detection | Security operations | Security & Monitoring | `read`, `grep`, `lsp_*`, `bash`, `grep_app_searchGitHub` | Block critical |
+| **refactorer** | Technical debt elimination | Refactor operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `ast_grep_*`, `lsp_rename` | Majority vote |
+| **test-architect** | Testing strategy & coverage | Test operations | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **librarian** | Codebase exploration & documentation | Analysis operations | Agent Delegation | `project-analysis_*` | N/A (solo agent) |
 
 ### 5.2 Pipeline Integration Points
 
@@ -527,11 +522,6 @@ Data Flow: User Input → Framework Processing → Agent Execution → Validatio
 | **refactorer** | Refactoring requests OR code quality issues | `agent-delegator.ts`, `dependency-graph-builder.ts` | Agent delegation pipeline |
 | **test-architect** | Test generation/validation needs | `test-auto-healing.ts`, `rule-enforcer.ts` | Rule enforcement pipeline |
 | **librarian** | Analysis/documentation requests | `codebase-context-analyzer.ts`, `project-analysis.server.ts` | Agent delegation pipeline |
-| **oracle** | Strategic guidance requests | `agent-delegator.ts`, `universal-librarian-consultation.ts` | Agent delegation pipeline |
-| **multimodal-looker** | Media file analysis requests | `codebase-context-analyzer.ts`, `project-analysis.server.ts` | Agent delegation pipeline |
-| **frontend-ui-ux-engineer** | Frontend/UI development requests | `agent-delegator.ts`, `complexity-analyzer.ts` | Agent delegation pipeline |
-| **document-writer** | Documentation generation requests | `agent-delegator.ts`, `universal-librarian-consultation.ts` | Agent delegation pipeline |
-| **explore** | Codebase exploration requests | `codebase-context-analyzer.ts`, `ast-code-parser.ts` | Agent delegation pipeline |
 
 ### Practical Agent Usage Examples
 
@@ -624,7 +614,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ## 7. Configuration & State Management
 
 **Configuration Hierarchy:**
-- Global settings (`.strray/config.json`)
+- Global settings (`.opencode/strray/config.json`)
 - Project overrides (`.opencode/oh-my-opencode.json`)
 - Runtime state (`src/state/state-manager.ts`)
 
@@ -639,15 +629,15 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ```json
 {
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code",
-    "librarian": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1",
+    "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "version": "1.1.1",
@@ -665,7 +655,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 }
 ```
 
-#### Complete .strray/config.json Template
+#### Complete .opencode/strray/config.json Template
 ```json
 {
   "framework": {
@@ -825,7 +815,46 @@ npm run lint                  # Code quality check
 npm run typecheck             # TypeScript validation
 ```
 
-### 1.3 Basic Usage
+### 1.3 Environment Architecture: Dev vs Consumer
+
+StringRay operates in **two distinct environments** with different module resolution strategies:
+
+#### **Development Environment** (Framework Development)
+- **Location**: Local repository (`./src` + `./dist`)
+- **TypeScript Source**: Standard imports without .js extensions
+  ```typescript
+  import { frameworkLogger } from "../core/framework-logger"
+  ```
+- **Compiled dist/**: ES modules preserved as-is from TypeScript
+- **Build Process**: `npm run build` compiles src/ → dist/ (import paths preserved)
+- **Test Scripts**: Located in `./scripts/node/` and `./scripts/mjs/`
+  - 46 working scripts that don't import from dist/
+  - 12 archived scripts in `./scripts/archived/broken/` (require post-install transformation)
+
+#### **Consumer Environment** (NPM Package Users)
+- **Location**: `node_modules/strray-ai/`
+- **Post-Install Transformation**: Automatically adds .js extensions to dist/ imports
+- **Import Resolution**: 
+  ```javascript
+  // Before transformation:
+  import { frameworkLogger } from "../core/framework-logger"
+  // After transformation:
+  import { frameworkLogger } from "../core/framework-logger.js"
+  ```
+- **Setup Required**: `node node_modules/strray-ai/scripts/postinstall.cjs`
+
+#### **Why Two Environments?**
+- **oh-my-opencode Plugin**: Uses bundler-style imports (no .js extensions needed)
+- **Node.js/Test Environment**: Requires .js extensions for ES module resolution
+- **Solution**: Clean TypeScript sources + transformation at distribution time
+
+#### **Agent Guidelines**
+- **DO NOT** add .js extensions to TypeScript source files
+- **DO NOT** modify dist/ folder directly (it's compiled output)
+- **DO** use the 46 working test scripts for framework validation
+- **DO** archive scripts that fail due to missing .js extensions (they need post-install)
+
+### 1.4 Basic Usage
 
 1. **Installation**: `npm install strray-ai`
 2. **Setup**: `node node_modules/strray-ai/scripts/postinstall.cjs`
@@ -997,7 +1026,7 @@ User Input → Complexity Analysis → Rule Validation → Agent Routing → Exe
 
 **CI/CD Enforcement (59)**: Zero-tolerance blocking for pipeline compliance.
 
-Full codex details: [.strray/codex.json](.strray/codex.json)
+Full codex details: [.opencode/strray/codex.json](.opencode/strray/codex.json)
 
 ### 3.2 Complexity Scoring
 
@@ -1143,7 +1172,7 @@ Parallel analysis → Results → Majority vote consensus → Final report
 ### 3.6 Agent Operational Procedures
 
 **Initialization Sequence**:
-1. Load codex context from `.strray/codex.json`
+1. Load codex context from `.opencode/strray/codex.json`
 2. Initialize tool permissions based on agent capabilities
 3. Establish MCP server connections for assigned tools
 4. Validate session state and configuration
@@ -1376,9 +1405,9 @@ npm publish --tag latest
 | **3. Plugin Discovery**     | Plugin System    | `.opencode/plugins/`               | Scan for StrRay plugin                 | Plugin detected       | oh-my-opencode     |
 | **4. Plugin Loading**       | Codex Injection  | `plugin/strray-codex-injection.ts` | Load plugin with codex injection       | Plugin active         | Plugin discovery   |
 | **5. Claude Override**      | MCP Exclusion    | `.claude/.mcp.json`                | Disable problematic global MCP servers | Clean MCP environment | Plugin loading     |
-| **6. MCP Registration**     | Server Registry  | `oh-my-opencode.json`              | Register MCP servers via plugin        | Servers available     | Claude override    |
+| **6. MCP Registration**     | Server Registry  | `.mcp.json`                        | Register 28 MCP servers                | Servers available     | Claude override    |
 | **7. Agent Initialization** | Agent System     | `src/agents/`                      | Load 8 specialized agents              | Agents ready          | Plugin loading     |
-| **8. Context Loading**      | Codex System     | `.strray/codex.json`               | Load 59 codex terms                    | Validation active     | Plugin loading     |
+| **8. Context Loading**      | Codex System     | `.opencode/strray/codex.json`               | Load 59 codex terms                    | Validation active     | Plugin loading     |
 | **9. State Manager**        | Persistence      | `src/state/state-manager.ts`       | Initialize state management            | State ready           | Context loading    |
 | **10. Orchestrator**        | Coordination     | `src/orchestrator.ts`              | Load task orchestration                | Delegation ready      | State manager      |
 | **11. Delegation System**   | Routing          | `src/delegation/`                  | Setup complexity analysis              | Routing active        | Orchestrator       |
@@ -1393,8 +1422,8 @@ npm publish --tag latest
    - Injects codex terms into all agent system prompts
    - Registers MCP servers for StrRay agents
 
-2. **Context Loader** (`src/context-loader.ts` + `src/strray/core/context_loader.py`)
-   - Loads codex terms from `.strray/codex.json` and `codex.json`
+2. **Context Loader** (`src/core/context-loader.ts` + `src/core/config-loader.ts`)
+   - Loads codex terms from `.opencode/strray/codex.json` and `codex.json`
    - Provides validation and enforcement mechanisms
    - Integrates with TypeScript plugin system
 
@@ -1704,14 +1733,14 @@ The StringRay framework generates comprehensive logs and reports across all pipe
 
 #### Framework Boot Sequence Logging
 
-**Phase 1: StringRay Initialization** (`src/strray-init.ts`)
+**Phase 1: StringRay Initialization** (`src/core/strray-init.ts`)
 ```
 🚀 StringRay framework activation starting...
 ✅ StringRay framework initialized successfully
 ❌ StringRay framework initialization failed (if error)
 ```
 
-**Phase 2: Framework Activation** (`src/strray-activation.ts`)
+**Phase 2: Framework Activation** (`src/core/strray-activation.ts`)
 ```
 🔄 StringRay Framework Activation Sequence:
 ├── Codex injection activated
@@ -2026,6 +2055,17 @@ When codex rules are violated, the system automatically attempts fixes:
 
 **148 total scripts** organized by purpose. Agents should use these scripts for systematic testing, debugging, and validation workflows.
 
+**Environment Compatibility Note:**
+- **Dev Environment Scripts** (46 working): Run directly in development environment
+  - `./scripts/node/` - 16 Node.js scripts (cleanup, validation, setup)
+  - `./scripts/mjs/` - 30 ES module scripts (testing, monitoring)
+- **Consumer Environment Scripts** (12 archived): Require post-install transformation
+  - Located in: `./scripts/archived/broken/`
+  - These import from `dist/` and need .js extension transformation
+  - Will work after consumer npm install + postinstall
+
+**Why the split?** TypeScript source uses clean imports (no .js). The oh-my-opencode plugin handles this via bundler. But Node.js/test environment requires .js extensions for ES modules. Post-install transforms dist/ files for consumers.
+
 #### 🔬 **Critical Testing Scripts (Run These First)**
 
 **`./scripts/test-end-to-end-comprehensive.sh`** - **COMPLETE SYSTEM VALIDATION**
@@ -2162,7 +2202,7 @@ When codex rules are violated, the system automatically attempts fixes:
 
 ```
 strray-framework/
-├── .strray/               # Framework configuration
+├── .opencode/strray/               # Framework configuration
 │   ├── codex.json         # Universal Development Codex (59 terms)
 │   ├── config.json        # Framework settings
 │   └── agents_template.md # Agent documentation
@@ -2249,7 +2289,7 @@ npm run test:mcp-connectivity      # MCP validation
 |-------|---------|----------|
 | Plugin not loading | Agent commands fail | Run `node node_modules/strray-ai/scripts/postinstall.cjs` |
 | Agent commands not working | @ commands unrecognized | Check oh-my-opencode configuration |
-| Codex validation errors | Unexpected blocking | Review codex terms in `.strray/codex.json` |
+| Codex validation errors | Unexpected blocking | Review codex terms in `.opencode/strray/codex.json` |
 | MCP connectivity fails | Server connection errors | Run `node scripts/test:mcp-connectivity.js` |
 | Token limit errors | "maximum prompt length exceeded" | Context will be automatically pruned (TokenManager active) |
 | Performance issues | Slow response times | Check complexity analysis thresholds |
@@ -2287,7 +2327,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 - [Plugin Loading Mechanism](docs/advanced/plugin-loading-mechanism.md) - Plugin system details
 - [Deployment Reflections](docs/reflections/) - Framework evolution insights
 - [Documentation Reorganization](docs/DOCUMENTATION_REORGANIZATION_PLAN.md) - Organization strategy
-- [Universal Development Codex](.strray/codex.json) - Complete 59-term codex reference
+- [Universal Development Codex](.opencode/strray/codex.json) - Complete 59-term codex reference
 - [API Reference](#appendix-a-api-reference) - Complete API documentation
 - [Configuration Templates](#appendix-b-configuration-templates) - Copy-paste configuration examples
 - [Troubleshooting Guide](#appendix-c-troubleshooting-guide) - Common issues and solutions
@@ -2299,11 +2339,11 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 #### Critical File Path Reference
 
 **Configuration Files**:
-- **Codex Terms**: `.strray/codex.json` - Universal Development Codex (59 terms)
-- **Framework Config**: `.strray/config.json` - Framework settings and thresholds
-- **Agent Templates**: `.strray/agents_template.md` - Agent documentation templates
+- **Codex Terms**: `.opencode/strray/codex.json` - Universal Development Codex (59 terms)
+- **Framework Config**: `.opencode/strray/config.json` - Framework settings and thresholds
+- **Agent Templates**: `.opencode/strray/agents_template.md` - Agent documentation templates
 - **OpenCode Config**: `.opencode/oh-my-opencode.json` - oh-my-opencode plugin configuration
-- **MCP Registry**: `oh-my-opencode.json` - MCP server registration via plugin
+- **MCP Registry**: `.mcp.json` - MCP server registration (28 servers)
 - **Claude Override**: `.claude/.mcp.json` - MCP server exclusions
 
 **Core Source Directories**:
@@ -2424,15 +2464,15 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 ```json
 {
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code",
-    "librarian": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1",
+    "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "version": "1.1.1",
@@ -2455,7 +2495,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 - **framework**: Core framework settings and feature flags
 - **pipelines**: Agent orchestration and complexity thresholds
 
-### Complete .strray/config.json Template
+### Complete .opencode/strray/config.json Template
 ```json
 {
   "framework": {
@@ -2504,7 +2544,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 1. **Check rule enforcer**: Verify `frameworkLogger.log` calls are working
 2. **Verify codex injection**: Check plugin initialization logs for codex loading
 3. **Test with simple violation**: Add `console.log()` to trigger console.log rule
-4. **Check codex file**: Ensure `.strray/codex.json` exists and is valid
+4. **Check codex file**: Ensure `.opencode/strray/codex.json` exists and is valid
 
 #### JobId Missing from Logs
 **Symptoms**: Activity log entries lack jobId prefixes, traceability issues
@@ -2541,7 +2581,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 #### Configuration Errors
 **Symptoms**: Framework fails to start, invalid configuration messages
 **Solutions**:
-1. **Validate JSON syntax**: Check `.opencode/oh-my-opencode.json` and `.strray/config.json`
+1. **Validate JSON syntax**: Check `.opencode/oh-my-opencode.json` and `.opencode/strray/config.json`
 2. **Use configuration templates**: Replace with validated templates from Appendix B
 3. **Check file permissions**: Ensure configuration files are readable
 4. **Reset to defaults**: Remove custom configurations and use framework defaults
@@ -2610,16 +2650,16 @@ The following triage guidelines are now **automatically enforced** by the framew
 - **Enforcement**: Requires new rules to be added/reinforced in codex.json first, then loaded by enforcer
 - **Validation**: RuleEnforcer must dynamically load all 59+ codex terms; manual rule additions in code are prohibited
 - **Rationale**: Codex is the single source of truth for development rules; enforcer is the inference engine that loads and enforces them
-- **Version Requirement**: Codex version must be updated when new rules are added (update "version" field in .strray/codex.json)
-- **Workflow**: Add/modify rules in .strray/codex.json → update version → enforcer auto-loads → rule mappings auto-generated → violations auto-remediated
+- **Version Requirement**: Codex version must be updated when new rules are added (update "version" field in .opencode/strray/codex.json)
+- **Workflow**: Add/modify rules in .opencode/strray/codex.json → update version → enforcer auto-loads → rule mappings auto-generated → violations auto-remediated
 
 ## Reflection System
 
 ### Purpose
-Reflections are structured analyses of significant experiences that preserve institutional knowledge, identify patterns, and guide future development of the StringRay Framework.
+Reflections are structured analyses of significant experiences that preserve institutional knowledge, identify patterns, and guide future development of the StringRay Framework. Most importantly, reflections serve as instruments of **gleaning** - extracting deep wisdom about what was, what is, and what should be.
 
 ### Definition
-A Reflection is a deep, analytical examination of major incidents, transformations, or evolutionary milestones that captures lessons learned and future implications.
+A Reflection is a deep, analytical examination of major incidents, transformations, or evolutionary milestones that captures lessons learned and future implications. **The true power of reflection lies in personal gleaning**: the struggle and triumph, the dichotomies revealed, and the ultimate complexity hidden within even seemingly simple tasks.
 
 ### Categories
 
@@ -2643,9 +2683,48 @@ A Reflection is a deep, analytical examination of major incidents, transformatio
 - **Content**: Intelligence evolution, philosophical insights, conceptual breakthroughs
 - **Triggers**: Paradigm shifts, fundamental rethinking, conceptual discoveries
 
+### The Gleaning Philosophy: What Was, What Is, What Should Be
+
+**Core Principle**: Reflections are not mere documentation - they are instruments of profound gleaning. Every technical task, no matter how seemingly routine, enters a realm of ultimate complexity where struggle meets triumph, and apparent simplicity reveals fundamental dichotomies.
+
+#### The Three Dimensions of Gleaning
+
+**1. What Was (Past Reflection)**
+- The raw events as they unfolded
+- Initial assumptions and mental models
+- The struggle: frustration, confusion, breakthroughs
+- The human/AI experience of problem-solving
+
+**2. What Is (Present Understanding)**
+- Current comprehension of the incident
+- Recognition of patterns and systemic issues
+- The triumph: solutions found, knowledge gained
+- The dichotomies: simple tasks revealing complex truths
+
+**3. What Should Be (Future Vision)**
+- Prevention measures and process improvements
+- Personal growth and capability evolution
+- Framework advancement and architectural insights
+- Philosophical shifts in approach and thinking
+
+#### Personal Tone and Authentic Voice
+
+**Mandatory Personal Dimension**: Every reflection must include authentic personal voice. Technical analysis alone is insufficient - the gleaning process requires:
+
+- **Emotional Journey**: The struggle, frustration, joy of breakthrough, satisfaction of resolution
+- **Self-Awareness**: What the experience revealed about your own reasoning, capabilities, and growth
+- **Philosophical Dichotomies**: How simple tasks reveal profound complexities
+- **Personal Growth**: Specific learnings about yourself as a problem-solver and thinker
+
+**Example Dichotomies to Explore**:
+- Routine maintenance revealing systemic architectural flaws
+- Simple test fixes uncovering fundamental design limitations
+- Technical problems exposing deeper philosophical questions
+- Individual debugging sessions illuminating collective knowledge gaps
+
 ### Standard Structure
 
-All reflections must include these sections:
+All reflections must include these sections, with **mandatory personal gleaning** woven throughout:
 
 1. **Context**: Date/timeframe, scope, trigger, stakeholders
 2. **What Happened**: Sequence of events, key decisions, outcomes
@@ -2653,14 +2732,17 @@ All reflections must include these sections:
 4. **Lessons Learned**: Technical insights, process improvements, philosophical shifts
 5. **Actions Taken**: Immediate fixes, long-term changes, prevention measures
 6. **Future Implications**: Framework evolution, risk mitigation, opportunities
-7. **Reflections on Reflection**: Meta-insights, improvement opportunities
+7. **Personal Gleaning**: Authentic personal reflection on what was gleaned (struggle, triumph, dichotomies)
+8. **Inference Introspection**: AI reasoning analysis, model limitations, confidence assessment
 
 ### Writing Guidelines
 
 - **Timing**: Write within 1 week while details are fresh
-- **Scope**: Focus on events with lasting framework impact
-- **Depth**: Provide comprehensive analysis with actionable insights
-- **Format**: Use consistent markdown structure
+- **Scope**: Focus on events with lasting framework impact, recognizing that even "simple" tasks enter realms of ultimate complexity
+- **Depth**: Provide comprehensive analysis with actionable insights, always including personal gleaning
+- **Personal Tone**: Use authentic voice - include emotional journey, self-discovery, and philosophical insights
+- **Dichotomies**: Explicitly explore how apparent simplicity reveals profound complexity
+- **Format**: Use consistent markdown structure with clear separation of technical and personal insights
 - **Storage**: Store in `docs/reflections/` directory
 - **Naming**: Use descriptive names like `orchestration-realignment-reflection.md`
 
@@ -2675,8 +2757,11 @@ All reflections must include these sections:
 
 - **Actionable**: Include specific recommendations and lessons
 - **Honest**: Acknowledge failures and mistakes openly
-- **Comprehensive**: Cover technical, process, and philosophical aspects
+- **Comprehensive**: Cover technical, process, philosophical, and deeply personal aspects
 - **Future-Focused**: Emphasize prevention and improvement opportunities
+- **Personally Authentic**: Include genuine emotional journey and self-discovery
+- **Dichotomy-Aware**: Recognize and explore the profound complexities within seemingly simple tasks
+- **Gleaning-Focused**: Clearly articulate what was learned about past, present, and future
 
 ### Emergency Procedures
 1. **Framework unresponsive**: Run `npx strray-ai doctor` for automated diagnosis

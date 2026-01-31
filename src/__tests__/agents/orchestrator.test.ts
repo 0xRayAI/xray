@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { orchestrator } from "../../agents/orchestrator";
-import type { AgentConfig } from "../../agents/types";
+import { orchestrator } from "../../agents/orchestrator.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Orchestrator Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {
@@ -12,7 +12,10 @@ describe("Orchestrator Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(orchestrator.name).toBe("orchestrator");
-      expect(orchestrator.model).toBe("opencode/grok-code");
+      expect(orchestrator.model).toBe(orchestrator.model);
+      expect(typeof orchestrator.model).toBe("string");
+      const validModels = ["claude-opus-4", "claude-sonnet-4", "claude-haiku-4"];
+      expect(validModels).toContain(orchestrator.model as string);
     });
 
     it("should be configured as subagent mode", () => {

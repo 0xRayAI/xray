@@ -1,9 +1,13 @@
-import { AgentConfig } from "./types";
-import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer";
+import { AgentConfig } from "./types.js";
+import { modelRouter } from '../core/model-router.js';
+import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer.js";
 
 export const librarian: AgentConfig = {
   name: "librarian",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('librarian'); },
+  capabilities: ["codebase-exploration", "documentation-retrieval", "pattern-recognition", "search-optimization", "context-building"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "Codebase and documentation search specialist. Expert in exploring large codebases, finding patterns, and retrieving relevant documentation.",
   mode: "subagent",
@@ -55,24 +59,21 @@ Specialized agent for comprehensive codebase exploration, documentation retrieva
 - **Recommendations**: Suggestions for further investigation or implementation approaches
 - **Documentation Links**: References to relevant documentation and resources`,
   temperature: 0.4,
-  tools: {
+   tools: {
     include: [
       "read",
       "grep",
       "lsp_*",
       "run_terminal_cmd",
-      "background_task",
-      "lsp_goto_definition",
-      "lsp_find_references",
       "project-analysis_*",
-      "librarian_*",
-      // Skill invocation tools for comprehensive analysis
-      "invoke-skill",
-      "skill-code-review",
-      "skill-security-audit",
-      "skill-performance-optimization",
-      "skill-testing-strategy",
-      "skill-project-analysis",
+      // Removed: background_task, invoke-skill, skill-* tools to prevent spawning cascades
+      // Librarian is a solo agent - it should not spawn other agents
+    ],
+    exclude: [
+      "background_task", // Prevents async spawning
+      "invoke-skill",    // Prevents skill-based spawning
+      "skill-*",         // Prevents all skill invocation
+      "call_omo_agent",  // Prevents direct agent spawning
     ],
   },
   permission: {

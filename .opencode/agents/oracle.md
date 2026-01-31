@@ -1,7 +1,7 @@
 ---
 name: oracle
 description: Strategic guidance and complex problem-solving specialist. Expert in architectural decisions, technical strategy, and high-level system design.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.3
 maxSteps: 40
 mode: subagent

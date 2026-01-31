@@ -11,7 +11,7 @@
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
 import { IncomingMessage, ServerResponse } from "http";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Security configuration constants
 export const SECURITY_CONFIG = {

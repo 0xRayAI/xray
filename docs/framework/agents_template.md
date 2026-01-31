@@ -70,13 +70,13 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
 - **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `opencode/grok-code` model
+- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
 
 - **Hybrid Architecture**: TypeScript frontend + Python backend for advanced capabilities
-- **Python Components**: Located in `.opencode/src/strray/` with async coordination
+- **Core Components**: Located in `src/core/` with TypeScript implementation
 - **Cross-Language Communication**: JSON-RPC/WebSocket protocols for inter-process communication
 - **State Synchronization**: Shared state management between TypeScript and Python layers
 
@@ -115,7 +115,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 #### `.opencode/` Directory (Primary Framework Hub)
 
 - **Purpose**: Contains the complete oh-my-opencode integration with plugins, agents, and MCP servers
-- **Python Backend**: Full backend implementation in `src/strray/` with async coordination and AI services
+- **TypeScript Core**: Full core implementation in `src/core/` with modular coordination and AI services
 - **Boot Orchestration**: `init.sh` provides orchestrator-first initialization with compliance validation
 - **Plugin Ecosystem**: TypeScript plugin system for codex injection and MCP server registration
 
@@ -125,9 +125,9 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 - `oh-my-opencode.json` - Main framework configuration with plugin declarations
 - `plugin/strray-codex-injection.ts` - Plugin initialization and hook system
 - `agents/` - Individual agent configurations (.md descriptions + .yml specs)
-- `src/strray/` - Python backend with BaseAgent classes and orchestration
+- `src/core/` - TypeScript core with manager classes and orchestration
 
-#### `.strray/` Directory (Configuration Repository)
+#### `.opencode/strray/` Directory (Configuration Repository)
 
 - **Purpose**: Centralized configuration for codex terms, agent templates, and context loading
 - **Codex Management**: `codex.json` contains detailed enforcement rules and metadata
@@ -148,8 +148,8 @@ Framework initializes in strict dependency order via orchestrator-first boot:
    - Injects codex terms into all agent system prompts
    - Registers MCP servers for StrRay agents
 
-2. **Context Loader** (`src/context-loader.ts` + `src/strray/core/context_loader.py`)
-   - Loads codex terms from `.strray/codex.json` and `codex.json`
+2. **Context Loader** (`src/core/context-loader.ts` + `src/core/config-loader.ts`)
+   - Loads codex terms from `.opencode/strray/codex.json` and `codex.json`
    - Provides validation and enforcement mechanisms
    - Integrates with TypeScript plugin system
 
@@ -207,13 +207,13 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
 - **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `opencode/grok-code` model
+- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
 
 - **Hybrid Architecture**: TypeScript frontend + Python backend for advanced capabilities
-- **Python Components**: Located in `.opencode/src/strray/` with async coordination
+- **Core Components**: Located in `src/core/` with TypeScript implementation
 - **Cross-Language Communication**: JSON-RPC/WebSocket protocols for inter-process communication
 - **State Synchronization**: Shared state management between TypeScript and Python layers
 
@@ -1214,30 +1214,13 @@ Framework initializes in strict dependency order:
 
 - **`.opencode/init.sh`**: Main initialization script with component verification
 - **`.opencode/plugin/strray-codex-injection.ts`**: Plugin initialization and hook system
-- **`.opencode/src/strray/core/context_loader.py`**: Python context loading and validation
-- **`.opencode/src/boot-orchestrator.ts`**: Boot sequence coordination
-
-### Configuration Files
-
-- **`.opencode/oh-my-opencode.json`**: Main framework configuration with plugin declarations
-- **`.strray/codex.json`**: 45 detailed codex terms with enforcement levels
-- **`.opencode/enforcer-config.json`**: Enforcer-specific threshold settings
-- **`.opencode/.strray/workflow_state.json`**: Workflow state persistence
-
-### Agent Configuration System
-
-- **`.opencode/agents/`**: Individual agent configurations and descriptions
-- **Agent configs**: 8 specialized agents with tools, permissions, and capabilities
-- **Model routing**: All agents configured for `opencode/grok-code`
-
-### Python Backend Components
-
-- **`.opencode/src/strray/core/agent.py`**: BaseAgent class with async coordination
-- **`.opencode/src/strray/core/codex_loader.py`**: Codex loading and validation
-- **`.opencode/src/strray/core/orchestration.py`**: Advanced coordination systems
-- **`.opencode/src/strray/config/manager.py`**: Configuration management
-- **`.opencode/src/strray/ai/service.py`**: AI provider interfaces
-- **`.opencode/src/strray/performance/monitor.py`**: Metrics collection and alerting
+- **`src/core/context-loader.ts`**: TypeScript context loading and validation
+- **`src/core/boot-orchestrator.ts`**: Boot orchestration system with async coordination
+- **`src/core/model-router.ts`**: Model routing and validation
+- **`src/core/config-loader.ts`**: Configuration management
+- **`src/core/framework-logger.ts`**: Logging and metrics collection
+- **`src/core/strray-activation.ts`**: Framework component activation
+- **`src/orchestrator/orchestrator.ts`**: Advanced coordination systems
 
 ---
 

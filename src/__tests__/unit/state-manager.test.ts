@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { StringRayStateManager, StateManager } from "../../state/state-manager";
-import { setupStandardMocks, waitForDebounce } from "../utils/test-utils";
+import { StringRayStateManager, StateManager } from "../../state/state-manager.js";
+import { setupStandardMocks, waitForDebounce } from "../utils/test-utils.js";
 
 describe("StringRayStateManager", () => {
   let stateManager: StateManager;
@@ -37,7 +37,7 @@ describe("StringRayStateManager", () => {
       expect(stateManager.get("stringKey")).toBe("hello world");
       expect(stateManager.get("numberKey")).toBe(42);
       expect(stateManager.get("booleanKey")).toBe(true);
-      expect(stateManager.get("nullKey")).toBe(undefined); // Corruption detection converts null to undefined
+      expect(stateManager.get("nullKey")).toBe(null);
       expect(stateManager.get("undefinedKey")).toBe(undefined);
     });
 

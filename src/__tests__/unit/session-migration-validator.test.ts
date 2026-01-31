@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { SessionMigrationValidator } from "../../validation/session-migration-validator";
+import { SessionMigrationValidator } from "../../validation/session-migration-validator.js";
 
 describe("SessionMigrationValidator", () => {
   let validator: SessionMigrationValidator;

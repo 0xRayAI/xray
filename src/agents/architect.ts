@@ -1,8 +1,12 @@
-import type { AgentConfig } from "./types";
+import type { AgentConfig } from "./types.js";
+import { modelRouter } from '../core/model-router.js';
 
 export const architect: AgentConfig = {
   name: "architect",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('architect'); },
+  capabilities: ["architecture", "design", "system-integration", "delegation", "complexity-analysis"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework architect with comprehensive architectural rule enforcement, state management, delegation, and system design capabilities. Specialized in preventing architectural violations and ensuring system integrity.",
   mode: "subagent",

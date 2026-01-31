@@ -9,13 +9,13 @@
  */
 
 import { EventEmitter } from "events";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";
 import { performance } from "perf_hooks";
-import { securityHardeningSystem } from "../security/security-hardening-system";
-import { advancedProfiler } from "./advanced-profiler";
+import { securityHardeningSystem } from "../security/security-hardening-system.js";
+import { advancedProfiler } from "./advanced-profiler.js";
 
 export interface SystemMetrics {
   timestamp: number;

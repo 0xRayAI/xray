@@ -1,7 +1,7 @@
 ---
 name: bug-triage-specialist
 description: Systematic bug investigation, error resolution, and root cause analysis. Triggers on errors, test failures, crashes.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.3
 tools:
   Read: true

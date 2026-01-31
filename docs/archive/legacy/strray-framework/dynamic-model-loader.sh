@@ -77,21 +77,21 @@ parse_models() {
         cat <<EOF
 {
   "models": [
-    "opencode/grok-code",
+    "openrouter/xai-grok-2-1212-fast-1",
     "gpt-4o",
     "gpt-5.2",
     "google/gemini-3-pro-high",
     "google/gemini-3-flash",
-    "opencode/grok-code"
+    "openrouter/xai-grok-2-1212-fast-1"
   ],
   "providers": {
-    "grok": ["opencode/grok-code"],
+    "grok": ["openrouter/xai-grok-2-1212-fast-1"],
     "openai": ["gpt-4o", "gpt-5.2"],
     "google": ["google/gemini-3-pro-high", "google/gemini-3-flash"],
     "anthropic": []
   },
   "capabilities": {
-    "opencode/grok-code": ["coding", "fast", "reasoning", "analysis"],
+    "openrouter/xai-grok-2-1212-fast-1": ["coding", "fast", "reasoning", "analysis"],
     "gpt-4o": ["coding", "reasoning", "analysis"],
     "gpt-5.2": ["coding", "reasoning", "analysis", "refactoring"],
     "google/gemini-3-pro-high": ["reasoning", "analysis"],
@@ -144,7 +144,7 @@ select_model_for_agent() {
 
     if [[ -z "$available_models" ]]; then
         log_warn "No models available, using fallback"
-        echo "opencode/grok-code"
+        echo "openrouter/xai-grok-2-1212-fast-1"
         return 0
     fi
 
@@ -152,7 +152,7 @@ select_model_for_agent() {
     case "$agent_type" in
         "enforcer")
             # Enforcer needs compliance checking - prefers reasoning models
-            for model in "opencode/grok-code" "gpt-5.2" "opencode/grok-code" "gpt-4o"; do
+            for model in "openrouter/xai-grok-2-1212-fast-1" "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -161,7 +161,7 @@ select_model_for_agent() {
             ;;
         "architect")
             # Architect needs design and architecture analysis
-            for model in "gpt-5.2" "opencode/grok-code" "opencode/grok-code" "gpt-4o"; do
+            for model in "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -170,7 +170,7 @@ select_model_for_agent() {
             ;;
         "orchestrator")
             # Orchestrator needs coordination and planning
-            for model in "opencode/grok-code" "gpt-5.2" "opencode/grok-code" "gpt-4o"; do
+            for model in "openrouter/xai-grok-2-1212-fast-1" "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -179,7 +179,7 @@ select_model_for_agent() {
             ;;
         "bug-triage-specialist")
             # Bug triage needs analysis and debugging
-            for model in "gpt-5.2" "opencode/grok-code" "opencode/grok-code" "gpt-4o"; do
+            for model in "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -188,7 +188,7 @@ select_model_for_agent() {
             ;;
         "code-reviewer")
             # Code reviewer needs detailed analysis
-            for model in "gpt-5.2" "opencode/grok-code" "gpt-4o" "opencode/grok-code"; do
+            for model in "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -197,7 +197,7 @@ select_model_for_agent() {
             ;;
         "refactorer")
             # Refactorer needs deep code understanding
-            for model in "gpt-5.2" "opencode/grok-code" "gpt-4o" "opencode/grok-code"; do
+            for model in "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -206,7 +206,7 @@ select_model_for_agent() {
             ;;
         "security-auditor")
             # Security auditor needs thorough analysis
-            for model in "opencode/grok-code" "gpt-5.2" "opencode/grok-code" "gpt-4o"; do
+            for model in "openrouter/xai-grok-2-1212-fast-1" "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -215,7 +215,7 @@ select_model_for_agent() {
             ;;
         "test-architect")
             # Test architect needs systematic thinking
-            for model in "google/gemini-3-pro-high" "gpt-5.2" "opencode/grok-code" "opencode/grok-code"; do
+            for model in "google/gemini-3-pro-high" "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "openrouter/xai-grok-2-1212-fast-1"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -224,7 +224,7 @@ select_model_for_agent() {
             ;;
         "librarian")
             # Librarian needs broad knowledge access
-            for model in "google/gemini-3-flash" "gpt-4o" "opencode/grok-code" "google/gemini-3-pro-high"; do
+            for model in "google/gemini-3-flash" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1" "google/gemini-3-pro-high"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -233,7 +233,7 @@ select_model_for_agent() {
             ;;
         "explore")
             # Explore needs fast information gathering
-            for model in "google/gemini-3-flash" "opencode/grok-code" "gpt-4o" "google/gemini-3-pro-high"; do
+            for model in "google/gemini-3-flash" "openrouter/xai-grok-2-1212-fast-1" "gpt-4o" "google/gemini-3-pro-high"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -242,7 +242,7 @@ select_model_for_agent() {
             ;;
         "frontend-ui-ux-engineer")
             # UI/UX engineer needs creative and design capabilities
-            for model in "google/gemini-3-pro-high" "gpt-4o" "opencode/grok-code" "gpt-5.2"; do
+            for model in "google/gemini-3-pro-high" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1" "gpt-5.2"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -251,7 +251,7 @@ select_model_for_agent() {
             ;;
         "document-writer")
             # Document writer needs clear communication
-            for model in "google/gemini-3-flash" "gpt-4o" "opencode/grok-code" "google/gemini-3-pro-high"; do
+            for model in "google/gemini-3-flash" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1" "google/gemini-3-pro-high"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -260,7 +260,7 @@ select_model_for_agent() {
             ;;
         "multimodal-looker")
             # Multimodal needs image/text understanding
-            for model in "google/gemini-3-pro-high" "google/gemini-3-flash" "gpt-4o" "opencode/grok-code"; do
+            for model in "google/gemini-3-pro-high" "google/gemini-3-flash" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -269,7 +269,7 @@ select_model_for_agent() {
             ;;
         *)
             # Default fallback
-            for model in "opencode/grok-code" "gpt-4o" "google/gemini-3-flash"; do
+            for model in "openrouter/xai-grok-2-1212-fast-1" "gpt-4o" "google/gemini-3-flash"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
                     echo "$model"
                     return 0
@@ -297,7 +297,7 @@ main() {
         log_warn "Failed to load models from OpenCode, using fallback configuration"
         # Fallback to hardcoded defaults
         select_model_for_agent "$agent_type" '{
-          "models": ["opencode/grok-code", "gpt-4o", "gpt-5.2", "google/gemini-3-pro-high", "google/gemini-3-flash"]
+          "models": ["openrouter/xai-grok-2-1212-fast-1", "gpt-4o", "gpt-5.2", "google/gemini-3-pro-high", "google/gemini-3-flash"]
         }'
         exit 0
     fi

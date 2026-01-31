@@ -1,8 +1,13 @@
-import type { AgentConfig } from "./types";
+import type { AgentConfig } from "./types.js";
+
+import { modelRouter } from '../core/model-router.js';
 
 export const enforcer: AgentConfig = {
   name: "enforcer",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('enforcer'); },
+  capabilities: ["error-prevention", "compliance-monitoring", "systematic-validation", "codex-enforcement", "security-policy"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework enforcer with error handling, compliance monitoring, and systematic validation - Advanced Error Preventer",
   mode: "subagent",

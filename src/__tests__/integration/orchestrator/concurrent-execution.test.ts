@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   StringRayOrchestrator,
   TaskDefinition,
-} from "../../../orchestrator";
+} from "../../../orchestrator/orchestrator.js";
 
 describe("Orchestrator Concurrent Execution", () => {
   let orchestrator: StringRayOrchestrator;

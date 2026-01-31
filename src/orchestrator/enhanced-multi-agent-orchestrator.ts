@@ -3,13 +3,14 @@
  * Integrates subagent spawning visibility and lifecycle management
  */
 
-import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../framework-logger";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { frameworkLogger } from "../core/framework-logger.js"
 import {
   ComplexityAnalyzer,
   ComplexityMetrics,
-} from "../delegation/complexity-analyzer";
-import { createAgentDelegator } from "../delegation/agent-delegator";
+} from "../delegation/complexity-analyzer.js";
+import { createAgentDelegator } from "../delegation/agent-delegator.js";
+import { strRayConfigLoader } from "../core/config-loader.js";
 
 export interface AgentSpawnRequest {
   agentType: string;
@@ -60,7 +61,7 @@ export class EnhancedMultiAgentOrchestrator {
   ) {
     this.stateManager = stateManager || new StringRayStateManager();
     this.complexityAnalyzer = new ComplexityAnalyzer();
-    this.agentDelegator = createAgentDelegator(this.stateManager);
+    this.agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
 
     this.state = {
       activeAgents: new Map(),

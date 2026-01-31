@@ -19,7 +19,7 @@ StrRay Framework implements a **hybrid TypeScript/Python architecture** optimize
 
 #### Python Backend Components (Secondary)
 
-- **Class-Based Agents**: Full-featured agents extending `BaseAgent` class in `src/strray/core/`
+- **Agent Configuration**: Configuration-based agents defined in `src/agents/` with routing from `src/core/model-router.ts`
 - **State Management**: Advanced agent state persistence and recovery
 - **Performance Monitoring**: Integrated performance tracking and alerting
 - **Codex Integration**: Universal Development Codex compliance enforcement

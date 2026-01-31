@@ -12,6 +12,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs";
 import path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 class StrRayFrameworkComplianceAuditServer {
   private server: Server;
@@ -30,7 +31,7 @@ class StrRayFrameworkComplianceAuditServer {
     );
 
     this.setupToolHandlers();
-    console.log("StrRay Framework Compliance Audit MCP Server initialized");
+    void frameworkLogger.log('framework-compliance-audit.server', '-strray-framework-compliance-audit-mcp-server-init', 'info', { message: "StrRay Framework Compliance Audit MCP Server initialized" });
   }
 
   private setupToolHandlers() {
@@ -108,10 +109,7 @@ class StrRayFrameworkComplianceAuditServer {
     const scope = args.scope || "full";
     const detailed = args.detailed || false;
 
-    console.log("📋 MCP: Performing framework compliance audit:", {
-      scope,
-      detailed,
-    });
+    await frameworkLogger.log('framework-compliance-audit.server', '-mcp-performing-framework-compliance-audit-scope-d', 'info', { message: "📋 MCP: Performing framework compliance audit:", scope, detailed: detailed });
 
     const auditResults = {
       passed: true,
@@ -215,10 +213,7 @@ ${auditResults.recommendations.length > 0 ? auditResults.recommendations.map((re
     const terms = args.terms || [];
     const strict = args.strict !== false;
 
-    console.log("📚 MCP: Performing codex validation:", {
-      terms: terms.length,
-      strict,
-    });
+    await frameworkLogger.log('framework-compliance-audit.server', '-mcp-performing-codex-validation-terms-terms-lengt', 'info', { message: "📚 MCP: Performing codex validation:", terms: terms.length, strict: strict });
 
     try {
       const results = await this.validateCodexTerms(terms, strict);
@@ -597,7 +592,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Framework Compliance Audit MCP Server started");
+    void frameworkLogger.log('framework-compliance-audit.server', '-strray-framework-compliance-audit-mcp-server-star', 'info', { message: "StrRay Framework Compliance Audit MCP Server started" });
   }
 }
 

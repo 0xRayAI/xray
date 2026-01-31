@@ -56,7 +56,7 @@ local agent_type="$2"
 # Mock get_model_for_agent for testing
 
 get_model_for_agent() {
-echo "opencode/grok-code" # Return safe default for testing
+echo "openrouter/xai-grok-2-1212-fast-1" # Return safe default for testing
 }
 
 echo "✅ Dynamic model functions loaded"
@@ -91,11 +91,11 @@ else
 echo "✅ CORRECTLY ALLOWED: claude-sonnet-4-5"
 fi
 
-if is_deprecated_model "opencode/grok-code"; then
-echo "❌ INCORRECTLY BLOCKED: opencode/grok-code (should not be deprecated)"
+if is_deprecated_model "openrouter/xai-grok-2-1212-fast-1"; then
+echo "❌ INCORRECTLY BLOCKED: openrouter/xai-grok-2-1212-fast-1 (should not be deprecated)"
 deprecated_tests_passed=false
 else
-echo "✅ CORRECTLY ALLOWED: opencode/grok-code"
+echo "✅ CORRECTLY ALLOWED: openrouter/xai-grok-2-1212-fast-1"
 fi
 
 if [ "$deprecated_tests_passed" = true ]; then
@@ -132,7 +132,7 @@ local expected="$3"
 
 test_compatibility "claude-sonnet-4-5" "enforcer" "compatible" || compatibility_tests_passed=false
 test_compatibility "gpt-5.2" "code-reviewer" "compatible" || compatibility_tests_passed=false
-test_compatibility "opencode/grok-code" "enforcer" "compatible" || compatibility_tests_passed=false
+test_compatibility "openrouter/xai-grok-2-1212-fast-1" "enforcer" "compatible" || compatibility_tests_passed=false
 test_compatibility "claude-opus-4.5" "enforcer" "incompatible" || compatibility_tests_passed=false
 
 if [ "$compatibility_tests_passed" = true ]; then

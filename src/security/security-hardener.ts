@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { SecurityIssue } from "./security-auditor";
+import { SecurityIssue } from "./security-auditor.js";
 import { promises as fs } from "fs";
 
 export interface SecurityHardeningConfig {

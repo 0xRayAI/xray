@@ -29,7 +29,7 @@ class TestBaseAgent:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         self.config_manager = ConfigManager()
-        self.config_manager.set_value("model_default", "opencode/grok-code")
+        self.config_manager.set_value("model_default", "openrouter/xai-grok-2-1212-fast-1")
         self.config_manager.set_value("ai_auto_log_responses", True)
         self.config_manager.set_value("logging_level", "INFO")
         self.config_manager.set_value("max_concurrent_tasks", 5)
@@ -44,7 +44,7 @@ class TestBaseAgent:
     def test_agent_initialization(self):
         """Test BaseAgent initializes correctly with config."""
         assert self.agent.config_manager is self.config_manager
-        assert self.agent.model == "opencode/grok-code"
+        assert self.agent.model == "openrouter/xai-grok-2-1212-fast-1"
         assert self.agent.temperature == 0.3  # default
         assert hasattr(self.agent, "_ai_service")
         assert hasattr(self.agent, "communication_bus")

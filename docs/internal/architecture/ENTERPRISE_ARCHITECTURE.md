@@ -459,8 +459,8 @@ The framework integrates seamlessly with oh-my-opencode:
 {
   "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray",

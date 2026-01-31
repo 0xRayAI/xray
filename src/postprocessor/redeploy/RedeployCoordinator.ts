@@ -2,8 +2,8 @@
  * Redeploy Coordinator for Post-Processor
  */
 
-import { FixResult, PostProcessorContext } from "../types";
-import { frameworkLogger } from "../../framework-logger";
+import { FixResult, PostProcessorContext } from "../types.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import { execSync } from "child_process";
 
 export interface RedeployResult {

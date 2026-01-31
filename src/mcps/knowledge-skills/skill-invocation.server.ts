@@ -6,7 +6,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { mcpClientManager } from "../../mcp-client.js";
+import { mcpClientManager } from "../mcp-client.js";
 
 class SkillInvocationServer {
   private server: Server;

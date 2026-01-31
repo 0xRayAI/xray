@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { codeReviewer } from "../../agents/code-reviewer";
-import type { AgentConfig } from "../../agents/types";
+import { codeReviewer } from "../../agents/code-reviewer.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Code Reviewer Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {
@@ -11,7 +11,7 @@ describe("Code Reviewer Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(codeReviewer.name).toBe("code-reviewer");
-      expect(codeReviewer.model).toBe("opencode/grok-code");
+      expect(codeReviewer.model).toBe("claude-sonnet-4");
     });
 
     it("should be configured as subagent mode", () => {

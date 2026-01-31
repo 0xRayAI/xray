@@ -1,7 +1,7 @@
 ---
 name: explore
 description: Fast codebase exploration and pattern analysis specialist. Expert in quickly mapping codebases and identifying structural patterns.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.4
 maxSteps: 20
 mode: subagent

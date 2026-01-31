@@ -1,4 +1,4 @@
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs/promises";
 export const useCodexValidation = () => {
     return {

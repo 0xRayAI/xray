@@ -1,8 +1,13 @@
-import type { AgentConfig } from "./types";
+import type { AgentConfig } from "./types.js";
+
+import { modelRouter } from '../core/model-router.js';
 
 export const orchestrator: AgentConfig = {
   name: "orchestrator",
-  model: "opencode/grok-code",
+  get model() { return modelRouter.getValidatedModel('orchestrator'); },
+  capabilities: ["multi-agent-orchestration", "workflow-management", "task-delegation", "conflict-resolution", "session-management"],
+  maxComplexity: 100,
+  enabled: true,
   description:
     "StringRay Framework orchestrator with multi-agent orchestration and coordination, workflow management, and enterprise task orchestration - Advanced Enterprise Coordinator",
   mode: "subagent",

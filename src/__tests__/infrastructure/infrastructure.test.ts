@@ -11,8 +11,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../framework-logger";
-import { StringRayStateManager } from "../../state/state-manager";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("StringRay Infrastructure Tests", () => {
   describe("Core File System", () => {
@@ -20,7 +20,7 @@ describe("StringRay Infrastructure Tests", () => {
       const requiredDirs = [
         "src",
         ".opencode",
-        ".strray",
+        ".opencode/strray",
       ];
 
       for (const dir of requiredDirs) {
@@ -32,7 +32,7 @@ describe("StringRay Infrastructure Tests", () => {
     it("should have required configuration files", () => {
       const requiredFiles = [
         ".opencode/oh-my-opencode.json",
-        ".strray/codex.json",
+        ".opencode/strray/codex.json",
         "package.json",
         "vitest.config.ts",
       ];
@@ -46,7 +46,7 @@ describe("StringRay Infrastructure Tests", () => {
     it("should have readable configuration files", () => {
       const configFiles = [
         ".opencode/oh-my-opencode.json",
-        ".strray/codex.json",
+        ".opencode/strray/codex.json",
         "package.json",
       ];
 
@@ -141,7 +141,7 @@ describe("StringRay Infrastructure Tests", () => {
 
   describe("Plugin Infrastructure", () => {
     it("should have plugin configuration", () => {
-      const pluginFile = ".opencode/plugin/strray-codex-injection.ts";
+      const pluginFile = "dist/plugin/strray-codex-injection.js";
       expect(fs.existsSync(pluginFile)).toBe(true);
     });
 

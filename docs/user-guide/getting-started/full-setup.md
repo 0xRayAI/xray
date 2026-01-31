@@ -4,7 +4,7 @@
 
 StrRay (StringRay) is an advanced AI agent orchestration framework that extends oh-my-opencode with systematic error prevention and production-ready development practices. This guide covers installation and model configuration.
 
-**Important Update**: All agents now use `opencode/grok-code` as the default model. Legacy Anthropic models have been deprecated and replaced to ensure consistency and reliability.
+**Important Update**: All agents now use `openrouter/xai-grok-2-1212-fast-1` as the default model. Legacy Anthropic models have been deprecated and replaced to ensure consistency and reliability.
 
 ## Prerequisites
 
@@ -69,14 +69,14 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
 {
   "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray",
@@ -128,7 +128,7 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
 
 ### Important: Model Migration Required
 
-If you have an existing StrRay installation with older Anthropic models, you **must update** your `.opencode/oh-my-opencode.json` file to use `opencode/grok-code` for all agents. The framework will not function properly with deprecated models.
+If you have an existing StrRay installation with older Anthropic models, you **must update** your `.opencode/oh-my-opencode.json` file to use `openrouter/xai-grok-2-1212-fast-1` for all agents. The framework will not function properly with deprecated models.
 
 Run this command to update your configuration:
 
@@ -136,8 +136,8 @@ Run this command to update your configuration:
 # Backup your current config
 cp .opencode/oh-my-opencode.json .opencode/oh-my-opencode.json.backup
 
-# Update all models to opencode/grok-code
-oh-my-opencode config set model.all opencode/grok-code
+# Update all models to openrouter/xai-grok-2-1212-fast-1
+oh-my-opencode config set model.all openrouter/xai-grok-2-1212-fast-1
 ```
 
 ### Method 1: Edit Configuration File (Recommended)
@@ -154,14 +154,14 @@ oh-my-opencode config set model.all opencode/grok-code
    ```json
    {
      "model_routing": {
-       "enforcer": "opencode/grok-code",
-       "architect": "opencode/grok-code",
-       "orchestrator": "opencode/grok-code",
-       "bug-triage-specialist": "opencode/grok-code",
-       "code-reviewer": "opencode/grok-code",
-       "security-auditor": "opencode/grok-code",
-       "refactorer": "opencode/grok-code",
-       "test-architect": "opencode/grok-code"
+       "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+       "architect": "openrouter/xai-grok-2-1212-fast-1",
+       "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+       "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+       "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+       "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+       "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+       "test-architect": "openrouter/xai-grok-2-1212-fast-1"
      }
    }
    ```
@@ -176,10 +176,10 @@ oh-my-opencode config set model.all opencode/grok-code
 
 ```bash
 # Update a specific agent's model
-oh-my-opencode config set model.enforcer opencode/grok-code
+oh-my-opencode config set model.enforcer openrouter/xai-grok-2-1212-fast-1
 
 # Update all agents to use the same model (recommended)
-oh-my-opencode config set model.all opencode/grok-code
+oh-my-opencode config set model.all openrouter/xai-grok-2-1212-fast-1
 
 # Validate configuration
 oh-my-opencode config validate
@@ -230,14 +230,14 @@ StrRay supports all OpenCode-compatible models. Recommended configurations:
 
 ```json
 {
-  "enforcer": "opencode/grok-code",
-  "architect": "opencode/grok-code",
-  "orchestrator": "opencode/grok-code",
-  "bug-triage-specialist": "opencode/grok-code",
-  "code-reviewer": "opencode/grok-code",
-  "security-auditor": "opencode/grok-code",
-  "refactorer": "opencode/grok-code",
-  "test-architect": "opencode/grok-code"
+  "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+  "architect": "openrouter/xai-grok-2-1212-fast-1",
+  "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+  "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+  "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+  "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+  "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+  "test-architect": "openrouter/xai-grok-2-1212-fast-1"
 }
 ```
 
@@ -245,14 +245,14 @@ StrRay supports all OpenCode-compatible models. Recommended configurations:
 
 ```json
 {
-  "enforcer": "opencode/grok-code",
-  "architect": "opencode/grok-code",
-  "orchestrator": "opencode/grok-code",
-  "bug-triage-specialist": "opencode/grok-code",
-  "code-reviewer": "opencode/grok-code",
-  "security-auditor": "opencode/grok-code",
-  "refactorer": "opencode/grok-code",
-  "test-architect": "opencode/grok-code"
+  "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+  "architect": "openrouter/xai-grok-2-1212-fast-1",
+  "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+  "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+  "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+  "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+  "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+  "test-architect": "openrouter/xai-grok-2-1212-fast-1"
 }
 ```
 
@@ -300,10 +300,10 @@ For complex scenarios, you can implement custom model routing logic:
 {
   "model_routing": {
     "dynamic": true,
-    "fallback_model": "opencode/grok-code",
+    "fallback_model": "openrouter/xai-grok-2-1212-fast-1",
     "agent_specific": {
-      "enforcer": ["opencode/grok-code"],
-      "architect": ["opencode/grok-code"]
+      "enforcer": ["openrouter/xai-grok-2-1212-fast-1"],
+      "architect": ["openrouter/xai-grok-2-1212-fast-1"]
     }
   }
 }

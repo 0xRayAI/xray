@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { EscalationEngine } from "../../../postprocessor/escalation/EscalationEngine";
-import { PostProcessorContext } from "../../../postprocessor/types";
+import { EscalationEngine } from "../../../postprocessor/escalation/EscalationEngine.js";
+import { PostProcessorContext } from "../../../postprocessor/types.js";
 
 describe("EscalationEngine", () => {
   let engine: EscalationEngine;

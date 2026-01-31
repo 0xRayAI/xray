@@ -3,8 +3,8 @@
  * Implements configurable thresholds for file count, time windows, and risk levels
  */
 
-import { frameworkLogger } from "../framework-logger";
-import { runCommand } from "../utils/command-runner";
+import { frameworkLogger } from "../core/framework-logger.js";
+import { runCommand } from "../utils/command-runner.js";
 
 export interface PendingChange {
   filePath: string;

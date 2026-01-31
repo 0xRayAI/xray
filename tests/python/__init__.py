@@ -14,7 +14,7 @@ from strray.config.manager import ConfigManager
 def temp_config_file():
     """Create a temporary config file for testing."""
     config_data = {
-        "model_default": "opencode/grok-code",
+        "model_default": "openrouter/xai-grok-2-1212-fast-1",
         "ai_auto_log_responses": True,
         "logging_level": "INFO",
         "max_concurrent_tasks": 5,
@@ -46,7 +46,7 @@ def mock_ai_service():
 def base_agent(mock_ai_service):
     """Create a BaseAgent instance with mocked AI service."""
     config = {
-        "model_default": "opencode/grok-code",
+        "model_default": "openrouter/xai-grok-2-1212-fast-1",
         "ai_auto_log_responses": True,
         "logging_level": "INFO",
     }
@@ -81,7 +81,7 @@ def sample_response():
         "content": "Analysis complete: Function returns greeting",
         "confidence": 0.95,
         "metadata": {
-            "model": "opencode/grok-code",
+            "model": "openrouter/xai-grok-2-1212-fast-1",
             "tokens": 150,
             "processing_time": 0.234,
         },

@@ -12,9 +12,9 @@ import {
   BootOrchestrator,
   BootSequenceConfig,
   BootResult,
-} from "../../boot-orchestrator";
-import { StringRayContextLoader } from "../../context-loader";
-import { StringRayStateManager } from "../../state/state-manager";
+} from "../../core/boot-orchestrator.js";
+import { StringRayContextLoader } from "../../core/context-loader.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("BootOrchestrator", () => {
   let orchestrator: BootOrchestrator;

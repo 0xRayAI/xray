@@ -3,10 +3,10 @@
  * Analyzes StrRay framework logs to understand flow, agents, and usage patterns
  */
 
-import { frameworkLogger } from "./src/framework-logger";
-import { strRayConfigLoader } from "./src/config-loader";
-import { AgentDelegator } from "./src/delegation/agent-delegator";
-import { StrRayStateManager } from "./src/state/state-manager";
+import { frameworkLogger } from "/Users/blaze/dev/stringray/src/core/framework-logger";
+import { strRayConfigLoader } from "/Users/blaze/dev/stringray/src/core/config-loader";
+import { AgentDelegator } from "/Users/blaze/dev/stringray/src/delegation/agent-delegator";
+import { StrRayStateManager } from "/Users/blaze/dev/stringray/src/state/state-manager";
 
 async function analyzeFrameworkUsage() {
   console.log("🔍 ANALYZING STRRAY FRAMEWORK USAGE PATTERNS");
@@ -21,7 +21,7 @@ async function analyzeFrameworkUsage() {
 
   // Initialize components
   console.log("\n🏗️ Initializing framework components...");
-  const stateManager = new StrRayStateManager();
+  const stateManager = new StrRayStateManager(".opencode/state", true);
   const delegator = new AgentDelegator(stateManager);
 
   // Simulate some framework activity
@@ -193,7 +193,7 @@ async function analyzeFrameworkUsage() {
     );
 
     for (const [agent, count] of Object.entries(agentStats).sort(
-      (a, b) => b[1] - a[1],
+      (a, b) => (b[1] as number) - (a[1] as number),
     )) {
       console.log(`   ${agent}: ${count} invocations`);
     }

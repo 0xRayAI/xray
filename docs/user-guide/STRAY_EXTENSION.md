@@ -74,8 +74,8 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
 // .opencode/oh-my-opencode.json
 {
   "agents": {
-    "architect": { "model": "opencode/grok-code" },
-    "code-reviewer": { "model": "opencode/grok-code" }
+    "architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "code-reviewer": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }
 }
 ```
@@ -249,7 +249,7 @@ bash .opencode/commands/mode-switch.md lite  # 4 core agents
 
 ### What models does StrRay use?
 
-All StrRay agents use `opencode/grok-code` by default, which provides excellent performance for development tasks while maintaining compatibility with oh-my-opencode's model system.
+All StrRay agents use `openrouter/xai-grok-2-1212-fast-1` by default, which provides excellent performance for development tasks while maintaining compatibility with oh-my-opencode's model system.
 
 ### How do I customize agent behavior?
 
@@ -258,8 +258,8 @@ Modify the agents configuration in `.opencode/oh-my-opencode.json`:
 ```json
 {
   "agents": {
-    "architect": { "model": "opencode/grok-code" },
-    "code-reviewer": { "model": "opencode/grok-code" }
+    "architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "code-reviewer": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }
 }
 ```

@@ -131,7 +131,7 @@ This guide provides solutions for common issues encountered when using the StrRa
 3. **Check JSON Syntax**:
    ```bash
    # Validate JSON syntax
-   cat .strray/config.json | jq .
+   cat .opencode/strray/config.json | jq .
    ```
 
 ### Environment Variables Not Loading
@@ -511,7 +511,7 @@ npm --version >> diagnostic.txt
 1. **Check Plugin Directory**:
 
    ```bash
-   ls -la .strray/plugins/
+   ls -la .opencode/strray/plugins/
    ```
 
 2. **Validate Plugin Structure**:
@@ -540,7 +540,7 @@ If StrRay becomes unresponsive:
 2. **Clear Locks**:
 
    ```bash
-   rm -f .strray/locks/*
+   rm -f .opencode/strray/locks/*
    ```
 
 3. **Restart Framework**:
@@ -555,7 +555,7 @@ For configuration or project data loss:
 1. **Check Backups**:
 
    ```bash
-   ls -la .strray/backups/
+   ls -la .opencode/strray/backups/
    ```
 
 2. **Restore from Backup**:

@@ -174,9 +174,9 @@ The framework automatically configures oh-my-opencode agents:
 ```json
 {
   "model_routing": {
-    "orchestrator": "opencode/grok-code",
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code"
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1"
   }
 }
 ```
@@ -307,7 +307,7 @@ node node_modules/strray-ai/scripts/postinstall.cjs
 ### Documentation
 - [Framework Architecture](./README_STRRAY_INTEGRATION.md)
 - [Agent Capabilities](./docs/agents/)
-- [Codex Compliance](./.strray/codex.json)
+- [Codex Compliance](./.opencode/strray/codex.json)
 - [API Reference](./api/API_REFERENCE.md)
 
 ### Community & Support

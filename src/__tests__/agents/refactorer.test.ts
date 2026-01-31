@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { refactorer } from "../../agents/refactorer";
-import type { AgentConfig } from "../../agents/types";
+import { refactorer } from "../../agents/refactorer.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Refactorer Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {
@@ -11,7 +11,7 @@ describe("Refactorer Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(refactorer.name).toBe("refactorer");
-      expect(refactorer.model).toBe("opencode/grok-code");
+      expect(refactorer.model).toBe("claude-sonnet-4");
     });
 
     it("should be configured as subagent mode", () => {

@@ -3,10 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { PostProcessor } from "../../postprocessor/PostProcessor";
-import { StringRayStateManager } from "../../state/state-manager";
-import { SessionMonitor } from "../../session/session-monitor";
-import { setupStandardMocks } from "../utils/test-utils";
+import { PostProcessor } from "../../postprocessor/PostProcessor.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { SessionMonitor } from "../../session/session-monitor.js";
+import { setupStandardMocks } from "../utils/test-utils.js";
 
 describe("PostProcessor Integration", () => {
   let postProcessor: PostProcessor;

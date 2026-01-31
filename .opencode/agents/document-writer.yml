@@ -1,7 +1,7 @@
 name: document-writer
 description: "Document Writer agent for technical documentation and content creation"
 version: "1.0.0"
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # State Management Configuration

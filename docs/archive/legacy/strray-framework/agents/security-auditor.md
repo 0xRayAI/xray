@@ -1,7 +1,7 @@
 ---
 name: security-auditor
 description: Detects security vulnerabilities, auth issues, and sensitive data exposure. Triggers on security, vulnerabilities, auth, input validation.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.2
 tools:
   Read: true

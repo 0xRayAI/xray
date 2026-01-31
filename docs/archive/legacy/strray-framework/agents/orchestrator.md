@@ -1,7 +1,7 @@
 ---
 name: orchestrator
 description: Coordinates complex multi-step tasks, manages async subagent delegation, and ensures completion. Use Sisyphus integration for relentless execution.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.4
 tools:
   Bash: true

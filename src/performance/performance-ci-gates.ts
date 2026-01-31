@@ -11,16 +11,16 @@
 import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 import {
   PerformanceBudgetEnforcer,
   PerformanceReport,
   PERFORMANCE_BUDGET,
-} from "./performance-budget-enforcer";
+} from "./performance-budget-enforcer.js";
 import {
   PerformanceRegressionTester,
   RegressionTestSuite,
-} from "./performance-regression-tester";
+} from "./performance-regression-tester.js";
 
 export interface CIGateConfig {
   failOnBudgetViolation: boolean;

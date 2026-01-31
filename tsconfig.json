@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ES2022",
+    "module": "ESNext",
     "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -35,7 +36,6 @@
     "src/dashboards/**/*",
     "src/distributed/**/*",
     "src/streaming/**/*",
-    "src/mcps/**/*",
     "src/plugins/**/*",
     "src/postprocessor/**/*",
     "src/integrations/**/*",

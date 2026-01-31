@@ -25,7 +25,7 @@ curl http://localhost:3000/api/agents/orchestrator/ping
   "status": "healthy",
   "uptime": "2h 15m",
   "lastActivity": "2024-01-05T10:30:00Z",
-  "model": "opencode/grok-code",
+  "model": "openrouter/xai-grok-2-1212-fast-1",
   "temperature": 0.2
 }
 ```
@@ -110,7 +110,7 @@ strray monitor --system-health --detailed
 const modelRouter = {
   selectModel: (agentType, taskComplexity) => {
     const models = {
-      simple: "opencode/grok-code",
+      simple: "openrouter/xai-grok-2-1212-fast-1",
       complex: "google/gemini-3-pro-high",
       creative: "gpt-4o",
     };

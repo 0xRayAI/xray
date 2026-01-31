@@ -8,7 +8,7 @@ import {
   EscalationResult,
   IncidentReport,
   EventTimeline,
-} from "../types";
+} from "../types.js";
 
 export interface EscalationConfig {
   manualInterventionThreshold: number;

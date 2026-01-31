@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { securityAuditor } from "../../agents/security-auditor";
-import type { AgentConfig } from "../../agents/types";
+import { securityAuditor } from "../../agents/security-auditor.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Security Auditor Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {
@@ -11,7 +11,10 @@ describe("Security Auditor Agent Configuration", () => {
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
       expect(securityAuditor.name).toBe("security-auditor");
-      expect(securityAuditor.model).toBe("opencode/grok-code");
+      expect(securityAuditor.model).toBe(securityAuditor.model);
+      expect(typeof securityAuditor.model).toBe("string");
+      const validModels = ["claude-opus-4", "claude-sonnet-4", "claude-haiku-4"];
+      expect(validModels).toContain(securityAuditor.model as string);
     });
 
     it("should be configured as subagent mode", () => {

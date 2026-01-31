@@ -9,28 +9,28 @@
  */
 
 import * as path from "path";
-import { frameworkLogger } from "../framework-logger";
-import { StringRayStateManager } from "../state/state-manager";
-import { SessionMonitor } from "../session/session-monitor";
-import { GitHookTrigger } from "./triggers/GitHookTrigger";
-import { WebhookTrigger } from "./triggers/WebhookTrigger";
-import { APITrigger } from "./triggers/APITrigger";
-import { PostProcessorMonitoringEngine } from "./monitoring/MonitoringEngine";
-import { FailureAnalysisEngine } from "./analysis/FailureAnalysisEngine";
-import { AutoFixEngine } from "./autofix/AutoFixEngine";
-import { FixValidator } from "./autofix/FixValidator";
-import { mcpClientManager } from "../mcp-client";
-import { RedeployCoordinator } from "./redeploy/RedeployCoordinator";
-import { EscalationEngine } from "./escalation/EscalationEngine";
-import { SuccessHandler } from "./success/SuccessHandler";
+import { frameworkLogger } from "../core/framework-logger.js";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { SessionMonitor } from "../session/session-monitor.js";
+import { GitHookTrigger } from "./triggers/GitHookTrigger.js";
+import { WebhookTrigger } from "./triggers/WebhookTrigger.js";
+import { APITrigger } from "./triggers/APITrigger.js";
+import { PostProcessorMonitoringEngine } from "./monitoring/MonitoringEngine.js";
+import { FailureAnalysisEngine } from "./analysis/FailureAnalysisEngine.js";
+import { AutoFixEngine } from "./autofix/AutoFixEngine.js";
+import { FixValidator } from "./autofix/FixValidator.js";
+import { mcpClientManager } from "../mcps/mcp-client.js";
+import { RedeployCoordinator } from "./redeploy/RedeployCoordinator.js";
+import { EscalationEngine } from "./escalation/EscalationEngine.js";
+import { SuccessHandler } from "./success/SuccessHandler.js";
 import {
   PostProcessorConfig,
   PostProcessorResult,
   PostProcessorContext,
-} from "./types";
-import { defaultConfig } from "./config";
-import { frameworkReportingSystem } from "../reporting/framework-reporting-system";
-import { ReportContentValidator } from "../validation/report-content-validator";
+} from "./types.js";
+import { defaultConfig } from "./config.js";
+import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
+import { ReportContentValidator } from "../validation/report-content-validator.js";
 
 export class PostProcessor {
   private config: PostProcessorConfig;
@@ -469,8 +469,8 @@ MANDATORY COMPLIANCE REQUIRED - VIOLATIONS WILL BLOCK COMMITS
 ❌ NEVER use hardcoded 'dist/' paths in source code:
 \`\`\`typescript
 // WRONG - Breaks across environments (actual violations found)
-import { RuleEnforcer } from "../dist/enforcement/rule-enforcer";
-import { ProcessorManager } from "./dist/processors/processor-manager";
+import { RuleEnforcer } from "../dist/enforcement/rule-enforcer.js";
+import { ProcessorManager } from "./dist/processors/processor-manager.js";
 \`\`\`
 
 ✅ CORRECT - Use import resolver for environment awareness:
@@ -487,15 +487,15 @@ const { RuleEnforcer } = await importResolver.importModule('enforcement/rule-enf
 ❌ Directory structure assumptions that break across environments:
 \`\`\`typescript
 // WRONG - Assumes specific deployment structure
-import { Agent } from "../agents/enforcer"; // May break if directories move
-import { Utils } from "../../../shared/utils"; // Fragile deep navigation
+import { Agent } from "../agents/enforcer.js"; // May break if directories move
+import { Utils } from "../../../shared/utils.js"; // Fragile deep navigation
 \`\`\`
 
 ✅ CORRECT - Use stable relative imports within modules:
 \`\`\`typescript
 // Stable within src/ directory structure
-import { Agent } from "../agents/enforcer"; // OK within same project
-import { Utils } from "../../shared/utils"; // Prefer shallower paths
+import { Agent } from "../agents/enforcer.js"; // OK within same project
+import { Utils } from "../../shared/utils.js"; // Prefer shallower paths
 \`\`\`
 
 ═══════════════════════════════════════════════════════════════
@@ -505,18 +505,18 @@ import { Utils } from "../../shared/utils"; // Prefer shallower paths
 ❌ Local file assumptions that break when files move:
 \`\`\`typescript
 // WRONG - Assumes file exists in specific location
-import { Config } from "./config"; // May not exist in built version
-import { Utils } from "./utils/helpers"; // Breaks if directory reorganized
+import { Config } from "./config.js"; // May not exist in built version
+import { Utils } from "./utils/helpers.js"; // Breaks if directory reorganized
 \`\`\`
 
 ✅ CORRECT - Use proper module resolution:
 \`\`\`typescript
 // Prefer named imports from index files
-import { Config } from "./config/index";
-import { helpers } from "./utils/index";
+import { Config } from "./config/index.js";
+import { helpers } from "./utils/index.js";
 
 // Or use full relative paths when necessary
-import { Config } from "./config/config";
+import { Config } from "./config/config.js";
 \`\`\`
 
 ═══════════════════════════════════════════════════════════════

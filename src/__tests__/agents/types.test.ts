@@ -3,7 +3,7 @@ import type {
   ToolConfig,
   PermissionConfig,
   AgentConfig,
-} from "../../agents/types";
+} from "../../agents/types.js";
 
 describe("Agent Types", () => {
   describe("ToolConfig", () => {
@@ -94,7 +94,7 @@ describe("Agent Types", () => {
     it("should support all optional fields", () => {
       const fullConfig: AgentConfig = {
         name: "full-agent",
-        model: "claude-3",
+         model: "opencode/grok-code",
         description: "Full featured agent",
         mode: "subagent",
         system: "System prompt",

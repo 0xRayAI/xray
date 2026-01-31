@@ -11,7 +11,7 @@
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
 import { createHash } from "crypto";
-import { frameworkLogger } from "../framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface SecurityIssue {
   severity: "critical" | "high" | "medium" | "low" | "info";

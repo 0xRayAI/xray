@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { BootOrchestrator, BootResult } from "../../boot-orchestrator";
-import { StringRayStateManager } from "../../state/state-manager";
+import { BootOrchestrator, BootResult } from "../../core/boot-orchestrator.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 // Mock all the dependencies that BootOrchestrator uses
 vi.mock("../../state/state-manager");
-vi.mock("../../context-loader", () => ({
+vi.mock("../../core/context-loader", () => ({
   StringRayContextLoader: {
     getInstance: vi.fn(() => ({
       loadCodexContext: vi.fn().mockResolvedValue({
@@ -70,15 +70,15 @@ vi.mock("../../security/security-hardener", () => ({
 vi.mock("../../security/security-headers", () => ({
   securityHeadersMiddleware: {},
 }));
-vi.mock("../../framework-logger", () => ({
+vi.mock("../../core/framework-logger", () => ({
   frameworkLogger: {
     log: vi.fn(),
   },
 }));
-vi.mock("../../codex-injector", () => ({
+vi.mock("../../enforcement/codex-injector", () => ({
   CodexInjector: vi.fn().mockImplementation(() => ({})),
 }));
-vi.mock("../../orchestrator", () => ({
+vi.mock("../../core/orchestrator", () => ({
   strRayOrchestrator: {},
 }));
 

@@ -2,70 +2,95 @@
   "baselineProcesses": 0,
   "tests": [
     {
-      "skill": "project-analysis",
-      "startTime": "2026-01-21T01:39:48.503Z",
-      "initialProcesses": 0,
-      "prompt": "Analyze project structure",
-      "endTime": "2026-01-21T01:39:48.599Z",
+      "skillName": "project-analysis",
+      "startTime": "2026-01-31T01:50:56.453Z",
+      "endTime": "2026-01-31T01:50:56.453Z",
       "baselineProcesses": 0,
-      "configValid": true,
-      "mcpServerExists": true,
-      "duration": 96
+      "configValid": false,
+      "mcpServerExists": false,
+      "duration": 0,
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/project-analysis/SKILL.md"
+    },
+    {
+      "skillName": "testing-strategy",
+      "startTime": "2026-01-31T01:50:56.843Z",
+      "endTime": "2026-01-31T01:50:56.843Z",
+      "baselineProcesses": 0,
+      "configValid": false,
+      "mcpServerExists": false,
+      "duration": 0,
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/testing-strategy/SKILL.md"
+    },
+    {
+      "skillName": "code-review",
+      "startTime": "2026-01-31T01:50:57.241Z",
+      "endTime": "2026-01-31T01:50:57.241Z",
+      "baselineProcesses": 0,
+      "configValid": false,
+      "mcpServerExists": false,
+      "duration": 0,
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/code-review/SKILL.md"
+    },
+    {
+      "skillName": "security-audit",
+      "startTime": "2026-01-31T01:50:57.635Z",
+      "endTime": "2026-01-31T01:50:57.635Z",
+      "baselineProcesses": 0,
+      "configValid": false,
+      "mcpServerExists": false,
+      "duration": 0,
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/security-audit/SKILL.md"
+    },
+    {
+      "skillName": "performance-optimization",
+      "startTime": "2026-01-31T01:50:58.027Z",
+      "endTime": "2026-01-31T01:50:58.027Z",
+      "baselineProcesses": 0,
+      "configValid": false,
+      "mcpServerExists": false,
+      "duration": 0,
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/performance-optimization/SKILL.md"
+    }
+  ],
+  "errors": [
+    {
+      "skill": "project-analysis",
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/project-analysis/SKILL.md",
+      "timestamp": "2026-01-31T01:50:56.547Z"
     },
     {
       "skill": "testing-strategy",
-      "startTime": "2026-01-21T01:39:48.701Z",
-      "initialProcesses": 0,
-      "prompt": "Design testing strategy",
-      "endTime": "2026-01-21T01:39:48.794Z",
-      "baselineProcesses": 0,
-      "configValid": true,
-      "mcpServerExists": true,
-      "duration": 93
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/testing-strategy/SKILL.md",
+      "timestamp": "2026-01-31T01:50:56.939Z"
     },
     {
       "skill": "code-review",
-      "startTime": "2026-01-21T01:39:48.895Z",
-      "initialProcesses": 0,
-      "prompt": "Review code quality",
-      "endTime": "2026-01-21T01:39:48.990Z",
-      "baselineProcesses": 0,
-      "configValid": true,
-      "mcpServerExists": true,
-      "duration": 95
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/code-review/SKILL.md",
+      "timestamp": "2026-01-31T01:50:57.337Z"
     },
     {
       "skill": "security-audit",
-      "startTime": "2026-01-21T01:39:49.091Z",
-      "initialProcesses": 0,
-      "prompt": "Audit security",
-      "endTime": "2026-01-21T01:39:49.192Z",
-      "baselineProcesses": 0,
-      "configValid": true,
-      "mcpServerExists": true,
-      "duration": 101
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/security-audit/SKILL.md",
+      "timestamp": "2026-01-31T01:50:57.729Z"
     },
     {
       "skill": "performance-optimization",
-      "startTime": "2026-01-21T01:39:49.293Z",
-      "initialProcesses": 0,
-      "prompt": "Optimize performance",
-      "endTime": "2026-01-21T01:39:49.389Z",
-      "baselineProcesses": 0,
-      "configValid": true,
-      "mcpServerExists": true,
-      "duration": 96
+      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/performance-optimization/SKILL.md",
+      "timestamp": "2026-01-31T01:50:58.121Z"
     }
   ],
-  "errors": [],
   "summary": {
     "totalTests": 5,
-    "successfulTests": 5,
-    "failedTests": 0,
-    "successRate": "100.0%",
-    "totalErrors": 0,
-    "averageDuration": 96.2,
+    "successfulTests": 0,
+    "failedTests": 5,
+    "expectedMissingSkills": 5,
+    "acceptableMissingRate": 1,
+    "acceptableMissing": true,
+    "successRate": "0.0%",
+    "totalErrors": 5,
+    "averageDuration": 0,
     "baselineProcesses": 0,
-    "allConfigsValid": true
+    "allConfigsValid": false,
+    "lazyLoadingBehavior": true
   }
 }

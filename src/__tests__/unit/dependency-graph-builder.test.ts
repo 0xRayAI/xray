@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { DependencyGraphBuilder } from "../../delegation/dependency-graph-builder";
-import { CodebaseContextAnalyzer } from "../../delegation/codebase-context-analyzer";
-import { ASTCodeParser } from "../../delegation/ast-code-parser";
-import { frameworkLogger } from "../../framework-logger";
+import { DependencyGraphBuilder } from "../../delegation/dependency-graph-builder.js";
+import { CodebaseContextAnalyzer } from "../../delegation/codebase-context-analyzer.js";
+import { ASTCodeParser } from "../../delegation/ast-code-parser.js";
+import { frameworkLogger } from "../../framework-logger.js";
 
 // Mock dependencies
 vi.mock("../../delegation/codebase-context-analyzer.js");
