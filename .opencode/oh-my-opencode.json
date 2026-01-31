@@ -27,43 +27,56 @@
   "model": "openrouter/xai-grok-2-1212-fast-1",
   "agent": {
     "orchestrator": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "enhanced-orchestrator": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "enforcer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "architect": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "test-architect": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "bug-triage-specialist": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "code-reviewer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "security-auditor": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "refactorer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "explore": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "librarian": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "document-writer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     },
     "frontend-ui-ux-engineer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1"
+      "model": "openrouter/xai-grok-2-1212-fast-1",
+      "temperature": 1.0
     }
   },
   "mcpServers": {

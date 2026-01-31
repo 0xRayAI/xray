@@ -136,15 +136,41 @@ class ConfigurationValidator {
     console.log("\n🔧 Validating Configuration Integrity...");
     
     // Check that configuration files are valid JSON
-    const configFiles = [
+    const requiredConfigFiles = [
       "package.json",
-      "opencode.json",
+      "opencode.json"
+    ];
+    
+    // tsconfig.json is not required in consumer test environment
+    const optionalConfigFiles = [
       "tsconfig.json"
     ];
 
-    for (const configFile of configFiles) {
+    for (const configFile of requiredConfigFiles) {
       try {
         const configPath = path.join(process.cwd(), configFile);
+        const content = fs.readFileSync(configPath, "utf8");
+        JSON.parse(content);
+        console.log(`  ✅ ${configFile} is valid JSON`);
+        this.results.passed.push(`${configFile} Integrity`);
+      } catch (error) {
+        console.log(`  ❌ ${configFile} is not valid JSON: ${error.message}`);
+        this.results.failed.push({
+          test: `${configFile} Integrity`,
+          error: error.message,
+        });
+      }
+    }
+    
+    // Check optional config files (not required in consumer environment)
+    for (const configFile of optionalConfigFiles) {
+      try {
+        const configPath = path.join(process.cwd(), configFile);
+        if (!fs.existsSync(configPath)) {
+          console.log(`  ℹ️ ${configFile} not found (optional in consumer environment)`);
+          this.results.passed.push(`${configFile} Integrity (Optional - Not Required)`);
+          continue;
+        }
         const content = fs.readFileSync(configPath, "utf8");
         JSON.parse(content);
         console.log(`  ✅ ${configFile} is valid JSON`);
