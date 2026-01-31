@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
+/* global console, process */
+
 /**
  * Import Consistency Fixer
  * Scans codebase and fixes import inconsistencies that cause module resolution issues
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync } from "fs";
+import { readFileSync, readdirSync, statSync } from "fs";
 import { join, extname } from "path";
 
 const SRC_DIR = "./src";
@@ -76,7 +78,7 @@ function generateReport(allIssues) {
   let filesWithIssues = 0;
   let totalIssues = 0;
 
-  for (const [filePath, issues] of Object.entries(allIssues)) {
+  for (const [, issues] of Object.entries(allIssues)) {
     totalFiles++;
     if (issues.length > 0) {
       filesWithIssues++;

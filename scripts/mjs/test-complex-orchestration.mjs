@@ -10,8 +10,7 @@
     console.log("Testing complex multi-agent orchestration...");
 
     // Import the orchestrator from project dist (tests should use built artifacts)
-    const orchestratorModule = await import("../dist/orchestrator.js");
-    const { StringRayOrchestrator } = orchestratorModule;
+    const { StringRayOrchestrator } = await import("../../dist/orchestrator/orchestrator.js");
 
     // Create orchestrator instance
     const orchestrator = new StringRayOrchestrator({

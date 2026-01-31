@@ -11,7 +11,7 @@ console.log("=====================================\n");
 async function testComplexOrchestratorRouting() {
   try {
     // Import the orchestrator
-    const { StringRayOrchestrator } = await import("./node_modules/strray-ai/dist/plugin/src/orchestrator.js");
+    const { StringRayOrchestrator } = await import("./node_modules/strray-ai/dist/orchestrator/orchestrator.js");
 
     console.log("✅ Orchestrator imported successfully");
 

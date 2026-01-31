@@ -10,8 +10,21 @@ console.log("====================================\n");
 
 async function testOrchestratorRouting() {
   try {
-    // Import the orchestrator
-    const { StringRayOrchestrator } = await import("./node_modules/strray-ai/dist/plugin/src/orchestrator.js");
+    // Import the orchestrator - try dev path first, then consumer path
+    let StringRayOrchestrator;
+    let module;
+    try {
+      // Development path (from project root)
+      module = await import("../../dist/orchestrator/orchestrator.js");
+    } catch (devError) {
+      try {
+        // Consumer path (after npm install)
+        module = await import("./node_modules/strray-ai/dist/orchestrator/orchestrator.js");
+      } catch (consumerError) {
+        throw new Error(`Cannot load orchestrator module. Tried dev path and consumer path. Error: ${consumerError.message}`);
+      }
+    }
+    StringRayOrchestrator = module.StringRayOrchestrator;
 
     console.log("✅ Orchestrator imported successfully");
 

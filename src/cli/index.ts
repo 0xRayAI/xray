@@ -30,7 +30,7 @@ program
 
     try {
       // Run the postinstaller script
-      const postinstallScript = join(packageRoot, 'scripts', 'postinstall.cjs');
+      const postinstallScript = join(packageRoot, 'scripts', 'node', 'postinstall.cjs');
       execSync(`node "${postinstallScript}"`, {
         stdio: 'inherit',
         cwd: process.cwd()
@@ -57,7 +57,7 @@ program
 
     try {
       // Run the postinstaller script (same as install)
-      const postinstallScript = join(packageRoot, 'scripts', 'postinstall.cjs');
+      const postinstallScript = join(packageRoot, 'scripts', 'node', 'postinstall.cjs');
       execSync(`node "${postinstallScript}"`, {
         stdio: 'inherit',
         cwd: process.cwd()
@@ -333,7 +333,7 @@ program
       console.log('Running postinstall setup to restore configuration...');
 
       // Run the postinstaller script (same as install command)
-      const postinstallScript = join(packageRoot, 'scripts', 'postinstall.cjs');
+      const postinstallScript = join(packageRoot, 'scripts', 'node', 'postinstall.cjs');
       execSync(`node "${postinstallScript}"`, {
         stdio: 'inherit',
         cwd: process.cwd()
