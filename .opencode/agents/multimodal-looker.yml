@@ -1,7 +1,7 @@
 name: multimodal-looker
 description: "Multimodal file analysis and interpretation specialist for images, diagrams, PDFs, and media files"
 version: "1.0.0"
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 
 # Logging Configuration
 logging:

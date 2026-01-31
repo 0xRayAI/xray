@@ -5,8 +5,8 @@
  * during oh-my-opencode initialization.
  */
 
-import { frameworkLogger } from "../core/framework-logger"
-import { ensureCriticalComponents } from "../architect/architectural-integrity";
+import { frameworkLogger } from "../core/framework-logger.js"
+import { ensureCriticalComponents } from "../architect/architectural-integrity.js";
 
 export interface StringRayActivationConfig {
   enableOrchestrator: boolean;

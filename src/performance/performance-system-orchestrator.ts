@@ -9,11 +9,11 @@
  */
 
 import { EventEmitter } from "events";
-import { PerformanceBudgetEnforcer } from "./performance-budget-enforcer";
-import { PerformanceRegressionTester } from "./performance-regression-tester";
-import { PerformanceMonitoringDashboard } from "./performance-monitoring-dashboard";
-import { PerformanceCIGates } from "./performance-ci-gates";
-import { frameworkLogger } from "../core/framework-logger";
+import { PerformanceBudgetEnforcer } from "./performance-budget-enforcer.js";
+import { PerformanceRegressionTester } from "./performance-regression-tester.js";
+import { PerformanceMonitoringDashboard } from "./performance-monitoring-dashboard.js";
+import { PerformanceCIGates } from "./performance-ci-gates.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface PerformanceSystemConfig {
   budgetEnforcement: {

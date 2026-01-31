@@ -1,7 +1,7 @@
 // Test script to demonstrate framework logging
 // Run with: npx tsx test-logging.ts
 
-import { frameworkLogger, generateJobId } from "../core/framework-logger";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 
 async function runTest() {
   // Test logging header - kept as console.log for test visibility

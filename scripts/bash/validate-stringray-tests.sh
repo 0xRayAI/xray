@@ -158,10 +158,8 @@ TEST_FILES=(
 # Additional validation tests (from scripts/mjs/)
 ADDITIONAL_TESTS=(
     "test-consumer-readiness.mjs"
-    "test-skills-mcp-integration.mjs"
-    "test-skills-comprehensive.mjs"
-    "test-postinstall-files.mjs"
-    "test-orchestrator-simple.mjs"
+    "test-mcp-functionality.mjs"
+    "test-configuration-validation.mjs"
     "test-orchestrator-complex.mjs"
 )
 
@@ -174,58 +172,50 @@ done
 
 # Copy additional validation tests
 for test_file in "${ADDITIONAL_TESTS[@]}"; do
-    src_file="$PROJECT_DIR/scripts/$test_file"
+    src_file="$PROJECT_DIR/scripts/mjs/$test_file"
     check_file "$src_file"
     run_cmd "cp '$src_file' '$TEST_DIR/'"
 done
 echo "✅ All test files copied"
 
-# 7. Run complexity analysis test
+# 7. Run complexity analysis test (TypeScript tests run from project dir)
 print_step "7" "Run Complexity Analysis Test"
-run_cmd "cd '$TEST_DIR' && node test-complexity-analysis.mjs"
+run_cmd "cd '$PROJECT_DIR' && npm test -- 'src/__tests__/integration/test-complexity-analysis.test.ts'"
 
 # 8. Run manual orchestrator test
 print_step "8" "Run Manual Orchestrator Test"
-run_cmd_timeout 60 "cd '$TEST_DIR' && node test-manual-orchestrator.mjs" || echo 'Test completed (timeout expected)'
+run_cmd "cd '$PROJECT_DIR' && npm test -- 'src/__tests__/integration/test-manual-orchestrator.test.ts'"
 
 # 9. Run LED orchestrator test
 print_step "9" "Run LED Orchestrator Test"
-run_cmd_timeout 60 "cd '$TEST_DIR' && node test-orchestrator-led.mjs" || echo 'Test completed (timeout expected)'
+run_cmd "cd '$PROJECT_DIR' && npm test -- 'src/__tests__/integration/test-orchestrator-led.test.ts'"
 
 # 10. Run corrected max test
 print_step "10" "Run Corrected Max Test"
-run_cmd "cd '$TEST_DIR' && node test-corrected-max.mjs"
+run_cmd "cd '$PROJECT_DIR' && npm test -- 'src/__tests__/integration/test-corrected-max.test.ts'"
 
 # 11. Run max complexity test
 print_step "11" "Run Max Complexity Test"
-run_cmd "cd '$TEST_DIR' && node test-max-complexity.mjs"
+run_cmd "cd '$PROJECT_DIR' && npm test -- 'src/__tests__/integration/test-max-complexity.test.ts'"
 
 # 12. Run ultra-complex test
 print_step "12" "Run Ultra-Complex Test"
-run_cmd "cd '$TEST_DIR' && node test-ultra-complex.mjs"
+run_cmd "cd '$PROJECT_DIR' && npm test -- 'src/__tests__/integration/test-ultra-complex.test.ts'"
 
-# 13. Run consumer readiness check
+# 13. Run consumer readiness check (mjs tests run in test dir)
 print_step "13" "Run Consumer Readiness Check"
 run_cmd "cd '$TEST_DIR' && node test-consumer-readiness.mjs"
 
-# 14. Run skills MCP integration test
-print_step "14" "Run Skills MCP Integration Test"
-run_cmd "cd '$TEST_DIR' && node test-skills-mcp-integration.mjs"
+# 14. Run MCP functionality test
+print_step "14" "Run MCP Functionality Test"
+run_cmd "cd '$TEST_DIR' && node test-mcp-functionality.mjs"
 
-# 15. Run skills comprehensive validation test
-print_step "15" "Run Skills Comprehensive Validation Test"
-run_cmd "cd '$TEST_DIR' && node test-skills-comprehensive.mjs"
+# 15. Run configuration validation test
+print_step "15" "Run Configuration Validation Test"
+run_cmd "cd '$TEST_DIR' && node test-configuration-validation.mjs"
 
-# 16. Run postinstall files validation
-print_step "16" "Run Postinstall Files Validation"
-run_cmd "cd '$TEST_DIR' && node test-postinstall-files.mjs"
-
-# 17. Run simple orchestrator test
-print_step "17" "Run Simple Orchestrator Test"
-run_cmd_timeout 90 "cd '$TEST_DIR' && node test-orchestrator-simple.mjs" || echo 'Simple orchestrator test completed'
-
-# 18. Run complex orchestrator test
-print_step "18" "Run Complex Orchestrator Test"
+# 16. Run complex orchestrator test
+print_step "16" "Run Complex Orchestrator Test"
 run_cmd_timeout 120 "cd '$TEST_DIR' && node test-orchestrator-complex.mjs" || echo 'Complex orchestrator test completed'
 
 # 19. Test CLI install command

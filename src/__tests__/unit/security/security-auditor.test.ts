@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SecurityAuditor } from "../../../security/security-auditor";
+import { SecurityAuditor } from "../../../security/security-auditor.js";
 import * as fs from "fs";
 
 // Mock fs module

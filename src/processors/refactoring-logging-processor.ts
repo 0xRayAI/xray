@@ -1,4 +1,4 @@
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 

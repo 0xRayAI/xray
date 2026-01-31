@@ -11,8 +11,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../core/framework-logger";
-import { StringRayStateManager } from "../../state/state-manager";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("StringRay Infrastructure Tests", () => {
   describe("Core File System", () => {
@@ -141,7 +141,7 @@ describe("StringRay Infrastructure Tests", () => {
 
   describe("Plugin Infrastructure", () => {
     it("should have plugin configuration", () => {
-      const pluginFile = "dist/plugin/plugins/strray-codex-injection.ts";
+      const pluginFile = "dist/plugin/strray-codex-injection.js";
       expect(fs.existsSync(pluginFile)).toBe(true);
     });
 

@@ -9,8 +9,8 @@ import {
   securityAuditor,
   refactorer,
   testArchitect,
-} from "../../agents/index";
-import type { AgentConfig } from "../../agents/types";
+} from "../../agents/index.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Agent Index Registry", () => {
   describe("Builtin Agents Registry", () => {

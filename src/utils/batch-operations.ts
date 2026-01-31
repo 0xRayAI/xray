@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
-import { getBatchOperations } from "../core/features-config";
+import { getBatchOperations } from "../core/features-config.js";
 
 export interface ReplacementOperation {
   pattern: string;

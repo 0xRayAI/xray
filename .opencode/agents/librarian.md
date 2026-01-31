@@ -1,7 +1,7 @@
 ---
 name: librarian
 description: Codebase and documentation search specialist. Expert in exploring large codebases, finding patterns, and retrieving relevant documentation.
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.4
 maxSteps: 25
 mode: subagent

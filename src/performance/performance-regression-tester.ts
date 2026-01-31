@@ -16,7 +16,7 @@ import {
   PerformanceBudgetEnforcer,
   PerformanceReport,
   PERFORMANCE_BUDGET,
-} from "./performance-budget-enforcer";
+} from "./performance-budget-enforcer.js";
 
 export interface PerformanceRegressionTest {
   name: string;

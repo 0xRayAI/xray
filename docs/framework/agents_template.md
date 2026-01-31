@@ -70,7 +70,7 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
 - **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `opencode/grok-code` model
+- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -207,7 +207,7 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
 - **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `opencode/grok-code` model
+- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration

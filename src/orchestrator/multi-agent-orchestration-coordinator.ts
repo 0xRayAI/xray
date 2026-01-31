@@ -8,14 +8,14 @@
  * @since 2026-01-23
  */
 
-import { StringRayOrchestrator } from "../core/orchestrator";
-import { TaskDefinition } from "../agents/types";
-import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator";
-import { createAgentDelegator } from "../delegation/agent-delegator";
-import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../core/framework-logger";
-import { ComplexityAnalyzer } from "../delegation/complexity-analyzer";
-import { strRayConfigLoader } from "../core/config-loader";
+import { StringRayOrchestrator } from "../core/orchestrator.js";
+import { TaskDefinition } from "../agents/types.js";
+import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
+import { createAgentDelegator } from "../delegation/agent-delegator.js";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { frameworkLogger } from "../core/framework-logger.js";
+import { ComplexityAnalyzer } from "../delegation/complexity-analyzer.js";
+import { strRayConfigLoader } from "../core/config-loader.js";
 
 export interface OrchestrationWorkflow {
   id: string;

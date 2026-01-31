@@ -8,9 +8,9 @@
  * @since 2026-01-07
  */
 
-import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator";
-import { frameworkLogger } from "../core/framework-logger";
-import { universalLibrarianConsultation, SystemAction } from "./universal-librarian-consultation";
+import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
+import { frameworkLogger } from "../core/framework-logger.js";
+import { universalLibrarianConsultation, SystemAction } from "./universal-librarian-consultation.js";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 

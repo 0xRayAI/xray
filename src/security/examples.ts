@@ -8,8 +8,8 @@ import {
   securityMiddleware,
   securityScanner,
   promptSecurityValidator,
-} from "./index";
-import { frameworkLogger } from "../core/framework-logger";
+} from "./index.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Example 1: Using security middleware in an Express app (if needed)
 export function setupSecurityMiddleware(app: any) {

@@ -12,10 +12,10 @@ import {
   StringRayOrchestrator,
   OrchestrationResult,
   OrchestratorConfig,
-} from "../../core/orchestrator";
+} from "../../core/orchestrator.js";
 import {
   TaskDefinition,
-} from "../../agents/types";
+} from "../../agents/types.js";
 
 describe("StringRayOrchestrator", () => {
   let orchestrator: StringRayOrchestrator;

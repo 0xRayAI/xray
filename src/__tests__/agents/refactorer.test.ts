@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { refactorer } from "../../agents/refactorer";
-import type { AgentConfig } from "../../agents/types";
+import { refactorer } from "../../agents/refactorer.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Refactorer Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {

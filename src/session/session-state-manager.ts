@@ -8,9 +8,9 @@
  * @since 2026-01-07
  */
 
-import { StringRayStateManager } from "../state/state-manager";
-import { SessionCoordinator } from "../delegation/session-coordinator";
-import { frameworkLogger } from "../core/framework-logger";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { SessionCoordinator } from "../delegation/session-coordinator.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface SessionDependency {
   sessionId: string;

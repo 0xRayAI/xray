@@ -1,1 +1,5 @@
-node -c src/plugins/strray-codex-injection.ts 2>&1 || echo "Syntax check failed"
+echo "Checking TypeScript syntax..."
+npx tsc --noEmit --skipLibCheck src/plugin/strray-codex-injection.ts 2>&1 && echo "✅ TypeScript syntax valid" || echo "❌ TypeScript syntax error"
+echo ""
+echo "Checking build compilation..."
+npm run typecheck > /dev/null && echo "✅ Build compilation successful" || echo "❌ Build compilation failed"

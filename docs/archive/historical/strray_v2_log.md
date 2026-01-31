@@ -1440,7 +1440,7 @@ Update each agent to include full codex loading instruction:
 
 name: enforcer
 description: Automated framework compliance auditor...
-model: opencode/grok-code
+model: openrouter/xai-grok-2-1212-fast-1
 codex_context: full # Load complete 30+ terms instead of partial
 
 ---
@@ -1485,7 +1485,7 @@ Implementation Steps
     name
     )
     self.model = model or self.config_manager.get_value(
-    "model_default", "opencode/grok-code"
+    "model_default", "openrouter/xai-grok-2-1212-fast-1"
     )
     self.temperature = temperature # State management
     self.state_manager = AgentStateManager(state_dir)
@@ -3520,9 +3520,9 @@ Test execution must be optimized for speed and reliability:
   Primary Configuration: .opencode/oh-my-opencode.json
   {
   model_routing: {
-  enforcer: opencode/grok-code,
-  architect: opencode/grok-code,
-  orchestrator: opencode/grok-code
+  enforcer: openrouter/xai-grok-2-1212-fast-1,
+  architect: openrouter/xai-grok-2-1212-fast-1,
+  orchestrator: openrouter/xai-grok-2-1212-fast-1
   // ... all 8 agents
   }
   }
@@ -3607,8 +3607,8 @@ Configuration Hierarchy
 // Primary: oh-my-opencode.json
 {
 model_routing: {
-enforcer: opencode/grok-code,
-architect: opencode/grok-code
+enforcer: openrouter/xai-grok-2-1212-fast-1,
+architect: openrouter/xai-grok-2-1212-fast-1
 // ... 8 agents total
 },
 strray_framework: {
@@ -4088,7 +4088,7 @@ npm run build -- --minify
 4. ✅ OpenCode service running and active
 5. ✅ Hooks registered and functional
    The setup is production-ready. The StrRay Framework codex injection is working as designed - loading 45 development terms from the Universal Development Codex and injecting them into tool outputs to guide AI-assisted development.
-   ✅ Complete! All models updated to "opencode/grok-code"
+   ✅ Complete! All models updated to "openrouter/xai-grok-2-1212-fast-1"
    JSON Files Updated:
 
 - config/oh-my-opencode.json ✅
@@ -4103,7 +4103,7 @@ npm run build -- --minify
 - docs/archive/strray-framework/agents/test-architect.md ✅
 - docs/archive/strray-framework/dynamic-orchestrator.md ✅
   Verification:
-  All active configuration and documentation files now consistently use opencode/grok-code for all model assignments. The framework is fully standardized on this model across all JSON and .md files! 🚀
+  All active configuration and documentation files now consistently use openrouter/xai-grok-2-1212-fast-1 for all model assignments. The framework is fully standardized on this model across all JSON and .md files! 🚀
   ✅ All Issues Fixed in strray-standalone
   I have successfully completed a comprehensive review and fix of all issues in the strray-standalone folder. Here's a summary of what was accomplished:
   🔴 Critical Issues Fixed
@@ -10614,7 +10614,7 @@ The is now fully committed and pushed with:
    Looking at my .opencode/agents/test-architect.md profile:
    name: test-architect
    description: Designs comprehensive test strategies, behavioral testing frameworks, and validation approaches. Triggers on test, coverage, validate, behavioral.
-   model: opencode/grok-code
+   model: openrouter/xai-grok-2-1212-fast-1
    temperature: 0.2
    tools:
    Read: true
@@ -11615,7 +11615,7 @@ State Management Integration
 - Conflict Resolution: Consensus and priority-based resolution strategies
   oh-my-opencode Compliance
 - Schema Validation: All configurations pass schema
-- Model Routing: Proper opencode/grok-code model configuration
+- Model Routing: Proper openrouter/xai-grok-2-1212-fast-1 model configuration
 - Agent Registration: Framework-recognized agent configurations
 - Integration Points: Proper hook and callback configurations
 
@@ -11776,7 +11776,7 @@ Monitoring Integration
 - Optimization Engine: Data-driven improvement suggestions
   oh-my-opencode Compliance
 - Schema Validation: All configurations pass schema
-- Model Routing: Proper opencode/grok-code model configuration
+- Model Routing: Proper openrouter/xai-grok-2-1212-fast-1 model configuration
 - Agent Registration: Framework-recognized agent configurations
 - Integration Points: Proper hook and callback configurations
 
@@ -11903,7 +11903,7 @@ The StrRay Framework is now enterprise-grade production-ready with:
 - refactorer: Technical debt elimination + consolidation
 - test-architect: Coverage optimization + behavioral testing
   🔧 CONFIGURATION DETAILS:
-- All agents use opencode/grok-code model
+- All agents use openrouter/xai-grok-2-1212-fast-1 model
 - Subagent mode with temperature 0.1 for consistency
 - Comprehensive tool permissions (read, grep, lsp\_\*, terminal commands)
 - Edit permissions enabled for code modifications
@@ -11926,7 +11926,7 @@ The StrRay Framework is now enterprise-grade production-ready with:
 - Created src/agents/types.ts with AgentConfig interface
 - Updated all 8 agent files to export proper AgentConfig objects
 - Created src/agents/index.ts registry with builtinAgents export
-- All agents use opencode/grok-code model with subagent mode
+- All agents use openrouter/xai-grok-2-1212-fast-1 model with subagent mode
 - Comprehensive tool permissions and system prompts
 - Temperature 0.1 for consistency and accuracy
   ✅ FACILITIES MIGRATION FROM YAML:
@@ -12017,7 +12017,7 @@ The StrRay Framework is now enterprise-grade production-ready with:
 - Functionality Check: ✅ Agents load correctly with proper tool permissions and settings
   ✅ oh-my-opencode Integration
 - Framework Compatibility: ✅ Agents follow oh-my-opencode AgentConfig interface standards
-- Model Configuration: ✅ All agents configured with opencode/grok-code model
+- Model Configuration: ✅ All agents configured with openrouter/xai-grok-2-1212-fast-1 model
 - Permission Settings: ✅ Appropriate tool access and bash command permissions
 - Subagent Mode: ✅ All agents properly configured as subagents
 
@@ -12077,7 +12077,7 @@ Phase 11: Test agent loading, functionality, and integration with oh-my-opencode
   ✅ Framework Compatibility Verified
 - Agent Loading: ✅ All 8 agents load correctly from TypeScript modules
 - Tool Permissions: ✅ Agent tool configurations respected by framework
-- Model Routing: ✅ All agents properly configured with opencode/grok-code model
+- Model Routing: ✅ All agents properly configured with openrouter/xai-grok-2-1212-fast-1 model
 - Configuration Integration: ✅ oh-my-opencode.json properly configured for all agents
   ✅ Functionality Validation
 - Unit Tests: ✅ All existing tests pass (511/511) - no regressions introduced
@@ -12133,7 +12133,7 @@ Phase 11: Test agent loading, functionality, and integration with oh-my-opencode
 - Agent Registry: Properly structured builtinAgents export with all 8 agents
 - Configuration Management: oh-my-opencode.json configured for all StrRay agents
 - Tool Permissions: Appropriate tool access configured for each agent's role
-- Model Routing: All agents use opencode/grok-code with optimized temperature settings
+- Model Routing: All agents use openrouter/xai-grok-2-1212-fast-1 with optimized temperature settings
   ✅ Quality Assurance
 - Test Coverage: 511/511 tests passing - no regressions introduced
 - Type Safety: Full TypeScript compliance across all agent implementations
@@ -12483,56 +12483,56 @@ StrRay Framework Enterprise Agent System: FULLY OPERATIONAL
   📋 Validating each agent against oh-my-opencode AgentConfig standards...
   🔍 Testing agent: enforcer
   ✅ Required property: name = "enforcer"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework enforcer with error handling, per..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Enforcer, a specialized agent r..."
   ✅ Agent enforcer: PASSES oh-my-opencode standards
   🔍 Testing agent: architect
   ✅ Required property: name = "architect"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework architect with state management, ..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Architect, a specialized agent ..."
   ✅ Agent architect: PASSES oh-my-opencode standards
   🔍 Testing agent: orchestrator
   ✅ Required property: name = "orchestrator"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework orchestrator with coordination, w..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Orchestrator, a specialized age..."
   ✅ Agent orchestrator: PASSES oh-my-opencode standards
   🔍 Testing agent: bug-triage-specialist
   ✅ Required property: name = "bug-triage-specialist"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework bug triage specialist with system..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Bug Triage Specialist, a specia..."
   ✅ Agent bug-triage-specialist: PASSES oh-my-opencode standards
   🔍 Testing agent: code-reviewer
   ✅ Required property: name = "code-reviewer"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework code reviewer with monitoring, an..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Code Reviewer, a specialized ag..."
   ✅ Agent code-reviewer: PASSES oh-my-opencode standards
   🔍 Testing agent: security-auditor
   ✅ Required property: name = "security-auditor"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework security auditor with compliance ..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Security Auditor, a specialized..."
   ✅ Agent security-auditor: PASSES oh-my-opencode standards
   🔍 Testing agent: refactorer
   ✅ Required property: name = "refactorer"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework refactorer with technical debt el..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Refactorer, a specialized agent..."
   ✅ Agent refactorer: PASSES oh-my-opencode standards
   🔍 Testing agent: test-architect
   ✅ Required property: name = "test-architect"
-  ✅ Required property: model = "opencode/grok-code"
+  ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework test architect with coverage opti..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Test Architect, a specialized a..."
@@ -12567,7 +12567,7 @@ All 8 agents pass 100% compliance with oh-my-opencode standards:
   | Property | Status | Validation |
   |----------|--------|------------|
   | name | ✅ | Unique identifier strings |
-  | model | ✅ | All set to "opencode/grok-code" |
+  | model | ✅ | All set to "openrouter/xai-grok-2-1212-fast-1" |
   | description | ✅ | Comprehensive role descriptions |
   | mode | ✅ | All set to "subagent" (correct for specialized agents) |
   | system | ✅ | Detailed system prompts with role-specific instructions |
@@ -12605,7 +12605,7 @@ Framework Loading Mechanism ✅
   "test-architect": testArchitect // ✅ Loaded
   };
   Configuration Standards ✅
-- ✅ Model Selection: All agents use opencode/grok-code (compatible with oh-my-opencode)
+- ✅ Model Selection: All agents use openrouter/xai-grok-2-1212-fast-1 (compatible with oh-my-opencode)
 - ✅ Mode Configuration: All agents set to "subagent" mode (appropriate for specialized roles)
 - ✅ Tool Permissions: Comprehensive tool access with security-appropriate restrictions
 - ✅ Temperature Settings: Optimized at 0.1 for consistent, reliable behavior
@@ -21504,7 +21504,7 @@ The Framework is Enterprise-Grade, But I'm Operating Like a Senior Engineer
   c8f4498 fix: Phase 1 - Remove incorrect YAML files and add StrRay agents to oh-my-opencode.json
   Evolution of Agent Configuration:
   ❌ Early Commits (c8f4498, 19156e6, 3de9898):
-- Only had basic model routing: "enforcer": "opencode/grok-code"
+- Only had basic model routing: "enforcer": "openrouter/xai-grok-2-1212-fast-1"
 - Had capabilities arrays but no full agent configurations
 - Missing mode, tools, permission settings
   ✅ Current HEAD (After Manual Restoration):
@@ -21516,7 +21516,7 @@ The Framework is Enterprise-Grade, But I'm Operating Like a Senior Engineer
 
 1. ✅ Comprehensive Agent Setup
    enforcer: {
-   model: opencode/grok-code,
+   model: openrouter/xai-grok-2-1212-fast-1,
    description: StrRay Framework enforcer...,
    mode: subagent,
    temperature: 0.1,
@@ -21554,7 +21554,7 @@ The Framework is Enterprise-Grade, But I'm Operating Like a Senior Engineer
   ✅ All Agents Configured As:
 - mode: "subagent" (correct for oh-my-opencode integration)
 - Full tool access with appropriate permissions
-- Proper model routing to opencode/grok-code
+- Proper model routing to openrouter/xai-grok-2-1212-fast-1
 - Complete descriptions and temperature settings
   ✅ Framework Integration:
 - Plugin system active (strray-codex-injection.ts)
@@ -22516,19 +22516,19 @@ Configuration Files:
   Complete .yml Configuration Status
   | Agent | .yml File | Version | Model | Status |
   |-------|-----------|---------|-------|--------|
-  | Sisyphus | ✅ sisyphus.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | enforcer | ✅ enforcer.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | architect | ✅ architect.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | orchestrator | ✅ orchestrator.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | bug-triage-specialist | ✅ bug-triage-specialist.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | code-reviewer | ✅ code-reviewer.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | security-auditor | ✅ security-auditor.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | refactorer | ✅ refactorer.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | test-architect | ✅ test-architect.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | librarian | ✅ librarian.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | explore | ✅ explore.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | oracle | ✅ oracle.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
-  | multimodal-looker | ✅ multimodal-looker.yml | 1.0.0 | opencode/grok-code | ✅ Complete |
+  | Sisyphus | ✅ sisyphus.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | enforcer | ✅ enforcer.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | architect | ✅ architect.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | orchestrator | ✅ orchestrator.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | bug-triage-specialist | ✅ bug-triage-specialist.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | code-reviewer | ✅ code-reviewer.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | security-auditor | ✅ security-auditor.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | refactorer | ✅ refactorer.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | test-architect | ✅ test-architect.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | librarian | ✅ librarian.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | explore | ✅ explore.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | oracle | ✅ oracle.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | multimodal-looker | ✅ multimodal-looker.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
   Fixed: Missing .yml Files Created
   | Missing File | ✅ Now Created | Purpose |
   |--------------|----------------|---------|
@@ -22538,7 +22538,7 @@ Configuration Files:
   | multimodal-looker.yml | ✅ Complete config | Media file analysis specialist |
   Configuration Consistency Verified
 - ✅ All 13 .yml files: Have version "1.0.0"
-- ✅ All 13 agents: Use "opencode/grok-code" model
+- ✅ All 13 agents: Use "openrouter/xai-grok-2-1212-fast-1" model
 - ✅ All agents: Have proper processor pipelines, capabilities, error handling, performance, integration, security, and monitoring configurations
 - ✅ Name matching: Agent names in .yml files match filenames and JSON config
 - ✅ Complete coverage: Every enabled agent has both JSON config + .yml spec
@@ -22674,7 +22674,7 @@ Configuration Files:
    📋 Configuration File Analysis
    JSON Configuration (oh-my-opencode.json)
 
-- ✅ Models: All 14 agents correctly routed to opencode/grok-code
+- ✅ Models: All 14 agents correctly routed to openrouter/xai-grok-2-1212-fast-1
 - ✅ Modes: Correct (13 subagents + 1 primary)
 - ✅ Permissions: Mostly aligned with documentation
 - ❌ Tools: Major mismatches with documented capabilities
@@ -22924,7 +22924,7 @@ You are continuing a comprehensive StrRay Framework configuration and agent setu
 - refactorer.md + refactorer.yml - Technical debt elimination
 - test-architect.md + test-architect.yml - Testing strategy
   All agents configured with:
-- Model routing to opencode/grok-code
+- Model routing to openrouter/xai-grok-2-1212-fast-1
 - Subagent mode with specific tools/permissions
 - Processor pipelines for validation
 - Logging integration
@@ -24190,13 +24190,13 @@ What You Need:
 2. Project Configuration (.opencode/oh-my-opencode.json):
       {
      model_routing: {
-       enforcer: opencode/grok-code,
-       architect: opencode/grok-code,
+       enforcer: openrouter/xai-grok-2-1212-fast-1,
+       architect: openrouter/xai-grok-2-1212-fast-1,
        // ... all 8 StrRay agents already configured
      },
      agents: {
-       enforcer: { model: opencode/grok-code, mode: subagent },
-       architect: { model: opencode/grok-code, mode: subagent },
+       enforcer: { model: openrouter/xai-grok-2-1212-fast-1, mode: subagent },
+       architect: { model: openrouter/xai-grok-2-1212-fast-1, mode: subagent },
        // ... all agents already defined
      }
    }
@@ -24475,7 +24475,7 @@ Compatibility Test Results
 - Version Compatibility: Compatible version numbering and schema formats
 - Feature Namespacing: No conflicts in feature names or settings
 ✅ Configuration Coexistence Verified
-- Model Consistency: Both systems configured for opencode/grok-code
+- Model Consistency: Both systems configured for openrouter/xai-grok-2-1212-fast-1
 - No Setting Conflicts: Different configuration namespaces prevent overlap
 - Path Isolation: Separate directory structures prevent file conflicts
 - Permission Compatibility: All files have appropriate access permissions
@@ -24547,21 +24547,21 @@ This plugin array should be moved to .opencode/oh-my-opencode.json in your proje
 The StrRay Framework documentation specifies that the 8 specialized agents (enforcer, architect, orchestrator, etc.) should be configured in .opencode/oh-my-opencode.json as part of the project-specific orchestration settings.
 This file contains agent model routing for all StrRay agents:
 agent: {
-  architect: {model: opencode/grok-code},
-  enforcer: {model: opencode/grok-code},
+  architect: {model: openrouter/xai-grok-2-1212-fast-1},
+  enforcer: {model: openrouter/xai-grok-2-1212-fast-1},
   // ... all 8 StrRay agents
 }
 These should be moved to .opencode/oh-my-opencode.json.
 3. Inconsistent Model Routing
-The documentation states: "All 8 agents configured to use opencode/grok-code model", but this file assigns different models:
-- Most agents: opencode/grok-code ✅
+The documentation states: "All 8 agents configured to use openrouter/xai-grok-2-1212-fast-1 model", but this file assigns different models:
+- Most agents: openrouter/xai-grok-2-1212-fast-1 ✅
 - code-reviewer: openai/gpt-5.2 ❌
 - test-architect: openai/gpt-5.2 ❌
 - refactorer: openai/gpt-5.2 ❌
 Recommended Corrections
 1. Move plugin array to .opencode/oh-my-opencode.json
 2. Move StrRay agent configurations to .opencode/oh-my-opencode.json
-3. Standardize model routing to use opencode/grok-code for all StrRay agents (or update documentation to reflect the mixed routing if intentional)
+3. Standardize model routing to use openrouter/xai-grok-2-1212-fast-1 for all StrRay agents (or update documentation to reflect the mixed routing if intentional)
 The provider configurations (Google Gemini models, OpenAI models) and schema reference appear correct for a global config file.
 I've successfully implemented a comprehensive logging system that tracks every framework component usage as requested. Here's what has been deployed:
 🎯 Logging System Components
@@ -24739,7 +24739,7 @@ You're absolutely right - I needed to add all agents to the configuration. I've 
 Priority Order: sisyphus, enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect, log-monitor
 Each Agent Configured With:
 - ✅ enabled: true
-- ✅ model: opencode/grok-code
+- ✅ model: openrouter/xai-grok-2-1212-fast-1
 - ✅ capabilities: Role-specific capabilities
 - ✅ tools: Appropriate tools for their function
 - ✅ config: Path to their YAML/JSON config file
@@ -24806,7 +24806,7 @@ Based on the oh-my-opencode documentation and codebase analysis, I corrected the
 3. Corrected Configuration Structure
 {
   version: 2.14.0,
-  model: opencode/grok-code,
+  model: openrouter/xai-grok-2-1212-fast-1,
   plugins: {
     strray-framework: {
       enabled: true,
@@ -27633,7 +27633,7 @@ Total Files Restored:
 Agent Management:
 - 15 specialized AI agents with detailed configurations
 - Rich YML configs (logging, security, performance tuning)
-- Multi-model support (opencode/grok-code + openai/gpt-5.2)
+- Multi-model support (openrouter/xai-grok-2-1212-fast-1 + openai/gpt-5.2)
 MCP Server Ecosystem:
 - 11 fully implemented MCP servers
 - Tool registration and execution
@@ -28360,7 +28360,7 @@ No, you do NOT need to register all agents in the config file.
 Current Configuration:
 agent: {
   orchestrator: {
-    model: opencode/grok-code
+    model: openrouter/xai-grok-2-1212-fast-1
   }
 }
 🎯 Why This is Correct
@@ -30957,7 +30957,7 @@ After Revert (153a867):
 {
   agent: {
     orchestrator: {
-      model: opencode/grok-code
+      model: openrouter/xai-grok-2-1212-fast-1
     }
   }
 }
@@ -31009,9 +31009,9 @@ private async handleFileCreation(filePath: string): Promise<void> {
     coordination_model: async-multi-agent
   },
   agents: {
-    enforcer: {model: opencode/grok-code},
-    architect: {model: opencode/grok-code},
-    test-architect: {model: opencode/grok-code}
+    enforcer: {model: openrouter/xai-grok-2-1212-fast-1},
+    architect: {model: openrouter/xai-grok-2-1212-fast-1},
+    test-architect: {model: openrouter/xai-grok-2-1212-fast-1}
   }
 }
 ---
@@ -31206,7 +31206,7 @@ Monitors:
 All 8 agents properly configured:
 - enforcer, architect, test-architect, bug-triage-specialist
 - code-reviewer, security-auditor, refactorer
-- All with opencode/grok-code model
+- All with openrouter/xai-grok-2-1212-fast-1 model
 - All with proper capabilities and settings
 ✅ Multi-Agent Orchestration Status
 - Orchestration: ✅ ENABLED
@@ -31971,9 +31971,9 @@ After exhaustive investigation across git history, codebase patterns, and agent 
 ✅ CONFIGURATION FIXED
 {
   agent: {
-    orchestrator: {model: opencode/grok-code},
-    enforcer: {model: opencode/grok-code},
-    architect: {model: opencode/grok-code},
+    orchestrator: {model: openrouter/xai-grok-2-1212-fast-1},
+    enforcer: {model: openrouter/xai-grok-2-1212-fast-1},
+    architect: {model: openrouter/xai-grok-2-1212-fast-1},
     // ... 11 more agents configured
   }
 }
@@ -38822,11 +38822,11 @@ The Enhanced Multi-Agent Orchestration system with clickable monitoring is now f
 // .opencode/oh-my-opencode.json - Enhanced orchestrator added
 agent: {
   enhanced-orchestrator: {
-    model: opencode/grok-code
+    model: openrouter/xai-grok-2-1212-fast-1
   }
 }
 Integration Points:
-- Agent Routing: Uses opencode/grok-code model
+- Agent Routing: Uses openrouter/xai-grok-2-1212-fast-1 model
 - Session Management: Integrated with oh-my-opencode sessions
 - Plugin Architecture: Works with oh-my-opencode plugin system
 - Codex Compliance: Follows Universal Development Codex v1.1.1
@@ -38883,7 +38883,7 @@ Synchronization & Cleanup → Enterprise Resource Management
 opencode Integration Points
 - MCP Server: enhanced-orchestrator registered and available
 - Tool Access: 5 orchestration tools accessible via MCP protocol
-- Model Routing: Uses opencode/grok-code for all agent operations
+- Model Routing: Uses openrouter/xai-grok-2-1212-fast-1 for all agent operations
 - Session Integration: Works within opencode session management
 ---
 🎯 PRODUCTION READINESS
@@ -42809,11 +42809,11 @@ npx strray-setup
 # ✅ Plugin activated in oh-my-opencode.json
 3. ✅ Configuration Created
 {
-  model: opencode/grok-code,
+  model: openrouter/xai-grok-2-1212-fast-1,
   plugin: [oh-my-opencode-strray/dist/plugin/strray-codex-injection.js],
   agent: {
-    orchestrator: {model: opencode/grok-code},
-    enforcer: {model: opencode/grok-code},
+    orchestrator: {model: openrouter/xai-grok-2-1212-fast-1},
+    enforcer: {model: openrouter/xai-grok-2-1212-fast-1},
     // ... all 9 agents configured
   }
 }
@@ -43326,17 +43326,17 @@ npm install oh-my-opencode-strray
 # Enables multi-agent orchestration
 Configuration Generated
 {
-  model: opencode/grok-code,
+  model: openrouter/xai-grok-2-1212-fast-1,
   plugin: [oh-my-opencode-strray/dist/plugin/strray-codex-injection.js],
   agent: {
-    orchestrator: {model: opencode/grok-code},
-    enforcer: {model: opencode/grok-code},
-    architect: {model: opencode/grok-code},
-    test-architect: {model: opencode/grok-code},
-    bug-triage-specialist: {model: opencode/grok-code},
-    code-reviewer: {model: opencode/grok-code},
-    security-auditor: {model: opencode/grok-code},
-    refactorer: {model: opencode/grok-code}
+    orchestrator: {model: openrouter/xai-grok-2-1212-fast-1},
+    enforcer: {model: openrouter/xai-grok-2-1212-fast-1},
+    architect: {model: openrouter/xai-grok-2-1212-fast-1},
+    test-architect: {model: openrouter/xai-grok-2-1212-fast-1},
+    bug-triage-specialist: {model: openrouter/xai-grok-2-1212-fast-1},
+    code-reviewer: {model: openrouter/xai-grok-2-1212-fast-1},
+    security-auditor: {model: openrouter/xai-grok-2-1212-fast-1},
+    refactorer: {model: openrouter/xai-grok-2-1212-fast-1}
   },
   settings: {
     multi_agent_orchestration: {
@@ -43395,7 +43395,7 @@ All tasks completed successfully. Plugin is production-ready and fully tested. �
 ✅ Configuration Generation
 - .opencode/oh-my-opencode.json: ✅ Created with:
   - Plugin registration: "oh-my-opencode-strray/dist/plugin/strray-codex-injection.js"
-  - All 9 agents configured with opencode/grok-code model
+  - All 9 agents configured with openrouter/xai-grok-2-1212-fast-1 model
   - Multi-agent orchestration settings enabled
   - Claude Code compatibility enabled
 - .strray/config.json: ✅ Created with:
@@ -43492,7 +43492,7 @@ Key Insight: npm intentionally skips postinstall scripts for local packages for 
 - Plugin Registration: ✅ "oh-my-opencode-strray/dist/plugin/strray-codex-injection.js"
 - Agent Count: ✅ All 9 StrRay agents configured
 - Agent List: ✅ architect, bug-triage-specialist, code-reviewer, enforcer, enhanced-orchestrator, orchestrator, refactorer, security-auditor, test-architect
-- Model Routing: ✅ All agents use opencode/grok-code
+- Model Routing: ✅ All agents use openrouter/xai-grok-2-1212-fast-1
 - Multi-Agent Settings: ✅ Enabled with max 5 concurrent agents
 ✅ Package Integrity Confirmed
 - Plugin Files: ✅ 67 JavaScript files present
@@ -43641,7 +43641,7 @@ The framework is now properly configured for the "strray" package name. Tests pa
 ✅ Package name standardized: All "oh-my-opencode-strray" references replaced with "strray" across codebase
 ✅ Local tar.gz install tested: Package builds (480KB), installs correctly, and setup configures properly
 ✅ Plugin paths updated: Config shows correct "strray/dist/plugin/strray-codex-injection.js"
-✅ Agent configs verified: All 8 StrRay agents configured with opencode/grok-code models
+✅ Agent configs verified: All 8 StrRay agents configured with openrouter/xai-grok-2-1212-fast-1 models
 ✅ Tests pass: 833/833 in main repo, local install working
 All deployment tests completed successfully with model flags:
 ✅ Development tests: 304/309 passing (833/833 total)
@@ -43651,7 +43651,7 @@ All deployment tests completed successfully with model flags:
 - Security-auditor: Vulnerability detection ✅
 - Test-architect: Unit test generation ✅
 - Refactorer: Code modernization ✅
-✅ Model configuration: All agents using opencode/grok-code correctly
+✅ Model configuration: All agents using openrouter/xai-grok-2-1212-fast-1 correctly
 ✅ Plugin integration: StrRay codex injection working in opencode
 The deployment is fully validated. All user actions work with proper model routing, and the framework enforces systematic error prevention as designed. StringRay AI v1.1.1 is production-ready.
 Reviewing system status

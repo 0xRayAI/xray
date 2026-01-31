@@ -5,8 +5,8 @@
  */
 
 import { describe, test, expect, beforeEach } from "vitest";
-import { complexityAnalyzer } from "../../delegation/complexity-analyzer";
-import { StringRayStateManager } from "../../state/state-manager";
+import { complexityAnalyzer } from "../../delegation/complexity-analyzer.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("Complexity Analysis Integration", () => {
   let stateManager: StringRayStateManager;

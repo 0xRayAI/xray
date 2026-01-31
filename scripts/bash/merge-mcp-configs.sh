@@ -70,44 +70,44 @@ merge_mcp_configs() {
         log "Found $server_count MCP server configurations in .mcp.json"
     fi
 
-    # Skip the individual file processing since they're consolidated
-    return 0
+    # Continue with individual file processing even if some are consolidated
+    log "Checking for individual MCP server configurations..."
 
     # Legacy code below (no longer used):
     # Find all .mcp.json files in .opencode/mcps/
     # for mcp_file in .opencode/mcps/*.mcp.json; do
-        if [ -f "$mcp_file" ]; then
-            log "Processing $mcp_file"
-
-            # Extract server name from filename
-            local server_name=$(basename "$mcp_file" .mcp.json)
-
-            # Extract server configuration from JSON
-            local server_config=$(jq -r ".mcpServers.\"$server_name\" // empty" "$mcp_file" 2>/dev/null)
-
-            if [ -n "$server_config" ] && [ "$server_config" != "null" ]; then
-                # Add comma if not first server
-                if [ $server_count -gt 0 ]; then
-                    strray_servers="${strray_servers},"
-                fi
-
-                # Add server configuration with proper path
-                local modified_config=$(echo "$server_config" | jq --arg prefix ".opencode/" '
-                    if .args and (.args | length > 0) and (.args[0] | startswith("mcps/")) then
-                        .args[0] = ($prefix + .args[0])
-                    else
-                        .
-                    end
-                ')
-
-                strray_servers="${strray_servers}\"${server_name}\": ${modified_config}"
-                server_count=$((server_count + 1))
-                success "Added MCP server: $server_name"
-            else
-                warning "No valid configuration found in $mcp_file"
-            fi
-        fi
-    done
+    #     if [ -f "$mcp_file" ]; then
+    #         log "Processing $mcp_file"
+    #
+    #         # Extract server name from filename
+    #         local server_name=$(basename "$mcp_file" .mcp.json)
+    #
+    #         # Extract server configuration from JSON
+    #         local server_config=$(jq -r ".mcpServers.\"$server_name\" // empty" "$mcp_file" 2>/dev/null)
+    #
+    #         if [ -n "$server_config" ] && [ "$server_config" != "null" ]; then
+    #             # Add comma if not first server
+    #             if [ $server_count -gt 0 ]; then
+    #                 strray_servers="${strray_servers},"
+    #             fi
+    #
+    #             # Add server configuration with proper path
+    #             local modified_config=$(echo "$server_config" | jq --arg prefix ".opencode/" '
+    #                 if .args and (.args | length > 0) and (.args[0] | startswith("mcps/")) then
+    #                     .args[0] = ($prefix + .args[0])
+    #                 else
+    #                     .
+    #                 end
+    #             ')
+    #
+    #             strray_servers="${strray_servers}\"${server_name}\": ${modified_config}"
+    #             server_count=$((server_count + 1))
+    #             success "Added MCP server: $server_name"
+    #         else
+    #             warning "No valid configuration found in $mcp_file"
+    #         fi
+    #     fi
+    # done
 
     # Close the merged configuration
     if [ -n "$strray_servers" ]; then

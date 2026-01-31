@@ -2,7 +2,7 @@ import {
   isLoggingEnabled,
   shouldLog,
   getLoggingConfig,
-} from "./logging-config";
+} from "./logging-config.js";
 
 /**
  * Generate a unique job ID for tracking work sessions

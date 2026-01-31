@@ -4,8 +4,8 @@
  * Validates applied fixes and provides rollback functionality.
  */
 
-import { frameworkLogger } from "../../core/framework-logger";
-import { FailureAnalysis, PostProcessorContext } from "../types";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import { FailureAnalysis, PostProcessorContext } from "../types.js";
 
 export interface AppliedFix {
   type: string;

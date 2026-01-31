@@ -137,14 +137,14 @@ npm install
 {
   "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray",
@@ -396,8 +396,8 @@ data:
         "monitoring_enabled": true
       },
       "model_routing": {
-        "enforcer": "opencode/grok-code",
-        "architect": "opencode/grok-code"
+        "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+        "architect": "openrouter/xai-grok-2-1212-fast-1"
       }
     }
 ```

@@ -1,7 +1,7 @@
 // Framework job ID correlation fix
 // Integrate JobContext into all framework loggers
 
-import { JobContext, generateJobId } from "../core/framework-logger"
+import { JobContext, generateJobId } from "../core/framework-logger.js"
 
 // Global job context for correlation - frameworks should populate this
 let currentJobContext: JobContext | null = null;

@@ -1,5 +1,5 @@
-import type { AgentConfig } from "./types";
-import { modelRouter } from '../core/model-router';
+import type { AgentConfig } from "./types.js";
+import { modelRouter } from '../core/model-router.js';
 
 export const architect: AgentConfig = {
   name: "architect",

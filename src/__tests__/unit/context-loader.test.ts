@@ -4,7 +4,7 @@ import {
   strRayContextLoader,
   CodexContext,
   CodexTerm,
-} from "../../core/context-loader";
+} from "../../core/context-loader.js";
 import * as fs from "fs";
 import * as path from "path";
 

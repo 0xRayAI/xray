@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SecurityHeadersMiddleware } from "../../../security/security-headers";
+import { SecurityHeadersMiddleware } from "../../../security/security-headers.js";
 
 describe("SecurityHeadersMiddleware", () => {
   let middleware: SecurityHeadersMiddleware;

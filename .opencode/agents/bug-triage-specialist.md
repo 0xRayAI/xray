@@ -2,7 +2,7 @@
 
 **Role**: Error investigation & surgical fixes
 **Mode**: Subagent
-**Model**: opencode/grok-code
+**Model**: openrouter/xai-grok-2-1212-fast-1
 
 ## Purpose
 

@@ -12,8 +12,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { SecurityHardener } from "../../../security/security-hardener";
-import { SecurityIssue } from "../../../security/security-auditor";
+import { SecurityHardener } from "../../../security/security-hardener.js";
+import { SecurityIssue } from "../../../security/security-auditor.js";
 
 // Mock fs module
 vi.mock("fs", () => ({

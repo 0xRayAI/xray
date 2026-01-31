@@ -8,8 +8,8 @@ import {
   RuleEnforcer,
   ruleEnforcer,
   RuleValidationContext,
-} from "../../enforcement/rule-enforcer";
-import { frameworkLogger } from "../../framework-logger";
+} from "../../enforcement/rule-enforcer.js";
+import { frameworkLogger } from "../../framework-logger.js";
 
 // Mock framework logger
 vi.mock("../../framework-logger");
@@ -308,7 +308,7 @@ describe("RuleEnforcer", () => {
         operation: "create",
         files: ["src/delegation/new-context.ts"],
         newCode: `
-          import { CodebaseContextAnalyzer } from './codebase-context-analyzer';
+          import { CodebaseContextAnalyzer } from './codebase-context-analyzer.js';
           new CodebaseContextAnalyzer(projectRoot, { maxFileSizeBytes: 1024 * 1024 });
         `,
       };

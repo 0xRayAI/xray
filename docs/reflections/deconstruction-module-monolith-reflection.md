@@ -52,7 +52,7 @@ The user insight reveals that our current architecture is a **construct** - an a
 
 ### Current Architecture as Monolith
 ```
-StringRay Framework v1.1.1
+StringRay AI v1.1.1
 ├── Core Monolith
 │   ├── Context Loading (Singleton)
 │   ├── Agent Orchestration (8 agents)

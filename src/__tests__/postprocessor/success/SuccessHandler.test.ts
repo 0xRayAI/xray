@@ -3,11 +3,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SuccessHandler } from "../../../postprocessor/success/SuccessHandler";
+import { SuccessHandler } from "../../../postprocessor/success/SuccessHandler.js";
 import {
   PostProcessorContext,
   PostProcessorResult,
-} from "../../../postprocessor/types";
+} from "../../../postprocessor/types.js";
 
 describe("SuccessHandler", () => {
   let handler: SuccessHandler;

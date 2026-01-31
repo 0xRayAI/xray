@@ -174,9 +174,9 @@ The framework automatically configures oh-my-opencode agents:
 ```json
 {
   "model_routing": {
-    "orchestrator": "opencode/grok-code",
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code"
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1"
   }
 }
 ```

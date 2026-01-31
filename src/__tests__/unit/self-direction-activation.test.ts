@@ -56,7 +56,7 @@ vi.mock("../../self-direction-activation", () => ({
 }));
 
 // Import after mocking
-import { SelfDirectionSystem } from "../../orchestrator/self-direction-activation";
+import { SelfDirectionSystem } from "../../orchestrator/self-direction-activation.js";
 
 vi.mock("../../advanced-features/analytics/predictive-analytics", () => ({
   PredictiveAnalytics: vi.fn().mockImplementation(() => ({

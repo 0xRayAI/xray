@@ -68,7 +68,7 @@ async function testPluginHooks() {
         if (fs.existsSync(path.join(process.cwd(), 'dist/plugin/plugins/stringray-codex-injection.js'))) {
             pluginPath = path.join(process.cwd(), 'dist/plugin/plugins/stringray-codex-injection.js');
         } else {
-            pluginPath = path.join(process.cwd(), 'node_modules/strray-ai/dist/plugin/plugins/stringray-codex-injection.js');
+            pluginPath = path.join(process.cwd(), 'dist/plugin/plugins/stringray-codex-injection.js');
         }
         console.log('Loading plugin from:', pluginPath);
         const plugin = await import(pluginPath);

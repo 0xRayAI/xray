@@ -7,7 +7,7 @@
  * @since 2026-01-08
  */
 
-import { EnterpriseMonitoringConfig } from "./enterprise-monitoring";
+import { EnterpriseMonitoringConfig } from "./enterprise-monitoring.js";
 
 // =============================================================================
 // CONFIGURATION TEMPLATES

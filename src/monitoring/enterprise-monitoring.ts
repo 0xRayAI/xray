@@ -16,10 +16,10 @@ import { EventEmitter } from "events";
 import {
   AdvancedMonitor,
   MonitoringMetrics,
-} from "../monitoring/advanced-monitor";
-import { SessionMonitor } from "../session/session-monitor";
-import { PerformanceSystemOrchestrator } from "../performance/performance-system-orchestrator";
-import { frameworkLogger } from "../core/framework-logger";
+} from "../monitoring/advanced-monitor.js";
+import { SessionMonitor } from "../session/session-monitor.js";
+import { PerformanceSystemOrchestrator } from "../performance/performance-system-orchestrator.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // =============================================================================
 // ARCHITECTURE OVERVIEW

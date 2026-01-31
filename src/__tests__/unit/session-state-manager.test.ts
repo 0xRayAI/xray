@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { SessionStateManager, createSessionStateManager } from "../../session/session-state-manager";
-import { StringRayStateManager } from "../../state/state-manager";
-import { SessionCoordinator } from "../../delegation/session-coordinator";
+import { SessionStateManager, createSessionStateManager } from "../../session/session-state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { SessionCoordinator } from "../../delegation/session-coordinator.js";
 
 // Mock dependencies
 vi.mock("../../state/state-manager");

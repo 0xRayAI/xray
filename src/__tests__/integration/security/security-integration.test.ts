@@ -8,9 +8,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { SecurityAuditor } from "../../../security/security-auditor";
-import { SecurityHardener } from "../../../security/security-hardener";
-import { SecurityHeadersMiddleware } from "../../../security/security-headers";
+import { SecurityAuditor } from "../../../security/security-auditor.js";
+import { SecurityHardener } from "../../../security/security-hardener.js";
+import { SecurityHeadersMiddleware } from "../../../security/security-headers.js";
 
 // Mock file system operations
 vi.mock("fs", () => ({

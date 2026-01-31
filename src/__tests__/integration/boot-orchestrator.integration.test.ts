@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { BootOrchestrator, BootResult } from "../../core/boot-orchestrator";
-import { StringRayStateManager } from "../../state/state-manager";
+import { BootOrchestrator, BootResult } from "../../core/boot-orchestrator.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 // Mock all the dependencies that BootOrchestrator uses
 vi.mock("../../state/state-manager");

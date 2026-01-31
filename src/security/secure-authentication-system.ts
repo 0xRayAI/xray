@@ -11,8 +11,8 @@
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
-import { securityHardeningSystem } from "./security-hardening-system";
-import { frameworkLogger } from "../core/framework-logger";
+import { securityHardeningSystem } from "./security-hardening-system.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface User {
   id: string;

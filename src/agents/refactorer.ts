@@ -1,6 +1,6 @@
-import type { AgentConfig } from "./types";
+import type { AgentConfig } from "./types.js";
 
-import { modelRouter } from '../core/model-router';
+import { modelRouter } from '../core/model-router.js';
 
 export const refactorer: AgentConfig = {
   name: "refactorer",

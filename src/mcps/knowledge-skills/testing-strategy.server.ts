@@ -13,7 +13,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface TestAnalysis {
   coverage: number;
@@ -889,7 +889,7 @@ class StrRayTestingStrategyServer {
     // Server startup - removed unnecessary startup logging
 
     const cleanup = async (signal: string) => {
-  console.log(`Received ${signal}, shutting down gracefully...`);
+  await frameworkLogger.log('testing-strategy.server', '-received-signal-shutting-down-gracefully-', 'info', { message: `Received ${signal}, shutting down gracefully...` });
 
   // Set a timeout to force exit if graceful shutdown fails
   const timeout = setTimeout(() => {
@@ -902,7 +902,7 @@ class StrRayTestingStrategyServer {
       await this.server.close();
     }
     clearTimeout(timeout);
-    console.log("StrRay MCP Server shut down gracefully");
+    await frameworkLogger.log('testing-strategy.server', '-strray-mcp-server-shut-down-gracefully-', 'info', { message: "StrRay MCP Server shut down gracefully" });
     process.exit(0);
   } catch (error) {
     clearTimeout(timeout);
@@ -918,13 +918,13 @@ process.on('SIGTERM', () => cleanup('SIGTERM'));
 process.on('SIGHUP', () => cleanup('SIGHUP'));
 
 // Monitor parent process (opencode) and shutdown if it dies
-const checkParent = () => {
+const checkParent = async () => {
   try {
     process.kill(process.ppid, 0); // Check if parent is alive
     setTimeout(checkParent, 1000); // Check again in 1 second
   } catch (error) {
     // Parent process died, shut down gracefully
-    console.log('Parent process (opencode) died, shutting down MCP server...');
+    await frameworkLogger.log('testing-strategy.server', '-parent-process-opencode-died-shutting-down-mcp-se', 'info', { message: 'Parent process (opencode) died, shutting down MCP server...' });
     cleanup('parent-process-death');
   }
 };

@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { frameworkLogger, generateJobId } from "../core/framework-logger";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 
 export interface PluginMetadata {
   id: string;

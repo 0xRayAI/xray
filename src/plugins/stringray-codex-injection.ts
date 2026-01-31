@@ -8,9 +8,9 @@
  * @author StringRay Framework Team
  */
 
-import { frameworkLogger, generateJobId } from "../core/framework-logger";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 
-import { TokenManager } from "../utils/token-manager";
+import { TokenManager } from "../utils/token-manager.js";
 
 const tokenManager = new TokenManager();
 

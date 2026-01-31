@@ -211,14 +211,14 @@ Then manually add to your development configuration (example for oh-my-opencode)
 {
   "plugin": ["stringray-ai/dist/plugin/strray-codex-injection.js"],
   "agent": {
-    "orchestrator": { "model": "opencode/grok-code" },
-    "enforcer": { "model": "opencode/grok-code" },
-    "architect": { "model": "opencode/grok-code" },
-    "test-architect": { "model": "opencode/grok-code" },
-    "bug-triage-specialist": { "model": "opencode/grok-code" },
-    "code-reviewer": { "model": "opencode/grok-code" },
-    "security-auditor": { "model": "opencode/grok-code" },
-    "refactorer": { "model": "opencode/grok-code" }
+    "orchestrator": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "enforcer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "test-architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "bug-triage-specialist": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "code-reviewer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "security-auditor": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "refactorer": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }
 }
 ```
@@ -697,14 +697,14 @@ Update your `.opencode/oh-my-opencode.json` for enterprise deployment:
 {
   "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray-ai",

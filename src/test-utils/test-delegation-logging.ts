@@ -1,7 +1,7 @@
-import { AgentDelegator } from "../delegation/agent-delegator";
-import { frameworkLogger, generateJobId } from "../core/framework-logger";
-import { StringRayStateManager } from "../state/state-manager";
-import { strRayConfigLoader } from "../core/config-loader";
+import { AgentDelegator } from "../delegation/agent-delegator.js";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { strRayConfigLoader } from "../core/config-loader.js";
 
 async function testDelegationLogging() {
   console.log("🔄 Testing delegation logging integration...");

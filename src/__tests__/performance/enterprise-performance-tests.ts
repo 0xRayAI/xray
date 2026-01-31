@@ -14,24 +14,24 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { performance } from "perf_hooks";
 
 // Core components
-import { predictiveAnalytics } from "../../analytics/predictive-analytics";
-import { liveMetricsCollector } from "../../dashboards/live-metrics-collector";
-import { marketplaceService } from "../../plugins/marketplace/marketplace-service";
+import { predictiveAnalytics } from "../../analytics/predictive-analytics.js";
+import { liveMetricsCollector } from "../../dashboards/live-metrics-collector.js";
+import { marketplaceService } from "../../plugins/marketplace/marketplace-service.js";
 
 // ML and inference components
 import {
   MLModel,
   InferenceRequest,
   InferenceResponse,
-} from "../../ml/core/types";
+} from "../../ml/core/types.js";
 
 // Performance infrastructure
 import {
   automatedBenchmarkingSuite,
   Benchmark,
-} from "../../performance/automated-benchmarking-suite";
-import { performanceRegressionTester } from "../../performance/performance-regression-tester";
-import { performanceBudgetEnforcer } from "../../performance/performance-budget-enforcer";
+} from "../../performance/automated-benchmarking-suite.js";
+import { performanceRegressionTester } from "../../performance/performance-regression-tester.js";
+import { performanceBudgetEnforcer } from "../../performance/performance-budget-enforcer.js";
 
 // Mock data generators
 import { faker } from "@faker-js/faker";

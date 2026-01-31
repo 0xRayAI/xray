@@ -3,8 +3,8 @@
  * Main orchestration engine for multi-agent task coordination
  */
 
-import { frameworkLogger } from "../core/framework-logger";
-import { TaskDefinition, AgentConfig } from "../agents/types";
+import { frameworkLogger } from "../core/framework-logger.js";
+import { TaskDefinition, AgentConfig } from "../agents/types.js";
 
 export interface OrchestrationResult {
   success: boolean;

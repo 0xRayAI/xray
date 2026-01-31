@@ -3,7 +3,7 @@
  * Enforces development rules and validates component creation
  */
 
-import { frameworkLogger } from "../core/framework-logger"
+import { frameworkLogger } from "../core/framework-logger.js"
 
 export interface RuleDefinition {
   id: string;

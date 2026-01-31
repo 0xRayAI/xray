@@ -2,7 +2,7 @@ import {
   isLoggingEnabled,
   shouldLog,
   getLoggingConfig,
-} from "../core/logging-config";
+} from "../core/logging-config.js";
 
 /**
  * MCP Server Logger

@@ -2,8 +2,8 @@ import {
   PreValidateContext,
   PostValidateContext,
   ProcessorHook,
-} from "../processors/processor-types";
-import { frameworkLogger } from "../core/framework-logger";
+} from "../processors/processor-types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs/promises";
 
 export interface ValidationHooks {

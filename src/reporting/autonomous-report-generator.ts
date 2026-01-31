@@ -1,5 +1,5 @@
 /**
- * StringRay AI v2.0.0 - Autonomous Report Generation System (Simplified)
+ * StringRay AI v1.1.1 - Autonomous Report Generation System (Simplified)
  *
  * Automatically generates comprehensive diagnostic reports from framework logs
  * and activity data for self-directed monitoring and improvement.
@@ -9,8 +9,8 @@
  * @since 2026-01-24
  */
 
-import { frameworkLogger, generateJobId } from "../core/framework-logger";
-import { strRayConfigLoader } from "../core/config-loader";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
+import { strRayConfigLoader } from "../core/config-loader.js";
 
 export interface DiagnosticReport {
   reportId: string;

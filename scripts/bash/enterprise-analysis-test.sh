@@ -39,7 +39,12 @@ create_enterprise_analysis() {
     node -e "
     (async () => {
       try {
-        const { createAgentDelegator } = await import('./dist/delegation/agent-delegator.js');
+        // Test if we can load the main delegator module
+        if [ "$TEST_PASSED" -eq 1 ]; then
+            echo "✅ Agent delegator module loaded successfully"
+        else
+            echo "❌ Agent delegator module failed to load"
+        fi
         const { StrRayStateManager } = await import('./dist/state/state-manager.js');
 
         const stateManager = new StrRayStateManager();

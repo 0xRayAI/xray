@@ -7,8 +7,8 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { StringRayStateManager } from "../../state/state-manager";
-import { frameworkLogger } from "../../core/framework-logger";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";

@@ -1,8 +1,8 @@
 // Mock implementations for StringRay Framework components
 
 import { vi } from "vitest";
-import { StateManager } from "../../state/state-manager";
-import { CodexContext, ContextLoadResult } from "../../context-loader";
+import { StateManager } from "../../state/state-manager.js";
+import { CodexContext, ContextLoadResult } from "../../context-loader.js";
 
 /**
  * Mock State Manager implementation

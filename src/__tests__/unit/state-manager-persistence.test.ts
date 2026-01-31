@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { StringRayStateManager } from "../../state/state-manager";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 // Mock fs and path modules for testing
 const mockFs = {

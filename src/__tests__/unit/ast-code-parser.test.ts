@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { ASTCodeParser } from "../../delegation/ast-code-parser";
+import { ASTCodeParser } from "../../delegation/ast-code-parser.js";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../core/framework-logger";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 // Mock external dependencies
 vi.mock("fs");
@@ -128,8 +128,8 @@ describe("ASTCodeParser", () => {
     it("should detect import/export statements", async () => {
       const testContent = `
         import React, { useState } from 'react';
-        import * as utils from './utils';
-        export { default as Component } from './Component';
+        import * as utils from './utils.js';
+        export { default as Component } from './Component.js';
         export const VERSION = '1.0.0';
       `;
 

@@ -6,13 +6,13 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { StringRayContextLoader } from "../../core/context-loader";
+import { StringRayContextLoader } from "../../core/context-loader.js";
 import {
   parseCodexContent,
   detectContentFormat,
   validateJsonSyntax,
   extractCodexMetadata,
-} from "../../utils/codex-parser";
+} from "../../utils/codex-parser.js";
 
 const testProjectRoot = process.cwd();
 const validJsonCodex = JSON.stringify({

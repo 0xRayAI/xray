@@ -15,6 +15,10 @@ set -e
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# If script_dir is scripts/bash, project_root should be one level up
+if [[ "$(basename "$SCRIPT_DIR")" == "bash" ]]; then
+    PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+fi
 VERBOSE="${1:-false}"
 
 # Colors
@@ -53,7 +57,7 @@ check_plugin_file() {
     log_header "🔍 CHECK 1: Plugin File Location"
 
     local plugin_file="$PROJECT_ROOT/.opencode/plugin/strray-codex-injection.ts"
-    local built_plugin="$PROJECT_ROOT/dist/plugin/plugins/strray-codex-injection.js"
+    local built_plugin="$PROJECT_ROOT/dist/plugin/strray-codex-injection.js"
 
     if [[ -f "$plugin_file" ]]; then
         log_success "Plugin file exists at expected location: .opencode/plugin/strray-codex-injection.ts"
@@ -169,7 +173,7 @@ check_mcp_servers() {
     log_info "Configured MCP servers: $server_count"
 
     # Test one StrRay server
-    local test_server="$PROJECT_ROOT/dist/plugin/mcps/knowledge-skills/project-analysis.server.js"
+    local test_server="$PROJECT_ROOT/dist/mcps/knowledge-skills/project-analysis.server.js"
     if [[ -f "$test_server" ]]; then
         log_info "Testing MCP server execution..."
         timeout 5s node "$test_server" > /dev/null 2>&1 &
@@ -193,8 +197,12 @@ check_plugin_functionality() {
 
     if [[ ! -f "$PROJECT_ROOT/scripts/test-strray-plugin.mjs" ]]; then
         log_error "Plugin test script missing: scripts/test-strray-plugin.mjs"
-        return 1
-    fi
+        log_error "PROJECT_ROOT: $PROJECT_ROOT"
+        log_error "Looking for: $PROJECT_ROOT/scripts/test-strray-plugin.mjs"
+    else
+        log_success "Plugin test script found: scripts/test-strray-plugin.mjs"
+fi
+         return 1
 
     log_info "Running plugin functionality test..."
     local test_output

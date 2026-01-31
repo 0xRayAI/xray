@@ -5,7 +5,7 @@ import {
   StringRayConfig,
   MultiAgentOrchestrationConfig,
   SisyphusOrchestratorConfig,
-} from "../../core/config-loader";
+} from "../../core/config-loader.js";
 import * as fs from "fs";
 import * as path from "path";
 

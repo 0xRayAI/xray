@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { modelRouter } from '../core/model-router';
+import { modelRouter } from '../core/model-router.js';
 
 export interface TokenLimits {
   maxPromptTokens: number;

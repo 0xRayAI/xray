@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { StringRayStateManager } from "../../state/state-manager";
-import { SessionCoordinator } from "../../delegation/session-coordinator";
-import { SessionStateManager } from "../../session/session-state-manager";
-import { setupStandardMocks, waitForDebounce } from "../utils/test-utils";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { SessionCoordinator } from "../../delegation/session-coordinator.js";
+import { SessionStateManager } from "../../session/session-state-manager.js";
+import { setupStandardMocks, waitForDebounce } from "../utils/test-utils.js";
 
 describe("Cross-Session State Sharing", () => {
   let stateManager: StringRayStateManager;

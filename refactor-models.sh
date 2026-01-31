@@ -11,7 +11,7 @@ HARDCODED_PATTERNS=(
     "claude-sonnet-4"
     "claude-opus-4" 
     "claude-haiku-4"
-    "opencode/grok-code"
+    "openrouter/xai-grok-2-1212-fast-1"
 )
 
 # Create temporary directory for processed files

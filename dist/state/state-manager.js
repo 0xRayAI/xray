@@ -1,4 +1,4 @@
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 export class StringRayStateManager {
     store = new Map();
     persistencePath;

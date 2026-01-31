@@ -13,7 +13,7 @@ import {
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 class StrRayBootOrchestratorServer {
   private server: Server;
@@ -65,7 +65,7 @@ class StrRayBootOrchestratorServer {
     this.initializeDependencies();
 
     this.setupToolHandlers();
-    frameworkLogger.log("mcps/boot-orchestrator", "initialize", "info");
+    void frameworkLogger.log("mcps/boot-orchestrator", "initialize", "info");
   }
 
   private initializeDependencies() {

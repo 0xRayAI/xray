@@ -9,13 +9,13 @@
  */
 
 import * as path from "path";
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 import {
   CodebaseContextAnalyzer,
   FileInfo,
   ModuleInfo,
-} from "./codebase-context-analyzer";
-import { ASTCodeParser, ImportInfo, ExportInfo } from "./ast-code-parser";
+} from "./codebase-context-analyzer.js";
+import { ASTCodeParser, ImportInfo, ExportInfo } from "./ast-code-parser.js";
 
 export interface DependencyNode {
   file: string;

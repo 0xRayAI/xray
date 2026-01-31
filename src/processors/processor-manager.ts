@@ -8,9 +8,9 @@
  * @since 2026-01-07
  */
 
-import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../core/framework-logger";
-import { ProcessorRegistration } from "./processor-types";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { frameworkLogger } from "../core/framework-logger.js";
+import { ProcessorRegistration } from "./processor-types.js";
 
 export interface ProcessorConfig {
   name: string;

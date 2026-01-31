@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { testArchitect } from "../../agents/test-architect";
-import type { AgentConfig } from "../../agents/types";
+import { testArchitect } from "../../agents/test-architect.js";
+import type { AgentConfig } from "../../agents/types.js";
 
 describe("Test Architect Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {

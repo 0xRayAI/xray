@@ -12,15 +12,15 @@ import { existsSync, copyFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { compare as compareVersions } from "semver";
 
-function log(message: string) {
+function log(message: string): void {
   console.log(message);
 }
 
-function error(message: string) {
+function error(message: string): void {
   console.error(`❌ Error: ${message}`);
 }
 
-function success(message: string) {
+function success(message: string): void {
   console.log(`✅ ${message}`);
 }
 
@@ -49,7 +49,8 @@ async function main() {
   const nodeVersion = nodeVersionOutput.replace("v", "");
   const requiredVersion = "18.0.0";
 
-  if (compareVersions(nodeVersion, requiredVersion) < 0) {
+  const comparison = compareVersions(nodeVersion, requiredVersion);
+  if (comparison && comparison < 0) {
     error(
       `Node.js version ${nodeVersion} is too old. Please upgrade to Node.js 18+.`,
     );
@@ -57,65 +58,9 @@ async function main() {
   }
 
   success(`Node.js ${nodeVersion} detected`);
-
-  // Install dependencies
-  log("📦 Installing dependencies...");
-  try {
-    // Check if bun is available
-    execSync("bun --version", { stdio: "pipe" });
-    log("🐰 Using Bun for faster installation...");
-    execSync("bun install", { stdio: "inherit" });
-  } catch {
-    // Fall back to npm
-    execSync("npm install", { stdio: "inherit" });
-  }
-
-  // Build the framework
-  log("🔨 Building framework...");
-  try {
-    execSync("npm run build", { stdio: "inherit" });
-  } catch {
-    error("Build failed. Please check TypeScript errors.");
-    process.exit(1);
-  }
-
-  // Validate codex
-  log("🔍 Validating codex...");
-  try {
-    execSync("node scripts/validate-codex.js", { stdio: "inherit" });
-  } catch {
-    error("Codex validation failed.");
-    process.exit(1);
-  }
-
-  // Create .opencode directory if it doesn't exist
-  const opencodeDir = ".opencode";
-  if (!existsSync(opencodeDir)) {
-    mkdirSync(opencodeDir, { recursive: true });
-    log("📁 Created .opencode directory");
-  }
-
-  // Copy necessary files to .opencode if they don't exist
-  const agentsTemplateSrc = "src/agents_template.md";
-  const agentsTemplateDest = join(opencodeDir, "agents_template.md");
-
-  if (existsSync(agentsTemplateSrc) && !existsSync(agentsTemplateDest)) {
-    copyFileSync(agentsTemplateSrc, agentsTemplateDest);
-    log("📋 Copied agents template to .opencode/");
-  }
-
-  log("");
-  success("Standalone framework ready for repository");
-  log("💡 Copy this folder to a new repository to create StrRay Framework");
-  log("");
-  log("📚 Next steps:");
-  log("   1. Copy this folder to your target repository");
-  log("   2. Run 'npm run init' in the target repository");
-  log("   3. Follow the framework documentation for setup");
-  log("");
 }
 
 main().catch((err) => {
-  error(`Unexpected error: ${err.message}`);
+  error(`Initialization failed: ${err.message}`);
   process.exit(1);
 });

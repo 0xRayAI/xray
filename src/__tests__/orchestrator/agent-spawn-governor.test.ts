@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { AgentSpawnGovernor, type SpawnAuthorization } from '../../orchestrator/agent-spawn-governor';
+import { AgentSpawnGovernor, type SpawnAuthorization } from '../../orchestrator/agent-spawn-governor.js';
 
 // Mock all framework dependencies to avoid complex import chains
 vi.mock('../../framework-logger', () => ({

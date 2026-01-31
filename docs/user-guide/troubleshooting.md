@@ -236,7 +236,7 @@ tail -50 logs/framework/activity.log
    // Ensure all required fields are present
    {
      "model_routing": {
-       "enforcer": "opencode/grok-code"
+       "enforcer": "openrouter/xai-grok-2-1212-fast-1"
      },
      "framework": {
        "version": "1.1.1"

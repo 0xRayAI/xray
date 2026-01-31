@@ -9,7 +9,7 @@
  */
 
 import { EventEmitter } from "events";
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export enum CircuitState {
   CLOSED = "closed", // Normal operation

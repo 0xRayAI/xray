@@ -1,5 +1,5 @@
 /**
- * StringRay AI v2.0.0 - Self-Direction Activation System (Simplified)
+ * StringRay AI v1.1.1 - Self-Direction Activation System (Simplified)
  *
  * Commercial version with autonomous self-direction capabilities.
  * Activates the framework's dormant self-evolution systems for continuous improvement.
@@ -10,7 +10,7 @@
  */
 
 // Framework core imports
-import { frameworkLogger, generateJobId } from "../core/framework-logger";
+import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 
 export interface SelfDirectionConfig {
   monitoringInterval: number;      // Self-monitoring frequency

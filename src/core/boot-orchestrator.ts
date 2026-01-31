@@ -8,24 +8,24 @@
  * @since 2026-01-07
  */
 
-import { StringRayContextLoader } from "./context-loader";
-import { StringRayStateManager } from "../state/state-manager";
-import { ProcessorManager } from "../processors/processor-manager";
-import { pathResolver } from "../utils/path-resolver";
+import { StringRayContextLoader } from "./context-loader.js";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { ProcessorManager } from "../processors/processor-manager.js";
+import { pathResolver } from "../utils/path-resolver.js";
 // Path configuration - can be overridden by environment or use path resolver
 const AGENTS_BASE_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
 import {
   createAgentDelegator,
   createSessionCoordinator,
-} from "../delegation/index";
-import { createSessionCleanupManager } from "../session/session-cleanup-manager";
-import { createSessionMonitor } from "../session/session-monitor";
-import { createSessionStateManager } from "../session/session-state-manager";
-import { securityHardener } from "../security/security-hardener";
-import { securityHeadersMiddleware } from "../security/security-headers";
-import { frameworkLogger } from "../core/framework-logger"
-import { memoryMonitor } from "../monitoring/memory-monitor";
-import { strRayConfigLoader } from "./config-loader";
+} from "../delegation/index.js";
+import { createSessionCleanupManager } from "../session/session-cleanup-manager.js";
+import { createSessionMonitor } from "../session/session-monitor.js";
+import { createSessionStateManager } from "../session/session-state-manager.js";
+import { securityHardener } from "../security/security-hardener.js";
+import { securityHeadersMiddleware } from "../security/security-headers.js";
+import { frameworkLogger } from "../core/framework-logger.js"
+import { memoryMonitor } from "../monitoring/memory-monitor.js";
+import { strRayConfigLoader } from "./config-loader.js";
 
 /**
  * Set up graceful interruption handling to prevent JSON parsing errors

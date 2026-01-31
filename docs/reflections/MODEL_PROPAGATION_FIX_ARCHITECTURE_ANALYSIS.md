@@ -37,7 +37,7 @@ You correctly identified a **major architectural flaw** in the StrRay framework.
 **Before (Bad):**
 ```typescript
 // 499 hardcoded instances across 88 files
-model: "opencode/grok-code",  // ❌ Hardcoded everywhere
+model: "openrouter/xai-grok-2-1212-fast-1",  // ❌ Hardcoded everywhere
 ```
 
 **After (Good):**
@@ -59,7 +59,7 @@ constructor() {
 ## **Execution Results**
 
 ### **Pre-Fix State:**
-- 🔴 **499 references** to `opencode/grok-code` variants across **89 files**
+- 🔴 **499 references** to `openrouter/xai-grok-2-1212-fast-1` variants across **89 files**
 - 🔴 System required mass find/replace for every model change
 - 🔴 No central governance for model assignments
 

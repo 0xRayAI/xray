@@ -36,7 +36,6 @@
     "src/dashboards/**/*",
     "src/distributed/**/*",
     "src/streaming/**/*",
-    "src/mcps/**/*",
     "src/plugins/**/*",
     "src/postprocessor/**/*",
     "src/integrations/**/*",

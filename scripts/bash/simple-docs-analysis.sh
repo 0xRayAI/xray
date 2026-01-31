@@ -16,5 +16,5 @@ echo "=== Directory Structure ==="
 find $DOCS_DIR -type d | sort
 
 echo ""
-echo "Analysis complete!"</content>
+echo "Analysis complete!"
 <parameter name="filePath">scripts/simple-docs-analysis.sh

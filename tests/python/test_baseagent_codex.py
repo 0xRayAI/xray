@@ -31,7 +31,7 @@ class TestBaseAgentCodexIntegration:
         self.config_manager = ConfigManager()
         # Set up config with codex terms like in oh-my-opencode.json
         self.config_manager.set_value("codex_terms", [1, 2, 3, 5, 15, 24, 38, 39])
-        self.config_manager.set_value("model_default", "opencode/grok-code")
+        self.config_manager.set_value("model_default", "openrouter/xai-grok-2-1212-fast-1")
         self.config_manager.set_value("ai_auto_log_responses", True)
 
         self.agent = BaseAgent(

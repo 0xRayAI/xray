@@ -242,7 +242,7 @@ class EnhancedMultiAgentOrchestratorServer {
           case "execute-complex-task":
             // Import the main orchestrator for complex task execution
             const { StringRayOrchestrator } =
-              await import("../orchestrator.js");
+              await import("../orchestrator/orchestrator.js");
 
             const orchestrator = new StringRayOrchestrator({
               maxConcurrentTasks: 5,

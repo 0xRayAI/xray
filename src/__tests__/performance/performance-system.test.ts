@@ -11,11 +11,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   performanceBudgetEnforcer,
   PERFORMANCE_BUDGET,
-} from "../../performance/performance-budget-enforcer";
-import { performanceRegressionTester } from "../../performance/performance-regression-tester";
-import { performanceDashboard } from "../../performance/performance-monitoring-dashboard";
-import { performanceCIGates } from "../../performance/performance-ci-gates";
-import { performanceSystem } from "../../performance/performance-system-orchestrator";
+} from "../../performance/performance-budget-enforcer.js";
+import { performanceRegressionTester } from "../../performance/performance-regression-tester.js";
+import { performanceDashboard } from "../../performance/performance-monitoring-dashboard.js";
+import { performanceCIGates } from "../../performance/performance-ci-gates.js";
+import { performanceSystem } from "../../performance/performance-system-orchestrator.js";
 
 describe("Performance Budget Enforcer", () => {
   beforeEach(() => {

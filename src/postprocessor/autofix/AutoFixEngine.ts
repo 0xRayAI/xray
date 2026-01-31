@@ -7,9 +7,9 @@ import {
   FixResult,
   FailureAnalysis,
   PostProcessorContext,
-} from "../types";
+} from "../types.js";
 import { execSync } from "child_process";
-import { frameworkLogger } from "../../core/framework-logger";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 

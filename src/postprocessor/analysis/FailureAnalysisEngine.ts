@@ -2,8 +2,8 @@
  * Failure Analysis Engine for Post-Processor
  */
 
-import { FailureAnalysis, SuggestedFix, MonitoringResult } from "../types";
-import { frameworkLogger } from "../../core/framework-logger";
+import { FailureAnalysis, SuggestedFix, MonitoringResult } from "../types.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 export class FailureAnalysisEngine {
   constructor() {

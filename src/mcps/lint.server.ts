@@ -12,6 +12,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { execSync } from "child_process";
 import fs from "fs";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 class StrRayLintServer {
   private server: Server;
@@ -30,7 +31,7 @@ class StrRayLintServer {
     );
 
     this.setupToolHandlers();
-    console.log("StrRay Lint MCP Server initialized");
+    void frameworkLogger.log('lint.server', '-strray-lint-mcp-server-initialized-', 'info', { message: "StrRay Lint MCP Server initialized" });
   }
 
   private setupToolHandlers() {
@@ -108,7 +109,7 @@ class StrRayLintServer {
     const fix = args.fix || false;
     const strict = args.strict || false;
 
-    console.log("🔍 MCP: Running lint:", { files: files.length, fix, strict });
+    await frameworkLogger.log('lint.server', '-mcp-running-lint-files-files-length-fix-strict-', 'info', { message: "🔍 MCP: Running lint:", files: files.length, fix, strict });
 
     const lintResults = {
       success: true,
@@ -163,7 +164,7 @@ ${lintResults.details.length > 0 ? lintResults.details.map((d) => `• ${d}`).jo
     const files = args.files || [];
     const rules = args.rules || [];
 
-    console.log("🔍 MCP: Checking lint for files:", files.length);
+    await frameworkLogger.log('lint.server', '-mcp-checking-lint-for-files-files-length', 'info', { message: "🔍 MCP: Checking lint for files:", fileCount: files.length });
 
     try {
       const checkResults = await this.checkLintRules(files, rules);
@@ -384,7 +385,7 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Lint MCP Server started");
+    await frameworkLogger.log('lint.server', '-strray-lint-mcp-server-started-', 'info', { message: "StrRay Lint MCP Server started" });
   }
 }
 

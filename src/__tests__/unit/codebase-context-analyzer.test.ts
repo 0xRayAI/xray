@@ -8,10 +8,10 @@ import {
   CodebaseContextAnalyzer,
   createCodebaseContextAnalyzer,
   MemoryConfig,
-} from "../../delegation/codebase-context-analyzer";
+} from "../../delegation/codebase-context-analyzer.js";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../framework-logger";
+import { frameworkLogger } from "../../framework-logger.js";
 
 // Mock fs module
 vi.mock("fs", () => ({

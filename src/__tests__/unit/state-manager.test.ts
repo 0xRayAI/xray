@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { StringRayStateManager, StateManager } from "../../state/state-manager";
-import { setupStandardMocks, waitForDebounce } from "../utils/test-utils";
+import { StringRayStateManager, StateManager } from "../../state/state-manager.js";
+import { setupStandardMocks, waitForDebounce } from "../utils/test-utils.js";
 
 describe("StringRayStateManager", () => {
   let stateManager: StateManager;

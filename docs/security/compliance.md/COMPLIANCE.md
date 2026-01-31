@@ -70,7 +70,7 @@ curl -s https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/ass
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "disabled_agents": ["oracle", "librarian", "explore"],
   "agents": {
-    "librarian": { "model": "opencode/grok-code" }
+    "librarian": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }
 }
 ```

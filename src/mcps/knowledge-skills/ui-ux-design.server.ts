@@ -11,6 +11,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface UIDesignAnalysis {
   component: string;
@@ -1031,6 +1032,7 @@ export const ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 
   private generateAngularComponent(design: any): string {
     return `import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { frameworkLogger } from "../framework-logger.js";
 
 @Component({
   selector: 'app-${design.componentType}',
@@ -1312,10 +1314,10 @@ Available: ${Object.keys(system.components).length} component types
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay UI/UX Design MCP Server running...");
+    await frameworkLogger.log('ui-ux-design.server', '-strray-ui-ux-design-mcp-server-running-', 'info', { message: "StrRay UI/UX Design MCP Server running..." });
 
     const cleanup = async (signal: string) => {
-  console.log(`Received ${signal}, shutting down gracefully...`);
+  await frameworkLogger.log('ui-ux-design.server', '-received-signal-shutting-down-gracefully-', 'info', { message: `Received ${signal}, shutting down gracefully...` });
 
   // Set a timeout to force exit if graceful shutdown fails
   const timeout = setTimeout(() => {
@@ -1328,7 +1330,7 @@ Available: ${Object.keys(system.components).length} component types
       await this.server.close();
     }
     clearTimeout(timeout);
-    console.log("StrRay MCP Server shut down gracefully");
+    await frameworkLogger.log('ui-ux-design.server', '-strray-mcp-server-shut-down-gracefully-', 'info', { message: "StrRay MCP Server shut down gracefully" });
     process.exit(0);
   } catch (error) {
     clearTimeout(timeout);
@@ -1344,13 +1346,13 @@ process.on('SIGTERM', () => cleanup('SIGTERM'));
 process.on('SIGHUP', () => cleanup('SIGHUP'));
 
 // Monitor parent process (opencode) and shutdown if it dies
-const checkParent = () => {
+const checkParent = async () => {
   try {
     process.kill(process.ppid, 0); // Check if parent is alive
     setTimeout(checkParent, 1000); // Check again in 1 second
   } catch (error) {
     // Parent process died, shut down gracefully
-    console.log('Parent process (opencode) died, shutting down MCP server...');
+    await frameworkLogger.log('ui-ux-design.server', '-parent-process-opencode-died-shutting-down-mcp-se', 'info', { message: 'Parent process (opencode) died, shutting down MCP server...' });
     cleanup('parent-process-death');
   }
 };

@@ -4,7 +4,7 @@ export interface StateManager {
   clear: (key: string) => void;
 }
 
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export class StringRayStateManager implements StateManager {
   private store = new Map<string, unknown>();

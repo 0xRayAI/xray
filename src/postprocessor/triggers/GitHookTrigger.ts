@@ -2,11 +2,11 @@
  * Git Hook Trigger for Post-Processor
  */
 
-import { PostProcessor } from "../PostProcessor";
-import { PostProcessorContext } from "../types";
+import { PostProcessor } from "../PostProcessor.js";
+import { PostProcessorContext } from "../types.js";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../core/framework-logger";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface LogArchiveConfig {
   archiveDirectory: string;

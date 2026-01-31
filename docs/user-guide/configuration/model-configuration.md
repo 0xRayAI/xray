@@ -19,14 +19,14 @@ This guide explains how to configure and update AI models in the StrRay framewor
   "preemptive_compaction": true,
   "plugins": ["stringray-ai"],
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
   },
   "logging": {
     "enabled": true,
@@ -91,9 +91,9 @@ This separation ensures:
    ```json
    {
      "model_routing": {
-       "enforcer": "opencode/grok-code",
-       "architect": "opencode/grok-code",
-       "orchestrator": "opencode/grok-code"
+       "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+       "architect": "openrouter/xai-grok-2-1212-fast-1",
+       "orchestrator": "openrouter/xai-grok-2-1212-fast-1"
      }
    }
    ```
@@ -118,12 +118,12 @@ This separation ensures:
 
 ## Available Models
 
-- `opencode/grok-code` (recommended, cost-effective, updated standard)
+- `openrouter/xai-grok-2-1212-fast-1` (recommended, cost-effective, updated standard)
 - Check [OpenCode](https://opencode.ai) for free models and update to your preferred option
 - `openai/gpt-4o` (versatile)
 - `openai/gpt-4o-mini` (fast, cost-effective)
 
-**Note**: All agents now use `opencode/grok-code` by default. Legacy Anthropic models have been deprecated and replaced.
+**Note**: All agents now use `openrouter/xai-grok-2-1212-fast-1` by default. Legacy Anthropic models have been deprecated and replaced.
 
 ## Troubleshooting
 

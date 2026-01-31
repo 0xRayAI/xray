@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { AgentDelegator } from "../../delegation/agent-delegator";
-import { StringRayStateManager } from "../../state/state-manager";
-import { frameworkLogger } from "../../core/framework-logger";
+import { AgentDelegator } from "../../delegation/agent-delegator.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 // Mock external dependencies
 vi.mock("../../core/framework-logger");

@@ -22,7 +22,7 @@ import {
 import {
   PluginMarketplaceService,
   marketplaceService,
-} from "../../plugins/marketplace/marketplace-service";
+} from "../../plugins/marketplace/marketplace-service.js";
 import {
   MarketplacePlugin,
   MarketplaceSearchQuery,
@@ -43,7 +43,7 @@ import {
   SecurityCompliance,
   PluginPermission,
   PluginDependency,
-} from "../../plugins/marketplace/marketplace-types";
+} from "../../plugins/marketplace/marketplace-types.js";
 
 // Mock dependencies
 vi.mock("../../security/security-hardening-system", () => ({

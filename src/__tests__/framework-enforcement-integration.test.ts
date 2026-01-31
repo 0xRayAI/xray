@@ -11,7 +11,7 @@ vi.mock("../core/framework-logger", () => ({
   },
 }));
 
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Type the mocked functions
 const mockGetRecentLogs = frameworkLogger.getRecentLogs as any;

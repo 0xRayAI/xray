@@ -7,20 +7,20 @@
 export {
   SecurityMiddleware,
   securityMiddleware,
-} from "./security-middleware";
+} from "./security-middleware.js";
 export {
   SecurityScanner,
   securityScanner,
-} from "./security-scanner";
+} from "./security-scanner.js";
 export {
   PromptSecurityValidator,
   promptSecurityValidator,
-} from "./prompt-security-validator";
+} from "./prompt-security-validator.js";
 
 // Additional security components
-export * from "./security-headers";
-export * from "./security-hardening-system";
-export * from "./security-hardener";
-export * from "./secure-authentication-system";
-export * from "./security-auditor";
-export * from "./examples";
+export * from "./security-headers.js";
+export * from "./security-hardening-system.js";
+export * from "./security-hardener.js";
+export * from "./secure-authentication-system.js";
+export * from "./security-auditor.js";
+export * from "./examples.js";

@@ -19,11 +19,11 @@ fi
 echo ""
 echo "2. Delegation System Test:"
 node -e "
+const { createAgentDelegator } = require('./dist/delegation/agent-delegator.js');
+const { StrRayStateManager } = require('./dist/state/state-manager.js');
+
 (async () => {
   try {
-    const { createAgentDelegator } = await import('./dist/delegation/agent-delegator.js');
-    const { StrRayStateManager } = await import('./dist/state/state-manager.js');
-
     const stateManager = new StrRayStateManager();
     const delegator = createAgentDelegator(stateManager);
 

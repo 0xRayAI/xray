@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { CodexContext, CodexTerm } from "../core/context-loader";
+import { CodexContext, CodexTerm } from "../core/context-loader.js";
 
 /**
  * Content format detection result

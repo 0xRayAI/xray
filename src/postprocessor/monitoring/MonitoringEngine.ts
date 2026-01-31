@@ -2,10 +2,10 @@
  * Post-Processor Monitoring Engine
  */
 
-import { StringRayStateManager } from "../../state/state-manager";
-import { frameworkLogger } from "../../core/framework-logger";
-import { SessionMonitor } from "../../session/session-monitor";
-import { MonitoringResult } from "../types";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import { SessionMonitor } from "../../session/session-monitor.js";
+import { MonitoringResult } from "../types.js";
 
 export class PostProcessorMonitoringEngine {
   constructor(

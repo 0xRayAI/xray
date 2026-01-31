@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { SessionCoordinationValidator } from "../../validation/session-coordination-validator";
+import { SessionCoordinationValidator } from "../../validation/session-coordination-validator.js";
 
 describe("SessionCoordinationValidator", () => {
   let validator: SessionCoordinationValidator;

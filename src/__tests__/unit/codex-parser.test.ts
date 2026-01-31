@@ -6,7 +6,7 @@ import {
   validateTypeScriptSyntax,
   validateJsonSyntax,
   validateBeforeModification,
-} from "../../utils/codex-parser";
+} from "../../utils/codex-parser.js";
 
 // Mock console.log to avoid test output pollution
 vi.spyOn(console, "log").mockImplementation(() => {});

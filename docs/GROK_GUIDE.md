@@ -19,11 +19,11 @@ StringRay AI is optimized for the following Grok Code models:
 ```json
 {
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "all-other-agents": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "all-other-agents": "openrouter/xai-grok-2-1212-fast-1"
   }
 }
 ```
@@ -72,7 +72,7 @@ Consider:
 import { StringRayPlugin } from 'strray-ai';
 
 const plugin = new StringRayPlugin({
-  model: 'opencode/grok-code',
+  model: 'openrouter/xai-grok-2-1212-fast-1',
   contextWindow: 128000,
   temperature: 0.1
 });
@@ -161,7 +161,7 @@ Solution: Lower temperature, add constraints
 ```json
 {
   "model": {
-    "name": "opencode/grok-code",
+    "name": "openrouter/xai-grok-2-1212-fast-1",
     "parameters": {
       "temperature": 0.1,
       "topP": 0.9,

@@ -8,7 +8,7 @@
  * @since 2026-01-23
  */
 
-import { frameworkLogger } from "../core/framework-logger"
+import { frameworkLogger } from "../core/framework-logger.js"
 
 export interface SpawnContext {
   agentType: string;

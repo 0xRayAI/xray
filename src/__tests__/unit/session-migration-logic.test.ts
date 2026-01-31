@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { SessionStateManager } from "../../session/session-state-manager";
-import { StringRayStateManager } from "../../state/state-manager";
+import { SessionStateManager } from "../../session/session-state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("Session Migration and Failover Logic", () => {
   let stateManager: StringRayStateManager;

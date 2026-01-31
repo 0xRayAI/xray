@@ -10,17 +10,17 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import * as path from 'path';
-import { StringRayOrchestrator, OrchestrationResult } from '../../core/orchestrator';
-import { TaskDefinition } from '../../agents/types';
-import { DelegationResult } from '../../delegation/agent-delegator';
-import { SessionStateManager, createSessionStateManager } from '../../session/session-state-manager';
-import { StringRayStateManager } from '../../state/state-manager';
-import { SessionCoordinator, createSessionCoordinator } from '../../delegation/session-coordinator';
-import { ComplexityAnalyzer, complexityAnalyzer } from '../../delegation/complexity-analyzer';
-import { AgentDelegator, createAgentDelegator } from '../../delegation/agent-delegator';
-import { strRayConfigLoader } from '../../core/config-loader';
-import { PluginRegistry, pluginRegistry, PluginSandbox, pluginSandbox } from '../../plugins/plugin-system';
-import { PerformanceTestUtils, AsyncTestUtils, MemoryTestUtils, MockFileSystem, MockCodexGenerator } from '../utils/test-helpers';
+import { StringRayOrchestrator, OrchestrationResult } from '../../core/orchestrator.js';
+import { TaskDefinition } from '../../agents/types.js';
+import { DelegationResult } from '../../delegation/agent-delegator.js';
+import { SessionStateManager, createSessionStateManager } from '../../session/session-state-manager.js';
+import { StringRayStateManager } from '../../state/state-manager.js';
+import { SessionCoordinator, createSessionCoordinator } from '../../delegation/session-coordinator.js';
+import { ComplexityAnalyzer, complexityAnalyzer } from '../../delegation/complexity-analyzer.js';
+import { AgentDelegator, createAgentDelegator } from '../../delegation/agent-delegator.js';
+import { strRayConfigLoader } from '../../core/config-loader.js';
+import { PluginRegistry, pluginRegistry, PluginSandbox, pluginSandbox } from '../../plugins/plugin-system.js';
+import { PerformanceTestUtils, AsyncTestUtils, MemoryTestUtils, MockFileSystem, MockCodexGenerator } from '../utils/test-helpers.js';
 
 // Mock external dependencies
 vi.mock('fs', () => ({

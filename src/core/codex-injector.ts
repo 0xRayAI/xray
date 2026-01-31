@@ -10,7 +10,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../core/framework-logger"
+import { frameworkLogger } from "../core/framework-logger.js"
 // Dynamic imports for cross-environment compatibility
 let extractCodexMetadata: any;
 let StringRayContextLoader: any;

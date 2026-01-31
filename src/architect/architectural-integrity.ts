@@ -6,7 +6,7 @@
  * the post-processor and rules engine enforcement.
  */
 
-import { frameworkLogger } from "../core/framework-logger";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Critical components that must always be active
 const CRITICAL_COMPONENTS = [

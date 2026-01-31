@@ -15,9 +15,9 @@ import {
   PerformanceBudgetEnforcer,
   PerformanceReport,
   PERFORMANCE_BUDGET,
-} from "./performance-budget-enforcer";
-import { PerformanceRegressionTester } from "./performance-regression-tester";
-import { frameworkLogger } from "../core/framework-logger";
+} from "./performance-budget-enforcer.js";
+import { PerformanceRegressionTester } from "./performance-regression-tester.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface DashboardMetrics {
   timestamp: number;

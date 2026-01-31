@@ -131,5 +131,4 @@ main() {
     log_success "Documentation consolidation analysis complete!"
 }
 
-main "$@"</content>
-<parameter name="filePath">scripts/consolidate-documentation.sh
+main "$@"

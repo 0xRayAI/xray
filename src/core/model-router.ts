@@ -14,7 +14,7 @@ import {
   featuresConfigLoader,
   detectTaskType,
   type TaskType,
-} from "./features-config";
+} from "./features-config.js";
 
 // ============================================================================
 // Types

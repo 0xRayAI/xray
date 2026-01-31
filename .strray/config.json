@@ -1,1 +1,8 @@
-{"autonomous_reporting": {"enabled": true, "interval_minutes": 60, "auto_schedule": false}}
+{
+  "autonomous_reporting": {"enabled": true, "interval_minutes": 60, "auto_schedule": false},
+  "multi_agent_orchestration": {
+    "max_concurrent_agents": 7,
+    "complexity_threshold": 25,
+    "orchestrator_led_threshold": 96
+  }
+}

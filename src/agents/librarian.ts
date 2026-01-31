@@ -1,6 +1,6 @@
-import { AgentConfig } from "./types";
-import { modelRouter } from '../core/model-router';
-import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer";
+import { AgentConfig } from "./types.js";
+import { modelRouter } from '../core/model-router.js';
+import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer.js";
 
 export const librarian: AgentConfig = {
   name: "librarian",

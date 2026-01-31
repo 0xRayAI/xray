@@ -3,11 +3,11 @@
  * Validates the complete end-to-end orchestration pipeline
  */
 
-import { StringRayOrchestrator } from "../orchestrator";
-import { enhancedMultiAgentOrchestrator } from "../orchestrator/enhanced-multi-agent-orchestrator";
-import { createAgentDelegator } from "../delegation/agent-delegator";
-import { StringRayStateManager } from "../state/state-manager";
-import { frameworkLogger } from "../core/framework-logger";
+import { StringRayOrchestrator } from "../orchestrator.js";
+import { enhancedMultiAgentOrchestrator } from "../orchestrator/enhanced-multi-agent-orchestrator.js";
+import { createAgentDelegator } from "../delegation/agent-delegator.js";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 interface TestResult {
   testName: string;

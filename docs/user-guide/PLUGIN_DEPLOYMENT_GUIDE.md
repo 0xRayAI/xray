@@ -126,14 +126,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 {
   "plugin": ["oh-my-opencode", "dist/plugin/plugins/strray-codex-injection.js"],
   "agent": {
-    "orchestrator": { "model": "opencode/grok-code" },
-    "enforcer": { "model": "opencode/grok-code" },
-    "architect": { "model": "opencode/grok-code" },
-    "code-reviewer": { "model": "opencode/grok-code" },
-    "security-auditor": { "model": "opencode/grok-code" },
-    "refactorer": { "model": "opencode/grok-code" },
-    "test-architect": { "model": "opencode/grok-code" },
-    "bug-triage-specialist": { "model": "opencode/grok-code" }
+    "orchestrator": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "enforcer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "code-reviewer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "security-auditor": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "refactorer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "test-architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "bug-triage-specialist": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }
 }
 ```
