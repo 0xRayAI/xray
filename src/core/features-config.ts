@@ -64,7 +64,10 @@ export interface MultiAgentOrchestrationConfig {
   enabled: boolean;
   coordination_model: "async-multi-agent" | "sync-multi-agent";
   max_concurrent_agents: number;
-  task_distribution_strategy: "capability-based" | "load-balanced" | "round-robin";
+  task_distribution_strategy:
+    | "capability-based"
+    | "load-balanced"
+    | "round-robin";
   conflict_resolution: "expert-priority" | "majority-vote" | "consensus";
   progress_tracking: boolean;
   session_persistence: boolean;
@@ -173,7 +176,7 @@ export interface FeaturesConfig {
 // Task Type Detection
 // ============================================================================
 
-export type TaskType = 
+export type TaskType =
   | "file_read"
   | "grep_search"
   | "simple_edit"
@@ -191,61 +194,93 @@ export type TaskType =
  */
 export function detectTaskType(
   toolName: string,
-  context?: { fileCount?: number; isComplex?: boolean }
+  context?: { fileCount?: number; isComplex?: boolean },
 ): TaskType {
   const toolLower = toolName.toLowerCase();
-  
+
   // File operations
   if (toolLower.includes("read") || toolLower === "cat") {
     return "file_read";
   }
-  
+
   // Search operations
-  if (toolLower.includes("grep") || toolLower.includes("search") || toolLower.includes("find")) {
+  if (
+    toolLower.includes("grep") ||
+    toolLower.includes("search") ||
+    toolLower.includes("find")
+  ) {
     return "grep_search";
   }
-  
+
   // Git operations
-  if (toolLower.includes("git") || toolLower.includes("commit") || toolLower.includes("push")) {
+  if (
+    toolLower.includes("git") ||
+    toolLower.includes("commit") ||
+    toolLower.includes("push")
+  ) {
     return "git_operations";
   }
-  
+
   // Edit operations - check complexity
-  if (toolLower.includes("edit") || toolLower.includes("write") || toolLower.includes("sed")) {
+  if (
+    toolLower.includes("edit") ||
+    toolLower.includes("write") ||
+    toolLower.includes("sed")
+  ) {
     const fileCount = context?.fileCount ?? 1;
     const isComplex = context?.isComplex ?? false;
-    
+
     if (fileCount > 5 || isComplex) {
       return "bulk_refactor";
     }
     return "simple_edit";
   }
-  
+
   // Documentation
-  if (toolLower.includes("doc") || toolLower.includes("readme") || toolLower.includes("markdown")) {
+  if (
+    toolLower.includes("doc") ||
+    toolLower.includes("readme") ||
+    toolLower.includes("markdown")
+  ) {
     return "documentation";
   }
-  
+
   // Security
-  if (toolLower.includes("security") || toolLower.includes("audit") || toolLower.includes("vulnerability")) {
+  if (
+    toolLower.includes("security") ||
+    toolLower.includes("audit") ||
+    toolLower.includes("vulnerability")
+  ) {
     return "security_audit";
   }
-  
+
   // Architecture
-  if (toolLower.includes("architect") || toolLower.includes("design") || toolLower.includes("structure")) {
+  if (
+    toolLower.includes("architect") ||
+    toolLower.includes("design") ||
+    toolLower.includes("structure")
+  ) {
     return "architecture_review";
   }
-  
+
   // Code generation
-  if (toolLower.includes("generate") || toolLower.includes("create") || toolLower.includes("implement")) {
+  if (
+    toolLower.includes("generate") ||
+    toolLower.includes("create") ||
+    toolLower.includes("implement")
+  ) {
     return "code_generation";
   }
-  
+
   // Debugging
-  if (toolLower.includes("debug") || toolLower.includes("fix") || toolLower.includes("error")) {
+  if (
+    toolLower.includes("debug") ||
+    toolLower.includes("fix") ||
+    toolLower.includes("error")
+  ) {
     return "debugging";
   }
-  
+
   return "unknown";
 }
 
@@ -299,7 +334,7 @@ export class FeaturesConfigLoader {
    */
   public getModelForTask(taskType: TaskType): string {
     const config = this.loadConfig();
-    
+
     if (!config.model_routing.enabled) {
       return config.model_routing.default_model;
     }
@@ -318,7 +353,7 @@ export class FeaturesConfigLoader {
   public getMaxTokensForTask(taskType: TaskType): number {
     const config = this.loadConfig();
     const taskConfig = config.model_routing.task_routing[taskType];
-    
+
     if (taskConfig) {
       return taskConfig.max_tokens;
     }
@@ -332,11 +367,15 @@ export class FeaturesConfigLoader {
   public isFeatureEnabled(feature: keyof FeaturesConfig): boolean {
     const config = this.loadConfig();
     const featureConfig = config[feature];
-    
-    if (typeof featureConfig === "object" && featureConfig !== null && "enabled" in featureConfig) {
+
+    if (
+      typeof featureConfig === "object" &&
+      featureConfig !== null &&
+      "enabled" in featureConfig
+    ) {
       return (featureConfig as { enabled: boolean }).enabled;
     }
-    
+
     return false;
   }
 
@@ -367,15 +406,20 @@ export class FeaturesConfigLoader {
    */
   public getAgentModel(agentName: string): string {
     const config = this.loadConfig();
-    return config.agent_management.agent_models[agentName] || config.model_routing.default_model;
+    return (
+      config.agent_management.agent_models[agentName] ||
+      config.model_routing.default_model
+    );
   }
 
   /**
    * Merge loaded config with defaults
    */
-  private mergeWithDefaults(configData: Partial<FeaturesConfig>): FeaturesConfig {
+  private mergeWithDefaults(
+    configData: Partial<FeaturesConfig>,
+  ): FeaturesConfig {
     const defaults = this.getDefaultConfig();
-    
+
     return {
       ...defaults,
       ...configData,
@@ -453,7 +497,7 @@ export class FeaturesConfigLoader {
     return {
       version: "1.1.1",
       description: "StringRay Framework - Unified Feature Configuration",
-      
+
       token_optimization: {
         enabled: true,
         max_context_tokens: 50000,
@@ -650,8 +694,11 @@ export class FeaturesConfigLoader {
     try {
       const configPath = path.resolve(process.cwd(), this.featuresPath);
       const currentConfig = this.loadConfig();
-      const mergedConfig = this.mergeWithDefaults({ ...currentConfig, ...config });
-      
+      const mergedConfig = this.mergeWithDefaults({
+        ...currentConfig,
+        ...config,
+      });
+
       fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 2));
       this.clearCache();
     } catch (error) {
@@ -666,10 +713,16 @@ export class FeaturesConfigLoader {
   public enableFeature(feature: keyof FeaturesConfig): void {
     const config = this.loadConfig();
     const featureConfig = config[feature];
-    
-    if (typeof featureConfig === "object" && featureConfig !== null && "enabled" in featureConfig) {
+
+    if (
+      typeof featureConfig === "object" &&
+      featureConfig !== null &&
+      "enabled" in featureConfig
+    ) {
       (featureConfig as { enabled: boolean }).enabled = true;
-      this.saveConfig({ [feature]: featureConfig } as unknown as Partial<FeaturesConfig>);
+      this.saveConfig({
+        [feature]: featureConfig,
+      } as unknown as Partial<FeaturesConfig>);
     }
   }
 
@@ -679,10 +732,16 @@ export class FeaturesConfigLoader {
   public disableFeature(feature: keyof FeaturesConfig): void {
     const config = this.loadConfig();
     const featureConfig = config[feature];
-    
-    if (typeof featureConfig === "object" && featureConfig !== null && "enabled" in featureConfig) {
+
+    if (
+      typeof featureConfig === "object" &&
+      featureConfig !== null &&
+      "enabled" in featureConfig
+    ) {
       (featureConfig as { enabled: boolean }).enabled = false;
-      this.saveConfig({ [feature]: featureConfig } as unknown as Partial<FeaturesConfig>);
+      this.saveConfig({
+        [feature]: featureConfig,
+      } as unknown as Partial<FeaturesConfig>);
     }
   }
 }
@@ -691,14 +750,14 @@ export class FeaturesConfigLoader {
 export const featuresConfigLoader = new FeaturesConfigLoader();
 
 // Export convenience functions
-export const getModelForTask = (taskType: TaskType) => 
+export const getModelForTask = (taskType: TaskType) =>
   featuresConfigLoader.getModelForTask(taskType);
 
-export const isFeatureEnabled = (feature: keyof FeaturesConfig) => 
+export const isFeatureEnabled = (feature: keyof FeaturesConfig) =>
   featuresConfigLoader.isFeatureEnabled(feature);
 
-export const getTokenOptimization = () => 
+export const getTokenOptimization = () =>
   featuresConfigLoader.getTokenOptimization();
 
-export const getBatchOperations = () => 
+export const getBatchOperations = () =>
   featuresConfigLoader.getBatchOperations();

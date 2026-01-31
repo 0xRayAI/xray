@@ -21,7 +21,7 @@ class SkillInvocationServer {
         capabilities: {
           tools: {},
         },
-      }
+      },
     );
 
     this.setupToolHandlers();
@@ -34,7 +34,8 @@ class SkillInvocationServer {
         tools: [
           {
             name: "invoke-skill",
-            description: "Generic skill invocation tool for calling any MCP skill server",
+            description:
+              "Generic skill invocation tool for calling any MCP skill server",
             inputSchema: {
               type: "object",
               properties: {
@@ -63,12 +64,16 @@ class SkillInvocationServer {
           },
           {
             name: "skill-code-review",
-            description: "Invoke code review skill for comprehensive code analysis",
+            description:
+              "Invoke code review skill for comprehensive code analysis",
             inputSchema: {
               type: "object",
               properties: {
                 code: { type: "string", description: "Code to analyze" },
-                language: { type: "string", description: "Programming language" },
+                language: {
+                  type: "string",
+                  description: "Programming language",
+                },
                 context: { type: "object", description: "Additional context" },
               },
               required: ["code"],
@@ -76,7 +81,8 @@ class SkillInvocationServer {
           },
           {
             name: "skill-security-audit",
-            description: "Invoke security audit skill for vulnerability scanning",
+            description:
+              "Invoke security audit skill for vulnerability scanning",
             inputSchema: {
               type: "object",
               properties: {
@@ -96,12 +102,16 @@ class SkillInvocationServer {
           },
           {
             name: "skill-performance-optimization",
-            description: "Invoke performance optimization skill for bottleneck analysis",
+            description:
+              "Invoke performance optimization skill for bottleneck analysis",
             inputSchema: {
               type: "object",
               properties: {
                 code: { type: "string", description: "Code to analyze" },
-                language: { type: "string", description: "Programming language" },
+                language: {
+                  type: "string",
+                  description: "Programming language",
+                },
                 metrics: {
                   type: "array",
                   items: { type: "string" },
@@ -117,7 +127,10 @@ class SkillInvocationServer {
             inputSchema: {
               type: "object",
               properties: {
-                code: { type: "string", description: "Code to analyze for testing" },
+                code: {
+                  type: "string",
+                  description: "Code to analyze for testing",
+                },
                 existingTests: {
                   type: "array",
                   items: { type: "string" },
@@ -175,13 +188,13 @@ class SkillInvocationServer {
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
-              `Unknown tool: ${name}`
+              `Unknown tool: ${name}`,
             );
         }
       } catch (error) {
         throw new McpError(
           ErrorCode.InternalError,
-          `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
+          `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     });
@@ -190,7 +203,11 @@ class SkillInvocationServer {
   private async handleInvokeSkill(args: any) {
     const { skillName, toolName, args: toolArgs = {} } = args;
 
-    const result = await mcpClientManager.callServerTool(skillName, toolName, toolArgs);
+    const result = await mcpClientManager.callServerTool(
+      skillName,
+      toolName,
+      toolArgs,
+    );
 
     return {
       content: [
@@ -210,7 +227,7 @@ class SkillInvocationServer {
     const result = await mcpClientManager.callServerTool(
       "code-review",
       "analyze_code_quality",
-      args
+      args,
     );
 
     return {
@@ -231,7 +248,7 @@ class SkillInvocationServer {
     const result = await mcpClientManager.callServerTool(
       "security-audit",
       "scan_vulnerabilities",
-      args
+      args,
     );
 
     return {
@@ -252,7 +269,7 @@ class SkillInvocationServer {
     const result = await mcpClientManager.callServerTool(
       "performance-optimization",
       "analyze_performance",
-      args
+      args,
     );
 
     return {
@@ -273,7 +290,7 @@ class SkillInvocationServer {
     const result = await mcpClientManager.callServerTool(
       "testing-strategy",
       "analyze_test_coverage",
-      args
+      args,
     );
 
     return {
@@ -294,7 +311,7 @@ class SkillInvocationServer {
     const result = await mcpClientManager.callServerTool(
       "librarian",
       "analyze-project-health",
-      args
+      args,
     );
 
     return {

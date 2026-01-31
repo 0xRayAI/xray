@@ -1,6 +1,6 @@
 // Simplified Orchestration Flow Reporter
 // Works with job correlation integration
-import * as fs from 'fs';
+import * as fs from "fs";
 
 export interface OrchestrationFlowReport {
   jobId: string;
@@ -30,8 +30,10 @@ export class OrchestrationFlowReporter {
   /**
    * Generate comprehensive orchestration flow report with job correlation
    */
-  async generateOrchestrationReport(jobId = 'demo-job-' + Date.now()): Promise<OrchestrationFlowReport> {
-    const sessionId = 'orchestration-session-' + Date.now();
+  async generateOrchestrationReport(
+    jobId = "demo-job-" + Date.now(),
+  ): Promise<OrchestrationFlowReport> {
+    const sessionId = "orchestration-session-" + Date.now();
 
     const agents = this.getSampleAgentActivities(jobId);
     const pipelines = this.getSamplePipelineData(jobId);
@@ -43,54 +45,101 @@ export class OrchestrationFlowReporter {
       timestamp: new Date().toISOString(),
       agents,
       pipelines,
-      performance
+      performance,
     };
 
-    console.log(`🎯 [${jobId}] [orchestration-reporter] Generated comprehensive orchestration flow report`);
+    console.log(
+      `🎯 [${jobId}] [orchestration-reporter] Generated comprehensive orchestration flow report`,
+    );
     return report;
   }
 
   private getSampleAgentActivities(jobId: string) {
     return [
       {
-        agent: 'architect',
-        activities: ['architectural validation', 'dependency analysis', 'scalability assessment', 'design pattern validation'],
-        status: 'completed',
-        jobCorrelation: jobId
+        agent: "architect",
+        activities: [
+          "architectural validation",
+          "dependency analysis",
+          "scalability assessment",
+          "design pattern validation",
+        ],
+        status: "completed",
+        jobCorrelation: jobId,
       },
       {
-        agent: 'code-reviewer',
-        activities: ['code quality assessment', 'style guide compliance', 'security audit verification', 'type safety validation'],
-        status: 'completed',
-        jobCorrelation: jobId
+        agent: "code-reviewer",
+        activities: [
+          "code quality assessment",
+          "style guide compliance",
+          "security audit verification",
+          "type safety validation",
+        ],
+        status: "completed",
+        jobCorrelation: jobId,
       },
       {
-        agent: 'test-architect',
-        activities: ['testing strategy development', 'performance testing validation', 'coverage configuration', 'automation pipeline setup'],
-        status: 'completed',
-        jobCorrelation: jobId
+        agent: "test-architect",
+        activities: [
+          "testing strategy development",
+          "performance testing validation",
+          "coverage configuration",
+          "automation pipeline setup",
+        ],
+        status: "completed",
+        jobCorrelation: jobId,
       },
       {
-        agent: 'enforcer',
-        activities: ['codex compliance verification', 'systematic validation audit', 'architectural integrity check', 'error prevention enforcement'],
-        status: 'completed',
-        jobCorrelation: jobId
+        agent: "enforcer",
+        activities: [
+          "codex compliance verification",
+          "systematic validation audit",
+          "architectural integrity check",
+          "error prevention enforcement",
+        ],
+        status: "completed",
+        jobCorrelation: jobId,
       },
       {
-        agent: 'orchestrator',
-        activities: ['multi-agent coordination', 'results synthesis', 'enterprise excellence achievement', 'report generation'],
-        status: 'completed',
-        jobCorrelation: jobId
-      }
+        agent: "orchestrator",
+        activities: [
+          "multi-agent coordination",
+          "results synthesis",
+          "enterprise excellence achievement",
+          "report generation",
+        ],
+        status: "completed",
+        jobCorrelation: jobId,
+      },
     ];
   }
 
   private getSamplePipelineData(jobId: string) {
     return [
-      { pipeline: 'pre-validation', executions: 2, status: 'active', jobCorrelation: jobId },
-      { pipeline: 'codex-compliance', executions: 2, status: 'active', jobCorrelation: jobId },
-      { pipeline: 'error-boundaries', executions: 4, status: 'active', jobCorrelation: jobId },
-      { pipeline: 'state-validation', executions: 2, status: 'active', jobCorrelation: jobId }
+      {
+        pipeline: "pre-validation",
+        executions: 2,
+        status: "active",
+        jobCorrelation: jobId,
+      },
+      {
+        pipeline: "codex-compliance",
+        executions: 2,
+        status: "active",
+        jobCorrelation: jobId,
+      },
+      {
+        pipeline: "error-boundaries",
+        executions: 4,
+        status: "active",
+        jobCorrelation: jobId,
+      },
+      {
+        pipeline: "state-validation",
+        executions: 2,
+        status: "active",
+        jobCorrelation: jobId,
+      },
     ];
   }
 
@@ -101,11 +150,11 @@ export class OrchestrationFlowReporter {
       memoryUsage: 13900000,
       agentPerformance: {
         architect: 252,
-        'code-reviewer': 140,
-        'test-architect': 210,
+        "code-reviewer": 140,
+        "test-architect": 210,
         enforcer: 110,
-        orchestrator: 90
-      }
+        orchestrator: 90,
+      },
     };
   }
 
@@ -115,22 +164,22 @@ export class OrchestrationFlowReporter {
     output += `**Timestamp**: ${report.timestamp}\n\n`;
 
     output += `## 🤖 Agent Activities\n\n`;
-    report.agents.forEach(agent => {
+    report.agents.forEach((agent) => {
       output += `### ${agent.agent.toUpperCase()} Agent\n`;
       output += `**Status**: ${agent.status}\n`;
       output += `**Job Correlation**: ${agent.jobCorrelation}\n`;
       output += `**Activities**:\n`;
-      agent.activities.forEach(activity => {
+      agent.activities.forEach((activity) => {
         output += `- ${activity}\n`;
       });
-      output += '\n';
+      output += "\n";
     });
 
     output += `## 🔄 Pipeline Operations\n\n`;
-    report.pipelines.forEach(pipeline => {
+    report.pipelines.forEach((pipeline) => {
       output += `- **${pipeline.pipeline}**: ${pipeline.executions} executions (${pipeline.status}) [${pipeline.jobCorrelation}]\n`;
     });
-    output += '\n';
+    output += "\n";
 
     output += `## 📊 Performance Metrics\n\n`;
     output += `- **Execution Time**: ${report.performance.executionTime}ms\n`;
@@ -138,9 +187,11 @@ export class OrchestrationFlowReporter {
     output += `- **Memory Usage**: ${(report.performance.memoryUsage / 1024 / 1024).toFixed(2)} MB\n\n`;
 
     output += `## 🎯 Agent Performance Breakdown\n\n`;
-    Object.entries(report.performance.agentPerformance).forEach(([agent, time]) => {
-      output += `- **${agent}**: ${time}ms execution time\n`;
-    });
+    Object.entries(report.performance.agentPerformance).forEach(
+      ([agent, time]) => {
+        output += `- **${agent}**: ${time}ms execution time\n`;
+      },
+    );
 
     output += `\n## 🎖️ Orchestration Status: COMPLETE ENTERPRISE SUCCESS\n\n`;
     output += `All agents coordinated flawlessly with perfect job correlation achieved. 🚀✨\n`;
@@ -154,9 +205,12 @@ export const orchestrationFlowReporter = new OrchestrationFlowReporter();
 
 // CLI execution (ESM compatible)
 if (import.meta.url === `file://${process.argv[1]}`) {
-  orchestrationFlowReporter.generateOrchestrationReport().then(report => {
-    orchestrationFlowReporter.exportReportAsText(report).then(text => {
-      console.log(text);
-    });
-  }).catch(err => console.error('Report generation failed:', err));
+  orchestrationFlowReporter
+    .generateOrchestrationReport()
+    .then((report) => {
+      orchestrationFlowReporter.exportReportAsText(report).then((text) => {
+        console.log(text);
+      });
+    })
+    .catch((err) => console.error("Report generation failed:", err));
 }

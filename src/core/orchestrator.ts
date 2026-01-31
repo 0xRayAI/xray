@@ -18,7 +18,7 @@ export interface OrchestrationResult {
 export interface OrchestratorConfig {
   maxConcurrentTasks?: number;
   taskTimeout?: number;
-  conflictResolutionStrategy?: 'majority_vote' | 'expert_priority';
+  conflictResolutionStrategy?: "majority_vote" | "expert_priority";
 }
 
 export class StringRayOrchestrator {
@@ -27,18 +27,20 @@ export class StringRayOrchestrator {
   private config: {
     maxConcurrentTasks: number;
     taskTimeout: number;
-    conflictResolutionStrategy: 'majority_vote' | 'expert_priority';
+    conflictResolutionStrategy: "majority_vote" | "expert_priority";
   } = {
     maxConcurrentTasks: 3,
     taskTimeout: 10000,
-    conflictResolutionStrategy: 'majority_vote'
+    conflictResolutionStrategy: "majority_vote",
   };
 
   constructor(config?: OrchestratorConfig) {
     if (config) {
       this.config = { ...this.config, ...config };
     }
-    frameworkLogger.log("orchestrator", "initialized", "info", { config: this.config });
+    frameworkLogger.log("orchestrator", "initialized", "info", {
+      config: this.config,
+    });
   }
 
   async executeTask(task: TaskDefinition): Promise<OrchestrationResult> {
@@ -49,23 +51,23 @@ export class StringRayOrchestrator {
     frameworkLogger.log("orchestrator", "task-started", "info", {
       taskId,
       taskType: task.type,
-      complexity: task.complexity
+      complexity: task.complexity,
     });
 
     try {
       // Task execution logic would go here
       const result = await this.dispatchToAgent(task);
-      
+
       frameworkLogger.log("orchestrator", "task-completed", "success", {
         taskId,
-        duration: result.duration
+        duration: result.duration,
       });
 
       return result;
     } catch (error) {
       frameworkLogger.log("orchestrator", "task-failed", "error", {
         taskId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       throw error;
@@ -75,28 +77,34 @@ export class StringRayOrchestrator {
     }
   }
 
-  private async dispatchToAgent(task: TaskDefinition): Promise<OrchestrationResult> {
+  private async dispatchToAgent(
+    task: TaskDefinition,
+  ): Promise<OrchestrationResult> {
     // Agent selection and dispatch logic
     const startTime = Date.now();
-    
+
     // Simulate task execution with minimal delay to avoid hanging in test environment
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     const duration = Date.now() - startTime;
-    
+
     return {
       success: true,
       taskId: task.id,
       agentUsed: task.subagentType || "default-agent",
       duration,
-      result: { id: task.id, type: task.type, simulated: true }
+      result: { id: task.id, type: task.type, simulated: true },
     };
   }
 
-  async executeComplexTask(description: string, tasks: TaskDefinition[], sessionId?: string): Promise<OrchestrationResult[]> {
+  async executeComplexTask(
+    description: string,
+    tasks: TaskDefinition[],
+    sessionId?: string,
+  ): Promise<OrchestrationResult[]> {
     frameworkLogger.log("orchestrator", "complex-task-started", "info", {
       description,
-      taskCount: tasks.length
+      taskCount: tasks.length,
     });
 
     const results: OrchestrationResult[] = [];
@@ -104,25 +112,27 @@ export class StringRayOrchestrator {
 
     // Sort tasks by dependencies (simple topological sort)
     const sortedTasks = this.topologicalSort(tasks);
-    
+
     for (const task of sortedTasks) {
       // Check dependencies
       if (task.dependencies && task.dependencies.length > 0) {
-        const missingDeps = task.dependencies.filter(dep => !completedTaskIds.has(dep));
-        
+        const missingDeps = task.dependencies.filter(
+          (dep) => !completedTaskIds.has(dep),
+        );
+
         if (missingDeps.length > 0) {
           frameworkLogger.log("orchestrator", "dependency-failed", "error", {
             taskId: task.id,
-            missingDependencies: missingDeps
+            missingDependencies: missingDeps,
           });
-          
+
           results.push({
             success: false,
             taskId: task.id,
             agentUsed: task.subagentType || "default-agent",
             duration: 0,
             result: null,
-            errors: [`Missing dependencies: ${missingDeps.join(', ')}`]
+            errors: [`Missing dependencies: ${missingDeps.join(", ")}`],
           });
           continue;
         }
@@ -139,7 +149,7 @@ export class StringRayOrchestrator {
           agentUsed: task.subagentType || "default-agent",
           duration: 0,
           result: null,
-          errors: [error instanceof Error ? error.message : String(error)]
+          errors: [error instanceof Error ? error.message : String(error)],
         });
       }
     }
@@ -147,7 +157,7 @@ export class StringRayOrchestrator {
     frameworkLogger.log("orchestrator", "complex-task-completed", "success", {
       description,
       taskCount: tasks.length,
-      successCount: results.filter(r => r.success).length
+      successCount: results.filter((r) => r.success).length,
     });
 
     return results;
@@ -157,7 +167,7 @@ export class StringRayOrchestrator {
     const visited = new Set<string>();
     const visiting = new Set<string>();
     const result: TaskDefinition[] = [];
-    
+
     const visit = (taskId: string) => {
       if (visiting.has(taskId)) {
         throw new Error(`Circular dependency detected: ${taskId}`);
@@ -165,34 +175,36 @@ export class StringRayOrchestrator {
       if (visited.has(taskId)) {
         return;
       }
-      
+
       visiting.add(taskId);
-      
-      const task = tasks.find(t => t.id === taskId);
+
+      const task = tasks.find((t) => t.id === taskId);
       if (task && task.dependencies) {
         for (const dep of task.dependencies) {
           visit(dep);
         }
       }
-      
+
       visiting.delete(taskId);
       visited.add(taskId);
-      
+
       if (task) {
         result.push(task);
       }
     };
-    
+
     for (const task of tasks) {
       if (!visited.has(task.id)) {
         visit(task.id);
       }
     }
-    
+
     return result;
   }
 
-  async executeComplexTaskSingle(task: TaskDefinition): Promise<OrchestrationResult> {
+  async executeComplexTaskSingle(
+    task: TaskDefinition,
+  ): Promise<OrchestrationResult> {
     const taskId = this.generateTaskId();
     this.taskQueue.set(taskId, task);
     this.activeTasks.add(taskId);
@@ -201,29 +213,29 @@ export class StringRayOrchestrator {
       taskId,
       taskType: task.type,
       complexity: task.complexity,
-      dependencies: task.dependencies
+      dependencies: task.dependencies,
     });
 
     try {
       const startTime = Date.now();
-      
+
       if (task.dependencies && task.dependencies.length > 0) {
         frameworkLogger.log("orchestrator", "processing-dependencies", "info", {
           taskId,
-          dependencies: task.dependencies
+          dependencies: task.dependencies,
         });
-        
-        await new Promise(resolve => setTimeout(resolve, 200));
+
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       const duration = Date.now() - startTime;
-      
+
       frameworkLogger.log("orchestrator", "complex-task-completed", "success", {
         taskId,
         duration,
-        dependenciesResolved: task.dependencies?.length || 0
+        dependenciesResolved: task.dependencies?.length || 0,
       });
 
       return {
@@ -231,25 +243,25 @@ export class StringRayOrchestrator {
         taskId,
         agentUsed: task.subagentType || "default-agent",
         duration,
-        result: { 
-          complexTask: true, 
+        result: {
+          complexTask: true,
           taskType: task.type,
-          dependenciesProcessed: task.dependencies?.length || 0
-        }
+          dependenciesProcessed: task.dependencies?.length || 0,
+        },
       };
     } catch (error) {
       frameworkLogger.log("orchestrator", "complex-task-failed", "error", {
         taskId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
-      
+
       return {
         success: false,
         taskId,
         agentUsed: task.subagentType || "default-agent",
         duration: 0,
         result: null,
-        errors: [error instanceof Error ? error.message : String(error)]
+        errors: [error instanceof Error ? error.message : String(error)],
       };
     } finally {
       this.activeTasks.delete(taskId);
@@ -257,38 +269,51 @@ export class StringRayOrchestrator {
     }
   }
 
-  resolveConflicts(conflicts: any[]): { response: string; expertiseScore: number } {
+  resolveConflicts(conflicts: any[]): {
+    response: string;
+    expertiseScore: number;
+  } {
     if (conflicts.length === 0) {
       return { response: "", expertiseScore: 0 };
     }
 
-    if (this.config.conflictResolutionStrategy === 'majority_vote') {
+    if (this.config.conflictResolutionStrategy === "majority_vote") {
       const votes: Record<string, number> = {};
-      
-      conflicts.forEach(conflict => {
+
+      conflicts.forEach((conflict) => {
         const response = conflict.response || conflict.proposed;
         votes[response] = (votes[response] || 0) + 1;
       });
 
       const maxVotes = Math.max(...Object.values(votes));
-      const winner = Object.entries(votes).find(([_, voteCount]) => voteCount === maxVotes);
-      
+      const winner = Object.entries(votes).find(
+        ([_, voteCount]) => voteCount === maxVotes,
+      );
+
       if (winner) {
-        const winningConflicts = conflicts.filter(c => (c.response || c.proposed) === winner[0]);
-        const avgExpertise = winningConflicts.reduce((sum: number, c: any) => sum + (c.expertiseScore || 0), 0) / winningConflicts.length;
-        
+        const winningConflicts = conflicts.filter(
+          (c) => (c.response || c.proposed) === winner[0],
+        );
+        const avgExpertise =
+          winningConflicts.reduce(
+            (sum: number, c: any) => sum + (c.expertiseScore || 0),
+            0,
+          ) / winningConflicts.length;
+
         return { response: winner[0], expertiseScore: avgExpertise };
       }
     }
 
     // Fallback to highest expertise score
-    const bestConflict = conflicts.reduce((best: any, current: any) => 
-      (current.expertiseScore || 0) > (best.expertiseScore || 0) ? current : best
+    const bestConflict = conflicts.reduce((best: any, current: any) =>
+      (current.expertiseScore || 0) > (best.expertiseScore || 0)
+        ? current
+        : best,
     );
-    
-    return { 
-      response: bestConflict.response || bestConflict.proposed, 
-      expertiseScore: bestConflict.expertiseScore || 0 
+
+    return {
+      response: bestConflict.response || bestConflict.proposed,
+      expertiseScore: bestConflict.expertiseScore || 0,
     };
   }
 
@@ -302,16 +327,16 @@ export class StringRayOrchestrator {
   async delegateToSubagent(agentName: string, task: any): Promise<any> {
     frameworkLogger.log("orchestrator", "delegate-to-subagent", "info", {
       agentName,
-      taskType: task.type
+      taskType: task.type,
     });
 
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     return {
       success: true,
       result: `Task completed successfully by ${agentName}`,
       agentName,
-      executionTime: 50
+      executionTime: 50,
     };
   }
 
@@ -320,7 +345,7 @@ export class StringRayOrchestrator {
       queueSize: this.taskQueue.size,
       activeTasks: this.activeTasks.size,
       totalProcessed: this.taskQueue.size + this.activeTasks.size,
-      config: this.config
+      config: this.config,
     };
   }
 }

@@ -173,7 +173,10 @@ describe("JSON Codex Integration", () => {
     test("should handle missing codex files gracefully", async () => {
       // Create a temporary context loader with non-existent file paths
       const tempContextLoader = new (StringRayContextLoader as any)();
-      tempContextLoader.codexFilePaths = ["nonexistent-codex-1.json", "nonexistent-codex-2.json"];
+      tempContextLoader.codexFilePaths = [
+        "nonexistent-codex-1.json",
+        "nonexistent-codex-2.json",
+      ];
 
       const result = await tempContextLoader.loadCodexContext(testProjectRoot);
 

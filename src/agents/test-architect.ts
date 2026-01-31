@@ -1,10 +1,18 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from '../core/model-router.js';
+import { modelRouter } from "../core/model-router.js";
 
 export const testArchitect: AgentConfig = {
   name: "test-architect",
-  get model() { return modelRouter.getValidatedModel('test-architect'); },
-  capabilities: ["test-auto-creation", "test-strategy-design", "coverage-optimization", "behavioral-testing", "performance-validation"],
+  get model() {
+    return modelRouter.getValidatedModel("test-architect");
+  },
+  capabilities: [
+    "test-auto-creation",
+    "test-strategy-design",
+    "coverage-optimization",
+    "behavioral-testing",
+    "performance-validation",
+  ],
   maxComplexity: 100,
   enabled: true,
   description:

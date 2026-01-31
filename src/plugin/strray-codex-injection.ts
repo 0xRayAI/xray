@@ -22,9 +22,15 @@ async function loadStrRayComponents() {
   if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
 
   try {
-    const procModule = await import("../../dist/processors/processor-manager.js" as any);
-    const stateModule = await import("../../dist/state/state-manager.js" as any);
-    const featuresModule = await import("../../dist/core/features-config.js" as any);
+    const procModule = await import(
+      "../../dist/processors/processor-manager.js" as any
+    );
+    const stateModule = await import(
+      "../../dist/state/state-manager.js" as any
+    );
+    const featuresModule = await import(
+      "../../dist/core/features-config.js" as any
+    );
     ProcessorManager = procModule.ProcessorManager;
     StrRayStateManager = stateModule.StrRayStateManager;
     featuresConfigLoader = featuresModule.featuresConfigLoader;
@@ -35,9 +41,15 @@ async function loadStrRayComponents() {
 
     for (const pluginPath of pluginPaths) {
       try {
-        ({ ProcessorManager } = await import(`../../../../../node_modules/${pluginPath}/dist/processors/processor-manager.js`));
-        ({ StrRayStateManager } = await import(`../../../../../node_modules/${pluginPath}/dist/state/state-manager.js`));
-        const fm = await import(`../../../../../node_modules/${pluginPath}/dist/core/features-config.js`);
+        ({ ProcessorManager } = await import(
+          `../../../../../node_modules/${pluginPath}/dist/processors/processor-manager.js`
+        ));
+        ({ StrRayStateManager } = await import(
+          `../../../../../node_modules/${pluginPath}/dist/state/state-manager.js`
+        ));
+        const fm = await import(
+          `../../../../../node_modules/${pluginPath}/dist/core/features-config.js`
+        );
         featuresConfigLoader = fm.featuresConfigLoader;
         detectTaskType = fm.detectTaskType;
         break;
@@ -331,7 +343,9 @@ export default async function strrayCodexPlugin(input: {
             const routing = config.model_routing.task_routing?.[taskType];
             if (routing?.model) {
               output.model = routing.model;
-              logger.log(`Model routed: ${input.tool} → ${taskType} → ${routing.model}`);
+              logger.log(
+                `Model routed: ${input.tool} → ${taskType} → ${routing.model}`,
+              );
             }
           }
         } catch (e) {
@@ -344,18 +358,22 @@ export default async function strrayCodexPlugin(input: {
       if (["write", "edit", "multiedit"].includes(tool)) {
         if (!ProcessorManager || !StrRayStateManager) return;
 
-        const stateManager = new StrRayStateManager(path.join(directory, ".opencode", "state"));
+        const stateManager = new StrRayStateManager(
+          path.join(directory, ".opencode", "state"),
+        );
         const processorManager = new ProcessorManager(stateManager);
 
         try {
           const result = await processorManager.executePreProcessors({
             tool,
             args,
-            context: { directory, operation: "tool_execution" }
+            context: { directory, operation: "tool_execution" },
           });
 
           if (!result.success) {
-            logger.error(`Pre-processor failed: ${result.results.find((r: any) => !r.success)?.error}`);
+            logger.error(
+              `Pre-processor failed: ${result.results.find((r: any) => !r.success)?.error}`,
+            );
           }
         } catch (error) {
           logger.error(`Pre-processor error`, error);

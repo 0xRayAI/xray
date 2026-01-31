@@ -718,7 +718,7 @@ export class AdvancedRegressionTestingSystem extends EventEmitter {
         const data = JSON.parse(fs.readFileSync(this.baselineFile, "utf8"));
         this.baselines = new Map(Object.entries(data.baselines || {}));
         this.historicalData = new Map(Object.entries(data.historical || {}));
-        }
+      }
     } catch (error) {
       console.warn("⚠️ Could not load advanced baselines:", error);
     }

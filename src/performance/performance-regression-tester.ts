@@ -77,9 +77,9 @@ export class PerformanceRegressionTester {
         const data = fs.readFileSync(baselineFile, "utf8");
         const baselines = JSON.parse(data);
         this.baselines = new Map(Object.entries(baselines));
-        } else {
-          // No existing baselines found, will use defaults
-        }
+      } else {
+        // No existing baselines found, will use defaults
+      }
     } catch (error) {
       console.error(`Failed to load baselines from ${baselineFile}:`, error);
     }
@@ -92,7 +92,7 @@ export class PerformanceRegressionTester {
     try {
       const baselines = Object.fromEntries(this.baselines);
       fs.writeFileSync(baselineFile, JSON.stringify(baselines, null, 2));
-      } catch (error) {
+    } catch (error) {
       console.error(`Failed to save baselines to ${baselineFile}:`, error);
     }
   }
@@ -235,8 +235,7 @@ export class PerformanceRegressionTester {
     // Test failure count - kept as console.log for CI visibility
     if (budgetReport) {
       if (budgetReport.violations.length > 0) {
-        budgetReport.violations.forEach((v) => {
-          });
+        budgetReport.violations.forEach((v) => {});
       }
     }
 

@@ -499,7 +499,12 @@ export async function validateCommand(args: string[]): Promise<void> {
       );
       process.exit(1);
     } else {
-      await frameworkLogger.log('iac-validator', '-n-all-iac-files-passed-validation-', 'success', { message: "\n✅ All IaC files passed validation." });
+      await frameworkLogger.log(
+        "iac-validator",
+        "-n-all-iac-files-passed-validation-",
+        "success",
+        { message: "\n✅ All IaC files passed validation." },
+      );
     }
   } else if (args.includes("--all")) {
     const { success, results } = await preCommitValidator.validateAllIaCFiles();
@@ -509,7 +514,12 @@ export async function validateCommand(args: string[]): Promise<void> {
       console.error("\n❌ IaC validation failed.");
       process.exit(1);
     } else {
-      await frameworkLogger.log('iac-validator', '-n-all-iac-files-passed-validation-', 'success', { message: "\n✅ All IaC files passed validation." });
+      await frameworkLogger.log(
+        "iac-validator",
+        "-n-all-iac-files-passed-validation-",
+        "success",
+        { message: "\n✅ All IaC files passed validation." },
+      );
     }
   } else {
     const targetPath = args[0] || ".";
@@ -525,21 +535,42 @@ export async function validateCommand(args: string[]): Promise<void> {
 
 function printResults(results: ValidationResult[]): void {
   for (const result of results) {
-    await frameworkLogger.log('iac-validator', '-n-result-file-', 'info', { message: `\n📄 ${result.file}:` });
+    await frameworkLogger.log("iac-validator", "-n-result-file-", "info", {
+      message: `\n📄 ${result.file}:`,
+    });
 
     if (result.errors.length > 0) {
-      await frameworkLogger.log('iac-validator', '-errors-', 'error', { message: "  ❌ Errors:" });
+      await frameworkLogger.log("iac-validator", "-errors-", "error", {
+        message: "  ❌ Errors:",
+      });
       result.errors.forEach((error) => {
-        await frameworkLogger.log('iac-validator', '-error-path-error-message-', 'error', { message: `    • ${error.path}: ${error.message}` });
+        await frameworkLogger.log(
+          "iac-validator",
+          "-error-path-error-message-",
+          "error",
+          { message: `    • ${error.path}: ${error.message}` },
+        );
       });
     }
 
     if (result.warnings.length > 0) {
-      await frameworkLogger.log('iac-validator', '-warnings-', 'info', { message: "  ⚠️  Warnings:" });
+      await frameworkLogger.log("iac-validator", "-warnings-", "info", {
+        message: "  ⚠️  Warnings:",
+      });
       result.warnings.forEach((warning) => {
-        await frameworkLogger.log('iac-validator', '-warning-path-warning-message-', 'info', { message: `    • ${warning.path}: ${warning.message}` });
+        await frameworkLogger.log(
+          "iac-validator",
+          "-warning-path-warning-message-",
+          "info",
+          { message: `    • ${warning.path}: ${warning.message}` },
+        );
         if (warning.suggestion) {
-          await frameworkLogger.log('iac-validator', '-warning-suggestion-', 'info', { message: `      💡 ${warning.suggestion}` });
+          await frameworkLogger.log(
+            "iac-validator",
+            "-warning-suggestion-",
+            "info",
+            { message: `      💡 ${warning.suggestion}` },
+          );
         }
       });
     }
@@ -549,7 +580,9 @@ function printResults(results: ValidationResult[]): void {
       result.errors.length === 0 &&
       result.warnings.length === 0
     ) {
-      await frameworkLogger.log('iac-validator', '-valid-', 'success', { message: "  ✅ Valid" });
+      await frameworkLogger.log("iac-validator", "-valid-", "success", {
+        message: "  ✅ Valid",
+      });
     }
   }
 }

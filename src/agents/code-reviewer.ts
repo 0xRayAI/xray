@@ -1,10 +1,18 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from '../core/model-router.js';
+import { modelRouter } from "../core/model-router.js";
 
 export const codeReviewer: AgentConfig = {
   name: "code-reviewer",
-  get model() { return modelRouter.getValidatedModel('code-reviewer'); },
-  capabilities: ["code-review", "quality-assurance", "monitoring", "analytics", "compliance-validation"],
+  get model() {
+    return modelRouter.getValidatedModel("code-reviewer");
+  },
+  capabilities: [
+    "code-review",
+    "quality-assurance",
+    "monitoring",
+    "analytics",
+    "compliance-validation",
+  ],
   maxComplexity: 100,
   enabled: true,
   description:

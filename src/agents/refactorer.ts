@@ -1,11 +1,19 @@
 import type { AgentConfig } from "./types.js";
 
-import { modelRouter } from '../core/model-router.js';
+import { modelRouter } from "../core/model-router.js";
 
 export const refactorer: AgentConfig = {
   name: "refactorer",
-  get model() { return modelRouter.getValidatedModel('refactorer'); },
-  capabilities: ["technical-debt-elimination", "code-consolidation", "surgical-refactoring", "performance-optimization", "maintainability-enhancement"],
+  get model() {
+    return modelRouter.getValidatedModel("refactorer");
+  },
+  capabilities: [
+    "technical-debt-elimination",
+    "code-consolidation",
+    "surgical-refactoring",
+    "performance-optimization",
+    "maintainability-enhancement",
+  ],
   maxComplexity: 100,
   enabled: true,
   description:

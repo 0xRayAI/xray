@@ -166,7 +166,7 @@ export class StringRayContextLoader {
     // Detect format before parsing
     const formatResult = detectContentFormat(content);
 
-    if (formatResult.format === "unknown" as any) {
+    if (formatResult.format === ("unknown" as any)) {
       throw new Error(
         `Unable to detect content format for ${sourcePath}. Content appears to be neither valid JSON nor Markdown.`,
       );

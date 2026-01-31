@@ -315,7 +315,9 @@ export class CodebaseContextAnalyzer {
   /**
    * Build complete codebase structure map with batching for memory efficiency
    */
-  private async buildCodebaseStructure(jobId: string): Promise<CodebaseStructure> {
+  private async buildCodebaseStructure(
+    jobId: string,
+  ): Promise<CodebaseStructure> {
     const fileGraph = new Map<string, FileInfo>();
     const modules = new Map<string, ModuleInfo>();
     const dependencyGraph = new Map<string, Set<string>>();
@@ -363,14 +365,14 @@ export class CodebaseContextAnalyzer {
 
         // Process directories first (may contain modules)
         for (const dirEntry of dirEntries) {
-            if (dirEntry.isModule) {
-              const moduleInfo = await this.analyzeModule(
-                dirEntry.path,
-                dirEntry.relativePath,
-                jobId,
-              );
-              modules.set(dirEntry.relativePath, moduleInfo);
-            } else {
+          if (dirEntry.isModule) {
+            const moduleInfo = await this.analyzeModule(
+              dirEntry.path,
+              dirEntry.relativePath,
+              jobId,
+            );
+            modules.set(dirEntry.relativePath, moduleInfo);
+          } else {
             await scanDirectory(dirEntry.path, dirEntry.relativePath);
           }
         }
@@ -390,11 +392,11 @@ export class CodebaseContextAnalyzer {
           const batchPromises = batch.map(
             async ({ path: filePath, relativePath: fileRelativePath }) => {
               try {
-                 const fileInfo = await this.analyzeFile(
-                   filePath,
-                   fileRelativePath,
-                   jobId,
-                 );
+                const fileInfo = await this.analyzeFile(
+                  filePath,
+                  fileRelativePath,
+                  jobId,
+                );
                 if (fileInfo) {
                   fileGraph.set(fileRelativePath, fileInfo);
 

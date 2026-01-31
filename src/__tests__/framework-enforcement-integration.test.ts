@@ -130,12 +130,12 @@ describe("Framework Enforcement Integration", () => {
     });
   });
 
-    // TODO: Fix this test - it has syntax errors
-    it.skip("should maintain framework state across operations", async () => {
-      const jobId = `test-framework-state-operations-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      // Test implementation needed
-      expect(true).toBe(true);
-    });
+  // TODO: Fix this test - it has syntax errors
+  it.skip("should maintain framework state across operations", async () => {
+    const jobId = `test-framework-state-operations-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Test implementation needed
+    expect(true).toBe(true);
+  });
 
   it("should provide comprehensive framework health reporting", async () => {
     const mockLogs = [

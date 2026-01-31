@@ -17,11 +17,7 @@ import { StringRayStateManager } from "../../state/state-manager.js";
 describe("StringRay Infrastructure Tests", () => {
   describe("Core File System", () => {
     it("should have required directories", () => {
-      const requiredDirs = [
-        "src",
-        ".opencode",
-        ".opencode/strray",
-      ];
+      const requiredDirs = ["src", ".opencode", ".opencode/strray"];
 
       for (const dir of requiredDirs) {
         expect(fs.existsSync(dir)).toBe(true);
@@ -76,7 +72,10 @@ describe("StringRay Infrastructure Tests", () => {
 
     it("should support basic state operations", () => {
       const testKey = "test:infrastructure:key";
-      const testValue = { message: "infrastructure test", timestamp: Date.now() };
+      const testValue = {
+        message: "infrastructure test",
+        timestamp: Date.now(),
+      };
 
       // Set value
       stateManager.set(testKey, testValue);
@@ -103,9 +102,15 @@ describe("StringRay Infrastructure Tests", () => {
 
     it("should support different log levels", () => {
       // These should not throw
-      expect(() => frameworkLogger.log("test", "info message", "info")).not.toThrow();
-      expect(() => frameworkLogger.log("test", "error message", "error")).not.toThrow();
-      expect(() => frameworkLogger.log("test", "success message", "success")).not.toThrow();
+      expect(() =>
+        frameworkLogger.log("test", "info message", "info"),
+      ).not.toThrow();
+      expect(() =>
+        frameworkLogger.log("test", "error message", "error"),
+      ).not.toThrow();
+      expect(() =>
+        frameworkLogger.log("test", "success message", "success"),
+      ).not.toThrow();
     });
   });
 
@@ -115,7 +120,9 @@ describe("StringRay Infrastructure Tests", () => {
       expect(fs.existsSync(agentConfigDir)).toBe(true);
 
       const files = fs.readdirSync(agentConfigDir);
-      const configFiles = files.filter(f => f.endsWith(".yml") || f.endsWith(".yaml"));
+      const configFiles = files.filter(
+        (f) => f.endsWith(".yml") || f.endsWith(".yaml"),
+      );
 
       expect(configFiles.length).toBeGreaterThan(0);
     });
@@ -173,7 +180,9 @@ describe("StringRay Infrastructure Tests", () => {
 
       const workflows = fs.readdirSync(workflowsDir);
       expect(workflows.length).toBeGreaterThan(0);
-      expect(workflows.some(w => w.includes("ci") || w.includes("test"))).toBe(true);
+      expect(
+        workflows.some((w) => w.includes("ci") || w.includes("test")),
+      ).toBe(true);
     });
 
     it("should have pre-commit hooks configured", () => {
@@ -181,7 +190,9 @@ describe("StringRay Infrastructure Tests", () => {
       expect(fs.existsSync(hooksDir)).toBe(true);
 
       const hooks = fs.readdirSync(hooksDir);
-      expect(hooks.some(h => h.includes("commit") || h.includes("push"))).toBe(true);
+      expect(
+        hooks.some((h) => h.includes("commit") || h.includes("push")),
+      ).toBe(true);
     });
   });
 

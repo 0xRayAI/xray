@@ -27,12 +27,22 @@ export class AutoFixEngine {
   ): Promise<FixResult> {
     const jobId = `auto-fix-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    await frameworkLogger.log('-auto-fix-engine', '-attempting-auto-fixes-for-failure-analysis-', 'info', { message: "🔧 Attempting auto-fixes for failure analysis..." });
+    await frameworkLogger.log(
+      "-auto-fix-engine",
+      "-attempting-auto-fixes-for-failure-analysis-",
+      "info",
+      { message: "🔧 Attempting auto-fixes for failure analysis..." },
+    );
 
     if (analysis.confidence < this.confidenceThreshold) {
-      await frameworkLogger.log('-auto-fix-engine', '-confidence-too-low-analysis-confidence-for-auto-f', 'info', { message: 
-        `⚠️  Confidence too low (${analysis.confidence}) for auto-fixes`,
-       });
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-confidence-too-low-analysis-confidence-for-auto-f",
+        "info",
+        {
+          message: `⚠️  Confidence too low (${analysis.confidence}) for auto-fixes`,
+        },
+      );
       return {
         success: false,
         appliedFixes: [],
@@ -51,7 +61,12 @@ export class AutoFixEngine {
 
     for (const fix of sortedFixes) {
       try {
-        await frameworkLogger.log('-auto-fix-engine', '-applying-fix-fix-description-', 'info', { message: `🔧 Applying fix: ${fix.description}` });
+        await frameworkLogger.log(
+          "-auto-fix-engine",
+          "-applying-fix-fix-description-",
+          "info",
+          { message: `🔧 Applying fix: ${fix.description}` },
+        );
 
         const result = await this.applySingleFix(fix, context);
 
@@ -64,7 +79,12 @@ export class AutoFixEngine {
             appliedChanges: result.changes,
           });
 
-          await frameworkLogger.log('-auto-fix-engine', '-fix-applied-successfully-fix-description-', 'success', { message: `✅ Fix applied successfully: ${fix.description}` });
+          await frameworkLogger.log(
+            "-auto-fix-engine",
+            "-fix-applied-successfully-fix-description-",
+            "success",
+            { message: `✅ Fix applied successfully: ${fix.description}` },
+          );
         } else {
           await frameworkLogger.log("auto-fix-engine", "fix-failed", "error", {
             jobId,
@@ -73,7 +93,12 @@ export class AutoFixEngine {
           });
         }
       } catch (error) {
-        await frameworkLogger.log('-auto-fix-engine', '-fix-error-fix-description-error-', 'error', { message: `❌ Fix error: ${fix.description} - ${error}` });
+        await frameworkLogger.log(
+          "-auto-fix-engine",
+          "-fix-error-fix-description-error-",
+          "error",
+          { message: `❌ Fix error: ${fix.description} - ${error}` },
+        );
       }
     }
 
@@ -122,7 +147,12 @@ export class AutoFixEngine {
     fix: SuggestedFix,
   ): Promise<{ success: boolean; changes?: string[]; error?: string }> {
     try {
-      await frameworkLogger.log('-auto-fix-engine', '-updating-dependencies-', 'info', { message: "📦 Updating dependencies..." });
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-updating-dependencies-",
+        "info",
+        { message: "📦 Updating dependencies..." },
+      );
 
       // Run npm audit fix
       execSync("npm audit fix", {
@@ -157,7 +187,12 @@ export class AutoFixEngine {
     fix: SuggestedFix,
   ): Promise<{ success: boolean; changes?: string[]; error?: string }> {
     try {
-      await frameworkLogger.log('-auto-fix-engine', '-applying-automatic-code-fixes-', 'info', { message: "🛠️  Applying automatic code fixes..." });
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-applying-automatic-code-fixes-",
+        "info",
+        { message: "🛠️  Applying automatic code fixes..." },
+      );
 
       // Run ESLint auto-fix
       execSync("npm run lint:fix", {
@@ -198,7 +233,12 @@ export class AutoFixEngine {
     fix: SuggestedFix,
   ): Promise<{ success: boolean; changes?: string[]; error?: string }> {
     try {
-      await frameworkLogger.log('-auto-fix-engine', '-applying-test-regeneration-fixes-', 'info', { message: "🧪 Applying test regeneration fixes..." });
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-applying-test-regeneration-fixes-",
+        "info",
+        { message: "🧪 Applying test regeneration fixes..." },
+      );
 
       // This would be more sophisticated in a real implementation
       // For now, we'll skip flaky tests that are commonly failing
@@ -224,7 +264,12 @@ export class AutoFixEngine {
           ) {
             // Add skip to the test (this is a simplified approach)
             // In practice, this would be more sophisticated
-            await frameworkLogger.log('-auto-fix-engine', '-skipping-problematic-test-in-testfile-', 'info', { message: `⏭️  Skipping problematic test in ${testFile}` });
+            await frameworkLogger.log(
+              "-auto-fix-engine",
+              "-skipping-problematic-test-in-testfile-",
+              "info",
+              { message: `⏭️  Skipping problematic test in ${testFile}` },
+            );
             changes.push(testFile);
           }
         }
@@ -252,7 +297,12 @@ export class AutoFixEngine {
   ): Promise<boolean> {
     const jobId = `fix-validation-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    await frameworkLogger.log('-auto-fix-engine', '-validating-applied-fixes-', 'success', { message: "✅ Validating applied fixes..." });
+    await frameworkLogger.log(
+      "-auto-fix-engine",
+      "-validating-applied-fixes-",
+      "success",
+      { message: "✅ Validating applied fixes..." },
+    );
 
     try {
       // Run relevant tests based on failure type
@@ -285,7 +335,12 @@ export class AutoFixEngine {
           execSync("npm run typecheck", { stdio: "pipe", timeout: 60000 });
       }
 
-      await frameworkLogger.log('-auto-fix-engine', '-fix-validation-passed-', 'success', { message: "✅ Fix validation passed" });
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-fix-validation-passed-",
+        "success",
+        { message: "✅ Fix validation passed" },
+      );
       return true;
     } catch (error) {
       await frameworkLogger.log(
@@ -302,12 +357,22 @@ export class AutoFixEngine {
    * Rollback applied fixes if validation fails
    */
   async rollbackFixes(fixes: any[]): Promise<void> {
-    await frameworkLogger.log('-auto-fix-engine', '-rolling-back-applied-fixes-', 'info', { message: "🔄 Rolling back applied fixes..." });
+    await frameworkLogger.log(
+      "-auto-fix-engine",
+      "-rolling-back-applied-fixes-",
+      "info",
+      { message: "🔄 Rolling back applied fixes..." },
+    );
 
     try {
       // Simple git reset for now
       execSync("git reset --hard HEAD~1", { stdio: "inherit" });
-      await frameworkLogger.log('-auto-fix-engine', '-fixes-rolled-back-', 'success', { message: "✅ Fixes rolled back" });
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-fixes-rolled-back-",
+        "success",
+        { message: "✅ Fixes rolled back" },
+      );
     } catch (error) {
       console.error("❌ Rollback failed:", error);
       throw error;

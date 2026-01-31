@@ -1,10 +1,18 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from '../core/model-router.js';
+import { modelRouter } from "../core/model-router.js";
 
 export const architect: AgentConfig = {
   name: "architect",
-  get model() { return modelRouter.getValidatedModel('architect'); },
-  capabilities: ["architecture", "design", "system-integration", "delegation", "complexity-analysis"],
+  get model() {
+    return modelRouter.getValidatedModel("architect");
+  },
+  capabilities: [
+    "architecture",
+    "design",
+    "system-integration",
+    "delegation",
+    "complexity-analysis",
+  ],
   maxComplexity: 100,
   enabled: true,
   description:

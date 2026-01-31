@@ -508,8 +508,7 @@ export class AdvancedMonitor {
     this.monitoringInterval = setInterval(() => {
       this.collectAndAnalyzeMetrics();
     }, intervalMs);
-
-    }
+  }
 
   /**
    * Stop monitoring
@@ -519,7 +518,7 @@ export class AdvancedMonitor {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = undefined;
     }
-    }
+  }
 
   /**
    * Manually collect and analyze metrics

@@ -598,10 +598,21 @@ class OrchestrationFlowValidator {
    * Run all orchestration flow validations
    */
   async runCompleteValidationSuite(): Promise<ValidationSuiteResults> {
-    await frameworkLogger.log('orchestration-flow-validator', '-starting-comprehensive-orchestration-flow-validat', 'info', { message: 
-      "🚀 STARTING COMPREHENSIVE ORCHESTRATION FLOW VALIDATION SUITE\n",
-     });
-    await frameworkLogger.log('orchestration-flow-validator', '-repeat-70-', 'info', { message: "=".repeat(70) });
+    await frameworkLogger.log(
+      "orchestration-flow-validator",
+      "-starting-comprehensive-orchestration-flow-validat",
+      "info",
+      {
+        message:
+          "🚀 STARTING COMPREHENSIVE ORCHESTRATION FLOW VALIDATION SUITE\n",
+      },
+    );
+    await frameworkLogger.log(
+      "orchestration-flow-validator",
+      "-repeat-70-",
+      "info",
+      { message: "=".repeat(70) },
+    );
 
     const tests = [
       this.testBasicOrchestrationFlow(),
@@ -657,22 +668,39 @@ class OrchestrationFlowValidator {
       const agents = result.metrics.agentsSpawned;
 
       // Test result details - kept as console.log for readability
-      await frameworkLogger.log('orchestration-flow-validator', '-index-1-result-testname-status-duration-ms-agents', 'info', { message: 
-        `${index + 1}. ${result.testName} - ${status} (${duration}ms, ${agents} agents)`,
-       });
+      await frameworkLogger.log(
+        "orchestration-flow-validator",
+        "-index-1-result-testname-status-duration-ms-agents",
+        "info",
+        {
+          message: `${index + 1}. ${result.testName} - ${status} (${duration}ms, ${agents} agents)`,
+        },
+      );
 
       // Show key metrics
-      await frameworkLogger.log('orchestration-flow-validator', '-metrics-result-metrics-agentscompleted-result-met', 'info', { message: 
-        `   Metrics: ${result.metrics.agentsCompleted}/${result.metrics.agentsSpawned} completed, ${result.metrics.dependenciesResolved} deps resolved`,
-       });
+      await frameworkLogger.log(
+        "orchestration-flow-validator",
+        "-metrics-result-metrics-agentscompleted-result-met",
+        "info",
+        {
+          message: `   Metrics: ${result.metrics.agentsCompleted}/${result.metrics.agentsSpawned} completed, ${result.metrics.dependenciesResolved} deps resolved`,
+        },
+      );
 
       // Show validation steps
       result.validationSteps.forEach((step) => {
         const stepStatus = step.success ? "✓" : "✗";
-        await frameworkLogger.log('orchestration-flow-validator', '-stepstatus-step-step-', 'info', { message: `     ${stepStatus} ${step.step}` });
+        await frameworkLogger.log(
+          "orchestration-flow-validator",
+          "-stepstatus-step-step-",
+          "info",
+          { message: `     ${stepStatus} ${step.step}` },
+        );
       });
 
-      await frameworkLogger.log('orchestration-flow-validator', '-', 'info', { message: "" });
+      await frameworkLogger.log("orchestration-flow-validator", "-", "info", {
+        message: "",
+      });
     });
 
     // Cleanup

@@ -14,9 +14,9 @@ describe("Basic Orchestrator Functionality", () => {
     });
 
     // Mock delegateToSubagent for testing
-    vi.spyOn(orchestrator as any, 'delegateToSubagent').mockResolvedValue({
+    vi.spyOn(orchestrator as any, "delegateToSubagent").mockResolvedValue({
       success: true,
-      result: { message: 'Task completed successfully', type: 'completed' },
+      result: { message: "Task completed successfully", type: "completed" },
       duration: 150,
     });
   });

@@ -160,23 +160,54 @@ class HookMetricsCollector {
     const summary = this.getSummary();
 
     // Hook metrics report header - kept as console.log for user visibility
-    await frameworkLogger.log('-hook-metrics-collector', '-', 'info', { message: "================================" });
-    await frameworkLogger.log('-hook-metrics-collector', '-total-executions-summary-totalexecutions-', 'info', { message: `Total Executions: ${summary.totalExecutions}` });
+    await frameworkLogger.log("-hook-metrics-collector", "-", "info", {
+      message: "================================",
+    });
+    await frameworkLogger.log(
+      "-hook-metrics-collector",
+      "-total-executions-summary-totalexecutions-",
+      "info",
+      { message: `Total Executions: ${summary.totalExecutions}` },
+    );
     await frameworkLogger.log("hook-metrics", "report-generated", "info", {
       overallSuccessRate: summary.successRate,
     });
-    await frameworkLogger.log('-hook-metrics-collector', '-average-duration-summary-averageduration-ms-', 'info', { message: `Average Duration: ${summary.averageDuration}ms` });
-    await frameworkLogger.log('-hook-metrics-collector', '-', 'info', { message: "" });
+    await frameworkLogger.log(
+      "-hook-metrics-collector",
+      "-average-duration-summary-averageduration-ms-",
+      "info",
+      { message: `Average Duration: ${summary.averageDuration}ms` },
+    );
+    await frameworkLogger.log("-hook-metrics-collector", "-", "info", {
+      message: "",
+    });
 
     for (const [hookType, stats] of Object.entries(summary.byHookType)) {
-      await frameworkLogger.log('-hook-metrics-collector', '-hooktype-', 'info', { message: `${hookType}:` });
-      await frameworkLogger.log('-hook-metrics-collector', '-count-stats-count-', 'info', { message: `  Count: ${stats.count}` });
+      await frameworkLogger.log(
+        "-hook-metrics-collector",
+        "-hooktype-",
+        "info",
+        { message: `${hookType}:` },
+      );
+      await frameworkLogger.log(
+        "-hook-metrics-collector",
+        "-count-stats-count-",
+        "info",
+        { message: `  Count: ${stats.count}` },
+      );
       await frameworkLogger.log("hook-metrics", "hook-stats", "info", {
         hookType,
         successRate: stats.successRate,
       });
-      await frameworkLogger.log('-hook-metrics-collector', '-average-duration-stats-averageduration-ms-', 'info', { message: `  Average Duration: ${stats.averageDuration}ms` });
-      await frameworkLogger.log('-hook-metrics-collector', '-', 'info', { message: "" });
+      await frameworkLogger.log(
+        "-hook-metrics-collector",
+        "-average-duration-stats-averageduration-ms-",
+        "info",
+        { message: `  Average Duration: ${stats.averageDuration}ms` },
+      );
+      await frameworkLogger.log("-hook-metrics-collector", "-", "info", {
+        message: "",
+      });
     }
   }
 }

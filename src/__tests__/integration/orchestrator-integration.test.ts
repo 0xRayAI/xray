@@ -8,22 +8,57 @@
  * @since 2026-01-08
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
-import * as path from 'path';
-import { StringRayOrchestrator, OrchestrationResult } from '../../core/orchestrator.js';
-import { TaskDefinition } from '../../agents/types.js';
-import { DelegationResult } from '../../delegation/agent-delegator.js';
-import { SessionStateManager, createSessionStateManager } from '../../session/session-state-manager.js';
-import { StringRayStateManager } from '../../state/state-manager.js';
-import { SessionCoordinator, createSessionCoordinator } from '../../delegation/session-coordinator.js';
-import { ComplexityAnalyzer, complexityAnalyzer } from '../../delegation/complexity-analyzer.js';
-import { AgentDelegator, createAgentDelegator } from '../../delegation/agent-delegator.js';
-import { strRayConfigLoader } from '../../core/config-loader.js';
-import { PluginRegistry, pluginRegistry, PluginSandbox, pluginSandbox } from '../../plugins/plugin-system.js';
-import { PerformanceTestUtils, AsyncTestUtils, MemoryTestUtils, MockFileSystem, MockCodexGenerator } from '../utils/test-helpers.js';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  beforeAll,
+  afterAll,
+} from "vitest";
+import * as path from "path";
+import {
+  StringRayOrchestrator,
+  OrchestrationResult,
+} from "../../core/orchestrator.js";
+import { TaskDefinition } from "../../agents/types.js";
+import { DelegationResult } from "../../delegation/agent-delegator.js";
+import {
+  SessionStateManager,
+  createSessionStateManager,
+} from "../../session/session-state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import {
+  SessionCoordinator,
+  createSessionCoordinator,
+} from "../../delegation/session-coordinator.js";
+import {
+  ComplexityAnalyzer,
+  complexityAnalyzer,
+} from "../../delegation/complexity-analyzer.js";
+import {
+  AgentDelegator,
+  createAgentDelegator,
+} from "../../delegation/agent-delegator.js";
+import { strRayConfigLoader } from "../../core/config-loader.js";
+import {
+  PluginRegistry,
+  pluginRegistry,
+  PluginSandbox,
+  pluginSandbox,
+} from "../../plugins/plugin-system.js";
+import {
+  PerformanceTestUtils,
+  AsyncTestUtils,
+  MemoryTestUtils,
+  MockFileSystem,
+  MockCodexGenerator,
+} from "../utils/test-helpers.js";
 
 // Mock external dependencies
-vi.mock('fs', () => ({
+vi.mock("fs", () => ({
   existsSync: vi.fn(),
   readFileSync: vi.fn(),
   writeFileSync: vi.fn(),
@@ -31,14 +66,14 @@ vi.mock('fs', () => ({
   rmSync: vi.fn(),
 }));
 
-vi.mock('path', () => ({
+vi.mock("path", () => ({
   join: vi.fn(),
   resolve: vi.fn(),
   basename: vi.fn(),
   dirname: vi.fn(),
 }));
 
-describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', () => {
+describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", () => {
   let orchestrator: StringRayOrchestrator;
   let stateManager: StringRayStateManager;
   let sessionCoordinator: SessionCoordinator;
@@ -48,51 +83,51 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
   let mockFs: MockFileSystem;
 
   // Test data
-  const testSessionId = 'test-session-123';
+  const testSessionId = "test-session-123";
   const testTasks: TaskDefinition[] = [
     {
-      id: 'task-1',
-      type: 'architecture',
-      description: 'Initialize framework components',
+      id: "task-1",
+      type: "architecture",
+      description: "Initialize framework components",
       complexity: 5,
-      priority: 'high',
+      priority: "high",
       createdAt: new Date(),
-      status: 'pending',
-      subagentType: 'architect'
+      status: "pending",
+      subagentType: "architect",
     },
     {
-      id: 'task-2',
-      type: 'documentation',
-      description: 'Load codex context',
+      id: "task-2",
+      type: "documentation",
+      description: "Load codex context",
       complexity: 3,
-      priority: 'high',
+      priority: "high",
       createdAt: new Date(),
-      status: 'pending',
-      subagentType: 'librarian',
-      dependencies: ['task-1']
+      status: "pending",
+      subagentType: "librarian",
+      dependencies: ["task-1"],
     },
     {
-      id: 'task-3',
-      type: 'enforcement',
-      description: 'Validate code compliance',
+      id: "task-3",
+      type: "enforcement",
+      description: "Validate code compliance",
       complexity: 4,
-      priority: 'medium',
+      priority: "medium",
       createdAt: new Date(),
-      status: 'pending',
-      subagentType: 'enforcer',
-      dependencies: ['task-2']
+      status: "pending",
+      subagentType: "enforcer",
+      dependencies: ["task-2"],
     },
     {
-      id: 'task-4',
-      type: 'testing',
-      description: 'Generate test coverage',
+      id: "task-4",
+      type: "testing",
+      description: "Generate test coverage",
       complexity: 3,
-      priority: 'low',
+      priority: "low",
       createdAt: new Date(),
-      status: 'pending',
-      subagentType: 'architect',
-      dependencies: ['task-3']
-    }
+      status: "pending",
+      subagentType: "architect",
+      dependencies: ["task-3"],
+    },
   ];
 
   beforeAll(() => {
@@ -109,94 +144,113 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
     // Initialize core components
     stateManager = new StringRayStateManager();
     sessionCoordinator = createSessionCoordinator(stateManager);
-    sessionStateManager = createSessionStateManager(stateManager, sessionCoordinator);
+    sessionStateManager = createSessionStateManager(
+      stateManager,
+      sessionCoordinator,
+    );
     agentDelegator = createAgentDelegator(stateManager, strRayConfigLoader);
 
     // Apply mock filesystem to replace the basic fs mock - necessary for complex plugin testing setup
     const mockFsInstance = mockFs.getMockFs();
-    vi.mocked(require('fs')).existsSync = mockFsInstance.existsSync;
-    vi.mocked(require('fs')).readFileSync = mockFsInstance.readFileSync;
-    vi.mocked(require('fs')).writeFileSync = mockFsInstance.writeFileSync;
-    vi.mocked(require('fs')).mkdirSync = mockFsInstance.mkdirSync;
-    vi.mocked(require('fs')).rmSync = mockFsInstance.rmSync;
+    vi.mocked(require("fs")).existsSync = mockFsInstance.existsSync;
+    vi.mocked(require("fs")).readFileSync = mockFsInstance.readFileSync;
+    vi.mocked(require("fs")).writeFileSync = mockFsInstance.writeFileSync;
+    vi.mocked(require("fs")).mkdirSync = mockFsInstance.mkdirSync;
+    vi.mocked(require("fs")).rmSync = mockFsInstance.rmSync;
 
     // Also mock the promises API used by PluginSandbox - necessary for async file operations in plugins
-    vi.mocked(require('fs').promises).readFile = vi.fn().mockImplementation(async (filePath: string, options?: any) => {
-      // Use a custom implementation that checks the mock filesystem
-      try {
-        const encoding = typeof options === 'string' ? options : options?.encoding || 'utf8';
-        return mockFsInstance.readFileSync(filePath, encoding);
-      } catch (error) {
-        throw new Error(`File not found: ${filePath}`);
-      }
-    });
-
-    // Mock additional promises API methods used by plugin validation
-    vi.mocked(require('fs').promises).readFile = vi.fn().mockImplementation(async (filePath: string, options?: any) => {
-      // Use a custom implementation that checks the mock filesystem
-      try {
-        const encoding = typeof options === 'string' ? options : options?.encoding || 'utf8';
-        return mockFsInstance.readFileSync(filePath, encoding);
-      } catch (error) {
-        throw new Error(`File not found: ${filePath}`);
-      }
-    });
-
-    // Mock additional promises API methods used by plugin validation
-    vi.mocked(require('fs').promises).readdir = vi.fn().mockImplementation(async (dirPath: string) => {
-      const resolved = path.resolve(dirPath);
-      const files: string[] = [];
-      for (const [filePath, content] of mockFs.files.entries()) {
-        if (filePath.startsWith(resolved + path.sep)) {
-          files.push(path.relative(resolved, filePath));
+    vi.mocked(require("fs").promises).readFile = vi
+      .fn()
+      .mockImplementation(async (filePath: string, options?: any) => {
+        // Use a custom implementation that checks the mock filesystem
+        try {
+          const encoding =
+            typeof options === "string" ? options : options?.encoding || "utf8";
+          return mockFsInstance.readFileSync(filePath, encoding);
+        } catch (error) {
+          throw new Error(`File not found: ${filePath}`);
         }
-      }
-      return files;
-    });
+      });
 
-    vi.mocked(require('fs').promises).stat = vi.fn().mockImplementation(async (filePath: string) => {
-      const resolved = path.resolve(filePath);
-      if (mockFs.files.has(resolved)) {
-        return {
-          isFile: () => true,
-          isDirectory: () => false,
-          size: mockFs.files.get(resolved)?.length || 0,
-          mtime: new Date(),
-          ctime: new Date()
-        };
-      } else if (mockFs.directories.has(resolved)) {
-        return {
-          isFile: () => false,
-          isDirectory: () => true,
-          size: 0,
-          mtime: new Date(),
-          ctime: new Date()
-        };
-      }
-      throw new Error(`ENOENT: no such file or directory, stat '${filePath}'`);
-    });
+    // Mock additional promises API methods used by plugin validation
+    vi.mocked(require("fs").promises).readFile = vi
+      .fn()
+      .mockImplementation(async (filePath: string, options?: any) => {
+        // Use a custom implementation that checks the mock filesystem
+        try {
+          const encoding =
+            typeof options === "string" ? options : options?.encoding || "utf8";
+          return mockFsInstance.readFileSync(filePath, encoding);
+        } catch (error) {
+          throw new Error(`File not found: ${filePath}`);
+        }
+      });
 
-    vi.mocked(require('fs').promises).stat = vi.fn().mockImplementation(async (filePath: string) => {
-      const resolved = path.resolve(filePath);
-      if (mockFs.files.has(resolved)) {
-        return {
-          isFile: () => true,
-          isDirectory: () => false,
-          size: mockFs.files.get(resolved)?.length || 0,
-          mtime: new Date(),
-          ctime: new Date()
-        };
-      } else if (mockFs.directories.has(resolved)) {
-        return {
-          isFile: () => false,
-          isDirectory: () => true,
-          size: 0,
-          mtime: new Date(),
-          ctime: new Date()
-        };
-      }
-      throw new Error(`ENOENT: no such file or directory, stat '${filePath}'`);
-    });
+    // Mock additional promises API methods used by plugin validation
+    vi.mocked(require("fs").promises).readdir = vi
+      .fn()
+      .mockImplementation(async (dirPath: string) => {
+        const resolved = path.resolve(dirPath);
+        const files: string[] = [];
+        for (const [filePath, content] of mockFs.files.entries()) {
+          if (filePath.startsWith(resolved + path.sep)) {
+            files.push(path.relative(resolved, filePath));
+          }
+        }
+        return files;
+      });
+
+    vi.mocked(require("fs").promises).stat = vi
+      .fn()
+      .mockImplementation(async (filePath: string) => {
+        const resolved = path.resolve(filePath);
+        if (mockFs.files.has(resolved)) {
+          return {
+            isFile: () => true,
+            isDirectory: () => false,
+            size: mockFs.files.get(resolved)?.length || 0,
+            mtime: new Date(),
+            ctime: new Date(),
+          };
+        } else if (mockFs.directories.has(resolved)) {
+          return {
+            isFile: () => false,
+            isDirectory: () => true,
+            size: 0,
+            mtime: new Date(),
+            ctime: new Date(),
+          };
+        }
+        throw new Error(
+          `ENOENT: no such file or directory, stat '${filePath}'`,
+        );
+      });
+
+    vi.mocked(require("fs").promises).stat = vi
+      .fn()
+      .mockImplementation(async (filePath: string) => {
+        const resolved = path.resolve(filePath);
+        if (mockFs.files.has(resolved)) {
+          return {
+            isFile: () => true,
+            isDirectory: () => false,
+            size: mockFs.files.get(resolved)?.length || 0,
+            mtime: new Date(),
+            ctime: new Date(),
+          };
+        } else if (mockFs.directories.has(resolved)) {
+          return {
+            isFile: () => false,
+            isDirectory: () => true,
+            size: 0,
+            mtime: new Date(),
+            ctime: new Date(),
+          };
+        }
+        throw new Error(
+          `ENOENT: no such file or directory, stat '${filePath}'`,
+        );
+      });
 
     pluginRegistryInstance = new PluginRegistry();
 
@@ -204,19 +258,19 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
     orchestrator = new StringRayOrchestrator({
       maxConcurrentTasks: 3,
       taskTimeout: 10000,
-      conflictResolutionStrategy: 'majority_vote'
+      conflictResolutionStrategy: "majority_vote",
     } as any);
 
     // Mock the delegateToSubagent method to simulate successful agent execution
-    vi.spyOn(orchestrator as any, 'delegateToSubagent').mockResolvedValue({
-      result: 'Task completed successfully',
-      agentName: 'mock-agent'
+    vi.spyOn(orchestrator as any, "delegateToSubagent").mockResolvedValue({
+      result: "Task completed successfully",
+      agentName: "mock-agent",
     });
 
     // Setup mock codex data
     const mockCodex = MockCodexGenerator.createCompleteCodex();
-    mockFs.addFile('/test/project/.opencode/strray/codex.json', mockCodex);
-    mockFs.addFile('/test/project/codex.json', mockCodex);
+    mockFs.addFile("/test/project/.opencode/strray/codex.json", mockCodex);
+    mockFs.addFile("/test/project/codex.json", mockCodex);
   });
 
   afterEach(() => {
@@ -227,9 +281,9 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
     pluginRegistryInstance = new PluginRegistry(); // Reset registry
   });
 
-  describe('Core Integration Scenarios', () => {
-    describe('Orchestrator Initialization', () => {
-      it('should successfully initialize orchestrator with all dependencies', async () => {
+  describe("Core Integration Scenarios", () => {
+    describe("Orchestrator Initialization", () => {
+      it("should successfully initialize orchestrator with all dependencies", async () => {
         expect(orchestrator).toBeDefined();
         expect(orchestrator.getStatus()).toEqual(
           expect.objectContaining({
@@ -237,24 +291,25 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
             config: expect.objectContaining({
               maxConcurrentTasks: 3,
               taskTimeout: 10000,
-              conflictResolutionStrategy: 'majority_vote'
-            })
-          })
+              conflictResolutionStrategy: "majority_vote",
+            }),
+          }),
         );
       });
 
-      it('should initialize with session coordinator integration', async () => {
+      it("should initialize with session coordinator integration", async () => {
         const session = sessionCoordinator.initializeSession(testSessionId);
         expect(session).toBeDefined();
         expect(session.sessionId).toBe(testSessionId);
 
         // Verify orchestrator can access session
-        const sessionStatus = sessionCoordinator.getSessionStatus(testSessionId);
+        const sessionStatus =
+          sessionCoordinator.getSessionStatus(testSessionId);
         expect(sessionStatus).toBeDefined();
         expect(sessionStatus?.active).toBe(true);
       });
 
-      it('should initialize with plugin system integration', async () => {
+      it("should initialize with plugin system integration", async () => {
         const plugins = pluginRegistryInstance.listPlugins();
         expect(Array.isArray(plugins)).toBe(true);
 
@@ -262,60 +317,81 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         expect(pluginSandbox).toBeDefined();
       });
 
-      it('should handle initialization failures gracefully', async () => {
+      it("should handle initialization failures gracefully", async () => {
         // Simulate state manager failure
         const failingStateManager = {
-          get: vi.fn().mockImplementation(() => { throw new Error('State manager error'); }),
-          set: vi.fn().mockImplementation(() => { throw new Error('State manager error'); }),
-          clear: vi.fn()
+          get: vi.fn().mockImplementation(() => {
+            throw new Error("State manager error");
+          }),
+          set: vi.fn().mockImplementation(() => {
+            throw new Error("State manager error");
+          }),
+          clear: vi.fn(),
         } as any;
 
-        const failingCoordinator = createSessionCoordinator(failingStateManager);
-        const failingStateManagerInstance = createSessionStateManager(failingStateManager, failingCoordinator);
+        const failingCoordinator =
+          createSessionCoordinator(failingStateManager);
+        const failingStateManagerInstance = createSessionStateManager(
+          failingStateManager,
+          failingCoordinator,
+        );
 
         // Orchestrator should still initialize even with dependency issues
         expect(orchestrator).toBeDefined();
 
         // But operations requiring the failing dependency should handle errors
         // Try to create a session group which persists to state manager
-        expect(() => failingStateManagerInstance.createSessionGroup('test-group', ['session-1'], 'session-1')).toThrow();
+        expect(() =>
+          failingStateManagerInstance.createSessionGroup(
+            "test-group",
+            ["session-1"],
+            "session-1",
+          ),
+        ).toThrow();
       });
     });
 
-    describe('Agent Coordination', () => {
-      it.skip('should coordinate multi-agent task execution with dependencies', async () => {
+    describe("Agent Coordination", () => {
+      it.skip("should coordinate multi-agent task execution with dependencies", async () => {
         const results = await orchestrator.executeComplexTask(
-          'Framework initialization workflow',
+          "Framework initialization workflow",
           testTasks,
-          testSessionId
+          testSessionId,
         );
 
         expect(results).toHaveLength(4);
-        expect(results.every(r => r.success)).toBe(true);
+        expect(results.every((r) => r.success)).toBe(true);
 
         // Verify dependency order was respected
-        const taskOrder = results.map(r => (r.result as any)?.id);
-        expect(taskOrder.indexOf('task-1')).toBeLessThan(taskOrder.indexOf('task-2'));
-        expect(taskOrder.indexOf('task-2')).toBeLessThan(taskOrder.indexOf('task-3'));
-        expect(taskOrder.indexOf('task-3')).toBeLessThan(taskOrder.indexOf('task-4'));
+        const taskOrder = results.map((r) => (r.result as any)?.id);
+        expect(taskOrder.indexOf("task-1")).toBeLessThan(
+          taskOrder.indexOf("task-2"),
+        );
+        expect(taskOrder.indexOf("task-2")).toBeLessThan(
+          taskOrder.indexOf("task-3"),
+        );
+        expect(taskOrder.indexOf("task-3")).toBeLessThan(
+          taskOrder.indexOf("task-4"),
+        );
       });
 
-      it('should handle agent delegation with complexity analysis', async () => {
+      it("should handle agent delegation with complexity analysis", async () => {
         const complexTask: TaskDefinition = {
-          id: 'complex-task',
-          type: 'architecture',
-          description: 'Highly complex multi-step operation requiring expert coordination',
+          id: "complex-task",
+          type: "architecture",
+          description:
+            "Highly complex multi-step operation requiring expert coordination",
           complexity: 8,
-          priority: 'high',
+          priority: "high",
           createdAt: new Date(),
-          status: 'pending',
-          subagentType: 'architect'
+          status: "pending",
+          subagentType: "architect",
         };
 
         const result = await orchestrator.executeComplexTask(
-          'Complex coordination test',
+          "Complex coordination test",
           [complexTask],
-          testSessionId
+          testSessionId,
         );
 
         expect(result).toHaveLength(1);
@@ -323,43 +399,43 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         // Test verifies that complex task delegation works through the orchestrator
       }, 60000); // Increased timeout to 60 seconds
 
-      it('should resolve conflicts between agent responses', async () => {
+      it("should resolve conflicts between agent responses", async () => {
         const conflicts = [
-          { response: 'option_a', expertiseScore: 80 },
-          { response: 'option_b', expertiseScore: 90 },
-          { response: 'option_a', expertiseScore: 85 }
+          { response: "option_a", expertiseScore: 80 },
+          { response: "option_b", expertiseScore: 90 },
+          { response: "option_a", expertiseScore: 85 },
         ];
 
         const resolution = orchestrator.resolveConflicts(conflicts);
         expect(resolution).toBeDefined();
 
         // With majority_vote strategy, should pick option_a (appears twice)
-        expect(resolution.response).toBe('option_a');
+        expect(resolution.response).toBe("option_a");
       });
 
-      it('should handle agent delegation failures with fallback', async () => {
+      it("should handle agent delegation failures with fallback", async () => {
         // Test that the orchestrator gracefully handles delegation failures
         // Since the fallback mechanisms are implemented in the enhanced orchestrator,
         // we test that the orchestrator continues to function even when delegation fails
 
         const task: TaskDefinition = {
-          id: 'fallback-test',
-          description: 'Test fallback delegation',
-          subagentType: 'librarian'
+          id: "fallback-test",
+          description: "Test fallback delegation",
+          subagentType: "librarian",
         };
 
         // The orchestrator should complete the task using its built-in fallback mechanisms
         // (simulation when enhanced orchestrator delegation fails)
         const result = await orchestrator.executeComplexTask(
-          'Fallback test',
+          "Fallback test",
           [task],
-          testSessionId
+          testSessionId,
         );
 
         expect(result).toHaveLength(1);
         expect(result[0].success).toBe(true);
         expect(result[0].result).toBeDefined();
-        expect(typeof result[0].result).toBe('object');
+        expect(typeof result[0].result).toBe("object");
 
         // Verify the task completed within reasonable time despite any fallback logic
         expect(result[0].duration).toBeGreaterThanOrEqual(0);
@@ -367,101 +443,124 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
       });
     });
 
-    describe('Session Management', () => {
-      it('should manage session lifecycle with state persistence', async () => {
+    describe("Session Management", () => {
+      it("should manage session lifecycle with state persistence", async () => {
         // Create session
         const session = sessionCoordinator.initializeSession(testSessionId);
         expect(session).toBeDefined();
 
         // Execute tasks in session
-        await orchestrator.executeComplexTask('Session test', testTasks, testSessionId);
+        await orchestrator.executeComplexTask(
+          "Session test",
+          testTasks,
+          testSessionId,
+        );
 
         // Verify session state
-        const sessionStatus = sessionCoordinator.getSessionStatus(testSessionId);
+        const sessionStatus =
+          sessionCoordinator.getSessionStatus(testSessionId);
         expect(sessionStatus?.active).toBe(true);
         expect(sessionStatus?.agentCount).toBeGreaterThan(0);
 
         // Share state between sessions
-        const session2 = sessionCoordinator.initializeSession('session-456');
-        const shared = sessionStateManager.shareState(testSessionId, 'session-456', 'test-data', { key: 'value' });
+        const session2 = sessionCoordinator.initializeSession("session-456");
+        const shared = sessionStateManager.shareState(
+          testSessionId,
+          "session-456",
+          "test-data",
+          { key: "value" },
+        );
         expect(shared).toBe(true);
 
         // Verify state sharing
-        const retrieved = sessionCoordinator.getSharedContext('session-456', 'received:test-session-123:test-data');
-        expect(retrieved.key).toBe('value');
-        expect(retrieved).toHaveProperty('sharedBy');
+        const retrieved = sessionCoordinator.getSharedContext(
+          "session-456",
+          "received:test-session-123:test-data",
+        );
+        expect(retrieved.key).toBe("value");
+        expect(retrieved).toHaveProperty("sharedBy");
       });
 
-      it('should handle session dependencies and coordination', async () => {
+      it("should handle session dependencies and coordination", async () => {
         // Create dependent sessions
-        sessionCoordinator.initializeSession('session-456');
-        sessionStateManager.registerDependency('session-456', [testSessionId], { type: 'coordination' });
+        sessionCoordinator.initializeSession("session-456");
+        sessionStateManager.registerDependency("session-456", [testSessionId], {
+          type: "coordination",
+        });
 
-        const chain = sessionStateManager.getDependencyChain('session-456');
+        const chain = sessionStateManager.getDependencyChain("session-456");
         expect(chain.dependencies).toContain(testSessionId);
         expect(chain.canStart).toBe(false); // Depends on testSessionId
 
         // Complete dependency
-        sessionStateManager.updateDependencyState(testSessionId, 'completed');
+        sessionStateManager.updateDependencyState(testSessionId, "completed");
 
-        const updatedChain = sessionStateManager.getDependencyChain('session-456');
+        const updatedChain =
+          sessionStateManager.getDependencyChain("session-456");
         expect(updatedChain.canStart).toBe(true);
       });
 
-      it('should manage session groups for complex workflows', async () => {
+      it("should manage session groups for complex workflows", async () => {
         // Create sessions
         sessionCoordinator.initializeSession(testSessionId);
-        sessionCoordinator.initializeSession('session-456');
-        sessionCoordinator.initializeSession('session-789');
+        sessionCoordinator.initializeSession("session-456");
+        sessionCoordinator.initializeSession("session-789");
 
         const group = sessionStateManager.createSessionGroup(
-          'test-group',
-          [testSessionId, 'session-456', 'session-789'],
-          testSessionId
+          "test-group",
+          [testSessionId, "session-456", "session-789"],
+          testSessionId,
         );
 
-        expect(group.groupId).toBe('test-group');
+        expect(group.groupId).toBe("test-group");
         expect(group.sessionIds).toHaveLength(3);
         expect(group.coordinatorSession).toBe(testSessionId);
 
         // Share group state
         const shared = sessionStateManager.shareGroupState(
-          'test-group',
-          'workflow-data',
-          { step: 1, status: 'in_progress' },
-          testSessionId
+          "test-group",
+          "workflow-data",
+          { step: 1, status: "in_progress" },
+          testSessionId,
         );
 
         expect(shared).toBe(true);
 
         // Verify group state
-        const retrieved = sessionStateManager.getGroupState('test-group', 'workflow-data');
-        expect(retrieved).toEqual({ step: 1, status: 'in_progress' });
+        const retrieved = sessionStateManager.getGroupState(
+          "test-group",
+          "workflow-data",
+        );
+        expect(retrieved).toEqual({ step: 1, status: "in_progress" });
       });
 
-      it('should handle session migration and failover', async () => {
+      it("should handle session migration and failover", async () => {
         // Create sessions
         sessionCoordinator.initializeSession(testSessionId);
-        sessionCoordinator.initializeSession('backup-1');
-        sessionCoordinator.initializeSession('backup-2');
+        sessionCoordinator.initializeSession("backup-1");
+        sessionCoordinator.initializeSession("backup-2");
 
         // Configure failover
         sessionStateManager.configureFailover(
           testSessionId,
-          ['backup-1', 'backup-2'],
+          ["backup-1", "backup-2"],
           5000,
-          true
+          true,
         );
 
         // Create migration plan
-        const plan = sessionStateManager.planMigration(testSessionId, 'backup-1');
+        const plan = sessionStateManager.planMigration(
+          testSessionId,
+          "backup-1",
+        );
         expect(plan.sessionId).toBe(testSessionId);
-        expect(plan.targetCoordinator).toBe('backup-1');
+        expect(plan.targetCoordinator).toBe("backup-1");
         expect(plan.migrationSteps).toHaveLength(6); // validate, transfer, cleanup
         expect(plan.rollbackSteps).toHaveLength(3); // restore steps
 
         // Execute migration (mock successful)
-        const migrationSpy = vi.spyOn(sessionStateManager, 'executeMigration')
+        const migrationSpy = vi
+          .spyOn(sessionStateManager, "executeMigration")
           .mockResolvedValue(true);
 
         const success = await sessionStateManager.executeMigration(plan);
@@ -470,8 +569,8 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
       });
     });
 
-    describe('Plugin System', () => {
-      it('should load and execute plugins securely', async () => {
+    describe("Plugin System", () => {
+      it("should load and execute plugins securely", async () => {
         // Create mock plugin
         const mockPluginCode = `
           class MockPlugin {
@@ -528,49 +627,55 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
           module.exports = { createPlugin: () => new MockPlugin() };
         `;
 
-        mockFs.addFile('/test/plugins/test-plugin/index.js', mockPluginCode);
-        mockFs.addFile('/test/plugins/test-plugin/package.json', JSON.stringify({
-          name: 'test-plugin',
-          version: '1.0.0',
-          main: 'index.js',
-          id: 'test-plugin',
-          description: 'Test plugin for integration testing',
-          author: 'Test Author',
-          license: 'MIT',
-          engines: { strray: '^1.0.0', node: '^18.0.0' },
-          strrayCapabilities: {
-            agentTypes: ['test-agent'],
-            supportedTasks: ['test-task'],
-            requiredPermissions: ['read'],
-            providedServices: ['test-service']
-          }
-        }));
+        mockFs.addFile("/test/plugins/test-plugin/index.js", mockPluginCode);
+        mockFs.addFile(
+          "/test/plugins/test-plugin/package.json",
+          JSON.stringify({
+            name: "test-plugin",
+            version: "1.0.0",
+            main: "index.js",
+            id: "test-plugin",
+            description: "Test plugin for integration testing",
+            author: "Test Author",
+            license: "MIT",
+            engines: { strray: "^1.0.0", node: "^18.0.0" },
+            strrayCapabilities: {
+              agentTypes: ["test-agent"],
+              supportedTasks: ["test-task"],
+              requiredPermissions: ["read"],
+              providedServices: ["test-service"],
+            },
+          }),
+        );
 
         // Mock the validator to return success
-        vi.spyOn(pluginRegistryInstance['validator'], 'validatePlugin').mockResolvedValue({
+        vi.spyOn(
+          pluginRegistryInstance["validator"],
+          "validatePlugin",
+        ).mockResolvedValue({
           valid: true,
           errors: [],
           warnings: [],
           securityIssues: [],
-          compatibilityScore: 100
+          compatibilityScore: 100,
         });
 
         // Mock the sandbox executePlugin method
         const mockPlugin = {
           metadata: {
-            id: 'test-plugin',
-            name: 'Test Plugin',
-            version: '1.0.0',
-            description: 'Test plugin',
-            author: 'Test Author',
-            license: 'MIT',
-            engines: { strray: '^1.0.0', node: '^18.0.0' },
+            id: "test-plugin",
+            name: "Test Plugin",
+            version: "1.0.0",
+            description: "Test plugin",
+            author: "Test Author",
+            license: "MIT",
+            engines: { strray: "^1.0.0", node: "^18.0.0" },
             capabilities: {
-              agentTypes: ['test-agent'],
-              supportedTasks: ['test-task'],
-              requiredPermissions: ['read'],
-              providedServices: ['test-service']
-            }
+              agentTypes: ["test-agent"],
+              supportedTasks: ["test-task"],
+              requiredPermissions: ["read"],
+              providedServices: ["test-service"],
+            },
           },
           hooks: {},
           capabilities: {},
@@ -578,44 +683,53 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
           activate: vi.fn().mockResolvedValue(undefined),
           deactivate: vi.fn().mockResolvedValue(undefined),
           getHealthStatus: vi.fn().mockResolvedValue({
-            status: 'healthy',
+            status: "healthy",
             lastCheck: Date.now(),
             uptime: 1000,
             errorCount: 0,
             warningCount: 0,
-            details: {}
-          })
+            details: {},
+          }),
         };
 
-        vi.spyOn(pluginRegistryInstance['sandbox'], 'executePlugin').mockResolvedValue(mockPlugin);
+        vi.spyOn(
+          pluginRegistryInstance["sandbox"],
+          "executePlugin",
+        ).mockResolvedValue(mockPlugin);
 
         // Register plugin
-        const registration = await pluginRegistryInstance.registerPlugin('/test/plugins/test-plugin');
+        const registration = await pluginRegistryInstance.registerPlugin(
+          "/test/plugins/test-plugin",
+        );
         expect(registration.success).toBe(true);
 
         // Activate plugin
-        const activation = await pluginRegistryInstance.activatePlugin('test-plugin', { test: true });
+        const activation = await pluginRegistryInstance.activatePlugin(
+          "test-plugin",
+          { test: true },
+        );
         expect(activation).toBe(true);
 
         // Verify plugin is active
         const plugins = pluginRegistryInstance.listPlugins();
-        const testPlugin = plugins.find(p => p.id === 'test-plugin');
+        const testPlugin = plugins.find((p) => p.id === "test-plugin");
         expect(testPlugin).toBeDefined();
         expect(testPlugin?.active).toBe(true);
 
         // Get plugin health
-        const health = await pluginRegistryInstance.getPluginHealth('test-plugin');
-        expect(health?.status).toBe('healthy');
+        const health =
+          await pluginRegistryInstance.getPluginHealth("test-plugin");
+        expect(health?.status).toBe("healthy");
       });
 
-      it.skip('should enforce plugin security sandboxing', async () => {
+      it.skip("should enforce plugin security sandboxing", async () => {
         // Test sandbox restrictions
         const sandbox = new PluginSandbox({
           memoryLimit: 10, // 10MB limit
           timeout: 5000, // 5 second timeout
-          allowedModules: ['util'], // Limited modules
+          allowedModules: ["util"], // Limited modules
           networkAccess: false,
-          fileSystemAccess: false
+          fileSystemAccess: false,
         });
 
         expect(sandbox).toBeDefined();
@@ -633,30 +747,38 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
           };
         `;
 
-        mockFs.addFile('/test/plugins/dangerous-plugin/index.js', dangerousPlugin);
-        mockFs.addFile('/test/plugins/dangerous-plugin/package.json', JSON.stringify({
-          name: 'dangerous-plugin',
-          version: '1.0.0',
-          main: 'index.js',
-          id: 'dangerous-plugin',
-          description: 'Dangerous plugin for security testing',
-          author: 'Test Author',
-          license: 'MIT',
-          engines: { strray: '^1.0.0', node: '^18.0.0' },
-          strrayCapabilities: {
-            agentTypes: ['dangerous-agent'],
-            supportedTasks: ['dangerous-task'],
-            requiredPermissions: ['dangerous-permission']
-          }
-        }));
+        mockFs.addFile(
+          "/test/plugins/dangerous-plugin/index.js",
+          dangerousPlugin,
+        );
+        mockFs.addFile(
+          "/test/plugins/dangerous-plugin/package.json",
+          JSON.stringify({
+            name: "dangerous-plugin",
+            version: "1.0.0",
+            main: "index.js",
+            id: "dangerous-plugin",
+            description: "Dangerous plugin for security testing",
+            author: "Test Author",
+            license: "MIT",
+            engines: { strray: "^1.0.0", node: "^18.0.0" },
+            strrayCapabilities: {
+              agentTypes: ["dangerous-agent"],
+              supportedTasks: ["dangerous-task"],
+              requiredPermissions: ["dangerous-permission"],
+            },
+          }),
+        );
 
         // Plugin validation should catch security issues
-        const validation = await pluginRegistryInstance.registerPlugin('/test/plugins/dangerous-plugin');
+        const validation = await pluginRegistryInstance.registerPlugin(
+          "/test/plugins/dangerous-plugin",
+        );
         expect(validation.success).toBe(false);
-        expect(validation.errors).toContain('Plugin registration failed');
+        expect(validation.errors).toContain("Plugin registration failed");
       });
 
-      it.skip('should handle plugin lifecycle management', async () => {
+      it.skip("should handle plugin lifecycle management", async () => {
         // Create and register a simple plugin
         const simplePlugin = `
           module.exports = {
@@ -686,59 +808,77 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
           };
         `;
 
-        mockFs.addFile('/test/plugins/lifecycle-plugin/index.js', simplePlugin);
-        mockFs.addFile('/test/plugins/lifecycle-plugin/package.json', JSON.stringify({
-          name: 'lifecycle-plugin',
-          version: '1.0.0',
-          main: 'index.js',
-          id: 'lifecycle-test',
-          description: 'Test plugin lifecycle',
-          author: 'Test',
-          license: 'MIT',
-          engines: { strray: '^1.0.0', node: '^18.0.0' },
-          strrayCapabilities: {
-            agentTypes: ['test'],
-            supportedTasks: ['lifecycle'],
-            requiredPermissions: [],
-            providedServices: ['lifecycle-service']
-          }
-        }));
+        mockFs.addFile("/test/plugins/lifecycle-plugin/index.js", simplePlugin);
+        mockFs.addFile(
+          "/test/plugins/lifecycle-plugin/package.json",
+          JSON.stringify({
+            name: "lifecycle-plugin",
+            version: "1.0.0",
+            main: "index.js",
+            id: "lifecycle-test",
+            description: "Test plugin lifecycle",
+            author: "Test",
+            license: "MIT",
+            engines: { strray: "^1.0.0", node: "^18.0.0" },
+            strrayCapabilities: {
+              agentTypes: ["test"],
+              supportedTasks: ["lifecycle"],
+              requiredPermissions: [],
+              providedServices: ["lifecycle-service"],
+            },
+          }),
+        );
 
         // Register and activate
-        await pluginRegistryInstance.registerPlugin('/test/plugins/lifecycle-plugin');
-        await pluginRegistryInstance.activatePlugin('lifecycle-test');
+        await pluginRegistryInstance.registerPlugin(
+          "/test/plugins/lifecycle-plugin",
+        );
+        await pluginRegistryInstance.activatePlugin("lifecycle-test");
 
         // Verify active
         let plugins = pluginRegistryInstance.listPlugins();
-        expect(plugins.find(p => p.id === 'lifecycle-test')?.active).toBe(true);
+        expect(plugins.find((p) => p.id === "lifecycle-test")?.active).toBe(
+          true,
+        );
 
         // Deactivate
-        await pluginRegistryInstance.deactivatePlugin('lifecycle-test');
+        await pluginRegistryInstance.deactivatePlugin("lifecycle-test");
         plugins = pluginRegistryInstance.listPlugins();
-        expect(plugins.find(p => p.id === 'lifecycle-test')?.active).toBe(false);
+        expect(plugins.find((p) => p.id === "lifecycle-test")?.active).toBe(
+          false,
+        );
 
         // Unregister
-        const unregistered = await pluginRegistryInstance.unregisterPlugin('lifecycle-test');
+        const unregistered =
+          await pluginRegistryInstance.unregisterPlugin("lifecycle-test");
         expect(unregistered).toBe(true);
 
         plugins = pluginRegistryInstance.listPlugins();
-        expect(plugins.find(p => p.id === 'lifecycle-test')).toBeUndefined();
+        expect(plugins.find((p) => p.id === "lifecycle-test")).toBeUndefined();
       });
     });
 
-    describe('Performance Integration', () => {
-      it('should maintain performance under concurrent load', async () => {
+    describe("Performance Integration", () => {
+      it("should maintain performance under concurrent load", async () => {
         const concurrentTasks = 10;
-        const tasks: TaskDefinition[] = Array.from({ length: concurrentTasks }, (_, i) => ({
-          id: `perf-task-${i}`,
-          description: `Performance test task ${i}`,
-          subagentType: 'architect',
-          priority: i % 2 === 0 ? 'high' : 'medium'
-        }));
-
-        const { result: results, duration } = PerformanceTestUtils.measureExecutionTime(
-          () => orchestrator.executeComplexTask('Performance test', tasks, testSessionId)
+        const tasks: TaskDefinition[] = Array.from(
+          { length: concurrentTasks },
+          (_, i) => ({
+            id: `perf-task-${i}`,
+            description: `Performance test task ${i}`,
+            subagentType: "architect",
+            priority: i % 2 === 0 ? "high" : "medium",
+          }),
         );
+
+        const { result: results, duration } =
+          PerformanceTestUtils.measureExecutionTime(() =>
+            orchestrator.executeComplexTask(
+              "Performance test",
+              tasks,
+              testSessionId,
+            ),
+          );
 
         await results;
 
@@ -746,17 +886,25 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         expect(duration).toBeLessThan(5000); // 5 seconds for 10 concurrent tasks
       });
 
-      it('should handle memory efficiently during large operations', async () => {
-        const largeTaskSet: TaskDefinition[] = Array.from({ length: 50 }, (_, i) => ({
-          id: `large-task-${i}`,
-          description: `Large scale task ${i} with substantial processing requirements`,
-          subagentType: 'librarian',
-          priority: 'medium'
-        }));
-
-        const { result: memoryUsage, memoryDelta } = MemoryTestUtils.monitorMemoryUsage(
-          () => orchestrator.executeComplexTask('Large scale test', largeTaskSet, testSessionId)
+      it("should handle memory efficiently during large operations", async () => {
+        const largeTaskSet: TaskDefinition[] = Array.from(
+          { length: 50 },
+          (_, i) => ({
+            id: `large-task-${i}`,
+            description: `Large scale task ${i} with substantial processing requirements`,
+            subagentType: "librarian",
+            priority: "medium",
+          }),
         );
+
+        const { result: memoryUsage, memoryDelta } =
+          MemoryTestUtils.monitorMemoryUsage(() =>
+            orchestrator.executeComplexTask(
+              "Large scale test",
+              largeTaskSet,
+              testSessionId,
+            ),
+          );
 
         await memoryUsage;
 
@@ -764,13 +912,17 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         expect(memoryDelta).toBeLessThan(50 * 1024 * 1024); // 50MB
       });
 
-      it('should enforce performance budgets', async () => {
+      it("should enforce performance budgets", async () => {
         // Test with performance monitoring
         const startTime = Date.now();
 
         // Execute multiple complex operations
         const operations = Array.from({ length: 5 }, (_, i) =>
-          orchestrator.executeComplexTask(`Budget test ${i}`, testTasks.slice(0, 2), `session-${i}`)
+          orchestrator.executeComplexTask(
+            `Budget test ${i}`,
+            testTasks.slice(0, 2),
+            `session-${i}`,
+          ),
         );
 
         await Promise.all(operations);
@@ -780,87 +932,113 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         const avgDuration = totalDuration / 5;
 
         // Performance budget: each operation should complete within 2 seconds
-        PerformanceTestUtils.assertPerformance(avgDuration, 2000, 'Average complex task execution');
+        PerformanceTestUtils.assertPerformance(
+          avgDuration,
+          2000,
+          "Average complex task execution",
+        );
       });
 
-      it('should handle timeout scenarios gracefully', async () => {
+      it("should handle timeout scenarios gracefully", async () => {
         // Create orchestrator with very short timeout
         const fastOrchestrator = new StringRayOrchestrator({
           maxConcurrentTasks: 1,
           taskTimeout: 100, // 100ms timeout
-          conflictResolutionStrategy: 'majority_vote'
+          conflictResolutionStrategy: "majority_vote",
         });
 
         const slowTask: TaskDefinition = {
-          id: 'slow-task',
-          description: 'Task that takes longer than timeout',
-          subagentType: 'architect'
+          id: "slow-task",
+          description: "Task that takes longer than timeout",
+          subagentType: "architect",
         };
 
         // Mock slow execution
-        const originalDelegate = fastOrchestrator['delegateToSubagent'];
-        fastOrchestrator['delegateToSubagent'] = vi.fn().mockRejectedValue(
-          new Error('Task execution timed out after 100ms')
-        );
+        const originalDelegate = fastOrchestrator["delegateToSubagent"];
+        fastOrchestrator["delegateToSubagent"] = vi
+          .fn()
+          .mockRejectedValue(new Error("Task execution timed out after 100ms"));
 
         const results = await fastOrchestrator.executeComplexTask(
-          'Timeout test',
+          "Timeout test",
           [slowTask],
-          testSessionId
+          testSessionId,
         );
 
         expect(results).toHaveLength(1);
         expect(results[0].success).toBe(false);
-        expect(results[0].error).toContain('timed out');
+        expect(results[0].error).toContain("timed out");
 
         // Restore original method
-        fastOrchestrator['delegateToSubagent'] = originalDelegate;
+        fastOrchestrator["delegateToSubagent"] = originalDelegate;
       });
     });
   });
 
-  describe('Error Handling Tests', () => {
-    it('should handle orchestrator task execution failures', async () => {
+  describe("Error Handling Tests", () => {
+    it("should handle orchestrator task execution failures", async () => {
       // Mock task failure
-      const originalDelegate = orchestrator['delegateToSubagent'];
-      orchestrator['delegateToSubagent'] = vi.fn().mockRejectedValue(new Error('Task execution failed'));
+      const originalDelegate = orchestrator["delegateToSubagent"];
+      orchestrator["delegateToSubagent"] = vi
+        .fn()
+        .mockRejectedValue(new Error("Task execution failed"));
 
-      const results = await orchestrator.executeComplexTask('Failure test', testTasks, testSessionId);
+      const results = await orchestrator.executeComplexTask(
+        "Failure test",
+        testTasks,
+        testSessionId,
+      );
 
-      expect(results.some(r => !r.success)).toBe(true);
-      expect(results.some(r => r.error?.includes('Task execution failed'))).toBe(true);
+      expect(results.some((r) => !r.success)).toBe(true);
+      expect(
+        results.some((r) => r.error?.includes("Task execution failed")),
+      ).toBe(true);
 
       // Orchestrator should continue with other tasks
       expect(results.length).toBe(4);
 
       // Restore
-      orchestrator['delegateToSubagent'] = originalDelegate;
+      orchestrator["delegateToSubagent"] = originalDelegate;
     });
 
-    it('should handle circular dependencies', async () => {
+    it("should handle circular dependencies", async () => {
       const circularTasks: TaskDefinition[] = [
-        { id: 'a', description: 'Task A', subagentType: 'architect', dependencies: ['b'] },
-        { id: 'b', description: 'Task B', subagentType: 'librarian', dependencies: ['a'] }
+        {
+          id: "a",
+          description: "Task A",
+          subagentType: "architect",
+          dependencies: ["b"],
+        },
+        {
+          id: "b",
+          description: "Task B",
+          subagentType: "librarian",
+          dependencies: ["a"],
+        },
       ];
 
       await expect(
-        orchestrator.executeComplexTask('Circular dependency test', circularTasks, testSessionId)
-      ).rejects.toThrow('Circular dependency detected');
+        orchestrator.executeComplexTask(
+          "Circular dependency test",
+          circularTasks,
+          testSessionId,
+        ),
+      ).rejects.toThrow("Circular dependency detected");
     });
 
-      it('should handle session state corruption', async () => {
+    it("should handle session state corruption", async () => {
       // Corrupt session state
-      stateManager.set('session:corrupted', undefined);
-      (stateManager as any).store.set('session:corrupted', null);
+      stateManager.set("session:corrupted", undefined);
+      (stateManager as any).store.set("session:corrupted", null);
 
-      const session = sessionCoordinator.initializeSession('corrupted-session');
+      const session = sessionCoordinator.initializeSession("corrupted-session");
       expect(session).toBeDefined();
 
-      const corruptedValue = stateManager.get('session:corrupted');
+      const corruptedValue = stateManager.get("session:corrupted");
       expect(corruptedValue).toBe(null);
     });
 
-    it('should recover from plugin execution failures', async () => {
+    it("should recover from plugin execution failures", async () => {
       // Register a failing plugin
       const failingPlugin = `
         module.exports = {
@@ -880,13 +1058,21 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         };
       `;
 
-      mockFs.addFile('/test/plugins/failing-plugin/index.js', failingPlugin);
-      mockFs.addFile('/test/plugins/failing-plugin/package.json', JSON.stringify({
-        name: 'failing-plugin',
-        strrayCapabilities: { agentTypes: ['fail'], supportedTasks: ['fail'] }
-      }));
+      mockFs.addFile("/test/plugins/failing-plugin/index.js", failingPlugin);
+      mockFs.addFile(
+        "/test/plugins/failing-plugin/package.json",
+        JSON.stringify({
+          name: "failing-plugin",
+          strrayCapabilities: {
+            agentTypes: ["fail"],
+            supportedTasks: ["fail"],
+          },
+        }),
+      );
 
-      const registration = await pluginRegistryInstance.registerPlugin('/test/plugins/failing-plugin');
+      const registration = await pluginRegistryInstance.registerPlugin(
+        "/test/plugins/failing-plugin",
+      );
       expect(registration.success).toBe(false);
 
       // Registry should remain functional
@@ -895,125 +1081,151 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
     });
   });
 
-  describe('Concurrency Tests', () => {
-      it('should handle multiple concurrent sessions', async () => {
+  describe("Concurrency Tests", () => {
+    it("should handle multiple concurrent sessions", async () => {
       const sessionCount = 5;
-      const sessions = Array.from({ length: sessionCount }, (_, i) =>
-        `concurrent-session-${i}`
+      const sessions = Array.from(
+        { length: sessionCount },
+        (_, i) => `concurrent-session-${i}`,
       );
 
       // Create multiple sessions concurrently
-      const sessionPromises = sessions.map(sessionId =>
-        sessionCoordinator.initializeSession(sessionId)
+      const sessionPromises = sessions.map((sessionId) =>
+        sessionCoordinator.initializeSession(sessionId),
       );
 
       const createdSessions = await Promise.all(sessionPromises);
       expect(createdSessions).toHaveLength(sessionCount);
-      createdSessions.forEach(session => expect(session).toBeDefined());
+      createdSessions.forEach((session) => expect(session).toBeDefined());
 
       // Execute tasks in all sessions concurrently
-      const taskPromises = sessions.map(sessionId =>
-        orchestrator.executeComplexTask(`Concurrent tasks for ${sessionId}`, testTasks, sessionId)
+      const taskPromises = sessions.map((sessionId) =>
+        orchestrator.executeComplexTask(
+          `Concurrent tasks for ${sessionId}`,
+          testTasks,
+          sessionId,
+        ),
       );
 
       const results = await Promise.all(taskPromises);
       expect(results).toHaveLength(sessionCount);
-      results.forEach(sessionResults => {
+      results.forEach((sessionResults) => {
         expect(sessionResults).toHaveLength(4);
-        expect(sessionResults.every(r => r.success)).toBe(true);
+        expect(sessionResults.every((r) => r.success)).toBe(true);
       });
     });
 
-      it('should manage resource contention', async () => {
+    it("should manage resource contention", async () => {
       // Create high contention scenario
-      const highLoadTasks: TaskDefinition[] = Array.from({ length: 20 }, (_, i) => ({
-        id: `high-load-${i}`,
-        description: `High load task ${i}`,
-        subagentType: 'architect',
-        priority: 'high'
-      }));
-
-      const results = await orchestrator.executeComplexTask(
-        'High contention test',
-        highLoadTasks,
-        testSessionId
+      const highLoadTasks: TaskDefinition[] = Array.from(
+        { length: 20 },
+        (_, i) => ({
+          id: `high-load-${i}`,
+          description: `High load task ${i}`,
+          subagentType: "architect",
+          priority: "high",
+        }),
       );
 
-       expect(results).toHaveLength(20);
-       // Note: Current implementation doesn't enforce maxConcurrentTasks limit
-       // All tasks run concurrently, so we expect most to complete quickly
-       expect(results.filter(r => r.success).length).toBeGreaterThan(15);
+      const results = await orchestrator.executeComplexTask(
+        "High contention test",
+        highLoadTasks,
+        testSessionId,
+      );
+
+      expect(results).toHaveLength(20);
+      // Note: Current implementation doesn't enforce maxConcurrentTasks limit
+      // All tasks run concurrently, so we expect most to complete quickly
+      expect(results.filter((r) => r.success).length).toBeGreaterThan(15);
     });
 
-      it('should handle session state sharing under concurrency', async () => {
-      const session1 = 'concurrency-session-1';
-      const session2 = 'concurrency-session-2';
+    it("should handle session state sharing under concurrency", async () => {
+      const session1 = "concurrency-session-1";
+      const session2 = "concurrency-session-2";
 
-        sessionCoordinator.initializeSession(session1);
-        sessionCoordinator.initializeSession(session2);
+      sessionCoordinator.initializeSession(session1);
+      sessionCoordinator.initializeSession(session2);
 
       // Concurrent state sharing operations
       const sharePromises = Array.from({ length: 10 }, (_, i) =>
-        sessionStateManager.shareState(session1, session2, `concurrent-key-${i}`, `value-${i}`)
+        sessionStateManager.shareState(
+          session1,
+          session2,
+          `concurrent-key-${i}`,
+          `value-${i}`,
+        ),
       );
 
       const shareResults = await Promise.all(sharePromises);
-      expect(shareResults.every(r => r === true)).toBe(true);
+      expect(shareResults.every((r) => r === true)).toBe(true);
 
-       // Verify all state was shared
-       for (let i = 0; i < 10; i++) {
-         const sharedData = sessionCoordinator.getSharedContext(session2, `received:${session1}:concurrent-key-${i}`);
-         // Handle the weird serialization where strings become objects
-         const value = typeof sharedData === 'object' && sharedData !== null && 'sharedBy' in sharedData
-           ? Object.keys(sharedData).filter(k => k !== 'sharedBy').map(k => sharedData[k]).join('')
-           : sharedData;
-         expect(value).toBe(`value-${i}`);
-       }
+      // Verify all state was shared
+      for (let i = 0; i < 10; i++) {
+        const sharedData = sessionCoordinator.getSharedContext(
+          session2,
+          `received:${session1}:concurrent-key-${i}`,
+        );
+        // Handle the weird serialization where strings become objects
+        const value =
+          typeof sharedData === "object" &&
+          sharedData !== null &&
+          "sharedBy" in sharedData
+            ? Object.keys(sharedData)
+                .filter((k) => k !== "sharedBy")
+                .map((k) => sharedData[k])
+                .join("")
+            : sharedData;
+        expect(value).toBe(`value-${i}`);
+      }
     });
   });
 
-  describe('Boundary Tests', () => {
-    it('should handle maximum concurrent tasks limit', async () => {
+  describe("Boundary Tests", () => {
+    it("should handle maximum concurrent tasks limit", async () => {
       const maxTasks: TaskDefinition[] = Array.from({ length: 10 }, (_, i) => ({
         id: `max-task-${i}`,
         description: `Maximum load task ${i}`,
-        subagentType: 'librarian'
+        subagentType: "librarian",
       }));
 
       const results = await orchestrator.executeComplexTask(
-        'Maximum concurrency test',
+        "Maximum concurrency test",
         maxTasks,
-        testSessionId
+        testSessionId,
       );
 
       expect(results).toHaveLength(10);
-      expect(results.every(r => r.success)).toBe(true);
+      expect(results.every((r) => r.success)).toBe(true);
     });
 
-    it('should handle empty task sets', async () => {
-      const results = await orchestrator.executeComplexTask('Empty test', [], testSessionId);
+    it("should handle empty task sets", async () => {
+      const results = await orchestrator.executeComplexTask(
+        "Empty test",
+        [],
+        testSessionId,
+      );
       expect(results).toHaveLength(0);
     });
 
-    it('should handle very large task descriptions', async () => {
-      const largeDescription = 'A'.repeat(10000); // 10KB description
+    it("should handle very large task descriptions", async () => {
+      const largeDescription = "A".repeat(10000); // 10KB description
       const largeTask: TaskDefinition = {
-        id: 'large-desc-task',
+        id: "large-desc-task",
         description: largeDescription,
-        subagentType: 'architect'
+        subagentType: "architect",
       };
 
       const results = await orchestrator.executeComplexTask(
-        'Large description test',
+        "Large description test",
         [largeTask],
-        testSessionId
+        testSessionId,
       );
 
       expect(results).toHaveLength(1);
       expect(results[0].success).toBe(true);
     });
 
-    it.skip('should handle plugin registry limits', async () => {
+    it.skip("should handle plugin registry limits", async () => {
       // Create maximum number of plugins
       const pluginPromises = Array.from({ length: 50 }, async (_, i) => {
         const pluginCode = `
@@ -1038,33 +1250,44 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
           };
         `;
 
-        mockFs.addFile(`/test/plugins/boundary-plugin-${i}/index.js`, pluginCode);
-        mockFs.addFile(`/test/plugins/boundary-plugin-${i}/package.json`, JSON.stringify({
-          name: `boundary-plugin-${i}`,
-          strrayCapabilities: { agentTypes: ['test'], supportedTasks: ['boundary'] }
-        }));
+        mockFs.addFile(
+          `/test/plugins/boundary-plugin-${i}/index.js`,
+          pluginCode,
+        );
+        mockFs.addFile(
+          `/test/plugins/boundary-plugin-${i}/package.json`,
+          JSON.stringify({
+            name: `boundary-plugin-${i}`,
+            strrayCapabilities: {
+              agentTypes: ["test"],
+              supportedTasks: ["boundary"],
+            },
+          }),
+        );
 
-        return pluginRegistryInstance.registerPlugin(`/test/plugins/boundary-plugin-${i}`);
+        return pluginRegistryInstance.registerPlugin(
+          `/test/plugins/boundary-plugin-${i}`,
+        );
       });
 
       const registrations = await Promise.all(pluginPromises);
-      const successful = registrations.filter(r => r.success).length;
+      const successful = registrations.filter((r) => r.success).length;
 
-       // Should handle at least some plugins (mocking limitations)
-       expect(successful).toBeGreaterThan(0);
+      // Should handle at least some plugins (mocking limitations)
+      expect(successful).toBeGreaterThan(0);
     });
   });
 
-  describe('Integration Flow Tests', () => {
-      it.skip('should execute complete end-to-end framework workflow', async () => {
+  describe("Integration Flow Tests", () => {
+    it.skip("should execute complete end-to-end framework workflow", async () => {
       // 1. Initialize framework components
       expect(orchestrator).toBeDefined();
       expect(sessionCoordinator).toBeDefined();
       expect(sessionStateManager).toBeDefined();
 
       // 2. Create session and load plugins
-        const session = sessionCoordinator.initializeSession('e2e-session');
-      expect(session.sessionId).toBe('e2e-session');
+      const session = sessionCoordinator.initializeSession("e2e-session");
+      expect(session.sessionId).toBe("e2e-session");
 
       // 3. Register and activate plugins
       const mockPlugin = `
@@ -1102,139 +1325,183 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         };
       `;
 
-      mockFs.addFile('/test/plugins/e2e-plugin/index.js', mockPlugin);
-      mockFs.addFile('/test/plugins/e2e-plugin/package.json', JSON.stringify({
-        name: 'e2e-plugin',
-        strrayCapabilities: { agentTypes: ['e2e-agent'], supportedTasks: ['e2e-task'] }
-      }));
+      mockFs.addFile("/test/plugins/e2e-plugin/index.js", mockPlugin);
+      mockFs.addFile(
+        "/test/plugins/e2e-plugin/package.json",
+        JSON.stringify({
+          name: "e2e-plugin",
+          strrayCapabilities: {
+            agentTypes: ["e2e-agent"],
+            supportedTasks: ["e2e-task"],
+          },
+        }),
+      );
 
-      await pluginRegistryInstance.registerPlugin('/test/plugins/e2e-plugin');
-      await pluginRegistryInstance.activatePlugin('e2e-plugin');
+      await pluginRegistryInstance.registerPlugin("/test/plugins/e2e-plugin");
+      await pluginRegistryInstance.activatePlugin("e2e-plugin");
 
       // 4. Setup session dependencies
-      sessionStateManager.registerDependency('e2e-session', [], { workflow: 'e2e-test' });
+      sessionStateManager.registerDependency("e2e-session", [], {
+        workflow: "e2e-test",
+      });
 
       // 5. Execute complex workflow
       const workflowTasks: TaskDefinition[] = [
         {
-          id: 'e2e-init',
-          description: 'Initialize E2E workflow',
-          subagentType: 'architect',
-          priority: 'high'
+          id: "e2e-init",
+          description: "Initialize E2E workflow",
+          subagentType: "architect",
+          priority: "high",
         },
         {
-          id: 'e2e-plugin-task',
-          description: 'Execute plugin-based task',
-          subagentType: 'e2e-agent',
-          priority: 'high',
-          dependencies: ['e2e-init']
+          id: "e2e-plugin-task",
+          description: "Execute plugin-based task",
+          subagentType: "e2e-agent",
+          priority: "high",
+          dependencies: ["e2e-init"],
         },
         {
-          id: 'e2e-validation',
-          description: 'Validate E2E results',
-          subagentType: 'enforcer',
-          priority: 'medium',
-          dependencies: ['e2e-plugin-task']
-        }
+          id: "e2e-validation",
+          description: "Validate E2E results",
+          subagentType: "enforcer",
+          priority: "medium",
+          dependencies: ["e2e-plugin-task"],
+        },
       ];
 
       const workflowResults = await orchestrator.executeComplexTask(
-        'Complete E2E Framework Workflow',
+        "Complete E2E Framework Workflow",
         workflowTasks,
-        'e2e-session'
+        "e2e-session",
       );
 
       // 6. Verify complete workflow success
       expect(workflowResults).toHaveLength(3);
-      expect(workflowResults.every(r => r.success)).toBe(true);
+      expect(workflowResults.every((r) => r.success)).toBe(true);
 
       // 7. Verify session state
-      const sessionStatus = sessionCoordinator.getSessionStatus('e2e-session');
+      const sessionStatus = sessionCoordinator.getSessionStatus("e2e-session");
       expect(sessionStatus?.active).toBe(true);
 
       // 8. Verify plugin health
-      const pluginHealth = await pluginRegistryInstance.getPluginHealth('e2e-plugin');
-      expect(pluginHealth?.status).toBe('healthy');
+      const pluginHealth =
+        await pluginRegistryInstance.getPluginHealth("e2e-plugin");
+      expect(pluginHealth?.status).toBe("healthy");
 
       // 9. Verify state sharing worked
-      const sharedState = sessionStateManager.shareState('e2e-session', 'e2e-session', 'workflow-complete', true);
+      const sharedState = sessionStateManager.shareState(
+        "e2e-session",
+        "e2e-session",
+        "workflow-complete",
+        true,
+      );
       expect(sharedState).toBe(true);
 
-      console.log('✅ Complete E2E Framework Workflow executed successfully');
+      console.log("✅ Complete E2E Framework Workflow executed successfully");
     });
 
-      it('should handle complex multi-session coordination workflow', async () => {
+    it("should handle complex multi-session coordination workflow", async () => {
       // Create multiple coordinating sessions
-        const coordinatorSession = sessionCoordinator.initializeSession('coordinator');
-        const workerSession1 = sessionCoordinator.initializeSession('worker-1');
-        const workerSession2 = sessionCoordinator.initializeSession('worker-2');
+      const coordinatorSession =
+        sessionCoordinator.initializeSession("coordinator");
+      const workerSession1 = sessionCoordinator.initializeSession("worker-1");
+      const workerSession2 = sessionCoordinator.initializeSession("worker-2");
 
       // Setup session group
       const group = sessionStateManager.createSessionGroup(
-        'complex-workflow-group',
-        ['coordinator', 'worker-1', 'worker-2'],
-        'coordinator'
+        "complex-workflow-group",
+        ["coordinator", "worker-1", "worker-2"],
+        "coordinator",
       );
 
       // Register dependencies
-      sessionStateManager.registerDependency('worker-1', ['coordinator'], { role: 'worker' });
-      sessionStateManager.registerDependency('worker-2', ['coordinator'], { role: 'worker' });
+      sessionStateManager.registerDependency("worker-1", ["coordinator"], {
+        role: "worker",
+      });
+      sessionStateManager.registerDependency("worker-2", ["coordinator"], {
+        role: "worker",
+      });
 
       // Execute coordinated workflow
-      const coordinatorTasks: TaskDefinition[] = [{
-        id: 'coordination-setup',
-        description: 'Setup multi-session coordination',
-        subagentType: 'architect',
-        priority: 'high'
-      }];
+      const coordinatorTasks: TaskDefinition[] = [
+        {
+          id: "coordination-setup",
+          description: "Setup multi-session coordination",
+          subagentType: "architect",
+          priority: "high",
+        },
+      ];
 
-      const workerTasks: TaskDefinition[] = [{
-        id: 'worker-processing',
-        description: 'Process work assigned by coordinator',
-        subagentType: 'librarian',
-        priority: 'medium'
-      }];
+      const workerTasks: TaskDefinition[] = [
+        {
+          id: "worker-processing",
+          description: "Process work assigned by coordinator",
+          subagentType: "librarian",
+          priority: "medium",
+        },
+      ];
 
       // Execute all workflows concurrently
       const workflows = [
-        orchestrator.executeComplexTask('Coordinator workflow', coordinatorTasks, 'coordinator'),
-        orchestrator.executeComplexTask('Worker 1 workflow', workerTasks, 'worker-1'),
-        orchestrator.executeComplexTask('Worker 2 workflow', workerTasks, 'worker-2')
+        orchestrator.executeComplexTask(
+          "Coordinator workflow",
+          coordinatorTasks,
+          "coordinator",
+        ),
+        orchestrator.executeComplexTask(
+          "Worker 1 workflow",
+          workerTasks,
+          "worker-1",
+        ),
+        orchestrator.executeComplexTask(
+          "Worker 2 workflow",
+          workerTasks,
+          "worker-2",
+        ),
       ];
 
       const workflowResults = await Promise.all(workflows);
 
       // Verify all workflows completed
       expect(workflowResults).toHaveLength(3);
-      workflowResults.forEach(results => {
-        expect(results.every(r => r.success)).toBe(true);
+      workflowResults.forEach((results) => {
+        expect(results.every((r) => r.success)).toBe(true);
       });
 
       // Share results across sessions
-      sessionStateManager.shareGroupState('complex-workflow-group', 'final-result',
-        { status: 'completed', participants: 3 }, 'coordinator');
+      sessionStateManager.shareGroupState(
+        "complex-workflow-group",
+        "final-result",
+        { status: "completed", participants: 3 },
+        "coordinator",
+      );
 
       // Verify group state
-      const finalResult = sessionStateManager.getGroupState('complex-workflow-group', 'final-result');
-      expect(finalResult).toEqual({ status: 'completed', participants: 3 });
+      const finalResult = sessionStateManager.getGroupState(
+        "complex-workflow-group",
+        "final-result",
+      );
+      expect(finalResult).toEqual({ status: "completed", participants: 3 });
 
-      console.log('✅ Complex multi-session coordination workflow completed successfully');
+      console.log(
+        "✅ Complex multi-session coordination workflow completed successfully",
+      );
     });
   });
 
-  describe('Coverage Goals Validation', () => {
-    it('should achieve 90%+ orchestrator functionality coverage', async () => {
+  describe("Coverage Goals Validation", () => {
+    it("should achieve 90%+ orchestrator functionality coverage", async () => {
       // Test all major orchestrator methods
       const status = orchestrator.getStatus();
       expect(status).toBeDefined();
-      expect(typeof status.activeTasks).toBe('number');
+      expect(typeof status.activeTasks).toBe("number");
       expect(status.config).toBeDefined();
 
       // Test conflict resolution strategies
       const conflicts = [
-        { response: { choice: 'A' }, expertiseScore: 80 },
-        { response: { choice: 'B' }, expertiseScore: 90 },
-        { response: { choice: 'A' }, expertiseScore: 85 }
+        { response: { choice: "A" }, expertiseScore: 80 },
+        { response: { choice: "B" }, expertiseScore: 90 },
+        { response: { choice: "A" }, expertiseScore: 85 },
       ];
 
       const majorityResolution = orchestrator.resolveConflicts(conflicts);
@@ -1242,82 +1509,118 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
 
       // Test with different strategy
       const expertOrchestrator = new StringRayOrchestrator({
-        conflictResolutionStrategy: 'expert_priority'
+        conflictResolutionStrategy: "expert_priority",
       });
       const expertResolution = expertOrchestrator.resolveConflicts(conflicts);
       expect(expertResolution).toBeDefined();
 
       // Test consensus strategy
       const consensusConflicts = [
-        { response: { choice: 'A' }, expertiseScore: 80 },
-        { response: { choice: 'A' }, expertiseScore: 90 },
-        { response: { choice: 'A' }, expertiseScore: 85 }
+        { response: { choice: "A" }, expertiseScore: 80 },
+        { response: { choice: "A" }, expertiseScore: 90 },
+        { response: { choice: "A" }, expertiseScore: 85 },
       ];
-      const consensusResolution = orchestrator.resolveConflicts(consensusConflicts);
+      const consensusResolution =
+        orchestrator.resolveConflicts(consensusConflicts);
       expect(consensusResolution).toBeDefined();
 
-      console.log('✅ Orchestrator functionality coverage: 90%+ achieved');
+      console.log("✅ Orchestrator functionality coverage: 90%+ achieved");
     });
 
-    it('should validate all agent coordination paths', async () => {
+    it("should validate all agent coordination paths", async () => {
       // Test all subagent types
-      const subagentTypes = ['architect', 'librarian', 'enforcer', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'test-architect'];
+      const subagentTypes = [
+        "architect",
+        "librarian",
+        "enforcer",
+        "bug-triage-specialist",
+        "code-reviewer",
+        "security-auditor",
+        "refactorer",
+        "test-architect",
+      ];
 
-      const coordinationTasks: TaskDefinition[] = subagentTypes.map((type, i) => ({
-        id: `coord-test-${i}`,
-        description: `Test ${type} coordination`,
-        subagentType: type as any,
-        priority: 'medium'
-      }));
+      const coordinationTasks: TaskDefinition[] = subagentTypes.map(
+        (type, i) => ({
+          id: `coord-test-${i}`,
+          description: `Test ${type} coordination`,
+          subagentType: type as any,
+          priority: "medium",
+        }),
+      );
 
       const results = await orchestrator.executeComplexTask(
-        'Agent coordination coverage test',
+        "Agent coordination coverage test",
         coordinationTasks,
-        testSessionId
+        testSessionId,
       );
 
       expect(results).toHaveLength(subagentTypes.length);
-      expect(results.every(r => r.success)).toBe(true);
+      expect(results.every((r) => r.success)).toBe(true);
 
-      console.log('✅ All agent coordination paths validated');
+      console.log("✅ All agent coordination paths validated");
     });
 
-      it.skip('should validate comprehensive error handling scenarios', async () => {
+    it.skip("should validate comprehensive error handling scenarios", async () => {
       // Test various error scenarios
       const errorScenarios = [
         // Circular dependency
         {
-          name: 'Circular dependency',
+          name: "Circular dependency",
           tasks: [
-            { id: 'a', description: 'A', subagentType: 'architect', dependencies: ['b'] },
-            { id: 'b', description: 'B', subagentType: 'librarian', dependencies: ['a'] }
+            {
+              id: "a",
+              description: "A",
+              subagentType: "architect",
+              dependencies: ["b"],
+            },
+            {
+              id: "b",
+              description: "B",
+              subagentType: "librarian",
+              dependencies: ["a"],
+            },
           ],
-          expectError: true
+          expectError: true,
         },
         // Task timeout
         {
-          name: 'Task timeout',
-          tasks: [{ id: 'timeout', description: 'Timeout task', subagentType: 'architect' }],
+          name: "Task timeout",
+          tasks: [
+            {
+              id: "timeout",
+              description: "Timeout task",
+              subagentType: "architect",
+            },
+          ],
           expectError: false, // Handled gracefully
           setup: () => {
-            const original = orchestrator['delegateToSubagent'];
-            orchestrator['delegateToSubagent'] = vi.fn().mockImplementation(
-              () => AsyncTestUtils.delay(15000) // Longer than timeout
+            const original = orchestrator["delegateToSubagent"];
+            orchestrator["delegateToSubagent"] = vi.fn().mockImplementation(
+              () => AsyncTestUtils.delay(15000), // Longer than timeout
             );
-            return () => orchestrator['delegateToSubagent'] = original;
-          }
+            return () => (orchestrator["delegateToSubagent"] = original);
+          },
         },
         // Agent delegation failure
         {
-          name: 'Delegation failure',
-          tasks: [{ id: 'fail', description: 'Failing task', subagentType: 'architect' }],
+          name: "Delegation failure",
+          tasks: [
+            {
+              id: "fail",
+              description: "Failing task",
+              subagentType: "architect",
+            },
+          ],
           expectError: false, // Handled gracefully
           setup: () => {
-            const original = orchestrator['delegateToSubagent'];
-            orchestrator['delegateToSubagent'] = vi.fn().mockRejectedValue(new Error('Delegation failed'));
-            return () => orchestrator['delegateToSubagent'] = original;
-          }
-        }
+            const original = orchestrator["delegateToSubagent"];
+            orchestrator["delegateToSubagent"] = vi
+              .fn()
+              .mockRejectedValue(new Error("Delegation failed"));
+            return () => (orchestrator["delegateToSubagent"] = original);
+          },
+        },
       ];
 
       for (const scenario of errorScenarios) {
@@ -1326,32 +1629,48 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         try {
           if (scenario.expectError) {
             await expect(
-              orchestrator.executeComplexTask(scenario.name, scenario.tasks, testSessionId)
+              orchestrator.executeComplexTask(
+                scenario.name,
+                scenario.tasks,
+                testSessionId,
+              ),
             ).rejects.toThrow();
           } else {
-            const results = await orchestrator.executeComplexTask(scenario.name, scenario.tasks, testSessionId);
-            expect(results.some(r => !r.success)).toBe(true);
+            const results = await orchestrator.executeComplexTask(
+              scenario.name,
+              scenario.tasks,
+              testSessionId,
+            );
+            expect(results.some((r) => !r.success)).toBe(true);
           }
         } finally {
           cleanup?.();
         }
       }
 
-      console.log('✅ Comprehensive error handling scenarios validated');
+      console.log("✅ Comprehensive error handling scenarios validated");
     });
 
-      it('should validate performance integration and monitoring', async () => {
+    it("should validate performance integration and monitoring", async () => {
       // Test performance monitoring integration
-      const performanceTasks: TaskDefinition[] = Array.from({ length: 100 }, (_, i) => ({
-        id: `perf-${i}`,
-        description: `Performance monitoring task ${i}`,
-        subagentType: 'architect',
-        priority: i % 10 === 0 ? 'high' : 'medium'
-      }));
-
-      const { result: perfResultsPromise, duration } = PerformanceTestUtils.measureExecutionTime(
-        () => orchestrator.executeComplexTask('Performance monitoring test', performanceTasks, testSessionId)
+      const performanceTasks: TaskDefinition[] = Array.from(
+        { length: 100 },
+        (_, i) => ({
+          id: `perf-${i}`,
+          description: `Performance monitoring task ${i}`,
+          subagentType: "architect",
+          priority: i % 10 === 0 ? "high" : "medium",
+        }),
       );
+
+      const { result: perfResultsPromise, duration } =
+        PerformanceTestUtils.measureExecutionTime(() =>
+          orchestrator.executeComplexTask(
+            "Performance monitoring test",
+            performanceTasks,
+            testSessionId,
+          ),
+        );
 
       const perfResults = await perfResultsPromise;
 
@@ -1360,17 +1679,22 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
       expect(perfResults.every((r: TaskResult) => r.success)).toBe(true);
 
       // Test memory monitoring
-      const { result: memoryResults, memoryDelta } = MemoryTestUtils.monitorMemoryUsage(
-        () => orchestrator.executeComplexTask('Memory monitoring test', performanceTasks.slice(0, 50), testSessionId)
-      );
+      const { result: memoryResults, memoryDelta } =
+        MemoryTestUtils.monitorMemoryUsage(() =>
+          orchestrator.executeComplexTask(
+            "Memory monitoring test",
+            performanceTasks.slice(0, 50),
+            testSessionId,
+          ),
+        );
 
       await memoryResults;
       expect(memoryDelta).toBeLessThan(100 * 1024 * 1024); // 100MB limit
 
-      console.log('✅ Performance integration and monitoring validated');
+      console.log("✅ Performance integration and monitoring validated");
     });
 
-    it.skip('should validate security integration in orchestrated scenarios', async () => {
+    it.skip("should validate security integration in orchestrated scenarios", async () => {
       // Test security integration with plugin system
       const securePlugin = `
         module.exports = {
@@ -1427,61 +1751,69 @@ describe('StringRay Framework - Comprehensive Orchestrator Integration Tests', (
         };
       `;
 
-      mockFs.addFile('/test/plugins/security-plugin/index.js', securePlugin);
-      mockFs.addFile('/test/plugins/security-plugin/package.json', JSON.stringify({
-        name: 'security-plugin',
-        strrayCapabilities: {
-          agentTypes: ['security-agent'],
-          supportedTasks: ['security-scan'],
-          requiredPermissions: ['security']
-        }
-      }));
+      mockFs.addFile("/test/plugins/security-plugin/index.js", securePlugin);
+      mockFs.addFile(
+        "/test/plugins/security-plugin/package.json",
+        JSON.stringify({
+          name: "security-plugin",
+          strrayCapabilities: {
+            agentTypes: ["security-agent"],
+            supportedTasks: ["security-scan"],
+            requiredPermissions: ["security"],
+          },
+        }),
+      );
 
       // Register with security configuration
-      await pluginRegistryInstance.registerPlugin('/test/plugins/security-plugin');
-      await pluginRegistryInstance.activatePlugin('security-plugin', {
-        encryptionKey: 'secure-key-123',
-        auditLogging: true
+      await pluginRegistryInstance.registerPlugin(
+        "/test/plugins/security-plugin",
+      );
+      await pluginRegistryInstance.activatePlugin("security-plugin", {
+        encryptionKey: "secure-key-123",
+        auditLogging: true,
       });
 
       // Execute security-focused workflow
       const securityTasks: TaskDefinition[] = [
         {
-          id: 'security-setup',
-          description: 'Initialize security monitoring',
-          subagentType: 'architect',
-          priority: 'high'
+          id: "security-setup",
+          description: "Initialize security monitoring",
+          subagentType: "architect",
+          priority: "high",
         },
         {
-          id: 'security-scan',
-          description: 'Execute comprehensive security scan',
-          subagentType: 'security-agent',
-          priority: 'high',
-          dependencies: ['security-setup']
+          id: "security-scan",
+          description: "Execute comprehensive security scan",
+          subagentType: "security-agent",
+          priority: "high",
+          dependencies: ["security-setup"],
         },
         {
-          id: 'security-validation',
-          description: 'Validate security measures',
-          subagentType: 'enforcer',
-          priority: 'medium',
-          dependencies: ['security-scan']
-        }
+          id: "security-validation",
+          description: "Validate security measures",
+          subagentType: "enforcer",
+          priority: "medium",
+          dependencies: ["security-scan"],
+        },
       ];
 
       const securityResults = await orchestrator.executeComplexTask(
-        'Security Integration Workflow',
+        "Security Integration Workflow",
         securityTasks,
-        testSessionId
+        testSessionId,
       );
 
       expect(securityResults).toHaveLength(3);
-      expect(securityResults.every(r => r.success)).toBe(true);
+      expect(securityResults.every((r) => r.success)).toBe(true);
 
       // Verify security plugin health
-      const securityHealth = await pluginRegistryInstance.getPluginHealth('security-plugin');
-      expect(securityHealth?.status).toBe('healthy');
+      const securityHealth =
+        await pluginRegistryInstance.getPluginHealth("security-plugin");
+      expect(securityHealth?.status).toBe("healthy");
 
-      console.log('✅ Security integration in orchestrated scenarios validated');
+      console.log(
+        "✅ Security integration in orchestrated scenarios validated",
+      );
     });
   });
 });

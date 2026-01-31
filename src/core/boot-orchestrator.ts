@@ -23,7 +23,7 @@ import { createSessionMonitor } from "../session/session-monitor.js";
 import { createSessionStateManager } from "../session/session-state-manager.js";
 import { securityHardener } from "../security/security-hardener.js";
 import { securityHeadersMiddleware } from "../security/security-headers.js";
-import { frameworkLogger } from "../core/framework-logger.js"
+import { frameworkLogger } from "../core/framework-logger.js";
 import { memoryMonitor } from "../monitoring/memory-monitor.js";
 import { strRayConfigLoader } from "./config-loader.js";
 
@@ -43,11 +43,21 @@ function setupGracefulShutdown(): void {
   process.on("SIGINT", async () => {
     if (isShuttingDown) {
       // Graceful shutdown messages kept as console.log for user visibility
-      await frameworkLogger.log('boot-orchestrator', '-received-sigint-shutting-down-gracefully-', 'info', { message: "Received SIGINT, shutting down gracefully..." });
+      await frameworkLogger.log(
+        "boot-orchestrator",
+        "-received-sigint-shutting-down-gracefully-",
+        "info",
+        { message: "Received SIGINT, shutting down gracefully..." },
+      );
       process.exit(0);
     }
     try {
-      await frameworkLogger.log('boot-orchestrator', '-received-sigint-shutting-down-gracefully-', 'info', { message: "Received SIGINT, shutting down gracefully..." });
+      await frameworkLogger.log(
+        "boot-orchestrator",
+        "-received-sigint-shutting-down-gracefully-",
+        "info",
+        { message: "Received SIGINT, shutting down gracefully..." },
+      );
       // Basic cleanup - orchestrator shutdown handled by process termination
       process.exit(0);
     } catch (error) {
@@ -156,7 +166,10 @@ export class BootOrchestrator {
    */
   private async initializeDelegationSystem(): Promise<boolean> {
     try {
-      const agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
+      const agentDelegator = createAgentDelegator(
+        this.stateManager,
+        strRayConfigLoader,
+      );
       this.stateManager.set("delegation:agent_delegator", agentDelegator);
 
       const sessionCoordinator = createSessionCoordinator(this.stateManager);
@@ -178,38 +191,41 @@ export class BootOrchestrator {
   /**
    * Load orchestrator as the first component
    */
-   private async loadOrchestrator(): Promise<boolean> {
-     try {
-       // Import orchestrator dynamically to ensure it's loaded first
-       let orchestratorModule;
-       try {
-         orchestratorModule = await import("../core/orchestrator");
-       } catch (jsError) {
-         // Fallback to TypeScript import for testing/development
-         try {
-           orchestratorModule = await import("../core/orchestrator");
-         } catch (tsError) {
-           console.error("❌ Failed to load orchestrator from both .js and .ts:", { jsError, tsError });
-           return false;
-         }
-       }
+  private async loadOrchestrator(): Promise<boolean> {
+    try {
+      // Import orchestrator dynamically to ensure it's loaded first
+      let orchestratorModule;
+      try {
+        orchestratorModule = await import("../core/orchestrator");
+      } catch (jsError) {
+        // Fallback to TypeScript import for testing/development
+        try {
+          orchestratorModule = await import("../core/orchestrator");
+        } catch (tsError) {
+          console.error(
+            "❌ Failed to load orchestrator from both .js and .ts:",
+            { jsError, tsError },
+          );
+          return false;
+        }
+      }
 
-       const orchestratorInstance = orchestratorModule.strRayOrchestrator;
+      const orchestratorInstance = orchestratorModule.strRayOrchestrator;
 
-       if (!orchestratorInstance) {
-         console.error("❌ Orchestrator instance not found in module");
-         return false;
-       }
+      if (!orchestratorInstance) {
+        console.error("❌ Orchestrator instance not found in module");
+        return false;
+      }
 
-       // Store in state manager for later access
-       this.stateManager.set("orchestrator", orchestratorInstance);
+      // Store in state manager for later access
+      this.stateManager.set("orchestrator", orchestratorInstance);
 
-       return true;
-     } catch (error) {
-       console.error("❌ Failed to load orchestrator:", error);
-       return false;
-     }
-   }
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to load orchestrator:", error);
+      return false;
+    }
+  }
 
   /**
    * Initialize session management system
@@ -331,13 +347,13 @@ export class BootOrchestrator {
         { jobId },
       );
 
-        // Skip refactoring logging processor - not available in this build
-        frameworkLogger.log(
-          "boot-orchestrator",
-          "skipping refactoringLogging processor - not available",
-          "info",
-          { jobId },
-        );
+      // Skip refactoring logging processor - not available in this build
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "skipping refactoringLogging processor - not available",
+        "info",
+        { jobId },
+      );
 
       const initSuccess = await this.processorManager.initializeProcessors();
       if (!initSuccess) {
@@ -644,15 +660,18 @@ export class BootOrchestrator {
       // Log recommendations
       alert.details.recommendations.forEach((rec: string) => {
         frameworkLogger.log("boot-orchestrator", `💡 ${rec}`, "info");
-       });
-     });
+      });
+    });
 
-     // Attach the listener to the memory monitor (prevent duplicates)
-     if (this.memoryMonitorListener && !memoryMonitor.listeners("alert").includes(this.memoryMonitorListener)) {
-       memoryMonitor.on("alert", this.memoryMonitorListener);
-     }
+    // Attach the listener to the memory monitor (prevent duplicates)
+    if (
+      this.memoryMonitorListener &&
+      !memoryMonitor.listeners("alert").includes(this.memoryMonitorListener)
+    ) {
+      memoryMonitor.on("alert", this.memoryMonitorListener);
+    }
 
-     // Log initial memory status
+    // Log initial memory status
     const initialStats = memoryMonitor.getCurrentStats();
     frameworkLogger.log(
       "boot-orchestrator",
@@ -790,18 +809,18 @@ export class BootOrchestrator {
 
       // Phase 2: Session management
       if (this.config.sessionManagement) {
-       result.sessionManagementActive =
-           await this.initializeSessionManagement();
-         if (!result.sessionManagementActive) {
-           frameworkLogger.log(
-             "boot-orchestrator",
-             "session management initialization failed",
-             "error",
-             { jobId },
-           );
-           result.errors.push("Failed to initialize session management");
-           return result;
-         }
+        result.sessionManagementActive =
+          await this.initializeSessionManagement();
+        if (!result.sessionManagementActive) {
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "session management initialization failed",
+            "error",
+            { jobId },
+          );
+          result.errors.push("Failed to initialize session management");
+          return result;
+        }
       }
 
       // Phase 3: Processors
@@ -812,24 +831,24 @@ export class BootOrchestrator {
           "info",
           { jobId },
         );
-         result.processorsActivated = await this.activateProcessors(jobId);
-         if (!result.processorsActivated) {
-           frameworkLogger.log(
-             "boot-orchestrator",
-             "processor activation failed",
-             "error",
-             { jobId },
-           );
-           result.errors.push("Failed to activate processors");
-           return result;
-         } else {
-           frameworkLogger.log(
-             "boot-orchestrator",
-             "processors activated successfully",
-             "success",
-             { jobId },
-           );
-         }
+        result.processorsActivated = await this.activateProcessors(jobId);
+        if (!result.processorsActivated) {
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "processor activation failed",
+            "error",
+            { jobId },
+          );
+          result.errors.push("Failed to activate processors");
+          return result;
+        } else {
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "processors activated successfully",
+            "success",
+            { jobId },
+          );
+        }
         frameworkLogger.log(
           "boot-orchestrator",
           "processors activated successfully",
@@ -862,60 +881,60 @@ export class BootOrchestrator {
         result.agentsLoaded = await this.loadRemainingAgents(jobId);
       }
 
-       // Phase 5: Security & compliance
-       if (this.config.enableEnforcement) {
-         frameworkLogger.log(
-           "boot-orchestrator",
-           "enabling enforcement",
-           "info",
-           { jobId },
-         );
-         result.enforcementEnabled = await this.enableEnforcement();
-         if (!result.enforcementEnabled) {
-           frameworkLogger.log(
-             "boot-orchestrator",
-             "enforcement enable failed",
-             "error",
-             { jobId },
-           );
-           result.errors.push("Failed to enable enforcement");
-           return result;
-         } else {
-           frameworkLogger.log(
-             "boot-orchestrator",
-             "enforcement enabled successfully",
-             "success",
-             { jobId },
-           );
-         }
-       }
+      // Phase 5: Security & compliance
+      if (this.config.enableEnforcement) {
+        frameworkLogger.log(
+          "boot-orchestrator",
+          "enabling enforcement",
+          "info",
+          { jobId },
+        );
+        result.enforcementEnabled = await this.enableEnforcement();
+        if (!result.enforcementEnabled) {
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "enforcement enable failed",
+            "error",
+            { jobId },
+          );
+          result.errors.push("Failed to enable enforcement");
+          return result;
+        } else {
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "enforcement enabled successfully",
+            "success",
+            { jobId },
+          );
+        }
+      }
 
-       if (this.config.codexValidation) {
-         frameworkLogger.log(
-           "boot-orchestrator",
-           "activating codex compliance",
-           "info",
-           { jobId },
-         );
-         result.codexComplianceActive = await this.activateCodexCompliance();
-         if (!result.codexComplianceActive) {
-           frameworkLogger.log(
-             "boot-orchestrator",
-             "codex compliance activation failed",
-             "error",
-             { jobId },
-           );
-           result.errors.push("Failed to activate codex compliance");
-           return result;
-         } else {
-           frameworkLogger.log(
-             "boot-orchestrator",
-             "codex compliance activated successfully",
-             "success",
-             { jobId },
-           );
-         }
-       }
+      if (this.config.codexValidation) {
+        frameworkLogger.log(
+          "boot-orchestrator",
+          "activating codex compliance",
+          "info",
+          { jobId },
+        );
+        result.codexComplianceActive = await this.activateCodexCompliance();
+        if (!result.codexComplianceActive) {
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "codex compliance activation failed",
+            "error",
+            { jobId },
+          );
+          result.errors.push("Failed to activate codex compliance");
+          return result;
+        } else {
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "codex compliance activated successfully",
+            "success",
+            { jobId },
+          );
+        }
+      }
 
       // Finalize security integration
       await this.finalizeSecurityIntegration();

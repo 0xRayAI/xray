@@ -110,8 +110,7 @@ export class SessionMonitor {
     if (this.config.enableMetrics) {
       this.startMetricsCollection();
     }
-
-    }
+  }
 
   registerSession(sessionId: string): void {
     const health: SessionHealth = {

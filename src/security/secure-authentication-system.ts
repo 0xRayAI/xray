@@ -231,7 +231,12 @@ export class SecureAuthenticationSystem extends EventEmitter {
         reason: errorMessage,
       });
 
-      await frameworkLogger.log('secure-authentication-system', '-security-authentication-failed-errormessage-', 'error', { message: `[SECURITY] Authentication failed: ${errorMessage}` });
+      await frameworkLogger.log(
+        "secure-authentication-system",
+        "-security-authentication-failed-errormessage-",
+        "error",
+        { message: `[SECURITY] Authentication failed: ${errorMessage}` },
+      );
 
       return {
         success: false,
@@ -345,7 +350,12 @@ export class SecureAuthenticationSystem extends EventEmitter {
       const errorMessage =
         error instanceof Error ? error.message : "Authorization failed";
 
-      frameworkLogger.log('secure-authentication-system', '-security-authorization-failed-errormessage-', 'error', { message: `[SECURITY] Authorization failed: ${errorMessage}` });
+      frameworkLogger.log(
+        "secure-authentication-system",
+        "-security-authorization-failed-errormessage-",
+        "error",
+        { message: `[SECURITY] Authorization failed: ${errorMessage}` },
+      );
 
       return {
         allowed: false,
@@ -640,7 +650,12 @@ export class SecureAuthenticationSystem extends EventEmitter {
    * Event handlers
    */
   private handleAuthSuccess(event: any): void {
-    frameworkLogger.log('secure-authentication-system', '-authentication-successful-for-user-event-userid-', 'success', { message: `✅ Authentication successful for user: ${event.userId}` });
+    frameworkLogger.log(
+      "secure-authentication-system",
+      "-authentication-successful-for-user-event-userid-",
+      "success",
+      { message: `✅ Authentication successful for user: ${event.userId}` },
+    );
   }
 
   private handleAuthFailure(event: any): void {
@@ -654,15 +669,25 @@ export class SecureAuthenticationSystem extends EventEmitter {
   }
 
   private handleSessionCreated(event: any): void {
-    frameworkLogger.log('secure-authentication-system', '-session-created-event-sessionid-for-user-event-us', 'info', { message:
-      `📋 Session created: ${event.sessionId} for user ${event.userId}`,
-     });
+    frameworkLogger.log(
+      "secure-authentication-system",
+      "-session-created-event-sessionid-for-user-event-us",
+      "info",
+      {
+        message: `📋 Session created: ${event.sessionId} for user ${event.userId}`,
+      },
+    );
   }
 
   private handleSessionDestroyed(event: any): void {
-    frameworkLogger.log('secure-authentication-system', '-session-destroyed-event-sessionid-for-user-event-', 'info', { message:
-      `📋 Session destroyed: ${event.sessionId} for user ${event.userId}`,
-     });
+    frameworkLogger.log(
+      "secure-authentication-system",
+      "-session-destroyed-event-sessionid-for-user-event-",
+      "info",
+      {
+        message: `📋 Session destroyed: ${event.sessionId} for user ${event.userId}`,
+      },
+    );
   }
 
   /**

@@ -31,7 +31,12 @@ class StrRayFrameworkComplianceAuditServer {
     );
 
     this.setupToolHandlers();
-    void frameworkLogger.log('framework-compliance-audit.server', '-strray-framework-compliance-audit-mcp-server-init', 'info', { message: "StrRay Framework Compliance Audit MCP Server initialized" });
+    void frameworkLogger.log(
+      "framework-compliance-audit.server",
+      "-strray-framework-compliance-audit-mcp-server-init",
+      "info",
+      { message: "StrRay Framework Compliance Audit MCP Server initialized" },
+    );
   }
 
   private setupToolHandlers() {
@@ -109,7 +114,16 @@ class StrRayFrameworkComplianceAuditServer {
     const scope = args.scope || "full";
     const detailed = args.detailed || false;
 
-    await frameworkLogger.log('framework-compliance-audit.server', '-mcp-performing-framework-compliance-audit-scope-d', 'info', { message: "📋 MCP: Performing framework compliance audit:", scope, detailed: detailed });
+    await frameworkLogger.log(
+      "framework-compliance-audit.server",
+      "-mcp-performing-framework-compliance-audit-scope-d",
+      "info",
+      {
+        message: "📋 MCP: Performing framework compliance audit:",
+        scope,
+        detailed: detailed,
+      },
+    );
 
     const auditResults = {
       passed: true,
@@ -213,7 +227,16 @@ ${auditResults.recommendations.length > 0 ? auditResults.recommendations.map((re
     const terms = args.terms || [];
     const strict = args.strict !== false;
 
-    await frameworkLogger.log('framework-compliance-audit.server', '-mcp-performing-codex-validation-terms-terms-lengt', 'info', { message: "📚 MCP: Performing codex validation:", terms: terms.length, strict: strict });
+    await frameworkLogger.log(
+      "framework-compliance-audit.server",
+      "-mcp-performing-codex-validation-terms-terms-lengt",
+      "info",
+      {
+        message: "📚 MCP: Performing codex validation:",
+        terms: terms.length,
+        strict: strict,
+      },
+    );
 
     try {
       const results = await this.validateCodexTerms(terms, strict);
@@ -592,7 +615,12 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    void frameworkLogger.log('framework-compliance-audit.server', '-strray-framework-compliance-audit-mcp-server-star', 'info', { message: "StrRay Framework Compliance Audit MCP Server started" });
+    void frameworkLogger.log(
+      "framework-compliance-audit.server",
+      "-strray-framework-compliance-audit-mcp-server-star",
+      "info",
+      { message: "StrRay Framework Compliance Audit MCP Server started" },
+    );
   }
 }
 

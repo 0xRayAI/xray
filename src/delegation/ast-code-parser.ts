@@ -274,12 +274,27 @@ export class ASTCodeParser {
 
       // Choose parsing method based on ast-grep availability
       const structure = this.astGrepAvailable
-        ? await this.parseCodeStructureWithAstGrep(content, language, filePath, jobId)
-        : await this.parseCodeStructureWithRegex(content, language, filePath, jobId);
+        ? await this.parseCodeStructureWithAstGrep(
+            content,
+            language,
+            filePath,
+            jobId,
+          )
+        : await this.parseCodeStructureWithRegex(
+            content,
+            language,
+            filePath,
+            jobId,
+          );
 
       const patterns = this.astGrepAvailable
         ? await this.detectPatternsWithAstGrep(filePath, language, jobId)
-        : await this.detectPatternsWithRegex(content, language, filePath, jobId);
+        : await this.detectPatternsWithRegex(
+            content,
+            language,
+            filePath,
+            jobId,
+          );
 
       const issues = await this.identifyIssues(structure, patterns, filePath);
       const suggestions = this.generateRefactoringSuggestions(
@@ -607,7 +622,12 @@ export class ASTCodeParser {
     }
 
     // Detect nested if statements
-    const nestedIfs = await this.findMatches(content, language, "nested-if", jobId);
+    const nestedIfs = await this.findMatches(
+      content,
+      language,
+      "nested-if",
+      jobId,
+    );
     if (nestedIfs.length > 0) {
       patterns.push({
         pattern: "nested-if",

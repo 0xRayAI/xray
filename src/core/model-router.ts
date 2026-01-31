@@ -97,9 +97,11 @@ class ModelRouter {
 
     if (featuresConfig.model_routing.enabled && context.toolName) {
       const taskContext: { fileCount?: number; isComplex?: boolean } = {};
-      if (context.fileCount !== undefined) taskContext.fileCount = context.fileCount;
-      if (context.isComplex !== undefined) taskContext.isComplex = context.isComplex;
-      
+      if (context.fileCount !== undefined)
+        taskContext.fileCount = context.fileCount;
+      if (context.isComplex !== undefined)
+        taskContext.isComplex = context.isComplex;
+
       const taskType = detectTaskType(context.toolName, taskContext);
 
       if (taskType !== "unknown") {
@@ -131,7 +133,8 @@ class ModelRouter {
     // 2. Check features config for agent-specific model
     if (agentType) {
       const featuresConfig = featuresConfigLoader.loadConfig();
-      const agentModel = featuresConfig.agent_management.agent_models[agentType];
+      const agentModel =
+        featuresConfig.agent_management.agent_models[agentType];
       if (agentModel && this.isModelAvailable(agentModel)) {
         return agentModel;
       }
@@ -153,8 +156,7 @@ class ModelRouter {
     }
 
     // 4. Legacy default
-    const legacyDefault =
-      this.config.model_default || "claude-sonnet-4";
+    const legacyDefault = this.config.model_default || "claude-sonnet-4";
     if (this.isModelAvailable(legacyDefault)) {
       return legacyDefault;
     }

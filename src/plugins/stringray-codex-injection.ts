@@ -15,14 +15,32 @@ import { TokenManager } from "../utils/token-manager.js";
 const tokenManager = new TokenManager();
 
 const pluginHooks = {
-  config: (input: { client?: string; directory?: string; worktree?: string }) => {
-    const jobId = generateJobId('codex-injector-init');
-    frameworkLogger.log("codex-injector", "plugin initialized", "info", {}, undefined, jobId);
+  config: (input: {
+    client?: string;
+    directory?: string;
+    worktree?: string;
+  }) => {
+    const jobId = generateJobId("codex-injector-init");
+    frameworkLogger.log(
+      "codex-injector",
+      "plugin initialized",
+      "info",
+      {},
+      undefined,
+      jobId,
+    );
   },
 
   "experimental.chat.system.transform": (messages: any[], context: any) => {
-    const jobId = generateJobId('codex-injector-transform');
-    frameworkLogger.log("codex-injector", "chat.system.transform hook called", "info", { messageCount: messages?.length }, undefined, jobId);
+    const jobId = generateJobId("codex-injector-transform");
+    frameworkLogger.log(
+      "codex-injector",
+      "chat.system.transform hook called",
+      "info",
+      { messageCount: messages?.length },
+      undefined,
+      jobId,
+    );
 
     // Inject codex context into system messages for agent guidance
     try {
@@ -87,19 +105,33 @@ For complete codex documentation, see: .opencode/strray/codex.json
       const limitCheck = tokenManager.checkLimits(fullContent);
       let finalContent = fullContent;
 
-       if (!limitCheck.withinLimit) {
-         const jobId = generateJobId('codex-injector-token-exceed');
-         frameworkLogger.log("codex-injector", "Codex content exceeds token limits, pruning context", "error", {
-           currentTokens: limitCheck.currentTokens,
-           maxTokens: limitCheck.maxTokens
-         }, undefined, jobId);
-         finalContent = tokenManager.pruneContext(fullContent);
-       } else if (limitCheck.warning) {
-         const jobId = generateJobId('codex-injector-token-warning');
-         frameworkLogger.log("codex-injector", "Codex content approaching token limits", "info", {
-           currentTokens: limitCheck.currentTokens,
-           maxTokens: limitCheck.maxTokens
-         }, undefined, jobId);
+      if (!limitCheck.withinLimit) {
+        const jobId = generateJobId("codex-injector-token-exceed");
+        frameworkLogger.log(
+          "codex-injector",
+          "Codex content exceeds token limits, pruning context",
+          "error",
+          {
+            currentTokens: limitCheck.currentTokens,
+            maxTokens: limitCheck.maxTokens,
+          },
+          undefined,
+          jobId,
+        );
+        finalContent = tokenManager.pruneContext(fullContent);
+      } else if (limitCheck.warning) {
+        const jobId = generateJobId("codex-injector-token-warning");
+        frameworkLogger.log(
+          "codex-injector",
+          "Codex content approaching token limits",
+          "info",
+          {
+            currentTokens: limitCheck.currentTokens,
+            maxTokens: limitCheck.maxTokens,
+          },
+          undefined,
+          jobId,
+        );
       }
 
       // CRITICAL: DO NOT add complexity analysis here
@@ -108,7 +140,7 @@ For complete codex documentation, see: .opencode/strray/codex.json
 
       const codexMessage = {
         role: "system",
-        content: finalContent
+        content: finalContent,
       };
 
       // Modify context.system array to include codex message
@@ -126,20 +158,33 @@ For complete codex documentation, see: .opencode/strray/codex.json
   },
 
   "tool.execute.before": (tool: string, args: any) => {
-      const jobId = generateJobId('codex-injector-tool-before');
-      frameworkLogger.log("codex-injector", "tool.execute.before hook called", "info", { tool }, undefined, jobId);
+    const jobId = generateJobId("codex-injector-tool-before");
+    frameworkLogger.log(
+      "codex-injector",
+      "tool.execute.before hook called",
+      "info",
+      { tool },
+      undefined,
+      jobId,
+    );
   },
 
   "tool.execute.after": (tool: string, args: any, result: any) => {
-      const jobId = generateJobId('codex-injector-tool-after');
-      frameworkLogger.log("codex-injector", "tool.execute.after hook called", "success", { tool }, undefined, jobId);
+    const jobId = generateJobId("codex-injector-tool-after");
+    frameworkLogger.log(
+      "codex-injector",
+      "tool.execute.after hook called",
+      "success",
+      { tool },
+      undefined,
+      jobId,
+    );
   },
-
 };
 
 // Lightweight bypass for simple interactions
 function isSimpleInteraction(input: any): boolean {
-  if (!input || typeof input !== 'object') return false;
+  if (!input || typeof input !== "object") return false;
 
   // Check messages for simple greetings/chats
   if (input.messages && Array.isArray(input.messages)) {
@@ -147,7 +192,11 @@ function isSimpleInteraction(input: any): boolean {
     if (lastMessage && lastMessage.content) {
       const content = String(lastMessage.content).toLowerCase().trim();
       // Detect basic greetings and chat
-      if (content.match(/^(hi|hello|hey|sup|yo|howdy|greeting|chat|how are you|what'?s up)$/i)) {
+      if (
+        content.match(
+          /^(hi|hello|hey|sup|yo|howdy|greeting|chat|how are you|what'?s up)$/i,
+        )
+      ) {
         return true;
       }
     }
@@ -158,28 +207,29 @@ function isSimpleInteraction(input: any): boolean {
 
 // Export a function that returns the plugin hooks object
 export function stringrayPlugin(input: any) {
-    // Fast path for simple interactions - skip full framework activation
-    if (isSimpleInteraction(input)) {
-      return {
-        config: () => {}, // No-op for simple interactions
-        "experimental.chat.system.transform": (messages: any[], context: any) => {
-          // Insert minimal welcome message for simple interactions
-          const lightMessage = {
-            role: "system",
-            content: "Hello! I'm the StrRay Agentic Framework. Ready to help with development tasks."
-          };
-          if (context && context.system && Array.isArray(context.system)) {
-            context.system.unshift(lightMessage);
-          }
-          return messages;
-        },
-        "tool.execute.before": () => {},
-        "tool.execute.after": () => {}
-      };
-    }
+  // Fast path for simple interactions - skip full framework activation
+  if (isSimpleInteraction(input)) {
+    return {
+      config: () => {}, // No-op for simple interactions
+      "experimental.chat.system.transform": (messages: any[], context: any) => {
+        // Insert minimal welcome message for simple interactions
+        const lightMessage = {
+          role: "system",
+          content:
+            "Hello! I'm the StrRay Agentic Framework. Ready to help with development tasks.",
+        };
+        if (context && context.system && Array.isArray(context.system)) {
+          context.system.unshift(lightMessage);
+        }
+        return messages;
+      },
+      "tool.execute.before": () => {},
+      "tool.execute.after": () => {},
+    };
+  }
 
-    // Full framework activation for complex requests
-    return pluginHooks;
+  // Full framework activation for complex requests
+  return pluginHooks;
 }
 
 // Default export for compatibility

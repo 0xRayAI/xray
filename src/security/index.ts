@@ -8,10 +8,7 @@ export {
   SecurityMiddleware,
   securityMiddleware,
 } from "./security-middleware.js";
-export {
-  SecurityScanner,
-  securityScanner,
-} from "./security-scanner.js";
+export { SecurityScanner, securityScanner } from "./security-scanner.js";
 export {
   PromptSecurityValidator,
   promptSecurityValidator,

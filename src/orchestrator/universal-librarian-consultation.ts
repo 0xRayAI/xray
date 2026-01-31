@@ -7,7 +7,12 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { RuleEnforcer } from "../enforcement/rule-enforcer.js";
 
 export interface SystemAction {
-  type: "code-change" | "rule-modification" | "architectural-change" | "configuration-update" | "documentation-update";
+  type:
+    | "code-change"
+    | "rule-modification"
+    | "architectural-change"
+    | "configuration-update"
+    | "documentation-update";
   description: string;
   scope: "framework" | "agent" | "tool" | "configuration" | "documentation";
   complexity: "low" | "medium" | "high" | "critical";
@@ -42,7 +47,9 @@ export class UniversalLibrarianConsultation {
   /**
    * Pre-action consultation - must be called before any major system action
    */
-  async consultBeforeAction(action: SystemAction): Promise<LibrarianConsultationResult> {
+  async consultBeforeAction(
+    action: SystemAction,
+  ): Promise<LibrarianConsultationResult> {
     await frameworkLogger.log(
       "universal-librarian-consultation",
       "pre-action-consultation-started",
@@ -61,7 +68,8 @@ export class UniversalLibrarianConsultation {
         "pre-action-consultation-skipped",
         "info",
         {
-          reason: "librarian operation detected - skipping to prevent recursion",
+          reason:
+            "librarian operation detected - skipping to prevent recursion",
           actionType: action.type,
           scope: action.scope,
         },
@@ -79,8 +87,12 @@ export class UniversalLibrarianConsultation {
     const documentationImpact = this.assessDocumentationImpact(action);
     const versionUpdates = await this.determineVersionUpdates(action);
     const pairProgrammingRequired = this.requiresPairProgramming(action);
-    const recommendations = this.generateRecommendations(action, documentationImpact);
-    const approved = action.complexity !== "critical" || documentationImpact !== "critical";
+    const recommendations = this.generateRecommendations(
+      action,
+      documentationImpact,
+    );
+    const approved =
+      action.complexity !== "critical" || documentationImpact !== "critical";
 
     const result: LibrarianConsultationResult = {
       approved,
@@ -143,7 +155,8 @@ export class UniversalLibrarianConsultation {
   private isLibrarianOperation(action: SystemAction): boolean {
     return (
       action.scope === "documentation" ||
-      action.type === "rule-modification" && action.description.includes("librarian") ||
+      (action.type === "rule-modification" &&
+        action.description.includes("librarian")) ||
       action.metadata?.triggeredBy === "librarian" ||
       action.description.includes("librarian consultation")
     );
@@ -152,7 +165,9 @@ export class UniversalLibrarianConsultation {
   /**
    * Assess documentation impact of the action
    */
-  private assessDocumentationImpact(action: SystemAction): "none" | "minor" | "major" | "critical" {
+  private assessDocumentationImpact(
+    action: SystemAction,
+  ): "none" | "minor" | "major" | "critical" {
     if (action.scope === "documentation") {
       return action.complexity === "critical" ? "critical" : "major";
     }
@@ -175,7 +190,9 @@ export class UniversalLibrarianConsultation {
   /**
    * Determine what version updates are needed
    */
-  private async determineVersionUpdates(action: SystemAction): Promise<VersionUpdate[]> {
+  private async determineVersionUpdates(
+    action: SystemAction,
+  ): Promise<VersionUpdate[]> {
     const updates: VersionUpdate[] = [];
 
     if (action.type === "rule-modification" || action.scope === "framework") {
@@ -218,7 +235,7 @@ export class UniversalLibrarianConsultation {
    */
   private generateRecommendations(
     action: SystemAction,
-    documentationImpact: string
+    documentationImpact: string,
   ): string[] {
     const recommendations: string[] = [];
 
@@ -229,7 +246,9 @@ export class UniversalLibrarianConsultation {
     }
 
     if (action.type === "rule-modification") {
-      recommendations.push("Ensure rule mappings are updated in agent-delegator");
+      recommendations.push(
+        "Ensure rule mappings are updated in agent-delegator",
+      );
       recommendations.push("Update AGENTS.md with any new enforceable rules");
     }
 
@@ -239,7 +258,9 @@ export class UniversalLibrarianConsultation {
     }
 
     if (action.complexity === "critical") {
-      recommendations.push("Consider updating version to indicate breaking changes");
+      recommendations.push(
+        "Consider updating version to indicate breaking changes",
+      );
       recommendations.push("Update changelog with major changes");
     }
 
@@ -249,7 +270,10 @@ export class UniversalLibrarianConsultation {
   /**
    * Update documentation after action completion
    */
-  private async updateDocumentation(action: SystemAction, result: any): Promise<void> {
+  private async updateDocumentation(
+    action: SystemAction,
+    result: any,
+  ): Promise<void> {
     await frameworkLogger.log(
       "universal-librarian-consultation",
       "documentation-update-triggered",
@@ -265,7 +289,10 @@ export class UniversalLibrarianConsultation {
   /**
    * Update versions after action completion
    */
-  private async updateVersions(action: SystemAction, result: any): Promise<void> {
+  private async updateVersions(
+    action: SystemAction,
+    result: any,
+  ): Promise<void> {
     await frameworkLogger.log(
       "universal-librarian-consultation",
       "version-update-triggered",
@@ -281,7 +308,9 @@ export class UniversalLibrarianConsultation {
   /**
    * Validate documentation integrity
    */
-  private async validateDocumentationIntegrity(action: SystemAction): Promise<void> {
+  private async validateDocumentationIntegrity(
+    action: SystemAction,
+  ): Promise<void> {
     await frameworkLogger.log(
       "universal-librarian-consultation",
       "documentation-integrity-validation",
@@ -325,6 +354,5 @@ export class UniversalLibrarianConsultation {
 }
 
 // Export singleton instance
-export const universalLibrarianConsultation = new UniversalLibrarianConsultation(
-  null as any
-);
+export const universalLibrarianConsultation =
+  new UniversalLibrarianConsultation(null as any);

@@ -51,9 +51,9 @@ export class SecurityHardener {
       const fix = await this.applyFixForIssue(issue);
       if (fix.applied) {
         appliedFixes.push(fix.description);
-        } else {
+      } else {
         remainingIssues.push(issue);
-        }
+      }
     }
 
     return { appliedFixes, remainingIssues };

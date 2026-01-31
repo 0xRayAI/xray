@@ -200,9 +200,14 @@ export class StringRayIntegration extends EventEmitter {
     }
 
     try {
-      await frameworkLogger.log('strray-integration', '-initializing-stringray-framework-integration-for-', 'info', { message: 
-        `🚀 Initializing StringRay Framework integration for ${this.config.framework}`,
-       });
+      await frameworkLogger.log(
+        "strray-integration",
+        "-initializing-stringray-framework-integration-for-",
+        "info",
+        {
+          message: `🚀 Initializing StringRay Framework integration for ${this.config.framework}`,
+        },
+      );
 
       // Detect and create framework adapter
       this.adapter = this.createFrameworkAdapter();
@@ -224,9 +229,14 @@ export class StringRayIntegration extends EventEmitter {
         features: this.config.features,
       });
 
-      await frameworkLogger.log('strray-integration', '-stringray-framework-integration-initialized-for-t', 'success', { message: 
-        `✅ StringRay Framework integration initialized for ${this.config.framework} v${this.config.version}`,
-       });
+      await frameworkLogger.log(
+        "strray-integration",
+        "-stringray-framework-integration-initialized-for-t",
+        "success",
+        {
+          message: `✅ StringRay Framework integration initialized for ${this.config.framework} v${this.config.version}`,
+        },
+      );
     } catch (error) {
       console.error(
         "❌ Failed to initialize StringRay Framework integration:",
@@ -245,9 +255,14 @@ export class StringRayIntegration extends EventEmitter {
     }
 
     try {
-      await frameworkLogger.log('strray-integration', '-destroying-stringray-framework-integration-for-th', 'info', { message: 
-        `🛑 Destroying StringRay Framework integration for ${this.config.framework}`,
-       });
+      await frameworkLogger.log(
+        "strray-integration",
+        "-destroying-stringray-framework-integration-for-th",
+        "info",
+        {
+          message: `🛑 Destroying StringRay Framework integration for ${this.config.framework}`,
+        },
+      );
 
       // Destroy framework adapter
       if (this.adapter) {
@@ -264,9 +279,14 @@ export class StringRayIntegration extends EventEmitter {
         framework: this.config.framework,
       });
 
-      await frameworkLogger.log('strray-integration', '-stringray-framework-integration-destroyed-for-thi', 'success', { message: 
-        `✅ StringRay Framework integration destroyed for ${this.config.framework}`,
-       });
+      await frameworkLogger.log(
+        "strray-integration",
+        "-stringray-framework-integration-destroyed-for-thi",
+        "success",
+        {
+          message: `✅ StringRay Framework integration destroyed for ${this.config.framework}`,
+        },
+      );
     } catch (error) {
       console.error(
         "❌ Failed to destroy StringRay Framework integration:",
@@ -593,21 +613,38 @@ export class StringRayIntegration extends EventEmitter {
    * Event handlers
    */
   private handleFrameworkInitialized(event: IntegrationEvent): void {
-    await frameworkLogger.log('strray-integration', '-framework-integration-initialized-event-framework', 'info', { message: 
-      `🎯 Framework integration initialized: ${event.framework} v${event.data.version}`,
-     });
+    await frameworkLogger.log(
+      "strray-integration",
+      "-framework-integration-initialized-event-framework",
+      "info",
+      {
+        message: `🎯 Framework integration initialized: ${event.framework} v${event.data.version}`,
+      },
+    );
   }
 
   private handleFrameworkDestroyed(event: IntegrationEvent): void {
-    await frameworkLogger.log('strray-integration', '-framework-integration-destroyed-event-framework-', 'info', { message: `🛑 Framework integration destroyed: ${event.framework}` });
+    await frameworkLogger.log(
+      "strray-integration",
+      "-framework-integration-destroyed-event-framework-",
+      "info",
+      { message: `🛑 Framework integration destroyed: ${event.framework}` },
+    );
   }
 
   private handleErrorCaught(event: IntegrationEvent): void {
     console.error(`❌ Framework error caught:`, event.data);
   }
 
-  private async handlePerformanceMeasured(event: IntegrationEvent): Promise<void> {
-    await frameworkLogger.log('strray-integration', '-performance-measured-event-data', 'info', { message: `📊 Performance measured:`, data: event.data });
+  private async handlePerformanceMeasured(
+    event: IntegrationEvent,
+  ): Promise<void> {
+    await frameworkLogger.log(
+      "strray-integration",
+      "-performance-measured-event-data",
+      "info",
+      { message: `📊 Performance measured:`, data: event.data },
+    );
   }
 
   /**

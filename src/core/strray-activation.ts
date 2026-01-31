@@ -5,7 +5,7 @@
  * during oh-my-opencode initialization.
  */
 
-import { frameworkLogger } from "../core/framework-logger.js"
+import { frameworkLogger } from "../core/framework-logger.js";
 import { ensureCriticalComponents } from "../architect/architectural-integrity.js";
 
 export interface StringRayActivationConfig {
@@ -104,8 +104,7 @@ async function activateCodexInjection(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { createStringRayCodexInjectorHook } =
-    await import("./codex-injector");
+  const { createStringRayCodexInjectorHook } = await import("./codex-injector");
   const hook = createStringRayCodexInjectorHook();
 
   (globalThis as any).strRayHooks = (globalThis as any).strRayHooks || [];
@@ -179,7 +178,8 @@ async function activateOrchestrator(jobId: string): Promise<void> {
   const { strRayOrchestrator } = await import("./orchestrator");
 
   // Also activate the multi-agent orchestration coordinator
-  const { multiAgentOrchestrationCoordinator } = await import("../orchestrator/multi-agent-orchestration-coordinator");
+  const { multiAgentOrchestrationCoordinator } =
+    await import("../orchestrator/multi-agent-orchestration-coordinator");
 
   frameworkLogger.log(
     "stringray-activation",
@@ -197,8 +197,7 @@ async function activateProcessors(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { ProcessorManager } =
-    await import("../processors/processor-manager");
+  const { ProcessorManager } = await import("../processors/processor-manager");
   const { StringRayStateManager } = await import("../state/state-manager");
 
   const stateManager = new StringRayStateManager();

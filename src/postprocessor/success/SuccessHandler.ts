@@ -120,7 +120,7 @@ export class SuccessHandler {
     console.log("🔍 Confirming deployment success...");
 
     // Simulate confirmation checks
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     console.log("✅ Deployment success confirmed");
   }
@@ -143,7 +143,7 @@ export class SuccessHandler {
     console.log("🧹 Performing post-success cleanup...");
 
     // Simulate cleanup operations
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     console.log("✅ Cleanup completed");
   }
@@ -212,7 +212,7 @@ Results:
 - Total Duration: ${metrics.totalDuration}ms
 
 Files Processed: ${context.files.length}
-${context.files.map(f => `  - ${f}`).join('\n')}
+${context.files.map((f) => `  - ${f}`).join("\n")}
 
 Timestamp: ${metrics.timestamp.toISOString()}
 `.trim();

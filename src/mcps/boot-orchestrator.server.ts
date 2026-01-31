@@ -182,24 +182,27 @@ class StrRayBootOrchestratorServer {
     });
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
-      const { name, arguments: args } = request.params;
+    this.server.setRequestHandler(
+      CallToolRequestSchema,
+      async (request: CallToolRequest) => {
+        const { name, arguments: args } = request.params;
 
-      switch (name) {
-        case "execute-boot-sequence":
-          return await this.handleExecuteBootSequence(args);
-        case "get-boot-status":
-          return await this.handleGetBootStatus(args);
-        case "initialize-component":
-          return await this.handleInitializeComponent(args);
-        case "validate-boot-dependencies":
-          return await this.handleValidateBootDependencies(args);
-        case "shutdown-framework":
-          return await this.handleShutdownFramework(args);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
+        switch (name) {
+          case "execute-boot-sequence":
+            return await this.handleExecuteBootSequence(args);
+          case "get-boot-status":
+            return await this.handleGetBootStatus(args);
+          case "initialize-component":
+            return await this.handleInitializeComponent(args);
+          case "validate-boot-dependencies":
+            return await this.handleValidateBootDependencies(args);
+          case "shutdown-framework":
+            return await this.handleShutdownFramework(args);
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      },
+    );
   }
 
   private async handleExecuteBootSequence(args: any) {

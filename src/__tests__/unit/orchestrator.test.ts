@@ -13,9 +13,7 @@ import {
   OrchestrationResult,
   OrchestratorConfig,
 } from "../../core/orchestrator.js";
-import {
-  TaskDefinition,
-} from "../../agents/types.js";
+import { TaskDefinition } from "../../agents/types.js";
 
 describe("StringRayOrchestrator", () => {
   let orchestrator: StringRayOrchestrator;
@@ -151,13 +149,18 @@ describe("StringRayOrchestrator", () => {
       },
     ];
 
-    const result = await orchestrator.executeComplexTask("Dependency test", tasks);
-    
+    const result = await orchestrator.executeComplexTask(
+      "Dependency test",
+      tasks,
+    );
+
     expect(result).toBeDefined();
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(1);
     expect(result[0].success).toBe(false);
-    expect(result[0].errors).toContain("Missing dependencies: non-existent-task");
+    expect(result[0].errors).toContain(
+      "Missing dependencies: non-existent-task",
+    );
   });
 
   test("should handle task timeouts", async () => {

@@ -169,20 +169,28 @@ export class StringRayConfigLoader {
   /**
    * Parse autonomous reporting configuration
    */
-  private parseAutonomousReportingConfig(config: any): AutonomousReportingConfig {
+  private parseAutonomousReportingConfig(
+    config: any,
+  ): AutonomousReportingConfig {
     return {
       enabled: config?.enabled ?? false,
-      interval_minutes: Math.max(5, Math.min(1440, config?.interval_minutes ?? 60)), // 5min to 24hrs
+      interval_minutes: Math.max(
+        5,
+        Math.min(1440, config?.interval_minutes ?? 60),
+      ), // 5min to 24hrs
       auto_schedule: config?.auto_schedule ?? false,
       include_health_assessment: config?.include_health_assessment ?? true,
       include_agent_activities: config?.include_agent_activities ?? true,
       include_pipeline_operations: config?.include_pipeline_operations ?? true,
       include_critical_issues: config?.include_critical_issues ?? true,
       include_recommendations: config?.include_recommendations ?? true,
-      report_retention_days: Math.max(1, Math.min(365, config?.report_retention_days ?? 30)),
+      report_retention_days: Math.max(
+        1,
+        Math.min(365, config?.report_retention_days ?? 30),
+      ),
       notification_channels: Array.isArray(config?.notification_channels)
         ? config.notification_channels.filter((ch: string) =>
-            ["console", "file", "webhook"].includes(ch)
+            ["console", "file", "webhook"].includes(ch),
           )
         : ["console"],
     };

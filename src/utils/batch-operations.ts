@@ -34,7 +34,7 @@ function escapeForGrep(str: string): string {
 
 export async function batchReplace(
   files: string[],
-  operations: ReplacementOperation[]
+  operations: ReplacementOperation[],
 ): Promise<BatchResult> {
   const startTime = Date.now();
   const config = getBatchOperations();
@@ -44,12 +44,24 @@ export async function batchReplace(
   }
 
   const firstOperation = operations[0];
-  if (config.prefer_sed_for_replacements && operations.length === 1 && firstOperation) {
+  if (
+    config.prefer_sed_for_replacements &&
+    operations.length === 1 &&
+    firstOperation
+  ) {
     return executeSedBatch(files, firstOperation, startTime);
   }
 
-  if (config.parallel_file_updates && files.length > config.auto_batch_threshold) {
-    return executeParallelBatch(files, operations, config.max_concurrent_edits, startTime);
+  if (
+    config.parallel_file_updates &&
+    files.length > config.auto_batch_threshold
+  ) {
+    return executeParallelBatch(
+      files,
+      operations,
+      config.max_concurrent_edits,
+      startTime,
+    );
   }
 
   return executeSequential(files, operations, startTime);
@@ -58,12 +70,14 @@ export async function batchReplace(
 async function executeSedBatch(
   files: string[],
   operation: ReplacementOperation,
-  startTime: number
+  startTime: number,
 ): Promise<BatchResult> {
   const errors: Array<{ file: string; error: string }> = [];
   let filesModified = 0;
 
-  const pattern = operation.isRegex ? operation.pattern : escapeForGrep(operation.pattern);
+  const pattern = operation.isRegex
+    ? operation.pattern
+    : escapeForGrep(operation.pattern);
   const replacement = escapeForSed(operation.replacement);
   const sedFlags = operation.caseSensitive ? "g" : "gi";
 
@@ -96,7 +110,7 @@ async function executeParallelBatch(
   files: string[],
   operations: ReplacementOperation[],
   maxConcurrent: number,
-  startTime: number
+  startTime: number,
 ): Promise<BatchResult> {
   const errors: Array<{ file: string; error: string }> = [];
   let filesModified = 0;
@@ -138,7 +152,7 @@ async function executeParallelBatch(
 async function executeSequential(
   files: string[],
   operations: ReplacementOperation[],
-  startTime: number
+  startTime: number,
 ): Promise<BatchResult> {
   const errors: Array<{ file: string; error: string }> = [];
   let filesModified = 0;
@@ -163,7 +177,7 @@ async function executeSequential(
 
 async function processFileOperations(
   filePath: string,
-  operations: ReplacementOperation[]
+  operations: ReplacementOperation[],
 ): Promise<void> {
   if (!fs.existsSync(filePath)) {
     throw new Error(`File not found: ${filePath}`);
@@ -190,7 +204,7 @@ async function processFileOperations(
 }
 
 export async function batchFileOperations(
-  operations: FileOperation[]
+  operations: FileOperation[],
 ): Promise<BatchResult> {
   const startTime = Date.now();
   const errors: Array<{ file: string; error: string }> = [];
@@ -249,7 +263,7 @@ export async function batchFileOperations(
 export function findFilesWithPattern(
   directory: string,
   pattern: string,
-  extensions: string[] = [".ts", ".tsx", ".js", ".jsx", ".json"]
+  extensions: string[] = [".ts", ".tsx", ".js", ".jsx", ".json"],
 ): string[] {
   const results: string[] = [];
 
@@ -289,7 +303,7 @@ export async function bulkRename(
   directory: string,
   oldName: string,
   newName: string,
-  extensions: string[] = [".ts", ".tsx", ".js", ".jsx"]
+  extensions: string[] = [".ts", ".tsx", ".js", ".jsx"],
 ): Promise<BatchResult> {
   const files = findFilesWithPattern(directory, oldName, extensions);
 

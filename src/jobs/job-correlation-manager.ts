@@ -1,7 +1,11 @@
 // Framework Job Correlation Fix Implementation
 // Global Job Context Integration for Framework-wide Job Tracking
 
-import { setCurrentJobContext, withJobContext, getCurrentJobId } from "../core/framework-logger.js"
+import {
+  setCurrentJobContext,
+  withJobContext,
+  getCurrentJobId,
+} from "../core/framework-logger.js";
 
 /**
  * Framework Job Correlation Manager
@@ -34,7 +38,7 @@ export class JobCorrelationManager {
    */
   async executeInJobContext<T>(
     operation: () => Promise<T> | T,
-    jobId?: string
+    jobId?: string,
   ): Promise<T> {
     const startedJobId = this.startJob(jobId);
     try {

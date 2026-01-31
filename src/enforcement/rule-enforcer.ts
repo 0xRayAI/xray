@@ -3,7 +3,7 @@
  * Enforces development rules and validates component creation
  */
 
-import { frameworkLogger } from "../core/framework-logger.js"
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface RuleDefinition {
   id: string;
@@ -106,7 +106,7 @@ export class RuleEnforcer {
 
       this.initialized = true;
     } catch (error) {
-      console.warn('Failed to load async rules:', error);
+      console.warn("Failed to load async rules:", error);
     }
   }
 
@@ -115,32 +115,45 @@ export class RuleEnforcer {
    */
   private async loadCodexRules(): Promise<void> {
     try {
-      const fs = await import('fs');
-      const path = await import('path');
+      const fs = await import("fs");
+      const path = await import("path");
 
-      const codexPath = path.join(process.cwd(), '.opencode/strray', 'codex.json');
-      const codexContent = fs.readFileSync(codexPath, 'utf8');
+      const codexPath = path.join(
+        process.cwd(),
+        ".opencode/strray",
+        "codex.json",
+      );
+      const codexContent = fs.readFileSync(codexPath, "utf8");
       const codexData = JSON.parse(codexContent);
 
       // Convert codex terms to rules
       for (const [key, term] of Object.entries(codexData)) {
-        if (typeof term === 'object' && term !== null && 'title' in term) {
+        if (typeof term === "object" && term !== null && "title" in term) {
           const codexTerm = term as any;
           this.addRule({
             id: `codex-${key}`,
             name: codexTerm.title,
             description: codexTerm.description || codexTerm.title,
-            category: codexTerm.category || 'codex',
-            severity: this.mapCodexSeverity(codexTerm.enforcementLevel || codexTerm.zeroTolerance ? 'blocking' : 'warning'),
+            category: codexTerm.category || "codex",
+            severity: this.mapCodexSeverity(
+              codexTerm.enforcementLevel || codexTerm.zeroTolerance
+                ? "blocking"
+                : "warning",
+            ),
             enabled: true,
             validator: this.createCodexValidator(codexTerm),
           });
         }
       }
 
-      await frameworkLogger.log('rule-enforcer', '-loaded-object-keys-codexdata-length-codex-rules-', 'info', { message: `Loaded ${Object.keys(codexData).length} codex rules` });
+      await frameworkLogger.log(
+        "rule-enforcer",
+        "-loaded-object-keys-codexdata-length-codex-rules-",
+        "info",
+        { message: `Loaded ${Object.keys(codexData).length} codex rules` },
+      );
     } catch (error) {
-      console.warn('Failed to load codex rules:', error);
+      console.warn("Failed to load codex rules:", error);
     }
   }
 
@@ -149,30 +162,38 @@ export class RuleEnforcer {
    */
   private async loadAgentTriageRules(): Promise<void> {
     try {
-      const fs = await import('fs');
-      const path = await import('path');
+      const fs = await import("fs");
+      const path = await import("path");
 
-      const agentsPath = path.join(process.cwd(), 'AGENTS.md');
-      const content = fs.readFileSync(agentsPath, 'utf8');
+      const agentsPath = path.join(process.cwd(), "AGENTS.md");
+      const content = fs.readFileSync(agentsPath, "utf8");
 
       // Extract triage guidelines from AGENTS.md
-      const triageSection = content.match(/### Triage Summary Guidelines([\s\S]*?)(?=###|$)/);
+      const triageSection = content.match(
+        /### Triage Summary Guidelines([\s\S]*?)(?=###|$)/,
+      );
 
       if (triageSection) {
         this.addRule({
           id: "agent-triage-commit-status",
           name: "Triage Commit Status Reporting",
-          description: "When providing triage summaries after build error resolution or major changes, ALWAYS explicitly state the commit status (successful/failed) to avoid confusion",
+          description:
+            "When providing triage summaries after build error resolution or major changes, ALWAYS explicitly state the commit status (successful/failed) to avoid confusion",
           category: "reporting",
           severity: "info",
           enabled: true,
           validator: this.validateTriageReporting.bind(this),
         });
 
-        await frameworkLogger.log('rule-enforcer', '-loaded-agent-triage-rules-', 'info', { message: 'Loaded agent triage rules' });
+        await frameworkLogger.log(
+          "rule-enforcer",
+          "-loaded-agent-triage-rules-",
+          "info",
+          { message: "Loaded agent triage rules" },
+        );
       }
     } catch (error) {
-      console.warn('Failed to load agent triage rules:', error);
+      console.warn("Failed to load agent triage rules:", error);
     }
   }
 
@@ -182,32 +203,50 @@ export class RuleEnforcer {
   private async loadProcessorRules(): Promise<void> {
     // Processor-specific rules would be loaded here
     // For now, this is a placeholder for future expansion
-    await frameworkLogger.log('rule-enforcer', '-processor-rules-loading-placeholder-', 'info', { message: 'Processor rules loading placeholder' });
+    await frameworkLogger.log(
+      "rule-enforcer",
+      "-processor-rules-loading-placeholder-",
+      "info",
+      { message: "Processor rules loading placeholder" },
+    );
   }
 
   /**
    * Map codex severity to rule severity
    */
-  private mapCodexSeverity(codexSeverity: string): "error" | "warning" | "info" | "blocking" | "high" {
+  private mapCodexSeverity(
+    codexSeverity: string,
+  ): "error" | "warning" | "info" | "blocking" | "high" {
     switch (codexSeverity.toLowerCase()) {
-      case 'blocking': return 'blocking';
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
-      default: return 'info';
+      case "blocking":
+        return "blocking";
+      case "high":
+        return "error";
+      case "medium":
+        return "warning";
+      case "low":
+        return "info";
+      default:
+        return "info";
     }
   }
 
   /**
    * Create validator for codex terms
    */
-  private createCodexValidator(codexTerm: any): (context: RuleValidationContext) => Promise<RuleValidationResult> {
-    return async (context: RuleValidationContext): Promise<RuleValidationResult> => {
+  private createCodexValidator(
+    codexTerm: any,
+  ): (context: RuleValidationContext) => Promise<RuleValidationResult> {
+    return async (
+      context: RuleValidationContext,
+    ): Promise<RuleValidationResult> => {
       // Basic validation - could be enhanced based on specific codex term requirements
       const passed = true; // Placeholder - actual validation logic would go here
       return {
         passed,
-        message: passed ? `${codexTerm.title} validated` : `${codexTerm.title} violation detected`,
+        message: passed
+          ? `${codexTerm.title} validated`
+          : `${codexTerm.title} violation detected`,
       };
     };
   }
@@ -215,7 +254,9 @@ export class RuleEnforcer {
   /**
    * Validate triage reporting requirements
    */
-  private async validateTriageReporting(context: RuleValidationContext): Promise<RuleValidationResult> {
+  private async validateTriageReporting(
+    context: RuleValidationContext,
+  ): Promise<RuleValidationResult> {
     // This rule validates that triage summaries include commit status
     // Would be checked during reporting operations
     return {
@@ -239,15 +280,15 @@ export class RuleEnforcer {
       validator: this.validateNoDuplicateCode.bind(this),
     });
 
-     this.addRule({
-       id: "context-analysis-integration",
-       name: "Context Analysis Integration",
-       description: "Ensures new code integrates properly with context analysis",
-       category: "architecture",
-       severity: "warning",
-       enabled: true,
-       validator: this.validateContextAnalysisIntegration.bind(this),
-     });
+    this.addRule({
+      id: "context-analysis-integration",
+      name: "Context Analysis Integration",
+      description: "Ensures new code integrates properly with context analysis",
+      category: "architecture",
+      severity: "warning",
+      enabled: true,
+      validator: this.validateContextAnalysisIntegration.bind(this),
+    });
 
     this.addRule({
       id: "memory-optimization",
@@ -284,7 +325,8 @@ export class RuleEnforcer {
     this.addRule({
       id: "tests-required",
       name: "Tests Required for New Code",
-      description: "Requires tests when creating new components or modifying functionality",
+      description:
+        "Requires tests when creating new components or modifying functionality",
       category: "testing",
       severity: "error",
       enabled: true,
@@ -295,7 +337,8 @@ export class RuleEnforcer {
     this.addRule({
       id: "documentation-required",
       name: "Documentation Required (Codex Term #46)",
-      description: "Requires comprehensive documentation for all new code, APIs, and architectural changes",
+      description:
+        "Requires comprehensive documentation for all new code, APIs, and architectural changes",
       category: "code-quality",
       severity: "error", // Upgraded from warning - documentation is critical
       enabled: true,
@@ -635,17 +678,26 @@ export class RuleEnforcer {
     }
 
     const applicableRules = this.getApplicableRules(operation, context);
-    await frameworkLogger.log('rule-enforcer', '-debug-applicablerules-length-applicable-rules-for', 'info', { message: 
-      `🔍 DEBUG: ${applicableRules.length} applicable rules for operation '${operation}': ${applicableRules.map((r) => r.id).join(", ")}`,
-     });
+    await frameworkLogger.log(
+      "rule-enforcer",
+      "-debug-applicablerules-length-applicable-rules-for",
+      "info",
+      {
+        message: `🔍 DEBUG: ${applicableRules.length} applicable rules for operation '${operation}': ${applicableRules.map((r) => r.id).join(", ")}`,
+      },
+    );
     const results: RuleValidationResult[] = [];
     const errors: string[] = [];
     const warnings: string[] = [];
 
     for (const rule of applicableRules) {
       try {
-        if (rule.id === 'resolve-all-errors') {
-          await frameworkLogger.log('rule-enforcer', 'APPLYING resolve-all-errors rule', 'info');
+        if (rule.id === "resolve-all-errors") {
+          await frameworkLogger.log(
+            "rule-enforcer",
+            "APPLYING resolve-all-errors rule",
+            "info",
+          );
         }
         const result = await rule.validator(context);
 
@@ -702,18 +754,32 @@ export class RuleEnforcer {
 
     for (const violation of violations) {
       try {
-        await frameworkLogger.log('rule-enforcer', '-enforcer-attempting-to-fix-rule-violation-violati', 'info', { message: `🔧 Enforcer: Attempting to fix rule violation: ${violation.rule}` });
+        await frameworkLogger.log(
+          "rule-enforcer",
+          "-enforcer-attempting-to-fix-rule-violation-violati",
+          "info",
+          {
+            message: `🔧 Enforcer: Attempting to fix rule violation: ${violation.rule}`,
+          },
+        );
 
         const agentSkill = this.getAgentForRule(violation.rule);
         if (!agentSkill) {
-          await frameworkLogger.log('rule-enforcer', '-enforcer-no-agent-skill-mapping-found-for-rule-vi', 'error', { message: `❌ Enforcer: No agent/skill mapping found for rule: ${violation.rule}` });
+          await frameworkLogger.log(
+            "rule-enforcer",
+            "-enforcer-no-agent-skill-mapping-found-for-rule-vi",
+            "error",
+            {
+              message: `❌ Enforcer: No agent/skill mapping found for rule: ${violation.rule}`,
+            },
+          );
           fixes.push({
             ruleId: violation.rule,
-            agent: '',
-            skill: '',
+            agent: "",
+            skill: "",
             context,
             attempted: false,
-            error: 'No agent/skill mapping found'
+            error: "No agent/skill mapping found",
           });
           continue;
         }
@@ -721,7 +787,7 @@ export class RuleEnforcer {
         const { agent, skill } = agentSkill;
 
         // Call the skill invocation MCP server to delegate to the agent/skill
-        const { mcpClientManager } = await import("../mcps/mcp-client")
+        const { mcpClientManager } = await import("../mcps/mcp-client");
         const result = await mcpClientManager.callServerTool(
           "skill-invocation",
           "invoke-skill",
@@ -735,13 +801,20 @@ export class RuleEnforcer {
                 rule: violation.rule,
                 message: violation.message,
                 files: context.files,
-                newCode: context.newCode
-              }
-            }
-          }
+                newCode: context.newCode,
+              },
+            },
+          },
         );
 
-        await frameworkLogger.log('rule-enforcer', '-enforcer-agent-agent-attempted-fix-for-rule-viola', 'success', { message: `✅ Enforcer: Agent ${agent} attempted fix for rule: ${violation.rule}` });
+        await frameworkLogger.log(
+          "rule-enforcer",
+          "-enforcer-agent-agent-attempted-fix-for-rule-viola",
+          "success",
+          {
+            message: `✅ Enforcer: Agent ${agent} attempted fix for rule: ${violation.rule}`,
+          },
+        );
 
         fixes.push({
           ruleId: violation.rule,
@@ -749,19 +822,25 @@ export class RuleEnforcer {
           skill,
           context,
           attempted: true,
-          success: true
+          success: true,
         });
-
       } catch (error) {
-        await frameworkLogger.log('rule-enforcer', '-enforcer-failed-to-call-agent-for-rule-violation-', 'error', { message: `❌ Enforcer: Failed to call agent for rule ${violation.rule}: ${error instanceof Error ? error.message : String(error)}` });
+        await frameworkLogger.log(
+          "rule-enforcer",
+          "-enforcer-failed-to-call-agent-for-rule-violation-",
+          "error",
+          {
+            message: `❌ Enforcer: Failed to call agent for rule ${violation.rule}: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        );
         fixes.push({
           ruleId: violation.rule,
-          agent: '',
-          skill: '',
+          agent: "",
+          skill: "",
           context,
           attempted: true,
           success: false,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -773,74 +852,208 @@ export class RuleEnforcer {
    * Get the appropriate agent/skill for a rule violation
    * Central governance mapping for all codex compliance actions
    */
-  private getAgentForRule(ruleId: string): { agent: string; skill: string } | null {
+  private getAgentForRule(
+    ruleId: string,
+  ): { agent: string; skill: string } | null {
     const ruleMappings: Record<string, { agent: string; skill: string }> = {
       // Existing mappings
       "tests-required": { agent: "test-architect", skill: "testing-strategy" },
       "no-duplicate-code": { agent: "refactorer", skill: "code-review" },
       "no-over-engineering": { agent: "architect", skill: "project-analysis" },
-      "resolve-all-errors": { agent: "bug-triage-specialist", skill: "code-review" },
-      "prevent-infinite-loops": { agent: "bug-triage-specialist", skill: "code-review" },
-      "state-management-patterns": { agent: "architect", skill: "project-analysis" },
+      "resolve-all-errors": {
+        agent: "bug-triage-specialist",
+        skill: "code-review",
+      },
+      "prevent-infinite-loops": {
+        agent: "bug-triage-specialist",
+        skill: "code-review",
+      },
+      "state-management-patterns": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
       "import-consistency": { agent: "refactorer", skill: "code-review" },
-      "documentation-required": { agent: "librarian", skill: "project-analysis" },
+      "documentation-required": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
       "clean-debug-logs": { agent: "refactorer", skill: "code-review" },
 
       // Phase 1: Complete Violation-to-Skill Mapping
-      "input-validation": { agent: "test-architect", skill: "testing-strategy" },
+      "input-validation": {
+        agent: "test-architect",
+        skill: "testing-strategy",
+      },
       "type-safety-first": { agent: "enforcer", skill: "code-review" },
-      "progressive-prod-ready-code": { agent: "code-reviewer", skill: "code-review" },
-      "no-patches-stubs-bridge-code": { agent: "architect", skill: "project-analysis" },
-      "fit-for-purpose-and-prod-level-code": { agent: "architect", skill: "project-analysis" },
-      "surgical-fixes-where-needed": { agent: "bug-triage-specialist", skill: "code-review" },
-      "batched-introspection-cycles": { agent: "librarian", skill: "project-analysis" },
-      "use-shared-global-state": { agent: "architect", skill: "project-analysis" },
-      "single-source-of-truth": { agent: "architect", skill: "project-analysis" },
-      "early-returns-guard-clauses": { agent: "refactorer", skill: "code-review" },
-      "error-boundaries-graceful-degradation": { agent: "bug-triage-specialist", skill: "code-review" },
-      "immutability-where-possible": { agent: "refactorer", skill: "code-review" },
-      "separation-of-concerns": { agent: "architect", skill: "project-analysis" },
+      "progressive-prod-ready-code": {
+        agent: "code-reviewer",
+        skill: "code-review",
+      },
+      "no-patches-stubs-bridge-code": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "fit-for-purpose-and-prod-level-code": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "surgical-fixes-where-needed": {
+        agent: "bug-triage-specialist",
+        skill: "code-review",
+      },
+      "batched-introspection-cycles": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
+      "use-shared-global-state": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "single-source-of-truth": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "early-returns-guard-clauses": {
+        agent: "refactorer",
+        skill: "code-review",
+      },
+      "error-boundaries-graceful-degradation": {
+        agent: "bug-triage-specialist",
+        skill: "code-review",
+      },
+      "immutability-where-possible": {
+        agent: "refactorer",
+        skill: "code-review",
+      },
+      "separation-of-concerns": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
       "dry-dont-repeat-yourself": { agent: "refactorer", skill: "code-review" },
-      "yagni-you-arent-gonna-need-it": { agent: "architect", skill: "project-analysis" },
+      "yagni-you-arent-gonna-need-it": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
       "meaningful-naming": { agent: "code-reviewer", skill: "code-review" },
       "small-focused-functions": { agent: "refactorer", skill: "code-review" },
       "consistent-code-style": { agent: "refactorer", skill: "code-review" },
       "dependency-injection": { agent: "architect", skill: "project-analysis" },
-      "interface-segregation": { agent: "architect", skill: "project-analysis" },
-      "open-closed-principle": { agent: "architect", skill: "project-analysis" },
-      "single-responsibility-principle": { agent: "architect", skill: "project-analysis" },
+      "interface-segregation": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "open-closed-principle": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "single-responsibility-principle": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
       "code-rot-prevention": { agent: "refactorer", skill: "code-review" },
-      "fast-feedback-loops": { agent: "test-architect", skill: "testing-strategy" },
-      "performance-budget-enforcement": { agent: "refactorer", skill: "performance-optimization" },
-      "security-by-design": { agent: "security-auditor", skill: "security-audit" },
+      "fast-feedback-loops": {
+        agent: "test-architect",
+        skill: "testing-strategy",
+      },
+      "performance-budget-enforcement": {
+        agent: "refactorer",
+        skill: "performance-optimization",
+      },
+      "security-by-design": {
+        agent: "security-auditor",
+        skill: "security-audit",
+      },
       "accessibility-first": { agent: "architect", skill: "project-analysis" },
-      "async-await-over-callbacks": { agent: "refactorer", skill: "refactoring-strategies" },
-      "proper-error-handling": { agent: "bug-triage-specialist", skill: "code-review" },
-      "logging-and-monitoring": { agent: "architect", skill: "project-analysis" },
-      "documentation-updates": { agent: "librarian", skill: "project-analysis" },
-      "version-control-best-practices": { agent: "librarian", skill: "project-analysis" },
-      "continuous-integration": { agent: "test-architect", skill: "testing-strategy" },
-      "configuration-management": { agent: "architect", skill: "project-analysis" },
-      "functionality-retention": { agent: "test-architect", skill: "testing-strategy" },
+      "async-await-over-callbacks": {
+        agent: "refactorer",
+        skill: "refactoring-strategies",
+      },
+      "proper-error-handling": {
+        agent: "bug-triage-specialist",
+        skill: "code-review",
+      },
+      "logging-and-monitoring": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "documentation-updates": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
+      "version-control-best-practices": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
+      "continuous-integration": {
+        agent: "test-architect",
+        skill: "testing-strategy",
+      },
+      "configuration-management": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "functionality-retention": {
+        agent: "test-architect",
+        skill: "testing-strategy",
+      },
       "gradual-refactoring": { agent: "refactorer", skill: "code-review" },
       "modular-design": { agent: "architect", skill: "project-analysis" },
       "code-review-standards": { agent: "code-reviewer", skill: "code-review" },
       "deployment-safety": { agent: "architect", skill: "project-analysis" },
-      "infrastructure-as-code-validation": { agent: "architect", skill: "project-analysis" },
-      "test-execution-optimization": { agent: "test-architect", skill: "testing-strategy" },
+      "infrastructure-as-code-validation": {
+        agent: "architect",
+        skill: "project-analysis",
+      },
+      "test-execution-optimization": {
+        agent: "test-architect",
+        skill: "testing-strategy",
+      },
 
       // Additional codex terms 44-59
-      "system-integrity-cross-check": { agent: "librarian", skill: "project-analysis" },
-      "integration-testing-mandate": { agent: "test-architect", skill: "testing-strategy" },
-      "path-resolution-abstraction": { agent: "refactorer", skill: "refactoring-strategies" },
-      "feature-completeness-validation": { agent: "architect", skill: "architecture-patterns" },
-      "architecture-review-requirements": { agent: "architect", skill: "architecture-patterns" },
-      "self-evolution-safety-framework": { agent: "architect", skill: "architecture-patterns" },
-      "ci-cd-pipeline-enforcement": { agent: "test-architect", skill: "testing-strategy" },
-      "npm-package-publishing-compliance": { agent: "librarian", skill: "project-analysis" },
-      "version-bumping-restrictions": { agent: "librarian", skill: "git-workflow" },
-      "framework-command-orchestration": { agent: "orchestrator", skill: "project-analysis" },
-      "universal-librarian-consultation": { agent: "librarian", skill: "project-analysis" }
+      "system-integrity-cross-check": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
+      "integration-testing-mandate": {
+        agent: "test-architect",
+        skill: "testing-strategy",
+      },
+      "path-resolution-abstraction": {
+        agent: "refactorer",
+        skill: "refactoring-strategies",
+      },
+      "feature-completeness-validation": {
+        agent: "architect",
+        skill: "architecture-patterns",
+      },
+      "architecture-review-requirements": {
+        agent: "architect",
+        skill: "architecture-patterns",
+      },
+      "self-evolution-safety-framework": {
+        agent: "architect",
+        skill: "architecture-patterns",
+      },
+      "ci-cd-pipeline-enforcement": {
+        agent: "test-architect",
+        skill: "testing-strategy",
+      },
+      "npm-package-publishing-compliance": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
+      "version-bumping-restrictions": {
+        agent: "librarian",
+        skill: "git-workflow",
+      },
+      "framework-command-orchestration": {
+        agent: "orchestrator",
+        skill: "project-analysis",
+      },
+      "universal-librarian-consultation": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
     };
 
     return ruleMappings[ruleId] || null;
@@ -906,12 +1119,12 @@ export class RuleEnforcer {
         return operation === "write" && !!context.newCode; // Critical for preventing module resolution issues
       case "documentation-required":
         return operation === "write" || operation === "modify";
-       case "clean-debug-logs":
-         return operation === "write" && !!context.newCode; // Development triage rule
-       case "console-log-usage":
-         return operation === "write" && !!context.newCode; // Critical for production log hygiene
-       default:
-         return true;
+      case "clean-debug-logs":
+        return operation === "write" && !!context.newCode; // Development triage rule
+      case "console-log-usage":
+        return operation === "write" && !!context.newCode; // Critical for production log hygiene
+      default:
+        return true;
     }
   }
 
@@ -1362,9 +1575,15 @@ export class RuleEnforcer {
             newCode.includes("get ") ||
             newCode.includes("set ");
 
-          if (!hasJSDoc && !isSimple && !newCode.includes("Mock documentation")) {
+          if (
+            !hasJSDoc &&
+            !isSimple &&
+            !newCode.includes("Mock documentation")
+          ) {
             violations.push(`Exported ${itemName} lacks JSDoc documentation`);
-            suggestions.push(`Add JSDoc comment with @param and @returns for ${itemName}`);
+            suggestions.push(
+              `Add JSDoc comment with @param and @returns for ${itemName}`,
+            );
           }
         }
       }
@@ -1372,26 +1591,45 @@ export class RuleEnforcer {
 
     // 2. Check for architectural changes requiring documentation updates
     if (newCode.includes("interface") || newCode.includes("abstract class")) {
-      violations.push("Architectural changes detected - README and docs must be updated");
+      violations.push(
+        "Architectural changes detected - README and docs must be updated",
+      );
       suggestions.push("Update architecture documentation and README.md");
     }
 
     // 3. Check for API changes requiring documentation
-    if (newCode.includes("export") && (newCode.includes("async") || newCode.includes("Promise"))) {
-      violations.push("API changes detected - API documentation must be updated");
+    if (
+      newCode.includes("export") &&
+      (newCode.includes("async") || newCode.includes("Promise"))
+    ) {
+      violations.push(
+        "API changes detected - API documentation must be updated",
+      );
       suggestions.push("Update API documentation for new/modified endpoints");
     }
 
     // 4. Check for configuration changes requiring version updates
-    if (newCode.includes("config") || newCode.includes("Config") || newCode.includes(".json")) {
-      violations.push("Configuration changes detected - version updates required");
+    if (
+      newCode.includes("config") ||
+      newCode.includes("Config") ||
+      newCode.includes(".json")
+    ) {
+      violations.push(
+        "Configuration changes detected - version updates required",
+      );
       suggestions.push("Update version fields in package.json and codex.json");
     }
 
     // 5. Universal librarian consultation requirement
-    violations.push("Universal librarian consultation required for all code changes");
-    suggestions.push("Consult librarian for documentation review and version updates");
-    suggestions.push("Ensure README.md, architecture docs, and API docs are current");
+    violations.push(
+      "Universal librarian consultation required for all code changes",
+    );
+    suggestions.push(
+      "Consult librarian for documentation review and version updates",
+    );
+    suggestions.push(
+      "Ensure README.md, architecture docs, and API docs are current",
+    );
 
     if (violations.length > 0) {
       return {
@@ -1401,7 +1639,7 @@ export class RuleEnforcer {
           ...suggestions,
           "Run: Consult librarian for comprehensive documentation review",
           "Update AGENTS.md if agent capabilities changed",
-          "Update version fields in relevant configuration files"
+          "Update version fields in relevant configuration files",
         ],
       };
     }
@@ -1731,7 +1969,9 @@ export class RuleEnforcer {
         "Replace console.log with proper logging framework (frameworkLogger)",
       );
       // Force failure for testing
-      violations.push("TEST: Console.log detected - blocking for codex compliance");
+      violations.push(
+        "TEST: Console.log detected - blocking for codex compliance",
+      );
     }
 
     // Check for unhandled promise rejections
@@ -2166,14 +2406,22 @@ export class RuleEnforcer {
 
     // Skip validation if no code to check
     if (!newCode) {
-      return { passed: true, message: "No code to validate for console.log usage" };
+      return {
+        passed: true,
+        message: "No code to validate for console.log usage",
+      };
     }
 
     // Check for console.log usage
-    if (newCode.includes("await frameworkLogger.log('rule-enforcer', '-return-passed-false-message-console-log-', 'info', { message: ")) {
+    if (
+      newCode.includes(
+        "await frameworkLogger.log('rule-enforcer', '-return-passed-false-message-console-log-', 'info', { message: ",
+      )
+    ) {
       return {
         passed: false,
-        message: "await frameworkLogger.log('rule-enforcer', '-', 'info', { message:  } }); detected - use frameworkLogger for production logs or remove for debugging",
+        message:
+          "await frameworkLogger.log('rule-enforcer', '-', 'info', { message:  } }); detected - use frameworkLogger for production logs or remove for debugging",
       };
     }
 

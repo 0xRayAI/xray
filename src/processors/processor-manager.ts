@@ -116,10 +116,15 @@ export class ProcessorManager {
       healthStatus: "healthy",
     });
 
-    frameworkLogger.log("processor-manager", "processor registered", "success", {
-      name: config.name,
-      type: config.type
-    });
+    frameworkLogger.log(
+      "processor-manager",
+      "processor registered",
+      "success",
+      {
+        name: config.name,
+        type: config.type,
+      },
+    );
   }
 
   /**
@@ -134,9 +139,14 @@ export class ProcessorManager {
     this.metrics.delete(name);
     this.activeProcessors.delete(name);
 
-    frameworkLogger.log("processor-manager", "processor unregistered", "success", {
-      name
-    });
+    frameworkLogger.log(
+      "processor-manager",
+      "processor unregistered",
+      "success",
+      {
+        name,
+      },
+    );
   }
 
   /**
@@ -158,7 +168,12 @@ export class ProcessorManager {
       },
     );
 
-    frameworkLogger.log("processor-manager", "initializing processors", "info", { jobId });
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing processors",
+      "info",
+      { jobId },
+    );
 
     const initPromises = Array.from(this.processors.values())
       .filter((p) => p.enabled)
@@ -250,9 +265,11 @@ export class ProcessorManager {
   /**
    * Execute pre-processors for a given operation
    */
-  async executePreProcessors(
-    input: { tool: string; args?: any; context?: any },
-  ): Promise<{ success: boolean; results: ProcessorResult[] }> {
+  async executePreProcessors(input: {
+    tool: string;
+    args?: any;
+    context?: any;
+  }): Promise<{ success: boolean; results: ProcessorResult[] }> {
     const jobId = `execute-pre-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const { tool, args, context } = input;
 
@@ -276,7 +293,6 @@ export class ProcessorManager {
     const results: ProcessorResult[] = [];
 
     for (const config of preProcessors) {
-
       const result = await this.executeProcessor(config.name, context);
       results.push(result);
 
@@ -597,32 +613,56 @@ export class ProcessorManager {
 
   private async initializePreValidateProcessor(): Promise<void> {
     // Setup syntax checking and validation hooks
-    frameworkLogger.log("processor-manager", "initializing pre-validate processor", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing pre-validate processor",
+      "info",
+    );
   }
 
   private async initializeCodexComplianceProcessor(): Promise<void> {
     // Setup codex compliance validation
-    frameworkLogger.log("processor-manager", "initializing codex compliance processor", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing codex compliance processor",
+      "info",
+    );
   }
 
   private async initializeErrorBoundaryProcessor(): Promise<void> {
     // Setup error boundary mechanisms
-    frameworkLogger.log("processor-manager", "initializing error boundary processor", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing error boundary processor",
+      "info",
+    );
   }
 
   private async initializeTestExecutionProcessor(): Promise<void> {
     // Setup automatic test execution
-    frameworkLogger.log("processor-manager", "initializing test execution processor", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing test execution processor",
+      "info",
+    );
   }
 
   private async initializeRegressionTestingProcessor(): Promise<void> {
     // Setup regression testing mechanisms
-    frameworkLogger.log("processor-manager", "initializing regression testing processor", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing regression testing processor",
+      "info",
+    );
   }
 
   private async initializeStateValidationProcessor(): Promise<void> {
     // Setup state validation post-operation
-    frameworkLogger.log("processor-manager", "initializing state validation processor", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing state validation processor",
+      "info",
+    );
   }
 
   private async executePreValidate(context: any): Promise<any> {
@@ -646,23 +686,29 @@ export class ProcessorManager {
     const { operation } = context;
 
     try {
-      const { RuleEnforcer } = await import('../enforcement/rule-enforcer');
+      const { RuleEnforcer } = await import("../enforcement/rule-enforcer");
       const ruleEnforcer = new RuleEnforcer();
 
       const validationContext = {
         files: context.files || [],
-        newCode: context.newCode || '',
+        newCode: context.newCode || "",
         existingCode: context.existingCode || new Map(),
         tests: context.tests || [],
         dependencies: context.dependencies || [],
-        operation: context.operation || 'unknown'
+        operation: context.operation || "unknown",
       };
 
-      const result = await ruleEnforcer.validateOperation(operation, validationContext);
+      const result = await ruleEnforcer.validateOperation(
+        operation,
+        validationContext,
+      );
 
       // If violations found, delegate to enforcer for centralized remediation
       if (!result.passed && result.errors.length > 0) {
-        await ruleEnforcer.attemptRuleViolationFixes(result.errors, validationContext);
+        await ruleEnforcer.attemptRuleViolationFixes(
+          result.errors,
+          validationContext,
+        );
       }
 
       return {
@@ -671,18 +717,20 @@ export class ProcessorManager {
         warnings: result.warnings,
         termsChecked: result.results.length,
         operation: operation,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.warn('Codex compliance check failed:', error);
+      console.warn("Codex compliance check failed:", error);
       return {
         compliant: true, // Allow processing to continue
-        violations: [`Compliance check error: ${error instanceof Error ? error.message : String(error)}`],
+        violations: [
+          `Compliance check error: ${error instanceof Error ? error.message : String(error)}`,
+        ],
         warnings: [],
         termsChecked: 0,
         operation: operation,
         error: true,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }
@@ -694,14 +742,22 @@ export class ProcessorManager {
 
   private async executeTestExecution(context: any): Promise<any> {
     // Execute tests automatically
-    frameworkLogger.log("processor-manager", "executing automatic tests", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "executing automatic tests",
+      "info",
+    );
     // Placeholder - would integrate with test runner
     return { testsExecuted: 0, passed: 0, failed: 0 };
   }
 
   private async executeRegressionTesting(context: any): Promise<any> {
     // Run regression tests
-    frameworkLogger.log("processor-manager", "running regression tests", "info");
+    frameworkLogger.log(
+      "processor-manager",
+      "running regression tests",
+      "info",
+    );
     // Placeholder - would integrate with regression test suite
     return { regressions: "checked", issues: [] };
   }
@@ -757,22 +813,34 @@ export class ProcessorManager {
    */
   private async attemptRuleViolationFixes(
     violations: any[],
-    context: any
+    context: any,
   ): Promise<void> {
     for (const violation of violations) {
       try {
-        await frameworkLogger.log('processor-manager', '-attempting-to-fix-rule-violation-violation-rule-', 'info', { message: `🔧 Attempting to fix rule violation: ${violation.rule}` });
+        await frameworkLogger.log(
+          "processor-manager",
+          "-attempting-to-fix-rule-violation-violation-rule-",
+          "info",
+          { message: `🔧 Attempting to fix rule violation: ${violation.rule}` },
+        );
 
         const agentSkill = this.getAgentForRule(violation.rule);
         if (!agentSkill) {
-          await frameworkLogger.log('processor-manager', '-no-agent-skill-mapping-found-for-rule-violation-r', 'error', { message: `❌ No agent/skill mapping found for rule: ${violation.rule}` });
+          await frameworkLogger.log(
+            "processor-manager",
+            "-no-agent-skill-mapping-found-for-rule-violation-r",
+            "error",
+            {
+              message: `❌ No agent/skill mapping found for rule: ${violation.rule}`,
+            },
+          );
           continue;
         }
 
         const { agent, skill } = agentSkill;
 
         // Call the skill invocation MCP server to delegate to the agent/skill
-        const { mcpClientManager } = await import("../mcps/mcp-client")
+        const { mcpClientManager } = await import("../mcps/mcp-client");
         const result = await mcpClientManager.callServerTool(
           "skill-invocation",
           "invoke-skill",
@@ -786,16 +854,29 @@ export class ProcessorManager {
                 rule: violation.rule,
                 message: violation.message,
                 files: context.files,
-                newCode: context.newCode
-              }
-            }
-          }
+                newCode: context.newCode,
+              },
+            },
+          },
         );
 
-        await frameworkLogger.log('processor-manager', '-agent-agent-attempted-fix-for-rule-violation-rule', 'success', { message: `✅ Agent ${agent} attempted fix for rule: ${violation.rule}` });
-
+        await frameworkLogger.log(
+          "processor-manager",
+          "-agent-agent-attempted-fix-for-rule-violation-rule",
+          "success",
+          {
+            message: `✅ Agent ${agent} attempted fix for rule: ${violation.rule}`,
+          },
+        );
       } catch (error) {
-        await frameworkLogger.log('processor-manager', '-failed-to-call-agent-for-rule-violation-rule-erro', 'error', { message: `❌ Failed to call agent for rule ${violation.rule}: ${error instanceof Error ? error.message : String(error)}` });
+        await frameworkLogger.log(
+          "processor-manager",
+          "-failed-to-call-agent-for-rule-violation-rule-erro",
+          "error",
+          {
+            message: `❌ Failed to call agent for rule ${violation.rule}: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        );
       }
     }
   }
@@ -803,17 +884,43 @@ export class ProcessorManager {
   /**
    * Get the appropriate agent/skill for a rule violation
    */
-  private getAgentForRule(ruleId: string): { agent: string; skill: string } | null {
+  private getAgentForRule(
+    ruleId: string,
+  ): { agent: string; skill: string } | null {
     const ruleMappings: Record<string, { agent: string; skill: string }> = {
       "tests-required": { agent: "test-architect", skill: "testing-strategy" },
-      "no-duplicate-code": { agent: "refactorer", skill: "refactoring-strategies" },
-      "no-over-engineering": { agent: "architect", skill: "architecture-patterns" },
-      "resolve-all-errors": { agent: "bug-triage-specialist", skill: "code-review" },
-      "prevent-infinite-loops": { agent: "bug-triage-specialist", skill: "code-review" },
-      "state-management-patterns": { agent: "architect", skill: "architecture-patterns" },
-      "import-consistency": { agent: "refactorer", skill: "refactoring-strategies" },
-      "documentation-required": { agent: "librarian", skill: "project-analysis" },
-      "clean-debug-logs": { agent: "refactorer", skill: "refactoring-strategies" }
+      "no-duplicate-code": {
+        agent: "refactorer",
+        skill: "refactoring-strategies",
+      },
+      "no-over-engineering": {
+        agent: "architect",
+        skill: "architecture-patterns",
+      },
+      "resolve-all-errors": {
+        agent: "bug-triage-specialist",
+        skill: "code-review",
+      },
+      "prevent-infinite-loops": {
+        agent: "bug-triage-specialist",
+        skill: "code-review",
+      },
+      "state-management-patterns": {
+        agent: "architect",
+        skill: "architecture-patterns",
+      },
+      "import-consistency": {
+        agent: "refactorer",
+        skill: "refactoring-strategies",
+      },
+      "documentation-required": {
+        agent: "librarian",
+        skill: "project-analysis",
+      },
+      "clean-debug-logs": {
+        agent: "refactorer",
+        skill: "refactoring-strategies",
+      },
     };
 
     return ruleMappings[ruleId] || null;

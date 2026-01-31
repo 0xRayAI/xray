@@ -67,12 +67,22 @@ export interface ValidationResult {
 }
 
 export class AgentConfigValidator {
-  private readonly requiredFields = ["name", "description", "version", "model", "mode"];
+  private readonly requiredFields = [
+    "name",
+    "description",
+    "version",
+    "model",
+    "mode",
+  ];
   private readonly validModes = ["primary", "subagent"];
   private readonly validLogLevels = ["debug", "info", "warn", "error"];
   private readonly validLogFormats = ["json", "text"];
   private readonly validPriorities = ["low", "medium", "high", "critical"];
-  private readonly validProcessorTypes = ["validation", "orchestration", "monitoring"];
+  private readonly validProcessorTypes = [
+    "validation",
+    "orchestration",
+    "monitoring",
+  ];
 
   /**
    * Validate agent configuration from file
@@ -114,7 +124,12 @@ export class AgentConfigValidator {
         "agent-config-validator",
         `Configuration validation ${result.valid ? "passed" : "failed"} for ${filePath}`,
         result.valid ? "success" : "error",
-        { jobId, filePath, errorCount: result.errors.length, warningCount: result.warnings.length },
+        {
+          jobId,
+          filePath,
+          errorCount: result.errors.length,
+          warningCount: result.warnings.length,
+        },
       );
 
       return {
@@ -126,12 +141,17 @@ export class AgentConfigValidator {
         "agent-config-validator",
         `Configuration validation error for ${filePath}`,
         "error",
-        { jobId, error: error instanceof Error ? error.message : String(error) },
+        {
+          jobId,
+          error: error instanceof Error ? error.message : String(error),
+        },
       );
 
       return {
         valid: false,
-        errors: [`Failed to parse configuration: ${error instanceof Error ? error.message : String(error)}`],
+        errors: [
+          `Failed to parse configuration: ${error instanceof Error ? error.message : String(error)}`,
+        ],
         warnings: [],
         config: null,
       };
@@ -154,7 +174,9 @@ export class AgentConfigValidator {
 
     // Validate mode
     if (config.mode && !this.validModes.includes(config.mode)) {
-      errors.push(`Invalid mode '${config.mode}'. Must be one of: ${this.validModes.join(", ")}`);
+      errors.push(
+        `Invalid mode '${config.mode}'. Must be one of: ${this.validModes.join(", ")}`,
+      );
     }
 
     // Validate logging configuration
@@ -164,7 +186,11 @@ export class AgentConfigValidator {
 
     // Validate processor pipeline
     if (config.processor_pipeline) {
-      this.validateProcessorPipeline(config.processor_pipeline, errors, warnings);
+      this.validateProcessorPipeline(
+        config.processor_pipeline,
+        errors,
+        warnings,
+      );
     }
 
     // Validate performance configuration
@@ -199,18 +225,25 @@ export class AgentConfigValidator {
     warnings: string[],
   ): void {
     if (logging.level && !this.validLogLevels.includes(logging.level)) {
-      errors.push(`Invalid log level '${logging.level}'. Must be one of: ${this.validLogLevels.join(", ")}`);
+      errors.push(
+        `Invalid log level '${logging.level}'. Must be one of: ${this.validLogLevels.join(", ")}`,
+      );
     }
 
     if (logging.format && !this.validLogFormats.includes(logging.format)) {
-      errors.push(`Invalid log format '${logging.format}'. Must be one of: ${this.validLogFormats.join(", ")}`);
+      errors.push(
+        `Invalid log format '${logging.format}'. Must be one of: ${this.validLogFormats.join(", ")}`,
+      );
     }
 
     if (logging.destinations && !Array.isArray(logging.destinations)) {
       errors.push("logging.destinations must be an array");
     }
 
-    if (logging.retention_days && (typeof logging.retention_days !== "number" || logging.retention_days < 1)) {
+    if (
+      logging.retention_days &&
+      (typeof logging.retention_days !== "number" || logging.retention_days < 1)
+    ) {
       errors.push("logging.retention_days must be a positive number");
     }
   }
@@ -236,21 +269,36 @@ export class AgentConfigValidator {
       if (!processor.type) {
         errors.push(`processor_pipeline[${index}]: missing 'type' field`);
       } else if (!this.validProcessorTypes.includes(processor.type)) {
-        errors.push(`processor_pipeline[${index}]: invalid type '${processor.type}'. Must be one of: ${this.validProcessorTypes.join(", ")}`);
+        errors.push(
+          `processor_pipeline[${index}]: invalid type '${processor.type}'. Must be one of: ${this.validProcessorTypes.join(", ")}`,
+        );
       }
 
       if (!processor.priority) {
         errors.push(`processor_pipeline[${index}]: missing 'priority' field`);
       } else if (!this.validPriorities.includes(processor.priority)) {
-        errors.push(`processor_pipeline[${index}]: invalid priority '${processor.priority}'. Must be one of: ${this.validPriorities.join(", ")}`);
+        errors.push(
+          `processor_pipeline[${index}]: invalid priority '${processor.priority}'. Must be one of: ${this.validPriorities.join(", ")}`,
+        );
       }
 
-      if (processor.timeout_ms && (typeof processor.timeout_ms !== "number" || processor.timeout_ms < 0)) {
-        errors.push(`processor_pipeline[${index}]: timeout_ms must be a non-negative number`);
+      if (
+        processor.timeout_ms &&
+        (typeof processor.timeout_ms !== "number" || processor.timeout_ms < 0)
+      ) {
+        errors.push(
+          `processor_pipeline[${index}]: timeout_ms must be a non-negative number`,
+        );
       }
 
-      if (processor.retry_attempts && (typeof processor.retry_attempts !== "number" || processor.retry_attempts < 0)) {
-        errors.push(`processor_pipeline[${index}]: retry_attempts must be a non-negative number`);
+      if (
+        processor.retry_attempts &&
+        (typeof processor.retry_attempts !== "number" ||
+          processor.retry_attempts < 0)
+      ) {
+        errors.push(
+          `processor_pipeline[${index}]: retry_attempts must be a non-negative number`,
+        );
       }
     });
   }
@@ -263,19 +311,35 @@ export class AgentConfigValidator {
     errors: string[],
     warnings: string[],
   ): void {
-    if (performance.timeout_ms && (typeof performance.timeout_ms !== "number" || performance.timeout_ms < 0)) {
+    if (
+      performance.timeout_ms &&
+      (typeof performance.timeout_ms !== "number" || performance.timeout_ms < 0)
+    ) {
       errors.push("performance.timeout_ms must be a non-negative number");
     }
 
-    if (performance.concurrency_limit && (typeof performance.concurrency_limit !== "number" || performance.concurrency_limit < 1)) {
+    if (
+      performance.concurrency_limit &&
+      (typeof performance.concurrency_limit !== "number" ||
+        performance.concurrency_limit < 1)
+    ) {
       errors.push("performance.concurrency_limit must be a positive number");
     }
 
-    if (performance.memory_limit_mb && (typeof performance.memory_limit_mb !== "number" || performance.memory_limit_mb < 1)) {
+    if (
+      performance.memory_limit_mb &&
+      (typeof performance.memory_limit_mb !== "number" ||
+        performance.memory_limit_mb < 1)
+    ) {
       errors.push("performance.memory_limit_mb must be a positive number");
     }
 
-    if (performance.cpu_limit_percent && (typeof performance.cpu_limit_percent !== "number" || performance.cpu_limit_percent < 1 || performance.cpu_limit_percent > 100)) {
+    if (
+      performance.cpu_limit_percent &&
+      (typeof performance.cpu_limit_percent !== "number" ||
+        performance.cpu_limit_percent < 1 ||
+        performance.cpu_limit_percent > 100)
+    ) {
       errors.push("performance.cpu_limit_percent must be between 1 and 100");
     }
   }
@@ -288,11 +352,17 @@ export class AgentConfigValidator {
     errors: string[],
     warnings: string[],
   ): void {
-    if (security.permission_level && typeof security.permission_level !== "string") {
+    if (
+      security.permission_level &&
+      typeof security.permission_level !== "string"
+    ) {
       errors.push("security.permission_level must be a string");
     }
 
-    if (security.data_classification && typeof security.data_classification !== "string") {
+    if (
+      security.data_classification &&
+      typeof security.data_classification !== "string"
+    ) {
       errors.push("security.data_classification must be a string");
     }
   }
@@ -305,18 +375,35 @@ export class AgentConfigValidator {
     errors: string[],
     warnings: string[],
   ): void {
-    if (errorHandling.retry_attempts && (typeof errorHandling.retry_attempts !== "number" || errorHandling.retry_attempts < 0)) {
-      errors.push("error_handling.retry_attempts must be a non-negative number");
+    if (
+      errorHandling.retry_attempts &&
+      (typeof errorHandling.retry_attempts !== "number" ||
+        errorHandling.retry_attempts < 0)
+    ) {
+      errors.push(
+        "error_handling.retry_attempts must be a non-negative number",
+      );
     }
 
     if (errorHandling.circuit_breaker) {
       const cb = errorHandling.circuit_breaker;
-      if (cb.failure_threshold && (typeof cb.failure_threshold !== "number" || cb.failure_threshold < 1)) {
-        errors.push("error_handling.circuit_breaker.failure_threshold must be a positive number");
+      if (
+        cb.failure_threshold &&
+        (typeof cb.failure_threshold !== "number" || cb.failure_threshold < 1)
+      ) {
+        errors.push(
+          "error_handling.circuit_breaker.failure_threshold must be a positive number",
+        );
       }
 
-      if (cb.recovery_timeout_ms && (typeof cb.recovery_timeout_ms !== "number" || cb.recovery_timeout_ms < 0)) {
-        errors.push("error_handling.circuit_breaker.recovery_timeout_ms must be a non-negative number");
+      if (
+        cb.recovery_timeout_ms &&
+        (typeof cb.recovery_timeout_ms !== "number" ||
+          cb.recovery_timeout_ms < 0)
+      ) {
+        errors.push(
+          "error_handling.circuit_breaker.recovery_timeout_ms must be a non-negative number",
+        );
       }
     }
   }
@@ -332,7 +419,9 @@ export class AgentConfigValidator {
 
     try {
       const files = fs.readdirSync(agentConfigDir);
-      const configFiles = files.filter(f => f.endsWith(".yml") || f.endsWith(".yaml") || f.endsWith(".json"));
+      const configFiles = files.filter(
+        (f) => f.endsWith(".yml") || f.endsWith(".yaml") || f.endsWith(".json"),
+      );
 
       for (const file of configFiles) {
         const filePath = path.join(agentConfigDir, file);
@@ -350,8 +439,8 @@ export class AgentConfigValidator {
 
     const summary = {
       total: results.length,
-      valid: results.filter(r => r.result.valid).length,
-      invalid: results.length - results.filter(r => r.result.valid).length,
+      valid: results.filter((r) => r.result.valid).length,
+      invalid: results.length - results.filter((r) => r.result.valid).length,
     };
 
     frameworkLogger.log(

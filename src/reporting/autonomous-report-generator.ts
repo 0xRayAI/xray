@@ -140,13 +140,15 @@ export class AutonomousReportGenerator {
   /**
    * Generate comprehensive diagnostic report automatically
    */
-  async generateDiagnosticReport(sessionId?: string): Promise<DiagnosticReport> {
+  async generateDiagnosticReport(
+    sessionId?: string,
+  ): Promise<DiagnosticReport> {
     // Check if autonomous reporting is enabled in configuration
     const config = strRayConfigLoader.loadConfig();
     if (!config.autonomous_reporting.enabled) {
       throw new Error(
         "Autonomous reporting is disabled in configuration. " +
-        "Enable it in .opencode/strray/config.json by setting autonomous_reporting.enabled to true."
+          "Enable it in .opencode/strray/config.json by setting autonomous_reporting.enabled to true.",
       );
     }
 
@@ -166,7 +168,7 @@ export class AutonomousReportGenerator {
       const sessionSummary = this.generateSessionSummary(
         healthAssessment,
         criticalIssues,
-        recommendations
+        recommendations,
       );
 
       const report: DiagnosticReport = {
@@ -200,16 +202,19 @@ export class AutonomousReportGenerator {
           recommendations: report.recommendations.length,
         },
         sessionId,
-        `report-${report.reportId}`
+        `report-${report.reportId}`,
       );
 
-      console.log(`🤖 AUTONOMOUS DIAGNOSTIC REPORT GENERATED: ${report.reportId}`);
-      console.log(`   Duration: ${(report.sessionDuration / 1000).toFixed(1)}s`);
+      console.log(
+        `🤖 AUTONOMOUS DIAGNOSTIC REPORT GENERATED: ${report.reportId}`,
+      );
+      console.log(
+        `   Duration: ${(report.sessionDuration / 1000).toFixed(1)}s`,
+      );
       console.log(`   Issues: ${report.criticalIssues.length}`);
       console.log(`   Recommendations: ${report.recommendations.length}`);
 
       return report;
-
     } catch (error) {
       console.error("❌ Autonomous report generation failed:", error);
       await frameworkLogger.log(
@@ -217,7 +222,7 @@ export class AutonomousReportGenerator {
         "report-generation-failed",
         "error",
         { error: error instanceof Error ? error.message : error },
-        sessionId
+        sessionId,
       );
       throw error;
     }
@@ -233,7 +238,7 @@ export class AutonomousReportGenerator {
     activityRate: number;
   }> {
     // Simplified log analysis - in production would query actual logs
-    const sessionStart = Date.now() - (5 * 60 * 1000); // Assume 5-minute session
+    const sessionStart = Date.now() - 5 * 60 * 1000; // Assume 5-minute session
     const simulatedEntries = Math.floor(Math.random() * 1000) + 500;
     const newEntries = Math.floor(simulatedEntries * 0.1);
 
@@ -248,7 +253,9 @@ export class AutonomousReportGenerator {
   /**
    * Analyze agent activities (simplified)
    */
-  private async analyzeAgentActivities(sessionId?: string): Promise<AgentActivity[]> {
+  private async analyzeAgentActivities(
+    sessionId?: string,
+  ): Promise<AgentActivity[]> {
     return [
       {
         agentType: "orchestrator",
@@ -277,7 +284,9 @@ export class AutonomousReportGenerator {
   /**
    * Analyze pipeline operations (simplified)
    */
-  private async analyzePipelineOperations(sessionId?: string): Promise<PipelineActivity[]> {
+  private async analyzePipelineOperations(
+    sessionId?: string,
+  ): Promise<PipelineActivity[]> {
     return [
       {
         pipeline: "pre-validation",
@@ -419,7 +428,11 @@ export class AutonomousReportGenerator {
       cycleNumber: 4,
       testsPassed: 21,
       memoryAlerts: 171,
-      keyIssues: ["memory leaks persist", "concurrent limits broken", "performance budget violations"],
+      keyIssues: [
+        "memory leaks persist",
+        "concurrent limits broken",
+        "performance budget violations",
+      ],
       status: "worsening",
       trendAnalysis: [
         "Test stability: 95.5% success rate (slight decline due to new issue)",
@@ -439,7 +452,8 @@ export class AutonomousReportGenerator {
         priority: "immediate",
         category: "investigation",
         description: "Conduct comprehensive memory profiling session",
-        rationale: "Memory leaks persist despite fixes - need to identify all sources",
+        rationale:
+          "Memory leaks persist despite fixes - need to identify all sources",
         estimatedImpact: "High - could resolve 1.3GB+ memory usage",
         implementationComplexity: "medium",
       },
@@ -468,10 +482,14 @@ export class AutonomousReportGenerator {
   private generateSessionSummary(
     health: SystemHealthAssessment,
     issues: CriticalIssue[],
-    recommendations: Recommendation[]
+    recommendations: Recommendation[],
   ): SessionSummary {
-    const criticalCount = issues.filter(i => i.severity === "critical").length;
-    const unresolvedCount = issues.filter(i => i.resolutionStatus === "unresolved").length;
+    const criticalCount = issues.filter(
+      (i) => i.severity === "critical",
+    ).length;
+    const unresolvedCount = issues.filter(
+      (i) => i.resolutionStatus === "unresolved",
+    ).length;
 
     let overallStatus: "healthy" | "warning" | "critical" = "healthy";
     if (criticalCount > 0) overallStatus = "critical";
@@ -485,14 +503,15 @@ export class AutonomousReportGenerator {
         "No new memory alerts generated in session",
       ],
       criticalUnresolvedIssues: issues
-        .filter(i => i.resolutionStatus === "unresolved")
-        .map(i => i.description),
+        .filter((i) => i.resolutionStatus === "unresolved")
+        .map((i) => i.description),
       nextSteps: [
         "Conduct comprehensive memory profiling",
         "Fix concurrent spawn limit race condition",
         "Resolve performance budget violations",
       ],
-      recommendation: "Conduct comprehensive memory profiling session with heap analysis to identify all leak sources before further development cycles.",
+      recommendation:
+        "Conduct comprehensive memory profiling session with heap analysis to identify all leak sources before further development cycles.",
     };
   }
 
@@ -529,37 +548,44 @@ export class AutonomousReportGenerator {
 Session Duration: ~${(report.sessionDuration / 1000).toFixed(1)} seconds (${new Date(report.timestamp - report.sessionDuration).toLocaleTimeString()} - ${new Date(report.timestamp).toLocaleTimeString()} UTC)
 Total Log Entries: ${report.totalLogEntries} activities (${report.newEntries} new entries)
 Activity Rate: ${report.activityRate.toFixed(1)} operations/second
-Agents Involved: ${report.agentsInvolved.length} active agents (${report.agentsInvolved.map(a => a.agentType).join(", ")})
-Pipelines Used: ${report.pipelinesUsed.length} major pipelines (${report.pipelinesUsed.map(p => p.pipeline).join(", ")})
+Agents Involved: ${report.agentsInvolved.length} active agents (${report.agentsInvolved.map((a) => a.agentType).join(", ")})
+Pipelines Used: ${report.pipelinesUsed.length} major pipelines (${report.pipelinesUsed.map((p) => p.pipeline).join(", ")})
 Validation Cycle: #${report.cycleAnalysis?.cycleNumber || "N/A"}
 
-${report.testResults ? `
+${
+  report.testResults
+    ? `
 ✅ Tests Successfully Executed - Autonomous Analysis
 ${report.testResults.category} Test Suite
 | Test Category | Tests | Status | Notes |
 |---------------|-------|--------|-------|
 | ${report.testResults.category} | ${report.testResults.tests} | ${report.testResults.status.toUpperCase()} | ${report.testResults.notes || "N/A"} |
-` : ""}
+`
+    : ""
+}
 
 🔍 System Health Assessment - Autonomous Analysis
 ${Object.entries(report.systemHealth)
   .filter(([key]) => key !== "trends")
-  .map(([component, health]) => `${component.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase())}: ${health.status.toUpperCase()} ${health.currentIssues ? `- ${health.currentIssues}` : ""}`)
+  .map(
+    ([component, health]) =>
+      `${component.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}: ${health.status.toUpperCase()} ${health.currentIssues ? `- ${health.currentIssues}` : ""}`,
+  )
   .join("\n")}
 
 🤖 Agent Activities During Session
 Active Agents During Execution
-${report.agentsInvolved.map(agent => `| ${agent.agentType} | ${agent.invocations} | ${agent.executionMode} | ${agent.status.toUpperCase()} | ${agent.notes || ""} |`).join("\n")}
+${report.agentsInvolved.map((agent) => `| ${agent.agentType} | ${agent.invocations} | ${agent.executionMode} | ${agent.status.toUpperCase()} | ${agent.notes || ""} |`).join("\n")}
 
 🔄 Pipeline Operations During Session
 Pipelines Activated
-${report.pipelinesUsed.map(pipeline => `| ${pipeline.pipeline} | ${pipeline.purpose} | ${pipeline.executions} | ${pipeline.status.toUpperCase()} | ${pipeline.notes || ""} |`).join("\n")}
+${report.pipelinesUsed.map((pipeline) => `| ${pipeline.pipeline} | ${pipeline.purpose} | ${pipeline.executions} | ${pipeline.status.toUpperCase()} | ${pipeline.notes || ""} |`).join("\n")}
 
 🚨 Critical Issues Status - Autonomous Detection
-${report.criticalIssues.map(issue => `${issue.description} (${issue.severity.toUpperCase()}) - ${issue.resolutionStatus.toUpperCase()}`).join("\n")}
+${report.criticalIssues.map((issue) => `${issue.description} (${issue.severity.toUpperCase()}) - ${issue.resolutionStatus.toUpperCase()}`).join("\n")}
 
 🚀 Recommendations - Autonomous Generation
-${report.recommendations.map(rec => `${rec.priority.toUpperCase()}: ${rec.description} (${rec.estimatedImpact} impact)`).join("\n")}
+${report.recommendations.map((rec) => `${rec.priority.toUpperCase()}: ${rec.description} (${rec.estimatedImpact} impact)`).join("\n")}
 
 Session Summary: ${report.summary.recommendation}
     `.trim();
@@ -569,20 +595,22 @@ Session Summary: ${report.summary.recommendation}
    * Schedule automatic report generation
    */
   scheduleAutomaticReports(intervalMinutes: number = 60): void {
-    setInterval(async () => {
-      try {
-        console.log("🤖 Generating scheduled diagnostic report...");
-        const report = await this.generateDiagnosticReport();
-        console.log(`✅ Report generated: ${report.reportId}`);
+    setInterval(
+      async () => {
+        try {
+          console.log("🤖 Generating scheduled diagnostic report...");
+          const report = await this.generateDiagnosticReport();
+          console.log(`✅ Report generated: ${report.reportId}`);
 
-        // Export and display the report
-        const reportText = this.exportReportAsText(report);
-        console.log(reportText);
-
-      } catch (error) {
-        console.error("❌ Scheduled report generation failed:", error);
-      }
-    }, intervalMinutes * 60 * 1000);
+          // Export and display the report
+          const reportText = this.exportReportAsText(report);
+          console.log(reportText);
+        } catch (error) {
+          console.error("❌ Scheduled report generation failed:", error);
+        }
+      },
+      intervalMinutes * 60 * 1000,
+    );
   }
 }
 

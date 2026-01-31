@@ -10,7 +10,10 @@
 
 import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { universalLibrarianConsultation, SystemAction } from "./universal-librarian-consultation.js";
+import {
+  universalLibrarianConsultation,
+  SystemAction,
+} from "./universal-librarian-consultation.js";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 
@@ -122,7 +125,10 @@ export class StringRayOrchestrator {
   /**
    * Execute a single task by delegating to appropriate subagent
    */
-  private async executeSingleTask(task: TaskDefinition, jobId: string): Promise<TaskResult> {
+  private async executeSingleTask(
+    task: TaskDefinition,
+    jobId: string,
+  ): Promise<TaskResult> {
     const startTime = Date.now();
 
     try {
@@ -509,18 +515,23 @@ export class StringRayOrchestrator {
    */
   private async delegateToSubagent(task: TaskDefinition): Promise<any> {
     // Import complexity analyzer for delegation decisions
-    const { complexityAnalyzer } = await import("../delegation/complexity-analyzer");
+    const { complexityAnalyzer } =
+      await import("../delegation/complexity-analyzer");
 
     // Analyze task complexity to determine delegation strategy
-    const complexityMetrics = complexityAnalyzer.analyzeComplexity("task-execution", {
-      description: task.description,
-      operation: "delegate",
-      agentType: task.subagentType,
-      priority: task.priority,
-      dependencies: task.dependencies,
-    });
+    const complexityMetrics = complexityAnalyzer.analyzeComplexity(
+      "task-execution",
+      {
+        description: task.description,
+        operation: "delegate",
+        agentType: task.subagentType,
+        priority: task.priority,
+        dependencies: task.dependencies,
+      },
+    );
 
-    const complexityScore = complexityAnalyzer.calculateComplexityScore(complexityMetrics);
+    const complexityScore =
+      complexityAnalyzer.calculateComplexityScore(complexityMetrics);
 
     // Log complexity analysis for monitoring
     await frameworkLogger.log(

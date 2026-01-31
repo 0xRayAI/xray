@@ -265,11 +265,28 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
     }
 
     // System startup - removed redundant startup logging (already logged elsewhere)
-    await frameworkLogger.log('enterprise-monitoring-system', '-instance-id-this-instanceid-', 'info', { message: `   Instance ID: ${this.instanceId}` });
-    await frameworkLogger.log('enterprise-monitoring-system', '-collection-interval-this-config-collectioninterva', 'info', { message: `   Collection Interval: ${this.config.collectionInterval}ms` });
-    await frameworkLogger.log('enterprise-monitoring-system', '-health-check-interval-this-config-healthchecks-in', 'info', { message: 
-      `   Health Check Interval: ${this.config.healthChecks.interval}ms`,
-     });
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-instance-id-this-instanceid-",
+      "info",
+      { message: `   Instance ID: ${this.instanceId}` },
+    );
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-collection-interval-this-config-collectioninterva",
+      "info",
+      {
+        message: `   Collection Interval: ${this.config.collectionInterval}ms`,
+      },
+    );
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-health-check-interval-this-config-healthchecks-in",
+      "info",
+      {
+        message: `   Health Check Interval: ${this.config.healthChecks.interval}ms`,
+      },
+    );
 
     this.isRunning = true;
 
@@ -883,16 +900,33 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
       (a) => !a.resolved || a.timestamp > cutoffTime,
     );
 
-    await frameworkLogger.log('enterprise-monitoring-system', '-cleaned-up-old-monitoring-data-', 'info', { message: "🧹 Cleaned up old monitoring data" });
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-cleaned-up-old-monitoring-data-",
+      "info",
+      { message: "🧹 Cleaned up old monitoring data" },
+    );
   }
 
   /**
    * Event handlers
    */
   private async handleAlertTriggered(alert: Alert): Promise<void> {
-    await frameworkLogger.log('enterprise-monitoring-system', '-alert-alert-severity-touppercase-alert-message-', 'info', { message: `🚨 Alert [${alert.severity.toUpperCase()}]: ${alert.message}` });
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-alert-alert-severity-touppercase-alert-message-",
+      "info",
+      {
+        message: `🚨 Alert [${alert.severity.toUpperCase()}]: ${alert.message}`,
+      },
+    );
 
-    await frameworkLogger.log('enterprise-monitoring-system', '-security-performance-alert-triggered-alert-messag', 'info', { message: `[SECURITY] Performance alert triggered: ${alert.message}` });
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-security-performance-alert-triggered-alert-messag",
+      "info",
+      { message: `[SECURITY] Performance alert triggered: ${alert.message}` },
+    );
   }
 
   private handleHealthCheckFailed(result: HealthCheckResult): void {
@@ -907,9 +941,14 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
   }): Promise<void> {
     // Optional: Log periodic metrics collection
     if (process.env.DEBUG_MONITORING) {
-      await frameworkLogger.log('enterprise-monitoring-system', '-metrics-collected-cpu-data-system-cpu-usage-tofix', 'info', { message: 
-        `📊 Metrics collected - CPU: ${data.system.cpu.usage.toFixed(1)}%, Memory: ${data.system.memory.usagePercent.toFixed(1)}%`,
-       });
+      await frameworkLogger.log(
+        "enterprise-monitoring-system",
+        "-metrics-collected-cpu-data-system-cpu-usage-tofix",
+        "info",
+        {
+          message: `📊 Metrics collected - CPU: ${data.system.cpu.usage.toFixed(1)}%, Memory: ${data.system.memory.usagePercent.toFixed(1)}%`,
+        },
+      );
     }
   }
 
@@ -1031,7 +1070,12 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
     };
 
     this.clusterNodes.set(node.id, clusterNode);
-    await frameworkLogger.log('enterprise-monitoring-system', '-added-cluster-node-node-id-node-hostname-', 'info', { message: `➕ Added cluster node: ${node.id} (${node.hostname})` });
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-added-cluster-node-node-id-node-hostname-",
+      "info",
+      { message: `➕ Added cluster node: ${node.id} (${node.hostname})` },
+    );
   }
 
   /**
@@ -1134,19 +1178,29 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
    */
   async updateConfig(newConfig: Partial<MonitoringConfig>): Promise<void> {
     this.config = { ...this.config, ...newConfig };
-    await frameworkLogger.log('enterprise-monitoring-system', '-monitoring-system-configuration-updated-', 'info', { message: "⚙️ Monitoring system configuration updated" });
+    await frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-monitoring-system-configuration-updated-",
+      "info",
+      { message: "⚙️ Monitoring system configuration updated" },
+    );
   }
 
   /**
    * Record a custom metric
    */
   recordMetric(name: string, value: any, tags?: Record<string, string>): void {
-    frameworkLogger.log('enterprise-monitoring-system', '-metric-recorded-name-value-tags-timestamp-new-dat', 'info', {
-      message: `📊 Metric recorded: ${name}`,
-      value,
-      tags,
-      timestamp: new Date().toISOString(),
-    });
+    frameworkLogger.log(
+      "enterprise-monitoring-system",
+      "-metric-recorded-name-value-tags-timestamp-new-dat",
+      "info",
+      {
+        message: `📊 Metric recorded: ${name}`,
+        value,
+        tags,
+        timestamp: new Date().toISOString(),
+      },
+    );
     // In a real implementation, this would store metrics for analysis
   }
 

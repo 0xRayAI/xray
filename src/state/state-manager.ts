@@ -13,7 +13,7 @@ export class StringRayStateManager implements StateManager {
   private writeQueue = new Map<string, NodeJS.Timeout>();
   private initialized = false;
   private earlyOperationsQueue: string[] = []; // Queue keys that need persistence after init
-  
+
   static readonly VERSION = "1.1.1";
 
   constructor(persistencePath = ".opencode/state", persistenceEnabled = true) {
@@ -172,7 +172,10 @@ export class StringRayStateManager implements StateManager {
       );
     }
 
-    frameworkLogger.log("state-manager", "set operation", "success", { jobId, key });
+    frameworkLogger.log("state-manager", "set operation", "success", {
+      jobId,
+      key,
+    });
   }
 
   clear(key: string): void {
@@ -223,12 +226,9 @@ export class StringRayStateManager implements StateManager {
       this.persistToDisk();
     }
 
-    frameworkLogger.log(
-      "state-manager",
-      "clearAll operation",
-      "success",
-      { keysCleared: keysCount },
-    );
+    frameworkLogger.log("state-manager", "clearAll operation", "success", {
+      keysCleared: keysCount,
+    });
   }
 
   // New method to check if persistence is enabled
@@ -243,7 +243,7 @@ export class StringRayStateManager implements StateManager {
     keysInMemory: number;
     pendingWrites: number;
   } {
-return {
+    return {
       enabled: this.persistenceEnabled,
       initialized: this.initialized,
       keysInMemory: this.store.size,
@@ -260,11 +260,15 @@ return {
     return []; // Simplified implementation for testing
   }
 
-  resolveConflict(conflict: { key: string; value1: unknown; value2: unknown }): unknown {
+  resolveConflict(conflict: {
+    key: string;
+    value1: unknown;
+    value2: unknown;
+  }): unknown {
     // Simple resolution strategy: prefer the newer value
     frameworkLogger.log("state-manager", "conflict-resolved", "info", {
       key: conflict.key,
-      strategy: "prefer-newer"
+      strategy: "prefer-newer",
     });
     return conflict.value2; // Prefer the second value as newer
   }

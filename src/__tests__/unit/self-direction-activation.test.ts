@@ -52,7 +52,9 @@ const mockSelfDirectionSystem = {
 
 // Mock the module to return our mock implementation
 vi.mock("../../self-direction-activation", () => ({
-  SelfDirectionSystem: vi.fn().mockImplementation(() => mockSelfDirectionSystem),
+  SelfDirectionSystem: vi
+    .fn()
+    .mockImplementation(() => mockSelfDirectionSystem),
 }));
 
 // Import after mocking
@@ -68,13 +70,16 @@ vi.mock("../../advanced-features/analytics/predictive-analytics", () => ({
   })),
 }));
 
-vi.mock("../../advanced-features/streaming/real-time-streaming-service", () => ({
-  RealTimeStreamingService: vi.fn().mockImplementation(() => ({
-    startAutonomousStreaming: vi.fn().mockResolvedValue(undefined),
-    stopStreaming: vi.fn().mockResolvedValue(undefined),
-    on: vi.fn(),
-  })),
-}));
+vi.mock(
+  "../../advanced-features/streaming/real-time-streaming-service",
+  () => ({
+    RealTimeStreamingService: vi.fn().mockImplementation(() => ({
+      startAutonomousStreaming: vi.fn().mockResolvedValue(undefined),
+      stopStreaming: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+    })),
+  }),
+);
 
 vi.mock("../../advanced-features/scaling/predictive-scaling-engine", () => ({
   PredictiveScalingEngine: vi.fn().mockImplementation(() => ({
@@ -90,55 +95,58 @@ vi.mock("../../advanced-features/distributed/load-balancer", () => ({
   })),
 }));
 
-vi.mock("../../advanced-features/simulation/self-evolution-simulations", () => ({
-  MetaAnalysisEngine: vi.fn().mockImplementation(() => ({
-    generateMetaAnalysisReport: vi.fn().mockResolvedValue({
-      ruleEffectiveness: [],
-      frameworkHealthScore: 0.8,
-      recommendations: ["update performance baselines"],
-    }),
-  })),
-  InferenceEngine: vi.fn().mockImplementation(() => ({
-    generateInference: vi.fn().mockResolvedValue({
-      relationships: [],
-      patterns: [],
-      confidence: 0.8,
-      recommendations: ["optimize memory usage"],
-    }),
-  })),
-  SelfReflectionSystem: vi.fn().mockImplementation(() => ({
-    getArchitecturalHealth: vi.fn().mockResolvedValue({
-      overallScore: 0.85,
-      recommendations: ["improve error handling"],
-      issues: [],
-    }),
-    recordDecision: vi.fn().mockReturnValue("decision-123"),
-    evaluateDecision: vi.fn(),
-    getDecisions: vi.fn().mockReturnValue([]),
-  })),
-  ContinuousLearningLoops: vi.fn().mockImplementation(() => ({
-    startLearningCycle: vi.fn().mockReturnValue("cycle-456"),
-    getStatistics: vi.fn().mockReturnValue({
-      activeCycles: 1,
-      totalCycles: 1,
-      completedCycles: 0,
-      failedCycles: 0,
-    }),
-    submitFeedback: vi.fn(),
-  })),
-  SelfEvolutionValidationSystem: vi.fn().mockImplementation(() => ({
-    assessOverallReadiness: vi.fn().mockReturnValue({
-      overallScore: 0.75,
-      riskLevel: "medium",
-      recommendations: ["complete Phase 2 activation"],
-      issues: [],
-    }),
-    runValidationSuite: vi.fn().mockResolvedValue({
-      summary: { total: 10, passed: 8, failed: 2, warnings: 0 },
-      results: [],
-    }),
-  })),
-}));
+vi.mock(
+  "../../advanced-features/simulation/self-evolution-simulations",
+  () => ({
+    MetaAnalysisEngine: vi.fn().mockImplementation(() => ({
+      generateMetaAnalysisReport: vi.fn().mockResolvedValue({
+        ruleEffectiveness: [],
+        frameworkHealthScore: 0.8,
+        recommendations: ["update performance baselines"],
+      }),
+    })),
+    InferenceEngine: vi.fn().mockImplementation(() => ({
+      generateInference: vi.fn().mockResolvedValue({
+        relationships: [],
+        patterns: [],
+        confidence: 0.8,
+        recommendations: ["optimize memory usage"],
+      }),
+    })),
+    SelfReflectionSystem: vi.fn().mockImplementation(() => ({
+      getArchitecturalHealth: vi.fn().mockResolvedValue({
+        overallScore: 0.85,
+        recommendations: ["improve error handling"],
+        issues: [],
+      }),
+      recordDecision: vi.fn().mockReturnValue("decision-123"),
+      evaluateDecision: vi.fn(),
+      getDecisions: vi.fn().mockReturnValue([]),
+    })),
+    ContinuousLearningLoops: vi.fn().mockImplementation(() => ({
+      startLearningCycle: vi.fn().mockReturnValue("cycle-456"),
+      getStatistics: vi.fn().mockReturnValue({
+        activeCycles: 1,
+        totalCycles: 1,
+        completedCycles: 0,
+        failedCycles: 0,
+      }),
+      submitFeedback: vi.fn(),
+    })),
+    SelfEvolutionValidationSystem: vi.fn().mockImplementation(() => ({
+      assessOverallReadiness: vi.fn().mockReturnValue({
+        overallScore: 0.75,
+        riskLevel: "medium",
+        recommendations: ["complete Phase 2 activation"],
+        issues: [],
+      }),
+      runValidationSuite: vi.fn().mockResolvedValue({
+        summary: { total: 10, passed: 8, failed: 2, warnings: 0 },
+        results: [],
+      }),
+    })),
+  }),
+);
 
 vi.mock("../orchestrator", () => ({
   StringRayOrchestrator: vi.fn().mockImplementation(() => ({
@@ -198,7 +206,10 @@ describe("SelfDirectionSystem", () => {
       expect(status.componentsHealth).toHaveProperty("inference", true);
       expect(status.componentsHealth).toHaveProperty("selfReflection", true);
       expect(status.componentsHealth).toHaveProperty("learningLoops", true);
-      expect(status.componentsHealth).toHaveProperty("evolutionValidation", true);
+      expect(status.componentsHealth).toHaveProperty(
+        "evolutionValidation",
+        true,
+      );
     });
   });
 
@@ -210,12 +221,14 @@ describe("SelfDirectionSystem", () => {
       expect(status.activeMonitoring).toBe(true);
     });
 
-it("should handle activation failures gracefully", async () => {
+    it("should handle activation failures gracefully", async () => {
       // Since this simplified version doesn't depend on external components,
       // test that activation completes without errors
       const failingSystem = new SelfDirectionSystem();
 
-      await expect(failingSystem.activateSelfMonitoring()).resolves.toBeUndefined();
+      await expect(
+        failingSystem.activateSelfMonitoring(),
+      ).resolves.toBeUndefined();
     });
   });
 
@@ -233,7 +246,9 @@ it("should handle activation failures gracefully", async () => {
 
     it("should require monitoring activation before evolution", async () => {
       // Try to activate evolution without monitoring
-      await expect(selfDirectionSystem.activateSelfEvolution()).resolves.not.toThrow();
+      await expect(
+        selfDirectionSystem.activateSelfEvolution(),
+      ).resolves.not.toThrow();
       // Should still work but might have warnings
     });
   });

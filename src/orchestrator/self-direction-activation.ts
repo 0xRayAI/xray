@@ -13,13 +13,13 @@
 import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 
 export interface SelfDirectionConfig {
-  monitoringInterval: number;      // Self-monitoring frequency
-  analyticsInterval: number;       // Pattern analysis frequency
-  learningCycleInterval: number;   // Self-improvement cycle frequency
-  autonomousReporting: boolean;    // Enable autonomous critical issue reporting
+  monitoringInterval: number; // Self-monitoring frequency
+  analyticsInterval: number; // Pattern analysis frequency
+  learningCycleInterval: number; // Self-improvement cycle frequency
+  autonomousReporting: boolean; // Enable autonomous critical issue reporting
   predictiveOptimization: boolean; // Enable predictive performance optimization
-  scalingAutonomy: boolean;        // Enable autonomous resource scaling
-  evolutionSafety: boolean;        // Enable safety validation for self-changes
+  scalingAutonomy: boolean; // Enable autonomous resource scaling
+  evolutionSafety: boolean; // Enable safety validation for self-changes
 }
 
 export interface SelfAssessmentReport {
@@ -70,8 +70,8 @@ export class SelfDirectionSystem {
 
   constructor(config: Partial<SelfDirectionConfig> = {}) {
     this.config = {
-      monitoringInterval: 30000,      // 30 seconds
-      analyticsInterval: 300000,      // 5 minutes
+      monitoringInterval: 30000, // 30 seconds
+      analyticsInterval: 300000, // 5 minutes
       learningCycleInterval: 3600000, // 1 hour
       autonomousReporting: true,
       predictiveOptimization: true,
@@ -105,9 +105,8 @@ export class SelfDirectionSystem {
         "success",
         { phase: 1, componentsActivated: ["reporting", "assessment"] },
         undefined,
-        generateJobId("self-monitoring")
+        generateJobId("self-monitoring"),
       );
-
     } catch (error) {
       console.error("❌ Self-monitoring activation failed:", error);
       await frameworkLogger.log(
@@ -116,7 +115,7 @@ export class SelfDirectionSystem {
         "error",
         { error: error instanceof Error ? error.message : error },
         undefined,
-        generateJobId("self-monitoring-fail")
+        generateJobId("self-monitoring-fail"),
       );
       throw error;
     }
@@ -165,9 +164,8 @@ export class SelfDirectionSystem {
         "success",
         { phase: 2, componentsActivated: ["learning-cycles"] },
         undefined,
-        generateJobId("self-evolution")
+        generateJobId("self-evolution"),
       );
-
     } catch (error) {
       console.error("❌ Self-evolution activation failed:", error);
       await frameworkLogger.log(
@@ -176,7 +174,7 @@ export class SelfDirectionSystem {
         "error",
         { error: error instanceof Error ? error.message : error },
         undefined,
-        generateJobId("self-evolution-fail")
+        generateJobId("self-evolution-fail"),
       );
       throw error;
     }
@@ -264,16 +262,22 @@ export class SelfDirectionSystem {
   /**
    * Process self-assessment results
    */
-  private async processSelfAssessmentResults(assessment: SelfAssessmentReport): Promise<void> {
+  private async processSelfAssessmentResults(
+    assessment: SelfAssessmentReport,
+  ): Promise<void> {
     if (assessment.criticalIssues.length > 0) {
-      console.log(`🚨 ${assessment.criticalIssues.length} critical issues detected`);
+      console.log(
+        `🚨 ${assessment.criticalIssues.length} critical issues detected`,
+      );
       for (const issue of assessment.criticalIssues) {
         console.log(`   ${issue.severity.toUpperCase()}: ${issue.description}`);
       }
     }
 
     if (assessment.recommendations.length > 0) {
-      console.log(`💡 ${assessment.recommendations.length} recommendations generated`);
+      console.log(
+        `💡 ${assessment.recommendations.length} recommendations generated`,
+      );
     }
   }
 

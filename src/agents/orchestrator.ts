@@ -1,11 +1,19 @@
 import type { AgentConfig } from "./types.js";
 
-import { modelRouter } from '../core/model-router.js';
+import { modelRouter } from "../core/model-router.js";
 
 export const orchestrator: AgentConfig = {
   name: "orchestrator",
-  get model() { return modelRouter.getValidatedModel('orchestrator'); },
-  capabilities: ["multi-agent-orchestration", "workflow-management", "task-delegation", "conflict-resolution", "session-management"],
+  get model() {
+    return modelRouter.getValidatedModel("orchestrator");
+  },
+  capabilities: [
+    "multi-agent-orchestration",
+    "workflow-management",
+    "task-delegation",
+    "conflict-resolution",
+    "session-management",
+  ],
   maxComplexity: 100,
   enabled: true,
   description:

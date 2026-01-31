@@ -7,7 +7,7 @@ import {
 /**
  * Generate a unique job ID for tracking work sessions
  */
-export function generateJobId(prefix: string = 'job'): string {
+export function generateJobId(prefix: string = "job"): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
   return `${prefix}-${timestamp}-${random}`;
@@ -28,7 +28,7 @@ export function setCurrentJobContext(jobId?: string): JobContext {
 
 export function withJobContext<T>(
   operation: () => Promise<T> | T,
-  jobId?: string
+  jobId?: string,
 ): Promise<T> {
   const originalContext = currentJobContext;
   const jobContext = setCurrentJobContext(jobId);
@@ -76,18 +76,18 @@ export class JobContext {
   async complete(success: boolean = true, details?: any) {
     const duration = Date.now() - this.startTime;
     await frameworkLogger.log(
-      'job-context',
-      'job-completed',
-      success ? 'success' : 'error',
+      "job-context",
+      "job-completed",
+      success ? "success" : "error",
       {
         duration,
         complexityScore: this.complexityScore,
         agentUsed: this.agentUsed,
         operationType: this.operationType,
-        ...details
+        ...details,
       },
       undefined, // sessionId
-      this.jobId
+      this.jobId,
     );
   }
 }
@@ -126,18 +126,18 @@ export class FrameworkUsageLogger {
     }
 
     // Auto-generate jobId if not provided
-    const actualJobId = jobId || generateJobId('auto');
+    const actualJobId = jobId || generateJobId("auto");
 
     // Ensure we always have a jobId
     if (!actualJobId) {
-      throw new Error('JobId generation failed');
+      throw new Error("JobId generation failed");
     }
 
     const entry: FrameworkLogEntry = {
       timestamp: Date.now(),
       component,
       action,
-       agent: "orchestrator",
+      agent: "orchestrator",
       sessionId,
       jobId: actualJobId,
       status,
@@ -176,7 +176,7 @@ export class FrameworkUsageLogger {
         fs.mkdirSync(logDir, { recursive: true });
       }
 
-      const jobIdPart = entry.jobId ? `[${entry.jobId}] ` : '';
+      const jobIdPart = entry.jobId ? `[${entry.jobId}] ` : "";
       const logEntry = `${new Date(entry.timestamp).toISOString()} ${jobIdPart}[${entry.component}] ${entry.action} - ${entry.status.toUpperCase()}\n`;
       fs.appendFileSync(logFile, logEntry);
     } catch (error) {

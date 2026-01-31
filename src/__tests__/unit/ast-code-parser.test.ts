@@ -14,8 +14,8 @@ vi.mock("fs");
 vi.mock("path");
 vi.mock("../../core/framework-logger", () => ({
   frameworkLogger: {
-    log: vi.fn()
-  }
+    log: vi.fn(),
+  },
 }));
 
 describe("ASTCodeParser", () => {

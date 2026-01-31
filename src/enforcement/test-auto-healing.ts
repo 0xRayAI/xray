@@ -241,12 +241,12 @@ export class TestAutoHealingSystem {
     for (const issue of issues) {
       try {
         switch (issue.fixStrategy.type) {
-            case "optimize":
-              const optimizationResult = await this.optimizeTestTimeouts(
-                issue,
-                context,
-                jobId,
-              );
+          case "optimize":
+            const optimizationResult = await this.optimizeTestTimeouts(
+              issue,
+              context,
+              jobId,
+            );
             if (optimizationResult.success) {
               fixesApplied++;
               performanceImprovement += issue.fixStrategy.estimatedImprovement;
@@ -256,12 +256,12 @@ export class TestAutoHealingSystem {
             }
             break;
 
-            case "parallelize":
-              const parallelResult = await this.implementParallelExecution(
-                issue,
-                context,
-                jobId,
-              );
+          case "parallelize":
+            const parallelResult = await this.implementParallelExecution(
+              issue,
+              context,
+              jobId,
+            );
             if (parallelResult.success) {
               fixesApplied++;
               testsOptimized++;
@@ -272,8 +272,8 @@ export class TestAutoHealingSystem {
             }
             break;
 
-            case "mock":
-              const mockResult = await this.addTestMocks(issue, context, jobId);
+          case "mock":
+            const mockResult = await this.addTestMocks(issue, context, jobId);
             if (mockResult.success) {
               fixesApplied++;
               performanceImprovement += issue.fixStrategy.estimatedImprovement;

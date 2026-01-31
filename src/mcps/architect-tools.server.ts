@@ -155,27 +155,30 @@ class StrRayArchitectToolsServer {
       };
     });
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
-      const { name, arguments: args } = request.params;
+    this.server.setRequestHandler(
+      CallToolRequestSchema,
+      async (request: CallToolRequest) => {
+        const { name, arguments: args } = request.params;
 
-      try {
-        switch (name) {
-          case "context-analysis":
-            return await this.contextAnalysis(args);
-          case "codebase-structure":
-            return await this.codebaseStructure(args);
-          case "dependency-analysis":
-            return await this.dependencyAnalysis(args);
-          case "architecture-assessment":
-            return await this.architectureAssessment(args);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
+        try {
+          switch (name) {
+            case "context-analysis":
+              return await this.contextAnalysis(args);
+            case "codebase-structure":
+              return await this.codebaseStructure(args);
+            case "dependency-analysis":
+              return await this.dependencyAnalysis(args);
+            case "architecture-assessment":
+              return await this.architectureAssessment(args);
+            default:
+              throw new Error(`Unknown tool: ${name}`);
+          }
+        } catch (error) {
+          console.error(`Error in architect tool ${name}:`, error);
+          throw error;
         }
-      } catch (error) {
-        console.error(`Error in architect tool ${name}:`, error);
-        throw error;
-      }
-    });
+      },
+    );
   }
 
   // Tool implementations - wrappers around the original architect-tools functions
@@ -681,62 +684,63 @@ class StrRayArchitectToolsServer {
     console.log("StrRay Architect Tools MCP Server started");
 
     const cleanup = async (signal: string) => {
-  console.log(`Received ${signal}, shutting down gracefully...`);
+      console.log(`Received ${signal}, shutting down gracefully...`);
 
-  // Set a timeout to force exit if graceful shutdown fails
-  const timeout = setTimeout(() => {
-    console.error('Graceful shutdown timeout, forcing exit...');
-    process.exit(1);
-  }, 5000); // 5 second timeout
+      // Set a timeout to force exit if graceful shutdown fails
+      const timeout = setTimeout(() => {
+        console.error("Graceful shutdown timeout, forcing exit...");
+        process.exit(1);
+      }, 5000); // 5 second timeout
 
-  try {
-    if (this.server && typeof this.server.close === 'function') {
-      await this.server.close();
-    }
-    clearTimeout(timeout);
-    console.log("StrRay MCP Server shut down gracefully");
-    process.exit(0);
-  } catch (error) {
-    clearTimeout(timeout);
-    console.error("Error during server shutdown:", error);
-    process.exit(1);
-  }
-};
+      try {
+        if (this.server && typeof this.server.close === "function") {
+          await this.server.close();
+        }
+        clearTimeout(timeout);
+        console.log("StrRay MCP Server shut down gracefully");
+        process.exit(0);
+      } catch (error) {
+        clearTimeout(timeout);
+        console.error("Error during server shutdown:", error);
+        process.exit(1);
+      }
+    };
 
+    // Handle multiple shutdown signals
+    process.on("SIGINT", () => cleanup("SIGINT"));
+    process.on("SIGTERM", () => cleanup("SIGTERM"));
+    process.on("SIGHUP", () => cleanup("SIGHUP"));
 
-// Handle multiple shutdown signals
-process.on('SIGINT', () => cleanup('SIGINT'));
-process.on('SIGTERM', () => cleanup('SIGTERM'));
-process.on('SIGHUP', () => cleanup('SIGHUP'));
+    // Monitor parent process (opencode) and shutdown if it dies
+    const checkParent = () => {
+      try {
+        process.kill(process.ppid, 0); // Check if parent is alive
+        setTimeout(checkParent, 1000); // Check again in 1 second
+      } catch (error) {
+        // Parent process died, shut down gracefully
+        console.log(
+          "Parent process (opencode) died, shutting down MCP server...",
+        );
+        cleanup("parent-process-death");
+      }
+    };
 
-// Monitor parent process (opencode) and shutdown if it dies
-const checkParent = () => {
-  try {
-    process.kill(process.ppid, 0); // Check if parent is alive
-    setTimeout(checkParent, 1000); // Check again in 1 second
-  } catch (error) {
-    // Parent process died, shut down gracefully
-    console.log('Parent process (opencode) died, shutting down MCP server...');
-    cleanup('parent-process-death');
-  }
-};
+    // Start monitoring parent process
+    setTimeout(checkParent, 2000); // Start checking after 2 seconds
 
-// Start monitoring parent process
-setTimeout(checkParent, 2000); // Start checking after 2 seconds
+    // Handle uncaught exceptions and unhandled rejections
+    process.on("uncaughtException", (error) => {
+      console.error("Uncaught Exception:", error);
+      cleanup("uncaughtException");
+    });
 
-// Handle uncaught exceptions and unhandled rejections
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  cleanup('uncaughtException');
-});
+    process.on("unhandledRejection", (reason, promise) => {
+      console.error("Unhandled Rejection at:", promise, "reason:", reason);
+      cleanup("unhandledRejection");
+    });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  cleanup('unhandledRejection');
-});
-
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
+    process.on("SIGINT", cleanup);
+    process.on("SIGTERM", cleanup);
   }
 }
 

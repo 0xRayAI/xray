@@ -1,9 +1,9 @@
 // Type definitions for jsonwebtoken module
-declare module 'jsonwebtoken' {
+declare module "jsonwebtoken" {
   interface JwtPayload {
     [key: string]: any;
   }
-  
+
   interface SignOptions {
     algorithm?: string;
     expiresIn?: string | number;
@@ -17,7 +17,7 @@ declare module 'jsonwebtoken' {
     header?: boolean | object;
     encoding?: string;
   }
-  
+
   interface VerifyOptions {
     algorithms?: string[];
     audience?: string | string[];
@@ -28,8 +28,19 @@ declare module 'jsonwebtoken' {
     maxAge?: string | number;
     clockTimestamp?: number;
   }
-  
-  function sign(payload: string | object | Buffer, secretOrPrivateKey: string, options?: SignOptions): string;
-  function verify(token: string, secretOrPublicKey: string | Buffer, options?: VerifyOptions): object | string;
-  function decode(token: string, options?: { complete?: boolean; json?: boolean }): object | string;
+
+  function sign(
+    payload: string | object | Buffer,
+    secretOrPrivateKey: string,
+    options?: SignOptions,
+  ): string;
+  function verify(
+    token: string,
+    secretOrPublicKey: string | Buffer,
+    options?: VerifyOptions,
+  ): object | string;
+  function decode(
+    token: string,
+    options?: { complete?: boolean; json?: boolean },
+  ): object | string;
 }

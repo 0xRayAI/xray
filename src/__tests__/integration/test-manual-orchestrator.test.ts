@@ -14,9 +14,9 @@ describe("Manual Orchestrator Integration", () => {
     const mockOrchestrator = {
       executeTask: () => ({ success: true }),
       addTask: () => ({}),
-      completeTask: () => ({ success: true })
+      completeTask: () => ({ success: true }),
     };
-    
+
     expect(mockOrchestrator.executeTask()).toBeDefined();
     expect(mockOrchestrator.addTask()).toBeDefined();
     expect(mockOrchestrator.completeTask()).toBeDefined();

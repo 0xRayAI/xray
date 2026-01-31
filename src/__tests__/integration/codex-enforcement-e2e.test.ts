@@ -48,7 +48,7 @@ describe("Codex Enforcement E2E", () => {
 
       // Check what rules are loaded
       const stats = ruleEnforcer.getRuleStats();
-      console.log('Rule stats:', stats);
+      console.log("Rule stats:", stats);
 
       expect(result.passed).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);

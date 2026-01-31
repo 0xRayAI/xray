@@ -121,7 +121,9 @@ describe("StringRayConfigLoader", () => {
       const config = loader.loadConfig();
 
       expect(config.multi_agent_orchestration.enabled).toBe(true);
-      expect(config.multi_agent_orchestration.coordination_model).toBe("async-multi-agent");
+      expect(config.multi_agent_orchestration.coordination_model).toBe(
+        "async-multi-agent",
+      );
       expect(config.sisyphus_orchestrator.enabled).toBe(true);
       expect(config.disabled_agents).toEqual([]);
     });
@@ -176,7 +178,9 @@ describe("StringRayConfigLoader", () => {
       const config = (loader as any).parseConfig(configData);
 
       expect(config.multi_agent_orchestration.enabled).toBe(false);
-      expect(config.multi_agent_orchestration.coordination_model).toBe("sync-multi-agent");
+      expect(config.multi_agent_orchestration.coordination_model).toBe(
+        "sync-multi-agent",
+      );
       expect(config.multi_agent_orchestration.max_concurrent_agents).toBe(10);
       expect(config.sisyphus_orchestrator.enabled).toBe(true);
       expect(config.disabled_agents).toEqual(["architect", "enforcer"]);
@@ -238,9 +242,18 @@ describe("StringRayConfigLoader", () => {
     });
 
     it("should clamp max_concurrent_agents to valid range", () => {
-      expect((loader as any).parseMultiAgentConfig({ max_concurrent_agents: 0 }).max_concurrent_agents).toBe(1);
-      expect((loader as any).parseMultiAgentConfig({ max_concurrent_agents: 15 }).max_concurrent_agents).toBe(10);
-      expect((loader as any).parseMultiAgentConfig({ max_concurrent_agents: 5 }).max_concurrent_agents).toBe(5);
+      expect(
+        (loader as any).parseMultiAgentConfig({ max_concurrent_agents: 0 })
+          .max_concurrent_agents,
+      ).toBe(1);
+      expect(
+        (loader as any).parseMultiAgentConfig({ max_concurrent_agents: 15 })
+          .max_concurrent_agents,
+      ).toBe(10);
+      expect(
+        (loader as any).parseMultiAgentConfig({ max_concurrent_agents: 5 })
+          .max_concurrent_agents,
+      ).toBe(5);
     });
 
     it("should validate enum values", () => {
@@ -291,9 +304,15 @@ describe("StringRayConfigLoader", () => {
     });
 
     it("should clamp max_retries to valid range", () => {
-      expect((loader as any).parseSisyphusConfig({ max_retries: -1 }).max_retries).toBe(0);
-      expect((loader as any).parseSisyphusConfig({ max_retries: 15 }).max_retries).toBe(10);
-      expect((loader as any).parseSisyphusConfig({ max_retries: 5 }).max_retries).toBe(5);
+      expect(
+        (loader as any).parseSisyphusConfig({ max_retries: -1 }).max_retries,
+      ).toBe(0);
+      expect(
+        (loader as any).parseSisyphusConfig({ max_retries: 15 }).max_retries,
+      ).toBe(10);
+      expect(
+        (loader as any).parseSisyphusConfig({ max_retries: 5 }).max_retries,
+      ).toBe(5);
     });
 
     it("should validate backoff_strategy enum", () => {
@@ -334,15 +353,43 @@ describe("StringRayConfigLoader", () => {
 
   describe("validateEnum", () => {
     it("should return value when it exists in allowed values", () => {
-      expect((loader as any).validateEnum("option1", ["option1", "option2"], "default")).toBe("option1");
-      expect((loader as any).validateEnum("option2", ["option1", "option2"], "default")).toBe("option2");
+      expect(
+        (loader as any).validateEnum(
+          "option1",
+          ["option1", "option2"],
+          "default",
+        ),
+      ).toBe("option1");
+      expect(
+        (loader as any).validateEnum(
+          "option2",
+          ["option1", "option2"],
+          "default",
+        ),
+      ).toBe("option2");
     });
 
     it("should return default value when input is not in allowed values", () => {
-      expect((loader as any).validateEnum("invalid", ["option1", "option2"], "default")).toBe("default");
-      expect((loader as any).validateEnum("", ["option1", "option2"], "default")).toBe("default");
-      expect((loader as any).validateEnum(null, ["option1", "option2"], "default")).toBe("default");
-      expect((loader as any).validateEnum(undefined, ["option1", "option2"], "default")).toBe("default");
+      expect(
+        (loader as any).validateEnum(
+          "invalid",
+          ["option1", "option2"],
+          "default",
+        ),
+      ).toBe("default");
+      expect(
+        (loader as any).validateEnum("", ["option1", "option2"], "default"),
+      ).toBe("default");
+      expect(
+        (loader as any).validateEnum(null, ["option1", "option2"], "default"),
+      ).toBe("default");
+      expect(
+        (loader as any).validateEnum(
+          undefined,
+          ["option1", "option2"],
+          "default",
+        ),
+      ).toBe("default");
     });
   });
 

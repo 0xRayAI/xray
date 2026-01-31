@@ -43,8 +43,15 @@ class StrRayStateManagerServer {
     this.loadState();
 
     this.setupToolHandlers();
-    const jobId = generateJobId('mcp-state-manager-init');
-    frameworkLogger.log("mcps/state-manager", "initialize", "info", {}, undefined, jobId);
+    const jobId = generateJobId("mcp-state-manager-init");
+    frameworkLogger.log(
+      "mcps/state-manager",
+      "initialize",
+      "info",
+      {},
+      undefined,
+      jobId,
+    );
   }
 
   private ensureStateDirectory() {
@@ -60,10 +67,17 @@ class StrRayStateManagerServer {
         const data = fs.readFileSync(this.stateFile, "utf8");
         const parsed = JSON.parse(data);
         this.state = new Map(Object.entries(parsed));
-        const jobId = generateJobId('mcp-state-manager-load');
-        frameworkLogger.log("mcps/state-manager", "load-state", "info", {
-          stateEntries: this.state.size,
-        }, undefined, jobId);
+        const jobId = generateJobId("mcp-state-manager-load");
+        frameworkLogger.log(
+          "mcps/state-manager",
+          "load-state",
+          "info",
+          {
+            stateEntries: this.state.size,
+          },
+          undefined,
+          jobId,
+        );
       }
     } catch (error) {
       console.warn("Failed to load state file:", error);
@@ -98,8 +112,8 @@ class StrRayStateManagerServer {
                     { type: "number" },
                     { type: "boolean" },
                     { type: "object" },
-                    { type: "array" }
-                  ]
+                    { type: "array" },
+                  ],
                 },
                 validate: { type: "boolean", default: true },
               },
@@ -120,8 +134,8 @@ class StrRayStateManagerServer {
                     { type: "number" },
                     { type: "boolean" },
                     { type: "object" },
-                    { type: "array" }
-                  ]
+                    { type: "array" },
+                  ],
                 },
                 persist: { type: "boolean", default: true },
                 backup: { type: "boolean", default: false },
@@ -700,8 +714,15 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    const jobId = generateJobId('mcp-state-manager-start');
-    frameworkLogger.log("mcps/state-manager", "start", "success", {}, undefined, jobId);
+    const jobId = generateJobId("mcp-state-manager-start");
+    frameworkLogger.log(
+      "mcps/state-manager",
+      "start",
+      "success",
+      {},
+      undefined,
+      jobId,
+    );
   }
 }
 

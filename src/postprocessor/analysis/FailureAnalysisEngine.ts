@@ -19,7 +19,12 @@ export class FailureAnalysisEngine {
   ): Promise<FailureAnalysis> {
     const jobId = `failure-analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    await frameworkLogger.log('-failure-analysis-engine', '-analyzing-ci-cd-failure-', 'info', { message: "🔍 Analyzing CI/CD failure..." });
+    await frameworkLogger.log(
+      "-failure-analysis-engine",
+      "-analyzing-ci-cd-failure-",
+      "info",
+      { message: "🔍 Analyzing CI/CD failure..." },
+    );
 
     // Determine failure category
     const category = this.classifyFailure(monitoringResult);

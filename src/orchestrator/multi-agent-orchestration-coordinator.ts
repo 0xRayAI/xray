@@ -65,7 +65,10 @@ export class MultiAgentOrchestrationCoordinator {
     this.stateManager = stateManager || new StringRayStateManager();
     this.strRayOrchestrator = new StringRayOrchestrator();
     this.enhancedOrchestrator = new EnhancedMultiAgentOrchestrator();
-    this.agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
+    this.agentDelegator = createAgentDelegator(
+      this.stateManager,
+      strRayConfigLoader,
+    );
     this.complexityAnalyzer = new ComplexityAnalyzer();
 
     this.coordinationMetrics = {
@@ -86,8 +89,14 @@ export class MultiAgentOrchestrationCoordinator {
   private initializeCoordinationSystem(): void {
     // Register coordination components in state manager
     this.stateManager.set("coordination:main_coordinator", this);
-    this.stateManager.set("coordination:strray_orchestrator", this.strRayOrchestrator);
-    this.stateManager.set("coordination:enhanced_orchestrator", this.enhancedOrchestrator);
+    this.stateManager.set(
+      "coordination:strray_orchestrator",
+      this.strRayOrchestrator,
+    );
+    this.stateManager.set(
+      "coordination:enhanced_orchestrator",
+      this.enhancedOrchestrator,
+    );
     this.stateManager.set("coordination:agent_delegator", this.agentDelegator);
     this.stateManager.set("coordination:metrics", this.coordinationMetrics);
 
@@ -122,7 +131,10 @@ export class MultiAgentOrchestrationCoordinator {
       const executionPlan = await this.analyzeWorkflowComplexity(workflow);
 
       // Phase 2: Coordinate agent availability and resource allocation
-      const resourceAllocation = await this.allocateWorkflowResources(workflow, executionPlan);
+      const resourceAllocation = await this.allocateWorkflowResources(
+        workflow,
+        executionPlan,
+      );
 
       // Phase 3: Execute workflow using integrated orchestration
       const executionResult = await this.executeCoordinatedWorkflow(
@@ -194,7 +206,9 @@ export class MultiAgentOrchestrationCoordinator {
   /**
    * Analyze workflow complexity and create execution plan
    */
-  private async analyzeWorkflowComplexity(workflow: OrchestrationWorkflow): Promise<{
+  private async analyzeWorkflowComplexity(
+    workflow: OrchestrationWorkflow,
+  ): Promise<{
     complexityScore: number;
     recommendedStrategy: "single-agent" | "multi-agent" | "orchestrator-led";
     parallelGroups: TaskDefinition[][];
@@ -206,22 +220,31 @@ export class MultiAgentOrchestrationCoordinator {
       "workflow-execution",
       {
         description: workflow.description,
-        files: workflow.tasks.map(t => `task-${t.id}.txt`),
+        files: workflow.tasks.map((t) => `task-${t.id}.txt`),
         dependencies: workflow.dependencies,
-        estimatedDuration: workflow.tasks.reduce((sum, task) => sum + (task.priority === "high" ? 30 : 15), 0),
+        estimatedDuration: workflow.tasks.reduce(
+          (sum, task) => sum + (task.priority === "high" ? 30 : 15),
+          0,
+        ),
       },
     );
 
-    const complexityScore = await this.complexityAnalyzer.calculateComplexityScore(workflowComplexity);
+    const complexityScore =
+      await this.complexityAnalyzer.calculateComplexityScore(
+        workflowComplexity,
+      );
 
     // Build dependency graph
     const dependencyGraph = new Map<string, string[]>();
-    workflow.tasks.forEach(task => {
+    workflow.tasks.forEach((task) => {
       dependencyGraph.set(task.id, task.dependencies || []);
     });
 
     // Group tasks by parallel execution potential
-    const parallelGroups = this.buildParallelExecutionGroups(workflow.tasks, dependencyGraph);
+    const parallelGroups = this.buildParallelExecutionGroups(
+      workflow.tasks,
+      dependencyGraph,
+    );
 
     return {
       complexityScore: complexityScore.score,
@@ -251,9 +274,12 @@ export class MultiAgentOrchestrationCoordinator {
 
     // Allocate agents based on workflow requirements
     workflow.tasks.forEach((task: any) => {
-      const matchingAgent = availableAgents.find((agent: any) =>
-        agent.expertise.some((exp: any) => task.subagentType.includes(exp)) ||
-        agent.specialties.some((spec: any) => task.subagentType.includes(spec.split('-')[0]))
+      const matchingAgent = availableAgents.find(
+        (agent: any) =>
+          agent.expertise.some((exp: any) => task.subagentType.includes(exp)) ||
+          agent.specialties.some((spec: any) =>
+            task.subagentType.includes(spec.split("-")[0]),
+          ),
       );
 
       if (matchingAgent && !allocatedAgents.includes(matchingAgent.name)) {
@@ -294,17 +320,20 @@ export class MultiAgentOrchestrationCoordinator {
       // Simple workflow - use StringRay orchestrator
       const task: TaskDefinition = {
         id: `workflow-${workflow.id}`,
-        type: 'simple',
+        type: "simple",
         description: workflow.description,
         complexity: 50,
-        priority: 'medium',
+        priority: "medium",
         createdAt: new Date(),
-        status: 'pending',
+        status: "pending",
         dependencies: [],
-        subagentType: 'orchestrator'
+        subagentType: "orchestrator",
       };
-      
-      const result = await this.strRayOrchestrator.executeComplexTask(task.description, [task]);
+
+      const result = await this.strRayOrchestrator.executeComplexTask(
+        task.description,
+        [task],
+      );
 
       taskResults.push(result);
       coordinationEvents += 1;
@@ -314,7 +343,7 @@ export class MultiAgentOrchestrationCoordinator {
       const coordinationPromises = workflow.tasks.map(async (task) => {
         coordinationEvents++;
 
-const agentType = task.subagentType || 'default-agent';
+        const agentType = task.subagentType || "default-agent";
         const agentRequest = {
           agentType,
           task: task.description || task.id,
@@ -323,18 +352,23 @@ const agentType = task.subagentType || 'default-agent';
             workflowId: workflow.id,
             sessionId,
           },
-          priority: (task.priority as "low" | "medium" | "high" | "critical") || "medium",
-          dependencies: task.dependencies?.map((depId: string) => `agent_${depId}`) || [],
+          priority:
+            (task.priority as "low" | "medium" | "high" | "critical") ||
+            "medium",
+          dependencies:
+            task.dependencies?.map((depId: string) => `agent_${depId}`) || [],
         };
 
         try {
-          const spawnedAgent = await this.enhancedOrchestrator.spawnAgent(agentRequest);
+          const spawnedAgent =
+            await this.enhancedOrchestrator.spawnAgent(agentRequest);
           agentsUsed.push(agentType);
 
           // Wait for completion
           return new Promise((resolve) => {
             const checkCompletion = () => {
-              const monitoringData = this.enhancedOrchestrator.getMonitoringInterface();
+              const monitoringData =
+                this.enhancedOrchestrator.getMonitoringInterface();
               const agent = monitoringData[spawnedAgent.id];
 
               if (agent?.status === "completed") {
@@ -368,7 +402,8 @@ const agentType = task.subagentType || 'default-agent';
         }
       });
 
-      const coordinationResults = await Promise.allSettled(coordinationPromises);
+      const coordinationResults =
+        await Promise.allSettled(coordinationPromises);
 
       coordinationResults.forEach((result) => {
         if (result.status === "fulfilled") {
@@ -400,8 +435,12 @@ const agentType = task.subagentType || 'default-agent';
     startTime: number,
   ): Promise<OrchestrationResult> {
     const duration = Date.now() - startTime;
-    const successfulTasks = executionResult.taskResults.filter((r: any) => r.success);
-    const failedTasks = executionResult.taskResults.filter((r: any) => !r.success);
+    const successfulTasks = executionResult.taskResults.filter(
+      (r: any) => r.success,
+    );
+    const failedTasks = executionResult.taskResults.filter(
+      (r: any) => !r.success,
+    );
 
     const success = successfulTasks.length === workflow.tasks.length;
 
@@ -437,7 +476,7 @@ const agentType = task.subagentType || 'default-agent';
   ): TaskDefinition[][] {
     const groups: TaskDefinition[][] = [];
     const processedTasks = new Set<string>();
-    const taskMap = new Map(tasks.map(task => [task.id, task]));
+    const taskMap = new Map(tasks.map((task) => [task.id, task]));
 
     while (processedTasks.size < tasks.length) {
       const currentGroup: TaskDefinition[] = [];
@@ -447,7 +486,7 @@ const agentType = task.subagentType || 'default-agent';
 
         // Check if all dependencies are processed
         const dependencies = dependencyGraph.get(task.id) || [];
-        const depsMet = dependencies.every(dep => processedTasks.has(dep));
+        const depsMet = dependencies.every((dep) => processedTasks.has(dep));
 
         if (depsMet) {
           currentGroup.push(task);
@@ -460,7 +499,7 @@ const agentType = task.subagentType || 'default-agent';
       }
 
       groups.push(currentGroup);
-      currentGroup.forEach(task => processedTasks.add(task.id));
+      currentGroup.forEach((task) => processedTasks.add(task.id));
     }
 
     return groups;
@@ -471,19 +510,26 @@ const agentType = task.subagentType || 'default-agent';
    */
   private updateCoordinationMetrics(result: OrchestrationResult): void {
     // Update agent utilization
-    result.agentCoordination.agentsUsed.forEach(agent => {
+    result.agentCoordination.agentsUsed.forEach((agent) => {
       this.coordinationMetrics.agentUtilization[agent] =
         (this.coordinationMetrics.agentUtilization[agent] || 0) + 1;
     });
 
     // Update average duration
-    const totalDuration = this.coordinationMetrics.averageDuration * (this.coordinationMetrics.totalWorkflows - 1) + result.duration;
-    this.coordinationMetrics.averageDuration = totalDuration / this.coordinationMetrics.totalWorkflows;
+    const totalDuration =
+      this.coordinationMetrics.averageDuration *
+        (this.coordinationMetrics.totalWorkflows - 1) +
+      result.duration;
+    this.coordinationMetrics.averageDuration =
+      totalDuration / this.coordinationMetrics.totalWorkflows;
 
     // Calculate coordination efficiency (tasks per minute)
     const totalTasks = this.coordinationMetrics.totalWorkflows * 10; // Assume average 10 tasks per workflow
-    const totalTime = this.coordinationMetrics.averageDuration * this.coordinationMetrics.totalWorkflows;
-    this.coordinationMetrics.coordinationEfficiency = totalTasks / (totalTime / 60000); // tasks per minute
+    const totalTime =
+      this.coordinationMetrics.averageDuration *
+      this.coordinationMetrics.totalWorkflows;
+    this.coordinationMetrics.coordinationEfficiency =
+      totalTasks / (totalTime / 60000); // tasks per minute
   }
 
   /**
@@ -505,15 +551,17 @@ const agentType = task.subagentType || 'default-agent';
     const warnings: string[] = [];
 
     // Check for duplicate task IDs
-    const taskIds = workflow.tasks.map(t => t.id);
-    const duplicates = taskIds.filter((id, index) => taskIds.indexOf(id) !== index);
+    const taskIds = workflow.tasks.map((t) => t.id);
+    const duplicates = taskIds.filter(
+      (id, index) => taskIds.indexOf(id) !== index,
+    );
     if (duplicates.length > 0) {
       errors.push(`Duplicate task IDs: ${duplicates.join(", ")}`);
     }
 
     // Check for circular dependencies
     const dependencyGraph = new Map<string, string[]>();
-    workflow.tasks.forEach(task => {
+    workflow.tasks.forEach((task) => {
       dependencyGraph.set(task.id, task.dependencies || []);
     });
 
@@ -545,23 +593,31 @@ const agentType = task.subagentType || 'default-agent';
 
     // Check for invalid agent types
     const validAgentTypes = [
-      "enforcer", "architect", "orchestrator", "bug-triage-specialist",
-      "code-reviewer", "security-auditor", "refactorer", "test-architect"
+      "enforcer",
+      "architect",
+      "orchestrator",
+      "bug-triage-specialist",
+      "code-reviewer",
+      "security-auditor",
+      "refactorer",
+      "test-architect",
     ];
 
-    workflow.tasks.forEach(task => {
-      const agentType = task.subagentType || 'default-agent';
+    workflow.tasks.forEach((task) => {
+      const agentType = task.subagentType || "default-agent";
       if (!validAgentTypes.includes(agentType)) {
         errors.push(`Invalid agent type: ${agentType} for task ${task.id}`);
       }
     });
 
     // Check for missing dependencies
-    const allTaskIds = new Set(workflow.tasks.map(t => t.id));
-    workflow.tasks.forEach(task => {
+    const allTaskIds = new Set(workflow.tasks.map((t) => t.id));
+    workflow.tasks.forEach((task) => {
       task.dependencies?.forEach((dep: string) => {
         if (!allTaskIds.has(dep)) {
-          errors.push(`Task ${task.id} references non-existent dependency: ${dep}`);
+          errors.push(
+            `Task ${task.id} references non-existent dependency: ${dep}`,
+          );
         }
       });
     });
@@ -595,4 +651,5 @@ const agentType = task.subagentType || 'default-agent';
 }
 
 // Export singleton instance
-export const multiAgentOrchestrationCoordinator = new MultiAgentOrchestrationCoordinator();
+export const multiAgentOrchestrationCoordinator =
+  new MultiAgentOrchestrationCoordinator();

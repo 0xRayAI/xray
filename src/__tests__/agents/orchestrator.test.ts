@@ -14,7 +14,11 @@ describe("Orchestrator Agent Configuration", () => {
       expect(orchestrator.name).toBe("orchestrator");
       expect(orchestrator.model).toBe(orchestrator.model);
       expect(typeof orchestrator.model).toBe("string");
-      const validModels = ["claude-opus-4", "claude-sonnet-4", "claude-haiku-4"];
+      const validModels = [
+        "claude-opus-4",
+        "claude-sonnet-4",
+        "claude-haiku-4",
+      ];
       expect(validModels).toContain(orchestrator.model as string);
     });
 

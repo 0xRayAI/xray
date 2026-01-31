@@ -410,9 +410,14 @@ export class SecurityHardeningSystem extends EventEmitter {
         `Validation error: ${error instanceof Error ? error.message : String(error)}`,
       );
 
-      frameworkLogger.log('security-hardening-system', '-security-data-decryption-failed-error-instanceof-', 'error', { message:
-        `[SECURITY] Data decryption failed: ${error instanceof Error ? error.message : String(error)}`,
-       });
+      frameworkLogger.log(
+        "security-hardening-system",
+        "-security-data-decryption-failed-error-instanceof-",
+        "error",
+        {
+          message: `[SECURITY] Data decryption failed: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      );
     }
 
     return result;
@@ -665,7 +670,12 @@ export class SecurityHardeningSystem extends EventEmitter {
       headers: this.sanitizeHeadersForAudit(req.headers),
     };
 
-    frameworkLogger.log('security-hardening-system', '-audit-json-stringify-auditevent-', 'info', { message: `[AUDIT] ${JSON.stringify(auditEvent)}` });
+    frameworkLogger.log(
+      "security-hardening-system",
+      "-audit-json-stringify-auditevent-",
+      "info",
+      { message: `[AUDIT] ${JSON.stringify(auditEvent)}` },
+    );
   }
 
   /**

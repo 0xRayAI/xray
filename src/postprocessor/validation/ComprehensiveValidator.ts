@@ -152,7 +152,12 @@ class ComprehensiveValidator {
       );
 
       if (hasVitest) {
-        await frameworkLogger.log('-comprehensive-validator', '-running-vitest-', 'info', { message: "🧪 Running Vitest..." });
+        await frameworkLogger.log(
+          "-comprehensive-validator",
+          "-running-vitest-",
+          "info",
+          { message: "🧪 Running Vitest..." },
+        );
         try {
           const result = execSync("npx vitest run --coverage --reporter=json", {
             cwd: this.projectRoot,
@@ -187,7 +192,12 @@ class ComprehensiveValidator {
           errors.push("Vitest execution failed");
         }
       } else if (hasJest) {
-        await frameworkLogger.log('-comprehensive-validator', '-running-jest-', 'info', { message: "🧪 Running Jest..." });
+        await frameworkLogger.log(
+          "-comprehensive-validator",
+          "-running-jest-",
+          "info",
+          { message: "🧪 Running Jest..." },
+        );
         try {
           execSync("npx jest --coverage --passWithNoTests", {
             cwd: this.projectRoot,
@@ -408,31 +418,66 @@ async function main(): Promise<void> {
 
   // Report results
   if (result.warnings.length > 0) {
-    await frameworkLogger.log('-comprehensive-validator', '-result-warnings-length-warning-s-found-', 'info', { message: `⚠️ ${result.warnings.length} warning(s) found:` });
+    await frameworkLogger.log(
+      "-comprehensive-validator",
+      "-result-warnings-length-warning-s-found-",
+      "info",
+      { message: `⚠️ ${result.warnings.length} warning(s) found:` },
+    );
     for (const warning of result.warnings) {
-      await frameworkLogger.log('-comprehensive-validator', '-warning-', 'info', { message: `   ${warning}` });
+      await frameworkLogger.log(
+        "-comprehensive-validator",
+        "-warning-",
+        "info",
+        { message: `   ${warning}` },
+      );
     }
   }
 
   if (result.errors.length > 0) {
-    await frameworkLogger.log('-comprehensive-validator', '-result-errors-length-error-s-found-', 'error', { message: `❌ ${result.errors.length} error(s) found:` });
+    await frameworkLogger.log(
+      "-comprehensive-validator",
+      "-result-errors-length-error-s-found-",
+      "error",
+      { message: `❌ ${result.errors.length} error(s) found:` },
+    );
     for (const error of result.errors) {
-      await frameworkLogger.log('-comprehensive-validator', '-error-', 'error', { message: `   ${error}` });
+      await frameworkLogger.log(
+        "-comprehensive-validator",
+        "-error-",
+        "error",
+        { message: `   ${error}` },
+      );
     }
   }
 
   if (result.testResults) {
-    await frameworkLogger.log('-comprehensive-validator', '-test-results-result-testresults-passed-result-tes', 'info', { message: 
-      `🧪 Test Results: ${result.testResults.passed}/${result.testResults.total} passed`,
-     });
+    await frameworkLogger.log(
+      "-comprehensive-validator",
+      "-test-results-result-testresults-passed-result-tes",
+      "info",
+      {
+        message: `🧪 Test Results: ${result.testResults.passed}/${result.testResults.total} passed`,
+      },
+    );
   }
 
-  await frameworkLogger.log('-comprehensive-validator', '-post-push-comprehensive-validation-completed-in-r', 'success', { message: 
-    `✅ Post-push: Comprehensive validation completed in ${result.duration}ms`,
-   });
+  await frameworkLogger.log(
+    "-comprehensive-validator",
+    "-post-push-comprehensive-validation-completed-in-r",
+    "success",
+    {
+      message: `✅ Post-push: Comprehensive validation completed in ${result.duration}ms`,
+    },
+  );
 
   if (!result.passed) {
-    await frameworkLogger.log('-comprehensive-validator', '-fix-the-errors-above-before-pushing-', 'error', { message: "💡 Fix the errors above before pushing" });
+    await frameworkLogger.log(
+      "-comprehensive-validator",
+      "-fix-the-errors-above-before-pushing-",
+      "error",
+      { message: "💡 Fix the errors above before pushing" },
+    );
     process.exit(1);
   }
 

@@ -55,7 +55,10 @@ export class FixValidator {
         "fix-validator",
         "fix validation error",
         "error",
-        { jobId, error: error instanceof Error ? error.message : String(error) },
+        {
+          jobId,
+          error: error instanceof Error ? error.message : String(error),
+        },
       );
       return false;
     }
@@ -100,7 +103,10 @@ export class FixValidator {
         "fix-validator",
         "fix rollback error",
         "error",
-        { jobId, error: error instanceof Error ? error.message : String(error) },
+        {
+          jobId,
+          error: error instanceof Error ? error.message : String(error),
+        },
       );
       throw error;
     }

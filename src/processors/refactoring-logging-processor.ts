@@ -6,7 +6,12 @@ export class RefactoringLoggingProcessor {
   private logPath: string;
 
   constructor() {
-    this.logPath = path.join(process.cwd(), "logs", "agents", "refactoring-log.md");
+    this.logPath = path.join(
+      process.cwd(),
+      "logs",
+      "agents",
+      "refactoring-log.md",
+    );
     this.ensureLogDirectory();
   }
 
@@ -17,7 +22,14 @@ export class RefactoringLoggingProcessor {
     }
   }
 
-  async execute(context: any): Promise<{ logged: boolean; success: boolean; message: string; error?: string }> {
+  async execute(
+    context: any,
+  ): Promise<{
+    logged: boolean;
+    success: boolean;
+    message: string;
+    error?: string;
+  }> {
     try {
       // Check if context is agent task completion context
       if (
@@ -41,8 +53,14 @@ export class RefactoringLoggingProcessor {
         message: "Not an agent task completion context",
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      await frameworkLogger.log('refactoring-logging-processor', '-refactoring-logging-failed-error-instanceof-error-', 'error', { message: `Refactoring logging failed: ${errorMessage}` });
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await frameworkLogger.log(
+        "refactoring-logging-processor",
+        "-refactoring-logging-failed-error-instanceof-error-",
+        "error",
+        { message: `Refactoring logging failed: ${errorMessage}` },
+      );
 
       return {
         logged: false,
@@ -59,9 +77,9 @@ export class RefactoringLoggingProcessor {
 
     let logEntry = `## Refactoring Operation - ${timestamp}\n\n`;
     logEntry += `**Agent:** ${context.agentName}\n`;
-    logEntry += `**Task:** ${context.task.description || context.task.id || 'Unknown'}\n`;
+    logEntry += `**Task:** ${context.task.description || context.task.id || "Unknown"}\n`;
     logEntry += `**Duration:** ${duration}ms\n`;
-    logEntry += `**Operation Type:** ${context.task.operationType || context.operationType || 'refactor'}\n`;
+    logEntry += `**Operation Type:** ${context.task.operationType || context.operationType || "refactor"}\n`;
 
     if (context.complexityScore) {
       logEntry += `**Complexity Score:** ${context.complexityScore}\n`;
@@ -70,7 +88,7 @@ export class RefactoringLoggingProcessor {
     if (context.changes && Array.isArray(context.changes)) {
       logEntry += `\n**Changes Made:**\n`;
       context.changes.forEach((change: any, index: number) => {
-        logEntry += `${index + 1}. ${change.description || change.type || 'Unknown change'}\n`;
+        logEntry += `${index + 1}. ${change.description || change.type || "Unknown change"}\n`;
       });
     }
 
@@ -101,16 +119,27 @@ export class RefactoringLoggingProcessor {
         header += `This log tracks all refactoring operations performed by StringRay agents.\n\n`;
         header += `Generated on: ${new Date().toISOString()}\n\n`;
         header += `---\n\n`;
-        fs.writeFileSync(this.logPath, header, 'utf8');
+        fs.writeFileSync(this.logPath, header, "utf8");
       }
 
       // Append the log entry
-      fs.appendFileSync(this.logPath, entry, 'utf8');
+      fs.appendFileSync(this.logPath, entry, "utf8");
 
-      await frameworkLogger.log('refactoring-logging-processor', '-refactoring-operation-logged-successfully-', 'info', { message: "Refactoring operation logged successfully" });
+      await frameworkLogger.log(
+        "refactoring-logging-processor",
+        "-refactoring-operation-logged-successfully-",
+        "info",
+        { message: "Refactoring operation logged successfully" },
+      );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      await frameworkLogger.log('refactoring-logging-processor', '-failed-to-append-to-refactoring-log-error-instanceof-', 'error', { message: `Failed to append to refactoring log: ${errorMessage}` });
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await frameworkLogger.log(
+        "refactoring-logging-processor",
+        "-failed-to-append-to-refactoring-log-error-instanceof-",
+        "error",
+        { message: `Failed to append to refactoring log: ${errorMessage}` },
+      );
       throw error;
     }
   }

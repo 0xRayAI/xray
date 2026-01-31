@@ -122,7 +122,7 @@ class StrRayPerformanceAnalysisServer {
     const duration = args.duration || 30;
     const detailed = args.detailed || false;
 
-    const jobId = generateJobId('mcp-performance-analysis');
+    const jobId = generateJobId("mcp-performance-analysis");
     await frameworkLogger.log(
       "mcp-performance-analysis",
       "analysis-started",
@@ -241,7 +241,7 @@ ${analysisResults.recommendations.length > 0 ? analysisResults.recommendations.m
     const operation = args.operation || "general";
     const threshold = args.threshold || 1000;
 
-    const jobId = generateJobId('mcp-performance-analysis-bottleneck');
+    const jobId = generateJobId("mcp-performance-analysis-bottleneck");
     await frameworkLogger.log(
       "mcp-performance-analysis",
       "bottleneck-detection",
@@ -655,7 +655,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    const jobId = generateJobId('mcp-performance-analysis-server');
+    const jobId = generateJobId("mcp-performance-analysis-server");
     await frameworkLogger.log(
       "mcp-performance-analysis",
       "server-started",

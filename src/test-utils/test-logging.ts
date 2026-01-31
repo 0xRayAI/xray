@@ -7,7 +7,7 @@ async function runTest() {
   // Test logging header - kept as console.log for test visibility
   console.log("==========================================");
 
-  const jobId = generateJobId('test-logging-system');
+  const jobId = generateJobId("test-logging-system");
 
   // Simulate framework component activity
   await frameworkLogger.log(

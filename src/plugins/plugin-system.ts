@@ -372,7 +372,13 @@ export class PluginSandbox {
 
     const context = vm.createContext({
       console: {
-        log: async (...args: any[]) => await frameworkLogger.log('plugin-system', '-plugin-args-error-args-any-console-error-plugin-a', 'error', { message: "[PLUGIN]", ...args }),
+        log: async (...args: any[]) =>
+          await frameworkLogger.log(
+            "plugin-system",
+            "-plugin-args-error-args-any-console-error-plugin-a",
+            "error",
+            { message: "[PLUGIN]", ...args },
+          ),
         error: (...args: any[]) => console.error("[PLUGIN]", ...args),
         warn: (...args: any[]) => console.warn("[PLUGIN]", ...args),
       },
@@ -461,11 +467,18 @@ export class PluginRegistry {
 
       this.plugins.set(pluginInstance.metadata.id, pluginInstance);
 
-      const jobId = generateJobId('plugin-system-register');
-      frameworkLogger.log("plugin-system", "plugin registered", "success", {
-        name: pluginInstance.metadata.name,
-        version: pluginInstance.metadata.version
-      }, undefined, jobId);
+      const jobId = generateJobId("plugin-system-register");
+      frameworkLogger.log(
+        "plugin-system",
+        "plugin registered",
+        "success",
+        {
+          name: pluginInstance.metadata.name,
+          version: pluginInstance.metadata.version,
+        },
+        undefined,
+        jobId,
+      );
 
       return { success: true, errors: [] };
     } catch (error) {
@@ -491,10 +504,17 @@ export class PluginRegistry {
       await plugin.activate();
       this.activePlugins.add(pluginId);
 
-      const jobId = generateJobId('plugin-system-activate');
-      frameworkLogger.log("plugin-system", "plugin activated", "success", {
-        name: plugin.metadata.name
-      }, undefined, jobId);
+      const jobId = generateJobId("plugin-system-activate");
+      frameworkLogger.log(
+        "plugin-system",
+        "plugin activated",
+        "success",
+        {
+          name: plugin.metadata.name,
+        },
+        undefined,
+        jobId,
+      );
       return true;
     } catch (error) {
       console.error(`❌ Plugin activation failed: ${error}`);
@@ -513,10 +533,17 @@ export class PluginRegistry {
       await plugin.deactivate();
       this.activePlugins.delete(pluginId);
 
-      const jobId = generateJobId('plugin-system-deactivate');
-      frameworkLogger.log("plugin-system", "plugin deactivated", "success", {
-        name: plugin.metadata.name
-      }, undefined, jobId);
+      const jobId = generateJobId("plugin-system-deactivate");
+      frameworkLogger.log(
+        "plugin-system",
+        "plugin deactivated",
+        "success",
+        {
+          name: plugin.metadata.name,
+        },
+        undefined,
+        jobId,
+      );
       return true;
     } catch (error) {
       console.error(`❌ Plugin deactivation failed: ${error}`);
@@ -587,10 +614,17 @@ export class PluginRegistry {
     }
 
     this.plugins.delete(pluginId);
-    const jobId = generateJobId('plugin-system-unregister');
-    frameworkLogger.log("plugin-system", "plugin unregistered", "success", {
-      name: plugin.metadata.name
-    }, undefined, jobId);
+    const jobId = generateJobId("plugin-system-unregister");
+    frameworkLogger.log(
+      "plugin-system",
+      "plugin unregistered",
+      "success",
+      {
+        name: plugin.metadata.name,
+      },
+      undefined,
+      jobId,
+    );
 
     return true;
   }

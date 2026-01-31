@@ -543,13 +543,28 @@ exit 0
       fs.symlinkSync(relativePostPush, gitPostPushHook);
     } catch (error) {
       console.error("❌ Failed to activate git hooks:", error);
-      await frameworkLogger.log('-git-hook-trigger', '-to-activate-manually-run-', 'info', { message: "💡 To activate manually, run:" });
-      await frameworkLogger.log('-git-hook-trigger', '-ln-s-opencode-hooks-post-commit-git-hooks-post-co', 'info', { message: 
-        `   ln -s "../../.opencode/hooks/post-commit" ".git/hooks/post-commit"`,
-       });
-      await frameworkLogger.log('-git-hook-trigger', '-ln-s-opencode-hooks-post-push-git-hooks-post-push', 'info', { message: 
-        `   ln -s "../../.opencode/hooks/post-push" ".git/hooks/post-push"`,
-       });
+      await frameworkLogger.log(
+        "-git-hook-trigger",
+        "-to-activate-manually-run-",
+        "info",
+        { message: "💡 To activate manually, run:" },
+      );
+      await frameworkLogger.log(
+        "-git-hook-trigger",
+        "-ln-s-opencode-hooks-post-commit-git-hooks-post-co",
+        "info",
+        {
+          message: `   ln -s "../../.opencode/hooks/post-commit" ".git/hooks/post-commit"`,
+        },
+      );
+      await frameworkLogger.log(
+        "-git-hook-trigger",
+        "-ln-s-opencode-hooks-post-push-git-hooks-post-push",
+        "info",
+        {
+          message: `   ln -s "../../.opencode/hooks/post-push" ".git/hooks/post-push"`,
+        },
+      );
     }
   }
 

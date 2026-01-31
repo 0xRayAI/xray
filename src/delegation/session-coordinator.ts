@@ -162,7 +162,6 @@ export class SessionCoordinator {
       `session:${sessionId}:delegations:${delegationId}`,
       delegation,
     );
-
   }
 
   /**
@@ -231,7 +230,6 @@ export class SessionCoordinator {
       duration: 0,
       success: true,
     });
-
   }
 
   /**
@@ -306,7 +304,6 @@ export class SessionCoordinator {
       console.warn(`⚠️ Failed to record context sharing interaction:`, error);
       // Continue operation despite recording failure
     }
-
   }
 
   /**
@@ -362,7 +359,6 @@ export class SessionCoordinator {
       `session:${sessionId}:conflicts`,
       session.conflictHistory,
     );
-
   }
 
   /**
@@ -387,7 +383,6 @@ export class SessionCoordinator {
         result,
         completedAt: Date.now(),
       });
-
     }
   }
 
@@ -497,7 +492,6 @@ export class SessionCoordinator {
 
     // Clear from state manager
     this.stateManager.clear(`session:${sessionId}:coordinator`);
-
   }
 
   // Private methods

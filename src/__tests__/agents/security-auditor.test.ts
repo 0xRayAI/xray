@@ -13,7 +13,11 @@ describe("Security Auditor Agent Configuration", () => {
       expect(securityAuditor.name).toBe("security-auditor");
       expect(securityAuditor.model).toBe(securityAuditor.model);
       expect(typeof securityAuditor.model).toBe("string");
-      const validModels = ["claude-opus-4", "claude-sonnet-4", "claude-haiku-4"];
+      const validModels = [
+        "claude-opus-4",
+        "claude-sonnet-4",
+        "claude-haiku-4",
+      ];
       expect(validModels).toContain(securityAuditor.model as string);
     });
 

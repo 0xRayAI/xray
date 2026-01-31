@@ -20,7 +20,7 @@ class FrameworkHelpServer {
         capabilities: {
           tools: {},
         },
-      }
+      },
     );
 
     this.setupToolHandlers();
@@ -33,7 +33,8 @@ class FrameworkHelpServer {
         tools: [
           {
             name: "strray_get_capabilities",
-            description: "Get comprehensive list of all StringRay framework capabilities, commands, and available tools",
+            description:
+              "Get comprehensive list of all StringRay framework capabilities, commands, and available tools",
             inputSchema: {
               type: "object",
               properties: {
@@ -41,49 +42,55 @@ class FrameworkHelpServer {
                   type: "string",
                   enum: ["all", "agents", "skills", "commands", "reporting"],
                   description: "Filter capabilities by category",
-                  default: "all"
+                  default: "all",
                 },
                 format: {
                   type: "string",
                   enum: ["summary", "detailed", "commands"],
                   description: "Output format",
-                  default: "summary"
-                }
+                  default: "summary",
+                },
               },
-              required: []
-            }
+              required: [],
+            },
           },
           {
             name: "strray_get_commands",
-            description: "Get list of available StringRay commands and their usage",
+            description:
+              "Get list of available StringRay commands and their usage",
             inputSchema: {
               type: "object",
               properties: {
                 type: {
                   type: "string",
-                  enum: ["agent-commands", "system-commands", "reporting-commands"],
+                  enum: [
+                    "agent-commands",
+                    "system-commands",
+                    "reporting-commands",
+                  ],
                   description: "Type of commands to list",
-                  default: "agent-commands"
-                }
+                  default: "agent-commands",
+                },
               },
-              required: []
-            }
+              required: [],
+            },
           },
           {
             name: "strray_explain_capability",
-            description: "Get detailed explanation of a specific StringRay capability",
+            description:
+              "Get detailed explanation of a specific StringRay capability",
             inputSchema: {
               type: "object",
               properties: {
                 capability: {
                   type: "string",
-                  description: "Name of the capability to explain"
-                }
+                  description: "Name of the capability to explain",
+                },
               },
-              required: ["capability"]
-            }
-          }
-        ]
+              required: ["capability"],
+            },
+          },
+        ],
       };
     });
 
@@ -99,10 +106,7 @@ class FrameworkHelpServer {
         case "strray_explain_capability":
           return this.handleExplainCapability(args);
         default:
-          throw new McpError(
-            ErrorCode.MethodNotFound,
-            `Unknown tool: ${name}`
-          );
+          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     });
   }
@@ -120,7 +124,7 @@ class FrameworkHelpServer {
         "code-reviewer": "Quality assessment & standards validation",
         "security-auditor": "Vulnerability detection & compliance",
         refactorer: "Technical debt elimination & code consolidation",
-        "test-architect": "Testing strategy & coverage optimization"
+        "test-architect": "Testing strategy & coverage optimization",
       },
       skills: {
         "project-analysis": "Codebase analysis and metrics",
@@ -130,19 +134,21 @@ class FrameworkHelpServer {
         "performance-optimization": "Performance analysis and optimization",
         "refactoring-strategies": "Code improvement techniques",
         "ui-ux-design": "User interface and experience design",
-        "documentation-generation": "Technical documentation creation"
+        "documentation-generation": "Technical documentation creation",
       },
       commands: {
-        "framework-reporting-system": "Generate comprehensive framework reports",
-        "complexity-analyzer": "Analyze code complexity and delegation decisions",
-        "codex-injector": "Apply development codex rules and standards"
+        "framework-reporting-system":
+          "Generate comprehensive framework reports",
+        "complexity-analyzer":
+          "Analyze code complexity and delegation decisions",
+        "codex-injector": "Apply development codex rules and standards",
       },
       reporting: {
         "activity-logs": "Real-time framework activity monitoring",
         "performance-metrics": "System performance and resource usage",
         "error-tracking": "Comprehensive error detection and reporting",
-        "test-coverage": "Automated testing coverage analysis"
-      }
+        "test-coverage": "Automated testing coverage analysis",
+      },
     };
 
     let result = "";
@@ -152,16 +158,20 @@ class FrameworkHelpServer {
     } else if (category === "all") {
       result = this.generateFullCapabilities(capabilities, format);
     } else {
-      result = this.generateCategoryCapabilities(capabilities, category, format);
+      result = this.generateCategoryCapabilities(
+        capabilities,
+        category,
+        format,
+      );
     }
 
     return {
       content: [
         {
           type: "text",
-          text: result
-        }
-      ]
+          text: result,
+        },
+      ],
     };
   }
 
@@ -227,9 +237,9 @@ Test Coverage - Automated testing analysis
       content: [
         {
           type: "text",
-          text: commands
-        }
-      ]
+          text: commands,
+        },
+      ],
     };
   }
 
@@ -241,14 +251,14 @@ Test Coverage - Automated testing analysis
         content: [
           {
             type: "text",
-            text: "Error: capability parameter is required"
-          }
-        ]
+            text: "Error: capability parameter is required",
+          },
+        ],
       };
     }
 
     const explanations: { [key: string]: string } = {
-      "enforcer": `
+      enforcer: `
 **Enforcer Agent**
 Automatically validates code against the Universal Development Codex (46 mandatory terms).
 Prevents common errors, enforces coding standards, and ensures production-ready code.
@@ -262,7 +272,7 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
 **Usage:** @enforcer analyze this code for violations
       `.trim(),
 
-      "orchestrator": `
+      orchestrator: `
 **Orchestrator Agent**
 Coordinates multiple AI agents for complex development tasks.
 Automatically delegates work based on complexity analysis (6 metrics).
@@ -289,7 +299,7 @@ Generates comprehensive reports on framework activity and performance.
 **Usage:** framework-reporting-system generate-report
       `.trim(),
 
-      "skills": `
+      skills: `
 **Skills System (23 Skills)**
 Lazy-loaded capabilities with on-demand MCP server activation.
 
@@ -304,10 +314,11 @@ Lazy-loaded capabilities with on-demand MCP server activation.
 - documentation-generation: Technical docs
 
 **Benefits:** 0 baseline processes, 90% resource reduction
-      `.trim()
+      `.trim(),
     };
 
-    const explanation = explanations[capability] ||
+    const explanation =
+      explanations[capability] ||
       `**${capability}**
 No detailed explanation available. This capability provides specialized functionality within the StringRay framework. Use @enforcer or check the framework documentation for more details.`;
 
@@ -315,9 +326,9 @@ No detailed explanation available. This capability provides specialized function
       content: [
         {
           type: "text",
-          text: explanation
-        }
-      ]
+          text: explanation,
+        },
+      ],
     };
   }
 
@@ -326,16 +337,24 @@ No detailed explanation available. This capability provides specialized function
 **StringRay Framework Commands:**
 
 **Agent Commands:**
-${Object.entries(capabilities.agents).map(([name, desc]) => `- @${name}: ${desc}`).join('\n')}
+${Object.entries(capabilities.agents)
+  .map(([name, desc]) => `- @${name}: ${desc}`)
+  .join("\n")}
 
 **System Commands:**
-${Object.entries(capabilities.commands).map(([name, desc]) => `- ${name}: ${desc}`).join('\n')}
+${Object.entries(capabilities.commands)
+  .map(([name, desc]) => `- ${name}: ${desc}`)
+  .join("\n")}
 
 **Skills (23 available):**
-${Object.entries(capabilities.skills).map(([name, desc]) => `- ${name}: ${desc}`).join('\n')}
+${Object.entries(capabilities.skills)
+  .map(([name, desc]) => `- ${name}: ${desc}`)
+  .join("\n")}
 
 **Reporting:**
-${Object.entries(capabilities.reporting).map(([name, desc]) => `- ${name}: ${desc}`).join('\n')}
+${Object.entries(capabilities.reporting)
+  .map(([name, desc]) => `- ${name}: ${desc}`)
+  .join("\n")}
 
 **Quick Start:**
 1. Use @enforcer for code quality validation
@@ -351,16 +370,24 @@ ${Object.entries(capabilities.reporting).map(([name, desc]) => `- ${name}: ${des
 **StringRay Framework - Complete Capabilities Overview**
 
 **8 Specialized Agents:**
-${Object.entries(capabilities.agents).map(([name, desc]) => `- **${name}**: ${desc}`).join('\n')}
+${Object.entries(capabilities.agents)
+  .map(([name, desc]) => `- **${name}**: ${desc}`)
+  .join("\n")}
 
 **23 Skills (Lazy Loading):**
-${Object.entries(capabilities.skills).map(([name, desc]) => `- **${name}**: ${desc}`).join('\n')}
+${Object.entries(capabilities.skills)
+  .map(([name, desc]) => `- **${name}**: ${desc}`)
+  .join("\n")}
 
 **System Commands:**
-${Object.entries(capabilities.commands).map(([name, desc]) => `- **${name}**: ${desc}`).join('\n')}
+${Object.entries(capabilities.commands)
+  .map(([name, desc]) => `- **${name}**: ${desc}`)
+  .join("\n")}
 
 **Reporting & Monitoring:**
-${Object.entries(capabilities.reporting).map(([name, desc]) => `- **${name}**: ${desc}`).join('\n')}
+${Object.entries(capabilities.reporting)
+  .map(([name, desc]) => `- **${name}**: ${desc}`)
+  .join("\n")}
 
 **Key Features:**
 - 99.6% error prevention through codex compliance
@@ -392,7 +419,11 @@ ${Object.entries(capabilities.reporting).map(([name, desc]) => `- **${name}**: $
     }
   }
 
-  private generateCategoryCapabilities(capabilities: any, category: string, format: string): string {
+  private generateCategoryCapabilities(
+    capabilities: any,
+    category: string,
+    format: string,
+  ): string {
     const categoryData = capabilities[category];
     if (!categoryData) {
       return `Category "${category}" not found. Available categories: agents, skills, commands, reporting`;
@@ -402,7 +433,7 @@ ${Object.entries(capabilities.reporting).map(([name, desc]) => `- **${name}**: $
     return `
 **StringRay ${category.charAt(0).toUpperCase() + category.slice(1)}:**
 
-${items.map(([name, desc]) => `- **${name}**: ${desc}`).join('\n')}
+${items.map(([name, desc]) => `- **${name}**: ${desc}`).join("\n")}
 
 **Total:** ${items.length} ${category}
     `.trim();

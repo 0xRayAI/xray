@@ -99,19 +99,24 @@ export class PostProcessor {
     // Only generate report if complexity score meets threshold
     if (complexityScore < this.config.reporting.reportThreshold) {
       await frameworkLogger.log(
-        'postprocessor',
-        'report-skipped-low-complexity',
-        'info',
+        "postprocessor",
+        "report-skipped-low-complexity",
+        "info",
         {
           complexityScore,
-          threshold: this.config.reporting.reportThreshold
-        }
+          threshold: this.config.reporting.reportThreshold,
+        },
       );
       return null;
     }
 
     try {
-      await frameworkLogger.log('-post-processor', '-generating-automated-framework-report-', 'info', { message: "📊 Generating automated framework report..." });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-generating-automated-framework-report-",
+        "info",
+        { message: "📊 Generating automated framework report..." },
+      );
 
       const reportConfig = {
         type: "full-analysis" as const,
@@ -127,7 +132,14 @@ export class PostProcessor {
 
       await frameworkReportingSystem.generateReport(reportConfig);
 
-      await frameworkLogger.log('-post-processor', '-framework-report-generated-reportconfig-outputpat', 'success', { message: `✅ Framework report generated: ${reportConfig.outputPath}` });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-framework-report-generated-reportconfig-outputpat",
+        "success",
+        {
+          message: `✅ Framework report generated: ${reportConfig.outputPath}`,
+        },
+      );
 
       // Clean up old reports
       await this.cleanupOldReports();
@@ -165,7 +177,12 @@ export class PostProcessor {
             );
           }
         } else {
-          await frameworkLogger.log('-post-processor', '-report-validation-passed-for-reportpath-', 'success', { message: `✅ Report validation passed for ${reportPath}` });
+          await frameworkLogger.log(
+            "-post-processor",
+            "-report-validation-passed-for-reportpath-",
+            "success",
+            { message: `✅ Report validation passed for ${reportPath}` },
+          );
         }
       }
     } catch (error) {
@@ -194,7 +211,12 @@ export class PostProcessor {
 
         if (stats.mtime.getTime() < cutoffTime) {
           fs.unlinkSync(filePath);
-          await frameworkLogger.log('-post-processor', '-cleaned-up-old-report-file-', 'info', { message: `🗑️ Cleaned up old report: ${file}` });
+          await frameworkLogger.log(
+            "-post-processor",
+            "-cleaned-up-old-report-file-",
+            "info",
+            { message: `🗑️ Cleaned up old report: ${file}` },
+          );
         }
       }
     } catch (error) {
@@ -206,7 +228,12 @@ export class PostProcessor {
    * Initialize the post-processor system
    */
   async initialize(): Promise<void> {
-    await frameworkLogger.log('-post-processor', '-initializing-stringray-post-processor-', 'info', { message: "🚀 Initializing StringRay Post-Processor..." });
+    await frameworkLogger.log(
+      "-post-processor",
+      "-initializing-stringray-post-processor-",
+      "info",
+      { message: "🚀 Initializing StringRay Post-Processor..." },
+    );
 
     // Initialize monitoring
     if (this.config.monitoring.enabled) {
@@ -230,7 +257,12 @@ export class PostProcessor {
       // API triggers initialization - removed unnecessary startup logging
     }
 
-    await frameworkLogger.log('-post-processor', '-post-processor-initialization-complete-', 'info', { message: "🎯 Post-Processor initialization complete" });
+    await frameworkLogger.log(
+      "-post-processor",
+      "-post-processor-initialization-complete-",
+      "info",
+      { message: "🎯 Post-Processor initialization complete" },
+    );
   }
 
   /**
@@ -240,12 +272,24 @@ export class PostProcessor {
     context: PostProcessorContext,
   ): Promise<boolean> {
     try {
-      await frameworkLogger.log('-post-processor', '-validating-architectural-compliance-', 'info', { message: "🏗️ Validating architectural compliance..." });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-validating-architectural-compliance-",
+        "info",
+        { message: "🏗️ Validating architectural compliance..." },
+      );
 
       // Rule 46: System Integrity Cross-Check
       const integrityCheck = await this.checkSystemIntegrity(context);
       if (!integrityCheck.passed) {
-        await frameworkLogger.log('-post-processor', '-system-integrity-violation-integritycheck-message', 'error', { message: `❌ System integrity violation: ${integrityCheck.message}` });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-system-integrity-violation-integritycheck-message",
+          "error",
+          {
+            message: `❌ System integrity violation: ${integrityCheck.message}`,
+          },
+        );
 
         // Call librarian agent to analyze system components
         const fixed = await this.callAgentForArchitecturalFix(
@@ -253,7 +297,7 @@ export class PostProcessor {
           "librarian",
           "project-analysis",
           context,
-          integrityCheck.message
+          integrityCheck.message,
         );
 
         if (!fixed) {
@@ -264,9 +308,14 @@ export class PostProcessor {
       // Rule 47: Integration Testing Mandate
       const integrationCheck = await this.checkIntegrationTesting(context);
       if (!integrationCheck.passed) {
-        await frameworkLogger.log('-post-processor', '-integration-testing-violation-integrationcheck-me', 'error', { message: 
-          `❌ Integration testing violation: ${integrationCheck.message}`,
-         });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-integration-testing-violation-integrationcheck-me",
+          "error",
+          {
+            message: `❌ Integration testing violation: ${integrationCheck.message}`,
+          },
+        );
 
         // Call test-architect agent for testing strategy
         const fixed = await this.callAgentForArchitecturalFix(
@@ -274,7 +323,7 @@ export class PostProcessor {
           "test-architect",
           "testing-strategy",
           context,
-          integrationCheck.message
+          integrationCheck.message,
         );
 
         if (!fixed) {
@@ -285,7 +334,12 @@ export class PostProcessor {
       // Rule 48: Path Resolution Abstraction
       const pathCheck = await this.checkPathResolution(context);
       if (!pathCheck.passed) {
-        await frameworkLogger.log('-post-processor', '-path-resolution-violation-pathcheck-message-', 'error', { message: `❌ Path resolution violation: ${pathCheck.message}` });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-path-resolution-violation-pathcheck-message-",
+          "error",
+          { message: `❌ Path resolution violation: ${pathCheck.message}` },
+        );
 
         // Call librarian + refactorer for path analysis and fixes
         const fixed = await this.callAgentForArchitecturalFix(
@@ -293,7 +347,7 @@ export class PostProcessor {
           "librarian",
           "project-analysis",
           context,
-          pathCheck.message
+          pathCheck.message,
         );
 
         if (!fixed) {
@@ -304,9 +358,14 @@ export class PostProcessor {
       // Rule 49: Feature Completeness Validation
       const completenessCheck = await this.checkFeatureCompleteness(context);
       if (!completenessCheck.passed) {
-        await frameworkLogger.log('-post-processor', '-feature-completeness-violation-completenesscheck-', 'error', { message: 
-          `❌ Feature completeness violation: ${completenessCheck.message}`,
-         });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-feature-completeness-violation-completenesscheck-",
+          "error",
+          {
+            message: `❌ Feature completeness violation: ${completenessCheck.message}`,
+          },
+        );
 
         // Call architect agent for system design analysis
         const fixed = await this.callAgentForArchitecturalFix(
@@ -314,7 +373,7 @@ export class PostProcessor {
           "architect",
           "architecture-patterns",
           context,
-          completenessCheck.message
+          completenessCheck.message,
         );
 
         if (!fixed) {
@@ -326,9 +385,14 @@ export class PostProcessor {
       const pathGuidelinesCheck =
         await this.checkPathAnalysisGuidelines(context);
       if (!pathGuidelinesCheck.passed) {
-        await frameworkLogger.log('-post-processor', '-path-analysis-guidelines-violation-pathguidelines', 'error', { message: 
-          `❌ Path analysis guidelines violation: ${pathGuidelinesCheck.message}`,
-         });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-path-analysis-guidelines-violation-pathguidelines",
+          "error",
+          {
+            message: `❌ Path analysis guidelines violation: ${pathGuidelinesCheck.message}`,
+          },
+        );
 
         // Call refactorer agent for code refactoring
         const fixed = await this.callAgentForArchitecturalFix(
@@ -336,7 +400,7 @@ export class PostProcessor {
           "refactorer",
           "refactoring-strategies",
           context,
-          pathGuidelinesCheck.message
+          pathGuidelinesCheck.message,
         );
 
         if (!fixed) {
@@ -344,12 +408,22 @@ export class PostProcessor {
         }
       }
 
-      await frameworkLogger.log('-post-processor', '-all-architectural-compliance-checks-passed-', 'success', { message: "✅ All architectural compliance checks passed" });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-all-architectural-compliance-checks-passed-",
+        "success",
+        { message: "✅ All architectural compliance checks passed" },
+      );
       return true;
     } catch (error) {
-      await frameworkLogger.log('-post-processor', '-architectural-compliance-validation-failed-error-', 'error', { message: 
-        `❌ Architectural compliance validation failed: ${error instanceof Error ? error.message : String(error)}`,
-       });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-architectural-compliance-validation-failed-error-",
+        "error",
+        {
+          message: `❌ Architectural compliance validation failed: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      );
       return false;
     }
   }
@@ -562,7 +636,9 @@ All path violations will be automatically detected and blocked.
 `;
 
     // Log the comprehensive guidelines notification for AIs
-    await frameworkLogger.log('-post-processor', 'guidelinesmessage', 'info', { message: guidelinesMessage });
+    await frameworkLogger.log("-post-processor", "guidelinesmessage", "info", {
+      message: guidelinesMessage,
+    });
 
     // In a full implementation, we would:
     // 1. Scan actual file contents for violations
@@ -590,17 +666,28 @@ All path violations will be automatically detected and blocked.
     const startTime = Date.now();
     const sessionId = `postprocessor-${context.commitSha}-${Date.now()}`;
 
-    await frameworkLogger.log('-post-processor', '-starting-post-processor-loop-for-commit-context-c', 'info', { message: 
-      `🔄 Starting post-processor loop for commit: ${context.commitSha}`,
-     });
+    await frameworkLogger.log(
+      "-post-processor",
+      "-starting-post-processor-loop-for-commit-context-c",
+      "info",
+      {
+        message: `🔄 Starting post-processor loop for commit: ${context.commitSha}`,
+      },
+    );
 
     // Validate architectural compliance before processing
     const compliancePassed =
       await this.validateArchitecturalCompliance(context);
     if (!compliancePassed) {
-      await frameworkLogger.log('-post-processor', '-architectural-compliance-validation-failed-blocki', 'error', { message: 
-        "❌ Architectural compliance validation failed - blocking post-processing",
-       });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-architectural-compliance-validation-failed-blocki",
+        "error",
+        {
+          message:
+            "❌ Architectural compliance validation failed - blocking post-processing",
+        },
+      );
       return {
         success: false,
         commitSha: context.commitSha,
@@ -612,37 +699,57 @@ All path violations will be automatically detected and blocked.
 
     // Codex compliance validation: Use processor-manager for proper rule enforcement and agent delegation
     const processorContext = {
-      operation: 'commit' as const,
+      operation: "commit" as const,
       files: context.files,
-      newCode: '', // Could be enhanced to analyze actual code changes
+      newCode: "", // Could be enhanced to analyze actual code changes
       existingCode: new Map(),
       tests: [],
-      dependencies: []
+      dependencies: [],
     };
 
     try {
-      const { importResolver } = await import('../utils/import-resolver.js');
-      const { ProcessorManager } = await importResolver.importModule('processors/processor-manager');
+      const { importResolver } = await import("../utils/import-resolver.js");
+      const { ProcessorManager } = await importResolver.importModule(
+        "processors/processor-manager",
+      );
 
       const processorManager = new ProcessorManager();
-      const complianceResult = await processorManager.executeCodexCompliance(processorContext);
+      const complianceResult =
+        await processorManager.executeCodexCompliance(processorContext);
 
       if (!complianceResult.compliant) {
-        await frameworkLogger.log("codex-compliance", "validation-failed", "error", {
-          jobId,
-          commitSha: context.commitSha,
-          violations: complianceResult.violations,
-          reason: "Codex compliance violations found - processor-manager attempted automated fixes"
-        });
+        await frameworkLogger.log(
+          "codex-compliance",
+          "validation-failed",
+          "error",
+          {
+            jobId,
+            commitSha: context.commitSha,
+            violations: complianceResult.violations,
+            reason:
+              "Codex compliance violations found - processor-manager attempted automated fixes",
+          },
+        );
 
-        await frameworkLogger.log('-post-processor', '-codex-compliance-violations-detected-processor-ma', 'info', { message: 
-          "⚠️ Codex compliance violations detected - processor-manager handled automated fixes",
-         });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-codex-compliance-violations-detected-processor-ma",
+          "info",
+          {
+            message:
+              "⚠️ Codex compliance violations detected - processor-manager handled automated fixes",
+          },
+        );
       }
     } catch (error) {
-      await frameworkLogger.log('-post-processor', '-codex-compliance-check-failed-continuing-with-com', 'error', { message: 
-        "⚠️ Codex compliance check failed - continuing with commit",
-       });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-codex-compliance-check-failed-continuing-with-com",
+        "error",
+        {
+          message: "⚠️ Codex compliance check failed - continuing with commit",
+        },
+      );
     }
 
     try {
@@ -655,7 +762,11 @@ All path violations will be automatically detected and blocked.
       });
 
       // Execute the monitoring → analysis → fix → redeploy loop
-      const result = await this.executeMonitoringLoop(context, sessionId, jobId);
+      const result = await this.executeMonitoringLoop(
+        context,
+        sessionId,
+        jobId,
+      );
 
       // Update final status
       await this.stateManager.set(`postprocessor:${sessionId}`, {
@@ -664,9 +775,14 @@ All path violations will be automatically detected and blocked.
         duration: Date.now() - startTime,
       });
 
-      await frameworkLogger.log('-post-processor', '-post-processor-loop-completed-result-success-succ', 'success', { message: 
-        `✅ Post-processor loop completed: ${result.success ? "SUCCESS" : "FAILED"}`,
-       });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-post-processor-loop-completed-result-success-succ",
+        "success",
+        {
+          message: `✅ Post-processor loop completed: ${result.success ? "SUCCESS" : "FAILED"}`,
+        },
+      );
       return result;
     } catch (error) {
       console.error("❌ Post-processor loop failed:", error);
@@ -706,9 +822,14 @@ All path violations will be automatically detected and blocked.
     while (attempts < maxAttempts) {
       attempts++;
 
-      await frameworkLogger.log('-post-processor', '-monitoring-attempt-attempts-maxattempts-for-conte', 'info', { message: 
-        `🔍 Monitoring attempt ${attempts}/${maxAttempts} for ${context.commitSha}`,
-       });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-monitoring-attempt-attempts-maxattempts-for-conte",
+        "info",
+        {
+          message: `🔍 Monitoring attempt ${attempts}/${maxAttempts} for ${context.commitSha}`,
+        },
+      );
 
       // Monitor CI/CD status
       const monitoringResult = await this.monitoringEngine.monitorDeployment(
@@ -718,7 +839,12 @@ All path violations will be automatically detected and blocked.
       monitoringResults.push(monitoringResult);
 
       if (monitoringResult.overallStatus === "success") {
-        await frameworkLogger.log('-post-processor', '-ci-cd-pipeline-successful-post-processor-complete', 'success', { message: "✅ CI/CD pipeline successful - post-processor complete" });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-ci-cd-pipeline-successful-post-processor-complete",
+          "success",
+          { message: "✅ CI/CD pipeline successful - post-processor complete" },
+        );
 
         const result = {
           success: true,
@@ -764,16 +890,26 @@ All path violations will be automatically detected and blocked.
 
       const analysis =
         await this.failureAnalysisEngine.analyzeFailure(monitoringResult);
-      await frameworkLogger.log('-post-processor', '-analysis-complete-analysis-category-analysis-seve', 'info', { message: 
-        `🔍 Analysis complete: ${analysis.category} (${analysis.severity}) - ${analysis.rootCause}`,
-       });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-analysis-complete-analysis-category-analysis-seve",
+        "info",
+        {
+          message: `🔍 Analysis complete: ${analysis.category} (${analysis.severity}) - ${analysis.rootCause}`,
+        },
+      );
 
       const fixResult = await this.autoFixEngine.applyFixes(analysis, context);
 
       if (fixResult.success && fixResult.appliedFixes.length > 0) {
-        await frameworkLogger.log('-post-processor', '-fixresult-appliedfixes-length-fix-es-applied-succ', 'success', { message: 
-          `🔧 ${fixResult.appliedFixes.length} fix(es) applied successfully`,
-         });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-fixresult-appliedfixes-length-fix-es-applied-succ",
+          "success",
+          {
+            message: `🔧 ${fixResult.appliedFixes.length} fix(es) applied successfully`,
+          },
+        );
 
         // Validate that fixes resolve the issue
         const validationPassed = await this.fixValidator.validateFixes(
@@ -783,7 +919,12 @@ All path violations will be automatically detected and blocked.
         );
 
         if (validationPassed) {
-          await frameworkLogger.log('-post-processor', '-fix-validation-passed-redeploying-', 'success', { message: "✅ Fix validation passed - redeploying..." });
+          await frameworkLogger.log(
+            "-post-processor",
+            "-fix-validation-passed-redeploying-",
+            "success",
+            { message: "✅ Fix validation passed - redeploying..." },
+          );
           await this.redeployWithFixes(context, fixResult, jobId);
           // Continue monitoring with next attempt
           continue;
@@ -807,8 +948,18 @@ All path violations will be automatically detected and blocked.
       );
 
       if (escalationResult) {
-        await frameworkLogger.log('-post-processor', '-escalation-triggered-escalationresult-level-', 'info', { message: `🚨 Escalation triggered: ${escalationResult.level}` });
-        await frameworkLogger.log('-post-processor', '-reason-escalationresult-reason-', 'info', { message: `   Reason: ${escalationResult.reason}` });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-escalation-triggered-escalationresult-level-",
+          "info",
+          { message: `🚨 Escalation triggered: ${escalationResult.level}` },
+        );
+        await frameworkLogger.log(
+          "-post-processor",
+          "-reason-escalationresult-reason-",
+          "info",
+          { message: `   Reason: ${escalationResult.reason}` },
+        );
 
         // For emergency/rollback levels, stop the loop
         if (
@@ -858,7 +1009,12 @@ All path violations will be automatically detected and blocked.
     fixResult: any,
     jobId: string,
   ): Promise<void> {
-    await frameworkLogger.log('-post-processor', '-executing-redeployment-with-fixes-', 'info', { message: "🔄 Executing redeployment with fixes..." });
+    await frameworkLogger.log(
+      "-post-processor",
+      "-executing-redeployment-with-fixes-",
+      "info",
+      { message: "🔄 Executing redeployment with fixes..." },
+    );
 
     const redeployResult = await this.redeployCoordinator.executeRedeploy(
       context,
@@ -866,7 +1022,14 @@ All path violations will be automatically detected and blocked.
     );
 
     if (redeployResult.success) {
-      await frameworkLogger.log('-post-processor', '-redeployment-successful-redeployresult-deployment', 'success', { message: `✅ Redeployment successful: ${redeployResult.deploymentId}` });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-redeployment-successful-redeployresult-deployment",
+        "success",
+        {
+          message: `✅ Redeployment successful: ${redeployResult.deploymentId}`,
+        },
+      );
     } else {
       await frameworkLogger.log(
         "postprocessor",
@@ -897,7 +1060,12 @@ All path violations will be automatically detected and blocked.
     monitoringResult: any,
     attempts: number,
   ): Promise<void> {
-    await frameworkLogger.log('-post-processor', '-escalating-to-manual-intervention-', 'info', { message: "🚨 Escalating to manual intervention" });
+    await frameworkLogger.log(
+      "-post-processor",
+      "-escalating-to-manual-intervention-",
+      "info",
+      { message: "🚨 Escalating to manual intervention" },
+    );
 
     // Create detailed incident report
     const report = {
@@ -917,7 +1085,12 @@ All path violations will be automatically detected and blocked.
     await this.stateManager.set(`escalation:${context.commitSha}`, report);
 
     // TODO: Send notifications to development team
-    await frameworkLogger.log('-post-processor', '-escalation-report-created-report', 'info', { message: "📋 Escalation report created:", report });
+    await frameworkLogger.log(
+      "-post-processor",
+      "-escalation-report-created-report",
+      "info",
+      { message: "📋 Escalation report created:", report },
+    );
   }
 
   /**
@@ -927,7 +1100,12 @@ All path violations will be automatically detected and blocked.
     const baseDelay = this.config.retryDelay || 30000; // 30 seconds
     const delay = baseDelay * Math.pow(2, attempt - 1);
 
-    await frameworkLogger.log('-post-processor', '-waiting-delay-ms-before-retry-attempt-attempt-1-', 'info', { message: `⏳ Waiting ${delay}ms before retry attempt ${attempt + 1}` });
+    await frameworkLogger.log(
+      "-post-processor",
+      "-waiting-delay-ms-before-retry-attempt-attempt-1-",
+      "info",
+      { message: `⏳ Waiting ${delay}ms before retry attempt ${attempt + 1}` },
+    );
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
@@ -950,10 +1128,17 @@ All path violations will be automatically detected and blocked.
     agentName: string,
     skillName: string,
     context: PostProcessorContext,
-    violationMessage: string
+    violationMessage: string,
   ): Promise<boolean> {
     try {
-      await frameworkLogger.log('-post-processor', '-calling-agentname-skillname-to-fix-violationtype-', 'info', { message: `🔧 Calling ${agentName} (${skillName}) to fix: ${violationType}` });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-calling-agentname-skillname-to-fix-violationtype-",
+        "info",
+        {
+          message: `🔧 Calling ${agentName} (${skillName}) to fix: ${violationType}`,
+        },
+      );
 
       // Call the skill invocation MCP server to delegate to the appropriate agent/skill
       const result = await mcpClientManager.callServerTool(
@@ -971,25 +1156,51 @@ All path violations will be automatically detected and blocked.
               commitSha: context.commitSha,
               repository: context.repository,
               branch: context.branch,
-              author: context.author
-            }
-          }
-        }
+              author: context.author,
+            },
+          },
+        },
       );
 
-      await frameworkLogger.log('-post-processor', '-agent-agentname-completed-fix-attempt-for-violati', 'success', { message: `✅ Agent ${agentName} completed fix attempt for ${violationType}` });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-agent-agentname-completed-fix-attempt-for-violati",
+        "success",
+        {
+          message: `✅ Agent ${agentName} completed fix attempt for ${violationType}`,
+        },
+      );
 
       // Check if the fix was successful by re-running the validation
       const fixed = await this.revalidateAfterFix(violationType, context);
       if (fixed) {
-        await frameworkLogger.log('-post-processor', '-violationtype-violation-fixed-by-agentname-', 'info', { message: `🎉 ${violationType} violation fixed by ${agentName}` });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-violationtype-violation-fixed-by-agentname-",
+          "info",
+          { message: `🎉 ${violationType} violation fixed by ${agentName}` },
+        );
         return true;
       } else {
-        await frameworkLogger.log('-post-processor', '-violationtype-violation-not-fixed-by-agentname-', 'error', { message: `❌ ${violationType} violation not fixed by ${agentName}` });
+        await frameworkLogger.log(
+          "-post-processor",
+          "-violationtype-violation-not-fixed-by-agentname-",
+          "error",
+          {
+            message: `❌ ${violationType} violation not fixed by ${agentName}`,
+          },
+        );
         return false;
       }
     } catch (error) {
-      await frameworkLogger.log('-post-processor', '-failed-to-call-agent-agentname-for-violationtype-', 'error', { message: `❌ Failed to call agent ${agentName} for ${violationType}: ${error instanceof Error ? error.message : String(error)}` });
+      await frameworkLogger.log(
+        "-post-processor",
+        "-failed-to-call-agent-agentname-for-violationtype-",
+        "error",
+        {
+          message: `❌ Failed to call agent ${agentName} for ${violationType}: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      );
       return false;
     }
   }
@@ -999,7 +1210,7 @@ All path violations will be automatically detected and blocked.
    */
   private calculateComplexityScore(
     monitoringResults: any[],
-    context: PostProcessorContext
+    context: PostProcessorContext,
   ): number {
     // Simple complexity calculation based on file count and monitoring results
     const fileCount = context.files?.length || 0;
@@ -1020,7 +1231,7 @@ All path violations will be automatically detected and blocked.
    */
   private async revalidateAfterFix(
     violationType: string,
-    context: PostProcessorContext
+    context: PostProcessorContext,
   ): Promise<boolean> {
     switch (violationType) {
       case "checkSystemIntegrity":

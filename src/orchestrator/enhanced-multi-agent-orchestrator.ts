@@ -4,7 +4,7 @@
  */
 
 import { StringRayStateManager } from "../state/state-manager.js";
-import { frameworkLogger } from "../core/framework-logger.js"
+import { frameworkLogger } from "../core/framework-logger.js";
 import {
   ComplexityAnalyzer,
   ComplexityMetrics,
@@ -61,7 +61,10 @@ export class EnhancedMultiAgentOrchestrator {
   ) {
     this.stateManager = stateManager || new StringRayStateManager();
     this.complexityAnalyzer = new ComplexityAnalyzer();
-    this.agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
+    this.agentDelegator = createAgentDelegator(
+      this.stateManager,
+      strRayConfigLoader,
+    );
 
     this.state = {
       activeAgents: new Map(),
@@ -194,7 +197,11 @@ export class EnhancedMultiAgentOrchestrator {
       agent.progress = 10;
 
       // Execute agent with progress updates
-      const executionPromise = this.executeAgentWithDelegator(agent, request, executeJobId);
+      const executionPromise = this.executeAgentWithDelegator(
+        agent,
+        request,
+        executeJobId,
+      );
 
       // Set up monitoring updates
       const monitorInterval = setInterval(() => {

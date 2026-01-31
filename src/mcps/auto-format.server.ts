@@ -90,18 +90,21 @@ class StrRayAutoFormatServer {
     });
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
-      const { name, arguments: args } = request.params;
+    this.server.setRequestHandler(
+      CallToolRequestSchema,
+      async (request: CallToolRequest) => {
+        const { name, arguments: args } = request.params;
 
-      switch (name) {
-        case "auto-format":
-          return await this.handleAutoFormat(args);
-        case "format-check":
-          return await this.handleFormatCheck(args);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
+        switch (name) {
+          case "auto-format":
+            return await this.handleAutoFormat(args);
+          case "format-check":
+            return await this.handleFormatCheck(args);
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      },
+    );
   }
 
   private async handleAutoFormat(args: any) {

@@ -1,6 +1,6 @@
 /**
  * Integration Test - Complexity Analysis
- * 
+ *
  * Tests complexity analysis integration with StringRay framework
  */
 
@@ -18,7 +18,7 @@ describe("Complexity Analysis Integration", () => {
   test("should analyze simple file complexity correctly", () => {
     const metrics = complexityAnalyzer.analyzeComplexity("edit", {
       files: ["simple.ts"],
-      linesChanged: 50
+      linesChanged: 50,
     });
 
     const score = complexityAnalyzer.calculateComplexityScore(metrics);
@@ -32,7 +32,7 @@ describe("Complexity Analysis Integration", () => {
       files: ["complex.ts"],
       linesChanged: 500,
       dependencyCount: 20,
-      riskLevel: "high"
+      riskLevel: "high",
     });
 
     const score = complexityAnalyzer.calculateComplexityScore(metrics);
@@ -42,7 +42,7 @@ describe("Complexity Analysis Integration", () => {
 
   test("should handle edge cases gracefully", () => {
     const metrics = complexityAnalyzer.analyzeComplexity("unknown", {
-      files: []
+      files: [],
     });
 
     const score = complexityAnalyzer.calculateComplexityScore(metrics);
@@ -53,7 +53,7 @@ describe("Complexity Analysis Integration", () => {
   test("should persist complexity metrics to state", () => {
     const metrics = complexityAnalyzer.analyzeComplexity("edit", {
       files: ["test.ts"],
-      linesChanged: 25
+      linesChanged: 25,
     });
 
     const score = complexityAnalyzer.calculateComplexityScore(metrics);

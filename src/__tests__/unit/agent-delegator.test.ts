@@ -65,7 +65,7 @@ describe("AgentDelegator", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     // Clean up delegation metrics to prevent test pollution
-    stateManager.set('delegation_metrics', []);
+    stateManager.set("delegation_metrics", []);
   });
 
   describe("constructor", () => {
@@ -237,7 +237,10 @@ describe("AgentDelegator", () => {
       stateManager.set("agent:test-architect", mockAgent);
 
       const delegation = await agentDelegator.analyzeDelegation(request);
-      const result = await agentDelegator.executeDelegation(delegation, request);
+      const result = await agentDelegator.executeDelegation(
+        delegation,
+        request,
+      );
 
       // executeDelegation catches errors and returns them in the result
       expect(result.success).toBe(false);
@@ -396,7 +399,10 @@ describe("AgentDelegator", () => {
       expect(delegation).toBeDefined();
       expect(delegation.strategy).toBeDefined();
 
-      const result = await agentDelegator.executeDelegation(delegation, request);
+      const result = await agentDelegator.executeDelegation(
+        delegation,
+        request,
+      );
 
       // Should return result based on strategy
       expect(result).toBeDefined();
@@ -450,8 +456,8 @@ describe("AgentDelegator", () => {
         request,
       );
 
-       // The result should be defined
-       expect(result).toBeDefined();
+      // The result should be defined
+      expect(result).toBeDefined();
     });
   });
 
@@ -515,7 +521,7 @@ describe("AgentDelegator", () => {
         },
       };
 
-await agentDelegator.analyzeDelegation(request1);
+      await agentDelegator.analyzeDelegation(request1);
       await agentDelegator.analyzeDelegation(request2);
 
       const metrics = agentDelegator.getDelegationMetrics();
@@ -634,13 +640,13 @@ await agentDelegator.analyzeDelegation(request1);
       };
 
       const delegation = await agentDelegator.analyzeDelegation(request);
-       expect(["single-agent", "multi-agent", "orchestrator-led"]).toContain(
-         delegation.strategy,
-       );
-       expect(delegation.agents.length).toBe(2);
-     });
+      expect(["single-agent", "multi-agent", "orchestrator-led"]).toContain(
+        delegation.strategy,
+      );
+      expect(delegation.agents.length).toBe(2);
+    });
 
-     it("should handle mixed operation types with appropriate agent selection", async () => {
+    it("should handle mixed operation types with appropriate agent selection", async () => {
       const request: DelegationRequest = {
         operation: "refactor",
         description: "Refactor authentication and add security features",
@@ -652,14 +658,14 @@ await agentDelegator.analyzeDelegation(request1);
         },
       };
 
-       const delegation = await agentDelegator.analyzeDelegation(request);
-       expect(["single-agent", "multi-agent", "orchestrator-led"]).toContain(
-         delegation.strategy,
-       );
-       expect(delegation.agents.length).toBe(2);
-     });
+      const delegation = await agentDelegator.analyzeDelegation(request);
+      expect(["single-agent", "multi-agent", "orchestrator-led"]).toContain(
+        delegation.strategy,
+      );
+      expect(delegation.agents.length).toBe(2);
+    });
 
-     it("should reject invalid delegation requests", async () => {
+    it("should reject invalid delegation requests", async () => {
       const invalidRequest = {
         operation: "",
         description: "",
@@ -886,7 +892,7 @@ await agentDelegator.analyzeDelegation(request1);
 
     it("should track delegation success rates", async () => {
       // Clear any previous metrics to ensure clean state
-      stateManager.set('delegation_metrics', []);
+      stateManager.set("delegation_metrics", []);
 
       // Ensure enforcer agent is properly mocked for format operations
       const mockEnforcer = {

@@ -522,7 +522,7 @@ export class PerformanceBudgetEnforcer extends EventEmitter {
    */
   stopMonitoring(): void {
     this.monitoringActive = false;
-    }
+  }
 
   /**
    * Get historical performance reports

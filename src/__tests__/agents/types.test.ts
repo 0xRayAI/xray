@@ -94,7 +94,7 @@ describe("Agent Types", () => {
     it("should support all optional fields", () => {
       const fullConfig: AgentConfig = {
         name: "full-agent",
-         model: "opencode/grok-code",
+        model: "opencode/grok-code",
         description: "Full featured agent",
         mode: "subagent",
         system: "System prompt",

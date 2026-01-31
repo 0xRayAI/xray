@@ -66,7 +66,7 @@ export interface DashboardMetrics {
     message: string;
     timestamp: number;
     resolved: boolean;
-   }>;
+  }>;
   recommendations: string[];
 }
 
@@ -533,7 +533,9 @@ export class PerformanceMonitoringDashboard extends EventEmitter {
     if (!currentEntry) return;
     const currentSize = currentEntry.value;
     const budget = PERFORMANCE_BUDGET.bundleSize.uncompressed;
-    const projectedViolation = predictions.find(p => p.predictedValue > budget);
+    const projectedViolation = predictions.find(
+      (p) => p.predictedValue > budget,
+    );
 
     if (projectedViolation && slope > 0) {
       this.addAlert({
@@ -558,33 +560,56 @@ export class PerformanceMonitoringDashboard extends EventEmitter {
     const budget = PERFORMANCE_BUDGET.bundleSize.uncompressed;
 
     if (currentSize > budget * 0.9) {
-      recommendations.push("Consider code splitting to reduce initial bundle size");
-      recommendations.push("Review and optimize large dependencies using webpack-bundle-analyzer");
-      recommendations.push("Implement lazy loading for non-critical components");
+      recommendations.push(
+        "Consider code splitting to reduce initial bundle size",
+      );
+      recommendations.push(
+        "Review and optimize large dependencies using webpack-bundle-analyzer",
+      );
+      recommendations.push(
+        "Implement lazy loading for non-critical components",
+      );
     }
 
     // Memory recommendations
-    const avgMemory = this.metrics.runtime.history
-      .slice(-10)
-      .reduce((sum, h) => sum + h.memory, 0) / Math.max(1, this.metrics.runtime.history.length);
+    const avgMemory =
+      this.metrics.runtime.history
+        .slice(-10)
+        .reduce((sum, h) => sum + h.memory, 0) /
+      Math.max(1, this.metrics.runtime.history.length);
 
-    if (avgMemory > 100 * 1024 * 1024) { // 100MB
-      recommendations.push("Implement memory pool optimizations for frequent allocations");
-      recommendations.push("Consider using WeakMap/WeakSet for large object caches");
+    if (avgMemory > 100 * 1024 * 1024) {
+      // 100MB
+      recommendations.push(
+        "Implement memory pool optimizations for frequent allocations",
+      );
+      recommendations.push(
+        "Consider using WeakMap/WeakSet for large object caches",
+      );
       recommendations.push("Review event listeners for potential memory leaks");
     }
 
     // Web vitals recommendations
-    if (this.metrics.webVitals.fcp > PERFORMANCE_BUDGET.webVitals.firstContentfulPaint) {
-      recommendations.push("Optimize critical rendering path and reduce blocking resources");
+    if (
+      this.metrics.webVitals.fcp >
+      PERFORMANCE_BUDGET.webVitals.firstContentfulPaint
+    ) {
+      recommendations.push(
+        "Optimize critical rendering path and reduce blocking resources",
+      );
       recommendations.push("Consider implementing critical CSS inlining");
       recommendations.push("Review and optimize font loading strategy");
     }
 
-    if (this.metrics.webVitals.tti > PERFORMANCE_BUDGET.webVitals.timeToInteractive) {
+    if (
+      this.metrics.webVitals.tti >
+      PERFORMANCE_BUDGET.webVitals.timeToInteractive
+    ) {
       recommendations.push("Defer non-critical JavaScript execution");
       recommendations.push("Optimize main thread work and reduce long tasks");
-      recommendations.push("Consider implementing virtual scrolling for large lists");
+      recommendations.push(
+        "Consider implementing virtual scrolling for large lists",
+      );
     }
 
     // Store recommendations in metrics
@@ -614,7 +639,10 @@ export class PerformanceMonitoringDashboard extends EventEmitter {
   /**
    * Send notification for alert
    */
-  private sendNotification(alert: DashboardMetrics["alerts"][0], jobId?: string): void {
+  private sendNotification(
+    alert: DashboardMetrics["alerts"][0],
+    jobId?: string,
+  ): void {
     if (this.config.notifications.webhook) {
       // Send webhook notification
       this.sendWebhookNotification(alert, jobId);

@@ -155,11 +155,11 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
     vi.restoreAllMocks();
   });
 
-   describe("Boot → Orchestrator → Session Flow Validation", () => {
-     it("should execute complete boot sequence and initialize orchestrator-first architecture", async () => {
-       // const consoleLogSpy = vi
-       //   .spyOn(console, "log")
-       //   .mockImplementation(() => {});
+  describe("Boot → Orchestrator → Session Flow Validation", () => {
+    it("should execute complete boot sequence and initialize orchestrator-first architecture", async () => {
+      // const consoleLogSpy = vi
+      //   .spyOn(console, "log")
+      //   .mockImplementation(() => {});
 
       try {
         // Execute boot sequence
@@ -201,12 +201,12 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
         ) as { sessionId: string };
         expect(defaultSession).toBeDefined();
         expect(defaultSession.sessionId).toBeDefined();
-       } finally {
-         // consoleLogSpy.mockRestore();
-       }
-     });
+      } finally {
+        // consoleLogSpy.mockRestore();
+      }
+    });
 
-     it("should validate orchestrator task execution within session context", async () => {
+    it("should validate orchestrator task execution within session context", async () => {
       // Run boot sequence first to load orchestrator
       const bootResult = await bootOrchestrator.executeBootSequence();
       expect(bootResult.success).toBe(true);

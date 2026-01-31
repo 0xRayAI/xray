@@ -269,11 +269,11 @@ describe("StringRayContextLoader", () => {
 
       const context = loader["parseCodexContent"](jsonContent, "test.json");
 
-       expect(context.version).toBe("1.1.2");
-       expect(context.errorPreventionTarget).toBe(0.996);
-       expect(context.terms.size).toBe(2);
-       expect(context.interweaves).toEqual(["Error Prevention Interweave"]);
-       expect(context.lenses).toEqual(["Code Quality Lens"]);
+      expect(context.version).toBe("1.1.2");
+      expect(context.errorPreventionTarget).toBe(0.996);
+      expect(context.terms.size).toBe(2);
+      expect(context.interweaves).toEqual(["Error Prevention Interweave"]);
+      expect(context.lenses).toEqual(["Code Quality Lens"]);
     });
 
     it("should return error for invalid project root", async () => {
@@ -648,15 +648,19 @@ describe("StringRayContextLoader", () => {
     });
 
     it("should detect type safety violations", () => {
-      const result = loader.validateAgainstCodex(context, "use @ts-ignore here", {
-        includesAny: true,
-      });
+      const result = loader.validateAgainstCodex(
+        context,
+        "use @ts-ignore here",
+        {
+          includesAny: true,
+        },
+      );
 
       // Note: Type safety validation logic may need refinement
       // For now, this test validates the validation framework structure
-      expect(result).toHaveProperty('compliant');
-      expect(result).toHaveProperty('violations');
-      expect(result).toHaveProperty('recommendations');
+      expect(result).toHaveProperty("compliant");
+      expect(result).toHaveProperty("violations");
+      expect(result).toHaveProperty("recommendations");
       expect(Array.isArray(result.violations)).toBe(true);
       expect(Array.isArray(result.recommendations)).toBe(true);
     });

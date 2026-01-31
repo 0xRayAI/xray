@@ -10,7 +10,9 @@ vi.mock("../../core/context-loader", () => ({
       loadCodexContext: vi.fn().mockResolvedValue({
         success: true,
         context: {
-          terms: new Map([[1, { number: 1, description: "test", category: "core" }]]),
+          terms: new Map([
+            [1, { number: 1, description: "test", category: "core" }],
+          ]),
         },
       }),
     })),
@@ -107,7 +109,9 @@ describe("BootOrchestrator - Integration Tests", () => {
       // Setup mocks for successful boot
       stateManager.get.mockImplementation((key: string) => {
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         if (key === "delegation:default_session") {
           return { sessionId: "default-session" };
@@ -128,7 +132,10 @@ describe("BootOrchestrator - Integration Tests", () => {
 
     it("should handle orchestrator loading failure", async () => {
       // Mock orchestrator loading failure by spying on the method
-      const loadOrchestratorSpy = vi.spyOn(bootOrchestrator as any, "loadOrchestrator");
+      const loadOrchestratorSpy = vi.spyOn(
+        bootOrchestrator as any,
+        "loadOrchestrator",
+      );
       loadOrchestratorSpy.mockResolvedValue(false);
 
       const result = await bootOrchestrator.executeBootSequence();
@@ -148,7 +155,10 @@ describe("BootOrchestrator - Integration Tests", () => {
       });
 
       // Force delegation initialization to fail by mocking an error
-      const mockDelegationSystem = vi.spyOn(bootOrchestrator as any, "initializeDelegationSystem");
+      const mockDelegationSystem = vi.spyOn(
+        bootOrchestrator as any,
+        "initializeDelegationSystem",
+      );
       mockDelegationSystem.mockResolvedValue(false);
 
       const result = await bootOrchestrator.executeBootSequence();
@@ -165,7 +175,9 @@ describe("BootOrchestrator - Integration Tests", () => {
       stateManager.get.mockImplementation((key: string) => {
         if (key === "orchestrator") return {};
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         if (key === "delegation:default_session") {
           return { sessionId: "default-session" };
@@ -173,14 +185,19 @@ describe("BootOrchestrator - Integration Tests", () => {
         return null;
       });
 
-      const mockSessionManagement = vi.spyOn(bootOrchestrator as any, "initializeSessionManagement");
+      const mockSessionManagement = vi.spyOn(
+        bootOrchestrator as any,
+        "initializeSessionManagement",
+      );
       mockSessionManagement.mockResolvedValue(false);
 
       const result = await bootOrchestrator.executeBootSequence();
 
       expect(result.success).toBe(false);
       expect(result.sessionManagementActive).toBe(false);
-      expect(result.errors).toContain("Failed to initialize session management");
+      expect(result.errors).toContain(
+        "Failed to initialize session management",
+      );
 
       mockSessionManagement.mockRestore();
     });
@@ -190,7 +207,9 @@ describe("BootOrchestrator - Integration Tests", () => {
       stateManager.get.mockImplementation((key: string) => {
         if (key === "orchestrator") return {};
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         if (key === "delegation:default_session") {
           return { sessionId: "default-session" };
@@ -198,7 +217,10 @@ describe("BootOrchestrator - Integration Tests", () => {
         return null;
       });
 
-      const mockProcessors = vi.spyOn(bootOrchestrator as any, "activateProcessors");
+      const mockProcessors = vi.spyOn(
+        bootOrchestrator as any,
+        "activateProcessors",
+      );
       mockProcessors.mockResolvedValue(false);
 
       const result = await bootOrchestrator.executeBootSequence();
@@ -215,7 +237,9 @@ describe("BootOrchestrator - Integration Tests", () => {
       stateManager.get.mockImplementation((key: string) => {
         if (key === "orchestrator") return {};
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         if (key === "delegation:default_session") {
           return { sessionId: "default-session" };
@@ -223,7 +247,10 @@ describe("BootOrchestrator - Integration Tests", () => {
         return null;
       });
 
-      const mockEnforcement = vi.spyOn(bootOrchestrator as any, "enableEnforcement");
+      const mockEnforcement = vi.spyOn(
+        bootOrchestrator as any,
+        "enableEnforcement",
+      );
       mockEnforcement.mockResolvedValue(false);
 
       const result = await bootOrchestrator.executeBootSequence();
@@ -240,7 +267,9 @@ describe("BootOrchestrator - Integration Tests", () => {
       stateManager.get.mockImplementation((key: string) => {
         if (key === "orchestrator") return {};
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         if (key === "delegation:default_session") {
           return { sessionId: "default-session" };
@@ -248,7 +277,10 @@ describe("BootOrchestrator - Integration Tests", () => {
         return null;
       });
 
-      const mockCodex = vi.spyOn(bootOrchestrator as any, "activateCodexCompliance");
+      const mockCodex = vi.spyOn(
+        bootOrchestrator as any,
+        "activateCodexCompliance",
+      );
       mockCodex.mockResolvedValue(false);
 
       const result = await bootOrchestrator.executeBootSequence();
@@ -262,18 +294,23 @@ describe("BootOrchestrator - Integration Tests", () => {
 
     it("should respect configuration flags", async () => {
       // Create orchestrator with disabled features
-      const configOrchestrator = new BootOrchestrator({
-        enableEnforcement: false,
-        codexValidation: false,
-        sessionManagement: false,
-        processorActivation: false,
-        agentLoading: false,
-      }, stateManager);
+      const configOrchestrator = new BootOrchestrator(
+        {
+          enableEnforcement: false,
+          codexValidation: false,
+          sessionManagement: false,
+          processorActivation: false,
+          agentLoading: false,
+        },
+        stateManager,
+      );
 
       stateManager.get.mockImplementation((key: string) => {
         if (key === "orchestrator") return {};
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         return null;
       });
@@ -293,15 +330,24 @@ describe("BootOrchestrator - Integration Tests", () => {
       // Setup successful boot state
       stateManager.get.mockImplementation((key: string) => {
         switch (key) {
-          case "boot:success": return true;
-          case "orchestrator": return {};
-          case "session:active": return true;
-          case "processor:active": return true;
-          case "enforcement:active": return true;
-          case "compliance:active": return true;
-          case "session:agents": return ["agent1", "agent2"];
-          case "boot:errors": return [];
-          default: return null;
+          case "boot:success":
+            return true;
+          case "orchestrator":
+            return {};
+          case "session:active":
+            return true;
+          case "processor:active":
+            return true;
+          case "enforcement:active":
+            return true;
+          case "compliance:active":
+            return true;
+          case "session:agents":
+            return ["agent1", "agent2"];
+          case "boot:errors":
+            return [];
+          default:
+            return null;
         }
       });
 
@@ -321,15 +367,27 @@ describe("BootOrchestrator - Integration Tests", () => {
       // Setup failed boot state
       stateManager.get.mockImplementation((key: string) => {
         switch (key) {
-          case "boot:success": return false;
-          case "orchestrator": return null;
-          case "session:active": return false;
-          case "processor:active": return false;
-          case "enforcement:active": return false;
-          case "compliance:active": return false;
-          case "session:agents": return [];
-          case "boot:errors": return ["Failed to load orchestrator", "Failed to initialize delegation"];
-          default: return null;
+          case "boot:success":
+            return false;
+          case "orchestrator":
+            return null;
+          case "session:active":
+            return false;
+          case "processor:active":
+            return false;
+          case "enforcement:active":
+            return false;
+          case "compliance:active":
+            return false;
+          case "session:agents":
+            return [];
+          case "boot:errors":
+            return [
+              "Failed to load orchestrator",
+              "Failed to initialize delegation",
+            ];
+          default:
+            return null;
         }
       });
 
@@ -342,7 +400,10 @@ describe("BootOrchestrator - Integration Tests", () => {
       expect(status.enforcementEnabled).toBe(false);
       expect(status.codexComplianceActive).toBe(false);
       expect(status.agentsLoaded).toEqual([]);
-      expect(status.errors).toEqual(["Failed to load orchestrator", "Failed to initialize delegation"]);
+      expect(status.errors).toEqual([
+        "Failed to load orchestrator",
+        "Failed to initialize delegation",
+      ]);
     });
   });
 
@@ -361,16 +422,27 @@ describe("BootOrchestrator - Integration Tests", () => {
       expect(result.success).toBe(true);
 
       // Verify delegation components were set in state manager
-      expect(stateManager.set).toHaveBeenCalledWith("delegation:agent_delegator", expect.any(Object));
-      expect(stateManager.set).toHaveBeenCalledWith("delegation:session_coordinator", expect.any(Object));
-      expect(stateManager.set).toHaveBeenCalledWith("delegation:default_session", expect.any(Object));
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "delegation:agent_delegator",
+        expect.any(Object),
+      );
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "delegation:session_coordinator",
+        expect.any(Object),
+      );
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "delegation:default_session",
+        expect.any(Object),
+      );
     });
 
     it("should integrate session management components correctly", async () => {
       stateManager.get.mockImplementation((key: string) => {
         if (key === "orchestrator") return {};
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         if (key === "delegation:default_session") {
           return { sessionId: "default-session" };
@@ -385,7 +457,10 @@ describe("BootOrchestrator - Integration Tests", () => {
 
       // Verify session components were set
       expect(stateManager.set).toHaveBeenCalledWith("session:active", true);
-      expect(stateManager.set).toHaveBeenCalledWith("session:boot_time", expect.any(Number));
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "session:boot_time",
+        expect.any(Number),
+      );
       expect(stateManager.set).toHaveBeenCalledWith("session:agents", []);
     });
 
@@ -393,7 +468,9 @@ describe("BootOrchestrator - Integration Tests", () => {
       stateManager.get.mockImplementation((key: string) => {
         if (key === "orchestrator") return {};
         if (key === "delegation:session_coordinator") {
-          return { initializeSession: vi.fn(() => ({ sessionId: "default-session" })) };
+          return {
+            initializeSession: vi.fn(() => ({ sessionId: "default-session" })),
+          };
         }
         if (key === "delegation:default_session") {
           return { sessionId: "default-session" };
@@ -415,13 +492,19 @@ describe("BootOrchestrator - Integration Tests", () => {
       expect(result.success).toBe(true);
 
       // Verify StringRay configuration was loaded
-      expect(stateManager.set).toHaveBeenCalledWith("strray:config", expect.objectContaining({
-        version: "1.0.0",
-        codex_enabled: true,
-        codex_version: "v1.1.1",
-      }));
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "strray:config",
+        expect.objectContaining({
+          version: "1.0.0",
+          codex_enabled: true,
+          codex_version: "v1.1.1",
+        }),
+      );
       expect(stateManager.set).toHaveBeenCalledWith("strray:version", "1.0.0");
-      expect(stateManager.set).toHaveBeenCalledWith("strray:codex_enabled", true);
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "strray:codex_enabled",
+        true,
+      );
     });
   });
 });

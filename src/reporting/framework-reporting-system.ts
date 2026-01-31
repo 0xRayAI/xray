@@ -130,10 +130,10 @@ export class FrameworkReportingSystem {
         try {
           await this.generateReport(config);
           await frameworkLogger.log(
-            'framework-reporting-system',
-            'automated-report-generated',
-            'success',
-            { reportType: type, outputPath: config.outputPath }
+            "framework-reporting-system",
+            "automated-report-generated",
+            "success",
+            { reportType: type, outputPath: config.outputPath },
           );
         } catch (error) {
           console.error(
@@ -477,7 +477,9 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
       const message = match[3] as string; // Type assertion since we checked match[3] exists
       const level = match[4];
 
-      const action = message.includes(':') ? (message.split(':')[0] || '').trim() : message.trim();
+      const action = message.includes(":")
+        ? (message.split(":")[0] || "").trim()
+        : message.trim();
 
       // Convert log level to status
       const status = this.levelToStatus(level);
@@ -498,32 +500,32 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
 
   private levelToStatus(level: string): string {
     switch (level.toUpperCase()) {
-      case 'ERROR':
-        return 'error';
-      case 'WARN':
-      case 'WARNING':
-        return 'warning';
-      case 'INFO':
-        return 'success';
-      case 'DEBUG':
-        return 'info';
+      case "ERROR":
+        return "error";
+      case "WARN":
+      case "WARNING":
+        return "warning";
+      case "INFO":
+        return "success";
+      case "DEBUG":
+        return "info";
       default:
-        return 'info';
+        return "info";
     }
   }
 
   private inferAgent(component: string): string {
     // Try to infer agent from component name
-    if (component.includes('enforcer')) return 'enforcer';
-    if (component.includes('architect')) return 'architect';
-    if (component.includes('orchestrator')) return 'orchestrator';
-    if (component.includes('bug-triage')) return 'bug-triage-specialist';
-    if (component.includes('code-review')) return 'code-reviewer';
-    if (component.includes('security-audit')) return 'security-auditor';
-    if (component.includes('refactor')) return 'refactorer';
-    if (component.includes('test-architect')) return 'test-architect';
+    if (component.includes("enforcer")) return "enforcer";
+    if (component.includes("architect")) return "architect";
+    if (component.includes("orchestrator")) return "orchestrator";
+    if (component.includes("bug-triage")) return "bug-triage-specialist";
+    if (component.includes("code-review")) return "code-reviewer";
+    if (component.includes("security-audit")) return "security-auditor";
+    if (component.includes("refactor")) return "refactorer";
+    if (component.includes("test-architect")) return "test-architect";
 
-    return 'system'; // Default for system components
+    return "system"; // Default for system components
   }
 
   private async collectReportData(config: ReportConfig): Promise<ReportData> {
@@ -1126,11 +1128,26 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   frameworkReportingSystem
     .generateReport(config)
     .then(async (result) => {
-      await frameworkLogger.log('framework-reporting-system', '-report-generated-successfully-', 'success', { message: "✅ Report generated successfully!" });
+      await frameworkLogger.log(
+        "framework-reporting-system",
+        "-report-generated-successfully-",
+        "success",
+        { message: "✅ Report generated successfully!" },
+      );
       if (config.outputPath) {
-        await frameworkLogger.log('framework-reporting-system', '-saved-to-config-outputpath-', 'info', { message: `📄 Saved to: ${config.outputPath}` });
+        await frameworkLogger.log(
+          "framework-reporting-system",
+          "-saved-to-config-outputpath-",
+          "info",
+          { message: `📄 Saved to: ${config.outputPath}` },
+        );
       } else {
-        await frameworkLogger.log('framework-reporting-system', 'result', 'info', { message: result });
+        await frameworkLogger.log(
+          "framework-reporting-system",
+          "result",
+          "info",
+          { message: result },
+        );
       }
     })
     .catch((error) => {

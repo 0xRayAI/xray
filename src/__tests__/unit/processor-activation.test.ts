@@ -168,8 +168,16 @@ describe("Processor Activation", () => {
       await processorManager.initializeProcessors();
 
       // Execute processor multiple times
-      await processorManager.executePreProcessors({ tool: "test1", args: {}, context: { data: "test1" } });
-      await processorManager.executePreProcessors({ tool: "test2", args: {}, context: { data: "test2" } });
+      await processorManager.executePreProcessors({
+        tool: "test1",
+        args: {},
+        context: { data: "test1" },
+      });
+      await processorManager.executePreProcessors({
+        tool: "test2",
+        args: {},
+        context: { data: "test2" },
+      });
 
       const health = processorManager.getProcessorHealth();
       expect(health[0]?.errorCount).toBeDefined();
@@ -354,7 +362,10 @@ describe("Processor Activation", () => {
       await processorManager.initializeProcessors();
 
       // Execute concurrently
-      const promises: Promise<{ success: boolean; results: ProcessorResult[] }>[] = [];
+      const promises: Promise<{
+        success: boolean;
+        results: ProcessorResult[];
+      }>[] = [];
       for (let i = 0; i < 10; i++) {
         promises.push(
           processorManager.executePreProcessors({
@@ -365,7 +376,8 @@ describe("Processor Activation", () => {
         );
       }
 
-      const results: { success: boolean; results: ProcessorResult[] }[] = await Promise.all(promises);
+      const results: { success: boolean; results: ProcessorResult[] }[] =
+        await Promise.all(promises);
 
       // Verify all executions completed
       results.forEach((result) => {
@@ -614,13 +626,20 @@ describe("Processor Activation", () => {
       const startTime = Date.now();
 
       // Execute CPU-intensive operations
-      const promises: Promise<{ success: boolean; results: ProcessorResult[] }>[] = [];
+      const promises: Promise<{
+        success: boolean;
+        results: ProcessorResult[];
+      }>[] = [];
       for (let i = 0; i < 50; i++) {
         promises.push(
           processorManager.executePreProcessors({
             tool: "cpuTest",
-            args: { data: Array.from({ length: 1000 }, (_, j) => j * Math.random()) },
-            context: { data: Array.from({ length: 1000 }, (_, j) => j * Math.random()) },
+            args: {
+              data: Array.from({ length: 1000 }, (_, j) => j * Math.random()),
+            },
+            context: {
+              data: Array.from({ length: 1000 }, (_, j) => j * Math.random()),
+            },
           }),
         );
       }
@@ -756,7 +775,11 @@ describe("Processor Activation", () => {
 
       // Execute all processors multiple times
       for (let i = 0; i < 15; i++) {
-        await processorManager.executePreProcessors({ tool: "multiHealthTest", args: {}, context: {} });
+        await processorManager.executePreProcessors({
+          tool: "multiHealthTest",
+          args: {},
+          context: {},
+        });
       }
 
       const health = processorManager.getProcessorHealth();
@@ -782,7 +805,11 @@ describe("Processor Activation", () => {
 
       // Build up some metrics
       for (let i = 0; i < 5; i++) {
-        await processorManager.executePreProcessors({ tool: "restartTest", args: {}, context: {} });
+        await processorManager.executePreProcessors({
+          tool: "restartTest",
+          args: {},
+          context: {},
+        });
       }
 
       let health = processorManager.getProcessorHealth();

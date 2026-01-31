@@ -8,7 +8,7 @@
  * @since 2026-01-23
  */
 
-import { frameworkLogger } from "../core/framework-logger.js"
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface SpawnContext {
   agentType: string;
@@ -73,8 +73,8 @@ export class AgentSpawnGovernor {
       "security-auditor": 2,
       refactorer: 2,
       "test-architect": 2,
-      "explore": 1,
-      "oracle": 1,
+      explore: 1,
+      oracle: 1,
       "multimodal-looker": 1,
       "frontend-ui-ux-engineer": 1,
       "document-writer": 1,
@@ -113,7 +113,8 @@ export class AgentSpawnGovernor {
     const memUsage = process.memoryUsage();
     const heapUsedMB = memUsage.heapUsed / 1024 / 1024;
     const maxMemoryMB = this.limits.memoryLimit?.maxMemoryMB ?? 100;
-    const emergencyThresholdMB = this.limits.memoryLimit?.emergencyThresholdMB ?? 80;
+    const emergencyThresholdMB =
+      this.limits.memoryLimit?.emergencyThresholdMB ?? 80;
 
     if (heapUsedMB > maxMemoryMB) {
       this.emergencyMemoryCleanup(heapUsedMB);
@@ -123,19 +124,24 @@ export class AgentSpawnGovernor {
   }
 
   private emergencyMemoryCleanup(heapUsedMB: number): void {
-    frameworkLogger.log("agent-spawn-governor", "emergency-memory-cleanup-triggered", "error", {
-      heapUsedMB,
-      maxMemoryMB: this.limits.memoryLimit?.maxMemoryMB ?? 100,
-      activeAgents: this.getTotalActive(),
-      historySize: this.spawnHistory.length,
-    });
+    frameworkLogger.log(
+      "agent-spawn-governor",
+      "emergency-memory-cleanup-triggered",
+      "error",
+      {
+        heapUsedMB,
+        maxMemoryMB: this.limits.memoryLimit?.maxMemoryMB ?? 100,
+        activeAgents: this.getTotalActive(),
+        historySize: this.spawnHistory.length,
+      },
+    );
 
-    this.spawnHistory = this.spawnHistory.filter(r => r.status === "active");
+    this.spawnHistory = this.spawnHistory.filter((r) => r.status === "active");
 
     const oneMinuteAgo = Date.now() - 60000;
     for (const [agentType, records] of this.activeAgents.entries()) {
-      const filtered = records.filter(r =>
-        r.status === "active" || r.timestamp > oneMinuteAgo
+      const filtered = records.filter(
+        (r) => r.status === "active" || r.timestamp > oneMinuteAgo,
       );
 
       if (filtered.length === 0) {
@@ -158,11 +164,11 @@ export class AgentSpawnGovernor {
     let cleanedCount = 0;
 
     for (const [agentType, records] of this.activeAgents.entries()) {
-      const filtered = records.filter(r => {
+      const filtered = records.filter((r) => {
         if (r.status === "active") {
-          return (now - r.timestamp) < activeRecordAge;
+          return now - r.timestamp < activeRecordAge;
         } else {
-          return (now - r.timestamp) < completedRecordAge;
+          return now - r.timestamp < completedRecordAge;
         }
       });
 
@@ -180,9 +186,9 @@ export class AgentSpawnGovernor {
     this.deepCleanupContexts();
 
     if (this.spawnHistory.length > this.maxHistorySize) {
-      const cutoffTime = now - (10 * 60 * 1000);
-      this.spawnHistory = this.spawnHistory.filter(r =>
-        r.status === "active" || r.timestamp > cutoffTime
+      const cutoffTime = now - 10 * 60 * 1000;
+      this.spawnHistory = this.spawnHistory.filter(
+        (r) => r.status === "active" || r.timestamp > cutoffTime,
       );
 
       if (this.spawnHistory.length > this.maxHistorySize) {
@@ -194,7 +200,7 @@ export class AgentSpawnGovernor {
       frameworkLogger.log("agent-spawn-governor", "memory-cleanup", "info", {
         cleanedRecords: cleanedCount,
         remainingActive: this.getTotalActive(),
-        historySize: this.spawnHistory.length
+        historySize: this.spawnHistory.length,
       });
     }
   }
@@ -202,7 +208,7 @@ export class AgentSpawnGovernor {
   private deepCleanupContexts(): void {
     for (const records of this.activeAgents.values()) {
       for (const record of records) {
-        if (record.context && typeof record.context === 'object') {
+        if (record.context && typeof record.context === "object") {
           this.sanitizeContext(record.context);
         }
       }
@@ -210,7 +216,7 @@ export class AgentSpawnGovernor {
   }
 
   private sanitizeContext(context: SpawnContext): void {
-    if ('largeObject' in context) {
+    if ("largeObject" in context) {
       delete (context as any).largeObject;
     }
   }
@@ -227,7 +233,7 @@ export class AgentSpawnGovernor {
           const result = await this.withTimeout(
             this.performAuthorization(context, trackingId),
             this.persistenceTimeout,
-            'Spawn authorization timeout'
+            "Spawn authorization timeout",
           );
           resolve(result);
         } catch (error) {
@@ -258,14 +264,17 @@ export class AgentSpawnGovernor {
     }
   }
 
-  private async performAuthorization(context: SpawnContext, trackingId: string): Promise<SpawnAuthorization> {
+  private async performAuthorization(
+    context: SpawnContext,
+    trackingId: string,
+  ): Promise<SpawnAuthorization> {
     const { agentType } = context;
 
     try {
       // Check spawn rate limits with retry
       const rateLimitOk = await this.withRetry(
         () => Promise.resolve(this.checkSpawnRateLimit(agentType)),
-        'Rate limit check'
+        "Rate limit check",
       );
       if (!rateLimitOk) {
         return {
@@ -305,7 +314,9 @@ export class AgentSpawnGovernor {
           authorized: false,
           trackingId,
           reason: "Infinite spawn pattern detected",
-          warnings: ["Recursive spawning prevented to avoid system instability"],
+          warnings: [
+            "Recursive spawning prevented to avoid system instability",
+          ],
         };
       }
 
@@ -316,9 +327,10 @@ export class AgentSpawnGovernor {
         authorized: true,
         trackingId,
       };
-
     } catch (error) {
-      throw new Error(`Authorization failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Authorization failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -327,16 +339,19 @@ export class AgentSpawnGovernor {
       const currentCount = this.getActiveCount(agentType);
       const typeLimit = this.limits.perAgentType?.[agentType] ?? 1;
       return currentCount < typeLimit;
-    }, 'Agent limit check');
+    }, "Agent limit check");
   }
 
   private async getTotalActiveWithRetry(): Promise<number> {
     return this.withRetry(() => {
       return Promise.resolve(this.getTotalActive());
-    }, 'Total active count');
+    }, "Total active count");
   }
 
-  private async registerSpawnWithRetry(context: SpawnContext, trackingId: string): Promise<void> {
+  private async registerSpawnWithRetry(
+    context: SpawnContext,
+    trackingId: string,
+  ): Promise<void> {
     return this.withRetry(async () => {
       const record: SpawnRecord = {
         id: trackingId,
@@ -349,36 +364,50 @@ export class AgentSpawnGovernor {
 
       this.registerSpawn(record);
 
-      await frameworkLogger.log("agent-spawn-governor", "spawn-authorized", "info", {
-        trackingId,
-        agentType: context.agentType,
-        parentAgent: context.parentAgent,
-        activeCount: this.getActiveCount(context.agentType),
-        totalActive: this.getTotalActive(),
-      });
-    }, 'Spawn registration');
+      await frameworkLogger.log(
+        "agent-spawn-governor",
+        "spawn-authorized",
+        "info",
+        {
+          trackingId,
+          agentType: context.agentType,
+          parentAgent: context.parentAgent,
+          activeCount: this.getActiveCount(context.agentType),
+          totalActive: this.getTotalActive(),
+        },
+      );
+    }, "Spawn registration");
   }
 
-  private async handleAuthorizationError(error: any, trackingId: string, context: SpawnContext): Promise<void> {
+  private async handleAuthorizationError(
+    error: any,
+    trackingId: string,
+    context: SpawnContext,
+  ): Promise<void> {
     const errorType = this.categorizeError(error);
 
-    await frameworkLogger.log("agent-spawn-governor", "spawn-authorization-error", "error", {
-      trackingId,
-      agentType: context.agentType,
-      errorType,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    await frameworkLogger.log(
+      "agent-spawn-governor",
+      "spawn-authorization-error",
+      "error",
+      {
+        trackingId,
+        agentType: context.agentType,
+        errorType,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
 
-    if (errorType === 'persistence') {
+    if (errorType === "persistence") {
       this.emergencyCleanup(`Authorization failure: ${errorType}`);
     }
   }
 
   private categorizeError(error: any): string {
-    if (error.message?.includes('timeout')) return 'timeout';
-    if (error.message?.includes('persistence')) return 'persistence';
-    if (error.message?.includes('memory')) return 'memory';
-    return 'unknown';
+    if (error.message?.includes("timeout")) return "timeout";
+    if (error.message?.includes("persistence")) return "persistence";
+    if (error.message?.includes("memory")) return "memory";
+    return "unknown";
   }
 
   private emergencyCleanup(reason: string): void {
@@ -398,12 +427,17 @@ export class AgentSpawnGovernor {
     const record = this.findRecord(trackingId);
     if (record) {
       record.status = "completed";
-      await frameworkLogger.log("agent-spawn-governor", "spawn-completed", "info", {
-        trackingId,
-        agentType: record.agentType,
-        duration: Date.now() - record.timestamp,
-        result: result ? "success" : "failure",
-      });
+      await frameworkLogger.log(
+        "agent-spawn-governor",
+        "spawn-completed",
+        "info",
+        {
+          trackingId,
+          agentType: record.agentType,
+          duration: Date.now() - record.timestamp,
+          result: result ? "success" : "failure",
+        },
+      );
     }
   }
 
@@ -414,12 +448,17 @@ export class AgentSpawnGovernor {
     const record = this.findRecord(trackingId);
     if (record) {
       record.status = "failed";
-      await frameworkLogger.log("agent-spawn-governor", "spawn-failed", "error", {
-        trackingId,
-        agentType: record.agentType,
-        duration: Date.now() - record.timestamp,
-        error: error?.message,
-      });
+      await frameworkLogger.log(
+        "agent-spawn-governor",
+        "spawn-failed",
+        "error",
+        {
+          trackingId,
+          agentType: record.agentType,
+          duration: Date.now() - record.timestamp,
+          error: error?.message,
+        },
+      );
     }
   }
 
@@ -430,12 +469,17 @@ export class AgentSpawnGovernor {
     const record = this.findRecord(trackingId);
     if (record) {
       record.status = "terminated";
-      await frameworkLogger.log("agent-spawn-governor", "spawn-terminated", "info", {
-        trackingId,
-        agentType: record.agentType,
-        duration: Date.now() - record.timestamp,
-        reason,
-      });
+      await frameworkLogger.log(
+        "agent-spawn-governor",
+        "spawn-terminated",
+        "info",
+        {
+          trackingId,
+          agentType: record.agentType,
+          duration: Date.now() - record.timestamp,
+          reason,
+        },
+      );
     }
   }
 
@@ -443,7 +487,10 @@ export class AgentSpawnGovernor {
    * Get current active count for agent type
    */
   getActiveCount(agentType: string): number {
-    return this.activeAgents.get(agentType)?.filter(r => r.status === "active").length ?? 0;
+    return (
+      this.activeAgents.get(agentType)?.filter((r) => r.status === "active")
+        .length ?? 0
+    );
   }
 
   /**
@@ -452,7 +499,7 @@ export class AgentSpawnGovernor {
   getTotalActive(): number {
     let total = 0;
     for (const records of this.activeAgents.values()) {
-      total += records.filter(r => r.status === "active").length;
+      total += records.filter((r) => r.status === "active").length;
     }
     return total;
   }
@@ -468,7 +515,7 @@ export class AgentSpawnGovernor {
     const perAgentType: Record<string, { active: number; total: number }> = {};
 
     for (const [agentType, records] of this.activeAgents.entries()) {
-      const active = records.filter(r => r.status === "active").length;
+      const active = records.filter((r) => r.status === "active").length;
       const total = records.length;
       perAgentType[agentType] = { active, total };
     }
@@ -487,17 +534,22 @@ export class AgentSpawnGovernor {
     const activeRecords: SpawnRecord[] = [];
 
     for (const records of this.activeAgents.values()) {
-      activeRecords.push(...records.filter(r => r.status === "active"));
+      activeRecords.push(...records.filter((r) => r.status === "active"));
     }
 
     for (const record of activeRecords) {
       await this.terminateSpawn(record.id, reason || "Emergency shutdown");
     }
 
-      await frameworkLogger.log("agent-spawn-governor", "emergency-shutdown", "error", {
-      terminatedCount: activeRecords.length,
-      reason: reason || "Emergency shutdown initiated",
-    });
+    await frameworkLogger.log(
+      "agent-spawn-governor",
+      "emergency-shutdown",
+      "error",
+      {
+        terminatedCount: activeRecords.length,
+        reason: reason || "Emergency shutdown initiated",
+      },
+    );
   }
 
   // Private methods
@@ -523,19 +575,24 @@ export class AgentSpawnGovernor {
 
   private checkSpawnRateLimit(agentType: string): boolean {
     const now = Date.now();
-    const rateLimit = this.limits.spawnRateLimit ?? this.defaultLimits.spawnRateLimit;
+    const rateLimit =
+      this.limits.spawnRateLimit ?? this.defaultLimits.spawnRateLimit;
     const windowStart = now - rateLimit.windowMs;
 
     const recentSpawns = this.spawnHistory.filter(
-      r => r.agentType === agentType &&
-           r.timestamp >= windowStart &&
-           r.timestamp <= now
+      (r) =>
+        r.agentType === agentType &&
+        r.timestamp >= windowStart &&
+        r.timestamp <= now,
     );
 
     return recentSpawns.length < rateLimit.maxPerMinute;
   }
 
-  private detectInfiniteSpawn(agentType: string, context: SpawnContext): boolean {
+  private detectInfiniteSpawn(
+    agentType: string,
+    context: SpawnContext,
+  ): boolean {
     // Check for rapid repeated spawns of same type
     const recentSpawns = this.getRecentSpawns(agentType, 300000); // 5 minutes
     if (recentSpawns.length > 5) {
@@ -549,7 +606,9 @@ export class AgentSpawnGovernor {
 
     // Check for cascading librarian spawns (specific known issue)
     if (agentType === "librarian") {
-      const librarianSpawns = recentSpawns.filter(r => r.agentType === "librarian");
+      const librarianSpawns = recentSpawns.filter(
+        (r) => r.agentType === "librarian",
+      );
       if (librarianSpawns.length > 2) {
         return true;
       }
@@ -558,19 +617,21 @@ export class AgentSpawnGovernor {
     return false;
   }
 
-  private getRecentSpawns(agentType: string, timeWindowMs: number): SpawnRecord[] {
+  private getRecentSpawns(
+    agentType: string,
+    timeWindowMs: number,
+  ): SpawnRecord[] {
     const now = Date.now();
     const windowStart = now - timeWindowMs;
 
     return this.spawnHistory.filter(
-      r => r.agentType === agentType &&
-            r.timestamp >= windowStart
+      (r) => r.agentType === agentType && r.timestamp >= windowStart,
     );
   }
 
   private findRecord(trackingId: string): SpawnRecord | undefined {
     for (const records of this.activeAgents.values()) {
-      const record = records.find(r => r.id === trackingId);
+      const record = records.find((r) => r.id === trackingId);
       if (record) return record;
     }
     return undefined;
@@ -585,8 +646,8 @@ export class AgentSpawnGovernor {
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
 
     for (const [agentType, records] of this.activeAgents.entries()) {
-      const filtered = records.filter(r =>
-        r.status === "active" || (now - r.timestamp) < maxAge
+      const filtered = records.filter(
+        (r) => r.status === "active" || now - r.timestamp < maxAge,
       );
 
       if (filtered.length === 0) {
@@ -598,12 +659,16 @@ export class AgentSpawnGovernor {
 
     // Clean up spawn history to prevent memory leaks (retains active records and recent history for 7 days)
     const historyMaxAge = 7 * 24 * 60 * 60 * 1000;
-    this.spawnHistory = this.spawnHistory.filter(r =>
-      r.status === "active" || (now - r.timestamp) < historyMaxAge
+    this.spawnHistory = this.spawnHistory.filter(
+      (r) => r.status === "active" || now - r.timestamp < historyMaxAge,
     );
   }
 
-  private async withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  private async withTimeout<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    timeoutMessage: string,
+  ): Promise<T> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error(timeoutMessage));
@@ -616,7 +681,10 @@ export class AgentSpawnGovernor {
     });
   }
 
-  private async withRetry<T>(operation: () => Promise<T>, operationName: string): Promise<T> {
+  private async withRetry<T>(
+    operation: () => Promise<T>,
+    operationName: string,
+  ): Promise<T> {
     let lastError: any;
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
@@ -627,14 +695,19 @@ export class AgentSpawnGovernor {
 
         if (attempt < this.maxRetries) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
 
-          await frameworkLogger.log("agent-spawn-governor", "retry-attempt", "info", {
-            operation: operationName,
-            attempt,
-            delay,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          await frameworkLogger.log(
+            "agent-spawn-governor",
+            "retry-attempt",
+            "info",
+            {
+              operation: operationName,
+              attempt,
+              delay,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          );
         }
       }
     }

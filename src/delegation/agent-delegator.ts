@@ -8,15 +8,19 @@
  * @since 2026-01-07
  */
 
-import { ComplexityAnalyzer, ComplexityMetrics, ComplexityScore } from './complexity-analyzer.js';
-import { StringRayStateManager } from '../state/state-manager.js';
-import { strRayConfigLoader } from '../core/config-loader.js';
-import { frameworkLogger } from '../core/framework-logger.js';
+import {
+  ComplexityAnalyzer,
+  ComplexityMetrics,
+  ComplexityScore,
+} from "./complexity-analyzer.js";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { strRayConfigLoader } from "../core/config-loader.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface AgentCapability {
   name: string;
   capabilities: string[];
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   [key: string]: any; // Allow additional properties
 }
 
@@ -28,7 +32,7 @@ export interface DelegationRequest {
 }
 
 export interface DelegationAnalysis {
-  strategy: 'single-agent' | 'multi-agent' | 'orchestrator-led';
+  strategy: "single-agent" | "multi-agent" | "orchestrator-led";
   agents: string[];
   agentDetails: Array<{
     name: string;
@@ -36,7 +40,7 @@ export interface DelegationAnalysis {
     role: string;
   }>;
   complexity: ComplexityScore;
-  conflictResolution: 'majority_vote' | 'expert_priority' | 'consensus';
+  conflictResolution: "majority_vote" | "expert_priority" | "consensus";
   estimatedDuration: number;
   metrics?: {
     [key: string]: any;
@@ -85,7 +89,10 @@ export class AgentDelegator {
   private stateManager: StringRayStateManager;
   private configLoader: typeof strRayConfigLoader;
 
-  constructor(stateManager: StringRayStateManager, configLoader: typeof strRayConfigLoader) {
+  constructor(
+    stateManager: StringRayStateManager,
+    configLoader: typeof strRayConfigLoader,
+  ) {
     this.stateManager = stateManager;
     this.configLoader = configLoader;
     this.complexityAnalyzer = new ComplexityAnalyzer();
@@ -93,97 +100,106 @@ export class AgentDelegator {
 
   getAvailableAgents(): AgentCapability[] {
     const defaultAgents = [
-      { 
-        name: 'enforcer', 
-        capabilities: ['code-quality', 'validation'], 
-        status: 'active',
-        expertise: 'code quality enforcement',
+      {
+        name: "enforcer",
+        capabilities: ["code-quality", "validation"],
+        status: "active",
+        expertise: "code quality enforcement",
         capacity: 100,
         performance: 95,
-        specialties: ['validation', 'compliance']
+        specialties: ["validation", "compliance"],
       },
-      { 
-        name: 'architect', 
-        capabilities: ['design', 'planning'], 
-        status: 'active',
-        expertise: 'system architecture',
+      {
+        name: "architect",
+        capabilities: ["design", "planning"],
+        status: "active",
+        expertise: "system architecture",
         capacity: 90,
         performance: 85,
-        specialties: ['design', 'planning']
+        specialties: ["design", "planning"],
       },
-      { 
-        name: 'code-reviewer', 
-        capabilities: ['review', 'quality'], 
-        status: 'active',
-        expertise: 'code review',
+      {
+        name: "code-reviewer",
+        capabilities: ["review", "quality"],
+        status: "active",
+        expertise: "code review",
         capacity: 80,
         performance: 80,
-        specialties: ['review', 'quality']
+        specialties: ["review", "quality"],
       },
-      { 
-        name: 'security-auditor', 
-        capabilities: ['security', 'audit'], 
-        status: 'active',
-        expertise: 'security analysis',
+      {
+        name: "security-auditor",
+        capabilities: ["security", "audit"],
+        status: "active",
+        expertise: "security analysis",
         capacity: 70,
         performance: 75,
-        specialties: ['security', 'audit']
+        specialties: ["security", "audit"],
       },
-      { 
-        name: 'test-architect', 
-        capabilities: ['testing', 'coverage'], 
-        status: 'active',
-        expertise: 'test architecture',
+      {
+        name: "test-architect",
+        capabilities: ["testing", "coverage"],
+        status: "active",
+        expertise: "test architecture",
         capacity: 85,
         performance: 80,
-        specialties: ['testing', 'coverage']
+        specialties: ["testing", "coverage"],
       },
-      { 
-        name: 'refactorer', 
-        capabilities: ['refactoring', 'optimization'], 
-        status: 'active',
-        expertise: 'code refactoring',
+      {
+        name: "refactorer",
+        capabilities: ["refactoring", "optimization"],
+        status: "active",
+        expertise: "code refactoring",
         capacity: 75,
         performance: 85,
-        specialties: ['refactoring', 'optimization']
+        specialties: ["refactoring", "optimization"],
       },
-      { 
-        name: 'bug-triage-specialist', 
-        capabilities: ['debugging', 'analysis'], 
-        status: 'active',
-        expertise: 'bug triage',
+      {
+        name: "bug-triage-specialist",
+        capabilities: ["debugging", "analysis"],
+        status: "active",
+        expertise: "bug triage",
         capacity: 60,
         performance: 70,
-        specialties: ['debugging', 'analysis']
+        specialties: ["debugging", "analysis"],
       },
     ];
-    
-    return defaultAgents.map(agent => {
-      const storedAgent = this.stateManager.get(`agent_capabilities:${agent.name}`) as AgentCapability;
+
+    return defaultAgents.map((agent) => {
+      const storedAgent = this.stateManager.get(
+        `agent_capabilities:${agent.name}`,
+      ) as AgentCapability;
       return storedAgent || agent;
     });
   }
 
-  async analyzeDelegation(request: DelegationRequest): Promise<DelegationAnalysis> {
+  async analyzeDelegation(
+    request: DelegationRequest,
+  ): Promise<DelegationAnalysis> {
     try {
       const metrics: ComplexityMetrics = {
         fileCount: request.context?.files?.length || 1,
         changeVolume: request.context?.changeVolume || 10,
         operationType: this.mapOperationToType(request.operation),
         dependencies: request.context?.dependencies?.length || 0,
-        riskLevel: request.context?.riskLevel || 'low',
+        riskLevel: request.context?.riskLevel || "low",
         estimatedDuration: 10,
-        operation: request.operation
+        operation: request.operation,
       } as any;
-      
-      const complexityScore = this.complexityAnalyzer.calculateComplexityScore(metrics);
-      
+
+      const complexityScore =
+        this.complexityAnalyzer.calculateComplexityScore(metrics);
+
       const agentDetails = this.determineAgents(metrics, complexityScore);
-      const conflictResolution = this.determineConflictResolution(metrics, complexityScore);
-      const agents = agentDetails.map(a => a.name);
+      const conflictResolution = this.determineConflictResolution(
+        metrics,
+        complexityScore,
+      );
+      const agents = agentDetails.map((a) => a.name);
 
       // Persist delegation analysis metrics to state for tracking
-      const existingMetrics = (this.stateManager.get('delegation_metrics') as any[]) || [];
+      const existingMetrics =
+        (this.stateManager.get("delegation_metrics") as any[]) || [];
       const delegationMetric = {
         timestamp: Date.now(),
         operation: request.operation,
@@ -192,22 +208,22 @@ export class AgentDelegator {
         estimatedDuration: metrics.estimatedDuration,
         agents: agents,
         analysisOnly: true,
-        sessionId: request.sessionId
+        sessionId: request.sessionId,
       };
       existingMetrics.push(delegationMetric);
-      this.stateManager.set('delegation_metrics', existingMetrics);
+      this.stateManager.set("delegation_metrics", existingMetrics);
 
       await frameworkLogger.log(
-        'agent-delegator',
-        'delegation-analyzed',
-        'info',
+        "agent-delegator",
+        "delegation-analyzed",
+        "info",
         {
           operation: request.operation,
           strategy: complexityScore.recommendedStrategy,
           complexity: complexityScore.score,
-          agentsCount: agents.length
+          agentsCount: agents.length,
         },
-        request.sessionId
+        request.sessionId,
       );
 
       return {
@@ -216,125 +232,180 @@ export class AgentDelegator {
         agentDetails,
         complexity: complexityScore,
         conflictResolution,
-        estimatedDuration: metrics.estimatedDuration
+        estimatedDuration: metrics.estimatedDuration,
       };
     } catch (error) {
       await frameworkLogger.log(
-        'agent-delegator',
-        'analysis-failed',
-        'error',
+        "agent-delegator",
+        "analysis-failed",
+        "error",
         {
           operation: request.operation,
-          error: String(error)
+          error: String(error),
         },
-        request.sessionId
+        request.sessionId,
       );
       throw error;
     }
   }
 
-  private determineAgents(metrics: ComplexityMetrics, complexityScore: ComplexityScore): Array<{name: string; confidence: number; role: string}> {
-    const agents: Array<{name: string; confidence: number; role: string}> = [];
-    
+  private determineAgents(
+    metrics: ComplexityMetrics,
+    complexityScore: ComplexityScore,
+  ): Array<{ name: string; confidence: number; role: string }> {
+    const agents: Array<{ name: string; confidence: number; role: string }> =
+      [];
+
     const operation = (metrics as any).operation;
-    
-    if (operation === 'security') {
-      agents.push({ name: 'security-auditor', confidence: 0.95, role: 'security' });
+
+    if (operation === "security") {
+      agents.push({
+        name: "security-auditor",
+        confidence: 0.95,
+        role: "security",
+      });
     }
-    
-    if (operation === 'review') {
-      agents.push({ name: 'code-reviewer', confidence: 0.8, role: 'review' });
+
+    if (operation === "review") {
+      agents.push({ name: "code-reviewer", confidence: 0.8, role: "review" });
     }
-    
-    if (operation === 'design') {
-      agents.push({ name: 'architect', confidence: 0.9, role: 'design' });
+
+    if (operation === "design") {
+      agents.push({ name: "architect", confidence: 0.9, role: "design" });
     }
-    if (complexityScore.recommendedStrategy === 'multi-agent' || complexityScore.recommendedStrategy === 'orchestrator-led') {
-      if (metrics.riskLevel === 'critical') {
-        agents.push({ name: 'security-auditor', confidence: 0.95, role: 'security' });
+    if (
+      complexityScore.recommendedStrategy === "multi-agent" ||
+      complexityScore.recommendedStrategy === "orchestrator-led"
+    ) {
+      if (metrics.riskLevel === "critical") {
+        agents.push({
+          name: "security-auditor",
+          confidence: 0.95,
+          role: "security",
+        });
       }
-      if (metrics.operationType === 'refactor') {
-        agents.push({ name: 'refactorer', confidence: 0.85, role: 'refactoring' });
+      if (metrics.operationType === "refactor") {
+        agents.push({
+          name: "refactorer",
+          confidence: 0.85,
+          role: "refactoring",
+        });
       }
       if (metrics.dependencies > 3) {
-        agents.push({ name: 'code-reviewer', confidence: 0.8, role: 'review' });
+        agents.push({ name: "code-reviewer", confidence: 0.8, role: "review" });
       }
       if (agents.length === 1) {
-        agents.push({ name: 'enforcer', confidence: 0.75, role: 'validation' });
+        agents.push({ name: "enforcer", confidence: 0.75, role: "validation" });
       }
     } else {
-      if (metrics.operationType === 'debug') {
-        agents.push({ name: 'bug-triage-specialist', confidence: 0.85, role: 'debugging' });
-      } else if (metrics.operationType === 'test') {
-        agents.push({ name: 'test-architect', confidence: 0.8, role: 'testing' });
-      } else if (metrics.operationType === 'refactor') {
-        agents.push({ name: 'refactorer', confidence: 0.85, role: 'refactoring' });
-      } else       if (metrics.operationType === 'create' && operation !== 'design') {
-        agents.push({ name: 'architect', confidence: 0.85, role: 'design' });
-      } else if (operation === 'review' && agents.length === 0) {
+      if (metrics.operationType === "debug") {
+        agents.push({
+          name: "bug-triage-specialist",
+          confidence: 0.85,
+          role: "debugging",
+        });
+      } else if (metrics.operationType === "test") {
+        agents.push({
+          name: "test-architect",
+          confidence: 0.8,
+          role: "testing",
+        });
+      } else if (metrics.operationType === "refactor") {
+        agents.push({
+          name: "refactorer",
+          confidence: 0.85,
+          role: "refactoring",
+        });
+      } else if (metrics.operationType === "create" && operation !== "design") {
+        agents.push({ name: "architect", confidence: 0.85, role: "design" });
+      } else if (operation === "review" && agents.length === 0) {
         // Add code-reviewer for review tasks if not already added
-        agents.push({ name: 'code-reviewer', confidence: 0.8, role: 'review' });
-      } else if (complexityScore.level === 'moderate' || metrics.dependencies > 3) {
-        agents.push({ name: 'code-reviewer', confidence: 0.8, role: 'review' });
+        agents.push({ name: "code-reviewer", confidence: 0.8, role: "review" });
+      } else if (
+        complexityScore.level === "moderate" ||
+        metrics.dependencies > 3
+      ) {
+        agents.push({ name: "code-reviewer", confidence: 0.8, role: "review" });
       } else if (agents.length === 0) {
-        agents.push({ name: 'enforcer', confidence: 0.75, role: 'validation' });
+        agents.push({ name: "enforcer", confidence: 0.75, role: "validation" });
       }
     }
-    
-    if (complexityScore.recommendedStrategy === 'orchestrator-led') {
-      agents.push({ name: 'orchestrator', confidence: 0.9, role: 'coordination' });
+
+    if (complexityScore.recommendedStrategy === "orchestrator-led") {
+      agents.push({
+        name: "orchestrator",
+        confidence: 0.9,
+        role: "coordination",
+      });
     }
-    
-    return agents.length > 0 ? agents : [{ name: 'enforcer', confidence: 0.75, role: 'validation' }];
+
+    return agents.length > 0
+      ? agents
+      : [{ name: "enforcer", confidence: 0.75, role: "validation" }];
   }
 
-  private mapOperationToType(operation: string): ComplexityMetrics['operationType'] {
+  private mapOperationToType(
+    operation: string,
+  ): ComplexityMetrics["operationType"] {
     const op = operation.toLowerCase();
-    if (op.includes('security') || op.includes('audit')) {
-      return 'analyze';
+    if (op.includes("security") || op.includes("audit")) {
+      return "analyze";
     }
-    if (op.includes('review') || op.includes('quality')) {
-      return 'modify';
+    if (op.includes("review") || op.includes("quality")) {
+      return "modify";
     }
-    if (op.includes('refactor') || op.includes('restructure')) {
-      return 'refactor';
+    if (op.includes("refactor") || op.includes("restructure")) {
+      return "refactor";
     }
-    if (op.includes('debug') || op.includes('fix') || op.includes('resolve')) {
-      return 'debug';
+    if (op.includes("debug") || op.includes("fix") || op.includes("resolve")) {
+      return "debug";
     }
-    if (op.includes('test')) {
-      return 'test';
+    if (op.includes("test")) {
+      return "test";
     }
-    if (op.includes('create') || op.includes('add') || op.includes('new')) {
-      return 'create';
+    if (op.includes("create") || op.includes("add") || op.includes("new")) {
+      return "create";
     }
-    if (op.includes('design') || op.includes('architect')) {
-      return 'create';
+    if (op.includes("design") || op.includes("architect")) {
+      return "create";
     }
-    return 'modify';
+    return "modify";
   }
 
-  private determineConflictResolution(metrics: ComplexityMetrics, complexityScore: ComplexityScore): 'majority_vote' | 'expert_priority' | 'consensus' {
-    if (complexityScore.level === 'enterprise' || metrics.riskLevel === 'critical') {
-      return 'expert_priority';
+  private determineConflictResolution(
+    metrics: ComplexityMetrics,
+    complexityScore: ComplexityScore,
+  ): "majority_vote" | "expert_priority" | "consensus" {
+    if (
+      complexityScore.level === "enterprise" ||
+      metrics.riskLevel === "critical"
+    ) {
+      return "expert_priority";
     }
-    
-    if (complexityScore.level === 'complex' || metrics.dependencies > 5) {
-      return 'consensus';
+
+    if (complexityScore.level === "complex" || metrics.dependencies > 5) {
+      return "consensus";
     }
-    
-    return 'majority_vote';
+
+    return "majority_vote";
   }
 
-  async executeDelegation(analysis: DelegationAnalysis, request: DelegationRequest): Promise<DelegationResult> {
+  async executeDelegation(
+    analysis: DelegationAnalysis,
+    request: DelegationRequest,
+  ): Promise<DelegationResult> {
     const startTime = Date.now();
-    const results: Array<{agent: string; output: any; executionTime: number}> = [];
+    const results: Array<{
+      agent: string;
+      output: any;
+      executionTime: number;
+    }> = [];
     const errors: string[] = [];
 
     try {
       for (const agentName of analysis.agents) {
         const agentStartTime = Date.now();
-        
+
         try {
           const agentInstance = this.stateManager.get(`agent:${agentName}`);
           if (!agentInstance) {
@@ -343,38 +414,38 @@ export class AgentDelegator {
 
           const output = await (agentInstance as any).execute(request);
           const executionTime = Date.now() - agentStartTime;
-          
+
           results.push({
             agent: agentName,
             output,
-            executionTime
+            executionTime,
           });
 
           await frameworkLogger.log(
-            'agent-delegator',
-            'agent-executed',
-            'success',
+            "agent-delegator",
+            "agent-executed",
+            "success",
             {
               agent: agentName,
               executionTime,
-              success: true
+              success: true,
             },
-            request.sessionId
+            request.sessionId,
           );
         } catch (error) {
           const executionTime = Date.now() - agentStartTime;
           errors.push(`Agent ${agentName} failed: ${String(error)}`);
-          
+
           await frameworkLogger.log(
-            'agent-delegator',
-            'agent-execution-failed',
-            'error',
+            "agent-delegator",
+            "agent-execution-failed",
+            "error",
             {
               agent: agentName,
               executionTime,
-              error: String(error)
+              error: String(error),
             },
-            request.sessionId
+            request.sessionId,
           );
         }
       }
@@ -383,7 +454,8 @@ export class AgentDelegator {
       const success = errors.length === 0 && results.length > 0;
 
       // Persist delegation execution metrics to state for tracking
-      const existingMetrics = (this.stateManager.get('delegation_metrics') as any[]) || [];
+      const existingMetrics =
+        (this.stateManager.get("delegation_metrics") as any[]) || [];
       const delegationMetric = {
         timestamp: Date.now(),
         operation: request.operation,
@@ -396,57 +468,69 @@ export class AgentDelegator {
         success,
         errors,
         analysisOnly: false,
-        sessionId: request.sessionId
+        sessionId: request.sessionId,
       };
       existingMetrics.push(delegationMetric);
-      this.stateManager.set('delegation_metrics', existingMetrics);
+      this.stateManager.set("delegation_metrics", existingMetrics);
 
       await frameworkLogger.log(
-        'agent-delegator',
-        'delegation-completed',
-        success ? 'success' : 'error',
+        "agent-delegator",
+        "delegation-completed",
+        success ? "success" : "error",
         {
           strategy: analysis.strategy,
           agentsCount: analysis.agents.length,
           successCount: results.length,
           errorCount: errors.length,
-          totalTime
+          totalTime,
         },
-        request.sessionId
+        request.sessionId,
       );
 
       return {
         success,
         results,
         totalTime,
-        errors: errors.length > 0 ? errors : undefined
+        errors: errors.length > 0 ? errors : undefined,
       };
     } catch (error) {
       const totalTime = Date.now() - startTime;
       await frameworkLogger.log(
-        'agent-delegator',
-        'delegation-failed',
-        'error',
+        "agent-delegator",
+        "delegation-failed",
+        "error",
         {
           error: String(error),
-          totalTime
+          totalTime,
         },
-        request.sessionId
+        request.sessionId,
       );
       throw error;
     }
   }
 
   getPerformanceMetrics(): PerformanceMetrics {
-    const delegations = (this.stateManager.get('delegation_metrics') as any[]) || [];
-    const executionDelegations = delegations.filter((d: any) => !d.analysisOnly);
-    const totalDelegations = executionDelegations.length > 0 ? executionDelegations.length : delegations.length;
-    const successfulDelegations = executionDelegations.filter((d: any) => d.success).length;
-    const failedDelegations = executionDelegations.filter((d: any) => !d.success).length;
-    
-    const averageExecutionTime = totalDelegations > 0 
-      ? delegations.reduce((sum: number, d: any) => sum + d.totalTime, 0) / totalDelegations 
-      : 0;
+    const delegations =
+      (this.stateManager.get("delegation_metrics") as any[]) || [];
+    const executionDelegations = delegations.filter(
+      (d: any) => !d.analysisOnly,
+    );
+    const totalDelegations =
+      executionDelegations.length > 0
+        ? executionDelegations.length
+        : delegations.length;
+    const successfulDelegations = executionDelegations.filter(
+      (d: any) => d.success,
+    ).length;
+    const failedDelegations = executionDelegations.filter(
+      (d: any) => !d.success,
+    ).length;
+
+    const averageExecutionTime =
+      totalDelegations > 0
+        ? delegations.reduce((sum: number, d: any) => sum + d.totalTime, 0) /
+          totalDelegations
+        : 0;
 
     const agentUtilization: Record<string, number> = {};
     const strategyUsage: Record<string, number> = {};
@@ -456,7 +540,8 @@ export class AgentDelegator {
     delegations.forEach((delegation: any) => {
       // Count strategy usage for both analyses and executions
       if (delegation.strategy) {
-        strategyUsage[delegation.strategy] = (strategyUsage[delegation.strategy] || 0) + 1;
+        strategyUsage[delegation.strategy] =
+          (strategyUsage[delegation.strategy] || 0) + 1;
       }
       if (delegation.complexity?.score) {
         totalComplexity += delegation.complexity.score;
@@ -465,13 +550,16 @@ export class AgentDelegator {
         totalDuration += delegation.estimatedDuration;
       }
       delegation.results?.forEach((result: any) => {
-        agentUtilization[result.agent] = (agentUtilization[result.agent] || 0) + 1;
+        agentUtilization[result.agent] =
+          (agentUtilization[result.agent] || 0) + 1;
       });
     });
 
     const averageResponseTime = averageExecutionTime;
-    const averageComplexity = totalDelegations > 0 ? totalComplexity / totalDelegations : 0;
-    const averageDuration = totalDelegations > 0 ? totalDuration / totalDelegations : 0;
+    const averageComplexity =
+      totalDelegations > 0 ? totalComplexity / totalDelegations : 0;
+    const averageDuration =
+      totalDelegations > 0 ? totalDuration / totalDelegations : 0;
 
     return {
       totalDelegations,
@@ -482,53 +570,59 @@ export class AgentDelegator {
       averageComplexity,
       averageDuration,
       strategyUsage,
-      agentUtilization
+      agentUtilization,
     };
   }
 
   getDelegationMetrics(): DelegationMetrics {
     const baseMetrics = this.getPerformanceMetrics();
-    const recentDelegations = ((this.stateManager.get('delegation_metrics') as any[]) || [])
+    const recentDelegations = (
+      (this.stateManager.get("delegation_metrics") as any[]) || []
+    )
       .slice(-10)
       .map((d: any) => ({
         timestamp: d.timestamp || Date.now(),
         operation: d.operation,
         strategy: d.strategy,
         success: d.success,
-        totalTime: d.totalTime
+        totalTime: d.totalTime,
       }));
 
     return {
       ...baseMetrics,
-      recentDelegations
+      recentDelegations,
     };
   }
 
-  updateAgentCapability(agentName: string, capabilities: Partial<AgentCapability>): void {
+  updateAgentCapability(
+    agentName: string,
+    capabilities: Partial<AgentCapability>,
+  ): void {
     const availableAgents = this.getAvailableAgents();
-    const agentIndex = availableAgents.findIndex(a => a.name === agentName);
-    
+    const agentIndex = availableAgents.findIndex((a) => a.name === agentName);
+
     if (agentIndex !== -1) {
       const existingAgent = availableAgents[agentIndex];
       const updatedAgent: AgentCapability = {
         ...existingAgent,
         ...capabilities,
         name: agentName,
-        capabilities: capabilities.capabilities || existingAgent?.capabilities || [],
-        status: capabilities.status || existingAgent?.status || 'active'
+        capabilities:
+          capabilities.capabilities || existingAgent?.capabilities || [],
+        status: capabilities.status || existingAgent?.status || "active",
       };
       availableAgents[agentIndex] = updatedAgent;
-      
+
       this.stateManager.set(`agent_capabilities:${agentName}`, updatedAgent);
-      
+
       frameworkLogger.log(
-        'agent-delegator',
-        'agent-capability-updated',
-        'info',
+        "agent-delegator",
+        "agent-capability-updated",
+        "info",
         {
           agentName,
-          updatedCapabilities: capabilities
-        }
+          updatedCapabilities: capabilities,
+        },
       );
     }
   }
@@ -536,7 +630,7 @@ export class AgentDelegator {
 
 export function createAgentDelegator(
   stateManager: StringRayStateManager,
-  configLoader: typeof strRayConfigLoader
+  configLoader: typeof strRayConfigLoader,
 ): AgentDelegator {
   return new AgentDelegator(stateManager, configLoader);
 }

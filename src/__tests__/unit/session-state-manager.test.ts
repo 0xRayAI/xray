@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { SessionStateManager, createSessionStateManager } from "../../session/session-state-manager.js";
+import {
+  SessionStateManager,
+  createSessionStateManager,
+} from "../../session/session-state-manager.js";
 import { StringRayStateManager } from "../../state/state-manager.js";
 import { SessionCoordinator } from "../../delegation/session-coordinator.js";
 
@@ -38,7 +41,10 @@ describe("SessionStateManager", () => {
     stateManager.get.mockReturnValue(null);
 
     // Create instance
-    sessionStateManager = new SessionStateManager(stateManager, sessionCoordinator);
+    sessionStateManager = new SessionStateManager(
+      stateManager,
+      sessionCoordinator,
+    );
   });
 
   afterEach(() => {
@@ -50,13 +56,20 @@ describe("SessionStateManager", () => {
       expect(sessionStateManager).toBeInstanceOf(SessionStateManager);
       // Test that internal properties are set (accessing private properties via type assertion)
       expect((sessionStateManager as any).stateManager).toBe(stateManager);
-      expect((sessionStateManager as any).sessionCoordinator).toBe(sessionCoordinator);
+      expect((sessionStateManager as any).sessionCoordinator).toBe(
+        sessionCoordinator,
+      );
     });
   });
 
   describe("shareState", () => {
     it("should successfully share state between sessions", () => {
-      const result = sessionStateManager.shareState(mockSessionId1, mockSessionId2, "test-key", "test-value");
+      const result = sessionStateManager.shareState(
+        mockSessionId1,
+        mockSessionId2,
+        "test-key",
+        "test-value",
+      );
 
       expect(result).toBe(true);
       expect(sessionCoordinator.shareContext).toHaveBeenCalledTimes(2);
@@ -64,30 +77,42 @@ describe("SessionStateManager", () => {
         mockSessionId1,
         `shared:${mockSessionId2}:test-key`,
         "test-value",
-        "state_manager"
+        "state_manager",
       );
       expect(sessionCoordinator.shareContext).toHaveBeenCalledWith(
         mockSessionId2,
         `received:${mockSessionId1}:test-key`,
         "test-value",
-        "state_manager"
+        "state_manager",
       );
     });
 
     it("should return false when source session does not exist", () => {
       sessionCoordinator.getSessionStatus.mockReturnValueOnce(null);
 
-      const result = sessionStateManager.shareState(mockSessionId1, mockSessionId2, "test-key", "test-value");
+      const result = sessionStateManager.shareState(
+        mockSessionId1,
+        mockSessionId2,
+        "test-key",
+        "test-value",
+      );
 
       expect(result).toBe(false);
       expect(sessionCoordinator.shareContext).not.toHaveBeenCalled();
     });
 
     it("should return false when target session does not exist", () => {
-      sessionCoordinator.getSessionStatus.mockReturnValueOnce(mockSessionStatus);
+      sessionCoordinator.getSessionStatus.mockReturnValueOnce(
+        mockSessionStatus,
+      );
       sessionCoordinator.getSessionStatus.mockReturnValueOnce(null);
 
-      const result = sessionStateManager.shareState(mockSessionId1, mockSessionId2, "test-key", "test-value");
+      const result = sessionStateManager.shareState(
+        mockSessionId1,
+        mockSessionId2,
+        "test-key",
+        "test-value",
+      );
 
       expect(result).toBe(false);
       expect(sessionCoordinator.shareContext).not.toHaveBeenCalled();
@@ -98,7 +123,12 @@ describe("SessionStateManager", () => {
         throw new Error("Share context failed");
       });
 
-      const result = sessionStateManager.shareState(mockSessionId1, mockSessionId2, "test-key", "test-value");
+      const result = sessionStateManager.shareState(
+        mockSessionId1,
+        mockSessionId2,
+        "test-key",
+        "test-value",
+      );
 
       expect(result).toBe(false);
     });
@@ -109,7 +139,12 @@ describe("SessionStateManager", () => {
       const targetSessions = [mockSessionId2, "session-3"];
       sessionCoordinator.shareContext.mockReturnValue(true);
 
-      const result = sessionStateManager.broadcastState(mockSessionId1, targetSessions, "broadcast-key", "broadcast-value");
+      const result = sessionStateManager.broadcastState(
+        mockSessionId1,
+        targetSessions,
+        "broadcast-key",
+        "broadcast-value",
+      );
 
       expect(result).toBe(2); // Both sessions successful
       expect(sessionCoordinator.shareContext).toHaveBeenCalledTimes(4); // 2 for each target session
@@ -118,7 +153,12 @@ describe("SessionStateManager", () => {
     it("should return count of successful broadcasts", () => {
       const targetSessions = [mockSessionId2, "session-3"];
 
-      const result = sessionStateManager.broadcastState(mockSessionId1, targetSessions, "broadcast-key", "broadcast-value");
+      const result = sessionStateManager.broadcastState(
+        mockSessionId1,
+        targetSessions,
+        "broadcast-key",
+        "broadcast-value",
+      );
 
       expect(result).toBe(2); // Both sessions successful (shareState doesn't check shareContext return values)
     });
@@ -129,14 +169,21 @@ describe("SessionStateManager", () => {
       const dependsOn = ["dep-1", "dep-2"];
       const metadata = { priority: 2 };
 
-      sessionStateManager.registerDependency(mockSessionId1, dependsOn, metadata);
+      sessionStateManager.registerDependency(
+        mockSessionId1,
+        dependsOn,
+        metadata,
+      );
 
       // Verify dependency was stored
       const chain = sessionStateManager.getDependencyChain(mockSessionId1);
       expect(chain.dependencies).toEqual(dependsOn);
 
       // Verify dependencies were persisted
-      expect(stateManager.set).toHaveBeenCalledWith("state_manager:dependencies", expect.any(Object));
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "state_manager:dependencies",
+        expect.any(Object),
+      );
     });
 
     it("should create dependency entries for depended-upon sessions", () => {
@@ -170,7 +217,7 @@ describe("SessionStateManager", () => {
           trigger: mockSessionId1,
           state: "completed",
         }),
-        "state_manager"
+        "state_manager",
       );
     });
   });
@@ -196,7 +243,11 @@ describe("SessionStateManager", () => {
   describe("createSessionGroup", () => {
     it("should create a session group", () => {
       const sessionIds = [mockSessionId1, mockSessionId2];
-      const group = sessionStateManager.createSessionGroup("group-1", sessionIds, mockSessionId1);
+      const group = sessionStateManager.createSessionGroup(
+        "group-1",
+        sessionIds,
+        mockSessionId1,
+      );
 
       expect(group.groupId).toBe("group-1");
       expect(group.sessionIds).toEqual(sessionIds);
@@ -208,15 +259,26 @@ describe("SessionStateManager", () => {
     });
 
     it("should persist session groups", () => {
-      sessionStateManager.createSessionGroup("group-1", [mockSessionId1], mockSessionId1);
+      sessionStateManager.createSessionGroup(
+        "group-1",
+        [mockSessionId1],
+        mockSessionId1,
+      );
 
-      expect(stateManager.set).toHaveBeenCalledWith("state_manager:groups", expect.any(Object));
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "state_manager:groups",
+        expect.any(Object),
+      );
     });
   });
 
   describe("updateSessionGroupState", () => {
     it("should update group state and notify sessions", () => {
-      sessionStateManager.createSessionGroup("group-1", [mockSessionId1, mockSessionId2], mockSessionId1);
+      sessionStateManager.createSessionGroup(
+        "group-1",
+        [mockSessionId1, mockSessionId2],
+        mockSessionId1,
+      );
 
       sessionStateManager.updateSessionGroupState("group-1", "active");
 
@@ -224,45 +286,75 @@ describe("SessionStateManager", () => {
         mockSessionId1,
         "group:group-1:state",
         expect.objectContaining({ state: "active" }),
-        "state_manager"
+        "state_manager",
       );
     });
 
     it("should set completion timestamp for terminal states", () => {
-      sessionStateManager.createSessionGroup("group-1", [mockSessionId1], mockSessionId1);
+      sessionStateManager.createSessionGroup(
+        "group-1",
+        [mockSessionId1],
+        mockSessionId1,
+      );
 
       sessionStateManager.updateSessionGroupState("group-1", "completed");
 
       // Verify completion timestamp was set
-      expect(stateManager.set).toHaveBeenCalledWith("state_manager:groups", expect.any(Object));
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "state_manager:groups",
+        expect.any(Object),
+      );
     });
   });
 
   describe("shareGroupState", () => {
     it("should share state within a group", () => {
-      sessionStateManager.createSessionGroup("group-1", [mockSessionId1, mockSessionId2], mockSessionId1);
+      sessionStateManager.createSessionGroup(
+        "group-1",
+        [mockSessionId1, mockSessionId2],
+        mockSessionId1,
+      );
 
-      const result = sessionStateManager.shareGroupState("group-1", "group-key", "group-value", mockSessionId1);
+      const result = sessionStateManager.shareGroupState(
+        "group-1",
+        "group-key",
+        "group-value",
+        mockSessionId1,
+      );
 
       expect(result).toBe(true);
       expect(sessionCoordinator.shareContext).toHaveBeenCalledWith(
         mockSessionId2,
         "group:group-1:group-key",
         "group-value",
-        mockSessionId1
+        mockSessionId1,
       );
     });
 
     it("should return false for non-existent group", () => {
-      const result = sessionStateManager.shareGroupState("non-existent", "key", "value", mockSessionId1);
+      const result = sessionStateManager.shareGroupState(
+        "non-existent",
+        "key",
+        "value",
+        mockSessionId1,
+      );
 
       expect(result).toBe(false);
     });
 
     it("should return false for session not in group", () => {
-      sessionStateManager.createSessionGroup("group-1", [mockSessionId1], mockSessionId1);
+      sessionStateManager.createSessionGroup(
+        "group-1",
+        [mockSessionId1],
+        mockSessionId1,
+      );
 
-      const result = sessionStateManager.shareGroupState("group-1", "key", "value", "outsider");
+      const result = sessionStateManager.shareGroupState(
+        "group-1",
+        "key",
+        "value",
+        "outsider",
+      );
 
       expect(result).toBe(false);
     });
@@ -270,8 +362,17 @@ describe("SessionStateManager", () => {
 
   describe("getGroupState", () => {
     it("should retrieve group state", () => {
-      sessionStateManager.createSessionGroup("group-1", [mockSessionId1], mockSessionId1);
-      sessionStateManager.shareGroupState("group-1", "test-key", "test-value", mockSessionId1);
+      sessionStateManager.createSessionGroup(
+        "group-1",
+        [mockSessionId1],
+        mockSessionId1,
+      );
+      sessionStateManager.shareGroupState(
+        "group-1",
+        "test-key",
+        "test-value",
+        mockSessionId1,
+      );
 
       const value = sessionStateManager.getGroupState("group-1", "test-key");
 
@@ -279,13 +380,18 @@ describe("SessionStateManager", () => {
     });
 
     it("should return undefined for non-existent group or key", () => {
-      expect(sessionStateManager.getGroupState("non-existent", "key")).toBeUndefined();
+      expect(
+        sessionStateManager.getGroupState("non-existent", "key"),
+      ).toBeUndefined();
     });
   });
 
   describe("planMigration", () => {
     it("should create a migration plan", () => {
-      const plan = sessionStateManager.planMigration(mockSessionId1, "target-coordinator");
+      const plan = sessionStateManager.planMigration(
+        mockSessionId1,
+        "target-coordinator",
+      );
 
       expect(plan.sessionId).toBe(mockSessionId1);
       expect(plan.targetCoordinator).toBe("target-coordinator");
@@ -315,7 +421,10 @@ describe("SessionStateManager", () => {
 
   describe("validateMigrationPlan", () => {
     it("should validate a correct migration plan", async () => {
-      const plan = sessionStateManager.planMigration(mockSessionId1, "target-coordinator");
+      const plan = sessionStateManager.planMigration(
+        mockSessionId1,
+        "target-coordinator",
+      );
 
       const result = await sessionStateManager.validateMigrationPlan(plan);
 
@@ -324,7 +433,10 @@ describe("SessionStateManager", () => {
     });
 
     it("should detect missing target coordinator", async () => {
-      const plan = sessionStateManager.planMigration(mockSessionId1, "target-coordinator");
+      const plan = sessionStateManager.planMigration(
+        mockSessionId1,
+        "target-coordinator",
+      );
       plan.targetCoordinator = "";
 
       const result = await sessionStateManager.validateMigrationPlan(plan);
@@ -334,13 +446,18 @@ describe("SessionStateManager", () => {
     });
 
     it("should detect missing migration steps", async () => {
-      const plan = sessionStateManager.planMigration(mockSessionId1, "target-coordinator");
+      const plan = sessionStateManager.planMigration(
+        mockSessionId1,
+        "target-coordinator",
+      );
       plan.migrationSteps = plan.migrationSteps.slice(1);
 
       const result = await sessionStateManager.validateMigrationPlan(plan);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain("Missing required migration step: validate_target_coordinator");
+      expect(result.errors).toContain(
+        "Missing required migration step: validate_target_coordinator",
+      );
     });
   });
 
@@ -348,9 +465,17 @@ describe("SessionStateManager", () => {
     it("should configure failover for a session", () => {
       const backupCoordinators = ["backup-1", "backup-2"];
 
-      sessionStateManager.configureFailover(mockSessionId1, backupCoordinators, 3, true);
+      sessionStateManager.configureFailover(
+        mockSessionId1,
+        backupCoordinators,
+        3,
+        true,
+      );
 
-      expect(stateManager.set).toHaveBeenCalledWith("state_manager:failover", expect.any(Object));
+      expect(stateManager.set).toHaveBeenCalledWith(
+        "state_manager:failover",
+        expect.any(Object),
+      );
     });
   });
 
@@ -358,9 +483,18 @@ describe("SessionStateManager", () => {
     it("should return coordination statistics", () => {
       sessionStateManager.registerDependency(mockSessionId1, []);
       sessionStateManager.updateDependencyState(mockSessionId1, "active");
-      sessionStateManager.createSessionGroup("group-1", [mockSessionId1], mockSessionId1);
+      sessionStateManager.createSessionGroup(
+        "group-1",
+        [mockSessionId1],
+        mockSessionId1,
+      );
       sessionStateManager.updateSessionGroupState("group-1", "active");
-      sessionStateManager.configureFailover(mockSessionId1, ["backup"], 3, true);
+      sessionStateManager.configureFailover(
+        mockSessionId1,
+        ["backup"],
+        3,
+        true,
+      );
 
       const stats = sessionStateManager.getCoordinationStats();
 
@@ -374,7 +508,10 @@ describe("SessionStateManager", () => {
 
   describe("createSessionStateManager factory", () => {
     it("should create a SessionStateManager instance", () => {
-      const instance = createSessionStateManager(stateManager, sessionCoordinator);
+      const instance = createSessionStateManager(
+        stateManager,
+        sessionCoordinator,
+      );
 
       expect(instance).toBeInstanceOf(SessionStateManager);
     });

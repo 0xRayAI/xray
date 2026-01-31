@@ -474,7 +474,9 @@ describe("DependencyGraphBuilder", () => {
       const analysis = await builder.buildDependencyGraph();
 
       expect(analysis.metrics.circularDependencies).toBe(0);
-      expect(analysis.chains.some((chain) => chain.path.length > 2)).toBe(false);
+      expect(analysis.chains.some((chain) => chain.path.length > 2)).toBe(
+        false,
+      );
     });
 
     it("should not report false positives for valid dependencies", async () => {

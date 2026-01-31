@@ -6,7 +6,7 @@ import { strRayConfigLoader } from "../core/config-loader.js";
 async function testDelegationLogging() {
   console.log("🔄 Testing delegation logging integration...");
 
-  const jobId = generateJobId('test-delegation-logging');
+  const jobId = generateJobId("test-delegation-logging");
   const stateManager = new StringRayStateManager();
   const delegator = new AgentDelegator(stateManager, strRayConfigLoader);
 
@@ -48,7 +48,14 @@ async function testDelegationLogging() {
     );
   }
 
-  await frameworkLogger.log("test-delegation", "test-completed", "success", {}, undefined, jobId);
+  await frameworkLogger.log(
+    "test-delegation",
+    "test-completed",
+    "success",
+    {},
+    undefined,
+    jobId,
+  );
 }
 
 testDelegationLogging();
