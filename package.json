@@ -75,6 +75,7 @@
     "LICENSE"
   ],
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
     "commander": "^11.1.0"
   },
   "devDependencies": {

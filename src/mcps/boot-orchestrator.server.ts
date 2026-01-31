@@ -9,6 +9,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { execSync } from "child_process";
 import fs from "fs";
@@ -181,7 +182,7 @@ class StrRayBootOrchestratorServer {
     });
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
       const { name, arguments: args } = request.params;
 
       switch (name) {
