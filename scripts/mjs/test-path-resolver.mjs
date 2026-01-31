@@ -6,7 +6,7 @@
  */
 
 // Direct import for deployed environment compatibility
-const { pathResolver } = await import("../dist/plugin/utils/path-resolver.js");
+const { pathResolver } = await import.*"../../dist/plugin/utils/path-resolver.js");
 
 console.log("🔍 StrRay Path Resolver Test\n");
 

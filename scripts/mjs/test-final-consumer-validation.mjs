@@ -72,7 +72,7 @@ class FinalConsumerValidation {
     } else {
       requiredFiles.push(
         {
-          path: "../dist/plugin/plugins/strray-codex-injection.js",
+          path: "../../dist/plugin/plugins/strray-codex-injection.js",
           description: "Main plugin file",
         },
         { path: "../package.json", description: "Package manifest" }
@@ -235,17 +235,17 @@ class FinalConsumerValidation {
       },
     ] : [
       {
-        path: "../dist/plugin/orchestrator.js",
+        path: "../../dist/plugin/orchestrator.js",
         name: "StringRay Orchestrator",
         check: (module) => module.StringRayOrchestrator,
       },
       {
-        path: "../dist/plugin/state/state-manager.js",
+        path: "../../dist/plugin/state/state-manager.js",
         name: "State Manager",
         check: (module) => module.StringRayStateManager,
       },
       {
-        path: "../dist/plugin/plugins/strray-codex-injection.js",
+        path: "../../dist/plugin/plugins/strray-codex-injection.js",
         name: "Main Plugin",
         check: (module) => module.default,
       },
@@ -289,7 +289,7 @@ class FinalConsumerValidation {
         // Simple check - just verify the CLI file exists and can be executed
         const cliPath = this.isConsumerEnvironment
           ? "node_modules/strray-ai/dist/cli/index.js"
-          : "../dist/cli/index.js";
+          : "../../dist/cli/index.js";
         const fullCliPath = path.resolve(this.consumerRoot, cliPath);
         if (fs.existsSync(fullCliPath)) {
           console.log(`  ✅ ${cmd.name} available`);

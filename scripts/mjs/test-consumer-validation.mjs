@@ -362,15 +362,15 @@ class ConsumerValidator {
     // Inline version of framework boot check
     const components = [
       {
-        path: "../dist/plugin/orchestrator.js",
+        path: "../../dist/plugin/orchestrator.js",
         export: "StringRayOrchestrator",
       },
       {
-        path: "../dist/plugin/state/state-manager.js",
+        path: "../../dist/plugin/state/state-manager.js",
         export: "StringRayStateManager",
       },
       {
-        path: "../dist/plugin/plugins/strray-codex-injection.js",
+        path: "../../dist/plugin/plugins/strray-codex-injection.js",
         export: "default",
       },
     ];
@@ -551,7 +551,7 @@ class ConsumerValidator {
     // Test that the orchestrator can be initialized and has basic functionality
     try {
       const { StringRayOrchestrator } =
-        await import("../dist/plugin/orchestrator.js");
+        await import.*"../../dist/plugin/orchestrator.js");
       const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 1 });
 
       // Check that orchestrator has required methods
@@ -571,7 +571,7 @@ class ConsumerValidator {
     // Test that session manager can be initialized
     try {
       const { StringRayStateManager } =
-        await import("../dist/plugin/state/state-manager.js");
+        await import.*"../../dist/plugin/state/state-manager.js");
       const sessionManager = new StringRayStateManager();
 
       // Check that session manager has required methods
@@ -588,7 +588,7 @@ class ConsumerValidator {
     // Test that complex orchestration can be set up (without actually running it)
     try {
       const { StringRayOrchestrator } =
-        await import("../dist/plugin/orchestrator.js");
+        await import.*"../../dist/plugin/orchestrator.js");
       const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 2 });
 
       // Test that we can set up a complex task structure
@@ -627,9 +627,9 @@ class ConsumerValidator {
     try {
       // Test that we can import and initialize the core components needed for prompt processing
       const { StringRayOrchestrator } =
-        await import("../dist/plugin/orchestrator.js");
+        await import.*"../../dist/plugin/orchestrator.js");
       const { StringRayStateManager } =
-        await import("../dist/plugin/state/state-manager.js");
+        await import.*"../../dist/plugin/state/state-manager.js");
 
       // Initialize components
       const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 1 });
@@ -657,7 +657,7 @@ class ConsumerValidator {
     try {
       // Try to import rules-related components
       const { frameworkLogger } =
-        await import("../dist/plugin/framework-logger.js");
+        await import.*"../../dist/plugin/framework-logger.js");
 
       // Test that logging system can handle rule-based decisions
       const canLogRules = typeof frameworkLogger?.log === "function";
@@ -683,7 +683,7 @@ class ConsumerValidator {
     // Test session caching and persistence
     try {
       const { StringRayStateManager } =
-        await import("../dist/plugin/state/state-manager.js");
+        await import.*"../../dist/plugin/state/state-manager.js");
       const sessionManager = new StringRayStateManager();
 
       // Test basic caching operations
@@ -707,7 +707,7 @@ class ConsumerValidator {
     try {
       // Test that processor pipeline components can be initialized
       const { frameworkLogger } =
-        await import("../dist/plugin/framework-logger.js");
+        await import.*"../../dist/plugin/framework-logger.js");
 
       // Test pipeline structure
       const testPipeline = {
@@ -734,7 +734,7 @@ class ConsumerValidator {
     // Test framework logging system
     try {
       const { frameworkLogger } =
-        await import("../dist/plugin/framework-logger.js");
+        await import.*"../../dist/plugin/framework-logger.js");
 
       // Test that logger has required methods
       const hasLogMethod = typeof frameworkLogger?.log === "function";
@@ -776,7 +776,7 @@ class ConsumerValidator {
 
       // Test that we can import security-related components if available
       try {
-        await import("../dist/plugin/security/security-headers.js");
+        await import.*"../../dist/plugin/security/security-headers.js");
         return hasSecurityStructure && true; // Security components available
       } catch (e) {
         return hasSecurityStructure && false; // Security components optional
@@ -805,7 +805,7 @@ class ConsumerValidator {
 
       // Test that we can access performance-related logging
       const { frameworkLogger } =
-        await import("../dist/plugin/framework-logger.js");
+        await import.*"../../dist/plugin/framework-logger.js");
       const canLogPerformance = typeof frameworkLogger?.log === "function";
 
       return hasPerformanceStructure && canLogPerformance;
@@ -847,7 +847,7 @@ class ConsumerValidator {
 
       // Test that the framework can handle agent delegation
       const { StringRayOrchestrator } =
-        await import("../dist/plugin/orchestrator.js");
+        await import.*"../../dist/plugin/orchestrator.js");
       const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 1 });
 
       // Test that orchestrator can handle different agent types

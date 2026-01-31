@@ -51,7 +51,7 @@ const isInstalledPackage = __dirname.includes("node_modules/strray-ai");
 const PLUGIN_PATH =
   process.env.STRINGRAY_PLUGIN_PATH ||
   (isInstalledPackage
-    ? "../dist/plugin/plugins" // Relative to scripts/ directory
+    ? "../../dist/plugin/plugins" // Relative to scripts/ directory
     : isTestEnvironment
       ? "node_modules/strray-ai/dist/plugin/plugins"
       : "dist/plugin/plugins");
@@ -65,7 +65,7 @@ console.log("Script location:", import.meta.url);
   try {
     // Import the plugin using relative path for consumer compatibility
     const pluginModule =
-      await import("../dist/plugin/plugins/strray-codex-injection.js");
+      await import.*"../../dist/plugin/plugins/strray-codex-injection.js");
     const plugin = pluginModule.default;
     console.log("✅ Plugin loaded successfully");
 

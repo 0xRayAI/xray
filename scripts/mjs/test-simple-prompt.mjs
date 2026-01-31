@@ -11,7 +11,7 @@
 
     // Import the orchestrator
     const { StringRayOrchestrator } =
-      await import("../dist/plugin/orchestrator.js");
+      await import.*"../../dist/plugin/orchestrator.js");
 
     // Create orchestrator instance
     const orchestrator = new StringRayOrchestrator({

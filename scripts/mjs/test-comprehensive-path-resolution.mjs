@@ -15,7 +15,7 @@ console.log("=== TEST 1: Environment Variable Path Resolution ===");
 const AGENTS_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
 const PROCESSORS_PATH = process.env.STRRAY_PROCESSORS_PATH || "../processors";
 const ENFORCEMENT_PATH =
-  process.env.STRRAY_ENFORCEMENT_PATH || "../dist/enforcement";
+  process.env.STRRAY_ENFORCEMENT_PATH || "../../dist/enforcement";
 
 console.log(`✅ AGENTS_PATH: ${AGENTS_PATH}`);
 console.log(`✅ PROCESSORS_PATH: ${PROCESSORS_PATH}`);
@@ -25,7 +25,7 @@ console.log(`✅ ENFORCEMENT_PATH: ${ENFORCEMENT_PATH}\n`);
 console.log("=== TEST 2: Dynamic Import Resolution ===");
 try {
   const [{ RuleEnforcer }] = await Promise.all([
-    import("../dist/enforcement/rule-enforcer.js"),
+    import("../../dist/enforcement/rule-enforcer.js"),
   ]);
   const enforcer = new RuleEnforcer();
   const stats = enforcer.getRuleStats();
@@ -44,7 +44,7 @@ try {
 
   // Possible paths to try (in order of preference)
   const possiblePaths = [
-    "../dist/utils/import-resolver.js", // Relative from scripts/
+    "../../dist/utils/import-resolver.js", // Relative from scripts/
     "./dist/utils/import-resolver.js", // Relative from project root
     "dist/utils/import-resolver.js", // From anywhere in project
   ];
@@ -84,7 +84,7 @@ try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
     const checkPaths = [
-      path.resolve(__dirname, "../dist/plugin/utils/import-resolver.js"),
+      path.resolve(__dirname, "../../dist/plugin/utils/import-resolver.js"),
       path.resolve(__dirname, "./dist/plugin/utils/import-resolver.js"),
       path.resolve(process.cwd(), "dist/plugin/utils/import-resolver.js"),
     ];
