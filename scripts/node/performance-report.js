@@ -30,7 +30,7 @@ try {
     // Generate basic report
     const report = {
       timestamp: new Date().toISOString(),
-      framework: "StringRay AI v1.1.1",
+      framework: "StringRay AI v1.2.0",
       totalTests: Object.keys(baselines).length,
       baselines: baselines,
       status: "generated",

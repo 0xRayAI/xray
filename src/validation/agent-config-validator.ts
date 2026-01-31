@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.1.1 - Agent Configuration Validator
+ * StringRay AI v1.2.0 - Agent Configuration Validator
  *
  * Validates agent configuration files for correctness and completeness
  * ensuring all required fields are present and properly formatted.

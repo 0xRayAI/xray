@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.1.1 - Features Configuration Loader
+ * StringRay AI v1.2.0 - Features Configuration Loader
  *
  * Loads and validates the unified features configuration from features.json
  * Supports token optimization, model routing, batch operations, and more.

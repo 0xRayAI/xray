@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.1.1 - Plugin Marketplace Service Unit Tests
+ * StringRay AI v1.2.0 - Plugin Marketplace Service Unit Tests
  *
  * Comprehensive unit tests for the plugin marketplace service ensuring >85% coverage
  * with edge cases, error scenarios, and Universal Development Codex v1.2.20 compliance.

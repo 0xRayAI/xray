@@ -5,11 +5,11 @@ description: Batched code quality and architecture introspection before commits
 
 #!/bin/bash
 
-# StringRay AI v1.1.1 - Pre-commit Introspection
+# StringRay AI v1.2.0 - Pre-commit Introspection
 
 # Comprehensive code quality and architecture validation
 
-echo "🔬 StringRay AI v1.1.1 - Pre-commit Introspection"
+echo "🔬 StringRay AI v1.2.0 - Pre-commit Introspection"
 echo "============================================================"
 
 # Initialize analysis status

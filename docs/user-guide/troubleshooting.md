@@ -239,7 +239,7 @@ tail -50 logs/framework/activity.log
        "enforcer": "openrouter/xai-grok-2-1212-fast-1"
      },
      "framework": {
-       "version": "1.1.1"
+       "version": "1.2.0"
      }
    }
    ```

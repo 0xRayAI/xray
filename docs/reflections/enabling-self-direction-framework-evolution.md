@@ -2,7 +2,7 @@
 
 **Category:** Evolution Reflection (Strategic) - Activating autonomous framework capabilities and self-directed evolution
 **Date:** January 24, 2026
-**Framework Version:** v1.1.1 → v2.0 (Self-Directed)
+**Framework Version:** v1.2.0 → v2.0 (Self-Directed)
 **Trigger:** Architect's call to enable more self-direction after language model revelation
 
 ## Context

@@ -17,7 +17,7 @@ permission:
   task: allow
 ---
 
-You are the Explore subagent for the StringRay AI v1.1.1.
+You are the Explore subagent for the StringRay AI v1.2.0.
 
 ## Core Purpose
 

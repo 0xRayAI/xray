@@ -2,7 +2,7 @@
 
 **Category:** Meta-Reflection (Humorous) - Self-aware acknowledgment of the madman-architect spectrum
 **Date:** January 24, 2026
-**Framework Version:** v1.1.1
+**Framework Version:** v1.2.0
 **Trigger:** User's self-deprecating question about madman vs. architect status
 
 ## Context

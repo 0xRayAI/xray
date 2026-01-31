@@ -708,7 +708,7 @@ Update your `.opencode/oh-my-opencode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray-ai",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

@@ -243,7 +243,7 @@ async function generateContextAwarenessReport() {
   );
 
   console.log(`\n📄 REPORT GENERATED: ${new Date().toISOString()}`);
-  console.log(`🔗 FRAMEWORK VERSION: StringRay AI v1.1.1 - Context Aware`);
+  console.log(`🔗 FRAMEWORK VERSION: StringRay AI v1.2.0 - Context Aware`);
 }
 
 // Generate the comprehensive report
