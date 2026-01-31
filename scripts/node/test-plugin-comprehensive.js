@@ -46,7 +46,7 @@ async function runComprehensiveTests() {
 
        // Check if file is valid
        const content = fs.readFileSync(pluginPath, 'utf-8');
-       if (content.includes('export default') || content.includes('export ')) {
+       if (content.includes('module.exports = {')) {
          results.pluginFileValid = true;
          console.log('✅ Plugin file has valid exports');
 

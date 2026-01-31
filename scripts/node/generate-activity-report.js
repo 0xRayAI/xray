@@ -1,4 +1,4 @@
-import { frameworkReportingSystem } from '../dist/reporting/framework-reporting-system.js';
+import { frameworkReportingSystem } from '../../dist/reporting/framework-reporting-system.js';
 
 async function generateActivityReport() {
   console.log('🚀 Generating activity report for pipeline integration work...');

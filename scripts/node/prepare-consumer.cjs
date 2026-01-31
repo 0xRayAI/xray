@@ -11,7 +11,8 @@ const path = require("path");
 console.log('🔧 StrRay Consumer Preparation: Transforming development paths back to consumer paths...');
 
 // Get the package root (where this script is located)
-const packageRoot = path.join(__dirname, "..");
+// Script is in scripts/node/, so package root is two levels up
+const packageRoot = path.join(__dirname, "..", "..");
 
 function updatePathsInFile(filePath) {
   try {
@@ -54,8 +55,8 @@ function updatePathsInFile(filePath) {
 }
 
 // Files to update for consumer preparation
+// Note: .mcp.json was refactored out - see AGENTS.md
 const filesToUpdate = [
-  ".mcp.json",
   "opencode.json",
   ".opencode/oh-my-opencode.json"
 ];
@@ -63,8 +64,72 @@ const filesToUpdate = [
 console.log("🔧 StrRay Consumer Preparation: Processing configuration files...");
 filesToUpdate.forEach(filePath => {
   const fullPath = path.join(packageRoot, filePath);
-  updatePathsInFile(fullPath);
+  if (fs.existsSync(fullPath)) {
+    updatePathsInFile(fullPath);
+  } else {
+    console.log(`ℹ️ Skipping ${filePath} (not found)`);
+  }
 });
+
+// Add .js extensions to dist/ folder imports for ES module compatibility
+function addJsExtensionsToDist() {
+  console.log("🔧 Adding .js extensions to dist/ folder imports...");
+  
+  const distPath = path.join(packageRoot, "dist");
+  
+  if (!fs.existsSync(distPath)) {
+    console.warn("⚠️ dist/ folder not found. Run npm run build first.");
+    return;
+  }
+  
+  let modifiedCount = 0;
+  
+  function processFile(filePath) {
+    try {
+      let content = fs.readFileSync(filePath, 'utf-8');
+      const originalContent = content;
+      
+      // Add .js extension to relative imports that don't have it
+      // Match: from "../path/module" but not from "../path/module.js"
+      content = content.replace(/from "(\.[./][^"]+)";/g, (match, importPath) => {
+        // Skip if already has .js extension
+        if (importPath.endsWith('.js')) return match;
+        // Skip if it's a directory import (ends with /)
+        if (importPath.endsWith('/')) return match;
+        // Add .js extension
+        return `from "${importPath}.js";`;
+      });
+      
+      if (content !== originalContent) {
+        fs.writeFileSync(filePath, content);
+        modifiedCount++;
+        console.log(`✅ Fixed: ${path.relative(distPath, filePath)}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error processing ${filePath}:`, error.message);
+    }
+  }
+  
+  function walkDir(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        walkDir(fullPath);
+      } else if (entry.name.endsWith('.js')) {
+        processFile(fullPath);
+      }
+    }
+  }
+  
+  walkDir(distPath);
+  console.log(`🎉 Added .js extensions to ${modifiedCount} files in dist/`);
+}
+
+// Run the dist transformation
+addJsExtensionsToDist();
 
 console.log("🎉 StrRay Consumer Preparation: Complete!");
 console.log("📦 Package is now ready for consumer installation.");

@@ -1,5 +1,5 @@
-import { advancedProfiler } from "./src/monitoring/advanced-profiler";
-import { enterpriseMonitoringSystem } from "./src/monitoring/enterprise-monitoring-system";
+import { advancedProfiler } from "../../dist/monitoring/advanced-profiler.js";
+import { enterpriseMonitoringSystem } from "../../dist/monitoring/enterprise-monitoring-system.js";
 // Simulate agent operations with profiling
 async function simulateAgentOperations() {
   console.log("🎯 Starting Advanced Profiling Demo...\n");

@@ -3,6 +3,7 @@
 // Validate codex integration in both development and deployed environments
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 
 // Check if we're in development or deployed environment
 const isDevelopment = fs.existsSync("src/codex-injector.ts");
@@ -26,8 +27,7 @@ if (isDeployed) {
       "DEBUG: .mcp.json not found, attempting to run postinstall script",
     );
     try {
-      // Import and run the postinstall script
-      const { execSync } = await import("child_process");
+      // Run the postinstall script
       execSync("node node_modules/strray-ai/scripts/postinstall.cjs", {
         stdio: "inherit",
       });
@@ -80,40 +80,56 @@ if (isDevelopment) {
           /\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/,
         );
         if (versionMatch) {
+          console.log(`Found codex version: ${versionMatch[1]}`);
         }
 
         const termMatches = content.match(/####\s*\d+\.\s/g);
         if (termMatches) {
+          console.log(`Found ${termMatches.length} codex terms`);
         }
-      } catch (error) {}
+      } catch (error) {
+        console.warn(`Warning: Could not read ${file}:`, error.message);
+      }
     }
   }
 
   if (!codexFound) {
+    console.error("No codex files found");
     process.exit(1);
   }
 
   // Check if built files exist
   if (fs.existsSync("dist")) {
+    console.log("dist directory exists");
   } else {
+    console.warn("dist directory not found");
   }
 
   // Check package.json
   if (fs.existsSync("package.json")) {
     try {
       const pkg = JSON.parse(fs.readFileSync("package.json", "utf-8"));
-    } catch (error) {}
+      console.log(`Package: ${pkg.name}@${pkg.version}`);
+    } catch (error) {
+      console.warn("Could not parse package.json:", error.message);
+    }
   } else {
+    console.error("package.json not found");
     process.exit(1);
   }
 
   // Check .strray directory
   if (fs.existsSync(".strray")) {
+    console.log(".strray directory exists");
     if (fs.existsSync(".strray/codex.json")) {
+      console.log("codex.json exists");
     } else {
+      console.warn("codex.json not found in .strray");
     }
   } else {
+    console.warn(".strray directory not found");
   }
 }
 
+console.log("All validation checks passed");
 process.exit(0); // All checks passed

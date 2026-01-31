@@ -11,9 +11,10 @@ import fs from "fs";
 import path from "path";
 
 // Get the root directory of the git repository
-function getGitRoot() {
+async function getGitRoot() {
   try {
-    const result = require('child_process').execSync('git rev-parse --show-toplevel', {
+    const { execSync } = await import('child_process');
+    const result = execSync('git rev-parse --show-toplevel', {
       encoding: 'utf8',
       stdio: 'pipe'
     });
@@ -40,8 +41,8 @@ function extractVersions(content) {
 }
 
 // Check if versions are consistent
-function validateVersionConsistency() {
-  const rootDir = getGitRoot();
+async function validateVersionConsistency() {
+  const rootDir = await getGitRoot();
   console.log('🔍 Checking version consistency...');
 
   // Read package.json to get the official version
@@ -108,9 +109,14 @@ function validateVersionConsistency() {
 }
 
 // Main validation
-if (!validateVersionConsistency()) {
-  console.log('');
-  console.log('🚫 Commit blocked due to version inconsistencies');
-  console.log('💡 Run version manager or fix manually');
+validateVersionConsistency().then(valid => {
+  if (!valid) {
+    console.log('');
+    console.log('🚫 Commit blocked due to version inconsistencies');
+    console.log('💡 Run version manager or fix manually');
+    process.exit(1);
+  }
+}).catch(err => {
+  console.error('Error during validation:', err);
   process.exit(1);
-}
+});

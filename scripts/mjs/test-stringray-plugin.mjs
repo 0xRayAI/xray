@@ -65,7 +65,7 @@ console.log("Script location:", import.meta.url);
   try {
     // Import the plugin using relative path for consumer compatibility
     const pluginModule =
-      await import.*"../../dist/plugin/plugins/strray-codex-injection.js");
+      await import("../../dist/plugin/strray-codex-injection.js");
     const plugin = pluginModule.default;
     console.log("✅ Plugin loaded successfully");
 

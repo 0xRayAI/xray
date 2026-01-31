@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
 /**
- * StringRay AI v2.0.0 - Self-Direction Activation Script
+ * StringRay AI v1.1.1 - Self-Direction Activation Script
  *
  * Initializes and activates the framework's autonomous self-direction capabilities.
  * This script brings the StringRay Framework from reactive tool to proactive intelligence.
  */
 
-import { selfDirectionSystem } from './src/self-direction-activation.js';
+import { selfDirectionSystem } from '../../dist/orchestrator/self-direction-activation.js';
 
 async function main() {
-  console.log('🚀 StringRay AI v2.0.0 - Self-Direction Activation');
+  console.log('🚀 StringRay AI v1.1.1 - Self-Direction Activation');
   console.log('================================================');
   console.log('');
 

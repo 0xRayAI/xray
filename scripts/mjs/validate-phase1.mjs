@@ -10,10 +10,10 @@ export {};
 
 // Path configuration for cross-environment compatibility
 const PROCESSORS_PATH =
-  process.env.STRRAY_PROCESSORS_PATH || "../../../dist/processors";
-const STATE_PATH = process.env.STRRAY_STATE_PATH || "../../../dist/state";
+  process.env.STRRAY_PROCESSORS_PATH || "../../dist/processors";
+const STATE_PATH = process.env.STRRAY_STATE_PATH || "../../dist/state";
 const ENFORCEMENT_PATH =
-  process.env.STRRAY_ENFORCEMENT_PATH || "../../../dist/enforcement";
+  process.env.STRRAY_ENFORCEMENT_PATH || "../../dist/enforcement";
 
 // Dynamic imports for cross-environment compatibility
 const [{ ProcessorManager }, { StringRayStateManager }, { ruleEnforcer }] =

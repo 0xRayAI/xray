@@ -1,6 +1,6 @@
 # StringRay Framework - Agent Context Guide v1.1.1
 
-**Version**: 1.1.1 **Purpose**: Enterprise AI orchestration with 99.6% error prevention **Updated**: 2026-01-26  
+**Version**: 1.1.1 **Purpose**: Enterprise AI orchestration with 99.6% error prevention **Updated**: 2026-01-27  
 **Note**: Lightweight guide for per-request inclusion (token-efficient). Full architecture, 59-term codex, pipeline diagrams and 51-file mapping → see master StringRay Complete System Architecture document.
 
 ## Executive Overview
@@ -98,6 +98,35 @@ Score: ≤25 Single-agent; 96+ Orchestrator-led.
 - **Tools Integration**: Leverage `read` for log verification; grep for pattern searches (e.g., `grep "ERROR" activity.log`).
 - **Alerts**: On failures, notify orchestrator and add blocking TODOs.
 - **Best Practice**: Tail logs in real-time during long ops (e.g., `tail -f activity.log | grep JobId`).
+## Environment Architecture: Dev vs Consumer
+
+StringRay operates in **two distinct environments** with different import resolution:
+
+### Development Environment (./src + ./dist)
+- **TypeScript source**: Standard imports without .js extensions (`import { x } from "./module"`)
+- **Compiled dist/**: ES modules that need .js extensions for Node.js (`import { x } from "./module.js"`)
+- **Test scripts**: Run against dist/ or src/ directly
+- **Build process**: `npm run build` compiles src/ → dist/ (TypeScript preserves import paths)
+
+### Consumer Environment (npm installed)
+- **Post-install transformation**: Adds .js extensions to dist/ imports automatically
+- **Location**: `node_modules/strray-ai/dist/`
+- **Usage**: Scripts import from `node_modules/strray-ai/dist/...`
+
+### Test Scripts Organization
+**Working scripts** (46 total): Test framework without importing from dist/
+- `./scripts/node/` - 16 Node.js scripts (cleanup, validation, setup)
+- `./scripts/mjs/` - 30 ES module scripts (testing, monitoring)
+
+**Archived scripts** (12 total): Require post-install transformation to work
+- Located in: `./scripts/archived/broken/`
+- These import from `dist/` and need .js extension transformation
+- Will work after `npm run build` + post-install transformation
+
+### Critical Rule for Agents
+**DO NOT modify TypeScript source files to add .js extensions** - this breaks the oh-my-opencode plugin bundler. The transformation happens at:
+1. Build time (for dev scripts that need it)
+2. Post-install time (for consumer npm packages)
 
 ## Platform-Specific Timeout Handling (For All Agents)
 - **Rule**: Use `timeout` for time-limiting test runs to prevent hangs. On macOS, prefix with `g` (gtimeout) if using Homebrew coreutils. On Linux, use plain `timeout` (pre-installed via coreutils).
@@ -106,3 +135,4 @@ Score: ≤25 Single-agent; 96+ Orchestrator-led.
   brew install coreutils
   # Then use: gtimeout 45s ...
   # Optional alias in ~/.zshrc: alias timeout='gtimeout'
+  

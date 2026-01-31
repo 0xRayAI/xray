@@ -16,13 +16,14 @@ const path = require("path");
 // Import framework (adjust path as needed)
 let initializeStrRay;
 try {
-  const frameworkPath = path.join(__dirname, "..", "dist", "index.js");
+  const frameworkPath = path.join(__dirname, "..", "dist", "plugin", "strray-codex-injection.js");
   if (fs.existsSync(frameworkPath)) {
     initializeStrRay = require(frameworkPath).initializeStrRay;
   } else {
     process.exit(1);
   }
 } catch (error) {
+  console.error("Failed to load framework:", error.message);
   process.exit(1);
 }
 

@@ -46,7 +46,7 @@
 
 ### 1.1 System Architecture
 
-StringRay Framework v1.1.1 is a comprehensive enterprise AI orchestration platform with **systematic error prevention** and **complexity-based task routing**. The system consists of **8 interconnected pipelines** spanning **51 core files** with **338 logging points** for complete traceability.
+StringRay AI v1.1.1 is a comprehensive enterprise AI orchestration platform with **systematic error prevention** and **complexity-based task routing**. The system consists of **8 interconnected pipelines** spanning **51 core files** with **338 logging points** for complete traceability.
 
 #### Core System Components:
 - **9 Specialized AI Agents** with automatic delegation
@@ -359,7 +359,7 @@ User Request → boot-orchestrator → agent-delegator → rule-enforcer → Pos
 ### 4.1 Master Pipeline Tree
 
 ```
-StringRay Framework v1.1.1
+StringRay AI v1.1.1
 ├── Framework Initialization Pipeline
 │   ├── Boot Orchestrator (boot-orchestrator.ts)
 │   ├── Framework Activation (strray-activation.ts)
@@ -629,15 +629,15 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ```json
 {
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code",
-    "librarian": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1",
+    "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "version": "1.1.1",
@@ -815,7 +815,46 @@ npm run lint                  # Code quality check
 npm run typecheck             # TypeScript validation
 ```
 
-### 1.3 Basic Usage
+### 1.3 Environment Architecture: Dev vs Consumer
+
+StringRay operates in **two distinct environments** with different module resolution strategies:
+
+#### **Development Environment** (Framework Development)
+- **Location**: Local repository (`./src` + `./dist`)
+- **TypeScript Source**: Standard imports without .js extensions
+  ```typescript
+  import { frameworkLogger } from "../core/framework-logger"
+  ```
+- **Compiled dist/**: ES modules preserved as-is from TypeScript
+- **Build Process**: `npm run build` compiles src/ → dist/ (import paths preserved)
+- **Test Scripts**: Located in `./scripts/node/` and `./scripts/mjs/`
+  - 46 working scripts that don't import from dist/
+  - 12 archived scripts in `./scripts/archived/broken/` (require post-install transformation)
+
+#### **Consumer Environment** (NPM Package Users)
+- **Location**: `node_modules/strray-ai/`
+- **Post-Install Transformation**: Automatically adds .js extensions to dist/ imports
+- **Import Resolution**: 
+  ```javascript
+  // Before transformation:
+  import { frameworkLogger } from "../core/framework-logger"
+  // After transformation:
+  import { frameworkLogger } from "../core/framework-logger.js"
+  ```
+- **Setup Required**: `node node_modules/strray-ai/scripts/postinstall.cjs`
+
+#### **Why Two Environments?**
+- **oh-my-opencode Plugin**: Uses bundler-style imports (no .js extensions needed)
+- **Node.js/Test Environment**: Requires .js extensions for ES module resolution
+- **Solution**: Clean TypeScript sources + transformation at distribution time
+
+#### **Agent Guidelines**
+- **DO NOT** add .js extensions to TypeScript source files
+- **DO NOT** modify dist/ folder directly (it's compiled output)
+- **DO** use the 46 working test scripts for framework validation
+- **DO** archive scripts that fail due to missing .js extensions (they need post-install)
+
+### 1.4 Basic Usage
 
 1. **Installation**: `npm install strray-ai`
 2. **Setup**: `node node_modules/strray-ai/scripts/postinstall.cjs`
@@ -2016,6 +2055,17 @@ When codex rules are violated, the system automatically attempts fixes:
 
 **148 total scripts** organized by purpose. Agents should use these scripts for systematic testing, debugging, and validation workflows.
 
+**Environment Compatibility Note:**
+- **Dev Environment Scripts** (46 working): Run directly in development environment
+  - `./scripts/node/` - 16 Node.js scripts (cleanup, validation, setup)
+  - `./scripts/mjs/` - 30 ES module scripts (testing, monitoring)
+- **Consumer Environment Scripts** (12 archived): Require post-install transformation
+  - Located in: `./scripts/archived/broken/`
+  - These import from `dist/` and need .js extension transformation
+  - Will work after consumer npm install + postinstall
+
+**Why the split?** TypeScript source uses clean imports (no .js). The oh-my-opencode plugin handles this via bundler. But Node.js/test environment requires .js extensions for ES modules. Post-install transforms dist/ files for consumers.
+
 #### 🔬 **Critical Testing Scripts (Run These First)**
 
 **`./scripts/test-end-to-end-comprehensive.sh`** - **COMPLETE SYSTEM VALIDATION**
@@ -2414,15 +2464,15 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 ```json
 {
   "model_routing": {
-    "enforcer": "opencode/grok-code",
-    "architect": "opencode/grok-code",
-    "orchestrator": "opencode/grok-code",
-    "bug-triage-specialist": "opencode/grok-code",
-    "code-reviewer": "opencode/grok-code",
-    "security-auditor": "opencode/grok-code",
-    "refactorer": "opencode/grok-code",
-    "test-architect": "opencode/grok-code",
-    "librarian": "opencode/grok-code"
+    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
+    "architect": "openrouter/xai-grok-2-1212-fast-1",
+    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
+    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
+    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
+    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
+    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
+    "test-architect": "openrouter/xai-grok-2-1212-fast-1",
+    "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "version": "1.1.1",

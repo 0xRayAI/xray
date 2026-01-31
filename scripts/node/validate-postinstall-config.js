@@ -168,6 +168,7 @@ class PostinstallConfigValidator {
 
     try {
       const claudeDir = path.join(os.homedir(), ".claude");
+      const { execSync } = await import('child_process');
       const claudeMcpPath = path.join(claudeDir, ".mcp.json");
 
       if (!fs.existsSync(claudeDir)) {

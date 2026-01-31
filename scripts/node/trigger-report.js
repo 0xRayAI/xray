@@ -1,4 +1,4 @@
-import { StringRayOrchestrator } from "../../dist/orchestrator.js";
+import { StringRayOrchestrator } from "../../dist/core/orchestrator.js";
 
 console.log(
   "🚀 Starting StrRay Framework to trigger automated report generation...",

@@ -83,7 +83,8 @@ function processFile(filePath) {
     const importStatement = "import { frameworkLogger } from \"../framework-logger.js\";";
     if (!content.includes(importStatement)) {
       // Find the last import statement
-      const importMatch = content.match(/import.*from.*;\n/g);
+      const importRegex = /import.*from.*;\n/g;
+      const importMatch = content.match(importRegex);
       if (importMatch) {
         const lastImport = importMatch[importMatch.length - 1];
         content = content.replace(lastImport, lastImport + importStatement + '\n');

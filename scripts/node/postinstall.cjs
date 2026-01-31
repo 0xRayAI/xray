@@ -11,7 +11,7 @@ const path = require("path");
 console.log('🔧 StrRay Postinstall: Script starting...');
 
 // Find the package root relative to this script
-const packageRoot = path.join(__dirname, "..");
+const packageRoot = path.join(__dirname, "..", "..");
 
 // Configuration files to copy during installation
 const configFiles = [
@@ -90,24 +90,14 @@ configDirs.forEach(dirPath => {
 
 // Detect if we're in a consumer environment (installed via npm)
 const cwd = process.cwd();
-const isConsumerEnvironment = !cwd.includes("dev/stringray") && cwd.includes("dev/jelly");
+const isConsumerEnvironment = !cwd.includes("dev/stringray") && !cwd.includes("stringray");
 
 // Convert paths for consumer environment
 if (isConsumerEnvironment) {
   console.log("🔧 StrRay Postinstall: Converting paths for consumer environment...");
 
-  // Convert MCP server paths
-  const mcpPath = path.join(process.cwd(), ".mcp.json");
-  if (fs.existsSync(mcpPath)) {
-    let mcpContent = fs.readFileSync(mcpPath, "utf8");
-    // Convert development paths to consumer paths
-    mcpContent = mcpContent.replace(
-      /"dist\/plugin\/mcps\//g,
-      '"node_modules/strray-ai/dist/plugin/mcps/'
-    );
-    fs.writeFileSync(mcpPath, mcpContent, "utf8");
-    console.log("✅ Updated MCP server paths");
-  }
+  // Note: .mcp.json was refactored out - no longer need to update MCP paths
+  // See AGENTS.md for details
 
   // Convert plugin path in oh-my-opencode.json
   const opencodePath = path.join(process.cwd(), ".opencode", "oh-my-opencode.json");
@@ -116,7 +106,12 @@ if (isConsumerEnvironment) {
     // Convert development plugin path to consumer path
     opencodeContent = opencodeContent.replace(
       /"dist\/plugin\/plugins\/stringray-codex-injection\.js"/g,
-      '"../../../node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"'
+      '"node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"'
+    );
+    // Also handle .ts source paths
+    opencodeContent = opencodeContent.replace(
+      /"src\/plugin\/strray-codex-injection\.ts"/g,
+      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
     );
     fs.writeFileSync(opencodePath, opencodeContent, "utf8");
     console.log("✅ Updated plugin path");

@@ -108,4 +108,9 @@ function cleanupRepository() {
 }
 
 // Run the cleanup
-cleanupRepository().catch(console.error);
+try {
+  cleanupRepository();
+} catch (error) {
+  console.error("Cleanup failed:", error);
+  process.exit(1);
+}
