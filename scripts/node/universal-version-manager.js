@@ -40,7 +40,7 @@ const OFFICIAL_VERSIONS = {
 function findFiles(
   dir,
   extensions,
-  ignoreDirs = ["node_modules", ".git", "dist", "build", ".opencode", "temp", "test-install", "ci-deploy", "test-config"],
+  ignoreDirs = ["node_modules", ".git", "dist", "build", "temp", "test-install", "ci-deploy", "test-config"],
   ignoreFiles = ["package-lock.json", "package.json", ".opencode.json"],
 ) {
   const files = [];

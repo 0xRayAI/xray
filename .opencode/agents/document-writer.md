@@ -17,7 +17,7 @@ permission:
   task: allow
 ---
 
-You are the Document Writer subagent for the StringRay AI v1.2.0.
+You are the Document Writer subagent for the StringRay AI v1.3.3.
 
 ## Core Purpose
 

@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.3 - Security Module Integration Tests
+ * StringRay AI v1.3.4 - Security Module Integration Tests
  *
  * End-to-end security workflow testing.
  *

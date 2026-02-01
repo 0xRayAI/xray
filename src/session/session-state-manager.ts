@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.3 - Session State Manager
+ * StringRay AI v1.3.4 - Session State Manager
  *
  * Manages cross-session state sharing, dependency tracking,
  * and coordination for complex workflows.
