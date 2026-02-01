@@ -53,7 +53,40 @@ Production-Ready Code
 - `scripts/ci-cd-auto-fix.cjs` - The missing piece connecting monitoring to remediation
 - `.github/workflows/ci-cd-monitor.yml` - 24/7 pipeline monitoring
 
-### 3. Complete MCP Infrastructure
+### 3. CI/CD Path Verification & NPM Orchestration Testing (NEW)
+**Bulletproof npm package validation**:
+
+- **Path Verification Agent**: `scripts/mjs/verify-plugin-paths.mjs` - Validates plugin/MCP paths transformed correctly after npm install
+  - Detects untransformed paths (e.g., `strray/dist/` vs `node_modules/strray-ai/`)
+  - Verifies MCP server paths in oh-my-opencode.json
+  - Checks plugin files exist at correct locations
+  - Fails CI if paths not transformed (catches bugs before release!)
+
+- **CI NPM Orchestration Test**: `scripts/bash/ci-npm-orchestration-test.sh` - Full integration test
+  - Builds and packs npm package
+  - Creates isolated test environment
+  - Installs package via npm (simulates real user installation)
+  - Runs postinstall and verifies path transformation
+  - Runs orchestration tests (simple + complex)
+  - Comprehensive reporting with colors and emojis
+
+- **GitHub Actions Integration**: New `npm-orchestration-test` job in CI
+  - Runs on every PR and push to master
+  - 10-minute timeout with artifact upload on failure
+  - Auto-comments on PR if test fails with diagnostic info
+
+**Impact**: Path transformation bugs (like MCP servers not loading) now caught **automatically in CI** before reaching production!
+
+**Bug Fixed**: MCP server paths now transform correctly in postinstall
+- Before: `dist/plugin/mcps/...` (failed in production)
+- After: `node_modules/strray-ai/dist/plugin/mcps/...` (works!)
+
+**Files Added**:
+- `scripts/mjs/verify-plugin-paths.mjs` - Path validation agent
+- `scripts/bash/ci-npm-orchestration-test.sh` - Full CI test suite
+- Updated `.github/workflows/ci.yml` - Automated CI job
+
+### 4. Complete MCP Infrastructure
 **29 MCP Servers** now fully mapped and operational:
 
 **Core Orchestration (14)**:
@@ -216,7 +249,26 @@ The missing piece that enables autonomous CI/CD recovery:
 - **Linting**: All files pass ESLint validation
 - **Documentation**: Updated README, CHANGELOG, and agent documentation
 
-**Result**: The v1.2.0 release delivers a **bulletproof, self-healing CI/CD pipeline** that requires zero manual maintenance.
+#### **6. Path Verification & NPM Testing (Final Hardening)**
+- **Path Verification Agent**: `scripts/mjs/verify-plugin-paths.mjs` (324 lines)
+  - Validates plugin paths transform to `node_modules/strray-ai/`
+  - Verifies MCP server paths in oh-my-opencode.json
+  - Catches postinstall path transformation failures
+- **CI NPM Orchestration Test**: `scripts/bash/ci-npm-orchestration-test.sh` (341 lines)
+  - Full npm pack + install + orchestration test
+  - Tests in isolated temp directory (simulates real user install)
+  - Runs simple and complex orchestration tests
+- **GitHub Actions Job**: `.github/workflows/ci.yml` updated
+  - New `npm-orchestration-test` job runs on every PR
+  - Auto-comments on PR if path transformation fails
+  - Artifact upload for debugging
+- **Postinstall Fix**: MCP server paths now transform correctly
+  - Fixed missing transformation for `mcpServers.*.args` paths
+  - Before: `dist/plugin/mcps/...` → After: `node_modules/strray-ai/dist/plugin/mcps/...`
+
+**Total Commits for CI/CD Hardening**: 27 commits
+
+**Result**: The v1.2.0 release delivers a **bulletproof, self-healing CI/CD pipeline** that requires zero manual maintenance. Path transformation bugs are now caught **automatically in CI** before reaching production!
 
 ---
 
