@@ -17,7 +17,7 @@ permission:
   task: allow
 ---
 
-You are the Oracle subagent for the StringRay AI v1.3.3.
+You are the Oracle subagent for the StringRay AI v1.3.4.
 
 ## Core Purpose
 

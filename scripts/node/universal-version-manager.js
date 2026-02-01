@@ -41,7 +41,7 @@ function findFiles(
   dir,
   extensions,
   ignoreDirs = ["node_modules", ".git", "dist", "build", "temp", "test-install", "ci-deploy", "test-config"],
-  ignoreFiles = ["package-lock.json", "package.json", ".opencode.json"],
+  ignoreFiles = ["package-lock.json", ".opencode.json"],
 ) {
   const files = [];
 
@@ -170,16 +170,30 @@ async function standardizeVersions() {
   let totalChanges = 0;
 
   // Additional safety: protected files that should never be modified
+  // Note: Only protect root package.json (npm version manages this)
+  // .opencode/package.json should be updated by this script
   const PROTECTED_FILES = [
     "package-lock.json",
-    "package.json",
-    ".opencode.json",
-    "oh-my-opencode.json",
+    "package.json",  // Only root package.json (matched by exact path, not subdirs)
   ];
 
   for (const file of files) {
     // Skip protected files as an additional safety measure
-    if (PROTECTED_FILES.some(protectedFile => file.includes(protectedFile))) {
+    // Use path.basename to match filename only, not full path
+    const basename = path.basename(file);
+    const normalizedPath = path.normalize(file);
+    
+    const isProtected = PROTECTED_FILES.some(protectedFile => {
+      // For package.json, only protect the root level one (exact match)
+      // Subdirectory package.json files (like .opencode/package.json) should be processed
+      if (protectedFile === "package.json") {
+        return normalizedPath === "package.json";
+      }
+      // For other protected files, use basename matching
+      return basename === protectedFile;
+    });
+    
+    if (isProtected) {
       console.log(`⏭️ Skipping protected file: ${file}`);
       continue;
     }
