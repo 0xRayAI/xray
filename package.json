@@ -6,7 +6,7 @@
   "main": "./dist/plugin/strray-codex-injection.js",
   "types": "./dist/plugin/plugins/strray-codex-injection.d.ts",
   "bin": {
-    "strray-ai": "./dist/cli/index.js"
+    "strray-ai": "dist/cli/index.js"
   },
   "oh-my-opencode": {
     "plugin": "./dist/plugin/plugins/strray-codex-injection.js",
