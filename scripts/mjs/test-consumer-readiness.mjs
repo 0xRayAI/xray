@@ -214,13 +214,13 @@ async function runPathVerification() {
                         process.cwd().includes('tmp') ||
                         fs.existsSync('node_modules/strray-ai');
   
-  if (isConsumerEnv) {
+    if (isConsumerEnv) {
     console.log("\n🔍 Running plugin path verification...");
     try {
       const { spawn } = await import('child_process');
       const result = await new Promise((resolve) => {
         const child = spawn('node', [
-          path.join(__dirname, 'verify-plugin-paths.mjs')
+          'verify-plugin-paths.mjs'
         ], {
           stdio: ['pipe', 'pipe', 'pipe'],
           cwd: process.cwd()

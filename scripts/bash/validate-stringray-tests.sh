@@ -161,6 +161,7 @@ ADDITIONAL_TESTS=(
     "test-mcp-functionality.mjs"
     "test-configuration-validation.mjs"
     "test-orchestrator-complex.mjs"
+    "verify-plugin-paths.mjs"
 )
 
 # Copy core integration tests
