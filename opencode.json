@@ -136,6 +136,105 @@
     },
     "plan": {
       "disable": true
+    },
+    "strray-architect": {
+      "disable": true
+    },
+    "strray-orchestrator": {
+      "disable": true
+    },
+    "strray-librarian": {
+      "disable": true
+    },
+    "strray-refactorer": {
+      "disable": true
+    },
+    "strray-security-auditor": {
+      "disable": true
+    },
+    "strray-test-architect": {
+      "disable": true
+    },
+    "strray-enforcer": {
+      "disable": true
+    },
+    "strray-code-reviewer": {
+      "disable": true
+    },
+    "strray-bug-triage-specialist": {
+      "disable": true
+    },
+    "strray-enhanced-orchestrator": {
+      "disable": true
+    },
+    "strray-state-manager": {
+      "disable": true
+    },
+    "strray-security-scan": {
+      "disable": true
+    },
+    "strray-processor-pipeline": {
+      "disable": true
+    },
+    "strray-performance-analysis": {
+      "disable": true
+    },
+    "strray-model-health-check": {
+      "disable": true
+    },
+    "strray-lint": {
+      "disable": true
+    },
+    "strray-framework-compliance-audit": {
+      "disable": true
+    },
+    "strray-boot-orchestrator": {
+      "disable": true
+    },
+    "strray-auto-format": {
+      "disable": true
+    },
+    "strray-architect-tools": {
+      "disable": true
+    },
+    "strray-ui-ux-design": {
+      "disable": true
+    },
+    "strray-testing-strategy": {
+      "disable": true
+    },
+    "strray-testing-best-practices": {
+      "disable": true
+    },
+    "strray-project-analysis": {
+      "disable": true
+    },
+    "strray-performance-optimization": {
+      "disable": true
+    },
+    "strray-git-workflow": {
+      "disable": true
+    },
+    "strray-documentation-generation": {
+      "disable": true
+    },
+    "strray-devops-deployment": {
+      "disable": true
+    },
+    "strray-database-design": {
+      "disable": true
+    },
+    "strray-code-review": {
+      "disable": true
+    },
+    "strray-architecture-patterns": {
+      "disable": true
+    },
+    "strray-api-design": {
+      "disable": true
+    },
+    "strray-enforcer-tools": {
+      "disable": true
     }
   }
 }
