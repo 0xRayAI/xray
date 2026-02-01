@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.1 - Server Integration Tests
+ * StringRay AI v1.3.2 - Server Integration Tests
  *
  * Tests server setup, middleware configuration, and basic functionality.
  *

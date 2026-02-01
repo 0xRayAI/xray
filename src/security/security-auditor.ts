@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.1 - Security Audit Tool
+ * StringRay AI v1.3.2 - Security Audit Tool
  *
  * Comprehensive security auditing for the framework and its components.
  * Identifies vulnerabilities, misconfigurations, and security weaknesses.
@@ -655,7 +655,7 @@ export class SecurityAuditor {
     let report = `# 🔒 StringRay Framework Security Audit Report
 
 **Audit Date:** ${new Date().toISOString()}
-**Framework Version:** v1.3.1
+**Framework Version:** v1.3.2
 **Files Scanned:** ${result.totalFiles}
 **Security Score:** ${result.score}/100
 

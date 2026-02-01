@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.1 - Session Management Module
+ * StringRay AI v1.3.2 - Session Management Module
  *
  * Comprehensive session management system with cleanup, monitoring,
  * and cross-session coordination capabilities.

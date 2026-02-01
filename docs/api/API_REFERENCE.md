@@ -1,6 +1,6 @@
 # API Reference
 
-**Version**: **Last Updated**: 2026-01-15 | **Framework**: StringRay AI v1.3.1
+**Version**: **Last Updated**: 2026-01-15 | **Framework**: StringRay AI v1.3.2
 
 ## Overview
 
@@ -507,7 +507,7 @@ for (const result of batchResult.results) {
   },
   "framework": {
     "name": "strray",
-    "version": "1.3.1",
+    "version": "1.3.2",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.1 - WebSocket Gateway
+ * StringRay AI v1.3.2 - WebSocket Gateway
  *
  * Enhanced WebSocket gateway for real-time performance dashboards.
  * Provides dashboard-specific WebSocket functionality with authentication,

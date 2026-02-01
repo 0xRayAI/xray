@@ -46,7 +46,7 @@
 
 ### 1.1 System Architecture
 
-StringRay AI v1.3.1 is a comprehensive enterprise AI orchestration platform with **systematic error prevention** and **complexity-based task routing**. The system consists of **8 interconnected pipelines** spanning **51 core files** with **338 logging points** for complete traceability.
+StringRay AI v1.3.2 is a comprehensive enterprise AI orchestration platform with **systematic error prevention** and **complexity-based task routing**. The system consists of **8 interconnected pipelines** spanning **51 core files** with **338 logging points** for complete traceability.
 
 #### Core System Components:
 - **9 Specialized AI Agents** with automatic delegation
@@ -359,7 +359,7 @@ User Request → boot-orchestrator → agent-delegator → rule-enforcer → Pos
 ### 4.1 Master Pipeline Tree
 
 ```
-StringRay AI v1.3.1
+StringRay AI v1.3.2
 ├── Framework Initialization Pipeline
 │   ├── Boot Orchestrator (boot-orchestrator.ts)
 │   ├── Framework Activation (strray-activation.ts)
@@ -640,7 +640,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
     "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.3.1",
+    "version": "1.3.2",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -659,7 +659,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ```json
 {
   "framework": {
-    "version": "1.3.1",
+    "version": "1.3.2",
     "logging": {
       "level": "info",
       "jobIdTracking": true,
@@ -2475,7 +2475,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
     "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.3.1",
+    "version": "1.3.2",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -2499,7 +2499,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 ```json
 {
   "framework": {
-    "version": "1.3.1",
+    "version": "1.3.2",
     "logging": {
       "level": "info",
       "jobIdTracking": true,
