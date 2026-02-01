@@ -40,8 +40,19 @@ const OFFICIAL_VERSIONS = {
 function findFiles(
   dir,
   extensions,
-  ignoreDirs = ["node_modules", ".git", "dist", "build", "temp", "test-install", "ci-deploy", "test-config"],
-  ignoreFiles = ["package-lock.json", ".opencode.json"],
+  ignoreDirs = [
+    "node_modules", ".git", "dist", "build", "temp", "test-install", 
+    "ci-deploy", "test-config", 
+    "docs/reflections", "docs/archive",  // Historical documents - keep original versions
+    ".opencode/state",  // Runtime state data
+    "logs", "reports",  // Generated logs/reports
+  ],
+  ignoreFiles = [
+    "package-lock.json", ".opencode.json",
+    "SIMULATION_TEST_RESULTS.md",  // Test record - keep original
+    "TEST_INVENTORY.md",  // Test inventory - keep original
+    "CHANGELOG.md", "CHANGELOG-v1.2.0.md",  // Version history
+  ],
 ) {
   const files = [];
 

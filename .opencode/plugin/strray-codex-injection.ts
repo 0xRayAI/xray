@@ -182,7 +182,7 @@ function extractCodexMetadata(content: string): {
   termCount: number;
 } {
   const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
-  const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.2.20";
+  const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.3.4";
 
   const termMatches = content.match(/####\s*\d+\.\s/g);
   const termCount = termMatches ? termMatches.length : 0;

@@ -16,7 +16,7 @@ import path from "path";
 // Version variables for documentation
 const VERSION_VARS = {
   FRAMEWORK_VERSION: "1.0.0",
-  CODEX_VERSION: "1.2.24",
+  CODEX_VERSION: "1.3.4",
   OH_MY_OPENCODE_VERSION: "2.14.0",
 };
 
