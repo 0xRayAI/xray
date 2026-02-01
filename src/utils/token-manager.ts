@@ -37,8 +37,8 @@ export class TokenManager {
           maxPromptTokens: 240000,
           warningThreshold: 200000,
           modelLimits: {
-            "opencode/grok-code":
-              modelRouter.getValidatedModel("opencode/grok-code"),
+            "openrouter/xai-grok-2-1212-fast-1":
+              modelRouter.getValidatedModel("openrouter/xai-grok-2-1212-fast-1"),
           },
           contextPruning: {
             enabled: true,
@@ -53,8 +53,8 @@ export class TokenManager {
         maxPromptTokens: 240000,
         warningThreshold: 200000,
         modelLimits: {
-          "opencode/grok-code":
-            Number(modelRouter.getValidatedModel("opencode/grok-code")) ||
+          "openrouter/xai-grok-2-1212-fast-1":
+            Number(modelRouter.getValidatedModel("openrouter/xai-grok-2-1212-fast-1")) ||
             256000,
         },
         contextPruning: {

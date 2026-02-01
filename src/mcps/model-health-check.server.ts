@@ -156,7 +156,7 @@ class StrRayModelHealthCheckServer {
       issues.push("Invalid model format");
     }
 
-    if (model === "opencode/grok-code") {
+    if (model === "openrouter/xai-grok-2-1212-fast-1") {
       // Known healthy model
     } else {
       // Simulate potential issues for other models
