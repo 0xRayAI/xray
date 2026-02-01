@@ -134,7 +134,7 @@ class PostinstallConfigValidator {
       // Check for plugin registration
       if (config.plugin && Array.isArray(config.plugin)) {
         const hasStringRayPlugin = config.plugin.some((p) =>
-          p.includes("stringray"),
+          p.toLowerCase().includes("strray"),
         );
         if (hasStringRayPlugin) {
           console.log("  ✅ StringRay plugin registered");

@@ -78,7 +78,8 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "commander": "^11.1.0"
+    "commander": "^11.1.0",
+    "strray-ai": "file:strray-ai-1.2.2.tgz"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
