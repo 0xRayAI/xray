@@ -1,4 +1,4 @@
-# StringRay AI v1.3.2 Release Notes
+# StringRay AI v1.3.3 Release Notes
 
 **Release Date**: 2026-01-31  
 **Codename**: "Multi-AI Orchestration"  
@@ -279,7 +279,7 @@ The missing piece that enables autonomous CI/CD recovery:
 **No breaking changes.** This is a validation and bugfix release.
 
 **Recommended steps**:
-1. Update version in package.json: `"version": "1.3.2"`
+1. Update version in package.json: `"version": "1.3.3"`
 2. Run `npm install` to refresh dependencies
 3. Run `npm run test:core-framework` to verify
 4. Deploy with confidence

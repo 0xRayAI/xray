@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.2 - Secure Plugin Marketplace Architecture
+ * StringRay AI v1.3.3 - Secure Plugin Marketplace Architecture
  *
  * Enterprise-grade plugin ecosystem with marketplace, version management,
  * and third-party integrations for StringRay Phase 3.

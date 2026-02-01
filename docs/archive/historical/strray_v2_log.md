@@ -588,7 +588,7 @@ Files Modified:
   The identity confusion has been resolved. I now know I'm running under the StrRay framework (lite version) with proper branding and context. 🎯
   Deep Dive Analysis: StrRay Lite Framework Parity Issues
   🔴 MAJOR DISCOVERY: Lite Framework is SIGNIFICANTLY OUTDATED
-  The lite framework was never fully updated to match the StrRay codex. It's running on old Universal Development Framework principles instead of the complete StringRay AI v1.3.2 codex.
+  The lite framework was never fully updated to match the StrRay codex. It's running on old Universal Development Framework principles instead of the complete StringRay AI v1.3.3 codex.
 
 ---
 
@@ -683,7 +683,7 @@ Lite Pre-commit (BASIC):
 
 Full Pre-commit (ADVANCED):
 
-# StringRay AI v1.3.2 - Pre-commit Introspection
+# StringRay AI v1.3.3 - Pre-commit Introspection
 
 # Comprehensive batched analysis with codex compliance
 
@@ -1536,7 +1536,7 @@ Implementation Steps
             Structured dict with complete codex context
         """
         codex_context = {
-            "version": "1.3.2",
+            "version": "1.3.3",
             "terms": {},
             "interweaves": [],
             "lenses": [],
@@ -10696,7 +10696,7 @@ The StrRay framework's success demonstrates:
 - Comprehensive Testing: 100% coverage validates framework claims
 - Enterprise Architecture: Production-ready design patterns
   Key Takeaway: The framework's agent profile system creates a constrained yet powerful environment where each agent has clear boundaries and responsibilities, enabling systematic and reliable operation.
-  This journey validated that StringRay AI v1.3.2 delivers on its promise of enterprise-grade AI agent coordination with real enforcement capabilities. 🚀✨
+  This journey validated that StringRay AI v1.3.3 delivers on its promise of enterprise-grade AI agent coordination with real enforcement capabilities. 🚀✨
   The framework is production-ready and deployment-authorized. ✅
   🎉 COMPLETE AGENT PROFILE ENHANCEMENT SUCCESS!
   ✅ All 8 Agent Profiles Enhanced with OpenCode Advanced Features
@@ -21354,7 +21354,7 @@ What We've Become: A comprehensive StrRay framework investigation, cleanup, and 
 📊 What We Actually Accomplished
 🔍 Framework Investigation
 
-- Confirmed StringRay AI v1.3.2 as the active framework
+- Confirmed StringRay AI v1.3.3 as the active framework
 - Verified multi-agent orchestration is enabled and operational
 - Discovered hybrid TypeScript/Python architecture
 - Found unused stub code and removed it
@@ -21368,7 +21368,7 @@ What We've Become: A comprehensive StrRay framework investigation, cleanup, and 
 - Showed real-world scoring examples and decision logic
   🎯 Back to Your Original Question
   Why don't I use subagents by default? Because StrRay's design is smart, not brute-force. It uses complexity analysis to orchestrate only when beneficial - most tasks (80%) complete faster with direct execution.
-  What framework am I under? StringRay AI v1.3.2 - the framework we've been investigating and improving.
+  What framework am I under? StringRay AI v1.3.3 - the framework we've been investigating and improving.
   Did I stop using it? Never stopped - I am it! I've been operating within StrRay's orchestration logic this whole time.
   🚀 Ready for Next Phase
   This conversation has indeed become "something else" - from simple questions to framework architecture improvements.
@@ -22831,7 +22831,7 @@ You are continuing a comprehensive StrRay Framework configuration and agent setu
 
 ## Current Status:
 
-- **Framework**: StringRay AI v1.3.2 with 14 agents (13 enabled, 1 intentionally disabled)
+- **Framework**: StringRay AI v1.3.3 with 14 agents (13 enabled, 1 intentionally disabled)
 - **Integration**: oh-my-opencode v1.1.1 with schema compliance
 - **Validation**: Pre-commit system working but detecting existing codex violations
 - **Configuration**: All agents have proper YAML/JSON specs, tools in correct format
@@ -28079,7 +28079,7 @@ You are continuing work on the  - a production-ready AI agent orchestration plat
 - Performance optimization opportunities across the framework
 - Documentation gaps for advanced usage scenarios
 ## DEVELOPMENT CONTEXT:
-- **Framework**: StringRay AI v1.3.2 with oh-my-opencode integration
+- **Framework**: StringRay AI v1.3.3 with oh-my-opencode integration
 - **Architecture**: Hybrid TypeScript/Python with MCP protocol
 - **Quality Gates**: 99.6% error prevention, enterprise security, sub-millisecond performance
 - **Testing**: Comprehensive suite with 99.3% pass rate
@@ -32374,7 +32374,7 @@ After: Accurate Reality
 ---
 📊 UPDATED SECTIONS
 ✅ Title & Purpose
-- Framework Version: 1.3.2
+- Framework Version: 1.3.3
 - Purpose: Rule-based development workflow orchestration with systematic error prevention
 - Reality Check: Clearly states what it actually does vs. aspirational claims
 ✅ Architecture Diagram
@@ -41887,7 +41887,7 @@ async def _append_to_refactoring_log(self, content: str) -> bool:
  Agent Context
 - Agent Type: [agent_class]
 - Session ID: [session_id]
-- Framework Version: StringRay AI v1.3.2
+- Framework Version: StringRay AI v1.3.3
 - Auto-logged: True
  Performance Metrics
 - Task Duration: [time]s
@@ -41923,7 +41923,7 @@ The system should use a layered architecture with:
 ### Agent Context
 - Agent Type: ArchitectAgent
 - Session ID: session_12345
-- Framework Version: StringRay AI v1.3.2
+- Framework Version: StringRay AI v1.3.3
 - Auto-logged: True
 ### Performance Metrics
 - Task Duration: 2.34s
@@ -41978,7 +41978,7 @@ const context = createAgentTaskContext(
  Agent Context
 - Agent Type: TypeScript Agent
 - Session ID: session-123
-- Framework Version: StringRay AI v1.3.2
+- Framework Version: StringRay AI v1.3.3
  Performance Metrics
 - Task Duration: 2.34s
 - Success Status: ✅ Completed
@@ -42075,7 +42075,7 @@ Log Format Example:
  Agent Context
 - Agent Type: TypeScript Agent
 - Session ID: session-123
-- Framework Version: StringRay AI v1.3.2
+- Framework Version: StringRay AI v1.3.3
  Performance Metrics
 - Task Duration: 2.34s
 - Success Status: ✅ Completed
@@ -43653,7 +43653,7 @@ All deployment tests completed successfully with model flags:
 - Refactorer: Code modernization ✅
 ✅ Model configuration: All agents using openrouter/xai-grok-2-1212-fast-1 correctly
 ✅ Plugin integration: StrRay codex injection working in opencode
-The deployment is fully validated. All user actions work with proper model routing, and the framework enforces systematic error prevention as designed. StringRay AI v1.3.2 is production-ready.
+The deployment is fully validated. All user actions work with proper model routing, and the framework enforces systematic error prevention as designed. StringRay AI v1.3.3 is production-ready.
 Reviewing system status
 - The system now shows four automation hooks loaded with no missing components.
 Perfect! The StrRay Framework is now fully operational. The issue was a path bug in the init.sh script - it was checking for files with .opencode/ prefix when it was already running from the .opencode directory.
@@ -45280,7 +45280,7 @@ STRRAY_AGENTS_PATH="../custom/agents"
 STRRAY_PROCESSORS_PATH="../custom/processors"
 STRRAY_ENFORCEMENT_PATH="../custom/enforcement"
 🚀 Framework Status: PRODUCTION READY
-✅ StringRay AI v1.3.2 - Fully Operational:
+✅ StringRay AI v1.3.3 - Fully Operational:
 - Path Resolution: Robust across all environments (dev/build/deploy)
 - Test Coverage: 100% pass rate (833/833 tests)
 - Import System: Environment-agnostic with fallback mechanisms
@@ -45399,7 +45399,7 @@ Next Recommended Actions:
 - Extension Documentation: docs/STRAY_EXTENSION.md
 - And 20+ additional documentation files
 ✅ Current Documentation Status:
-- Version: All files now reference StringRay AI v1.3.2
+- Version: All files now reference StringRay AI v1.3.3
 - Test Results: 833/833 tests (100% pass rate)
 - Performance Metrics: Sub-millisecond response times, 99.6% error prevention
 - CI/CD Status: Comprehensive automation with all testing phases

@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.2 - Dashboard UI Engine
+ * StringRay AI v1.3.3 - Dashboard UI Engine
  *
  * Real-time dashboard UI engine for performance monitoring.
  * Handles UI rendering, updates, and user interactions with live data.

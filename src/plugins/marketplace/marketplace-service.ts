@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.2 - Plugin Marketplace Service
+ * StringRay AI v1.3.3 - Plugin Marketplace Service
  *
  * Core marketplace service implementing plugin discovery, search, and curation
  * with enterprise-grade security and performance optimizations.
