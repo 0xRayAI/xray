@@ -97,35 +97,12 @@ const UPDATE_PATTERNS = [
      pattern: /\*\*📦 Current Version: 1\.[0-9]+\.[0-9]+\*\* - Enterprise production release with automated postinstall configuration, MCP server integration, and comprehensive testing\. Use `npm install strray-ai@latest` for installation\./g,
      replacement: `**📦 Current Version: ${OFFICIAL_VERSIONS.framework.version}** - Enterprise production release with automated postinstall configuration, MCP server integration, and comprehensive testing. Use \`npm install strray-ai@latest\` for installation.`,
    },
-   {
-     pattern: /# ⚡ StringRay AI v1\.[0-9]+\.[0-9]+ – Bulletproof AI Orchestration for Production-Grade Development/g,
-     replacement: `# ⚡ ${OFFICIAL_VERSIONS.framework.displayName} – Bulletproof AI Orchestration for Production-Grade Development`,
-   },
-   {
-     pattern: /version-1\.[0-9]+\.[0-9]+-blue\.svg/g,
-     replacement: `version-${OFFICIAL_VERSIONS.framework.version}-blue.svg`,
-   },
-   {
-     pattern: /StrRay Framework v[0-9]+\.[0-9]+\.[0-9]+/g,
-     replacement: OFFICIAL_VERSIONS.framework.displayName,
-   },
-   {
-     pattern: /StringRay AI v[0-9]+\.[0-9]+\.[0-9]+/g,
-     replacement: OFFICIAL_VERSIONS.framework.displayName,
-   },
-   {
-     pattern: /version-[0-9]+\.[0-9]+\.[0-9]+-blue\.svg/g,
-     replacement: `version-${OFFICIAL_VERSIONS.framework.version}-blue.svg`,
-   },
-   // Framework Version patterns
-   {
-     pattern: /\*\*Framework Version\*\*: [0-9]+\.[0-9]+\.[0-9]+/g,
-     replacement: `**Framework Version**: ${OFFICIAL_VERSIONS.framework.version}`,
-   },
-   {
-     pattern: /\*\*Framework Version:\*\* v[0-9]+\.[0-9]+\.[0-9]+/g,
-     replacement: `**Framework Version:** v${OFFICIAL_VERSIONS.framework.version}`,
-   },
+    // NOTE: Removed source file header patterns
+    // Source files should NOT have versions in their headers
+    // Only essential files get versions (package.json, README badge, CLI)
+    
+    // README title pattern (only updates the badge, not the title)
+    // Title is now clean: "# StringRay AI" without version
    {
      pattern: /- Framework Version: StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
      replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.displayName}`,
