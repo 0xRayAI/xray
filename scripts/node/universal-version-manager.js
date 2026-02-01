@@ -93,11 +93,8 @@ const UPDATE_PATTERNS = [
       pattern: /StringRay Framework v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: OFFICIAL_VERSIONS.framework.displayName,
     },
-   {
-     pattern: /\*\*📦 Current Version: 1\.[0-9]+\.[0-9]+\*\* - Enterprise production release with automated postinstall configuration, MCP server integration, and comprehensive testing\. Use `npm install strray-ai@latest` for installation\./g,
-     replacement: `**📦 Current Version: ${OFFICIAL_VERSIONS.framework.version}** - Enterprise production release with automated postinstall configuration, MCP server integration, and comprehensive testing. Use \`npm install strray-ai@latest\` for installation.`,
-   },
-    // NOTE: Removed source file header patterns
+    // NOTE: Removed README badge pattern - README is now version-free
+    // Only essential files have versions: package.json, CLI, plugin
     // Source files should NOT have versions in their headers
     // Only essential files get versions (package.json, README badge, CLI)
     

@@ -14,7 +14,7 @@
 
 ⚡ StringRay ⚡ provides intelligent multi-agent coordination, codex-based code quality enforcement, and enterprise-grade development practices through oh-my-opencode integration. Eliminate spaghetti code, hallucinations, and code rot through systematic validation and intelligent agent delegation.
 
-> **📦 Current Version: 1.3.3** - Enterprise production release with autonomous CI/CD monitoring, automated postinstall configuration, and comprehensive testing. Use `npm install strray-ai@latest` for installation.
+> Enterprise production release with autonomous CI/CD monitoring, automated postinstall configuration, and comprehensive testing. Use `npm install strray-ai@latest` for installation.
 
 ---
 
@@ -737,7 +737,7 @@ Update your `.opencode/oh-my-opencode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray-ai",
-    "version": "1.3.4",
+    "version": "1.x.x",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"
