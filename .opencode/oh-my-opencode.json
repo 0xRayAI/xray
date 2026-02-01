@@ -26,59 +26,45 @@
     "global-git",
     "global-sqlite"
   ],
-  "model": "openrouter/xai-grok-2-1212-fast-1",
   "agent": {
     "orchestrator": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "enhanced-orchestrator": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "enforcer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "primary"
     },
     "architect": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "test-architect": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "bug-triage-specialist": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "code-reviewer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "security-auditor": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "refactorer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "explore": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "librarian": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "document-writer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     },
     "frontend-ui-ux-engineer": {
-      "model": "openrouter/xai-grok-2-1212-fast-1",
-      "temperature": 1.0
+      "mode": "subagent"
     }
   },
   "mcpServers": {
