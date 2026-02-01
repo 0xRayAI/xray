@@ -99,14 +99,14 @@ if (isConsumerEnvironment) {
   // Note: .mcp.json was refactored out - no longer need to update MCP paths
   // See AGENTS.md for details
 
-  // Convert plugin path in oh-my-opencode.json
+  // Convert plugin paths in oh-my-opencode.json
   const opencodePath = path.join(process.cwd(), ".opencode", "oh-my-opencode.json");
   if (fs.existsSync(opencodePath)) {
     let opencodeContent = fs.readFileSync(opencodePath, "utf8");
-    // Convert development plugin path to consumer path
+    // Convert strray/dist/plugin path to node_modules path
     opencodeContent = opencodeContent.replace(
-      /"dist\/plugin\/plugins\/stringray-codex-injection\.js"/g,
-      '"node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js"'
+      /"strray\/dist\/plugin\/strray-codex-injection\.js"/g,
+      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
     );
     // Also handle .ts source paths
     opencodeContent = opencodeContent.replace(
@@ -114,7 +114,24 @@ if (isConsumerEnvironment) {
       '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
     );
     fs.writeFileSync(opencodePath, opencodeContent, "utf8");
-    console.log("✅ Updated plugin path");
+    console.log("✅ Updated plugin paths in oh-my-opencode.json");
+  }
+
+  // Convert plugin paths in opencode.json
+  const mainOpencodePath = path.join(process.cwd(), "opencode.json");
+  if (fs.existsSync(mainOpencodePath)) {
+    let opencodeContent = fs.readFileSync(mainOpencodePath, "utf8");
+    // Handle various plugin path patterns
+    opencodeContent = opencodeContent.replace(
+      /"strray\/dist\/plugin\/strray-codex-injection\.js"/g,
+      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
+    );
+    opencodeContent = opencodeContent.replace(
+      /"src\/plugin\/strray-codex-injection\.ts"/g,
+      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
+    );
+    fs.writeFileSync(mainOpencodePath, opencodeContent, "utf8");
+    console.log("✅ Updated plugin paths in opencode.json");
   }
 }
 
