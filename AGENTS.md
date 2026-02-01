@@ -69,8 +69,42 @@ Score: ≤25 Single-agent; 96+ Orchestrator-led.
 - Commands ignored: Check oh-my-opencode.json
 - Logs: tail activity.log
 
-## Reflection System
-- Create after >30min sessions: Root cause, actions, next steps.
+## Reflection System (MANDATORY - Enhanced v1.0)
+
+### Three-Command Process (All Required)
+
+**1. READ TEMPLATE** (Before writing)
+```bash
+cat docs/reflections/TEMPLATE.md
+```
+**Purpose:** Understand required structure (9 sections, specific format)
+
+**2. VALIDATE** (After writing, before saving)
+```bash
+./scripts/node/reflection-check.sh /path/to/reflection-draft.md
+```
+**Purpose:** Verify compliance with template  
+**Must Pass:** Zero errors before proceeding
+
+**3. SAVE CORRECTLY** (Final step)
+```bash
+mv reflection-draft.md docs/reflections/[descriptive-name]-reflection.md
+```
+**Location:** MUST be in `docs/reflections/` directory  
+**Naming:** `[topic]-[specifics]-reflection.md` (e.g., `deployment-crisis-v127-reflection.md`)
+
+### Quick Reference
+- **Read template:** `cat docs/reflections/TEMPLATE.md`
+- **Validate:** `./scripts/node/reflection-check.sh <file>`
+- **Location:** `docs/reflections/`
+- **9 Required Sections:** Executive Summary, The Dichotomy, Timeline, Root Causes, Solutions, Deep Lessons, Personal Journey, Action Items, Technical Artifacts
+
+### Enforcement
+- **NON-COMPLIANCE = Immediate rewrite request**
+- Enforcer agent validates all reflections
+- Non-compliant reflections will be rejected
+
+**Full Documentation:** `docs/reflections/REFLECTION_COMMAND_SYSTEM.md`
 
 ## Handling Large Test Suites (Mandatory for Test-Architect and Bug-Triage Agents)
 - **Rule**: For suites >100 tests or prone to timeouts (e.g., Linux default limits), ALWAYS prioritize logging, monitoring, and isolation to prevent incomplete runs and ensure full error visibility.
