@@ -1,0 +1,25 @@
+#!/bin/bash
+# .husky/pre-commit or .git/hooks/pre-commit
+# Pre-commit hook: Enforces version compliance before allowing commits
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo "🔍 Running pre-commit version compliance check..."
+
+# Run the enforcer
+if [ -f "scripts/node/enforce-version-compliance.sh" ]; then
+    chmod +x scripts/node/enforce-version-compliance.sh
+    if ! ./scripts/node/enforce-version-compliance.sh; then
+        echo ""
+        echo -e "${RED}❌ COMMIT BLOCKED${NC}"
+        echo "Version compliance check failed. Fix the issues above before committing."
+        exit 1
+    fi
+else
+    echo "⚠️  Version enforcer script not found - skipping check"
+fi
+
+exit 0

@@ -63,7 +63,11 @@
     "monitoring:report": "node scripts/monitoring/daemon.js report",
     "build:run": "node scripts/build/utils.js build",
     "build:clean": "node scripts/build/utils.js clean",
-    "build:verify": "node scripts/build/utils.js verify"
+    "build:verify": "node scripts/build/utils.js verify",
+    "enforce:versions": "bash scripts/node/enforce-version-compliance.sh",
+    "version:sync": "node scripts/node/universal-version-manager.js",
+    "preversion": "npm run enforce:versions && npm run version:sync",
+    "safe-publish": "npm run enforce:versions && npm run build && npm publish"
   },
   "files": [
     "dist/",

@@ -1,0 +1,60 @@
+# .github/workflows/enforce-version-compliance.yml
+# ENFORCER: Blocks PRs and publishes if version compliance fails
+
+name: 🔒 Version Compliance Enforcement
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  version-compliance:
+    name: Enforce Version Rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run Version Compliance Check
+        run: |
+          chmod +x scripts/node/enforce-version-compliance.sh
+          ./scripts/node/enforce-version-compliance.sh
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 📊 Report Status
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Version Compliance Check Failed**\n\nThe enforcer agent has blocked this PR due to version mismatches.\n\nPlease:\n1. Check `scripts/node/universal-version-manager.js` version\n2. Run `node scripts/node/universal-version-manager.js`\n3. Ensure version is 1 ahead of npm published version\n\nSee AGENTS.md for version management rules.'
+            })
+
+  # Block publish if compliance fails
+  publish-gate:
+    name: Publish Gatekeeper
+    needs: version-compliance
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/v')
+    steps:
+      - name: ✅ Publish Approved
+        run: |
+          echo "✅ Version compliance passed - publish approved"
+          echo "Tag: ${{ github.ref }}"
+          echo "All version rules satisfied"
