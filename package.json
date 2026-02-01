@@ -70,6 +70,7 @@
     "scripts/node/",
     "scripts/mjs/",
     ".opencode/",
+    ".opencode/package.json",
     ".strray/",
     "opencode.json",
     "README.md",

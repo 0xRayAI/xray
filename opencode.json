@@ -123,16 +123,16 @@
       "mode": "subagent"
     },
     "Sisyphus": {
-      "disabled": true
+      "disable": true
     },
     "Planner-Sisyphus": {
-      "disabled": true
+      "disable": true
     },
     "build": {
-      "disabled": true
+      "disable": true
     },
     "plan": {
-      "disabled": true
+      "disable": true
     }
   }
 }

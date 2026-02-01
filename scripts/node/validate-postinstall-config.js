@@ -114,11 +114,11 @@ class PostinstallConfigValidator {
 
       // Check for disabled_agents (optional in CI environments)
       const isCI = process.env.CI || process.env.GITHUB_ACTIONS;
-      if (
-        config.disabled_agents &&
+      const hasDisabledSisyphus = config.disabled_agents &&
         Array.isArray(config.disabled_agents) &&
-        config.disabled_agents.includes("sisyphus")
-      ) {
+        config.disabled_agents.some(agent => agent.toLowerCase() === "sisyphus");
+      
+      if (hasDisabledSisyphus) {
         console.log("  ✅ sisyphus agent properly disabled");
       } else if (isCI) {
         console.log("  ℹ️  sisyphus configuration optional in CI environment");
