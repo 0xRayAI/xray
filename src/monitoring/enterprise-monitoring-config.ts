@@ -545,7 +545,7 @@ export const dockerComposeConfig = `
 version: '3.8'
 services:
   strray:
-    image: strray/strray:v1.1.1
+    image: strray/strray:v1.2.0
     environment:
       - NODE_ENV=production
       - STRRAY_INSTANCE_ID=strray-1
@@ -636,7 +636,7 @@ spec:
     spec:
       containers:
       - name: strray
-        image: strray/strray:v1.1.1
+        image: strray/strray:v1.2.0
         env:
         - name: NODE_ENV
           value: "production"
@@ -783,7 +783,7 @@ Resources:
             yum update -y
             # Install Docker, StringRay, monitoring agents
             systemctl start docker
-            docker run -d --name strray strray/strray:v1.1.1
+            docker run -d --name strray strray/strray:v1.2.0
 
   StringRayLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer

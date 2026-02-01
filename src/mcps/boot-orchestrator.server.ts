@@ -454,7 +454,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
       const nodeVersionOutput =
         execSync("node --version", { encoding: "utf8" })?.toString().trim() ||
         "";
-      const nodeVersion = nodeVersionOutput || "v1.1.1";
+      const nodeVersion = nodeVersionOutput || "v1.2.0";
       const versionParts = nodeVersion.split(".");
       const majorVersion =
         versionParts.length > 0 && versionParts[0]

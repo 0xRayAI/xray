@@ -4,7 +4,7 @@
  * Comprehensive performance test suite for ML inference latency, scaling engine prediction accuracy,
  * dashboard update performance, and plugin marketplace search performance.
  *
- * Ensures sub-millisecond response times and <2MB bundle compliance per Universal Development Codex v1.1.1.
+ * Ensures sub-millisecond response times and <2MB bundle compliance per Universal Development Codex v1.2.0.
  *
  * @version 1.0.0
  * @since 2026-01-08

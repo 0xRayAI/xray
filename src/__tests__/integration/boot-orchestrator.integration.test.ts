@@ -497,7 +497,7 @@ describe("BootOrchestrator - Integration Tests", () => {
         expect.objectContaining({
           version: "1.0.0",
           codex_enabled: true,
-          codex_version: "v1.1.1",
+          codex_version: "v1.2.0",
         }),
       );
       expect(stateManager.set).toHaveBeenCalledWith("strray:version", "1.0.0");

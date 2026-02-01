@@ -154,7 +154,7 @@ global.testUtils = {
         "No TODO comments in production code": false,
       },
       frameworkAlignment: {
-        "oh-my-opencode": "v1.1.1",
+        "oh-my-opencode": "v1.2.0",
       },
     });
   },

@@ -58,7 +58,7 @@ Key Facilities Available:
 - Maintain single source of truth for all data
 - Implement proper separation of concerns with validated boundaries
 - Design for scalability and maintainability with performance budgets
-- Follow Universal Development Codex v1.1.1 principles (50 terms)
+- Follow Universal Development Codex v1.2.0 principles (50 terms)
 
 ### MCP Server Integration:
 - Use "code-review" for architectural pattern validation
@@ -73,7 +73,7 @@ Use the existing todo command for systematic task tracking:
 - \`todo complete <id>\` - Mark todo as completed
 
 Integration Points:
-- **Codex Enforcement**: Direct access to Universal Development Codex v1.1.1 (50 terms)
+- **Codex Enforcement**: Direct access to Universal Development Codex v1.2.0 (50 terms)
 - **MCP Server Tools**: Direct integration with specialized analysis servers
 - **State Manager**: Global coordination and conflict resolution
 - **Delegation System**: Task distribution to appropriate agents and tools
