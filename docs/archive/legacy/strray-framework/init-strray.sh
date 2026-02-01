@@ -3,7 +3,7 @@
 # StrRay Framework - Session Initialization
 # Loads framework templates and automation hooks on StrRay startup
 
-echo "🎯 StringRay AI v1.3.0"
+echo "🎯 StringRay AI v1.3.1"
 echo "Initializing session with Codex compliance..."
 
 # Load framework configuration

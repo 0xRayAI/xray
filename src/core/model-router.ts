@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.0 - Model Router
+ * StringRay AI v1.3.1 - Model Router
  *
  * Intelligent model routing based on task complexity and type.
  * Integrates with features-config for task-based model selection.

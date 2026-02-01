@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StringRay AI v1.3.0 - Advanced Profiling Integration Demo
+# StringRay AI v1.3.1 - Advanced Profiling Integration Demo
 # Demonstrates comprehensive agent performance profiling and monitoring
 
 set -e

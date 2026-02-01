@@ -1,4 +1,4 @@
-# 🔮 StringRay AI v1.3.0
+# 🔮 StringRay AI v1.3.1
 
 **🚀 ENTERPRISE AI ORCHESTRATION FRAMEWORK 🚀**
 
@@ -737,7 +737,7 @@ Update your `.opencode/oh-my-opencode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray-ai",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

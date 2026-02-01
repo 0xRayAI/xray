@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.0 - Processor Manager
+ * StringRay AI v1.3.1 - Processor Manager
  *
  * Centralized processor management for pre/post processing operations.
  * Implements lifecycle management, performance monitoring, and conflict resolution.

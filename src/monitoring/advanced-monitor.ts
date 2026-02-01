@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.0 - Advanced Monitoring System
+ * StringRay AI v1.3.1 - Advanced Monitoring System
  *
  * Real-time monitoring with anomaly detection and alerting.
  * Provides comprehensive framework health tracking and automated responses.

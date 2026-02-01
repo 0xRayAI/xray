@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.0 - Delegation System Integration Tests
+ * StringRay AI v1.3.1 - Delegation System Integration Tests
  *
  * Tests the complete automatic multi-agent delegation system.
  *
