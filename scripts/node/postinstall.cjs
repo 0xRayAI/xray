@@ -136,8 +136,13 @@ if (isConsumerEnvironment) {
       '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
     );
     // Convert MCP server paths (mcpServers use command array)
+    // Handle both ./dist/mcps/ and ./dist/plugin/mcps/ patterns
     opencodeContent = opencodeContent.replace(
-      /"\.\/dist\/plugin\/mcps\//g,
+      /"\.\.?\/dist\/mcps\//g,
+      '"node_modules/strray-ai/dist/plugin/mcps/'
+    );
+    opencodeContent = opencodeContent.replace(
+      /"\.\.?\/dist\/plugin\/mcps\//g,
       '"node_modules/strray-ai/dist/plugin/mcps/'
     );
     fs.writeFileSync(mainOpencodePath, opencodeContent, "utf8");
