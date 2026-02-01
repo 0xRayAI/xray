@@ -1,6 +1,6 @@
 # StrRay Framework - Command Reference and Usage Guide
 
-**Version**: **Last Updated**: 2026-01-05 | **Framework**: StringRay AI v1.2.2
+**Version**: **Last Updated**: 2026-01-05 | **Framework**: StringRay AI v1.3.0
 
 ## Overview
 

@@ -18,14 +18,14 @@ import path from "path";
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.2.6",
-    displayName: "StringRay AI v1.2.6",
+    version: "1.3.0",
+    displayName: "StringRay AI v1.3.0",
     lastUpdated: "2026-02-01",
   },
 
   // Codex versions
   codex: {
-    version: "v1.2.2",
+    version: "v1.3.0",
     termsCount: 55,
     lastUpdated: "2026-02-01",
   },

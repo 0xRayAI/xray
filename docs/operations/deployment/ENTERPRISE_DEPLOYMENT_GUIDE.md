@@ -148,7 +148,7 @@ npm install
   },
   "framework": {
     "name": "strray",
-    "version": "1.2.2",
+    "version": "1.3.0",
     "performance_mode": "optimized",
     "monitoring_enabled": true
   }
@@ -391,7 +391,7 @@ data:
     {
       "framework": {
         "name": "strray",
-        "version": "1.2.2",
+        "version": "1.3.0",
         "performance_mode": "optimized",
         "monitoring_enabled": true
       },

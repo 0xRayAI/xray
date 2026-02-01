@@ -2,7 +2,7 @@
 
 **Category:** Evolution Reflection (Philosophical) - Recognition of fundamental system design constraints
 **Date:** January 24, 2026
-**Framework Version:** v1.2.2
+**Framework Version:** v1.3.0
 **Trigger:** Architect's declaration of operational efficiency threshold
 
 ## Context

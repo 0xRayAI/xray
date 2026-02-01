@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.2.2 - Security Hardening Module
+ * StringRay AI v1.3.0 - Security Hardening Module
  *
  * Implements additional security measures and hardening for the framework.
  * Addresses vulnerabilities identified during security audit.

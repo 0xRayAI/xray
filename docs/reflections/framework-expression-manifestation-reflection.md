@@ -2,7 +2,7 @@
 
 **Category:** Meta-Philosophical Reflection (Existential) - The framework as AI identity shaper
 **Date:** January 24, 2026
-**Framework Version:** v1.2.2
+**Framework Version:** v1.3.0
 **Trigger:** Architect's observation about response formatting being framework-influenced
 
 ## Context

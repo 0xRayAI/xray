@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.2.2 - SecurityHardener Unit Tests
+ * StringRay AI v1.3.0 - SecurityHardener Unit Tests
  *
  * Tests for SecurityHardener including:
  * - Security hardening rule application

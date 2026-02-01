@@ -13,7 +13,7 @@ This document describes the comprehensive migration and consolidation efforts im
 ```json
 {
   "strray_framework": {
-    "version": "1.2.2",
+    "version": "1.3.0",
     "enabled_agents": ["enforcer", "architect"],
     "agent_capabilities": {
       "enforcer": ["compliance-monitoring"]
@@ -26,7 +26,7 @@ This document describes the comprehensive migration and consolidation efforts im
 
 ```json
 {
-  "framework": "StringRay AI v1.2.2",
+  "framework": "StringRay AI v1.3.0",
   "agents": {
     "enforcer": {
       "enabled": true,

@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.2.2 - CI/CD Performance Gates
+ * StringRay AI v1.3.0 - CI/CD Performance Gates
  *
  * Automated performance gates for CI/CD pipelines that enforce
  * performance budgets and prevent performance regressions.
