@@ -298,7 +298,7 @@ class StringRayValidator {
     this.checkDirectory(path.join(PROJECT_DIR, '.opencode'), 'OpenCode directory');
 
     // Test consumer readiness if available
-    const consumerTestPath = path.join(PROJECT_DIR, 'scripts', 'test-consumer-readiness.mjs');
+    const consumerTestPath = path.join(PROJECT_DIR, 'scripts', 'mjs', 'test-consumer-readiness.mjs');
     if (this.checkFile(consumerTestPath, 'Consumer readiness test')) {
       try {
         await this.runCommand(`node "${consumerTestPath}"`, 'Consumer readiness validation', 30000);
