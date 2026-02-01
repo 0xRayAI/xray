@@ -149,6 +149,20 @@ const UPDATE_PATTERNS = [
       replacement: `🔬 ${OFFICIAL_VERSIONS.framework.displayName} - Pre-commit Introspection`,
     },
 
+    // Codex version patterns (for .opencode/strray/codex.json)
+    {
+      pattern: /"version":"[0-9]+\.[0-9]+\.[0-9]+"/g,
+      replacement: `"version":"${OFFICIAL_VERSIONS.framework.version}"`,
+    },
+    {
+      pattern: /"codex_version":\s*"v[0-9]+\.[0-9]+\.[0-9]+"/g,
+      replacement: `"codex_version": "${OFFICIAL_VERSIONS.codex.version}"`,
+    },
+    {
+      pattern: /"strray:version":\s*"[0-9]+\.[0-9]+\.[0-9]+"/g,
+      replacement: `"strray:version": "${OFFICIAL_VERSIONS.framework.version}"`,
+    },
+
   ];
 
 async function standardizeVersions() {
