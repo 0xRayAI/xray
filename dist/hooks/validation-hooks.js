@@ -12,20 +12,20 @@ export const useVersionValidation = () => {
     const validateVersionConsistency = async (context) => {
         try {
             // Read package.json to get official version
-            const packageJson = JSON.parse(await fs.readFile('./package.json', 'utf8'));
+            const packageJson = JSON.parse(await fs.readFile("./package.json", "utf8"));
             const officialVersion = packageJson.version;
             let hasInconsistencies = false;
             // Check critical files for version consistency
             const criticalFiles = [
-                'README.md',
-                'AGENTS.md',
-                'src/agents/orchestrator.ts',
-                'src/agents/enforcer.ts',
-                'src/agents/architect.ts'
+                "README.md",
+                "AGENTS.md",
+                "src/agents/orchestrator.ts",
+                "src/agents/enforcer.ts",
+                "src/agents/architect.ts",
             ];
             for (const file of criticalFiles) {
                 try {
-                    const content = await fs.readFile(file, 'utf8');
+                    const content = await fs.readFile(file, "utf8");
                     // Simple version pattern matching
                     const versionMatches = content.match(/\b\d+\.\d+\.\d+\b/g) || [];
                     const conflictingVersions = versionMatches.filter((v) => v !== officialVersion);
@@ -34,7 +34,7 @@ export const useVersionValidation = () => {
                             file,
                             officialVersion,
                             conflictingVersions,
-                            operation: context.operation
+                            operation: context.operation,
                         });
                         hasInconsistencies = true;
                     }
@@ -46,7 +46,7 @@ export const useVersionValidation = () => {
             if (hasInconsistencies) {
                 await frameworkLogger.log("version-validation", "validation-failed", "error", {
                     operation: context.operation,
-                    message: "Version inconsistencies found - run universal version manager"
+                    message: "Version inconsistencies found - run universal version manager",
                 });
             }
             return !hasInconsistencies;
@@ -54,7 +54,7 @@ export const useVersionValidation = () => {
         catch (error) {
             await frameworkLogger.log("version-validation", "validation-error", "error", {
                 operation: context.operation,
-                error: error instanceof Error ? error.message : String(error)
+                error: error instanceof Error ? error.message : String(error),
             });
             return false;
         }
@@ -66,10 +66,10 @@ export const useCompactionPrevention = () => {
         const { filesChanged, agentName, operation, riskLevel } = context;
         // Compaction Research Detection Rules
         const isMassiveChange = filesChanged.length > 5;
-        const isArchitecturalChange = filesChanged.some(file => file.includes('architecture') ||
-            file.includes('config') ||
-            file.includes('core') ||
-            file.includes('framework'));
+        const isArchitecturalChange = filesChanged.some((file) => file.includes("architecture") ||
+            file.includes("config") ||
+            file.includes("core") ||
+            file.includes("framework"));
         const isHighRisk = riskLevel === "critical" || riskLevel === "high";
         if (isMassiveChange || (isArchitecturalChange && isHighRisk)) {
             await frameworkLogger.log("compaction-detection", "compaction-research-detected", "error", {
@@ -80,14 +80,14 @@ export const useCompactionPrevention = () => {
                 filesChanged,
                 isMassiveChange,
                 isArchitecturalChange,
-                isHighRisk
+                isHighRisk,
             });
             // Log immediate action requirements
             await frameworkLogger.log("compaction-detection", "immediate-action-required", "error", {
                 action1: "STOP ALL CHANGES - Do not proceed with modifications",
                 action2: "NOTIFY USER - Alert user of compaction research detection",
                 action3: "REQUEST APPROVAL - Ask user to explicitly approve changes",
-                action4: "PROVIDE ALTERNATIVES - Suggest surgical fixes instead"
+                action4: "PROVIDE ALTERNATIVES - Suggest surgical fixes instead",
             });
             return true; // Compaction detected
         }
@@ -105,12 +105,12 @@ export const useProcessorValidation = () => {
             if (context.operation) {
                 const versionContext = {
                     filesChanged: context.filesChanged || [],
-                    operation: context.operation
+                    operation: context.operation,
                 };
                 const versionValid = await versionValidation.validateVersionConsistency(versionContext);
                 if (!versionValid) {
                     // Version inconsistencies found - log but don't block (warning only during development)
-                    console.warn('⚠️ Version inconsistencies detected - consider running version manager');
+                    console.warn("⚠️ Version inconsistencies detected - consider running version manager");
                 }
             }
             // Check for compaction research before running other processors
@@ -119,7 +119,7 @@ export const useProcessorValidation = () => {
                     filesChanged: context.filesChanged || [],
                     agentName: context.agentName,
                     operation: context.operation,
-                    riskLevel: context.riskLevel || "low"
+                    riskLevel: context.riskLevel || "low",
                 };
                 if (await compactionPrevention.detectCompactionResearch(compactionContext)) {
                     // Compaction detected - block the operation

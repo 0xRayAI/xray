@@ -134,7 +134,10 @@ export class StringRayStateManager {
             }
             frameworkLogger.log("state-manager", "set called before initialization, queued for persistence", "debug", { jobId, key });
         }
-        frameworkLogger.log("state-manager", "set operation", "success", { jobId, key });
+        frameworkLogger.log("state-manager", "set operation", "success", {
+            jobId,
+            key,
+        });
     }
     clear(key) {
         // Ensure persistence is initialized
@@ -162,7 +165,9 @@ export class StringRayStateManager {
         if (this.persistenceEnabled && keysCount > 0) {
             this.persistToDisk();
         }
-        frameworkLogger.log("state-manager", "clearAll operation", "success", { keysCleared: keysCount });
+        frameworkLogger.log("state-manager", "clearAll operation", "success", {
+            keysCleared: keysCount,
+        });
     }
     // New method to check if persistence is enabled
     isPersistenceEnabled() {
@@ -188,7 +193,7 @@ export class StringRayStateManager {
         // Simple resolution strategy: prefer the newer value
         frameworkLogger.log("state-manager", "conflict-resolved", "info", {
             key: conflict.key,
-            strategy: "prefer-newer"
+            strategy: "prefer-newer",
         });
         return conflict.value2; // Prefer the second value as newer
     }
