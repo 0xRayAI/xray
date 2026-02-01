@@ -38,7 +38,7 @@
     "test:full-suite": "npm run test:integration-all && npm run test:performance-all && npm run test:agents-all && npm run test:infrastructure && npm run test:root",
     "postinstall": "node scripts/node/postinstall.cjs",
     "setup-dev": "node scripts/node/setup-dev.cjs",
-    "prepare-consumer": "node scripts/prepare-consumer.cjs",
+    "prepare-consumer": "node scripts/node/prepare-consumer.cjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -68,7 +68,6 @@
   "files": [
     "dist/",
     "scripts/node/",
-    "scripts/prepare-consumer.cjs",
     ".opencode/",
     ".strray/",
     "opencode.json",
