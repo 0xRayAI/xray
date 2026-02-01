@@ -1,11 +1,4 @@
 {
-  "memory:baseline": {
-    "heapUsed": 12.31,
-    "heapTotal": 19.64,
-    "external": 2.03,
-    "rss": 63.38,
-    "timestamp": 1769123389339
-  },
   "session:expired-test:coordinator": {
     "sessionId": "expired-test",
     "startTime": 1769123616851,
@@ -28,6 +21,13 @@
     "isActive": true
   },
   "cleanup:session_metadata": {},
+  "memory:baseline": {
+    "heapUsed": 12.31,
+    "heapTotal": 19.64,
+    "external": 2.03,
+    "rss": 63.38,
+    "timestamp": 1769123389339
+  },
   "strray:config": {
     "version": "1.2.0",
     "codex_enabled": true,
@@ -640,6 +640,18 @@
       },
       {
         "timestamp": 1769913959346,
+        "sessionId": "healthy-session",
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 1,
+        "coordinationEfficiency": 1,
+        "memoryUsage": 0,
+        "agentCount": 3
+      },
+      {
+        "timestamp": 1769915272053,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
