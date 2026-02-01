@@ -113,8 +113,13 @@ if (isConsumerEnvironment) {
       /"src\/plugin\/strray-codex-injection\.ts"/g,
       '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
     );
+    // Convert MCP server paths (in mcpServers.*.args)
+    opencodeContent = opencodeContent.replace(
+      /"dist\/plugin\/mcps\//g,
+      '"node_modules/strray-ai/dist/plugin/mcps/'
+    );
     fs.writeFileSync(opencodePath, opencodeContent, "utf8");
-    console.log("✅ Updated plugin paths in oh-my-opencode.json");
+    console.log("✅ Updated plugin and MCP paths in oh-my-opencode.json");
   }
 
   // Convert plugin paths in opencode.json
@@ -130,8 +135,13 @@ if (isConsumerEnvironment) {
       /"src\/plugin\/strray-codex-injection\.ts"/g,
       '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
     );
+    // Convert MCP server paths (mcpServers use command array)
+    opencodeContent = opencodeContent.replace(
+      /"\.\/dist\/plugin\/mcps\//g,
+      '"node_modules/strray-ai/dist/plugin/mcps/'
+    );
     fs.writeFileSync(mainOpencodePath, opencodeContent, "utf8");
-    console.log("✅ Updated plugin paths in opencode.json");
+    console.log("✅ Updated plugin and MCP paths in opencode.json");
   }
 }
 
