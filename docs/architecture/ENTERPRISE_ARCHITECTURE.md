@@ -508,7 +508,7 @@ The framework integrates seamlessly with oh-my-opencode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.3.4"
+    "version": "1.3.5"
   }
 }
 ```

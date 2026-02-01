@@ -1,6 +1,6 @@
 {
   "name": "@opencode/oh-my-opencode",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "oh-my-opencode framework configuration",
   "main": "oh-my-opencode.json",
   "scripts": {
