@@ -133,6 +133,49 @@ mv reflection-draft.md docs/reflections/[descriptive-name]-reflection.md
 - **Tools Integration**: Leverage `read` for log verification; grep for pattern searches (e.g., `grep "ERROR" activity.log`).
 - **Alerts**: On failures, notify orchestrator and add blocking TODOs.
 - **Best Practice**: Tail logs in real-time during long ops (e.g., `tail -f activity.log | grep JobId`).
+
+## Version Management (MANDATORY - Zero Tolerance)
+
+### Universal Version Manager Rule
+**CRITICAL**: Universal version manager MUST be 1 release ahead of npm published version.
+
+**Current State Check:**
+```bash
+npm view strray-ai@latest version          # e.g., 1.3.2
+cat scripts/node/universal-version-manager.js | grep "version:"  # MUST be 1.3.3
+```
+
+### Pre-Publish Workflow (MANDATORY)
+```bash
+# 1. Ensure version manager is 1 ahead of npm
+cat scripts/node/universal-version-manager.js | grep "version:"
+
+# 2. Run universal version manager
+node scripts/node/universal-version-manager.js
+
+# 3. Verify all files updated
+git status
+
+# 4. Commit version updates
+git add -A && git commit -m "chore: Standardize versions to X.Y.Z"
+
+# 5. Bump version (now in sync)
+npm version patch  # or minor/major
+
+# 6. Build and publish
+npm run build && npm publish
+```
+
+### Version Synchronization Check
+If version manager matches npm published version:
+- ❌ **WRONG**: Version manager should be AHEAD by 1 release
+- 🔧 **Fix**: Update OFFICIAL_VERSIONS.framework.version to next release
+
+### Enforcement
+- **violation**: Version manager not run before publish
+- **consequence**: Block publish, require version sync
+- **check**: Always verify version manager is 1 ahead before npm version
+
 ## Environment Architecture: Dev vs Consumer
 
 StringRay operates in **two distinct environments** with different import resolution:
