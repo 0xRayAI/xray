@@ -18,16 +18,16 @@ import path from "path";
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.2.0",
-    displayName: "StringRay AI v1.2.0",
-    lastUpdated: "2026-01-31",
+    version: "1.2.2",
+    displayName: "StringRay AI v1.2.2",
+    lastUpdated: "2026-02-01",
   },
 
   // Codex versions
   codex: {
-    version: "v1.2.0",
+    version: "v1.2.2",
     termsCount: 55,
-    lastUpdated: "2026-01-31",
+    lastUpdated: "2026-02-01",
   },
 
   // External dependencies
@@ -119,9 +119,14 @@ const UPDATE_PATTERNS = [
      pattern: /- Framework Version: StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
      replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.displayName}`,
    },
-   {
-     pattern: /- Framework Version: [0-9]+\.[0-9]+\.[0-9]+/g,
-     replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.version}`,
+    {
+      pattern: /- Framework Version: [0-9]+\.[0-9]+\.[0-9]+/g,
+      replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.version}`,
+    },
+    // CLI Version pattern
+    {
+      pattern: /\.version\("[0-9]+\.[0-9]+\.[0-9]+"\)/g,
+      replacement: `.version("${OFFICIAL_VERSIONS.framework.version}")`,
    },
     {
       pattern: /Framework Version: StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,

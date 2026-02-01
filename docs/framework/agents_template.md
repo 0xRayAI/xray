@@ -1,6 +1,6 @@
 # - Complete Agent Context & Universal Development Codex v1.1.1
 
-**Framework Version**: 1.2.0
+**Framework Version**: 1.2.2
 **Codex Version**: 1.2.25
 **Last Updated**: 2026-01-16
 **Terms Count**: 55 mandatory terms

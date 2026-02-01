@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.2.0 - Performance Benchmark Unit Tests
+ * StringRay AI v1.2.2 - Performance Benchmark Unit Tests
  *
  * Tests the performance benchmarking and metrics collection functionality.
  *

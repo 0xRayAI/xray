@@ -68,6 +68,7 @@
   "files": [
     "dist/",
     "scripts/node/",
+    "scripts/mjs/",
     ".opencode/",
     ".strray/",
     "opencode.json",
