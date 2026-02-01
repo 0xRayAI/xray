@@ -208,12 +208,62 @@ class ConsumerReadinessCheck {
   }
 }
 
+// Run path verification if in consumer environment
+async function runPathVerification() {
+  const isConsumerEnv = process.cwd().includes('test-') || 
+                        process.cwd().includes('tmp') ||
+                        fs.existsSync('node_modules/strray-ai');
+  
+  if (isConsumerEnv) {
+    console.log("\n🔍 Running plugin path verification...");
+    try {
+      const { spawn } = await import('child_process');
+      const result = await new Promise((resolve) => {
+        const child = spawn('node', [
+          path.join(__dirname, 'verify-plugin-paths.mjs')
+        ], {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          cwd: process.cwd()
+        });
+        
+        let stdout = '';
+        let stderr = '';
+        
+        child.stdout.on('data', (data) => {
+          stdout += data.toString();
+          process.stdout.write(data);
+        });
+        
+        child.stderr.on('data', (data) => {
+          stderr += data.toString();
+          process.stderr.write(data);
+        });
+        
+        child.on('close', (code) => {
+          resolve(code === 0);
+        });
+      });
+      
+      return result;
+    } catch (error) {
+      console.warn("⚠️ Path verification could not run:", error.message);
+      return true; // Don't fail if verification script missing
+    }
+  }
+  return true;
+}
+
 // Run the check
 const checker = new ConsumerReadinessCheck();
 checker
   .runChecks()
-  .then((success) => {
-    process.exit(success ? 0 : 1);
+  .then(async (success) => {
+    if (success) {
+      const pathSuccess = await runPathVerification();
+      process.exit(pathSuccess ? 0 : 1);
+    } else {
+      process.exit(1);
+    }
   })
   .catch((error) => {
     console.error("Readiness check failed:", error);
