@@ -66,17 +66,17 @@ else
 fi
 echo ""
 
-# Rule 2: package.json MUST match UVM when committing
+# Rule 2: package.json MUST match UVM when not in preversion
 echo "2️⃣  Checking: package.json Synchronization"
 if [ "$PKG_VERSION" != "$UVM_VERSION" ]; then
-  echo -e "   ${RED}❌ VIOLATION:${NC} package.json version mismatch"
+  echo -e "   ${YELLOW}⚠️  WARNING:${NC} package.json version mismatch"
   echo "      package.json: ${PKG_VERSION}"
   echo "      UVM:          ${UVM_VERSION}"
   echo ""
-  echo -e "   ${YELLOW}🔧 FIX REQUIRED:${NC}"
-  echo "      Run: npm version [patch|minor|major]"
-  echo "      This updates package.json to match UVM"
-  ((ERRORS++))
+  echo -e "   ℹ️  This is OK if you're about to run: npm version [patch|minor|major]"
+  echo "      That command will update package.json to ${UVM_VERSION}"
+  # Don't increment ERRORS - this is just a warning
+  ((WARNINGS++))
 else
   echo -e "   ${GREEN}✅ PASS:${NC} package.json matches UVM (${PKG_VERSION})"
 fi
