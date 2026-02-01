@@ -28,7 +28,7 @@ class StrRayProcessorPipelineServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray-processor-pipeline",
+        name: "processor-pipeline",
         version: "1.0.0",
       },
       {

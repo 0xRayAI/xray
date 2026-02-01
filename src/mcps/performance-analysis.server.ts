@@ -23,7 +23,7 @@ class StrRayPerformanceAnalysisServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray-performance-analysis",
+        name: "performance-analysis",
         version: "1.0.0",
       },
       {

@@ -122,10 +122,13 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
-    "Sisyphus": {
+    "sisyphus": {
       "disable": true
     },
     "Planner-Sisyphus": {
+      "disable": true
+    },
+    "OpenCode-Builder": {
       "disable": true
     },
     "build": {

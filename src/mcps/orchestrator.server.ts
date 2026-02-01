@@ -20,7 +20,7 @@ class StrRayOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray-orchestrator",
+        name: "orchestrator",
         version: "1.0.0",
       },
       {
