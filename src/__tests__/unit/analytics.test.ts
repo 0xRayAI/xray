@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Predictive Analytics Unit Tests
+ * Predictive Analytics Unit Tests
  *
  * Tests the agent performance analysis and task prediction functionality.
  *

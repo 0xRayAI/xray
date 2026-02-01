@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Infrastructure as Code Validation System
+ * Infrastructure as Code Validation System
  *
  * Comprehensive IaC validation with schema enforcement, pre-commit hooks,
  * and automated CI/CD integration for enterprise-grade cloud deployments.

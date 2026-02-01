@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Circuit Breaker Pattern Implementation
+ * Circuit Breaker Pattern Implementation
  *
  * Enterprise-grade circuit breaker pattern for distributed systems with failure
  * thresholds, recovery mechanisms, and graceful degradation.

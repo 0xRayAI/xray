@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Performance Benchmark Unit Tests
+ * Performance Benchmark Unit Tests
  *
  * Tests the performance benchmarking and metrics collection functionality.
  *

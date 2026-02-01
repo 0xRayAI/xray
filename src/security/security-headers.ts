@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Security Headers Middleware
+ * Security Headers Middleware
  *
  * Comprehensive security headers implementation for HTTP responses.
  * Integrates with boot orchestrator and API endpoints.

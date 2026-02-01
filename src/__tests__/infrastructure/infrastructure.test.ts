@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Infrastructure Tests
+ * Infrastructure Tests
  *
  * Basic infrastructure tests for core system components
  * ensuring essential services and configurations are operational.

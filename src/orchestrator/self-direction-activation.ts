@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Self-Direction Activation System (Simplified)
+ * Self-Direction Activation System (Simplified)
  *
  * Commercial version with autonomous self-direction capabilities.
  * Activates the framework's dormant self-evolution systems for continuous improvement.

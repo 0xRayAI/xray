@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Enterprise Monitoring System
+ * Enterprise Monitoring System
  *
  * Comprehensive enterprise-scale monitoring and health check system.
  * Supports distributed deployments, auto-scaling, and production monitoring.

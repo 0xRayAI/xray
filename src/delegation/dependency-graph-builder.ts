@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Dependency Graph Builder
+ * Dependency Graph Builder
  *
  * Builds comprehensive dependency graphs for codebase analysis.
  * Tracks file relationships, import/export chains, and architectural dependencies.

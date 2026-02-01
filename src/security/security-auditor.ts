@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Security Audit Tool
+ * Security Audit Tool
  *
  * Comprehensive security auditing for the framework and its components.
  * Identifies vulnerabilities, misconfigurations, and security weaknesses.

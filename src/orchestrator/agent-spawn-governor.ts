@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Agent Spawn Governor
+ * Agent Spawn Governor
  *
  * Critical governance component that prevents infinite agent spawning
  * and enforces spawn limits across the multi-agent orchestration system.

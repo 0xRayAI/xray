@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Orchestrator Agent
+ * Orchestrator Agent
  *
  * Coordinates multi-step tasks and delegates to specialized subagents.
  * Implements Sisyphus integration for relentless execution.

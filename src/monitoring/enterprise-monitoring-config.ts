@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Enterprise Monitoring Configuration
+ * Enterprise Monitoring Configuration
  *
  * Configuration templates and deployment guides for enterprise-scale monitoring.
  *

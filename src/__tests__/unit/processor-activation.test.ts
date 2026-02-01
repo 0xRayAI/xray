@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Processor Activation Tests
+ * Processor Activation Tests
  *
  * Comprehensive tests for the processor activation system including:
  * - Registration/deregistration

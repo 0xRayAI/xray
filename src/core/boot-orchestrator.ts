@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Boot Orchestrator
+ * Boot Orchestrator
  *
  * Implements orchestrator-first boot sequence with automatic enforcement activation.
  * Coordinates the initialization of all framework components in the correct order.

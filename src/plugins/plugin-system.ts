@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Plugin Ecosystem
+ * Plugin Ecosystem
  *
  * Secure plugin system for third-party agent extensions.
  * Provides sandboxed execution, validation, and lifecycle management.

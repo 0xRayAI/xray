@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Session Management Integration Test
+ * Session Management Integration Test
  *
  * Tests the complete session management system including cleanup,
  * monitoring, and cross-session coordination.

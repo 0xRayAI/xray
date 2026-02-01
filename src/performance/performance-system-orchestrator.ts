@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Performance System Orchestrator
+ * Performance System Orchestrator
  *
  * Unified performance monitoring, testing, and enforcement system
  * that integrates all performance components into a cohesive framework.

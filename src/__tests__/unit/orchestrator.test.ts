@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Orchestrator Unit Tests
+ * Orchestrator Unit Tests
  *
  * Tests the multi-agent orchestration and task delegation functionality.
  *
