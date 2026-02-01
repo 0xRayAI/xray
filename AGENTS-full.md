@@ -73,7 +73,7 @@ The framework operates through 8 interconnected pipelines that form a complete d
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    STRINGRAY FRAMEWORK v1.1.1                   │
+│                    STRINGRAY FRAMEWORK v1.2.0                   │
 │                    8 INTERCONNECTED PIPELINES                   │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────┐ │
