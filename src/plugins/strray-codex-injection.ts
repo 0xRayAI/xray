@@ -36,7 +36,6 @@ async function loadStrRayComponents() {
     featuresConfigLoader = featuresModule.featuresConfigLoader;
     detectTaskType = featuresModule.detectTaskType;
   } catch {
-    console.debug?.("StrRay: Loading from node_modules...");
     const pluginPaths = ["strray-ai", "strray-framework"];
 
     for (const pluginPath of pluginPaths) {
