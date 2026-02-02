@@ -325,57 +325,13 @@ export default async function strrayCodexPlugin(input: {
       if (featuresConfigLoader && detectTaskType) {
         try {
           const config = featuresConfigLoader.loadConfig();
-
           if (config.model_routing?.enabled) {
             const taskType = detectTaskType(input.tool);
             const routing = config.model_routing.task_routing?.[taskType];
-
             if (routing?.model) {
               output.model = routing.model;
-              await logger.log("opencode", "model_routing", "info", {
-                tool: input.tool,
-                taskType,
-                routedModel: routing.model,
-                timestamp: new Date().toISOString()
-              });
+              logger.log(`Model routed: ${input.tool} → ${taskType} → ${routing.model}`);
             }
-          }
-        } catch (e) {
-          await logger.error("model_routing_error", String(e));
-        }
-      }
-
-      // Log tool execution attempt
-      await logger.log("opencode", "tool.execute.before", "info", {
-        tool: input.tool,
-        args: input.args,
-        timestamp: new Date().toISOString()
-      });
-
-      try {
-        // Execute the tool via opencode
-        const result = await (globalThis as any).opencode.executeTool(input.tool, input.args);
-
-        // Log successful execution
-        await logger.log("opencode", "tool.execute.after", "success", {
-          tool: input.tool,
-          args: input.args,
-          result: result,
-          timestamp: new Date().toISOString()
-        });
-
-        output = result;
-      } catch (error) {
-        // Log execution error
-        await logger.log("opencode", "tool.execute.error", "error", {
-          tool: input.tool,
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-
-        throw error;
-      }
-    },
           }
         } catch (e) {
           logger.error("Model routing error", e);
