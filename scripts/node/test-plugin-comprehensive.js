@@ -12,8 +12,8 @@ import path from 'path';
 import fs from 'fs';
 
 const TEST_TIMEOUT = 30000; // 30 seconds
-const DEV_ENV = process.cwd().includes('stringray');
-const CONSUMER_ENV = process.cwd().includes('jelly');
+const DEV_ENV = fs.existsSync('./src') && fs.existsSync('./package.json');
+const CONSUMER_ENV = fs.existsSync('./node_modules/strray-ai') && !DEV_ENV;
 
 console.log('🧪 StringRay Comprehensive Plugin Test');
 console.log('=====================================');
