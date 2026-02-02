@@ -254,6 +254,9 @@ export class ProcessorManager {
       case "stateValidation":
         await this.initializeStateValidationProcessor();
         break;
+      case "agentsMdValidation":
+        await this.initializeAgentsMdValidationProcessor();
+        break;
       default:
         // Generic initialization
         break;
@@ -663,6 +666,43 @@ export class ProcessorManager {
       "initializing state validation processor",
       "info",
     );
+  }
+
+  private async initializeAgentsMdValidationProcessor(): Promise<void> {
+    // Setup AGENTS.md validation pre-processor
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing AGENTS.md validation processor",
+      "info",
+    );
+
+    // Import and initialize the processor
+    try {
+      const { AgentsMdValidationProcessor } = await import("./agents-md-validation-processor.js");
+      const processor = new AgentsMdValidationProcessor(process.cwd());
+
+      // Validate AGENTS.md on initialization (blocking if missing)
+      const result = await processor.execute({
+        tool: "validate",
+        operation: "initialization"
+      });
+
+      if (!result.success && result.blocked) {
+        frameworkLogger.log(
+          "processor-manager",
+          "agents-md-validation",
+          "info",
+          { message: "AGENTS.md validation failed - commit operations may be blocked" }
+        );
+      }
+    } catch (error) {
+      frameworkLogger.log(
+        "processor-manager",
+        "agents-md-validation-init-error",
+        "error",
+        { error: error instanceof Error ? error.message : String(error) }
+      );
+    }
   }
 
   private async executePreValidate(context: any): Promise<any> {

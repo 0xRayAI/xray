@@ -101,6 +101,9 @@ export class RuleEnforcer {
       // Load agent triage rules from AGENTS.md
       await this.loadAgentTriageRules();
 
+      // Load AGENTS.md validation rule
+      await this.loadAgentsMdValidationRule();
+
       // Load processor-specific rules
       await this.loadProcessorRules();
 
@@ -194,6 +197,138 @@ export class RuleEnforcer {
       }
     } catch (error) {
       console.warn("Failed to load agent triage rules:", error);
+    }
+  }
+
+  /**
+   * Load AGENTS.md validation rule
+   * Enforces that AGENTS.md exists and is properly maintained
+   */
+  private async loadAgentsMdValidationRule(): Promise<void> {
+    try {
+      this.addRule({
+        id: "agents-md-exists",
+        name: "AGENTS.md Must Exist",
+        description: "AGENTS.md is required for agent triage rules, codex compliance, and session management. Projects must maintain an up-to-date AGENTS.md file.",
+        category: "architecture",
+        severity: "blocking",
+        enabled: true,
+        validator: this.validateAgentsMdExists.bind(this),
+      });
+
+      this.addRule({
+        id: "agents-md-current",
+        name: "AGENTS.md Must Be Current",
+        description: "AGENTS.md should be reviewed and updated regularly (within 30 days) to ensure agent capabilities and rules are accurate.",
+        category: "reporting",
+        severity: "warning",
+        enabled: true,
+        validator: this.validateAgentsMdCurrent.bind(this),
+      });
+
+      await frameworkLogger.log(
+        "rule-enforcer",
+        "-loaded-agents-md-validation-rules-",
+        "info",
+        { message: "Loaded AGENTS.md validation rules" }
+      );
+    } catch (error) {
+      console.warn("Failed to load AGENTS.md validation rules:", error);
+    }
+  }
+
+  /**
+   * Validate that AGENTS.md exists
+   */
+  private async validateAgentsMdExists(context: RuleValidationContext): Promise<RuleValidationResult> {
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+
+      const agentsPath = path.join(process.cwd(), "AGENTS.md");
+
+      if (!fs.existsSync(agentsPath)) {
+        return {
+          passed: false,
+          message: "AGENTS.md not found in project root",
+          suggestions: [
+            "Create AGENTS.md using template from docs/AGENTS_TEMPLATE.md",
+            "Run: node scripts/node/enforce-agents-md.js --generate",
+            "See AGENTS.md for agent triage rules and codex compliance"
+          ],
+          fixes: [
+            {
+              type: "run-command",
+              description: "Auto-generate AGENTS.md from template",
+              command: "node scripts/node/enforce-agents-md.js --generate"
+            }
+          ]
+        };
+      }
+
+      return {
+        passed: true,
+        message: "AGENTS.md exists"
+      };
+    } catch (error) {
+      return {
+        passed: false,
+        message: `Error checking AGENTS.md: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  /**
+   * Validate that AGENTS.md is current (updated within 30 days)
+   */
+  private async validateAgentsMdCurrent(context: RuleValidationContext): Promise<RuleValidationResult> {
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+
+      const agentsPath = path.join(process.cwd(), "AGENTS.md");
+
+      if (!fs.existsSync(agentsPath)) {
+        return {
+          passed: true,
+          message: "AGENTS.md check skipped (file does not exist)"
+        };
+      }
+
+      const content = fs.readFileSync(agentsPath, "utf8");
+      const dateMatch = content.match(/\*\*Updated\*\*:\s*(\d{4}-\d{2}-\d{2})/);
+
+      if (!dateMatch || !dateMatch[1]) {
+        return {
+          passed: false,
+          message: "AGENTS.md missing date stamp",
+          suggestions: ["Add '**Updated**: YYYY-MM-DD' to AGENTS.md header"]
+        };
+      }
+
+      const updateDate = new Date(dateMatch[1]);
+      const daysSinceUpdate = Math.floor((Date.now() - updateDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysSinceUpdate > 30) {
+        return {
+          passed: false,
+          message: `AGENTS.md is ${daysSinceUpdate} days old (recommended: review every 30 days)`,
+          suggestions: [
+            "Review and update AGENTS.md to reflect current agent capabilities",
+            "Update the date stamp to today's date"
+          ]
+        };
+      }
+
+      return {
+        passed: true,
+        message: `AGENTS.md is current (${daysSinceUpdate} days old)`
+      };
+    } catch (error) {
+      return {
+        passed: false,
+        message: `Error checking AGENTS.md date: ${error instanceof Error ? error.message : String(error)}`
+      };
     }
   }
 

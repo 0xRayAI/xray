@@ -335,6 +335,19 @@ export class BootOrchestrator {
       );
 
       this.processorManager.registerProcessor({
+        name: "agentsMdValidation",
+        type: "pre",
+        priority: 35,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered agentsMdValidation processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
         name: "stateValidation",
         type: "post",
         priority: 130,
