@@ -322,6 +322,19 @@ export class BootOrchestrator {
       );
 
       this.processorManager.registerProcessor({
+        name: "versionCompliance",
+        type: "pre",
+        priority: 25,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered versionCompliance processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
         name: "errorBoundary",
         type: "pre",
         priority: 30,

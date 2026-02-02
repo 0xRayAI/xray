@@ -242,6 +242,9 @@ export class ProcessorManager {
       case "codexCompliance":
         await this.initializeCodexComplianceProcessor();
         break;
+      case "versionCompliance":
+        await this.initializeVersionComplianceProcessor();
+        break;
       case "errorBoundary":
         await this.initializeErrorBoundaryProcessor();
         break;
@@ -699,6 +702,53 @@ export class ProcessorManager {
       frameworkLogger.log(
         "processor-manager",
         "agents-md-validation-init-error",
+        "error",
+        { error: error instanceof Error ? error.message : String(error) }
+      );
+    }
+  }
+
+  private async initializeVersionComplianceProcessor(): Promise<void> {
+    // Setup version compliance pre-processor
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing version compliance processor",
+      "info",
+    );
+
+    // Import and initialize the processor
+    try {
+      const { VersionComplianceProcessor } = await import("./version-compliance-processor.js");
+      const processor = new VersionComplianceProcessor(process.cwd());
+
+      // Validate version compliance on initialization (non-blocking, just info)
+      const result = await processor.validateVersionCompliance();
+
+      if (!result.compliant) {
+        frameworkLogger.log(
+          "processor-manager",
+          "version-compliance",
+          "info",
+          { 
+            message: "Version compliance issues detected - commits may be blocked",
+            errors: result.errors,
+            warnings: result.warnings
+          }
+        );
+      } else {
+        frameworkLogger.log(
+          "processor-manager",
+          "version-compliance",
+          "info",
+          { 
+            message: `Version compliance verified: NPM ${result.npmVersion}, UVM ${result.uvmVersion}`
+          }
+        );
+      }
+    } catch (error) {
+      frameworkLogger.log(
+        "processor-manager",
+        "version-compliance-init-error",
         "error",
         { error: error instanceof Error ? error.message : String(error) }
       );
