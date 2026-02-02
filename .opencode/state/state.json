@@ -215,7 +215,12 @@
   },
   "orchestrator": {
     "taskQueue": {},
-    "activeTasks": {}
+    "activeTasks": {},
+    "config": {
+      "maxConcurrentTasks": 3,
+      "taskTimeout": 10000,
+      "conflictResolutionStrategy": "majority_vote"
+    }
   },
   "delegation:agent_delegator": {
     "complexityAnalyzer": {
@@ -268,7 +273,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1769447791782,
+    "startTime": 1770057319448,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -289,12 +294,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-01-26T17:16:31.782Z",
+    "createdAt": "2026-02-02T18:35:19.448Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1769447791782,
+  "session:boot_time": 1770057319448,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -320,8 +325,29 @@
     "sessionGroups": {},
     "failoverConfigs": {}
   },
-  "cleanup:session_metadata": {},
-  "monitor:health": {},
+  "cleanup:session_metadata": {
+    "default": {
+      "sessionId": "default",
+      "createdAt": 1770057319449,
+      "lastActivity": 1770057319449,
+      "ttlMs": 86400000,
+      "isActive": true,
+      "agentCount": 0,
+      "memoryUsage": 0
+    }
+  },
+  "monitor:health": {
+    "default": {
+      "sessionId": "default",
+      "status": "unknown",
+      "lastCheck": 0,
+      "responseTime": 0,
+      "errorCount": 0,
+      "activeAgents": 0,
+      "memoryUsage": 0,
+      "issues": []
+    }
+  },
   "enforcement:active": true,
   "enforcement:codex_terms": [
     {
@@ -712,6 +738,18 @@
       },
       {
         "timestamp": 1769980178843,
+        "sessionId": "healthy-session",
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 1,
+        "coordinationEfficiency": 1,
+        "memoryUsage": 0,
+        "agentCount": 3
+      },
+      {
+        "timestamp": 1770057319576,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,

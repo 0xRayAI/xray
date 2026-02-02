@@ -414,11 +414,9 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
   ): Promise<any[]> {
     const logs: any[] = [];
 
-    // Always use project root, not current working directory
-    // This handles cases where scripts are run from subdirectories
-    const currentFileUrl = import.meta.url;
-    const currentFilePath = new URL(currentFileUrl).pathname;
-    const projectRoot = path.resolve(path.dirname(currentFilePath), "../../");
+    // Always use project root (cwd), not relative to this file
+    // This ensures logs are found both in development and node_modules installations
+    const projectRoot = process.cwd();
     const logDir = path.join(projectRoot, "logs", "framework");
     const logFile = path.join(logDir, "activity.log");
 
@@ -466,16 +464,19 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
    * Parse a single log line into structured format
    */
   private parseLogLine(line: string): any | null {
-    // Actual log format: "2026-01-21T19:52:33.175Z [component] message - LEVEL"
+    // Log format: "2026-01-21T19:52:33.175Z [job-id] [component] message - LEVEL"
+    // OR older: "2026-01-21T19:52:33.175Z [component] message - LEVEL"
+    // Regex handles both with optional job-id capture group
     const logRegex =
-      /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
+      /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+(?:\[([^\]]+)\]\s+)?\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
     const match = line.match(logRegex);
 
-    if (match && match[1] && match[2] && match[3] && match[4]) {
+    if (match && match[1] && match[3] && match[4] && match[5]) {
       const timestamp = match[1];
-      const component = match[2];
-      const message = match[3] as string; // Type assertion since we checked match[3] exists
-      const level = match[4];
+      // match[2] is optional job-id (ignored for now)
+      const component = match[3];
+      const message = match[4] as string;
+      const level = match[5];
 
       const action = message.includes(":")
         ? (message.split(":")[0] || "").trim()
