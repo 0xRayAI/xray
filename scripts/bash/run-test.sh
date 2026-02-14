@@ -1,2 +1,2 @@
 #!/bin/bash
-bash test-deployment.sh
+bash scripts/bash/test-deployment.sh
