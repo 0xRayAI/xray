@@ -273,7 +273,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1771097371059,
+    "startTime": 1771102306327,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -294,12 +294,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-02-14T19:29:31.059Z",
+    "createdAt": "2026-02-14T20:51:46.327Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1771097371059,
+  "session:boot_time": 1771102306327,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -337,8 +337,8 @@
     },
     "default": {
       "sessionId": "default",
-      "createdAt": 1771097371059,
-      "lastActivity": 1771097371059,
+      "createdAt": 1771102306327,
+      "lastActivity": 1771102306327,
       "ttlMs": 86400000,
       "isActive": true,
       "agentCount": 0,
@@ -463,6 +463,18 @@
       },
       {
         "timestamp": 1771097379719,
+        "sessionId": "healthy-session",
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 1,
+        "coordinationEfficiency": 1,
+        "memoryUsage": 0,
+        "agentCount": 3
+      },
+      {
+        "timestamp": 1771100649601,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,

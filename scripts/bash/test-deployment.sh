@@ -70,24 +70,33 @@ echo "=== Phase 2: Installation Testing ==="
 
 echo "2.1 Local .tar.gz Installation Testing"
 echo "Creating test directory and installing locally"
-mkdir -p test-install
-cd test-install
+
+# Save original directory
+ORIG_DIR=$(pwd)
+TEST_DIR="$ORIG_DIR/test-install"
 
 # Create package tarball
-cd ..
 npm pack > /dev/null 2>&1
-PACK_FILE=$(ls *.tgz | head -1)
-cd test-install
+PACK_FILE="$ORIG_DIR/strray-ai-1.3.5.tgz"
 
-echo "Installing package: ../$PACK_FILE"
-if npm install "../$PACK_FILE"; then
+# Create test directory
+rm -rf "$TEST_DIR"
+mkdir -p "$TEST_DIR"
+cd "$TEST_DIR"
+
+echo "Installing package: $PACK_FILE"
+if npm install "$PACK_FILE" --legacy-peer-deps; then
     echo "✅ Local installation successful"
     
-    # Check if plugin file exists
-    if [ -f "dist/plugin/plugins/strray-codex-injection.js" ]; then
-        echo "✅ Plugin file found in node_modules"
+    # Check if plugin file exists (correct path)
+    PLUGIN_PATH="$TEST_DIR/node_modules/strray-ai/dist/plugin/strray-codex-injection.js"
+    if [ -f "$PLUGIN_PATH" ]; then
+        echo "✅ Plugin file found at $PLUGIN_PATH"
+        ls -la "$TEST_DIR/node_modules/strray-ai/dist/plugin/"
     else
-        echo "❌ Plugin file not found in node_modules"
+        echo "❌ Plugin file not found at $PLUGIN_PATH"
+        ls -la "$TEST_DIR/node_modules/strray-ai/dist/" 2>/dev/null || echo "dist not found"
+        ls -la "$TEST_DIR/node_modules/strray-ai/" 2>/dev/null | head -10
         exit 1
     fi
 else
@@ -95,8 +104,8 @@ else
     exit 1
 fi
 
-cd ..
-rm -rf test-install *.tgz
+cd "$ORIG_DIR"
+rm -rf "$TEST_DIR" strray-ai-1.3.5.tgz
 
 echo ""
 echo "2.2 Postinstall Script Execution Verification"
