@@ -1,7 +1,6 @@
 name: refactorer
 description: "Refactorer agent for technical debt elimination and surgical code improvements"
 version: "1.0.0"
-model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # Error Handling Configuration

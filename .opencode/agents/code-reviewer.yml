@@ -1,7 +1,6 @@
 name: code-reviewer
 description: "Code reviewer agent for quality assessment and compliance validation"
 version: "1.0.0"
-model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # Logging Configuration

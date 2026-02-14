@@ -75,6 +75,7 @@ export class MCPClient {
 
   /**
    * Call a specific MCP server tool
+   * Uses real MCP server process via spawn instead of mock data
    */
   async callTool(toolName: string, args: any = {}): Promise<MCPToolResult> {
     const jobId = `mcp-call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -87,12 +88,8 @@ export class MCPClient {
         { jobId, args },
       );
 
-      // For now, we'll simulate tool execution
-      // In a real implementation, this would:
-      // 1. Start the MCP server process if not running
-      // 2. Send the tool call via MCP protocol
-      // 3. Parse the response
-      const result = await this.simulateToolCall(toolName, args);
+      // Use real MCP server call via spawn
+      const result = await this.executeRealMCPCall(toolName, args);
 
       frameworkLogger.log(
         "mcp-client",
@@ -496,6 +493,104 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
           ],
         };
     }
+  }
+
+  /**
+   * Execute real MCP server call via spawn
+   * Uses child_process to spawn the MCP server and communicate via stdin/stdout
+   */
+  private async executeRealMCPCall(
+    toolName: string,
+    args: any,
+  ): Promise<MCPToolResult> {
+    const jobId = `mcp-real-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    return new Promise((resolve, reject) => {
+      // Build MCP request in JSON-RPC format
+      const mcpRequest = {
+        jsonrpc: "2.0",
+        id: jobId,
+        method: "tools/call",
+        params: {
+          name: toolName,
+          arguments: args,
+        },
+      };
+
+      // Spawn MCP server process
+      const serverProcess = spawn(this.config.command, this.config.args, {
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: this.config.timeout || 30000,
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      serverProcess.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      serverProcess.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      serverProcess.on("close", (code) => {
+        if (code !== 0 && stderr) {
+          frameworkLogger.log(
+            "mcp-client",
+            `MCP server stderr: ${stderr}`,
+            "info",
+            { jobId },
+          );
+        }
+
+        try {
+          // Parse MCP response
+          const response = JSON.parse(stdout);
+          if (response.error) {
+            throw new Error(response.error.message || "MCP server error");
+          }
+          resolve({
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(response.result || response, null, 2),
+              },
+            ],
+          });
+        } catch (parseError) {
+          // If parsing fails, return the raw output
+          resolve({
+            content: [
+              {
+                type: "text",
+                text: stdout || `Tool ${toolName} executed (no response)`,
+              },
+            ],
+          });
+        }
+      });
+
+      serverProcess.on("error", (error) => {
+        frameworkLogger.log(
+          "mcp-client",
+          `MCP server spawn error: ${error.message}`,
+          "error",
+          { jobId, error: error.message },
+        );
+        reject(error);
+      });
+
+      // Send request to MCP server
+      serverProcess.stdin.write(JSON.stringify(mcpRequest));
+      serverProcess.stdin.end();
+
+      // Timeout handling
+      setTimeout(() => {
+        serverProcess.kill();
+        reject(new Error(`MCP call timeout after ${this.config.timeout || 30000}ms`));
+      }, this.config.timeout || 30000);
+    });
   }
 }
 

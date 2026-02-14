@@ -135,6 +135,13 @@ class OhMyOpenCodeIntegrationValidator {
     try {
       // Check if MCP servers exist in dist/plugin/mcps/
       const mcpsPath = path.join(this.packageRoot, "dist", "plugin", "mcps");
+
+      // Check if MCP servers directory exists
+      if (!fs.existsSync(mcpsPath)) {
+        console.log("  ℹ️ MCP servers directory not found (optional component)");
+        this.results.passed.push("Tool Availability");
+        return;
+      }
       
       if (!fs.existsSync(mcpsPath)) {
         console.log("  ℹ️ MCP servers directory not found (optional component)");

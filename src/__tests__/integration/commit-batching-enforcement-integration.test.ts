@@ -17,7 +17,7 @@ import { frameworkLogger } from "../../core/framework-logger.js";
 // Mock external dependencies
 vi.mock("../../core/framework-logger");
 
-describe.skip("Commit Batching + Enforcement Integration", () => {
+describe("Commit Batching + Enforcement Integration", () => {
   let batcher: IntelligentCommitBatcher;
 
   beforeEach(() => {

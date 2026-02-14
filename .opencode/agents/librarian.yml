@@ -1,7 +1,6 @@
 name: librarian
 description: "Codebase and documentation search specialist"
 version: "1.0.0"
-model: openrouter/xai-grok-2-1212-fast-1
 
 # Logging Configuration
 logging:

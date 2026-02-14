@@ -5,7 +5,13 @@ import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-an
 export const librarian: AgentConfig = {
   name: "librarian",
   get model() {
-    return modelRouter.getValidatedModel("librarian");
+    try {
+      return modelRouter.getValidatedModel("librarian");
+    } catch (error) {
+      // Fallback to default model if validation fails
+      console.warn("[Librarian] Model validation failed, using default model");
+      return "openai/gpt-4o";
+    }
   },
   capabilities: [
     "codebase-exploration",

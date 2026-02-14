@@ -1,7 +1,6 @@
 name: test-architect
 description: "Test architect agent for comprehensive testing strategy and validation"
 version: "1.0.0"
-model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # Logging Configuration

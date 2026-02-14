@@ -9,6 +9,8 @@ import { refactorer } from "./refactorer.js";
 import { testArchitect } from "./test-architect.js";
 import { logMonitorAgent } from "./log-monitor.js";
 import { librarian } from "./librarian.js";
+import { multimodalLooker } from "./multimodal-looker.js";
+import { analyzer } from "./analyzer.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   enforcer,
@@ -21,6 +23,8 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "test-architect": testArchitect,
   "log-monitor": logMonitorAgent,
   librarian,
+  "multimodal-looker": multimodalLooker,
+  "analyzer": analyzer,
 };
 
 export {
@@ -34,4 +38,6 @@ export {
   testArchitect,
   logMonitorAgent,
   librarian,
+  multimodalLooker,
+  analyzer,
 };

@@ -352,6 +352,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
     });
 
     describe("Agent Coordination", () => {
+      // Skipped: Requires complex multi-agent dependency setup
       it.skip("should coordinate multi-agent task execution with dependencies", async () => {
         const results = await orchestrator.executeComplexTask(
           "Framework initialization workflow",
@@ -376,6 +377,9 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
       });
 
       it("should handle agent delegation with complexity analysis", async () => {
+        // Use real timers for this test to avoid timeout issues with fake timers
+        vi.useRealTimers();
+        
         const complexTask: TaskDefinition = {
           id: "complex-task",
           type: "architecture",
@@ -397,7 +401,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         expect(result).toHaveLength(1);
         expect(result[0].success).toBe(true);
         // Test verifies that complex task delegation works through the orchestrator
-      }, 60000); // Increased timeout to 60 seconds
+      }, 60000); // Timeout set to 60 seconds
 
       it("should resolve conflicts between agent responses", async () => {
         const conflicts = [

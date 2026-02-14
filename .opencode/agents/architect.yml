@@ -1,7 +1,6 @@
 name: architect
 description: "Architect agent for design and architecture validation"
 version: "1.0.0"
-model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # State Management Configuration

@@ -1,7 +1,6 @@
 name: enforcer
 description: "Enforcer agent for codex compliance and error prevention"
 version: "1.0.0"
-model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # Logging Configuration

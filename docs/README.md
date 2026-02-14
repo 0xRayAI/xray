@@ -160,7 +160,7 @@ Update your `.opencode/oh-my-opencode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.3.5"
+    "version": "1.3.6"
   }
 }
 ```
@@ -390,7 +390,7 @@ Update your `.opencode/oh-my-opencode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray",
-    "version": "1.3.5",
+    "version": "1.3.6",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

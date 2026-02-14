@@ -1,7 +1,6 @@
 name: security-auditor
 description: "Security auditor agent for vulnerability detection and compliance"
 version: "1.0.0"
-model: openrouter/xai-grok-2-1212-fast-1
 mode: subagent
 
 # Logging Configuration

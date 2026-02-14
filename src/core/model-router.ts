@@ -55,9 +55,11 @@ class ModelRouter {
   private loadConfig(): ModelConfig {
     try {
       const configData = fs.readFileSync(this.configPath, "utf8");
+      console.log(`[ModelRouter] Loaded config from: ${this.configPath}`);
       return JSON.parse(configData);
-    } catch {
+    } catch (error) {
       // Provide defaults if config not found
+      console.log(`[ModelRouter] Config not found at ${this.configPath}, using defaults`);
       return {
         model_routing: {},
         model_default: "claude-sonnet-4",
@@ -124,9 +126,13 @@ class ModelRouter {
    * Get validated model for agent type (legacy method)
    */
   getValidatedModel(agentType?: string): string {
+    // Debug logging for troubleshooting
+    console.log(`[ModelRouter] Getting model for agent: ${agentType || "default"}`);
+
     // 1. User preference (future enhancement)
     const userModel = this.getUserPreference();
     if (userModel && this.isModelAvailable(userModel)) {
+      console.log(`[ModelRouter] Using user preference: ${userModel}`);
       return userModel;
     }
 
@@ -136,6 +142,7 @@ class ModelRouter {
       const agentModel =
         featuresConfig.agent_management.agent_models[agentType];
       if (agentModel && this.isModelAvailable(agentModel)) {
+        console.log(`[ModelRouter] Using agent model from features-config: ${agentModel}`);
         return agentModel;
       }
 
@@ -143,6 +150,7 @@ class ModelRouter {
       if (this.config.model_routing?.[agentType]) {
         const configModel = this.config.model_routing[agentType];
         if (this.isModelAvailable(configModel)) {
+          console.log(`[ModelRouter] Using model from oh-my-opencode.json: ${configModel}`);
           return configModel;
         }
       }
@@ -152,12 +160,14 @@ class ModelRouter {
     const featuresConfig = featuresConfigLoader.loadConfig();
     const defaultModel = featuresConfig.model_routing.default_model;
     if (this.isModelAvailable(defaultModel)) {
+      console.log(`[ModelRouter] Using default model: ${defaultModel}`);
       return defaultModel;
     }
 
     // 4. Legacy default
     const legacyDefault = this.config.model_default || "claude-sonnet-4";
     if (this.isModelAvailable(legacyDefault)) {
+      console.log(`[ModelRouter] Using legacy default: ${legacyDefault}`);
       return legacyDefault;
     }
 
@@ -166,6 +176,7 @@ class ModelRouter {
       featuresConfig.model_routing.fallback_model ||
       this.config.model_fallback ||
       "claude-haiku-4";
+    console.log(`[ModelRouter] Using fallback model: ${fallbackModel}`);
     return fallbackModel;
   }
 

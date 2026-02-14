@@ -656,7 +656,7 @@ describe("Processor Activation", () => {
 
   // Processor Health Monitoring Tests
   describe("Processor Health Monitoring", () => {
-    it.skip("should track comprehensive health metrics over time", async () => {
+    it("should track comprehensive health metrics over time", async () => {
       processorManager.registerProcessor({
         name: "healthMetrics",
         type: "pre",
@@ -688,7 +688,7 @@ describe("Processor Activation", () => {
       expect(processorHealth.status).toBe("degraded");
     });
 
-    it.skip("should update health status based on success rate thresholds", async () => {
+    it("should update health status based on success rate thresholds", async () => {
       processorManager.registerProcessor({
         name: "healthThreshold",
         type: "pre",
@@ -730,7 +730,7 @@ describe("Processor Activation", () => {
       expect(healthAfter[0]?.status).toBe("healthy");
     });
 
-    it.skip("should monitor processor performance degradation", async () => {
+    it("should monitor processor performance degradation", async () => {
       processorManager.registerProcessor({
         name: "performanceMonitor",
         type: "pre",
@@ -758,7 +758,7 @@ describe("Processor Activation", () => {
       expect(health[0]?.successRate).toBe(0.7);
     });
 
-    it.skip("should handle health monitoring for multiple processors simultaneously", async () => {
+    it("should handle health monitoring for multiple processors simultaneously", async () => {
       // Register multiple processors
       const processorNames = ["health1", "health2", "health3"];
 
@@ -793,7 +793,7 @@ describe("Processor Activation", () => {
       });
     });
 
-    it.skip("should reset health metrics after processor restart", async () => {
+    it("should reset health metrics after processor restart", async () => {
       processorManager.registerProcessor({
         name: "restartTest",
         type: "pre",

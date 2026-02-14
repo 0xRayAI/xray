@@ -14,7 +14,7 @@ vi.spyOn(console, "log").mockImplementation(() => {});
 describe("StringRay Codex Parser", () => {
   describe("detectContentFormat", () => {
     it("should detect JSON format with high confidence", () => {
-      const jsonContent = '{"version": "1.3.5", "terms": {}}';
+      const jsonContent = '{"version": "1.3.6", "terms": {}}';
       const result = detectContentFormat(jsonContent);
 
       expect(result.format).toBe("json");
@@ -33,7 +33,7 @@ Description of term.`;
     });
 
     it("should detect markdown when JSON parsing fails despite JSON-like start", () => {
-      const mixedContent = `{"version": "1.3.5"}
+      const mixedContent = `{"version": "1.3.6"}
 **Version**: 1.2.20
 #### 1. Test Term`;
       const result = detectContentFormat(mixedContent);
@@ -267,7 +267,7 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
     });
   });
 
-  describe.skip("validateBeforeModification", () => {
+  describe("validateBeforeModification", () => {
     it("should validate TypeScript files", async () => {
       const code = `function test(): void { return; }`;
       const result = await validateBeforeModification(code, "test.ts");

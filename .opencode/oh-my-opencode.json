@@ -13,8 +13,6 @@
   "disabled_agents": [
     "Sisyphus",
     "Planner-Sisyphus",
-    "oracle",
-    "librarian",
     "Build",
     "Plan"
   ],
@@ -58,6 +56,15 @@
       "mode": "subagent"
     },
     "librarian": {
+      "mode": "subagent"
+    },
+    "multimodal-looker": {
+      "mode": "subagent"
+    },
+    "oracle": {
+      "mode": "subagent"
+    },
+    "analyzer": {
       "mode": "subagent"
     },
     "document-writer": {

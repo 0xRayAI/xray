@@ -12,6 +12,7 @@ export interface OrchestrationResult {
   agentUsed: string;
   duration: number;
   result: any;
+  error?: string;
   errors?: string[];
 }
 
@@ -55,25 +56,108 @@ export class StringRayOrchestrator {
     });
 
     try {
-      // Task execution logic would go here
-      const result = await this.dispatchToAgent(task);
+      // Delegate to subagent for actual task execution
+      const result = await this.delegateToSubagent(
+        task.subagentType || "default-agent",
+        task,
+      );
+
+      const executionTime = result.executionTime ?? 0;
+      const agentName = result.agentName ?? task.subagentType ?? "default-agent";
 
       frameworkLogger.log("orchestrator", "task-completed", "success", {
         taskId,
-        duration: result.duration,
+        duration: executionTime,
       });
 
-      return result;
+      // Ensure result is always an object
+      const resultValue = typeof result.result === 'object' ? result.result : { value: result.result };
+
+      return {
+        success: true,
+        taskId: task.id,
+        agentUsed: agentName,
+        duration: executionTime,
+        result: resultValue,
+      };
     } catch (error) {
       frameworkLogger.log("orchestrator", "task-failed", "error", {
         taskId,
         error: error instanceof Error ? error.message : String(error),
       });
 
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Return failure result instead of throwing
+      return {
+        success: false,
+        taskId: task.id,
+        agentUsed: task.subagentType || "default-agent",
+        duration: 0,
+        result: null,
+        error: errorMessage,
+        errors: [errorMessage],
+      };
     } finally {
       this.activeTasks.delete(taskId);
       this.taskQueue.delete(taskId);
+    }
+  }
+
+  /**
+   * Execute a single task by delegating to appropriate subagent
+   */
+  private async executeSingleTask(
+    task: TaskDefinition,
+    jobId: string,
+  ): Promise<OrchestrationResult> {
+    const startTime = Date.now();
+
+    try {
+      // Delegate to subagent for actual task execution
+      const result = await this.delegateToSubagent(
+        task.subagentType || "default-agent",
+        task,
+      );
+
+      const duration = Date.now() - startTime;
+      const agentName = result.agentName ?? task.subagentType ?? "default-agent";
+
+      await frameworkLogger.log(
+        "orchestrator",
+        "complex-task-completed",
+        "success",
+        { jobId, taskExecuted: true },
+      );
+
+      // Ensure result is always an object
+      const resultValue = typeof result.result === 'object' ? result.result : { value: result.result };
+
+      return {
+        success: true,
+        taskId: task.id,
+        agentUsed: agentName,
+        duration,
+        result: resultValue,
+      };
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      await frameworkLogger.log(
+        "orchestrator",
+        "complex-task-failed",
+        "error",
+        { jobId, taskId: task.id, error: errorMessage },
+      );
+
+      return {
+        success: false,
+        taskId: task.id,
+        agentUsed: task.subagentType || "default-agent",
+        duration,
+        result: null,
+        error: errorMessage,
+        errors: [errorMessage],
+      };
     }
   }
 

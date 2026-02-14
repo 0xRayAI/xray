@@ -245,6 +245,7 @@ describe("Performance System Orchestrator", () => {
 
     performanceSystem.stop();
     status = performanceSystem.getStatus();
+    // Note: This assertion may fail if stop() doesn't update status
     expect(status.monitoringActive).toBe(false);
   });
 

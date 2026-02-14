@@ -20,7 +20,7 @@ program
   .description(
     "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention",
   )
-  .version("1.3.5");
+  .version("1.3.6");
 
 program
   .command("install")
@@ -268,10 +268,12 @@ program
           name: "Configuration Files",
           check: () =>
             fs.existsSync(
-              path.join(process.cwd(), ".opencode", "oh-my-opencode.json"),
+              // Check for opencode.json at root (Jelly integration standard)
+              path.join(process.cwd(), "opencode.json") ||
+              path.join(process.cwd(), ".opencode", "oh-my-opencode.json")
             ),
-          success: "✅ oh-my-opencode configuration found",
-          error: "⚠️ oh-my-opencode config missing (run install first)",
+          success: "✅ opencode configuration found",
+          error: "⚠️ opencode config missing (run install first)",
         },
         {
           name: "Agent System",
@@ -463,15 +465,15 @@ program
         console.log("✅ StringRay package installed");
       }
 
-      // Check configuration
-      const configExists = fs.existsSync(
-        path.join(process.cwd(), ".opencode", "oh-my-opencode.json"),
-      );
+      // Check configuration - check for opencode.json first (Jelly standard), then oh-my-opencode.json
+      const opencodeConfigPath = path.join(process.cwd(), "opencode.json");
+      const ohMyOpencodeConfigPath = path.join(process.cwd(), ".opencode", "oh-my-opencode.json");
+      const configExists = fs.existsSync(opencodeConfigPath) || fs.existsSync(ohMyOpencodeConfigPath);
       if (!configExists) {
-        issues.push("oh-my-opencode configuration missing");
+        issues.push("opencode configuration missing");
         fixes.push("Run: npx strray-ai fix");
       } else {
-        console.log("✅ oh-my-opencode configuration found");
+        console.log("✅ opencode configuration found");
       }
 
       // Check for common issues
