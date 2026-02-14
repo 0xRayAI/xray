@@ -86,7 +86,7 @@ echo "✅ Build artifacts cleaned"
 
 # 3. Install dependencies
 print_step "3" "Install Dependencies"
-run_cmd "cd '$PROJECT_DIR' && npm ci"
+run_cmd "cd '$PROJECT_DIR' && npm install"
 echo "✅ Dependencies installed"
 
 # 4. Run type checking

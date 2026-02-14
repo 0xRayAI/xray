@@ -223,13 +223,12 @@ class MCPFunctionalityTest {
       
       const testServers = [
         "orchestrator",
-        "enforcer-tools",
-        "framework-compliance-audit",
+        "enforcer",
       ];
       let initializedServers = 0;
 
       for (const serverName of testServers) {
-        const serverConfig = mcpConfig.mcpServers[serverName];
+        const serverConfig = mcpConfig.mcpServers[serverName] || mcpConfig.mcp?.[serverName];
 
         if (!serverConfig) {
           console.log(`  ⚠️ Server ${serverName} not configured`);

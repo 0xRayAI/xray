@@ -76,17 +76,8 @@ if [ -f "$PLUGIN_FILE" ]; then
         exit 1
     fi
     
-    # Check file syntax by reading and parsing (ES modules can't be required in CommonJS)
-    node -c "
-    try {
-        require('$PLUGIN_FILE');
-        console.log('✅ Plugin syntax valid');
-        process.exit(0);
-    } catch (error) {
-        console.log('❌ Plugin syntax error:', error.message);
-        process.exit(1);
-    }
-" 2>/dev/null
+    # Check file syntax using Node.js parsing (ES modules)
+    node --check "$PLUGIN_FILE" 2>/dev/null
     
     if [ $? -eq 0 ]; then
         log_success "Plugin file validated"
