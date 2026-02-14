@@ -8,7 +8,7 @@ tags: [analysis, project, complexity, health]
 mcp:
   project-analysis:
     command: node
-    args: [node_modules/strray-ai/dist/plugin/mcps/knowledge-skills/project-analysis.server.js]
+    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/project-analysis.server.js]
 ---
 
 # Project Analysis Skill

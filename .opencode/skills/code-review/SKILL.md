@@ -8,7 +8,7 @@ tags: [review, quality, assessment, improvement]
 mcp:
   code-review:
     command: node
-    args: [node_modules/strray-ai/dist/plugin/mcps/knowledge-skills/code-review.server.js]
+    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/code-review.server.js]
 ---
 
 # Code Review Skill

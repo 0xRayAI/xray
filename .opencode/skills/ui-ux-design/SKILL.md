@@ -8,7 +8,7 @@ tags: [design, ui, ux, design]
 mcp:
   ui-ux-design:
     command: node
-    args: [node_modules/strray-ai/dist/plugin/mcps/dist/plugin/mcps/knowledge-skills/ui-ux-design.server.js]
+    args: [node_modules/strray-ai/dist/plugin/mcps/dist/mcps/knowledge-skills/ui-ux-design.server.js]
 ---
 
 # Ui Ux Design Skill

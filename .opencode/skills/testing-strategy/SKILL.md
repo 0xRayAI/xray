@@ -8,7 +8,7 @@ tags: [testing, strategy, coverage, quality]
 mcp:
   testing-strategy:
     command: node
-    args: [node_modules/strray-ai/dist/plugin/mcps/knowledge-skills/testing-strategy.server.js]
+    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/testing-strategy.server.js]
 ---
 
 # Testing Strategy Skill

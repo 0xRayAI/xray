@@ -8,7 +8,7 @@ tags: [research, librarian]
 mcp:
   librarian:
     command: node
-    args: [node_modules/strray-ai/dist/plugin/mcps/dist/plugin/mcps/knowledge-skills/project-analysis.server.js]
+    args: [node_modules/strray-ai/dist/plugin/mcps/dist/mcps/knowledge-skills/project-analysis.server.js]
 ---
 
 # Librarian Skill
