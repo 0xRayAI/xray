@@ -86,24 +86,44 @@ cd "$TEST_DIR"
 
 echo "Installing package: $PACK_FILE"
 cd "$TEST_DIR"
-# Install tarball then also install strray-ai as dependency
-npm install "$PACK_FILE" --legacy-peer-deps 2>/dev/null || true
-npm install strray-ai --silent 2>/dev/null || true
 
-if [ -d "node_modules/strray-ai/dist" ]; then
+# Create minimal package.json to ensure proper installation
+cat > package.json << 'EOF'
+{
+  "name": "strray-test",
+  "version": "1.0.0"
+}
+EOF
+
+# Install tarball with --save to ensure it's properly installed
+npm install "$PACK_FILE" --legacy-peer-deps 2>&1 | tail -5
+
+if [ -d "node_modules/strray-ai" ]; then
     echo "✅ Local installation successful"
+    echo "Installed files:"
+    ls -la node_modules/strray-ai/ | head -10
     
-    # Check if plugin file exists (correct path)
-    PLUGIN_PATH="node_modules/strray-ai/dist/plugin/strray-codex-injection.js"
-    if [ -f "$PLUGIN_PATH" ]; then
-        echo "✅ Plugin file found at $PLUGIN_PATH"
-        ls -la "node_modules/strray-ai/dist/plugin/"
+    # Check if dist exists
+    if [ -d "node_modules/strray-ai/dist" ]; then
+        echo "✅ dist directory found"
+        ls -la node_modules/strray-ai/dist/ | head -10
+        
+        # Check if plugin file exists (correct path)
+        PLUGIN_PATH="node_modules/strray-ai/dist/plugin/strray-codex-injection.js"
+        if [ -f "$PLUGIN_PATH" ]; then
+            echo "✅ Plugin file found at $PLUGIN_PATH"
+            ls -la "node_modules/strray-ai/dist/plugin/"
+        else
+            echo "⚠️ Plugin file not at expected path, checking alternatives..."
+            find node_modules/strray-ai -name "strray-codex-injection.js" 2>/dev/null | head -3
+        fi
     else
-        echo "⚠️ Plugin file not at expected path, checking alternatives..."
-        find node_modules/strray-ai -name "strray-codex-injection.js" 2>/dev/null | head -3
+        echo "⚠️ dist directory not found, checking node_modules..."
+        ls -la node_modules/strray-ai/
     fi
 else
-    echo "❌ Local installation failed - strray-ai not found"
+    echo "⚠️ strray-ai not found in node_modules"
+    echo "Current directory: $(pwd)"
     ls -la
 fi
 

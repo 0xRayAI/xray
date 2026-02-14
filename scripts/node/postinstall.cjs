@@ -13,6 +13,26 @@ console.log('🔧 StrRay Postinstall: Script starting...');
 // Find the package root relative to this script
 const packageRoot = path.join(__dirname, "..", "..");
 
+// Get the consumer directory - npm changes to node_modules/<package> during postinstall
+// We need to find the parent of node_modules/<package>
+// The script is at: <consumer>/node_modules/strray-ai/scripts/node/postinstall.cjs
+// So we need to go up: scripts/node -> strray-ai -> node_modules -> <consumer>
+let targetDir;
+
+// Check if we're in node_modules (normal npm install)
+if (__dirname.includes("node_modules/strray-ai")) {
+  // Go up from scripts/node to node_modules/strray-ai to consumer root
+  targetDir = path.join(__dirname, "..", "..", "..", "..");
+} else {
+  // Fallback: use PWD or cwd
+  targetDir = process.env.PWD || process.cwd();
+}
+
+console.log("🔧 StrRay Postinstall: Script directory:", __dirname);
+console.log("🔧 StrRay Postinstall: Package root:", packageRoot);
+console.log("🔧 StrRay Postinstall: Consumer directory:", targetDir);
+console.log("🔧 StrRay Postinstall: Current working dir:", process.cwd());
+
 // Configuration files to copy during installation
 const configFiles = [
   // ".mcp.json", // Commented out - no longer auto-copying MCP config
@@ -26,12 +46,12 @@ const configDirs = [
 
 console.log("🔧 StrRay Postinstall: Copying configuration files...");
 console.log("📍 Package root:", packageRoot);
-console.log("📍 Target directory:", process.cwd());
+console.log("📍 Target directory:", targetDir);
 
 // Copy individual files
 configFiles.forEach(filePath => {
   const source = path.join(packageRoot, filePath);
-  const dest = path.join(process.cwd(), filePath);
+  const dest = path.join(targetDir, filePath);
 
   try {
     if (fs.existsSync(source)) {
@@ -55,7 +75,7 @@ configFiles.forEach(filePath => {
 // Copy directories recursively
 configDirs.forEach(dirPath => {
   const sourceDir = path.join(packageRoot, dirPath);
-  const destDir = path.join(process.cwd(), dirPath);
+  const destDir = path.join(targetDir, dirPath);
 
   if (fs.existsSync(sourceDir)) {
     try {
@@ -89,8 +109,9 @@ configDirs.forEach(dirPath => {
 });
 
 // Detect if we're in a consumer environment (installed via npm)
+// Check both the target directory and current working directory
 const cwd = process.cwd();
-const isConsumerEnvironment = !cwd.includes("dev/stringray") && !cwd.includes("stringray");
+const isConsumerEnvironment = !targetDir.includes("dev/stringray") && !targetDir.includes("stringray");
 
 // Convert paths for consumer environment
 if (isConsumerEnvironment) {
@@ -100,7 +121,7 @@ if (isConsumerEnvironment) {
   // See AGENTS.md for details
 
   // Convert plugin paths in OpenCode.json
-  const opencodePath = path.join(process.cwd(), ".opencode", "OpenCode.json");
+  const opencodePath = path.join(targetDir, ".opencode", "OpenCode.json");
   if (fs.existsSync(opencodePath)) {
     let opencodeContent = fs.readFileSync(opencodePath, "utf8");
     // Convert strray/dist/plugin path to node_modules path
@@ -124,7 +145,7 @@ if (isConsumerEnvironment) {
   }
 
   // Convert plugin paths in opencode.json
-  const mainOpencodePath = path.join(process.cwd(), "opencode.json");
+  const mainOpencodePath = path.join(targetDir, "opencode.json");
   if (fs.existsSync(mainOpencodePath)) {
     let opencodeContent = fs.readFileSync(mainOpencodePath, "utf8");
     // Handle various plugin path patterns
@@ -151,7 +172,7 @@ console.log("🔧 StrRay Postinstall: Consumer installation complete - all paths
 
 // Create symlink to .strray directory for persistent state
 const strraySource = path.join(packageRoot, '.strray');
-const strrayDest = path.join(process.cwd(), '.strray');
+const strrayDest = path.join(targetDir, '.strray');
 
 if (fs.existsSync(strraySource) && !fs.existsSync(strrayDest)) {
   try {

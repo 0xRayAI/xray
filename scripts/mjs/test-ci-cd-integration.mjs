@@ -59,7 +59,7 @@ async function main() {
     runCommand(`cd ${CI_TEST_DIR} && npm install ../${packageFile}`, 'Install package in test environment');
 
     // Test 5: Run postinstall script
-    runCommand(`cd ${CI_TEST_DIR} && node node_modules/strray-ai/scripts/postinstall.cjs`, 'Run postinstall script');
+    runCommand(`cd ${CI_TEST_DIR} && node node_modules/strray-ai/scripts/node/postinstall.cjs`, 'Run postinstall script');
 
     // Test 6: Validate configuration
     const configPath = join(CI_TEST_DIR, '.opencode', 'OpenCode.json');
