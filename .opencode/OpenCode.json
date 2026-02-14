@@ -1,5 +1,29 @@
 {
-  "plugin": "./dist/plugin/plugins/strray-codex-injection.js",
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "src/plugin/strray-codex-injection.ts",
+    "strray/dist/plugin/strray-codex-injection.js"
+  ],
+  "settings": {
+    "multi_agent_orchestration": {
+      "enabled": true,
+      "max_concurrent_agents": 3
+    }
+  },
+  "disabled_agents": [
+    "Sisyphus",
+    "Planner-Sisyphus",
+    "Build",
+    "Plan"
+  ],
+  "sisyphus_agent": {
+    "disabled": true
+  },
+  "disabled_mcps": [
+    "global-everything",
+    "global-git",
+    "global-sqlite"
+  ],
   "agents": [
     "enforcer",
     "architect",
