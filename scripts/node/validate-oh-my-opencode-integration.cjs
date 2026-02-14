@@ -3,7 +3,7 @@
 /**
  * Fixed OH-MY-OPENCODE Integration Validator
  *
- * Tests complete integration between StringRay framework and oh-my-opencode
+ * Tests complete integration between StringRay framework and OpenCode
  * Validates MCP server registration, plugin loading, and tool availability
  */
 
@@ -49,7 +49,7 @@ class OhMyOpenCodeIntegrationValidator {
     console.log("\n🔌 Testing Plugin Registration...");
     
     try {
-      const configPath = path.join(this.packageRoot, ".opencode", "oh-my-opencode.json");
+      const configPath = path.join(this.packageRoot, ".opencode", "OpenCode.json");
       const ohMyOpencodeConfig = JSON.parse(
         fs.readFileSync(configPath, "utf8"),
       );
@@ -61,10 +61,10 @@ class OhMyOpenCodeIntegrationValidator {
           p.includes("strray-codex-injection")
         )
       ) {
-        console.log("  ✅ StringRay plugin registered in oh-my-opencode");
+        console.log("  ✅ StringRay plugin registered in OpenCode");
         this.results.passed.push("Plugin Registration");
       } else {
-        console.log("  ❌ StringRay plugin not registered in oh-my-opencode");
+        console.log("  ❌ StringRay plugin not registered in OpenCode");
         this.results.failed.push("Plugin Registration");
       }
     } catch (error) {

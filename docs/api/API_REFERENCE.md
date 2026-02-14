@@ -16,7 +16,7 @@ Main orchestrator for framework initialization and agent coordination.
 import { StrRayOrchestrator } from "@strray/framework";
 
 const orchestrator = new StrRayOrchestrator({
-  configPath: ".opencode/oh-my-opencode.json",
+  configPath: ".opencode/OpenCode.json",
   performanceMode: "optimized",
   monitoringEnabled: true,
 });
@@ -494,7 +494,7 @@ for (const result of batchResult.results) {
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",

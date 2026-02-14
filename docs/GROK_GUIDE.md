@@ -65,7 +65,7 @@ Consider:
 
 ## Integration Patterns
 
-### oh-my-opencode Integration
+### OpenCode Integration
 
 ```typescript
 // Automatic integration via plugin

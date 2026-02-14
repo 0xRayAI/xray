@@ -50,7 +50,7 @@ class PathVerifier {
     const cwd = process.cwd();
     console.log(`Working directory: ${cwd}\n`);
 
-    // Check 1: Verify oh-my-opencode.json exists and has correct paths
+    // Check 1: Verify OpenCode.json exists and has correct paths
     await this.verifyOhMyOpencodeConfig();
 
     // Check 2: Verify opencode.json has correct paths
@@ -79,9 +79,9 @@ class PathVerifier {
   }
 
   async verifyOhMyOpencodeConfig() {
-    this.check('oh-my-opencode.json paths');
+    this.check('OpenCode.json paths');
 
-    const configPath = '.opencode/oh-my-opencode.json';
+    const configPath = '.opencode/OpenCode.json';
     if (!fs.existsSync(configPath)) {
       this.error(`${configPath} not found`);
       return;
@@ -188,7 +188,7 @@ class PathVerifier {
     this.check('No old development paths remaining');
 
     const filesToCheck = [
-      '.opencode/oh-my-opencode.json',
+      '.opencode/OpenCode.json',
       'opencode.json',
     ];
 

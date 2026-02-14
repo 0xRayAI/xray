@@ -9,14 +9,14 @@ description: Switch between full (8 agents) and lite (4 agents) modes dynamicall
 
 # Dynamically switches between full and lite agent configurations
 
-CONFIG_FILE="oh-my-opencode.json"
+CONFIG_FILE="OpenCode.json"
 ENFORCER_CONFIG_FILE="enforcer-config.json"
 
 # Function to display current mode
 
 show_current_mode() {
-if [ -f ".opencode/oh-my-opencode.json" ]; then
-DISABLED_COUNT=$(jq '.disabled_agents | length' .opencode/oh-my-opencode.json)
+if [ -f ".opencode/OpenCode.json" ]; then
+DISABLED_COUNT=$(jq '.disabled_agents | length' .opencode/OpenCode.json)
         if [ "$DISABLED_COUNT" -eq 0 ]; then
 CURRENT_MODE="full"
 echo "🎯 Current Mode: $CURRENT_MODE"

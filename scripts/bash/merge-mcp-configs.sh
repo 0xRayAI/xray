@@ -203,12 +203,12 @@ main() {
     echo ""
     info "Summary:"
     info "- MCP servers merged into .mcp.json"
-    info "- oh-my-opencode can now access StrRay agents as subagents"
+    info "- OpenCode can now access StrRay agents as subagents"
     info "- Multi-agent orchestration should now work through MCP protocol"
     echo ""
     success "StrRay subagents are now active in OpenConsole!"
     echo ""
-    info "To test: Run oh-my-opencode and check for available MCP tools"
+    info "To test: Run OpenCode and check for available MCP tools"
     info "Agents should appear as: orchestrator, enforcer, architect, etc."
 }
 

@@ -9,7 +9,7 @@
     "strray-ai": "dist/cli/index.js",
     "strray-integration": "dist/scripts/integration.js"
   },
-  "oh-my-opencode": {
+  "opencode": {
     "plugin": "./dist/plugin/plugins/strray-codex-injection.js",
     "mcps": "./dist/plugin/mcps/"
   },
@@ -45,7 +45,7 @@
     "lint:fix": "eslint src --fix",
     "security-audit": "npm audit --audit-level high",
     "test:integration": "node scripts/mjs/test-consumer-readiness.mjs && node scripts/mjs/test-mcp-functionality.mjs",
-    "test:e2e": "node scripts/node/validate-mcp-connectivity.js && node scripts/node/validate-oh-my-opencode-integration.cjs && node scripts/node/validate-external-processes.js",
+    "test:e2e": "node scripts/node/validate-mcp-connectivity.js && node scripts/node/validate-external-processes.js",
     "test:coverage": "vitest run --coverage",
     "profiling:demo": "bash advanced-profiling-integration.sh",
     "profiling:validate": "bash validate-profiling.sh",

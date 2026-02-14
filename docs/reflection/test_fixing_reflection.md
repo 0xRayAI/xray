@@ -253,7 +253,7 @@ All fixes were validated against security and compliance requirements:
 
 ## Integration and Ecosystem Issues
 
-### oh-my-opencode Plugin Integration
+### OpenCode Plugin Integration
 
 The test fixing process revealed integration fragility:
 

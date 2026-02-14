@@ -53,7 +53,7 @@ export class SecurityMiddleware {
         ...config.rateLimiting,
       },
       cors: {
-        enabled: false, // oh-my-opencode handles CORS for plugins
+        enabled: false, // OpenCode handles CORS for plugins
         origins: [],
         methods: [],
         headers: [],
@@ -131,7 +131,7 @@ export class SecurityMiddleware {
    */
   cors(): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
-      // CORS handled by oh-my-opencode framework
+      // CORS handled by OpenCode framework
       next();
     };
   }

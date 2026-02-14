@@ -6,15 +6,15 @@ This guide explains how to configure and update AI models in the StrRay framewor
 
 ## Key Configuration Files
 
-### 1. Primary Model Configuration: `oh-my-opencode.json`
+### 1. Primary Model Configuration: `OpenCode.json`
 
-**Location**: `.opencode/oh-my-opencode.json`
+**Location**: `.opencode/OpenCode.json`
 
 **Purpose**: Defines which AI model each agent uses and basic framework settings
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/OpenCode/master/assets/OpenCode.schema.json",
   "google_auth": false,
   "preemptive_compaction": true,
   "plugins": ["stringray-ai"],
@@ -67,12 +67,12 @@ defaults = {
 
 The StrRay framework uses a **hybrid configuration system**:
 
-- **oh-my-opencode.json**: oh-my-opencode-compatible settings (model routing, plugins, basic config)
+- **OpenCode.json**: OpenCode-compatible settings (model routing, plugins, basic config)
 - **Python ConfigManager**: Runtime framework configuration (codex terms, agent capabilities, monitoring)
 
 This separation ensures:
 
-- Schema compliance with oh-my-opencode
+- Schema compliance with OpenCode
 - Runtime flexibility for framework settings
 - Clear separation of concerns
 
@@ -80,10 +80,10 @@ This separation ensures:
 
 ### Step-by-Step Process
 
-1. **Edit the oh-my-opencode.json file:**
+1. **Edit the OpenCode.json file:**
 
    ```bash
-   nano .opencode/oh-my-opencode.json
+   nano .opencode/OpenCode.json
    ```
 
 2. **Update model assignments in the `model_routing` section:**
@@ -101,19 +101,19 @@ This separation ensures:
 3. **Restart the framework:**
 
    ```bash
-   oh-my-opencode restart
+   OpenCode restart
    ```
 
 4. **Validate changes:**
    ```bash
-   oh-my-opencode status
+   OpenCode status
    ```
 
 ## Important Notes
 
 - **Static Configuration**: Models cannot be changed dynamically during runtime
 - **Restart Required**: Changes require framework restart to take effect
-- **Validation**: Always run `oh-my-opencode config validate` after changes
+- **Validation**: Always run `OpenCode config validate` after changes
 - **Backup**: Keep backups of working configurations
 
 ## Available Models

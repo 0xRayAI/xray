@@ -405,8 +405,8 @@ fi
     STRRAY_PLUGIN="node_modules/strray-framework"
   elif [ -d "node_modules/@strray/strray-framework" ]; then
     STRRAY_PLUGIN="node_modules/@strray/strray-framework"
-  elif [ -d "node_modules/oh-my-opencode/plugins/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/oh-my-opencode/plugins/strray-framework"
+  elif [ -d "node_modules/OpenCode/plugins/strray-framework" ]; then
+    STRRAY_PLUGIN="node_modules/OpenCode/plugins/strray-framework"
   elif [ -f "dist/postprocessor/PostProcessor.js" ]; then
     # Development mode - use current project
     STRRAY_PLUGIN="."

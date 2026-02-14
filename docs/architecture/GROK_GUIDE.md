@@ -25,10 +25,10 @@ StringRay is **optimized for Grok** and other advanced AI models. It leverages G
 ### 1. Install StringRay
 
 ```bash
-# Install oh-my-opencode (required dependency)
-npm install -g oh-my-opencode
+# Install OpenCode (required dependency)
+npm install -g OpenCode
 # or
-bun install -g oh-my-opencode
+bun install -g OpenCode
 
 # Install StringRay dependencies
 npm install
@@ -41,11 +41,11 @@ npm run init
 
 ### 2. Configure for Grok
 
-Update your `.opencode/oh-my-opencode.json`:
+Update your `.opencode/OpenCode.json`:
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "grok-code",
     "architect": "grok-code",
@@ -207,7 +207,7 @@ npm run init
 
 ### Step 2: Configure Grok
 
-Update `.opencode/oh-my-opencode.json` with your Grok model settings.
+Update `.opencode/OpenCode.json` with your Grok model settings.
 
 ### Step 3: Start Developing
 
@@ -249,7 +249,7 @@ Visit http://localhost:3000 to see real-time agent coordination and project stat
 
 - Check the troubleshooting guide: `docs/troubleshooting/`
 - Visit the dashboard at http://localhost:3000 for status
-- Run `oh-my-opencode status` for framework diagnostics
+- Run `OpenCode status` for framework diagnostics
 
 ---
 

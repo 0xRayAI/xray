@@ -210,7 +210,7 @@ class ConsumerReadinessTest {
     const integrationPoints = [
       { name: 'OpenCode Configuration', check: () => {
         const fs = require('fs');
-        return fs.existsSync(path.join(__dirname, '..', '..', '.opencode/oh-my-opencode.json'));
+        return fs.existsSync(path.join(__dirname, '..', '..', '.opencode/OpenCode.json'));
       }},
       { name: 'Postinstall Script', check: () => {
         const fs = require('fs');

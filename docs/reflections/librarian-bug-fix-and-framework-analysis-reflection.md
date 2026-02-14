@@ -21,7 +21,7 @@ A critical bug was discovered in the librarian agent: infinite subagent spawning
 
 ### Framework Operations Revealed
 The investigation uncovered extensive framework operations:
-- **Agent Activities**: 27 delegation decisions, 5 agent executions, 4 oh-my-opencode integrations
+- **Agent Activities**: 27 delegation decisions, 5 agent executions, 4 OpenCode integrations
 - **Rule Processing**: 8 validation events, codex compliance active, 4-processor pipeline
 - **Documentation**: 3 updates triggered, 5 version updates, 3 integrity validations
 - **Security**: 3 audit scans, compliance processors active

@@ -100,7 +100,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
     antiPatterns: ["Spaghetti code"],
     validationCriteria: {},
     frameworkAlignment: {
-      "oh-my-opencode": "v1.2.0",
+      "OpenCode": "v1.2.0",
     },
   });
 
@@ -435,7 +435,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
         "security-processor-session",
       );
 
-      // Mock security-focused delegation (agents executed via oh-my-opencode framework)
+      // Mock security-focused delegation (agents executed via OpenCode framework)
       const mockDelegation = {
         strategy: "single-agent" as const,
         agents: ["security-auditor"],
@@ -456,7 +456,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
         },
         estimatedDuration: 200,
         success: true,
-        result: "Security analysis completed via oh-my-opencode framework",
+        result: "Security analysis completed via OpenCode framework",
       };
 
       sessionCoordinator.registerDelegation(
@@ -517,11 +517,11 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
       );
       expect(sessionStatus!.active).toBe(true);
 
-      // Recovery: Mock successful recovery delegation via oh-my-opencode framework
+      // Recovery: Mock successful recovery delegation via OpenCode framework
       const mockRecoveryDelegation = {
         success: true,
         agents: ["security-auditor"],
-        result: "Recovery successful via oh-my-opencode agent execution",
+        result: "Recovery successful via OpenCode agent execution",
         sessionId: session.sessionId,
       };
 

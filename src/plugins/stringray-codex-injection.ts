@@ -1,5 +1,5 @@
 /**
- * StringRay Plugin for oh-my-opencode
+ * StringRay Plugin for OpenCode
  *
  * Enterprise AI orchestration with systematic error prevention.
  * This plugin provides intelligent agent coordination and codex-based code quality enforcement.

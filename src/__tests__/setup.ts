@@ -55,7 +55,7 @@ beforeAll(() => {
     plugin: "./dist/plugin/plugins/strray-codex-injection.js",
     agents: ["enforcer", "architect", "orchestrator"],
   };
-  const ohMyOpencodePath = path.resolve(".opencode/oh-my-opencode.json");
+  const ohMyOpencodePath = path.resolve(".opencode/OpenCode.json");
   if (!fs.existsSync(ohMyOpencodePath)) {
     fs.writeFileSync(
       ohMyOpencodePath,
@@ -154,7 +154,7 @@ global.testUtils = {
         "No TODO comments in production code": false,
       },
       frameworkAlignment: {
-        "oh-my-opencode": "v1.2.0",
+        "OpenCode": "v1.2.0",
       },
     });
   },

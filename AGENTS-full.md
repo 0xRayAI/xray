@@ -253,7 +253,7 @@ Authentication → Capability Matching → Operation Execution → Result Format
 **Purpose**: Third-party extension management and integration
 **Entry Point**: `src/plugins/plugin-system.ts`
 **Components**:
-- `src/plugins/stringray-codex-injection.ts` - oh-my-opencode integration
+- `src/plugins/stringray-codex-injection.ts` - OpenCode integration
 - `src/hooks/validation-hooks.ts` - Hook system integration
 - `src/architectural-integrity.ts` - System integrity validation
 
@@ -269,7 +269,7 @@ Security Scan → Sandbox Setup → Lifecycle Management → Event Handling
 - Security validation and sandboxing
 - Lifecycle management (activate/deactivate)
 - Hook integration with framework events
-- oh-my-opencode plugin system integration
+- OpenCode plugin system integration
 
 ### 2.8 Testing & Validation Pipeline
 
@@ -449,7 +449,7 @@ Dependencies (→ indicates "depends on")
 Data Flow: User Input → Framework Processing → Agent Execution → Validation → Output
 
 ├── Input Processing
-│   ├── oh-my-opencode Hooks (stringray-codex-injection.ts)
+│   ├── OpenCode Hooks (stringray-codex-injection.ts)
 │   ├── CLI Commands (boot-orchestrator.ts)
 │   └── MCP Tool Calls (mcp-client.ts)
 │
@@ -615,7 +615,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 
 **Configuration Hierarchy:**
 - Global settings (`.opencode/strray/config.json`)
-- Project overrides (`.opencode/oh-my-opencode.json`)
+- Project overrides (`.opencode/OpenCode.json`)
 - Runtime state (`src/state/state-manager.ts`)
 
 **State Persistence:**
@@ -625,7 +625,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 
 ### Configuration Templates
 
-#### Complete .opencode/oh-my-opencode.json Template
+#### Complete .opencode/OpenCode.json Template
 ```json
 {
   "model_routing": {
@@ -724,7 +724,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 | Rule violations not caught | Code passes validation | Verify rule-enforcer integration |
 | JobId missing from logs | Activity log incomplete | Check framework-logger updates |
 | Performance degradation | Slow response times | Monitor complexity thresholds |
-| Plugin conflicts | oh-my-opencode integration issues | Validate plugin system |
+| Plugin conflicts | OpenCode integration issues | Validate plugin system |
 
 **Diagnostic Commands:**
 ```bash
@@ -756,7 +756,7 @@ npm run monitoring
 
 #### Agent Commands
 ```bash
-# Invoke agents via oh-my-opencode
+# Invoke agents via OpenCode
 @orchestrator analyze codebase complexity
 @architect design API endpoints
 @enforcer validate code against codex
@@ -793,7 +793,7 @@ npm run test:coverage         # Coverage analysis (>85% required)
 
 # Validation scripts
 node scripts/test:mcp-connectivity    # MCP server validation
-node scripts/test:oh-my-opencode-integration  # Framework integration
+node scripts/test:OpenCode-integration  # Framework integration
 node scripts/test:postinstall-config  # Configuration validation
 ```
 
@@ -844,7 +844,7 @@ StringRay operates in **two distinct environments** with different module resolu
 - **Setup Required**: `node node_modules/strray-ai/scripts/postinstall.cjs`
 
 #### **Why Two Environments?**
-- **oh-my-opencode Plugin**: Uses bundler-style imports (no .js extensions needed)
+- **OpenCode Plugin**: Uses bundler-style imports (no .js extensions needed)
 - **Node.js/Test Environment**: Requires .js extensions for ES module resolution
 - **Solution**: Clean TypeScript sources + transformation at distribution time
 
@@ -858,7 +858,7 @@ StringRay operates in **two distinct environments** with different module resolu
 
 1. **Installation**: `npm install strray-ai`
 2. **Setup**: `node node_modules/strray-ai/scripts/postinstall.cjs`
-3. **Invoke Agents**: Use @agent-name commands in oh-my-opencode
+3. **Invoke Agents**: Use @agent-name commands in OpenCode
 4. **Complexity Analysis**: Tasks are automatically routed based on complexity metrics
 
 **Agent Routing Behavior**:
@@ -872,9 +872,9 @@ StringRay operates in **two distinct environments** with different module resolu
 
 ### 2.1 Core Architecture
 
-StringRay integrates as an oh-my-opencode plugin with optimized agent orchestration:
+StringRay integrates as an OpenCode plugin with optimized agent orchestration:
 
-- **Primary**: oh-my-opencode's Prometheus planner + Sisyphus executor
+- **Primary**: OpenCode's Prometheus planner + Sisyphus executor
 - **Secondary**: StringRay's multi-agent delegation for complex tasks
 - **Configuration**: Merged hierarchy (global → project → framework settings)
 - **Boot Sequence**: Plugin loading → context initialization → agent activation
@@ -1176,14 +1176,14 @@ Parallel analysis → Results → Majority vote consensus → Final report
 2. Initialize tool permissions based on agent capabilities
 3. Establish MCP server connections for assigned tools
 4. Validate session state and configuration
-5. Register for oh-my-opencode hook events
+5. Register for OpenCode hook events
 
 **Multi-Tasking Approaches**:
 - **Background Execution**: Use `background_task` for parallel operations
 - **Subagent Parallel Execution**: Use `call_omo_agent` or `task()` with `subagent_type` parameter
 - **Session-Based Multi-Tasking**: Related tasks within same session context
 
-**oh-my-opencode Commands**:
+**OpenCode Commands**:
 - `@orchestrator coordinate <task>` - Delegate complex tasks to orchestrator
 - `@enforcer analyze <code>` - Run code quality and error prevention analysis
 - `@architect design <system>` - Get architectural design and technical decisions
@@ -1205,7 +1205,7 @@ call_omo_agent(description="Code review", prompt="...", subagent_type="architect
 - **Primary**: Use `task()` for visibility into subagent execution and progress monitoring
 - **Alternative**: Use `call_omo_agent()` for background execution (no visibility)
 - Internal agents use programmatic calls, not @ commands
-- @ commands are for user interaction with oh-my-opencode
+- @ commands are for user interaction with OpenCode
 
 ### 3.8 Agent Invocation Methods Guide
 
@@ -1218,7 +1218,7 @@ call_omo_agent(description="Code review", prompt="...", subagent_type="architect
 
 **When to use**:
 - ✅ External user interaction with the framework
-- ✅ Direct agent commands from oh-my-opencode chat
+- ✅ Direct agent commands from OpenCode chat
 - ✅ Simple, immediate requests
 
 #### **task() (Internal Agent Coordination with Visibility)**
@@ -1272,7 +1272,7 @@ call_omo_agent(description="Code review", prompt="...", subagent_type="architect
 
 ### 3.7 Framework Integration Details
 
-**oh-my-opencode Integration**:
+**OpenCode Integration**:
 - Hook system: `agent.start`, `tool.execute.before/after`, `experimental.chat.system.transform`
 - MCP server connections (9 servers: architect-tools, enforcer-tools, framework-help, etc.)
 - Plugin lifecycle: registered → validated → activated → running → deactivated
@@ -1401,8 +1401,8 @@ npm publish --tag latest
 | Stage                       | Component        | Location                           | Action                                 | Output                | Dependencies       |
 | --------------------------- | ---------------- | ---------------------------------- | -------------------------------------- | --------------------- | ------------------ |
 | **1. OpenCode**             | Core Runtime     | `~/.opencode/`                     | Start OpenCode environment             | Runtime ready         | None               |
-| **2. oh-my-opencode**       | Framework Loader | `~/.opencode/plugins/`             | Load oh-my-opencode framework          | Framework active      | OpenCode           |
-| **3. Plugin Discovery**     | Plugin System    | `.opencode/plugins/`               | Scan for StrRay plugin                 | Plugin detected       | oh-my-opencode     |
+| **2. OpenCode**       | Framework Loader | `~/.opencode/plugins/`             | Load OpenCode framework          | Framework active      | OpenCode           |
+| **3. Plugin Discovery**     | Plugin System    | `.opencode/plugins/`               | Scan for StrRay plugin                 | Plugin detected       | OpenCode     |
 | **4. Plugin Loading**       | Codex Injection  | `plugin/strray-codex-injection.ts` | Load plugin with codex injection       | Plugin active         | Plugin discovery   |
 | **5. Claude Override**      | MCP Exclusion    | `.claude/.mcp.json`                | Disable problematic global MCP servers | Clean MCP environment | Plugin loading     |
 | **6. MCP Registration**     | Server Registry  | `.mcp.json`                        | Register 28 MCP servers                | Servers available     | Claude override    |
@@ -1418,7 +1418,7 @@ npm publish --tag latest
 #### Boot Orchestration Sequence
 
 1. **Plugin Loading** (`plugin/strray-codex-injection.ts`)
-   - Loads on oh-my-opencode startup via plugin system
+   - Loads on OpenCode startup via plugin system
    - Injects codex terms into all agent system prompts
    - Registers MCP servers for StrRay agents
 
@@ -1936,7 +1936,7 @@ project-root/
 #### Framework Boot Sequence Summary
 
 **14-Stage Initialization Process**:
-1. **Plugin Loading**: oh-my-opencode plugin system loads StringRay
+1. **Plugin Loading**: OpenCode plugin system loads StringRay
 2. **Context Loading**: Codex terms and configuration loaded
 3. **State Manager**: Session persistence and recovery initialized
 4. **Orchestrator**: Multi-agent coordination system activated
@@ -2064,7 +2064,7 @@ When codex rules are violated, the system automatically attempts fixes:
   - These import from `dist/` and need .js extension transformation
   - Will work after consumer npm install + postinstall
 
-**Why the split?** TypeScript source uses clean imports (no .js). The oh-my-opencode plugin handles this via bundler. But Node.js/test environment requires .js extensions for ES modules. Post-install transforms dist/ files for consumers.
+**Why the split?** TypeScript source uses clean imports (no .js). The OpenCode plugin handles this via bundler. But Node.js/test environment requires .js extensions for ES modules. Post-install transforms dist/ files for consumers.
 
 #### 🔬 **Critical Testing Scripts (Run These First)**
 
@@ -2095,7 +2095,7 @@ When codex rules are violated, the system automatically attempts fixes:
 
 **`./scripts/deploy-stringray-plugin.sh`** - **PLUGIN DEPLOYMENT**
 - **When to run**: When deploying framework updates
-- **What it does**: Deploys StringRay as an oh-my-opencode plugin
+- **What it does**: Deploys StringRay as an OpenCode plugin
 - **Use case**: "Need to deploy framework to production environment"
 
 **`./scripts/build/` directory** - **BUILD SYSTEM SCRIPTS**
@@ -2112,9 +2112,9 @@ When codex rules are violated, the system automatically attempts fixes:
 - **What it does**: Tests all 28 MCP server connections
 - **Use case**: "MCP tools aren't available to agents"
 
-**`./scripts/validation/validate-oh-my-opencode-integration.js`** - **FRAMEWORK INTEGRATION**
+**`./scripts/validation/validate-OpenCode-integration.js`** - **FRAMEWORK INTEGRATION**
 - **When to run**: When framework commands aren't working
-- **What it does**: Tests oh-my-opencode plugin integration
+- **What it does**: Tests OpenCode plugin integration
 - **Use case**: "@agent commands not responding"
 
 **`./scripts/validation/validate-postinstall-config.js`** - **CONFIGURATION VALIDATION**
@@ -2136,8 +2136,8 @@ When codex rules are violated, the system automatically attempts fixes:
 
 **`./scripts/debug/debug-plugin.cjs`** - **PLUGIN DEBUGGING**
 - **When to run**: When plugin loading fails
-- **What it does**: Debugs oh-my-opencode plugin integration
-- **Use case**: "Plugin not loading in oh-my-opencode"
+- **What it does**: Debugs OpenCode plugin integration
+- **Use case**: "Plugin not loading in OpenCode"
 
 #### 📊 **Performance & Monitoring Scripts**
 
@@ -2169,7 +2169,7 @@ When codex rules are violated, the system automatically attempts fixes:
 |----------|-------------|-------------|-------------|
 | **Testing** | 45 scripts | `test-end-to-end-comprehensive.sh`, `validate-stringray-framework.sh` | System validation, debugging |
 | **Build** | 15 scripts | `run-build.sh`, `run-typecheck.sh` | Compilation, type checking |
-| **Validation** | 12 scripts | `validate-mcp-connectivity.js`, `validate-oh-my-opencode-integration.js` | Component testing |
+| **Validation** | 12 scripts | `validate-mcp-connectivity.js`, `validate-OpenCode-integration.js` | Component testing |
 | **Debugging** | 8 scripts | `strray-triage.sh`, `debug-rules.mjs` | Issue diagnosis |
 | **Performance** | 6 scripts | `performance-report.js`, `run-performance-gates.mjs` | Performance analysis |
 | **Setup** | 4 scripts | `postinstall.cjs`, `setup.cjs` | Environment configuration |
@@ -2190,7 +2190,7 @@ When codex rules are violated, the system automatically attempts fixes:
 
 **For Agent/Skill Issues:**
 1. MCP problems: `validate-mcp-connectivity.js`
-2. Integration issues: `validate-oh-my-opencode-integration.js`
+2. Integration issues: `validate-OpenCode-integration.js`
 3. Skill problems: `test-skills-comprehensive.mjs`
 
 **For Performance Issues:**
@@ -2236,8 +2236,8 @@ strray-framework/
 **Testing Approach**:
 - **Mock-Based**: Plugin architecture requires mocks for ES6 import isolation
 - **Unit Tests**: Pure functions, utilities, agent logic (25+ files)
-- **Integration Tests**: oh-my-opencode simulation, component interaction (20+ files)
-- **E2E Tests**: Full runtime through oh-my-opencode (real execution)
+- **Integration Tests**: OpenCode simulation, component interaction (20+ files)
+- **E2E Tests**: Full runtime through OpenCode (real execution)
 - **Performance Tests**: Regression detection, load testing
 
 **Running Tests**:
@@ -2265,13 +2265,13 @@ npm run test:mcp-connectivity      # MCP validation
 
 **Mock vs Real Testing**:
 - **Mock**: ES6 import conflicts prevent direct plugin testing
-- **Real**: E2E tests run through actual oh-my-opencode execution
+- **Real**: E2E tests run through actual OpenCode execution
 - **Hybrid**: Integration tests simulate runtime with controlled mocks
 
 **AI Agent Testing Procedures**:
 - **Validation Scripts**: Use `node scripts/test:mcp-connectivity.js` for MCP validation
 - **Postinstall Verification**: Run `node scripts/test:postinstall-config.js` after installation
-- **Integration Testing**: Execute `node scripts/test:oh-my-opencode-integration.js` for framework integration
+- **Integration Testing**: Execute `node scripts/test:OpenCode-integration.js` for framework integration
 - **End-to-End Validation**: Use `./scripts/test-end-to-end-comprehensive.sh` for complete framework testing
 
 **Test Execution Optimization**:
@@ -2288,7 +2288,7 @@ npm run test:mcp-connectivity      # MCP validation
 | Issue | Symptom | Solution |
 |-------|---------|----------|
 | Plugin not loading | Agent commands fail | Run `node node_modules/strray-ai/scripts/postinstall.cjs` |
-| Agent commands not working | @ commands unrecognized | Check oh-my-opencode configuration |
+| Agent commands not working | @ commands unrecognized | Check OpenCode configuration |
 | Codex validation errors | Unexpected blocking | Review codex terms in `.opencode/strray/codex.json` |
 | MCP connectivity fails | Server connection errors | Run `node scripts/test:mcp-connectivity.js` |
 | Token limit errors | "maximum prompt length exceeded" | Context will be automatically pruned (TokenManager active) |
@@ -2299,7 +2299,7 @@ npm run test:mcp-connectivity      # MCP validation
 ```bash
 # Validate setup
 node scripts/test:postinstall-config.js
-node scripts/test:oh-my-opencode-integration.js
+node scripts/test:OpenCode-integration.js
 node scripts/test:mcp-connectivity.js
 
 # Monitor performance
@@ -2342,7 +2342,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 - **Codex Terms**: `.opencode/strray/codex.json` - Universal Development Codex (59 terms)
 - **Framework Config**: `.opencode/strray/config.json` - Framework settings and thresholds
 - **Agent Templates**: `.opencode/strray/agents_template.md` - Agent documentation templates
-- **OpenCode Config**: `.opencode/oh-my-opencode.json` - oh-my-opencode plugin configuration
+- **OpenCode Config**: `.opencode/OpenCode.json` - OpenCode plugin configuration
 - **MCP Registry**: `.mcp.json` - MCP server registration (28 servers)
 - **Claude Override**: `.claude/.mcp.json` - MCP server exclusions
 
@@ -2393,7 +2393,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
   - `mcps/model-health-check.server.js` - AI model health monitoring
 
 **Plugin Files**:
-- **Main Plugin**: `plugin/strray-codex-injection.ts` - oh-my-opencode plugin entry point
+- **Main Plugin**: `plugin/strray-codex-injection.ts` - OpenCode plugin entry point
 - **Codex Injection**: `src/plugins/stringray-codex-injection.ts` - Codex context injection
 - **Plugin System**: `src/plugins/plugin-system.ts` - Plugin lifecycle management
 
@@ -2417,7 +2417,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 - **Test Scripts**: `scripts/test/` - Validation and testing utilities
 - **Validation Scripts**: `scripts/test:mcp-connectivity.js` - MCP server validation
 - **Postinstall Scripts**: `scripts/test:postinstall-config.js` - Configuration validation
-- **Integration Scripts**: `scripts/test:oh-my-opencode-integration.js` - Framework integration
+- **Integration Scripts**: `scripts/test:OpenCode-integration.js` - Framework integration
 - **Report Generation**: `scripts/generate-activity-report.js` - Activity log analysis
 - **Deployment Scripts**: `scripts/deploy-stringray-plugin.sh` - Plugin deployment
 
@@ -2460,7 +2460,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 
 ## Appendix B: Configuration Templates
 
-### Complete .opencode/oh-my-opencode.json Template
+### Complete .opencode/OpenCode.json Template
 ```json
 {
   "model_routing": {
@@ -2534,7 +2534,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 **Symptoms**: @agent commands ignored, no response from agents
 **Solutions**:
 1. **Check framework initialization**: Run `npx strray-ai health`
-2. **Restart oh-my-opencode**: Fully restart the application
+2. **Restart OpenCode**: Fully restart the application
 3. **Verify plugin installation**: Run `npx strray-ai status`
 4. **Check agent availability**: Ensure agents are loaded in `.opencode/agents/`
 
@@ -2574,14 +2574,14 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 **Symptoms**: StringRay commands unavailable, plugin not recognized
 **Solutions**:
 1. **Check plugin installation**: Run `npx strray-ai validate`
-2. **Verify oh-my-opencode integration**: Check `.opencode/plugins/` directory
+2. **Verify OpenCode integration**: Check `.opencode/plugins/` directory
 3. **Reinstall framework**: Run `npm install strray-ai` and `node node_modules/strray-ai/scripts/postinstall.cjs`
-4. **Check plugin compatibility**: Ensure oh-my-opencode version compatibility
+4. **Check plugin compatibility**: Ensure OpenCode version compatibility
 
 #### Configuration Errors
 **Symptoms**: Framework fails to start, invalid configuration messages
 **Solutions**:
-1. **Validate JSON syntax**: Check `.opencode/oh-my-opencode.json` and `.opencode/strray/config.json`
+1. **Validate JSON syntax**: Check `.opencode/OpenCode.json` and `.opencode/strray/config.json`
 2. **Use configuration templates**: Replace with validated templates from Appendix B
 3. **Check file permissions**: Ensure configuration files are readable
 4. **Reset to defaults**: Remove custom configurations and use framework defaults

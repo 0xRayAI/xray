@@ -82,7 +82,7 @@ Integration Points:
 
 ### Framework Integration
 
-- **oh-my-opencode Extension**: Seamless integration with existing workflow
+- **OpenCode Extension**: Seamless integration with existing workflow
 - **Plugin Architecture**: Extensible agent system with MCP protocol support
 - **State Persistence**: Workflow state maintained across sessions
 

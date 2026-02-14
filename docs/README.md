@@ -15,7 +15,7 @@
 StringRay Framework is available as both:
 
 - **Standalone npm package** for direct installation
-- **Integrated plugin** within oh-my-opencode framework
+- **Integrated plugin** within OpenCode framework
 
 **✅ Install as standalone package:**
 
@@ -24,10 +24,10 @@ npm install strray
 npx strray init
 ```
 
-**✅ Or install oh-my-opencode (includes StringRay Framework):**
+**✅ Or install OpenCode (includes StringRay Framework):**
 
 ```bash
-npm install -g oh-my-opencode
+npm install -g OpenCode
 # StringRay Framework is automatically included
 ```
 
@@ -64,7 +64,7 @@ This repository contains the complete StringRay Framework source code with enter
 
 - Node.js 18+
 - npm or bun
-- Optional: oh-my-opencode framework for enhanced integration
+- Optional: OpenCode framework for enhanced integration
 
 ### Installation Options
 
@@ -80,13 +80,13 @@ bun install strray
 npx strray init
 ```
 
-#### Option 2: oh-my-opencode Integration
+#### Option 2: OpenCode Integration
 
 ```bash
-# Install oh-my-opencode globally (includes StringRay Framework)
-npm install -g oh-my-opencode
+# Install OpenCode globally (includes StringRay Framework)
+npm install -g OpenCode
 # or
-bun install -g oh-my-opencode
+bun install -g OpenCode
 
 # StringRay Framework is automatically included as a plugin
 ```
@@ -103,9 +103,9 @@ StringRay Framework automatically configures itself based on your installation m
 - Sets up MCP servers for agent communication
 - Configures automated deployment pipelines
 
-#### oh-my-opencode Integration
+#### OpenCode Integration
 
-- All above features plus oh-my-opencode integration
+- All above features plus OpenCode integration
 - Enhanced multi-framework support
 - Cross-platform compatibility
 
@@ -126,28 +126,28 @@ npx strray init
 # - Enable automated deployment with canary rollouts
 ```
 
-#### oh-my-opencode Integration
+#### OpenCode Integration
 
 ```bash
-# Start oh-my-opencode (includes StringRay Framework)
+# Start OpenCode (includes StringRay Framework)
 opencode
 
 # All StringRay features are automatically available
 ```
 
-### oh-my-opencode Documentation
+### OpenCode Documentation
 
-For complete oh-my-opencode setup and usage instructions, see the [official oh-my-opencode documentation](https://github.com/code-yeongyu/oh-my-opencode).
+For complete OpenCode setup and usage instructions, see the [official OpenCode documentation](https://github.com/code-yeongyu/OpenCode).
 
 ### Configuration
 
-Update your `.opencode/oh-my-opencode.json`:
+Update your `.opencode/OpenCode.json`:
 
 **First, update to your preferred AI model.** Check [OpenCode](https://opencode.ai) for free models and update the `model_routing` section in your config. See [Model Configuration Guide](./docs/StringRay_MODEL_CONFIG.md) for detailed instructions.
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",
@@ -323,12 +323,12 @@ npm run optimize      # Performance optimization analysis
 # Quality Assurance
 # Testing Architecture
 npm run test:unit        # Unit tests with mock-based plugin testing
-npm run test:integration # Integration tests with oh-my-opencode simulation
-npm run test:e2e         # End-to-end tests through oh-my-opencode runtime
+npm run test:integration # Integration tests with OpenCode simulation
+npm run test:e2e         # End-to-end tests through OpenCode runtime
 
 ### 🧪 Testing Approach
 
-**StringRay Framework uses mock-based testing** due to its oh-my-opencode plugin architecture:
+**StringRay Framework uses mock-based testing** due to its OpenCode plugin architecture:
 
 **❌ Direct Plugin Testing (Not Supported):**
 ```typescript
@@ -354,16 +354,16 @@ const mockPlugin = {
 
 **Why Mock Testing?**
 
-- **Plugin Architecture**: Framework runs as oh-my-opencode plugin, not standalone Node.js
-- **ES6 Import Conflicts**: Direct plugin imports fail when run outside oh-my-opencode
+- **Plugin Architecture**: Framework runs as OpenCode plugin, not standalone Node.js
+- **ES6 Import Conflicts**: Direct plugin imports fail when run outside OpenCode
 - **Behavioral Testing**: Mocks test hook contracts and enforcement logic
 - **Reliability**: No environment-specific import issues
 
 **Testing Strategy:**
 
 - **Unit Tests**: Mock plugin behavior, test utility functions
-- **Integration Tests**: Simulate oh-my-opencode runtime with mocks
-- **E2E Tests**: Test through actual oh-my-opencode execution
+- **Integration Tests**: Simulate OpenCode runtime with mocks
+- **E2E Tests**: Test through actual OpenCode execution
 
 npm run test:coverage # Test coverage analysis (>85% required)
 npm run test:performance # Performance regression testing
@@ -373,11 +373,11 @@ npm run test:security # Security-focused test suite
 
 ### Advanced Configuration
 
-Update your `.opencode/oh-my-opencode.json` for enterprise deployment:
+Update your `.opencode/OpenCode.json` for enterprise deployment:
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",

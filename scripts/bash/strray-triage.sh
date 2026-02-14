@@ -119,18 +119,18 @@ check_strray_init() {
     fi
 }
 
-# Check 3: oh-my-opencode integration
+# Check 3: OpenCode integration
 check_omocode_integration() {
-    log_header "🔌 CHECK 3: oh-my-opencode Integration"
+    log_header "🔌 CHECK 3: OpenCode Integration"
 
     if ! command -v npx &> /dev/null; then
         log_error "npx not available"
         return 1
     fi
 
-    log_info "Running oh-my-opencode doctor check..."
+    log_info "Running OpenCode doctor check..."
     local doctor_output
-    doctor_output="$(npx oh-my-opencode doctor 2>&1)"
+    doctor_output="$(npx OpenCode doctor 2>&1)"
 
     if echo "$doctor_output" | grep -q "✓ Plugin Registration → Registered"; then
         log_success "Plugin registration: SUCCESS"
@@ -153,7 +153,7 @@ check_omocode_integration() {
     # Check for failures
     local failed_count=$(echo "$doctor_output" | grep -c "failed," | head -1)
     if [[ "$failed_count" -gt 0 ]]; then
-        log_warning "oh-my-opencode doctor reported failures. Run 'npx oh-my-opencode doctor' for details."
+        log_warning "OpenCode doctor reported failures. Run 'npx OpenCode doctor' for details."
     fi
 }
 
@@ -240,18 +240,18 @@ check_configuration() {
     fi
 
     # Check project config
-    if [[ -f "$PROJECT_ROOT/.opencode/oh-my-opencode.json" ]]; then
-        log_success "Project oh-my-opencode config exists"
+    if [[ -f "$PROJECT_ROOT/.opencode/OpenCode.json" ]]; then
+        log_success "Project OpenCode config exists"
 
         # Validate JSON
-        if jq empty "$PROJECT_ROOT/.opencode/oh-my-opencode.json" 2>/dev/null; then
+        if jq empty "$PROJECT_ROOT/.opencode/OpenCode.json" 2>/dev/null; then
             log_success "Project config JSON: VALID"
         else
             log_error "Project config JSON: INVALID"
             return 1
         fi
     else
-        log_error "Project oh-my-opencode config missing"
+        log_error "Project OpenCode config missing"
         return 1
     fi
 
@@ -340,7 +340,7 @@ case "${1:-}" in
         echo "This script performs comprehensive diagnostics on:"
         echo "- Plugin file location and integrity"
         echo "- StrRay framework initialization"
-        echo "- oh-my-opencode integration"
+        echo "- OpenCode integration"
         echo "- MCP server configuration and functionality"
         echo "- Plugin functionality and codex injection"
         echo "- Configuration file validation"

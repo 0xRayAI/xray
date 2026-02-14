@@ -31,7 +31,7 @@ These tests validate actual framework behavior and should be used for final vali
 - **`src/__tests__/framework-enforcement-integration.test.ts`**
   - Calls real: Codex injection hooks and rule enforcement
   - Validates: Plugin hook system and codex compliance
-  - Usage: Validate real plugin behavior in oh-my-opencode
+  - Usage: Validate real plugin behavior in OpenCode
 
 ### 🟡 MOCK-BASED UNIT TESTS (Use Mocks for Isolation)
 These tests validate individual components in isolation using mocks.
@@ -59,10 +59,10 @@ These tests validate individual components in isolation using mocks.
   - Usage: Validate agent behavior in isolation
 
 #### Integration Tests (Mock-Based)
-- **`src/__tests__/integration/oh-my-opencode-integration.test.ts`**
-  - Mock: oh-my-opencode environment and plugin loading
+- **`src/__tests__/integration/OpenCode-integration.test.ts`**
+  - Mock: OpenCode environment and plugin loading
   - Tests: Plugin integration contracts and hook triggering
-  - Usage: Validate plugin interfaces without real oh-my-opencode
+  - Usage: Validate plugin interfaces without real OpenCode
 
 - **`src/__tests__/integration/codex-enforcement.test.ts`**
   - Mock: Framework components, focus on codex rules

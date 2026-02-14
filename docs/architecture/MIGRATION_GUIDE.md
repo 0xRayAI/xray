@@ -54,11 +54,11 @@ This guide covers the technical migration procedures for StrRay Framework config
 
 ```bash
 # Check configuration syntax
-python3 -c "import json; json.load(open('.opencode/oh-my-opencode.json'))"
+python3 -c "import json; json.load(open('.opencode/OpenCode.json'))"
 
 # Validate required properties
 python3 -c "
-config = json.load(open('.opencode/oh-my-opencode.json'))
+config = json.load(open('.opencode/OpenCode.json'))
 required = ['strray_agents', 'dynamic_models', 'ai_logging']
 missing = [k for k in required if k not in config]
 print('Missing:', missing) if missing else print('Configuration valid')
@@ -268,7 +268,7 @@ echo "🔍 StrRay Migration Validation"
 echo "============================="
 
 # 1. Configuration syntax
-if python3 -c "import json; json.load(open('.opencode/oh-my-opencode.json'))"; then
+if python3 -c "import json; json.load(open('.opencode/OpenCode.json'))"; then
   echo "✅ Configuration syntax valid"
 else
   echo "❌ Configuration syntax invalid"
@@ -278,7 +278,7 @@ fi
 # 2. Required properties
 missing=$(python3 -c "
 import json
-config = json.load(open('.opencode/oh-my-opencode.json'))
+config = json.load(open('.opencode/OpenCode.json'))
 required = ['strray_agents', 'dynamic_models', 'ai_logging']
 missing = [k for k in required if k not in config]
 print(','.join(missing)) if missing else print('')
@@ -294,7 +294,7 @@ fi
 # 3. Agent configuration
 agent_count=$(python3 -c "
 import json
-config = json.load(open('.opencode/oh-my-opencode.json'))
+config = json.load(open('.opencode/OpenCode.json'))
 agents = config.get('strray_agents', {}).get('enabled', [])
 print(len(agents))
 ")
@@ -326,7 +326,7 @@ npm run lint            # Code quality checks
 
 ```bash
 # Restore previous configuration
-cp .opencode/oh-my-opencode.json.backup .opencode/oh-my-opencode.json
+cp .opencode/OpenCode.json.backup .opencode/OpenCode.json
 
 # Restart framework
 bash .opencode/init.sh

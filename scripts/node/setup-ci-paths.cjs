@@ -15,7 +15,7 @@ console.log('🔧 CI Path Setup: Converting to development paths...');
 
 // Files that need path conversion for CI
 const filesToUpdate = [
-  '.opencode/oh-my-opencode.json',
+  '.opencode/OpenCode.json',
   '.mcp.json'
 ];
 

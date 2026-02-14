@@ -2,16 +2,16 @@
 
 ## Overview
 
-The StrRay Framework integrates with oh-my-opencode through a sophisticated plugin architecture that enables automatic multi-agent orchestration and codex enforcement.
+The StrRay Framework integrates with OpenCode through a sophisticated plugin architecture that enables automatic multi-agent orchestration and codex enforcement.
 
 ## Plugin Loading Flow
 
-### 1. oh-my-opencode Plugin Discovery
+### 1. OpenCode Plugin Discovery
 
-oh-my-opencode loads plugins through its internal plugin system. The framework scans for plugin files and loads them dynamically:
+OpenCode loads plugins through its internal plugin system. The framework scans for plugin files and loads them dynamically:
 
 ```typescript
-// oh-my-opencode plugin loading (internal mechanism)
+// OpenCode plugin loading (internal mechanism)
 const pluginPath = ".opencode/plugin/strray-codex-injection.ts";
 const pluginModule = await import(pluginPath);
 const pluginInstance = pluginModule.default(input);
@@ -77,7 +77,7 @@ export default async function strrayCodexPlugin(input: {
 - **Mechanism**:
   1. Registers 11 MCP servers (7 agent-specific + 4 knowledge skills)
   2. Executes `.opencode/init.sh` for framework initialization
-  3. Returns MCP server configuration to oh-my-opencode
+  3. Returns MCP server configuration to OpenCode
 
 ## Automatic Multi-Agent Orchestration
 
@@ -118,11 +118,11 @@ interface ComplexityMetrics {
 
 ### Dual Configuration System
 
-**oh-my-opencode Configuration** (`.opencode/oh-my-opencode.json`):
+**OpenCode Configuration** (`.opencode/OpenCode.json`):
 
 - Agent definitions and model routing
 - Framework settings and permissions
-- oh-my-opencode-specific parameters
+- OpenCode-specific parameters
 
 **StrRay Configuration** (`.opencode/strray/config.json`):
 
@@ -132,7 +132,7 @@ interface ComplexityMetrics {
 
 ### Plugin Registration
 
-Plugins are registered through oh-my-opencode's configuration system. The framework automatically discovers and loads plugins from the `.opencode/plugin/` directory.
+Plugins are registered through OpenCode's configuration system. The framework automatically discovers and loads plugins from the `.opencode/plugin/` directory.
 
 ## Error Handling & Recovery
 
@@ -202,7 +202,7 @@ Logs are written to `.opencode/logs/strray-plugin-YYYY-MM-DD.log`
 
 ## Integration Testing
 
-The plugin includes comprehensive integration tests that simulate the oh-my-opencode environment:
+The plugin includes comprehensive integration tests that simulate the OpenCode environment:
 
 - **Mock Plugin Loading**: Tests plugin discovery and initialization
 - **Hook Execution**: Validates all hook functions work correctly

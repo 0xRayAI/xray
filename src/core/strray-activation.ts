@@ -2,7 +2,7 @@
  * StringRay Framework Activation Module
  *
  * This module handles activation of StringRay framework components
- * during oh-my-opencode initialization.
+ * during OpenCode initialization.
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";

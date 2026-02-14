@@ -16,7 +16,7 @@ This reflection analyzes the comprehensive evolution of the StringRay Framework 
 - **Basic Scripts**: Isolated deployment and test scripts with hardcoded paths
 - **Version Management**: Manual updates across scattered files
 - **Testing**: Fragmented validation with inconsistent failure rates
-- **Integration**: Loose coupling with oh-my-opencode, minimal error handling
+- **Integration**: Loose coupling with OpenCode, minimal error handling
 
 ### Phase 2: Critical Path Analysis (Discovery Phase)
 - **Path Management Crisis**: Consumer vs development environment conflicts

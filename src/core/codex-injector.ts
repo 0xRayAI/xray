@@ -163,7 +163,7 @@ function formatCodexContext(
  *
  * This hook injects codex context into tool outputs and displays
  * a welcome message on agent startup, following the production-tested
- * pattern from oh-my-opencode's rules-injector.
+ * pattern from OpenCode's rules-injector.
  */
 export function createStringRayCodexInjectorHook() {
   return {

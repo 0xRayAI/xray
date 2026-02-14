@@ -44,7 +44,7 @@ program
       console.log("✅ StringRay framework installed successfully!");
       console.log("");
       console.log("📋 Next steps:");
-      console.log("1. Restart oh-my-opencode to load the plugin");
+      console.log("1. Restart OpenCode to load the plugin");
       console.log('2. Run "opencode agent list" to see StrRay agents');
       console.log('3. Try "@enforcer analyze this code" to test the plugin');
     } catch (error) {
@@ -268,9 +268,8 @@ program
           name: "Configuration Files",
           check: () =>
             fs.existsSync(
-              // Check for opencode.json at root (Jelly integration standard)
-              path.join(process.cwd(), "opencode.json") ||
-              path.join(process.cwd(), ".opencode", "oh-my-opencode.json")
+              // Check for opencode.json at root (OpenCode integration standard)
+              path.join(process.cwd(), "opencode.json")
             ),
           success: "✅ opencode configuration found",
           error: "⚠️ opencode config missing (run install first)",
@@ -371,7 +370,7 @@ program
       );
       console.log("");
       console.log("💡 Troubleshooting:");
-      console.log("  • Make sure oh-my-opencode is running");
+      console.log("  • Make sure OpenCode is running");
       console.log("  • Check framework installation: npx strray-ai status");
       console.log(
         "  • Try manual report: framework-reporting-system generate-report",
@@ -410,7 +409,7 @@ program
       console.log("");
       console.log("💡 Next steps:");
       console.log(
-        "  • Restart oh-my-opencode to load the restored configuration",
+        "  • Restart OpenCode to load the restored configuration",
       );
       console.log("  • Run: npx strray-ai health (to verify everything works)");
       console.log("  • Try: @enforcer analyze this code");
@@ -465,10 +464,9 @@ program
         console.log("✅ StringRay package installed");
       }
 
-      // Check configuration - check for opencode.json first (Jelly standard), then oh-my-opencode.json
+      // Check configuration - check for opencode.json (OpenCode standard)
       const opencodeConfigPath = path.join(process.cwd(), "opencode.json");
-      const ohMyOpencodeConfigPath = path.join(process.cwd(), ".opencode", "oh-my-opencode.json");
-      const configExists = fs.existsSync(opencodeConfigPath) || fs.existsSync(ohMyOpencodeConfigPath);
+      const configExists = fs.existsSync(opencodeConfigPath);
       if (!configExists) {
         issues.push("opencode configuration missing");
         fixes.push("Run: npx strray-ai fix");

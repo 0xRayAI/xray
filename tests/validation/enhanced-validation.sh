@@ -90,7 +90,7 @@ check_dir ".strray" "Framework configuration"
 
 echo ""
 echo "📄 Configuration Validation:"
-check_json ".opencode/oh-my-opencode.json" "oh-my-opencode config"
+check_json ".opencode/OpenCode.json" "OpenCode config"
 check_json ".mcp.json" "MCP server registry"
 check_json ".strray/codex.json" "Codex configuration"
 

@@ -27,7 +27,7 @@ if [ $? -eq 0 ]; then
     echo "✅ Framework fully initialized"
     echo "✅ All components loaded"
     echo "✅ Codex terms injected"
-    echo "✅ oh-my-opencode integration ready"
+    echo "✅ OpenCode integration ready"
     exit 0
 else
     echo ""

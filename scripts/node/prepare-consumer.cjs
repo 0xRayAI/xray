@@ -58,7 +58,7 @@ function updatePathsInFile(filePath) {
 // Note: .mcp.json was refactored out - see AGENTS.md
 const filesToUpdate = [
   "opencode.json",
-  ".opencode/oh-my-opencode.json"
+  ".opencode/OpenCode.json"
 ];
 
 console.log("🔧 StrRay Consumer Preparation: Processing configuration files...");

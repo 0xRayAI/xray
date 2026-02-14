@@ -2,7 +2,7 @@
 
 ## What Are Autonomous Modules?
 
-From configuration analysis, autonomous modules appear to be **legacy oh-my-opencode features** that were activated during initial StringRay framework setup:
+From configuration analysis, autonomous modules appear to be **legacy OpenCode features** that were activated during initial StringRay framework setup:
 
 ### Evidence Found:
 - `autonomous-report-generator.ts` compiled files in `dist/`
@@ -13,7 +13,7 @@ From configuration analysis, autonomous modules appear to be **legacy oh-my-open
 
 **Configuration Override Situation:**
 ```json
-// .opencode/oh-my-opencode.json shows disabled features:
+// .opencode/OpenCode.json shows disabled features:
 "disabled_agents": [
   "Sisyphus",        // <- Autonomous agent
   "Planner-Sisyphus", // <- Autonomous planner
@@ -26,8 +26,8 @@ From configuration analysis, autonomous modules appear to be **legacy oh-my-open
 ```
 
 **Why Not Being Used:**
-1. **StringRay has its own orchestration system** - Doesn't use oh-my-opencode's autonomous agents
-2. **oh-my-opencode features are disabled** - All autonomous agents are listed as disabled
+1. **StringRay has its own orchestration system** - Doesn't use OpenCode's autonomous agents
+2. **OpenCode features are disabled** - All autonomous agents are listed as disabled
 3. **Framework uses custom agent coordination** - Not the legacy autonomous modules
 
 ### Recommendation:
@@ -35,7 +35,7 @@ From configuration analysis, autonomous modules appear to be **legacy oh-my-open
 
 ## Current Status: LEGACY TECH DEBT - NOT ACTIVELY USED
 
-These were likely copied from oh-my-opencode setup scripts but StringRay implements its own coordination without using them.
+These were likely copied from OpenCode setup scripts but StringRay implements its own coordination without using them.
 
 ---
 

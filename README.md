@@ -12,7 +12,7 @@
 
 **Enterprise AI agent coordination with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.**
 
-⚡ StringRay ⚡ provides intelligent multi-agent coordination, codex-based code quality enforcement, and enterprise-grade development practices through oh-my-opencode integration. Eliminate spaghetti code, hallucinations, and code rot through systematic validation and intelligent agent delegation.
+⚡ StringRay ⚡ provides intelligent multi-agent coordination, codex-based code quality enforcement, and enterprise-grade development practices through OpenCode integration. Eliminate spaghetti code, hallucinations, and code rot through systematic validation and intelligent agent delegation.
 
 > Enterprise production release with autonomous CI/CD monitoring, automated postinstall configuration, and comprehensive testing. Use `npm install strray-ai@latest` for installation.
 
@@ -61,10 +61,10 @@
 
 **⚡ Enterprise-Grade AI Agent Coordination. Production-Ready Code. Zero Dead Ends. ⚡**
 
-**Delivers clean architecture, predictive analytics, secure oh-my-opencode plugin ecosystem, and sub-millisecond performance — enterprise-grade, every time.**
+**Delivers clean architecture, predictive analytics, secure OpenCode plugin ecosystem, and sub-millisecond performance — enterprise-grade, every time.**
 
 **Latest: Enhanced git hook validation with lightweight post-commit checks (<2s) and comprehensive post-push CI/CD validation (<5min).**
-**Features: Real-time metrics collection and performance monitoring for all hook executions through oh-my-opencode integration.**
+**Features: Real-time metrics collection and performance monitoring for all hook executions through OpenCode integration.**
 
 ## 🚀 Features
 
@@ -93,7 +93,7 @@
 ### Prerequisites
 
 - Node.js 18+ / Bun (recommended)
-- oh-my-opencode installed & running (StringRay AI integrates as an oh-my-opencode plugin)
+- OpenCode installed & running (StringRay AI integrates as an OpenCode plugin)
 
 ## 📚 Documentation
 
@@ -123,11 +123,11 @@ npm install strray-ai
 node node_modules/strray-ai/scripts/postinstall.cjs
 ```
 
-**Note:** The postinstall script is required because npm's security restrictions prevent automatic execution in many environments. Running the script manually ensures proper configuration of oh-my-opencode and MCP servers.
+**Note:** The postinstall script is required because npm's security restrictions prevent automatic execution in many environments. Running the script manually ensures proper configuration of OpenCode and MCP servers.
 
 This will automatically:
 
-- ✅ Configure all 8 StringRay agents in oh-my-opencode
+- ✅ Configure all 8 StringRay agents in OpenCode
 - ✅ Create project configuration files (.opencode/ skills system)
 - ✅ Register 23 skills with lazy-loading MCP server integration
 - ✅ Enable multi-agent orchestration settings
@@ -139,7 +139,7 @@ After installation and setup, validate that StringRay is working correctly:
 ```bash
 # Run comprehensive validation suite
 node node_modules/strray-ai/scripts/test:mcp-connectivity
-node node_modules/strray-ai/scripts/test:oh-my-opencode-integration
+node node_modules/strray-ai/scripts/test:OpenCode-integration
 node node_modules/strray-ai/scripts/test:postinstall-config
 node node_modules/strray-ai/scripts/test:external-processes
 
@@ -154,7 +154,7 @@ node node_modules/strray-ai/scripts/test-stringray-plugin.mjs
 The comprehensive test suite verifies:
 
 - ✅ MCP server connectivity (4/4 operational)
-- ✅ oh-my-opencode integration (plugin loading confirmed)
+- ✅ OpenCode integration (plugin loading confirmed)
 - ✅ Postinstall configuration (all files created correctly)
 - ✅ External process communication (framework ready)
 
@@ -205,7 +205,7 @@ If automatic setup fails:
 npm install strray-ai
 ```
 
-Then manually add to your development configuration (example for oh-my-opencode):
+Then manually add to your development configuration (example for OpenCode):
 
 ```json
 {
@@ -294,8 +294,8 @@ For production environments:
 
 1. **Install**: `npm install strray-ai`
 2. **Initialize**: `node node_modules/strray-ai/scripts/postinstall.cjs`
-3. **Configure**: Framework automatically configures oh-my-opencode and MCP servers
-4. **Deploy**: Restart oh-my-opencode to load StringRay agents
+3. **Configure**: Framework automatically configures OpenCode and MCP servers
+4. **Deploy**: Restart OpenCode to load StringRay agents
 
 **Enterprise Features:**
 
@@ -416,7 +416,7 @@ export STRRAY_CLUSTER_NAME="production-cluster"
 export STRRAY_TEST_MODE=true
 ```
 
-### oh-my-opencode Configuration
+### OpenCode Configuration
 
 The plugin automatically configures:
 
@@ -470,7 +470,7 @@ The plugin automatically configures:
 opencode --version
 
 # Verify configuration
-cat .opencode/oh-my-opencode.json
+cat .opencode/OpenCode.json
 
 # Check for errors
 npm ls strray-ai
@@ -483,7 +483,7 @@ npm ls strray-ai
 opencode agent list
 
 # Check agent configuration
-grep -A5 '"agent"' .opencode/oh-my-opencode.json
+grep -A5 '"agent"' .opencode/OpenCode.json
 ```
 
 ### Codex Validation Errors
@@ -670,12 +670,12 @@ npm run optimize      # Performance optimization analysis
 # Quality Assurance
 # Testing Architecture
 npm run test:unit        # Unit tests with mock-based plugin testing
-npm run test:integration # Integration tests with oh-my-opencode simulation
-npm run test:e2e         # End-to-end tests through oh-my-opencode runtime
+npm run test:integration # Integration tests with OpenCode simulation
+npm run test:e2e         # End-to-end tests through OpenCode runtime
 
 ### 🧪 Testing Approach
 
-**StringRay Framework uses mock-based testing** due to its oh-my-opencode plugin architecture:
+**StringRay Framework uses mock-based testing** due to its OpenCode plugin architecture:
 
 **❌ Direct Plugin Testing (Not Supported):**
 ```typescript
@@ -701,16 +701,16 @@ const mockPlugin = {
 
 **Why Mock Testing?**
 
-- **Plugin Architecture**: Framework runs as oh-my-opencode plugin, not standalone Node.js
-- **ES6 Import Conflicts**: Direct plugin imports fail when run outside oh-my-opencode
+- **Plugin Architecture**: Framework runs as OpenCode plugin, not standalone Node.js
+- **ES6 Import Conflicts**: Direct plugin imports fail when run outside OpenCode
 - **Behavioral Testing**: Mocks test hook contracts and enforcement logic
 - **Reliability**: No environment-specific import issues
 
 **Testing Strategy:**
 
 - **Unit Tests**: Mock plugin behavior, test utility functions
-- **Integration Tests**: Simulate oh-my-opencode runtime with mocks
-- **E2E Tests**: Test through actual oh-my-opencode execution
+- **Integration Tests**: Simulate OpenCode runtime with mocks
+- **E2E Tests**: Test through actual OpenCode execution
 
 npm run test:coverage # Test coverage analysis (>85% required)
 npm run test:performance # Performance regression testing
@@ -720,11 +720,11 @@ npm run test:security # Security-focused test suite
 
 ### Advanced Configuration
 
-Update your `.opencode/oh-my-opencode.json` for enterprise deployment:
+Update your `.opencode/OpenCode.json` for enterprise deployment:
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",

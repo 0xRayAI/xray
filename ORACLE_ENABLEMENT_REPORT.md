@@ -31,7 +31,7 @@
 ## 🪄 **Oracle Agent Enabled**
 
 ### **Configuration Change**
-✅ **Removed "oracle" from disabled_agents list** in `.opencode/oh-my-opencode.json`
+✅ **Removed "oracle" from disabled_agents list** in `.opencode/OpenCode.json`
 ✅ **Oracle agent already existed in `src/agents/oracle.ts`** and was already functional
 ✅ **Now ENABLED** in opencode runtime
 
@@ -84,7 +84,7 @@ All major domains now covered:
 ✅ **Clean**: Only active agent configurations (13 files)
 ✅ **Archived**: 2 legacy configs moved to `archive/` subdirectory
 
-### **Framework Configuration** (`.opencode/oh-my-opencode.json`)
+### **Framework Configuration** (`.opencode/OpenCode.json`)
 ✅ **All enabled agents properly configured**
 ✅ **Oracle now active** for strategic guidance
 ✅ **MCP servers correctly referenced**
@@ -109,7 +109,7 @@ All major domains now covered:
 ## 📋 **Summary of Changes**
 
 ### **Files Modified**
-- ✅ `.opencode/oh-my-opencode.json` - Oracle enabled
+- ✅ `.opencode/OpenCode.json` - Oracle enabled
 - ✅ `archive/` directory created with 2 legacy configs
 - ✅ 2 agent configurations archived safely
 

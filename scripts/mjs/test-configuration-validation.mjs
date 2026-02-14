@@ -100,15 +100,15 @@ class ConfigurationValidator {
   }
 
   async validateOhMyOpencodePluginPaths() {
-    console.log("\n🔧 Validating oh-my-opencode Plugin Paths...");
+    console.log("\n🔧 Validating OpenCode Plugin Paths...");
     
     try {
       const pluginPath = path.join(process.cwd(), "opencode.json");
       
       if (!fs.existsSync(pluginPath)) {
-        console.log("  ❌ oh-my-opencode plugin not found");
+        console.log("  ❌ OpenCode plugin not found");
         this.results.failed.push({
-          test: "oh-my-opencode Plugin",
+          test: "OpenCode Plugin",
           error: "Plugin not found",
         });
         return;
@@ -118,15 +118,15 @@ class ConfigurationValidator {
       
       if (!pluginConfig.plugin || !Array.isArray(pluginConfig.plugin)) {
         console.log("  ℹ️ No plugins configured");
-        this.results.passed.push("oh-my-opencode plugins: none configured");
+        this.results.passed.push("OpenCode plugins: none configured");
       } else {
-        console.log("  ✅ oh-my-opencode configuration is valid JSON");
-        this.results.passed.push("oh-my-opencode configuration Integrity");
+        console.log("  ✅ OpenCode configuration is valid JSON");
+        this.results.passed.push("OpenCode configuration Integrity");
       }
     } catch (error) {
       console.log(`  ❌ Plugin validation failed: ${error.message}`);
       this.results.failed.push({
-        test: "oh-my-opencode Plugin",
+        test: "OpenCode Plugin",
         error: error.message,
       });
     }

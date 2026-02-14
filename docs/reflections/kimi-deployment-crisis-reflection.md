@@ -115,7 +115,7 @@ When the user said "run all tests again," I ran tests in the dev environment whe
 1. **Regex patterns** are fragile - must match exactly
 2. **Case sensitivity** matters in JavaScript but should be normalized
 3. **Silent failures** - if regex doesn't match, no error is thrown
-4. **Multiple config files** need transformation (opencode.json AND .opencode/oh-my-opencode.json)
+4. **Multiple config files** need transformation (opencode.json AND .opencode/OpenCode.json)
 
 ### Testing Limitations
 1. **Unit tests** test code logic, not deployment artifacts

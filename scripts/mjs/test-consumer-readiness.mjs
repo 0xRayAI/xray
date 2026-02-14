@@ -33,8 +33,8 @@ class ConsumerReadinessCheck {
     // Core file existence checks (skip .mcp.json for lazy loading)
     this.checkFile("opencode.json", "OpenCode configuration");
     this.checkFile(
-      ".opencode/oh-my-opencode.json",
-      "oh-my-opencode configuration",
+      ".opencode/OpenCode.json",
+      "OpenCode configuration",
     );
 
     // MCP server validation
@@ -114,7 +114,7 @@ class ConsumerReadinessCheck {
   checkPluginRegistration() {
     try {
       const config = JSON.parse(
-        fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"),
+        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
       );
       const pluginArray = config.plugin || config.plugins || [];
       const hasStringRayPlugin =
@@ -124,15 +124,15 @@ class ConsumerReadinessCheck {
         );
 
       // In CI/development environments, plugin registration is optional
-      // The plugin requires oh-my-opencode to be running to register
+      // The plugin requires OpenCode to be running to register
       const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS || !this.isConsumerEnvironment;
       
       if (isCIEnvironment && !hasStringRayPlugin) {
-        // Mark as warning (passed=true) in CI since plugin needs active oh-my-opencode
+        // Mark as warning (passed=true) in CI since plugin needs active OpenCode
         this.checks.push({
           name: "StringRay plugin registration",
           passed: true, // Don't fail CI for this
-          details: "Plugin not loaded (expected in CI - requires oh-my-opencode)",
+          details: "Plugin not loaded (expected in CI - requires OpenCode)",
         });
         console.log(
           `ℹ️ Plugin registration: Not loaded (expected in CI environment)`,
@@ -162,7 +162,7 @@ class ConsumerReadinessCheck {
   checkSisyphusDisabled() {
     try {
       const config = JSON.parse(
-        fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"),
+        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
       );
       const sisyphusDisabled =
         config.sisyphus_agent?.disabled === true ||

@@ -113,7 +113,7 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
 - All functions have implementations: false
 
 ### Framework Alignment
-- **oh-my-opencode**: v1.1.1`;
+- **OpenCode**: v1.1.1`;
 
       const result = parseCodexContent(markdownContent, "test.md");
 

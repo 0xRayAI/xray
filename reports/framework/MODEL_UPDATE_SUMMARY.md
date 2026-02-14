@@ -4,7 +4,7 @@
 
 **Main Configuration Files Updated:**
 - `./opencode.json` - All 8 agents now use grok
-- `./.opencode/oh-my-opencode.json` - All agents configured  
+- `./.opencode/OpenCode.json` - All agents configured  
 - `./.opencode/enforcer-config.json` - Override models updated
 - `./staging-env/opencode.json` - All agents updated
 - `./final-verification-test/opencode.json` - All agents updated  

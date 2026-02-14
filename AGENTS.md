@@ -66,7 +66,7 @@ Score: ≤25 Single-agent; 96+ Orchestrator-led.
 
 ## Troubleshooting (Key)
 - Plugin fail: Run postinstall.cjs
-- Commands ignored: Check oh-my-opencode.json
+- Commands ignored: Check OpenCode.json
 - Logs: tail activity.log
 
 ## Reflection System (MANDATORY - Enhanced v1.0)
@@ -202,7 +202,7 @@ StringRay operates in **two distinct environments** with different import resolu
 - Will work after `npm run build` + post-install transformation
 
 ### Critical Rule for Agents
-**DO NOT modify TypeScript source files to add .js extensions** - this breaks the oh-my-opencode plugin bundler. The transformation happens at:
+**DO NOT modify TypeScript source files to add .js extensions** - this breaks the OpenCode plugin bundler. The transformation happens at:
 1. Build time (for dev scripts that need it)
 2. Post-install time (for consumer npm packages)
 

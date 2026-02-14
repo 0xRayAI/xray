@@ -66,7 +66,7 @@ function updatePathsInFile(filePath) {
 const filesToUpdate = [
   ".mcp.json",
   "opencode.json",
-  ".opencode/oh-my-opencode.json"
+  ".opencode/OpenCode.json"
 ];
 
 console.log("🔧 StrRay Development Setup: Processing configuration files...");
@@ -78,6 +78,6 @@ filesToUpdate.forEach(filePath => {
 console.log("🎉 StrRay Development Setup: Complete!");
 console.log("📋 Next steps:");
 console.log("1. Run 'npm run build:all' to build the framework");
-console.log("2. Restart oh-my-opencode to load the plugin");
+console.log("2. Restart OpenCode to load the plugin");
 console.log("3. Run 'opencode agent list' to see StrRay agents");
 console.log("4. Try '@enforcer analyze this code' to test the plugin");

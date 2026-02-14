@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # StrRay Framework MCP Server Registration Script
-# Registers all 18 MCP servers with oh-my-opencode skill registry
+# Registers all 18 MCP servers with OpenCode skill registry
 
 set -e
 
@@ -15,12 +15,12 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to check if oh-my-opencode is installed
+# Function to check if OpenCode is installed
 check_opencode() {
-    if ! command -v oh-my-opencode &> /dev/null; then
-        echo -e "${RED}❌ Error: oh-my-opencode is not installed${NC}"
-        echo "Please install oh-my-opencode first:"
-        echo "npm install -g oh-my-opencode"
+    if ! command -v OpenCode &> /dev/null; then
+        echo -e "${RED}❌ Error: OpenCode is not installed${NC}"
+        echo "Please install OpenCode first:"
+        echo "npm install -g OpenCode"
         exit 1
     fi
 }
@@ -39,7 +39,7 @@ register_mcp_server() {
         return 1
     fi
 
-    # Register with oh-my-opencode (this would be the actual command)
+    # Register with OpenCode (this would be the actual command)
     # For now, we'll just log what would be registered
     echo -e "${GREEN}✅ Would register: $server_name${NC}"
     echo "   Path: $server_path"
@@ -49,10 +49,10 @@ register_mcp_server() {
 
 # Main registration process
 main() {
-    echo -e "${YELLOW}🔍 Checking oh-my-opencode installation...${NC}"
+    echo -e "${YELLOW}🔍 Checking OpenCode installation...${NC}"
     check_opencode
 
-    echo -e "${GREEN}✅ oh-my-opencode is installed${NC}"
+    echo -e "${GREEN}✅ OpenCode is installed${NC}"
     echo ""
 
     echo -e "${BLUE}🎯 Registering StrRay Framework MCP Servers${NC}"
@@ -83,8 +83,8 @@ main() {
     echo "   📈 Total MCP Servers: 8 registered"
     echo ""
     echo -e "${YELLOW}⚠️  Note: This script currently logs registration intent.${NC}"
-    echo -e "${YELLOW}   Actual oh-my-opencode MCP registration requires:${NC}"
-    echo "   1. oh-my-opencode MCP plugin support"
+    echo -e "${YELLOW}   Actual OpenCode MCP registration requires:${NC}"
+    echo "   1. OpenCode MCP plugin support"
     echo "   2. Server capability validation"
     echo "   3. Protocol compatibility verification"
     echo ""

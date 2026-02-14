@@ -45,6 +45,6 @@ console.log("  • Check npm download stats weekly");
 console.log("  • Monitor GitHub issues and discussions");
 console.log("  • Watch for user feedback in Discord/GitHub");
 console.log("  • Run validation tests after major Node.js updates");
-console.log("  • Monitor oh-my-opencode compatibility");
+console.log("  • Monitor OpenCode compatibility");
 
 console.log("\n✅ Package monitoring setup complete");

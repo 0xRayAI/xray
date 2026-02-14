@@ -157,7 +157,7 @@ async function standardizeVersions() {
     `📋 Codex: ${OFFICIAL_VERSIONS.codex.version} (${OFFICIAL_VERSIONS.codex.termsCount} terms)`,
   );
   console.log(
-    `📋 oh-my-opencode: v${OFFICIAL_VERSIONS.dependencies.ohMyOpencode}`,
+    `📋 OpenCode: v${OFFICIAL_VERSIONS.dependencies.ohMyOpencode}`,
   );
   console.log("=".repeat(60));
 

@@ -2,11 +2,11 @@
 
 ## Overview
 
-This guide documents the complete process for deploying and testing the StrRay Framework as an oh-my-opencode plugin. This process has been refined through multiple iterations to resolve path resolution, initialization conflicts, and integration issues.
+This guide documents the complete process for deploying and testing the StrRay Framework as an OpenCode plugin. This process has been refined through multiple iterations to resolve path resolution, initialization conflicts, and integration issues.
 
 ## Architecture Understanding
 
-**Critical Distinction:** oh-my-opencode does NOT execute plugin JavaScript files. It only loads supporting file structures:
+**Critical Distinction:** OpenCode does NOT execute plugin JavaScript files. It only loads supporting file structures:
 
 ✅ **Loads:** `commands/`, `agents/`, `skills/`, `hooks/`, `mcps/`, `.mcp.json`
 ❌ **Ignores:** Main plugin JavaScript/TypeScript files (ES modules not supported)
@@ -120,11 +120,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 ## Plugin Configuration
 
-### oh-my-opencode.json Setup
+### OpenCode.json Setup
 
 ```json
 {
-  "plugin": ["oh-my-opencode", "dist/plugin/plugins/strray-codex-injection.js"],
+  "plugin": ["OpenCode", "dist/plugin/plugins/strray-codex-injection.js"],
   "agent": {
     "orchestrator": { "model": "openrouter/xai-grok-2-1212-fast-1" },
     "enforcer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
@@ -142,7 +142,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 ```json
 {
-  "oh-my-opencode": {
+  "OpenCode": {
     "plugin": "./dist/plugin/plugins/strray-codex-injection.js"
   },
   "bin": {
@@ -170,7 +170,7 @@ This verifies that all framework components (agents, MCP servers, codex) are pro
 
 ### 4. Development Environment Testing
 
-**Note:** Plugin JavaScript execution tests are for development only. oh-my-opencode does not execute plugin code.
+**Note:** Plugin JavaScript execution tests are for development only. OpenCode does not execute plugin code.
 
 ```bash
 # Test plugin execution in development environment
@@ -190,10 +190,10 @@ npm run dev:framework
 🎉 StrRay Framework Plugin Test: PASSED
 ```
 
-### 5. oh-my-opencode Integration Check
+### 5. OpenCode Integration Check
 
 ```bash
-npx oh-my-opencode doctor
+npx OpenCode doctor
 ```
 
 **Expected Output:**
@@ -203,7 +203,7 @@ npx oh-my-opencode doctor
 ✓ User MCP Configuration → 21 user server(s) configured
 ```
 
-**Note:** oh-my-opencode does not automatically display StrRay initialization messages. To see the ASCII art and initialization feedback, run `.opencode/init.sh` manually after setup.
+**Note:** OpenCode does not automatically display StrRay initialization messages. To see the ASCII art and initialization feedback, run `.opencode/init.sh` manually after setup.
 
 ### 2. Orchestration Functionality Test
 
@@ -261,7 +261,7 @@ npm run triage
 📋 Codex terms included: ✅
 
 🎉 StrRay Framework Plugin Test: PASSED
-✨ Framework is ready for oh-my-opencode integration
+✨ Framework is ready for OpenCode integration
 
 🏁 TRIAGE RESULTS: 6/6 checks passed
 🎉 ALL SYSTEMS OPERATIONAL - StrRay Framework is fully functional!
@@ -307,7 +307,7 @@ node scripts/boot-check.cjs
 
 ### Plugin Configuration
 
-- [ ] oh-my-opencode.json has correct plugin path
+- [ ] OpenCode.json has correct plugin path
 - [ ] All 8 StrRay agents configured with correct models
 - [ ] Plugin path resolves correctly in deployment environment
 
@@ -320,7 +320,7 @@ node scripts/boot-check.cjs
 ### Initialization
 
 - [ ] Global flag prevents double initialization
-- [ ] Framework initializes once per oh-my-opencode session
+- [ ] Framework initializes once per OpenCode session
 - [ ] No processor registration conflicts
 
 ### Testing
@@ -347,13 +347,13 @@ node scripts/boot-check.cjs
 **Cause:** CommonJS **dirname usage in ES modules
 **Fix:** Use `const **dirname = dirname(fileURLToPath(import.meta.url));`
 
-### Plugin doesn't load in oh-my-opencode
+### Plugin doesn't load in OpenCode
 
 **Check:**
 
-- Plugin path in oh-my-opencode.json is correct
+- Plugin path in OpenCode.json is correct
 - dist/plugin/plugins/strray-codex-injection.js exists
-- oh-my-opencode version supports ES module plugins
+- OpenCode version supports ES module plugins
 - No syntax errors in plugin file
 
 ### Codex not injected into system prompts
@@ -368,7 +368,7 @@ node scripts/boot-check.cjs
 
 **Check:**
 
-- All agent configurations in oh-my-opencode.json
+- All agent configurations in OpenCode.json
 - Complexity analysis working correctly
 - Session coordinator initialized properly
 
@@ -383,19 +383,19 @@ node scripts/boot-check.cjs
 ### 2. Initialization Strategy
 
 - Use global flags to prevent duplicate initialization
-- Initialize framework once per oh-my-opencode session
+- Initialize framework once per OpenCode session
 - Handle both automatic and manual initialization scenarios
 
 ### 3. Plugin Architecture
 
 - Keep plugin code minimal - import framework components, don't duplicate
-- Use oh-my-opencode's plugin hooks for integration
+- Use OpenCode's plugin hooks for integration
 - Test plugin loading separately from framework functionality
 
 ### 4. Testing Approach
 
 - Test plugin loading and codex injection independently
-- Use mock-based testing for oh-my-opencode integration
+- Use mock-based testing for OpenCode integration
 - Verify both development and deployment environments
 
 ### 5. Error Handling
@@ -432,7 +432,7 @@ npm run triage                          # Comprehensive system diagnostics
 
 # Verify framework
 node dist/strray-init.js                 # Manual initialization check
-.opencode/init.sh                        # oh-my-opencode integration check
+.opencode/init.sh                        # OpenCode integration check
 
 # Clean up
 cd .. && rm -rf test-install

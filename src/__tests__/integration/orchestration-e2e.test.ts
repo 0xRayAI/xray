@@ -151,9 +151,9 @@ describe("StringRay Framework - End-to-End Orchestration Integration", () => {
     });
   });
 
-  describe("Integration with oh-my-opencode", () => {
-    it("should integrate with oh-my-opencode plugin system", async () => {
-      // Mock oh-my-opencode plugin system
+  describe("Integration with OpenCode", () => {
+    it("should integrate with OpenCode plugin system", async () => {
+      // Mock OpenCode plugin system
       const mockPluginSystem = {
         registerPlugin: () => true,
         getPlugin: () => ({ execute: () => ({ success: true }) }),
@@ -162,7 +162,7 @@ describe("StringRay Framework - End-to-End Orchestration Integration", () => {
       expect(mockPluginSystem.registerPlugin()).toBe(true);
     });
 
-    it("should handle oh-my-opencode session lifecycle", async () => {
+    it("should handle OpenCode session lifecycle", async () => {
       const mockSession = {
         id: "test-session",
         startTime: Date.now(),

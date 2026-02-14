@@ -2,27 +2,27 @@
 
 ## Overview
 
-StrRay (StringRay) is an advanced AI agent orchestration framework that extends oh-my-opencode with systematic error prevention and production-ready development practices. This guide covers installation and model configuration.
+StrRay (StringRay) is an advanced AI agent orchestration framework that extends OpenCode with systematic error prevention and production-ready development practices. This guide covers installation and model configuration.
 
 **Important Update**: All agents now use `openrouter/xai-grok-2-1212-fast-1` as the default model. Legacy Anthropic models have been deprecated and replaced to ensure consistency and reliability.
 
 ## Prerequisites
 
 - **OpenCode** installed and configured
-- **oh-my-opencode** framework installed
+- **OpenCode** framework installed
 - **Node.js** 18+ (for framework scripts)
 - **Python** 3.8+ (for validation scripts)
 - **Terminal/Shell** access
 
 ## Installation Steps
 
-### Step 1: Install oh-my-opencode
+### Step 1: Install OpenCode
 
 ```bash
-# Install oh-my-opencode globally
-npm install -g oh-my-opencode
+# Install OpenCode globally
+npm install -g OpenCode
 # OR
-bun install -g oh-my-opencode
+bun install -g OpenCode
 ```
 
 ### Step 2: Initialize StrRay Framework
@@ -36,7 +36,7 @@ npm run init
 
 # This creates:
 # - .opencode/ directory with framework files
-# - oh-my-opencode.json with agent configurations
+# - OpenCode.json with agent configurations
 # - Framework automation hooks
 ```
 
@@ -44,7 +44,7 @@ npm run init
 
 ```bash
 # Check framework status
-oh-my-opencode status
+OpenCode status
 
 # Should show:
 # ✅  loaded
@@ -59,15 +59,15 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
 
 ### Configuration Files
 
-#### Primary Configuration: `oh-my-opencode.json`
+#### Primary Configuration: `OpenCode.json`
 
-**Location**: `.opencode/oh-my-opencode.json`
+**Location**: `.opencode/OpenCode.json`
 
 **Purpose**: Defines model assignments for each agent
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",
@@ -128,16 +128,16 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
 
 ### Important: Model Migration Required
 
-If you have an existing StrRay installation with older Anthropic models, you **must update** your `.opencode/oh-my-opencode.json` file to use `openrouter/xai-grok-2-1212-fast-1` for all agents. The framework will not function properly with deprecated models.
+If you have an existing StrRay installation with older Anthropic models, you **must update** your `.opencode/OpenCode.json` file to use `openrouter/xai-grok-2-1212-fast-1` for all agents. The framework will not function properly with deprecated models.
 
 Run this command to update your configuration:
 
 ```bash
 # Backup your current config
-cp .opencode/oh-my-opencode.json .opencode/oh-my-opencode.json.backup
+cp .opencode/OpenCode.json .opencode/OpenCode.json.backup
 
 # Update all models to openrouter/xai-grok-2-1212-fast-1
-oh-my-opencode config set model.all openrouter/xai-grok-2-1212-fast-1
+OpenCode config set model.all openrouter/xai-grok-2-1212-fast-1
 ```
 
 ### Method 1: Edit Configuration File (Recommended)
@@ -146,7 +146,7 @@ oh-my-opencode config set model.all openrouter/xai-grok-2-1212-fast-1
 
    ```bash
    # Edit the primary model configuration
-   nano .opencode/oh-my-opencode.json
+   nano .opencode/OpenCode.json
    ```
 
 2. **Update model assignments:**
@@ -168,28 +168,28 @@ oh-my-opencode config set model.all openrouter/xai-grok-2-1212-fast-1
 
 3. **Restart the framework:**
    ```bash
-   # Restart oh-my-opencode to apply changes
-   oh-my-opencode restart
+   # Restart OpenCode to apply changes
+   OpenCode restart
    ```
 
 ### Method 2: Use Framework Commands
 
 ```bash
 # Update a specific agent's model
-oh-my-opencode config set model.enforcer openrouter/xai-grok-2-1212-fast-1
+OpenCode config set model.enforcer openrouter/xai-grok-2-1212-fast-1
 
 # Update all agents to use the same model (recommended)
-oh-my-opencode config set model.all openrouter/xai-grok-2-1212-fast-1
+OpenCode config set model.all openrouter/xai-grok-2-1212-fast-1
 
 # Validate configuration
-oh-my-opencode config validate
+OpenCode config validate
 ```
 
 ### Method 3: Interactive Configuration
 
 ```bash
 # Launch interactive model configuration
-oh-my-opencode models configure
+OpenCode models configure
 
 # Follow prompts to update agent models
 ```
@@ -200,20 +200,20 @@ oh-my-opencode models configure
 
 ```bash
 # Validate model availability
-oh-my-opencode models check
+OpenCode models check
 
 # Test model connectivity
-oh-my-opencode models test --agent enforcer
+OpenCode models test --agent enforcer
 
 # Validate configuration syntax
-oh-my-opencode config validate
+OpenCode config validate
 ```
 
 ### Runtime Validation
 
 ```bash
 # Check framework compliance
-oh-my-opencode status --compliance
+OpenCode status --compliance
 
 # Run model health checks
 bash .opencode/scripts/model-health-check.sh
@@ -274,7 +274,7 @@ opencode auth status
 
 ```bash
 # Restart the framework
-oh-my-opencode restart
+OpenCode restart
 
 # Clear cache
 rm -rf .opencode/cache/
@@ -331,8 +331,8 @@ Once installed and configured, StrRay provides:
 
 ## Next Steps
 
-1. **Install** oh-my-opencode and StrRay framework
-2. **Configure** models in `oh-my-opencode.json`
+1. **Install** OpenCode and StrRay framework
+2. **Configure** models in `OpenCode.json`
 3. **Validate** configuration with framework tools
 4. **Test** agent functionality
 5. **Monitor** compliance and performance

@@ -24,25 +24,25 @@ tail -50 logs/framework/activity.log
 
 ### Agent Commands Not Responding
 
-**Symptoms**: @agent commands are ignored in oh-my-opencode
+**Symptoms**: @agent commands are ignored in OpenCode
 
 **Possible Causes**:
 - Framework plugin not loaded
-- oh-my-opencode configuration issues
+- OpenCode configuration issues
 - Agent initialization failures
 
 **Solutions**:
 
 1. **Check Plugin Loading**:
    ```bash
-   # Restart oh-my-opencode completely
+   # Restart OpenCode completely
    # Check that StringRay plugin appears in loaded plugins
    ```
 
 2. **Validate Configuration**:
    ```bash
-   # Check .opencode/oh-my-opencode.json exists and is valid
-   cat .opencode/oh-my-opencode.json
+   # Check .opencode/OpenCode.json exists and is valid
+   cat .opencode/OpenCode.json
    ```
 
 3. **Test Framework Health**:
@@ -76,7 +76,7 @@ tail -50 logs/framework/activity.log
 3. **Check Resource Usage**:
    ```bash
    # Monitor memory and CPU during agent execution
-   top -p $(pgrep -f "oh-my-opencode")
+   top -p $(pgrep -f "OpenCode")
    ```
 
 ## Framework Initialization Issues
@@ -188,7 +188,7 @@ tail -50 logs/framework/activity.log
 1. **Monitor Memory Usage**:
    ```bash
    # Check memory consumption
-   ps aux | grep "oh-my-opencode"
+   ps aux | grep "OpenCode"
    ```
 
 2. **Adjust Memory Settings**:
@@ -222,13 +222,13 @@ tail -50 logs/framework/activity.log
 1. **Validate JSON Syntax**:
    ```bash
    # Check config file syntax
-   python3 -m json.tool .opencode/oh-my-opencode.json
+   python3 -m json.tool .opencode/OpenCode.json
    ```
 
 2. **Use Configuration Templates**:
    ```bash
    # Reset to known good configuration
-   cp api/API_REFERENCE.md .opencode/oh-my-opencode.json
+   cp api/API_REFERENCE.md .opencode/OpenCode.json
    ```
 
 3. **Check Required Fields**:
@@ -316,7 +316,7 @@ tail -50 logs/framework/activity.log
 **Procedure**:
 ```bash
 # 1. Stop all processes
-pkill -f "oh-my-opencode"
+pkill -f "OpenCode"
 pkill -f "strray"
 
 # 2. Clear all caches and state
@@ -325,7 +325,7 @@ rm -rf node_modules/.cache
 rm -rf logs/framework/*
 
 # 3. Reset configuration
-cp api/API_REFERENCE.md .opencode/oh-my-opencode.json
+cp api/API_REFERENCE.md .opencode/OpenCode.json
 
 # 4. Clean reinstall
 rm -rf node_modules package-lock.json
@@ -379,7 +379,7 @@ npx strray-ai health
 tail -100 logs/framework/activity.log
 
 # Configuration (redact sensitive data)
-cat .opencode/oh-my-opencode.json | jq '.'
+cat .opencode/OpenCode.json | jq '.'
 ```
 
 This comprehensive troubleshooting guide covers the most common issues. For complex problems not covered here, check the framework logs and consider reaching out to the development team with detailed diagnostic information.

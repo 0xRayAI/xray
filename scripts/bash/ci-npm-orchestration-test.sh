@@ -204,16 +204,16 @@ fi
 # Additional manual checks
 log_info "Checking configuration files..."
 
-# Check oh-my-opencode.json
-if [[ -f ".opencode/oh-my-opencode.json" ]]; then
-    if grep -q "node_modules/strray-ai" .opencode/oh-my-opencode.json; then
-        log_success "oh-my-opencode.json has correct paths"
+# Check OpenCode.json
+if [[ -f ".opencode/OpenCode.json" ]]; then
+    if grep -q "node_modules/strray-ai" .opencode/OpenCode.json; then
+        log_success "OpenCode.json has correct paths"
     else
-        log_error "oh-my-opencode.json missing node_modules paths"
+        log_error "OpenCode.json missing node_modules paths"
         ((ERRORS++))
     fi
 else
-    log_error "oh-my-opencode.json not found"
+    log_error "OpenCode.json not found"
     ((ERRORS++))
 fi
 

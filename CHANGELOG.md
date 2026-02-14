@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1
 - **8 Specialized AI Agents**: Complete agent orchestration for development workflows
 - **16 MCP Servers**: Full Model Context Protocol implementation with specialized servers
 - **Enterprise-Grade Quality**: Production-ready code generation with systematic validation
-- **oh-my-opencode Integration**: Seamless plugin ecosystem and configuration management
+- **OpenCode Integration**: Seamless plugin ecosystem and configuration management
 
 **Documentation & Support:**
 

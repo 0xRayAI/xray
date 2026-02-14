@@ -7,7 +7,7 @@ This guide provides comprehensive instructions for deploying the StringRay AI fr
 ## Prerequisites
 
 - Node.js 18+ or Bun
-- oh-my-opencode installed and running
+- OpenCode installed and running
 - Basic understanding of TypeScript/JavaScript development
 
 ## Installation
@@ -25,7 +25,7 @@ node node_modules/strray-ai/scripts/postinstall.cjs
 ```
 
 This will:
-- Configure oh-my-opencode integration
+- Configure OpenCode integration
 - Set up framework directories
 - Initialize plugin components
 
@@ -37,7 +37,7 @@ npx strray-ai status
 
 ## Configuration
 
-### oh-my-opencode Integration
+### OpenCode Integration
 
 The plugin automatically configures the following agents:
 
@@ -94,11 +94,11 @@ Create `.opencode/strray/config.json` for advanced settings:
 ### Plugin Not Loading
 
 ```bash
-# Check oh-my-opencode configuration
-cat .opencode/oh-my-opencode.json
+# Check OpenCode configuration
+cat .opencode/OpenCode.json
 
 # Verify plugin registration
-grep "strray" .opencode/oh-my-opencode.json
+grep "strray" .opencode/OpenCode.json
 ```
 
 ### Agent Commands Not Working
@@ -142,7 +142,7 @@ npx strray-ai status
 ## Deployment Checklist
 
 - [ ] Node.js 18+ installed
-- [ ] oh-my-opencode running
+- [ ] OpenCode running
 - [ ] StringRay AI installed
 - [ ] Postinstall script executed
 - [ ] Plugin status verified

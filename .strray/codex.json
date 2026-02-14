@@ -521,7 +521,7 @@
     "Proper secrets management": false
   },
   "frameworkAlignment": {
-    "oh-my-opencode": "v1.1.1",
+    "OpenCode": "v1.1.1",
     "strray-framework": "v1.1.1"
   }
 }

@@ -451,13 +451,13 @@ Resources:
 
 ## Integration Points
 
-### oh-my-opencode Integration
+### OpenCode Integration
 
-The framework integrates seamlessly with oh-my-opencode:
+The framework integrates seamlessly with OpenCode:
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1"

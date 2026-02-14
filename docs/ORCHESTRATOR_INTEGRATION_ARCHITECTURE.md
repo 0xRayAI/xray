@@ -131,7 +131,7 @@ interface SessionState {
 
 ### External Integration
 
-- **oh-my-opencode**: Plugin-based integration
+- **OpenCode**: Plugin-based integration
 - **MCP Servers**: Tool execution delegation
 - **File System**: Persistent state storage
 

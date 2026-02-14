@@ -222,9 +222,9 @@ The framework prevents common vulnerabilities through systematic enforcement:
 
 ## Integration and Ecosystem
 
-### oh-my-opencode Plugin Architecture
+### OpenCode Plugin Architecture
 
-StringRay integrates seamlessly as an oh-my-opencode plugin:
+StringRay integrates seamlessly as an OpenCode plugin:
 
 ```json
 {

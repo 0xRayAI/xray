@@ -56,7 +56,7 @@ The session revealed that the "broken scripts" weren't merely syntax errors but 
 
 **Discovery**: The `tsconfig.json` intentionally excludes several folders from compilation (`src/validation/`, `src/reporting/`, `src/postprocessor/`, `advanced-features/simulation/`) to keep the core build lean. However, scripts existed that depended on these excluded folders being compiled to `dist/`.
 
-**Architectural Tension**: The framework maintains a lean core for the oh-my-opencode plugin but has auxiliary capabilities that aren't part of the standard build. This creates a two-tier system where some features are "core" and others are "extended," but the scripts don't distinguish between them.
+**Architectural Tension**: The framework maintains a lean core for the OpenCode plugin but has auxiliary capabilities that aren't part of the standard build. This creates a two-tier system where some features are "core" and others are "extended," but the scripts don't distinguish between them.
 
 **Resolution Strategy**: Archive scripts that require excluded folders, document which capabilities are core vs extended, and establish clear build profiles for different use cases.
 
@@ -86,7 +86,7 @@ The session revealed that the "broken scripts" weren't merely syntax errors but 
 - Why TypeScript sources don't use `.js` extensions
 - Why the dist/ folder needs transformation
 - Which scripts work in dev vs which need post-install
-- The role of the oh-my-opencode bundler vs Node.js ES modules
+- The role of the OpenCode bundler vs Node.js ES modules
 
 **Communication Principle**: Architecture documentation is as important as API documentation. Users need to understand why things work the way they do, not just how to use them.
 
@@ -211,16 +211,16 @@ content = content.replace(/from "(\.[./][^"]+)";/g, (match, importPath) => {
 - Document these as "extended features" requiring special build
 - Consider moving these capabilities to separate packages
 
-**Recommendation**: Create `tsconfig.full.json` for comprehensive builds that include all folders, keeping `tsconfig.json` lean for the oh-my-opencode plugin.
+**Recommendation**: Create `tsconfig.full.json` for comprehensive builds that include all folders, keeping `tsconfig.json` lean for the OpenCode plugin.
 
 ### 3. Plugin System Testing
 
-**Issue**: No validation that the oh-my-opencode plugin actually loads and functions.
+**Issue**: No validation that the OpenCode plugin actually loads and functions.
 
-**Gap**: All script testing was done in Node.js context, not in oh-my-opencode context.
+**Gap**: All script testing was done in Node.js context, not in OpenCode context.
 
 **Next Steps**:
-- Create integration test that validates plugin loading in oh-my-opencode
+- Create integration test that validates plugin loading in OpenCode
 - Test that MCP servers register correctly
 - Validate that agent commands work end-to-end
 

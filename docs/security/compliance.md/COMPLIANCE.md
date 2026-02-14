@@ -1,8 +1,8 @@
-# StrRay Extension - oh-my-opencode Compliance Guide
+# StrRay Extension - OpenCode Compliance Guide
 
 ## Overview
 
-This document outlines the compliance status of the StrRay 1.0.0 framework with oh-my-opencode's official standards and provides guidance for maintaining compatibility.
+This document outlines the compliance status of the StrRay 1.0.0 framework with OpenCode's official standards and provides guidance for maintaining compatibility.
 
 ## Compliance Status
 
@@ -12,14 +12,14 @@ This document outlines the compliance status of the StrRay 1.0.0 framework with 
 - Agent and command markdown formats
 - MCP server configuration and integration
 - Workflow YAML structure and automation
-- Official oh-my-opencode schema properties
+- Official OpenCode schema properties
 
 ### ⚠️ **Partial Compliance (Custom Extensions)**
 
 - `universal_development_framework` - Framework-specific enhancements
 - `model_routing` - Custom agent model assignments
 - `framework_thresholds` - Project-specific quality metrics
-- These are **allowed** by schema but may change with oh-my-opencode updates
+- These are **allowed** by schema but may change with OpenCode updates
 
 ### ❌ **Previously Non-Compliant (Now Fixed)**
 
@@ -33,13 +33,13 @@ This document outlines the compliance status of the StrRay 1.0.0 framework with 
 
 ```bash
 # Validate configuration against official schema
-curl -s https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json > schema.json
-# Use a JSON Schema validator to check oh-my-opencode.json
+curl -s https://raw.githubusercontent.com/code-yeongyu/OpenCode/master/assets/OpenCode.schema.json > schema.json
+# Use a JSON Schema validator to check OpenCode.json
 ```
 
 ### Update Procedures
 
-1. **Before oh-my-opencode updates**: Backup current configuration
+1. **Before OpenCode updates**: Backup current configuration
 2. **Test compatibility**: Run schema validation on new versions
 3. **Migrate extensions**: Adapt custom properties to new schema requirements
 4. **Validate functionality**: Ensure all StringRay features work with updated config
@@ -48,8 +48,8 @@ curl -s https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/ass
 
 - Document all custom properties and their purposes
 - Provide fallback configurations for schema-breaking changes
-- Test custom extensions independently of core oh-my-opencode functionality
-- Consider contributing useful extensions back to oh-my-opencode upstream
+- Test custom extensions independently of core OpenCode functionality
+- Consider contributing useful extensions back to OpenCode upstream
 
 ## Migration from Previous Versions
 
@@ -67,7 +67,7 @@ curl -s https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/ass
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/OpenCode/master/assets/OpenCode.schema.json",
   "disabled_agents": ["oracle", "librarian", "explore"],
   "agents": {
     "librarian": { "model": "openrouter/xai-grok-2-1212-fast-1" }
@@ -81,7 +81,7 @@ curl -s https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/ass
 
 - **Low Risk**: Standard properties unlikely to change
 - **Medium Risk**: Custom extensions may require updates
-- **High Risk**: Major oh-my-opencode version changes
+- **High Risk**: Major OpenCode version changes
 
 ### Monitoring
 
@@ -91,12 +91,12 @@ curl -s https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/ass
 
 ## Support
 
-For questions about oh-my-opencode compliance:
+For questions about OpenCode compliance:
 
-- Check official documentation: https://github.com/code-yeongyu/oh-my-opencode
+- Check official documentation: https://github.com/code-yeongyu/OpenCode
 - Validate configurations against schema
 - Test with minimal configurations first
 
 ---
 
-_This compliance guide ensures StrRay Extension maintains compatibility with oh-my-opencode while preserving enhanced functionality._
+_This compliance guide ensures StrRay Extension maintains compatibility with OpenCode while preserving enhanced functionality._

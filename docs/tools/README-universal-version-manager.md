@@ -8,7 +8,7 @@ The Universal Version Manager (`scripts/universal-version-manager.js`) maintains
 
 - **Framework versions** (StringRay AI releases)
 - **Codex versions** (Universal Development Codex)
-- **Dependency versions** (oh-my-opencode, etc.)
+- **Dependency versions** (OpenCode, etc.)
 - **Documentation** (README, API docs, etc.)
 - **Code comments** and references
 
@@ -69,7 +69,7 @@ git add . && git commit -m "chore: bump version to 1.0.5"
 
 ### Dependency References
 
-- `oh-my-opencode v1.1.1` → `oh-my-opencode v1.1.1`
+- `OpenCode v1.1.1` → `OpenCode v1.1.1`
 
 ## Files Excluded
 

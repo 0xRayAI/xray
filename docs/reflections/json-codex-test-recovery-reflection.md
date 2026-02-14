@@ -72,7 +72,7 @@ The StringRay Framework's JSON codex integration test suite experienced critical
 ### Contributing Factors
 
 - **Rapid Development Pace**: Framework evolution outpaced test maintenance
-- **Complex Testing Environment**: oh-my-opencode plugin architecture complicates direct testing
+- **Complex Testing Environment**: OpenCode plugin architecture complicates direct testing
 - **Singleton Dependencies**: Context loader design pattern creates testing challenges
 - **Manual Synchronization**: Reliance on manual test updates rather than automated validation
 

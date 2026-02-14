@@ -47,7 +47,7 @@ class ModelRouter {
   constructor(configPath?: string) {
     this.configPath =
       configPath ||
-      path.resolve(process.cwd(), ".opencode", "oh-my-opencode.json");
+      path.resolve(process.cwd(), "opencode.json");
     this.config = this.loadConfig();
     this.availableModels = this.discoverModels();
   }
@@ -146,11 +146,11 @@ class ModelRouter {
         return agentModel;
       }
 
-      // Fall back to oh-my-opencode.json model routing
+      // Fall back to opencode.json model routing
       if (this.config.model_routing?.[agentType]) {
         const configModel = this.config.model_routing[agentType];
         if (this.isModelAvailable(configModel)) {
-          console.log(`[ModelRouter] Using model from oh-my-opencode.json: ${configModel}`);
+          console.log(`[ModelRouter] Using model from opencode.json: ${configModel}`);
           return configModel;
         }
       }

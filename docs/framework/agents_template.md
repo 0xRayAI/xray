@@ -10,7 +10,7 @@
 
 \*\*\*\* is an enterprise-grade AI agent orchestration platform that implements systematic error prevention through the Universal Development Codex. This document provides complete context for all agents, enabling intelligent orchestration and codex-compliant development.
 
-**📚 oh-my-opencode Integration**: This framework operates as a plugin within the oh-my-opencode ecosystem. For complete setup and usage instructions, see the [official oh-my-opencode documentation](https://github.com/code-yeongyu/oh-my-opencode).
+**📚 OpenCode Integration**: This framework operates as a plugin within the OpenCode ecosystem. For complete setup and usage instructions, see the [official OpenCode documentation](https://github.com/code-yeongyu/OpenCode).
 
 ### Core Architecture: Hybrid TypeScript/Python System
 
@@ -56,17 +56,17 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 7. **refactorer** - Technical debt elimination & code consolidation
 8. **test-architect** - Testing strategy & coverage optimization
 
-### oh-my-opencode Plugin Integration
+### OpenCode Plugin Integration
 
-**StrRay operates as a comprehensive plugin within the oh-my-opencode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
+**StrRay operates as a comprehensive plugin within the OpenCode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
 
 #### Plugin Architecture
 
 - **Plugin Entry Point**: `plugin/strray-codex-injection.ts` serves as the main plugin interface
-- **Configuration Integration**: `.opencode/oh-my-opencode.json` contains StrRay-specific configuration blocks
-- **Hook System**: Implements oh-my-opencode's hook system for tool execution interception and system prompt injection
+- **Configuration Integration**: `.opencode/OpenCode.json` contains StrRay-specific configuration blocks
+- **Hook System**: Implements OpenCode's hook system for tool execution interception and system prompt injection
 
-#### oh-my-opencode Integration Points
+#### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
 - **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
@@ -114,7 +114,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 
 #### `.opencode/` Directory (Primary Framework Hub)
 
-- **Purpose**: Contains the complete oh-my-opencode integration with plugins, agents, and MCP servers
+- **Purpose**: Contains the complete OpenCode integration with plugins, agents, and MCP servers
 - **TypeScript Core**: Full core implementation in `src/core/` with modular coordination and AI services
 - **Boot Orchestration**: `init.sh` provides orchestrator-first initialization with compliance validation
 - **Plugin Ecosystem**: TypeScript plugin system for codex injection and MCP server registration
@@ -122,7 +122,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 **Key Files:**
 
 - `init.sh` - Main initialization script with component verification
-- `oh-my-opencode.json` - Main framework configuration with plugin declarations
+- `OpenCode.json` - Main framework configuration with plugin declarations
 - `plugin/strray-codex-injection.ts` - Plugin initialization and hook system
 - `agents/` - Individual agent configurations (.md descriptions + .yml specs)
 - `src/core/` - TypeScript core with manager classes and orchestration
@@ -144,7 +144,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 Framework initializes in strict dependency order via orchestrator-first boot:
 
 1. **Plugin Loading** (`plugin/strray-codex-injection.ts`)
-   - Loads on oh-my-opencode startup via plugin system
+   - Loads on OpenCode startup via plugin system
    - Injects codex terms into all agent system prompts
    - Registers MCP servers for StrRay agents
 
@@ -193,17 +193,17 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 - **Infrastructure Automation**: CloudFormation, Kubernetes, multi-cloud
 - **Predictive Analytics**: Automated scaling and performance optimization
 
-### oh-my-opencode Plugin Integration
+### OpenCode Plugin Integration
 
-**StrRay operates as a comprehensive plugin within the oh-my-opencode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
+**StrRay operates as a comprehensive plugin within the OpenCode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
 
 #### Plugin Architecture
 
 - **Plugin Entry Point**: `plugin/strray-codex-injection.ts` serves as the main plugin interface
-- **Configuration Integration**: `.opencode/oh-my-opencode.json` contains StrRay-specific configuration blocks
-- **Hook System**: Implements oh-my-opencode's hook system for tool execution interception and system prompt injection
+- **Configuration Integration**: `.opencode/OpenCode.json` contains StrRay-specific configuration blocks
+- **Hook System**: Implements OpenCode's hook system for tool execution interception and system prompt injection
 
-#### oh-my-opencode Integration Points
+#### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
 - **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
@@ -910,7 +910,7 @@ score = Math.min(Math.max(score, 0), 100); // Normalize 0-100
 - **Hot-Reload**: Dynamic plugin updates without framework restart
 - **Dependency Resolution**: Version compatibility and automatic updates
 
-### oh-my-opencode Hook System
+### OpenCode Hook System
 
 - **`agent.start`**: Loads codex context on agent initialization
 - **`tool.execute.before`**: Validates actions against codex terms
@@ -935,7 +935,7 @@ score = Math.min(Math.max(score, 0), 100); // Normalize 0-100
 - **Hot-Reload**: Dynamic plugin updates without framework restart
 - **Dependency Resolution**: Version compatibility and automatic updates
 
-### oh-my-opencode Hook System
+### OpenCode Hook System
 
 - **`agent.start`**: Loads codex context on agent initialization
 - **`tool.execute.before`**: Validates actions against codex terms
@@ -1233,7 +1233,7 @@ Framework initializes in strict dependency order:
 - **Hybrid Architecture**: TypeScript/Python integration operational
 - **Boot Orchestration**: Dependency-ordered initialization working
 - **State Management**: Session persistence and cross-session coordination
-- **Plugin Integration**: oh-my-opencode plugin system functional
+- **Plugin Integration**: OpenCode plugin system functional
 
 ### Partially Implemented ⚠️
 

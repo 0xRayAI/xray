@@ -4,7 +4,7 @@
 
 ### Prerequisites
 - Node.js 18+ (check with `node --version`)
-- oh-my-opencode installed and running
+- OpenCode installed and running
 
 ### Installation
 ```bash
@@ -169,8 +169,8 @@ Create `.stringray/config.json` in your project root:
 }
 ```
 
-### oh-my-opencode Integration
-The framework automatically configures oh-my-opencode agents:
+### OpenCode Integration
+The framework automatically configures OpenCode agents:
 ```json
 {
   "model_routing": {
@@ -207,7 +207,7 @@ The framework automatically configures oh-my-opencode agents:
 
 #### Agent Commands Not Working
 ```bash
-# Check oh-my-opencode status
+# Check OpenCode status
 opencode --version
 
 # Verify framework installation

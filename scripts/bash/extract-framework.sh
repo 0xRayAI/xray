@@ -150,29 +150,29 @@ create_configuration() {
         rm -f "$target_dir/.opencode/enforcer-config.json.bak"
     fi
 
-    # Customize oh-my-opencode.json for project type
-    if [ -f "$target_dir/.opencode/oh-my-opencode.json" ]; then
+    # Customize OpenCode.json for project type
+    if [ -f "$target_dir/.opencode/OpenCode.json" ]; then
         case $PROJECT_FRAMEWORK in
             "react")
-                sed -i.bak 's/"framework": "[^"]*"/"framework": "React + TypeScript"/g' "$target_dir/.opencode/oh-my-opencode.json"
+                sed -i.bak 's/"framework": "[^"]*"/"framework": "React + TypeScript"/g' "$target_dir/.opencode/OpenCode.json"
                 ;;
             "vue")
-                sed -i.bak 's/"framework": "[^"]*"/"framework": "Vue.js"/g' "$target_dir/.opencode/oh-my-opencode.json"
+                sed -i.bak 's/"framework": "[^"]*"/"framework": "Vue.js"/g' "$target_dir/.opencode/OpenCode.json"
                 ;;
             "angular")
-                sed -i.bak 's/"framework": "[^"]*"/"framework": "Angular"/g' "$target_dir/.opencode/oh-my-opencode.json"
+                sed -i.bak 's/"framework": "[^"]*"/"framework": "Angular"/g' "$target_dir/.opencode/OpenCode.json"
                 ;;
             "python")
-                sed -i.bak 's/"framework": "[^"]*"/"framework": "Python"/g' "$target_dir/.opencode/oh-my-opencode.json"
+                sed -i.bak 's/"framework": "[^"]*"/"framework": "Python"/g' "$target_dir/.opencode/OpenCode.json"
                 ;;
             "rust")
-                sed -i.bak 's/"framework": "[^"]*"/"framework": "Rust"/g' "$target_dir/.opencode/oh-my-opencode.json"
+                sed -i.bak 's/"framework": "[^"]*"/"framework": "Rust"/g' "$target_dir/.opencode/OpenCode.json"
                 ;;
             "go")
-                sed -i.bak 's/"framework": "[^"]*"/"framework": "Go"/g' "$target_dir/.opencode/oh-my-opencode.json"
+                sed -i.bak 's/"framework": "[^"]*"/"framework": "Go"/g' "$target_dir/.opencode/OpenCode.json"
                 ;;
         esac
-        rm -f "$target_dir/.opencode/oh-my-opencode.json.bak"
+        rm -f "$target_dir/.opencode/OpenCode.json.bak"
     fi
 }
 

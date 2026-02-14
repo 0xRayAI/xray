@@ -289,7 +289,7 @@ class AgentsMdEnforcer {
    */
   async discoverAgents() {
     const agents = [];
-    const configPath = path.join(this.projectRoot, '.opencode', 'oh-my-opencode.json');
+    const configPath = path.join(this.projectRoot, '.opencode', 'OpenCode.json');
     
     if (fs.existsSync(configPath)) {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));

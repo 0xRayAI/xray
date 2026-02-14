@@ -49,7 +49,7 @@
 - ✅ Added to export list
 - ✅ Both agents compile successfully to `dist/agents/`
 
-### **Framework Configuration** (`.opencode/oh-my-opencode.json`) ✅
+### **Framework Configuration** (`.opencode/OpenCode.json`) ✅
 - ✅ Removed "librarian" from disabled_agents list (now ENABLED)
 - ✅ Added both new agents to agent configuration section
 - ✅ Both agents set as "subagent" mode
@@ -208,7 +208,7 @@
 - `src/agents/index.ts` (44 lines, 1.8KB)
 
 ### **Configuration Updates** (1 file)
-- `.opencode/oh-my-opencode.json` (4 lines modified)
+- `.opencode/OpenCode.json` (4 lines modified)
 
 ### **Test Suites** (4 files)
 - `src/__tests__/unit/multimodal-looker.test.ts` (330+ lines, 12.8KB)

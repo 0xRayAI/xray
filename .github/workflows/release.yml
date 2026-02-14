@@ -79,7 +79,7 @@ jobs:
             ### 🔧 Requirements
 
             - Node.js 18+
-            - oh-my-opencode (for plugin integration)
+            - OpenCode (for plugin integration)
 
             ---
             *Built on the Universal Development Codex v1.2.24*

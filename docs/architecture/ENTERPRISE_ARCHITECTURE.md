@@ -70,7 +70,7 @@ The StringRay Framework consists of **28 key components** providing enterprise-g
 | 2  | **State Management System** | Manages framework state and persistence | **CRITICAL** | Unit tests (integrated), Step 18 (Framework stability) |
 | 3  | **Processor Pipeline** | Handles tool execution preprocessing | **CRITICAL** | **Step 24** (Regression tests - StrRayStateManager/ProcessorManager) |
 | 4  | **MCP Server Registry** | Manages 26 Model Context Protocol servers | **HIGH** | Step 16 (MCP connectivity), Step 17 (Server validation) |
-| 5  | **oh-my-opencode Integration** | Plugin registration and agent management | **HIGH** | Step 4 (Plugin registration), Step 17 (Integration testing) |
+| 5  | **OpenCode Integration** | Plugin registration and agent management | **HIGH** | Step 4 (Plugin registration), Step 17 (Integration testing) |
 | 6  | **TypeScript Compilation** | Builds framework from source | **CRITICAL** | Step 2 (Build verification) |
 | 7  | **Consumer Path Transformation** | Prepares package for npm distribution | **HIGH** | Step 3 (Consumer path preparation) |
 | 8  | **Postinstall Configuration** | Sets up plugin after npm install | **HIGH** | Step 6 (Postinstall validation), Steps 19-21 (CLI commands) |
@@ -495,13 +495,13 @@ Resources:
 
 ## Integration Points
 
-### oh-my-opencode Integration
+### OpenCode Integration
 
-The framework integrates seamlessly with oh-my-opencode:
+The framework integrates seamlessly with OpenCode:
 
 ```json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1"

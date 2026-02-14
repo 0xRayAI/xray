@@ -31,8 +31,8 @@ const REMOVE_PATTERNS = [
   // Specific hardcoded versions that should be removed
   /\bStrRay Framework v1\.0\.0\b/g,
   /\bUniversal Development Codex v1\.2\.22\b/g,
-  /\boh-my-opencode v2\.12\.0\b/g,
-  /\boh-my-opencode v2\.14\.0\b/g,
+  /\bOpenCode v2\.12\.0\b/g,
+  /\bOpenCode v2\.14\.0\b/g,
 
   // Archive version references (keep in archive files)
   // These will be handled separately for archive files
@@ -50,10 +50,10 @@ const REPLACE_PATTERNS = [
     pattern: /Universal Development Codex v1\.2\.22/g,
     replacement: `Universal Development Codex v${VERSION_VARS.CODEX_VERSION}`,
   },
-  // oh-my-opencode version
+  // OpenCode version
   {
-    pattern: /oh-my-opencode v2\.14\.0/g,
-    replacement: `oh-my-opencode v${VERSION_VARS.OH_MY_OPENCODE_VERSION}`,
+    pattern: /OpenCode v2\.14\.0/g,
+    replacement: `OpenCode v${VERSION_VARS.OH_MY_OPENCODE_VERSION}`,
   },
 ];
 
@@ -93,7 +93,7 @@ async function cleanupDocumentationVersions() {
   console.log(`📋 Version Variables:`);
   console.log(`   Framework: v${VERSION_VARS.FRAMEWORK_VERSION}`);
   console.log(`   Codex: v${VERSION_VARS.CODEX_VERSION}`);
-  console.log(`   oh-my-opencode: v${VERSION_VARS.OH_MY_OPENCODE_VERSION}`);
+  console.log(`   OpenCode: v${VERSION_VARS.OH_MY_OPENCODE_VERSION}`);
   console.log("=".repeat(50));
 
   // Find all documentation files

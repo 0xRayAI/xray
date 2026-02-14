@@ -39,7 +39,7 @@ class SkillMcpIntegrationTester {
     if (isConsumer) {
       this.log('Consumer environment detected - skills loaded via plugin system');
       this.log('Skipping file-based validation in consumer environment');
-      this.log('✅ Skills loaded via oh-my-opencode plugin system');
+      this.log('✅ Skills loaded via OpenCode plugin system');
       this.log('');
       this.log('=== SKILLS & MCP INTEGRATION TEST REPORT ===');
 
@@ -250,7 +250,7 @@ class SkillMcpIntegrationTester {
   async testSkillInvocation(skillName) {
     this.log(`Testing skill invocation for: ${skillName}`);
 
-    // This would normally invoke the skill through oh-my-opencode
+    // This would normally invoke the skill through OpenCode
     // For now, we'll just validate that the skill exists and has MCP config
     const skill = this.results.skillsLoaded.find(s => s.name === skillName);
 
@@ -265,7 +265,7 @@ class SkillMcpIntegrationTester {
     }
 
     // In a real test, we would:
-    // 1. Start oh-my-opencode
+    // 1. Start OpenCode
     // 2. Send a prompt that triggers this skill
     // 3. Monitor for MCP server startup
     // 4. Check that tools are available

@@ -3,7 +3,7 @@
 /**
  * StrRay Plugin Setup Script
  *
- * Configures oh-my-opencode to use the StrRay plugin.
+ * Configures OpenCode to use the StrRay plugin.
  * Run this after installing the plugin.
  */
 
@@ -12,17 +12,17 @@ const path = require("path");
 const os = require("os");
 
 function getOhMyOpenCodeConfigPath() {
-  // Try to find oh-my-opencode config in current project
+  // Try to find OpenCode config in current project
   const projectConfig = path.join(
     process.cwd(),
     ".opencode",
-    "oh-my-opencode.json",
+    "OpenCode.json",
   );
   if (fs.existsSync(projectConfig)) {
     return projectConfig;
   }
 
-  // Try to find global oh-my-opencode config
+  // Try to find global OpenCode config
   const homeDir = os.homedir();
   const globalConfig = path.join(
     homeDir,
@@ -67,7 +67,7 @@ function configureStrRayPlugin() {
   const configPath = getOhMyOpenCodeConfigPath();
 
   console.log(
-    `🔧 Configuring StrRay plugin for oh-my-opencode at: ${configPath}`,
+    `🔧 Configuring StrRay plugin for OpenCode at: ${configPath}`,
   );
 
   let config = loadConfig(configPath);
@@ -124,7 +124,7 @@ function configureStrRayPlugin() {
 
   console.log(`🎉 StrRay plugin setup complete!`);
   console.log(`\n📋 Next Steps:`);
-  console.log(`1. Restart oh-my-opencode to load the plugin`);
+  console.log(`1. Restart OpenCode to load the plugin`);
   console.log(`2. Run 'opencode agent list' to see StrRay agents`);
   console.log(`3. Try '@enforcer analyze this code' to test the plugin`);
   console.log(
@@ -138,7 +138,7 @@ try {
 } catch (error) {
   console.error("❌ StrRay plugin setup failed:", error.message);
   console.log("\n🔧 Manual Configuration:");
-  console.log("Add the following to your .opencode/oh-my-opencode.json:");
+  console.log("Add the following to your .opencode/OpenCode.json:");
   console.log(`"plugin": ["strray/dist/plugin/strray-codex-injection.js"]`);
   process.exit(1);
 }

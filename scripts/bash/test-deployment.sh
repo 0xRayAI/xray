@@ -118,7 +118,7 @@ else
 fi
 
 echo ""
-echo "2.3 oh-my-opencode Configuration Generation"
+echo "2.3 OpenCode Configuration Generation"
 echo "Testing configuration generation"
 mkdir -p test-config
 cd test-config
@@ -139,12 +139,12 @@ cd test-config
 npm install "../$PACK_FILE" > /dev/null 2>&1
 
 # Check if config was created
-if [ -f ".opencode/oh-my-opencode.json" ]; then
-    echo "✅ oh-my-opencode.json created"
+if [ -f ".opencode/OpenCode.json" ]; then
+    echo "✅ OpenCode.json created"
     echo "Configuration content (first 10 lines):"
-    head -10 .opencode/oh-my-opencode.json
+    head -10 .opencode/OpenCode.json
 else
-    echo "❌ oh-my-opencode.json not created"
+    echo "❌ OpenCode.json not created"
     exit 1
 fi
 
@@ -172,7 +172,7 @@ PACK_FILE=$(ls *.tgz | head -1)
 cd test-registration
 npm install "../$PACK_FILE" > /dev/null 2>&1
 
-if grep -q "strray" .opencode/oh-my-opencode.json; then
+if grep -q "strray" .opencode/OpenCode.json; then
     echo "✅ Plugin registered in configuration"
 else
     echo "❌ Plugin not registered in configuration"
@@ -217,7 +217,7 @@ try {
 
 echo ""
 echo "3.2 Agent Configuration Validation"
-echo "Testing agent configuration in oh-my-opencode.json"
+echo "Testing agent configuration in OpenCode.json"
 mkdir -p test-agents
 cd test-agents
 
@@ -240,7 +240,7 @@ AGENTS=("orchestrator" "enforcer" "architect" "test-architect" "bug-triage-speci
 MISSING_AGENTS=()
 
 for agent in "${AGENTS[@]}"; do
-    if grep -q "\"$agent\":" .opencode/oh-my-opencode.json; then
+    if grep -q "\"$agent\":" .opencode/OpenCode.json; then
         echo "✅ Agent $agent configured"
     else
         echo "❌ Agent $agent not configured"

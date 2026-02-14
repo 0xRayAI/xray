@@ -298,8 +298,8 @@ class ConsumerValidator {
       { path: ".mcp.json", description: "MCP server configuration" },
       { path: "opencode.json", description: "OpenCode base configuration" },
       {
-        path: ".opencode/oh-my-opencode.json",
-        description: "oh-my-opencode main config",
+        path: ".opencode/OpenCode.json",
+        description: "OpenCode main config",
       },
       {
         path: "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js",
@@ -329,7 +329,7 @@ class ConsumerValidator {
     // Check plugin registration
     try {
       const config = JSON.parse(
-        fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"),
+        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
       );
       const pluginArray = config.plugins || config.plugin || [];
       const hasStringRayPlugin =
@@ -345,7 +345,7 @@ class ConsumerValidator {
     // Check Sisyphus disabled
     try {
       const config = JSON.parse(
-        fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"),
+        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
       );
       const sisyphusDisabled =
         config.sisyphus_agent?.disabled === true ||
@@ -424,7 +424,7 @@ class ConsumerValidator {
       // File existence checks
       () => fs.existsSync(".mcp.json"),
       () => fs.existsSync("opencode.json"),
-      () => fs.existsSync(".opencode/oh-my-opencode.json"),
+      () => fs.existsSync(".opencode/OpenCode.json"),
       () =>
         fs.existsSync(
           "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js",
@@ -450,7 +450,7 @@ class ConsumerValidator {
       },
       () => {
         try {
-          JSON.parse(fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"));
+          JSON.parse(fs.readFileSync(".opencode/OpenCode.json", "utf8"));
           return true;
         } catch {
           return false;
@@ -471,7 +471,7 @@ class ConsumerValidator {
       () => {
         try {
           const config = JSON.parse(
-            fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"),
+            fs.readFileSync(".opencode/OpenCode.json", "utf8"),
           );
           const plugins = config.plugins || config.plugin || [];
           return (
@@ -487,7 +487,7 @@ class ConsumerValidator {
       () => {
         try {
           const config = JSON.parse(
-            fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"),
+            fs.readFileSync(".opencode/OpenCode.json", "utf8"),
           );
           return (
             config.sisyphus_agent?.disabled === true ||
@@ -830,9 +830,9 @@ class ConsumerValidator {
 
       let loadedAgents = 0;
 
-      // Test that agent configurations exist in oh-my-opencode config
+      // Test that agent configurations exist in OpenCode config
       const ohMyOpencodeConfig = JSON.parse(
-        fs.readFileSync(".opencode/oh-my-opencode.json", "utf8"),
+        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
       );
 
       // Check if agents are defined (they might be loaded dynamically)

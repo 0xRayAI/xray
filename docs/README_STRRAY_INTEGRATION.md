@@ -1,27 +1,27 @@
-# StrRay Framework - Direct oh-my-opencode Integration
+# StrRay Framework - Direct OpenCode Integration
 
 ## Overview
 
-StrRay Framework is now **directly integrated** into oh-my-opencode's core rather than using a separate plugin approach. This provides:
+StrRay Framework is now **directly integrated** into OpenCode's core rather than using a separate plugin approach. This provides:
 
 - ✅ **Full Framework Functionality**: All advanced orchestration, processors, MCP servers, and enterprise features
-- ✅ **Automatic Activation**: StrRay components activate automatically when oh-my-opencode starts
+- ✅ **Automatic Activation**: StrRay components activate automatically when OpenCode starts
 - ✅ **Seamless Experience**: No separate plugin installation or configuration needed
-- ✅ **Core Integration**: StrRay is now part of oh-my-opencode's fundamental architecture
+- ✅ **Core Integration**: StrRay is now part of OpenCode's fundamental architecture
 
 ## Architecture
 
 ### Core Integration Points
 
 1. **src/core/strray-activation.ts**: Handles framework component activation in correct order
-2. **.opencode/init.sh**: Auto-initializes StrRay during oh-my-opencode startup
+2. **.opencode/init.sh**: Auto-initializes StrRay during OpenCode startup
 3. **src/index.ts**: Exports StrRay components and auto-activates framework
 4. **Boot Orchestrator**: Initializes all components in dependency order
 
 ### Activation Sequence
 
 ```
-oh-my-opencode starts
+OpenCode starts
     ↓
 .opencode/init.sh (plugin executed)
     ↓
@@ -63,7 +63,7 @@ If upgrading from the old plugin approach:
 # Rebuild to include new integration
 npm run build
 
-# StrRay now activates automatically with oh-my-opencode
+# StrRay now activates automatically with OpenCode
 ```
 
 ## Benefits Over Plugin Approach
@@ -98,8 +98,8 @@ When developing StrRay features:
 1. **Core components** go in `src/` (automatically integrated)
 2. **Tests** go in `src/__tests__/`
 3. **Documentation** updates in relevant files
-4. **Build** with `npm run build` to include in oh-my-opencode
+4. **Build** with `npm run build` to include in OpenCode
 
 ## Result
 
-StrRay Framework is now a **native part of oh-my-opencode** rather than a separate plugin, providing the complete sophisticated orchestration system with automatic pre/post processors, enterprise monitoring, and full framework capabilities integrated at the core level.
+StrRay Framework is now a **native part of OpenCode** rather than a separate plugin, providing the complete sophisticated orchestration system with automatic pre/post processors, enterprise monitoring, and full framework capabilities integrated at the core level.

@@ -102,7 +102,7 @@ console.log("Script location:", import.meta.url);
 
       if (hasCodex && hasTerms) {
         console.log("\n🎉 StringRay Framework Plugin Test: PASSED");
-        console.log("✨ Framework is ready for oh-my-opencode integration");
+        console.log("✨ Framework is ready for OpenCode integration");
 
         // Run comprehensive deployment tests unless basic-only flag is set
         if (!isBasicOnly) {

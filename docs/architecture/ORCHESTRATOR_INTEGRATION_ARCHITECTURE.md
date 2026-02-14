@@ -12,7 +12,7 @@ graph TB
 
     %% Plugin Integration Layer
     subgraph "Plugin Integration Layer"
-        OMC[oh-my-opencode<br/>Framework]
+        OMC[OpenCode<br/>Framework]
         SRP[StrRay Plugin<br/>strray-codex-injection.ts]
         MCP[MCP Servers<br/>enhanced-orchestrator<br/>enforcer<br/>etc.]
     end
@@ -27,7 +27,7 @@ graph TB
     %% Agent Execution Layer
     subgraph "Agent Execution Layer"
         ENF[Enforcer<br/>Codex Validation]
-        AGENTS[oh-my-opencode Agents<br/>Architect, Librarian, etc.]
+        AGENTS[OpenCode Agents<br/>Architect, Librarian, etc.]
     end
 
     %% Flow Connections
@@ -63,9 +63,9 @@ graph TB
 │   └── 🔧 Tool/API Invocation
 │       └── orchestrator.executeComplexTask()
 │
-├── 🔌 Plugin Integration (oh-my-opencode)
+├── 🔌 Plugin Integration (OpenCode)
 │   ├── 📥 Prompt Reception
-│   │   └── oh-my-opencode receives user prompt
+│   │   └── OpenCode receives user prompt
 │   ├── 🔍 Plugin Activation
 │   │   └── StrRay plugin (strray-codex-injection.ts) activates
 │   ├── 📚 Context Injection
@@ -100,7 +100,7 @@ graph TB
 │   │   ├── Pre-execution validation (45 codex terms)
 │   │   ├── Runtime monitoring
 │   │   └── Post-execution compliance audit
-│   └── 🌐 oh-my-opencode Agents
+│   └── 🌐 OpenCode Agents
 │       ├── Architect → System design
 │       ├── Librarian → Research & documentation
 │       ├── Test-Architect → Testing strategy
@@ -128,7 +128,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant User
-    participant OMC as oh-my-opencode
+    participant OMC as OpenCode
     participant SRP as StrRay Plugin
     participant MCP as MCP Server
     participant SO as StrRayOrchestrator
@@ -181,7 +181,7 @@ graph TB
         subgraph "StrRay Agents"
             ENF[Enforcer<br/>Codex Validation]
         end
-        subgraph "oh-my-opencode Agents"
+        subgraph "OpenCode Agents"
             ARC[Architect]
             LIB[Librarian]
             TSA[Test-Architect]
@@ -271,7 +271,7 @@ graph TB
 │   └── 🎯 AgentDelegator
 │       ├── analyzeDelegation() → Strategy Determination
 │       ├── executeDelegation() → Agent Routing
-│       └── oh-my-opencode Integration
+│       └── OpenCode Integration
 │
 ├── 🤖 Agent Execution Layer
 │   ├── 🛡️ StrRay Enforcer (Internal)
@@ -279,7 +279,7 @@ graph TB
 │   │   ├── Pre/Post Execution Checks
 │   │   └── 99.6% Error Prevention
 │   │
-│   └── 🌐 oh-my-opencode Agents (External)
+│   └── 🌐 OpenCode Agents (External)
 │       ├── Architect → System Design
 │       ├── Librarian → Research & Documentation
 │       ├── Test-Architect → Testing Strategy
@@ -401,7 +401,7 @@ graph TD
 ```mermaid
 graph TD
     A[Task Execution Request] --> B{Agent Delegation Success?}
-    B -->|Yes| C[Execute via oh-my-opencode]
+    B -->|Yes| C[Execute via OpenCode]
     B -->|No| D[Fallback to Simulation]
 
     C --> E{Execution Success?}
@@ -437,7 +437,7 @@ graph TD
 | ------------------------ | -------------------- | ---------------------------- |
 | **StrRayOrchestrator**   | Direct instantiation | Main task coordination       |
 | **EnhancedOrchestrator** | Singleton import     | Agent lifecycle & monitoring |
-| **AgentDelegator**       | Factory creation     | oh-my-opencode routing       |
+| **AgentDelegator**       | Factory creation     | OpenCode routing       |
 | **Enforcer**             | Internal validation  | Codex compliance             |
 | **MCP Server**           | Network protocol     | External tool integration    |
 | **StateManager**         | Dependency injection | Persistence & coordination   |

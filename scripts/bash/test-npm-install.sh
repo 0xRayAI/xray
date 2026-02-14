@@ -74,7 +74,7 @@ if ! run_with_timeout 120 npx $PACKAGE_NAME install; then
 fi
 
 # Verify files were created
-expected_files=(".mcp.json" "opencode.json" ".opencode/oh-my-opencode.json")
+expected_files=(".mcp.json" "opencode.json" ".opencode/OpenCode.json")
 for file in "${expected_files[@]}"; do
     if [ ! -f "$file" ]; then
         log_error "Missing expected file: $file"

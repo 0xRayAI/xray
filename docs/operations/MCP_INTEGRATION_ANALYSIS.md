@@ -4,7 +4,7 @@
 
 ### **❌ Current Reality:**
 
-Our "contextual awareness architecture" is **purely agent-side** - it does **NOT integrate with oh-my-opencode's MCP system** at all!
+Our "contextual awareness architecture" is **purely agent-side** - it does **NOT integrate with OpenCode's MCP system** at all!
 
 ### **🔍 What We Actually Have:**
 
@@ -54,13 +54,13 @@ We have **10 infrastructure MCP servers** but **0 knowledge skill MCP servers**:
 
 ---
 
-## 🤔 **What oh-my-opencode Skills Actually Are**
+## 🤔 **What OpenCode Skills Actually Are**
 
-### **oh-my-opencode Skill System:**
+### **OpenCode Skill System:**
 
-oh-my-opencode uses **MCP (Model Context Protocol) servers** as "skills" - each skill is an MCP server that provides specialized capabilities.
+OpenCode uses **MCP (Model Context Protocol) servers** as "skills" - each skill is an MCP server that provides specialized capabilities.
 
-### **Real MCP Skills in oh-my-opencode:**
+### **Real MCP Skills in OpenCode:**
 
 ```typescript
 // Skills are MCP servers with tools like:
@@ -71,7 +71,7 @@ oh-my-opencode uses **MCP (Model Context Protocol) servers** as "skills" - each 
 }
 ```
 
-### **How Skills Work in oh-my-opencode:**
+### **How Skills Work in OpenCode:**
 
 1. **MCP Server Registration**: Each skill registers as an MCP server
 2. **Tool Exposure**: Skills expose tools via MCP protocol
@@ -89,7 +89,7 @@ oh-my-opencode uses **MCP (Model Context Protocol) servers** as "skills" - each 
 - Our "tools" are just JavaScript functions
 - Agents call them directly (not via MCP protocol)
 - No MCP server registration or discovery
-- Not integrated with oh-my-opencode's skill system
+- Not integrated with OpenCode's skill system
 
 #### **2. Knowledge Skills Don't Exist**
 
@@ -101,7 +101,7 @@ oh-my-opencode uses **MCP (Model Context Protocol) servers** as "skills" - each 
 
 - Contextual analysis happens only within agents
 - No external MCP server exposure
-- Cannot be used by other oh-my-opencode instances
+- Cannot be used by other OpenCode instances
 - Not part of the shared skill ecosystem
 
 ---
@@ -147,10 +147,10 @@ oh-my-opencode uses **MCP (Model Context Protocol) servers** as "skills" - each 
 const context = await callMcpSkill("context-analysis", { projectRoot });
 ```
 
-### **Phase 4: oh-my-opencode Integration**
+### **Phase 4: OpenCode Integration**
 
 ```typescript
-// Register with oh-my-opencode skill system:
+// Register with OpenCode skill system:
 {
   "skills": [
     "project-analysis",
@@ -175,7 +175,7 @@ const context = await callMcpSkill("context-analysis", { projectRoot });
 
 - **Zero MCP integration** - purely agent-side
 - **Missing knowledge skills** - 6 claimed but 0 implemented
-- **Not part of oh-my-opencode ecosystem**
+- **Not part of OpenCode ecosystem**
 - **Cannot be shared or discovered** by other instances
 
 ### **📊 Reality Check:**
@@ -214,7 +214,7 @@ const result = await architectTools.contextAnalysis(projectRoot);
 const result = await callMcpSkill("context-analysis", { projectRoot });
 ```
 
-### **Step 4: oh-my-opencode Registration**
+### **Step 4: OpenCode Registration**
 
 ```json
 {
@@ -234,7 +234,7 @@ const result = await callMcpSkill("context-analysis", { projectRoot });
 
 ### **Benefits Achieved:**
 
-- ✅ **True oh-my-opencode integration** - part of skill ecosystem
+- ✅ **True OpenCode integration** - part of skill ecosystem
 - ✅ **Discoverable skills** - other instances can use our analysis
 - ✅ **Standardized interface** - follows MCP protocol
 - ✅ **Scalable architecture** - can add skills without agent changes
@@ -245,7 +245,7 @@ const result = await callMcpSkill("context-analysis", { projectRoot });
 - **Skill Marketplace**: Our contextual analysis becomes reusable
 - **Cross-Instance Sharing**: Analysis results shared across teams
 - **Protocol Compliance**: Follows industry MCP standards
-- **Ecosystem Participation**: Contributes to oh-my-opencode skill library
+- **Ecosystem Participation**: Contributes to OpenCode skill library
 
 ---
 
@@ -253,7 +253,7 @@ const result = await callMcpSkill("context-analysis", { projectRoot });
 
 **"Is it purely agent-side?"** - **YES, completely agent-side with zero MCP integration!**
 
-**Our "contextual awareness architecture" is just JavaScript functions that agents call directly. It's not integrated with oh-my-opencode's MCP skill system at all.**
+**Our "contextual awareness architecture" is just JavaScript functions that agents call directly. It's not integrated with OpenCode's MCP skill system at all.**
 
 **The knowledge skills we claim to have? They don't exist as MCP servers - just listed in config files.**
 

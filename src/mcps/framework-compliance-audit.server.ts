@@ -283,7 +283,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     try {
       // Check for required configuration files
       const requiredFiles = [
-        ".opencode/oh-my-opencode.json",
+        ".opencode/OpenCode.json",
         "src/strray/config/manager.py",
         "src/agents/types.ts",
       ];

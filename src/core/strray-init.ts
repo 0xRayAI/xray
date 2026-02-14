@@ -1,15 +1,15 @@
 /**
  * StringRay Framework Initialization
  *
- * This file integrates StringRay framework activation directly into oh-my-opencode's
+ * This file integrates StringRay framework activation directly into OpenCode's
  * core initialization process.
  */
 
-// Import and activate StringRay framework during oh-my-opencode startup
+// Import and activate StringRay framework during OpenCode startup
 import { activateStringRayFramework } from "./strray-activation.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-// Initialize StringRay framework when oh-my-opencode starts
+// Initialize StringRay framework when OpenCode starts
 export async function initializeStringRay(): Promise<void> {
   const jobId = `init-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -28,7 +28,7 @@ export async function initializeStringRay(): Promise<void> {
       "error",
       { jobId, error },
     );
-    // Don't throw - allow oh-my-opencode to continue without StringRay
+    // Don't throw - allow OpenCode to continue without StringRay
     console.warn(
       "⚠️ StringRay framework failed to initialize:",
       error instanceof Error ? error.message : String(error),

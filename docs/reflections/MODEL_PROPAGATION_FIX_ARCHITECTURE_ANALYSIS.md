@@ -23,7 +23,7 @@ You correctly identified a **major architectural flaw** in the StrRay framework.
 
 ### **1. Centralized Model Configuration**
 ```json
-// .opencode/oh-my-opencode.json - Single Source of Truth
+// .opencode/OpenCode.json - Single Source of Truth
 {
   "model_default": "openrouter/xai-grok-2-1212-fast-1",
   "model_routing": {
@@ -66,7 +66,7 @@ constructor() {
 ### **Post-Fix State:**
 - ✅ **0 hardcoded references** - all dynamic resolution
 - ✅ Model changes require **1 config update** only
-- ✅ Centralized governance through oh-my-opencode.json
+- ✅ Centralized governance through OpenCode.json
 - ✅ Instant propagation across all agents and services
 
 ## **Engineering Impact**
@@ -106,7 +106,7 @@ This fixes a **fundamental antipattern** where **3 key principles were violated:
 3. **Separation of Concerns** - Configuration mixed with implementation logic
 
 **Now employs:**
-- ✅ **Unified Configuration Layer** via oh-my-opencode.json
+- ✅ **Unified Configuration Layer** via OpenCode.json
 - ✅ **Dynamic Resolution Engine** eliminating hardcoded references  
 - ✅ **Hierarchical Model Management** with proper fallbacks
 - ✅ **Automated Model Validation** ensuring correctness

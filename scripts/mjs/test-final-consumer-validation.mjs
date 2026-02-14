@@ -55,8 +55,8 @@ class FinalConsumerValidation {
       { path: ".mcp.json", description: "MCP server configuration" },
       { path: "opencode.json", description: "OpenCode base configuration" },
       {
-        path: ".opencode/oh-my-opencode.json",
-        description: "oh-my-opencode main config",
+        path: ".opencode/OpenCode.json",
+        description: "OpenCode main config",
       },
     ];
 
@@ -162,7 +162,7 @@ class FinalConsumerValidation {
     console.log("\n🔌 PLUGIN INTEGRATION VALIDATION");
 
     try {
-      const configPath = path.resolve(this.consumerRoot, ".opencode/oh-my-opencode.json");
+      const configPath = path.resolve(this.consumerRoot, ".opencode/OpenCode.json");
       const ohMyOpencodeConfig = JSON.parse(
         fs.readFileSync(configPath, "utf8"),
       );

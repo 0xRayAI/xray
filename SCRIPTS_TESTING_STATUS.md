@@ -122,7 +122,7 @@
 21. **merge-mcp-configs.sh** 🔧 FIXED
    - Issue: Syntax error with commented-out for loop
    - Fix: Commented out entire for loop to avoid 'done' syntax error
-   - Note: Script now obsolete as MCP servers defined in .opencode/oh-my-opencode.json
+   - Note: Script now obsolete as MCP servers defined in .opencode/OpenCode.json
 
 22. **simple-docs-analysis.sh** ✅
    - Status: Working correctly

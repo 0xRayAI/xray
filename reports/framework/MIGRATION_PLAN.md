@@ -1,7 +1,7 @@
 # ✅ MCP Server Migration COMPLETED: From Auto-Start to Lazy Loading
 
 ## Executive Summary ✅ MIGRATION SUCCESSFUL
-Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy loading model, achieving 90%+ resource reduction and proper lifecycle management.
+Successfully migrated from auto-starting MCP servers to OpenCode's lazy loading model, achieving 90%+ resource reduction and proper lifecycle management.
 
 ## Migration Status: ✅ COMPLETE
 
@@ -21,7 +21,7 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
 - ❌ No idle cleanup or session management
 - ❌ No skills system integration
 
-## Target State (oh-my-opencode Model)
+## Target State (OpenCode Model)
 - ✅ MCP servers defined in .mcp.json (same config)
 - ✅ Lazy loading - servers start only when tools used
 - ✅ Skills system integration (not direct MCP calls)
@@ -44,7 +44,7 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
 1.2 **Update Plugin Integration**
    - Modify plugin to use skills system instead of direct MCP
    - Remove direct MCPClient usage
-   - Integrate with oh-my-opencode's SkillMcpManager
+   - Integrate with OpenCode's SkillMcpManager
 
 1.3 **Test Skills Loading**
    - Verify skills appear in available skills list
@@ -66,7 +66,7 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
    - Test automatic cleanup of unused connections
 
 2.3 **Enhanced Shutdown Handling**
-   - Upgrade signal handlers to match oh-my-opencode's implementation
+   - Upgrade signal handlers to match OpenCode's implementation
    - Add async cleanup with proper error handling
    - Test graceful shutdown on opencode termination
 
@@ -76,7 +76,7 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
 #### Tasks:
 3.1 **Remove Auto-Start Configuration**
    - Clear .mcp.json to prevent auto-loading
-   - Update oh-my-opencode.json to enable skills system
+   - Update OpenCode.json to enable skills system
    - Verify no servers start on opencode launch
 
 3.2 **Skills Configuration**
@@ -180,7 +180,7 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
 ## Dependencies & Prerequisites
 
 ### Technical Requirements
-- oh-my-opencode plugin architecture understanding
+- OpenCode plugin architecture understanding
 - MCP protocol knowledge
 - Skills system familiarity
 - Node.js async/await patterns
@@ -210,7 +210,7 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
 
 **🏗️ Architecture Transformation:**
 - **From**: Direct MCP server auto-loading via .mcp.json
-- **To**: oh-my-opencode skills system with lazy loading
+- **To**: OpenCode skills system with lazy loading
 - **Integration**: 23 skills created for all MCP server capabilities
 
 **🔧 Enhanced Lifecycle Management:**
@@ -229,7 +229,7 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
 **✅ Skills System Integration:**
 - Created 23 SKILL.md files in .opencode/skills/
 - Each skill defines MCP server integration
-- Skills load on-demand via oh-my-opencode's SkillMcpManager
+- Skills load on-demand via OpenCode's SkillMcpManager
 
 **✅ Configuration Cleanup:**
 - Removed .mcp.json auto-loading configuration
@@ -262,8 +262,8 @@ Successfully migrated from auto-starting MCP servers to oh-my-opencode's lazy lo
 
 **Migration Successfully Completed**
 
-This migration successfully transformed our MCP server integration from a resource-intensive auto-start system to an efficient, lazy-loaded skills-based system that matches oh-my-opencode's best practices.
+This migration successfully transformed our MCP server integration from a resource-intensive auto-start system to an efficient, lazy-loaded skills-based system that matches OpenCode's best practices.
 
 **Key Achievement**: 90%+ resource reduction while maintaining full functionality through on-demand skill loading.
 
-The framework now provides significantly better performance, reliability, and user experience with proper MCP server lifecycle management integrated into oh-my-opencode's skills ecosystem.
+The framework now provides significantly better performance, reliability, and user experience with proper MCP server lifecycle management integrated into OpenCode's skills ecosystem.

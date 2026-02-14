@@ -78,8 +78,8 @@ The StrRay Framework supports multiple deployment strategies for enterprise envi
 #### Required Packages
 
 ```bash
-# oh-my-opencode framework
-npm install -g oh-my-opencode
+# OpenCode framework
+npm install -g OpenCode
 
 # Docker (for containerized deployment)
 # Install from https://docs.docker.com/get-docker/
@@ -112,7 +112,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 
 #### Outbound Connectivity
 
-- **oh-my-opencode API**: For model routing and agent coordination
+- **OpenCode API**: For model routing and agent coordination
 - **External APIs**: For plugin ecosystem and integrations
 - **Monitoring Services**: For metrics export and alerting
 
@@ -130,12 +130,12 @@ cd stringray
 npm install
 ```
 
-2. **Configure oh-my-opencode**
+2. **Configure OpenCode**
 
 ```json
-// .opencode/oh-my-opencode.json
+// .opencode/OpenCode.json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",
@@ -177,7 +177,7 @@ curl http://localhost:3000/api/status
 NODE_ENV=development
 PORT=3000
 
-# oh-my-opencode integration
+# OpenCode integration
 OPENAI_API_KEY=your_api_key_here
 
 # Database configuration

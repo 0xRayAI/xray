@@ -63,7 +63,7 @@ check_dir "dist" "Compiled code"
 
 echo ""
 echo "📄 Configuration Files:"
-check_json ".opencode/oh-my-opencode.json" "oh-my-opencode config"
+check_json ".opencode/OpenCode.json" "OpenCode config"
 check_json ".mcp.json" "MCP server registry"
 check_json "$HOME/.config/opencode/opencode.json" "Global OpenCode config"
 

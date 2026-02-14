@@ -52,10 +52,10 @@ run_test "Hook directory exists" "test -d \"${PROJECT_ROOT}/.opencode/hooks\""
 # Test 2: Hook dispatcher script exists
 run_test "Hook dispatcher exists" "test -f \"${PROJECT_ROOT}/.opencode/scripts/hook-dispatcher.sh\""
 
-# Test 3: Hook configuration in oh-my-opencode.json
-run_test "Hook config in oh-my-opencode" "python3 -c \"
+# Test 3: Hook configuration in OpenCode.json
+run_test "Hook config in OpenCode" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 disabled = config.get('disabled_hooks', [])
 if isinstance(disabled, list):
     exit(0)
@@ -83,7 +83,7 @@ run_test "Hook dispatcher executable" "test -x \"${PROJECT_ROOT}/.opencode/scrip
 # Test 6: Hook consolidation configuration
 run_test "Hook consolidation config" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 
 # Check for consolidated hook settings
 experimental = config.get('experimental', {})
@@ -103,7 +103,7 @@ exit(0)
 run_test "Backward compatibility" "python3 -c \"
 # Test that old hook configurations still work
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 
 # Check for any legacy hook configurations
 legacy_indicators = [
@@ -126,7 +126,7 @@ run_test "Hook performance impact" "python3 -c \"
 import time
 import json
 
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 disabled_hooks = config.get('disabled_hooks', [])
 
 # Performance should not be significantly impacted by disabled hooks
@@ -138,7 +138,7 @@ exit(1)
 # Test 9: Hook consolidation integrity
 run_test "Hook consolidation integrity" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 
 # Check that hook consolidation didn't break existing functionality
 required_sections = ['disabled_hooks', 'disabled_commands', 'disabled_skills']

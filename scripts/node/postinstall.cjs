@@ -99,8 +99,8 @@ if (isConsumerEnvironment) {
   // Note: .mcp.json was refactored out - no longer need to update MCP paths
   // See AGENTS.md for details
 
-  // Convert plugin paths in oh-my-opencode.json
-  const opencodePath = path.join(process.cwd(), ".opencode", "oh-my-opencode.json");
+  // Convert plugin paths in OpenCode.json
+  const opencodePath = path.join(process.cwd(), ".opencode", "OpenCode.json");
   if (fs.existsSync(opencodePath)) {
     let opencodeContent = fs.readFileSync(opencodePath, "utf8");
     // Convert strray/dist/plugin path to node_modules path
@@ -120,7 +120,7 @@ if (isConsumerEnvironment) {
       '"node_modules/strray-ai/dist/mcps/'
     );
     fs.writeFileSync(opencodePath, opencodeContent, "utf8");
-    console.log("✅ Updated plugin and MCP paths in oh-my-opencode.json");
+    console.log("✅ Updated plugin and MCP paths in OpenCode.json");
   }
 
   // Convert plugin paths in opencode.json
@@ -186,6 +186,6 @@ if (fs.existsSync(strraySource) && !fs.existsSync(strrayDest)) {
 
 console.log("🎉 StrRay Postinstall: Configuration complete!");
 console.log("📋 Next steps:");
-console.log("1. Restart oh-my-opencode to load the plugin");
+console.log("1. Restart OpenCode to load the plugin");
 console.log("2. Run 'opencode agent list' to see StrRay agents");
 console.log("3. Try '@enforcer analyze this code' to test the plugin");

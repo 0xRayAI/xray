@@ -47,15 +47,15 @@ echo "🔧 Running Configuration Integration Tests"
 echo "==========================================="
 
 # Test 1: Configuration file existence
-run_test "Config file exists" "test -f \"${PROJECT_ROOT}/.opencode/oh-my-opencode.json\""
+run_test "Config file exists" "test -f \"${PROJECT_ROOT}/.opencode/OpenCode.json\""
 
 # Test 2: Configuration JSON validity
-run_test "Config JSON syntax" "python3 -c \"import json; json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))\""
+run_test "Config JSON syntax" "python3 -c \"import json; json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))\""
 
 # Test 3: Required configuration properties
 run_test "Required properties present" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 required = ['strray_agents', 'dynamic_models', 'ai_logging', 'python_backend']
 missing = [k for k in required if k not in config]
 if not missing:
@@ -68,7 +68,7 @@ else:
 # Test 4: Agent configuration structure
 run_test "Agent config structure" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 agents = config.get('strray_agents', {})
 if 'enabled' in agents and 'disabled' in agents:
     if isinstance(agents['enabled'], list) and isinstance(agents['disabled'], list):
@@ -79,7 +79,7 @@ exit(1)
 # Test 5: Model configuration validation
 run_test "Model config validation" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 models = config.get('dynamic_models', {})
 if 'enabled' in models and 'fallback_models' in models:
     if isinstance(models['fallback_models'], list):
@@ -90,7 +90,7 @@ exit(1)
 # Test 6: Python backend configuration
 run_test "Python backend config" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 backend = config.get('python_backend', {})
 if 'enabled' in backend and 'path' in backend and 'entry_point' in backend:
     exit(0)
@@ -100,7 +100,7 @@ exit(1)
 # Test 7: MCP server configurations
 run_test "MCP server configs" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 mcps = config.get('mcps', {})
 if isinstance(mcps, dict) and len(mcps) > 0:
     # Check that each MCP has server and config
@@ -115,7 +115,7 @@ exit(1)
 run_test "Schema compliance" "python3 -c \"
 import json
 import requests
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 schema_url = config.get('\$schema')
 if schema_url:
     try:
@@ -130,7 +130,7 @@ exit(1)
 # Test 9: Agent count validation
 run_test "Agent count validation" "python3 -c \"
 import json
-config = json.load(open('${PROJECT_ROOT}/.opencode/oh-my-opencode.json'))
+config = json.load(open('${PROJECT_ROOT}/.opencode/OpenCode.json'))
 agents = config.get('strray_agents', {}).get('enabled', [])
 expected_agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'test-architect']
 if set(agents) == set(expected_agents):
@@ -139,7 +139,7 @@ exit(1)
 \""
 
 # Test 10: File permission checks
-run_test "Config file permissions" "test -r \"${PROJECT_ROOT}/.opencode/oh-my-opencode.json\" && test -w \"${PROJECT_ROOT}/.opencode/oh-my-opencode.json\""
+run_test "Config file permissions" "test -r \"${PROJECT_ROOT}/.opencode/OpenCode.json\" && test -w \"${PROJECT_ROOT}/.opencode/OpenCode.json\""
 
 # Test Results Summary
 echo ""

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # StrRay Framework MCP Server Registration Script
-# Registers all 18 MCP servers with oh-my-opencode skill registry
+# Registers all 18 MCP servers with OpenCode skill registry
 
 set -e
 
@@ -29,7 +29,7 @@ register_mcp_server() {
         return 1
     fi
 
-    # Register with oh-my-opencode (this would be the actual command)
+    # Register with OpenCode (this would be the actual command)
     echo -e "${GREEN}✅ Would register: $server_name${NC}"
     echo "   Path: $server_path"
     echo "   Description: $description"

@@ -60,12 +60,12 @@ echo ""
 echo "2️⃣ Testing Multi-Agent Orchestration Configuration..."
 
 # Detect if we're in .opencode directory or parent directory
-if [ -f "oh-my-opencode.json" ]; then
-    CONFIG_FILE="oh-my-opencode.json"
-elif [ -f ".opencode/oh-my-opencode.json" ]; then
-    CONFIG_FILE=".opencode/oh-my-opencode.json"
+if [ -f "OpenCode.json" ]; then
+    CONFIG_FILE="OpenCode.json"
+elif [ -f ".opencode/OpenCode.json" ]; then
+    CONFIG_FILE=".opencode/OpenCode.json"
 else
-    echo "❌ oh-my-opencode.json not found"
+    echo "❌ OpenCode.json not found"
     return 1
 fi
 
@@ -186,7 +186,7 @@ echo "=================================================="
 echo ""
 echo "Summary:"
 echo "- Agent configurations: $([ ${#MISSING_AGENTS[@]} -eq 0 ] && echo "✅ Valid" || echo "❌ Issues found")"
-echo "- Multi-agent config: $(grep -q '"enabled": true' .opencode/oh-my-opencode.json && echo "✅ Enabled" || echo "❌ Disabled")"
+echo "- Multi-agent config: $(grep -q '"enabled": true' .opencode/OpenCode.json && echo "✅ Enabled" || echo "❌ Disabled")"
 echo "- Delegation system: $(node -e "(async()=>{try{const{d}=await import('./dist/delegation/agent-delegator.js');const s=new(await import('./dist/state/state-manager.js')).StrRayStateManager();const d2=d.createAgentDelegator(s);await d2.analyzeDelegation({operation:'test',description:'test',context:{}});console.log('✅ Working')}catch(e){console.log('❌ Error')}})();" 2>/dev/null)"
 echo ""
 echo "Next steps:"

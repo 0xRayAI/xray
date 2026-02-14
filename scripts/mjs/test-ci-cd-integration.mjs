@@ -62,9 +62,9 @@ async function main() {
     runCommand(`cd ${CI_TEST_DIR} && node node_modules/strray-ai/scripts/postinstall.cjs`, 'Run postinstall script');
 
     // Test 6: Validate configuration
-    const configPath = join(CI_TEST_DIR, '.opencode', 'oh-my-opencode.json');
+    const configPath = join(CI_TEST_DIR, '.opencode', 'OpenCode.json');
     if (!existsSync(configPath)) {
-      throw new Error('oh-my-opencode configuration not created');
+      throw new Error('OpenCode configuration not created');
     }
 
     const config = JSON.parse(readFileSync(configPath, 'utf8'));

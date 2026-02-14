@@ -143,7 +143,7 @@ export class AgentsMdValidationProcessor {
     const filePath = context.args?.filePath || '';
     const agentPatterns = [
       'AGENTS.md',
-      '.opencode/oh-my-opencode.json',
+      '.opencode/OpenCode.json',
       '.opencode/agent',
       'src/agents',
       'docs/agent'

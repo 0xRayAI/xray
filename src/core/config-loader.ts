@@ -1,7 +1,7 @@
 /**
  * Configuration Loader
  *
- * Loads and validates StringRay-specific configuration from oh-my-opencode.json
+ * Loads and validates StringRay-specific configuration from opencode.json
  *
  * @version 1.0.0
  * @since 2026-01-09

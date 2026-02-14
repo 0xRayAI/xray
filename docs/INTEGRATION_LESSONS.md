@@ -32,7 +32,7 @@ StringRay 1.0.0 represents a breakthrough in AI-assisted software development, a
 
 **Key Lesson**: Session initialization ensures consistent framework activation.
 
-- **Integration Pattern**: oh-my-opencode.json as single source of truth
+- **Integration Pattern**: OpenCode.json as single source of truth
 - **Validation Success**: All 15 coordination points validated successfully
 - **Sisyphus Orchestrator**: Enables complex multi-agent workflows
 
@@ -90,7 +90,7 @@ All 55 Universal Development Codex terms successfully implemented:
 ```
 universal-development-framework/
 ├── .opencode/
-│   ├── oh-my-opencode.json          # Framework configuration
+│   ├── OpenCode.json          # Framework configuration
 │   ├── enforcer-config.json         # Thresholds & settings
 │   ├── init.sh                      # Session initialization
 │   ├── commands/                    # Automation hooks

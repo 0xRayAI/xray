@@ -27,7 +27,7 @@ describe("StringRay Infrastructure Tests", () => {
 
     it("should have required configuration files", () => {
       const requiredFiles = [
-        ".opencode/oh-my-opencode.json",
+        ".opencode/OpenCode.json",
         ".opencode/strray/codex.json",
         "package.json",
         "vitest.config.ts",
@@ -41,7 +41,7 @@ describe("StringRay Infrastructure Tests", () => {
 
     it("should have readable configuration files", () => {
       const configFiles = [
-        ".opencode/oh-my-opencode.json",
+        ".opencode/OpenCode.json",
         ".opencode/strray/codex.json",
         "package.json",
       ];
@@ -152,8 +152,8 @@ describe("StringRay Infrastructure Tests", () => {
       expect(fs.existsSync(pluginFile)).toBe(true);
     });
 
-    it("should not have MCP server configuration (.mcp.json) - servers configured in oh-my-opencode.json", () => {
-      // MCP servers are now configured directly in oh-my-opencode.json
+    it("should not have MCP server configuration (.mcp.json) - servers configured in OpenCode.json", () => {
+      // MCP servers are now configured directly in OpenCode.json
       // .mcp.json is no longer used for server configuration
       expect(fs.existsSync(".mcp.json")).toBe(false);
     });

@@ -1,14 +1,14 @@
-# StrRay Extension for oh-my-opencode
+# StrRay Extension for OpenCode
 
 ## Overview
 
-StrRay is a comprehensive extension framework for that adds specialized AI agents and development automation capabilities. This document explains what StrRay adds to oh-my-opencode and how to leverage its enhanced features.
+StrRay is a comprehensive extension framework for that adds specialized AI agents and development automation capabilities. This document explains what StrRay adds to OpenCode and how to leverage its enhanced features.
 
-## What StrRay Adds to oh-my-opencode
+## What StrRay Adds to OpenCode
 
 ### Core Enhancements
 
-**8 Specialized AI Agents** (vs oh-my-opencode's standard agents):
+**8 Specialized AI Agents** (vs OpenCode's standard agents):
 
 - **Enforcer**: Compliance monitoring and automation orchestration
 - **Architect**: Design review and architecture validation
@@ -60,7 +60,7 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
    ```
 
 3. **Agent Interaction**:
-   All StrRay agents are accessible through oh-my-opencode's standard interface:
+   All StrRay agents are accessible through OpenCode's standard interface:
    ```bash
    opencode architect "Design a user authentication system"
    opencode code-reviewer "Review this React component"
@@ -71,7 +71,7 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
 **Custom Agent Models**:
 
 ```json
-// .opencode/oh-my-opencode.json
+// .opencode/OpenCode.json
 {
   "agents": {
     "architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
@@ -111,7 +111,7 @@ git commit -m "feat: add user authentication"
   run: bash .opencode/commands/framework-compliance-audit.md
 ```
 
-## Architecture: StrRay + oh-my-opencode
+## Architecture: StrRay + OpenCode
 
 ```
 
@@ -125,18 +125,18 @@ git commit -m "feat: add user authentication"
     └── Custom MCP Skills
 ```
 
-## Migration from Standard oh-my-opencode
+## Migration from Standard OpenCode
 
-### For Existing oh-my-opencode Users
+### For Existing OpenCode Users
 
 1. **Backup Current Configuration**:
 
    ```bash
-   cp .opencode/oh-my-opencode.json .opencode/oh-my-opencode.backup.json
+   cp .opencode/OpenCode.json .opencode/OpenCode.backup.json
    ```
 
 2. **Update to StrRay Configuration**:
-   The `.opencode` directory already contains the integrated StrRay-oh-my-opencode framework. Your existing oh-my-opencode configuration will continue to work.
+   The `.opencode` directory already contains the integrated StrRay-OpenCode framework. Your existing OpenCode configuration will continue to work.
 
 3. **Enable StrRay Features**:
 
@@ -152,7 +152,7 @@ git commit -m "feat: add user authentication"
 
 ### Feature Comparison
 
-| Feature             | Standard oh-my-opencode | StrRay Extension                       |
+| Feature             | Standard OpenCode | StrRay Extension                       |
 | ------------------- | ----------------------- | -------------------------------------- |
 | AI Agents           | Basic set               | 8 specialized agents                   |
 | Code Quality        | Standard checks         | Universal Development Codex compliance |
@@ -190,7 +190,7 @@ git commit -m "feat: add user authentication"
 # Check mode configuration
 bash .opencode/init.sh
 # Verify disabled_agents array
-jq '.disabled_agents' .opencode/oh-my-opencode.json
+jq '.disabled_agents' .opencode/OpenCode.json
 ```
 
 **Model Configuration**:
@@ -210,30 +210,30 @@ bash .opencode/commands/mode-switch.md lite
 ## Support and Resources
 
 - **Documentation**: See `framework/README.md` for detailed framework information
-- **Compliance**: Refer to `framework/COMPLIANCE.md` for oh-my-opencode compatibility
+- **Compliance**: Refer to `framework/COMPLIANCE.md` for OpenCode compatibility
 - **Agent Guidelines**: See `../AGENTS.md` for proper agent usage
 
 ## Future Development
 
-StrRay continues to evolve with oh-my-opencode, adding new specialized agents and enhanced automation capabilities. Stay updated with the latest features and improvements.
+StrRay continues to evolve with OpenCode, adding new specialized agents and enhanced automation capabilities. Stay updated with the latest features and improvements.
 
 ## Frequently Asked Questions
 
-### What is StrRay's relationship to oh-my-opencode?
+### What is StrRay's relationship to OpenCode?
 
-StrRay is implemented as a comprehensive extension within the oh-my-opencode ecosystem. oh-my-opencode provides the core plugin architecture and agent orchestration, while StrRay adds 8 specialized AI agents for development-focused tasks.
+StrRay is implemented as a comprehensive extension within the OpenCode ecosystem. OpenCode provides the core plugin architecture and agent orchestration, while StrRay adds 8 specialized AI agents for development-focused tasks.
 
-### Do I need to install oh-my-opencode separately?
+### Do I need to install OpenCode separately?
 
-No. The `.opencode` directory contains the complete integrated StrRay-oh-my-opencode framework. All oh-my-opencode components are included and configured automatically.
+No. The `.opencode` directory contains the complete integrated StrRay-OpenCode framework. All OpenCode components are included and configured automatically.
 
-### Can I use StrRay without oh-my-opencode?
+### Can I use StrRay without OpenCode?
 
-No. StrRay requires oh-my-opencode's plugin system and orchestration capabilities to function.
+No. StrRay requires OpenCode's plugin system and orchestration capabilities to function.
 
 ### What's the difference between StrRay Lite and Full?
 
-Both use the same oh-my-opencode foundation but with different agent configurations:
+Both use the same OpenCode foundation but with different agent configurations:
 
 - **Lite**: 4 core agents for essential development support
 - **Full**: 8 specialized agents for comprehensive development capabilities
@@ -249,11 +249,11 @@ bash .opencode/commands/mode-switch.md lite  # 4 core agents
 
 ### What models does StrRay use?
 
-All StrRay agents use `openrouter/xai-grok-2-1212-fast-1` by default, which provides excellent performance for development tasks while maintaining compatibility with oh-my-opencode's model system.
+All StrRay agents use `openrouter/xai-grok-2-1212-fast-1` by default, which provides excellent performance for development tasks while maintaining compatibility with OpenCode's model system.
 
 ### How do I customize agent behavior?
 
-Modify the agents configuration in `.opencode/oh-my-opencode.json`:
+Modify the agents configuration in `.opencode/OpenCode.json`:
 
 ```json
 {
@@ -267,10 +267,10 @@ Modify the agents configuration in `.opencode/oh-my-opencode.json`:
 ### What if I encounter issues with StrRay?
 
 1. Check framework initialization: `bash .opencode/init.sh`
-2. Verify mode settings: `jq '.disabled_agents' .opencode/oh-my-opencode.json`
+2. Verify mode settings: `jq '.disabled_agents' .opencode/OpenCode.json`
 3. Review logs: `logs/agents/refactoring-log.md`
 4. Check compliance: `bash .opencode/commands/framework-compliance-audit.md`
 
 ---
 
-_StrRay AI v1.1.1 - Enhancing oh-my-opencode with systematic AI-assisted development capabilities._
+_StrRay AI v1.1.1 - Enhancing OpenCode with systematic AI-assisted development capabilities._

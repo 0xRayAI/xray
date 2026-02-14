@@ -16,7 +16,7 @@ export function setupSecurityMiddleware(app: any) {
   // Apply security middleware (minimal for AI orchestration)
   app.use(securityMiddleware.securityHeaders());
   app.use(securityMiddleware.rateLimit());
-  // CORS handled by oh-my-opencode
+  // CORS handled by OpenCode
 
   // Input validation for API endpoints
   app.use("/api/prompt", securityMiddleware.inputValidation());

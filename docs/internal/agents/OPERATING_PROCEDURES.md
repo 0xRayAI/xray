@@ -169,7 +169,7 @@ interface AgentMessage {
 #### Server Communication Flow
 
 ```
-User Request → oh-my-opencode → MCP Server → Agent Processing → Response
+User Request → OpenCode → MCP Server → Agent Processing → Response
     ↓              ↓                ↓            ↓              ↓
 Validation    Routing        Tool Call    Execution    Formatting
 ```
@@ -419,7 +419,7 @@ const logger = {
 **Symptoms**: Agents not responding to orchestration requests
 **Solutions**:
 
-1. Verify MCP server configurations in `oh-my-opencode.json`
+1. Verify MCP server configurations in `OpenCode.json`
 2. Check agent health using monitoring endpoints
 3. Restart individual agents or entire framework
 4. Review communication logs for error patterns

@@ -157,10 +157,10 @@ async function simulateCompleteOrchestratorPipeline() {
   console.log("-".repeat(40));
 
   console.log("🎭 Agent Delegator routing to appropriate agents:");
-  console.log("   → architect → oh-my-opencode architect agent");
+  console.log("   → architect → OpenCode architect agent");
   console.log("   → enforcer → StrRay enforcer with codex validation");
-  console.log("   → librarian → oh-my-opencode librarian agent");
-  console.log("   → test-architect → oh-my-opencode test-architect agent");
+  console.log("   → librarian → OpenCode librarian agent");
+  console.log("   → test-architect → OpenCode test-architect agent");
 
   console.log("\n🔍 Enforcer Agent Special Processing:");
   console.log("   → Loading Universal Development Codex v1.1.1 (50 terms)");

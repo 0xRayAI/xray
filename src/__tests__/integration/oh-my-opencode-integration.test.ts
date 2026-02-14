@@ -1,7 +1,7 @@
 /**
  * StringRay Framework - Oh-My-OpenCode Integration Tests
  *
- * Tests StringRay enforcement working within the oh-my-opencode plugin ecosystem.
+ * Tests StringRay enforcement working within the OpenCode plugin ecosystem.
  * Simulates MCP tool execution and plugin hook triggering.
  *
  * @version 1.0.0
@@ -10,7 +10,7 @@
 
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 
-// Mock the oh-my-opencode environment
+// Mock the OpenCode environment
 const mockOhMyOpenCode = {
   plugins: new Map<string, any>(),
   mcpServers: new Map<string, any>(),
@@ -103,7 +103,7 @@ const mockOhMyOpenCode = {
 
 describe("Oh-My-OpenCode Integration", () => {
   beforeAll(async () => {
-    // Load the StringRay plugin into mock oh-my-opencode environment
+    // Load the StringRay plugin into mock OpenCode environment
     await mockOhMyOpenCode.loadPlugin("./.opencode/codex-injector.js");
   });
 

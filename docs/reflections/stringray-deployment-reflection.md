@@ -74,10 +74,10 @@ if (!fs.existsSync(opencodeDir)) {
   console.log("✅ Created .opencode directory");
 }
 
-// Create oh-my-opencode.json configuration
+// Create OpenCode.json configuration
 const ohMyOpencodeConfig = {
   plugin: [
-    "oh-my-opencode",
+    "OpenCode",
     "stringray-ai/dist/plugin/strray-codex-injection.js",
   ],
 };

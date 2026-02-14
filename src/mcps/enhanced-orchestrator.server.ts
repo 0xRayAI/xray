@@ -2,7 +2,7 @@
  * Enhanced Multi-Agent Orchestrator MCP Server
  *
  * Provides clickable agent monitoring and orchestration capabilities via MCP protocol
- * Integrates with oh-my-opencode and opencode ecosystems
+ * Integrates with OpenCode and opencode ecosystems
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";

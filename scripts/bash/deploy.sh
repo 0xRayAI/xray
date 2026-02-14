@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # StringRay Framework Deployment Script (Simplified)
-# Deploys StringRay plugin for oh-my-opencode integration
+# Deploys StringRay plugin for OpenCode integration
 
 # @since 2026-01-12
 

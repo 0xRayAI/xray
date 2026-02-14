@@ -124,7 +124,7 @@ describe("StringRayContextLoader", () => {
       "All error paths are handled": false,
     },
     frameworkAlignment: {
-      "oh-my-opencode": "v1.2.0",
+      "OpenCode": "v1.2.0",
     },
   });
 

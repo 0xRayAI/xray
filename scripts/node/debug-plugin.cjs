@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Debug script for StringRay plugin loading in oh-my-opencode
+ * Debug script for StringRay plugin loading in OpenCode
  * Tests if the plugin loads correctly and exports expected interface
  */
 

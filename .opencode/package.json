@@ -1,8 +1,8 @@
 {
-  "name": "@opencode/oh-my-opencode",
+  "name": "@opencode/OpenCode",
   "version": "1.3.6",
-  "description": "oh-my-opencode framework configuration",
-  "main": "oh-my-opencode.json",
+  "description": "OpenCode framework configuration",
+  "main": "OpenCode.json",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

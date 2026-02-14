@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/OpenCode/master/assets/OpenCode.schema.json",
   "google_auth": false,
   "preemptive_compaction": true,
   "model_routing": {

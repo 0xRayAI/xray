@@ -58,7 +58,7 @@ Production-Ready Code
 
 - **Path Verification Agent**: `scripts/mjs/verify-plugin-paths.mjs` - Validates plugin/MCP paths transformed correctly after npm install
   - Detects untransformed paths (e.g., `strray/dist/` vs `node_modules/strray-ai/`)
-  - Verifies MCP server paths in oh-my-opencode.json
+  - Verifies MCP server paths in OpenCode.json
   - Checks plugin files exist at correct locations
   - Fails CI if paths not transformed (catches bugs before release!)
 
@@ -176,7 +176,7 @@ StringRay v1.2.0 validates its positioning as the **first AI Operating System**:
    - Review operations were getting 2x code-reviewer agents
    - Fixed condition to prevent duplicates
 
-2. **Missing Agent Configurations** (oh-my-opencode.json)
+2. **Missing Agent Configurations** (OpenCode.json)
    - explore, document-writer, frontend-ui-ux-engineer lacked model routing
    - Caused ProviderModelNotFoundError on task assignment
 
@@ -252,7 +252,7 @@ The missing piece that enables autonomous CI/CD recovery:
 #### **6. Path Verification & NPM Testing (Final Hardening)**
 - **Path Verification Agent**: `scripts/mjs/verify-plugin-paths.mjs` (324 lines)
   - Validates plugin paths transform to `node_modules/strray-ai/`
-  - Verifies MCP server paths in oh-my-opencode.json
+  - Verifies MCP server paths in OpenCode.json
   - Catches postinstall path transformation failures
 - **CI NPM Orchestration Test**: `scripts/bash/ci-npm-orchestration-test.sh` (341 lines)
   - Full npm pack + install + orchestration test
@@ -285,7 +285,7 @@ The missing piece that enables autonomous CI/CD recovery:
 4. Deploy with confidence
 
 **Configuration Updates** (if needed):
-- Ensure `oh-my-opencode.json` has agent model routing
+- Ensure `OpenCode.json` has agent model routing
 - Verify MCP server mappings in `mcp-client.ts`
 
 ---

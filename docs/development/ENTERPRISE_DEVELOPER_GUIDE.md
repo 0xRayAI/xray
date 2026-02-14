@@ -24,7 +24,7 @@ Before you begin developing with the StrRay Framework, ensure you have the follo
 - **Node.js**: Version 18.0.0 or higher (LTS recommended)
 - **npm**: Version 8.0.0 or higher (comes with Node.js)
 - **Git**: Version 2.30.0 or higher
-- **oh-my-opencode**: Framework integration plugin
+- **OpenCode**: Framework integration plugin
 
 #### Recommended Tools
 
@@ -49,12 +49,12 @@ cd stringray
 npm install
 ```
 
-3. **Set Up oh-my-opencode Integration**
+3. **Set Up OpenCode Integration**
 
 ```json
-// .opencode/oh-my-opencode.json
+// .opencode/OpenCode.json
 {
-  "$schema": "https://opencode.ai/oh-my-opencode.schema.json",
+  "$schema": "https://opencode.ai/OpenCode.schema.json",
   "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",
@@ -101,7 +101,7 @@ NODE_ENV=development
 PORT=3000
 LOG_LEVEL=debug
 
-# oh-my-opencode Integration
+# OpenCode Integration
 OPENAI_API_KEY=your_api_key_here
 
 # Database Configuration
@@ -355,7 +355,7 @@ strray/
 │   ├── unit/
 │   ├── integration/
 │   └── e2e/
-├── .opencode/                    # oh-my-opencode configuration
+├── .opencode/                    # OpenCode configuration
 ├── package.json
 ├── tsconfig.json
 ├── vitest.config.ts

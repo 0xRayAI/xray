@@ -1,8 +1,8 @@
-# oh-my-opencode Framework - Setup and Installation Guide
+# OpenCode Framework - Setup and Installation Guide
 
 ## Overview
 
-The oh-my-opencode framework can be installed through multiple methods depending on your development environment and requirements. This guide covers all installation options and initial configuration.
+The OpenCode framework can be installed through multiple methods depending on your development environment and requirements. This guide covers all installation options and initial configuration.
 
 ## System Requirements
 
@@ -29,7 +29,7 @@ The oh-my-opencode framework can be installed through multiple methods depending
 #### Global Installation
 
 ```bash
-# Install oh-my-opencode globally
+# Install OpenCode globally
 npm install -g @strray/framework
 
 # Verify installation
@@ -76,7 +76,7 @@ pnpm add -D @strray/framework
 # Pull official Docker image
 docker pull strray/framework:latest
 
-# Run oh-my-opencode in container
+# Run OpenCode in container
 docker run -it --rm \
   -v $(pwd):/workspace \
   strray/framework:latest
@@ -104,7 +104,7 @@ npm link
 ### Automatic Setup
 
 ```bash
-# Initialize new project with oh-my-opencode
+# Initialize new project with OpenCode
 strray init my-project
 
 # This creates:
@@ -154,7 +154,7 @@ Create `.opencode/strray/config.json` in your project root:
 Create `.env` file in project root:
 
 ```bash
-# oh-my-opencode Configuration
+# OpenCode Configuration
 STRRAY_ENV=development
 STRRAY_LOG_LEVEL=info
 STRRAY_CACHE_DIR=.opencode/strray/cache
@@ -174,7 +174,7 @@ DEBUG=strray:*
 #### VS Code Setup
 
 1. Install recommended extensions:
-   - oh-my-opencode Framework Support
+   - OpenCode Framework Support
    - TypeScript IntelliSense
    - Prettier Formatter
 
@@ -192,9 +192,9 @@ DEBUG=strray:*
 
 #### Other IDEs
 
-- **WebStorm/IntelliJ**: Install oh-my-opencode plugin from marketplace
-- **Sublime Text**: Use Package Control to install oh-my-opencode package
-- **Vim/Neovim**: Add oh-my-opencode language server configuration
+- **WebStorm/IntelliJ**: Install OpenCode plugin from marketplace
+- **Sublime Text**: Use Package Control to install OpenCode package
+- **Vim/Neovim**: Add OpenCode language server configuration
 
 ## Project Initialization
 
@@ -205,7 +205,7 @@ DEBUG=strray:*
 mkdir my-strray-project
 cd my-strray-project
 
-# Initialize with oh-my-opencode
+# Initialize with OpenCode
 strray init
 
 # Install dependencies
@@ -221,7 +221,7 @@ strray dev
 # Navigate to existing project
 cd existing-project
 
-# Initialize oh-my-opencode (non-destructive)
+# Initialize OpenCode (non-destructive)
 strray init --existing
 
 # This adds:
@@ -234,7 +234,7 @@ strray init --existing
 
 ### Default Agent Setup
 
-oh-my-opencode comes with pre-configured agents:
+OpenCode comes with pre-configured agents:
 
 ```bash
 # List available agents
@@ -272,7 +272,7 @@ module.exports = {
 
 ### Required Tools
 
-oh-my-opencode automatically detects and configures required tools:
+OpenCode automatically detects and configures required tools:
 
 ```bash
 # Check tool availability
@@ -362,7 +362,7 @@ nvm install node
 #### Path Issues
 
 ```bash
-# Add oh-my-opencode to PATH
+# Add OpenCode to PATH
 export PATH="$HOME/.npm-global/bin:$PATH"
 
 # Add to shell profile
@@ -429,7 +429,7 @@ After successful installation:
 
 1. **Explore Documentation**: Read `../README.md`, `../README.md`, and `../architecture/CONCEPTUAL_ARCHITECTURE.md`
 2. **Run Examples**: Try the example projects in `examples/` directory
-3. **Join Community**: Visit the oh-my-opencode community forum for support
+3. **Join Community**: Visit the OpenCode community forum for support
 4. **Contribute**: Report issues or contribute to the framework
 
-For additional help, see `TROUBLESHOOTING.md` or visit the [oh-my-opencode Documentation](https://opencode.ai).
+For additional help, see `TROUBLESHOOTING.md` or visit the [OpenCode Documentation](https://opencode.ai).

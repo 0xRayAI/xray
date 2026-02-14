@@ -145,7 +145,7 @@ jobs:
         cd test-install
         node node_modules/strray-ai/scripts/node/validate-postinstall-config.js
         node node_modules/strray-ai/scripts/node/validate-mcp-connectivity.js
-        node node_modules/strray-ai/scripts/node/validate-oh-my-opencode-integration.cjs
+        node node_modules/strray-ai/scripts/node/validate-OpenCode-integration.cjs
 
   deploy-validation:
     name: Deployment Validation
@@ -175,7 +175,7 @@ jobs:
       run: |
         cd ci-deploy
         node node_modules/strray-ai/scripts/validate-mcp-connectivity.js
-        node node_modules/strray-ai/scripts/validate-oh-my-opencode-integration.cjs
+        node node_modules/strray-ai/scripts/validate-OpenCode-integration.cjs
         node node_modules/strray-ai/scripts/test:postinstall-config.js
 
   version-management:

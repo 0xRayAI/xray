@@ -41,19 +41,19 @@ class PostinstallConfigValidator {
     const requiredFiles = [
       { path: "opencode.json", description: "OpenCode base configuration" },
       {
-        path: ".opencode/oh-my-opencode.json",
-        description: "oh-my-opencode main config",
+        path: ".opencode/OpenCode.json",
+        description: "OpenCode main config",
       },
       {
         path: ".opencode/package.json",
-        description: "oh-my-opencode package config",
+        description: "OpenCode package config",
       },
     ];
     
     // Optional files (not required for CI/test environments)
     const optionalFiles = [
       { path: ".mcp.json", description: "MCP server configuration (lazy loaded)" },
-      { path: ".opencode/README.md", description: "oh-my-opencode documentation" },
+      { path: ".opencode/README.md", description: "OpenCode documentation" },
     ];
 
     let allPresent = true;
@@ -100,12 +100,12 @@ class PostinstallConfigValidator {
     console.log("\n🛠️  Testing OpenCode Configuration...");
 
     try {
-      const configPath = ".opencode/oh-my-opencode.json";
+      const configPath = ".opencode/OpenCode.json";
       if (!fs.existsSync(configPath)) {
         console.log(`  ❌ ${configPath} not found`);
         this.results.failed.push({
           test: "OpenCode Configuration",
-          error: "oh-my-opencode.json not found",
+          error: "OpenCode.json not found",
         });
         return;
       }

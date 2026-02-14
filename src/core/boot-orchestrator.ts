@@ -516,7 +516,7 @@ export class BootOrchestrator {
         try {
           ({ CodexInjector } = await import("./codex-injector"));
         } catch (error) {
-          // Fallback to import without .js extension (for oh-my-opencode plugin environment)
+          // Fallback to import without .js extension (for OpenCode plugin environment)
           ({ CodexInjector } = await import("./codex-injector"));
         }
         codexInjector = new CodexInjector();

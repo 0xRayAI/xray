@@ -154,19 +154,19 @@ class PostinstallFileValidator {
   }
 
   async validateOhMyOpencodeConfig() {
-    console.log("\n🔌 Validating oh-my-opencode Configuration...");
+    console.log("\n🔌 Validating OpenCode Configuration...");
 
     try {
       const ohMyOpencodePath = path.join(
         process.cwd(),
         ".opencode",
-        "oh-my-opencode.json",
+        "OpenCode.json",
       );
 
       if (!fs.existsSync(ohMyOpencodePath)) {
-        console.log("  ❌ .opencode/oh-my-opencode.json not found");
+        console.log("  ❌ .opencode/OpenCode.json not found");
         this.results.failed.push({
-          test: "oh-my-opencode Config",
+          test: "OpenCode Config",
           error: "File does not exist",
         });
         return;
@@ -177,7 +177,7 @@ class PostinstallFileValidator {
       );
 
       // Check for StringRay plugin registration
-      // oh-my-opencode uses "plugin" (singular) not "plugins" (plural)
+      // OpenCode uses "plugin" (singular) not "plugins" (plural)
       const hasPlugins =
         (ohMyOpencodeConfig.plugins &&
           Array.isArray(ohMyOpencodeConfig.plugins)) ||
@@ -200,20 +200,20 @@ class PostinstallFileValidator {
       }
 
       // In CI/development environments, plugin registration is optional
-      // The plugin requires oh-my-opencode to be actively running to register
+      // The plugin requires OpenCode to be actively running to register
       const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS || !this.isConsumerEnvironment;
       
       if (hasStringRayPlugin) {
-        console.log(`  ✅ StringRay plugin registered in oh-my-opencode.json (${this.environment})`);
-        this.results.passed.push("oh-my-opencode Plugin Registration");
+        console.log(`  ✅ StringRay plugin registered in OpenCode.json (${this.environment})`);
+        this.results.passed.push("OpenCode Plugin Registration");
       } else if (isCIEnvironment) {
         // Don't fail CI for missing plugin registration
-        console.log(`  ℹ️ StringRay plugin not found in oh-my-opencode.json (${this.environment}) - Optional in CI`);
-        this.results.passed.push("oh-my-opencode Plugin Registration (Optional in CI)");
+        console.log(`  ℹ️ StringRay plugin not found in OpenCode.json (${this.environment}) - Optional in CI`);
+        this.results.passed.push("OpenCode Plugin Registration (Optional in CI)");
       } else {
-        console.log(`  ❌ StringRay plugin not found in oh-my-opencode.json (${this.environment})`);
+        console.log(`  ❌ StringRay plugin not found in OpenCode.json (${this.environment})`);
         this.results.failed.push({
-          test: "oh-my-opencode Plugin Registration",
+          test: "OpenCode Plugin Registration",
           error: "Plugin not registered",
         });
       }
@@ -222,17 +222,17 @@ class PostinstallFileValidator {
       const hasAgents = ohMyOpencodeConfig.agents || ohMyOpencodeConfig.agent;
       if (hasAgents) {
         console.log("  ✅ Agent configurations present");
-        this.results.passed.push("oh-my-opencode Agent Config");
+        this.results.passed.push("OpenCode Agent Config");
       } else {
         console.log("  ⚠️ No agent configurations found");
-        this.results.passed.push("oh-my-opencode Agent Config");
+        this.results.passed.push("OpenCode Agent Config");
       }
     } catch (error) {
       console.log(
-        `  ❌ oh-my-opencode config validation failed: ${error.message}`,
+        `  ❌ OpenCode config validation failed: ${error.message}`,
       );
       this.results.failed.push({
-        test: "oh-my-opencode Config",
+        test: "OpenCode Config",
         error: error.message,
       });
     }
@@ -244,7 +244,7 @@ class PostinstallFileValidator {
     const directories = [
       {
         path: ".opencode",
-        description: "oh-my-opencode configuration directory",
+        description: "OpenCode configuration directory",
       },
       {
         path: ".opencode/logs",

@@ -596,7 +596,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
   private async initConfiguration(): Promise<any> {
     // Check for configuration files
     const configFiles = [
-      ".opencode/oh-my-opencode.json",
+      ".opencode/OpenCode.json",
       "src/strray/config/manager.py",
     ];
 
@@ -830,7 +830,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     // Simplified check - in real implementation this would be more thorough
     switch (component) {
       case "configuration":
-        return fs.existsSync(".opencode/oh-my-opencode.json");
+        return fs.existsSync(".opencode/OpenCode.json");
       case "logging":
         return fs.existsSync("src/framework-logger.ts");
       case "state-management":

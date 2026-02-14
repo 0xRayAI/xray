@@ -504,7 +504,7 @@ export class SecurityAuditor {
     const issues: SecurityIssue[] = [];
 
     const configFiles = [
-      ".opencode/oh-my-opencode.json",
+      ".opencode/OpenCode.json",
       "config.json",
       ".env",
     ];
