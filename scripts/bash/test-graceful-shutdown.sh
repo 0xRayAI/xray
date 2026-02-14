@@ -8,7 +8,7 @@ echo "This will start the boot orchestrator and then interrupt it to test gracef
 node -e "
 (async () => {
   console.log('Starting boot orchestrator...');
-  const { bootOrchestrator } = await import('./dist/boot-orchestrator.js');
+  const { bootOrchestrator } = await import('./dist/core/boot-orchestrator.js');
   console.log('Boot orchestrator loaded, memory monitor should be running...');
   
   // Keep it running so we can interrupt it

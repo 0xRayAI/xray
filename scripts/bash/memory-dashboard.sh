@@ -7,7 +7,7 @@ echo "=============================================="
 # Get current memory status
 node -e "
 (async () => {
-  const { bootOrchestrator } = await import('./dist/boot-orchestrator.js');
+  const { bootOrchestrator } = await import('./dist/core/boot-orchestrator.js');
   const health = bootOrchestrator.getMemoryHealth();
   
   console.log('📊 Current Memory Health Status');
