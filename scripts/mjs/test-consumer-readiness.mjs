@@ -220,7 +220,7 @@ async function runPathVerification() {
       const { spawn } = await import('child_process');
       const result = await new Promise((resolve) => {
         const child = spawn('node', [
-          'scripts/mjs/verify-plugin-paths.mjs'
+          'verify-plugin-paths.mjs'
         ], {
           stdio: ['pipe', 'pipe', 'pipe'],
           cwd: process.cwd()
