@@ -216,7 +216,7 @@ jobs:
       run: npm version patch --no-git-tag-version --no-commit-hooks
 
     - name: Universal version management
-      run: node scripts/universal-version-manager.js
+      run: node scripts/node/universal-version-manager.js
 
     - name: Rebuild with new version
       run: npm run build:all
