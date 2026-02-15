@@ -107,6 +107,15 @@ class MCPFunctionalityTest {
       // DEBUG: Log environment detection
       console.log(`  ℹ️ Environment: cwd=${cwd}, hasPackageJson=${hasPackageJson}, hasDistDir=${hasDistDir}, isConsumerEnv=${isConsumerEnv}, isDevOrCi=${isDevOrCi}`);
       
+      // Debug: list what's in dist/mcps
+      if (hasDistDir) {
+        const mcpsDir = path.join(cwd, "dist", "mcps");
+        if (fs.existsSync(mcpsDir)) {
+          const files = fs.readdirSync(mcpsDir).slice(0, 5);
+          console.log(`  ℹ️ dist/mcps contains: ${files.join(", ")}...`);
+        }
+      }
+      
       if (fs.existsSync(".mcp.json")) {
         mcpConfig = JSON.parse(fs.readFileSync(".mcp.json", "utf8"));
         configSource = "mcp.json";
@@ -159,15 +168,19 @@ class MCPFunctionalityTest {
           ];
           
           let found = false;
+          let foundPath = null;
           for (const checkPath of possiblePaths) {
             if (fs.existsSync(checkPath)) {
               existingServers++;
               found = true;
+              foundPath = checkPath;
               break;
             }
           }
           
-          if (!found) {
+          if (found) {
+            console.log(`  ✅ Server ${serverName} found at ${foundPath}`);
+          } else if (!found) {
             // Check if this is a disabled server - if so, don't count it as an error
             if (serverConfig.enabled === false) {
               existingServers++; // Count disabled servers as existing (they don't need files)
