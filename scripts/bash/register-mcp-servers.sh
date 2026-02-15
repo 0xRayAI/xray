@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # StrRay Framework MCP Server Registration Script
-# Registers all 18 MCP servers with OpenCode skill registry
+# registers all 18 MCP servers with OpenCode skill registry
 
 set -e
 
@@ -17,10 +17,10 @@ NC='\033[0m' # No Color
 
 # Function to check if OpenCode is installed
 check_opencode() {
-    if ! command -v OpenCode &> /dev/null; then
+    if ! command -v opencode &> /dev/null; then
         echo -e "${RED}❌ Error: OpenCode is not installed${NC}"
         echo "Please install OpenCode first:"
-        echo "npm install -g OpenCode"
+        echo "npm install -g opencode"
         exit 1
     fi
 }
@@ -92,5 +92,4 @@ main() {
 }
 
 # Run main function
-main "$@"</content>
-<parameter name="filePath">register-mcp-servers.sh
+main "$@"

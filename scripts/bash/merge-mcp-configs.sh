@@ -19,6 +19,10 @@ log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
 }
 
+info() {
+    echo -e "${BLUE}$1${NC}"
+}
+
 success() {
     echo -e "${GREEN}✅ $1${NC}"
 }
