@@ -357,10 +357,51 @@ export default async function strrayCodexPlugin(input: {
       if (["write", "edit", "multiedit"].includes(tool)) {
         if (!ProcessorManager || !StrRayStateManager) return;
 
+        // Get existing state manager or create new one
         const stateManager = new StrRayStateManager(
           path.join(directory, ".opencode", "state"),
         );
-        const processorManager = new ProcessorManager(stateManager);
+        
+        // Get existing processor manager from state, or create and register processors
+        let processorManager = stateManager.get("processor:manager");
+        if (!processorManager) {
+          processorManager = new ProcessorManager(stateManager);
+          
+          // Register the same processors as boot-orchestrator
+          processorManager.registerProcessor({
+            name: "preValidate",
+            type: "pre",
+            priority: 10,
+            enabled: true,
+          });
+          processorManager.registerProcessor({
+            name: "codexCompliance",
+            type: "pre",
+            priority: 20,
+            enabled: true,
+          });
+          processorManager.registerProcessor({
+            name: "versionCompliance",
+            type: "pre",
+            priority: 25,
+            enabled: true,
+          });
+          processorManager.registerProcessor({
+            name: "testExecution",
+            type: "post",
+            priority: 10,
+            enabled: true,
+          });
+          processorManager.registerProcessor({
+            name: "coverageAnalysis",
+            type: "post",
+            priority: 20,
+            enabled: true,
+          });
+          
+          // Store for future use
+          stateManager.set("processor:manager", processorManager);
+        }
 
         try {
           const result = await processorManager.executePreProcessors({
