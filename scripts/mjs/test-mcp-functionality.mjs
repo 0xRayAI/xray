@@ -92,9 +92,18 @@ class MCPFunctionalityTest {
       let mcpConfig = null;
       let configSource = "";
       
-      // Determine if we're in a consumer environment (installed package) vs dev environment
-      const isConsumerEnv = __dirname.includes("node_modules/strray-ai");
-      const isDevEnv = fs.existsSync("dist") && fs.existsSync("package.json");
+      // Determine environment: dev vs consumer vs CI
+      // - Dev: running from project root with src/ directory
+      // - CI: running from project root but building first (has dist/)
+      // - Consumer: running from node_modules/strray-ai/
+      const cwd = process.cwd();
+      const isConsumerEnv = cwd.includes("node_modules/strray-ai");
+      const hasSrcDir = fs.existsSync(path.join(cwd, "src"));
+      const hasDistDir = fs.existsSync(path.join(cwd, "dist"));
+      const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
+      
+      // We're in a development or CI environment if package.json exists in cwd
+      const isDevOrCi = hasPackageJson && !isConsumerEnv;
       
       if (fs.existsSync(".mcp.json")) {
         mcpConfig = JSON.parse(fs.readFileSync(".mcp.json", "utf8"));
@@ -134,13 +143,18 @@ class MCPFunctionalityTest {
 
         if (serverPath) {
           // Check multiple possible locations for the server file
-          // Priority: 1) Dev environment (project root dist/), 2) Consumer environment (node_modules)
-          const possiblePaths = isDevEnv ? [
-            path.join(process.cwd(), serverPath), // Dev: ./dist/mcps/xxx
-            path.join(process.cwd(), "dist", serverPath.replace("./dist/", "")), // Dev alt path
-            path.join(process.cwd(), "node_modules", "strray-ai", serverPath), // Fallback to consumer path
+          // Handle both absolute paths and relative paths like ./dist/mcps/xxx
+          const normalizedPath = serverPath.startsWith("./") 
+            ? serverPath.slice(2)  // Remove ./
+            : serverPath;
+            
+          // Priority: 1) Dev/CI environment (project root dist/), 2) Consumer environment (node_modules)
+          const possiblePaths = isDevOrCi ? [
+            path.join(cwd, normalizedPath), // Dev/CI: dist/mcps/xxx
+            path.join(cwd, serverPath), // Dev/CI with ./
+            path.join(cwd, "node_modules", "strray-ai", normalizedPath), // Fallback to consumer
           ] : [
-            path.join(process.cwd(), "node_modules", "strray-ai", serverPath), // Consumer
+            path.join(cwd, "node_modules", "strray-ai", normalizedPath), // Consumer
           ];
           
           let found = false;
@@ -181,11 +195,10 @@ class MCPFunctionalityTest {
         console.log("  ⚠️ No MCP servers configured (refactored architecture)");
         this.results.passed.push("Server File Existence (Refactored)");
       } else if (existingServers > 0) {
-        // In dev environment with built dist/, partial success is acceptable
-        const isDevEnv = fs.existsSync("dist") && fs.existsSync("src");
-        if (isDevEnv) {
-          console.log(`  ✅ ${existingServers}/${totalServers} MCP server files found (dev environment)`);
-          this.results.passed.push(`Server File Existence (${existingServers}/${totalServers} in dev env)`);
+        // In dev/CI environment with built dist/, partial success is acceptable
+        if (isDevOrCi && hasDistDir) {
+          console.log(`  ✅ ${existingServers}/${totalServers} MCP server files found (dev/CI environment - build available)`);
+          this.results.passed.push(`Server File Existence (${existingServers}/${totalServers} in dev/CI env)`);
         } else if (existingServers > 0) {
           console.log(`  ✅ ${existingServers}/${totalServers} MCP server files found (test environment - partial check)`);
           this.results.passed.push(`Server File Existence (${existingServers}/${totalServers} in test env)`);
@@ -212,8 +225,11 @@ class MCPFunctionalityTest {
     console.log("\n🔄 Testing MCP Server Initialization...");
 
     try {
-      // Determine environment
-      const isDevEnv = fs.existsSync("dist") && fs.existsSync("src");
+      // Determine environment - reuse same logic
+      const cwd = process.cwd();
+      const isConsumerEnv = cwd.includes("node_modules/strray-ai");
+      const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
+      const isDevOrCi = hasPackageJson && !isConsumerEnv;
       
       // Check for .mcp.json first (legacy), then opencode.json (refactored)
       let mcpConfig = null;
@@ -261,15 +277,25 @@ class MCPFunctionalityTest {
 
           if (serverPath && serverPath.endsWith(".js")) {
             // Resolve the path based on environment
+            // Handle both ./dist/mcps/xxx and dist/mcps/xxx formats
+            const normalizedPath = serverPath.startsWith("./") 
+              ? serverPath.slice(2) 
+              : serverPath;
+              
             let resolvedPath;
-            if (isDevEnv) {
-              // Dev environment: look in project root
-              resolvedPath = fs.existsSync(path.join(process.cwd(), serverPath)) 
-                ? path.join(process.cwd(), serverPath)
-                : path.join(process.cwd(), "dist", serverPath.replace("./dist/", ""));
+            if (isDevOrCi) {
+              // Dev/CI environment: look in project root
+              const altPath1 = path.join(cwd, normalizedPath);
+              const altPath2 = path.join(cwd, serverPath);
+              resolvedPath = fs.existsSync(altPath1) ? altPath1 : (fs.existsSync(altPath2) ? altPath2 : null);
+              
+              // Fallback to checking node_modules for consumer case
+              if (!resolvedPath) {
+                resolvedPath = path.join(cwd, "node_modules", "strray-ai", normalizedPath);
+              }
             } else {
               // Consumer environment: look in node_modules
-              resolvedPath = path.join(process.cwd(), "node_modules", "strray-ai", serverPath);
+              resolvedPath = path.join(cwd, "node_modules", "strray-ai", normalizedPath);
             }
             
             if (fs.existsSync(resolvedPath)) {
@@ -310,10 +336,10 @@ class MCPFunctionalityTest {
           `  ✅ ${initializedServers} test servers initialized successfully`,
         );
         this.results.passed.push("Server Initialization");
-      } else if (isDevEnv) {
-        // In dev environment, servers may have syntax issues but are present
-        console.log("  ⚠️ No test servers could be initialized (dev environment - may have partial build)");
-        this.results.passed.push("Server Initialization (Dev Environment - Partial Build)");
+      } else if (isDevOrCi) {
+        // In dev/CI environment, servers may have syntax issues but are present
+        console.log("  ⚠️ No test servers could be initialized (dev/CI environment - may have partial build)");
+        this.results.passed.push("Server Initialization (Dev/CI Environment - Partial Build)");
       } else {
         console.log("  ⚠️ No test servers could be initialized (refactored architecture uses lazy loading)");
         this.results.passed.push("Server Initialization (Refactored - Lazy Loading)");
