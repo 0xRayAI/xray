@@ -201,9 +201,8 @@ jobs:
         run: |
           cd test-install
           node node_modules/strray-ai/scripts/validate-mcp-connectivity.js
-          node node_modules/strray-ai/scripts/validate-OpenCode-integration.cjs
-          node node_modules/strray-ai/scripts/validate-postinstall-config.js
-          node node_modules/strray-ai/scripts/validate-external-processes.js
+          node node_modules/strray-ai/scripts/node/validate-postinstall-config.js
+          node node_modules/strray-ai/scripts/node/validate-external-processes.js
 
   # New job: NPM Orchestration Test with Path Verification
   npm-orchestration-test:

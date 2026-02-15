@@ -273,7 +273,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1771125563037,
+    "startTime": 1771125575433,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -294,12 +294,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-02-15T03:19:23.037Z",
+    "createdAt": "2026-02-15T03:19:35.433Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1771125563037,
+  "session:boot_time": 1771125575433,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -337,8 +337,8 @@
     },
     "default": {
       "sessionId": "default",
-      "createdAt": 1771125563037,
-      "lastActivity": 1771125563037,
+      "createdAt": 1771125575434,
+      "lastActivity": 1771125575434,
       "ttlMs": 86400000,
       "isActive": true,
       "agentCount": 0,
@@ -356,6 +356,14 @@
       "memoryUsage": 0,
       "issues": []
     }
+  },
+  "test1-test-framework-init-session": {
+    "component": "state-manager",
+    "status": "active"
+  },
+  "test2-test-framework-init-session": {
+    "component": "context-loader",
+    "status": "ready"
   },
   "session:expired-test:coordinator": {
     "sessionId": "expired-test",
@@ -421,7 +429,7 @@
       "enforcementLevel": "blocking"
     }
   ],
-  "enforcement:enabled_at": 1771125563828,
+  "enforcement:enabled_at": 1771125576150,
   "delegation_metrics": [],
   "agent:enforcer": {},
   "agent:architect": {},
