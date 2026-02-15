@@ -144,11 +144,6 @@ class MCPFunctionalityTest {
         // Support both legacy format (args array) and new opencode format (command array)
         let serverPath = null;
         
-        // Debug: log the raw server config
-        if (serverName === "orchestrator") {
-          console.log(`  ℹ️ DEBUG: serverConfig=`, JSON.stringify(serverConfig));
-        }
-        
         if (serverConfig.args && serverConfig.args.length > 0) {
           // Legacy format: extract path from args
           serverPath = serverConfig.args[serverConfig.args.length - 1];
@@ -158,27 +153,26 @@ class MCPFunctionalityTest {
         }
 
         if (serverPath) {
-          // Check multiple possible locations for the server file
-          // Handle both ./dist/mcps/xxx and dist/mcps/xxx formats
-          const normalizedPath = serverPath.startsWith("./") 
-            ? serverPath.slice(2)  // Remove ./
+          // Handle various path formats:
+          // - ./dist/mcps/xxx.js (local dev)
+          // - node_modules/strray-ai/dist/mcps/xxx.js (consumer)
+          // - dist/mcps/xxx.js (after stripping ./)
+          let normalizedPath = serverPath.startsWith("./") 
+            ? serverPath.slice(2) 
             : serverPath;
             
-          // In CI after build, dist/ is always in cwd
-          // Always prioritize checking cwd/dist/ for all environments
-          const checkPath1 = path.join(cwd, normalizedPath);
-          const checkPath2 = path.join(cwd, serverPath);
-          
-          // Debug: log what's being checked
-          if (serverName === "orchestrator") {
-            console.log(`  ℹ️ DEBUG: normalizedPath=${normalizedPath}, checkPath1=${checkPath1}, exists=${fs.existsSync(checkPath1)}`);
-            console.log(`  ℹ️ DEBUG: serverPath=${serverPath}, checkPath2=${checkPath2}, exists=${fs.existsSync(checkPath2)}`);
+          // If path contains node_modules/strray-ai/, extract just the relative part
+          if (normalizedPath.includes("node_modules/strray-ai/")) {
+            normalizedPath = normalizedPath.replace("node_modules/strray-ai/", "");
           }
-          
+            
+          // In CI/build environment, files are in cwd/dist/, not in node_modules
+          // Try local paths first, then fall back to node_modules
           const possiblePaths = [
-            checkPath1,
-            checkPath2,
-            path.join(cwd, "node_modules", "strray-ai", normalizedPath), // Consumer fallback
+            path.join(cwd, "dist", path.basename(normalizedPath)), // dist/xxx.js (always check this first in CI)
+            path.join(cwd, normalizedPath), // as-is (./dist/xxx)
+            path.join(cwd, serverPath), // with ./
+            path.join(cwd, "node_modules", "strray-ai", normalizedPath), // consumer fallback
           ];
           
           let found = false;
