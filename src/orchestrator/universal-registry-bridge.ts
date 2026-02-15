@@ -47,7 +47,8 @@ export class UniversalRegistryBridge {
 
   constructor(options: BridgeOptions) {
     this.registries = options.registries || [];
-    this.cacheDir = options.cacheDir || join(__dirname, "../../.strray/registry-cache");
+    this.cacheDir =
+      options.cacheDir || join(__dirname, "../../.strray/registry-cache");
     this.autoRefresh = options.autoRefresh ?? true;
   }
 
@@ -61,9 +62,17 @@ export class UniversalRegistryBridge {
       try {
         const agents = await this.fetchFromRegistry(registry);
         allAgents.push(...agents);
-        this.logger.log("universal-registry-bridge", `Loaded ${agents.length} agents from ${registry.type} registry: ${registry.location}`, "info");
+        this.logger.log(
+          "universal-registry-bridge",
+          `Loaded ${agents.length} agents from ${registry.type} registry: ${registry.location}`,
+          "info",
+        );
       } catch (error) {
-        this.logger.log("universal-registry-bridge", `Failed to load from registry ${registry.location}: ${error}`, "info");
+        this.logger.log(
+          "universal-registry-bridge",
+          `Failed to load from registry ${registry.location}: ${error}`,
+          "info",
+        );
       }
     }
 
@@ -73,7 +82,9 @@ export class UniversalRegistryBridge {
   /**
    * Fetch agents from a specific registry
    */
-  private async fetchFromRegistry(registry: ExternalRegistryConfig): Promise<RegistryAgentDefinition[]> {
+  private async fetchFromRegistry(
+    registry: ExternalRegistryConfig,
+  ): Promise<RegistryAgentDefinition[]> {
     // Check cache first
     const cacheKey = `${registry.type}:${registry.location}`;
     const cached = this.cache.get(cacheKey);
@@ -94,7 +105,11 @@ export class UniversalRegistryBridge {
         agents = await this.loadFromNpm(registry.location);
         break;
       default:
-        this.logger.log("universal-registry-bridge", `Unknown registry type: ${registry.type}`, "info");
+        this.logger.log(
+          "universal-registry-bridge",
+          `Unknown registry type: ${registry.type}`,
+          "info",
+        );
         return [];
     }
 
@@ -105,7 +120,9 @@ export class UniversalRegistryBridge {
   /**
    * Load agents from a local file
    */
-  private async loadFromFile(location: string): Promise<RegistryAgentDefinition[]> {
+  private async loadFromFile(
+    location: string,
+  ): Promise<RegistryAgentDefinition[]> {
     const filePath = resolve(location);
 
     if (!existsSync(filePath)) {
@@ -148,10 +165,10 @@ export class UniversalRegistryBridge {
         if (inAgent && currentAgent) {
           agents.push(currentAgent);
         }
-        currentAgent = { 
-          name: nameMatch[1].trim(), 
-          description: "", 
-          version: "1.0.0" 
+        currentAgent = {
+          name: nameMatch[1].trim(),
+          description: "",
+          version: "1.0.0",
         };
         inAgent = true;
         continue;
@@ -183,7 +200,9 @@ export class UniversalRegistryBridge {
   /**
    * Load agents from HTTP endpoint
    */
-  private async loadFromHttp(location: string): Promise<RegistryAgentDefinition[]> {
+  private async loadFromHttp(
+    location: string,
+  ): Promise<RegistryAgentDefinition[]> {
     try {
       const response = await fetch(location);
       if (!response.ok) {
@@ -198,19 +217,23 @@ export class UniversalRegistryBridge {
   /**
    * Load agents from npm package
    */
-  private async loadFromNpm(packageName: string): Promise<RegistryAgentDefinition[]> {
+  private async loadFromNpm(
+    packageName: string,
+  ): Promise<RegistryAgentDefinition[]> {
     try {
-      const response = await fetch(`https://registry.npmjs.org/${packageName}/latest`);
+      const response = await fetch(
+        `https://registry.npmjs.org/${packageName}/latest`,
+      );
       if (!response.ok) {
         throw new Error(`npm API error: ${response.status}`);
       }
       const pkg = await response.json();
-      
+
       // Look for agent definitions in package exports
       if (pkg.stringray?.agents) {
         return pkg.stringray.agents;
       }
-      
+
       return [];
     } catch (error) {
       throw new Error(`Failed to load npm package ${packageName}: ${error}`);
@@ -231,7 +254,10 @@ export class UniversalRegistryBridge {
   /**
    * Get cached agents from a specific registry
    */
-  getCached(registryType: string, location: string): RegistryAgentDefinition[] | undefined {
+  getCached(
+    registryType: string,
+    location: string,
+  ): RegistryAgentDefinition[] | undefined {
     return this.cache.get(`${registryType}:${location}`);
   }
 
@@ -240,7 +266,11 @@ export class UniversalRegistryBridge {
    */
   clearCache(): void {
     this.cache.clear();
-    this.logger.log("universal-registry-bridge", "Registry cache cleared", "info");
+    this.logger.log(
+      "universal-registry-bridge",
+      "Registry cache cleared",
+      "info",
+    );
   }
 
   /**
@@ -248,7 +278,11 @@ export class UniversalRegistryBridge {
    */
   addRegistry(registry: ExternalRegistryConfig): void {
     this.registries.push(registry);
-    this.logger.log("universal-registry-bridge", `Added registry: ${registry.type}:${registry.location}`, "info");
+    this.logger.log(
+      "universal-registry-bridge",
+      `Added registry: ${registry.type}:${registry.location}`,
+      "info",
+    );
   }
 
   /**
@@ -262,8 +296,13 @@ export class UniversalRegistryBridge {
 /**
  * Create a bridge from integration config
  */
-export async function createRegistryBridge(configPath?: string): Promise<UniversalRegistryBridge> {
-  const defaultPath = resolve(process.cwd(), ".stringray/integration/registries.json");
+export async function createRegistryBridge(
+  configPath?: string,
+): Promise<UniversalRegistryBridge> {
+  const defaultPath = resolve(
+    process.cwd(),
+    ".stringray/integration/registries.json",
+  );
   const path = configPath || defaultPath;
 
   let registries: ExternalRegistryConfig[] = [];
@@ -274,7 +313,11 @@ export async function createRegistryBridge(configPath?: string): Promise<Univers
       const config = JSON.parse(content);
       registries = config.registries || [];
     } catch (error) {
-      frameworkLogger.log("universal-registry-bridge", `Failed to load registry config from ${path}: ${error}`, "info");
+      frameworkLogger.log(
+        "universal-registry-bridge",
+        `Failed to load registry config from ${path}: ${error}`,
+        "info",
+      );
     }
   }
 

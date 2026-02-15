@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * StringRay Integration Script
- * 
+ *
  * Main CLI bridge for external systems (like Jelly commercial modules) to call into StringRay.
  * Allows spawning OpenCode CLI with StringRay agents to execute real tasks.
- * 
+ *
  * @version 1.1.0
  * @since 2026-02-14
- * 
+ *
  * Usage:
  *   node dist/scripts/integration.js enforcer '{"taskDescription": "Check code quality"}'
  *   node dist/scripts/integration.js --version
@@ -139,7 +139,8 @@ Flow:
  * Build task prompt from agent configuration
  */
 function buildTaskPrompt(agent: AgentConfig, taskContext: TaskContext): string {
-  const availableTools = agent.tools?.include?.join(", ") || "read, grep, edit, bash commands";
+  const availableTools =
+    agent.tools?.include?.join(", ") || "read, grep, edit, bash commands";
 
   return `You are the ${agent.name} agent.
 
@@ -162,7 +163,7 @@ Execute this task using the available tools. Be thorough and provide detailed re
  */
 function spawnOpenCode(agentName: string, prompt: string): Promise<unknown> {
   let isFinished = false;
-  
+
   return new Promise((resolve, reject) => {
     // Spawn opencode with stdin for prompt - more reliable
     const opencode = spawn(
@@ -198,15 +199,15 @@ function spawnOpenCode(agentName: string, prompt: string): Promise<unknown> {
     const cleanup = (force = false) => {
       if (isFinished) return;
       isFinished = true;
-      
+
       if (force && opencode.pid !== undefined && !opencode.killed) {
         try {
-          process.kill(opencode.pid, 'SIGTERM');
+          process.kill(opencode.pid, "SIGTERM");
           // Give it 2 seconds to terminate gracefully, then force kill
           setTimeout(() => {
             if (!opencode.killed && opencode.pid !== undefined) {
               try {
-                process.kill(opencode.pid, 'SIGKILL');
+                process.kill(opencode.pid, "SIGKILL");
               } catch (e) {
                 // Process already dead
               }

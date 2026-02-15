@@ -100,7 +100,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
     antiPatterns: ["Spaghetti code"],
     validationCriteria: {},
     frameworkAlignment: {
-      "OpenCode": "v1.2.0",
+      OpenCode: "v1.2.0",
     },
   });
 

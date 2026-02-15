@@ -17,25 +17,6 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 cd "$PROJECT_ROOT"
 
-# Check if the TypeScript version exists (after build)
-if [ -f "$SCRIPT_DIR/enforce-version-compliance.ts" ]; then
-    # Try to run the TypeScript directly with ts-node or npx tsx
-    if command -v tsx &> /dev/null; then
-        tsx "$SCRIPT_DIR/enforce-version-compliance.ts"
-    elif command -v npx &> /dev/null; then
-        npx tsx "$SCRIPT_DIR/enforce-version-compliance.ts"
-    else
-        # Fallback: compile on-the-fly with tsc and run
-        echo "Compiling version compliance script..."
-        npx tsc "$SCRIPT_DIR/enforce-version-compliance.ts" --outDir "$SCRIPT_DIR" --module commonjs --esModuleInterop true --skipLibCheck true 2>/dev/null || true
-        if [ -f "${SCRIPT_DIR}/enforce-version-compliance.js" ]; then
-            node "${SCRIPT_DIR}/enforce-version-compliance.js"
-        else
-            echo "Error: Could not compile or run version compliance script"
-            exit 1
-        fi
-    fi
-else
-    echo "Error: enforce-version-compliance.ts not found"
-    exit 1
-fi
+# Use npx tsx to run TypeScript files directly
+# tsx is a zero-config TypeScript execution engine
+npx tsx "$SCRIPT_DIR/enforce-version-compliance.ts"

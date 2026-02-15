@@ -24,7 +24,7 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "log-monitor": logMonitorAgent,
   librarian,
   "multimodal-looker": multimodalLooker,
-  "analyzer": analyzer,
+  analyzer: analyzer,
 };
 
 export {

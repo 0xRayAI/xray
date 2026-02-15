@@ -3,7 +3,7 @@ import { modelRouter } from "../core/model-router.js";
 
 /**
  * Analyzer Agent
- * 
+ *
  * Universal analysis specialist for code, systems, and technical artifacts.
  * Provides comprehensive analysis across multiple domains including security,
  * performance, architecture, and dependency analysis.
@@ -135,12 +135,7 @@ When analyzing a system or component:
       "security-audit_*",
       "refactoring-strategies_*",
     ],
-    exclude: [
-      "background_task",
-      "invoke-skill",
-      "skill-*",
-      "call_omo_agent",
-    ],
+    exclude: ["background_task", "invoke-skill", "skill-*", "call_omo_agent"],
   },
   permission: {
     edit: "deny",

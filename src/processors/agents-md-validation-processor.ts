@@ -12,9 +12,9 @@
  * @framework StringRay 1.3.5
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { frameworkLogger } from '../core/framework-logger.js';
+import * as fs from "fs";
+import * as path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface AgentsMdValidationResult {
   valid: boolean;
@@ -29,24 +29,24 @@ export class AgentsMdValidationProcessor {
 
   // Required sections that must exist in AGENTS.md
   private readonly REQUIRED_SECTIONS = [
-    '## Agent Triage Rules',
-    '## Universal Development Codex',
-    '## Agent Commands',
-    '## Rule Hierarchy',
-    '## Agent Capabilities Matrix'
+    "## Agent Triage Rules",
+    "## Universal Development Codex",
+    "## Agent Commands",
+    "## Rule Hierarchy",
+    "## Agent Capabilities Matrix",
   ];
 
   // Required agent definitions
   private readonly REQUIRED_AGENTS = [
-    '@enforcer',
-    '@architect',
-    '@orchestrator',
-    '@security-auditor'
+    "@enforcer",
+    "@architect",
+    "@orchestrator",
+    "@security-auditor",
   ];
 
   constructor(projectRoot: string = process.cwd()) {
     this.projectRoot = projectRoot;
-    this.agentsPath = path.join(projectRoot, 'AGENTS.md');
+    this.agentsPath = path.join(projectRoot, "AGENTS.md");
   }
 
   /**
@@ -64,11 +64,11 @@ export class AgentsMdValidationProcessor {
   }> {
     try {
       // Only validate on write/edit operations
-      if (!['write', 'edit', 'multiedit'].includes(context.tool)) {
+      if (!["write", "edit", "multiedit"].includes(context.tool)) {
         return {
           success: true,
           blocked: false,
-          message: 'AGENTS.md validation skipped (not a file modification)'
+          message: "AGENTS.md validation skipped (not a file modification)",
         };
       }
 
@@ -80,58 +80,59 @@ export class AgentsMdValidationProcessor {
 
       if (!validation.valid) {
         await frameworkLogger.log(
-          'agents-md-validation-processor',
-          '-agents-md-validation-failed-',
-          'error',
+          "agents-md-validation-processor",
+          "-agents-md-validation-failed-",
+          "error",
           {
             errors: validation.errors,
             warnings: validation.warnings,
-            filePath: this.agentsPath
-          }
+            filePath: this.agentsPath,
+          },
         );
 
         return {
           success: false,
           blocked: true,
-          message: `AGENTS.md validation failed: ${validation.errors.join(', ')}`,
-          result: validation
+          message: `AGENTS.md validation failed: ${validation.errors.join(", ")}`,
+          result: validation,
         };
       }
 
       // Log success
       await frameworkLogger.log(
-        'agents-md-validation-processor',
-        '-agents-md-validation-passed-',
-        'info',
+        "agents-md-validation-processor",
+        "-agents-md-validation-passed-",
+        "info",
         {
           warnings: validation.warnings,
-          isAgentRelated
-        }
+          isAgentRelated,
+        },
       );
 
       return {
         success: true,
         blocked: false,
-        message: validation.warnings.length > 0
-          ? `AGENTS.md valid with ${validation.warnings.length} warnings`
-          : 'AGENTS.md validation passed',
-        result: validation
+        message:
+          validation.warnings.length > 0
+            ? `AGENTS.md valid with ${validation.warnings.length} warnings`
+            : "AGENTS.md validation passed",
+        result: validation,
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
       await frameworkLogger.log(
-        'agents-md-validation-processor',
-        '-validation-error-',
-        'error',
-        { message: errorMessage }
+        "agents-md-validation-processor",
+        "-validation-error-",
+        "error",
+        { message: errorMessage },
       );
 
       return {
         success: false,
         blocked: true,
-        message: `AGENTS.md validation error: ${errorMessage}`
+        message: `AGENTS.md validation error: ${errorMessage}`,
       };
     }
   }
@@ -139,17 +140,19 @@ export class AgentsMdValidationProcessor {
   /**
    * Determine if the change is agent-related
    */
-  private isAgentRelatedChange(context: { args?: { filePath?: string } }): boolean {
-    const filePath = context.args?.filePath || '';
+  private isAgentRelatedChange(context: {
+    args?: { filePath?: string };
+  }): boolean {
+    const filePath = context.args?.filePath || "";
     const agentPatterns = [
-      'AGENTS.md',
-      '.opencode/OpenCode.json',
-      '.opencode/agent',
-      'src/agents',
-      'docs/agent'
+      "AGENTS.md",
+      ".opencode/OpenCode.json",
+      ".opencode/agent",
+      "src/agents",
+      "docs/agent",
     ];
 
-    return agentPatterns.some(pattern => filePath.includes(pattern));
+    return agentPatterns.some((pattern) => filePath.includes(pattern));
   }
 
   /**
@@ -160,48 +163,54 @@ export class AgentsMdValidationProcessor {
       valid: true,
       errors: [],
       warnings: [],
-      fixes: []
+      fixes: [],
     };
 
     // Check 1: File exists
     if (!fs.existsSync(this.agentsPath)) {
       result.valid = false;
-      result.errors.push('AGENTS.md not found in project root');
+      result.errors.push("AGENTS.md not found in project root");
       result.fixes = result.fixes || [];
-      result.fixes.push('Create AGENTS.md using template from docs/AGENTS_TEMPLATE.md');
+      result.fixes.push(
+        "Create AGENTS.md using template from docs/AGENTS_TEMPLATE.md",
+      );
       return result;
     }
 
-    const content = fs.readFileSync(this.agentsPath, 'utf-8');
+    const content = fs.readFileSync(this.agentsPath, "utf-8");
 
     // Check 2: Not empty/minimal
     if (content.length < 500) {
       result.valid = false;
-      result.errors.push('AGENTS.md is too short (likely incomplete)');
+      result.errors.push("AGENTS.md is too short (likely incomplete)");
     }
 
     // Check 3: Required sections
     const missingSections = this.REQUIRED_SECTIONS.filter(
-      section => !content.includes(section)
+      (section) => !content.includes(section),
     );
     if (missingSections.length > 0) {
       result.valid = false;
-      result.errors.push(`Missing required sections: ${missingSections.join(', ')}`);
+      result.errors.push(
+        `Missing required sections: ${missingSections.join(", ")}`,
+      );
     }
 
     // Check 4: Required agents
     const missingAgents = this.REQUIRED_AGENTS.filter(
-      agent => !content.includes(agent)
+      (agent) => !content.includes(agent),
     );
     if (missingAgents.length > 0) {
       result.valid = false;
-      result.errors.push(`Missing agent definitions: ${missingAgents.join(', ')}`);
+      result.errors.push(
+        `Missing agent definitions: ${missingAgents.join(", ")}`,
+      );
     }
 
     // Check 5: Version header
     const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
     if (!versionMatch) {
-      result.warnings.push('No version header found in AGENTS.md');
+      result.warnings.push("No version header found in AGENTS.md");
     }
 
     // Check 6: Date freshness
@@ -209,16 +218,20 @@ export class AgentsMdValidationProcessor {
     if (dateMatch && dateMatch[1]) {
       const daysOld = this.calculateDaysOld(dateMatch[1]);
       if (daysOld > 30) {
-        result.warnings.push(`AGENTS.md is ${daysOld} days old - consider review`);
+        result.warnings.push(
+          `AGENTS.md is ${daysOld} days old - consider review`,
+        );
       }
     } else {
-      result.warnings.push('No date stamp found in AGENTS.md');
+      result.warnings.push("No date stamp found in AGENTS.md");
     }
 
     // Check 7: Codex terms
     const codexTerms = (content.match(/####\s*\d+\./g) || []).length;
     if (codexTerms < 10) {
-      result.warnings.push(`Only ${codexTerms} codex terms found (recommend 20+)`);
+      result.warnings.push(
+        `Only ${codexTerms} codex terms found (recommend 20+)`,
+      );
     }
 
     return result;
@@ -242,43 +255,47 @@ export class AgentsMdValidationProcessor {
     path?: string;
   }> {
     try {
-      const templatePath = path.join(this.projectRoot, 'docs', 'AGENTS_TEMPLATE.md');
+      const templatePath = path.join(
+        this.projectRoot,
+        "docs",
+        "AGENTS_TEMPLATE.md",
+      );
 
       if (!fs.existsSync(templatePath)) {
         return {
           success: false,
-          message: 'AGENTS_TEMPLATE.md not found in docs/'
+          message: "AGENTS_TEMPLATE.md not found in docs/",
         };
       }
 
-      let template = fs.readFileSync(templatePath, 'utf-8');
+      let template = fs.readFileSync(templatePath, "utf-8");
 
       // Update date and version
-      const now = new Date().toISOString().split('T')[0];
+      const now = new Date().toISOString().split("T")[0];
       template = template
         .replace(/\*\*Updated\*\*:\s*\d{4}-\d{2}-\d{2}/, `**Updated**: ${now}`)
         .replace(/\*\*Version\*\*:\s*\d+\.\d+\.\d+/, `**Version**: 1.0.0`);
 
-      fs.writeFileSync(this.agentsPath, template, 'utf-8');
+      fs.writeFileSync(this.agentsPath, template, "utf-8");
 
       await frameworkLogger.log(
-        'agents-md-validation-processor',
-        '-agents-md-auto-generated-',
-        'info',
-        { path: this.agentsPath }
+        "agents-md-validation-processor",
+        "-agents-md-auto-generated-",
+        "info",
+        { path: this.agentsPath },
       );
 
       return {
         success: true,
-        message: 'AGENTS.md auto-generated successfully',
-        path: this.agentsPath
+        message: "AGENTS.md auto-generated successfully",
+        path: this.agentsPath,
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        message: `Auto-generation failed: ${errorMessage}`
+        message: `Auto-generation failed: ${errorMessage}`,
       };
     }
   }

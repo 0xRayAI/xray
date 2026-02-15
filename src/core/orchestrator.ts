@@ -63,7 +63,8 @@ export class StringRayOrchestrator {
       );
 
       const executionTime = result.executionTime ?? 0;
-      const agentName = result.agentName ?? task.subagentType ?? "default-agent";
+      const agentName =
+        result.agentName ?? task.subagentType ?? "default-agent";
 
       frameworkLogger.log("orchestrator", "task-completed", "success", {
         taskId,
@@ -71,7 +72,10 @@ export class StringRayOrchestrator {
       });
 
       // Ensure result is always an object
-      const resultValue = typeof result.result === 'object' ? result.result : { value: result.result };
+      const resultValue =
+        typeof result.result === "object"
+          ? result.result
+          : { value: result.result };
 
       return {
         success: true,
@@ -86,7 +90,8 @@ export class StringRayOrchestrator {
         error: error instanceof Error ? error.message : String(error),
       });
 
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       // Return failure result instead of throwing
       return {
         success: false,
@@ -120,7 +125,8 @@ export class StringRayOrchestrator {
       );
 
       const duration = Date.now() - startTime;
-      const agentName = result.agentName ?? task.subagentType ?? "default-agent";
+      const agentName =
+        result.agentName ?? task.subagentType ?? "default-agent";
 
       await frameworkLogger.log(
         "orchestrator",
@@ -130,7 +136,10 @@ export class StringRayOrchestrator {
       );
 
       // Ensure result is always an object
-      const resultValue = typeof result.result === 'object' ? result.result : { value: result.result };
+      const resultValue =
+        typeof result.result === "object"
+          ? result.result
+          : { value: result.result };
 
       return {
         success: true,
@@ -141,7 +150,8 @@ export class StringRayOrchestrator {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       await frameworkLogger.log(
         "orchestrator",
         "complex-task-failed",

@@ -168,14 +168,19 @@ describe("Multimodal Looker", () => {
   describe("Tool Access Control", () => {
     it("should allow read tools", () => {
       const allowedTools = ["read", "grep", "webfetch", "websearch"];
-      allowedTools.forEach(tool => {
+      allowedTools.forEach((tool) => {
         expect(agent.tools.include).toContain(tool);
       });
     });
 
     it("should restrict dangerous operations", () => {
-      const restrictedTools = ["background_task", "invoke-skill", "skill-*", "call_omo_agent"];
-      restrictedTools.forEach(tool => {
+      const restrictedTools = [
+        "background_task",
+        "invoke-skill",
+        "skill-*",
+        "call_omo_agent",
+      ];
+      restrictedTools.forEach((tool) => {
         expect(agent.tools.exclude).toContain(tool);
       });
     });
@@ -192,10 +197,10 @@ describe("Multimodal Looker", () => {
   describe("File System Integration", () => {
     it("should handle various file types", () => {
       const supportedTypes = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".pdf"];
-      
+
       // Test that agent can handle different file extensions (case-insensitive)
       const systemLower = agent.system.toLowerCase();
-      supportedTypes.forEach(ext => {
+      supportedTypes.forEach((ext) => {
         expect(systemLower).toContain(ext.replace(".", ""));
       });
     });
@@ -232,7 +237,7 @@ describe("Multimodal Looker", () => {
     it("should handle unsupported file types", () => {
       // Test behavior with unsupported file types
       const systemPrompt = agent.system.toLowerCase();
-      
+
       // System should mention supported formats
       expect(systemPrompt).toContain("png");
       expect(systemPrompt).toContain("jpeg");

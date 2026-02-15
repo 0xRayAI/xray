@@ -12,7 +12,11 @@
  * @deprecated Use VersionComplianceProcessor directly in new code
  */
 
-const path = require('path');
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Colors for terminal output
 const RED = '\x1b[0;31m';
@@ -27,8 +31,11 @@ async function main() {
   console.log('');
 
   try {
-    // Import and run the processor
-    const { VersionComplianceProcessor } = require('../dist/processors/version-compliance-processor.js');
+    // Import and run the processor - use file URL for ESM compatibility
+    // The path needs to resolve from project root, not scripts/node/
+    const projectRoot = path.join(__dirname, '..', '..');
+    const processorPath = path.join(projectRoot, 'dist', 'processors', 'version-compliance-processor.js');
+    const { VersionComplianceProcessor } = await import(`file://${processorPath}`);
     const processor = new VersionComplianceProcessor(process.cwd());
     
     const result = await processor.validateVersionCompliance();

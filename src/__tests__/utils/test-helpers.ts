@@ -249,7 +249,7 @@ export class MockCodexGenerator {
         "TypeScript compilation succeeds": true,
       },
       frameworkAlignment: {
-        "OpenCode": "v1.2.0",
+        OpenCode: "v1.2.0",
         "strray-framework": "v1.2.0",
       },
     });
@@ -428,7 +428,7 @@ export class MockContextFactory {
         "TypeScript compilation succeeds": true,
       },
       frameworkAlignment: {
-        "OpenCode": "v1.2.0",
+        OpenCode: "v1.2.0",
         "StringRay Framework": "v1.2.0",
       },
       errorPreventionTarget: 0.996,

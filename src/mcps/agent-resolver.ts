@@ -1,9 +1,9 @@
 /**
  * Agent Resolver
- * 
+ *
  * Resolves agent configurations from the StringRay registry.
  * Used by the integration layer to programmatically access agent configs.
- * 
+ *
  * @version 1.1.0
  * @since 2026-02-14
  */
@@ -53,7 +53,7 @@ const DEFAULT_AGENT_CONFIG: AgentConfig = {
 
 /**
  * Resolves an agent configuration by name from the StringRay registry
- * 
+ *
  * @param agentName - The name of the agent to resolve
  * @returns The agent configuration object
  * @throws Error if agent cannot be resolved
@@ -74,7 +74,9 @@ export async function resolveAgent(agentName: string): Promise<AgentConfig> {
   }
 
   // Return default fallback if nothing found
-  console.warn(`[AgentResolver] Agent '${agentName}' not found, using default config`);
+  console.warn(
+    `[AgentResolver] Agent '${agentName}' not found, using default config`,
+  );
   return {
     ...DEFAULT_AGENT_CONFIG,
     name: agentName,
@@ -105,7 +107,9 @@ async function loadAgentRegistry(): Promise<AgentRegistry> {
 /**
  * Loads an individual agent configuration file
  */
-async function loadAgentConfigFile(agentName: string): Promise<AgentConfig | null> {
+async function loadAgentConfigFile(
+  agentName: string,
+): Promise<AgentConfig | null> {
   // Map agent names to file paths (kebab-case to camelCase for some agents)
   const agentFileMap: Record<string, string> = {
     "bug-triage-specialist": "bugTriageSpecialist",
@@ -116,20 +120,27 @@ async function loadAgentConfigFile(agentName: string): Promise<AgentConfig | nul
   };
 
   const fileName = agentFileMap[agentName] || agentName;
-  const agentPath = path.join(process.cwd(), "dist", "agents", `${fileName}.js`);
+  const agentPath = path.join(
+    process.cwd(),
+    "dist",
+    "agents",
+    `${fileName}.js`,
+  );
   const fileUrl = `file://${agentPath}`;
 
   try {
     if (fs.existsSync(agentPath)) {
       // Dynamic import of the agent file (ESM)
       const agentModule = await import(fileUrl);
-      
+
       // Get the export (could be default or named)
       const camelName = toCamelCase(agentName);
       return agentModule[camelName] || agentModule.default || null;
     }
   } catch (error) {
-    console.warn(`[AgentResolver] Failed to load agent config for '${agentName}': ${error}`);
+    console.warn(
+      `[AgentResolver] Failed to load agent config for '${agentName}': ${error}`,
+    );
   }
 
   return null;

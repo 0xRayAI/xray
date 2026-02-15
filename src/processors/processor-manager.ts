@@ -681,13 +681,14 @@ export class ProcessorManager {
 
     // Import and initialize the processor
     try {
-      const { AgentsMdValidationProcessor } = await import("./agents-md-validation-processor.js");
+      const { AgentsMdValidationProcessor } =
+        await import("./agents-md-validation-processor.js");
       const processor = new AgentsMdValidationProcessor(process.cwd());
 
       // Validate AGENTS.md on initialization (blocking if missing)
       const result = await processor.execute({
         tool: "validate",
-        operation: "initialization"
+        operation: "initialization",
       });
 
       if (!result.success && result.blocked) {
@@ -695,7 +696,10 @@ export class ProcessorManager {
           "processor-manager",
           "agents-md-validation",
           "info",
-          { message: "AGENTS.md validation failed - commit operations may be blocked" }
+          {
+            message:
+              "AGENTS.md validation failed - commit operations may be blocked",
+          },
         );
       }
     } catch (error) {
@@ -703,7 +707,7 @@ export class ProcessorManager {
         "processor-manager",
         "agents-md-validation-init-error",
         "error",
-        { error: error instanceof Error ? error.message : String(error) }
+        { error: error instanceof Error ? error.message : String(error) },
       );
     }
   }
@@ -718,39 +722,31 @@ export class ProcessorManager {
 
     // Import and initialize the processor
     try {
-      const { VersionComplianceProcessor } = await import("./version-compliance-processor.js");
+      const { VersionComplianceProcessor } =
+        await import("./version-compliance-processor.js");
       const processor = new VersionComplianceProcessor(process.cwd());
 
       // Validate version compliance on initialization (non-blocking, just info)
       const result = await processor.validateVersionCompliance();
 
       if (!result.compliant) {
-        frameworkLogger.log(
-          "processor-manager",
-          "version-compliance",
-          "info",
-          { 
-            message: "Version compliance issues detected - commits may be blocked",
-            errors: result.errors,
-            warnings: result.warnings
-          }
-        );
+        frameworkLogger.log("processor-manager", "version-compliance", "info", {
+          message:
+            "Version compliance issues detected - commits may be blocked",
+          errors: result.errors,
+          warnings: result.warnings,
+        });
       } else {
-        frameworkLogger.log(
-          "processor-manager",
-          "version-compliance",
-          "info",
-          { 
-            message: `Version compliance verified: NPM ${result.npmVersion}, UVM ${result.uvmVersion}`
-          }
-        );
+        frameworkLogger.log("processor-manager", "version-compliance", "info", {
+          message: `Version compliance verified: NPM ${result.npmVersion}, UVM ${result.uvmVersion}`,
+        });
       }
     } catch (error) {
       frameworkLogger.log(
         "processor-manager",
         "version-compliance-init-error",
         "error",
-        { error: error instanceof Error ? error.message : String(error) }
+        { error: error instanceof Error ? error.message : String(error) },
       );
     }
   }

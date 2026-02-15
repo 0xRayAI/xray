@@ -269,7 +269,7 @@ program
           check: () =>
             fs.existsSync(
               // Check for opencode.json at root (OpenCode integration standard)
-              path.join(process.cwd(), "opencode.json")
+              path.join(process.cwd(), "opencode.json"),
             ),
           success: "✅ opencode configuration found",
           error: "⚠️ opencode config missing (run install first)",
@@ -408,9 +408,7 @@ program
       console.log("🎉 Framework configuration restored successfully!");
       console.log("");
       console.log("💡 Next steps:");
-      console.log(
-        "  • Restart OpenCode to load the restored configuration",
-      );
+      console.log("  • Restart OpenCode to load the restored configuration");
       console.log("  • Run: npx strray-ai health (to verify everything works)");
       console.log("  • Try: @enforcer analyze this code");
     } catch (error) {

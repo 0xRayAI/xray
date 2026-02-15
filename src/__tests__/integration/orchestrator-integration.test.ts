@@ -379,7 +379,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
       it("should handle agent delegation with complexity analysis", async () => {
         // Use real timers for this test to avoid timeout issues with fake timers
         vi.useRealTimers();
-        
+
         const complexTask: TaskDefinition = {
           id: "complex-task",
           type: "architecture",

@@ -18,13 +18,13 @@
  * @framework StringRay 1.3.5
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { spawn } from 'child_process';
-import { promisify } from 'util';
-import { frameworkLogger } from '../core/framework-logger.js';
+import * as fs from "fs";
+import * as path from "path";
+import { spawn } from "child_process";
+import { promisify } from "util";
+import { frameworkLogger } from "../core/framework-logger.js";
 
-const exec = promisify(require('child_process').exec);
+const exec = promisify(require("child_process").exec);
 
 export interface VersionComplianceResult {
   compliant: boolean;
@@ -37,7 +37,7 @@ export interface VersionComplianceResult {
 }
 
 export interface VersionFix {
-  type: 'update-uvm' | 'sync-source' | 'update-readme';
+  type: "update-uvm" | "sync-source" | "update-readme";
   description: string;
   command: string;
   autoFixable: boolean;
@@ -75,12 +75,22 @@ export class VersionComplianceProcessor {
   }> {
     try {
       // Only validate on relevant operations
-      const relevantOperations = ['write', 'edit', 'multiedit', 'version', 'publish'];
-      if (!relevantOperations.includes(context.tool) && !context.operation.includes('version')) {
+      const relevantOperations = [
+        "write",
+        "edit",
+        "multiedit",
+        "version",
+        "publish",
+      ];
+      if (
+        !relevantOperations.includes(context.tool) &&
+        !context.operation.includes("version")
+      ) {
         return {
           success: true,
           blocked: false,
-          message: 'Version compliance skipped (not a version-related operation)'
+          message:
+            "Version compliance skipped (not a version-related operation)",
         };
       }
 
@@ -88,62 +98,63 @@ export class VersionComplianceProcessor {
 
       if (!result.compliant) {
         await frameworkLogger.log(
-          'version-compliance-processor',
-          '-version-compliance-failed-',
-          'error',
+          "version-compliance-processor",
+          "-version-compliance-failed-",
+          "error",
           {
             errors: result.errors,
             warnings: result.warnings,
             npmVersion: result.npmVersion,
             uvmVersion: result.uvmVersion,
-            pkgVersion: result.pkgVersion
-          }
+            pkgVersion: result.pkgVersion,
+          },
         );
 
         return {
           success: false,
           blocked: true,
-          message: `Version compliance failed: ${result.errors.join(', ')}`,
-          result
+          message: `Version compliance failed: ${result.errors.join(", ")}`,
+          result,
         };
       }
 
       // Log success
       await frameworkLogger.log(
-        'version-compliance-processor',
-        '-version-compliance-passed-',
-        'info',
+        "version-compliance-processor",
+        "-version-compliance-passed-",
+        "info",
         {
           npmVersion: result.npmVersion,
           uvmVersion: result.uvmVersion,
           pkgVersion: result.pkgVersion,
-          warnings: result.warnings
-        }
+          warnings: result.warnings,
+        },
       );
 
       return {
         success: true,
         blocked: false,
-        message: result.warnings.length > 0
-          ? `Version compliance passed with ${result.warnings.length} warnings`
-          : 'Version compliance passed',
-        result
+        message:
+          result.warnings.length > 0
+            ? `Version compliance passed with ${result.warnings.length} warnings`
+            : "Version compliance passed",
+        result,
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
       await frameworkLogger.log(
-        'version-compliance-processor',
-        '-validation-error-',
-        'error',
-        { message: errorMessage }
+        "version-compliance-processor",
+        "-validation-error-",
+        "error",
+        { message: errorMessage },
       );
 
       return {
         success: false,
         blocked: true,
-        message: `Version compliance error: ${errorMessage}`
+        message: `Version compliance error: ${errorMessage}`,
       };
     }
   }
@@ -162,21 +173,21 @@ export class VersionComplianceProcessor {
     const pkgVersion = this.getPackageVersion();
 
     // Rule 1: UVM MUST be 1 ahead of NPM
-    if (npmVersion !== 'NOT_PUBLISHED' && npmVersion !== 'ERROR') {
+    if (npmVersion !== "NOT_PUBLISHED" && npmVersion !== "ERROR") {
       const npmParsed = this.parseVersion(npmVersion);
       const uvmParsed = this.parseVersion(uvmVersion);
-      
+
       const expectedUvm = this.incrementPatch(npmParsed);
-      
+
       if (uvmVersion !== this.formatVersion(expectedUvm)) {
         this.errors.push(
-          `Version manager not 1 ahead of npm (NPM: ${npmVersion}, UVM: ${uvmVersion}, Expected: ${this.formatVersion(expectedUvm)})`
+          `Version manager not 1 ahead of npm (NPM: ${npmVersion}, UVM: ${uvmVersion}, Expected: ${this.formatVersion(expectedUvm)})`,
         );
         this.fixes.push({
-          type: 'update-uvm',
+          type: "update-uvm",
           description: `Update UVM to ${this.formatVersion(expectedUvm)}`,
-          command: 'node scripts/node/universal-version-manager.js',
-          autoFixable: false // Requires manual edit
+          command: "node scripts/node/universal-version-manager.js",
+          autoFixable: false, // Requires manual edit
         });
       }
     }
@@ -184,7 +195,7 @@ export class VersionComplianceProcessor {
     // Rule 2: package.json SHOULD match UVM
     if (pkgVersion !== uvmVersion) {
       this.warnings.push(
-        `package.json version (${pkgVersion}) doesn't match UVM (${uvmVersion}) - run "npm version [patch|minor|major]" to sync`
+        `package.json version (${pkgVersion}) doesn't match UVM (${uvmVersion}) - run "npm version [patch|minor|major]" to sync`,
       );
     }
 
@@ -192,27 +203,31 @@ export class VersionComplianceProcessor {
     const sourceVersion = this.getSourceVersion();
     if (sourceVersion && sourceVersion !== uvmVersion) {
       this.errors.push(
-        `Source files not synchronized to UVM version (${sourceVersion} vs ${uvmVersion})`
+        `Source files not synchronized to UVM version (${sourceVersion} vs ${uvmVersion})`,
       );
       this.fixes.push({
-        type: 'sync-source',
-        description: 'Synchronize source files to UVM version',
-        command: 'node scripts/node/universal-version-manager.js',
-        autoFixable: true
+        type: "sync-source",
+        description: "Synchronize source files to UVM version",
+        command: "node scripts/node/universal-version-manager.js",
+        autoFixable: true,
       });
     }
 
     // Rule 4: README SHOULD reference current version
     const readmeVersion = this.getReadmeVersion();
-    if (readmeVersion && readmeVersion !== uvmVersion && readmeVersion !== pkgVersion) {
+    if (
+      readmeVersion &&
+      readmeVersion !== uvmVersion &&
+      readmeVersion !== pkgVersion
+    ) {
       this.warnings.push(
-        `README version (${readmeVersion}) may be outdated (UVM: ${uvmVersion}, package: ${pkgVersion})`
+        `README version (${readmeVersion}) may be outdated (UVM: ${uvmVersion}, package: ${pkgVersion})`,
       );
       this.fixes.push({
-        type: 'update-readme',
-        description: 'Update README version references',
-        command: 'node scripts/node/universal-version-manager.js',
-        autoFixable: true
+        type: "update-readme",
+        description: "Update README version references",
+        command: "node scripts/node/universal-version-manager.js",
+        autoFixable: true,
       });
     }
 
@@ -223,7 +238,7 @@ export class VersionComplianceProcessor {
       pkgVersion,
       errors: this.errors,
       warnings: this.warnings,
-      fixes: this.fixes
+      fixes: this.fixes,
     };
   }
 
@@ -232,13 +247,16 @@ export class VersionComplianceProcessor {
    */
   private async getNpmVersion(): Promise<string> {
     try {
-      const { stdout } = await exec('npm view strray-ai@latest version 2>/dev/null || echo "NOT_PUBLISHED"', {
-        cwd: this.projectRoot,
-        timeout: 10000
-      });
-      return stdout?.trim() || 'NOT_PUBLISHED';
+      const { stdout } = await exec(
+        'npm view strray-ai@latest version 2>/dev/null || echo "NOT_PUBLISHED"',
+        {
+          cwd: this.projectRoot,
+          timeout: 10000,
+        },
+      );
+      return stdout?.trim() || "NOT_PUBLISHED";
     } catch {
-      return 'NOT_PUBLISHED';
+      return "NOT_PUBLISHED";
     }
   }
 
@@ -247,24 +265,31 @@ export class VersionComplianceProcessor {
    */
   private getUvmVersion(): string {
     try {
-      const uvmPath = path.join(this.projectRoot, 'scripts', 'node', 'universal-version-manager.js');
+      const uvmPath = path.join(
+        this.projectRoot,
+        "scripts",
+        "node",
+        "universal-version-manager.js",
+      );
       if (!fs.existsSync(uvmPath)) {
-        return 'NOT_FOUND';
+        return "NOT_FOUND";
       }
 
-      const content = fs.readFileSync(uvmPath, 'utf-8');
-      
+      const content = fs.readFileSync(uvmPath, "utf-8");
+
       // Match version in OFFICIAL_VERSIONS.framework.version format
-      const match = content.match(/OFFICIAL_VERSIONS\s*=\s*\{[\s\S]*?framework:\s*\{[\s\S]*?version:\s*["']([^"']+)["']/);
+      const match = content.match(
+        /OFFICIAL_VERSIONS\s*=\s*\{[\s\S]*?framework:\s*\{[\s\S]*?version:\s*["']([^"']+)["']/,
+      );
       if (match && match[1]) {
         return match[1];
       }
 
       // Fallback: grep for version pattern
       const fallbackMatch = content.match(/version:\s*["'](\d+\.\d+\.\d+)["']/);
-      return fallbackMatch && fallbackMatch[1] ? fallbackMatch[1] : 'NOT_FOUND';
+      return fallbackMatch && fallbackMatch[1] ? fallbackMatch[1] : "NOT_FOUND";
     } catch {
-      return 'ERROR';
+      return "ERROR";
     }
   }
 
@@ -273,15 +298,15 @@ export class VersionComplianceProcessor {
    */
   private getPackageVersion(): string {
     try {
-      const pkgPath = path.join(this.projectRoot, 'package.json');
+      const pkgPath = path.join(this.projectRoot, "package.json");
       if (!fs.existsSync(pkgPath)) {
-        return 'NOT_FOUND';
+        return "NOT_FOUND";
       }
 
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-      return pkg?.version || 'NOT_FOUND';
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+      return pkg?.version || "NOT_FOUND";
     } catch {
-      return 'ERROR';
+      return "ERROR";
     }
   }
 
@@ -290,12 +315,12 @@ export class VersionComplianceProcessor {
    */
   private getSourceVersion(): string | null {
     try {
-      const cliPath = path.join(this.projectRoot, 'src', 'cli', 'index.ts');
+      const cliPath = path.join(this.projectRoot, "src", "cli", "index.ts");
       if (!fs.existsSync(cliPath)) {
         return null;
       }
 
-      const content = fs.readFileSync(cliPath, 'utf-8');
+      const content = fs.readFileSync(cliPath, "utf-8");
       const match = content.match(/\.version\(["']([^"']+)["']\)/);
       return match && match[1] ? match[1] : null;
     } catch {
@@ -308,13 +333,13 @@ export class VersionComplianceProcessor {
    */
   private getReadmeVersion(): string | null {
     try {
-      const readmePath = path.join(this.projectRoot, 'README.md');
+      const readmePath = path.join(this.projectRoot, "README.md");
       if (!fs.existsSync(readmePath)) {
         return null;
       }
 
-      const content = fs.readFileSync(readmePath, 'utf-8');
-      
+      const content = fs.readFileSync(readmePath, "utf-8");
+
       // Match vX.Y.Z or X.Y.Z patterns
       const match = content.match(/v?(\d+\.\d+\.\d+)/);
       return match && match[1] ? match[1] : null;
@@ -327,12 +352,12 @@ export class VersionComplianceProcessor {
    * Parse version string into components
    */
   private parseVersion(version: string): VersionInfo {
-    const parts = version.split('.');
+    const parts = version.split(".");
     return {
-      major: parseInt(parts[0] || '0', 10),
-      minor: parseInt(parts[1] || '0', 10),
-      patch: parseInt(parts[2] || '0', 10),
-      raw: version
+      major: parseInt(parts[0] || "0", 10),
+      minor: parseInt(parts[1] || "0", 10),
+      patch: parseInt(parts[2] || "0", 10),
+      raw: version,
     };
   }
 
@@ -349,7 +374,7 @@ export class VersionComplianceProcessor {
   private incrementPatch(version: VersionInfo): VersionInfo {
     return {
       ...version,
-      patch: version.patch + 1
+      patch: version.patch + 1,
     };
   }
 
@@ -370,7 +395,7 @@ export class VersionComplianceProcessor {
         try {
           const { stdout, stderr } = await exec(fix.command, {
             cwd: this.projectRoot,
-            timeout: 30000
+            timeout: 30000,
           });
 
           if (stderr) {
@@ -379,7 +404,9 @@ export class VersionComplianceProcessor {
             fixed.push(fix.type);
           }
         } catch (error) {
-          failed.push(`${fix.type}: ${error instanceof Error ? error.message : String(error)}`);
+          failed.push(
+            `${fix.type}: ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
       } else {
         failed.push(`${fix.type}: Manual fix required`);
@@ -389,7 +416,7 @@ export class VersionComplianceProcessor {
     return {
       success: failed.length === 0,
       fixed,
-      failed
+      failed,
     };
   }
 
@@ -398,39 +425,39 @@ export class VersionComplianceProcessor {
    */
   generateReport(result: VersionComplianceResult): string {
     const lines: string[] = [
-      '🔍 Version Compliance Report',
-      '============================',
-      '',
+      "🔍 Version Compliance Report",
+      "============================",
+      "",
       `NPM Published: ${result.npmVersion}`,
       `Version Manager: ${result.uvmVersion}`,
       `package.json: ${result.pkgVersion}`,
-      '',
-      result.compliant ? '✅ COMPLIANT' : '❌ NON-COMPLIANT',
-      ''
+      "",
+      result.compliant ? "✅ COMPLIANT" : "❌ NON-COMPLIANT",
+      "",
     ];
 
     if (result.errors.length > 0) {
-      lines.push('Errors:');
-      result.errors.forEach(e => lines.push(`  ❌ ${e}`));
-      lines.push('');
+      lines.push("Errors:");
+      result.errors.forEach((e) => lines.push(`  ❌ ${e}`));
+      lines.push("");
     }
 
     if (result.warnings.length > 0) {
-      lines.push('Warnings:');
-      result.warnings.forEach(w => lines.push(`  ⚠️  ${w}`));
-      lines.push('');
+      lines.push("Warnings:");
+      result.warnings.forEach((w) => lines.push(`  ⚠️  ${w}`));
+      lines.push("");
     }
 
     if (result.fixes && result.fixes.length > 0) {
-      lines.push('Suggested Fixes:');
-      result.fixes.forEach(f => {
+      lines.push("Suggested Fixes:");
+      result.fixes.forEach((f) => {
         lines.push(`  🔧 ${f.description}`);
         lines.push(`     Command: ${f.command}`);
-        lines.push(`     Auto-fixable: ${f.autoFixable ? 'Yes' : 'No'}`);
+        lines.push(`     Auto-fixable: ${f.autoFixable ? "Yes" : "No"}`);
       });
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 }
 

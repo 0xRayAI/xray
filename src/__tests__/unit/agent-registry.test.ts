@@ -48,7 +48,7 @@ describe("Agent Registry Integration", () => {
   describe("Agent Configuration Consistency", () => {
     it("should have consistent structure for multimodal-looker", () => {
       const agent = builtinAgents["multimodal-looker"];
-      
+
       expect(agent).toHaveProperty("name");
       expect(agent).toHaveProperty("capabilities");
       expect(agent).toHaveProperty("maxComplexity");
@@ -63,7 +63,7 @@ describe("Agent Registry Integration", () => {
 
     it("should have consistent structure for analyzer", () => {
       const agent = builtinAgents["analyzer"];
-      
+
       expect(agent).toHaveProperty("name");
       expect(agent).toHaveProperty("capabilities");
       expect(agent).toHaveProperty("maxComplexity");
@@ -115,7 +115,7 @@ describe("Agent Registry Integration", () => {
     it("should provide model getter for multimodal-looker", () => {
       const agent = builtinAgents["multimodal-looker"];
       expect(typeof agent.model).toBe("string");
-      
+
       const model = agent.model;
       expect(model).toContain("multimodal-looker");
     });
@@ -123,7 +123,7 @@ describe("Agent Registry Integration", () => {
     it("should provide model getter for analyzer", () => {
       const agent = builtinAgents["analyzer"];
       expect(typeof agent.model).toBe("string");
-      
+
       const model = agent.model;
       expect(model).toContain("analyzer");
     });
@@ -132,7 +132,7 @@ describe("Agent Registry Integration", () => {
   describe("Tool Permissions", () => {
     it("should restrict multimodal-looker tools appropriately", () => {
       const agent = builtinAgents["multimodal-looker"];
-      
+
       expect(agent.tools?.include).toContain("read");
       expect(agent.tools?.include).toContain("webfetch");
       expect(agent.tools?.exclude).toContain("background_task");
@@ -142,7 +142,7 @@ describe("Agent Registry Integration", () => {
 
     it("should restrict analyzer tools appropriately", () => {
       const agent = builtinAgents["analyzer"];
-      
+
       expect(agent.tools?.include).toContain("read");
       expect(agent.tools?.include).toContain("security-audit_*");
       expect(agent.tools?.include).toContain("performance-analysis_*");
@@ -193,7 +193,7 @@ describe("Agent Registry Integration", () => {
   describe("System Prompts", () => {
     it("should have comprehensive system prompt for multimodal-looker", () => {
       const agent = builtinAgents["multimodal-looker"];
-      
+
       expect(agent.system).toContain("Multimodal Looker subagent");
       expect(agent.system).toContain("StringRay AI v1.3.4");
       expect(agent.system).toContain("visual and multimedia content");
@@ -201,7 +201,7 @@ describe("Agent Registry Integration", () => {
 
     it("should have comprehensive system prompt for analyzer", () => {
       const agent = builtinAgents["analyzer"];
-      
+
       expect(agent.system).toContain("Analyzer subagent");
       expect(agent.system).toContain("StringRay AI v1.3.4");
       expect(agent.system).toContain("Universal analysis specialist");
@@ -212,8 +212,8 @@ describe("Agent Registry Integration", () => {
     it("should not break existing agent functionality", () => {
       // Ensure existing agents still work
       const existingAgents = ["enforcer", "architect", "librarian"];
-      
-      existingAgents.forEach(agentName => {
+
+      existingAgents.forEach((agentName) => {
         expect(builtinAgents[agentName]).toBeDefined();
         expect(typeof builtinAgents[agentName]).toBe("object");
       });
@@ -221,12 +221,12 @@ describe("Agent Registry Integration", () => {
 
     it("should maintain registry integrity", () => {
       const agentCount = Object.keys(builtinAgents).length;
-      
+
       // Should have original agents plus 2 new ones
       expect(agentCount).toBeGreaterThan(10);
-      
+
       // All agents should have required properties
-      Object.values(builtinAgents).forEach(agent => {
+      Object.values(builtinAgents).forEach((agent) => {
         expect(agent).toHaveProperty("name");
         expect(agent).toHaveProperty("capabilities");
       });
@@ -248,14 +248,14 @@ describe("Agent Registry Integration", () => {
   describe("Configuration Values", () => {
     it("should have correct description for multimodal-looker", () => {
       const agent = builtinAgents["multimodal-looker"];
-      
+
       expect(agent.description).toContain("Media file analysis");
       expect(agent.description).toContain("visual content");
     });
 
     it("should have correct description for analyzer", () => {
       const agent = builtinAgents["analyzer"];
-      
+
       expect(agent.description).toContain("Universal analysis specialist");
       expect(agent.description).toContain("technical artifacts");
     });

@@ -503,11 +503,7 @@ export class SecurityAuditor {
   private auditConfiguration(projectPath: string): SecurityIssue[] {
     const issues: SecurityIssue[] = [];
 
-    const configFiles = [
-      ".opencode/OpenCode.json",
-      "config.json",
-      ".env",
-    ];
+    const configFiles = [".opencode/OpenCode.json", "config.json", ".env"];
 
     for (const configFile of configFiles) {
       const configPath = join(projectPath, configFile);

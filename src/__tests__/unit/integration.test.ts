@@ -1,8 +1,8 @@
 /**
  * StringRay Integration Script Tests
- * 
+ *
  * Tests for src/scripts/integration.ts - CLI bridge for external systems
- * 
+ *
  * @version 1.0.0
  * @since 2026-02-14
  */
@@ -39,7 +39,7 @@ describe("StringRay Integration Script", () => {
         taskDescription: "Check code quality",
         context: { file: "src/**/*.ts" },
       };
-      
+
       expect(task.taskDescription).toBe("Check code quality");
       expect(task.context?.file).toBe("src/**/*.ts");
     });
@@ -50,7 +50,7 @@ describe("StringRay Integration Script", () => {
         priority: "high",
         timeout: 30000,
       };
-      
+
       expect((task as any).priority).toBe("high");
       expect((task as any).timeout).toBe(30000);
     });
@@ -63,7 +63,7 @@ describe("StringRay Integration Script", () => {
         system: "You are a code quality enforcer...",
         tools: { include: ["read", "grep", "edit"] },
       };
-      
+
       expect(config.name).toBe("enforcer");
       expect(config.tools?.include).toContain("edit");
     });
@@ -73,7 +73,7 @@ describe("StringRay Integration Script", () => {
         name: "architect",
         tools: { exclude: ["bash"] },
       };
-      
+
       expect(config.tools?.exclude).toContain("bash");
     });
   });
@@ -87,7 +87,7 @@ describe("StringRay Integration Script", () => {
         result: { issues: 0 },
         timestamp: new Date().toISOString(),
       };
-      
+
       expect(result.success).toBe(true);
       expect(result.result).toEqual({ issues: 0 });
     });
@@ -99,7 +99,7 @@ describe("StringRay Integration Script", () => {
         error: "Agent not found",
         timestamp: new Date().toISOString(),
       };
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBe("Agent not found");
     });
@@ -109,7 +109,7 @@ describe("StringRay Integration Script", () => {
     it("should resolve enforcer agent", async () => {
       const { resolveAgent } = await import("../mcps/agent-resolver.js");
       const config = await resolveAgent("enforcer");
-      
+
       expect(config.name).toBe("enforcer");
       expect(config.system).toBeDefined();
     });
@@ -117,7 +117,7 @@ describe("StringRay Integration Script", () => {
     it("should resolve architect agent", async () => {
       const { resolveAgent } = await import("../mcps/agent-resolver.js");
       const config = await resolveAgent("architect");
-      
+
       expect(config.name).toBeDefined();
     });
   });

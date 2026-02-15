@@ -51,12 +51,22 @@ describe("Analyzer", () => {
       "config/",
     ]);
     mockFs.statSync.mockReturnValue({
-      isDirectory: vi.fn().mockImplementation((path: string) => 
-        path.includes("src") || path.includes("dist") || path.includes("config")
-      ),
-      isFile: vi.fn().mockImplementation((path: string) => 
-        !path.includes("src") && !path.includes("dist") && !path.includes("config")
-      ),
+      isDirectory: vi
+        .fn()
+        .mockImplementation(
+          (path: string) =>
+            path.includes("src") ||
+            path.includes("dist") ||
+            path.includes("config"),
+        ),
+      isFile: vi
+        .fn()
+        .mockImplementation(
+          (path: string) =>
+            !path.includes("src") &&
+            !path.includes("dist") &&
+            !path.includes("config"),
+        ),
       mode: 0o644, // Regular file permissions
     });
   });
@@ -108,12 +118,19 @@ describe("Analyzer", () => {
         "security-audit_*",
         "refactoring-strategies_*",
       ];
-      expect(agent.tools.include).toEqual(expect.arrayContaining(expectedTools));
+      expect(agent.tools.include).toEqual(
+        expect.arrayContaining(expectedTools),
+      );
     });
 
     it("should restrict dangerous operations", () => {
-      const restrictedTools = ["background_task", "invoke-skill", "skill-*", "call_omo_agent"];
-      restrictedTools.forEach(tool => {
+      const restrictedTools = [
+        "background_task",
+        "invoke-skill",
+        "skill-*",
+        "call_omo_agent",
+      ];
+      restrictedTools.forEach((tool) => {
         expect(agent.tools.exclude).toContain(tool);
       });
     });
@@ -258,7 +275,9 @@ describe("Analyzer", () => {
 
     it("should mention refactorer collaboration", () => {
       expect(agent.system).toContain("Refactorer");
-      expect(agent.system).toContain("Recommend refactoring for technical debt");
+      expect(agent.system).toContain(
+        "Recommend refactoring for technical debt",
+      );
     });
 
     it("should mention architect collaboration", () => {
@@ -270,7 +289,9 @@ describe("Analyzer", () => {
   describe("Multi-Domain Analysis", () => {
     it("should handle comprehensive analysis approach", () => {
       expect(agent.system).toContain("Multi-Domain Analysis");
-      expect(agent.system).toContain("code, security, performance, and architectural lenses");
+      expect(agent.system).toContain(
+        "code, security, performance, and architectural lenses",
+      );
     });
 
     it("should provide prioritized findings", () => {
@@ -317,8 +338,8 @@ describe("Analyzer", () => {
         "security-audit_*",
         "refactoring-strategies_*",
       ];
-      
-      analysisTools.forEach(tool => {
+
+      analysisTools.forEach((tool) => {
         expect(agent.tools.include).toContain(tool);
       });
     });
@@ -350,8 +371,12 @@ describe("Analyzer", () => {
   describe("Description and Purpose", () => {
     it("should describe comprehensive analysis capabilities", () => {
       expect(agent.description).toContain("Universal analysis specialist");
-      expect(agent.description).toContain("code, systems, and technical artifacts");
-      expect(agent.description).toContain("security, performance, architecture");
+      expect(agent.description).toContain(
+        "code, systems, and technical artifacts",
+      );
+      expect(agent.description).toContain(
+        "security, performance, architecture",
+      );
     });
   });
 

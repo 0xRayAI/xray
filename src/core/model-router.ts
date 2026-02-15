@@ -46,8 +46,7 @@ class ModelRouter {
 
   constructor(configPath?: string) {
     this.configPath =
-      configPath ||
-      path.resolve(process.cwd(), "opencode.json");
+      configPath || path.resolve(process.cwd(), "opencode.json");
     this.config = this.loadConfig();
     this.availableModels = this.discoverModels();
   }
@@ -59,7 +58,9 @@ class ModelRouter {
       return JSON.parse(configData);
     } catch (error) {
       // Provide defaults if config not found
-      console.log(`[ModelRouter] Config not found at ${this.configPath}, using defaults`);
+      console.log(
+        `[ModelRouter] Config not found at ${this.configPath}, using defaults`,
+      );
       return {
         model_routing: {},
         model_default: "claude-sonnet-4",
@@ -127,7 +128,9 @@ class ModelRouter {
    */
   getValidatedModel(agentType?: string): string {
     // Debug logging for troubleshooting
-    console.log(`[ModelRouter] Getting model for agent: ${agentType || "default"}`);
+    console.log(
+      `[ModelRouter] Getting model for agent: ${agentType || "default"}`,
+    );
 
     // 1. User preference (future enhancement)
     const userModel = this.getUserPreference();
@@ -142,7 +145,9 @@ class ModelRouter {
       const agentModel =
         featuresConfig.agent_management.agent_models[agentType];
       if (agentModel && this.isModelAvailable(agentModel)) {
-        console.log(`[ModelRouter] Using agent model from features-config: ${agentModel}`);
+        console.log(
+          `[ModelRouter] Using agent model from features-config: ${agentModel}`,
+        );
         return agentModel;
       }
 
@@ -150,7 +155,9 @@ class ModelRouter {
       if (this.config.model_routing?.[agentType]) {
         const configModel = this.config.model_routing[agentType];
         if (this.isModelAvailable(configModel)) {
-          console.log(`[ModelRouter] Using model from opencode.json: ${configModel}`);
+          console.log(
+            `[ModelRouter] Using model from opencode.json: ${configModel}`,
+          );
           return configModel;
         }
       }

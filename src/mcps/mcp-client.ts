@@ -588,7 +588,9 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
       // Timeout handling
       setTimeout(() => {
         serverProcess.kill();
-        reject(new Error(`MCP call timeout after ${this.config.timeout || 30000}ms`));
+        reject(
+          new Error(`MCP call timeout after ${this.config.timeout || 30000}ms`),
+        );
       }, this.config.timeout || 30000);
     });
   }

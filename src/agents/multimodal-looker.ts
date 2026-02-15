@@ -3,7 +3,7 @@ import { modelRouter } from "../core/model-router.js";
 
 /**
  * Multimodal Looker Agent
- * 
+ *
  * Media file analysis and interpretation specialist for images, diagrams, PDFs,
  * and other visual content. Provides technical analysis and insights from
  * multimodal sources.
@@ -88,12 +88,7 @@ When analyzing visual content:
       // Visual/multimodal analysis tools
       // Note: Actual image reading capability depends on opencode's file reading support
     ],
-    exclude: [
-      "background_task",
-      "invoke-skill",
-      "skill-*",
-      "call_omo_agent",
-    ],
+    exclude: ["background_task", "invoke-skill", "skill-*", "call_omo_agent"],
   },
   permission: {
     edit: "deny",
