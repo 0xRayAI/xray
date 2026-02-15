@@ -20,21 +20,60 @@ export const testAutoCreationProcessor = {
 
   async execute(context: any): Promise<any> {
     const startTime = Date.now();
+    
+    // Debug: Log entry point immediately
+    console.log(`[TEST-AUTO-CREATION] ENTER execute with context:`, JSON.stringify(context, null, 2).slice(0, 500));
 
     try {
-      const { tool, args, directory } = context;
+      const { tool, args, directory, filePath: contextFilePath, operation } = context;
 
-      // Only process write operations
-      if (tool !== "write" && tool !== "edit") {
+      // Use console.log for immediate feedback, frameworkLogger for persistence
+      console.log(`[TEST-AUTO-CREATION] tool=${tool}, operation=${operation}, directory=${directory}, filePath=${contextFilePath}`);
+      
+      await frameworkLogger.log(
+        "test-auto-creation",
+        "execute-start",
+        "info",
+        {
+          message: `TestAutoCreation processor executing`,
+          tool,
+          hasArgs: !!args,
+          hasDirectory: !!directory,
+          contextFilePath,
+          argsFilePath: args?.filePath,
+        }
+      );
+
+      // Get file path from various possible locations in context
+      const filePath = contextFilePath || args?.filePath || args?.path || context.filePath;
+      
+      console.log(`[TEST-AUTO-CREATION] resolved filePath=${filePath}`);
+      
+      if (!filePath) {
+        console.log(`[TEST-AUTO-CREATION] SKIPPED: no filePath found`);
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "skipped-no-filepath",
+          "info",
+          { message: `Skipped: no filePath found in context`, contextKeys: Object.keys(context) }
+        );
         return {
           success: true,
           processorName: "testAutoCreation",
           duration: Date.now() - startTime,
         };
       }
-
-      const filePath = args?.filePath || args?.path;
-      if (!filePath) {
+      
+      // Check if this looks like a write operation based on context
+      const isWriteOperation = tool === "write" || tool === "edit" || operation === "tool_execution";
+      if (!isWriteOperation) {
+        console.log(`[TEST-AUTO-CREATION] SKIPPED: not a write operation (tool=${tool}, operation=${operation})`);
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "skipped-not-write",
+          "info",
+          { message: `Skipped: not a write operation`, tool, operation }
+        );
         return {
           success: true,
           processorName: "testAutoCreation",
@@ -72,6 +111,12 @@ export const testAutoCreationProcessor = {
       // Read source file to analyze exports
       const fullSourcePath = path.join(directory, filePath);
       if (!fs.existsSync(fullSourcePath)) {
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "skipped-source-not-found",
+          "info",
+          { message: `Skipped: source file not found`, fullSourcePath, directory, filePath }
+        );
         return {
           success: false,
           processorName: "testAutoCreation",
@@ -147,16 +192,26 @@ export const testAutoCreationProcessor = {
         }
       } catch (error) {
         // Fallback: Create basic test stub if agent fails
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "mcp-failed-using-fallback",
+          "info",
+          {
+            message: `MCP call failed, using fallback stub creation`,
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
+        
         await createBasicTestStub(fullTestPath, filePath, exports);
 
         await frameworkLogger.log(
           "test-auto-creation",
           "test-stub-created",
-          "info",
+          "success",
           {
             message: `Basic test stub created for ${filePath}`,
             testFile: testFilePath,
-            reason: "Agent invocation failed, using fallback",
+            exportsCount: exports.length,
           }
         );
 

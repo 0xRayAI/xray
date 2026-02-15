@@ -778,7 +778,7 @@ export class ProcessorManager {
     const { operation } = context;
 
     try {
-      const { RuleEnforcer } = await import("../enforcement/rule-enforcer");
+      const { RuleEnforcer } = await import("../enforcement/rule-enforcer.js");
       const ruleEnforcer = new RuleEnforcer();
 
       const validationContext = {
@@ -1034,6 +1034,13 @@ export class ProcessorManager {
    * Execute test auto-creation processor
    */
   private async executeTestAutoCreation(context: any): Promise<any> {
+    frameworkLogger.log(
+      "processor-manager",
+      "test-auto-creation-start",
+      "info",
+      { message: "Executing test auto-creation processor", context: JSON.stringify(context).slice(0, 200) }
+    );
+    
     try {
       // Import the test auto-creation processor dynamically
       const { testAutoCreationProcessor } =
