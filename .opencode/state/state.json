@@ -273,7 +273,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1771109085737,
+    "startTime": 1771124645003,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -294,12 +294,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-02-14T22:44:45.737Z",
+    "createdAt": "2026-02-15T03:04:05.003Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1771109085737,
+  "session:boot_time": 1771124645003,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -337,8 +337,8 @@
     },
     "default": {
       "sessionId": "default",
-      "createdAt": 1771109085737,
-      "lastActivity": 1771109085737,
+      "createdAt": 1771124645003,
+      "lastActivity": 1771124645003,
       "ttlMs": 86400000,
       "isActive": true,
       "agentCount": 0,
@@ -356,6 +356,27 @@
       "memoryUsage": 0,
       "issues": []
     }
+  },
+  "session:expired-test:coordinator": {
+    "sessionId": "expired-test",
+    "startTime": 1770067376666,
+    "activeDelegations": {},
+    "agentInteractions": {},
+    "conflictHistory": [],
+    "coordinationState": {
+      "activeAgents": {},
+      "pendingCommunications": [],
+      "sharedContext": {},
+      "sessionMetrics": {
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 0,
+        "coordinationEfficiency": 0
+      }
+    },
+    "isActive": true
   },
   "enforcement:active": true,
   "enforcement:codex_terms": [
@@ -400,28 +421,7 @@
       "enforcementLevel": "blocking"
     }
   ],
-  "enforcement:enabled_at": 1770067986325,
-  "session:expired-test:coordinator": {
-    "sessionId": "expired-test",
-    "startTime": 1770067376666,
-    "activeDelegations": {},
-    "agentInteractions": {},
-    "conflictHistory": [],
-    "coordinationState": {
-      "activeAgents": {},
-      "pendingCommunications": [],
-      "sharedContext": {},
-      "sessionMetrics": {
-        "totalInteractions": 0,
-        "successfulInteractions": 0,
-        "failedInteractions": 0,
-        "averageResponseTime": 0,
-        "conflictResolutionRate": 0,
-        "coordinationEfficiency": 0
-      }
-    },
-    "isActive": true
-  },
+  "enforcement:enabled_at": 1771125136435,
   "delegation_metrics": [],
   "agent:enforcer": {},
   "agent:architect": {},
@@ -628,7 +628,69 @@
         "coordinationEfficiency": 1,
         "memoryUsage": 0,
         "agentCount": 3
+      },
+      {
+        "timestamp": 1771124645114,
+        "sessionId": "healthy-session",
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 1,
+        "coordinationEfficiency": 1,
+        "memoryUsage": 0,
+        "agentCount": 3
+      },
+      {
+        "timestamp": 1771124811688,
+        "sessionId": "healthy-session",
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 1,
+        "coordinationEfficiency": 1,
+        "memoryUsage": 0,
+        "agentCount": 3
+      },
+      {
+        "timestamp": 1771124952173,
+        "sessionId": "healthy-session",
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 1,
+        "coordinationEfficiency": 1,
+        "memoryUsage": 0,
+        "agentCount": 3
+      },
+      {
+        "timestamp": 1771125135785,
+        "sessionId": "healthy-session",
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 1,
+        "coordinationEfficiency": 1,
+        "memoryUsage": 0,
+        "agentCount": 3
       }
     ]
-  }
+  },
+  "processor:manager": {
+    "processors": {},
+    "metrics": {},
+    "stateManager": {
+      "store": {},
+      "persistencePath": ".opencode/state/state.json",
+      "persistenceEnabled": true,
+      "writeQueue": {},
+      "initialized": true,
+      "earlyOperationsQueue": []
+    },
+    "activeProcessors": {}
+  },
+  "processor:active": true
 }
