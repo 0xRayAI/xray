@@ -361,12 +361,12 @@ export default async function strrayCodexPlugin(input: {
         const stateManager = new StrRayStateManager(
           path.join(directory, ".opencode", "state"),
         );
-        
+
         // Get existing processor manager from state, or create and register processors
         let processorManager = stateManager.get("processor:manager");
         if (!processorManager) {
           processorManager = new ProcessorManager(stateManager);
-          
+
           // Register the same processors as boot-orchestrator
           processorManager.registerProcessor({
             name: "preValidate",
@@ -398,7 +398,7 @@ export default async function strrayCodexPlugin(input: {
             priority: 20,
             enabled: true,
           });
-          
+
           // Store for future use
           stateManager.set("processor:manager", processorManager);
         }
