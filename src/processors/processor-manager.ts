@@ -1038,9 +1038,12 @@ export class ProcessorManager {
       "processor-manager",
       "test-auto-creation-start",
       "info",
-      { message: "Executing test auto-creation processor", context: JSON.stringify(context).slice(0, 200) }
+      {
+        message: "Executing test auto-creation processor",
+        context: JSON.stringify(context).slice(0, 200),
+      },
     );
-    
+
     try {
       // Import the test auto-creation processor dynamically
       const { testAutoCreationProcessor } =

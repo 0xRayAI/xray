@@ -20,42 +20,52 @@ export const testAutoCreationProcessor = {
 
   async execute(context: any): Promise<any> {
     const startTime = Date.now();
-    
+
     // Debug: Log entry point immediately
-    console.log(`[TEST-AUTO-CREATION] ENTER execute with context:`, JSON.stringify(context, null, 2).slice(0, 500));
+    console.log(
+      `[TEST-AUTO-CREATION] ENTER execute with context:`,
+      JSON.stringify(context, null, 2).slice(0, 500),
+    );
 
     try {
-      const { tool, args, directory, filePath: contextFilePath, operation } = context;
+      const {
+        tool,
+        args,
+        directory,
+        filePath: contextFilePath,
+        operation,
+      } = context;
 
       // Use console.log for immediate feedback, frameworkLogger for persistence
-      console.log(`[TEST-AUTO-CREATION] tool=${tool}, operation=${operation}, directory=${directory}, filePath=${contextFilePath}`);
-      
-      await frameworkLogger.log(
-        "test-auto-creation",
-        "execute-start",
-        "info",
-        {
-          message: `TestAutoCreation processor executing`,
-          tool,
-          hasArgs: !!args,
-          hasDirectory: !!directory,
-          contextFilePath,
-          argsFilePath: args?.filePath,
-        }
+      console.log(
+        `[TEST-AUTO-CREATION] tool=${tool}, operation=${operation}, directory=${directory}, filePath=${contextFilePath}`,
       );
 
+      await frameworkLogger.log("test-auto-creation", "execute-start", "info", {
+        message: `TestAutoCreation processor executing`,
+        tool,
+        hasArgs: !!args,
+        hasDirectory: !!directory,
+        contextFilePath,
+        argsFilePath: args?.filePath,
+      });
+
       // Get file path from various possible locations in context
-      const filePath = contextFilePath || args?.filePath || args?.path || context.filePath;
-      
+      const filePath =
+        contextFilePath || args?.filePath || args?.path || context.filePath;
+
       console.log(`[TEST-AUTO-CREATION] resolved filePath=${filePath}`);
-      
+
       if (!filePath) {
         console.log(`[TEST-AUTO-CREATION] SKIPPED: no filePath found`);
         await frameworkLogger.log(
           "test-auto-creation",
           "skipped-no-filepath",
           "info",
-          { message: `Skipped: no filePath found in context`, contextKeys: Object.keys(context) }
+          {
+            message: `Skipped: no filePath found in context`,
+            contextKeys: Object.keys(context),
+          },
         );
         return {
           success: true,
@@ -63,16 +73,19 @@ export const testAutoCreationProcessor = {
           duration: Date.now() - startTime,
         };
       }
-      
+
       // Check if this looks like a write operation based on context
-      const isWriteOperation = tool === "write" || tool === "edit" || operation === "tool_execution";
+      const isWriteOperation =
+        tool === "write" || tool === "edit" || operation === "tool_execution";
       if (!isWriteOperation) {
-        console.log(`[TEST-AUTO-CREATION] SKIPPED: not a write operation (tool=${tool}, operation=${operation})`);
+        console.log(
+          `[TEST-AUTO-CREATION] SKIPPED: not a write operation (tool=${tool}, operation=${operation})`,
+        );
         await frameworkLogger.log(
           "test-auto-creation",
           "skipped-not-write",
           "info",
-          { message: `Skipped: not a write operation`, tool, operation }
+          { message: `Skipped: not a write operation`, tool, operation },
         );
         return {
           success: true,
@@ -95,12 +108,9 @@ export const testAutoCreationProcessor = {
       const fullTestPath = path.join(directory, testFilePath);
 
       if (fs.existsSync(fullTestPath)) {
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "test-exists",
-          "info",
-          { message: `Test file already exists: ${testFilePath}` }
-        );
+        await frameworkLogger.log("test-auto-creation", "test-exists", "info", {
+          message: `Test file already exists: ${testFilePath}`,
+        });
         return {
           success: true,
           processorName: "testAutoCreation",
@@ -115,7 +125,12 @@ export const testAutoCreationProcessor = {
           "test-auto-creation",
           "skipped-source-not-found",
           "info",
-          { message: `Skipped: source file not found`, fullSourcePath, directory, filePath }
+          {
+            message: `Skipped: source file not found`,
+            fullSourcePath,
+            directory,
+            filePath,
+          },
         );
         return {
           success: false,
@@ -145,7 +160,7 @@ export const testAutoCreationProcessor = {
           message: `Auto-generating tests for ${filePath}`,
           exports: exports.map((e: { name: string }) => e.name),
           testFile: testFilePath,
-        }
+        },
       );
 
       // Delegate to test-architect agent via MCP
@@ -163,7 +178,7 @@ export const testAutoCreationProcessor = {
               testFilePath,
               directory,
             },
-          }
+          },
         );
 
         // Check if result indicates success
@@ -178,14 +193,17 @@ export const testAutoCreationProcessor = {
               message: `Tests auto-generated for ${filePath}`,
               testFile: testFilePath,
               exportsTested: exports.length,
-            }
+            },
           );
 
           return {
             success: true,
             processorName: "testAutoCreation",
             duration: Date.now() - startTime,
-            data: { testFile: testFilePath, exports: exports.map((e: { name: string }) => e.name) },
+            data: {
+              testFile: testFilePath,
+              exports: exports.map((e: { name: string }) => e.name),
+            },
           };
         } else {
           throw new Error("Test generation failed");
@@ -199,9 +217,9 @@ export const testAutoCreationProcessor = {
           {
             message: `MCP call failed, using fallback stub creation`,
             error: error instanceof Error ? error.message : String(error),
-          }
+          },
         );
-        
+
         await createBasicTestStub(fullTestPath, filePath, exports);
 
         await frameworkLogger.log(
@@ -212,25 +230,23 @@ export const testAutoCreationProcessor = {
             message: `Basic test stub created for ${filePath}`,
             testFile: testFilePath,
             exportsCount: exports.length,
-          }
+          },
         );
 
         return {
           success: true,
           processorName: "testAutoCreation",
           duration: Date.now() - startTime,
-          data: { testFile: testFilePath, exports: exports.map((e: { name: string }) => e.name) },
+          data: {
+            testFile: testFilePath,
+            exports: exports.map((e: { name: string }) => e.name),
+          },
         };
       }
     } catch (error) {
-      await frameworkLogger.log(
-        "test-auto-creation",
-        "error",
-        "error",
-        {
-          message: `Test auto-creation failed: ${error instanceof Error ? error.message : String(error)}`,
-        }
-      );
+      await frameworkLogger.log("test-auto-creation", "error", "error", {
+        message: `Test auto-creation failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
 
       return {
         success: false,
@@ -245,14 +261,20 @@ export const testAutoCreationProcessor = {
 /**
  * Extract exports from source file content
  */
-function extractExports(content: string): Array<{ name: string; type: string }> {
+function extractExports(
+  content: string,
+): Array<{ name: string; type: string }> {
   const exports: Array<{ name: string; type: string }> = [];
 
   // Match exported functions
-  const functionMatches = content.match(/export\s+(?:async\s+)?function\s+(\w+)/g);
+  const functionMatches = content.match(
+    /export\s+(?:async\s+)?function\s+(\w+)/g,
+  );
   if (functionMatches) {
     functionMatches.forEach((match: string) => {
-      const name = match.replace(/export\s+(?:async\s+)?function\s+/, "").trim();
+      const name = match
+        .replace(/export\s+(?:async\s+)?function\s+/, "")
+        .trim();
       exports.push({ name, type: "function" });
     });
   }
@@ -270,13 +292,18 @@ function extractExports(content: string): Array<{ name: string; type: string }> 
   const constMatches = content.match(/export\s+const\s+(\w+)\s*[:=]/g);
   if (constMatches) {
     constMatches.forEach((match: string) => {
-      const name = match.replace(/export\s+const\s+/, "").replace(/\s*[:=]/, "").trim();
+      const name = match
+        .replace(/export\s+const\s+/, "")
+        .replace(/\s*[:=]/, "")
+        .trim();
       exports.push({ name, type: "const" });
     });
   }
 
   // Match default exports
-  const defaultMatch = content.match(/export\s+default\s+(?:class|function)?\s*(\w+)/);
+  const defaultMatch = content.match(
+    /export\s+default\s+(?:class|function)?\s*(\w+)/,
+  );
   if (defaultMatch) {
     exports.push({ name: defaultMatch[1] || "default", type: "default" });
   }
@@ -290,7 +317,7 @@ function extractExports(content: string): Array<{ name: string; type: string }> 
 async function createBasicTestStub(
   testFilePath: string,
   sourceFile: string,
-  exports: Array<{ name: string; type: string }>
+  exports: Array<{ name: string; type: string }>,
 ): Promise<void> {
   const testDir = path.dirname(testFilePath);
 
@@ -299,7 +326,10 @@ async function createBasicTestStub(
     fs.mkdirSync(testDir, { recursive: true });
   }
 
-  const relativeSourcePath = path.relative(testDir, sourceFile.replace(/\.ts$/, ""));
+  const relativeSourcePath = path.relative(
+    testDir,
+    sourceFile.replace(/\.ts$/, ""),
+  );
   const importPath = relativeSourcePath.startsWith(".")
     ? relativeSourcePath
     : `./${relativeSourcePath}`;
@@ -315,7 +345,7 @@ async function createBasicTestStub(
 function generateTestStub(
   importPath: string,
   exports: Array<{ name: string; type: string }>,
-  sourceFile: string
+  sourceFile: string,
 ): string {
   const imports = exports.map((e: { name: string }) => e.name).join(", ");
 
