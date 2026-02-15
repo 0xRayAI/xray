@@ -355,16 +355,35 @@ export default async function strrayCodexPlugin(input: {
       const { tool, args } = input;
 
       if (["write", "edit", "multiedit"].includes(tool)) {
-        if (!ProcessorManager || !StrRayStateManager) return;
+        if (!ProcessorManager || !StrRayStateManager) {
+          logger.error("ProcessorManager or StrRayStateManager not loaded");
+          return;
+        }
 
-        // Get existing state manager or create new one
-        const stateManager = new StrRayStateManager(
-          path.join(directory, ".opencode", "state"),
-        );
+        // PHASE 1: Connect to booted framework or boot if needed
+        let stateManager: any;
+        let processorManager: any;
 
-        // Get existing processor manager from state, or create and register processors
-        let processorManager = stateManager.get("processor:manager");
+        // Check if framework is already booted (global state exists)
+        const globalState = (globalThis as any).strRayStateManager;
+        if (globalState) {
+          logger.log("🔗 Connecting to booted StrRay framework");
+          stateManager = globalState;
+        } else {
+          logger.log("🚀 StrRay framework not booted, initializing...");
+          // Create new state manager (framework not booted yet)
+          stateManager = new StrRayStateManager(
+            path.join(directory, ".opencode", "state"),
+          );
+          // Store globally for future use
+          (globalThis as any).strRayStateManager = stateManager;
+        }
+
+        // Get processor manager from state
+        processorManager = stateManager.get("processor:manager");
+
         if (!processorManager) {
+          logger.log("⚙️ Creating and registering processors...");
           processorManager = new ProcessorManager(stateManager);
 
           // Register the same processors as boot-orchestrator
@@ -387,6 +406,12 @@ export default async function strrayCodexPlugin(input: {
             enabled: true,
           });
           processorManager.registerProcessor({
+            name: "testAutoCreation",
+            type: "pre",
+            priority: 30,
+            enabled: true,
+          });
+          processorManager.registerProcessor({
             name: "testExecution",
             type: "post",
             priority: 10,
@@ -401,22 +426,48 @@ export default async function strrayCodexPlugin(input: {
 
           // Store for future use
           stateManager.set("processor:manager", processorManager);
+          logger.log("✅ Processors registered successfully");
+        } else {
+          logger.log("✅ Using existing processor manager");
         }
 
+        // PHASE 2: Execute pre-processors with detailed logging
         try {
+          logger.log(`▶️ Executing pre-processors for ${tool}...`);
           const result = await processorManager.executePreProcessors({
             tool,
             args,
-            context: { directory, operation: "tool_execution" },
+            context: { directory, operation: "tool_execution", filePath: args?.filePath },
           });
 
+          logger.log(`📊 Pre-processor result: ${result.success ? 'SUCCESS' : 'FAILED'} (${result.results?.length || 0} processors)`);
+
           if (!result.success) {
-            logger.error(
-              `Pre-processor failed: ${result.results.find((r: any) => !r.success)?.error}`,
-            );
+            const failures = result.results?.filter((r: any) => !r.success) || [];
+            failures.forEach((f: any) => {
+              logger.error(`❌ Pre-processor ${f.processorName} failed: ${f.error}`);
+            });
+          } else {
+            result.results?.forEach((r: any) => {
+              logger.log(`✅ Pre-processor ${r.processorName}: ${r.success ? 'OK' : 'FAILED'}`);
+            });
           }
         } catch (error) {
-          logger.error(`Pre-processor error`, error);
+          logger.error(`💥 Pre-processor execution error`, error);
+        }
+
+        // PHASE 3: Execute post-processors after tool completion
+        try {
+          logger.log(`▶️ Executing post-processors for ${tool}...`);
+          const postResult = await processorManager.executePostProcessors(
+            tool,
+            { directory, operation: "tool_execution", filePath: args?.filePath, success: true },
+            []
+          );
+
+          logger.log(`📊 Post-processor result: ${postResult.success ? 'SUCCESS' : 'FAILED'}`);
+        } catch (error) {
+          logger.error(`💥 Post-processor execution error`, error);
         }
       }
     },

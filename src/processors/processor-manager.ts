@@ -260,6 +260,9 @@ export class ProcessorManager {
       case "agentsMdValidation":
         await this.initializeAgentsMdValidationProcessor();
         break;
+      case "testAutoCreation":
+        await this.initializeTestAutoCreationProcessor();
+        break;
       default:
         // Generic initialization
         break;
@@ -472,6 +475,9 @@ export class ProcessorManager {
           break;
         case "refactoringLogging":
           result = await this.executeRefactoringLogging(context);
+          break;
+        case "testAutoCreation":
+          result = await this.executeTestAutoCreation(context);
           break;
         default:
           throw new Error(`Unknown processor: ${name}`);
@@ -1010,5 +1016,48 @@ export class ProcessorManager {
     };
 
     return ruleMappings[ruleId] || null;
+  }
+
+  /**
+   * Initialize test auto-creation processor
+   */
+  private async initializeTestAutoCreationProcessor(): Promise<void> {
+    frameworkLogger.log(
+      "processor-manager",
+      "initializing test auto-creation processor",
+      "info",
+    );
+    // Processor is initialized when first executed
+  }
+
+  /**
+   * Execute test auto-creation processor
+   */
+  private async executeTestAutoCreation(context: any): Promise<any> {
+    try {
+      // Import the test auto-creation processor dynamically
+      const { testAutoCreationProcessor } =
+        await import("./test-auto-creation-processor.js");
+
+      // Execute the processor
+      const result = await testAutoCreationProcessor.execute(context);
+
+      return {
+        success: result.success,
+        message: result.message,
+        data: result.data,
+      };
+    } catch (error) {
+      frameworkLogger.log(
+        "processor-manager",
+        "test-auto-creation-error",
+        "error",
+        { error: error instanceof Error ? error.message : String(error) },
+      );
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 }

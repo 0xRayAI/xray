@@ -322,6 +322,19 @@ export class BootOrchestrator {
       );
 
       this.processorManager.registerProcessor({
+        name: "testAutoCreation",
+        type: "pre",
+        priority: 22,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered testAutoCreation processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
         name: "versionCompliance",
         type: "pre",
         priority: 25,
