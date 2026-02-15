@@ -144,6 +144,11 @@ class MCPFunctionalityTest {
         // Support both legacy format (args array) and new opencode format (command array)
         let serverPath = null;
         
+        // Debug: log the raw server config
+        if (serverName === "orchestrator") {
+          console.log(`  ℹ️ DEBUG: serverConfig=`, JSON.stringify(serverConfig));
+        }
+        
         if (serverConfig.args && serverConfig.args.length > 0) {
           // Legacy format: extract path from args
           serverPath = serverConfig.args[serverConfig.args.length - 1];
