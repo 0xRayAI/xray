@@ -161,9 +161,18 @@ class MCPFunctionalityTest {
             
           // In CI after build, dist/ is always in cwd
           // Always prioritize checking cwd/dist/ for all environments
+          const checkPath1 = path.join(cwd, normalizedPath);
+          const checkPath2 = path.join(cwd, serverPath);
+          
+          // Debug: log what's being checked
+          if (serverName === "orchestrator") {
+            console.log(`  ℹ️ DEBUG: normalizedPath=${normalizedPath}, checkPath1=${checkPath1}, exists=${fs.existsSync(checkPath1)}`);
+            console.log(`  ℹ️ DEBUG: serverPath=${serverPath}, checkPath2=${checkPath2}, exists=${fs.existsSync(checkPath2)}`);
+          }
+          
           const possiblePaths = [
-            path.join(cwd, normalizedPath), // Try: dist/mcps/orchestrator.server.js
-            path.join(cwd, serverPath), // Try: ./dist/mcps/orchestrator.server.js
+            checkPath1,
+            checkPath2,
             path.join(cwd, "node_modules", "strray-ai", normalizedPath), // Consumer fallback
           ];
           
