@@ -1,9 +1,9 @@
+# Workflow disabled - run manually after CI passes
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  # Disable automatic triggers - run manually
+  workflow_dispatch:
 
 permissions:
   contents: write

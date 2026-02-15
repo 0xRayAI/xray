@@ -1,8 +1,8 @@
-name: Publish to NPM
+# Workflow disabled - run manually after CI passes
+# name: Publish to NPM
 
 on:
-  release:
-    types: [published]
+  # Disable automatic triggers
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Build plugin
-        run: npm run build:plugin
+        run: npm run build
 
       - name: Validate package before publish
         run: npm pack --dry-run

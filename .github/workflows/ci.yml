@@ -93,7 +93,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Build plugin
-        run: npm run build:plugin
+        run: npm run build
 
       - name: Build all
         run: npm run build:all
@@ -131,40 +131,12 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Build for publish
-        run: npm run build:plugin
+        run: npm run build
 
-      - name: Publish to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  release-validation:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.19"
-
-      - name: Install dependencies
-        run: |
-          rm -f package-lock.json
-          npm install --ignore-scripts
-
-      - name: Package for release validation
-        run: npm pack
-
-      - name: Run comprehensive release validation
-        run: npm run test:comprehensive
-
-  e2e-test:
-    needs: publish
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  # Publish jobs disabled - run manually after CI passes
+  # publish:
+  # release-validation:
+  # e2e-test:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
