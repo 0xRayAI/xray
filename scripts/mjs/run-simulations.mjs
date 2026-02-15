@@ -55,7 +55,7 @@ async function main() {
   // Test 4: State Manager
   try {
     console.log("📋 Test 4: State Manager");
-    const { StringRayStateManager } = await import("../../dist/session/session-state-manager.js");
+    const { StringRayStateManager } = await import("../../dist/state/state-manager.js");
     const stateManager = new StringRayStateManager({ sessionId: "simulation-test" });
     console.log("✅ State Manager working");
     results.push({ test: "State Manager", passed: 1, failed: 0 });

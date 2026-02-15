@@ -40,9 +40,10 @@ async function runTest() {
     });
     
     testProcess.on('close', (code) => {
-      // Check for test success indicators
+      // Check for test success indicators - be more specific to avoid false positives
       const hasPassedTests = stdout.includes('passed') || stdout.includes('✓');
-      const hasFailedTests = stdout.includes('failed') || stdout.includes('FAIL');
+      // Check for actual test failures, not just the word "failed" in summary
+      const hasFailedTests = /(\d+)\s+failed/.test(stdout) || stdout.includes(' FAIL ') || stdout.includes('✗');
       
       if (code === 0 && hasPassedTests && !hasFailedTests) {
         // Extract test count
