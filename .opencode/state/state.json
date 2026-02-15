@@ -273,7 +273,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1771124645003,
+    "startTime": 1771125563037,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -294,12 +294,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-02-15T03:04:05.003Z",
+    "createdAt": "2026-02-15T03:19:23.037Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1771124645003,
+  "session:boot_time": 1771125563037,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -337,8 +337,8 @@
     },
     "default": {
       "sessionId": "default",
-      "createdAt": 1771124645003,
-      "lastActivity": 1771124645003,
+      "createdAt": 1771125563037,
+      "lastActivity": 1771125563037,
       "ttlMs": 86400000,
       "isActive": true,
       "agentCount": 0,
@@ -421,7 +421,7 @@
       "enforcementLevel": "blocking"
     }
   ],
-  "enforcement:enabled_at": 1771125136435,
+  "enforcement:enabled_at": 1771125563828,
   "delegation_metrics": [],
   "agent:enforcer": {},
   "agent:architect": {},
