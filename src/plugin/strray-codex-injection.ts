@@ -437,19 +437,30 @@ export default async function strrayCodexPlugin(input: {
           const result = await processorManager.executePreProcessors({
             tool,
             args,
-            context: { directory, operation: "tool_execution", filePath: args?.filePath },
+            context: {
+              directory,
+              operation: "tool_execution",
+              filePath: args?.filePath,
+            },
           });
 
-          logger.log(`📊 Pre-processor result: ${result.success ? 'SUCCESS' : 'FAILED'} (${result.results?.length || 0} processors)`);
+          logger.log(
+            `📊 Pre-processor result: ${result.success ? "SUCCESS" : "FAILED"} (${result.results?.length || 0} processors)`,
+          );
 
           if (!result.success) {
-            const failures = result.results?.filter((r: any) => !r.success) || [];
+            const failures =
+              result.results?.filter((r: any) => !r.success) || [];
             failures.forEach((f: any) => {
-              logger.error(`❌ Pre-processor ${f.processorName} failed: ${f.error}`);
+              logger.error(
+                `❌ Pre-processor ${f.processorName} failed: ${f.error}`,
+              );
             });
           } else {
             result.results?.forEach((r: any) => {
-              logger.log(`✅ Pre-processor ${r.processorName}: ${r.success ? 'OK' : 'FAILED'}`);
+              logger.log(
+                `✅ Pre-processor ${r.processorName}: ${r.success ? "OK" : "FAILED"}`,
+              );
             });
           }
         } catch (error) {
@@ -461,11 +472,18 @@ export default async function strrayCodexPlugin(input: {
           logger.log(`▶️ Executing post-processors for ${tool}...`);
           const postResult = await processorManager.executePostProcessors(
             tool,
-            { directory, operation: "tool_execution", filePath: args?.filePath, success: true },
-            []
+            {
+              directory,
+              operation: "tool_execution",
+              filePath: args?.filePath,
+              success: true,
+            },
+            [],
           );
 
-          logger.log(`📊 Post-processor result: ${postResult.success ? 'SUCCESS' : 'FAILED'}`);
+          logger.log(
+            `📊 Post-processor result: ${postResult.success ? "SUCCESS" : "FAILED"}`,
+          );
         } catch (error) {
           logger.error(`💥 Post-processor execution error`, error);
         }

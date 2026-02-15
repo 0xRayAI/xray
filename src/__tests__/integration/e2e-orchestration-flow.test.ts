@@ -76,14 +76,12 @@ describe("E2E Orchestration Flow", () => {
     expect(processorManager).toBeDefined();
 
     // Should be same instance as boot
-    expect(processorManager).toBe(
-      bootOrchestrator["processorManager"]
-    );
+    expect(processorManager).toBe(bootOrchestrator["processorManager"]);
   });
 
   it("should execute pre-processors on write operation", async () => {
     const processorManager = (globalThis as any).strRayStateManager.get(
-      "processor:manager"
+      "processor:manager",
     );
 
     // Create a test file
@@ -106,14 +104,14 @@ describe("E2E Orchestration Flow", () => {
 
     // Verify testAutoCreation processor ran
     const testAutoResult = result.results.find(
-      (r: any) => r.processorName === "testAutoCreation"
+      (r: any) => r.processorName === "testAutoCreation",
     );
     // Note: This may be skipped if source file doesn't exist yet
   });
 
   it("should auto-create test file for new source file", async () => {
     const processorManager = (globalThis as any).strRayStateManager.get(
-      "processor:manager"
+      "processor:manager",
     );
 
     // Create a source file with exports
@@ -137,7 +135,7 @@ export class Calculator {
   }
 }
 `,
-      "utf8"
+      "utf8",
     );
 
     // Execute pre-processors
@@ -160,16 +158,14 @@ export class Calculator {
     // Note: In a real scenario with MCP skills, it would be created
     // In this test, we verify the processor executed
     const testAutoResult = result.results.find(
-      (r: any) => r.processorName === "testAutoCreation"
+      (r: any) => r.processorName === "testAutoCreation",
     );
 
     expect(testAutoResult).toBeDefined();
   });
 
   it("should detect missing tests and report violation", async () => {
-    const { RuleEnforcer } = await import(
-      "../../enforcement/rule-enforcer.js"
-    );
+    const { RuleEnforcer } = await import("../../enforcement/rule-enforcer.js");
     const enforcer = new RuleEnforcer();
 
     // Test code without tests
@@ -191,18 +187,15 @@ export function newFeature() {
     expect(result.errors.length).toBeGreaterThan(0);
 
     // Should suggest test creation
-    const hasTestSuggestion = result.results.some(
-      (r: any) =>
-        r.suggestions?.some((s: string) =>
-          s.toLowerCase().includes("test")
-        )
+    const hasTestSuggestion = result.results.some((r: any) =>
+      r.suggestions?.some((s: string) => s.toLowerCase().includes("test")),
     );
     expect(hasTestSuggestion).toBe(true);
   });
 
   it("should execute post-processors after operation", async () => {
     const processorManager = (globalThis as any).strRayStateManager.get(
-      "processor:manager"
+      "processor:manager",
     );
 
     const result = await processorManager.executePostProcessors(
@@ -213,7 +206,7 @@ export function newFeature() {
         filePath: "src/test.ts",
         success: true,
       },
-      []
+      [],
     );
 
     expect(result.success).toBe(true);
