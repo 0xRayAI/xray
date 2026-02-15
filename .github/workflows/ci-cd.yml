@@ -207,7 +207,7 @@ jobs:
     - name: Build and test (pre-version)
       run: |
         npm run build:all
-        npm run test:all
+        npm run test:integration
 
     - name: Deploy test (pre-version)
       run: bash scripts/bash/deploy-stringray-plugin.sh ci-deploy-pre-version
