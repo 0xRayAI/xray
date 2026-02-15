@@ -113,6 +113,12 @@ class MCPFunctionalityTest {
         if (fs.existsSync(mcpsDir)) {
           const files = fs.readdirSync(mcpsDir).slice(0, 5);
           console.log(`  ℹ️ dist/mcps contains: ${files.join(", ")}...`);
+          
+          // Debug: check exact paths
+          const testPath1 = path.join(cwd, "dist/mcps/orchestrator.server.js");
+          const testPath2 = path.join(cwd, "dist", "mcps", "orchestrator.server.js");
+          console.log(`  ℹ️ path join (slash): ${testPath1}, exists: ${fs.existsSync(testPath1)}`);
+          console.log(`  ℹ️ path join (func): ${testPath2}, exists: ${fs.existsSync(testPath2)}`);
         }
       }
       
