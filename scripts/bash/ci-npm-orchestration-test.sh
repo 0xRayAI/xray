@@ -28,7 +28,7 @@ PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
 TEST_DIR="${TEST_DIR:-/tmp/strray-ci-test-$$}"
 PACKAGE_NAME="strray-ai"
 # Dynamically get version from package.json
-PACKAGE_VERSION="${PACKAGE_VERSION:-$(cd "$PROJECT_DIR" && node -p \"require('./package.json').version\")}"
+PACKAGE_VERSION="${PACKAGE_VERSION:-$(cd "$PROJECT_DIR" && node -p "require('./package.json').version")}"
 PACKAGE_FILE="${PACKAGE_NAME}-${PACKAGE_VERSION}.tgz"
 TIMEOUT=300
 
