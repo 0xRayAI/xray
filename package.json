@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc",
     "build:all": "npm run build",
-    "build:plugin": "tsc && mkdir -p dist/plugin/plugins && cp ./src/plugins/strray-codex-injection.ts dist/plugin/plugins/ 2>/dev/null || echo 'JS file not found, will be compiled'",
+    "ci-install": "npm ci",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run prepare-consumer && npm run build:all",
     "test": "vitest run",
