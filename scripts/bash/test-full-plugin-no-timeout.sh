@@ -11,13 +11,14 @@ echo ""
 
 # Ensure we're in the project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# Go up two levels: scripts/bash -> scripts -> project root
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$PROJECT_ROOT"
 
 echo "Running from directory: $(pwd)"
 
 # Run the test and capture output
-node scripts/test-stringray-plugin.mjs
+node scripts/mjs/test-stringray-plugin.mjs
 
 # Check result
 if [ $? -eq 0 ]; then
