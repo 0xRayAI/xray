@@ -171,7 +171,7 @@ jobs:
         npm pack
 
     - name: Deploy to test environment
-      run: ./scripts/deploy-stringray-plugin.sh ci-deploy
+      run: bash scripts/bash/deploy-stringray-plugin.sh ci-deploy
 
     - name: Run deployment tests
       run: |
@@ -206,7 +206,7 @@ jobs:
         npm run test:all
 
     - name: Deploy test (pre-version)
-      run: ./scripts/deploy-stringray-plugin.sh ci-deploy-pre-version
+      run: bash scripts/bash/deploy-stringray-plugin.sh ci-deploy-pre-version
 
     - name: Version bump
       run: npm version patch --no-git-tag-version --no-commit-hooks
@@ -218,7 +218,7 @@ jobs:
       run: npm run build:all
 
     - name: Final deployment test
-      run: ./scripts/deploy-stringray-plugin.sh ci-deploy-final
+      run: bash scripts/bash/deploy-stringray-plugin.sh ci-deploy-final
 
     - name: Commit version updates
       run: |
