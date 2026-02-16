@@ -123,6 +123,9 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
+    "sisyphus": {
+      "disable": true
+    },
     "Planner-Sisyphus": {
       "disable": true
     },

@@ -18,9 +18,9 @@ import path from "path";
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.4.0",
-    displayName: "StringRay AI v1.4.0",
-    lastUpdated: "2026-02-15",
+    version: "1.4.1",
+    displayName: "StringRay AI v1.4.1",
+    lastUpdated: "2026-02-16",
   },
 
   // Codex versions
@@ -32,7 +32,7 @@ const OFFICIAL_VERSIONS = {
 
   // External dependencies
   dependencies: {
-    ohMyOpencode: "2.14.0",
+    opencode: "2.14.0",
   },
 };
 

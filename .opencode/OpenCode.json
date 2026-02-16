@@ -1,8 +1,0 @@
-{
-  "plugin": "./dist/plugin/plugins/strray-codex-injection.js",
-  "agents": [
-    "enforcer",
-    "architect",
-    "orchestrator"
-  ]
-}
