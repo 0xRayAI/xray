@@ -19,7 +19,6 @@ const PROJECT_ROOT = path.join(__dirname, '..');
 
 const CONFIG_FILES = [
   'opencode.json',
-  '.opencode/OpenCode.json',
   'package.json',
 ];
 
