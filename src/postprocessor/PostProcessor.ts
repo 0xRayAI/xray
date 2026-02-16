@@ -718,6 +718,22 @@ All path violations will be automatically detected and blocked.
         await processorManager.executeCodexCompliance(processorContext);
 
       if (!complianceResult.compliant) {
+
+      // Run test auto-creation processor for new files
+      try {
+        await processorManager.executeProcessor("testAutoCreation", {
+          operation: "commit",
+          files: context.files,
+        });
+      } catch (testError) {
+        // Non-blocking - log but continue
+        await frameworkLogger.log(
+          "-post-processor",
+          "-test-auto-creation-failed",
+          "info",
+          { message: `Test auto-creation failed: ${testError}` },
+        );
+      }
         await frameworkLogger.log(
           "codex-compliance",
           "validation-failed",
