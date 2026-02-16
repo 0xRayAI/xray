@@ -148,8 +148,43 @@ async function getOrCreateLogger(directory: string): Promise<PluginLogger> {
 }
 
 /**
- * Codex context entry with metadata
+ * Get the current framework version from package.json
  */
+function getFrameworkVersion(): string {
+  try {
+    const packageJsonPath = path.join(process.cwd(), "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+    return packageJson.version || "1.4.6";
+  } catch {
+    return "1.4.6";
+  }
+}
+
+/**
+ * Get framework identity message for injection
+ */
+function getFrameworkIdentity(): string {
+  const version = getFrameworkVersion();
+  return `╔══════════════════════════════════════════════════════════════╗
+║         ⚡ StringRay Framework v${version} Successfully Loaded ⚡         ║
+╠══════════════════════════════════════════════════════════════╣
+║  You are running under StringRay AI Orchestration Framework  ║
+║                                                              ║
+║  🔹 9 Specialized Agents: enforcer, architect, orchestrator ║
+║     bug-triage-specialist, code-reviewer, security-auditor  ║
+║     refactorer, test-architect, librarian                    ║
+║                                                              ║
+║  🔹 28 MCP Servers: Skill servers, framework tools          ║
+║                                                              ║
+║  🔹 59-Term Universal Development Codex (99.6% prevention)  ║
+║                                                              ║
+║  📖 Key Documentation:                                       ║
+║     • AGENTS.md - Complete agent capabilities & usage       ║
+║     • .opencode/strray/codex.json - Development rules       ║
+║     • .opencode/strray/config.json - Framework configuration ║
+╚══════════════════════════════════════════════════════════════╝`;
+}
+
 interface CodexContextEntry {
   id: string;
   source: string;
@@ -316,8 +351,7 @@ export default async function strrayCodexPlugin(input: {
 
       const formattedCodex = formatCodexContext(codexContexts);
 
-      const welcomeMessage =
-        "✨ Welcome StrRay 1.0.0 Agentic Framework Successfully Loaded.";
+      const welcomeMessage = getFrameworkIdentity();
 
       if (output.system && Array.isArray(output.system)) {
         output.system.unshift(welcomeMessage, formattedCodex);

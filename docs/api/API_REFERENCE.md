@@ -507,7 +507,7 @@ for (const result of batchResult.results) {
   },
   "framework": {
     "name": "strray",
-    "version": "1.4.2",
+    "version": "1.4.7",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"
