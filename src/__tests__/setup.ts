@@ -51,15 +51,15 @@ beforeAll(() => {
     fs.writeFileSync(codexPath, codexContent);
   }
 
-  const ohMyOpencodeConfig = {
+  const openCodeConfig = {
     plugin: "./dist/plugin/plugins/strray-codex-injection.js",
     agents: ["enforcer", "architect", "orchestrator"],
   };
-  const ohMyOpencodePath = path.resolve(".opencode/OpenCode.json");
-  if (!fs.existsSync(ohMyOpencodePath)) {
+  const openCodePath = path.resolve(".opencode/OpenCode.json");
+  if (!fs.existsSync(openCodePath)) {
     fs.writeFileSync(
-      ohMyOpencodePath,
-      JSON.stringify(ohMyOpencodeConfig, null, 2),
+      openCodePath,
+      JSON.stringify(openCodeConfig, null, 2),
     );
   }
 });

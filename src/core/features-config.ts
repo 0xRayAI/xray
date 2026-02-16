@@ -73,15 +73,6 @@ export interface MultiAgentOrchestrationConfig {
   session_persistence: boolean;
 }
 
-export interface SisyphusOrchestratorConfig {
-  enabled: boolean;
-  relentless_execution: boolean;
-  todo_enforcement: boolean;
-  max_retries: number;
-  backoff_strategy: "exponential" | "linear" | "fixed";
-  progress_persistence: boolean;
-}
-
 export interface AutonomousReportingConfig {
   enabled: boolean;
   interval_minutes: number;
@@ -162,7 +153,6 @@ export interface FeaturesConfig {
   model_routing: ModelRoutingConfig;
   batch_operations: BatchOperationsConfig;
   multi_agent_orchestration: MultiAgentOrchestrationConfig;
-  sisyphus_orchestrator: SisyphusOrchestratorConfig;
   autonomous_reporting: AutonomousReportingConfig;
   agent_management: AgentManagementConfig;
   refactoring: RefactoringConfig;
@@ -447,10 +437,6 @@ export class FeaturesConfigLoader {
         ...defaults.multi_agent_orchestration,
         ...configData.multi_agent_orchestration,
       },
-      sisyphus_orchestrator: {
-        ...defaults.sisyphus_orchestrator,
-        ...configData.sisyphus_orchestrator,
-      },
       autonomous_reporting: {
         ...defaults.autonomous_reporting,
         ...configData.autonomous_reporting,
@@ -584,15 +570,6 @@ export class FeaturesConfigLoader {
         conflict_resolution: "expert-priority",
         progress_tracking: true,
         session_persistence: true,
-      },
-
-      sisyphus_orchestrator: {
-        enabled: true,
-        relentless_execution: true,
-        todo_enforcement: true,
-        max_retries: 3,
-        backoff_strategy: "exponential",
-        progress_persistence: true,
       },
 
       autonomous_reporting: {

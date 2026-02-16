@@ -4,7 +4,6 @@ import {
   strRayConfigLoader,
   StringRayConfig,
   MultiAgentOrchestrationConfig,
-  SisyphusOrchestratorConfig,
 } from "../../core/config-loader.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -34,14 +33,6 @@ describe("StringRayConfigLoader", () => {
       conflict_resolution: "expert-priority",
       progress_tracking: true,
       session_persistence: false,
-    },
-    sisyphus_orchestrator: {
-      enabled: false,
-      relentless_execution: true,
-      todo_enforcement: false,
-      max_retries: 5,
-      backoff_strategy: "linear",
-      progress_persistence: false,
     },
     disabled_agents: ["test-architect"],
   });
@@ -111,7 +102,6 @@ describe("StringRayConfigLoader", () => {
 
       expect(config.multi_agent_orchestration.enabled).toBe(true);
       expect(config.multi_agent_orchestration.max_concurrent_agents).toBe(5);
-      expect(config.sisyphus_orchestrator.enabled).toBe(false);
       expect(config.disabled_agents).toEqual(["test-architect"]);
     });
 
@@ -124,7 +114,6 @@ describe("StringRayConfigLoader", () => {
       expect(config.multi_agent_orchestration.coordination_model).toBe(
         "async-multi-agent",
       );
-      expect(config.sisyphus_orchestrator.enabled).toBe(true);
       expect(config.disabled_agents).toEqual([]);
     });
 
@@ -164,14 +153,6 @@ describe("StringRayConfigLoader", () => {
           progress_tracking: false,
           session_persistence: false,
         },
-        sisyphus_orchestrator: {
-          enabled: true,
-          relentless_execution: false,
-          todo_enforcement: true,
-          max_retries: 10,
-          backoff_strategy: "fixed",
-          progress_persistence: true,
-        },
         disabled_agents: ["architect", "enforcer"],
       };
 
@@ -182,7 +163,6 @@ describe("StringRayConfigLoader", () => {
         "sync-multi-agent",
       );
       expect(config.multi_agent_orchestration.max_concurrent_agents).toBe(10);
-      expect(config.sisyphus_orchestrator.enabled).toBe(true);
       expect(config.disabled_agents).toEqual(["architect", "enforcer"]);
     });
 
@@ -192,7 +172,6 @@ describe("StringRayConfigLoader", () => {
       const config = (loader as any).parseConfig(configData);
 
       expect(config.multi_agent_orchestration).toBeDefined();
-      expect(config.sisyphus_orchestrator).toBeDefined();
       expect(config.disabled_agents).toEqual([]);
     });
 
@@ -269,61 +248,6 @@ describe("StringRayConfigLoader", () => {
     });
   });
 
-  describe("parseSisyphusConfig", () => {
-    it("should parse valid sisyphus config", () => {
-      const configData = {
-        enabled: false,
-        relentless_execution: false,
-        todo_enforcement: true,
-        max_retries: 8,
-        backoff_strategy: "fixed",
-        progress_persistence: false,
-      };
-
-      const config = (loader as any).parseSisyphusConfig(configData);
-
-      expect(config.enabled).toBe(false);
-      expect(config.relentless_execution).toBe(false);
-      expect(config.todo_enforcement).toBe(true);
-      expect(config.max_retries).toBe(8);
-      expect(config.backoff_strategy).toBe("fixed");
-      expect(config.progress_persistence).toBe(false);
-    });
-
-    it("should use defaults for missing values", () => {
-      const configData = {};
-
-      const config = (loader as any).parseSisyphusConfig(configData);
-
-      expect(config.enabled).toBe(true);
-      expect(config.relentless_execution).toBe(true);
-      expect(config.todo_enforcement).toBe(true);
-      expect(config.max_retries).toBe(3);
-      expect(config.backoff_strategy).toBe("exponential");
-      expect(config.progress_persistence).toBe(true);
-    });
-
-    it("should clamp max_retries to valid range", () => {
-      expect(
-        (loader as any).parseSisyphusConfig({ max_retries: -1 }).max_retries,
-      ).toBe(0);
-      expect(
-        (loader as any).parseSisyphusConfig({ max_retries: 15 }).max_retries,
-      ).toBe(10);
-      expect(
-        (loader as any).parseSisyphusConfig({ max_retries: 5 }).max_retries,
-      ).toBe(5);
-    });
-
-    it("should validate backoff_strategy enum", () => {
-      const config = (loader as any).parseSisyphusConfig({
-        backoff_strategy: "invalid-strategy",
-      });
-
-      expect(config.backoff_strategy).toBe("exponential");
-    });
-  });
-
   describe("getDefaultConfig", () => {
     it("should return complete default configuration", () => {
       const config = (loader as any).getDefaultConfig();
@@ -336,15 +260,6 @@ describe("StringRayConfigLoader", () => {
         conflict_resolution: "expert-priority",
         progress_tracking: true,
         session_persistence: true,
-      });
-
-      expect(config.sisyphus_orchestrator).toEqual({
-        enabled: true,
-        relentless_execution: true,
-        todo_enforcement: true,
-        max_retries: 3,
-        backoff_strategy: "exponential",
-        progress_persistence: true,
       });
 
       expect(config.disabled_agents).toEqual([]);

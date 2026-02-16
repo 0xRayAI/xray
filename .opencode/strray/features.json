@@ -91,15 +91,6 @@
     "session_persistence": true
   },
 
-  "sisyphus_orchestrator": {
-    "enabled": true,
-    "relentless_execution": true,
-    "todo_enforcement": true,
-    "max_retries": 3,
-    "backoff_strategy": "exponential",
-    "progress_persistence": true
-  },
-
   "autonomous_reporting": {
     "enabled": false,
     "interval_minutes": 60,

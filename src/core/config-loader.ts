@@ -23,15 +23,6 @@ export interface MultiAgentOrchestrationConfig {
   session_persistence: boolean;
 }
 
-export interface SisyphusOrchestratorConfig {
-  enabled: boolean;
-  relentless_execution: boolean;
-  todo_enforcement: boolean;
-  max_retries: number;
-  backoff_strategy: "exponential" | "linear" | "fixed";
-  progress_persistence: boolean;
-}
-
 export interface AutonomousReportingConfig {
   enabled: boolean;
   interval_minutes: number;
@@ -47,7 +38,6 @@ export interface AutonomousReportingConfig {
 
 export interface StringRayConfig {
   multi_agent_orchestration: MultiAgentOrchestrationConfig;
-  sisyphus_orchestrator: SisyphusOrchestratorConfig;
   autonomous_reporting: AutonomousReportingConfig;
   disabled_agents: string[];
 }
@@ -106,9 +96,6 @@ export class StringRayConfigLoader {
       multi_agent_orchestration: this.parseMultiAgentConfig(
         configData.multi_agent_orchestration,
       ),
-      sisyphus_orchestrator: this.parseSisyphusConfig(
-        configData.sisyphus_orchestrator,
-      ),
       autonomous_reporting: this.parseAutonomousReportingConfig(
         configData.autonomous_reporting,
       ),
@@ -145,24 +132,6 @@ export class StringRayConfigLoader {
       ),
       progress_tracking: config?.progress_tracking ?? true,
       session_persistence: config?.session_persistence ?? true,
-    };
-  }
-
-  /**
-   * Parse Sisyphus orchestrator configuration
-   */
-  private parseSisyphusConfig(config: any): SisyphusOrchestratorConfig {
-    return {
-      enabled: config?.enabled ?? true,
-      relentless_execution: config?.relentless_execution ?? true,
-      todo_enforcement: config?.todo_enforcement ?? true,
-      max_retries: Math.max(0, Math.min(10, config?.max_retries ?? 3)),
-      backoff_strategy: this.validateEnum(
-        config?.backoff_strategy,
-        ["exponential", "linear", "fixed"],
-        "exponential",
-      ),
-      progress_persistence: config?.progress_persistence ?? true,
     };
   }
 
@@ -209,14 +178,6 @@ export class StringRayConfigLoader {
         conflict_resolution: "expert-priority",
         progress_tracking: true,
         session_persistence: true,
-      },
-      sisyphus_orchestrator: {
-        enabled: true,
-        relentless_execution: true,
-        todo_enforcement: true,
-        max_retries: 3,
-        backoff_strategy: "exponential",
-        progress_persistence: true,
       },
       autonomous_reporting: {
         enabled: false, // Disabled by default for performance
