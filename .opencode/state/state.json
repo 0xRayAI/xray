@@ -273,7 +273,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1771187459783,
+    "startTime": 1771206089845,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -294,12 +294,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-02-15T20:30:59.783Z",
+    "createdAt": "2026-02-16T01:41:29.845Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1771187459783,
+  "session:boot_time": 1771206089845,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -337,8 +337,8 @@
     },
     "default": {
       "sessionId": "default",
-      "createdAt": 1771187459783,
-      "lastActivity": 1771187459783,
+      "createdAt": 1771206089845,
+      "lastActivity": 1771206089845,
       "ttlMs": 86400000,
       "isActive": true,
       "agentCount": 0,
@@ -356,35 +356,6 @@
       "memoryUsage": 0,
       "issues": []
     }
-  },
-  "test1-test-framework-init-session": {
-    "component": "state-manager",
-    "status": "active"
-  },
-  "test2-test-framework-init-session": {
-    "component": "context-loader",
-    "status": "ready"
-  },
-  "session:expired-test:coordinator": {
-    "sessionId": "expired-test",
-    "startTime": 1770067376666,
-    "activeDelegations": {},
-    "agentInteractions": {},
-    "conflictHistory": [],
-    "coordinationState": {
-      "activeAgents": {},
-      "pendingCommunications": [],
-      "sharedContext": {},
-      "sessionMetrics": {
-        "totalInteractions": 0,
-        "successfulInteractions": 0,
-        "failedInteractions": 0,
-        "averageResponseTime": 0,
-        "conflictResolutionRate": 0,
-        "coordinationEfficiency": 0
-      }
-    },
-    "isActive": true
   },
   "enforcement:active": true,
   "enforcement:codex_terms": [
@@ -430,6 +401,35 @@
     }
   ],
   "enforcement:enabled_at": 1771187460438,
+  "test1-test-framework-init-session": {
+    "component": "state-manager",
+    "status": "active"
+  },
+  "test2-test-framework-init-session": {
+    "component": "context-loader",
+    "status": "ready"
+  },
+  "session:expired-test:coordinator": {
+    "sessionId": "expired-test",
+    "startTime": 1770067376666,
+    "activeDelegations": {},
+    "agentInteractions": {},
+    "conflictHistory": [],
+    "coordinationState": {
+      "activeAgents": {},
+      "pendingCommunications": [],
+      "sharedContext": {},
+      "sessionMetrics": {
+        "totalInteractions": 0,
+        "successfulInteractions": 0,
+        "failedInteractions": 0,
+        "averageResponseTime": 0,
+        "conflictResolutionRate": 0,
+        "coordinationEfficiency": 0
+      }
+    },
+    "isActive": true
+  },
   "delegation_metrics": [],
   "agent:enforcer": {},
   "agent:architect": {},

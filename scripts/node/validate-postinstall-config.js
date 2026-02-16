@@ -112,24 +112,8 @@ class PostinstallConfigValidator {
 
       const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 
-      // Check for disabled_agents (optional in CI environments)
-      const isCI = process.env.CI || process.env.GITHUB_ACTIONS;
-      const hasDisabledSisyphus = config.disabled_agents &&
-        Array.isArray(config.disabled_agents) &&
-        config.disabled_agents.some(agent => agent.toLowerCase() === "sisyphus");
-      
-      if (hasDisabledSisyphus) {
-        console.log("  ✅ sisyphus agent properly disabled");
-      } else if (isCI) {
-        console.log("  ℹ️  sisyphus configuration optional in CI environment");
-      } else {
-        console.log("  ❌ sisyphus not disabled in configuration");
-        this.results.failed.push({
-          test: "OpenCode Configuration",
-          error: "sisyphus agent not disabled",
-        });
-        return;
-      }
+      // Sisyphus was removed from the framework - skip this check
+      console.log("  ℹ️  sisyphus check: N/A (removed from framework)");
 
       // Check for plugin registration
       if (config.plugin && Array.isArray(config.plugin)) {

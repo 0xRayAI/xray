@@ -350,19 +350,8 @@ class ConsumerValidator {
       return false;
     }
 
-    // Check Sisyphus disabled
-    try {
-      const config = JSON.parse(
-        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
-      );
-      const sisyphusDisabled =
-        config.sisyphus_agent?.disabled === true ||
-        (config.disabled_agents && config.disabled_agents.includes("Sisyphus"));
-      if (!sisyphusDisabled) return false;
-    } catch (error) {
-      return false;
-    }
-
+    // Sisyphus no longer exists in the framework - skip this check
+    // Sisyphus was replaced with orchestrator
     return true;
   }
 
@@ -485,20 +474,10 @@ class ConsumerValidator {
         }
       },
 
-      // Sisyphus disabled check
+      // Sisyphus disabled check - removed from framework
       () => {
-        try {
-          const config = JSON.parse(
-            fs.readFileSync(".opencode/OpenCode.json", "utf8"),
-          );
-          return (
-            config.sisyphus_agent?.disabled === true ||
-            (config.disabled_agents &&
-              config.disabled_agents.includes("Sisyphus"))
-          );
-        } catch {
-          return false;
-        }
+        // Sisyphus was replaced with orchestrator - always return true
+        return true;
       },
 
       // MCP path validation (in opencode.json under 'mcp' key)

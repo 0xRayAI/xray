@@ -160,30 +160,13 @@ class ConsumerReadinessCheck {
   }
 
   checkSisyphusDisabled() {
-    try {
-      const config = JSON.parse(
-        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
-      );
-      const sisyphusDisabled =
-        config.sisyphus_agent?.disabled === true ||
-        (config.disabled_agents && config.disabled_agents.includes("Sisyphus"));
-
-      this.checks.push({
-        name: "Sisyphus orchestrator disabled",
-        passed: sisyphusDisabled,
-        details: sisyphusDisabled ? "Disabled" : "Not disabled",
-      });
-      console.log(
-        `${sisyphusDisabled ? "✅" : "❌"} Sisyphus orchestrator: ${sisyphusDisabled ? "Disabled" : "Enabled"}`,
-      );
-    } catch (error) {
-      this.checks.push({
-        name: "Sisyphus orchestrator disabled",
-        passed: false,
-        details: "Configuration error",
-      });
-      console.log("❌ Sisyphus orchestrator: Configuration error");
-    }
+    // Sisyphus was removed from the framework - always pass
+    this.checks.push({
+      name: "Sisyphus orchestrator (N/A)",
+      passed: true,
+      details: "Removed from framework",
+    });
+    console.log("ℹ️  Sisyphus: N/A (removed from framework)");
   }
 
   printSummary() {

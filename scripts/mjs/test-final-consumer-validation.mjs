@@ -195,22 +195,9 @@ class FinalConsumerValidation {
         });
       }
 
-      // Check Sisyphus disabled
-      const sisyphusDisabled =
-        ohMyOpencodeConfig.sisyphus_agent?.disabled === true ||
-        (ohMyOpencodeConfig.disabled_agents &&
-          ohMyOpencodeConfig.disabled_agents.includes("Sisyphus"));
-
-      if (sisyphusDisabled) {
-        console.log("  ✅ Sisyphus orchestrator disabled");
-        this.results.passed.push("Sisyphus Disabled");
-      } else {
-        console.log("  ❌ Sisyphus orchestrator not disabled");
-        this.results.failed.push({
-          test: "Sisyphus Disabled",
-          error: "Sisyphus still enabled",
-        });
-      }
+      // Sisyphus no longer exists in the framework - skip this check
+      console.log("  ℹ️  Sisyphus check: N/A (Sisyphus removed from framework)");
+      this.results.passed.push("Sisyphus (N/A - removed)");
     } catch (error) {
       console.log(
         `  ❌ Plugin integration validation failed: ${error.message}`,
