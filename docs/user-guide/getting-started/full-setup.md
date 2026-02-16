@@ -80,7 +80,7 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
   },
   "framework": {
     "name": "strray",
-    "version": "1.4.7",
+    "version": "1.4.8",
     "codex_terms": [
       "1",
       "2",
