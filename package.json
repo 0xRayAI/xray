@@ -44,6 +44,8 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "security-audit": "npm audit --audit-level high",
+    "test:security-audit": "npm run test:security",
+    "test:dependency-scan": "npm run security-audit",
     "test:integration": "node scripts/mjs/test-consumer-readiness.mjs && node scripts/mjs/test-mcp-functionality.mjs",
     "test:e2e": "node scripts/node/validate-mcp-connectivity.js && node scripts/node/validate-external-processes.js",
     "test:coverage": "vitest run --coverage",
