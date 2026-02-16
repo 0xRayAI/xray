@@ -138,7 +138,7 @@ try {
 } catch (error) {
   console.error("❌ StrRay plugin setup failed:", error.message);
   console.log("\n🔧 Manual Configuration:");
-  console.log("Add the following to your .opencode/OpenCode.json:");
-  console.log(`"plugin": ["strray/dist/plugin/strray-codex-injection.js"]`);
+  console.log("Add the following to your opencode.json (root directory):");
+  console.log(`"plugin": "./node_modules/strray-ai/dist/plugin/strray-codex-injection.js"`);
   process.exit(1);
 }

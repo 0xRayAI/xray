@@ -55,10 +55,9 @@ function updatePathsInFile(filePath) {
 }
 
 // Files to update for consumer preparation
-// Note: .mcp.json was refactored out - see AGENTS.md
+// Note: .opencode/OpenCode.json was removed - plugin loads from opencode.json in root
 const filesToUpdate = [
-  "opencode.json",
-  ".opencode/OpenCode.json"
+  "opencode.json"
 ];
 
 console.log("🔧 StrRay Consumer Preparation: Processing configuration files...");

@@ -120,32 +120,8 @@ if (isConsumerEnvironment) {
   // Note: .mcp.json was refactored out - no longer need to update MCP paths
   // See AGENTS.md for details
 
-  // Convert plugin paths in OpenCode.json
-  const opencodePath = path.join(targetDir, ".opencode", "OpenCode.json");
-  if (fs.existsSync(opencodePath)) {
-    let opencodeContent = fs.readFileSync(opencodePath, "utf8");
-    // Convert strray/dist/plugin path to node_modules path
-    opencodeContent = opencodeContent.replace(
-      /"strray\/dist\/plugin\/strray-codex-injection\.js"/g,
-      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
-    );
-    // Also handle .ts source paths
-    opencodeContent = opencodeContent.replace(
-      /"src\/plugin\/strray-codex-injection\.ts"/g,
-      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
-    );
-    // Convert MCP server paths (in mcpServers.*.args)
-    // Note: MCP servers are in dist/mcps/ NOT dist/plugin/mcps/
-    opencodeContent = opencodeContent.replace(
-      /"dist\/mcps\//g,
-      '"node_modules/strray-ai/dist/mcps/'
-    );
-    fs.writeFileSync(opencodePath, opencodeContent, "utf8");
-    console.log("✅ Updated plugin and MCP paths in OpenCode.json");
-  }
-
-  // Convert plugin paths in opencode.json
-  const mainOpencodePath = path.join(targetDir, "opencode.json");
+// Convert plugin paths in opencode.json
+const mainOpencodePath = path.join(targetDir, "opencode.json");
   if (fs.existsSync(mainOpencodePath)) {
     let opencodeContent = fs.readFileSync(mainOpencodePath, "utf8");
     // Handle various plugin path patterns

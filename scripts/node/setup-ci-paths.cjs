@@ -14,8 +14,8 @@ const path = require("path");
 console.log('🔧 CI Path Setup: Converting to development paths...');
 
 // Files that need path conversion for CI
+// Note: .opencode/OpenCode.json was removed - plugin loads from opencode.json in root
 const filesToUpdate = [
-  '.opencode/OpenCode.json',
   '.mcp.json'
 ];
 

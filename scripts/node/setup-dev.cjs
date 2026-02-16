@@ -63,10 +63,10 @@ function updatePathsInFile(filePath) {
 }
 
 // Files to update for development
+// Note: .opencode/OpenCode.json was removed - plugin loads from opencode.json in root
 const filesToUpdate = [
   ".mcp.json",
-  "opencode.json",
-  ".opencode/OpenCode.json"
+  "opencode.json"
 ];
 
 console.log("🔧 StrRay Development Setup: Processing configuration files...");
