@@ -640,7 +640,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
     "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.3.6",
+    "version": "1.4.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -659,7 +659,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ```json
 {
   "framework": {
-    "version": "1.3.6",
+    "version": "1.4.0",
     "logging": {
       "level": "info",
       "jobIdTracking": true,
@@ -2475,7 +2475,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
     "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.3.6",
+    "version": "1.4.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -2499,7 +2499,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 ```json
 {
   "framework": {
-    "version": "1.3.6",
+    "version": "1.4.0",
     "logging": {
       "level": "info",
       "jobIdTracking": true,

@@ -18,9 +18,9 @@ import path from "path";
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.3.6",
-    displayName: "StringRay AI v1.3.6",
-    lastUpdated: "2026-02-01",
+    version: "1.4.0",
+    displayName: "StringRay AI v1.4.0",
+    lastUpdated: "2026-02-15",
   },
 
   // Codex versions
@@ -93,17 +93,15 @@ const UPDATE_PATTERNS = [
       pattern: /StringRay Framework v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: OFFICIAL_VERSIONS.framework.displayName,
     },
-    // NOTE: Removed README badge pattern - README is now version-free
-    // Only essential files have versions: package.json, CLI, plugin
-    // Source files should NOT have versions in their headers
-    // Only essential files get versions (package.json, README badge, CLI)
-    
-    // README title pattern (only updates the badge, not the title)
-    // Title is now clean: "# StringRay AI" without version
-   {
-     pattern: /- Framework Version: StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
-     replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.displayName}`,
-   },
+    // NOTE: README has a version badge that needs updating
+    {
+      pattern: /!\[Version\]\(https:\/\/img\.shields\.io\/badge\/version-[0-9]+\.[0-9]+\.[0-9]+/g,
+      replacement: `![Version](https://img.shields.io/badge/version-${OFFICIAL_VERSIONS.framework.version}`,
+    },
+    {
+      pattern: /- Framework Version: StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
+      replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.displayName}`,
+    },
     {
       pattern: /- Framework Version: [0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.version}`,

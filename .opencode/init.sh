@@ -55,17 +55,16 @@ if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ]; then
     exit 1
 fi
 
-echo -e "${PURPLE}//   ✅ Framework ready                                      //${NC}"
-echo -e "${PURPLE}//   🤖 Agents: $AGENTS_COUNT | ⚙️ MCPs: $MCPS_COUNT | 💡 Skills: $SKILLS_COUNT    //${NC}"
-echo -e "${PURPLE}//   🔌 Plugin: $PLUGIN_STATUS                                       //${NC}"
-echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}"
-
-echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}"
+echo ""
+echo "🤖 Agents: $AGENTS_COUNT | ⚙️ MCPs: $MCPS_COUNT | 💡 Skills: $SKILLS_COUNT"
 
 # BootOrchestrator check (with fixed path)
 if command -v node &> /dev/null && ([ -f "$PROJECT_ROOT/src/core/boot-orchestrator.ts" ] || [ -f "$PROJECT_ROOT/node_modules/strray-ai/src/core/boot-orchestrator.ts" ] || [ -f "$PROJECT_ROOT/node_modules/strray-ai/dist/mcps/boot-orchestrator.server.js" ]); then
-    log "⚙️ BootOrchestrator: ✅"
+    echo "⚙️ BootOrchestrator: ✅"
 fi
+
+echo "✅ Framework ready"
+echo "🔌 Plugin: $PLUGIN_STATUS"
 
 INIT_TIME=$(($(date +%s) - START_TIME))
 log "StrRay initialized in ${INIT_TIME}s"
