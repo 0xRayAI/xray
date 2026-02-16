@@ -273,7 +273,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1771206089845,
+    "startTime": 1771239716714,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -294,12 +294,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-02-16T01:41:29.845Z",
+    "createdAt": "2026-02-16T11:01:56.714Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1771206089845,
+  "session:boot_time": 1771239716714,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -337,8 +337,8 @@
     },
     "default": {
       "sessionId": "default",
-      "createdAt": 1771206089845,
-      "lastActivity": 1771206089845,
+      "createdAt": 1771239716714,
+      "lastActivity": 1771239716714,
       "ttlMs": 86400000,
       "isActive": true,
       "agentCount": 0,

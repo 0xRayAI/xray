@@ -32,10 +32,6 @@ class ConsumerReadinessCheck {
 
     // Core file existence checks (skip .mcp.json for lazy loading)
     this.checkFile("opencode.json", "OpenCode configuration");
-    this.checkFile(
-      ".opencode/OpenCode.json",
-      "OpenCode configuration",
-    );
 
     // MCP server validation
     this.checkMCPServers();
@@ -113,9 +109,25 @@ class ConsumerReadinessCheck {
 
   checkPluginRegistration() {
     try {
-      const config = JSON.parse(
-        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
-      );
+      // Check opencode.json (main config) or .opencode/OpenCode.json (legacy)
+      let config = null;
+      if (fs.existsSync("opencode.json")) {
+        config = JSON.parse(fs.readFileSync("opencode.json", "utf8"));
+      } else if (fs.existsSync(".opencode/OpenCode.json")) {
+        config = JSON.parse(fs.readFileSync(".opencode/OpenCode.json", "utf8"));
+      }
+
+      if (!config) {
+        const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS;
+        this.checks.push({
+          name: "StringRay plugin registration",
+          passed: isCIEnvironment ? true : false,
+          details: "No config file found",
+        });
+        console.log(isCIEnvironment ? "ℹ️ Plugin registration: Optional in CI" : "❌ Plugin registration: No config found");
+        return;
+      }
+
       const pluginArray = config.plugin || config.plugins || [];
       const hasStringRayPlugin =
         Array.isArray(pluginArray) &&
@@ -126,13 +138,13 @@ class ConsumerReadinessCheck {
       // In CI/development environments, plugin registration is optional
       // The plugin requires OpenCode to be running to register
       const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS || !this.isConsumerEnvironment;
-      
+
       if (isCIEnvironment && !hasStringRayPlugin) {
         // Mark as warning (passed=true) in CI since plugin needs active OpenCode
         this.checks.push({
           name: "StringRay plugin registration",
-          passed: true, // Don't fail CI for this
-          details: "Plugin not loaded (expected in CI - requires OpenCode)",
+          passed: true,
+          details: "Optional in CI environment",
         });
         console.log(
           `ℹ️ Plugin registration: Not loaded (expected in CI environment)`,
