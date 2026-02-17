@@ -67,7 +67,7 @@ npm install
   },
   "framework": {
     "name": "strray",
-    "version": "1.4.17"
+    "version": "1.4.18"
   }
 }
 ```
