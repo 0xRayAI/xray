@@ -67,6 +67,8 @@ export class SelfDirectionSystem {
   private config: SelfDirectionConfig;
   private activeMonitoring = false;
   private activeLearning = false;
+  private monitoringIntervalId: NodeJS.Timeout | undefined;
+  private learningIntervalId: NodeJS.Timeout | undefined;
 
   constructor(config: Partial<SelfDirectionConfig> = {}) {
     this.config = {
@@ -133,8 +135,14 @@ export class SelfDirectionSystem {
    * Start continuous self-assessment cycle
    */
   private startContinuousSelfAssessment(): void {
-    setInterval(async () => {
+    // Clear any existing interval first to prevent duplicates
+    if (this.monitoringIntervalId) {
+      clearInterval(this.monitoringIntervalId);
+    }
+    
+    this.monitoringIntervalId = setInterval(async () => {
       try {
+        if (!this.activeMonitoring) return; // Don't run if stopped
         const assessment = await this.performSelfAssessment();
         await this.processSelfAssessmentResults(assessment);
       } catch (error) {
@@ -184,7 +192,13 @@ export class SelfDirectionSystem {
    * Start learning cycles
    */
   private startLearningCycles(): void {
-    setInterval(async () => {
+    // Clear any existing interval first to prevent duplicates
+    if (this.learningIntervalId) {
+      clearInterval(this.learningIntervalId);
+    }
+    
+    this.learningIntervalId = setInterval(async () => {
+      if (!this.activeLearning) return; // Don't run if stopped
       console.log("🔄 Learning cycle executed");
       // Basic learning cycle - would be enhanced with advanced features
     }, this.config.learningCycleInterval);
@@ -318,6 +332,16 @@ export class SelfDirectionSystem {
    */
   async shutdown(): Promise<void> {
     console.log("🛑 Shutting down self-direction system...");
+
+    // Clear all intervals to prevent memory leaks
+    if (this.monitoringIntervalId) {
+      clearInterval(this.monitoringIntervalId);
+      this.monitoringIntervalId = undefined;
+    }
+    if (this.learningIntervalId) {
+      clearInterval(this.learningIntervalId);
+      this.learningIntervalId = undefined;
+    }
 
     this.activeMonitoring = false;
     this.activeLearning = false;
