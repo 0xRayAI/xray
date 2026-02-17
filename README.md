@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework**
 
-![Version](https://img.shields.io/badge/version-1.4.11-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.4.17-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tests](https://img.shields.io/badge/tests-100%25%20passing-brightgreen?style=flat-square)
 
@@ -130,7 +130,7 @@ Create `.opencode/strray/features.json` in your project root:
 
 ```json
 {
-  "version": "1.4.11",
+  "version": "1.4.17",
   "description": "StringRay Framework Configuration",
 
   "token_optimization": {

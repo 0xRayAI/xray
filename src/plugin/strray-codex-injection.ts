@@ -330,7 +330,7 @@ function createCodexContextEntry(
 /**
  * Load codex context (cached globally, loaded once)
  */
-function loadCodexContext(): CodexContextEntry[] {
+function loadCodexContext(directory: string): CodexContextEntry[] {
   if (cachedCodexContexts) {
     return cachedCodexContexts;
   }
@@ -338,7 +338,7 @@ function loadCodexContext(): CodexContextEntry[] {
   const codexContexts: CodexContextEntry[] = [];
 
   for (const relativePath of CODEX_FILE_LOCATIONS) {
-    const fullPath = path.join(process.cwd(), relativePath);
+    const fullPath = path.join(directory, relativePath);
     const content = readFileContent(fullPath);
 
     if (content && content.trim().length > 0) {
@@ -352,7 +352,7 @@ function loadCodexContext(): CodexContextEntry[] {
   cachedCodexContexts = codexContexts;
 
   if (codexContexts.length === 0) {
-    void getOrCreateLogger(process.cwd()).then((l) =>
+    void getOrCreateLogger(directory).then((l) =>
       l.error(
         `No valid codex files found. Checked: ${CODEX_FILE_LOCATIONS.join(", ")}`,
       ),
@@ -408,7 +408,7 @@ export default async function strrayCodexPlugin(input: {
       _input: Record<string, unknown>,
       output: { system?: string[] },
     ) => {
-      const codexContexts = loadCodexContext();
+      const codexContexts = loadCodexContext(directory);
 
       if (codexContexts.length === 0) {
         const logger = await getOrCreateLogger(directory);

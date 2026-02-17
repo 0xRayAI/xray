@@ -112,16 +112,16 @@ export class ImportResolver {
 
     if (this.isTesting) {
       // In tests, prefer built versions to avoid import issues
-      return `../dist/plugin/${fullModuleName}.js`;
+      return `../dist/${fullModuleName}.js`;
     } else if (this.isDevelopment) {
       // In development, use source files
       return `../src/${fullModuleName}.ts`;
     } else if (this.isBuilt || this.isInstalled) {
       // In built/deployed environments, use compiled files
-      return `../dist/plugin/${fullModuleName}.js`;
+      return `../dist/${fullModuleName}.js`;
     } else {
       // Fallback - try built first, then source
-      return `../dist/plugin/${fullModuleName}.js`;
+      return `../dist/${fullModuleName}.js`;
     }
   }
 
@@ -167,7 +167,7 @@ export class ImportResolver {
       try {
         const rootPath = join(
           this.projectRoot,
-          "dist/plugin",
+          "dist",
           subPath,
           `${moduleName}.js`,
         );
@@ -193,7 +193,7 @@ export class ImportResolver {
     if (this.isDevelopment) {
       // Development alternatives
       paths.push(
-        `../dist/plugin/${fullModuleName}.js`,
+        `../dist/${fullModuleName}.js`,
         `../src/${fullModuleName}.ts`,
         `./${fullModuleName}.ts`,
         `../dist/${fullModuleName}.js`,
@@ -202,7 +202,7 @@ export class ImportResolver {
       // Built/deployed alternatives
       paths.push(
         `../src/${fullModuleName}.ts`,
-        `../dist/plugin/${fullModuleName}.js`,
+        `../dist/${fullModuleName}.js`,
         `./${fullModuleName}.js`,
         `../dist/${fullModuleName}.js`,
       );
@@ -212,7 +212,7 @@ export class ImportResolver {
     try {
       const absPath = resolve(
         this.projectRoot,
-        "dist/plugin",
+        "dist",
         subPath,
         `${moduleName}.js`,
       );

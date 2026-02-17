@@ -245,4 +245,27 @@ async function activatePostProcessor(jobId: string): Promise<void> {
     "success",
     { jobId },
   );
+
+  // Initialize path resolver globally
+  const { pathResolver } = await import("../utils/path-resolver.js");
+  (globalThis as any).strRayPathResolver = pathResolver;
+
+  frameworkLogger.log(
+    "stringray-activation",
+    "path resolver activated",
+    "success",
+    { jobId },
+  );
+
+  // Initialize codex injector globally
+  const { CodexInjector } = await import("./codex-injector.js");
+  const codexInjector = new CodexInjector();
+  (globalThis as any).strRayCodexInjector = codexInjector;
+
+  frameworkLogger.log(
+    "stringray-activation",
+    "codex injector activated",
+    "success",
+    { jobId },
+  );
 }

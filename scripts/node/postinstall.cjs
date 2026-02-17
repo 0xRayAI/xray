@@ -151,10 +151,37 @@ console.log("🔧 StrRay Postinstall: Consumer installation complete - all paths
 const strraySource = path.join(packageRoot, '.strray');
 const strrayDest = path.join(targetDir, '.strray');
 
-if (fs.existsSync(strraySource) && !fs.existsSync(strrayDest)) {
+if (fs.existsSync(strraySource)) {
   try {
-    fs.symlinkSync(strraySource, strrayDest, 'dir');
-    console.log(`✅ .strray directory symlinked`);
+    // Check if .strray already exists
+    if (fs.existsSync(strrayDest)) {
+      const stats = fs.lstatSync(strrayDest);
+      
+      if (stats.isSymbolicLink()) {
+        // It's a symlink - check if it points to the right location
+        const existingTarget = fs.readlinkSync(strrayDest);
+        if (existingTarget === strraySource) {
+          console.log(`✅ .strray symlink already exists and is correct`);
+        } else {
+          // Symlink exists but points to wrong location - remove and recreate
+          console.log(`📝 Updating .strray symlink to point to new location...`);
+          fs.unlinkSync(strrayDest);
+          fs.symlinkSync(strraySource, strrayDest, 'dir');
+          console.log(`✅ .strray directory symlinked (updated)`);
+        }
+      } else if (stats.isDirectory()) {
+        // It's a regular directory - backup and create symlink
+        const backupName = `.strray.backup.${Date.now()}`;
+        console.log(`📝 Backing up existing .strray directory to ${backupName}...`);
+        fs.renameSync(strrayDest, path.join(targetDir, backupName));
+        fs.symlinkSync(strraySource, strrayDest, 'dir');
+        console.log(`✅ .strray directory symlinked (backed up existing)`);
+      }
+    } else {
+      // .strray doesn't exist - create symlink
+      fs.symlinkSync(strraySource, strrayDest, 'dir');
+      console.log(`✅ .strray directory symlinked`);
+    }
   } catch (error) {
     console.error(`❌ Failed to symlink .strray:`, error.message);
     // Fallback: copy the directory

@@ -681,7 +681,7 @@ export class MCPClientManager {
         serverName: "code-review",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/code-review.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/code-review.server.js`,
         ],
         timeout: 30000,
       },
@@ -689,7 +689,7 @@ export class MCPClientManager {
         serverName: "security-audit",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/security-audit.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/security-audit.server.js`,
         ],
         timeout: 45000,
       },
@@ -697,7 +697,7 @@ export class MCPClientManager {
         serverName: "performance-optimization",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/performance-optimization.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/performance-optimization.server.js`,
         ],
         timeout: 30000,
       },
@@ -705,7 +705,7 @@ export class MCPClientManager {
         serverName: "testing-strategy",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/testing-strategy.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/testing-strategy.server.js`,
         ],
         timeout: 25000,
       },
@@ -713,7 +713,7 @@ export class MCPClientManager {
         serverName: "librarian",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/project-analysis.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/project-analysis.server.js`,
         ],
         timeout: 60000,
       },
@@ -721,7 +721,7 @@ export class MCPClientManager {
         serverName: "framework-help",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/framework-help.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/framework-help.server.js`,
         ],
         timeout: 15000,
       },
@@ -729,7 +729,7 @@ export class MCPClientManager {
         serverName: "skill-invocation",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/skill-invocation.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/skill-invocation.server.js`,
         ],
         timeout: 30000,
       },
@@ -737,7 +737,7 @@ export class MCPClientManager {
         serverName: "explore",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/project-analysis.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/project-analysis.server.js`,
         ],
         timeout: 25000,
       },
@@ -745,7 +745,7 @@ export class MCPClientManager {
         serverName: "document-writer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/documentation-generation.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/documentation-generation.server.js`,
         ],
         timeout: 45000,
       },
@@ -753,7 +753,7 @@ export class MCPClientManager {
         serverName: "frontend-ui-ux-engineer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/ui-ux-design.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/ui-ux-design.server.js`,
         ],
         timeout: 35000,
       },
@@ -764,7 +764,7 @@ export class MCPClientManager {
         serverName,
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist/plugin"}/mcps/knowledge-skills/${serverName}.server.js`,
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/${serverName}.server.js`,
         ],
         timeout: 30000,
       }
