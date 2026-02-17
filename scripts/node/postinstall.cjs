@@ -36,7 +36,8 @@ console.log("🔧 StrRay Postinstall: Current working dir:", process.cwd());
 // Configuration files to copy during installation
 const configFiles = [
   // ".mcp.json", // Refactored out - MCP config now in opencode.json
-  "opencode.json"
+  "opencode.json",
+  "AGENTS.md"
 ];
 
 // Directories to copy recursively
