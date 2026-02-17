@@ -18,8 +18,8 @@ import path from "path";
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.4.10",
-    displayName: "StringRay AI v1.4.10",
+    version: "1.4.11",
+    displayName: "StringRay AI v1.4.11",
     lastUpdated: "2026-02-16",
   },
 

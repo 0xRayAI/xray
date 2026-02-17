@@ -20,7 +20,7 @@ program
   .description(
     "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention",
   )
-  .version("1.4.10");
+  .version("1.4.11");
 
 program
   .command("install")

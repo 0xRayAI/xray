@@ -21,40 +21,42 @@ let detectTaskType: any;
 async function loadStrRayComponents() {
   if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
 
+  const logger = await getOrCreateLogger(process.cwd());
+  
+  // Try local dist first (for development)
   try {
-    const procModule = await import(
-      "../../dist/processors/processor-manager.js" as any
-    );
-    const stateModule = await import(
-      "../../dist/state/state-manager.js" as any
-    );
-    const featuresModule = await import(
-      "../../dist/core/features-config.js" as any
-    );
+    logger.log(`🔄 Attempting to load from ../../dist/`);
+    const procModule = await import("../../dist/processors/processor-manager.js" as any);
+    const stateModule = await import("../../dist/state/state-manager.js" as any);
+    const featuresModule = await import("../../dist/core/features-config.js" as any);
     ProcessorManager = procModule.ProcessorManager;
     StrRayStateManager = stateModule.StrRayStateManager;
     featuresConfigLoader = featuresModule.featuresConfigLoader;
     detectTaskType = featuresModule.detectTaskType;
-  } catch {
-    const pluginPaths = ["strray-ai", "strray-framework"];
+    logger.log(`✅ Loaded from ../../dist/`);
+    return;
+  } catch (e: any) {
+    logger.error(`❌ Failed to load from ../../dist/: ${e?.message || e}`);
+  }
 
-    for (const pluginPath of pluginPaths) {
-      try {
-        ({ ProcessorManager } = await import(
-          `../../../../../node_modules/${pluginPath}/dist/processors/processor-manager.js`
-        ));
-        ({ StrRayStateManager } = await import(
-          `../../../../../node_modules/${pluginPath}/dist/state/state-manager.js`
-        ));
-        const fm = await import(
-          `../../../../../node_modules/${pluginPath}/dist/core/features-config.js`
-        );
-        featuresConfigLoader = fm.featuresConfigLoader;
-        detectTaskType = fm.detectTaskType;
-        break;
-      } catch {
-        continue;
-      }
+  // Try node_modules (for consumer installation)
+  const pluginPaths = ["strray-ai", "strray-framework"];
+
+  for (const pluginPath of pluginPaths) {
+    try {
+      logger.log(`🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
+      const pm = await import(`../../node_modules/${pluginPath}/dist/processors/processor-manager.js`);
+      const sm = await import(`../../node_modules/${pluginPath}/dist/state/state-manager.js`);
+      const fm = await import(`../../node_modules/${pluginPath}/dist/core/features-config.js`);
+      ProcessorManager = pm.ProcessorManager;
+      StrRayStateManager = sm.StrRayStateManager;
+      featuresConfigLoader = fm.featuresConfigLoader;
+      detectTaskType = fm.detectTaskType;
+      logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
+      return;
+    } catch (e: any) {
+      logger.error(`❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`);
+      continue;
     }
   }
 }
@@ -433,6 +435,7 @@ export default async function strrayCodexPlugin(input: {
       output: any,
     ) => {
       const logger = await getOrCreateLogger(directory);
+      logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
       await loadStrRayComponents();
 
       if (featuresConfigLoader && detectTaskType) {
