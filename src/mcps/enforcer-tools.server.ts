@@ -809,10 +809,41 @@ class StrRayEnforcerToolsServer {
         (f: any) => f.type === "auto",
       );
       for (const fix of autoFixes) {
-        // Would execute actual auto-fix logic here
+        // Execute actual auto-fix logic
         console.log(`Applying auto-fix: ${fix.description}`);
+        
+        if (fix.action === "createTestFile" && files.length > 0) {
+          // Import and run test auto-creation processor
+          try {
+            const { testAutoCreationProcessor } = await import("../processors/test-auto-creation-processor.js");
+            const result = await testAutoCreationProcessor.execute({
+              tool: "write",
+              args: { filePath: files[0] },
+              directory: process.cwd(),
+              filePath: files[0],
+              operation: "tool_execution",
+            });
+            
+            if (result.success) {
+              console.log(`✅ Auto-fix applied: Test file created for ${files[0]}`);
+              fix.applied = true;
+              fix.result = result;
+            } else {
+              console.error(`❌ Auto-fix failed: ${result.error || "Unknown error"}`);
+              fix.applied = false;
+              fix.error = result.error;
+            }
+          } catch (error) {
+            console.error(`❌ Auto-fix execution failed:`, error);
+            fix.applied = false;
+            fix.error = error instanceof Error ? error.message : String(error);
+          }
+        } else {
+          console.log(`ℹ️ Auto-fix not implemented for action: ${fix.action}`);
+          fix.applied = false;
+        }
       }
-      qualityCheck.fixesApplied = autoFixes.length;
+      qualityCheck.fixesApplied = autoFixes.filter((f: any) => f.applied).length;
     }
 
     return {
