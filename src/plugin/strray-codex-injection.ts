@@ -185,6 +185,73 @@ function getFrameworkIdentity(): string {
 ╚══════════════════════════════════════════════════════════════╝`;
 }
 
+/**
+ * Run Enforcer quality gate check before operations
+ */
+async function runEnforcerQualityGate(
+  input: { tool: string; args?: { content?: string; filePath?: string } },
+  logger: PluginLogger
+): Promise<{ passed: boolean; violations: string[] }> {
+  const violations: string[] = [];
+  const { tool, args } = input;
+
+  // Rule 1: tests-required for new files
+  if (tool === "write" && args?.filePath) {
+    const filePath = args.filePath;
+    // Check if this is a source file (not test, not config)
+    if (filePath.endsWith(".ts") && !filePath.includes(".test.") && !filePath.includes(".spec.")) {
+      // Check if test file exists
+      const testPath = filePath.replace(".ts", ".test.ts");
+      const specPath = filePath.replace(".ts", ".spec.ts");
+      
+      if (!fs.existsSync(testPath) && !fs.existsSync(specPath)) {
+        violations.push(`tests-required: No test file found for ${filePath} (expected ${testPath} or ${specPath})`);
+        logger.log(`⚠️ ENFORCER: tests-required violation detected for ${filePath}`);
+      }
+    }
+  }
+
+  // Rule 2: documentation-required for new features
+  if (tool === "write" && args?.filePath?.includes("src/")) {
+    const docsDir = path.join(process.cwd(), "docs");
+    const readmePath = path.join(process.cwd(), "README.md");
+    
+    // Check if docs directory exists
+    if (!fs.existsSync(docsDir) && !fs.existsSync(readmePath)) {
+      violations.push(`documentation-required: No documentation found for new feature`);
+      logger.log(`⚠️ ENFORCER: documentation-required violation detected`);
+    }
+  }
+
+  // Rule 3: resolve-all-errors - check if we're creating code with error patterns
+  if (args?.content) {
+    const errorPatterns = [
+      /console\.log\s*\(/g,
+      /TODO\s*:/gi,
+      /FIXME\s*:/gi,
+      /throw\s+new\s+Error\s*\(\s*['"]test['"]\s*\)/gi
+    ];
+    
+    for (const pattern of errorPatterns) {
+      if (pattern.test(args.content)) {
+        violations.push(`resolve-all-errors: Found debug/error pattern (${pattern.source}) in code`);
+        logger.log(`⚠️ ENFORCER: resolve-all-errors violation detected`);
+        break;
+      }
+    }
+  }
+
+  const passed = violations.length === 0;
+  
+  if (!passed) {
+    logger.error(`🚫 Quality Gate FAILED with ${violations.length} violations`);
+  } else {
+    logger.log(`✅ Quality Gate PASSED`);
+  }
+
+  return { passed, violations };
+}
+
 interface CodexContextEntry {
   id: string;
   source: string;
@@ -387,6 +454,14 @@ export default async function strrayCodexPlugin(input: {
       }
 
       const { tool, args } = input;
+
+      // ENFORCER QUALITY GATE CHECK - Block on violations
+      const qualityGateResult = await runEnforcerQualityGate(input, logger);
+      if (!qualityGateResult.passed) {
+        logger.error(`🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`);
+        throw new Error(`ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`);
+      }
+      logger.log(`✅ Quality gate passed for ${tool}`);
 
       if (["write", "edit", "multiedit"].includes(tool)) {
         if (!ProcessorManager || !StrRayStateManager) {

@@ -7,7 +7,7 @@
     "timestamp": 1770067985393
   },
   "strray:config": {
-    "version": "1.4.8",
+    "version": "1.4.9",
     "codex_enabled": true,
     "codex_version": "v1.3.0",
     "codex_terms": [
@@ -111,7 +111,7 @@
       ]
     }
   },
-  "strray:version": "1.4.8",
+  "strray:version": "1.4.9",
   "strray:codex_enabled": true,
   "strray:codex_terms": [
     1,
