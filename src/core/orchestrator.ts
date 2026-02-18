@@ -196,6 +196,9 @@ export class StringRayOrchestrator {
     tasks: TaskDefinition[],
     sessionId?: string,
   ): Promise<OrchestrationResult[]> {
+    // Validate that all task dependencies are within this orchestrator's batch
+    this.validateTaskDependencies(tasks);
+
     frameworkLogger.log("orchestrator", "complex-task-started", "info", {
       description,
       taskCount: tasks.length,
@@ -294,6 +297,49 @@ export class StringRayOrchestrator {
     }
 
     return result;
+  }
+
+  /**
+   * Validates that all task dependencies are within the current task batch.
+   * Prevents cross-orchestrator dependency errors by failing fast with a clear message.
+   */
+  private validateTaskDependencies(tasks: TaskDefinition[]): void {
+    const taskIds = new Set(tasks.map(t => t.id));
+    const errors: string[] = [];
+
+    for (const task of tasks) {
+      if (task.dependencies && task.dependencies.length > 0) {
+        for (const dep of task.dependencies) {
+          if (!taskIds.has(dep)) {
+            errors.push(
+              `Task "${task.id}" depends on "${dep}" which is NOT in this orchestrator's task batch.\n` +
+              `Available tasks in this batch: ${Array.from(taskIds).join(", ")}`
+            );
+          }
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      const errorMessage = 
+        `[TEST ARCHITECTURE ERROR] Cross-orchestrator dependencies detected.\n\n` +
+        `${errors.join("\n\n")}\n\n` +
+        `This usually means:\n` +
+        `1. You're creating multiple orchestrator instances in one test\n` +
+        `2. Task dependencies are crossing orchestrator boundaries\n\n` +
+        `FIX: Either:\n` +
+        `A) Include the missing dependency task in this executeComplexTask() call\n` +
+        `B) Use a single orchestrator for all dependent tasks\n` +
+        `C) Remove the dependency if it's not needed\n\n` +
+        `Example of correct usage:\n` +
+        `  const orch = new StringRayOrchestrator();\n` +
+        `  await orch.executeComplexTask("test", [\n` +
+        `    { id: "task-1" },\n` +
+        `    { id: "task-2", dependencies: ["task-1"] }  // ✅ Same orchestrator\n` +
+        `  ]);`;
+      
+      throw new Error(errorMessage);
+    }
   }
 
   async executeComplexTaskSingle(

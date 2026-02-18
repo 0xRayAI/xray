@@ -23,8 +23,9 @@ describe("Complexity Analysis Integration", () => {
 
     const score = complexityAnalyzer.calculateComplexityScore(metrics);
     expect(score.score).toBeGreaterThan(0);
-    expect(score.score).toBeLessThan(20);
+    expect(score.score).toBeLessThan(35); // Updated for calibrated weights (was 20)
     expect(score.level).toBeDefined();
+    expect(["simple", "moderate"]).toContain(score.level);
   });
 
   test("should analyze complex file complexity correctly", () => {

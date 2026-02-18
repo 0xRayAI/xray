@@ -125,8 +125,8 @@ export class FrameworkUsageLogger {
       return;
     }
 
-    // Auto-generate jobId if not provided
-    const actualJobId = jobId || generateJobId("auto");
+    // Use current job context if available, otherwise auto-generate
+    const actualJobId = jobId || getCurrentJobId() || generateJobId("auto");
 
     // Ensure we always have a jobId
     if (!actualJobId) {

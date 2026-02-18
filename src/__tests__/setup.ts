@@ -51,17 +51,8 @@ beforeAll(() => {
     fs.writeFileSync(codexPath, codexContent);
   }
 
-  const openCodeConfig = {
-    plugin: "./dist/plugin/plugins/strray-codex-injection.js",
-    agents: ["enforcer", "architect", "orchestrator"],
-  };
-  const openCodePath = path.resolve(".opencode/OpenCode.json");
-  if (!fs.existsSync(openCodePath)) {
-    fs.writeFileSync(
-      openCodePath,
-      JSON.stringify(openCodeConfig, null, 2),
-    );
-  }
+  // Note: .opencode/OpenCode.json creation removed
+  // The framework now uses opencode.json in the project root instead
 });
 
 afterAll(() => {

@@ -464,18 +464,23 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
 
   /**
    * Parse a single log line into structured format
+   * 
+   * Actual log format: "2026-02-17T11:50:24.155Z [job-id] [component] message - LEVEL"
+   * Example: "2026-02-17T11:50:24.155Z [auto-1771329024155-yml87t] [state-manager] persistence loaded - SUCCESS"
    */
   private parseLogLine(line: string): any | null {
-    // Actual log format: "2026-01-21T19:52:33.175Z [component] message - LEVEL"
+    // Fixed regex: accounts for jobId between timestamp and component
+    // Groups: 1=timestamp, 2=jobId, 3=component, 4=message, 5=level
     const logRegex =
-      /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
+      /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
     const match = line.match(logRegex);
 
-    if (match && match[1] && match[2] && match[3] && match[4]) {
+    if (match && match[1] && match[2] && match[3] && match[4] && match[5]) {
       const timestamp = match[1];
-      const component = match[2];
-      const message = match[3] as string; // Type assertion since we checked match[3] exists
-      const level = match[4];
+      const jobId = match[2];
+      const component = match[3];
+      const message = match[4] as string;
+      const level = match[5];
 
       const action = message.includes(":")
         ? (message.split(":")[0] || "").trim()
@@ -486,12 +491,42 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
 
       return {
         timestamp: new Date(timestamp).getTime(),
+        jobId: jobId.trim(),
         component: component.trim(),
         action: action,
         message: message.trim(),
         level: level.toLowerCase(),
         status: status,
         agent: this.inferAgent(component), // Try to infer agent from component
+      };
+    }
+
+    // Fallback: try original regex for backwards compatibility with simpler logs
+    const fallbackRegex =
+      /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
+    const fallbackMatch = line.match(fallbackRegex);
+    
+    if (fallbackMatch && fallbackMatch[1] && fallbackMatch[2] && fallbackMatch[3] && fallbackMatch[4]) {
+      const timestamp = fallbackMatch[1];
+      const component = fallbackMatch[2];
+      const message = fallbackMatch[3];
+      const level = fallbackMatch[4];
+
+      const action = message.includes(":")
+        ? (message.split(":")[0] || "").trim()
+        : message.trim();
+
+      const status = this.levelToStatus(level);
+
+      return {
+        timestamp: new Date(timestamp).getTime(),
+        jobId: null,
+        component: component.trim(),
+        action: action,
+        message: message.trim(),
+        level: level.toLowerCase(),
+        status: status,
+        agent: this.inferAgent(component),
       };
     }
 

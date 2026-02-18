@@ -39,10 +39,17 @@ export interface ComplexityThresholds {
 }
 
 export class ComplexityAnalyzer {
+  /**
+   * CALIBRATED: Adjusted thresholds for balanced orchestration utilization
+   * - simple: 20 (was 25) - only truly trivial tasks
+   * - moderate: 35 (was 50) - medium complexity triggers earlier
+   * - complex: 75 (was 95) - complex tasks get multi-agent coordination
+   * - enterprise: 100 (unchanged) - maximum complexity (only extreme cases)
+   */
   private thresholds: ComplexityThresholds = {
-    simple: 25,
-    moderate: 50,
-    complex: 95,
+    simple: 20,
+    moderate: 35,
+    complex: 75,
     enterprise: 100,
   };
 
@@ -80,28 +87,33 @@ export class ComplexityAnalyzer {
 
   /**
    * Calculate complexity score and delegation strategy
+   * 
+   * CALIBRATED: Weights increased to properly utilize orchestration
+   * - File count: 4 pts/file (was 2) - better reflects multi-file complexity
+   * - Change volume: 0.2/line (was 0.1) - better reflects code volume
+   * - Dependencies: 5 each (was 3) - better reflects coordination needs
    */
   calculateComplexityScore(metrics: ComplexityMetrics): ComplexityScore {
     // Base score calculation
     let score = 0;
 
-    // File count contribution (0-20 points)
-    score += Math.min(metrics.fileCount * 2, 20);
+    // File count contribution (0-40 points) - INCREASED from 0-20
+    score += Math.min(metrics.fileCount * 4, 40);
 
-    // Change volume contribution (0-25 points)
-    score += Math.min(metrics.changeVolume / 10, 25);
+    // Change volume contribution (0-50 points) - INCREASED from 0-25
+    score += Math.min(metrics.changeVolume / 5, 50);
+
+    // Dependencies contribution (0-25 points) - INCREASED from 0-15
+    score += Math.min(metrics.dependencies * 5, 25);
+
+    // Duration contribution (0-15 points) - BEFORE multipliers for consistency
+    score += Math.min(metrics.estimatedDuration / 10, 15);
 
     // Operation type weight (multiplier)
     score *= this.operationWeights[metrics.operationType];
 
-    // Dependencies contribution (0-15 points)
-    score += Math.min(metrics.dependencies * 3, 15);
-
     // Risk level multiplier
     score *= this.riskMultipliers[metrics.riskLevel];
-
-    // Duration contribution (0-15 points)
-    score += Math.min(metrics.estimatedDuration / 10, 15);
 
     // Normalize to 0-100
     score = Math.min(Math.max(score, 0), 100);
@@ -140,8 +152,17 @@ export class ComplexityAnalyzer {
     };
   }
 
+  /**
+   * Update thresholds based on historical performance data
+   * TODO: Implement calibration based on actual task completion times
+   * 
+   * This would analyze completed tasks and their scores vs actual duration
+   * to automatically calibrate thresholds for optimal routing.
+   */
   updateThresholds(performanceData: any): void {
-    // Implementation would update thresholds based on performance data
+    // Placeholder for future calibration implementation
+    // Would analyze: task score vs completion time vs success rate
+    // to automatically adjust thresholds
   }
 
   /**
@@ -160,8 +181,12 @@ export class ComplexityAnalyzer {
 
   // Private helper methods
 
+  /**
+   * Calculate file count from context
+   * FIXED: Handle empty arrays by falling back to description inference
+   */
   private calculateFileCount(context: any): number {
-    if (context.files && Array.isArray(context.files)) {
+    if (context.files && Array.isArray(context.files) && context.files.length > 0) {
       return context.files.length;
     }
     if (context.fileCount) {
@@ -170,13 +195,24 @@ export class ComplexityAnalyzer {
 
     const description = context.description || "";
     const desc = description.toLowerCase();
-    if (desc.includes("single file")) return 1;
-    if (desc.includes("multiple files")) return 5;
-    if (desc.includes("entire module")) return 10;
-    if (desc.includes("system-wide")) return 20;
+    
+    // Enhanced inference with more patterns
+    if (desc.includes("single file") || desc.includes("one file")) return 1;
+    if (desc.includes("couple files") || desc.includes("few files")) return 2;
+    if (desc.includes("several files")) return 4;
+    if (desc.includes("multiple files") || desc.includes("various files")) return 5;
+    if (desc.includes("many files")) return 8;
+    if (desc.includes("entire module") || desc.includes("whole module")) return 10;
+    if (desc.includes("system-wide") || desc.includes("across system")) return 20;
+    
+    // Default: assume single file for safety
     return 1;
   }
 
+  /**
+   * Calculate change volume from context
+   * ENHANCED: Better defaults based on operation type and description
+   */
   private calculateChangeVolume(context: any): number {
     if (context.changeVolume) {
       return context.changeVolume;
@@ -186,13 +222,25 @@ export class ComplexityAnalyzer {
     }
 
     const operation = context.operation || "";
-    if (operation.includes("create")) return 50;
-    if (operation.includes("modify")) return 100;
-    if (operation.includes("refactor")) return 200;
-    if (operation.includes("analyze")) return 0;
-    if (operation.includes("debug")) return 20;
-    if (operation.includes("test")) return 30;
-    return 50;
+    const desc = (context.description || "").toLowerCase();
+    const opLower = operation.toLowerCase();
+    
+    // Size indicators in description
+    if (desc.includes("large") || desc.includes("extensive")) return 500;
+    if (desc.includes("medium") || desc.includes("significant")) return 200;
+    if (desc.includes("small") || desc.includes("minor")) return 50;
+    if (desc.includes("tiny") || desc.includes("trivial")) return 10;
+
+    // Operation-based defaults
+    if (opLower.includes("create")) return 100; // Creating new code
+    if (opLower.includes("modify")) return 75;  // Modifying existing
+    if (opLower.includes("refactor")) return 150; // Refactoring tends to be larger
+    if (opLower.includes("analyze")) return 25; // Analysis may involve some changes
+    if (opLower.includes("debug")) return 50;   // Debugging fixes
+    if (opLower.includes("test")) return 80;    // Tests can be substantial
+    if (opLower.includes("documentation")) return 30; // Docs
+    
+    return 50; // default
   }
 
   private determineOperationType(
@@ -232,6 +280,10 @@ export class ComplexityAnalyzer {
     return 1;
   }
 
+  /**
+   * Assess risk level based on operation type and description
+   * ENHANCED: Added missing high-risk keywords for better accuracy
+   */
   private assessRiskLevel(context: any): ComplexityMetrics["riskLevel"] {
     if (context.riskLevel) {
       return context.riskLevel;
@@ -239,30 +291,50 @@ export class ComplexityAnalyzer {
 
     const operation = context.operation || "";
     const description = context.description || "";
+    const opLower = operation.toLowerCase();
+    const descLower = description.toLowerCase();
 
+    // CRITICAL: Database, migrations, and infrastructure changes
     if (
-      operation.includes("database") ||
-      operation.includes("migration") ||
-      description.includes("breaking change") ||
-      description.includes("critical")
+      opLower.includes("database") ||
+      opLower.includes("migration") ||
+      opLower.includes("deploy") ||
+      opLower.includes("release") ||
+      opLower.includes("production") ||
+      descLower.includes("breaking change") ||
+      descLower.includes("critical")
     ) {
       return "critical";
     }
 
+    // HIGH: Security, payment, authentication, and API changes
     if (
-      operation.includes("api") ||
-      operation.includes("security") ||
-      description.includes("complex") ||
-      description.includes("multiple files")
+      opLower.includes("api") ||
+      opLower.includes("security") ||
+      opLower.includes("auth") ||
+      opLower.includes("payment") ||
+      opLower.includes("billing") ||
+      opLower.includes("user") ||
+      opLower.includes("login") ||
+      opLower.includes("password") ||
+      opLower.includes("token") ||
+      opLower.includes("session") ||
+      opLower.includes("permission") ||
+      descLower.includes("complex") ||
+      descLower.includes("multiple files")
     ) {
       return "high";
     }
 
+    // LOW: Documentation and trivial changes
     if (
-      operation.includes("documentation") ||
-      operation.includes("comment") ||
-      description.includes("simple") ||
-      description.includes("single file")
+      opLower.includes("documentation") ||
+      opLower.includes("comment") ||
+      opLower.includes("readme") ||
+      opLower.includes("typo") ||
+      descLower.includes("simple") ||
+      descLower.includes("single file") ||
+      descLower.includes("fix typo")
     ) {
       return "low";
     }
