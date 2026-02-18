@@ -11,6 +11,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 // Environment-aware path configuration for cross-environment compatibility
 // From dist/mcps/ (built): ../../orchestrator/
 // From src/mcps/ (source): ../orchestrator/
@@ -45,7 +46,9 @@ class EnhancedMultiAgentOrchestratorServer {
     );
 
     this.setupToolHandlers();
-    console.log("Enhanced Multi-Agent Orchestrator MCP Server initialized");
+    void frameworkLogger.log("enhanced-orchestrator.server", "initialize", "info", {
+      message: "Enhanced Multi-Agent Orchestrator MCP Server initialized",
+    });
   }
 
   private setupToolHandlers() {
@@ -287,14 +290,22 @@ class EnhancedMultiAgentOrchestratorServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("Enhanced Multi-Agent Orchestrator MCP Server running");
+    await frameworkLogger.log("enhanced-orchestrator.server", "start", "info", {
+      message: "Enhanced Multi-Agent Orchestrator MCP Server running",
+    });
   }
 }
 
 // Start the server if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new EnhancedMultiAgentOrchestratorServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => {
+    void frameworkLogger.log("enhanced-orchestrator.server", "fatal-error", "error", {
+      message: "Server failed to start",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    process.exit(1);
+  });
 }
 
 export { EnhancedMultiAgentOrchestratorServer };

@@ -14,7 +14,7 @@ class FrameworkHelpServer {
     this.server = new Server(
       {
         name: "strray/framework-help",
-        version: "1.1.1",
+        version: "1.4.22",
       },
       {
         capabilities: {

@@ -14,7 +14,7 @@ export class StringRayStateManager implements StateManager {
   private initialized = false;
   private earlyOperationsQueue: string[] = []; // Queue keys that need persistence after init
 
-  static readonly VERSION = "1.1.1";
+  static readonly VERSION = "1.5.0";
 
   constructor(persistencePath = ".opencode/state", persistenceEnabled = true) {
     this.persistencePath = persistencePath;
@@ -179,13 +179,14 @@ export class StringRayStateManager implements StateManager {
   }
 
   clear(key: string): void {
-    // Ensure persistence is initialized
+    // If not initialized yet, queue the operation
     if (!this.initialized) {
+      this.earlyOperationsQueue.push(key);
       frameworkLogger.log(
         "state-manager",
-        "clear called before initialization",
-        "error",
-        { key },
+        "clear queued for initialization",
+        "info",
+        { key, queueSize: this.earlyOperationsQueue.length },
       );
       return;
     }

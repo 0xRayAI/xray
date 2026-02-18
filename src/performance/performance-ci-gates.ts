@@ -216,26 +216,30 @@ export class PerformanceCIGates {
     );
     await frameworkLogger.log(
       "performance-ci-gates",
-      "-budget-check-result-budgetcheck-passed-passed-fai",
-      "error",
+      "budget-check-result",
+      result.budgetCheck.passed ? "success" : "error",
       {
         message: `   Budget Check: ${result.budgetCheck.passed ? "✅ PASSED" : "❌ FAILED"}`,
+        passed: result.budgetCheck.passed,
+        violations: result.budgetCheck.violations,
       },
     );
     await frameworkLogger.log(
       "performance-ci-gates",
-      "-regression-check-result-regressioncheck-passed-pa",
-      "error",
+      "regression-check-result",
+      result.regressionCheck.passed ? "success" : "error",
       {
         message: `   Regression Check: ${result.regressionCheck.passed ? "✅ PASSED" : "❌ FAILED"}`,
+        passed: result.regressionCheck.passed,
       },
     );
     await frameworkLogger.log(
       "performance-ci-gates",
-      "-overall-result-result-success-success-failure-",
-      "error",
+      "overall-result",
+      result.success ? "success" : "error",
       {
         message: `   Overall Result: ${result.success ? "✅ SUCCESS" : "❌ FAILURE"}`,
+        success: result.success,
       },
     );
 
@@ -341,10 +345,15 @@ export class PerformanceCIGates {
     );
     await frameworkLogger.log(
       "performance-ci-gates",
-      "-violations-violations-length-criticalviolations-c",
-      "error",
+      "violations-summary",
+      passed ? "info" : "error",
       {
         message: `   🚨 Violations: ${violations.length} (${criticalViolations} critical, ${errorViolations} error, ${warningViolations} warning)`,
+        totalViolations: violations.length,
+        criticalViolations,
+        errorViolations,
+        warningViolations,
+        passed,
       },
     );
     await frameworkLogger.log(
@@ -402,12 +411,14 @@ export class PerformanceCIGates {
       "info",
       { message: `   ⚠️ Warnings: ${suiteResult.summary.warnings}` },
     );
-    await frameworkLogger.log(
-      "performance-ci-gates",
-      "-failed-suiteresult-summary-failed-",
-      "error",
-      { message: `   ❌ Failed: ${suiteResult.summary.failed}` },
-    );
+    if (suiteResult.summary.failed > 0) {
+      await frameworkLogger.log(
+        "performance-ci-gates",
+        "tests-failed",
+        "error",
+        { message: `   ❌ Failed: ${suiteResult.summary.failed}` },
+      );
+    }
     await frameworkLogger.log(
       "performance-ci-gates",
       "-average-deviation-suiteresult-summary-averagedevi",

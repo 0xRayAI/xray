@@ -6,7 +6,7 @@ export class StringRayStateManager {
     writeQueue = new Map();
     initialized = false;
     earlyOperationsQueue = []; // Queue keys that need persistence after init
-    static VERSION = "1.1.1";
+    static VERSION = "1.5.0";
     constructor(persistencePath = ".opencode/state", persistenceEnabled = true) {
         this.persistencePath = persistencePath;
         this.persistenceEnabled = persistenceEnabled;
@@ -140,9 +140,10 @@ export class StringRayStateManager {
         });
     }
     clear(key) {
-        // Ensure persistence is initialized
+        // If not initialized yet, queue the operation
         if (!this.initialized) {
-            frameworkLogger.log("state-manager", "clear called before initialization", "error", { key });
+            this.earlyOperationsQueue.push(key);
+            frameworkLogger.log("state-manager", "clear queued for initialization", "info", { key, queueSize: this.earlyOperationsQueue.length });
             return;
         }
         const existed = this.store.has(key);

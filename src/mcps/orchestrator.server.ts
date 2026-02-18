@@ -10,6 +10,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 class StrRayOrchestratorServer {
   private server: Server;
@@ -32,7 +33,9 @@ class StrRayOrchestratorServer {
 
     this.initializeAgentCapabilities();
     this.setupToolHandlers();
-    console.log("StringRay Orchestrator MCP Server initialized");
+    void frameworkLogger.log("orchestrator.server", "initialize", "info", {
+      message: "StringRay Orchestrator MCP Server initialized",
+    });
   }
 
   private initializeAgentCapabilities() {
@@ -237,7 +240,7 @@ class StrRayOrchestratorServer {
     const executionMode = args.executionMode || "optimized";
     const timeout = args.timeout || 300000;
 
-    console.log("🎯 MCP: Orchestrating complex task:", {
+    await frameworkLogger.log("orchestrator.server", "orchestrate-task-start", "info", {
       description,
       taskCount: tasks.length,
       sessionId,
@@ -332,7 +335,7 @@ ${orchestrationResult.recommendations.length > 0 ? orchestrationResult.recommend
   private async handleAnalyzeComplexity(args: any) {
     const tasks = args.tasks || [];
 
-    console.log("🔍 MCP: Analyzing task complexity:", {
+    await frameworkLogger.log("orchestrator.server", "analyze-complexity-start", "info", {
       taskCount: tasks.length,
     });
 
@@ -390,7 +393,7 @@ ${recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     const sessionId = args.sessionId;
     const detailed = args.detailed || false;
 
-    console.log("📊 MCP: Getting orchestration status:", {
+    await frameworkLogger.log("orchestrator.server", "get-status-start", "info", {
       sessionId,
       detailed,
     });
@@ -445,7 +448,7 @@ ${recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     const taskId = args.taskId;
     const force = args.force || false;
 
-    console.log("🛑 MCP: Cancelling orchestration:", {
+    await frameworkLogger.log("orchestrator.server", "cancel-orchestration-start", "info", {
       sessionId,
       taskId,
       force,
@@ -521,7 +524,7 @@ ${recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     const includeHistory = args.history !== false;
     const includeRecommendations = args.recommendations !== false;
 
-    console.log("⚡ MCP: Optimizing orchestration patterns:", {
+    await frameworkLogger.log("orchestrator.server", "optimize-patterns-start", "info", {
       includeHistory,
       includeRecommendations,
     });
@@ -713,9 +716,11 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
       // Execute phases
       for (let i = 0; i < plan.phases.length; i++) {
         const phase = plan.phases[i];
-        console.log(
-          `Executing phase ${i + 1}/${plan.phases.length} with ${phase.length} tasks`,
-        );
+        await frameworkLogger.log("orchestrator.server", "execute-phase", "info", {
+          phase: i + 1,
+          totalPhases: plan.phases.length,
+          taskCount: phase.length,
+        });
 
         // Execute tasks in phase (simplified - in real implementation would coordinate actual agents)
         for (const task of phase) {
@@ -1088,14 +1093,20 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Orchestrator MCP Server started");
+    await frameworkLogger.log("orchestrator.server", "start", "info", {
+      message: "StrRay Orchestrator MCP Server started",
+    });
 
     const cleanup = async (signal: string) => {
-      console.log(`Received ${signal}, shutting down gracefully...`);
+      await frameworkLogger.log("orchestrator.server", "shutdown", "info", {
+        message: `Received ${signal}, shutting down gracefully...`,
+      });
 
       // Set a timeout to force exit if graceful shutdown fails
-      const timeout = setTimeout(() => {
-        console.error("Graceful shutdown timeout, forcing exit...");
+      const timeout = setTimeout(async () => {
+        await frameworkLogger.log("orchestrator.server", "shutdown-timeout", "error", {
+          message: "Graceful shutdown timeout, forcing exit...",
+        });
         process.exit(1);
       }, 5000); // 5 second timeout
 
@@ -1104,11 +1115,16 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
           await this.server.close();
         }
         clearTimeout(timeout);
-        console.log("StrRay Orchestrator MCP Server shut down gracefully");
+        await frameworkLogger.log("orchestrator.server", "shutdown-complete", "success", {
+          message: "StrRay Orchestrator MCP Server shut down gracefully",
+        });
         process.exit(0);
       } catch (error) {
         clearTimeout(timeout);
-        console.error("Error during server shutdown:", error);
+        await frameworkLogger.log("orchestrator.server", "shutdown-error", "error", {
+          message: "Error during server shutdown",
+          error: error instanceof Error ? error.message : String(error),
+        });
         process.exit(1);
       }
     };
@@ -1119,15 +1135,15 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
     process.on("SIGHUP", () => cleanup("SIGHUP"));
 
     // Monitor parent process (opencode) and shutdown if it dies
-    const checkParent = () => {
+    const checkParent = async () => {
       try {
         process.kill(process.ppid, 0); // Check if parent is alive
         setTimeout(checkParent, 1000); // Check again in 1 second
       } catch (error) {
         // Parent process died, shut down gracefully
-        console.log(
-          "Parent process (opencode) died, shutting down MCP server...",
-        );
+        await frameworkLogger.log("orchestrator.server", "parent-died", "error", {
+          message: "Parent process (opencode) died, shutting down MCP server...",
+        });
         cleanup("parent-process-death");
       }
     };
@@ -1137,12 +1153,19 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
 
     // Handle uncaught exceptions and unhandled rejections
     process.on("uncaughtException", (error) => {
-      console.error("Uncaught Exception:", error);
+      void frameworkLogger.log("orchestrator.server", "uncaught-exception", "error", {
+        message: "Uncaught Exception",
+        error: error instanceof Error ? error.message : String(error),
+      });
       cleanup("uncaughtException");
     });
 
     process.on("unhandledRejection", (reason, promise) => {
-      console.error("Unhandled Rejection at:", promise, "reason:", reason);
+      void frameworkLogger.log("orchestrator.server", "unhandled-rejection", "error", {
+        message: "Unhandled Rejection",
+        reason: String(reason),
+        promise: String(promise),
+      });
       cleanup("unhandledRejection");
     });
 
@@ -1154,7 +1177,13 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayOrchestratorServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => {
+    void frameworkLogger.log("orchestrator.server", "fatal-error", "error", {
+      message: "Server failed to start",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    process.exit(1);
+  });
 }
 
 export { StrRayOrchestratorServer };
