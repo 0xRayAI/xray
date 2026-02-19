@@ -48,7 +48,7 @@
     }
   },
   "strray:config": {
-    "version": "1.4.18",
+    "version": "1.5.1",
     "codex_enabled": true,
     "codex_version": "v1.3.0",
     "codex_terms": [
@@ -152,7 +152,7 @@
       ]
     }
   },
-  "strray:version": "1.4.18",
+  "strray:version": "1.5.1",
   "strray:codex_enabled": true,
   "strray:codex_terms": [
     1,

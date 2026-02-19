@@ -14,7 +14,7 @@ export class StringRayStateManager implements StateManager {
   private initialized = false;
   private earlyOperationsQueue: string[] = []; // Queue keys that need persistence after init
 
-  static readonly VERSION = "1.5.0";
+  static readonly VERSION = "1.5.1";
 
   constructor(persistencePath = ".opencode/state", persistenceEnabled = true) {
     this.persistencePath = persistencePath;

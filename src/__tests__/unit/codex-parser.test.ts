@@ -14,7 +14,7 @@ vi.spyOn(console, "log").mockImplementation(() => {});
 describe("StringRay Codex Parser", () => {
   describe("detectContentFormat", () => {
     it("should detect JSON format with high confidence", () => {
-      const jsonContent = '{"version": "1.4.18", "terms": {}}';
+      const jsonContent = '{"version": "1.5.1", "terms": {}}';
       const result = detectContentFormat(jsonContent);
 
       expect(result.format).toBe("json");
@@ -33,7 +33,7 @@ Description of term.`;
     });
 
     it("should detect markdown when JSON parsing fails despite JSON-like start", () => {
-      const mixedContent = `{"version": "1.4.18"}
+      const mixedContent = `{"version": "1.5.1"}
 **Version**: 1.2.20
 #### 1. Test Term`;
       const result = detectContentFormat(mixedContent);
