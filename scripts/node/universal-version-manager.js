@@ -15,19 +15,20 @@ import fs from "fs";
 import path from "path";
 
 // Official version information - SINGLE SOURCE OF TRUTH
+// UPDATE THIS WHEN RELEASING NEW VERSIONS
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.4.18",
-    displayName: "StringRay AI v1.4.18",
-    lastUpdated: "2026-02-17",
+    version: "1.5.0",
+    displayName: "StringRay AI v1.5.0",
+    lastUpdated: "2026-02-18",
   },
 
   // Codex versions
   codex: {
     version: "v1.3.0",
     termsCount: 55,
-    lastUpdated: "2026-02-01",
+    lastUpdated: "2026-02-18",
   },
 
   // External dependencies
@@ -155,11 +156,54 @@ async function standardizeVersions() {
     `📋 Codex: ${OFFICIAL_VERSIONS.codex.version} (${OFFICIAL_VERSIONS.codex.termsCount} terms)`,
   );
   console.log(
-    `📋 OpenCode: v${OFFICIAL_VERSIONS.dependencies.ohMyOpencode}`,
+    `📋 OpenCode: v${OFFICIAL_VERSIONS.dependencies.opencode}`,
   );
   console.log("=".repeat(60));
 
-  // Find all files that might contain version references
+  // Phase 1: Explicitly update critical .opencode config files
+  console.log("\n📁 Phase 1: Updating .opencode configuration files...");
+  const criticalConfigFiles = [
+    ".opencode/strray/codex.json",
+    ".opencode/package.json",
+    ".opencode/strray/features.json",
+  ];
+  
+  let configFilesUpdated = 0;
+  for (const configFile of criticalConfigFiles) {
+    if (fs.existsSync(configFile)) {
+      try {
+        const content = fs.readFileSync(configFile, "utf8");
+        let updatedContent = content;
+        let fileChanged = false;
+        
+        // Apply all patterns to config files
+        for (const { pattern, replacement } of UPDATE_PATTERNS) {
+          const matches = content.match(pattern);
+          if (matches) {
+            updatedContent = updatedContent.replace(pattern, replacement);
+            fileChanged = true;
+          }
+        }
+        
+        if (fileChanged) {
+          fs.writeFileSync(configFile, updatedContent, "utf8");
+          console.log(`✅ Updated: ${configFile}`);
+          configFilesUpdated++;
+        }
+      } catch (error) {
+        console.error(`❌ Error processing ${configFile}:`, error.message);
+      }
+    } else {
+      console.log(`⚠️  Not found: ${configFile}`);
+    }
+  }
+  
+  if (configFilesUpdated > 0) {
+    console.log(`✅ Updated ${configFilesUpdated} critical config files`);
+  }
+
+  // Phase 2: Find all other files that might contain version references
+  console.log("\n📁 Phase 2: Scanning all other files...");
   const extensions = [".ts", ".js", ".md", ".json", ".txt", ".sh"];
   const files = findFiles(".", extensions);
 
@@ -224,8 +268,9 @@ async function standardizeVersions() {
   console.log("\n" + "=".repeat(60));
   console.log("🎉 Universal Version Standardization Complete!");
   console.log(`📊 Summary:`);
-  console.log(`   Files Updated: ${totalFilesUpdated}`);
-  console.log(`   Total Changes: ${totalChanges}`);
+  console.log(`   Config Files Updated: ${configFilesUpdated}`);
+  console.log(`   Other Files Updated: ${totalFilesUpdated}`);
+  console.log(`   Total Changes: ${totalChanges + configFilesUpdated}`);
   console.log(`   Framework Version: ${OFFICIAL_VERSIONS.framework.version}`);
   console.log(
     `   Codex Version: ${OFFICIAL_VERSIONS.codex.version} (${OFFICIAL_VERSIONS.codex.termsCount} terms)`,
