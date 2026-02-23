@@ -11,6 +11,9 @@ import { logMonitorAgent } from "./log-monitor.js";
 import { librarian } from "./librarian.js";
 import { multimodalLooker } from "./multimodal-looker.js";
 import { analyzer } from "./analyzer.js";
+import { seoSpecialist } from "./seo-specialist.js";
+import { seoCopywriter } from "./seo-copywriter.js";
+import { marketingExpert } from "./marketing-expert.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   enforcer,
@@ -25,6 +28,9 @@ export const builtinAgents: Record<string, AgentConfig> = {
   librarian,
   "multimodal-looker": multimodalLooker,
   analyzer: analyzer,
+  "seo-specialist": seoSpecialist,
+  "seo-copywriter": seoCopywriter,
+  "marketing-expert": marketingExpert,
 };
 
 export {
@@ -40,4 +46,7 @@ export {
   librarian,
   multimodalLooker,
   analyzer,
+  seoSpecialist,
+  seoCopywriter,
+  marketingExpert,
 };

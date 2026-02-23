@@ -1,6 +1,6 @@
 {
   "$schema": "./features.schema.json",
-  "version": "1.5.2",
+  "version": "1.5.5",
   "description": "StringRay Framework - Unified Feature Configuration",
   
   "token_optimization": {
@@ -114,7 +114,17 @@
       "code-reviewer": "claude-sonnet-4",
       "security-auditor": "claude-opus-4",
       "refactorer": "claude-sonnet-4",
-      "test-architect": "claude-sonnet-4"
+      "test-architect": "claude-sonnet-4",
+      "librarian": "claude-haiku-4",
+      "multimodal-looker": "claude-sonnet-4",
+      "oracle": "claude-opus-4",
+      "document-writer": "claude-haiku-4",
+      "explore": "claude-haiku-4",
+      "analyzer": "claude-haiku-4",
+      "frontend-ui-ux-engineer": "claude-sonnet-4",
+      "seo-specialist": "claude-sonnet-4",
+      "seo-copywriter": "claude-haiku-4",
+      "marketing-expert": "claude-opus-4"
     },
     "performance_limits": {
       "max_task_duration_ms": 30000,
