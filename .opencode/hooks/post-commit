@@ -126,4 +126,3 @@ fi
       # Metrics collection - simplified, don't fail if unavailable
       echo "✅ Post-commit hook completed in ${DURATION}s"
       [ $EXIT_CODE -eq 0 ] && exit 0 || exit 1
-      exit 0
