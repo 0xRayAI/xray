@@ -29,13 +29,20 @@ export const testAutoCreationProcessor = {
     );
 
     try {
+      // Handle both direct context and context.data (from ProcessorManager)
+      // ProcessorManager passes: { operation, data: { directory, filePath, ... }, preResults }
+      const innerContext = context.data || context;
+      
       const {
         tool,
         args,
         directory,
         filePath: contextFilePath,
         operation,
-      } = context;
+      } = innerContext;
+
+      // Also check the outer context for backward compatibility
+      const outerFilePath = context.filePath || contextFilePath;
 
       // Use console.log for immediate feedback, frameworkLogger for persistence
       console.log(
@@ -52,8 +59,13 @@ export const testAutoCreationProcessor = {
       });
 
       // Get file path from various possible locations in context
+      // Check: innerContext.filePath, context.filePath, args.filePath, context.filePath
       const filePath =
-        contextFilePath || args?.filePath || args?.path || context.filePath;
+        outerFilePath || 
+        contextFilePath || 
+        args?.filePath || 
+        args?.path || 
+        innerContext.filePath;
 
       console.log(`[TEST-AUTO-CREATION] resolved filePath=${filePath}`);
 
