@@ -2,127 +2,55 @@
 # StrRay Post-Processor post-commit Hook
 # Automatically triggers post-processor after post-commit
 
-# Get hook type from script name
+set -e
+
 HOOK_NAME=$(basename "$0")
-COMMIT_SHA=""
-
-if [ "$HOOK_NAME" = "post-commit" ]; then
-  # Light monitoring for local commits - just basic validation
-  COMMIT_SHA=$(git rev-parse HEAD)
-  MONITORING_LEVEL="basic"
-elif [ "$HOOK_NAME" = "post-push" ]; then
-  # Full monitoring for pushes - comprehensive validation
-  # For push hooks, we need to parse the pushed refs from stdin
-  while read local_ref local_sha remote_ref remote_sha; do
-    if [ "$local_sha" != "0000000000000000000000000000000000000000" ]; then
-      COMMIT_SHA=$local_sha
-      break
-    fi
-  done
-  MONITORING_LEVEL="full"
-else
-  COMMIT_SHA=$(git rev-parse HEAD)
-  MONITORING_LEVEL="basic"
-fi
-
-if [ -z "$COMMIT_SHA" ]; then
-  echo "Warning: Could not determine commit SHA for post-processor"
-  exit 0
-fi
-
-# Get repository info
-REPO="strray-framework/stringray"  # Placeholder for now
+COMMIT_SHA=$(git rev-parse HEAD)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 AUTHOR=$(git log -1 --pretty=format:'%an <%ae>')
 
-# Get changed files (different logic for commit vs push)
-if [ "$HOOK_NAME" = "post-commit" ]; then
-  FILES=$(git diff --name-only HEAD~1 2>/dev/null || git diff --name-only --cached)
-else
-  FILES=$(git log --name-only --oneline -1 $COMMIT_SHA | tail -n +2)
+if [ -z "$COMMIT_SHA" ]; then
+  exit 0
 fi
 
-# Trigger post-processor asynchronously (don't block git operations)
-(
-  cd "$(dirname "$0")/../.." # Navigate to project root
+# Get changed files
+FILES=$(git diff --name-only HEAD~1 2>/dev/null || git diff --name-only --cached)
 
-  # Find the StrRay plugin in node_modules or current project (development)
-  STRRAY_PLUGIN=""
-  STRRAY_DIST=""
-  if [ -d "node_modules/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/strray-framework"
-    STRRAY_DIST="node_modules/strray-framework/dist"
-  elif [ -d "node_modules/strray-ai" ]; then
-    STRRAY_PLUGIN="node_modules/strray-ai"
-    STRRAY_DIST="node_modules/strray-ai/dist"
-  elif [ -d "node_modules/@strray/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/@strray/strray-framework"
-    STRRAY_DIST="node_modules/@strray/strray-framework/dist"
-  elif [ -d "node_modules/oh-my-opencode/plugins/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/oh-my-opencode/plugins/strray-framework"
-    STRRAY_DIST="node_modules/oh-my-opencode/plugins/strray-framework/dist"
-  elif [ -f "dist/postprocessor/PostProcessor.js" ]; then
-    # Development mode - use current project
-    STRRAY_PLUGIN="."
-    STRRAY_DIST="dist"
+# Find StrRay dist
+STRRAY_DIST=""
+for dir in "dist" "node_modules/strray-ai/dist" "node_modules/strray-framework/dist"; do
+  if [ -f "$dir/postprocessor/PostProcessor.js" ]; then
+    STRRAY_DIST=$dir
+    break
   fi
+done
 
-  if command -v node >/dev/null 2>&1 && [ -n "$STRRAY_PLUGIN" ]; then
-    # Call a separate script to avoid bash variable issues
-    export COMMIT_SHA="$COMMIT_SHA"
-    export REPO="$REPO"
-    export BRANCH="$BRANCH"
-    export AUTHOR="$AUTHOR"
-    export STRRAY_PLUGIN="$STRRAY_PLUGIN"
-    export STRRAY_DIST="$STRRAY_DIST"
-    export MONITORING_LEVEL="$MONITORING_LEVEL"
-    export IS_FULL_MONITORING="$([ "$MONITORING_LEVEL" = "full" ] && echo "true" || echo "false")"
+if [ -z "$STRRAY_DIST" ]; then
+  exit 0
+fi
 
-    # Run appropriate monitoring based on hook type
-    if [ "$HOOK_NAME" = "post-commit" ]; then
-      # LIGHT MONITORING: Quick validation, don't block git workflow
-      # Timeout: 2 seconds max, log metrics for monitoring
-      START_TIME=$(date +%s)
-      timeout 2 node -e "
-      (async () => {
-        try {
-          // Use PostProcessor from environment variable
-          const STRRAY_DIST = process.env.STRRAY_DIST || './dist';
-          const { PostProcessor } = await import(STRRAY_DIST + '/postprocessor/PostProcessor.js');
-          const { StrRayStateManager } = await import(STRRAY_DIST + '/state/state-manager.js');
-          
-          const stateManager = new StrRayStateManager();
-          const postProcessor = new PostProcessor(stateManager, null, {
-            reporting: { enabled: false }
-          });
-          
-          // Run quick validation through post-processor
-          const result = await postProcessor.validateArchitecturalCompliance({});
-          
-          if (result.warnings && result.warnings.length > 0) {
-            console.log('⚠️ ' + result.warnings.length + ' warning(s) found:');
-            result.warnings.forEach(w => console.log('   ' + w));
-          }
-          if (!result.passed) {
-            console.log('❌ ' + result.errors.length + ' error(s) found:');
-            result.errors.forEach(e => console.log('   ' + e));
-            process.exit(1);
-          }
-          console.log('✅ Post-commit: Validation passed');
-        } catch (error) {
-          // Don't fail on validation errors in post-commit - just log
-          console.log('✅ Post-commit: Validation skipped (' + (error instanceof Error ? error.message : 'error') + ')');
-        }
-      })();
-      " 2>/dev/null
-      EXIT_CODE=$?
-      END_TIME=$(date +%s)
-      DURATION=$((END_TIME - START_TIME))
+# Run post-processor in background with Node.js
+node --input-type=module << EOF &>/dev/null || true
+import { PostProcessor } from './$STRRAY_DIST/postprocessor/PostProcessor.js';
+import { StrRayStateManager } from './$STRRAY_DIST/state/state-manager.js';
 
-      # Log metrics for monitoring (convert to milliseconds)
-      DURATION_MS=$((DURATION * 1000))
-      echo "HOOK_METRICS: post-commit duration=${DURATION_MS}ms exit_code=${EXIT_CODE}" >&2
+const stateManager = new StrRayStateManager();
+const postProcessor = new PostProcessor(stateManager, null, { 
+  reporting: { enabled: false } 
+});
 
-      # Metrics collection - simplified, don't fail if unavailable
-      echo "✅ Post-commit hook completed in ${DURATION}s"
-      [ $EXIT_CODE -eq 0 ] && exit 0 || exit 1
+const files = \`$FILES\`.split('\n').filter(f => f.endsWith('.ts') && !f.includes('.test.'));
+
+await postProcessor.executePostProcessorLoop({
+  commitSha: '$COMMIT_SHA',
+  repository: 'strray-framework/stringray',
+  branch: '$BRANCH',
+  author: '$AUTHOR',
+  files: files,
+  trigger: 'git-hook'
+});
+
+console.log('Post-processor completed for', files.length, 'files');
+EOF
+
+exit 0
