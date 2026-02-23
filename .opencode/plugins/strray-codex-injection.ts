@@ -346,11 +346,49 @@ export default async function strrayCodexPlugin(input: {
         const stateManager = new StrRayStateManager(path.join(directory, ".opencode", "state"));
         const processorManager = new ProcessorManager(stateManager);
 
+        // Register processors (same as boot-orchestrator)
+        processorManager.registerProcessor({
+          name: "preValidate",
+          type: "pre",
+          priority: 10,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "codexCompliance",
+          type: "pre",
+          priority: 20,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "versionCompliance",
+          type: "pre",
+          priority: 25,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "testAutoCreation",
+          type: "post",
+          priority: 50,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "testExecution",
+          type: "post",
+          priority: 10,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "coverageAnalysis",
+          type: "post",
+          priority: 20,
+          enabled: true,
+        });
+
         try {
           const result = await processorManager.executePreProcessors({
             tool,
             args,
-            context: { directory, operation: "tool_execution" }
+            context: { directory, operation: "tool_execution", filePath: args?.filePath }
           });
 
           if (!result.success) {
@@ -358,6 +396,77 @@ export default async function strrayCodexPlugin(input: {
           }
         } catch (error) {
           logger.error(`Pre-processor error`, error);
+        }
+      }
+    },
+
+    // NEW: Execute POST-processors after tool completion (includes testAutoCreation!)
+    "tool.execute.after": async (
+      input: {
+        tool: string;
+        args?: { content?: string; filePath?: string };
+        result?: any;
+      },
+      _output: any,
+    ) => {
+      const logger = await getOrCreateLogger(directory);
+      await loadStrRayComponents();
+
+      const { tool, args, result } = input;
+
+      // Run post-processors for write/edit operations
+      if (["write", "edit", "multiedit"].includes(tool)) {
+        if (!ProcessorManager || !StrRayStateManager) return;
+
+        const stateManager = new StrRayStateManager(path.join(directory, ".opencode", "state"));
+        const processorManager = new ProcessorManager(stateManager);
+
+        // Register post-processors
+        processorManager.registerProcessor({
+          name: "testAutoCreation",
+          type: "post",
+          priority: 50,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "testExecution",
+          type: "post",
+          priority: 10,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "coverageAnalysis",
+          type: "post",
+          priority: 20,
+          enabled: true,
+        });
+
+        try {
+          // Execute post-processors with filePath for testAutoCreation
+          const postResult = await processorManager.executePostProcessors(
+            tool,
+            { 
+              directory, 
+              operation: "tool_execution", 
+              filePath: args?.filePath,
+              success: result?.success !== false
+            },
+            []
+          );
+
+          logger.log(`✅ Post-processors executed for ${tool}: ${postResult.success ? "SUCCESS" : "FAILED"}`);
+          
+          // Log testAutoCreation results specifically
+          const testAutoResult = postResult.results?.find((r: any) => r.processorName === "testAutoCreation");
+          if (testAutoResult) {
+            if (testAutoResult.success && testAutoResult.testCreated) {
+              logger.log(`✅ TEST AUTO-CREATION: Created ${testAutoResult.testFile}`);
+            } else if (!testAutoResult.success) {
+              logger.log(`⚠️ TEST AUTO-CREATION: ${testAutoResult.message || "skipped"}`);
+            }
+          }
+        } catch (error) {
+          logger.error(`Post-processor error`, error);
         }
       }
     },

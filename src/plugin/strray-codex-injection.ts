@@ -602,6 +602,77 @@ export default async function strrayCodexPlugin(input: {
       }
     },
 
+    // Execute POST-processors AFTER tool completes (this is the correct place!)
+    "tool.execute.after": async (
+      input: {
+        tool: string;
+        args?: { content?: string; filePath?: string };
+        result?: any;
+      },
+      _output: any,
+    ) => {
+      const logger = await getOrCreateLogger(directory);
+      await loadStrRayComponents();
+
+      const { tool, args, result } = input;
+
+      // Run post-processors for write/edit operations AFTER tool completes
+      if (["write", "edit", "multiedit"].includes(tool)) {
+        if (!ProcessorManager || !StrRayStateManager) return;
+
+        const stateManager = new StrRayStateManager(path.join(directory, ".opencode", "state"));
+        const processorManager = new ProcessorManager(stateManager);
+
+        // Register post-processors
+        processorManager.registerProcessor({
+          name: "testAutoCreation",
+          type: "post",
+          priority: 50,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "testExecution",
+          type: "post",
+          priority: 10,
+          enabled: true,
+        });
+        processorManager.registerProcessor({
+          name: "coverageAnalysis",
+          type: "post",
+          priority: 20,
+          enabled: true,
+        });
+
+        try {
+          // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
+          const postResult = await processorManager.executePostProcessors(
+            tool,
+            { 
+              directory, 
+              operation: "tool_execution", 
+              filePath: args?.filePath,
+              success: result?.success !== false
+            },
+            []
+          );
+
+          logger.log(`📊 Post-processor result: ${postResult.success ? "SUCCESS" : "FAILED"}`);
+          
+          // Log testAutoCreation results specifically
+          const testAutoResult = postResult.results?.find((r: any) => r.processorName === "testAutoCreation");
+          if (testAutoResult) {
+            if (testAutoResult.success && testAutoResult.testCreated) {
+              logger.log(`✅ TEST AUTO-CREATION: Created ${testAutoResult.testFile}`);
+            } else if (!testAutoResult.success) {
+              logger.log(`ℹ️ TEST AUTO-CREATION: ${testAutoResult.message || "skipped - no new files"}`);
+            }
+          }
+        } catch (error) {
+          logger.error(`💥 Post-processor error`, error);
+        }
+      }
+    },
+
     config: async (_config: Record<string, unknown>) => {
       const logger = await getOrCreateLogger(directory);
       logger.log(
