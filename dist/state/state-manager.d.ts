@@ -10,7 +10,7 @@ export declare class StringRayStateManager implements StateManager {
     private writeQueue;
     private initialized;
     private earlyOperationsQueue;
-    static readonly VERSION = "1.5.1";
+    static readonly VERSION = "1.5.2";
     constructor(persistencePath?: string, persistenceEnabled?: boolean);
     private initializePersistence;
     private persistToDisk;

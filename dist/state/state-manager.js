@@ -6,7 +6,7 @@ export class StringRayStateManager {
     writeQueue = new Map();
     initialized = false;
     earlyOperationsQueue = []; // Queue keys that need persistence after init
-    static VERSION = "1.5.1";
+    static VERSION = "1.5.2";
     constructor(persistencePath = ".opencode/state", persistenceEnabled = true) {
         this.persistencePath = persistencePath;
         this.persistenceEnabled = persistenceEnabled;

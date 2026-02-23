@@ -12,6 +12,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { mcpClientManager } from "../mcps/mcp-client.js";
+import { testAutoGenerationMonitor } from "../monitoring/test-auto-generation-monitor.js";
 
 export const testAutoCreationProcessor = {
   name: "testAutoCreation",
@@ -111,6 +112,16 @@ export const testAutoCreationProcessor = {
         await frameworkLogger.log("test-auto-creation", "test-exists", "info", {
           message: `Test file already exists: ${testFilePath}`,
         });
+        
+        // Record skipped to monitor
+        testAutoGenerationMonitor.recordEvent({
+          type: "skipped",
+          filePath,
+          testFile: testFilePath,
+          timestamp: Date.now(),
+          reason: "Test file already exists",
+        });
+        
         return {
           success: true,
           processorName: "testAutoCreation",
@@ -145,6 +156,15 @@ export const testAutoCreationProcessor = {
       const exports = extractExports(sourceContent);
 
       if (exports.length === 0) {
+        // Record skipped to monitor
+        testAutoGenerationMonitor.recordEvent({
+          type: "skipped",
+          filePath,
+          testFile: null,
+          timestamp: Date.now(),
+          reason: "No exports found",
+        });
+        
         return {
           success: true,
           processorName: "testAutoCreation",
@@ -196,6 +216,14 @@ export const testAutoCreationProcessor = {
             },
           );
 
+          // Record success to monitor
+          testAutoGenerationMonitor.recordEvent({
+            type: "generated",
+            filePath,
+            testFile: testFilePath,
+            timestamp: Date.now(),
+          });
+
           return {
             success: true,
             processorName: "testAutoCreation",
@@ -246,6 +274,15 @@ export const testAutoCreationProcessor = {
     } catch (error) {
       await frameworkLogger.log("test-auto-creation", "error", "error", {
         message: `Test auto-creation failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
+
+      // Record failure to monitor
+      testAutoGenerationMonitor.recordEvent({
+        type: "failed",
+        filePath: "unknown",
+        testFile: null,
+        timestamp: Date.now(),
+        reason: error instanceof Error ? error.message : String(error),
       });
 
       return {

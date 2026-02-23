@@ -3,8 +3,10 @@
  *
  * Intelligent agent delegation system that uses complexity analysis to determine
  * optimal task distribution strategies and conflict resolution.
+ * 
+ * Integrates with TaskSkillRouter for keyword-based preprocessing.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-01-07
  */
 
@@ -16,6 +18,7 @@ import {
 import { StringRayStateManager } from "../state/state-manager.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { TaskSkillRouter, createTaskSkillRouter } from "./task-skill-router.js";
 
 export interface AgentCapability {
   name: string;
@@ -88,6 +91,7 @@ export class AgentDelegator {
   private complexityAnalyzer: ComplexityAnalyzer;
   private stateManager: StringRayStateManager;
   private configLoader: typeof strRayConfigLoader;
+  private taskSkillRouter: TaskSkillRouter;
 
   constructor(
     stateManager: StringRayStateManager,
@@ -96,6 +100,7 @@ export class AgentDelegator {
     this.stateManager = stateManager;
     this.configLoader = configLoader;
     this.complexityAnalyzer = new ComplexityAnalyzer();
+    this.taskSkillRouter = createTaskSkillRouter(stateManager);
   }
 
   getAvailableAgents(): AgentCapability[] {
@@ -171,6 +176,43 @@ export class AgentDelegator {
       ) as AgentCapability;
       return storedAgent || agent;
     });
+  }
+
+  /**
+   * Pre-process a task description using TaskSkillRouter
+   * This extracts operation type and context from natural language descriptions
+   * before running complexity analysis
+   */
+  preprocessTaskDescription(
+    description: string,
+    options?: {
+      sessionId?: string;
+      taskId?: string;
+      complexity?: number;
+    },
+  ): {
+    operation: string;
+    context: Record<string, unknown>;
+    suggestedAgent: string;
+    suggestedSkill: string;
+    confidence: number;
+  } {
+    const routingOptions = {
+      ...(options?.sessionId && { sessionId: options.sessionId }),
+      ...(options?.taskId && { taskId: options.taskId }),
+      ...(options?.complexity !== undefined && { complexity: options.complexity }),
+      stateManager: this.stateManager,
+    };
+
+    const preprocessResult = this.taskSkillRouter.preprocess(description, routingOptions);
+
+    return {
+      operation: preprocessResult.operation,
+      context: preprocessResult.context,
+      suggestedAgent: preprocessResult.routing.agent,
+      suggestedSkill: preprocessResult.routing.skill,
+      confidence: preprocessResult.routing.confidence,
+    };
   }
 
   async analyzeDelegation(

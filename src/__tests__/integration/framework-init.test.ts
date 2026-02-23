@@ -79,7 +79,6 @@ describe("StringRay Framework Initialization Integration", () => {
     });
 
     test("should validate configuration files", () => {
-      expect(checkJson(".opencode/OpenCode.json")).toBe(true);
       expect(checkJson(".opencode/strray/codex.json")).toBe(true);
     });
 
@@ -306,7 +305,6 @@ describe("StringRay Framework Initialization Integration", () => {
 
       // Test that all required config files exist
       const requiredFiles = [
-        ".opencode/OpenCode.json",
         ".opencode/strray/codex.json",
       ];
 

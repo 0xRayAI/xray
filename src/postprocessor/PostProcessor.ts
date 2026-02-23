@@ -727,23 +727,33 @@ All path violations will be automatically detected and blocked.
       const complianceResult =
         await processorManager.executeCodexCompliance(processorContext);
 
-      if (!complianceResult.compliant) {
-
-      // Run test auto-creation processor for new files
-      try {
-        await processorManager.executeProcessor("testAutoCreation", {
-          operation: "commit",
-          files: context.files,
-        });
-      } catch (testError) {
-        // Non-blocking - log but continue
-        await frameworkLogger.log(
-          "-post-processor",
-          "-test-auto-creation-failed",
-          "info",
-          { message: `Test auto-creation failed: ${testError}` },
-        );
+      // FIX #1: Run test auto-creation for ALL new files, NOT just non-compliant ones
+      // Iterate over each file and create tests for new TypeScript files
+      if (context.files && context.files.length > 0) {
+        for (const filePath of context.files) {
+          // Only process TypeScript source files (not test files)
+          if (filePath.endsWith(".ts") && !filePath.endsWith(".test.ts")) {
+            try {
+              await processorManager.executeProcessor("testAutoCreation", {
+                tool: "write",
+                operation: "commit",
+                filePath: filePath, // FIX #2: Pass filePath (string), not files (array)
+                directory: process.cwd(),
+              });
+            } catch (testError) {
+              // Non-blocking - log but continue
+              await frameworkLogger.log(
+                "-post-processor",
+                "-test-auto-creation-failed",
+                "info",
+                { message: `Test auto-creation failed for ${filePath}: ${testError}` },
+              );
+            }
+          }
+        }
       }
+
+      if (!complianceResult.compliant) {
         await frameworkLogger.log(
           "codex-compliance",
           "validation-failed",

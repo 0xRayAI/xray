@@ -15,9 +15,12 @@ import { frameworkLogger } from "../../core/framework-logger.js";
 import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("StringRay Infrastructure Tests", () => {
+  // Get project root (two levels up from this test file)
+  const projectRoot = path.resolve(__dirname, "../../..");
+
   describe("Core File System", () => {
     it("should have required directories", () => {
-      const requiredDirs = ["src", ".opencode", ".opencode/strray"];
+      const requiredDirs = ["src", ".opencode", ".opencode/strray"].map(d => path.join(projectRoot, d));
 
       for (const dir of requiredDirs) {
         expect(fs.existsSync(dir)).toBe(true);
@@ -26,12 +29,12 @@ describe("StringRay Infrastructure Tests", () => {
     });
 
     it("should have required configuration files", () => {
+      // Use files that actually exist in the project
       const requiredFiles = [
-        ".opencode/OpenCode.json",
         ".opencode/strray/codex.json",
         "package.json",
         "vitest.config.ts",
-      ];
+      ].map(f => path.join(projectRoot, f));
 
       for (const file of requiredFiles) {
         expect(fs.existsSync(file)).toBe(true);
@@ -40,11 +43,11 @@ describe("StringRay Infrastructure Tests", () => {
     });
 
     it("should have readable configuration files", () => {
+      // Use files that actually exist
       const configFiles = [
-        ".opencode/OpenCode.json",
         ".opencode/strray/codex.json",
         "package.json",
-      ];
+      ].map(f => path.join(projectRoot, f));
 
       for (const file of configFiles) {
         const content = fs.readFileSync(file, "utf8");

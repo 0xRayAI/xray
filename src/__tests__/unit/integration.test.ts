@@ -107,7 +107,7 @@ describe("StringRay Integration Script", () => {
 
   describe("resolveAgent function", () => {
     it("should resolve enforcer agent", async () => {
-      const { resolveAgent } = await import("../mcps/agent-resolver.js");
+      const { resolveAgent } = await import("../../mcps/agent-resolver.js");
       const config = await resolveAgent("enforcer");
 
       expect(config.name).toBe("enforcer");
@@ -115,7 +115,7 @@ describe("StringRay Integration Script", () => {
     });
 
     it("should resolve architect agent", async () => {
-      const { resolveAgent } = await import("../mcps/agent-resolver.js");
+      const { resolveAgent } = await import("../../mcps/agent-resolver.js");
       const config = await resolveAgent("architect");
 
       expect(config.name).toBeDefined();

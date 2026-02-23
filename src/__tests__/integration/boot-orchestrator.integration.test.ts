@@ -18,17 +18,25 @@ vi.mock("../../core/context-loader", () => ({
     })),
   },
 }));
-vi.mock("../../processors/processor-manager", () => ({
-  ProcessorManager: vi.fn().mockImplementation(() => ({
-    registerProcessor: vi.fn(),
-    initializeProcessors: vi.fn().mockResolvedValue(true),
-    getProcessorHealth: vi.fn(() => [
+
+// Use vi.hoisted to properly mock the ProcessorManager class
+const { ProcessorManager: MockProcessorManager } = vi.hoisted(() => {
+  // Create a constructor function that works with 'new'
+  const MockClass = function(this: any) {
+    this.registerProcessor = vi.fn();
+    this.initializeProcessors = vi.fn().mockResolvedValue(true);
+    this.getProcessorHealth = vi.fn(() => [
       { name: "preValidate", status: "healthy" },
       { name: "codexCompliance", status: "healthy" },
       { name: "errorBoundary", status: "healthy" },
       { name: "stateValidation", status: "healthy" },
-    ]),
-  })),
+    ]);
+  };
+  return { ProcessorManager: MockClass };
+});
+
+vi.mock("../../processors/processor-manager", () => ({
+  ProcessorManager: MockProcessorManager,
 }));
 vi.mock("../../delegation/index", () => ({
   createAgentDelegator: vi.fn(() => ({})),
@@ -84,8 +92,9 @@ vi.mock("../../core/orchestrator", () => ({
   strRayOrchestrator: {},
 }));
 
+// BootOrchestrator Integration Tests
 describe("BootOrchestrator - Integration Tests", () => {
-  let stateManager: vi.Mocked<StringRayStateManager>;
+  let stateManager: StringRayStateManager;
   let bootOrchestrator: BootOrchestrator;
 
   beforeEach(() => {

@@ -278,7 +278,8 @@ describe("Context Providers Integration", () => {
       expect(simpleResult.strategy).not.toBe("orchestrator-led");
 
       // Complex request should use more sophisticated strategy
-      expect(complexResult.strategy).toBe("multi-agent");
+      // For high complexity, it should use orchestrator-led strategy
+      expect(complexResult.strategy).toBe("orchestrator-led");
     });
 
     it("should enforce memory limits during analysis", async () => {

@@ -4,7 +4,7 @@
  * Complete automatic multi-agent delegation system with complexity assessment
  * and session-based coordination.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-01-07
  */
 
@@ -17,6 +17,13 @@ export {
   SessionCoordinator,
   createSessionCoordinator,
 } from "./session-coordinator.js";
+export {
+  TaskSkillRouter,
+  taskSkillRouter,
+  createTaskSkillRouter,
+  routeTaskToAgent,
+  preprocessTask,
+} from "./task-skill-router.js";
 
 // Re-export types
 export type {
@@ -40,3 +47,5 @@ export type {
   Communication,
   SessionMetrics,
 } from "./session-coordinator.js";
+
+// Types are exported from task-skill-router.d.ts declaration file
