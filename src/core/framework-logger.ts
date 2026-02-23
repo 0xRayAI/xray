@@ -22,7 +22,6 @@ export function getCurrentJobId(): string | null {
 
 export function setCurrentJobContext(jobId?: string): JobContext {
   currentJobContext = new JobContext(jobId);
-  console.log(`🤖 [JOB-CONTEXT] Switched to job: ${currentJobContext.jobId}`);
   return currentJobContext;
 }
 

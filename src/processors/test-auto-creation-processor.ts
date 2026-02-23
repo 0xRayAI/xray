@@ -22,12 +22,6 @@ export const testAutoCreationProcessor = {
   async execute(context: any): Promise<any> {
     const startTime = Date.now();
 
-    // Debug: Log entry point immediately
-    console.log(
-      `[TEST-AUTO-CREATION] ENTER execute with context:`,
-      JSON.stringify(context, null, 2).slice(0, 500),
-    );
-
     try {
       // Handle both direct context and context.data (from ProcessorManager)
       // ProcessorManager passes: { operation, data: { directory, filePath, ... }, preResults }
@@ -43,11 +37,6 @@ export const testAutoCreationProcessor = {
 
       // Also check the outer context for backward compatibility
       const outerFilePath = context.filePath || contextFilePath;
-
-      // Use console.log for immediate feedback, frameworkLogger for persistence
-      console.log(
-        `[TEST-AUTO-CREATION] tool=${tool}, operation=${operation}, directory=${directory}, filePath=${contextFilePath}`,
-      );
 
       await frameworkLogger.log("test-auto-creation", "execute-start", "info", {
         message: `TestAutoCreation processor executing`,
@@ -67,10 +56,7 @@ export const testAutoCreationProcessor = {
         args?.path || 
         innerContext.filePath;
 
-      console.log(`[TEST-AUTO-CREATION] resolved filePath=${filePath}`);
-
       if (!filePath) {
-        console.log(`[TEST-AUTO-CREATION] SKIPPED: no filePath found`);
         await frameworkLogger.log(
           "test-auto-creation",
           "skipped-no-filepath",
@@ -91,9 +77,6 @@ export const testAutoCreationProcessor = {
       const isWriteOperation =
         tool === "write" || tool === "edit" || operation === "tool_execution";
       if (!isWriteOperation) {
-        console.log(
-          `[TEST-AUTO-CREATION] SKIPPED: not a write operation (tool=${tool}, operation=${operation})`,
-        );
         await frameworkLogger.log(
           "test-auto-creation",
           "skipped-not-write",
