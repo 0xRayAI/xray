@@ -303,10 +303,7 @@ class ConsumerValidator {
     // Refactored architecture: MCP config is in opencode.json under 'mcp' key
     const requiredFiles = [
       { path: "opencode.json", description: "OpenCode base configuration" },
-      {
-        path: ".opencode/OpenCode.json",
-        description: "OpenCode main config",
-      },
+      // .opencode/OpenCode.json is deprecated - removed
       {
         path: "node_modules/strray-ai/dist/plugin/strray-codex-injection.js",
         description: "Main plugin file",
@@ -334,10 +331,10 @@ class ConsumerValidator {
       return false;
     }
 
-    // Check plugin registration
+    // Check plugin registration - use opencode.json at root
     try {
       const config = JSON.parse(
-        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
+        fs.readFileSync("opencode.json", "utf8"),
       );
       const pluginArray = config.plugins || config.plugin || [];
       const hasStringRayPlugin =
@@ -422,7 +419,7 @@ class ConsumerValidator {
     const checks = [
       // File existence checks
       () => fs.existsSync("opencode.json"),
-      () => fs.existsSync(".opencode/OpenCode.json"),
+      // .opencode/OpenCode.json is deprecated - removed
       () =>
         fs.existsSync(
           "node_modules/strray-ai/dist/plugin/strray-codex-injection.js",
@@ -438,14 +435,7 @@ class ConsumerValidator {
           return false;
         }
       },
-      () => {
-        try {
-          JSON.parse(fs.readFileSync(".opencode/OpenCode.json", "utf8"));
-          return true;
-        } catch {
-          return false;
-        }
-      },
+      // .opencode/OpenCode.json deprecated - removed check
 
       // MCP server count check (in opencode.json under 'mcp' key)
       () => {
@@ -458,11 +448,11 @@ class ConsumerValidator {
         }
       },
 
-      // Plugin registration check
+      // Plugin registration check - use opencode.json
       () => {
         try {
           const config = JSON.parse(
-            fs.readFileSync(".opencode/OpenCode.json", "utf8"),
+            fs.readFileSync("opencode.json", "utf8"),
           );
           const plugins = config.plugins || config.plugin || [];
           return (
@@ -813,9 +803,9 @@ class ConsumerValidator {
 
       let loadedAgents = 0;
 
-      // Test that agent configurations exist in OpenCode config
+      // Test that agent configurations exist in OpenCode config - use opencode.json
       const ohMyOpencodeConfig = JSON.parse(
-        fs.readFileSync(".opencode/OpenCode.json", "utf8"),
+        fs.readFileSync("opencode.json", "utf8"),
       );
 
       // Check if agents are defined (they might be loaded dynamically)

@@ -81,7 +81,8 @@ class PathVerifier {
   async verifyOhMyOpencodeConfig() {
     this.check('OpenCode.json paths');
 
-    const configPath = '.opencode/OpenCode.json';
+    // Use opencode.json at root (.opencode/OpenCode.json is deprecated)
+    const configPath = 'opencode.json';
     if (!fs.existsSync(configPath)) {
       this.error(`${configPath} not found`);
       return;
@@ -187,8 +188,8 @@ class PathVerifier {
   async verifyNoOldPaths() {
     this.check('No old development paths remaining');
 
+    // Only check opencode.json at root (.opencode/OpenCode.json deprecated)
     const filesToCheck = [
-      '.opencode/OpenCode.json',
       'opencode.json',
     ];
 

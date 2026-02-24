@@ -58,10 +58,7 @@ class FinalConsumerValidation {
     // Refactored: MCP config is in opencode.json, not .mcp.json
     const requiredFiles = [
       { path: "opencode.json", description: "OpenCode base configuration (includes MCP)" },
-      {
-        path: ".opencode/OpenCode.json",
-        description: "OpenCode main config",
-      },
+      // .opencode/OpenCode.json is deprecated - removed
     ];
 
     // Add package files for validation
@@ -170,7 +167,8 @@ class FinalConsumerValidation {
     console.log("\n🔌 PLUGIN INTEGRATION VALIDATION");
 
     try {
-      const configPath = path.resolve(this.consumerRoot, ".opencode/OpenCode.json");
+      // Use opencode.json at root (.opencode/OpenCode.json deprecated)
+      const configPath = path.resolve(this.consumerRoot, "opencode.json");
       const ohMyOpencodeConfig = JSON.parse(
         fs.readFileSync(configPath, "utf8"),
       );

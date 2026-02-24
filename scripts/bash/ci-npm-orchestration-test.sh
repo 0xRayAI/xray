@@ -205,16 +205,16 @@ fi
 # Additional manual checks
 log_info "Checking configuration files..."
 
-# Check OpenCode.json
-if [[ -f ".opencode/OpenCode.json" ]]; then
-    if grep -q "node_modules/strray-ai" .opencode/OpenCode.json; then
-        log_success "OpenCode.json has correct paths"
+# Check opencode.json at root (.opencode/OpenCode.json deprecated)
+if [[ -f "opencode.json" ]]; then
+    if grep -q "node_modules/strray-ai" opencode.json; then
+        log_success "opencode.json has correct paths"
     else
-        log_error "OpenCode.json missing node_modules paths"
+        log_error "opencode.json missing node_modules paths"
         ((ERRORS++))
     fi
 else
-    log_error "OpenCode.json not found"
+    log_error "opencode.json not found"
     ((ERRORS++))
 fi
 

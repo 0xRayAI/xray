@@ -91,7 +91,7 @@ cd "$TEST_DIR"
 cat > package.json << 'EOF'
 {
   "name": "strray-test",
-  "version": "1.5.2"
+  "version": "1.6.0"
 }
 EOF
 
@@ -150,7 +150,7 @@ cd test-config
 cat > package.json << 'EOF'
 {
   "name": "test-config",
-  "version": "1.5.2"
+  "version": "1.6.0"
 }
 EOF
 
@@ -158,16 +158,16 @@ EOF
 cd ..
 npm pack > /dev/null 2>&1
 PACK_FILE=$(ls *.tgz | head -1)
-cd test-config
+ cd test-config
 npm install "../$PACK_FILE" > /dev/null 2>&1
 
-# Check if config was created
-if [ -f ".opencode/OpenCode.json" ]; then
-    echo "✅ OpenCode.json created"
+# Check if config was created - use opencode.json at root (.opencode/OpenCode.json deprecated)
+if [ -f "opencode.json" ]; then
+    echo "✅ opencode.json created"
     echo "Configuration content (first 10 lines):"
-    head -10 .opencode/OpenCode.json
+    head -10 opencode.json
 else
-    echo "❌ OpenCode.json not created"
+    echo "❌ opencode.json not created"
     exit 1
 fi
 
@@ -184,7 +184,7 @@ cd test-registration
 cat > package.json << 'EOF'
 {
   "name": "test-registration",
-  "version": "1.5.2"
+  "version": "1.6.0"
 }
 EOF
 
@@ -195,7 +195,8 @@ PACK_FILE=$(ls *.tgz | head -1)
 cd test-registration
 npm install "../$PACK_FILE" > /dev/null 2>&1
 
-if grep -q "strray" .opencode/OpenCode.json; then
+# Use opencode.json at root (.opencode/OpenCode.json deprecated)
+if grep -q "strray" opencode.json; then
     echo "✅ Plugin registered in configuration"
 else
     echo "❌ Plugin not registered in configuration"
@@ -252,7 +253,7 @@ cd test-agents
 cat > package.json << 'EOF'
 {
   "name": "test-agents",
-  "version": "1.5.2"
+  "version": "1.6.0"
 }
 EOF
 
@@ -266,9 +267,8 @@ npm install "../$PACK_FILE" > /dev/null 2>&1
 AGENTS=("orchestrator" "enforcer" "architect" "test-architect" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer")
 MISSING_AGENTS=()
 
-# Check agents in the main project OpenCode.json
-# Only check for agents that are actually defined in the config
-OPENCODE_PATH=".opencode/OpenCode.json"
+# Check agents in the main project opencode.json at root (.opencode/OpenCode.json deprecated)
+OPENCODE_PATH="opencode.json"
 
 # Agents that are actually configured in OpenCode.json
 CONFIGURED_AGENTS=("orchestrator" "enforcer" "architect")

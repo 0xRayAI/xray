@@ -80,9 +80,8 @@ async function runComprehensiveTests() {
 
     // 2. Test configuration files
     console.log('\n⚙️ 2. Testing configuration files...');
+    // Use opencode.json at root (.opencode/OpenCode.json is deprecated)
     const configPaths = [
-      './.opencode/OpenCode.json',
-      './.mcp.json',
       './opencode.json'
     ];
 
@@ -91,7 +90,7 @@ async function runComprehensiveTests() {
         try {
           JSON.parse(fs.readFileSync(configPath, 'utf-8'));
           console.log(`✅ ${path.basename(configPath)} exists and is valid JSON`);
-          if (configPath.includes('OpenCode')) results.configExists = true;
+          if (configPath.includes('opencode.json')) results.configExists = true;
           if (configPath.includes('.mcp.json') || configPath.includes('opencode.json')) results.mcpConfigExists = true;
         } catch (error) {
           console.log(`⚠️ ${path.basename(configPath)} exists but has invalid JSON`);
@@ -104,8 +103,9 @@ async function runComprehensiveTests() {
     // 3. Test path correctness
     console.log('\n🛣️ 3. Testing path transformations...');
 
+    // Use opencode.json at root
     if (results.configExists) {
-      const config = JSON.parse(fs.readFileSync('./.opencode/OpenCode.json', 'utf-8'));
+      const config = JSON.parse(fs.readFileSync('./opencode.json', 'utf-8'));
       if (config.plugin && Array.isArray(config.plugin)) {
         const pluginEntry = config.plugin.find(p => p.includes('stringray-codex-injection'));
         if (pluginEntry) {

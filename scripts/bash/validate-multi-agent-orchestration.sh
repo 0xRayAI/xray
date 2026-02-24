@@ -52,7 +52,8 @@ echo ""
 
 # Test 2: Multi-Agent Orchestration Configuration
 echo "2️⃣ Testing Multi-Agent Orchestration Configuration..."
-if [ ! -f ".opencode/OpenCode.json" ]; then
+# Use opencode.json at root (.opencode/OpenCode.json deprecated)
+if [ ! -f "opencode.json" ]; then
     echo "❌ OpenCode configuration not found"
     exit 1
 fi
@@ -60,7 +61,7 @@ fi
 # Check if multi-agent orchestration is enabled
 CONFIG=$(node -e "
 try {
-    const config = require('./.opencode/OpenCode.json');
+    const config = require('./opencode.json');
     console.log('Multi-agent orchestration enabled:', config.settings?.multi_agent_orchestration?.enabled);
     console.log('Max concurrent agents:', config.settings?.multi_agent_orchestration?.max_concurrent_agents);
 } catch (error) {
@@ -159,7 +160,7 @@ echo ""
 echo "Summary:"
 CONFIG_CHECK=$(node -e "
 try {
-    const config = require('./.opencode/OpenCode.json');
+    const config = require('./opencode.json');
     if (config.settings?.multi_agent_orchestration?.enabled === true) {
         console.log('enabled');
     } else {

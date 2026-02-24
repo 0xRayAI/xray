@@ -28,21 +28,22 @@ test_config() {
     echo ""
     log "Testing multi-agent orchestration configuration..."
 
-    if grep -q '"enabled": true' .opencode/OpenCode.json && grep -q '"multi_agent_orchestration"' .opencode/OpenCode.json; then
+    # Use opencode.json at root (.opencode/OpenCode.json deprecated)
+    if grep -q '"enabled": true' opencode.json && grep -q '"multi_agent_orchestration"' opencode.json; then
         success "Multi-agent orchestration is enabled in configuration"
     else
         echo "❌ Multi-agent orchestration not enabled in configuration"
         return 1
     fi
 
-    if grep -q '"max_concurrent_agents": 5' .opencode/OpenCode.json; then
+    if grep -q '"max_concurrent_agents": 5' opencode.json; then
         success "Max concurrent agents set to 5"
     else
         echo "❌ Max concurrent agents not set correctly"
         return 1
     fi
 
-    if grep -q '"coordination_model": "async-multi-agent"' .opencode/OpenCode.json; then
+    if grep -q '"coordination_model": "async-multi-agent"' opencode.json; then
         success "Async multi-agent coordination model configured"
     else
         echo "❌ Coordination model not set correctly"

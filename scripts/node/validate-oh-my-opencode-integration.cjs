@@ -49,7 +49,8 @@ class OhMyOpenCodeIntegrationValidator {
     console.log("\n🔌 Testing Plugin Registration...");
     
     try {
-      const configPath = path.join(this.packageRoot, ".opencode", "OpenCode.json");
+      // Use opencode.json at root (.opencode/OpenCode.json is deprecated)
+      const configPath = path.join(this.packageRoot, "opencode.json");
       const ohMyOpencodeConfig = JSON.parse(
         fs.readFileSync(configPath, "utf8"),
       );
