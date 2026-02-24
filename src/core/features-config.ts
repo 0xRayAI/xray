@@ -600,6 +600,12 @@ export class FeaturesConfigLoader {
           "seo-specialist": "claude-sonnet-4",
           "seo-copywriter": "claude-sonnet-4",
           "marketing-expert": "claude-sonnet-4",
+          "database-engineer": "claude-sonnet-4",
+          "devops-engineer": "claude-sonnet-4",
+          "backend-engineer": "claude-sonnet-4",
+          "frontend-engineer": "claude-sonnet-4",
+          "documentation-writer": "claude-sonnet-4",
+          "performance-engineer": "claude-sonnet-4",
         },
         performance_limits: {
           max_task_duration_ms: 30000,

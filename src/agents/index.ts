@@ -14,6 +14,12 @@ import { analyzer } from "./analyzer.js";
 import { seoSpecialist } from "./seo-specialist.js";
 import { seoCopywriter } from "./seo-copywriter.js";
 import { marketingExpert } from "./marketing-expert.js";
+import { databaseEngineer } from "./database-engineer.js";
+import { devopsEngineer } from "./devops-engineer.js";
+import { backendEngineer } from "./backend-engineer.js";
+import { frontendEngineer } from "./frontend-engineer.js";
+import { documentationWriter } from "./documentation-writer.js";
+import { performanceEngineer } from "./performance-engineer.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   enforcer,
@@ -31,6 +37,12 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "seo-specialist": seoSpecialist,
   "seo-copywriter": seoCopywriter,
   "marketing-expert": marketingExpert,
+  "database-engineer": databaseEngineer,
+  "devops-engineer": devopsEngineer,
+  "backend-engineer": backendEngineer,
+  "frontend-engineer": frontendEngineer,
+  "documentation-writer": documentationWriter,
+  "performance-engineer": performanceEngineer,
 };
 
 export {
@@ -49,4 +61,10 @@ export {
   seoSpecialist,
   seoCopywriter,
   marketingExpert,
+  databaseEngineer,
+  devopsEngineer,
+  backendEngineer,
+  frontendEngineer,
+  documentationWriter,
+  performanceEngineer,
 };

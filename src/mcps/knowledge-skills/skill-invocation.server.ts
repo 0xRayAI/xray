@@ -47,6 +47,13 @@ class SkillInvocationServer {
                     "performance-optimization",
                     "testing-strategy",
                     "project-analysis",
+                    "database-design",
+                    "devops-deployment",
+                    "api-design",
+                    "ui-ux-design",
+                    "documentation-generation",
+                    "refactoring-strategies",
+                    "architecture-patterns",
                   ],
                   description: "Name of the skill to invoke",
                 },
@@ -163,6 +170,91 @@ class SkillInvocationServer {
               },
             },
           },
+          {
+            name: "skill-database-design",
+            description:
+              "Invoke database design skill for schema design and query optimization",
+            inputSchema: {
+              type: "object",
+              properties: {
+                schema: { type: "string", description: "Database schema or entities" },
+                databaseType: {
+                  type: "string",
+                  enum: ["postgresql", "mysql", "mongodb", "dynamodb"],
+                  description: "Target database type",
+                },
+              },
+              required: ["schema"],
+            },
+          },
+          {
+            name: "skill-devops-deployment",
+            description:
+              "Invoke DevOps deployment skill for CI/CD and infrastructure",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectType: { type: "string", description: "Type of project" },
+                cloudProvider: {
+                  type: "string",
+                  enum: ["aws", "gcp", "azure"],
+                  description: "Target cloud provider",
+                },
+              },
+              required: ["projectType"],
+            },
+          },
+          {
+            name: "skill-api-design",
+            description:
+              "Invoke API design skill for REST/GraphQL endpoints",
+            inputSchema: {
+              type: "object",
+              properties: {
+                resources: { type: "array", items: { type: "string" }, description: "API resources" },
+                style: {
+                  type: "string",
+                  enum: ["rest", "graphql"],
+                  description: "API style",
+                },
+              },
+              required: ["resources"],
+            },
+          },
+          {
+            name: "skill-ui-ux-design",
+            description:
+              "Invoke UI/UX design skill for component design",
+            inputSchema: {
+              type: "object",
+              properties: {
+                component: { type: "string", description: "Component to design" },
+                framework: {
+                  type: "string",
+                  enum: ["react", "vue", "angular", "svelte"],
+                  description: "Target framework",
+                },
+              },
+              required: ["component"],
+            },
+          },
+          {
+            name: "skill-documentation-generation",
+            description:
+              "Invoke documentation skill for API docs and README",
+            inputSchema: {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  enum: ["api", "readme", "guide"],
+                  description: "Documentation type",
+                },
+                code: { type: "string", description: "Code to document" },
+              },
+              required: ["type"],
+            },
+          },
         ],
       };
     });
@@ -185,6 +277,16 @@ class SkillInvocationServer {
             return await this.handleSkillTestingStrategy(args);
           case "skill-project-analysis":
             return await this.handleSkillProjectAnalysis(args);
+          case "skill-database-design":
+            return await this.handleSkillDatabaseDesign(args);
+          case "skill-devops-deployment":
+            return await this.handleSkillDevopsDeployment(args);
+          case "skill-api-design":
+            return await this.handleSkillApiDesign(args);
+          case "skill-ui-ux-design":
+            return await this.handleSkillUiUxDesign(args);
+          case "skill-documentation-generation":
+            return await this.handleSkillDocumentationGeneration(args);
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -319,6 +421,111 @@ class SkillInvocationServer {
         {
           type: "text",
           text: "Project analysis completed:",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async handleSkillDatabaseDesign(args: any) {
+    const result = await mcpClientManager.callServerTool(
+      "database-design",
+      "schema_analysis",
+      args,
+    );
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Database design analysis completed:",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async handleSkillDevopsDeployment(args: any) {
+    const result = await mcpClientManager.callServerTool(
+      "devops-deployment",
+      "pipeline_generation",
+      args,
+    );
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "DevOps deployment configuration completed:",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async handleSkillApiDesign(args: any) {
+    const result = await mcpClientManager.callServerTool(
+      "api-design",
+      "endpoint_design",
+      args,
+    );
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "API design completed:",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async handleSkillUiUxDesign(args: any) {
+    const result = await mcpClientManager.callServerTool(
+      "ui-ux-design",
+      "design_component",
+      args,
+    );
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "UI/UX design completed:",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async handleSkillDocumentationGeneration(args: any) {
+    const result = await mcpClientManager.callServerTool(
+      "documentation-generation",
+      "generate_documentation",
+      args,
+    );
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Documentation generation completed:",
         },
         {
           type: "text",
