@@ -1,9 +1,7 @@
-import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 
 export default [
-  js.configs.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
@@ -11,8 +9,6 @@ export default [
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: "module",
-        // Temporarily disable project-based type checking to avoid config issues
-        // project: './tsconfig.json',
       },
       globals: {
         console: "readonly",
@@ -35,21 +31,17 @@ export default [
       "@typescript-eslint": tseslint,
     },
     rules: {
-      // Temporarily relaxed rules to pass pre-commit
-      // Will be strengthened as violations are fixed
-      "@typescript-eslint/no-unused-vars": "off", // Many unused variables in framework
-      "@typescript-eslint/no-explicit-any": "off", // Framework uses many 'any' types
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-inferrable-types": "off",
-
-      // General rules - relaxed for now
-      "no-console": "off", // Framework uses console.log extensively
+      "no-console": "off",
       "no-debugger": "off",
       "prefer-const": "off",
       "no-var": "off",
-      "no-undef": "off", // Node.js globals not recognized
-      "no-unused-vars": "off", // Many unused variables throughout
-      "no-case-declarations": "off", // Lexical declarations in case blocks
-      "no-useless-escape": "off", // Unnecessary escape characters in regex
+      "no-undef": "off",
+      "no-unused-vars": "off",
+      "no-case-declarations": "off",
+      "no-useless-escape": "off",
     },
   },
   {
@@ -58,7 +50,7 @@ export default [
       "node_modules/",
       "**/*.js",
       "**/*.d.ts",
-      "src/__tests__/**", // Test files have many violations
+      "src/__tests__/**",
     ],
   },
 ];

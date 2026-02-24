@@ -596,6 +596,10 @@ export class FeaturesConfigLoader {
           "security-auditor": "claude-opus-4",
           refactorer: "claude-sonnet-4",
           "test-architect": "claude-sonnet-4",
+          librarian: "claude-sonnet-4",
+          "seo-specialist": "claude-sonnet-4",
+          "seo-copywriter": "claude-sonnet-4",
+          "marketing-expert": "claude-sonnet-4",
         },
         performance_limits: {
           max_task_duration_ms: 30000,
