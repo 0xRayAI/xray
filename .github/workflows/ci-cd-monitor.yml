@@ -40,7 +40,7 @@ jobs:
 
       - name: Run CI/CD Health Monitor
         id: monitor
-        run: node scripts/github-actions-monitor.cjs --report
+        run: node scripts/node/github-actions-monitor.cjs --report
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -104,7 +104,7 @@ jobs:
       - name: Run CI/CD Auto-Fix
         if: steps.check-fix.outputs.needs_fix == 'true' && github.event.workflow_run.conclusion != 'in_progress'
         id: auto-fix
-        run: node scripts/ci-cd-auto-fix.cjs
+        run: node scripts/node/ci-cd-auto-fix.cjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}

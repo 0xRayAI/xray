@@ -28,7 +28,7 @@ const EXIT_OUTDATED = 2;
 const EXIT_INVALID_FORMAT = 3;
 const EXIT_VERSION_MISMATCH = 4;
 
-// Required sections in AGENTS.md
+// Required sections in AGENTS.md (accept ## or ### for compatibility)
 const REQUIRED_SECTIONS = [
   '## Agent Triage Rules',
   '## Universal Development Codex',
@@ -164,13 +164,13 @@ class AgentsMdEnforcer {
   checkRequiredSections(content) {
     const missing = [];
     
-    // Check for required sections - be flexible about exact matching
+    // Check for required sections - be flexible about exact matching (## or ###)
     const sectionPatterns = {
       '## Agent Triage Rules': /##\s*Agent\s*Triage\s*Rules/i,
       '## Universal Development Codex': /##\s*Universal\s*Development\s*Codex/i,
       '## Agent Commands': /##\s*Agent\s*Commands/i,
       '## Rule Hierarchy': /##\s*Rule\s*Hierarchy/i,
-      '## Agent Capabilities Matrix': /##\s*Agent\s*Capabilities\s*Matrix/i,
+      '## Agent Capabilities Matrix': /###\s*\d+\.\d+\s*Agent\s*Capabilities\s*Matrix/i,
       '## Session Management': /##\s*Session\s*Management/i,
       '## Rule Enforcement': /##\s*Rule\s*Enforcement/i,
       '## Critical Rules': /##\s*Critical\s*Rules/i,

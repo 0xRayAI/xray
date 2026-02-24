@@ -157,6 +157,8 @@ class PostinstallFileValidator {
     console.log("\n🔌 Validating OpenCode Configuration...");
 
     try {
+      // NOTE: .opencode/OpenCode.json is NOT required and can cause OpenCode boot issues
+      // The framework uses .opencode/strray/config.json for configuration instead
       const ohMyOpencodePath = path.join(
         process.cwd(),
         ".opencode",
@@ -164,20 +166,23 @@ class PostinstallFileValidator {
       );
 
       if (!fs.existsSync(ohMyOpencodePath)) {
-        console.log("  ❌ .opencode/OpenCode.json not found");
-        this.results.failed.push({
-          test: "OpenCode Config",
-          error: "File does not exist",
+        // OpenCode.json is optional - don't fail the test
+        console.log("  ℹ️ .opencode/OpenCode.json not found (optional - using strray/config.json instead)");
+        this.results.passed.push({
+          test: "OpenCode Config File",
+          details: "Optional - using .opencode/strray/config.json instead"
         });
         return;
       }
 
+      // If it exists, validate it
       const ohMyOpencodeConfig = JSON.parse(
         fs.readFileSync(ohMyOpencodePath, "utf8"),
       );
+      console.log("  ✅ OpenCode Config File: Found (optional)");
+      this.results.passed.push({ test: "OpenCode Config File" });
 
-      // Check for StringRay plugin registration
-      // OpenCode uses "plugin" (singular) not "plugins" (plural)
+      // Check for StringRay plugin registration (optional check)
       const hasPlugins =
         (ohMyOpencodeConfig.plugins &&
           Array.isArray(ohMyOpencodeConfig.plugins)) ||

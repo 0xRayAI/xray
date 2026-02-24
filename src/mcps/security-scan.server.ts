@@ -21,7 +21,7 @@ class StrRaySecurityScanServer {
     this.server = new Server(
       {
         name: "security-scan",
-        version: "1.0.0",
+        version: "1.6.0",
       },
       {
         capabilities: {
@@ -111,12 +111,6 @@ class StrRaySecurityScanServer {
     const auditLevel = args.auditLevel || "moderate";
     const includeOutdated = args.includeOutdated !== false;
 
-    console.log("🔒 MCP: Performing security scan:", {
-      scope,
-      auditLevel,
-      includeOutdated,
-    });
-
     const results = {
       secure: true,
       vulnerabilities: [] as string[],
@@ -182,11 +176,6 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n")}
   private async handleDependencyAudit(args: any) {
     const packageManager = args.packageManager || "auto";
     const auditLevel = args.auditLevel || "moderate";
-
-    console.log("📦 MCP: Performing dependency audit:", {
-      packageManager,
-      auditLevel,
-    });
 
     try {
       const results = await this.scanDependencies(auditLevel, true);

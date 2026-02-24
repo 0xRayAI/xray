@@ -31,7 +31,7 @@ jobs:
 
       - name: Run comprehensive security audit
         run: |
-          node scripts/basic-security-audit.cjs > security-report.txt || true
+          node scripts/node/basic-security-audit.cjs > security-report.txt || true
           echo "## Security Audit Report" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           cat security-report.txt >> $GITHUB_STEP_SUMMARY

@@ -35,7 +35,7 @@
     "test:performance-all": "npm test -- src/__tests__/performance/ src/__tests__/unit/performance-system.test.ts src/__tests__/unit/benchmark.test.ts src/__tests__/unit/analytics.test.ts",
     "test:agents-all": "npm test -- src/__tests__/agents/",
     "test:infrastructure": "npm test -- src/__tests__/infrastructure/",
-    "test:root": "npm test -- src/__tests__/server.test.ts src/__tests__/test-processor.ts src/__tests__/test-integration.ts",
+    "test:root": "npm test -- src/__tests__/integration/server.test.ts src/__tests__/framework-enforcement-integration.test.ts",
     "test:full-suite": "npm run test:integration-all && npm run test:performance-all && npm run test:agents-all && npm run test:infrastructure && npm run test:root",
     "postinstall": "node scripts/node/postinstall.cjs",
     "setup-dev": "node scripts/node/setup-dev.cjs",

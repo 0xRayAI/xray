@@ -394,7 +394,6 @@ export class ProcessorManager {
 
       // Continue execution even if post-processors fail
       if (!result.success) {
-        console.warn(`⚠️ Post-processor ${config.name} failed, continuing...`);
         frameworkLogger.log(
           "processor-manager",
           "post-processor failed",

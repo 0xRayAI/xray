@@ -24,7 +24,7 @@ class StrRayStateManagerServer {
     this.server = new Server(
       {
         name: "state-manager",
-        version: "1.0.0",
+        version: "1.6.0",
       },
       {
         capabilities: {
@@ -236,11 +236,7 @@ class StrRayStateManagerServer {
     const defaultValue = args.defaultValue;
     const validate = args.validate !== false;
 
-    console.log("📖 MCP: Getting state:", {
-      key,
-      hasDefault: defaultValue !== undefined,
-      validate,
-    });
+    // Silent operation - no console output
 
     try {
       if (this.state.has(key)) {
@@ -305,13 +301,6 @@ class StrRayStateManagerServer {
     const persist = args.persist !== false;
     const backup = args.backup || false;
 
-    console.log("💾 MCP: Setting state:", {
-      key,
-      valueType: typeof value,
-      persist,
-      backup,
-    });
-
     try {
       // Validate the value
       const validationResult = this.validateStateValue(value);
@@ -363,8 +352,6 @@ class StrRayStateManagerServer {
   private async handleDeleteState(args: any) {
     const key = args.key;
     const force = args.force || false;
-
-    console.log("🗑️ MCP: Deleting state:", { key, force });
 
     try {
       if (!this.state.has(key)) {
@@ -426,8 +413,6 @@ class StrRayStateManagerServer {
     const includeValues = args.includeValues || false;
     const limit = args.limit || 100;
 
-    console.log("📋 MCP: Listing state:", { prefix, includeValues, limit });
-
     try {
       const keys = Array.from(this.state.keys())
         .filter((key) => key.startsWith(prefix))
@@ -466,8 +451,6 @@ class StrRayStateManagerServer {
   private async handleBackupState(args: any) {
     const keys = args.keys || [];
     const name = args.name || `backup_${Date.now()}`;
-
-    console.log("💾 MCP: Creating backup:", { name, keys: keys.length });
 
     try {
       const backupData: Record<string, any> = {};
@@ -509,8 +492,6 @@ class StrRayStateManagerServer {
   private async handleRestoreState(args: any) {
     const name = args.name;
     const keys = args.keys || [];
-
-    console.log("🔄 MCP: Restoring backup:", { name, keys: keys.length });
 
     try {
       if (!this.backups.has(name)) {
@@ -568,8 +549,6 @@ class StrRayStateManagerServer {
   private async handleValidateState(args: any) {
     const deep = args.deep || false;
     const repair = args.repair || false;
-
-    console.log("✅ MCP: Validating state:", { deep, repair });
 
     const results = {
       totalKeys: this.state.size,
