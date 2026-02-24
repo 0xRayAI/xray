@@ -493,7 +493,7 @@ Data Flow: User Input → Framework Processing → Agent Execution → Validatio
 
 ### 5.1 Agent Matrix
 
-**9 Specialized AI Agents with Automatic Complexity-Based Routing:**
+**23 Specialized AI Agents with Automatic Complexity-Based Routing:**
 
 | Agent | Role | Complexity Threshold | Primary Pipeline | Key Tools | Conflict Strategy |
 |-------|------|---------------------|------------------|-----------|-------------------|
@@ -506,6 +506,19 @@ Data Flow: User Input → Framework Processing → Agent Execution → Validatio
 | **refactorer** | Technical debt elimination | Refactor operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `ast_grep_*`, `lsp_rename` | Majority vote |
 | **test-architect** | Testing strategy & coverage | Test operations | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
 | **librarian** | Codebase exploration & documentation | Analysis operations | Agent Delegation | `project-analysis_*` | N/A (solo agent) |
+| **seo-specialist** | Technical SEO optimization | SEO operations | Agent Delegation | `read`, `grep`, `bash` | Expert priority |
+| **seo-copywriter** | SEO content creation | Content operations | Agent Delegation | `read`, `grep`, `bash` | Expert priority |
+| **marketing-expert** | Marketing strategy | Marketing operations | Agent Delegation | `read`, `grep`, `bash` | Expert priority |
+| **database-engineer** | Database design & optimization | Database operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **devops-engineer** | DevOps & infrastructure | DevOps operations | Agent Delegation | `read`, `grep`, `bash`, `lsp_*` | Expert priority |
+| **backend-engineer** | Backend API development | Backend operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **frontend-engineer** | Frontend UI development | Frontend operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **documentation-writer** | Technical documentation | Documentation | Agent Delegation | `read`, `grep`, `bash` | Expert priority |
+| **performance-engineer** | Performance optimization | Performance ops | Agent Delegation | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **mobile-developer** | Mobile app development | Mobile operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **multimodal-looker** | Media analysis | Media operations | Agent Delegation | `read`, `bash` | N/A (solo agent) |
+| **analyzer** | Data analysis | Analysis operations | Agent Delegation | `read`, `grep`, `bash` | Expert priority |
+| **log-monitor** | Log monitoring | Monitoring operations | Agent Delegation | `read`, `grep`, `bash` | N/A (solo agent) |
 
 ### 5.2 Pipeline Integration Points
 
@@ -522,6 +535,16 @@ Data Flow: User Input → Framework Processing → Agent Execution → Validatio
 | **refactorer** | Refactoring requests OR code quality issues | `agent-delegator.ts`, `dependency-graph-builder.ts` | Agent delegation pipeline |
 | **test-architect** | Test generation/validation needs | `test-auto-healing.ts`, `rule-enforcer.ts` | Rule enforcement pipeline |
 | **librarian** | Analysis/documentation requests | `codebase-context-analyzer.ts`, `project-analysis.server.ts` | Agent delegation pipeline |
+| **seo-specialist** | SEO optimization requests | `seo-specialist.ts`, `seo-analysis.server.ts` | Agent delegation pipeline |
+| **seo-copywriter** | Content creation requests | `seo-copywriter.ts`, `seo-content.server.ts` | Agent delegation pipeline |
+| **marketing-expert** | Marketing strategy requests | `marketing-expert.ts`, `marketing.server.ts` | Agent delegation pipeline |
+| **database-engineer** | Database design/optimization | `database-engineer.ts`, `database-design.server.ts` | Agent delegation pipeline |
+| **devops-engineer** | DevOps/infrastructure requests | `devops-engineer.ts`, `devops-deployment.server.ts` | Agent delegation pipeline |
+| **backend-engineer** | Backend API development | `backend-engineer.ts`, `api-design.server.ts` | Agent delegation pipeline |
+| **frontend-engineer** | Frontend UI development | `frontend-engineer.ts`, `ui-ux-design.server.ts` | Agent delegation pipeline |
+| **documentation-writer** | Documentation requests | `documentation-writer.ts`, `documentation-generation.server.ts` | Agent delegation pipeline |
+| **performance-engineer** | Performance optimization | `performance-engineer.ts`, `performance-optimization.server.ts` | Agent delegation pipeline |
+| **mobile-developer** | Mobile app development | `mobile-developer.ts`, `mobile-development.server.ts` | Agent delegation pipeline |
 
 ### Practical Agent Usage Examples
 
@@ -952,6 +975,19 @@ Tasks are evaluated using 6 metrics:
 | **refactorer**            | Technical debt      | Refactor operations | ast_grep_*, lsp_rename | ✅ All skills | Majority vote |
 | **test-architect**        | Testing strategy    | Test operations     | run_terminal_cmd | ✅ All skills | Expert priority |
 | **librarian**             | Codebase exploration| Analysis operations | project-analysis_* | ✅ All skills | N/A (solo agent) |
+| **seo-specialist**        | Technical SEO       | SEO operations      | read, grep | ✅ All skills | Expert priority |
+| **seo-copywriter**        | SEO content         | Content operations  | read, grep | ✅ All skills | Expert priority |
+| **marketing-expert**       | Marketing strategy  | Marketing operations| read, grep | ✅ All skills | Expert priority |
+| **database-engineer**     | Database design    | Database operations| read, grep, lsp_* | ✅ All skills | Expert priority |
+| **devops-engineer**      | DevOps/infrastructure| DevOps operations | read, grep, lsp_* | ✅ All skills | Expert priority |
+| **backend-engineer**      | Backend API dev    | Backend operations | read, grep, lsp_* | ✅ All skills | Expert priority |
+| **frontend-engineer**     | Frontend UI dev    | Frontend operations| read, grep, lsp_* | ✅ All skills | Expert priority |
+| **documentation-writer**  | Documentation       | Documentation      | read, grep | ✅ All skills | Expert priority |
+| **performance-engineer** | Performance opt    | Performance ops   | read, grep, lsp_* | ✅ All skills | Expert priority |
+| **mobile-developer**      | Mobile development  | Mobile operations  | read, grep, lsp_* | ✅ All skills | Expert priority |
+| **multimodal-looker**    | Media analysis     | Media operations   | read, bash | ✅ All skills | N/A (solo agent) |
+| **analyzer**              | Data analysis      | Analysis operations| read, grep, bash | ✅ All skills | Expert priority |
+| **log-monitor**           | Log monitoring     | Monitoring ops    | read, grep, bash | ✅ All skills | N/A (solo agent) |
 
 **[Agent Matrix](#51-agent-matrix)** determines which agents handle each complexity level.
 

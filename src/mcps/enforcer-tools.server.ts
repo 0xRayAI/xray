@@ -31,7 +31,6 @@ class StrRayEnforcerToolsServer {
     );
 
     this.setupToolHandlers();
-    console.log("StrRay Enforcer Tools MCP Server initialized");
   }
 
   private setupToolHandlers() {
@@ -270,9 +269,7 @@ class StrRayEnforcerToolsServer {
     const { operation, files, newCode, existingCode, dependencies, tests } =
       args;
 
-    console.log(
-      `🛡️ Enforcer Tool: Validating operation '${operation}' against rule hierarchy`,
-    );
+    // Tool execution - no logging to console (results returned to agent)
 
     // This would integrate with the actual rule-enforcer.ts validation logic
     const context = {
@@ -316,9 +313,7 @@ class StrRayEnforcerToolsServer {
   private async codexEnforcement(args: any): Promise<any> {
     const { operation, files, newCode, focusAreas } = args;
 
-    console.log(
-      `📚 Enforcer Tool: Enforcing codex compliance for operation '${operation}'`,
-    );
+    // Codex enforcement - no logging to console (results returned to agent)
 
     // Simulate codex validation (would call actual codex validation)
     const codexCheck = await this.simulateCodexValidation(
@@ -352,9 +347,7 @@ class StrRayEnforcerToolsServer {
   private async contextAnalysisValidation(args: any): Promise<any> {
     const { files, operation, checkPatterns } = args;
 
-    console.log(
-      `🔍 Enforcer Tool: Validating context analysis integration for ${files.length} files`,
-    );
+    // Context analysis - no logging to console (results returned to agent)
 
     // Simulate context validation (would call actual context validation)
     const contextValidation = await this.simulateContextValidation(
@@ -391,9 +384,7 @@ class StrRayEnforcerToolsServer {
   private async qualityGateCheck(args: any): Promise<any> {
     const { operation, context, strictMode = true } = args;
 
-    console.log(
-      `🚧 Enforcer Tool: Running quality gate check for '${operation}'`,
-    );
+    // Quality gate check - no logging to console (results returned to agent)
 
     // Run comprehensive quality validation
     const qualityCheck = await this.performQualityGateCheck(
@@ -432,7 +423,7 @@ class StrRayEnforcerToolsServer {
   private async getEnforcementStatus(args: any): Promise<any> {
     const { includeHistory = false, focusAreas } = args;
 
-    console.log(`📊 Enforcer Tool: Retrieving enforcement status`);
+    // Status retrieval - no logging to console (results returned to agent)
 
     // Simulate status retrieval (would call actual status tracking)
     const status = await this.simulateEnforcementStatus(
@@ -472,9 +463,7 @@ class StrRayEnforcerToolsServer {
       strictBlocking = true,
     } = args;
 
-    console.log(
-      `🔒 Enforcer Tool: Running pre-commit validation for ${files.length} files`,
-    );
+    // Pre-commit validation - no logging to console (results returned to agent)
 
     // Run comprehensive pre-commit validation
     const preCommitResult = await this.performPreCommitValidation(
@@ -810,7 +799,6 @@ class StrRayEnforcerToolsServer {
       );
       for (const fix of autoFixes) {
         // Execute actual auto-fix logic
-        console.log(`Applying auto-fix: ${fix.description}`);
         
         if (fix.action === "createTestFile" && files.length > 0) {
           // Import and run test auto-creation processor
@@ -825,21 +813,21 @@ class StrRayEnforcerToolsServer {
             });
             
             if (result.success) {
-              console.log(`✅ Auto-fix applied: Test file created for ${files[0]}`);
+              // Auto-fix applied successfully - no logging to console
               fix.applied = true;
               fix.result = result;
             } else {
-              console.error(`❌ Auto-fix failed: ${result.error || "Unknown error"}`);
+              console.error(`Auto-fix failed: ${result.error || "Unknown error"}`);
               fix.applied = false;
               fix.error = result.error;
             }
           } catch (error) {
-            console.error(`❌ Auto-fix execution failed:`, error);
+            console.error(`Auto-fix execution failed:`, error);
             fix.applied = false;
             fix.error = error instanceof Error ? error.message : String(error);
           }
         } else {
-          console.log(`ℹ️ Auto-fix not implemented for action: ${fix.action}`);
+          // Auto-fix not implemented for this action - no logging
           fix.applied = false;
         }
       }
@@ -858,11 +846,9 @@ class StrRayEnforcerToolsServer {
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Enforcer Tools MCP Server started");
+    // Server started - no startup logging to console
 
     const cleanup = async (signal: string) => {
-      console.log(`Received ${signal}, shutting down gracefully...`);
-
       // Set a timeout to force exit if graceful shutdown fails
       const timeout = setTimeout(() => {
         console.error("Graceful shutdown timeout, forcing exit...");
@@ -874,7 +860,6 @@ class StrRayEnforcerToolsServer {
           await this.server.close();
         }
         clearTimeout(timeout);
-        console.log("StrRay MCP Server shut down gracefully");
         process.exit(0);
       } catch (error) {
         clearTimeout(timeout);
@@ -894,10 +879,7 @@ class StrRayEnforcerToolsServer {
         process.kill(process.ppid, 0); // Check if parent is alive
         setTimeout(checkParent, 1000); // Check again in 1 second
       } catch (error) {
-        // Parent process died, shut down gracefully
-        console.log(
-          "Parent process (opencode) died, shutting down MCP server...",
-        );
+        // Parent process died, shut down gracefully - no logging
         cleanup("parent-process-death");
       }
     };

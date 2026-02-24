@@ -170,7 +170,6 @@ class SEOSpecialistServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error("SEO Specialist MCP Server running on stdio");
   }
 }
 

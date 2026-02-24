@@ -538,7 +538,6 @@ class SkillInvocationServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error("StringRay Skill Invocation MCP server running on stdio");
   }
 }
 

@@ -314,7 +314,7 @@ export class FeaturesConfigLoader {
 
       return config;
     } catch (error) {
-      console.error(`❌ Failed to load features config:`, error);
+      // Silent fallback to defaults on error - frameworkLogger not available here
       return this.getDefaultConfig();
     }
   }
@@ -606,6 +606,7 @@ export class FeaturesConfigLoader {
           "frontend-engineer": "claude-sonnet-4",
           "documentation-writer": "claude-sonnet-4",
           "performance-engineer": "claude-sonnet-4",
+          "mobile-developer": "claude-sonnet-4",
         },
         performance_limits: {
           max_task_duration_ms: 30000,
@@ -689,7 +690,7 @@ export class FeaturesConfigLoader {
       fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 2));
       this.clearCache();
     } catch (error) {
-      console.error(`❌ Failed to save features config:`, error);
+      // Silent fail - frameworkLogger not available here
       throw error;
     }
   }

@@ -114,7 +114,7 @@ class PluginLogger {
       const logEntry = `[${timestamp}] ${message}\n`;
       await fs.promises.appendFile(this.logPath, logEntry, "utf-8");
     } catch (error) {
-      console.error("Failed to write to log file:", error);
+      // Silent fail - logging failure should not break plugin
     }
   }
 

@@ -20,6 +20,7 @@ import { backendEngineer } from "./backend-engineer.js";
 import { frontendEngineer } from "./frontend-engineer.js";
 import { documentationWriter } from "./documentation-writer.js";
 import { performanceEngineer } from "./performance-engineer.js";
+import { mobileDeveloper } from "./mobile-developer.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   enforcer,
@@ -43,6 +44,7 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "frontend-engineer": frontendEngineer,
   "documentation-writer": documentationWriter,
   "performance-engineer": performanceEngineer,
+  "mobile-developer": mobileDeveloper,
 };
 
 export {
@@ -67,4 +69,5 @@ export {
   frontendEngineer,
   documentationWriter,
   performanceEngineer,
+  mobileDeveloper,
 };

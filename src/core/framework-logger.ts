@@ -179,8 +179,7 @@ export class FrameworkUsageLogger {
       const logEntry = `${new Date(entry.timestamp).toISOString()} ${jobIdPart}[${entry.component}] ${entry.action} - ${entry.status.toUpperCase()}\n`;
       fs.appendFileSync(logFile, logEntry);
     } catch (error) {
-      // Fallback to console if file writing fails
-      console.error("Failed to persist log to file:", error);
+      // Silent fail - cannot log to console as this IS the logger
     }
   }
 
