@@ -41,10 +41,6 @@ class PostinstallConfigValidator {
     const requiredFiles = [
       { path: "opencode.json", description: "OpenCode base configuration" },
       {
-        path: ".opencode/OpenCode.json",
-        description: "OpenCode main config",
-      },
-      {
         path: ".opencode/package.json",
         description: "OpenCode package config",
       },
@@ -52,6 +48,10 @@ class PostinstallConfigValidator {
     
     // Optional files (not required for CI/test environments)
     const optionalFiles = [
+      {
+        path: ".opencode/OpenCode.json",
+        description: "OpenCode main config (optional - can cause boot issues)",
+      },
       { path: ".mcp.json", description: "MCP server configuration (lazy loaded)" },
       { path: ".opencode/README.md", description: "OpenCode documentation" },
     ];
@@ -99,17 +99,18 @@ class PostinstallConfigValidator {
   async validateOpencodeConfig() {
     console.log("\n🛠️  Testing OpenCode Configuration...");
 
-    try {
-      const configPath = ".opencode/OpenCode.json";
-      if (!fs.existsSync(configPath)) {
-        console.log(`  ❌ ${configPath} not found`);
-        this.results.failed.push({
-          test: "OpenCode Configuration",
-          error: "OpenCode.json not found",
-        });
-        return;
-      }
+    // OpenCode.json is optional - framework uses strray/config.json instead
+    const configPath = ".opencode/OpenCode.json";
+    if (!fs.existsSync(configPath)) {
+      console.log(`  ℹ️  ${configPath} not found (optional - using .opencode/strray/config.json instead)`);
+      this.results.passed.push({
+        test: "OpenCode Configuration",
+        details: "Optional - using strray/config.json"
+      });
+      return;
+    }
 
+    try {
       const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 
       // Sisyphus was removed from the framework - skip this check
