@@ -438,17 +438,27 @@ export class PostProcessor {
     // If globals not set, try graceful degradation for standalone operation
     if (!stateManager) {
       try {
-        const { StrRayStateManager } = await import("../state/state-manager.js");
+        const { StrRayStateManager } =
+          await import("../state/state-manager.js");
         const tempStateManager = new StrRayStateManager();
         (globalThis as any).strRayStateManager = tempStateManager;
-        return { passed: true, message: "System integrity verified (graceful mode)" };
+        return {
+          passed: true,
+          message: "System integrity verified (graceful mode)",
+        };
       } catch (e) {
-        return { passed: true, message: "System integrity assumed OK (no full framework context)" };
+        return {
+          passed: true,
+          message: "System integrity assumed OK (no full framework context)",
+        };
       }
     }
 
     if (!postProcessor) {
-      return { passed: true, message: "System integrity verified (state manager active)" };
+      return {
+        passed: true,
+        message: "System integrity verified (state manager active)",
+      };
     }
 
     return { passed: true, message: "System integrity verified" };
@@ -474,7 +484,10 @@ export class PostProcessor {
     const pathResolver = (globalThis as any).strRayPathResolver;
     if (!pathResolver) {
       // Graceful degradation - path resolver not available in standalone mode
-      return { passed: true, message: "Path resolution check skipped (no full framework context)" };
+      return {
+        passed: true,
+        message: "Path resolution check skipped (no full framework context)",
+      };
     }
 
     // Test path resolution with a sample path
@@ -724,6 +737,55 @@ All path violations will be automatically detected and blocked.
       );
 
       const processorManager = new ProcessorManager();
+      
+      // Register processors needed for post-processing
+      // (same registrations as boot-orchestrator.ts)
+      processorManager.registerProcessor({
+        name: "preValidate",
+        type: "pre",
+        priority: 10,
+        enabled: true,
+      });
+      processorManager.registerProcessor({
+        name: "codexCompliance",
+        type: "pre",
+        priority: 20,
+        enabled: true,
+      });
+      processorManager.registerProcessor({
+        name: "testAutoCreation",
+        type: "pre",
+        priority: 22,
+        enabled: true,
+      });
+      processorManager.registerProcessor({
+        name: "versionCompliance",
+        type: "pre",
+        priority: 25,
+        enabled: true,
+      });
+      processorManager.registerProcessor({
+        name: "errorBoundary",
+        type: "pre",
+        priority: 30,
+        enabled: true,
+      });
+      processorManager.registerProcessor({
+        name: "agentsMdValidation",
+        type: "pre",
+        priority: 35,
+        enabled: true,
+      });
+      processorManager.registerProcessor({
+        name: "stateValidation",
+        type: "post",
+        priority: 130,
+        enabled: true,
+      });
+
+      // Initialize all registered processors
+      await processorManager.initializeProcessors();
+
       const complianceResult =
         await processorManager.executeCodexCompliance(processorContext);
 
@@ -746,7 +808,9 @@ All path violations will be automatically detected and blocked.
                 "-post-processor",
                 "-test-auto-creation-failed",
                 "info",
-                { message: `Test auto-creation failed for ${filePath}: ${testError}` },
+                {
+                  message: `Test auto-creation failed for ${filePath}: ${testError}`,
+                },
               );
             }
           }
@@ -899,7 +963,8 @@ All path violations will be automatically detected and blocked.
 
         // Auto-update AGENTS.md via Librarian
         try {
-          const { librarianAgentsUpdater } = await import("../agents/librarian-agents-updater.js");
+          const { librarianAgentsUpdater } =
+            await import("../agents/librarian-agents-updater.js");
           await librarianAgentsUpdater.updateAgentsMd(process.cwd());
         } catch (error) {
           // Non-blocking - log but don't fail
