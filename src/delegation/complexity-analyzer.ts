@@ -87,7 +87,7 @@ export class ComplexityAnalyzer {
 
   /**
    * Calculate complexity score and delegation strategy
-   * 
+   *
    * CALIBRATED: Weights increased to properly utilize orchestration
    * - File count: 4 pts/file (was 2) - better reflects multi-file complexity
    * - Change volume: 0.2/line (was 0.1) - better reflects code volume
@@ -155,7 +155,7 @@ export class ComplexityAnalyzer {
   /**
    * Update thresholds based on historical performance data
    * TODO: Implement calibration based on actual task completion times
-   * 
+   *
    * This would analyze completed tasks and their scores vs actual duration
    * to automatically calibrate thresholds for optimal routing.
    */
@@ -179,6 +179,49 @@ export class ComplexityAnalyzer {
     this.thresholds = { ...this.thresholds, ...thresholds };
   }
 
+  /**
+   * Set operation type weights (from calibrator)
+   */
+  setOperationWeights(weights: Partial<Record<string, number>>): void {
+    for (const [key, value] of Object.entries(weights)) {
+      if (typeof value === 'number') {
+        (this.operationWeights as any)[key] = value;
+      }
+    }
+  }
+
+  /**
+   * Set risk multipliers (from calibrator)
+   */
+  setRiskMultipliers(multipliers: Partial<Record<string, number>>): void {
+    for (const [key, value] of Object.entries(multipliers)) {
+      if (typeof value === 'number') {
+        (this.riskMultipliers as any)[key] = value;
+      }
+    }
+  }
+
+  /**
+   * Apply calibration results from ComplexityCalibrator
+   */
+  applyCalibration(calibrationResult: {
+    adjustedWeights: {
+      operationType: Record<string, number>;
+      riskLevel: Record<string, number>;
+    };
+    adjustedThresholds: ComplexityThresholds;
+  }): void {
+    if (calibrationResult.adjustedWeights.operationType) {
+      this.setOperationWeights(calibrationResult.adjustedWeights.operationType);
+    }
+    if (calibrationResult.adjustedWeights.riskLevel) {
+      this.setRiskMultipliers(calibrationResult.adjustedWeights.riskLevel);
+    }
+    if (calibrationResult.adjustedThresholds) {
+      this.setThresholds(calibrationResult.adjustedThresholds);
+    }
+  }
+
   // Private helper methods
 
   /**
@@ -186,7 +229,11 @@ export class ComplexityAnalyzer {
    * FIXED: Handle empty arrays by falling back to description inference
    */
   private calculateFileCount(context: any): number {
-    if (context.files && Array.isArray(context.files) && context.files.length > 0) {
+    if (
+      context.files &&
+      Array.isArray(context.files) &&
+      context.files.length > 0
+    ) {
       return context.files.length;
     }
     if (context.fileCount) {
@@ -195,16 +242,19 @@ export class ComplexityAnalyzer {
 
     const description = context.description || "";
     const desc = description.toLowerCase();
-    
+
     // Enhanced inference with more patterns
     if (desc.includes("single file") || desc.includes("one file")) return 1;
     if (desc.includes("couple files") || desc.includes("few files")) return 2;
     if (desc.includes("several files")) return 4;
-    if (desc.includes("multiple files") || desc.includes("various files")) return 5;
+    if (desc.includes("multiple files") || desc.includes("various files"))
+      return 5;
     if (desc.includes("many files")) return 8;
-    if (desc.includes("entire module") || desc.includes("whole module")) return 10;
-    if (desc.includes("system-wide") || desc.includes("across system")) return 20;
-    
+    if (desc.includes("entire module") || desc.includes("whole module"))
+      return 10;
+    if (desc.includes("system-wide") || desc.includes("across system"))
+      return 20;
+
     // Default: assume single file for safety
     return 1;
   }
@@ -224,7 +274,7 @@ export class ComplexityAnalyzer {
     const operation = context.operation || "";
     const desc = (context.description || "").toLowerCase();
     const opLower = operation.toLowerCase();
-    
+
     // Size indicators in description
     if (desc.includes("large") || desc.includes("extensive")) return 500;
     if (desc.includes("medium") || desc.includes("significant")) return 200;
@@ -233,13 +283,13 @@ export class ComplexityAnalyzer {
 
     // Operation-based defaults
     if (opLower.includes("create")) return 100; // Creating new code
-    if (opLower.includes("modify")) return 75;  // Modifying existing
+    if (opLower.includes("modify")) return 75; // Modifying existing
     if (opLower.includes("refactor")) return 150; // Refactoring tends to be larger
     if (opLower.includes("analyze")) return 25; // Analysis may involve some changes
-    if (opLower.includes("debug")) return 50;   // Debugging fixes
-    if (opLower.includes("test")) return 80;    // Tests can be substantial
+    if (opLower.includes("debug")) return 50; // Debugging fixes
+    if (opLower.includes("test")) return 80; // Tests can be substantial
     if (opLower.includes("documentation")) return 30; // Docs
-    
+
     return 50; // default
   }
 

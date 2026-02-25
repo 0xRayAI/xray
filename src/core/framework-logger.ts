@@ -56,13 +56,23 @@ export function withJobContext<T>(
 
 /**
  * Job context for tracking work sessions
+ * Enhanced with outcome and complexity accuracy tracking for pattern analytics
  */
+export type Outcome = 'success' | 'fail' | 'escalated' | 'auto-fixed';
+export type ComplexityAccuracy = 'underestimated' | 'accurate' | 'overestimated';
+
 export class JobContext {
   public readonly jobId: string;
   public readonly startTime: number;
   public complexityScore?: number;
   public agentUsed?: string;
   public operationType?: string;
+  
+  // NEW: Outcome tracking for pattern analysis
+  public outcome?: Outcome;
+  
+  // NEW: Predicted duration for accuracy comparison (in ms)
+  public predictedDuration?: number;
 
   constructor(jobId?: string) {
     this.jobId = jobId || generateJobId();
@@ -70,19 +80,72 @@ export class JobContext {
   }
 
   /**
+   * Set the outcome after task completion
+   */
+  setOutcome(
+    success: boolean, 
+    escalated: boolean = false, 
+    autoFixed: boolean = false
+  ): void {
+    if (escalated) this.outcome = 'escalated';
+    else if (autoFixed) this.outcome = 'auto-fixed';
+    else this.outcome = success ? 'success' : 'fail';
+  }
+
+  /**
+   * Set predicted duration for complexity accuracy comparison
+   */
+  setPredictedDuration(completionTimeMs: number): void {
+    this.predictedDuration = completionTimeMs;
+  }
+
+  /**
    * Log job completion with diagnostic info
+   * Enhanced with outcome and complexity accuracy tracking
    */
   async complete(success: boolean = true, details?: any) {
-    const duration = Date.now() - this.startTime;
+    const actualDuration = Date.now() - this.startTime;
+    
+    // Calculate complexity accuracy if we have both predicted and actual
+    let complexityAccuracy: ComplexityAccuracy | undefined;
+    if (this.complexityScore && this.predictedDuration) {
+      const ratio = actualDuration / this.predictedDuration;
+      if (ratio > 1.5) {
+        complexityAccuracy = 'underestimated';
+      } else if (ratio < 0.5) {
+        complexityAccuracy = 'overestimated';
+      } else {
+        complexityAccuracy = 'accurate';
+      }
+    } else if (this.complexityScore && actualDuration) {
+      // Fallback: estimate predicted based on complexity score
+      const estimatedPredicted = this.complexityScore * 1000; // 1 second per complexity point
+      const ratio = actualDuration / estimatedPredicted;
+      if (ratio > 1.5) {
+        complexityAccuracy = 'underestimated';
+      } else if (ratio < 0.5) {
+        complexityAccuracy = 'overestimated';
+      } else {
+        complexityAccuracy = 'accurate';
+      }
+    }
+
+    // Determine final outcome
+    const finalOutcome = this.outcome || (success ? 'success' : 'fail');
+
     await frameworkLogger.log(
       "job-context",
       "job-completed",
       success ? "success" : "error",
       {
-        duration,
+        duration: actualDuration,
         complexityScore: this.complexityScore,
         agentUsed: this.agentUsed,
         operationType: this.operationType,
+        // NEW: Enhanced analytics fields
+        outcome: finalOutcome,
+        complexityAccuracy,
+        predictedDuration: this.predictedDuration,
         ...details,
       },
       undefined, // sessionId
@@ -99,7 +162,19 @@ export interface FrameworkLogEntry {
   sessionId?: string | undefined;
   jobId?: string | undefined;
   status: "success" | "error" | "info" | "debug";
-  details?: any;
+  details?: {
+    // Core fields
+    duration?: number;
+    complexityScore?: number;
+    agentUsed?: string;
+    operationType?: string;
+    // NEW: Enhanced analytics fields
+    outcome?: Outcome;
+    complexityAccuracy?: ComplexityAccuracy;
+    predictedDuration?: number;
+    // Additional details
+    [key: string]: unknown;
+  };
 }
 
 export class FrameworkUsageLogger {

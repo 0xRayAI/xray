@@ -20,7 +20,7 @@ program
   .description(
     "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention",
   )
-  .version("1.5.2");
+  .version("1.6.0");
 
 program
   .command("install")
@@ -425,6 +425,119 @@ program
     }
   });
 
+// Analytics command - pattern analysis and insights
+program
+  .command("analytics")
+  .description("Generate pattern analytics report from activity logs")
+  .option("-l, --limit <number>", "Limit analysis to last N entries", "1000")
+  .option("-o, --output <file>", "Save report to file")
+  .action(async (opts) => {
+    console.log("📊 StringRay Pattern Analytics");
+    console.log("==============================");
+    console.log("");
+
+    try {
+      // Dynamic import to avoid loading analytics module unless needed
+      const { SimplePatternAnalyzer } = await import(
+        "../analytics/simple-pattern-analyzer.js"
+      );
+
+      const analyzer = new SimplePatternAnalyzer();
+      const limit = parseInt(opts.limit) || 1000;
+      
+      console.log(`Analyzing last ${limit} log entries...`);
+      console.log("");
+
+      const insights = await analyzer.analyze(limit);
+      const insightsLines = analyzer.generateInsights(insights);
+      
+      // Print insights
+      insightsLines.forEach(line => {
+        console.log(line);
+      });
+
+      // Save to file if requested
+      if (opts.output) {
+        const fs = await import("fs");
+        const report = await analyzer.generateReport();
+        fs.writeFileSync(opts.output, report);
+        console.log("");
+        console.log(`✅ Report saved to: ${opts.output}`);
+      }
+
+      console.log("");
+      console.log("💡 Run regularly to track agent performance and complexity accuracy");
+    } catch (error) {
+      console.error(
+        "❌ Analytics failed:",
+        error instanceof Error ? error.message : String(error)
+      );
+      process.exit(1);
+    }
+  });
+
+// Calibrate command - adjust complexity based on historical accuracy
+program
+  .command("calibrate")
+  .description("Calibrate complexity predictions based on historical accuracy")
+  .option("-m, --min-samples <number>", "Minimum samples needed", "10")
+  .option("-a, --apply", "Apply calibration to complexity analyzer")
+  .action(async (opts) => {
+    console.log("🎯 StringRay Complexity Calibration");
+    console.log("======================================");
+    console.log("");
+
+    try {
+      const { ComplexityCalibrator } = await import(
+        "../delegation/complexity-calibrator.js"
+      );
+
+      const calibrator = new ComplexityCalibrator();
+      const minSamples = parseInt(opts.minSamples) || 10;
+      
+      console.log(`Analyzing historical accuracy (need ${minSamples}+ samples)...`);
+      console.log("");
+
+      const result = await calibrator.calibrate(minSamples);
+      
+      if (!result) {
+        console.log("⚠️ Not enough data for calibration.");
+        console.log("   Run more tasks and try again later.");
+        return;
+      }
+
+      // Display results
+      console.log("📊 Calibration Results:");
+      console.log(`   Sample size: ${result.sampleSize}`);
+      console.log("");
+      console.log("   Accuracy breakdown:");
+      console.log(`   - Underestimated: ${result.accuracyHistory.underestimated} (${((result.accuracyHistory.underestimated/result.sampleSize)*100).toFixed(1)}%)`);
+      console.log(`   - Accurate: ${result.accuracyHistory.accurate} (${((result.accuracyHistory.accurate/result.sampleSize)*100).toFixed(1)}%)`);
+      console.log(`   - Overestimated: ${result.accuracyHistory.overestimated} (${((result.accuracyHistory.overestimated/result.sampleSize)*100).toFixed(1)}%)`);
+      console.log("");
+      console.log("   Adjusted thresholds:");
+      console.log(`   - Simple: ${result.adjustedThresholds.simple}`);
+      console.log(`   - Moderate: ${result.adjustedThresholds.moderate}`);
+      console.log(`   - Complex: ${result.adjustedThresholds.complex}`);
+      console.log(`   - Enterprise: ${result.adjustedThresholds.enterprise}`);
+
+      if (opts.apply) {
+        // Would apply to analyzer - for now just show what would happen
+        console.log("");
+        console.log("✅ Calibration would be applied (integration pending)");
+      }
+
+      console.log("");
+      console.log("💡 Run 'npx strray-ai analytics' to see detailed pattern insights");
+    } catch (error) {
+      console.error(
+        "❌ Calibration failed:",
+        error instanceof Error ? error.message : String(error)
+      );
+      process.exit(1);
+    }
+  });
+
 program
   .command("doctor")
   .description("Diagnose framework issues (does not fix them)")
@@ -527,6 +640,8 @@ Examples:
    $ npx strray-ai report        # Generate activity and health reports
    $ npx strray-ai fix           # Automatically restore missing config files
    $ npx strray-ai doctor        # Diagnose issues (does not fix them)
+   $ npx strray-ai analytics     # Pattern analytics and insights
+   $ npx strray-ai calibrate     # Calibrate complexity predictions
 
 Quick Start:
    1. Install: npx strray-ai install
@@ -534,6 +649,8 @@ Quick Start:
    3. Use agents: @enforcer analyze this code
    4. Generate reports: npx strray-ai report
    5. Fix issues: npx strray-ai fix
+   6. View analytics: npx strray-ai analytics
+   7. Calibrate: npx strray-ai calibrate
 
 For more information, visit: https://github.com/htafolla/stringray
 `,
