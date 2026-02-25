@@ -56,22 +56,22 @@ log_header() {
 check_plugin_file() {
     log_header "🔍 CHECK 1: Plugin File Location"
 
-    local plugin_file="$PROJECT_ROOT/.opencode/plugins/strray-codex-injection.ts"
-    local plugin_js="$PROJECT_ROOT/.opencode/plugins/strray-codex-injection.js"
-    local built_plugin="$PROJECT_ROOT/dist/plugin/plugins/strray-codex-injection.js"
+    local plugin_file="$PROJECT_ROOT/.opencode/plugin/strray-codex-injection.js"
+    local plugin_js="$PROJECT_ROOT/.opencode/plugin/strray-codex-injection.js"
+    local built_plugin="$PROJECT_ROOT/dist/plugin/strray-codex-injection.js"
 
     if [[ -f "$plugin_file" ]]; then
-        log_success "Plugin file exists at expected location: .opencode/plugins/strray-codex-injection.ts"
+        log_success "Plugin file exists at expected location: .opencode/plugin/strray-codex-injection.ts"
         local file_size=$(stat -f%z "$plugin_file" 2>/dev/null || stat -c%s "$plugin_file" 2>/dev/null)
         log_info "Plugin file size: ${file_size} bytes"
     elif [[ -f "$plugin_js" ]]; then
-        log_success "Plugin file exists at expected location: .opencode/plugins/strray-codex-injection.js"
+        log_success "Plugin file exists at expected location: .opencode/plugin/strray-codex-injection.js"
     elif [[ -f "$built_plugin" ]]; then
-        log_warning "Built plugin exists at: dist/plugin/plugins/strray-codex-injection.js"
-        log_warning "Run: cp dist/plugin/plugins/strray-codex-injection.js .opencode/plugins/strray-codex-injection.js"
+        log_warning "Built plugin exists at: dist/plugin/strray-codex-injection.js"
+        log_warning "Run: cp dist/plugin/strray-codex-injection.js .opencode/plugin/strray-codex-injection.js"
         return 1
     else
-        log_error "Plugin file missing from expected location: .opencode/plugins/"
+        log_error "Plugin file missing from expected location: .opencode/plugin/"
         log_error "Built plugin also missing. Run: npm run build"
         return 1
     fi

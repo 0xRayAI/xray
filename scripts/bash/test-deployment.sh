@@ -435,7 +435,7 @@ try {
   }
   
   // Test codex loading (simulate plugin behavior)
-  const pluginPath = path.join(process.cwd(), 'dist/plugin/plugins/strray-codex-injection.js');
+  const pluginPath = path.join(process.cwd(), 'dist/plugin/strray-codex-injection.js');
   const content = fs.readFileSync(pluginPath, 'utf-8');
   
   if (content.includes('loadCodexContext')) {

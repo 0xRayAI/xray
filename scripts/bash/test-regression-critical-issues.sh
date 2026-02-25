@@ -65,10 +65,10 @@ async function testPluginHooks() {
     try {
         // Load the plugin (use local dist for development, node_modules for npm package)
         let pluginPath;
-        if (fs.existsSync(path.join(process.cwd(), 'dist/plugin/plugins/stringray-codex-injection.js'))) {
-            pluginPath = path.join(process.cwd(), 'dist/plugin/plugins/stringray-codex-injection.js');
+        if (fs.existsSync(path.join(process.cwd(), 'dist/plugin/stringray-codex-injection.js'))) {
+            pluginPath = path.join(process.cwd(), 'dist/plugin/stringray-codex-injection.js');
         } else {
-            pluginPath = path.join(process.cwd(), 'dist/plugin/plugins/stringray-codex-injection.js');
+            pluginPath = path.join(process.cwd(), 'dist/plugin/stringray-codex-injection.js');
         }
         console.log('Loading plugin from:', pluginPath);
         const plugin = await import(pluginPath);

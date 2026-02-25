@@ -42,8 +42,8 @@ fi
 AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/.opencode/agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
 SKILLS_COUNT=$(ls -1 "$PROJECT_ROOT/.opencode/skills/" 2>/dev/null | wc -l | tr -d ' ')
 
-# Plugin status
-if [ -f "$PROJECT_ROOT/.opencode/plugins/strray-codex-injection.ts" ]; then
+# Plugin status (check .opencode/plugin/ directory - singular)
+if [ -f "$PROJECT_ROOT/.opencode/plugin/strray-codex-injection.js" ]; then
     PLUGIN_STATUS="✅"
 else
     PLUGIN_STATUS="❌"
