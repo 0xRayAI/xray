@@ -37,7 +37,7 @@ console.log("🔧 StrRay Postinstall: Current working dir:", process.cwd());
 const configFiles = [
   // ".mcp.json", // Refactored out - MCP config now in opencode.json
   "opencode.json",
-  "AGENTS.md"
+  "AGENTS-consumer.md:AGENTS.md"  // Minimal version for consumers
 ];
 
 // Directories to copy recursively
@@ -50,9 +50,11 @@ console.log("📍 Package root:", packageRoot);
 console.log("📍 Target directory:", targetDir);
 
 // Copy individual files
-configFiles.forEach(filePath => {
-  const source = path.join(packageRoot, filePath);
-  const dest = path.join(targetDir, filePath);
+configFiles.forEach(fileMapping => {
+  // Handle "source:destination" format for renames
+  const [sourceFile, destFile] = fileMapping.split(':');
+  const source = path.join(packageRoot, sourceFile);
+  const dest = path.join(targetDir, destFile || sourceFile);
 
   try {
     if (fs.existsSync(source)) {
@@ -64,12 +66,12 @@ configFiles.forEach(filePath => {
       }
 
       fs.copyFileSync(source, dest);
-      console.log(`✅ Copied ${filePath}`);
+      console.log(`✅ Copied ${sourceFile} → ${destFile || sourceFile}`);
     } else {
       console.warn(`⚠️ Source not found: ${source}`);
     }
   } catch (error) {
-    console.warn(`⚠️ Could not copy ${filePath}:`, error.message);
+    console.warn(`⚠️ Could not copy ${fileMapping}:`, error.message);
   }
 });
 
