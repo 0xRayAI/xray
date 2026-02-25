@@ -663,7 +663,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
     "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.5.2",
+    "version": "1.6.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -682,7 +682,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ```json
 {
   "framework": {
-    "version": "1.5.2",
+    "version": "1.6.0",
     "logging": {
       "level": "info",
       "jobIdTracking": true,
@@ -2356,14 +2356,14 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 
 ## 6. Appendices
 
-- [Architecture Overview](docs/ARCHITECTURE.md) - Framework design principles
-- [Orchestrator Integration](docs/ORCHESTRATOR_INTEGRATION_ARCHITECTURE.md) - Advanced coordination
-- [Grok Code Guide](docs/GROK_GUIDE.md) - AI model configuration
-- [Enterprise Developer Guide](docs/developer/ENTERPRISE_DEVELOPER_GUIDE.md) - Advanced development
-- [Plugin Loading Mechanism](docs/advanced/plugin-loading-mechanism.md) - Plugin system details
-- [Deployment Reflections](docs/reflections/) - Framework evolution insights
-- [Documentation Reorganization](docs/DOCUMENTATION_REORGANIZATION_PLAN.md) - Organization strategy
-- [Universal Development Codex](.opencode/strray/codex.json) - Complete 59-term codex reference
+- [Architecture Overview](https://github.com/htafolla/stringray/blob/master/docs/ARCHITECTURE.md) - Framework design principles
+- [Orchestrator Integration](https://github.com/htafolla/stringray/blob/master/docs/ORCHESTRATOR_INTEGRATION_ARCHITECTURE.md) - Advanced coordination
+- [Grok Code Guide](https://github.com/htafolla/stringray/blob/master/docs/GROK_GUIDE.md) - AI model configuration
+- [Enterprise Developer Guide](https://github.com/htafolla/stringray/blob/master/docs/developer/ENTERPRISE_DEVELOPER_GUIDE.md) - Advanced development
+- [Plugin Loading Mechanism](https://github.com/htafolla/stringray/blob/master/docs/advanced/plugin-loading-mechanism.md) - Plugin system details
+- [Deployment Reflections](https://github.com/htafolla/stringray/blob/master/docs/reflections/) - Framework evolution insights
+- [Documentation Reorganization](https://github.com/htafolla/stringray/blob/master/docs/DOCUMENTATION_REORGANIZATION_PLAN.md) - Organization strategy
+- [Universal Development Codex](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) - Complete 59-term codex reference
 - [API Reference](#appendix-a-api-reference) - Complete API documentation
 - [Configuration Templates](#appendix-b-configuration-templates) - Copy-paste configuration examples
 - [Troubleshooting Guide](#appendix-c-troubleshooting-guide) - Common issues and solutions
@@ -2511,7 +2511,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
     "librarian": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.5.2",
+    "version": "1.6.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -2535,7 +2535,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 ```json
 {
   "framework": {
-    "version": "1.5.2",
+    "version": "1.6.0",
     "logging": {
       "level": "info",
       "jobIdTracking": true,

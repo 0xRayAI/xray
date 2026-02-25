@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework**
 
-[![Version](https://img.shields.io/badge/version-1.5.5-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.6.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-104%20passed-brightgreen?style=flat-square)](src/__tests__)
 
@@ -53,10 +53,10 @@ npx strray-ai status
 
 | Guide | Description |
 |-------|-------------|
-| [Configuration Reference](docs/CONFIGURATION.md) | Complete features.json settings |
-| [Agent Documentation](AGENTS.md) | Detailed agent specifications |
-| [Universal Codex](.opencode/strray/codex.json) | 59-term codex reference |
-| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues & solutions |
+| [Configuration Reference](https://github.com/htafolla/stringray/blob/master/docs/CONFIGURATION.md) | Complete features.json settings |
+| [Agent Documentation](https://github.com/htafolla/stringray/blob/master/AGENTS.md) | Detailed agent specifications |
+| [Universal Codex](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) | 59-term codex reference |
+| [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md) | Common issues & solutions |
 
 ## 🔧 CLI Commands
 
@@ -88,9 +88,9 @@ npx strray-ai health       # Health check
 
 If StringRay helps you build better software, please consider:
 
-- ⭐ **Starring the repo** on [GitHub](https://github.com/stringray/stringray)
+- ⭐ **Starring the repo** on [GitHub](https://github.com/htafolla/stringray)
 - 📢 **Sharing** with your team
-- 🐛 **Reporting issues** at [github.com/stringray/stringray/issues](https://github.com/stringray/stringray/issues)
+- 🐛 **Reporting issues** at [github.com/htafolla/stringray/issues](https://github.com/htafolla/stringray/issues)
 
 ## 📄 License
 
