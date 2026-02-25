@@ -1,9 +1,9 @@
 /**
  * Task-Skill Router TypeScript Definitions
- * 
+ *
  * Pre-processor utility for intelligent task-to-agent/skill routing.
  * Complements the AgentDelegator by providing keyword-based preprocessing.
- * 
+ *
  * @version 1.1.0
  * @since 2026-02-22
  */
@@ -83,7 +83,10 @@ export class TaskSkillRouter {
    * Pre-process a task description to extract operation and context
    * This is the main integration point with AgentDelegator
    */
-  preprocess(taskDescription: string, options?: RoutingOptions): PreprocessResult;
+  preprocess(
+    taskDescription: string,
+    options?: RoutingOptions,
+  ): PreprocessResult;
 
   /**
    * Route a task to the appropriate agent and skill
@@ -108,7 +111,12 @@ export class TaskSkillRouter {
   /**
    * Add custom keyword mapping
    */
-  addMapping(keywords: string | string[], skill: string, agent: string, confidence?: number): void;
+  addMapping(
+    keywords: string | string[],
+    skill: string,
+    agent: string,
+    confidence?: number,
+  ): void;
 
   /**
    * Get all available mappings (for debugging/testing)
@@ -124,14 +132,22 @@ export const taskSkillRouter: TaskSkillRouter;
 /**
  * Factory function for creating with state manager
  */
-export function createTaskSkillRouter(stateManager?: StringRayStateManager): TaskSkillRouter;
+export function createTaskSkillRouter(
+  stateManager?: StringRayStateManager,
+): TaskSkillRouter;
 
 /**
  * Convenience function for one-off routing
  */
-export function routeTaskToAgent(taskDescription: string, options?: RoutingOptions): RoutingResult;
+export function routeTaskToAgent(
+  taskDescription: string,
+  options?: RoutingOptions,
+): RoutingResult;
 
 /**
  * Convenience function for preprocessing (recommended for AgentDelegator integration)
  */
-export function preprocessTask(taskDescription: string, options?: RoutingOptions): PreprocessResult;
+export function preprocessTask(
+  taskDescription: string,
+  options?: RoutingOptions,
+): PreprocessResult;

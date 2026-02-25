@@ -44,8 +44,7 @@ class StrRayBootOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "boot-orchestrator",
-        version: "1.0.0",
+        name: "boot-orchestrator", version: "1.6.0",
       },
       {
         capabilities: {
@@ -596,7 +595,6 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
   private async initConfiguration(): Promise<any> {
     // Check for configuration files
     const configFiles = [
-      ".opencode/OpenCode.json",
       "src/strray/config/manager.py",
     ];
 
@@ -830,7 +828,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     // Simplified check - in real implementation this would be more thorough
     switch (component) {
       case "configuration":
-        return fs.existsSync(".opencode/OpenCode.json");
+        return fs.existsSync("opencode.json");
       case "logging":
         return fs.existsSync("src/framework-logger.ts");
       case "state-management":

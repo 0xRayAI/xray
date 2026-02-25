@@ -14,8 +14,7 @@ class SkillInvocationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray/skill-invocation",
-        version: "1.4.22",
+        name: "strray/skill-invocation", version: "1.6.0",
       },
       {
         capabilities: {
@@ -177,7 +176,10 @@ class SkillInvocationServer {
             inputSchema: {
               type: "object",
               properties: {
-                schema: { type: "string", description: "Database schema or entities" },
+                schema: {
+                  type: "string",
+                  description: "Database schema or entities",
+                },
                 databaseType: {
                   type: "string",
                   enum: ["postgresql", "mysql", "mongodb", "dynamodb"],
@@ -206,12 +208,15 @@ class SkillInvocationServer {
           },
           {
             name: "skill-api-design",
-            description:
-              "Invoke API design skill for REST/GraphQL endpoints",
+            description: "Invoke API design skill for REST/GraphQL endpoints",
             inputSchema: {
               type: "object",
               properties: {
-                resources: { type: "array", items: { type: "string" }, description: "API resources" },
+                resources: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "API resources",
+                },
                 style: {
                   type: "string",
                   enum: ["rest", "graphql"],
@@ -223,12 +228,14 @@ class SkillInvocationServer {
           },
           {
             name: "skill-ui-ux-design",
-            description:
-              "Invoke UI/UX design skill for component design",
+            description: "Invoke UI/UX design skill for component design",
             inputSchema: {
               type: "object",
               properties: {
-                component: { type: "string", description: "Component to design" },
+                component: {
+                  type: "string",
+                  description: "Component to design",
+                },
                 framework: {
                   type: "string",
                   enum: ["react", "vue", "angular", "svelte"],
@@ -240,8 +247,7 @@ class SkillInvocationServer {
           },
           {
             name: "skill-documentation-generation",
-            description:
-              "Invoke documentation skill for API docs and README",
+            description: "Invoke documentation skill for API docs and README",
             inputSchema: {
               type: "object",
               properties: {

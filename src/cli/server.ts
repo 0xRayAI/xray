@@ -51,7 +51,7 @@ app.get("/api/status", (req: Request, res: Response) => {
   // Return framework status
   res.json({
     framework: "StringRay",
-    version: "1.0.0",
+    version: "1.6.0",
     status: "active",
     agents: 8,
     timestamp: new Date().toISOString(),

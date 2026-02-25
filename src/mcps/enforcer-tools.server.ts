@@ -20,8 +20,7 @@ class StrRayEnforcerToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "enforcer",
-        version: "1.0.0",
+        name: "enforcer", version: "1.6.0",
       },
       {
         capabilities: {
@@ -799,11 +798,12 @@ class StrRayEnforcerToolsServer {
       );
       for (const fix of autoFixes) {
         // Execute actual auto-fix logic
-        
+
         if (fix.action === "createTestFile" && files.length > 0) {
           // Import and run test auto-creation processor
           try {
-            const { testAutoCreationProcessor } = await import("../processors/test-auto-creation-processor.js");
+            const { testAutoCreationProcessor } =
+              await import("../processors/test-auto-creation-processor.js");
             const result = await testAutoCreationProcessor.execute({
               tool: "write",
               args: { filePath: files[0] },
@@ -811,13 +811,15 @@ class StrRayEnforcerToolsServer {
               filePath: files[0],
               operation: "tool_execution",
             });
-            
+
             if (result.success) {
               // Auto-fix applied successfully - no logging to console
               fix.applied = true;
               fix.result = result;
             } else {
-              console.error(`Auto-fix failed: ${result.error || "Unknown error"}`);
+              console.error(
+                `Auto-fix failed: ${result.error || "Unknown error"}`,
+              );
               fix.applied = false;
               fix.error = result.error;
             }
@@ -831,7 +833,9 @@ class StrRayEnforcerToolsServer {
           fix.applied = false;
         }
       }
-      qualityCheck.fixesApplied = autoFixes.filter((f: any) => f.applied).length;
+      qualityCheck.fixesApplied = autoFixes.filter(
+        (f: any) => f.applied,
+      ).length;
     }
 
     return {

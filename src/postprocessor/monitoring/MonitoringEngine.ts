@@ -54,7 +54,7 @@ export class PostProcessorMonitoringEngine {
     try {
       const { execSync } = await import("child_process");
       const output = execSync(
-        `node scripts/github-actions-monitor.cjs --commit ${commitSha}`,
+        `node scripts/node/github-actions-monitor.cjs --commit ${commitSha}`,
         {
           encoding: "utf8",
           timeout: 30000,

@@ -26,7 +26,7 @@ export const testAutoCreationProcessor = {
       // Handle both direct context and context.data (from ProcessorManager)
       // ProcessorManager passes: { operation, data: { directory, filePath, ... }, preResults }
       const innerContext = context.data || context;
-      
+
       const {
         tool,
         args,
@@ -50,10 +50,10 @@ export const testAutoCreationProcessor = {
       // Get file path from various possible locations in context
       // Check: innerContext.filePath, context.filePath, args.filePath, context.filePath
       const filePath =
-        outerFilePath || 
-        contextFilePath || 
-        args?.filePath || 
-        args?.path || 
+        outerFilePath ||
+        contextFilePath ||
+        args?.filePath ||
+        args?.path ||
         innerContext.filePath;
 
       if (!filePath) {
@@ -107,7 +107,7 @@ export const testAutoCreationProcessor = {
         await frameworkLogger.log("test-auto-creation", "test-exists", "info", {
           message: `Test file already exists: ${testFilePath}`,
         });
-        
+
         // Record skipped to monitor
         testAutoGenerationMonitor.recordEvent({
           type: "skipped",
@@ -116,7 +116,7 @@ export const testAutoCreationProcessor = {
           timestamp: Date.now(),
           reason: "Test file already exists",
         });
-        
+
         return {
           success: true,
           processorName: "testAutoCreation",
@@ -159,7 +159,7 @@ export const testAutoCreationProcessor = {
           timestamp: Date.now(),
           reason: "No exports found",
         });
-        
+
         return {
           success: true,
           processorName: "testAutoCreation",

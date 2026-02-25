@@ -20,7 +20,7 @@ export function parseUrlForSeo(urlString: string): {
     const url = new URL(urlString);
     const pathname = url.pathname === "/" ? "" : url.pathname;
     const slug = pathname.split("/").filter(Boolean).join("-").toLowerCase();
-    
+
     return {
       hostname: url.hostname,
       pathname: url.pathname,
@@ -59,15 +59,16 @@ export function calculateReadability(text: string): {
   const syllables = words.reduce((count, word) => {
     return count + countSyllables(word);
   }, 0);
-  
+
   if (words.length === 0 || sentences.length === 0) {
     return { score: 0, grade: "N/A" };
   }
-  
+
   const avgWordsPerSentence = words.length / sentences.length;
   const avgSyllablesPerWord = syllables / words.length;
-  const score = 206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord);
-  
+  const score =
+    206.835 - 1.015 * avgWordsPerSentence - 84.6 * avgSyllablesPerWord;
+
   let grade: string;
   if (score >= 90) grade = "Very Easy";
   else if (score >= 80) grade = "Easy";
@@ -76,17 +77,17 @@ export function calculateReadability(text: string): {
   else if (score >= 50) grade = "Fairly Difficult";
   else if (score >= 30) grade = "Difficult";
   else grade = "Very Difficult";
-  
+
   return { score: Math.round(score), grade };
 }
 
 function countSyllables(word: string): number {
   word = word.toLowerCase().replace(/[^a-z]/g, "");
   if (word.length <= 3) return 1;
-  
+
   word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "");
   word = word.replace(/^y/, "");
-  
+
   const matches = word.match(/[aeiouy]{1,2}/g);
   return matches ? matches.length : 1;
 }
@@ -99,15 +100,15 @@ export function validateJsonLd(schema: Record<string, unknown>): {
   errors: string[];
 } {
   const errors: string[] = [];
-  
+
   if (!schema["@context"] || schema["@context"] !== "https://schema.org") {
     errors.push("Missing or invalid @context");
   }
-  
+
   if (!schema["@type"]) {
     errors.push("Missing @type");
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,

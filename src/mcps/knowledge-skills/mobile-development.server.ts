@@ -63,8 +63,7 @@ class StrRayMobileDevelopmentServer {
   constructor() {
     this.server = new Server(
       {
-        name: "mobile-development",
-        version: "1.0.0",
+        name: "mobile-development", version: "1.6.0",
       },
       {
         capabilities: {
@@ -144,8 +143,7 @@ class StrRayMobileDevelopmentServer {
           },
           {
             name: "react_native_boilerplate",
-            description:
-              "Generate React Native project with Expo or CLI setup",
+            description: "Generate React Native project with Expo or CLI setup",
             inputSchema: {
               type: "object",
               properties: {
@@ -165,13 +163,7 @@ class StrRayMobileDevelopmentServer {
                 },
                 stateManagement: {
                   type: "string",
-                  enum: [
-                    "redux",
-                    "zustand",
-                    "context",
-                    "recoil",
-                    "mobx",
-                  ],
+                  enum: ["redux", "zustand", "context", "recoil", "mobx"],
                   description: "State management solution",
                 },
                 typescript: {
@@ -195,13 +187,7 @@ class StrRayMobileDevelopmentServer {
                 },
                 stateManagement: {
                   type: "string",
-                  enum: [
-                    "provider",
-                    "riverpod",
-                    "bloc",
-                    "getx",
-                    "setstate",
-                  ],
+                  enum: ["provider", "riverpod", "bloc", "getx", "setstate"],
                   description: "State management solution",
                 },
                 architecture: {
@@ -296,8 +282,13 @@ class StrRayMobileDevelopmentServer {
   }
 
   private async generateIOSBlueprint(args: any): Promise<any> {
-    const { projectName, language = "swiftui", architecture = "mvvm", features = [] } = args;
-    
+    const {
+      projectName,
+      language = "swiftui",
+      architecture = "mvvm",
+      features = [],
+    } = args;
+
     const blueprint: IOSBlueprint = {
       projectName,
       swiftVersion: "5.9",
@@ -377,8 +368,13 @@ class AuthService: ObservableObject {
   }
 
   private async generateAndroidBlueprint(args: any): Promise<any> {
-    const { projectName, uiFramework = "compose", architecture = "mvvm", features = [] } = args;
-    
+    const {
+      projectName,
+      uiFramework = "compose",
+      architecture = "mvvm",
+      features = [],
+    } = args;
+
     const blueprint: AndroidBlueprint = {
       projectName,
       kotlinVersion: "1.9.22",
@@ -433,8 +429,14 @@ dependencies {
   }
 
   private async generateReactNativeBlueprint(args: any): Promise<any> {
-    const { projectName, expo = true, navigation = "react-navigation", stateManagement = "zustand", typescript = true } = args;
-    
+    const {
+      projectName,
+      expo = true,
+      navigation = "react-navigation",
+      stateManagement = "zustand",
+      typescript = true,
+    } = args;
+
     const blueprint: ReactNativeBlueprint = {
       projectName,
       expo,
@@ -484,8 +486,12 @@ const styles = StyleSheet.create({
   }
 
   private async generateFlutterBlueprint(args: any): Promise<any> {
-    const { projectName, stateManagement = "provider", architecture = "clean" } = args;
-    
+    const {
+      projectName,
+      stateManagement = "provider",
+      architecture = "clean",
+    } = args;
+
     const blueprint: FlutterBlueprint = {
       projectName,
       flutterVersion: "3.16.0",
@@ -544,7 +550,7 @@ class HomePage extends StatelessWidget {
 
   private async analyzeMobilePerformance(args: any): Promise<any> {
     const { platform, metrics = {} } = args;
-    
+
     const profile: MobilePerformanceProfile = {
       appLaunchTime: metrics.appLaunchTime || 2000,
       memoryUsage: metrics.memoryUsage || 120,
@@ -557,19 +563,19 @@ class HomePage extends StatelessWidget {
     // Generate recommendations based on metrics
     if (profile.appLaunchTime > 2000) {
       profile.recommendations.push(
-        "App launch time exceeds 2 seconds. Consider lazy loading resources and optimizing initialization."
+        "App launch time exceeds 2 seconds. Consider lazy loading resources and optimizing initialization.",
       );
     }
 
     if (profile.memoryUsage > 150) {
       profile.recommendations.push(
-        "Memory usage is high. Review memory leaks and implement image caching."
+        "Memory usage is high. Review memory leaks and implement image caching.",
       );
     }
 
     if (profile.uiFrameRate < 55) {
       profile.recommendations.push(
-        "UI frame rate below 60fps. Check for heavy computations on main thread."
+        "UI frame rate below 60fps. Check for heavy computations on main thread.",
       );
     }
 
@@ -592,12 +598,14 @@ class HomePage extends StatelessWidget {
 
     const metadata = {
       appName,
-      platforms: platform === "both" ? ["iOS", "Android"] : [platform.toUpperCase()],
+      platforms:
+        platform === "both" ? ["iOS", "Android"] : [platform.toUpperCase()],
       category: category || "Utilities",
       title: appName,
-      description: features.length > 0 
-        ? `Features include: ${features.slice(0, 5).join(", ")}. Download now!`
-        : "A mobile app built with StringRay.",
+      description:
+        features.length > 0
+          ? `Features include: ${features.slice(0, 5).join(", ")}. Download now!`
+          : "A mobile app built with StringRay.",
       keywords: features.join(", "),
       screenshots: {
         ios: ["screenshot1.png", "screenshot2.png"],

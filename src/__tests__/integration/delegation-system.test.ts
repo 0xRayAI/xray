@@ -213,8 +213,8 @@ describe("StringRay Delegation System Integration", () => {
   });
 
   describe("Performance and Monitoring", () => {
-  // Skipped - flaky test with timing issues
-  it.skip("should track delegation performance metrics", async () => {
+    // Skipped - flaky test with timing issues
+    it.skip("should track delegation performance metrics", async () => {
       const request = {
         operation: "test",
         description: "Performance test",

@@ -35,8 +35,7 @@ class EnhancedMultiAgentOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "enhanced-multi-agent-orchestrator",
-        version: "1.0.0",
+        name: "enhanced-multi-agent-orchestrator", version: "1.6.0",
       },
       {
         capabilities: {
@@ -46,9 +45,14 @@ class EnhancedMultiAgentOrchestratorServer {
     );
 
     this.setupToolHandlers();
-    void frameworkLogger.log("enhanced-orchestrator.server", "initialize", "info", {
-      message: "Enhanced Multi-Agent Orchestrator MCP Server initialized",
-    });
+    void frameworkLogger.log(
+      "enhanced-orchestrator.server",
+      "initialize",
+      "info",
+      {
+        message: "Enhanced Multi-Agent Orchestrator MCP Server initialized",
+      },
+    );
   }
 
   private setupToolHandlers() {
@@ -300,10 +304,15 @@ class EnhancedMultiAgentOrchestratorServer {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new EnhancedMultiAgentOrchestratorServer();
   server.run().catch((error) => {
-    void frameworkLogger.log("enhanced-orchestrator.server", "fatal-error", "error", {
-      message: "Server failed to start",
-      error: error instanceof Error ? error.message : String(error),
-    });
+    void frameworkLogger.log(
+      "enhanced-orchestrator.server",
+      "fatal-error",
+      "error",
+      {
+        message: "Server failed to start",
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
     process.exit(1);
   });
 }

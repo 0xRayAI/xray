@@ -168,7 +168,7 @@ export class UniversalRegistryBridge {
         currentAgent = {
           name: nameMatch[1].trim(),
           description: "",
-          version: "1.0.0",
+          version: "1.6.0",
         };
         inAgent = true;
         continue;

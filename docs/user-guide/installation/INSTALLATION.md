@@ -120,7 +120,7 @@ Create `.opencode/strray/config.json` in your project root:
 ```json
 {
   "framework": {
-    "version": "1.5.2",
+    "version": "1.6.0",
     "codex": "v1.1.1"
   },
   "agents": {

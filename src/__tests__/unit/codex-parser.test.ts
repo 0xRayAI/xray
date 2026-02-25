@@ -14,7 +14,7 @@ vi.spyOn(console, "log").mockImplementation(() => {});
 describe("StringRay Codex Parser", () => {
   describe("detectContentFormat", () => {
     it("should detect JSON format with high confidence", () => {
-      const jsonContent = '{"version": "1.5.2", "terms": {}}';
+      const jsonContent = '{"version": "1.6.0", "terms": {}}';
       const result = detectContentFormat(jsonContent);
 
       expect(result.format).toBe("json");
@@ -33,7 +33,7 @@ Description of term.`;
     });
 
     it("should detect markdown when JSON parsing fails despite JSON-like start", () => {
-      const mixedContent = `{"version": "1.5.2"}
+      const mixedContent = `{"version": "1.6.0"}
 **Version**: 1.2.20
 #### 1. Test Term`;
       const result = detectContentFormat(mixedContent);
@@ -58,7 +58,7 @@ Description of term.`;
   describe("parseCodexContent", () => {
     it("should parse JSON content successfully as primary format", () => {
       const jsonContent = JSON.stringify({
-        version: "1.2.20",
+        version: "1.6.0",
         lastUpdated: "2026-01-06",
         errorPreventionTarget: 0.996,
         terms: {
@@ -82,7 +82,7 @@ Description of term.`;
       const result = parseCodexContent(jsonContent, "test.json");
 
       expect(result.success).toBe(true);
-      expect(result.context!.version).toBe("1.2.20");
+      expect(result.context!.version).toBe("1.6.0");
       expect(result.context!.terms.size).toBe(1);
       expect(result.context!.interweaves).toContain("Test Interweave");
     });
@@ -128,13 +128,13 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
 
     it("should prefer JSON parsing for .json files", () => {
       const jsonContent = JSON.stringify({
-        version: "1.2.20",
+        version: "1.6.0",
         terms: { "1": { number: 1, title: "JSON Term" } },
       });
 
       const result = parseCodexContent(jsonContent, "test.json");
       expect(result.success).toBe(true);
-      expect(result.context!.version).toBe("1.2.20");
+      expect(result.context!.version).toBe("1.6.0");
     });
 
     it("should return error for empty content", () => {
@@ -166,12 +166,12 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
   describe("extractCodexMetadata", () => {
     it("should extract version and term count from JSON as primary format", () => {
       const jsonContent = JSON.stringify({
-        version: "1.2.20",
+        version: "1.6.0",
         terms: { "1": {}, "2": {} },
       });
 
       const metadata = extractCodexMetadata(jsonContent);
-      expect(metadata.version).toBe("1.2.20");
+      expect(metadata.version).toBe("1.6.0");
       expect(metadata.termCount).toBe(2);
     });
 
@@ -188,7 +188,7 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
 
     it("should handle complex JSON structures", () => {
       const jsonContent = JSON.stringify({
-        version: "1.2.22",
+        version: "1.6.0",
         terms: {
           "1": { number: 1 },
           "11": { number: 11 },
@@ -198,13 +198,13 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
       });
 
       const metadata = extractCodexMetadata(jsonContent);
-      expect(metadata.version).toBe("1.2.22");
+      expect(metadata.version).toBe("1.6.0");
       expect(metadata.termCount).toBe(4);
     });
 
     it("should return defaults for invalid content", () => {
       const metadata = extractCodexMetadata("invalid");
-      expect(metadata.version).toBe("1.2.20");
+      expect(metadata.version).toBe("1.6.0");
       expect(metadata.termCount).toBe(0);
     });
   });

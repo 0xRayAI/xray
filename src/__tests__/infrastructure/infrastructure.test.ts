@@ -20,7 +20,9 @@ describe("StringRay Infrastructure Tests", () => {
 
   describe("Core File System", () => {
     it("should have required directories", () => {
-      const requiredDirs = ["src", ".opencode", ".opencode/strray"].map(d => path.join(projectRoot, d));
+      const requiredDirs = ["src", ".opencode", ".opencode/strray"].map((d) =>
+        path.join(projectRoot, d),
+      );
 
       for (const dir of requiredDirs) {
         expect(fs.existsSync(dir)).toBe(true);
@@ -34,7 +36,7 @@ describe("StringRay Infrastructure Tests", () => {
         ".opencode/strray/codex.json",
         "package.json",
         "vitest.config.ts",
-      ].map(f => path.join(projectRoot, f));
+      ].map((f) => path.join(projectRoot, f));
 
       for (const file of requiredFiles) {
         expect(fs.existsSync(file)).toBe(true);
@@ -44,10 +46,9 @@ describe("StringRay Infrastructure Tests", () => {
 
     it("should have readable configuration files", () => {
       // Use files that actually exist
-      const configFiles = [
-        ".opencode/strray/codex.json",
-        "package.json",
-      ].map(f => path.join(projectRoot, f));
+      const configFiles = [".opencode/strray/codex.json", "package.json"].map(
+        (f) => path.join(projectRoot, f),
+      );
 
       for (const file of configFiles) {
         const content = fs.readFileSync(file, "utf8");

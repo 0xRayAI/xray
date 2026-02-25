@@ -20,7 +20,7 @@ import { BootOrchestrator } from "../../core/boot-orchestrator.js";
 
 // Mock ProcessorManager for E2E tests
 vi.mock("../../processors/processor-manager", () => {
-  const MockClass = function(this: any) {
+  const MockClass = function (this: any) {
     this.registerProcessor = vi.fn();
     this.initializeProcessors = vi.fn().mockResolvedValue(true);
     this.getProcessorHealth = vi.fn(() => [

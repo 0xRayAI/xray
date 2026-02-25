@@ -530,7 +530,9 @@ describe("AgentDelegator", () => {
       expect(metrics.totalDelegations).toBe(2);
       // Strategy depends on complexity - simple goes to single-agent, complex goes to orchestrator-led
       expect(metrics.strategyUsage["single-agent"]).toBeGreaterThanOrEqual(0);
-      expect(metrics.strategyUsage["orchestrator-led"]).toBeGreaterThanOrEqual(0);
+      expect(metrics.strategyUsage["orchestrator-led"]).toBeGreaterThanOrEqual(
+        0,
+      );
     });
 
     it("should track successful executions", async () => {
@@ -959,7 +961,7 @@ describe("AgentDelegator", () => {
   describe("TaskSkillRouter Integration - preprocessTaskDescription", () => {
     it("should pre-process testing task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "write tests for authentication"
+        "write tests for authentication",
       );
 
       expect(result.operation).toBe("test");
@@ -970,7 +972,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process security task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "scan for security vulnerabilities"
+        "scan for security vulnerabilities",
       );
 
       expect(result.operation).toBe("security");
@@ -981,7 +983,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process refactoring task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "refactor the messy code"
+        "refactor the messy code",
       );
 
       expect(result.operation).toBe("refactor");
@@ -991,7 +993,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process performance task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "optimize database queries for better performance"
+        "optimize database queries for better performance",
       );
 
       expect(result.operation).toBe("optimize");
@@ -1001,7 +1003,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process architecture task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "design system architecture"
+        "design system architecture",
       );
 
       // "design system" is a UI/UX term that matches first, so enforcer is correct
@@ -1012,7 +1014,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process pure architecture task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "create microservice architecture"
+        "create microservice architecture",
       );
 
       expect(result.operation).toBe("design");
@@ -1021,9 +1023,8 @@ describe("AgentDelegator", () => {
     });
 
     it("should pre-process bug fix to correct agent", () => {
-      const result = agentDelegator.preprocessTaskDescription(
-        "fix the login bug"
-      );
+      const result =
+        agentDelegator.preprocessTaskDescription("fix the login bug");
 
       expect(result.suggestedAgent).toBe("bug-triage-specialist");
       expect(result.suggestedSkill).toBe("code-review");
@@ -1031,7 +1032,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process documentation to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "update documentation"
+        "update documentation",
       );
 
       expect(result.suggestedAgent).toBe("librarian");
@@ -1041,7 +1042,7 @@ describe("AgentDelegator", () => {
     it("should pre-process with session ID", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "deploy to production",
-        { sessionId: "session-123" }
+        { sessionId: "session-123" },
       );
 
       expect(result.operation).toBe("deploy");
@@ -1051,17 +1052,16 @@ describe("AgentDelegator", () => {
     it("should pre-process with task ID for historical tracking", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "run security audit",
-        { taskId: "task-security-001" }
+        { taskId: "task-security-001" },
       );
 
       expect(result.operation).toBe("security");
     });
 
     it("should pre-process with complexity score", () => {
-      const result = agentDelegator.preprocessTaskDescription(
-        "do something",
-        { complexity: 50 }
-      );
+      const result = agentDelegator.preprocessTaskDescription("do something", {
+        complexity: 50,
+      });
 
       expect(result).toBeDefined();
       expect(result.context).toBeDefined();
@@ -1069,7 +1069,7 @@ describe("AgentDelegator", () => {
 
     it("should return fallback for unknown tasks", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "do something random"
+        "do something random",
       );
 
       expect(result.suggestedAgent).toBe("enforcer");
@@ -1077,33 +1077,29 @@ describe("AgentDelegator", () => {
     });
 
     it("should include confidence in context", () => {
-      const result = agentDelegator.preprocessTaskDescription(
-        "write unit tests"
-      );
+      const result =
+        agentDelegator.preprocessTaskDescription("write unit tests");
 
       // "unit test" matches specific testing keyword with 0.95 confidence
       expect(result.context.routingConfidence).toBe(0.95);
     });
 
     it("should include suggested skill in context", () => {
-      const result = agentDelegator.preprocessTaskDescription(
-        "refactor code"
-      );
+      const result = agentDelegator.preprocessTaskDescription("refactor code");
 
       expect(result.context.suggestedSkill).toBe("refactoring-strategies");
     });
 
     it("should include suggested agent in context", () => {
-      const result = agentDelegator.preprocessTaskDescription(
-        "check code quality"
-      );
+      const result =
+        agentDelegator.preprocessTaskDescription("check code quality");
 
       expect(result.context.suggestedAgent).toBe("code-reviewer");
     });
 
     it("should pre-process database tasks to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "design database schema"
+        "design database schema",
       );
 
       expect(result.suggestedAgent).toBe("architect");
@@ -1112,7 +1108,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process devops tasks to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "set up docker deployment"
+        "set up docker deployment",
       );
 
       expect(result.suggestedAgent).toBe("architect");
@@ -1121,7 +1117,7 @@ describe("AgentDelegator", () => {
 
     it("should pre-process git tasks to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
-        "resolve merge conflict"
+        "resolve merge conflict",
       );
 
       expect(result.suggestedAgent).toBe("librarian");

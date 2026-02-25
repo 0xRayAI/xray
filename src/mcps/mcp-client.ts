@@ -535,6 +535,15 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
       });
 
       serverProcess.on("close", (code) => {
+        // Always kill the process after completion to prevent leaks
+        frameworkLogger.log(
+          "mcp-client",
+          `Killing MCP server process after completion (code: ${code})`,
+          "info",
+          { jobId, server: this.config.serverName },
+        );
+        serverProcess.kill();
+        
         if (code !== 0 && stderr) {
           frameworkLogger.log(
             "mcp-client",
@@ -585,13 +594,18 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
       serverProcess.stdin.write(JSON.stringify(mcpRequest));
       serverProcess.stdin.end();
 
-      // Timeout handling
-      setTimeout(() => {
+      // Timeout handling - kill process if it takes too long
+      const timeoutId = setTimeout(() => {
         serverProcess.kill();
         reject(
           new Error(`MCP call timeout after ${this.config.timeout || 30000}ms`),
         );
       }, this.config.timeout || 30000);
+      
+      // Clear timeout if process closes before timeout
+      serverProcess.on("close", () => {
+        clearTimeout(timeoutId);
+      });
     });
   }
 }

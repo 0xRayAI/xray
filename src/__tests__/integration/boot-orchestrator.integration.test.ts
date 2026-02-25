@@ -22,7 +22,7 @@ vi.mock("../../core/context-loader", () => ({
 // Use vi.hoisted to properly mock the ProcessorManager class
 const { ProcessorManager: MockProcessorManager } = vi.hoisted(() => {
   // Create a constructor function that works with 'new'
-  const MockClass = function(this: any) {
+  const MockClass = function (this: any) {
     this.registerProcessor = vi.fn();
     this.initializeProcessors = vi.fn().mockResolvedValue(true);
     this.getProcessorHealth = vi.fn(() => [
@@ -504,12 +504,12 @@ describe("BootOrchestrator - Integration Tests", () => {
       expect(stateManager.set).toHaveBeenCalledWith(
         "strray:config",
         expect.objectContaining({
-          version: "1.0.0",
+          version: "1.6.0",
           codex_enabled: true,
           codex_version: "v1.2.0",
         }),
       );
-      expect(stateManager.set).toHaveBeenCalledWith("strray:version", "1.0.0");
+      expect(stateManager.set).toHaveBeenCalledWith("strray:version", "1.6.0");
       expect(stateManager.set).toHaveBeenCalledWith(
         "strray:codex_enabled",
         true,

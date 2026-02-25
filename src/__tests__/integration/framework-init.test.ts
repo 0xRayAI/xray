@@ -304,9 +304,7 @@ describe("StringRay Framework Initialization Integration", () => {
       });
 
       // Test that all required config files exist
-      const requiredFiles = [
-        ".opencode/strray/codex.json",
-      ];
+      const requiredFiles = [".opencode/strray/codex.json"];
 
       requiredFiles.forEach((file) => {
         expect(checkFile(file)).toBe(true);

@@ -28,8 +28,7 @@ class StrRayProcessorPipelineServer {
   constructor() {
     this.server = new Server(
       {
-        name: "processor-pipeline",
-        version: "1.0.0",
+        name: "processor-pipeline", version: "1.6.0",
       },
       {
         capabilities: {
@@ -39,7 +38,7 @@ class StrRayProcessorPipelineServer {
     );
 
     this.setupToolHandlers();
-    console.log("StrRay Processor Pipeline MCP Server initialized");
+    // Server initialized silently - use frameworkLogger for important events
   }
 
   private setupToolHandlers() {
@@ -138,11 +137,7 @@ class StrRayProcessorPipelineServer {
     const validateCodex = args.validateCodex !== false;
     const strictMode = args.strictMode || false;
 
-    console.log("🔄 MCP: Running pre-processors:", {
-      contentLength: content.length,
-      validateCodex,
-      strictMode,
-    });
+    // Silent execution - no console output
 
     const results = {
       processed: content,
@@ -202,11 +197,7 @@ ${results.warnings.length > 0 ? results.warnings.map((w: string) => `• ⚠️ 
     const enforceCompliance = args.enforceCompliance !== false;
     const auditTrail = args.auditTrail !== false;
 
-    console.log("🔄 MCP: Running post-processors:", {
-      contentLength: content.length,
-      enforceCompliance,
-      auditTrail,
-    });
+    // Silent execution - no console output
 
     const postResults = {
       processed: content,
@@ -278,10 +269,7 @@ ${postResults.auditEntries
     const terms = args.terms || ["all"];
     const strict = args.strict || false;
 
-    console.log("📚 MCP: Performing codex validation:", {
-      terms: terms.length,
-      strict,
-    });
+    // Silent validation - no console output
 
     try {
       const validationResults = await this.validateAgainstCodex(
@@ -330,10 +318,7 @@ ${validationResults.recommendations.map((r: string) => `• 💡 ${r}`).join("\n
     const operation = args.operation;
     const context = args.context || {};
 
-    console.log("📋 MCP: Performing compliance check:", {
-      operation,
-      contentLength: content.length,
-    });
+    // Silent compliance check - no console output
 
     try {
       const complianceResults = await this.checkFrameworkCompliance(
@@ -634,7 +619,7 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Processor Pipeline MCP Server started");
+    // Silent start - no console output
   }
 }
 

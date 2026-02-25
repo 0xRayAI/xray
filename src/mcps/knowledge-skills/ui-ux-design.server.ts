@@ -98,8 +98,7 @@ class StrRayUIUXDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "ui-ux-design",
-        version: "1.0.0",
+        name: "ui-ux-design", version: "1.6.0",
       },
       {
         capabilities: {
@@ -250,7 +249,8 @@ class StrRayUIUXDesignServer {
                 },
                 viewportWidth: {
                   type: "number",
-                  description: "Minimum viewport width to validate (default: 320)",
+                  description:
+                    "Minimum viewport width to validate (default: 320)",
                   default: 320,
                 },
                 framework: {
@@ -275,7 +275,13 @@ class StrRayUIUXDesignServer {
                 },
                 pageType: {
                   type: "string",
-                  enum: ["landing", "dashboard", "form", "content", "ecommerce"],
+                  enum: [
+                    "landing",
+                    "dashboard",
+                    "form",
+                    "content",
+                    "ecommerce",
+                  ],
                   description: "Type of page being analyzed",
                 },
               },
@@ -291,11 +297,18 @@ class StrRayUIUXDesignServer {
               properties: {
                 context: {
                   type: "string",
-                  description: "Design context (e.g., 'hero section', 'product gallery', 'team portraits')",
+                  description:
+                    "Design context (e.g., 'hero section', 'product gallery', 'team portraits')",
                 },
                 style: {
                   type: "string",
-                  enum: ["photography", "illustration", "3d", "abstract", "minimal"],
+                  enum: [
+                    "photography",
+                    "illustration",
+                    "3d",
+                    "abstract",
+                    "minimal",
+                  ],
                   description: "Preferred visual style",
                 },
                 budget: {
@@ -1178,9 +1191,12 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
     if (cssContent) {
       const contrastIssues = this.analyzeColorContrast(cssContent, htmlContent);
       violations.push(...contrastIssues);
-      
+
       // Hero section specific checks
-      const heroIssues = this.analyzeHeroSectionContrast(cssContent, htmlContent);
+      const heroIssues = this.analyzeHeroSectionContrast(
+        cssContent,
+        htmlContent,
+      );
       violations.push(...heroIssues);
     }
 
@@ -1190,13 +1206,18 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
   /**
    * Parse color value and convert to RGB
    */
-  private parseColor(color: string): { r: number; g: number; b: number } | null {
+  private parseColor(
+    color: string,
+  ): { r: number; g: number; b: number } | null {
     // Hex color
     const hexMatch = color.match(/#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/);
     if (hexMatch && hexMatch[1]) {
       let hex: string = hexMatch[1];
       if (hex.length === 3) {
-        hex = hex.split('').map(c => c + c).join('');
+        hex = hex
+          .split("")
+          .map((c) => c + c)
+          .join("");
       }
       return {
         r: parseInt(hex.substring(0, 2), 16),
@@ -1217,16 +1238,16 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 
     // Named colors
     const namedColors: Record<string, string> = {
-      'white': '#ffffff',
-      'black': '#000000',
-      'red': '#ff0000',
-      'blue': '#0000ff',
-      'green': '#008000',
-      'gray': '#808080',
-      'lightgray': '#d3d3d3',
-      'darkgray': '#a9a9a9',
+      white: "#ffffff",
+      black: "#000000",
+      red: "#ff0000",
+      blue: "#0000ff",
+      green: "#008000",
+      gray: "#808080",
+      lightgray: "#d3d3d3",
+      darkgray: "#a9a9a9",
     };
-    
+
     const lowerColor = color.toLowerCase().trim();
     if (namedColors[lowerColor]) {
       return this.parseColor(namedColors[lowerColor]);
@@ -1247,13 +1268,18 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 
   private getLuminanceComponent(c: number): number {
     const normalized = c / 255;
-    return normalized <= 0.03928 ? normalized / 12.92 : Math.pow((normalized + 0.055) / 1.055, 2.4);
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : Math.pow((normalized + 0.055) / 1.055, 2.4);
   }
 
   /**
    * Calculate contrast ratio between two colors
    */
-  private calculateContrastRatio(color1: string, color2: string): number | null {
+  private calculateContrastRatio(
+    color1: string,
+    color2: string,
+  ): number | null {
     const rgb1 = this.parseColor(color1);
     const rgb2 = this.parseColor(color2);
 
@@ -1273,14 +1299,14 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
    */
   private analyzeColorContrast(cssContent: string, htmlContent: string): any[] {
     const violations: any[] = [];
-    
+
     // Extract color pairs from CSS
     const colorRegex = /color:\s*([^;]+)/gi;
     const bgRegex = /background(?:-color)?:\s*([^;]+)/gi;
-    
+
     const colors: string[] = [];
     const backgrounds: string[] = [];
-    
+
     let match: RegExpExecArray | null;
     while ((match = colorRegex.exec(cssContent)) !== null) {
       if (match[1]) {
@@ -1295,15 +1321,15 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 
     // Check for known problematic combinations
     const problematicCombos = [
-      { fg: '#ffffff', bg: '#f3f4f6', desc: 'White text on light gray' },
-      { fg: '#ffffff', bg: '#e5e7eb', desc: 'White text on gray' },
-      { fg: '#ffffff', bg: '#d1d5db', desc: 'White text on medium gray' },
-      { fg: '#000000', bg: '#1f2937', desc: 'Black text on dark gray' },
-      { fg: '#9ca3af', bg: '#ffffff', desc: 'Light gray text on white' },
-      { fg: '#d1d5db', bg: '#ffffff', desc: 'Medium gray text on white' },
+      { fg: "#ffffff", bg: "#f3f4f6", desc: "White text on light gray" },
+      { fg: "#ffffff", bg: "#e5e7eb", desc: "White text on gray" },
+      { fg: "#ffffff", bg: "#d1d5db", desc: "White text on medium gray" },
+      { fg: "#000000", bg: "#1f2937", desc: "Black text on dark gray" },
+      { fg: "#9ca3af", bg: "#ffffff", desc: "Light gray text on white" },
+      { fg: "#d1d5db", bg: "#ffffff", desc: "Medium gray text on white" },
     ];
 
-    problematicCombos.forEach(combo => {
+    problematicCombos.forEach((combo) => {
       const ratio = this.calculateContrastRatio(combo.fg, combo.bg);
       if (ratio && ratio < 4.5) {
         violations.push({
@@ -1321,9 +1347,12 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
   /**
    * Specifically analyze hero section for contrast issues
    */
-  private analyzeHeroSectionContrast(cssContent: string, htmlContent: string): any[] {
+  private analyzeHeroSectionContrast(
+    cssContent: string,
+    htmlContent: string,
+  ): any[] {
     const violations: any[] = [];
-    
+
     // Check for hero section patterns
     const heroPatterns = [
       /class="[^"]*hero[^"]*"/i,
@@ -1331,24 +1360,31 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
       /hero-section/i,
       /landing-hero/i,
     ];
-    
-    const hasHero = heroPatterns.some(pattern => 
-      pattern.test(htmlContent) || pattern.test(cssContent)
+
+    const hasHero = heroPatterns.some(
+      (pattern) => pattern.test(htmlContent) || pattern.test(cssContent),
     );
 
     if (!hasHero) return violations;
 
     // Check for hero with background image but no overlay
-    const hasBackgroundImage = /background(?:-image)?\s*:\s*url\s*\(/i.test(cssContent);
-    const hasOverlay = /(?:rgba?\([^)]+\)|#[a-f0-9]{3,8}).*overlay|gradient.*rgba/i.test(cssContent);
+    const hasBackgroundImage = /background(?:-image)?\s*:\s*url\s*\(/i.test(
+      cssContent,
+    );
+    const hasOverlay =
+      /(?:rgba?\([^)]+\)|#[a-f0-9]{3,8}).*overlay|gradient.*rgba/i.test(
+        cssContent,
+      );
     const hasTextShadow = /text-shadow\s*:/i.test(cssContent);
 
     if (hasBackgroundImage && !hasOverlay && !hasTextShadow) {
       violations.push({
         guideline: "1.4.3 Contrast (Minimum) - Hero Section",
         severity: "critical",
-        description: "Hero section with background image lacks text overlay or shadow",
-        recommendation: "Add a semi-transparent overlay (e.g., rgba(0,0,0,0.5)) or text-shadow to ensure text readability",
+        description:
+          "Hero section with background image lacks text overlay or shadow",
+        recommendation:
+          "Add a semi-transparent overlay (e.g., rgba(0,0,0,0.5)) or text-shadow to ensure text readability",
       });
     }
 
@@ -1357,11 +1393,11 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
     if (heroSection) {
       const bgMatch = heroSection.match(/background(?:-color)?\s*:\s*([^;]+)/i);
       const colorMatch = heroSection.match(/color\s*:\s*([^;]+)/i);
-      
+
       if (bgMatch?.[1] && colorMatch?.[1]) {
         const bg = bgMatch[1].trim();
         const color = colorMatch[1].trim();
-        
+
         const ratio = this.calculateContrastRatio(color, bg);
         if (ratio && ratio < 4.5) {
           violations.push({
@@ -1384,14 +1420,14 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
     const heroRegex = /(?:\.hero|#hero)[^{]*\{([^}]+)\}/gi;
     const matches: string[] = [];
     let match: RegExpExecArray | null;
-    
+
     while ((match = heroRegex.exec(cssContent)) !== null) {
       if (match[1]) {
         matches.push(match[1]);
       }
     }
-    
-    return matches.length > 0 ? matches.join(' ') : null;
+
+    return matches.length > 0 ? matches.join(" ") : null;
   }
 
   private calculateWCAGScore(violations: any[], level: string): number {
@@ -1603,7 +1639,8 @@ Available: ${Object.keys(system.components).length} component types
     const recommendations: string[] = [];
 
     // Check touch target sizes
-    const touchTargetRegex = /(width|height|padding|min-width|min-height):\s*(\d+)(px|rem|em)/gi;
+    const touchTargetRegex =
+      /(width|height|padding|min-width|min-height):\s*(\d+)(px|rem|em)/gi;
     let match: RegExpExecArray | null;
     while ((match = touchTargetRegex.exec(componentCode)) !== null) {
       if (match[2] && match[3]) {
@@ -1623,25 +1660,41 @@ Available: ${Object.keys(system.components).length} component types
     }
 
     // Check for responsive units
-    if (componentCode.includes("px") && !componentCode.includes("rem") && !componentCode.includes("em")) {
-      recommendations.push("Consider using rem/em instead of px for better accessibility");
+    if (
+      componentCode.includes("px") &&
+      !componentCode.includes("rem") &&
+      !componentCode.includes("em")
+    ) {
+      recommendations.push(
+        "Consider using rem/em instead of px for better accessibility",
+      );
     }
 
     // Check for media queries
     if (!componentCode.includes("@media")) {
-      recommendations.push("Add responsive breakpoints (@media) for different viewport sizes");
+      recommendations.push(
+        "Add responsive breakpoints (@media) for different viewport sizes",
+      );
     }
 
     // Check for mobile navigation pattern
-    if (componentCode.includes("nav") && !componentCode.includes("hamburger") && !componentCode.includes("menu")) {
-      recommendations.push("Consider mobile navigation pattern (hamburger menu) for small screens");
+    if (
+      componentCode.includes("nav") &&
+      !componentCode.includes("hamburger") &&
+      !componentCode.includes("menu")
+    ) {
+      recommendations.push(
+        "Consider mobile navigation pattern (hamburger menu) for small screens",
+      );
     }
 
     return {
-      content: [{
-        type: "text",
-        text: `## Mobile Design Validation (Viewport: ${viewportWidth}px)\n\n### Issues Found: ${issues.length}\n${issues.map((i: any) => `- ${i.severity.toUpperCase()}: ${i.message} (WCAG ${i.wcag})`).join("\n") || "None"}\n\n### Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### Mobile-First Checklist:\n- [ ] Touch targets ≥ 44px\n- [ ] Responsive typography (rem/em)\n- [ ] Media queries for breakpoints\n- [ ] Mobile navigation pattern\n- [ ] Readable without zoom (16px min)`,
-      }],
+      content: [
+        {
+          type: "text",
+          text: `## Mobile Design Validation (Viewport: ${viewportWidth}px)\n\n### Issues Found: ${issues.length}\n${issues.map((i: any) => `- ${i.severity.toUpperCase()}: ${i.message} (WCAG ${i.wcag})`).join("\n") || "None"}\n\n### Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### Mobile-First Checklist:\n- [ ] Touch targets ≥ 44px\n- [ ] Responsive typography (rem/em)\n- [ ] Media queries for breakpoints\n- [ ] Mobile navigation pattern\n- [ ] Readable without zoom (16px min)`,
+        },
+      ],
     };
   }
 
@@ -1658,42 +1711,73 @@ Available: ${Object.keys(system.components).length} component types
     const h3Count = (designCode.match(/<h3/gi) || []).length;
 
     if (h1Count === 0) {
-      issues.push({ type: "hierarchy", severity: "critical", message: "Missing H1 heading - page purpose unclear" });
+      issues.push({
+        type: "hierarchy",
+        severity: "critical",
+        message: "Missing H1 heading - page purpose unclear",
+      });
     } else if (h1Count > 1) {
-      issues.push({ type: "hierarchy", severity: "high", message: `Multiple H1 headings (${h1Count}) - confuses page structure` });
+      issues.push({
+        type: "hierarchy",
+        severity: "high",
+        message: `Multiple H1 headings (${h1Count}) - confuses page structure`,
+      });
     }
 
     if (h2Count > 7) {
-      recommendations.push("Consider reducing number of H2 sections (current: " + h2Count + ") - may overwhelm users");
+      recommendations.push(
+        "Consider reducing number of H2 sections (current: " +
+          h2Count +
+          ") - may overwhelm users",
+      );
     }
 
     // Check for clear CTAs
-    const ctaPatterns = [/class="[^"]*cta[^"]*"/i, /class="[^"]*button[^"]*"/i, /<button/i];
-    const hasCTA = ctaPatterns.some(pattern => pattern.test(designCode));
+    const ctaPatterns = [
+      /class="[^"]*cta[^"]*"/i,
+      /class="[^"]*button[^"]*"/i,
+      /<button/i,
+    ];
+    const hasCTA = ctaPatterns.some((pattern) => pattern.test(designCode));
 
     if (!hasCTA && pageType === "landing") {
-      issues.push({ type: "conversion", severity: "high", message: "No clear CTA found - users don't know what to do" });
+      issues.push({
+        type: "conversion",
+        severity: "high",
+        message: "No clear CTA found - users don't know what to do",
+      });
     }
 
     // Check for progressive disclosure (accordions, tabs, etc.)
-    const hasProgressiveDisclosure = designCode.includes("accordion") || designCode.includes("tab") || designCode.includes("collapsible");
+    const hasProgressiveDisclosure =
+      designCode.includes("accordion") ||
+      designCode.includes("tab") ||
+      designCode.includes("collapsible");
     if (!hasProgressiveDisclosure && designCode.length > 5000) {
-      recommendations.push("Consider progressive disclosure (accordions/tabs) to reduce cognitive load");
+      recommendations.push(
+        "Consider progressive disclosure (accordions/tabs) to reduce cognitive load",
+      );
     }
 
     // Check for "Don't Make Me Think" violations
     const unclearLabels = [/click here/i, /read more/i, /learn more$/i];
-    unclearLabels.forEach(pattern => {
+    unclearLabels.forEach((pattern) => {
       if (pattern.test(designCode)) {
-        issues.push({ type: "usability", severity: "medium", message: `Vague link text found: "${pattern.source}" - be descriptive` });
+        issues.push({
+          type: "usability",
+          severity: "medium",
+          message: `Vague link text found: "${pattern.source}" - be descriptive`,
+        });
       }
     });
 
     return {
-      content: [{
-        type: "text",
-        text: `## Visual Hierarchy & Cognitive Load Analysis\n\n### "Don't Make Me Think" Score: ${Math.max(0, cognitiveLoadScore - (issues.length * 10))}/100\n\n### Heading Structure:\n- H1: ${h1Count} ${h1Count === 1 ? "✅" : "❌"}\n- H2: ${h2Count}\n- H3: ${h3Count}\n\n### Issues (${issues.length}):\n${issues.map((i: any) => `- ${i.severity.toUpperCase()}: ${i.message}`).join("\n") || "None"}\n\n### Cognitive Load Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### 3-Second Rule Checklist:\n- [ ] Page purpose immediately clear\n- [ ] Primary action obvious\n- [ ] No ambiguous labels\n- [ ] Clear visual hierarchy\n- [ ] Progressive disclosure used`,
-      }],
+      content: [
+        {
+          type: "text",
+          text: `## Visual Hierarchy & Cognitive Load Analysis\n\n### "Don't Make Me Think" Score: ${Math.max(0, cognitiveLoadScore - issues.length * 10)}/100\n\n### Heading Structure:\n- H1: ${h1Count} ${h1Count === 1 ? "✅" : "❌"}\n- H2: ${h2Count}\n- H3: ${h3Count}\n\n### Issues (${issues.length}):\n${issues.map((i: any) => `- ${i.severity.toUpperCase()}: ${i.message}`).join("\n") || "None"}\n\n### Cognitive Load Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### 3-Second Rule Checklist:\n- [ ] Page purpose immediately clear\n- [ ] Primary action obvious\n- [ ] No ambiguous labels\n- [ ] Clear visual hierarchy\n- [ ] Progressive disclosure used`,
+        },
+      ],
     };
   }
 
@@ -1708,46 +1792,97 @@ Available: ${Object.keys(system.components).length} component types
 
     // Context-specific recommendations
     if (context.toLowerCase().includes("hero")) {
-      recommendations.tips.push("Hero images should be high-impact but not compete with text");
-      recommendations.tips.push("Use overlay/gradient to ensure text readability");
-      recommendations.tips.push("Recommended size: 1920x1080px, optimized to < 200KB");
+      recommendations.tips.push(
+        "Hero images should be high-impact but not compete with text",
+      );
+      recommendations.tips.push(
+        "Use overlay/gradient to ensure text readability",
+      );
+      recommendations.tips.push(
+        "Recommended size: 1920x1080px, optimized to < 200KB",
+      );
     }
 
-    if (context.toLowerCase().includes("team") || context.toLowerCase().includes("portrait")) {
-      recommendations.tips.push("Use consistent lighting and background for team photos");
+    if (
+      context.toLowerCase().includes("team") ||
+      context.toLowerCase().includes("portrait")
+    ) {
+      recommendations.tips.push(
+        "Use consistent lighting and background for team photos",
+      );
       recommendations.tips.push("Square or 4:5 aspect ratio works best");
     }
 
     if (context.toLowerCase().includes("product")) {
-      recommendations.tips.push("Use high-quality product photography with neutral background");
+      recommendations.tips.push(
+        "Use high-quality product photography with neutral background",
+      );
       recommendations.tips.push("Include multiple angles and detail shots");
     }
 
     // Library recommendations based on budget and style
     if (budget === "free") {
       if (style === "photography") {
-        recommendations.libraries.push({ name: "Unsplash", url: "unsplash.com", description: "Free, high-quality photography" });
-        recommendations.libraries.push({ name: "Pexels", url: "pexels.com", description: "Free stock photos and videos" });
+        recommendations.libraries.push({
+          name: "Unsplash",
+          url: "unsplash.com",
+          description: "Free, high-quality photography",
+        });
+        recommendations.libraries.push({
+          name: "Pexels",
+          url: "pexels.com",
+          description: "Free stock photos and videos",
+        });
       } else if (style === "illustration") {
-        recommendations.libraries.push({ name: "unDraw", url: "undraw.co", description: "Customizable open-source illustrations" });
-        recommendations.libraries.push({ name: "Humaaans", url: "humaaans.com", description: "Mix-and-match people illustrations" });
+        recommendations.libraries.push({
+          name: "unDraw",
+          url: "undraw.co",
+          description: "Customizable open-source illustrations",
+        });
+        recommendations.libraries.push({
+          name: "Humaaans",
+          url: "humaaans.com",
+          description: "Mix-and-match people illustrations",
+        });
       } else if (style === "3d") {
-        recommendations.libraries.push({ name: "BlenderKit", url: "blenderkit.com", description: "Free 3D assets" });
+        recommendations.libraries.push({
+          name: "BlenderKit",
+          url: "blenderkit.com",
+          description: "Free 3D assets",
+        });
       }
     } else if (budget === "premium") {
-      recommendations.libraries.push({ name: "Shutterstock", url: "shutterstock.com", description: "Extensive premium catalog" });
-      recommendations.libraries.push({ name: "Getty Images", url: "gettyimages.com", description: "Editorial and commercial quality" });
+      recommendations.libraries.push({
+        name: "Shutterstock",
+        url: "shutterstock.com",
+        description: "Extensive premium catalog",
+      });
+      recommendations.libraries.push({
+        name: "Getty Images",
+        url: "gettyimages.com",
+        description: "Editorial and commercial quality",
+      });
     }
 
     // Icon recommendations
-    recommendations.libraries.push({ name: "Lucide", url: "lucide.dev", description: "Clean, consistent icon library (Free)" });
-    recommendations.libraries.push({ name: "Heroicons", url: "heroicons.com", description: "Beautiful SVG icons by Tailwind (Free)" });
+    recommendations.libraries.push({
+      name: "Lucide",
+      url: "lucide.dev",
+      description: "Clean, consistent icon library (Free)",
+    });
+    recommendations.libraries.push({
+      name: "Heroicons",
+      url: "heroicons.com",
+      description: "Beautiful SVG icons by Tailwind (Free)",
+    });
 
     return {
-      content: [{
-        type: "text",
-        text: `## Image Recommendations for: ${context}\n\n### Style: ${style}\n### Budget: ${budget}\n\n### Recommended Libraries:\n${recommendations.libraries.map((lib: any) => `- **${lib.name}** (${lib.url})\n  ${lib.description}`).join("\n")}\n\n### Context-Specific Tips:\n${recommendations.tips.map((tip: string) => `- ${tip}`).join("\n")}\n\n### Image Optimization Checklist:\n- [ ] WebP format with JPEG fallback\n- [ ] Responsive srcset for different sizes\n- [ ] Alt text describing purpose (not just "image")\n- [ ] Lazy loading for below-fold images\n- [ ] Compressed to < 200KB without quality loss\n- [ ] Consistent style across all images`,
-      }],
+      content: [
+        {
+          type: "text",
+          text: `## Image Recommendations for: ${context}\n\n### Style: ${style}\n### Budget: ${budget}\n\n### Recommended Libraries:\n${recommendations.libraries.map((lib: any) => `- **${lib.name}** (${lib.url})\n  ${lib.description}`).join("\n")}\n\n### Context-Specific Tips:\n${recommendations.tips.map((tip: string) => `- ${tip}`).join("\n")}\n\n### Image Optimization Checklist:\n- [ ] WebP format with JPEG fallback\n- [ ] Responsive srcset for different sizes\n- [ ] Alt text describing purpose (not just "image")\n- [ ] Lazy loading for below-fold images\n- [ ] Compressed to < 200KB without quality loss\n- [ ] Consistent style across all images`,
+        },
+      ],
     };
   }
 

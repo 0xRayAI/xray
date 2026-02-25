@@ -139,7 +139,7 @@ export class SelfDirectionSystem {
     if (this.monitoringIntervalId) {
       clearInterval(this.monitoringIntervalId);
     }
-    
+
     this.monitoringIntervalId = setInterval(async () => {
       try {
         if (!this.activeMonitoring) return; // Don't run if stopped
@@ -196,7 +196,7 @@ export class SelfDirectionSystem {
     if (this.learningIntervalId) {
       clearInterval(this.learningIntervalId);
     }
-    
+
     this.learningIntervalId = setInterval(async () => {
       if (!this.activeLearning) return; // Don't run if stopped
       console.log("🔄 Learning cycle executed");

@@ -1,9 +1,9 @@
 /**
  * Test Auto-Generation Monitor
- * 
+ *
  * Tracks and reports on test auto-generation activity.
  * Provides metrics on test creation success/failure rates.
- * 
+ *
  * @since 2026-02-22
  */
 
@@ -46,7 +46,10 @@ class TestAutoGenerationMonitor {
     if (!fs.existsSync(metricsDir)) {
       fs.mkdirSync(metricsDir, { recursive: true });
     }
-    this.metricsFile = path.join(metricsDir, "test-auto-generation-metrics.json");
+    this.metricsFile = path.join(
+      metricsDir,
+      "test-auto-generation-metrics.json",
+    );
     this.loadMetrics();
   }
 
@@ -59,10 +62,10 @@ class TestAutoGenerationMonitor {
         const data = fs.readFileSync(this.metricsFile, "utf8");
         const loaded = JSON.parse(data);
         this.metrics = { ...this.metrics, ...loaded };
-        console.log(`📊 Loaded metrics: ${this.metrics.testsGenerated} tests generated previously`);
+        // Silent load - no console output during tests
       }
     } catch (error) {
-      console.warn("⚠️ Failed to load metrics:", error);
+      // Silent fail - no console output during tests
     }
   }
 
@@ -73,7 +76,7 @@ class TestAutoGenerationMonitor {
     try {
       fs.writeFileSync(this.metricsFile, JSON.stringify(this.metrics, null, 2));
     } catch (error) {
-      console.warn("⚠️ Failed to save metrics:", error);
+      // Silent fail - no console output during tests
     }
   }
 
@@ -82,7 +85,7 @@ class TestAutoGenerationMonitor {
    */
   recordEvent(event: TestGenerationEvent): void {
     this.events.push(event);
-    
+
     // Keep only last maxEvents
     if (this.events.length > this.maxEvents) {
       this.events = this.events.slice(-this.maxEvents);
@@ -90,7 +93,7 @@ class TestAutoGenerationMonitor {
 
     // Update metrics based on event type
     this.metrics.totalFilesProcessed++;
-    
+
     switch (event.type) {
       case "generated":
         this.metrics.testsGenerated++;
@@ -126,7 +129,9 @@ class TestAutoGenerationMonitor {
    */
   getSuccessRate(): number {
     if (this.metrics.totalFilesProcessed === 0) return 0;
-    return (this.metrics.testsGenerated / this.metrics.totalFilesProcessed) * 100;
+    return (
+      (this.metrics.testsGenerated / this.metrics.totalFilesProcessed) * 100
+    );
   }
 
   /**
@@ -152,9 +157,11 @@ class TestAutoGenerationMonitor {
 ║                                                              ║
 ║  ✅ Success Rate: ${successRate}%                                ║
 ║                                                              ║
-║  🕐 Last Generation: ${metrics.lastGenerationTime 
-      ? new Date(metrics.lastGenerationTime).toLocaleString()
-      : "Never".padEnd(33)}║
+║  🕐 Last Generation: ${
+      metrics.lastGenerationTime
+        ? new Date(metrics.lastGenerationTime).toLocaleString()
+        : "Never".padEnd(33)
+    }║
 ╚══════════════════════════════════════════════════════════════╝
 `;
   }
@@ -173,7 +180,7 @@ class TestAutoGenerationMonitor {
     };
     this.events = [];
     this.saveMetrics();
-    console.log("📊 Metrics reset");
+    // Silent reset - no console output during tests
   }
 }
 
@@ -181,6 +188,9 @@ class TestAutoGenerationMonitor {
 export const testAutoGenerationMonitor = new TestAutoGenerationMonitor();
 
 // CLI interface
-if (process.argv[1] && process.argv[1].includes("test-auto-generation-monitor")) {
+if (
+  process.argv[1] &&
+  process.argv[1].includes("test-auto-generation-monitor")
+) {
   console.log(testAutoGenerationMonitor.generateReport());
 }

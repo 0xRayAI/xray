@@ -202,20 +202,24 @@ function extractCodexMetadata(content: string): {
       const json = JSON.parse(content);
       let version = "1.0.0";
       let termCount = 0;
-      
+
       if (json.version) version = json.version;
       if (json.terms) {
-        termCount = Array.isArray(json.terms) ? json.terms.length : Object.keys(json.terms).length;
+        termCount = Array.isArray(json.terms)
+          ? json.terms.length
+          : Object.keys(json.terms).length;
       } else if (json.codex?.terms) {
-        termCount = Array.isArray(json.codex.terms) ? json.codex.terms.length : Object.keys(json.codex.terms).length;
+        termCount = Array.isArray(json.codex.terms)
+          ? json.codex.terms.length
+          : Object.keys(json.codex.terms).length;
       }
-      
+
       return { version, termCount };
     } catch {
       // Not valid JSON, continue to markdown parsing
     }
   }
-  
+
   // Markdown format
   const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
   const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.2.20";

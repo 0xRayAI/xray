@@ -19,16 +19,16 @@ import path from "path";
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.5.2",
-    displayName: "StringRay AI v1.5.2",
-    lastUpdated: "2026-02-18",
+    version: "1.6.0",
+    displayName: "StringRay AI v1.6.0",
+    lastUpdated: "2026-02-24",
   },
 
   // Codex versions
   codex: {
     version: "v1.3.0",
-    termsCount: 55,
-    lastUpdated: "2026-02-18",
+    termsCount: 59,
+    lastUpdated: "2026-02-24",
   },
 
   // External dependencies
@@ -47,6 +47,7 @@ function findFiles(
     "docs/reflections", "docs/archive",  // Historical documents - keep original versions
     ".opencode/state",  // Runtime state data
     "logs", "reports",  // Generated logs/reports
+    ".strray",  // Circular symlink
   ],
   ignoreFiles = [
     "package-lock.json", ".opencode.json",
@@ -89,6 +90,25 @@ const UPDATE_PATTERNS = [
     {
       pattern: /"version": "[0-9]+\.[0-9]+\.[0-9]+"/g,
       replacement: `"version": "${OFFICIAL_VERSIONS.framework.version}"`,
+    },
+    // MCP server version in server definition objects
+    {
+      pattern: /version: "[0-9]+\.[0-9]+\.[0-9]+"/g,
+      replacement: `version: "${OFFICIAL_VERSIONS.framework.version}"`,
+    },
+    // MCP server version in name+version objects (e.g., { name: "xxx", version: "x.x.x" })
+    {
+      pattern: /name: "[^"]+",\s*version: "[0-9]+\.[0-9]+\.[0-9]+"/g,
+      replacement: (match) => {
+        const nameMatch = match.match(/name: "([^"]+)"/);
+        const name = nameMatch ? nameMatch[1] : 'unknown';
+        return `name: "${name}", version: "${OFFICIAL_VERSIONS.framework.version}"`;
+      },
+    },
+    // features-config default version
+    {
+      pattern: /version: "[0-9]+\.[0-9]+\.[0-9]+",\s*$/gm,
+      replacement: `version: "${OFFICIAL_VERSIONS.framework.version}",`,
     },
     {
       pattern: /StringRay Framework v[0-9]+\.[0-9]+\.[0-9]+/g,
@@ -217,6 +237,15 @@ async function standardizeVersions() {
     "package-lock.json",
     "package.json",  // Only root package.json (matched by exact path, not subdirs)
   ];
+  
+  // Test files with version assertions - these contain expected version values for testing
+  // and should NOT have their assertions updated by this script
+  const TEST_ASSERTION_FILES = [
+    "context-loader.test.ts",
+    "codex-parser.test.ts", 
+    "json-codex-integration.test.ts",
+    "boot-orchestrator.integration.test.ts",
+  ];
 
   for (const file of files) {
     // Skip protected files as an additional safety measure
@@ -236,6 +265,14 @@ async function standardizeVersions() {
     
     if (isProtected) {
       console.log(`⏭️ Skipping protected file: ${file}`);
+      continue;
+    }
+    
+    // Skip test assertion files - these contain expected version values for testing
+    // and should NOT have their assertions updated by this script
+    const isTestAssertionFile = TEST_ASSERTION_FILES.includes(basename);
+    if (isTestAssertionFile) {
+      console.log(`⏭️ Skipping test assertion file: ${file}`);
       continue;
     }
 

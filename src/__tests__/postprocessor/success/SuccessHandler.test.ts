@@ -119,21 +119,25 @@ describe("SuccessHandler", () => {
     // Skipped - console logging behavior inconsistent with beforeEach mock
     it.skip("should skip success confirmation when disabled", async () => {
       const customHandler = new SuccessHandler({ successConfirmation: false });
-      
+
       // Track calls specifically - restore first to allow tracking
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
       await customHandler.handleSuccess(mockContext, mockResult, []);
 
       // Get all logged messages
-      const loggedMessages = (consoleSpy.mock.calls || []).map(c => c.join(' '));
-      const hasConfirmationMessage = loggedMessages.some(m => 
-        m.includes("Confirming deployment success") || m.includes("Deployment success confirmed")
+      const loggedMessages = (consoleSpy.mock.calls || []).map((c) =>
+        c.join(" "),
       );
-      
+      const hasConfirmationMessage = loggedMessages.some(
+        (m) =>
+          m.includes("Confirming deployment success") ||
+          m.includes("Deployment success confirmed"),
+      );
+
       // When disabled, should NOT have confirmation messages
       expect(hasConfirmationMessage).toBe(false);
-      
+
       consoleSpy.mockRestore();
     });
   });

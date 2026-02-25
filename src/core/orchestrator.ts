@@ -304,7 +304,7 @@ export class StringRayOrchestrator {
    * Prevents cross-orchestrator dependency errors by failing fast with a clear message.
    */
   private validateTaskDependencies(tasks: TaskDefinition[]): void {
-    const taskIds = new Set(tasks.map(t => t.id));
+    const taskIds = new Set(tasks.map((t) => t.id));
     const errors: string[] = [];
 
     for (const task of tasks) {
@@ -313,7 +313,7 @@ export class StringRayOrchestrator {
           if (!taskIds.has(dep)) {
             errors.push(
               `Task "${task.id}" depends on "${dep}" which is NOT in this orchestrator's task batch.\n` +
-              `Available tasks in this batch: ${Array.from(taskIds).join(", ")}`
+                `Available tasks in this batch: ${Array.from(taskIds).join(", ")}`,
             );
           }
         }
@@ -321,7 +321,7 @@ export class StringRayOrchestrator {
     }
 
     if (errors.length > 0) {
-      const errorMessage = 
+      const errorMessage =
         `[TEST ARCHITECTURE ERROR] Cross-orchestrator dependencies detected.\n\n` +
         `${errors.join("\n\n")}\n\n` +
         `This usually means:\n` +
@@ -337,7 +337,7 @@ export class StringRayOrchestrator {
         `    { id: "task-1" },\n` +
         `    { id: "task-2", dependencies: ["task-1"] }  // ✅ Same orchestrator\n` +
         `  ]);`;
-      
+
       throw new Error(errorMessage);
     }
   }

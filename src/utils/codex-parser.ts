@@ -349,7 +349,7 @@ export function extractCodexMetadata(content: string): {
     return { version, termCount };
   } catch (error) {
     // Fallback for invalid content
-    return { version: "1.2.20", termCount: 0 };
+    return { version: "1.6.0", termCount: 0 };
   }
 }
 

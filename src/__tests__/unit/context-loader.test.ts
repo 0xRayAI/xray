@@ -55,7 +55,7 @@ describe("StringRayContextLoader", () => {
   let mockPath: any;
 
   const mockCodexContent = JSON.stringify({
-    version: "1.2.22",
+    version: "1.6.0",
     lastUpdated: "2026-01-06",
     errorPreventionTarget: 0.996,
     terms: {
@@ -197,7 +197,7 @@ describe("StringRayContextLoader", () => {
 
       expect(result.success).toBe(true);
       expect(result.context).toBeDefined();
-      expect(result.context!.version).toBe("1.2.22");
+      expect(result.context!.version).toBe("1.6.0");
     });
 
     it("should try all file paths until one succeeds", async () => {
@@ -237,7 +237,7 @@ describe("StringRayContextLoader", () => {
 
     it("should parse codex content correctly", () => {
       const jsonContent = JSON.stringify({
-        version: "1.1.2",
+        version: "1.6.0",
         lastUpdated: "2026-01-06",
         errorPreventionTarget: 0.996,
         terms: {
@@ -269,7 +269,7 @@ describe("StringRayContextLoader", () => {
 
       const context = loader["parseCodexContent"](jsonContent, "test.json");
 
-      expect(context.version).toBe("1.1.2");
+      expect(context.version).toBe("1.6.0");
       expect(context.errorPreventionTarget).toBe(0.996);
       expect(context.terms.size).toBe(2);
       expect(context.interweaves).toEqual(["Error Prevention Interweave"]);
@@ -306,7 +306,7 @@ describe("StringRayContextLoader", () => {
 
       expect(result.success).toBe(true);
       expect(result.context).toBeDefined();
-      expect(result.context!.version).toBe("1.2.22");
+      expect(result.context!.version).toBe("1.6.0");
     });
 
     it("should try all file paths until one succeeds", async () => {
@@ -360,11 +360,11 @@ describe("StringRayContextLoader", () => {
 
     it("should parse version correctly", () => {
       const content = JSON.stringify({
-        version: "1.2.21",
+        version: "1.6.0",
         terms: {},
       });
       const context = loader["parseCodexContent"](content, "test.json");
-      expect(context.version).toBe("1.2.21");
+      expect(context.version).toBe("1.6.0");
     });
 
     it("should parse error prevention target", () => {
@@ -523,7 +523,7 @@ describe("StringRayContextLoader", () => {
 
     it("should handle missing optional fields", () => {
       const content = JSON.stringify({
-        version: "1.2.20",
+        version: "1.6.0",
         terms: {
           1: {
             number: 1,
@@ -536,7 +536,7 @@ describe("StringRayContextLoader", () => {
 
       const context = loader["parseCodexContent"](content, "test.json");
 
-      expect(context.version).toBe("1.2.20");
+      expect(context.version).toBe("1.6.0");
       expect(context.interweaves).toEqual([]);
       expect(context.lenses).toEqual([]);
       expect(context.principles).toEqual([]);

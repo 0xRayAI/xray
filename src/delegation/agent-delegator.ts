@@ -3,7 +3,7 @@
  *
  * Intelligent agent delegation system that uses complexity analysis to determine
  * optimal task distribution strategies and conflict resolution.
- * 
+ *
  * Integrates with TaskSkillRouter for keyword-based preprocessing.
  *
  * @version 1.1.0
@@ -200,11 +200,16 @@ export class AgentDelegator {
     const routingOptions = {
       ...(options?.sessionId && { sessionId: options.sessionId }),
       ...(options?.taskId && { taskId: options.taskId }),
-      ...(options?.complexity !== undefined && { complexity: options.complexity }),
+      ...(options?.complexity !== undefined && {
+        complexity: options.complexity,
+      }),
       stateManager: this.stateManager,
     };
 
-    const preprocessResult = this.taskSkillRouter.preprocess(description, routingOptions);
+    const preprocessResult = this.taskSkillRouter.preprocess(
+      description,
+      routingOptions,
+    );
 
     return {
       operation: preprocessResult.operation,

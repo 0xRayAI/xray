@@ -21,8 +21,7 @@ class StrRayOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "orchestrator",
-        version: "1.0.0",
+        name: "orchestrator", version: "1.6.0",
       },
       {
         capabilities: {
@@ -240,12 +239,17 @@ class StrRayOrchestratorServer {
     const executionMode = args.executionMode || "optimized";
     const timeout = args.timeout || 300000;
 
-    await frameworkLogger.log("orchestrator.server", "orchestrate-task-start", "info", {
-      description,
-      taskCount: tasks.length,
-      sessionId,
-      executionMode,
-    });
+    await frameworkLogger.log(
+      "orchestrator.server",
+      "orchestrate-task-start",
+      "info",
+      {
+        description,
+        taskCount: tasks.length,
+        sessionId,
+        executionMode,
+      },
+    );
 
     const orchestrationResult = {
       sessionId,
@@ -335,9 +339,14 @@ ${orchestrationResult.recommendations.length > 0 ? orchestrationResult.recommend
   private async handleAnalyzeComplexity(args: any) {
     const tasks = args.tasks || [];
 
-    await frameworkLogger.log("orchestrator.server", "analyze-complexity-start", "info", {
-      taskCount: tasks.length,
-    });
+    await frameworkLogger.log(
+      "orchestrator.server",
+      "analyze-complexity-start",
+      "info",
+      {
+        taskCount: tasks.length,
+      },
+    );
 
     try {
       const analysis = await this.analyzeTaskComplexity(tasks);
@@ -393,10 +402,15 @@ ${recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     const sessionId = args.sessionId;
     const detailed = args.detailed || false;
 
-    await frameworkLogger.log("orchestrator.server", "get-status-start", "info", {
-      sessionId,
-      detailed,
-    });
+    await frameworkLogger.log(
+      "orchestrator.server",
+      "get-status-start",
+      "info",
+      {
+        sessionId,
+        detailed,
+      },
+    );
 
     try {
       let status: any;
@@ -448,11 +462,16 @@ ${recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     const taskId = args.taskId;
     const force = args.force || false;
 
-    await frameworkLogger.log("orchestrator.server", "cancel-orchestration-start", "info", {
-      sessionId,
-      taskId,
-      force,
-    });
+    await frameworkLogger.log(
+      "orchestrator.server",
+      "cancel-orchestration-start",
+      "info",
+      {
+        sessionId,
+        taskId,
+        force,
+      },
+    );
 
     try {
       let cancelled = false;
@@ -524,10 +543,15 @@ ${recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     const includeHistory = args.history !== false;
     const includeRecommendations = args.recommendations !== false;
 
-    await frameworkLogger.log("orchestrator.server", "optimize-patterns-start", "info", {
-      includeHistory,
-      includeRecommendations,
-    });
+    await frameworkLogger.log(
+      "orchestrator.server",
+      "optimize-patterns-start",
+      "info",
+      {
+        includeHistory,
+        includeRecommendations,
+      },
+    );
 
     try {
       const optimizationResults =
@@ -716,11 +740,16 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
       // Execute phases
       for (let i = 0; i < plan.phases.length; i++) {
         const phase = plan.phases[i];
-        await frameworkLogger.log("orchestrator.server", "execute-phase", "info", {
-          phase: i + 1,
-          totalPhases: plan.phases.length,
-          taskCount: phase.length,
-        });
+        await frameworkLogger.log(
+          "orchestrator.server",
+          "execute-phase",
+          "info",
+          {
+            phase: i + 1,
+            totalPhases: plan.phases.length,
+            taskCount: phase.length,
+          },
+        );
 
         // Execute tasks in phase (simplified - in real implementation would coordinate actual agents)
         for (const task of phase) {
@@ -1104,9 +1133,14 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
 
       // Set a timeout to force exit if graceful shutdown fails
       const timeout = setTimeout(async () => {
-        await frameworkLogger.log("orchestrator.server", "shutdown-timeout", "error", {
-          message: "Graceful shutdown timeout, forcing exit...",
-        });
+        await frameworkLogger.log(
+          "orchestrator.server",
+          "shutdown-timeout",
+          "error",
+          {
+            message: "Graceful shutdown timeout, forcing exit...",
+          },
+        );
         process.exit(1);
       }, 5000); // 5 second timeout
 
@@ -1115,16 +1149,26 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
           await this.server.close();
         }
         clearTimeout(timeout);
-        await frameworkLogger.log("orchestrator.server", "shutdown-complete", "success", {
-          message: "StrRay Orchestrator MCP Server shut down gracefully",
-        });
+        await frameworkLogger.log(
+          "orchestrator.server",
+          "shutdown-complete",
+          "success",
+          {
+            message: "StrRay Orchestrator MCP Server shut down gracefully",
+          },
+        );
         process.exit(0);
       } catch (error) {
         clearTimeout(timeout);
-        await frameworkLogger.log("orchestrator.server", "shutdown-error", "error", {
-          message: "Error during server shutdown",
-          error: error instanceof Error ? error.message : String(error),
-        });
+        await frameworkLogger.log(
+          "orchestrator.server",
+          "shutdown-error",
+          "error",
+          {
+            message: "Error during server shutdown",
+            error: error instanceof Error ? error.message : String(error),
+          },
+        );
         process.exit(1);
       }
     };
@@ -1141,9 +1185,15 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
         setTimeout(checkParent, 1000); // Check again in 1 second
       } catch (error) {
         // Parent process died, shut down gracefully
-        await frameworkLogger.log("orchestrator.server", "parent-died", "error", {
-          message: "Parent process (opencode) died, shutting down MCP server...",
-        });
+        await frameworkLogger.log(
+          "orchestrator.server",
+          "parent-died",
+          "error",
+          {
+            message:
+              "Parent process (opencode) died, shutting down MCP server...",
+          },
+        );
         cleanup("parent-process-death");
       }
     };
@@ -1153,19 +1203,29 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
 
     // Handle uncaught exceptions and unhandled rejections
     process.on("uncaughtException", (error) => {
-      void frameworkLogger.log("orchestrator.server", "uncaught-exception", "error", {
-        message: "Uncaught Exception",
-        error: error instanceof Error ? error.message : String(error),
-      });
+      void frameworkLogger.log(
+        "orchestrator.server",
+        "uncaught-exception",
+        "error",
+        {
+          message: "Uncaught Exception",
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
       cleanup("uncaughtException");
     });
 
     process.on("unhandledRejection", (reason, promise) => {
-      void frameworkLogger.log("orchestrator.server", "unhandled-rejection", "error", {
-        message: "Unhandled Rejection",
-        reason: String(reason),
-        promise: String(promise),
-      });
+      void frameworkLogger.log(
+        "orchestrator.server",
+        "unhandled-rejection",
+        "error",
+        {
+          message: "Unhandled Rejection",
+          reason: String(reason),
+          promise: String(promise),
+        },
+      );
       cleanup("unhandledRejection");
     });
 

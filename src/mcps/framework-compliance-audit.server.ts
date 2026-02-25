@@ -20,8 +20,7 @@ class StrRayFrameworkComplianceAuditServer {
   constructor() {
     this.server = new Server(
       {
-        name: "framework-compliance-audit",
-        version: "1.0.0",
+        name: "framework-compliance-audit", version: "1.6.0",
       },
       {
         capabilities: {
@@ -283,7 +282,6 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     try {
       // Check for required configuration files
       const requiredFiles = [
-        ".opencode/OpenCode.json",
         "src/strray/config/manager.py",
         "src/agents/types.ts",
       ];

@@ -464,7 +464,7 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
 
   /**
    * Parse a single log line into structured format
-   * 
+   *
    * Actual log format: "2026-02-17T11:50:24.155Z [job-id] [component] message - LEVEL"
    * Example: "2026-02-17T11:50:24.155Z [auto-1771329024155-yml87t] [state-manager] persistence loaded - SUCCESS"
    */
@@ -505,8 +505,14 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
     const fallbackRegex =
       /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
     const fallbackMatch = line.match(fallbackRegex);
-    
-    if (fallbackMatch && fallbackMatch[1] && fallbackMatch[2] && fallbackMatch[3] && fallbackMatch[4]) {
+
+    if (
+      fallbackMatch &&
+      fallbackMatch[1] &&
+      fallbackMatch[2] &&
+      fallbackMatch[3] &&
+      fallbackMatch[4]
+    ) {
       const timestamp = fallbackMatch[1];
       const component = fallbackMatch[2];
       const message = fallbackMatch[3];

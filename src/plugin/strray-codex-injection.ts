@@ -22,13 +22,19 @@ async function loadStrRayComponents() {
   if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
 
   const logger = await getOrCreateLogger(process.cwd());
-  
+
   // Try local dist first (for development)
   try {
     logger.log(`🔄 Attempting to load from ../../dist/`);
-    const procModule = await import("../../dist/processors/processor-manager.js" as any);
-    const stateModule = await import("../../dist/state/state-manager.js" as any);
-    const featuresModule = await import("../../dist/core/features-config.js" as any);
+    const procModule = await import(
+      "../../dist/processors/processor-manager.js" as any
+    );
+    const stateModule = await import(
+      "../../dist/state/state-manager.js" as any
+    );
+    const featuresModule = await import(
+      "../../dist/core/features-config.js" as any
+    );
     ProcessorManager = procModule.ProcessorManager;
     StrRayStateManager = stateModule.StrRayStateManager;
     featuresConfigLoader = featuresModule.featuresConfigLoader;
@@ -44,10 +50,18 @@ async function loadStrRayComponents() {
 
   for (const pluginPath of pluginPaths) {
     try {
-      logger.log(`🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
-      const pm = await import(`../../node_modules/${pluginPath}/dist/processors/processor-manager.js`);
-      const sm = await import(`../../node_modules/${pluginPath}/dist/state/state-manager.js`);
-      const fm = await import(`../../node_modules/${pluginPath}/dist/core/features-config.js`);
+      logger.log(
+        `🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`,
+      );
+      const pm = await import(
+        `../../node_modules/${pluginPath}/dist/processors/processor-manager.js`
+      );
+      const sm = await import(
+        `../../node_modules/${pluginPath}/dist/state/state-manager.js`
+      );
+      const fm = await import(
+        `../../node_modules/${pluginPath}/dist/core/features-config.js`
+      );
       ProcessorManager = pm.ProcessorManager;
       StrRayStateManager = sm.StrRayStateManager;
       featuresConfigLoader = fm.featuresConfigLoader;
@@ -55,7 +69,9 @@ async function loadStrRayComponents() {
       logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
       return;
     } catch (e: any) {
-      logger.error(`❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`);
+      logger.error(
+        `❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`,
+      );
       continue;
     }
   }
@@ -192,7 +208,7 @@ function getFrameworkIdentity(): string {
  */
 async function runEnforcerQualityGate(
   input: { tool: string; args?: { content?: string; filePath?: string } },
-  logger: PluginLogger
+  logger: PluginLogger,
 ): Promise<{ passed: boolean; violations: string[] }> {
   const violations: string[] = [];
   const { tool, args } = input;
@@ -201,14 +217,22 @@ async function runEnforcerQualityGate(
   if (tool === "write" && args?.filePath) {
     const filePath = args.filePath;
     // Check if this is a source file (not test, not config)
-    if (filePath.endsWith(".ts") && !filePath.includes(".test.") && !filePath.includes(".spec.")) {
+    if (
+      filePath.endsWith(".ts") &&
+      !filePath.includes(".test.") &&
+      !filePath.includes(".spec.")
+    ) {
       // Check if test file exists
       const testPath = filePath.replace(".ts", ".test.ts");
       const specPath = filePath.replace(".ts", ".spec.ts");
-      
+
       if (!fs.existsSync(testPath) && !fs.existsSync(specPath)) {
-        violations.push(`tests-required: No test file found for ${filePath} (expected ${testPath} or ${specPath})`);
-        logger.log(`⚠️ ENFORCER: tests-required violation detected for ${filePath}`);
+        violations.push(
+          `tests-required: No test file found for ${filePath} (expected ${testPath} or ${specPath})`,
+        );
+        logger.log(
+          `⚠️ ENFORCER: tests-required violation detected for ${filePath}`,
+        );
       }
     }
   }
@@ -217,10 +241,12 @@ async function runEnforcerQualityGate(
   if (tool === "write" && args?.filePath?.includes("src/")) {
     const docsDir = path.join(process.cwd(), "docs");
     const readmePath = path.join(process.cwd(), "README.md");
-    
+
     // Check if docs directory exists
     if (!fs.existsSync(docsDir) && !fs.existsSync(readmePath)) {
-      violations.push(`documentation-required: No documentation found for new feature`);
+      violations.push(
+        `documentation-required: No documentation found for new feature`,
+      );
       logger.log(`⚠️ ENFORCER: documentation-required violation detected`);
     }
   }
@@ -231,12 +257,14 @@ async function runEnforcerQualityGate(
       /console\.log\s*\(/g,
       /TODO\s*:/gi,
       /FIXME\s*:/gi,
-      /throw\s+new\s+Error\s*\(\s*['"]test['"]\s*\)/gi
+      /throw\s+new\s+Error\s*\(\s*['"]test['"]\s*\)/gi,
     ];
-    
+
     for (const pattern of errorPatterns) {
       if (pattern.test(args.content)) {
-        violations.push(`resolve-all-errors: Found debug/error pattern (${pattern.source}) in code`);
+        violations.push(
+          `resolve-all-errors: Found debug/error pattern (${pattern.source}) in code`,
+        );
         logger.log(`⚠️ ENFORCER: resolve-all-errors violation detected`);
         break;
       }
@@ -244,7 +272,7 @@ async function runEnforcerQualityGate(
   }
 
   const passed = violations.length === 0;
-  
+
   if (!passed) {
     logger.error(`🚫 Quality Gate FAILED with ${violations.length} violations`);
   } else {
@@ -461,8 +489,12 @@ export default async function strrayCodexPlugin(input: {
       // ENFORCER QUALITY GATE CHECK - Block on violations
       const qualityGateResult = await runEnforcerQualityGate(input, logger);
       if (!qualityGateResult.passed) {
-        logger.error(`🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`);
-        throw new Error(`ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`);
+        logger.error(
+          `🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`,
+        );
+        throw new Error(
+          `ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`,
+        );
       }
       logger.log(`✅ Quality gate passed for ${tool}`);
 
@@ -620,7 +652,9 @@ export default async function strrayCodexPlugin(input: {
       if (["write", "edit", "multiedit"].includes(tool)) {
         if (!ProcessorManager || !StrRayStateManager) return;
 
-        const stateManager = new StrRayStateManager(path.join(directory, ".opencode", "state"));
+        const stateManager = new StrRayStateManager(
+          path.join(directory, ".opencode", "state"),
+        );
         const processorManager = new ProcessorManager(stateManager);
 
         // Register post-processors
@@ -647,24 +681,32 @@ export default async function strrayCodexPlugin(input: {
           // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
           const postResult = await processorManager.executePostProcessors(
             tool,
-            { 
-              directory, 
-              operation: "tool_execution", 
+            {
+              directory,
+              operation: "tool_execution",
               filePath: args?.filePath,
-              success: result?.success !== false
+              success: result?.success !== false,
             },
-            []
+            [],
           );
 
-          logger.log(`📊 Post-processor result: ${postResult.success ? "SUCCESS" : "FAILED"}`);
-          
+          logger.log(
+            `📊 Post-processor result: ${postResult.success ? "SUCCESS" : "FAILED"}`,
+          );
+
           // Log testAutoCreation results specifically
-          const testAutoResult = postResult.results?.find((r: any) => r.processorName === "testAutoCreation");
+          const testAutoResult = postResult.results?.find(
+            (r: any) => r.processorName === "testAutoCreation",
+          );
           if (testAutoResult) {
             if (testAutoResult.success && testAutoResult.testCreated) {
-              logger.log(`✅ TEST AUTO-CREATION: Created ${testAutoResult.testFile}`);
+              logger.log(
+                `✅ TEST AUTO-CREATION: Created ${testAutoResult.testFile}`,
+              );
             } else if (!testAutoResult.success) {
-              logger.log(`ℹ️ TEST AUTO-CREATION: ${testAutoResult.message || "skipped - no new files"}`);
+              logger.log(
+                `ℹ️ TEST AUTO-CREATION: ${testAutoResult.message || "skipped - no new files"}`,
+              );
             }
           }
         } catch (error) {

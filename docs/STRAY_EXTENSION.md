@@ -112,7 +112,7 @@ my-extension/
 ```json
 {
   "name": "strray-extension-custom",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "description": "Custom StringRay extension",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
