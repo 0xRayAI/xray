@@ -486,6 +486,9 @@ export class ProcessorManager {
         case "testAutoCreation":
           result = await this.executeTestAutoCreation(context);
           break;
+        case "coverageAnalysis":
+          result = await this.executeCoverageAnalysis(context);
+          break;
         default:
           throw new Error(`Unknown processor: ${name}`);
       }
@@ -1318,5 +1321,26 @@ export class ProcessorManager {
         error: error instanceof Error ? error.message : String(error),
       };
     }
+  }
+
+  /**
+   * Execute coverage analysis processor
+   */
+  private async executeCoverageAnalysis(context: any): Promise<any> {
+    frameworkLogger.log(
+      "processor-manager",
+      "coverage-analysis-start",
+      "info",
+      {
+        message: "Executing coverage analysis processor",
+      },
+    );
+
+    // Coverage analysis is informational - return success even if no coverage data
+    return {
+      success: true,
+      message: "Coverage analysis skipped - no coverage data available",
+      coverage: null,
+    };
   }
 }

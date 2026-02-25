@@ -477,13 +477,24 @@ export default async function strrayCodexPlugin(input) {
                 // PHASE 3: Execute post-processors after tool completion
                 try {
                     logger.log(`▶️ Executing post-processors for ${tool}...`);
-                    const postResult = await processorManager.executePostProcessors(tool, {
+                    const postResults = await processorManager.executePostProcessors(tool, {
                         directory,
                         operation: "tool_execution",
                         filePath: args?.filePath,
                         success: true,
                     }, []);
-                    logger.log(`📊 Post-processor result: ${postResult.success ? "SUCCESS" : "FAILED"}`);
+                    // postResults is an array of ProcessorResult
+                    const allSuccess = postResults.every((r) => r.success);
+                    logger.log(`📊 Post-processor result: ${allSuccess ? "SUCCESS" : "FAILED"} (${postResults.length} processors)`);
+                    // Log each post-processor result for debugging
+                    for (const r of postResults) {
+                        if (r.success) {
+                            logger.log(`✅ Post-processor ${r.processorName}: OK`);
+                        }
+                        else {
+                            logger.error(`❌ Post-processor ${r.processorName} failed: ${r.error}`);
+                        }
+                    }
                 }
                 catch (error) {
                     logger.error(`💥 Post-processor execution error`, error);
@@ -522,15 +533,26 @@ export default async function strrayCodexPlugin(input) {
                 });
                 try {
                     // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
-                    const postResult = await processorManager.executePostProcessors(tool, {
+                    const postResults = await processorManager.executePostProcessors(tool, {
                         directory,
                         operation: "tool_execution",
                         filePath: args?.filePath,
                         success: result?.success !== false,
                     }, []);
-                    logger.log(`📊 Post-processor result: ${postResult.success ? "SUCCESS" : "FAILED"}`);
+                    // postResults is an array of ProcessorResult
+                    const allSuccess = postResults.every((r) => r.success);
+                    logger.log(`📊 Post-processor result: ${allSuccess ? "SUCCESS" : "FAILED"} (${postResults.length} processors)`);
+                    // Log each post-processor result for debugging
+                    for (const r of postResults) {
+                        if (r.success) {
+                            logger.log(`✅ Post-processor ${r.processorName}: OK`);
+                        }
+                        else {
+                            logger.error(`❌ Post-processor ${r.processorName} failed: ${r.error}`);
+                        }
+                    }
                     // Log testAutoCreation results specifically
-                    const testAutoResult = postResult.results?.find((r) => r.processorName === "testAutoCreation");
+                    const testAutoResult = postResults.find((r) => r.processorName === "testAutoCreation");
                     if (testAutoResult) {
                         if (testAutoResult.success && testAutoResult.testCreated) {
                             logger.log(`✅ TEST AUTO-CREATION: Created ${testAutoResult.testFile}`);
