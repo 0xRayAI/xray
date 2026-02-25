@@ -302,7 +302,12 @@ let cachedCodexContexts: CodexContextEntry[] | null = null;
 /**
  * Codex file locations to search
  */
-const CODEX_FILE_LOCATIONS = [".strray/agents_template.md", "AGENTS.md"];
+const CODEX_FILE_LOCATIONS = [
+  ".opencode/strray/codex.json",
+  ".opencode/codex.codex",
+  ".strray/agents_template.md",
+  "AGENTS.md"
+];
 
 /**
  * Read file content safely
@@ -324,8 +329,22 @@ function extractCodexMetadata(content: string): {
   version: string;
   termCount: number;
 } {
+  // Try JSON format first (codex.json)
+  if (content.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(content);
+      const version = parsed.version || "1.6.0";
+      const terms = parsed.terms || {};
+      const termCount = Object.keys(terms).length;
+      return { version, termCount };
+    } catch {
+      // Not valid JSON, try markdown format
+    }
+  }
+
+  // Markdown format (AGENTS.md, .strray/agents_template.md)
   const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
-  const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.2.20";
+  const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.6.0";
 
   const termMatches = content.match(/####\s*\d+\.\s/g);
   const termCount = termMatches ? termMatches.length : 0;

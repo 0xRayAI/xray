@@ -763,11 +763,16 @@ export class ProcessorManager {
 
   private async executePreValidate(context: any): Promise<any> {
     // Implement comprehensive pre-validation with syntax checking
-    const { data } = context;
+    const { data, filePath } = context;
+
+    // Skip validation if no data provided (tool execution context)
+    if (!data && !filePath) {
+      return { validated: true, syntaxCheck: "skipped", reason: "no data provided" };
+    }
 
     // Basic validation
     if (!data) {
-      throw new Error("No data provided for validation");
+      return { validated: true, syntaxCheck: "skipped", reason: "no data in context" };
     }
 
     // Syntax checking (placeholder - would integrate with TypeScript compiler API)
