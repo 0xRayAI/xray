@@ -421,7 +421,7 @@ MCP server registration for StringRay tools:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENCODE_PLUGIN_PATH` | Path to StringRay plugin | `./.opencode/plugins/strray` |
+| `OPENCODE_PLUGIN_PATH` | Path to StringRay plugin | `./.opencode/plugin/` |
 | `STRRAY_LOG_LEVEL` | Log level | `info` |
 | `STRRAY_STATE_DIR` | State directory | `./.opencode/state` |
 | `STRRAY_CACHE_DIR` | Cache directory | `./.opencode/cache` |

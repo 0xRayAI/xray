@@ -1401,8 +1401,8 @@ npm publish --tag latest
 | Stage                       | Component        | Location                           | Action                                 | Output                | Dependencies       |
 | --------------------------- | ---------------- | ---------------------------------- | -------------------------------------- | --------------------- | ------------------ |
 | **1. OpenCode**             | Core Runtime     | `~/.opencode/`                     | Start OpenCode environment             | Runtime ready         | None               |
-| **2. OpenCode**       | Framework Loader | `~/.opencode/plugins/`             | Load OpenCode framework          | Framework active      | OpenCode           |
-| **3. Plugin Discovery**     | Plugin System    | `.opencode/plugins/`               | Scan for StrRay plugin                 | Plugin detected       | OpenCode     |
+| **2. OpenCode**       | Framework Loader | `~/.opencode/`             | Load OpenCode framework          | Framework active      | OpenCode           |
+| **3. Plugin Discovery**     | Plugin System    | `.opencode/plugin/`               | Scan for StrRay plugin                 | Plugin detected       | OpenCode     |
 | **4. Plugin Loading**       | Codex Injection  | `plugin/strray-codex-injection.ts` | Load plugin with codex injection       | Plugin active         | Plugin discovery   |
 | **5. Claude Override**      | MCP Exclusion    | `.claude/.mcp.json`                | Disable problematic global MCP servers | Clean MCP environment | Plugin loading     |
 | **6. MCP Registration**     | Server Registry  | `.mcp.json`                        | Register 28 MCP servers                | Servers available     | Claude override    |
@@ -2574,7 +2574,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 **Symptoms**: StringRay commands unavailable, plugin not recognized
 **Solutions**:
 1. **Check plugin installation**: Run `npx strray-ai validate`
-2. **Verify OpenCode integration**: Check `.opencode/plugins/` directory
+2. **Verify OpenCode integration**: Check `.opencode/plugin/` directory
 3. **Reinstall framework**: Run `npm install strray-ai` and `node node_modules/strray-ai/scripts/node/postinstall.cjs`
 4. **Check plugin compatibility**: Ensure OpenCode version compatibility
 
