@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework**
 
-[![Version](https://img.shields.io/badge/version-1.6.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.6.5-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-104%20passed-brightgreen?style=flat-square)](src/__tests__)
 
@@ -47,16 +47,19 @@ npx strray-ai status
 | `@librarian` | Codebase exploration |
 | `@mobile-developer` | iOS/Android/React Native/Flutter |
 
+> **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](docs/AGENT_CONFIG.md).
+
 [View all 23 agents →](AGENTS.md)
 
 ## 📖 Documentation
 
 | Guide | Description |
 |-------|-------------|
-| [Configuration Reference](https://github.com/htafolla/stringray/blob/master/docs/CONFIGURATION.md) | Complete features.json settings |
-| [Agent Documentation](https://github.com/htafolla/stringray/blob/master/AGENTS.md) | Detailed agent specifications |
-| [Universal Codex](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) | 59-term codex reference |
-| [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md) | Common issues & solutions |
+| [Agent Configuration](docs/AGENT_CONFIG.md) | Copy-paste opencode.json agent setup |
+| [Configuration Reference](docs/CONFIGURATION.md) | Complete features.json settings |
+| [Agent Documentation](AGENTS.md) | Detailed agent specifications |
+| [Universal Codex](.opencode/strray/codex.json) | 59-term codex reference |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues & solutions |
 
 ## 🔧 CLI Commands
 

@@ -86,6 +86,14 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
+    "librarian": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "log-monitor": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
     "sisyphus": {
       "disable": true
     },
