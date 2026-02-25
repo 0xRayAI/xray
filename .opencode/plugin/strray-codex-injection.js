@@ -351,6 +351,7 @@ export default async function strrayCodexPlugin(input) {
         "tool.execute.before": async (input, output) => {
             const logger = await getOrCreateLogger(directory);
             logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
+            logger.log(`📥 Full input: ${JSON.stringify(input)}`);
             await loadStrRayComponents();
             if (featuresConfigLoader && detectTaskType) {
                 try {
@@ -507,6 +508,8 @@ export default async function strrayCodexPlugin(input) {
             const logger = await getOrCreateLogger(directory);
             await loadStrRayComponents();
             const { tool, args, result } = input;
+            // Debug: log full input
+            logger.log(`📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`);
             // Run post-processors for write/edit operations AFTER tool completes
             if (["write", "edit", "multiedit"].includes(tool)) {
                 if (!ProcessorManager || !StrRayStateManager)
