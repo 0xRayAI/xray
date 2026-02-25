@@ -465,6 +465,9 @@ export class ProcessorManager {
         case "codexCompliance":
           result = await this.executeCodexCompliance(context);
           break;
+        case "versionCompliance":
+          result = await this.executeVersionCompliance(context);
+          break;
         case "errorBoundary":
           result = await this.executeErrorBoundary(context);
           break;
@@ -781,6 +784,29 @@ export class ProcessorManager {
     }
 
     return { validated: true, syntaxCheck: "passed" };
+  }
+
+  private async executeVersionCompliance(context: any): Promise<any> {
+    try {
+      const { VersionComplianceProcessor } = await import("./version-compliance-processor.js");
+      const processor = new VersionComplianceProcessor(process.cwd());
+      
+      const result = await processor.validateVersionCompliance();
+      
+      return {
+        success: result.compliant,
+        errors: result.errors || [],
+        warnings: result.warnings || [],
+        checkedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      return {
+        success: false,
+        errors: [error instanceof Error ? error.message : "Unknown error"],
+        warnings: [],
+        checkedAt: new Date().toISOString()
+      };
+    }
   }
 
   private async executeCodexCompliance(context: any): Promise<any> {
