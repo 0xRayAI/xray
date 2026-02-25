@@ -34,7 +34,7 @@ export interface TaskDefinition {
 
 export interface AgentConfig {
   name: string;
-  model: string;
+  model?: string;
   description: string;
   mode: "primary" | "subagent" | "all";
   system: string;

@@ -35,20 +35,19 @@ export interface TaskRouting {
 
 export interface ModelRoutingConfig {
   enabled: boolean;
-  default_model: string;
-  fallback_model: string;
-  task_routing: {
-    file_read: TaskRouting;
-    grep_search: TaskRouting;
-    simple_edit: TaskRouting;
-    bulk_refactor: TaskRouting;
-    architecture_review: TaskRouting;
-    security_audit: TaskRouting;
-    git_operations: TaskRouting;
-    documentation: TaskRouting;
-    code_generation: TaskRouting;
-    debugging: TaskRouting;
-    [key: string]: TaskRouting;
+  default_model?: string;
+  fallback_model?: string;
+  task_routing?: {
+    file_read?: TaskRouting;
+    grep_search?: TaskRouting;
+    simple_edit?: TaskRouting;
+    bulk_refactor?: TaskRouting;
+    architecture_review?: TaskRouting;
+    security_audit?: TaskRouting;
+    git_operations?: TaskRouting;
+    documentation?: TaskRouting;
+    code_generation?: TaskRouting;
+    debugging?: TaskRouting;
   };
 }
 
@@ -325,16 +324,17 @@ export class FeaturesConfigLoader {
   public getModelForTask(taskType: TaskType): string {
     const config = this.loadConfig();
 
-    if (!config.model_routing.enabled) {
-      return config.model_routing.default_model;
+    if (!config.model_routing?.enabled) {
+      return config.model_routing?.default_model || "claude-sonnet-4";
     }
 
-    const taskConfig = config.model_routing.task_routing[taskType];
+    const taskRouting = config.model_routing?.task_routing;
+    const taskConfig = taskRouting ? taskRouting[taskType as keyof typeof taskRouting] : undefined;
     if (taskConfig) {
       return taskConfig.model;
     }
 
-    return config.model_routing.default_model;
+    return config.model_routing?.default_model || "claude-sonnet-4";
   }
 
   /**
@@ -342,7 +342,8 @@ export class FeaturesConfigLoader {
    */
   public getMaxTokensForTask(taskType: TaskType): number {
     const config = this.loadConfig();
-    const taskConfig = config.model_routing.task_routing[taskType];
+    const taskRouting = config.model_routing?.task_routing;
+    const taskConfig = taskRouting ? taskRouting[taskType as keyof typeof taskRouting] : undefined;
 
     if (taskConfig) {
       return taskConfig.max_tokens;
@@ -397,8 +398,9 @@ export class FeaturesConfigLoader {
   public getAgentModel(agentName: string): string {
     const config = this.loadConfig();
     return (
-      config.agent_management.agent_models[agentName] ||
-      config.model_routing.default_model
+      config.agent_management?.agent_models?.[agentName] ||
+      config.model_routing?.default_model ||
+      "claude-sonnet-4"
     );
   }
 
@@ -498,60 +500,8 @@ export class FeaturesConfigLoader {
 
       model_routing: {
         enabled: true,
-        default_model: "claude-sonnet-4",
-        fallback_model: "claude-haiku-4",
-        task_routing: {
-          file_read: {
-            model: "claude-haiku-4",
-            max_tokens: 1000,
-            description: "Simple file reading operations",
-          },
-          grep_search: {
-            model: "claude-haiku-4",
-            max_tokens: 500,
-            description: "Pattern matching and search",
-          },
-          simple_edit: {
-            model: "claude-haiku-4",
-            max_tokens: 2000,
-            description: "Single-line or simple multi-line edits",
-          },
-          bulk_refactor: {
-            model: "claude-sonnet-4",
-            max_tokens: 8000,
-            description: "Multi-file refactoring operations",
-          },
-          architecture_review: {
-            model: "claude-opus-4",
-            max_tokens: 16000,
-            description: "Complex architectural analysis",
-          },
-          security_audit: {
-            model: "claude-opus-4",
-            max_tokens: 16000,
-            description: "Security vulnerability analysis",
-          },
-          git_operations: {
-            model: "claude-haiku-4",
-            max_tokens: 1000,
-            description: "Git commands and status checks",
-          },
-          documentation: {
-            model: "claude-sonnet-4",
-            max_tokens: 4000,
-            description: "Documentation generation and updates",
-          },
-          code_generation: {
-            model: "claude-sonnet-4",
-            max_tokens: 8000,
-            description: "New code implementation",
-          },
-          debugging: {
-            model: "claude-sonnet-4",
-            max_tokens: 8000,
-            description: "Error analysis and fixes",
-          },
-        },
+        // Use OpenCode's default model for all tasks
+        // Task-based model selection can be configured in opencode.json
       },
 
       batch_operations: {
@@ -588,25 +538,7 @@ export class FeaturesConfigLoader {
       agent_management: {
         disabled_agents: [],
         agent_models: {
-          enforcer: "claude-sonnet-4",
-          architect: "claude-opus-4",
-          orchestrator: "claude-sonnet-4",
-          "bug-triage-specialist": "claude-sonnet-4",
-          "code-reviewer": "claude-sonnet-4",
-          "security-auditor": "claude-opus-4",
-          refactorer: "claude-sonnet-4",
-          "test-architect": "claude-sonnet-4",
-          librarian: "claude-sonnet-4",
-          "seo-specialist": "claude-sonnet-4",
-          "seo-copywriter": "claude-sonnet-4",
-          "marketing-expert": "claude-sonnet-4",
-          "database-engineer": "claude-sonnet-4",
-          "devops-engineer": "claude-sonnet-4",
-          "backend-engineer": "claude-sonnet-4",
-          "frontend-engineer": "claude-sonnet-4",
-          "documentation-writer": "claude-sonnet-4",
-          "performance-engineer": "claude-sonnet-4",
-          "mobile-developer": "claude-sonnet-4",
+          // Use default model from OpenCode configuration
         },
         performance_limits: {
           max_task_duration_ms: 30000,

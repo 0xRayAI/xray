@@ -149,8 +149,8 @@ class ModelRouter {
 
     // 3. Framework default from features config
     const featuresConfig = featuresConfigLoader.loadConfig();
-    const defaultModel = featuresConfig.model_routing.default_model;
-    if (this.isModelAvailable(defaultModel)) {
+    const defaultModel = featuresConfig.model_routing?.default_model;
+    if (defaultModel && this.isModelAvailable(defaultModel)) {
       return defaultModel;
     }
 
@@ -162,7 +162,7 @@ class ModelRouter {
 
     // 5. Ultimate fallback
     const fallbackModel =
-      featuresConfig.model_routing.fallback_model ||
+      featuresConfig.model_routing?.fallback_model ||
       this.config.model_fallback ||
       "claude-haiku-4";
     return fallbackModel;
@@ -215,9 +215,9 @@ class ModelRouter {
   } {
     const featuresConfig = featuresConfigLoader.loadConfig();
     return {
-      defaultModel: featuresConfig.model_routing.default_model,
-      fallbackModel: featuresConfig.model_routing.fallback_model,
-      taskRoutingEnabled: featuresConfig.model_routing.enabled,
+      defaultModel: featuresConfig.model_routing?.default_model || "claude-sonnet-4",
+      fallbackModel: featuresConfig.model_routing?.fallback_model || "claude-haiku-4",
+      taskRoutingEnabled: featuresConfig.model_routing?.enabled || false,
       availableModels: this.availableModels,
     };
   }
