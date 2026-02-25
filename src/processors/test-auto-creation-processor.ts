@@ -43,8 +43,10 @@ export const testAutoCreationProcessor = {
         tool,
         hasArgs: !!args,
         hasDirectory: !!directory,
+        directoryValue: directory,
         contextFilePath,
         argsFilePath: args?.filePath,
+        fullContext: JSON.stringify({ tool, directory, filePath: contextFilePath, argsFilePath: args?.filePath }).slice(0, 200),
       });
 
       // Get file path from various possible locations in context
@@ -55,6 +57,17 @@ export const testAutoCreationProcessor = {
         args?.filePath ||
         args?.path ||
         innerContext.filePath;
+
+      await frameworkLogger.log("test-auto-creation", "filepath-resolution", "info", {
+        message: `Resolved filePath: ${filePath || 'UNDEFINED'}`,
+        outerFilePath,
+        contextFilePath,
+        argsFilePath: args?.filePath,
+        argsPath: args?.path,
+        innerFilePath: innerContext.filePath,
+        directory,
+        directoryType: typeof directory,
+      });
 
       if (!filePath) {
         await frameworkLogger.log(
