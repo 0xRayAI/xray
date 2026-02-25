@@ -17,7 +17,7 @@ COMPLIANCE_SCORES=()
 # 1. Configuration Integrity Check
 
 echo "⚙️ Checking framework configuration integrity..."
-if [ -f ".opencode/enforcer-config.json" ] && [ -f ".opencode/OpenCode.json" ]; then
+if [ -f ".opencode/enforcer-config.json" ] && [ -f "opencode.json" ]; then
 echo "✅ Framework configurations present"
 COMPLIANCE_SCORES+=("configuration_integrity:PASS")
 else

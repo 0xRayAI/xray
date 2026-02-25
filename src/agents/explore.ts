@@ -10,6 +10,9 @@ export const explore: AgentConfig = {
   name: "explore",
   mode: "subagent",
   system: "explore-agent",
+  get model() {
+    return modelRouter.getValidatedModel("explore");
+  },
   capabilities: [
     "codebase-exploration",
     "pattern-analysis",

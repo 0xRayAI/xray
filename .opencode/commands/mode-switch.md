@@ -15,9 +15,9 @@ ENFORCER_CONFIG_FILE="enforcer-config.json"
 # Function to display current mode
 
 show_current_mode() {
-if [ -f ".opencode/OpenCode.json" ]; then
-DISABLED_COUNT=$(jq '.disabled_agents | length' .opencode/OpenCode.json)
-        if [ "$DISABLED_COUNT" -eq 0 ]; then
+if [ -f "opencode.json" ]; then
+DISABLED_COUNT=$(jq '.agent | map(select(.disable == true)) | length' opencode.json)
+        if [ "$DISABLED_COUNT" -eq 0 ] || [ -z "$DISABLED_COUNT" ]; then
 CURRENT_MODE="full"
 echo "🎯 Current Mode: $CURRENT_MODE"
             echo "📝 Description: All 8 agents active for comprehensive development support"

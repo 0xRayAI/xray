@@ -18,8 +18,16 @@
       "command": ["node", "./dist/mcps/enforcer-tools.server.js"],
       "enabled": true
     },
-    "orchestrator": { "enabled": false },
-    "enhanced-orchestrator": { "enabled": false },
+    "orchestrator": { 
+      "type": "local",
+      "command": ["node", "./dist/mcps/orchestrator.server.js"],
+      "enabled": true 
+    },
+    "enhanced-orchestrator": { 
+      "type": "local", 
+      "command": ["node", "./dist/mcps/enhanced-orchestrator.server.js"],
+      "enabled": true 
+    },
     "code-review": { "enabled": false },
     "security-audit": { "enabled": false },
     "project-analysis": { "enabled": false },

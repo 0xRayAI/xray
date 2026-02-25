@@ -20,11 +20,11 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { spawn } from "child_process";
+import { spawn, exec as execSync } from "child_process";
 import { promisify } from "util";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-const exec = promisify(require("child_process").exec);
+const exec = promisify(execSync);
 
 export interface VersionComplianceResult {
   compliant: boolean;

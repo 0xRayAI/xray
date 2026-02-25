@@ -1,4 +1,5 @@
 import { AgentConfig } from "./types.js";
+import { modelRouter } from "../core/model-router.js";
 
 /**
  * Oracle Agent
@@ -9,6 +10,9 @@ export const oracle: AgentConfig = {
   name: "oracle",
   mode: "subagent",
   system: "oracle-agent",
+  get model() {
+    return modelRouter.getValidatedModel("oracle");
+  },
   capabilities: [
     "strategic-planning",
     "complex-problem-solving",
