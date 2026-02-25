@@ -31,8 +31,16 @@
     "code-review": { "enabled": false },
     "security-audit": { "enabled": false },
     "project-analysis": { "enabled": false },
-    "testing-strategy": { "enabled": false },
-    "librarian": { "enabled": false },
+    "testing-strategy": { 
+      "type": "local", 
+      "command": ["node", "./dist/mcps/knowledge-skills/testing-strategy.server.js"],
+      "enabled": true 
+    },
+    "librarian": { 
+      "type": "local", 
+      "command": ["node", "./dist/mcps/librarian.server.js"],
+      "enabled": true 
+    },
     "api-design": { "enabled": false },
     "architecture-patterns": { "enabled": false },
     "git-workflow": { "enabled": false },
