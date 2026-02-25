@@ -14,6 +14,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { detectProjectLanguage, LANGUAGE_CONFIGS } from "../../utils/language-detector.js";
 
 interface TestAnalysis {
   coverage: number;
@@ -376,10 +377,17 @@ class StrRayTestingStrategyServer {
   }
 
   private findSourceFiles(projectRoot: string): string[] {
+    // Use language detector to find supported extensions
+    const projectLanguage = detectProjectLanguage(projectRoot);
+    const langConfig = projectLanguage 
+      ? LANGUAGE_CONFIGS.find((c: any) => c.language === projectLanguage.language)
+      : null;
+    const supportedExtensions = langConfig?.extensions || [".ts", ".js", ".tsx", ".jsx", ".py", ".java", ".go", ".rs", ".cs", ".rb", ".php"];
+    
     return this.findFiles(projectRoot, (file) => {
       const ext = path.extname(file);
       return (
-        [".ts", ".js", ".tsx", ".jsx", ".py", ".java"].includes(ext) &&
+        supportedExtensions.includes(ext) &&
         !file.includes(".test.") &&
         !file.includes(".spec.") &&
         !file.includes("/__tests__/")

@@ -13,6 +13,7 @@ import {
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { detectProjectLanguage, LANGUAGE_CONFIGS } from "../utils/language-detector.js";
 
 class StrRaySecurityScanServer {
   private server: Server;
@@ -333,15 +334,15 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
   }
 
   private findCodeFiles(): string[] {
-    const extensions = [
-      ".js",
-      ".ts",
-      ".jsx",
-      ".tsx",
-      ".py",
-      ".java",
-      ".cpp",
-      ".c",
+    // Use language detector to find supported extensions
+    const projectRoot = process.cwd();
+    const projectLanguage = detectProjectLanguage(projectRoot);
+    const langConfig = projectLanguage 
+      ? LANGUAGE_CONFIGS.find((c: any) => c.language === projectLanguage.language)
+      : null;
+    const extensions = langConfig?.extensions || [
+      ".js", ".ts", ".jsx", ".tsx", ".py", ".java", ".cpp", ".c", 
+      ".go", ".rs", ".cs", ".rb", ".php", ".swift", ".kt"
     ];
     const files: string[] = [];
 

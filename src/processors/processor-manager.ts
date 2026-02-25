@@ -11,6 +11,11 @@
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { ProcessorRegistration } from "./processor-types.js";
+import { detectProjectLanguage, getTestFilePath, buildTestCommand } from "../utils/language-detector.js";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 export interface ProcessorConfig {
   name: string;
@@ -832,14 +837,228 @@ export class ProcessorManager {
   }
 
   private async executeTestExecution(context: any): Promise<any> {
-    // Execute tests automatically
+    // Execute tests automatically for newly created test files
+    // Now with language-aware detection!
     frameworkLogger.log(
       "processor-manager",
       "executing automatic tests",
       "info",
+      { message: "Running auto-generated tests..." },
     );
-    // Placeholder - would integrate with test runner
-    return { testsExecuted: 0, passed: 0, failed: 0 };
+
+    try {
+      const cwd = context.directory || process.cwd();
+      
+      // Detect project language and test framework
+      const projectLanguage = detectProjectLanguage(cwd);
+      
+      if (!projectLanguage) {
+        frameworkLogger.log(
+          "processor-manager",
+          "language-detection-failed",
+          "info",
+          { message: "Could not detect project language, falling back to TypeScript" },
+        );
+        // Fall back to TypeScript
+        return this.executeTypeScriptTests(context, cwd);
+      }
+
+      frameworkLogger.log(
+        "processor-manager",
+        "language-detected",
+        "info",
+        { 
+          message: `Detected ${projectLanguage.language} project with ${projectLanguage.testFramework}`,
+          language: projectLanguage.language,
+          testFramework: projectLanguage.testFramework,
+        },
+      );
+
+      // Handle TypeScript/JavaScript specially (most common)
+      if (projectLanguage.language === "TypeScript" || projectLanguage.language === "JavaScript") {
+        return this.executeTypeScriptTests(context, cwd);
+      }
+
+      // For other languages, build and run their test command
+      return this.executeGenericTests(context, cwd, projectLanguage);
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      frameworkLogger.log(
+        "processor-manager",
+        "test-execution-error",
+        "error",
+        { message: `Test execution failed: ${errorMessage}` },
+      );
+
+      return { 
+        testsExecuted: 0, 
+        passed: 0, 
+        failed: 0,
+        error: errorMessage,
+        success: false,
+      };
+    }
+  }
+
+  /**
+   * Execute TypeScript/JavaScript tests using Vitest
+   */
+  private async executeTypeScriptTests(context: any, cwd: string): Promise<any> {
+    let testPattern = "src/__tests__/**/*.test.ts";
+    
+    if (context.filePath) {
+      // Convert source file to test file
+      const testFilePath = context.filePath
+        .replace(/\/src\//, "/src/__tests__/")
+        .replace(/\.ts$/, ".test.ts");
+      
+      const fs = await import("fs");
+      if (fs.existsSync(testFilePath)) {
+        testPattern = testFilePath;
+      }
+    }
+
+    // Run vitest with the test pattern
+    const command = `npx vitest run --reporter=verbose "${testPattern}"`;
+    
+    frameworkLogger.log(
+      "processor-manager",
+      "running-typescript-tests",
+      "info",
+      { command, cwd },
+    );
+
+    return this.runTestCommand(command, cwd);
+  }
+
+  /**
+   * Execute tests for any language using their native test framework
+   */
+  private async executeGenericTests(context: any, cwd: string, projectLanguage: any): Promise<any> {
+    let testFilePath: string | undefined;
+    
+    if (context.filePath) {
+      testFilePath = getTestFilePath(context.filePath, projectLanguage);
+      
+      const fs = await import("fs");
+      if (!fs.existsSync(testFilePath)) {
+        frameworkLogger.log(
+          "processor-manager",
+          "test-file-not-found",
+          "info",
+          { 
+            message: `Test file not found: ${testFilePath}`,
+            sourceFile: context.filePath,
+          },
+        );
+        // Try running all tests instead
+        testFilePath = undefined;
+      }
+    }
+
+    // Build the test command for this language
+    const command = buildTestCommand(projectLanguage, testFilePath);
+    
+    frameworkLogger.log(
+      "processor-manager",
+      "running-generic-tests",
+      "info",
+      { command, cwd, language: projectLanguage.language },
+    );
+
+    return this.runTestCommand(command, cwd);
+  }
+
+  /**
+   * Run a test command and parse results
+   */
+  private async runTestCommand(command: string, cwd: string): Promise<any> {
+    let stdout = "";
+    let stderr = "";
+    let exitCode = 0;
+    
+    try {
+      const result = await execAsync(command, { 
+        cwd, 
+        timeout: 120000, // 2 minute timeout
+      });
+      stdout = result.stdout;
+      stderr = result.stderr;
+    } catch (execError: any) {
+      exitCode = execError.code || 1;
+      stdout = execError.stdout || "";
+      stderr = execError.stderr || "";
+    }
+
+    // Parse results from output (language-agnostic patterns)
+    const actualPassed = this.parseTestOutput(stdout, "passed");
+    const actualFailed = this.parseTestOutput(stdout, "failed");
+
+    const result = {
+      testsExecuted: actualPassed + actualFailed,
+      passed: actualPassed,
+      failed: actualFailed,
+      exitCode,
+      output: stdout.substring(0, 2000), // Limit output size
+      success: exitCode === 0,
+    };
+
+    frameworkLogger.log(
+      "processor-manager",
+      "tests-completed",
+      result.success ? "success" : "error",
+      {
+        message: `Tests completed: ${result.passed} passed, ${result.failed} failed`,
+        ...result,
+      },
+    );
+
+    return result;
+  }
+
+  /**
+   * Parse test output for pass/fail counts (language-agnostic)
+   */
+  private parseTestOutput(output: string, type: "passed" | "failed"): number {
+    // Try various output formats
+    const patterns = [
+      // "10 passed", "15 passed, 2 failed"
+      new RegExp(`(\\d+)\\s+${type}`, "gi"),
+      // "Tests: 10 passed, 2 failed"
+      new RegExp(`Tests?:\\s+\\d+\\s+passed,\\s+(\\d+)\\s+failed`, "gi"),
+      // "10 passed, 0 failed"
+      new RegExp(`(\\d+)\\s+passed,\\s+(\\d+)\\s+failed`, "gi"),
+      // JUnit XML style
+      new RegExp(`tests="(\\d+)"\\s+failures="(\\d+)"`, "gi"),
+    ];
+
+    for (const pattern of patterns) {
+      const match = output.match(pattern);
+      if (match) {
+        if (type === "passed") {
+          // For combined patterns, extract passed count
+          if (match[0].includes("passed") && match[0].includes("failed")) {
+            const passedMatch = match[0].match(/(\d+)\s+passed/);
+            return passedMatch ? parseInt(passedMatch[1] || "0") : 0;
+          }
+          const count = match[0].match(/(\d+)/);
+          return count ? parseInt(count[1] || "0") : 0;
+        } else {
+          // For failed
+          if (match[0].includes("passed") && match[0].includes("failed")) {
+            const failedMatch = match[0].match(/(\d+)\s+failed/);
+            return failedMatch ? parseInt(failedMatch[1] || "0") : 0;
+          }
+          // For JUnit style
+          const count = match[0].match(/failures="(\d+)"/);
+          return count ? parseInt(count[1] || "0") : 0;
+        }
+      }
+    }
+
+    return 0;
   }
 
   private async executeRegressionTesting(context: any): Promise<any> {

@@ -17,7 +17,7 @@ npm init -y
 npm install strray-ai
 
 # Run postinstall setup (REQUIRED)
-node node_modules/strray-ai/scripts/postinstall.cjs
+node node_modules/strray-ai/scripts/node/postinstall.cjs
 ```
 
 ### First Usage
@@ -211,7 +211,7 @@ The framework automatically configures OpenCode agents:
 opencode --version
 
 # Verify framework installation
-node node_modules/strray-ai/scripts/postinstall.cjs
+node node_modules/strray-ai/scripts/node/postinstall.cjs
 ```
 
 #### Codex Validation Errors

@@ -864,7 +864,7 @@ StringRay operates in **two distinct environments** with different module resolu
   // After transformation:
   import { frameworkLogger } from "../core/framework-logger.js"
   ```
-- **Setup Required**: `node node_modules/strray-ai/scripts/postinstall.cjs`
+- **Setup Required**: `node node_modules/strray-ai/scripts/node/postinstall.cjs`
 
 #### **Why Two Environments?**
 - **OpenCode Plugin**: Uses bundler-style imports (no .js extensions needed)
@@ -880,7 +880,7 @@ StringRay operates in **two distinct environments** with different module resolu
 ### 1.4 Basic Usage
 
 1. **Installation**: `npm install strray-ai`
-2. **Setup**: `node node_modules/strray-ai/scripts/postinstall.cjs`
+2. **Setup**: `node node_modules/strray-ai/scripts/node/postinstall.cjs`
 3. **Invoke Agents**: Use @agent-name commands in OpenCode
 4. **Complexity Analysis**: Tasks are automatically routed based on complexity metrics
 
@@ -2323,7 +2323,7 @@ npm run test:mcp-connectivity      # MCP validation
 
 | Issue | Symptom | Solution |
 |-------|---------|----------|
-| Plugin not loading | Agent commands fail | Run `node node_modules/strray-ai/scripts/postinstall.cjs` |
+| Plugin not loading | Agent commands fail | Run `node node_modules/strray-ai/scripts/node/postinstall.cjs` |
 | Agent commands not working | @ commands unrecognized | Check OpenCode configuration |
 | Codex validation errors | Unexpected blocking | Review codex terms in `.opencode/strray/codex.json` |
 | MCP connectivity fails | Server connection errors | Run `node scripts/test:mcp-connectivity.js` |
@@ -2611,7 +2611,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 **Solutions**:
 1. **Check plugin installation**: Run `npx strray-ai validate`
 2. **Verify OpenCode integration**: Check `.opencode/plugins/` directory
-3. **Reinstall framework**: Run `npm install strray-ai` and `node node_modules/strray-ai/scripts/postinstall.cjs`
+3. **Reinstall framework**: Run `npm install strray-ai` and `node node_modules/strray-ai/scripts/node/postinstall.cjs`
 4. **Check plugin compatibility**: Ensure OpenCode version compatibility
 
 #### Configuration Errors

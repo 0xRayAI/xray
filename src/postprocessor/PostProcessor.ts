@@ -796,10 +796,19 @@ All path violations will be automatically detected and blocked.
           // Only process TypeScript source files (not test files)
           if (filePath.endsWith(".ts") && !filePath.endsWith(".test.ts")) {
             try {
+              // 1. First create the test
               await processorManager.executeProcessor("testAutoCreation", {
                 tool: "write",
                 operation: "commit",
                 filePath: filePath, // FIX #2: Pass filePath (string), not files (array)
+                directory: process.cwd(),
+              });
+              
+              // 2. Then run the generated test
+              await processorManager.executeProcessor("testExecution", {
+                tool: "write",
+                operation: "commit",
+                filePath: filePath,
                 directory: process.cwd(),
               });
             } catch (testError) {

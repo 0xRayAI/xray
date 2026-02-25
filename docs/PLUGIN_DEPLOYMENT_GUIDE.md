@@ -21,7 +21,7 @@ npm install strray-ai
 ### 2. Run Postinstall Setup
 
 ```bash
-node node_modules/strray-ai/scripts/postinstall.cjs
+node node_modules/strray-ai/scripts/node/postinstall.cjs
 ```
 
 This will:
