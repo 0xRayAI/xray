@@ -633,6 +633,7 @@ export default async function strrayCodexPlugin(input: {
         // PHASE 3: Execute post-processors after tool completion
         try {
           logger.log(`▶️ Executing post-processors for ${tool}...`);
+          logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
           const postResults = await processorManager.executePostProcessors(
             tool,
             {
@@ -709,6 +710,9 @@ export default async function strrayCodexPlugin(input: {
 
         try {
           // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
+          const filePath = args?.filePath;
+          logger.log(`📝 Post-processor filePath: ${filePath || 'undefined'}`);
+          
           const postResults = await processorManager.executePostProcessors(
             tool,
             {
