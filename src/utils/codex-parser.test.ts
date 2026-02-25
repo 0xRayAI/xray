@@ -14,8 +14,7 @@ describe("codex-parser", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await detectContentFormat();
+      const result = await detectContentFormat("{}");
       expect(result).toBeDefined();
     });
   });
@@ -26,8 +25,7 @@ describe("codex-parser", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await parseCodexContent();
+      const result = await parseCodexContent("{}");
       expect(result).toBeDefined();
     });
   });
@@ -38,8 +36,7 @@ describe("codex-parser", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await extractCodexMetadata();
+      const result = await extractCodexMetadata("{}");
       expect(result).toBeDefined();
     });
   });
@@ -50,8 +47,7 @@ describe("codex-parser", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await validateTypeScriptSyntax();
+      const result = await validateTypeScriptSyntax("const x = 1;", "test.ts");
       expect(result).toBeDefined();
     });
   });
@@ -62,8 +58,7 @@ describe("codex-parser", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await validateJsonSyntax();
+      const result = await validateJsonSyntax("{}");
       expect(result).toBeDefined();
     });
   });
@@ -74,8 +69,7 @@ describe("codex-parser", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await validateBeforeModification();
+      const result = await validateBeforeModification("const x = 1;", "test.ts");
       expect(result).toBeDefined();
     });
   });

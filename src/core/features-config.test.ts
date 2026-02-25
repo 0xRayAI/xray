@@ -14,8 +14,8 @@ describe("features-config", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await detectTaskType();
+      // Test with valid tool name
+      const result = await detectTaskType("read");
       expect(result).toBeDefined();
     });
   });

@@ -14,8 +14,7 @@ describe("seo-utils", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await parseUrlForSeo();
+      const result = await parseUrlForSeo("https://example.com/page");
       expect(result).toBeDefined();
     });
   });
@@ -26,8 +25,7 @@ describe("seo-utils", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await generateSlug();
+      const result = await generateSlug("Hello World");
       expect(result).toBeDefined();
     });
   });
@@ -38,8 +36,7 @@ describe("seo-utils", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await calculateReadability();
+      const result = await calculateReadability("This is some sample text.");
       expect(result).toBeDefined();
     });
   });
@@ -50,8 +47,7 @@ describe("seo-utils", () => {
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await validateJsonLd();
+      const result = await validateJsonLd({ "@context": "https://schema.org", "@type": "WebPage" });
       expect(result).toBeDefined();
     });
   });
