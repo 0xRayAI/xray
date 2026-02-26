@@ -74,7 +74,7 @@ describe('Agent Configuration', () => {
     expect(fs.existsSync(agentsPath)).toBe(true);
     const content = fs.readFileSync(agentsPath, 'utf-8');
     expect(content).toContain('Antigravity');
-    expect(content).toContain('StringRay Agents (22)');
+    expect(content).toContain('StringRay Agents (21)');
   });
 });
 

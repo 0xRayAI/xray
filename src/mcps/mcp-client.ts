@@ -405,7 +405,6 @@ export class MCPClient {
 @enforcer - Codex compliance & error prevention
 @architect - System design & technical decisions
 @orchestrator - Multi-agent workflow coordination
-@enhanced-orchestrator - Advanced orchestration with monitoring
 @bug-triage-specialist - Error investigation & surgical fixes
 @code-reviewer - Quality assessment & standards validation
 @security-auditor - Vulnerability detection & compliance

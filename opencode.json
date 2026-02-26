@@ -23,7 +23,7 @@
     "enhanced-orchestrator": { 
       "type": "local", 
       "command": ["node", "./dist/mcps/enhanced-orchestrator.server.js"],
-      "enabled": true 
+      "enabled": false 
     },
     "code-review": { "enabled": false },
     "security-audit": { "enabled": false },
@@ -52,8 +52,7 @@
       "mode": "subagent"
     },
     "enhanced-orchestrator": {
-      "temperature": 1.0,
-      "mode": "subagent"
+      "disable": true
     },
     "enforcer": {
       "temperature": 1.0,
