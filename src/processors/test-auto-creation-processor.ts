@@ -20,30 +20,50 @@ import { testAutoGenerationMonitor } from "../monitoring/test-auto-generation-mo
  */
 function findRecentlyModifiedTsFile(
   dir: string,
-  maxAgeSeconds: number = 10,
+  maxAgeSeconds: number = 60, // Increased to 60 seconds
 ): string | null {
   try {
-    const files = fs.readdirSync(dir);
-    const now = Date.now();
-    const maxAgeMs = maxAgeSeconds * 1000;
-
+    // Recursive walk to find all .ts files
+    const files: string[] = [];
+    
+    function walkSync(dirPath: string) {
+      try {
+        const items = fs.readdirSync(dirPath);
+        for (const item of items) {
+          const fullPath = path.join(dirPath, item);
+          try {
+            const stat = fs.statSync(fullPath);
+            if (stat.isDirectory()) {
+              // Skip node_modules, dist, etc.
+              if (!item.startsWith('.') && item !== 'node_modules' && item !== 'dist') {
+                walkSync(fullPath);
+              }
+            } else if (item.endsWith(".ts") && !item.endsWith(".test.ts") && !item.endsWith(".spec.ts")) {
+              files.push(fullPath);
+            }
+          } catch {
+            // Skip files we can't stat
+          }
+        }
+      } catch {
+        // Skip directories we can't read
+      }
+    }
+    
+    walkSync(dir);
+    
+    // Find most recently modified
     let mostRecent: { path: string; mtime: number } | null = null;
 
-    for (const file of files) {
-      // Skip test files and non-ts files
-      if (!file.endsWith(".ts") || file.endsWith(".test.ts") || file.endsWith(".spec.ts")) {
-        continue;
-      }
-
-      const filePath = path.join(dir, file);
+    for (const filePath of files) {
       try {
         const stats = fs.statSync(filePath);
-        const age = now - stats.mtimeMs;
-
-        if (age < maxAgeMs) {
-          if (!mostRecent || stats.mtimeMs > mostRecent.mtime) {
-            mostRecent = { path: file, mtime: stats.mtimeMs };
-          }
+        
+        // Get relative path
+        const relPath = path.relative(dir, filePath);
+        
+        if (!mostRecent || stats.mtimeMs > mostRecent.mtime) {
+          mostRecent = { path: relPath, mtime: stats.mtimeMs };
         }
       } catch {
         // Skip files we can't stat
@@ -79,13 +99,14 @@ export const testAutoCreationProcessor = {
 
       // Also check the outer context for backward compatibility
       const outerFilePath = context.filePath || contextFilePath;
+      const outerDirectory = context.directory || directory;
 
       await frameworkLogger.log("test-auto-creation", "execute-start", "info", {
         message: `TestAutoCreation processor executing`,
         tool,
         hasArgs: !!args,
-        hasDirectory: !!directory,
-        directoryValue: directory,
+        hasDirectory: !!outerDirectory,
+        directoryValue: outerDirectory,
         contextFilePath,
         argsFilePath: args?.filePath,
         fullContext: JSON.stringify({ tool, directory, filePath: contextFilePath, argsFilePath: args?.filePath }).slice(0, 200),
@@ -100,34 +121,17 @@ export const testAutoCreationProcessor = {
         args?.path ||
         innerContext.filePath;
 
-      // If no filePath from context, scan for recently modified files
-      console.log(`[test-auto-creation] Starting filePath resolution. Initial filePath: ${filePath}, directory: ${directory}`);
+      // ALWAYS scan for the most recent ts file in src/ as fallback
+      // This is more reliable than depending on context
+      const srcDir = path.join(process.cwd(), 'src');
       
-      if (!filePath && directory) {
-        console.log(`[test-auto-creation] Scanning for recent files in ${directory}...`);
-        
-        const recentFile = findRecentlyModifiedTsFile(directory, 10); // 10 seconds
-        if (recentFile) {
-          filePath = recentFile;
-          console.log(`[test-auto-creation] FOUND recent file: ${filePath}`);
-        } else {
-          console.log(`[test-auto-creation] No recent files found`);
-        }
-      } else {
-        console.log(`[test-auto-creation] filePath already exists: ${filePath}, skipping scan`);
+      const recentFile = findRecentlyModifiedTsFile(srcDir, 60);
+      if (recentFile) {
+        filePath = path.join('src', recentFile);
       }
-
-      console.log(`[test-auto-creation] Final filePath: ${filePath || 'UNDEFINED'}`);
 
       await frameworkLogger.log("test-auto-creation", "filepath-resolution", "info", {
         message: `Resolved filePath: ${filePath || 'UNDEFINED'}`,
-        outerFilePath,
-        contextFilePath,
-        argsFilePath: args?.filePath,
-        argsPath: args?.path,
-        innerFilePath: innerContext.filePath,
-        directory,
-        directoryType: typeof directory,
       });
 
       if (!filePath) {
@@ -270,10 +274,10 @@ export const testAutoCreationProcessor = {
           },
         );
 
-        // Check if result indicates success
-        const isSuccess = result && (result as any).success === true;
-
-        if (isSuccess) {
+        // MCP creates the file directly - check if it was created
+        const testCreated = fs.existsSync(fullTestPath);
+        
+        if (testCreated) {
           await frameworkLogger.log(
             "test-auto-creation",
             "tests-generated",
@@ -302,9 +306,8 @@ export const testAutoCreationProcessor = {
               exports: exports.map((e: { name: string }) => e.name),
             },
           };
-        } else {
-          throw new Error("Test generation failed");
         }
+        // If file not created, fall through to fallback
       } catch (error) {
         // Fallback: Create basic test stub if agent fails
         await frameworkLogger.log(

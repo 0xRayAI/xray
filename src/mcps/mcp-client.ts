@@ -506,10 +506,25 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
     const jobId = `mcp-real-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     return new Promise((resolve, reject) => {
-      // Build MCP request in JSON-RPC format
+      // Build MCP initialize request
+      const initializeRequest = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: {
+            name: "strray-mcp-client",
+            version: "1.6.0",
+          },
+        },
+      };
+
+      // Build MCP tool call request
       const mcpRequest = {
         jsonrpc: "2.0",
-        id: jobId,
+        id: 2,
         method: "tools/call",
         params: {
           name: toolName,
@@ -520,14 +535,55 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
       // Spawn MCP server process
       const serverProcess = spawn(this.config.command, this.config.args, {
         stdio: ["pipe", "pipe", "pipe"],
-        timeout: this.config.timeout || 30000,
       });
 
       let stdout = "";
       let stderr = "";
+      let initialized = false;
+      let requestSent = false;
 
       serverProcess.stdout.on("data", (data) => {
         stdout += data.toString();
+        
+        // Try to parse complete JSON-RPC messages
+        const lines = stdout.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          try {
+            const response = JSON.parse(line);
+            
+            // If we got initialize response, now send the tool request
+            if (response.id === 1 && response.result && !initialized) {
+              initialized = true;
+              // Send the actual tool request after initialization
+              if (!requestSent) {
+                serverProcess.stdin.write(JSON.stringify(mcpRequest) + '\n');
+                requestSent = true;
+              }
+            }
+            
+            // If we got tool response, resolve
+            if (response.id === 2 && response.result) {
+              resolve({
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify(response.result, null, 2),
+                  },
+                ],
+              });
+              serverProcess.kill();
+            }
+            
+            // If we got an error
+            if (response.error) {
+              reject(new Error(response.error.message || "MCP server error"));
+              serverProcess.kill();
+            }
+          } catch (e) {
+            // Not valid JSON yet, continue accumulating
+          }
+        }
       });
 
       serverProcess.stderr.on("data", (data) => {
@@ -543,6 +599,7 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
           { jobId, server: this.config.serverName },
         );
         serverProcess.kill();
+        clearTimeout(timeoutId);
         
         if (code !== 0 && stderr) {
           frameworkLogger.log(
@@ -552,32 +609,7 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
             { jobId },
           );
         }
-
-        try {
-          // Parse MCP response
-          const response = JSON.parse(stdout);
-          if (response.error) {
-            throw new Error(response.error.message || "MCP server error");
-          }
-          resolve({
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(response.result || response, null, 2),
-              },
-            ],
-          });
-        } catch (parseError) {
-          // If parsing fails, return the raw output
-          resolve({
-            content: [
-              {
-                type: "text",
-                text: stdout || `Tool ${toolName} executed (no response)`,
-              },
-            ],
-          });
-        }
+        // Note: Response handling is done in stdout data handler
       });
 
       serverProcess.on("error", (error) => {
@@ -590,9 +622,8 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
         reject(error);
       });
 
-      // Send request to MCP server
-      serverProcess.stdin.write(JSON.stringify(mcpRequest));
-      serverProcess.stdin.end();
+      // Send initialize request first, then tool request will be sent after response
+      serverProcess.stdin.write(JSON.stringify(initializeRequest) + '\n');
 
       // Timeout handling - kill process if it takes too long
       const timeoutId = setTimeout(() => {
