@@ -101,17 +101,23 @@ export const testAutoCreationProcessor = {
         innerContext.filePath;
 
       // If no filePath from context, scan for recently modified files
+      console.log(`[test-auto-creation] Starting filePath resolution. Initial filePath: ${filePath}, directory: ${directory}`);
+      
       if (!filePath && directory) {
-        console.log(`[test-auto-creation] No filePath in context, scanning for recent files in ${directory}...`);
+        console.log(`[test-auto-creation] Scanning for recent files in ${directory}...`);
         
         const recentFile = findRecentlyModifiedTsFile(directory, 10); // 10 seconds
         if (recentFile) {
           filePath = recentFile;
-          console.log(`[test-auto-creation] Found recent file: ${filePath}`);
+          console.log(`[test-auto-creation] FOUND recent file: ${filePath}`);
         } else {
           console.log(`[test-auto-creation] No recent files found`);
         }
+      } else {
+        console.log(`[test-auto-creation] filePath already exists: ${filePath}, skipping scan`);
       }
+
+      console.log(`[test-auto-creation] Final filePath: ${filePath || 'UNDEFINED'}`);
 
       await frameworkLogger.log("test-auto-creation", "filepath-resolution", "info", {
         message: `Resolved filePath: ${filePath || 'UNDEFINED'}`,
