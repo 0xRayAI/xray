@@ -75,9 +75,12 @@ describe("AgentDelegator", () => {
 
     it("should initialize default agent capabilities", () => {
       const agents = agentDelegator.getAvailableAgents();
-      expect(agents).toHaveLength(7); // Default agents
+      expect(agents).toHaveLength(22); // All builtin agents
       expect(agents.some((a) => a.name === "enforcer")).toBe(true);
       expect(agents.some((a) => a.name === "architect")).toBe(true);
+      expect(agents.some((a) => a.name === "seo-specialist")).toBe(true);
+      expect(agents.some((a) => a.name === "marketing-expert")).toBe(true);
+      expect(agents.some((a) => a.name === "orchestrator")).toBe(true);
     });
   });
 
@@ -1111,8 +1114,8 @@ describe("AgentDelegator", () => {
         "set up docker deployment",
       );
 
-      expect(result.suggestedAgent).toBe("architect");
-      expect(result.suggestedSkill).toBe("devops-deployment");
+      expect(result.suggestedAgent).toBe("devops-engineer");
+      expect(result.suggestedSkill).toBe("docker-expert");
     });
 
     it("should pre-process git tasks to correct agent", () => {

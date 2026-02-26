@@ -801,6 +801,70 @@ export class MCPClientManager {
         ],
         timeout: 35000,
       },
+      enforcer: {
+        serverName: "enforcer",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/enforcer-tools.server.js`,
+        ],
+        timeout: 30000,
+      },
+      orchestrator: {
+        serverName: "orchestrator",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/orchestrator.server.js`,
+        ],
+        timeout: 60000,
+      },
+      architect: {
+        serverName: "architect",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/architect-tools.server.js`,
+        ],
+        timeout: 45000,
+      },
+      "backend-engineer": {
+        serverName: "backend-engineer",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/api-design.server.js`,
+        ],
+        timeout: 40000,
+      },
+      "bug-triage-specialist": {
+        serverName: "bug-triage-specialist",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/bug-triage-specialist.server.js`,
+        ],
+        timeout: 30000,
+      },
+      "log-monitor": {
+        serverName: "log-monitor",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/log-monitor.server.js`,
+        ],
+        timeout: 30000,
+      },
+      "multimodal-looker": {
+        serverName: "multimodal-looker",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/multimodal-looker.server.js`,
+        ],
+        timeout: 40000,
+      },
+      analyzer: {
+        serverName: "analyzer",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/analyzer.server.js`,
+        ],
+        timeout: 45000,
+      },
     };
 
     return (

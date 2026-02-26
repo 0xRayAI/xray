@@ -453,6 +453,17 @@ export class RuleEnforcer {
       validator: this.validateDependencyManagement.bind(this),
     });
 
+    // Build Process Rules
+    this.addRule({
+      id: "src-dist-integrity",
+      name: "Source-Dist Integrity",
+      description: "Prevents direct file copying between src/ and dist/. All changes must be made in src/ and compiled via npm run build",
+      category: "architecture",
+      severity: "error",
+      enabled: true,
+      validator: this.validateSrcDistIntegrity.bind(this),
+    });
+
     // Security Rules
     this.addRule({
       id: "input-validation",
@@ -1266,6 +1277,8 @@ export class RuleEnforcer {
         return operation === "write" && !!context.newCode; // Development triage rule
       case "console-log-usage":
         return operation === "write" && !!context.newCode; // Critical for production log hygiene
+      case "src-dist-integrity":
+        return (operation === "write" || operation === "copy" || operation === "modify") && !!context.files;
       default:
         return true;
     }
@@ -1570,6 +1583,59 @@ export class RuleEnforcer {
     }
 
     return { passed: true, message: "Dependencies properly managed" };
+  }
+
+  /**
+   * Validate src-dist integrity
+   * Prevents direct file copying between src/ and dist/
+   * All changes must be made in src/ and compiled via npm run build
+   */
+  private async validateSrcDistIntegrity(
+    context: RuleValidationContext,
+  ): Promise<RuleValidationResult> {
+    const { files, operation } = context;
+
+    if (!files || files.length === 0) {
+      return { passed: true, message: "No files to check for src-dist integrity" };
+    }
+
+    // Check if any files are being copied directly between src and dist
+    const violations: string[] = [];
+    
+    for (const file of files) {
+      const normalizedFile = file.replace(/^\.\//, ''); // Remove leading ./
+      
+      // Check for direct edits to dist/ that should come from src/
+      if ((normalizedFile.startsWith("dist/") || normalizedFile.includes("/dist/")) && 
+          !normalizedFile.includes("/node_modules/")) {
+        violations.push(
+          "Direct edit to dist/: " + file + ". Make changes in src/ and run 'npm run build'",
+        );
+      }
+      
+      // Check for direct edits to .opencode/ that should be generated
+      if ((normalizedFile.startsWith(".opencode/") || normalizedFile.includes("/.opencode/")) && 
+          (normalizedFile.includes("/plugin/") || normalizedFile.includes("/plugins/"))) {
+        violations.push(
+          "Direct edit to .opencode/plugin/: " + file + ". This should be generated via build/postinstall",
+        );
+      }
+    }
+
+    if (violations.length > 0) {
+      return {
+        passed: false,
+        message: `SRC-DIST INTEGRITY VIOLATION: ${violations.length} issue(s) found`,
+        suggestions: [
+          "Make all code changes in src/ directory",
+          "Run 'npm run build' to compile to dist/",
+          "Use postinstall scripts for consumer path transformations",
+          "Never copy files directly between src and dist",
+        ],
+      };
+    }
+
+    return { passed: true, message: "Src-dist integrity maintained" };
   }
 
   /**

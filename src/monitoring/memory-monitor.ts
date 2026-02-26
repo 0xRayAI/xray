@@ -55,9 +55,13 @@ export class MemoryMonitor extends EventEmitter {
   private leakDetectionEnabled = true;
   private lastLeakCheck = Date.now();
   private leakCheckInterval = 60 * 1000; // CRITICAL FIX: Check every minute instead of 5 minutes
+  private listenersInitialized = false;
 
   constructor(config: Partial<MemoryMonitorConfig> = {}) {
     super();
+    
+    // Increase max listeners to prevent warnings in test environments
+    this.setMaxListeners(50);
 
     this.config = {
       checkInterval: 30000,
@@ -344,6 +348,21 @@ export class MemoryMonitor extends EventEmitter {
       // Silent fail - don't spam console with logging errors
     }
   }
+
+  /**
+   * Safely add an alert listener, preventing duplicates
+   */
+  addAlertListener(callback: (alert: any) => void): void {
+    // Check if this exact callback already exists
+    const existingListeners = this.listeners("alert");
+    const alreadyAdded = existingListeners.some(
+      (listener: any) => listener === callback
+    );
+    
+    if (!alreadyAdded) {
+      this.on("alert", callback);
+    }
+  }
 }
 
 // Export singleton instance
@@ -354,8 +373,9 @@ export function getMemoryUsage(): MemoryStats {
   return memoryMonitor.getCurrentStats();
 }
 
-export function logMemoryUsage(): void {
-  // Memory usage logging removed for codex compliance
+export function logMemoryUsage(): MemoryStats {
+  // Memory usage logging - return current stats
+  return memoryMonitor.getCurrentStats();
 }
 
 export function checkMemoryHealth(): { healthy: boolean; issues: string[] } {

@@ -97,7 +97,7 @@ describe("TaskSkillRouter", () => {
 
     it("should route devops tasks correctly", () => {
       const result = router.routeTask("set up docker pipeline");
-      expect(result.agent).toBe("architect");
+      expect(result.agent).toBe("devops-engineer");
     });
 
     it("should route git tasks correctly", () => {

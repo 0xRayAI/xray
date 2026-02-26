@@ -23,4 +23,69 @@
 - Configuration
 
 ---
+
+## StringRay Agents (22)
+
+StringRay includes 22 built-in agents with MCP server integration:
+
+| Agent | Purpose | MCP Server |
+|-------|---------|------------|
+| enforcer | Codex compliance & error prevention | enforcer-tools |
+| architect | System design & architecture | architect-tools |
+| orchestrator | Multi-agent workflow coordination | orchestrator |
+| code-reviewer | Code quality review | code-review |
+| security-auditor | Security vulnerability analysis | security-audit |
+| refactorer | Code refactoring | refactoring-strategies |
+| test-architect | Testing strategy | testing-strategy |
+| bug-triage-specialist | Bug analysis & debugging | bug-triage-specialist |
+| log-monitor | Log analysis & alerting | log-monitor |
+| librarian | Codebase search & docs | librarian |
+| multimodal-looker | Visual content analysis | multimodal-looker |
+| analyzer | Code metrics & patterns | analyzer |
+| seo-specialist | Technical SEO | seo-specialist |
+| seo-copywriter | SEO content writing | seo-copywriter |
+| marketing-expert | Marketing strategy | marketing-expert |
+| database-engineer | Database design | database-design |
+| devops-engineer | DevOps & deployment | devops-deployment |
+| backend-engineer | API design | api-design |
+| frontend-engineer | UI/UX development | ui-ux-design |
+| documentation-writer | Technical docs | documentation-generation |
+| performance-engineer | Performance optimization | performance-optimization |
+| mobile-developer | Mobile development | mobile-development |
+
+---
+
+## Antigravity Integration
+
+StringRay integrates with [Antigravity Awesome Skills](https://github.com/sickn33/antigravity-awesome-skills) - **946+ AI agent skills** under MIT license.
+
+### How It Works
+
+Skills are automatically activated based on keywords in your prompts:
+
+| You Say | Routes To |
+|---------|-----------|
+| "fix this TypeScript error" | code-reviewer agent |
+| "write a Dockerfile" | devops-engineer agent |
+| "landing page copy" | marketing-expert agent |
+| "optimize React component" | frontend-engineer agent |
+| "AWS Lambda setup" | devops-engineer agent |
+
+### Curated Skills (17)
+
+The integration script installs these curated skills for enhanced capabilities:
+
+| Category | Skills |
+|----------|--------|
+| Languages | typescript-expert, python-patterns, react-patterns, go-patterns, rust-patterns |
+| DevOps | docker-expert, aws-serverless, vercel-deployment |
+| Security | vulnerability-scanner, api-security-best-practices |
+| Business | copywriting, pricing-strategy, seo-fundamentals |
+| AI/Data | rag-engineer, prompt-engineering |
+| General | brainstorming, planning |
+
+See `docs/ANTIGRAVITY_INTEGRATION.md` for full documentation.
+
+---
+
 *This AGENTS.md is auto-maintained by StringRay AI Librarian*

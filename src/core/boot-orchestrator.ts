@@ -667,46 +667,59 @@ export class BootOrchestrator {
     // Start memory monitor
     memoryMonitor.start();
 
-    // Set up alert handlers
-    memoryMonitor.on("alert", (alert: any) => {
-      const level =
-        alert.severity === "critical"
-          ? "error"
-          : alert.severity === "high"
-            ? "warn"
-            : "info";
-
-      frameworkLogger.log(
-        "boot-orchestrator",
-        `🚨 MEMORY ALERT: ${alert.message}`,
-        "error",
-      );
-
-      // Store alert in state for dashboard access
-      const alerts = (this.stateManager.get("memory:alerts") as any[]) || [];
-      alerts.push({
-        ...alert,
-        timestamp: Date.now(),
-      });
-
-      // Keep only last 100 alerts
-      if (alerts.length > 100) {
-        alerts.shift();
+    // CRITICAL FIX: Only add alert listener once to prevent memory leak
+    // Each BootOrchestrator instantiation was adding duplicate listeners
+    let currentListenerCount = 0;
+    try {
+      if (typeof memoryMonitor.listenerCount === 'function') {
+        currentListenerCount = memoryMonitor.listenerCount("alert");
+      } else if (memoryMonitor.listeners && typeof memoryMonitor.listeners === 'function') {
+        currentListenerCount = memoryMonitor.listeners("alert").length;
       }
+    } catch (e) {
+      // Fallback: assume no listeners if we can't determine count
+      currentListenerCount = 0;
+    }
+    
+    if (currentListenerCount === 0) {
+      // First time setup - add the memory alert handler
+      memoryMonitor.on("alert", (alert: any) => {
+        const level =
+          alert.severity === "critical"
+            ? "error"
+            : alert.severity === "high"
+              ? "warn"
+              : "info";
 
-      this.stateManager.set("memory:alerts", alerts);
+        frameworkLogger.log(
+          "boot-orchestrator",
+          `🚨 MEMORY ALERT: ${alert.message}`,
+          "error",
+        );
 
-      // Log recommendations
-      alert.details.recommendations.forEach((rec: string) => {
-        frameworkLogger.log("boot-orchestrator", `💡 ${rec}`, "info");
+        // Store alert in state for dashboard access
+        const alerts = (this.stateManager.get("memory:alerts") as any[]) || [];
+        alerts.push({
+          ...alert,
+          timestamp: Date.now(),
+        });
+
+        // Keep only last 100 alerts
+        if (alerts.length > 100) {
+          alerts.shift();
+        }
+
+        this.stateManager.set("memory:alerts", alerts);
+
+        // Log recommendations
+        alert.details.recommendations.forEach((rec: string) => {
+          frameworkLogger.log("boot-orchestrator", `💡 ${rec}`, "info");
+        });
       });
-    });
+    }
 
-    // Attach the listener to the memory monitor (prevent duplicates)
-    if (
-      this.memoryMonitorListener &&
-      !memoryMonitor.listeners("alert").includes(this.memoryMonitorListener)
-    ) {
+    // Attach the listener to the memory monitor only if none exist
+    if (this.memoryMonitorListener && memoryMonitor.listenerCount("alert") === 0) {
       memoryMonitor.on("alert", this.memoryMonitorListener);
     }
 
