@@ -10,6 +10,24 @@ Adding a new agent currently requires updating **8+ files** across the codebase.
 
 ---
 
+## Important: Two Types of Agent Access
+
+### 1. Task Tool (OpenCode native)
+The Task tool has a **hardcoded list** of agent types in OpenCode's framework:
+- general, explore, orchestrator, enhanced-orchestrator, architect, test-architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, librarian, log-monitor, oracle, document-writer, multimodal-looker, frontend-ui-ux-engineer
+
+**To add new agents here**, you must modify OpenCode's Task tool definition.
+
+### 2. StringRay Enhanced Access
+StringRay provides additional ways to access agents:
+- **@agent commands** - Via framework-help server
+- **enhanced-orchestrator spawn-agent** - Programmatic access
+- **features.json** - Agent model configuration
+
+This is where seo-specialist, marketing-expert, etc. are accessible.
+
+---
+
 ## Files That Need to Be Updated
 
 ### 1. `.opencode/strray/features.json` (REQUIRED)
@@ -66,25 +84,31 @@ Create MCP server if the agent has tools.
 
 ---
 
-## Current Agent List (18 agents)
+## Current Agent List
 
+### Available via Task Tool (OpenCode native - 16 agents)
 | Agent | Features.json | MCP Client | Framework Help |
 |-------|--------------|------------|----------------|
-| enforcer | ✅ | ✅ | ✅ |
-| architect | ✅ | ✅ | ✅ |
+| general | - | - | - |
+| explore | ✅ | ✅ (alias) | ✅ |
 | orchestrator | ✅ | ✅ | ✅ |
 | enhanced-orchestrator | ❌ | ✅ | ✅ |
+| architect | ✅ | ✅ (alias) | ✅ |
+| test-architect | ✅ | ✅ (alias) | ✅ |
 | bug-triage-specialist | ✅ | ✅ | ✅ |
 | code-reviewer | ✅ | ✅ (alias) | ✅ |
 | security-auditor | ✅ | ✅ | ✅ |
 | refactorer | ✅ | ✅ (alias) | ✅ |
-| test-architect | ✅ | ✅ (alias) | ✅ |
 | librarian | ✅ | ✅ (alias) | ✅ |
+| log-monitor | ✅ | ✅ | ✅ |
 | oracle | ✅ | ✅ (alias) | ✅ |
 | document-writer | ✅ | ✅ (alias) | ✅ |
-| explore | ✅ | ✅ (alias) | ✅ |
-| analyzer | ✅ | ✅ | ✅ |
+| multimodal-looker | ✅ | ✅ | ✅ |
 | frontend-ui-ux-engineer | ✅ | ✅ (alias) | ✅ |
+
+### Available via enhanced-orchestrator Only (StringRay - 3 agents)
+| Agent | Features.json | MCP Client | Framework Help |
+|-------|--------------|------------|----------------|
 | seo-specialist | ✅ | ✅ | ✅ |
 | seo-copywriter | ✅ | ✅ | ✅ |
 | marketing-expert | ✅ | ✅ | ✅ |
@@ -126,3 +150,4 @@ This system should be automated. Ideas:
 - Generate all docs from a single `agents.json` config
 - Auto-generate help text from agent metadata
 - Single source of truth for agent definitions
+- Work with OpenCode to add agents to Task tool enum

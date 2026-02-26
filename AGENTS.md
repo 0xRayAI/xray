@@ -24,6 +24,39 @@
 
 ---
 
+## Available Agents
+
+### Via Task Tool (OpenCode native)
+
+| Agent | Description |
+|-------|-------------|
+| general | General-purpose agent for complex questions and multi-step tasks |
+| explore | Fast codebase exploration and pattern analysis |
+| orchestrator | Multi-agent workflow coordination *(manual only)* |
+| enhanced-orchestrator | Advanced orchestration with conflict resolution *(manual only)* |
+| architect | System design and technical architecture |
+| test-architect | Testing strategy design |
+| bug-triage-specialist | Debugging analysis and issue prioritization |
+| code-reviewer | Code quality assessment |
+| security-auditor | Security vulnerability scanning |
+| refactorer | Code refactoring techniques |
+| librarian | Codebase and documentation search |
+| log-monitor | Log analysis and pattern detection |
+| oracle | Strategic guidance and complex problem-solving |
+| document-writer | Technical documentation creation |
+| multimodal-looker | Media file analysis (images, diagrams, PDFs) |
+| frontend-ui-ux-engineer | Frontend development and UI/UX |
+
+### Via enhanced-orchestrator (StringRay)
+
+| Agent | Description |
+|-------|-------------|
+| seo-specialist | SEO analysis & optimization |
+| seo-copywriter | Marketing copy & content writing |
+| marketing-expert | Marketing strategy & growth |
+
+---
+
 ## Antigravity Skills (17 Curated)
 
 StringRay integrates 17 curated skills from [Antigravity Awesome Skills](https://github.com/sickn33/antigravity-awesome-skills) under MIT license.
