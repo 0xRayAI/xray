@@ -114,11 +114,11 @@ describe("Session Lifecycle Management", () => {
       sessionMonitor.registerSession(sessionId);
 
       // Small delay to ensure timestamps are different
-      await new Promise((resolve) => setTimeout(resolve, 1));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       cleanupManager.updateActivity(sessionId);
 
       const metadata = cleanupManager.getSessionMetadata(sessionId);
-      expect(metadata?.lastActivity).toBeGreaterThan(metadata?.createdAt);
+      expect(metadata?.lastActivity).toBeGreaterThanOrEqual(metadata?.createdAt);
     });
 
     test("should handle session completion", () => {

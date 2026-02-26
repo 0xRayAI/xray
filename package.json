@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "1.6.8",
+  "version": "1.6.9",
   "description": "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.",
   "type": "module",
   "main": "./dist/plugin/strray-codex-injection.js",
@@ -14,6 +14,8 @@
     "mcps": "./dist/plugin/mcps/"
   },
   "scripts": {
+    "version:bump": "node scripts/node/version-manager.mjs",
+    "version": "node scripts/node/version-manager.mjs",
     "build": "tsc",
     "build:all": "npm run build",
     "ci-install": "npm ci",

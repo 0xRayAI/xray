@@ -187,16 +187,35 @@ class FrameworkHelpServer {
 @enforcer - Codex compliance & error prevention
 @architect - System design & technical decisions  
 @orchestrator - Multi-agent workflow coordination
+@enhanced-orchestrator - Advanced orchestration with monitoring
 @bug-triage-specialist - Error investigation & surgical fixes
 @code-reviewer - Quality assessment & standards validation
 @security-auditor - Vulnerability detection & compliance
 @refactorer - Technical debt elimination & code consolidation
 @test-architect - Testing strategy & coverage optimization
+@librarian - Codebase exploration & documentation search
+@oracle - Strategic guidance & complex problem-solving
+@seo-specialist - SEO analysis & optimization
+@seo-copywriter - Marketing copy & content writing
+@marketing-expert - Marketing strategy & growth
+@multimodal-looker - Visual content & media analysis
+@frontend-ui-ux-engineer - Frontend development & UI/UX
+@document-writer - Technical documentation generation
+@log-monitor - Log analysis & pattern detection
+@explore - Fast codebase exploration
+@analyzer - Code metrics & pattern detection
+@backend-engineer - API & backend development
+@performance-engineer - Performance optimization
+@database-engineer - Database design & optimization
+@devops-engineer - DevOps & infrastructure
+@mobile-developer - Mobile app development
 
 **Usage Examples:**
 - "@enforcer analyze this code for violations"
 - "@architect design a scalable solution for X"
 - "@orchestrator coordinate testing for this feature"
+- "@seo-specialist review the website for SEO improvements"
+- "@marketing-expert analyze the marketing strategy"
         `.trim();
         break;
 

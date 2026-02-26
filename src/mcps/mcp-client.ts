@@ -405,11 +405,23 @@ export class MCPClient {
 @enforcer - Codex compliance & error prevention
 @architect - System design & technical decisions
 @orchestrator - Multi-agent workflow coordination
+@enhanced-orchestrator - Advanced orchestration with monitoring
 @bug-triage-specialist - Error investigation & surgical fixes
 @code-reviewer - Quality assessment & standards validation
 @security-auditor - Vulnerability detection & compliance
 @refactorer - Technical debt elimination & code consolidation
 @test-architect - Testing strategy & coverage optimization
+@librarian - Codebase exploration & documentation search
+@oracle - Strategic guidance & complex problem-solving
+@seo-specialist - SEO analysis & optimization
+@seo-copywriter - Marketing copy & content writing
+@marketing-expert - Marketing strategy & growth
+@multimodal-looker - Visual content & media analysis
+@frontend-ui-ux-engineer - Frontend development & UI/UX
+@document-writer - Technical documentation generation
+@log-monitor - Log analysis & pattern detection
+@explore - Fast codebase exploration
+@analyzer - Code metrics & pattern detection
 
 **System Commands:**
 framework-reporting-system - Generate comprehensive framework reports
@@ -419,8 +431,9 @@ codex-injector - Apply development standards and quality enforcement
 **Getting Started:**
 1. Use @enforcer for code quality validation
 2. Use @orchestrator for complex development tasks
-3. Use skills for specialized capabilities
-4. Check framework-reporting-system for activity reports`,
+3. Use @seo-specialist for SEO reviews
+4. Use @marketing-expert for marketing analysis
+5. Check framework-reporting-system for activity reports`,
               },
             ],
           };
@@ -864,6 +877,71 @@ export class MCPClientManager {
           `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/analyzer.server.js`,
         ],
         timeout: 45000,
+      },
+      "seo-specialist": {
+        serverName: "seo-specialist",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/seo-specialist.server.js`,
+        ],
+        timeout: 30000,
+      },
+      "seo-copywriter": {
+        serverName: "seo-copywriter",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/seo-copywriter.server.js`,
+        ],
+        timeout: 30000,
+      },
+      "marketing-expert": {
+        serverName: "marketing-expert",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/marketing-expert.server.js`,
+        ],
+        timeout: 45000,
+      },
+      // Aliases to match features.json agent names
+      "code-reviewer": {
+        serverName: "code-reviewer",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/code-review.server.js`,
+        ],
+        timeout: 30000,
+      },
+      "security-auditor": {
+        serverName: "security-auditor",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/security-audit.server.js`,
+        ],
+        timeout: 45000,
+      },
+      "refactorer": {
+        serverName: "refactorer",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/refactoring-strategies.server.js`,
+        ],
+        timeout: 40000,
+      },
+      "test-architect": {
+        serverName: "test-architect",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/testing-strategy.server.js`,
+        ],
+        timeout: 30000,
+      },
+      oracle: {
+        serverName: "oracle",
+        command: "node",
+        args: [
+          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/project-analysis.server.js`,
+        ],
+        timeout: 60000,
       },
     };
 
