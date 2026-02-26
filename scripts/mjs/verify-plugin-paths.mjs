@@ -81,6 +81,9 @@ class PathVerifier {
   async verifyOhMyOpencodeConfig() {
     this.check('OpenCode.json paths');
 
+    // Detect development mode
+    const isDevMode = fs.existsSync('src/plugin/strray-codex-injection.ts');
+    
     // Use opencode.json at root (.opencode/OpenCode.json is deprecated)
     const configPath = 'opencode.json';
     if (!fs.existsSync(configPath)) {
@@ -94,21 +97,31 @@ class PathVerifier {
 
       // Check plugin paths
       if (config.plugin && Array.isArray(config.plugin)) {
-        let hasNodeModulesPath = false;
-        let hasOldPath = false;
-
-        for (const pluginPath of config.plugin) {
-          if (pluginPath.includes('node_modules/strray-ai/')) {
-            hasNodeModulesPath = true;
-            this.success(`Plugin path transformed: ${pluginPath}`);
-          } else if (pluginPath.includes('strray/') || pluginPath.includes('src/')) {
-            hasOldPath = true;
-            this.error(`Plugin path NOT transformed: ${pluginPath}`);
+        if (isDevMode) {
+          // In dev mode, relative paths are expected
+          const hasRelativePath = config.plugin.some(p => p.startsWith('./') || p.startsWith('src/'));
+          if (hasRelativePath) {
+            this.success('Plugin uses relative paths (development mode)');
+          } else {
+            this.warning('Plugin paths may need adjustment for development');
           }
-        }
+        } else {
+          let hasNodeModulesPath = false;
+          let hasOldPath = false;
 
-        if (!hasNodeModulesPath && config.plugin.length > 0) {
-          this.error('No plugin paths point to node_modules/strray-ai/');
+          for (const pluginPath of config.plugin) {
+            if (pluginPath.includes('node_modules/strray-ai/')) {
+              hasNodeModulesPath = true;
+              this.success(`Plugin path transformed: ${pluginPath}`);
+            } else if (pluginPath.includes('strray/') || pluginPath.includes('src/')) {
+              hasOldPath = true;
+              this.error(`Plugin path NOT transformed: ${pluginPath}`);
+            }
+          }
+
+          if (!hasNodeModulesPath && config.plugin.length > 0) {
+            this.error('No plugin paths point to node_modules/strray-ai/');
+          }
         }
       }
 
@@ -118,7 +131,11 @@ class PathVerifier {
           if (server.args && Array.isArray(server.args)) {
             const serverPath = server.args[server.args.length - 1];
             if (serverPath) {
-              if (serverPath.includes('node_modules/strray-ai/')) {
+              if (isDevMode) {
+                if (serverPath.startsWith('./dist/') || serverPath.startsWith('dist/')) {
+                  this.success(`MCP server "${name}" uses relative path (dev mode)`);
+                }
+              } else if (serverPath.includes('node_modules/strray-ai/')) {
                 this.success(`MCP server "${name}" path transformed`);
               } else if (serverPath.includes('strray/') || serverPath.includes('dist/plugin/mcps/')) {
                 this.error(`MCP server "${name}" path NOT transformed: ${serverPath}`);
@@ -136,6 +153,9 @@ class PathVerifier {
   async verifyOpencodeConfig() {
     this.check('opencode.json paths');
 
+    // Detect development mode
+    const isDevMode = fs.existsSync('src/plugin/strray-codex-injection.ts');
+    
     const configPath = 'opencode.json';
     if (!fs.existsSync(configPath)) {
       this.error(`${configPath} not found`);
@@ -152,10 +172,17 @@ class PathVerifier {
           if (server.command && Array.isArray(server.command)) {
             const serverPath = server.command[server.command.length - 1];
             if (serverPath) {
-              if (serverPath.includes('node_modules/strray-ai/')) {
+              if (isDevMode) {
+                if (serverPath.startsWith('./dist/')) {
+                  this.success(`OpenCode MCP server "${name}" uses relative path (dev mode)`);
+                }
+              } else if (serverPath.includes('node_modules/strray-ai/')) {
                 this.success(`OpenCode MCP server "${name}" path transformed`);
               } else if (serverPath.includes('strray/') || serverPath.startsWith('./dist/')) {
-                this.error(`OpenCode MCP server "${name}" path NOT transformed: ${serverPath}`);
+                // In production, this would be an error - in dev it's OK
+                if (!isDevMode) {
+                  this.error(`OpenCode MCP server "${name}" path NOT transformed: ${serverPath}`);
+                }
               }
             }
           }
@@ -169,6 +196,29 @@ class PathVerifier {
 
   async verifyPluginFilesExist() {
     this.check('Plugin files exist at expected locations');
+
+    // In development mode, files are at src/ not node_modules/
+    const isDevMode = fs.existsSync('src/plugin/strray-codex-injection.ts');
+    
+    if (isDevMode) {
+      const devFiles = [
+        'src/plugin/strray-codex-injection.ts',
+        'src/plugins/strray-codex-injection.ts',
+      ];
+      
+      let devFileFound = false;
+      for (const file of devFiles) {
+        if (fs.existsSync(file)) {
+          this.success(`${file} exists (development mode)`);
+          devFileFound = true;
+        }
+      }
+      
+      if (devFileFound) {
+        this.success('Development mode: Using src/ paths (not node_modules/)');
+        return; // Skip node_modules check in dev mode
+      }
+    }
 
     const expectedFiles = [
       'node_modules/strray-ai/dist/plugin/strray-codex-injection.js',

@@ -40,7 +40,10 @@ function removeConsoleLogs(filePath) {
 }
 
 // Find all TypeScript files in src/ excluding test files and CLI
-const srcDir = path.join(__dirname, '..', 'src');
+// Function to remove console.log statements from a file
+// srcDir should point to project root src/ not scripts/src/
+const projectRoot = path.join(__dirname, '..', '..');
+const srcDir = path.join(projectRoot, 'src');
 const excludePatterns = ['__tests__', 'test-utils', 'cli'];
 
 function shouldProcessFile(filePath) {

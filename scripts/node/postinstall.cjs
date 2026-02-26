@@ -121,29 +121,22 @@ if (isConsumerEnvironment) {
   console.log("🔧 StrRay Postinstall: Converting paths for consumer environment...");
 
   // Note: .mcp.json was refactored out - no longer need to update MCP paths
-  // See AGENTS.md for details
+  // Note: "plugin" config is for npm packages only - local plugins go in .opencode/plugin/
+  // See OpenCode docs: https://opencode.ai/docs/config/#plugins
+  // So we don't need to update plugin paths in opencode.json anymore
 
-// Convert plugin paths in opencode.json
+// Convert MCP server paths only (not plugin paths - those are for npm packages)
+// Note: MCP servers are in dist/mcps/ NOT dist/plugin/mcps/
 const mainOpencodePath = path.join(targetDir, "opencode.json");
   if (fs.existsSync(mainOpencodePath)) {
     let opencodeContent = fs.readFileSync(mainOpencodePath, "utf8");
-    // Handle various plugin path patterns
-    opencodeContent = opencodeContent.replace(
-      /"strray\/dist\/plugin\/strray-codex-injection\.js"/g,
-      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
-    );
-    opencodeContent = opencodeContent.replace(
-      /"src\/plugin\/strray-codex-injection\.ts"/g,
-      '"node_modules/strray-ai/dist/plugin/strray-codex-injection.js"'
-    );
     // Convert MCP server paths (mcpServers use command array)
-    // Note: MCP servers are in dist/mcps/ NOT dist/plugin/mcps/
     opencodeContent = opencodeContent.replace(
       /"\.\.?\/dist\/mcps\//g,
       '"node_modules/strray-ai/dist/mcps/'
     );
     fs.writeFileSync(mainOpencodePath, opencodeContent, "utf8");
-    console.log("✅ Updated plugin and MCP paths in opencode.json");
+    console.log("✅ Updated MCP paths in opencode.json");
   }
 }
 

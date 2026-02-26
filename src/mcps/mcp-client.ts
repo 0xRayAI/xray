@@ -515,8 +515,7 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
           protocolVersion: "2024-11-05",
           capabilities: {},
           clientInfo: {
-            name: "strray-mcp-client",
-            version: "1.6.0",
+            name: "strray-mcp-client", version: "1.6.0",
           },
         },
       };

@@ -1,0 +1,45 @@
+name: devops-engineer
+description: "DevOps engineer agent for CI/CD and infrastructure"
+version: "1.0.0"
+mode: subagent
+
+# Logging Configuration
+logging:
+  level: warn
+  format: json
+  destinations:
+    - console
+    - file
+    - monitoring
+  retention_days: 90
+  audit_trail: true
+
+# Agent Capabilities
+capabilities:
+  - ci-cd-pipeline
+  - infrastructure-as-code
+  - deployment-automation
+  - container-orchestration
+  - monitoring-setup
+
+# Error Handling Configuration
+error_handling:
+  retry_attempts: 3
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 3
+    recovery_timeout_ms: 30000
+  fallback_strategy: strict
+  alert_on_failure: true
+
+# Performance Configuration
+performance:
+  timeout_ms: 30000
+  concurrency_limit: 3
+  memory_limit_mb: 128
+
+# Integration Hooks
+integration:
+  pre_commit: false
+  post_commit: true
+  deployment_validation: true

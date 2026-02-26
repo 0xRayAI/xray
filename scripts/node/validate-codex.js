@@ -6,7 +6,7 @@ import path from "path";
 import { execSync } from "child_process";
 
 // Check if we're in development or deployed environment
-const isDevelopment = fs.existsSync("src/codex-injector.ts");
+const isDevelopment = fs.existsSync("src/core/codex-injector.ts") || fs.existsSync("src/plugin/strray-codex-injection.ts");
 const isDeployed = fs.existsSync("node_modules/strray-ai");
 
 if (!isDevelopment && !isDeployed) {
@@ -48,7 +48,7 @@ if (isDeployed) {
 
   // Check if the plugin files exist
   const pluginExists = fs.existsSync(
-    "node_modules/strray-ai/dist/plugin/plugins/strray-codex-injection.js",
+    "node_modules/strray-ai/dist/plugin/strray-codex-injection.js",
   );
   console.log("DEBUG: plugin file exists:", pluginExists);
   if (!pluginExists) {

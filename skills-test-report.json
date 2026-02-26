@@ -2,95 +2,74 @@
   "baselineProcesses": 0,
   "tests": [
     {
-      "skillName": "project-analysis",
-      "startTime": "2026-01-31T01:50:56.453Z",
-      "endTime": "2026-01-31T01:50:56.453Z",
-      "baselineProcesses": 0,
-      "configValid": false,
-      "mcpServerExists": false,
-      "duration": 0,
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/project-analysis/SKILL.md"
-    },
-    {
-      "skillName": "testing-strategy",
-      "startTime": "2026-01-31T01:50:56.843Z",
-      "endTime": "2026-01-31T01:50:56.843Z",
-      "baselineProcesses": 0,
-      "configValid": false,
-      "mcpServerExists": false,
-      "duration": 0,
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/testing-strategy/SKILL.md"
-    },
-    {
-      "skillName": "code-review",
-      "startTime": "2026-01-31T01:50:57.241Z",
-      "endTime": "2026-01-31T01:50:57.241Z",
-      "baselineProcesses": 0,
-      "configValid": false,
-      "mcpServerExists": false,
-      "duration": 0,
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/code-review/SKILL.md"
-    },
-    {
-      "skillName": "security-audit",
-      "startTime": "2026-01-31T01:50:57.635Z",
-      "endTime": "2026-01-31T01:50:57.635Z",
-      "baselineProcesses": 0,
-      "configValid": false,
-      "mcpServerExists": false,
-      "duration": 0,
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/security-audit/SKILL.md"
-    },
-    {
-      "skillName": "performance-optimization",
-      "startTime": "2026-01-31T01:50:58.027Z",
-      "endTime": "2026-01-31T01:50:58.027Z",
-      "baselineProcesses": 0,
-      "configValid": false,
-      "mcpServerExists": false,
-      "duration": 0,
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/performance-optimization/SKILL.md"
-    }
-  ],
-  "errors": [
-    {
       "skill": "project-analysis",
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/project-analysis/SKILL.md",
-      "timestamp": "2026-01-31T01:50:56.547Z"
+      "startTime": "2026-02-26T03:27:01.070Z",
+      "initialProcesses": 0,
+      "prompt": "Analyze project structure",
+      "endTime": "2026-02-26T03:27:01.208Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 138
     },
     {
       "skill": "testing-strategy",
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/testing-strategy/SKILL.md",
-      "timestamp": "2026-01-31T01:50:56.939Z"
+      "startTime": "2026-02-26T03:27:01.309Z",
+      "initialProcesses": 0,
+      "prompt": "Design testing strategy",
+      "endTime": "2026-02-26T03:27:01.448Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 139
     },
     {
       "skill": "code-review",
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/code-review/SKILL.md",
-      "timestamp": "2026-01-31T01:50:57.337Z"
+      "startTime": "2026-02-26T03:27:01.549Z",
+      "initialProcesses": 0,
+      "prompt": "Review code quality",
+      "endTime": "2026-02-26T03:27:01.689Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 140
     },
     {
       "skill": "security-audit",
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/security-audit/SKILL.md",
-      "timestamp": "2026-01-31T01:50:57.729Z"
+      "startTime": "2026-02-26T03:27:01.791Z",
+      "initialProcesses": 0,
+      "prompt": "Audit security",
+      "endTime": "2026-02-26T03:27:01.931Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 140
     },
     {
       "skill": "performance-optimization",
-      "error": "Skill file not found: /Users/blaze/dev/stringray/scripts/.opencode/skills/performance-optimization/SKILL.md",
-      "timestamp": "2026-01-31T01:50:58.121Z"
+      "startTime": "2026-02-26T03:27:02.032Z",
+      "initialProcesses": 0,
+      "prompt": "Optimize performance",
+      "endTime": "2026-02-26T03:27:02.168Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 136
     }
   ],
+  "errors": [],
   "summary": {
     "totalTests": 5,
-    "successfulTests": 0,
-    "failedTests": 5,
-    "expectedMissingSkills": 5,
+    "successfulTests": 5,
+    "failedTests": 0,
+    "expectedMissingSkills": 0,
     "acceptableMissingRate": 1,
     "acceptableMissing": true,
-    "successRate": "0.0%",
-    "totalErrors": 5,
-    "averageDuration": 0,
+    "successRate": "100.0%",
+    "totalErrors": 0,
+    "averageDuration": 138.6,
     "baselineProcesses": 0,
-    "allConfigsValid": false,
+    "allConfigsValid": true,
     "lazyLoadingBehavior": true
   }
 }

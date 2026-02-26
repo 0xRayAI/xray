@@ -1,0 +1,56 @@
+#!/bin/bash
+# StrRay Post-Processor post-commit Hook
+# Automatically triggers post-processor after post-commit
+
+set -e
+
+HOOK_NAME=$(basename "$0")
+COMMIT_SHA=$(git rev-parse HEAD)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+AUTHOR=$(git log -1 --pretty=format:'%an <%ae>')
+
+if [ -z "$COMMIT_SHA" ]; then
+  exit 0
+fi
+
+# Get changed files
+FILES=$(git diff --name-only HEAD~1 2>/dev/null || git diff --name-only --cached)
+
+# Find StrRay dist
+STRRAY_DIST=""
+for dir in "dist" "node_modules/strray-ai/dist" "node_modules/strray-framework/dist"; do
+  if [ -f "$dir/postprocessor/PostProcessor.js" ]; then
+    STRRAY_DIST=$dir
+    break
+  fi
+done
+
+if [ -z "$STRRAY_DIST" ]; then
+  exit 0
+fi
+
+# Run post-processor in background with Node.js
+node --input-type=module << EOF &>/dev/null || true
+import { PostProcessor } from './$STRRAY_DIST/postprocessor/PostProcessor.js';
+import { StrRayStateManager } from './$STRRAY_DIST/state/state-manager.js';
+
+const stateManager = new StrRayStateManager();
+const postProcessor = new PostProcessor(stateManager, null, { 
+  reporting: { enabled: false } 
+});
+
+const files = \`$FILES\`.split('\n').filter(f => f.endsWith('.ts') && !f.includes('.test.'));
+
+await postProcessor.executePostProcessorLoop({
+  commitSha: '$COMMIT_SHA',
+  repository: 'strray-framework/stringray',
+  branch: '$BRANCH',
+  author: '$AUTHOR',
+  files: files,
+  trigger: 'git-hook'
+});
+
+console.log('Post-processor completed for', files.length, 'files');
+EOF
+
+exit 0

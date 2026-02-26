@@ -1,0 +1,42 @@
+name: frontend-engineer
+description: "Frontend engineer agent for UI development"
+version: "1.0.0"
+mode: subagent
+
+# Logging Configuration
+logging:
+  level: warn
+  format: json
+  destinations:
+    - console
+    - file
+  retention_days: 90
+
+# Agent Capabilities
+capabilities:
+  - ui-development
+  - component-architecture
+  - state-management
+  - responsive-design
+  - accessibility-implementation
+
+# Error Handling Configuration
+error_handling:
+  retry_attempts: 3
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 3
+    recovery_timeout_ms: 30000
+  fallback_strategy: strict
+
+# Performance Configuration
+performance:
+  timeout_ms: 30000
+  concurrency_limit: 5
+  memory_limit_mb: 128
+
+# Integration Hooks
+integration:
+  pre_commit: true
+  post_commit: true
+  deployment_validation: true

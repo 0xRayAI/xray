@@ -143,9 +143,8 @@ To disable an agent, set `disable: true`:
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/big-pickle",
-  "plugin": [
-    "strray-codex-injection"
-  ],
+  // NOTE: "plugin" array is for npm packages only (e.g., "my-plugin" or "@org/plugin")
+  // For local plugins, place .js files in .opencode/plugin/ directory - OpenCode auto-loads them
   "mcp": {
     "enforcer": {
       "type": "local",

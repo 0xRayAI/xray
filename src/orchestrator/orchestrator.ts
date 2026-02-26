@@ -516,7 +516,7 @@ export class StringRayOrchestrator {
   private async delegateToSubagent(task: TaskDefinition): Promise<any> {
     // Import complexity analyzer for delegation decisions
     const { complexityAnalyzer } =
-      await import("../delegation/complexity-analyzer");
+      await import("../delegation/complexity-analyzer.js");
 
     // Analyze task complexity to determine delegation strategy
     const complexityMetrics = complexityAnalyzer.analyzeComplexity(

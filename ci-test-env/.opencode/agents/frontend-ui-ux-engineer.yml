@@ -1,0 +1,39 @@
+name: frontend-ui-ux-engineer
+description: "Frontend UI/UX Engineer - UI/UX design and user experience specialist"
+version: "1.0.0"
+mode: subagent
+
+# Logging Configuration
+logging:
+  level: warn
+  format: json
+  destinations:
+    - console
+    - file
+  retention_days: 30
+
+# Agent Capabilities
+capabilities:
+  - ui-design
+  - ux-design
+  - visual-design
+  - accessibility
+  - responsive-design
+  - design-systems
+  - component-design
+  - user-research
+
+# Error Handling Configuration
+error_handling:
+  retry_attempts: 3
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 3
+    recovery_timeout_ms: 30000
+  fallback_strategy: graceful
+
+# Performance Configuration
+performance:
+  timeout_ms: 30000
+  concurrency_limit: 3
+  memory_limit_mb: 128
