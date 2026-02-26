@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # StringRay Framework Version
-STRRAY_VERSION="1.6.9"
+STRRAY_VERSION="1.6.10"
 
 START_TIME=$(date +%s)
 
@@ -59,11 +59,17 @@ fi
 
 # Plugin status (check both dev and consumer paths)
 PLUGIN_DEV="$PROJECT_ROOT/.opencode/plugin/strray-codex-injection.js"
+PLUGIN_DEV_PLURAL="$PROJECT_ROOT/.opencode/plugins/strray-codex-injection.js"
 PLUGIN_CONSUMER="$PROJECT_ROOT/node_modules/strray-ai/.opencode/plugin/strray-codex-injection.js"
+PLUGIN_CONSUMER_PLURAL="$PROJECT_ROOT/node_modules/strray-ai/.opencode/plugins/strray-codex-injection.js"
 
 if [ -f "$PLUGIN_DEV" ]; then
     PLUGIN_STATUS="✅"
+elif [ -f "$PLUGIN_DEV_PLURAL" ]; then
+    PLUGIN_STATUS="✅"
 elif [ -f "$PLUGIN_CONSUMER" ]; then
+    PLUGIN_STATUS="✅"
+elif [ -f "$PLUGIN_CONSUMER_PLURAL" ]; then
     PLUGIN_STATUS="✅"
 else
     PLUGIN_STATUS="❌"
