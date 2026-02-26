@@ -14,6 +14,48 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { mcpClientManager } from "../mcps/mcp-client.js";
 import { testAutoGenerationMonitor } from "../monitoring/test-auto-generation-monitor.js";
 
+/**
+ * Find the most recently modified TypeScript file in a directory
+ * This is used as a fallback when filePath is not provided in the hook context
+ */
+function findRecentlyModifiedTsFile(
+  dir: string,
+  maxAgeSeconds: number = 10,
+): string | null {
+  try {
+    const files = fs.readdirSync(dir);
+    const now = Date.now();
+    const maxAgeMs = maxAgeSeconds * 1000;
+
+    let mostRecent: { path: string; mtime: number } | null = null;
+
+    for (const file of files) {
+      // Skip test files and non-ts files
+      if (!file.endsWith(".ts") || file.endsWith(".test.ts") || file.endsWith(".spec.ts")) {
+        continue;
+      }
+
+      const filePath = path.join(dir, file);
+      try {
+        const stats = fs.statSync(filePath);
+        const age = now - stats.mtimeMs;
+
+        if (age < maxAgeMs) {
+          if (!mostRecent || stats.mtimeMs > mostRecent.mtime) {
+            mostRecent = { path: file, mtime: stats.mtimeMs };
+          }
+        }
+      } catch {
+        // Skip files we can't stat
+      }
+    }
+
+    return mostRecent?.path || null;
+  } catch {
+    return null;
+  }
+}
+
 export const testAutoCreationProcessor = {
   name: "testAutoCreation",
   priority: 30,
@@ -51,12 +93,25 @@ export const testAutoCreationProcessor = {
 
       // Get file path from various possible locations in context
       // Check: innerContext.filePath, context.filePath, args.filePath, context.filePath
-      const filePath =
+      let filePath =
         outerFilePath ||
         contextFilePath ||
         args?.filePath ||
         args?.path ||
         innerContext.filePath;
+
+      // If no filePath from context, scan for recently modified files
+      if (!filePath && directory) {
+        console.log(`[test-auto-creation] No filePath in context, scanning for recent files in ${directory}...`);
+        
+        const recentFile = findRecentlyModifiedTsFile(directory, 10); // 10 seconds
+        if (recentFile) {
+          filePath = recentFile;
+          console.log(`[test-auto-creation] Found recent file: ${filePath}`);
+        } else {
+          console.log(`[test-auto-creation] No recent files found`);
+        }
+      }
 
       await frameworkLogger.log("test-auto-creation", "filepath-resolution", "info", {
         message: `Resolved filePath: ${filePath || 'UNDEFINED'}`,
