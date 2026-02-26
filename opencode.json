@@ -91,6 +91,42 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
+    "general": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "explore": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "oracle": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "document-writer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "multimodal-looker": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "frontend-ui-ux-engineer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "seo-specialist": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "seo-copywriter": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "marketing-expert": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
     "sisyphus": {
       "disable": true
     },
