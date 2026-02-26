@@ -77,20 +77,6 @@ function configureStrRayPlugin() {
     config.model = "openrouter/xai-grok-2-1212-fast-1";
   }
 
-  // Add plugin to the plugin array
-  if (!config.plugin) {
-    config.plugin = [];
-  }
-
-  const pluginPath = "strray/dist/plugin/strray-codex-injection.js";
-
-  if (!config.plugin.includes(pluginPath)) {
-    config.plugin.push(pluginPath);
-    console.log(`✅ Added StrRay plugin to configuration`);
-  } else {
-    console.log(`ℹ️ StrRay plugin already configured`);
-  }
-
   // Add StrRay agent configurations (only valid opencode agent config)
   if (!config.agent) {
     config.agent = {};
