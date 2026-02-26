@@ -98,7 +98,6 @@ function configureStrRayPlugin() {
 
   const strrayAgents = {
     orchestrator: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "enhanced-orchestrator": { model: "openrouter/xai-grok-2-1212-fast-1" },
     enforcer: { model: "openrouter/xai-grok-2-1212-fast-1" },
     architect: { model: "openrouter/xai-grok-2-1212-fast-1" },
     "test-architect": { model: "openrouter/xai-grok-2-1212-fast-1" },
@@ -106,6 +105,18 @@ function configureStrRayPlugin() {
     "code-reviewer": { model: "openrouter/xai-grok-2-1212-fast-1" },
     "security-auditor": { model: "openrouter/xai-grok-2-1212-fast-1" },
     refactorer: { model: "openrouter/xai-grok-2-1212-fast-1" },
+    librarian: { model: "openrouter/xai-grok-2-1212-fast-1" },
+    "log-monitor": { model: "openrouter/xai-grok-2-1212-fast-1" },
+    oracle: { model: "openrouter/xai-grok-2-1212-fast-1" },
+    "document-writer": { model: "openrouter/xai-grok-2-1212-fast-1" },
+    explore: { model: "openrouter/xai-grok-2-1212-fast-1" },
+    analyzer: { model: "openrouter/xai-grok-2-1212-fast-1" },
+    "frontend-ui-ux-engineer": { model: "openrouter/xai-grok-2-1212-fast-1" },
+    "seo-specialist": { model: "openrouter/xai-grok-2-1212-fast-1" },
+    "seo-copywriter": { model: "openrouter/xai-grok-2-1212-fast-1" },
+    "marketing-expert": { model: "openrouter/xai-grok-2-1212-fast-1" },
+    general: { model: "openrouter/xai-grok-2-1212-fast-1" },
+    "multimodal-looker": { model: "openrouter/xai-grok-2-1212-fast-1" },
   };
 
   let agentsAdded = 0;

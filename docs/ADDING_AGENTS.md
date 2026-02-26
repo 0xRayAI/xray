@@ -57,6 +57,18 @@ Add MCP server configuration in `serverConfigs`:
 
 Also update `strray_get_commands` tool to include the new agent.
 
+### 3. `scripts/node/setup.cjs` (REQUIRED for consumer install)
+Add the agent to the `strrayAgents` object so it gets added to opencode.json when user runs `npx strray-ai setup`:
+
+```javascript
+const strrayAgents = {
+  // ... existing agents ...
+  "new-agent": { model: "openrouter/xai-grok-2-1212-fast-1" },
+};
+```
+
+**Note:** `setup.cjs` is run manually by consumers with `npx strray-ai setup` - it's NOT called automatically during npm install.
+
 ### 3. `src/mcps/framework-help.server.ts` (REQUIRED)
 Update the `agent-commands` case to include the new agent:
 
