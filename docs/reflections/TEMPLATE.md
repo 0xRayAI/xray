@@ -1,9 +1,26 @@
-# AI Agent Reflection Template (v1.0)
+# AI Agent Reflection Template (v1.1)
 ## Mandatory Structure for All StringRay Reflections
 
 **Location:** `./docs/reflections/[descriptive-name]-reflection.md`  
 **Required:** After ANY session >30 minutes or involving significant debugging/deployment  
 **Purpose:** Glean wisdom from experience - what was, what is, what should be
+
+---
+
+## When to Write Reflections (Triggered By)
+
+Reflections should be automatically suggested by the post-commit hook when commits contain:
+- Debugging sessions (any "fix", "bug", "debug" in commit message)
+- Path-related changes (consumer vs dev paths)
+- MCP/framework infrastructure changes
+- Publishing to npm
+- Any session longer than 30 minutes
+
+The post-commit hook will display:
+```
+📝 Reflection Suggestion: This commit appears to involve debugging, fixes, or significant changes.
+   Consider writing a reflection using the template at docs/reflections/TEMPLATE.md
+```
 
 ---
 
@@ -267,6 +284,12 @@ Every reflection must produce:
 ### 6. Write for Future You
 Assume you'll face this again. Make the reflection detailed enough that future you can follow the recovery steps.
 
+### 7. Verify Your Assumptions in Clean Environments
+When debugging:
+- Local dev ≠ Consumer installation (create fresh npm projects)
+- Code that exists ≠ Code that executes (verify function calls)
+- Working locally ≠ Working everywhere (test in isolation)
+
 ---
 
 ## Reflection Checklist (Before Marking Complete)
@@ -351,7 +374,9 @@ Assume you'll face this again. Make the reflection detailed enough that future y
 
 ---
 
-**Version:** 1.0  
-**Last Updated:** 2026-02-01  
+**Version:** 1.1  
+**Last Updated:** 2026-02-27  
 **Enforced By:** enforcer agent - All reflections MUST follow this template  
 **Location:** This template should be read by ALL agents before writing reflections
+
+**v1.1 Changes:** Added reflection trigger guidance (post-commit hook), added Golden Rule #7 about testing in clean environments

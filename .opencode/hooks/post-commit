@@ -1,6 +1,7 @@
 #!/bin/bash
 # StrRay Post-Processor post-commit Hook
-# Automatically triggers post-processor after post-commit
+# Automatically triggers post-processor after commit
+# Suggests reflection writing for significant changes
 
 set -e
 
@@ -15,6 +16,18 @@ fi
 
 # Get changed files
 FILES=$(git diff --name-only HEAD~1 2>/dev/null || git diff --name-only --cached)
+
+# Get commit message for reflection decision
+COMMIT_MSG=$(git log -1 --pretty=format:'%s')
+
+# Check if this commit warrants reflection
+# (debugging, bug fixes, path issues, significant changes)
+REFLECTION_TRIGGERS="debug|fix|bug|path|mcp|consumer|installation|reflection"
+if echo "$COMMIT_MSG" | grep -qiE "$REFLECTION_TRIGGERS"; then
+  echo "📝 Reflection Suggestion: This commit appears to involve debugging, fixes, or significant changes."
+  echo "   Consider writing a reflection using the template at docs/reflections/TEMPLATE.md"
+  echo ""
+fi
 
 # For consumer projects, always use the full node_modules path to avoid symlink issues
 # This ensures imports resolve correctly
