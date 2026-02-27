@@ -325,6 +325,32 @@ export class LibrarianAgentsUpdater {
       sections.push("");
     }
 
+    // Add plugin systems clarification (IMPORTANT)
+    sections.push("## Plugin Systems (IMPORTANT: Two Different Systems!)");
+    sections.push("");
+    sections.push("StringRay has **two distinct plugin systems** - do NOT confuse them:");
+    sections.push("");
+    sections.push("### 1. OpenCode Plugin (`.opencode/plugin/`)");
+    sections.push("**Purpose:** Injects StringRay into OpenCode framework");
+    sections.push("- Location: `.opencode/plugin/strray-codex-injection.js`");
+    sections.push("- What it does: Injects Universal Development Codex into OpenCode's AI agents");
+    sections.push("- For: OpenCode integration, NOT for third-party extensions");
+    sections.push("");
+    sections.push("### 2. StringRay Plugin Ecosystem (`src/plugins/`)");
+    sections.push("**Purpose:** Third-party plugin system for extending StringRay");
+    sections.push("- Location: `src/plugins/`");
+    sections.push("- Components:");
+    sections.push("  - `plugin-system.ts` - Core: PluginRegistry, PluginSandbox, PluginValidator");
+    sections.push("  - `marketplace/` - Plugin discovery and download service");
+    sections.push("- What it does: Allows third-party developers to create custom agents");
+    sections.push("- For: Third-party plugins, NOT OpenCode integration");
+    sections.push("");
+    sections.push("### Quick Reference");
+    sections.push("| What You Want | Use This |");
+    sections.push("|---------------|----------|");
+    sections.push("| Extend StringRay with custom agents | `src/plugins/` |");
+    sections.push("| Inject codex into OpenCode | `.opencode/plugin/` |");
+
     sections.push("---");
     sections.push(
       "*This AGENTS.md is auto-maintained by StringRay AI Librarian*",

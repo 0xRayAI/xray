@@ -73,8 +73,11 @@ describe('Agent Configuration', () => {
     const agentsPath = path.join(process.cwd(), 'AGENTS.md');
     expect(fs.existsSync(agentsPath)).toBe(true);
     const content = fs.readFileSync(agentsPath, 'utf-8');
-    expect(content).toContain('Antigravity');
-    expect(content).toContain('StringRay Agents (21)');
+    // New format checks
+    expect(content).toContain('Project Agents Guide');
+    expect(content).toContain('Plugin Systems');
+    expect(content).toContain('src/plugins/');
+    expect(content).toContain('.opencode/plugin/');
   });
 });
 
