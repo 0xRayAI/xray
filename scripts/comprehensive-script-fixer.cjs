@@ -5,11 +5,22 @@
  * 
  * Fixes common path resolution, module import, and build issues
  * across all framework scripts in one execution.
+ * 
+ * ⚠️ WARNING: This script MODIFIES source files!
+ * Run with --force flag to execute: node comprehensive-script-fixer.cjs --force
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+
+// Safety check - require --force flag
+if (!process.argv.includes('--force')) {
+  console.log('⚠️  This script MODIFIES source files.');
+  console.log('   Run with --force flag to execute:');
+  console.log('   node comprehensive-script-fixer.cjs --force');
+  process.exit(0);
+}
 
 class ScriptFixer {
   constructor() {
