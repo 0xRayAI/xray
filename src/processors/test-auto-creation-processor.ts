@@ -264,29 +264,94 @@ export const testAutoCreationProcessor = {
         },
       );
 
-      // Skip MCP for now - use direct fallback which is more reliable
-      // TODO: Fix MCP integration later
-      await frameworkLogger.log(
-        "test-auto-creation",
-        "using-direct-fallback",
-        "info",
-        {
-          message: `Skipping MCP, using direct test creation for ${filePath}`,
-        },
-      );
+      // Try MCP first, fallback to direct method if it fails
+      let mcpSuccess = false;
+      
+      try {
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "mcp-call-start",
+          "info",
+          {
+            message: `Calling MCP testing-strategy for test generation`,
+          },
+        );
 
-      await createBasicTestStub(fullTestPath, filePath, exports);
+        // Call testing-strategy MCP server directly (not through skill-invocation)
+        const mcpResult = await mcpClientManager.callServerTool(
+          "testing-strategy",
+          "generate-test-file",
+          {
+            sourceFile: filePath,
+            sourceContent,
+            exports: exports.map((e: { name: string; type: string; params: string; returnType: string }) => ({
+              name: e.name,
+              type: e.type,
+            })),
+            testFilePath,
+            directory,
+          },
+        );
 
-      await frameworkLogger.log(
-        "test-auto-creation",
-        "test-stub-created",
-        "success",
-        {
-          message: `Basic test stub created for ${filePath}`,
-          testFile: testFilePath,
-          exportsCount: exports.length,
-        },
-      );
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "mcp-call-result",
+          "info",
+          {
+            message: `MCP result: ${JSON.stringify(mcpResult).slice(0, 200)}`,
+          },
+        );
+
+        // Check if MCP actually created the file
+        const testCreated = fs.existsSync(fullTestPath);
+        
+        if (testCreated) {
+          await frameworkLogger.log(
+            "test-auto-creation",
+            "tests-generated-mcp",
+            "success",
+            {
+              message: `Tests auto-generated via MCP for ${filePath}`,
+              testFile: testFilePath,
+            },
+          );
+          mcpSuccess = true;
+        }
+      } catch (mcpError) {
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "mcp-failed",
+          "info",
+          {
+            message: `MCP failed: ${mcpError instanceof Error ? mcpError.message : String(mcpError)}, using fallback`,
+          },
+        );
+      }
+
+      // If MCP didn't succeed, use direct fallback
+      if (!mcpSuccess) {
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "using-direct-fallback",
+          "info",
+          {
+            message: `Using direct test creation for ${filePath}`,
+          },
+        );
+
+        await createBasicTestStub(fullTestPath, filePath, exports);
+
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "test-stub-created",
+          "success",
+          {
+            message: `Basic test stub created for ${filePath}`,
+            testFile: testFilePath,
+            exportsCount: exports.length,
+          },
+        );
+      }
 
       return {
         success: true,

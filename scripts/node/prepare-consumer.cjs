@@ -14,6 +14,73 @@ console.log('🔧 StrRay Consumer Preparation: Transforming development paths ba
 // Script is in scripts/node/, so package root is two levels up
 const packageRoot = path.join(__dirname, "..", "..");
 
+/**
+ * Fix relative imports in MCP servers
+ * In dev: mcps/ imports from ../../core/ (resolves to src/core/)
+ * In consumer: mcps/ needs to import from ../../dist/core/ (resolves to dist/core/)
+ */
+function fixMCPServerImports() {
+  console.log("🔧 Fixing MCP server relative imports...");
+  
+  const distPath = path.join(packageRoot, "dist");
+  const mcpsPath = path.join(distPath, "mcps");
+  
+  if (!fs.existsSync(mcpsPath)) {
+    console.warn("⚠️ dist/mcps/ folder not found. Run npm run build first.");
+    return;
+  }
+  
+  let modifiedCount = 0;
+  
+  function processFile(filePath) {
+    try {
+      let content = fs.readFileSync(filePath, 'utf-8');
+      const originalContent = content;
+      
+      // Fix relative imports: ../../core/ -> ../../dist/core/
+      // This is because MCP servers are at dist/mcps/xxx.server.js
+      // and core is at dist/core/, so we need the extra /dist/
+      content = content.replace(
+        /from "\.\.\/\.\.\/core\//g,
+        'from "../../dist/core/'
+      );
+      content = content.replace(
+        /from "\.\.\/\.\.\/utils\//g,
+        'from "../../dist/utils/'
+      );
+      
+      if (content !== originalContent) {
+        fs.writeFileSync(filePath, content);
+        modifiedCount++;
+        console.log(`  ✅ Fixed: ${path.relative(distPath, filePath)}`);
+      }
+    } catch (error) {
+      console.error(`  ❌ Error processing ${filePath}:`, error.message);
+    }
+  }
+  
+  function walkDir(dir) {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        
+        if (entry.isDirectory()) {
+          walkDir(fullPath);
+        } else if (entry.name.endsWith('.js')) {
+          processFile(fullPath);
+        }
+      }
+    } catch (error) {
+      console.warn(`  not read ⚠️ Could directory ${dir}:`, error.message);
+    }
+  }
+  
+  walkDir(mcpsPath);
+  console.log(`🎉 Fixed imports in ${modifiedCount} MCP server files`);
+}
+
 function updatePathsInFile(filePath) {
   try {
     if (!fs.existsSync(filePath)) {

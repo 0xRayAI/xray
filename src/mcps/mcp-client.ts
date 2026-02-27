@@ -81,31 +81,11 @@ export class MCPClient {
     const jobId = `mcp-call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     try {
-      frameworkLogger.log(
-        "mcp-client",
-        `calling tool ${toolName} on ${this.config.serverName}`,
-        "info",
-        { jobId, args },
-      );
-
       // Use real MCP server call via spawn
       const result = await this.executeRealMCPCall(toolName, args);
 
-      frameworkLogger.log(
-        "mcp-client",
-        `tool ${toolName} executed successfully`,
-        "success",
-        { jobId },
-      );
-
       return result;
     } catch (error) {
-      frameworkLogger.log(
-        "mcp-client",
-        `tool ${toolName} execution failed: ${error instanceof Error ? error.message : String(error)}`,
-        "error",
-        { jobId, error },
-      );
       throw error;
     }
   }
@@ -603,12 +583,6 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
 
       serverProcess.on("close", (code) => {
         // Always kill the process after completion to prevent leaks
-        frameworkLogger.log(
-          "mcp-client",
-          `Killing MCP server process after completion (code: ${code})`,
-          "info",
-          { jobId, server: this.config.serverName },
-        );
         serverProcess.kill();
         clearTimeout(timeoutId);
         
@@ -718,26 +692,24 @@ export class MCPClientManager {
 
   /**
    * Create client configuration for a server
+   * 
+   * Path Strategy:
+   * - Consumer projects: Use node_modules/strray-ai/dist/ (default)
+   * - Dev mode: Set STRRAY_DEV_PATH=dist to use local build
    */
   public createClientConfig(serverName: string): MCPClientConfig {
-    // COMMENTED OUT: No longer loading from .mcp.json for lazy loading approach
-    // const loadedConfig = this.loadServerConfig(serverName);
-    // if (loadedConfig) {
-    //   return loadedConfig;
-    // }
-
-    // Fallback to hardcoded configurations
-    frameworkLogger.log(
-      "mcp-client",
-      `Using fallback config for ${serverName}`,
-      "info",
-    );
+    // For consumer projects: default to node_modules/strray-ai/dist/
+    // For local dev: use STRRAY_DEV_PATH env var (e.g., "dist")
+    const basePath = process.env.STRRAY_DEV_PATH 
+      ? process.env.STRRAY_DEV_PATH 
+      : "node_modules/strray-ai/dist";
+    
     const serverConfigs: Record<string, MCPClientConfig> = {
       "code-review": {
         serverName: "code-review",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/code-review.server.js`,
+          `${basePath}/mcps/knowledge-skills/code-review.server.js`,
         ],
         timeout: 30000,
       },
@@ -745,7 +717,7 @@ export class MCPClientManager {
         serverName: "security-audit",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/security-audit.server.js`,
+          `${basePath}/mcps/knowledge-skills/security-audit.server.js`,
         ],
         timeout: 45000,
       },
@@ -753,7 +725,7 @@ export class MCPClientManager {
         serverName: "performance-optimization",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/performance-optimization.server.js`,
+          `${basePath}/mcps/knowledge-skills/performance-optimization.server.js`,
         ],
         timeout: 30000,
       },
@@ -761,7 +733,7 @@ export class MCPClientManager {
         serverName: "testing-strategy",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/testing-strategy.server.js`,
+          `${basePath}/mcps/knowledge-skills/testing-strategy.server.js`,
         ],
         timeout: 25000,
       },
@@ -769,7 +741,7 @@ export class MCPClientManager {
         serverName: "librarian",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/project-analysis.server.js`,
+          `${basePath}/mcps/knowledge-skills/project-analysis.server.js`,
         ],
         timeout: 60000,
       },
@@ -777,7 +749,7 @@ export class MCPClientManager {
         serverName: "framework-help",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/framework-help.server.js`,
+          `${basePath}/mcps/framework-help.server.js`,
         ],
         timeout: 15000,
       },
@@ -785,7 +757,7 @@ export class MCPClientManager {
         serverName: "skill-invocation",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/skill-invocation.server.js`,
+          `${basePath}/mcps/knowledge-skills/skill-invocation.server.js`,
         ],
         timeout: 30000,
       },
@@ -793,7 +765,7 @@ export class MCPClientManager {
         serverName: "explore",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/project-analysis.server.js`,
+          `${basePath}/mcps/knowledge-skills/project-analysis.server.js`,
         ],
         timeout: 25000,
       },
@@ -801,7 +773,7 @@ export class MCPClientManager {
         serverName: "document-writer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/documentation-generation.server.js`,
+          `${basePath}/mcps/knowledge-skills/documentation-generation.server.js`,
         ],
         timeout: 45000,
       },
@@ -809,7 +781,7 @@ export class MCPClientManager {
         serverName: "frontend-ui-ux-engineer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/ui-ux-design.server.js`,
+          `${basePath}/mcps/knowledge-skills/ui-ux-design.server.js`,
         ],
         timeout: 35000,
       },
@@ -817,7 +789,7 @@ export class MCPClientManager {
         serverName: "enforcer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/enforcer-tools.server.js`,
+          `${basePath}/mcps/enforcer-tools.server.js`,
         ],
         timeout: 30000,
       },
@@ -825,7 +797,7 @@ export class MCPClientManager {
         serverName: "orchestrator",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/orchestrator.server.js`,
+          `${basePath}/mcps/orchestrator.server.js`,
         ],
         timeout: 60000,
       },
@@ -833,7 +805,7 @@ export class MCPClientManager {
         serverName: "architect",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/architect-tools.server.js`,
+          `${basePath}/mcps/architect-tools.server.js`,
         ],
         timeout: 45000,
       },
@@ -841,7 +813,7 @@ export class MCPClientManager {
         serverName: "backend-engineer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/api-design.server.js`,
+          `${basePath}/mcps/knowledge-skills/api-design.server.js`,
         ],
         timeout: 40000,
       },
@@ -849,7 +821,7 @@ export class MCPClientManager {
         serverName: "bug-triage-specialist",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/bug-triage-specialist.server.js`,
+          `${basePath}/mcps/knowledge-skills/bug-triage-specialist.server.js`,
         ],
         timeout: 30000,
       },
@@ -857,7 +829,7 @@ export class MCPClientManager {
         serverName: "log-monitor",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/log-monitor.server.js`,
+          `${basePath}/mcps/knowledge-skills/log-monitor.server.js`,
         ],
         timeout: 30000,
       },
@@ -865,7 +837,7 @@ export class MCPClientManager {
         serverName: "multimodal-looker",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/multimodal-looker.server.js`,
+          `${basePath}/mcps/knowledge-skills/multimodal-looker.server.js`,
         ],
         timeout: 40000,
       },
@@ -873,7 +845,7 @@ export class MCPClientManager {
         serverName: "analyzer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/analyzer.server.js`,
+          `${basePath}/mcps/knowledge-skills/analyzer.server.js`,
         ],
         timeout: 45000,
       },
@@ -881,7 +853,7 @@ export class MCPClientManager {
         serverName: "seo-specialist",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/seo-specialist.server.js`,
+          `${basePath}/mcps/knowledge-skills/seo-specialist.server.js`,
         ],
         timeout: 30000,
       },
@@ -889,7 +861,7 @@ export class MCPClientManager {
         serverName: "seo-copywriter",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/seo-copywriter.server.js`,
+          `${basePath}/mcps/knowledge-skills/seo-copywriter.server.js`,
         ],
         timeout: 30000,
       },
@@ -897,7 +869,7 @@ export class MCPClientManager {
         serverName: "marketing-expert",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/marketing-expert.server.js`,
+          `${basePath}/mcps/knowledge-skills/marketing-expert.server.js`,
         ],
         timeout: 45000,
       },
@@ -906,7 +878,7 @@ export class MCPClientManager {
         serverName: "code-reviewer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/code-review.server.js`,
+          `${basePath}/mcps/knowledge-skills/code-review.server.js`,
         ],
         timeout: 30000,
       },
@@ -914,7 +886,7 @@ export class MCPClientManager {
         serverName: "security-auditor",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/security-audit.server.js`,
+          `${basePath}/mcps/knowledge-skills/security-audit.server.js`,
         ],
         timeout: 45000,
       },
@@ -922,7 +894,7 @@ export class MCPClientManager {
         serverName: "refactorer",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/refactoring-strategies.server.js`,
+          `${basePath}/mcps/knowledge-skills/refactoring-strategies.server.js`,
         ],
         timeout: 40000,
       },
@@ -930,7 +902,7 @@ export class MCPClientManager {
         serverName: "test-architect",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/testing-strategy.server.js`,
+          `${basePath}/mcps/knowledge-skills/testing-strategy.server.js`,
         ],
         timeout: 30000,
       },
@@ -938,7 +910,7 @@ export class MCPClientManager {
         serverName: "oracle",
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/project-analysis.server.js`,
+          `${basePath}/mcps/knowledge-skills/project-analysis.server.js`,
         ],
         timeout: 60000,
       },
@@ -949,7 +921,7 @@ export class MCPClientManager {
         serverName,
         command: "node",
         args: [
-          `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/${serverName}.server.js`,
+          `${basePath}/mcps/knowledge-skills/${serverName}.server.js`,
         ],
         timeout: 30000,
       }
