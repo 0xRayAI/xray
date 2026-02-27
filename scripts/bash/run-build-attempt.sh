@@ -1,1 +1,1 @@
-npm run build:plugin 2>&1
+npm run build 2>&1

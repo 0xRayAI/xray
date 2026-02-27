@@ -10,6 +10,10 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const TEST_TIMEOUT = 30000; // 30 seconds
 const DEV_ENV = fs.existsSync('./src') && fs.existsSync('./package.json');
@@ -37,10 +41,14 @@ async function runComprehensiveTests() {
     // 1. Test plugin file existence
     console.log('📦 1. Testing plugin file...');
     // In dev mode, check for source file; in consumer mode, check for built file
-    const devPluginPath = './src/plugin/strray-codex-injection.ts';
-    const devPluginPathAlt = './src/plugins/strray-codex-injection.ts';
-    const devDistPath = './dist/plugin/strray-codex-injection.js';
-    const consumerPluginPath = path.resolve('./.opencode', '../node_modules/strray-ai/dist/plugin/strray-codex-injection.js');
+    // Use __dirname to get absolute paths relative to script location
+    const scriptDir = path.dirname(__filename);
+    const projectRoot = path.resolve(scriptDir, '..', '..');
+    
+    const devPluginPath = path.resolve(projectRoot, './src/plugin/strray-codex-injection.ts');
+    const devPluginPathAlt = path.resolve(projectRoot, './src/plugins/strray-codex-injection.ts');
+    const devDistPath = path.resolve(projectRoot, './dist/plugin/strray-codex-injection.js');
+    const consumerPluginPath = path.resolve(projectRoot, './node_modules/strray-ai/dist/plugin/strray-codex-injection.js');
     
     // In dev mode, prefer dist file for loading
     const pluginPath = DEV_ENV
