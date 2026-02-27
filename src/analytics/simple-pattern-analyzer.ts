@@ -1,16 +1,16 @@
 /**
  * Simple Pattern Analyzer for StringRay
- * 
+ *
  * Reads activity log → Counts patterns → Generates insights
- * 
+ *
  * This is the "learning" system - simple pattern matching, not ML.
- * 
+ *
  * @version 1.0.0
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import type { Outcome, ComplexityAccuracy } from '../core/framework-logger.js';
+import * as fs from "fs";
+import * as path from "path";
+import type { Outcome, ComplexityAccuracy } from "../core/framework-logger.js";
 
 export interface ParsedLogEntry {
   timestamp: string;
@@ -62,7 +62,8 @@ export class SimplePatternAnalyzer {
 
   constructor(logPath?: string) {
     const cwd = process.cwd();
-    this.logPath = logPath || path.join(cwd, 'logs', 'framework', 'activity.log');
+    this.logPath =
+      logPath || path.join(cwd, "logs", "framework", "activity.log");
   }
 
   /**
@@ -73,13 +74,13 @@ export class SimplePatternAnalyzer {
       return this.emptyInsights();
     }
 
-    const content = fs.readFileSync(this.logPath, 'utf-8');
-    const lines = content.split('\n').filter(l => l.trim());
-    
+    const content = fs.readFileSync(this.logPath, "utf-8");
+    const lines = content.split("\n").filter((l) => l.trim());
+
     // Parse entries (newest first if no limit, otherwise get last N)
     const entriesToAnalyze = limit ? lines.slice(-limit) : lines;
     const entries = entriesToAnalyze
-      .map(line => this.parseLine(line))
+      .map((line) => this.parseLine(line))
       .filter((e): e is ParsedLogEntry => e !== null);
 
     if (entries.length === 0) {
@@ -95,7 +96,7 @@ export class SimplePatternAnalyzer {
   private parseLine(line: string): ParsedLogEntry | null {
     // Format: 2026-02-24T10:30:00.000Z [job-123-abc] [component] action - STATUS
     const match = line.match(
-      /^(\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/
+      /^(\d{4}-\d{2}-\d{2}T[\d:.]+Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/,
     );
 
     if (!match) {
@@ -103,15 +104,15 @@ export class SimplePatternAnalyzer {
     }
 
     const [, timestamp, jobId, component, actionRaw, statusRaw] = match;
-    
+
     // Parse action and any embedded details
-    const action = actionRaw?.trim() || 'unknown';
-    const status = statusRaw?.toLowerCase() || 'info';
-    
+    const action = actionRaw?.trim() || "unknown";
+    const status = statusRaw?.toLowerCase() || "info";
+
     return {
-      timestamp: timestamp || '',
-      jobId: jobId || '',
-      component: component || 'unknown',
+      timestamp: timestamp || "",
+      jobId: jobId || "",
+      component: component || "unknown",
       action,
       status,
     };
@@ -131,13 +132,13 @@ export class SimplePatternAnalyzer {
     };
 
     // Filter to job-completed entries (they have the analytics data)
-    const completedEntries = entries.filter(e => 
-      e.action === 'job-completed' || e.action.includes('completed')
+    const completedEntries = entries.filter(
+      (e) => e.action === "job-completed" || e.action.includes("completed"),
     );
 
     for (const entry of completedEntries) {
-      const agent = entry.agentUsed || entry.component || 'unknown';
-      
+      const agent = entry.agentUsed || entry.component || "unknown";
+
       // Agent stats
       if (!agentStats.has(agent)) {
         agentStats.set(agent, {
@@ -150,34 +151,35 @@ export class SimplePatternAnalyzer {
           totalDuration: 0,
         });
       }
-      
+
       const stats = agentStats.get(agent)!;
       stats.attempts++;
-      
+
       if (entry.duration) {
         stats.totalDuration += entry.duration;
         stats.avgDuration = stats.totalDuration / stats.attempts;
       }
 
       // Outcome tracking
-      const outcome = entry.outcome || (entry.status === 'success' ? 'success' : 'fail');
+      const outcome =
+        entry.outcome || (entry.status === "success" ? "success" : "fail");
       switch (outcome) {
-        case 'success':
+        case "success":
           stats.successes++;
           break;
-        case 'fail':
+        case "fail":
           stats.failures++;
           break;
-        case 'escalated':
+        case "escalated":
           stats.escalated++;
           break;
-        case 'auto-fixed':
+        case "auto-fixed":
           stats.autoFixed++;
           break;
       }
 
       // Task type stats
-      const taskType = entry.operationType || 'unknown';
+      const taskType = entry.operationType || "unknown";
       if (!taskTypeStats.has(taskType)) {
         taskTypeStats.set(taskType, {
           count: 0,
@@ -185,27 +187,27 @@ export class SimplePatternAnalyzer {
           avgComplexity: 0,
         });
       }
-      
+
       const taskStat = taskTypeStats.get(taskType)!;
       taskStat.count++;
       if (entry.complexityScore) {
-        taskStat.avgComplexity = (
-          (taskStat.avgComplexity * (taskStat.count - 1) + entry.complexityScore) 
-          / taskStat.count
-        );
+        taskStat.avgComplexity =
+          (taskStat.avgComplexity * (taskStat.count - 1) +
+            entry.complexityScore) /
+          taskStat.count;
       }
 
       // Complexity accuracy
       if (entry.complexityAccuracy) {
         complexityStats.total++;
         switch (entry.complexityAccuracy) {
-          case 'underestimated':
+          case "underestimated":
             complexityStats.underestimated++;
             break;
-          case 'accurate':
+          case "accurate":
             complexityStats.accurate++;
             break;
-          case 'overestimated':
+          case "overestimated":
             complexityStats.overestimated++;
             break;
         }
@@ -221,16 +223,21 @@ export class SimplePatternAnalyzer {
 
     for (const [taskType, stats] of taskTypeStats) {
       const agentStatsForTask = Array.from(agentStats.values()).reduce(
-        (acc, s) => ({ attempts: acc.attempts + s.attempts, successes: acc.successes + s.successes }),
-        { attempts: 0, successes: 0 }
+        (acc, s) => ({
+          attempts: acc.attempts + s.attempts,
+          successes: acc.successes + s.successes,
+        }),
+        { attempts: 0, successes: 0 },
       );
-      stats.successRate = agentStatsForTask.attempts > 0 
-        ? (agentStatsForTask.successes / agentStatsForTask.attempts) * 100 
-        : 0;
+      stats.successRate =
+        agentStatsForTask.attempts > 0
+          ? (agentStatsForTask.successes / agentStatsForTask.attempts) * 100
+          : 0;
     }
 
-    const sortedEntries = [...entries].sort((a, b) => 
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    const sortedEntries = [...entries].sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
     return {
@@ -239,8 +246,8 @@ export class SimplePatternAnalyzer {
       complexityStats,
       totalEntries: entries.length,
       dateRange: {
-        start: sortedEntries[0]?.timestamp || '',
-        end: sortedEntries[sortedEntries.length - 1]?.timestamp || '',
+        start: sortedEntries[0]?.timestamp || "",
+        end: sortedEntries[sortedEntries.length - 1]?.timestamp || "",
       },
     };
   }
@@ -252,48 +259,51 @@ export class SimplePatternAnalyzer {
     const output: string[] = [];
 
     if (insights.totalEntries === 0) {
-      return ['No activity log entries found.'];
+      return ["No activity log entries found."];
     }
 
     // Agent performance
-    output.push('=== Agent Performance ===');
+    output.push("=== Agent Performance ===");
     for (const [agent, stats] of insights.agentStats) {
-      const successRate = stats.attempts > 0 
-        ? ((stats.successes / stats.attempts) * 100).toFixed(1) 
-        : '0.0';
-      const avgDuration = stats.avgDuration > 0 
-        ? (stats.avgDuration / 1000).toFixed(1) + 's'
-        : 'N/A';
-      
+      const successRate =
+        stats.attempts > 0
+          ? ((stats.successes / stats.attempts) * 100).toFixed(1)
+          : "0.0";
+      const avgDuration =
+        stats.avgDuration > 0
+          ? (stats.avgDuration / 1000).toFixed(1) + "s"
+          : "N/A";
+
       output.push(
-        `- ${agent}: ${successRate}% success (${stats.attempts} tasks), avg ${avgDuration}`
+        `- ${agent}: ${successRate}% success (${stats.attempts} tasks), avg ${avgDuration}`,
       );
     }
 
     // Complexity accuracy
-    output.push('');
-    output.push('=== Complexity Accuracy ===');
-    const { underestimated, accurate, overestimated, total } = insights.complexityStats;
+    output.push("");
+    output.push("=== Complexity Accuracy ===");
+    const { underestimated, accurate, overestimated, total } =
+      insights.complexityStats;
     if (total > 0) {
       output.push(
-        `- Underestimated: ${((underestimated / total) * 100).toFixed(1)}% (tasks took longer than predicted)`
+        `- Underestimated: ${((underestimated / total) * 100).toFixed(1)}% (tasks took longer than predicted)`,
       );
       output.push(
-        `- Accurate: ${((accurate / total) * 100).toFixed(1)}% (predictions within 50%)`
+        `- Accurate: ${((accurate / total) * 100).toFixed(1)}% (predictions within 50%)`,
       );
       output.push(
-        `- Overestimated: ${((overestimated / total) * 100).toFixed(1)}% (tasks completed faster than predicted)`
+        `- Overestimated: ${((overestimated / total) * 100).toFixed(1)}% (tasks completed faster than predicted)`,
       );
     } else {
-      output.push('- Not enough data to determine accuracy');
+      output.push("- Not enough data to determine accuracy");
     }
 
     // Task type breakdown
-    output.push('');
-    output.push('=== Task Types ===');
+    output.push("");
+    output.push("=== Task Types ===");
     for (const [taskType, stats] of insights.taskTypeStats) {
       output.push(
-        `- ${taskType}: ${stats.count} tasks, avg complexity ${stats.avgComplexity.toFixed(0)}`
+        `- ${taskType}: ${stats.count} tasks, avg complexity ${stats.avgComplexity.toFixed(0)}`,
       );
     }
 
@@ -308,20 +318,20 @@ export class SimplePatternAnalyzer {
     const insightsLines = this.generateInsights(insights);
 
     const report = [
-      '╔════════════════════════════════════════════════════════════╗',
-      '║           StringRay Pattern Analytics Report             ║',
-      '╚════════════════════════════════════════════════════════════╝',
-      '',
+      "╔════════════════════════════════════════════════════════════╗",
+      "║           StringRay Pattern Analytics Report             ║",
+      "╚════════════════════════════════════════════════════════════╝",
+      "",
       `Analyzed: ${insights.totalEntries} log entries`,
-      `Date Range: ${insights.dateRange.start || 'N/A'} to ${insights.dateRange.end || 'N/A'}`,
-      '',
+      `Date Range: ${insights.dateRange.start || "N/A"} to ${insights.dateRange.end || "N/A"}`,
+      "",
       ...insightsLines,
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'Generated by StringRay Simple Pattern Analyzer',
+      "",
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+      "Generated by StringRay Simple Pattern Analyzer",
     ];
 
-    return report.join('\n');
+    return report.join("\n");
   }
 
   private emptyInsights(): PatternInsights {
@@ -335,7 +345,7 @@ export class SimplePatternAnalyzer {
         total: 0,
       },
       totalEntries: 0,
-      dateRange: { start: '', end: '' },
+      dateRange: { start: "", end: "" },
     };
   }
 }

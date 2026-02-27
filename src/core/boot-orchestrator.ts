@@ -671,16 +671,19 @@ export class BootOrchestrator {
     // Each BootOrchestrator instantiation was adding duplicate listeners
     let currentListenerCount = 0;
     try {
-      if (typeof memoryMonitor.listenerCount === 'function') {
+      if (typeof memoryMonitor.listenerCount === "function") {
         currentListenerCount = memoryMonitor.listenerCount("alert");
-      } else if (memoryMonitor.listeners && typeof memoryMonitor.listeners === 'function') {
+      } else if (
+        memoryMonitor.listeners &&
+        typeof memoryMonitor.listeners === "function"
+      ) {
         currentListenerCount = memoryMonitor.listeners("alert").length;
       }
     } catch (e) {
       // Fallback: assume no listeners if we can't determine count
       currentListenerCount = 0;
     }
-    
+
     if (currentListenerCount === 0) {
       // First time setup - add the memory alert handler
       memoryMonitor.on("alert", (alert: any) => {
@@ -719,7 +722,10 @@ export class BootOrchestrator {
     }
 
     // Attach the listener to the memory monitor only if none exist
-    if (this.memoryMonitorListener && memoryMonitor.listenerCount("alert") === 0) {
+    if (
+      this.memoryMonitorListener &&
+      memoryMonitor.listenerCount("alert") === 0
+    ) {
       memoryMonitor.on("alert", this.memoryMonitorListener);
     }
 

@@ -125,7 +125,11 @@ export class AgentDelegator {
       },
       {
         name: "orchestrator",
-        capabilities: ["task-coordination", "multi-agent-management", "workflow-orchestration"],
+        capabilities: [
+          "task-coordination",
+          "multi-agent-management",
+          "workflow-orchestration",
+        ],
         status: "active",
         expertise: "orchestrating complex multi-agent workflows",
         capacity: 90,
@@ -143,7 +147,11 @@ export class AgentDelegator {
       },
       {
         name: "librarian",
-        capabilities: ["code-search", "documentation-lookup", "implementation-search"],
+        capabilities: [
+          "code-search",
+          "documentation-lookup",
+          "implementation-search",
+        ],
         status: "active",
         expertise: "codebase search and documentation",
         capacity: 80,
@@ -152,7 +160,11 @@ export class AgentDelegator {
       },
       {
         name: "multimodal-looker",
-        capabilities: ["image-analysis", "diagram-understanding", "visual-inspection"],
+        capabilities: [
+          "image-analysis",
+          "diagram-understanding",
+          "visual-inspection",
+        ],
         status: "active",
         expertise: "analyzing images and visual content",
         capacity: 70,
@@ -215,7 +227,13 @@ export class AgentDelegator {
       },
       {
         name: "seo-specialist",
-        capabilities: ["technical-seo-audit", "schema-markup-generation", "robots-txt-optimization", "core-web-vitals-optimization", "ai-search-optimization"],
+        capabilities: [
+          "technical-seo-audit",
+          "schema-markup-generation",
+          "robots-txt-optimization",
+          "core-web-vitals-optimization",
+          "ai-search-optimization",
+        ],
         status: "active",
         expertise: "technical SEO optimization",
         capacity: 70,
@@ -224,7 +242,12 @@ export class AgentDelegator {
       },
       {
         name: "seo-copywriter",
-        capabilities: ["seo-content-writing", "keyword-optimization", "meta-description", "content-strategy"],
+        capabilities: [
+          "seo-content-writing",
+          "keyword-optimization",
+          "meta-description",
+          "content-strategy",
+        ],
         status: "active",
         expertise: "SEO content creation",
         capacity: 65,
@@ -233,7 +256,12 @@ export class AgentDelegator {
       },
       {
         name: "marketing-expert",
-        capabilities: ["campaign-strategy", "market-analysis", "brand-positioning", "content-marketing-strategy"],
+        capabilities: [
+          "campaign-strategy",
+          "market-analysis",
+          "brand-positioning",
+          "content-marketing-strategy",
+        ],
         status: "active",
         expertise: "strategic marketing",
         capacity: 75,
@@ -242,7 +270,12 @@ export class AgentDelegator {
       },
       {
         name: "database-engineer",
-        capabilities: ["schema-design", "query-optimization", "migrations", "data-modeling"],
+        capabilities: [
+          "schema-design",
+          "query-optimization",
+          "migrations",
+          "data-modeling",
+        ],
         status: "active",
         expertise: "database architecture",
         capacity: 70,
@@ -251,7 +284,12 @@ export class AgentDelegator {
       },
       {
         name: "devops-engineer",
-        capabilities: ["ci-cd", "infrastructure", "containerization", "monitoring"],
+        capabilities: [
+          "ci-cd",
+          "infrastructure",
+          "containerization",
+          "monitoring",
+        ],
         status: "active",
         expertise: "DevOps and infrastructure",
         capacity: 70,
@@ -260,7 +298,12 @@ export class AgentDelegator {
       },
       {
         name: "backend-engineer",
-        capabilities: ["api-design", "server-logic", "database-integration", "security"],
+        capabilities: [
+          "api-design",
+          "server-logic",
+          "database-integration",
+          "security",
+        ],
         status: "active",
         expertise: "backend development",
         capacity: 80,
@@ -269,7 +312,12 @@ export class AgentDelegator {
       },
       {
         name: "frontend-engineer",
-        capabilities: ["ui-development", "component-design", "state-management", "accessibility"],
+        capabilities: [
+          "ui-development",
+          "component-design",
+          "state-management",
+          "accessibility",
+        ],
         status: "active",
         expertise: "frontend development",
         capacity: 80,
@@ -278,7 +326,12 @@ export class AgentDelegator {
       },
       {
         name: "performance-engineer",
-        capabilities: ["performance-optimization", "profiling", "caching", "load-testing"],
+        capabilities: [
+          "performance-optimization",
+          "profiling",
+          "caching",
+          "load-testing",
+        ],
         status: "active",
         expertise: "performance optimization",
         capacity: 65,
@@ -287,7 +340,12 @@ export class AgentDelegator {
       },
       {
         name: "mobile-developer",
-        capabilities: ["ios-development", "android-development", "cross-platform", "mobile-ui"],
+        capabilities: [
+          "ios-development",
+          "android-development",
+          "cross-platform",
+          "mobile-ui",
+        ],
         status: "active",
         expertise: "mobile app development",
         capacity: 70,
@@ -296,7 +354,12 @@ export class AgentDelegator {
       },
       {
         name: "documentation-writer",
-        capabilities: ["api-documentation", "markdown", "technical-writing", "examples"],
+        capabilities: [
+          "api-documentation",
+          "markdown",
+          "technical-writing",
+          "examples",
+        ],
         status: "active",
         expertise: "technical documentation",
         capacity: 70,

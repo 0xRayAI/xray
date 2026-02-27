@@ -457,7 +457,8 @@ export class RuleEnforcer {
     this.addRule({
       id: "src-dist-integrity",
       name: "Source-Dist Integrity",
-      description: "Prevents direct file copying between src/ and dist/. All changes must be made in src/ and compiled via npm run build",
+      description:
+        "Prevents direct file copying between src/ and dist/. All changes must be made in src/ and compiled via npm run build",
       category: "architecture",
       severity: "error",
       enabled: true,
@@ -1278,7 +1279,12 @@ export class RuleEnforcer {
       case "console-log-usage":
         return operation === "write" && !!context.newCode; // Critical for production log hygiene
       case "src-dist-integrity":
-        return (operation === "write" || operation === "copy" || operation === "modify") && !!context.files;
+        return (
+          (operation === "write" ||
+            operation === "copy" ||
+            operation === "modify") &&
+          !!context.files
+        );
       default:
         return true;
     }
@@ -1596,28 +1602,42 @@ export class RuleEnforcer {
     const { files, operation } = context;
 
     if (!files || files.length === 0) {
-      return { passed: true, message: "No files to check for src-dist integrity" };
+      return {
+        passed: true,
+        message: "No files to check for src-dist integrity",
+      };
     }
 
     // Check if any files are being copied directly between src and dist
     const violations: string[] = [];
-    
+
     for (const file of files) {
-      const normalizedFile = file.replace(/^\.\//, ''); // Remove leading ./
-      
+      const normalizedFile = file.replace(/^\.\//, ""); // Remove leading ./
+
       // Check for direct edits to dist/ that should come from src/
-      if ((normalizedFile.startsWith("dist/") || normalizedFile.includes("/dist/")) && 
-          !normalizedFile.includes("/node_modules/")) {
+      if (
+        (normalizedFile.startsWith("dist/") ||
+          normalizedFile.includes("/dist/")) &&
+        !normalizedFile.includes("/node_modules/")
+      ) {
         violations.push(
-          "Direct edit to dist/: " + file + ". Make changes in src/ and run 'npm run build'",
+          "Direct edit to dist/: " +
+            file +
+            ". Make changes in src/ and run 'npm run build'",
         );
       }
-      
+
       // Check for direct edits to .opencode/ that should be generated
-      if ((normalizedFile.startsWith(".opencode/") || normalizedFile.includes("/.opencode/")) && 
-          (normalizedFile.includes("/plugin/") || normalizedFile.includes("/plugins/"))) {
+      if (
+        (normalizedFile.startsWith(".opencode/") ||
+          normalizedFile.includes("/.opencode/")) &&
+        (normalizedFile.includes("/plugin/") ||
+          normalizedFile.includes("/plugins/"))
+      ) {
         violations.push(
-          "Direct edit to .opencode/plugin/: " + file + ". This should be generated via build/postinstall",
+          "Direct edit to .opencode/plugin/: " +
+            file +
+            ". This should be generated via build/postinstall",
         );
       }
     }

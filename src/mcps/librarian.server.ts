@@ -26,7 +26,8 @@ class StrRayLibrarianServer {
   constructor() {
     this.server = new Server(
       {
-        name: "librarian", version: "1.6.0",
+        name: "librarian",
+        version: "1.6.0",
       },
       {
         capabilities: {
@@ -80,7 +81,8 @@ class StrRayLibrarianServer {
                 },
                 context: {
                   type: "string",
-                  description: "Additional context (e.g., 'MCP', 'testing', 'agent')",
+                  description:
+                    "Additional context (e.g., 'MCP', 'testing', 'agent')",
                 },
               },
               required: ["feature"],
@@ -132,44 +134,46 @@ class StrRayLibrarianServer {
     try {
       const searchDir = process.cwd();
       const results: SearchResult[] = [];
-      
+
       // Simple recursive search
       const searchFiles = (dir: string, depth: number = 0): void => {
         if (depth > 5 || results.length >= maxResults) return;
-        
+
         if (!fs.existsSync(dir)) return;
-        
+
         const entries = fs.readdirSync(dir, { withFileTypes: true });
-        
+
         for (const entry of entries) {
           if (results.length >= maxResults) break;
-          
+
           const fullPath = path.join(dir, entry.name);
-          
+
           // Skip certain directories
-          if (entry.name.startsWith(".") || 
-              entry.name === "node_modules" ||
-              entry.name === "dist" ||
-              entry.name === "coverage") {
+          if (
+            entry.name.startsWith(".") ||
+            entry.name === "node_modules" ||
+            entry.name === "dist" ||
+            entry.name === "coverage"
+          ) {
             continue;
           }
-          
+
           if (entry.isDirectory()) {
             searchFiles(fullPath, depth + 1);
           } else if (entry.isFile() && entry.name.endsWith(fileExtension)) {
             const content = fs.readFileSync(fullPath, "utf-8");
             const lines = content.split("\n");
-            
+
             const matches: string[] = [];
             const lineNumbers: number[] = [];
-            
+
             lines.forEach((line, index) => {
               if (line.toLowerCase().includes(query.toLowerCase())) {
                 matches.push(line.trim().substring(0, 100));
                 lineNumbers.push(index + 1);
               }
             });
-            
+
             if (matches.length > 0) {
               results.push({
                 file: fullPath,
@@ -180,9 +184,9 @@ class StrRayLibrarianServer {
           }
         }
       };
-      
+
       searchFiles(path.join(searchDir, "src"));
-      
+
       if (results.length === 0) {
         return {
           content: [
@@ -193,7 +197,7 @@ class StrRayLibrarianServer {
           ],
         };
       }
-      
+
       const output = results
         .slice(0, maxResults)
         .map((r) => {
@@ -204,7 +208,7 @@ class StrRayLibrarianServer {
           return `📄 ${relPath}\n${matchList}`;
         })
         .join("\n\n");
-      
+
       return {
         content: [
           {
@@ -232,37 +236,47 @@ class StrRayLibrarianServer {
       // Search for implementations
       const searchDir = process.cwd();
       const implementations: { file: string; snippet: string }[] = [];
-      
+
       const searchIn = (dir: string, depth: number = 0): void => {
         if (depth > 5 || implementations.length >= 5) return;
         if (!fs.existsSync(dir)) return;
-        
+
         const entries = fs.readdirSync(dir, { withFileTypes: true });
-        
+
         for (const entry of entries) {
           if (implementations.length >= 5) break;
-          
+
           const fullPath = path.join(dir, entry.name);
-          
-          if (entry.name.startsWith(".") || 
-              entry.name === "node_modules" ||
-              entry.name === "dist") {
+
+          if (
+            entry.name.startsWith(".") ||
+            entry.name === "node_modules" ||
+            entry.name === "dist"
+          ) {
             continue;
           }
-          
+
           if (entry.isDirectory()) {
             searchIn(fullPath, depth + 1);
-          } else if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))) {
+          } else if (
+            entry.isFile() &&
+            (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))
+          ) {
             const content = fs.readFileSync(fullPath, "utf-8");
-            
+
             // Look for the feature in content
             if (content.toLowerCase().includes(feature.toLowerCase())) {
               const lines = content.split("\n");
               // Find a relevant snippet
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                if (line && line.toLowerCase().includes(feature.toLowerCase())) {
-                  const snippet = lines.slice(Math.max(0, i - 2), i + 3).join("\n");
+                if (
+                  line &&
+                  line.toLowerCase().includes(feature.toLowerCase())
+                ) {
+                  const snippet = lines
+                    .slice(Math.max(0, i - 2), i + 3)
+                    .join("\n");
                   implementations.push({
                     file: fullPath.replace(searchDir + "/", ""),
                     snippet: snippet.substring(0, 300),
@@ -274,9 +288,9 @@ class StrRayLibrarianServer {
           }
         }
       };
-      
+
       searchIn(path.join(searchDir, "src"));
-      
+
       if (implementations.length === 0) {
         return {
           content: [
@@ -287,11 +301,14 @@ class StrRayLibrarianServer {
           ],
         };
       }
-      
+
       const output = implementations
-        .map((impl, i) => `${i + 1}. ${impl.file}\n\`\`\`\n${impl.snippet}\n\`\`\``)
+        .map(
+          (impl, i) =>
+            `${i + 1}. ${impl.file}\n\`\`\`\n${impl.snippet}\n\`\`\``,
+        )
         .join("\n\n");
-      
+
       return {
         content: [
           {
@@ -319,39 +336,40 @@ class StrRayLibrarianServer {
       // Search for documentation in the codebase
       const searchDir = process.cwd();
       let documentation = "";
-      
+
       // Search for README or docs
       const docFiles = ["README.md", "docs/README.md", "DOCS.md"];
-      
+
       for (const docFile of docFiles) {
         const docPath = path.join(searchDir, docFile);
         if (fs.existsSync(docPath)) {
           const content = fs.readFileSync(docPath, "utf-8");
           // Look for target in docs
           const lines = content.split("\n");
-          const targetLines = lines.filter((line) => 
-            line.toLowerCase().includes(target.toLowerCase())
+          const targetLines = lines.filter((line) =>
+            line.toLowerCase().includes(target.toLowerCase()),
           );
-          
+
           if (targetLines.length > 0) {
             documentation = targetLines.slice(0, 10).join("\n");
             break;
           }
         }
       }
-      
+
       if (!documentation) {
         return {
           content: [
             {
               type: "text",
-              text: `Documentation for "${target}":\n\n` +
-                `No specific documentation found. Try using search_codebase or find_implementation tools.`
+              text:
+                `Documentation for "${target}":\n\n` +
+                `No specific documentation found. Try using search_codebase or find_implementation tools.`,
             },
           ],
         };
       }
-      
+
       return {
         content: [
           {

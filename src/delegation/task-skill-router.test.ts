@@ -5,7 +5,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createTaskSkillRouter, routeTaskToAgent, preprocessTask, TaskSkillRouter, taskSkillRouter } from "./task-skill-router";
+import {
+  createTaskSkillRouter,
+  routeTaskToAgent,
+  preprocessTask,
+  TaskSkillRouter,
+  taskSkillRouter,
+} from "./task-skill-router";
 
 describe("task-skill-router", () => {
   describe("createTaskSkillRouter", () => {

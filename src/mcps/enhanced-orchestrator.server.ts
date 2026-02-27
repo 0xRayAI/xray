@@ -35,7 +35,8 @@ class EnhancedMultiAgentOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "enhanced-multi-agent-orchestrator", version: "1.6.0",
+        name: "enhanced-multi-agent-orchestrator",
+        version: "1.6.0",
       },
       {
         capabilities: {

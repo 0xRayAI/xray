@@ -504,29 +504,27 @@ describe("BootOrchestrator - Integration Tests", () => {
       // Verify StringRay configuration was loaded - check any call contains the expected key
       // Use mock.calls to check since multiple calls happen in different order
       const setCalls = (stateManager.set as any).mock.calls;
-      
+
       // Check that strray:config was set with version
       const hasStrrayConfig = setCalls.some(
-        (call: unknown[]) => 
-          Array.isArray(call) && 
-          call[0] === "strray:config" && 
-          typeof call[1] === 'object'
+        (call: unknown[]) =>
+          Array.isArray(call) &&
+          call[0] === "strray:config" &&
+          typeof call[1] === "object",
       );
       expect(hasStrrayConfig).toBe(true);
 
       // Check that strray:version was set
       const hasStrrayVersion = setCalls.some(
-        (call: unknown[]) => 
-          Array.isArray(call) && 
-          call[0] === "strray:version"
+        (call: unknown[]) =>
+          Array.isArray(call) && call[0] === "strray:version",
       );
       expect(hasStrrayVersion).toBe(true);
 
       // Check that strray:codex_enabled was set
       const hasCodexEnabled = setCalls.some(
-        (call: unknown[]) => 
-          Array.isArray(call) && 
-          call[0] === "strray:codex_enabled"
+        (call: unknown[]) =>
+          Array.isArray(call) && call[0] === "strray:codex_enabled",
       );
       expect(hasCodexEnabled).toBe(true);
     });

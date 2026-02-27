@@ -59,7 +59,7 @@ export class MemoryMonitor extends EventEmitter {
 
   constructor(config: Partial<MemoryMonitorConfig> = {}) {
     super();
-    
+
     // Increase max listeners to prevent warnings in test environments
     this.setMaxListeners(50);
 
@@ -356,9 +356,9 @@ export class MemoryMonitor extends EventEmitter {
     // Check if this exact callback already exists
     const existingListeners = this.listeners("alert");
     const alreadyAdded = existingListeners.some(
-      (listener: any) => listener === callback
+      (listener: any) => listener === callback,
     );
-    
+
     if (!alreadyAdded) {
       this.on("alert", callback);
     }

@@ -5,7 +5,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { detectProjectLanguage, getTestFilePath, buildTestCommand, LANGUAGE_CONFIGS, languageDetector } from "./language-detector";
+import {
+  detectProjectLanguage,
+  getTestFilePath,
+  buildTestCommand,
+  LANGUAGE_CONFIGS,
+  languageDetector,
+} from "./language-detector";
 
 describe("language-detector", () => {
   describe("detectProjectLanguage", () => {
@@ -32,7 +38,7 @@ describe("language-detector", () => {
         testFramework: "Vitest",
         testCommand: "vitest run",
         testFilePattern: "*.test.ts",
-        configFiles: ["vitest.config.ts"]
+        configFiles: ["vitest.config.ts"],
       });
       expect(result).toBeDefined();
     });
@@ -49,7 +55,7 @@ describe("language-detector", () => {
         testFramework: "Vitest",
         testCommand: "vitest run",
         testFilePattern: "*.test.ts",
-        configFiles: []
+        configFiles: [],
       });
       expect(result).toBeDefined();
     });

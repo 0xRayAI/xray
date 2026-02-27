@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { SelfDirectionSystem, selfDirectionSystem } from "./self-direction-activation";
+import {
+  SelfDirectionSystem,
+  selfDirectionSystem,
+} from "./self-direction-activation";
 
 describe("self-direction-activation", () => {
   describe("SelfDirectionSystem", () => {

@@ -44,7 +44,8 @@ class StrRayBootOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "boot-orchestrator", version: "1.6.0",
+        name: "boot-orchestrator",
+        version: "1.6.0",
       },
       {
         capabilities: {
@@ -594,9 +595,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
 
   private async initConfiguration(): Promise<any> {
     // Check for configuration files
-    const configFiles = [
-      "src/strray/config/manager.py",
-    ];
+    const configFiles = ["src/strray/config/manager.py"];
 
     for (const file of configFiles) {
       if (!fs.existsSync(file)) {

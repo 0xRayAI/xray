@@ -306,7 +306,7 @@ const CODEX_FILE_LOCATIONS = [
   ".opencode/strray/codex.json",
   ".opencode/codex.codex",
   ".strray/agents_template.md",
-  "AGENTS.md"
+  "AGENTS.md",
 ];
 
 /**
@@ -330,7 +330,7 @@ function extractCodexMetadata(content: string): {
   termCount: number;
 } {
   // Try JSON format first (codex.json)
-  if (content.trim().startsWith('{')) {
+  if (content.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(content);
       const version = parsed.version || "1.6.0";
@@ -657,7 +657,9 @@ export default async function strrayCodexPlugin(input: {
             if (r.success) {
               logger.log(`✅ Post-processor ${r.processorName}: OK`);
             } else {
-              logger.error(`❌ Post-processor ${r.processorName} failed: ${r.error}`);
+              logger.error(
+                `❌ Post-processor ${r.processorName} failed: ${r.error}`,
+              );
             }
           }
         } catch (error) {
@@ -681,7 +683,9 @@ export default async function strrayCodexPlugin(input: {
       const { tool, args, result } = input;
 
       // Debug: log full input
-      logger.log(`📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`);
+      logger.log(
+        `📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`,
+      );
 
       // Run post-processors for write/edit operations AFTER tool completes
       if (["write", "edit", "multiedit"].includes(tool)) {
@@ -717,7 +721,7 @@ export default async function strrayCodexPlugin(input: {
           logger.log(`📝 Post-processor tool: ${tool}`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
           logger.log(`📝 Post-processor directory: ${directory}`);
-          
+
           const postResults = await processorManager.executePostProcessors(
             tool,
             {
@@ -740,7 +744,9 @@ export default async function strrayCodexPlugin(input: {
             if (r.success) {
               logger.log(`✅ Post-processor ${r.processorName}: OK`);
             } else {
-              logger.error(`❌ Post-processor ${r.processorName} failed: ${r.error}`);
+              logger.error(
+                `❌ Post-processor ${r.processorName} failed: ${r.error}`,
+              );
             }
           }
 

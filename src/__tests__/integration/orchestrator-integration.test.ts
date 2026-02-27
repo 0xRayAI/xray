@@ -635,7 +635,8 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         mockFs.addFile(
           "/test/plugins/test-plugin/package.json",
           JSON.stringify({
-            name: "test-plugin", version: "1.6.0",
+            name: "test-plugin",
+            version: "1.6.0",
             main: "index.js",
             id: "test-plugin",
             description: "Test plugin for integration testing",
@@ -667,7 +668,8 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         const mockPlugin = {
           metadata: {
             id: "test-plugin",
-            name: "Test Plugin", version: "1.6.0",
+            name: "Test Plugin",
+            version: "1.6.0",
             description: "Test plugin",
             author: "Test Author",
             license: "MIT",
@@ -756,7 +758,8 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         mockFs.addFile(
           "/test/plugins/dangerous-plugin/package.json",
           JSON.stringify({
-            name: "dangerous-plugin", version: "1.6.0",
+            name: "dangerous-plugin",
+            version: "1.6.0",
             main: "index.js",
             id: "dangerous-plugin",
             description: "Dangerous plugin for security testing",
@@ -813,7 +816,8 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         mockFs.addFile(
           "/test/plugins/lifecycle-plugin/package.json",
           JSON.stringify({
-            name: "lifecycle-plugin", version: "1.6.0",
+            name: "lifecycle-plugin",
+            version: "1.6.0",
             main: "index.js",
             id: "lifecycle-test",
             description: "Test plugin lifecycle",

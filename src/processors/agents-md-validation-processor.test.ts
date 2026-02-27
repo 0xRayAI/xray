@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { AgentsMdValidationProcessor, agentsMdValidationProcessor } from "./agents-md-validation-processor";
+import {
+  AgentsMdValidationProcessor,
+  agentsMdValidationProcessor,
+} from "./agents-md-validation-processor";
 
 describe("agents-md-validation-processor", () => {
   describe("AgentsMdValidationProcessor", () => {

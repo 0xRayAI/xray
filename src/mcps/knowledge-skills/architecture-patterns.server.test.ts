@@ -12,4 +12,3 @@ describe("architecture-patterns.server", () => {
     expect(true).toBe(true);
   });
 });
-

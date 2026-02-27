@@ -12,4 +12,3 @@ describe("project-analysis.server", () => {
     expect(true).toBe(true);
   });
 });
-

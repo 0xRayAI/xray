@@ -14,7 +14,10 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { detectProjectLanguage, LANGUAGE_CONFIGS } from "../../utils/language-detector.js";
+import {
+  detectProjectLanguage,
+  LANGUAGE_CONFIGS,
+} from "../../utils/language-detector.js";
 
 interface TestAnalysis {
   coverage: number;
@@ -40,7 +43,8 @@ class StrRayTestingStrategyServer {
   constructor() {
     this.server = new Server(
       {
-        name: "testing-strategy", version: "1.6.0",
+        name: "testing-strategy",
+        version: "1.6.0",
       },
       {
         capabilities: {
@@ -127,17 +131,37 @@ class StrRayTestingStrategyServer {
             inputSchema: {
               type: "object",
               properties: {
-                sourceFile: { type: "string", description: "Path to source file" },
-                sourceContent: { type: "string", description: "Source file content" },
+                sourceFile: {
+                  type: "string",
+                  description: "Path to source file",
+                },
+                sourceContent: {
+                  type: "string",
+                  description: "Source file content",
+                },
                 exports: {
                   type: "array",
-                  items: { type: "object", properties: { name: { type: "string" }, type: { type: "string" } } },
-                  description: "Exported functions/classes to test"
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      type: { type: "string" },
+                    },
+                  },
+                  description: "Exported functions/classes to test",
                 },
-                testFilePath: { type: "string", description: "Path for generated test file" },
+                testFilePath: {
+                  type: "string",
+                  description: "Path for generated test file",
+                },
                 directory: { type: "string", description: "Project directory" },
               },
-              required: ["sourceFile", "sourceContent", "exports", "testFilePath"],
+              required: [
+                "sourceFile",
+                "sourceContent",
+                "exports",
+                "testFilePath",
+              ],
             },
           },
         ],
@@ -298,7 +322,8 @@ class StrRayTestingStrategyServer {
   }
 
   private async generateTestFile(args: any): Promise<any> {
-    const { sourceFile, sourceContent, exports, testFilePath, directory } = args;
+    const { sourceFile, sourceContent, exports, testFilePath, directory } =
+      args;
 
     console.log(`[testing-strategy] generateTestFile called:`);
     console.log(`  sourceFile: ${sourceFile}`);
@@ -312,10 +337,10 @@ class StrRayTestingStrategyServer {
 
     // Resolve paths relative to the project directory
     const projectDir = directory || process.cwd();
-    const resolvedTestPath = pathModule.isAbsolute(testFilePath) 
-      ? testFilePath 
+    const resolvedTestPath = pathModule.isAbsolute(testFilePath)
+      ? testFilePath
       : pathModule.join(projectDir, testFilePath);
-    
+
     console.log(`[testing-strategy] resolved test path: ${resolvedTestPath}`);
 
     const testDir = pathModule.dirname(resolvedTestPath);
@@ -325,7 +350,10 @@ class StrRayTestingStrategyServer {
       fs.mkdirSync(testDir, { recursive: true });
     }
 
-    const relativeSourcePath = pathModule.relative(testDir, sourceFile.replace(/\.ts$/, ""));
+    const relativeSourcePath = pathModule.relative(
+      testDir,
+      sourceFile.replace(/\.ts$/, ""),
+    );
     const importPath = relativeSourcePath.startsWith(".")
       ? relativeSourcePath
       : `./${relativeSourcePath}`;
@@ -381,9 +409,11 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
 
     // Write the test file
     fs.writeFileSync(resolvedTestPath, testContent, "utf8");
-    
+
     console.log(`[testing-strategy] Test file written to: ${resolvedTestPath}`);
-    console.log(`[testing-strategy] File exists: ${fs.existsSync(resolvedTestPath)}`);
+    console.log(
+      `[testing-strategy] File exists: ${fs.existsSync(resolvedTestPath)}`,
+    );
 
     return {
       content: [
@@ -507,11 +537,25 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
   private findSourceFiles(projectRoot: string): string[] {
     // Use language detector to find supported extensions
     const projectLanguage = detectProjectLanguage(projectRoot);
-    const langConfig = projectLanguage 
-      ? LANGUAGE_CONFIGS.find((c: any) => c.language === projectLanguage.language)
+    const langConfig = projectLanguage
+      ? LANGUAGE_CONFIGS.find(
+          (c: any) => c.language === projectLanguage.language,
+        )
       : null;
-    const supportedExtensions = langConfig?.extensions || [".ts", ".js", ".tsx", ".jsx", ".py", ".java", ".go", ".rs", ".cs", ".rb", ".php"];
-    
+    const supportedExtensions = langConfig?.extensions || [
+      ".ts",
+      ".js",
+      ".tsx",
+      ".jsx",
+      ".py",
+      ".java",
+      ".go",
+      ".rs",
+      ".cs",
+      ".rb",
+      ".php",
+    ];
+
     return this.findFiles(projectRoot, (file) => {
       const ext = path.extname(file);
       return (

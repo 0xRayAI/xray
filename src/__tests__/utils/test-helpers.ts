@@ -660,7 +660,7 @@ export class AsyncTestUtils {
 export function getFrameworkVersion(): string {
   try {
     const packageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8")
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8"),
     );
     return packageJson.version || "unknown";
   } catch {

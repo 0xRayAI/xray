@@ -12,4 +12,3 @@ describe("performance-optimization.server", () => {
     expect(true).toBe(true);
   });
 });
-

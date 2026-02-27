@@ -438,21 +438,20 @@ program
 
     try {
       // Dynamic import to avoid loading analytics module unless needed
-      const { SimplePatternAnalyzer } = await import(
-        "../analytics/simple-pattern-analyzer.js"
-      );
+      const { SimplePatternAnalyzer } =
+        await import("../analytics/simple-pattern-analyzer.js");
 
       const analyzer = new SimplePatternAnalyzer();
       const limit = parseInt(opts.limit) || 1000;
-      
+
       console.log(`Analyzing last ${limit} log entries...`);
       console.log("");
 
       const insights = await analyzer.analyze(limit);
       const insightsLines = analyzer.generateInsights(insights);
-      
+
       // Print insights
-      insightsLines.forEach(line => {
+      insightsLines.forEach((line) => {
         console.log(line);
       });
 
@@ -466,11 +465,13 @@ program
       }
 
       console.log("");
-      console.log("💡 Run regularly to track agent performance and complexity accuracy");
+      console.log(
+        "💡 Run regularly to track agent performance and complexity accuracy",
+      );
     } catch (error) {
       console.error(
         "❌ Analytics failed:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
       process.exit(1);
     }
@@ -488,18 +489,19 @@ program
     console.log("");
 
     try {
-      const { ComplexityCalibrator } = await import(
-        "../delegation/complexity-calibrator.js"
-      );
+      const { ComplexityCalibrator } =
+        await import("../delegation/complexity-calibrator.js");
 
       const calibrator = new ComplexityCalibrator();
       const minSamples = parseInt(opts.minSamples) || 10;
-      
-      console.log(`Analyzing historical accuracy (need ${minSamples}+ samples)...`);
+
+      console.log(
+        `Analyzing historical accuracy (need ${minSamples}+ samples)...`,
+      );
       console.log("");
 
       const result = await calibrator.calibrate(minSamples);
-      
+
       if (!result) {
         console.log("⚠️ Not enough data for calibration.");
         console.log("   Run more tasks and try again later.");
@@ -511,9 +513,15 @@ program
       console.log(`   Sample size: ${result.sampleSize}`);
       console.log("");
       console.log("   Accuracy breakdown:");
-      console.log(`   - Underestimated: ${result.accuracyHistory.underestimated} (${((result.accuracyHistory.underestimated/result.sampleSize)*100).toFixed(1)}%)`);
-      console.log(`   - Accurate: ${result.accuracyHistory.accurate} (${((result.accuracyHistory.accurate/result.sampleSize)*100).toFixed(1)}%)`);
-      console.log(`   - Overestimated: ${result.accuracyHistory.overestimated} (${((result.accuracyHistory.overestimated/result.sampleSize)*100).toFixed(1)}%)`);
+      console.log(
+        `   - Underestimated: ${result.accuracyHistory.underestimated} (${((result.accuracyHistory.underestimated / result.sampleSize) * 100).toFixed(1)}%)`,
+      );
+      console.log(
+        `   - Accurate: ${result.accuracyHistory.accurate} (${((result.accuracyHistory.accurate / result.sampleSize) * 100).toFixed(1)}%)`,
+      );
+      console.log(
+        `   - Overestimated: ${result.accuracyHistory.overestimated} (${((result.accuracyHistory.overestimated / result.sampleSize) * 100).toFixed(1)}%)`,
+      );
       console.log("");
       console.log("   Adjusted thresholds:");
       console.log(`   - Simple: ${result.adjustedThresholds.simple}`);
@@ -528,11 +536,13 @@ program
       }
 
       console.log("");
-      console.log("💡 Run 'npx strray-ai analytics' to see detailed pattern insights");
+      console.log(
+        "💡 Run 'npx strray-ai analytics' to see detailed pattern insights",
+      );
     } catch (error) {
       console.error(
         "❌ Calibration failed:",
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
       process.exit(1);
     }

@@ -12,4 +12,3 @@ describe("git-workflow.server", () => {
     expect(true).toBe(true);
   });
 });
-

@@ -5,7 +5,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { modelRouter, getModelForTask, getModelForTaskType, getValidatedModel, modelRouter } from "./model-router";
+import {
+  modelRouter,
+  getModelForTask,
+  getModelForTaskType,
+  getValidatedModel,
+  modelRouter,
+} from "./model-router";
 
 describe("model-router", () => {
   describe("modelRouter", () => {

@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { LibrarianAgentsUpdater, librarianAgentsUpdater } from "./librarian-agents-updater";
+import {
+  LibrarianAgentsUpdater,
+  librarianAgentsUpdater,
+} from "./librarian-agents-updater";
 
 describe("librarian-agents-updater", () => {
   describe("LibrarianAgentsUpdater", () => {

@@ -5,7 +5,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { detectContentFormat, parseCodexContent, extractCodexMetadata, validateTypeScriptSyntax, validateJsonSyntax, validateBeforeModification } from "./codex-parser";
+import {
+  detectContentFormat,
+  parseCodexContent,
+  extractCodexMetadata,
+  validateTypeScriptSyntax,
+  validateJsonSyntax,
+  validateBeforeModification,
+} from "./codex-parser";
 
 describe("codex-parser", () => {
   describe("detectContentFormat", () => {
@@ -69,7 +76,10 @@ describe("codex-parser", () => {
     });
 
     it("should handle basic case", async () => {
-      const result = await validateBeforeModification("const x = 1;", "test.ts");
+      const result = await validateBeforeModification(
+        "const x = 1;",
+        "test.ts",
+      );
       expect(result).toBeDefined();
     });
   });

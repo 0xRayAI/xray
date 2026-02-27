@@ -184,7 +184,7 @@ export class ComplexityAnalyzer {
    */
   setOperationWeights(weights: Partial<Record<string, number>>): void {
     for (const [key, value] of Object.entries(weights)) {
-      if (typeof value === 'number') {
+      if (typeof value === "number") {
         (this.operationWeights as any)[key] = value;
       }
     }
@@ -195,7 +195,7 @@ export class ComplexityAnalyzer {
    */
   setRiskMultipliers(multipliers: Partial<Record<string, number>>): void {
     for (const [key, value] of Object.entries(multipliers)) {
-      if (typeof value === 'number') {
+      if (typeof value === "number") {
         (this.riskMultipliers as any)[key] = value;
       }
     }

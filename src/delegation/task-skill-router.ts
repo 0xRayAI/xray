@@ -20,25 +20,57 @@ import { StringRayStateManager } from "../state/state-manager.js";
 const TASK_KEYWORD_MAPPINGS = [
   // ===== HIGHEST PRIORITY: Language-specific (most specific first) =====
   {
-    keywords: ["rust", "rustlang", "cargo", "traits", "borrow checker", "rustacean", "derive macro"],
+    keywords: [
+      "rust",
+      "rustlang",
+      "cargo",
+      "traits",
+      "borrow checker",
+      "rustacean",
+      "derive macro",
+    ],
     skill: "rust-patterns",
     agent: "performance-engineer",
     confidence: 0.99,
   },
   {
-    keywords: ["typescript", " ts ", " ts,", " ts.", "type error", "type safety", "type system"],
+    keywords: [
+      "typescript",
+      " ts ",
+      " ts,",
+      " ts.",
+      "type error",
+      "type safety",
+      "type system",
+    ],
     skill: "typescript-expert",
     agent: "code-reviewer",
     confidence: 0.98,
   },
   {
-    keywords: ["python", "django", "flask", "fastapi", "pandas", "numpy", "pytorch"],
+    keywords: [
+      "python",
+      "django",
+      "flask",
+      "fastapi",
+      "pandas",
+      "numpy",
+      "pytorch",
+    ],
     skill: "python-patterns",
     agent: "backend-engineer",
     confidence: 0.99,
   },
   {
-    keywords: ["golang", " go ", " go,", "goroutine", "goroutines", "channel", "gopher"],
+    keywords: [
+      "golang",
+      " go ",
+      " go,",
+      "goroutine",
+      "goroutines",
+      "channel",
+      "gopher",
+    ],
     skill: "go-patterns",
     agent: "backend-engineer",
     confidence: 0.98,
@@ -59,25 +91,53 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Antigravity Skills (high priority) =====
   {
-    keywords: ["copywriting", "marketing copy", "landing page copy", "headline", "advertising copy", "cta copy"],
+    keywords: [
+      "copywriting",
+      "marketing copy",
+      "landing page copy",
+      "headline",
+      "advertising copy",
+      "cta copy",
+    ],
     skill: "copywriting",
     agent: "marketing-expert",
     confidence: 0.98,
   },
   {
-    keywords: ["pricing strategy", "saas pricing", "monetization", "pricing model", "price optimization"],
+    keywords: [
+      "pricing strategy",
+      "saas pricing",
+      "monetization",
+      "pricing model",
+      "price optimization",
+    ],
     skill: "pricing-strategy",
     agent: "marketing-expert",
     confidence: 0.98,
   },
   {
-    keywords: ["rag", "vector database", "embedding", "chunking", "retrieval", "vector db", "pinecone", "weaviate", "chroma"],
+    keywords: [
+      "rag",
+      "vector database",
+      "embedding",
+      "chunking",
+      "retrieval",
+      "vector db",
+      "pinecone",
+      "weaviate",
+      "chroma",
+    ],
     skill: "rag-engineer",
     agent: "librarian",
     confidence: 0.98,
   },
   {
-    keywords: ["prompt engineering", "prompt-optimization", "few-shot", "chain-of-thought"],
+    keywords: [
+      "prompt engineering",
+      "prompt-optimization",
+      "few-shot",
+      "chain-of-thought",
+    ],
     skill: "prompt-engineering",
     agent: "librarian",
     confidence: 0.98,
@@ -86,7 +146,14 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Security (specific domain) =====
   {
-    keywords: ["security", "vulnerability", "audit", "credential", "encrypt", "sanitize"],
+    keywords: [
+      "security",
+      "vulnerability",
+      "audit",
+      "credential",
+      "encrypt",
+      "sanitize",
+    ],
     skill: "security-audit",
     agent: "security-auditor",
     confidence: 0.95,
@@ -95,7 +162,16 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Testing =====
   {
-    keywords: ["tdd", "bdd", "test coverage", "test strategy", "unit test", "integration test", "e2e", "behavior test"],
+    keywords: [
+      "tdd",
+      "bdd",
+      "test coverage",
+      "test strategy",
+      "unit test",
+      "integration test",
+      "e2e",
+      "behavior test",
+    ],
     skill: "testing-best-practices",
     agent: "test-architect",
     confidence: 0.95,
@@ -119,7 +195,13 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Performance =====
   {
-    keywords: ["bottleneck", "memory leak", "cpu usage", "latency", "throughput"],
+    keywords: [
+      "bottleneck",
+      "memory leak",
+      "cpu usage",
+      "latency",
+      "throughput",
+    ],
     skill: "performance-optimization",
     agent: "refactorer",
     confidence: 0.9,
@@ -155,7 +237,16 @@ const TASK_KEYWORD_MAPPINGS = [
     confidence: 0.85,
   },
   {
-    keywords: ["ui", "frontend", "css", "button", "form", "modal", "page", "interface"],
+    keywords: [
+      "ui",
+      "frontend",
+      "css",
+      "button",
+      "form",
+      "modal",
+      "page",
+      "interface",
+    ],
     skill: "ui-ux-design",
     agent: "enforcer",
     confidence: 0.75,
@@ -257,7 +348,15 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== State management =====
   {
-    keywords: ["state", "store", "redux", "mobx", "context", "cache", "persistence"],
+    keywords: [
+      "state",
+      "store",
+      "redux",
+      "mobx",
+      "context",
+      "cache",
+      "persistence",
+    ],
     skill: "state-manager",
     agent: "architect",
     confidence: 0.85,
@@ -275,7 +374,16 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Git workflow =====
   {
-    keywords: ["git", "commit", "branch", "merge", "pr", "pull request", "rebase", "conflict"],
+    keywords: [
+      "git",
+      "commit",
+      "branch",
+      "merge",
+      "pr",
+      "pull request",
+      "rebase",
+      "conflict",
+    ],
     skill: "git-workflow",
     agent: "librarian",
     confidence: 0.9,
@@ -320,7 +428,13 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Code analysis =====
   {
-    keywords: ["code analysis", "metrics", "complexity", "code smell", "technical debt"],
+    keywords: [
+      "code analysis",
+      "metrics",
+      "complexity",
+      "code smell",
+      "technical debt",
+    ],
     skill: "code-analyzer",
     agent: "analyzer",
     confidence: 0.9,
@@ -338,7 +452,14 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Visual analysis =====
   {
-    keywords: ["screenshot", "diagram", "image", "visual", "mockup", "ui design"],
+    keywords: [
+      "screenshot",
+      "diagram",
+      "image",
+      "visual",
+      "mockup",
+      "ui design",
+    ],
     skill: "multimodal-looker",
     agent: "multimodal-looker",
     confidence: 0.85,
@@ -347,7 +468,14 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== AWS/Serverless =====
   {
-    keywords: ["aws", "lambda", "serverless", "s3", "dynamodb", "cloudformation"],
+    keywords: [
+      "aws",
+      "lambda",
+      "serverless",
+      "s3",
+      "dynamodb",
+      "cloudformation",
+    ],
     skill: "aws-serverless",
     agent: "devops-engineer",
     confidence: 0.85,
@@ -356,7 +484,13 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== Vulnerability scanning =====
   {
-    keywords: ["vulnerability", "cve", "exploit", "penetration", "security scan"],
+    keywords: [
+      "vulnerability",
+      "cve",
+      "exploit",
+      "penetration",
+      "security scan",
+    ],
     skill: "vulnerability-scanner",
     agent: "security-auditor",
     confidence: 0.9,
@@ -365,7 +499,13 @@ const TASK_KEYWORD_MAPPINGS = [
 
   // ===== API Security =====
   {
-    keywords: ["api security", "authentication", "authorization", "jwt", "oauth"],
+    keywords: [
+      "api security",
+      "authentication",
+      "authorization",
+      "jwt",
+      "oauth",
+    ],
     skill: "api-security-best-practices",
     agent: "security-auditor",
     confidence: 0.9,

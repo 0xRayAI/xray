@@ -119,7 +119,8 @@ class StrRayDocumentationGenerationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "documentation-generation", version: "1.6.0",
+        name: "documentation-generation",
+        version: "1.6.0",
       },
       {
         capabilities: {

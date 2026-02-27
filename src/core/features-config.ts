@@ -329,7 +329,9 @@ export class FeaturesConfigLoader {
     }
 
     const taskRouting = config.model_routing?.task_routing;
-    const taskConfig = taskRouting ? taskRouting[taskType as keyof typeof taskRouting] : undefined;
+    const taskConfig = taskRouting
+      ? taskRouting[taskType as keyof typeof taskRouting]
+      : undefined;
     if (taskConfig) {
       return taskConfig.model;
     }
@@ -343,7 +345,9 @@ export class FeaturesConfigLoader {
   public getMaxTokensForTask(taskType: TaskType): number {
     const config = this.loadConfig();
     const taskRouting = config.model_routing?.task_routing;
-    const taskConfig = taskRouting ? taskRouting[taskType as keyof typeof taskRouting] : undefined;
+    const taskConfig = taskRouting
+      ? taskRouting[taskType as keyof typeof taskRouting]
+      : undefined;
 
     if (taskConfig) {
       return taskConfig.max_tokens;

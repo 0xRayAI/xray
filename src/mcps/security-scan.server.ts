@@ -13,7 +13,10 @@ import {
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { detectProjectLanguage, LANGUAGE_CONFIGS } from "../utils/language-detector.js";
+import {
+  detectProjectLanguage,
+  LANGUAGE_CONFIGS,
+} from "../utils/language-detector.js";
 
 class StrRaySecurityScanServer {
   private server: Server;
@@ -21,7 +24,8 @@ class StrRaySecurityScanServer {
   constructor() {
     this.server = new Server(
       {
-        name: "security-scan", version: "1.6.0",
+        name: "security-scan",
+        version: "1.6.0",
       },
       {
         capabilities: {
@@ -337,12 +341,27 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
     // Use language detector to find supported extensions
     const projectRoot = process.cwd();
     const projectLanguage = detectProjectLanguage(projectRoot);
-    const langConfig = projectLanguage 
-      ? LANGUAGE_CONFIGS.find((c: any) => c.language === projectLanguage.language)
+    const langConfig = projectLanguage
+      ? LANGUAGE_CONFIGS.find(
+          (c: any) => c.language === projectLanguage.language,
+        )
       : null;
     const extensions = langConfig?.extensions || [
-      ".js", ".ts", ".jsx", ".tsx", ".py", ".java", ".cpp", ".c", 
-      ".go", ".rs", ".cs", ".rb", ".php", ".swift", ".kt"
+      ".js",
+      ".ts",
+      ".jsx",
+      ".tsx",
+      ".py",
+      ".java",
+      ".cpp",
+      ".c",
+      ".go",
+      ".rs",
+      ".cs",
+      ".rb",
+      ".php",
+      ".swift",
+      ".kt",
     ];
     const files: string[] = [];
 

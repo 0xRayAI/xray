@@ -11,7 +11,11 @@
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { ProcessorRegistration } from "./processor-types.js";
-import { detectProjectLanguage, getTestFilePath, buildTestCommand } from "../utils/language-detector.js";
+import {
+  detectProjectLanguage,
+  getTestFilePath,
+  buildTestCommand,
+} from "../utils/language-detector.js";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -773,12 +777,20 @@ export class ProcessorManager {
 
     // Skip validation if no data provided (tool execution context)
     if (!data && !filePath) {
-      return { validated: true, syntaxCheck: "skipped", reason: "no data provided" };
+      return {
+        validated: true,
+        syntaxCheck: "skipped",
+        reason: "no data provided",
+      };
     }
 
     // Basic validation
     if (!data) {
-      return { validated: true, syntaxCheck: "skipped", reason: "no data in context" };
+      return {
+        validated: true,
+        syntaxCheck: "skipped",
+        reason: "no data in context",
+      };
     }
 
     // Syntax checking (placeholder - would integrate with TypeScript compiler API)
@@ -791,23 +803,24 @@ export class ProcessorManager {
 
   private async executeVersionCompliance(context: any): Promise<any> {
     try {
-      const { VersionComplianceProcessor } = await import("./version-compliance-processor.js");
+      const { VersionComplianceProcessor } =
+        await import("./version-compliance-processor.js");
       const processor = new VersionComplianceProcessor(process.cwd());
-      
+
       const result = await processor.validateVersionCompliance();
-      
+
       return {
         success: result.compliant,
         errors: result.errors || [],
         warnings: result.warnings || [],
-        checkedAt: new Date().toISOString()
+        checkedAt: new Date().toISOString(),
       };
     } catch (error) {
       return {
         success: false,
         errors: [error instanceof Error ? error.message : "Unknown error"],
         warnings: [],
-        checkedAt: new Date().toISOString()
+        checkedAt: new Date().toISOString(),
       };
     }
   }
@@ -882,43 +895,44 @@ export class ProcessorManager {
 
     try {
       const cwd = context.directory || process.cwd();
-      
+
       // Detect project language and test framework
       const projectLanguage = detectProjectLanguage(cwd);
-      
+
       if (!projectLanguage) {
         frameworkLogger.log(
           "processor-manager",
           "language-detection-failed",
           "info",
-          { message: "Could not detect project language, falling back to TypeScript" },
+          {
+            message:
+              "Could not detect project language, falling back to TypeScript",
+          },
         );
         // Fall back to TypeScript
         return this.executeTypeScriptTests(context, cwd);
       }
 
-      frameworkLogger.log(
-        "processor-manager",
-        "language-detected",
-        "info",
-        { 
-          message: `Detected ${projectLanguage.language} project with ${projectLanguage.testFramework}`,
-          language: projectLanguage.language,
-          testFramework: projectLanguage.testFramework,
-        },
-      );
+      frameworkLogger.log("processor-manager", "language-detected", "info", {
+        message: `Detected ${projectLanguage.language} project with ${projectLanguage.testFramework}`,
+        language: projectLanguage.language,
+        testFramework: projectLanguage.testFramework,
+      });
 
       // Handle TypeScript/JavaScript specially (most common)
-      if (projectLanguage.language === "TypeScript" || projectLanguage.language === "JavaScript") {
+      if (
+        projectLanguage.language === "TypeScript" ||
+        projectLanguage.language === "JavaScript"
+      ) {
         return this.executeTypeScriptTests(context, cwd);
       }
 
       // For other languages, build and run their test command
       return this.executeGenericTests(context, cwd, projectLanguage);
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       frameworkLogger.log(
         "processor-manager",
         "test-execution-error",
@@ -926,9 +940,9 @@ export class ProcessorManager {
         { message: `Test execution failed: ${errorMessage}` },
       );
 
-      return { 
-        testsExecuted: 0, 
-        passed: 0, 
+      return {
+        testsExecuted: 0,
+        passed: 0,
         failed: 0,
         error: errorMessage,
         success: false,
@@ -939,15 +953,18 @@ export class ProcessorManager {
   /**
    * Execute TypeScript/JavaScript tests using Vitest
    */
-  private async executeTypeScriptTests(context: any, cwd: string): Promise<any> {
+  private async executeTypeScriptTests(
+    context: any,
+    cwd: string,
+  ): Promise<any> {
     let testPattern = "src/__tests__/**/*.test.ts";
-    
+
     if (context.filePath) {
       // Convert source file to test file
       const testFilePath = context.filePath
         .replace(/\/src\//, "/src/__tests__/")
         .replace(/\.ts$/, ".test.ts");
-      
+
       const fs = await import("fs");
       if (fs.existsSync(testFilePath)) {
         testPattern = testFilePath;
@@ -956,7 +973,7 @@ export class ProcessorManager {
 
     // Run vitest with the test pattern
     const command = `npx vitest run --reporter=verbose "${testPattern}"`;
-    
+
     frameworkLogger.log(
       "processor-manager",
       "running-typescript-tests",
@@ -970,19 +987,23 @@ export class ProcessorManager {
   /**
    * Execute tests for any language using their native test framework
    */
-  private async executeGenericTests(context: any, cwd: string, projectLanguage: any): Promise<any> {
+  private async executeGenericTests(
+    context: any,
+    cwd: string,
+    projectLanguage: any,
+  ): Promise<any> {
     let testFilePath: string | undefined;
-    
+
     if (context.filePath) {
       testFilePath = getTestFilePath(context.filePath, projectLanguage);
-      
+
       const fs = await import("fs");
       if (!fs.existsSync(testFilePath)) {
         frameworkLogger.log(
           "processor-manager",
           "test-file-not-found",
           "info",
-          { 
+          {
             message: `Test file not found: ${testFilePath}`,
             sourceFile: context.filePath,
           },
@@ -994,13 +1015,12 @@ export class ProcessorManager {
 
     // Build the test command for this language
     const command = buildTestCommand(projectLanguage, testFilePath);
-    
-    frameworkLogger.log(
-      "processor-manager",
-      "running-generic-tests",
-      "info",
-      { command, cwd, language: projectLanguage.language },
-    );
+
+    frameworkLogger.log("processor-manager", "running-generic-tests", "info", {
+      command,
+      cwd,
+      language: projectLanguage.language,
+    });
 
     return this.runTestCommand(command, cwd);
   }
@@ -1012,10 +1032,10 @@ export class ProcessorManager {
     let stdout = "";
     let stderr = "";
     let exitCode = 0;
-    
+
     try {
-      const result = await execAsync(command, { 
-        cwd, 
+      const result = await execAsync(command, {
+        cwd,
         timeout: 120000, // 2 minute timeout
       });
       stdout = result.stdout;

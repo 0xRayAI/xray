@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { FrameworkReportingSystem, frameworkReportingSystem } from "./framework-reporting-system";
+import {
+  FrameworkReportingSystem,
+  frameworkReportingSystem,
+} from "./framework-reporting-system";
 
 describe("framework-reporting-system", () => {
   describe("FrameworkReportingSystem", () => {

@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { VersionComplianceProcessor, versionComplianceProcessor } from "./version-compliance-processor";
+import {
+  VersionComplianceProcessor,
+  versionComplianceProcessor,
+} from "./version-compliance-processor";
 
 describe("version-compliance-processor", () => {
   describe("VersionComplianceProcessor", () => {

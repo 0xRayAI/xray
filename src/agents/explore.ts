@@ -21,7 +21,8 @@ export const explore: AgentConfig = {
   ],
   maxComplexity: 30,
   enabled: true,
-  description: "Fast codebase exploration and pattern analysis specialist. Expert in quickly mapping codebases and finding structural patterns.",
+  description:
+    "Fast codebase exploration and pattern analysis specialist. Expert in quickly mapping codebases and finding structural patterns.",
   tools: {
     include: ["glob", "grep", "read", "bash"],
     exclude: ["edit", "write", "invoke-skill", "skill-*"],

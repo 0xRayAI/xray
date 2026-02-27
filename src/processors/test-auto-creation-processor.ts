@@ -12,7 +12,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { detectProjectLanguage, getTestFilePath, LANGUAGE_CONFIGS } from "../utils/language-detector.js";
+import {
+  detectProjectLanguage,
+  getTestFilePath,
+  LANGUAGE_CONFIGS,
+} from "../utils/language-detector.js";
 import { testAutoGenerationMonitor } from "../monitoring/test-auto-generation-monitor.js";
 
 /**
@@ -26,7 +30,7 @@ function findRecentlyModifiedTsFile(
   try {
     // Recursive walk to find all .ts files
     const files: string[] = [];
-    
+
     function walkSync(dirPath: string) {
       try {
         const items = fs.readdirSync(dirPath);
@@ -36,10 +40,18 @@ function findRecentlyModifiedTsFile(
             const stat = fs.statSync(fullPath);
             if (stat.isDirectory()) {
               // Skip node_modules, dist, etc.
-              if (!item.startsWith('.') && item !== 'node_modules' && item !== 'dist') {
+              if (
+                !item.startsWith(".") &&
+                item !== "node_modules" &&
+                item !== "dist"
+              ) {
                 walkSync(fullPath);
               }
-            } else if (item.endsWith(".ts") && !item.endsWith(".test.ts") && !item.endsWith(".spec.ts")) {
+            } else if (
+              item.endsWith(".ts") &&
+              !item.endsWith(".test.ts") &&
+              !item.endsWith(".spec.ts")
+            ) {
               files.push(fullPath);
             }
           } catch {
@@ -50,19 +62,19 @@ function findRecentlyModifiedTsFile(
         // Skip directories we can't read
       }
     }
-    
+
     walkSync(dir);
-    
+
     // Find most recently modified
     let mostRecent: { path: string; mtime: number } | null = null;
 
     for (const filePath of files) {
       try {
         const stats = fs.statSync(filePath);
-        
+
         // Get relative path
         const relPath = path.relative(dir, filePath);
-        
+
         if (!mostRecent || stats.mtimeMs > mostRecent.mtime) {
           mostRecent = { path: relPath, mtime: stats.mtimeMs };
         }
@@ -110,7 +122,12 @@ export const testAutoCreationProcessor = {
         directoryValue: outerDirectory,
         contextFilePath,
         argsFilePath: args?.filePath,
-        fullContext: JSON.stringify({ tool, directory, filePath: contextFilePath, argsFilePath: args?.filePath }).slice(0, 200),
+        fullContext: JSON.stringify({
+          tool,
+          directory,
+          filePath: contextFilePath,
+          argsFilePath: args?.filePath,
+        }).slice(0, 200),
       });
 
       // Get file path from various possible locations in context
@@ -124,24 +141,31 @@ export const testAutoCreationProcessor = {
 
       // ALWAYS scan for the most recent ts file in src/ or root as fallback
       // This is more reliable than depending on context
-      const srcDir = path.join(process.cwd(), 'src');
+      const srcDir = path.join(process.cwd(), "src");
       const rootDir = process.cwd();
-      
+
       // Try src first, then root
       let recentFile = findRecentlyModifiedTsFile(srcDir, 60);
       if (!recentFile) {
         recentFile = findRecentlyModifiedTsFile(rootDir, 60);
       }
-      
+
       if (recentFile) {
         // If it's from root, use it directly; if from src, prepend 'src/'
         const isFromSrc = recentFile.startsWith(srcDir);
-        filePath = isFromSrc ? path.relative(process.cwd(), recentFile) : recentFile;
+        filePath = isFromSrc
+          ? path.relative(process.cwd(), recentFile)
+          : recentFile;
       }
 
-      await frameworkLogger.log("test-auto-creation", "filepath-resolution", "info", {
-        message: `Resolved filePath: ${filePath || 'UNDEFINED'}`,
-      });
+      await frameworkLogger.log(
+        "test-auto-creation",
+        "filepath-resolution",
+        "info",
+        {
+          message: `Resolved filePath: ${filePath || "UNDEFINED"}`,
+        },
+      );
 
       if (!filePath) {
         await frameworkLogger.log(
@@ -178,10 +202,21 @@ export const testAutoCreationProcessor = {
       }
 
       // Support multiple file types: .ts, .js, .py, .go, .rs, .java, .cs
-      const supportedExtensions = [".ts", ".js", ".tsx", ".jsx", ".py", ".go", ".rs", ".java", ".cs"];
+      const supportedExtensions = [
+        ".ts",
+        ".js",
+        ".tsx",
+        ".jsx",
+        ".py",
+        ".go",
+        ".rs",
+        ".java",
+        ".cs",
+      ];
       const ext = path.extname(filePath);
-      const isTestFile = filePath.endsWith(".test.ts") || filePath.endsWith(".spec.ts");
-      
+      const isTestFile =
+        filePath.endsWith(".test.ts") || filePath.endsWith(".spec.ts");
+
       if (!supportedExtensions.includes(ext) || isTestFile) {
         return {
           success: true,
@@ -191,10 +226,15 @@ export const testAutoCreationProcessor = {
       }
 
       // Get language config for this extension
-      const langConfig = LANGUAGE_CONFIGS.find(c => c.extensions.includes(ext));
+      const langConfig = LANGUAGE_CONFIGS.find((c) =>
+        c.extensions.includes(ext),
+      );
 
       // Check if test file already exists (use language-appropriate extension)
-      let testFilePath = getTestFilePath(filePath, (langConfig?.language as any) || "TypeScript");
+      let testFilePath = getTestFilePath(
+        filePath,
+        (langConfig?.language as any) || "TypeScript",
+      );
       const fullTestPath = path.join(directory, testFilePath);
 
       if (fs.existsSync(fullTestPath)) {
@@ -325,10 +365,16 @@ export const testAutoCreationProcessor = {
 function extractExports(
   content: string,
 ): Array<{ name: string; type: string; params: string; returnType: string }> {
-  const exports: Array<{ name: string; type: string; params: string; returnType: string }> = [];
+  const exports: Array<{
+    name: string;
+    type: string;
+    params: string;
+    returnType: string;
+  }> = [];
 
   // Match exported functions with their full signatures
-  const functionRegex = /export\s+(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?/g;
+  const functionRegex =
+    /export\s+(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?/g;
   let match;
   while ((match = functionRegex.exec(content)) !== null) {
     exports.push({
@@ -349,7 +395,8 @@ function extractExports(
   }
 
   // Match exported const/let arrow functions
-  const arrowFunctionRegex = /export\s+const\s+(\w+)\s*=\s*(?:async\s+)?\(([^)]*)\)\s*(?::\s*(\w+))?\s*=>\s*/g;
+  const arrowFunctionRegex =
+    /export\s+const\s+(\w+)\s*=\s*(?:async\s+)?\(([^)]*)\)\s*(?::\s*(\w+))?\s*=>\s*/g;
   while ((match = arrowFunctionRegex.exec(content)) !== null) {
     exports.push({
       name: match[1] || "",
@@ -375,7 +422,12 @@ function extractExports(
     /export\s+default\s+(?:class|function)?\s*(\w+)/,
   );
   if (defaultMatch) {
-    exports.push({ name: defaultMatch[1] || "default", type: "default", params: "", returnType: "" });
+    exports.push({
+      name: defaultMatch[1] || "default",
+      type: "default",
+      params: "",
+      returnType: "",
+    });
   }
 
   return exports;
@@ -387,7 +439,12 @@ function extractExports(
 async function createBasicTestStub(
   testFilePath: string,
   sourceFile: string,
-  exports: Array<{ name: string; type: string; params: string; returnType: string }>,
+  exports: Array<{
+    name: string;
+    type: string;
+    params: string;
+    returnType: string;
+  }>,
 ): Promise<void> {
   const testDir = path.dirname(testFilePath);
 
@@ -414,19 +471,30 @@ async function createBasicTestStub(
  */
 function generateTestStub(
   importPath: string,
-  exports: Array<{ name: string; type: string; params: string; returnType: string }>,
+  exports: Array<{
+    name: string;
+    type: string;
+    params: string;
+    returnType: string;
+  }>,
   sourceFile: string,
 ): string {
   const imports = exports.map((e: { name: string }) => e.name).join(", ");
 
   const testCases = exports
-    .map((exp: { name: string; type: string; params: string; returnType: string }) => {
-      if (exp.type === "function") {
-        // Generate sample arguments based on params
-        const sampleArgs = generateSampleArgs(exp.params);
-        const returnCheck = generateReturnCheck(exp.returnType);
-        
-        return `
+    .map(
+      (exp: {
+        name: string;
+        type: string;
+        params: string;
+        returnType: string;
+      }) => {
+        if (exp.type === "function") {
+          // Generate sample arguments based on params
+          const sampleArgs = generateSampleArgs(exp.params);
+          const returnCheck = generateReturnCheck(exp.returnType);
+
+          return `
   describe("${exp.name}", () => {
     it("should be defined", () => {
       expect(typeof ${exp.name}).toBe("function");
@@ -437,23 +505,24 @@ function generateTestStub(
       ${returnCheck}
     });
   });`;
-      } else if (exp.type === "class") {
-        return `
+        } else if (exp.type === "class") {
+          return `
   describe("${exp.name}", () => {
     it("should instantiate", () => {
       const instance = new ${exp.name}();
       expect(instance).toBeInstanceOf(${exp.name});
     });
   });`;
-      } else {
-        return `
+        } else {
+          return `
   describe("${exp.name}", () => {
     it("should be defined", () => {
       expect(${exp.name}).toBeDefined();
     });
   });`;
-      }
-    })
+        }
+      },
+    )
     .join("\n");
 
   return `/**
@@ -475,14 +544,14 @@ describe("${path.basename(sourceFile, ".ts")}", () => {${testCases}
  */
 function generateSampleArgs(params: string): string {
   if (!params.trim()) return "";
-  
-  const paramList = params.split(",").map(p => p.trim());
+
+  const paramList = params.split(",").map((p) => p.trim());
   const sampleValues = paramList.map((param) => {
     // Extract parameter name (before type annotation if present)
     const parts = param.split(":");
     const paramName = (parts[0] || "").trim();
     const paramType = (parts[1] || "any").trim();
-    
+
     // Generate sample value based on type
     if (paramType.includes("string")) return `"test"`;
     if (paramType.includes("number")) return "1";
@@ -492,7 +561,7 @@ function generateSampleArgs(params: string): string {
     if (paramType.includes("Promise")) return "Promise.resolve(undefined)";
     return "undefined";
   });
-  
+
   return sampleValues.join(", ");
 }
 

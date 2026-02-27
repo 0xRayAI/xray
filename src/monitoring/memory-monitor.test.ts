@@ -5,7 +5,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getMemoryUsage, logMemoryUsage, checkMemoryHealth, MemoryMonitor, memoryMonitor } from "./memory-monitor";
+import {
+  getMemoryUsage,
+  logMemoryUsage,
+  checkMemoryHealth,
+  MemoryMonitor,
+  memoryMonitor,
+} from "./memory-monitor";
 
 describe("memory-monitor", () => {
   describe("getMemoryUsage", () => {

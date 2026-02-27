@@ -12,4 +12,3 @@ describe("api-design.server", () => {
     expect(true).toBe(true);
   });
 });
-

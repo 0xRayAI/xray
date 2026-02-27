@@ -118,7 +118,9 @@ describe("Session Lifecycle Management", () => {
       cleanupManager.updateActivity(sessionId);
 
       const metadata = cleanupManager.getSessionMetadata(sessionId);
-      expect(metadata?.lastActivity).toBeGreaterThanOrEqual(metadata?.createdAt);
+      expect(metadata?.lastActivity).toBeGreaterThanOrEqual(
+        metadata?.createdAt,
+      );
     });
 
     test("should handle session completion", () => {

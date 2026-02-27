@@ -737,7 +737,7 @@ All path violations will be automatically detected and blocked.
       );
 
       const processorManager = new ProcessorManager();
-      
+
       // Register processors needed for post-processing
       // (same registrations as boot-orchestrator.ts)
       processorManager.registerProcessor({
@@ -803,7 +803,7 @@ All path violations will be automatically detected and blocked.
                 filePath: filePath, // FIX #2: Pass filePath (string), not files (array)
                 directory: process.cwd(),
               });
-              
+
               // 2. Then run the generated test
               await processorManager.executeProcessor("testExecution", {
                 tool: "write",

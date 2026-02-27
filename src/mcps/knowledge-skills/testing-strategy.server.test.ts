@@ -12,4 +12,3 @@ describe("testing-strategy.server", () => {
     expect(true).toBe(true);
   });
 });
-

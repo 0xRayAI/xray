@@ -5,7 +5,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseUrlForSeo, generateSlug, calculateReadability, validateJsonLd } from "./seo-utils";
+import {
+  parseUrlForSeo,
+  generateSlug,
+  calculateReadability,
+  validateJsonLd,
+} from "./seo-utils";
 
 describe("seo-utils", () => {
   describe("parseUrlForSeo", () => {
@@ -47,7 +52,10 @@ describe("seo-utils", () => {
     });
 
     it("should handle basic case", async () => {
-      const result = await validateJsonLd({ "@context": "https://schema.org", "@type": "WebPage" });
+      const result = await validateJsonLd({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+      });
       expect(result).toBeDefined();
     });
   });

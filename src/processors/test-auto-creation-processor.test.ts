@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { testAutoCreationProcessor, testAutoCreationProcessor } from "./test-auto-creation-processor";
+import {
+  testAutoCreationProcessor,
+  testAutoCreationProcessor,
+} from "./test-auto-creation-processor";
 
 describe("test-auto-creation-processor", () => {
   describe("testAutoCreationProcessor", () => {

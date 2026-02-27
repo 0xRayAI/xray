@@ -5,7 +5,15 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { detectTaskType, FeaturesConfigLoader, featuresConfigLoader, getModelForTask, isFeatureEnabled, getTokenOptimization, getBatchOperations } from "./features-config";
+import {
+  detectTaskType,
+  FeaturesConfigLoader,
+  featuresConfigLoader,
+  getModelForTask,
+  isFeatureEnabled,
+  getTokenOptimization,
+  getBatchOperations,
+} from "./features-config";
 
 describe("features-config", () => {
   describe("detectTaskType", () => {

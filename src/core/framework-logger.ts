@@ -58,8 +58,11 @@ export function withJobContext<T>(
  * Job context for tracking work sessions
  * Enhanced with outcome and complexity accuracy tracking for pattern analytics
  */
-export type Outcome = 'success' | 'fail' | 'escalated' | 'auto-fixed';
-export type ComplexityAccuracy = 'underestimated' | 'accurate' | 'overestimated';
+export type Outcome = "success" | "fail" | "escalated" | "auto-fixed";
+export type ComplexityAccuracy =
+  | "underestimated"
+  | "accurate"
+  | "overestimated";
 
 export class JobContext {
   public readonly jobId: string;
@@ -67,10 +70,10 @@ export class JobContext {
   public complexityScore?: number;
   public agentUsed?: string;
   public operationType?: string;
-  
+
   // NEW: Outcome tracking for pattern analysis
   public outcome?: Outcome;
-  
+
   // NEW: Predicted duration for accuracy comparison (in ms)
   public predictedDuration?: number;
 
@@ -83,13 +86,13 @@ export class JobContext {
    * Set the outcome after task completion
    */
   setOutcome(
-    success: boolean, 
-    escalated: boolean = false, 
-    autoFixed: boolean = false
+    success: boolean,
+    escalated: boolean = false,
+    autoFixed: boolean = false,
   ): void {
-    if (escalated) this.outcome = 'escalated';
-    else if (autoFixed) this.outcome = 'auto-fixed';
-    else this.outcome = success ? 'success' : 'fail';
+    if (escalated) this.outcome = "escalated";
+    else if (autoFixed) this.outcome = "auto-fixed";
+    else this.outcome = success ? "success" : "fail";
   }
 
   /**
@@ -105,33 +108,33 @@ export class JobContext {
    */
   async complete(success: boolean = true, details?: any) {
     const actualDuration = Date.now() - this.startTime;
-    
+
     // Calculate complexity accuracy if we have both predicted and actual
     let complexityAccuracy: ComplexityAccuracy | undefined;
     if (this.complexityScore && this.predictedDuration) {
       const ratio = actualDuration / this.predictedDuration;
       if (ratio > 1.5) {
-        complexityAccuracy = 'underestimated';
+        complexityAccuracy = "underestimated";
       } else if (ratio < 0.5) {
-        complexityAccuracy = 'overestimated';
+        complexityAccuracy = "overestimated";
       } else {
-        complexityAccuracy = 'accurate';
+        complexityAccuracy = "accurate";
       }
     } else if (this.complexityScore && actualDuration) {
       // Fallback: estimate predicted based on complexity score
       const estimatedPredicted = this.complexityScore * 1000; // 1 second per complexity point
       const ratio = actualDuration / estimatedPredicted;
       if (ratio > 1.5) {
-        complexityAccuracy = 'underestimated';
+        complexityAccuracy = "underestimated";
       } else if (ratio < 0.5) {
-        complexityAccuracy = 'overestimated';
+        complexityAccuracy = "overestimated";
       } else {
-        complexityAccuracy = 'accurate';
+        complexityAccuracy = "accurate";
       }
     }
 
     // Determine final outcome
-    const finalOutcome = this.outcome || (success ? 'success' : 'fail');
+    const finalOutcome = this.outcome || (success ? "success" : "fail");
 
     await frameworkLogger.log(
       "job-context",

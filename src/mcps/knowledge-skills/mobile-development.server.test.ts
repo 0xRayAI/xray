@@ -12,4 +12,3 @@ describe("mobile-development.server", () => {
     expect(true).toBe(true);
   });
 });
-
