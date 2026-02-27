@@ -60,11 +60,16 @@ describe("MCP Server Files", () => {
 
 describe("Antigravity Skills Integration", () => {
   it("should have Antigravity integration script", () => {
+    // Check for both .js and .mjs extensions (ESM scripts use .mjs)
     const scriptPath = path.join(
       process.cwd(),
       "scripts/integrations/install-antigravity-skills.js",
     );
-    expect(fs.existsSync(scriptPath)).toBe(true);
+    const scriptPathMjs = path.join(
+      process.cwd(),
+      "scripts/integrations/install-antigravity-skills.js.mjs",
+    );
+    expect(fs.existsSync(scriptPath) || fs.existsSync(scriptPathMjs)).toBe(true);
   });
 
   it("should have Antigravity documentation", () => {
