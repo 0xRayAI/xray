@@ -300,11 +300,25 @@ class StrRayTestingStrategyServer {
   private async generateTestFile(args: any): Promise<any> {
     const { sourceFile, sourceContent, exports, testFilePath, directory } = args;
 
+    console.log(`[testing-strategy] generateTestFile called:`);
+    console.log(`  sourceFile: ${sourceFile}`);
+    console.log(`  testFilePath: ${testFilePath}`);
+    console.log(`  directory: ${directory}`);
+    console.log(`  exports: ${JSON.stringify(exports)}`);
+
     // Use dynamic import for ESM compatibility
     const fs = await import("fs");
     const pathModule = await import("path");
 
-    const testDir = pathModule.dirname(testFilePath);
+    // Resolve paths relative to the project directory
+    const projectDir = directory || process.cwd();
+    const resolvedTestPath = pathModule.isAbsolute(testFilePath) 
+      ? testFilePath 
+      : pathModule.join(projectDir, testFilePath);
+    
+    console.log(`[testing-strategy] resolved test path: ${resolvedTestPath}`);
+
+    const testDir = pathModule.dirname(resolvedTestPath);
 
     // Ensure test directory exists
     if (!fs.existsSync(testDir)) {
@@ -366,7 +380,10 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
 `;
 
     // Write the test file
-    fs.writeFileSync(testFilePath, testContent, "utf8");
+    fs.writeFileSync(resolvedTestPath, testContent, "utf8");
+    
+    console.log(`[testing-strategy] Test file written to: ${resolvedTestPath}`);
+    console.log(`[testing-strategy] File exists: ${fs.existsSync(resolvedTestPath)}`);
 
     return {
       content: [

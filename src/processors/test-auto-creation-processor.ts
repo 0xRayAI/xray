@@ -266,6 +266,18 @@ export const testAutoCreationProcessor = {
 
       // Delegate to test-architect agent via MCP
       try {
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "mcp-call-start",
+          "info",
+          {
+            message: `Calling MCP for test generation`,
+            skillName: "testing-strategy",
+            toolName: "generate-test-file",
+            args: { sourceFile: filePath, testFilePath, directory },
+          },
+        );
+        
         const result = await mcpClientManager.callServerTool(
           "skill-invocation",
           "invoke-skill",
@@ -280,10 +292,48 @@ export const testAutoCreationProcessor = {
               directory,
             },
           },
-        );
+        ).catch((err) => {
+          frameworkLogger.log(
+            "test-auto-creation",
+            "mcp-error",
+            "error",
+            { message: `MCP error: ${err}` },
+          );
+          throw err;
+        });
+        
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "mcp-call-result",
+          "info",
+          {
+            message: `MCP returned`,
+            result: JSON.stringify(result).slice(0, 500),
+          },
+        ).catch((err) => {
+          frameworkLogger.log(
+            "test-auto-creation",
+            "log-error",
+            "error", 
+            { message: `Log error: ${err}` },
+          );
+        });
 
         // MCP creates the file directly - check if it was created
         const testCreated = fs.existsSync(fullTestPath);
+        
+        await frameworkLogger.log(
+          "test-auto-creation",
+          "test-creation-check",
+          "info",
+          {
+            message: `Test creation check: ${testCreated}`,
+            fullTestPath,
+            directory,
+            filePath,
+            testFilePath,
+          },
+        );
         
         if (testCreated) {
           await frameworkLogger.log(
