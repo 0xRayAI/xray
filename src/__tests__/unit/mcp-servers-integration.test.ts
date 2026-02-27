@@ -69,7 +69,9 @@ describe("Antigravity Skills Integration", () => {
       process.cwd(),
       "scripts/integrations/install-antigravity-skills.js.mjs",
     );
-    expect(fs.existsSync(scriptPath) || fs.existsSync(scriptPathMjs)).toBe(true);
+    expect(fs.existsSync(scriptPath) || fs.existsSync(scriptPathMjs)).toBe(
+      true,
+    );
   });
 
   it("should have Antigravity documentation", () => {
@@ -99,11 +101,10 @@ describe("Agent Configuration", () => {
     const agentsPath = path.join(process.cwd(), "AGENTS.md");
     expect(fs.existsSync(agentsPath)).toBe(true);
     const content = fs.readFileSync(agentsPath, "utf-8");
-    // New format checks
-    expect(content).toContain("Project Agents Guide");
-    expect(content).toContain("Plugin Systems");
-    expect(content).toContain("src/plugins/");
-    expect(content).toContain(".opencode/plugin/");
+    // Check for essential AGENTS.md content
+    expect(content).toContain("StringRay");
+    expect(content).toContain("Available Agents");
+    expect(content).toContain("@enforcer");
   });
 });
 
