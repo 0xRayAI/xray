@@ -137,6 +137,9 @@ filesToUpdate.forEach(filePath => {
   }
 });
 
+// Fix MCP server relative imports for consumer projects
+fixMCPServerImports();
+
 // Add .js extensions to dist/ folder imports for ES module compatibility
 function addJsExtensionsToDist() {
   console.log("🔧 Adding .js extensions to dist/ folder imports...");
