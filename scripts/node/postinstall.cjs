@@ -205,6 +205,29 @@ if (fs.existsSync(strraySource)) {
 }
 
 console.log("🎉 StrRay Postinstall: Configuration complete!");
+
+// Create symlink to dist for MCP servers that look for "dist/" path
+const distSource = path.join(packageRoot, 'dist');
+const distDest = path.join(targetDir, 'dist');
+
+if (fs.existsSync(distSource)) {
+  try {
+    if (fs.existsSync(distDest)) {
+      const stats = fs.lstatSync(distDest);
+      if (stats.isSymbolicLink()) {
+        console.log(`✅ dist symlink already exists`);
+      } else {
+        console.log(`⚠️ dist exists but is not a symlink - MCP servers may not work correctly`);
+      }
+    } else {
+      fs.symlinkSync(distSource, distDest, 'dir');
+      console.log(`✅ Created dist symlink → node_modules/strray-ai/dist`);
+    }
+  } catch (error) {
+    console.warn(`⚠️ Could not create dist symlink:`, error.message);
+  }
+}
+
 console.log("📋 Next steps:");
 console.log("1. Restart OpenCode to load the plugin");
 console.log("2. Run 'opencode agent list' to see StrRay agents");

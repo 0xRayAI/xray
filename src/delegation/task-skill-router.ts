@@ -5,7 +5,7 @@
  * Complements the AgentDelegator by providing keyword-based preprocessing
  * that feeds into the complexity-based delegation system.
  *
- * @version 1.1.0
+ * @version 1.2.0 - Deduplicated
  * @since 2026-02-22
  */
 
@@ -14,84 +14,68 @@ import { StringRayStateManager } from "../state/state-manager.js";
 
 /**
  * Keyword to skill/agent mapping
- * Ordered by specificity - more specific keywords must come first
+ * ORDERED BY SPECIFICITY - most specific keywords must come FIRST
+ * Each skill appears exactly ONCE - no duplicates
  */
 const TASK_KEYWORD_MAPPINGS = [
-  // ===== ULTIMATE PRIORITY: Language-specific (must be first) =====
-  // Rust (before TypeScript - "traits", "borrow" are Rust-specific)
+  // ===== HIGHEST PRIORITY: Language-specific (most specific first) =====
   {
     keywords: ["rust", "rustlang", "cargo", "traits", "borrow checker", "rustacean", "derive macro"],
     skill: "rust-patterns",
     agent: "performance-engineer",
     confidence: 0.99,
   },
-  // TypeScript (before bug/fix catches "error")
   {
     keywords: ["typescript", " ts ", " ts,", " ts.", "type error", "type safety", "type system"],
     skill: "typescript-expert",
     agent: "code-reviewer",
     confidence: 0.98,
   },
-  // Python (before API catches)
   {
     keywords: ["python", "django", "flask", "fastapi", "pandas", "numpy", "pytorch"],
     skill: "python-patterns",
     agent: "backend-engineer",
     confidence: 0.99,
   },
-  // Docker (before API catches)
-  {
-    keywords: ["docker", "dockerfile", "containerize", "docker-compose"],
-    skill: "docker-expert",
-    agent: "devops-engineer",
-    confidence: 0.99,
-  },
-  // Vercel (before deployment catches)
-  {
-    keywords: ["vercel", "vercel deployment", "vercel deploy"],
-    skill: "vercel-deployment",
-    agent: "devops-engineer",
-    confidence: 0.99,
-  },
-  // ===== END ULTIMATE PRIORITY =====
-
-  // ===== NEW: Antigravity Skills (high priority) =====
-  // Rust (before TypeScript to avoid "ts" matching)
-  {
-    keywords: ["rust", "rustlang", "cargo", "traits", "borrow checker", "rustacean"],
-    skill: "rust-patterns",
-    agent: "performance-engineer",
-    confidence: 0.98,
-  },
-  // Go
   {
     keywords: ["golang", " go ", " go,", "goroutine", "goroutines", "channel", "gopher"],
     skill: "go-patterns",
     agent: "backend-engineer",
     confidence: 0.98,
   },
-  // Copywriting
+  {
+    keywords: ["docker", "dockerfile", "containerize", "docker-compose"],
+    skill: "docker-expert",
+    agent: "devops-engineer",
+    confidence: 0.99,
+  },
+  {
+    keywords: ["vercel", "vercel deployment", "vercel deploy"],
+    skill: "vercel-deployment",
+    agent: "devops-engineer",
+    confidence: 0.99,
+  },
+  // ===== END LANGUAGE-SPECIFIC =====
+
+  // ===== Antigravity Skills (high priority) =====
   {
     keywords: ["copywriting", "marketing copy", "landing page copy", "headline", "advertising copy", "cta copy"],
     skill: "copywriting",
     agent: "marketing-expert",
     confidence: 0.98,
   },
-  // Pricing strategy
   {
     keywords: ["pricing strategy", "saas pricing", "monetization", "pricing model", "price optimization"],
     skill: "pricing-strategy",
     agent: "marketing-expert",
     confidence: 0.98,
   },
-  // RAG
   {
     keywords: ["rag", "vector database", "embedding", "chunking", "retrieval", "vector db", "pinecone", "weaviate", "chroma"],
     skill: "rag-engineer",
     agent: "librarian",
     confidence: 0.98,
   },
-  // Prompt Engineering
   {
     keywords: ["prompt engineering", "prompt-optimization", "few-shot", "chain-of-thought"],
     skill: "prompt-engineering",
@@ -100,460 +84,320 @@ const TASK_KEYWORD_MAPPINGS = [
   },
   // ===== END Antigravity Skills =====
 
-  // Security (highest priority - specific domain)
+  // ===== Security (specific domain) =====
   {
-    keywords: [
-      "security",
-      "vulnerability",
-      "audit",
-      "credential",
-      "encrypt",
-      "sanitize",
-    ],
+    keywords: ["security", "vulnerability", "audit", "credential", "encrypt", "sanitize"],
     skill: "security-audit",
     agent: "security-auditor",
     confidence: 0.95,
   },
-  // Testing - specific methodologies
+  // ===== END Security =====
+
+  // ===== Testing =====
   {
-    keywords: [
-      "tdd",
-      "bdd",
-      "test coverage",
-      "test strategy",
-      "unit test",
-      "integration test",
-      "e2e",
-      "behavior test",
-    ],
+    keywords: ["tdd", "bdd", "test coverage", "test strategy", "unit test", "integration test", "e2e", "behavior test"],
     skill: "testing-best-practices",
     agent: "test-architect",
     confidence: 0.95,
   },
-  // Testing - general
   {
     keywords: ["test", "testing", "spec", "mock", "stub"],
     skill: "testing-strategy",
     agent: "test-architect",
     confidence: 0.9,
   },
-  // Refactoring - specific patterns
+  // ===== END Testing =====
+
+  // ===== Refactoring =====
   {
     keywords: ["refactor", "technical debt", "code smell", "consolidate"],
     skill: "refactoring-strategies",
     agent: "refactorer",
     confidence: 0.9,
   },
-  // Performance - specific
+  // ===== END Refactoring =====
+
+  // ===== Performance =====
   {
-    keywords: [
-      "bottleneck",
-      "memory leak",
-      "cpu usage",
-      "latency",
-      "throughput",
-    ],
+    keywords: ["bottleneck", "memory leak", "cpu usage", "latency", "throughput"],
     skill: "performance-optimization",
     agent: "refactorer",
     confidence: 0.9,
   },
-  // Performance - general
   {
     keywords: ["performance", "optimize", "slow", "speed"],
     skill: "performance-optimization",
     agent: "refactorer",
     confidence: 0.8,
   },
-  // Code Review - specific
+  // ===== END Performance =====
+
+  // ===== Code Review =====
   {
     keywords: ["code quality", "lint", "style guide", "best practice"],
     skill: "code-review",
     agent: "code-reviewer",
     confidence: 0.9,
   },
-  // Code Review - general
   {
     keywords: ["review", "quality check"],
     skill: "code-review",
     agent: "code-reviewer",
     confidence: 0.85,
   },
-  // Frontend/UI - more specific first
+  // ===== END Code Review =====
+
+  // ===== Frontend/UI =====
   {
     keywords: ["design system", "component library", "ui component"],
     skill: "ui-ux-design",
-    agent: "enforcer", // Routes to enforcer which delegates appropriately
+    agent: "enforcer",
     confidence: 0.85,
   },
-  // Frontend/UI - general
   {
-    keywords: [
-      "ui",
-      "frontend",
-      "css",
-      "button",
-      "form",
-      "modal",
-      "page",
-      "interface",
-    ],
+    keywords: ["ui", "frontend", "css", "button", "form", "modal", "page", "interface"],
     skill: "ui-ux-design",
     agent: "enforcer",
     confidence: 0.75,
   },
-  // Architecture - specific
+  // ===== END Frontend/UI =====
+
+  // ===== Architecture =====
   {
     keywords: ["system architecture", "microservice", "distributed system"],
     skill: "architecture-patterns",
     agent: "architect",
     confidence: 0.95,
   },
-  // Architecture - general
   {
     keywords: ["architect", "architecture", "structure", "pattern"],
     skill: "architecture-patterns",
     agent: "architect",
     confidence: 0.85,
   },
-  // API/Backend - specific
+  // ===== END Architecture =====
+
+  // ===== API/Backend =====
   {
     keywords: ["rest api", "graphql", "endpoint", "route handler"],
     skill: "api-design",
     agent: "architect",
     confidence: 0.9,
   },
-  // API/Backend - general
   {
     keywords: ["api", "backend", "server", "crud"],
     skill: "api-design",
     agent: "architect",
     confidence: 0.8,
   },
-  // Database - specific
+  // ===== END API/Backend =====
+
+  // ===== Database =====
   {
     keywords: ["database schema", "sql", "migration", "query optimization"],
     skill: "database-design",
     agent: "architect",
     confidence: 0.9,
   },
-  // Documentation - specific FIRST (before generic "doc" matches everything)
+  // ===== END Database =====
+
+  // ===== Documentation =====
   {
     keywords: ["readme", "changelog", "api documentation", "markdown"],
     skill: "documentation-generation",
     agent: "librarian",
     confidence: 0.9,
   },
-  // DevOps/Deployment - specific BEFORE generic (docker before pipeline)
-  {
-    keywords: [
-      "deploy",
-      "docker",
-      "kubernetes",
-      "ci/cd",
-      "pipeline",
-      "release",
-    ],
-    skill: "devops-deployment",
-    agent: "architect",
-    confidence: 0.85,
-  },
-  // Documentation - general (now comes after specific but BEFORE architecture to avoid "doc" matching "architect")
   {
     keywords: ["document", "doc", "comment", "guide", "tutorial"],
     skill: "documentation-generation",
     agent: "librarian",
     confidence: 0.8,
   },
-  // Architecture - specific (comes after documentation to avoid "doc" substring match)
+  // ===== END Documentation =====
+
+  // ===== DevOps/Deployment =====
   {
-    keywords: ["system architecture", "microservice", "distributed system"],
-    skill: "architecture-patterns",
-    agent: "architect",
-    confidence: 0.95,
-  },
-  // Architecture - general (moved AFTER specific to avoid premature matching)
-  {
-    keywords: ["architect", "architecture", "structure", "pattern"],
-    skill: "architecture-patterns",
+    keywords: ["deploy", "kubernetes", "ci/cd", "pipeline", "release"],
+    skill: "devops-deployment",
     agent: "architect",
     confidence: 0.85,
   },
-  // Bug fixing - specific patterns
+  // ===== END DevOps =====
+
+  // ===== Bug fixing =====
   {
     keywords: ["debug", "stack trace", "exception", "crash", "panic"],
     skill: "code-review",
     agent: "bug-triage-specialist",
     confidence: 0.9,
   },
-  // Bug fixing - general (lower priority than language-specific)
   {
     keywords: ["bug", "fix", "issue", "problem", "fail"],
     skill: "code-review",
     agent: "bug-triage-specialist",
     confidence: 0.7,
   },
-  // Project analysis - specific
+  // ===== END Bug fixing =====
+
+  // ===== Project analysis =====
   {
     keywords: ["code complexity", "maintainability", "cyclomatic"],
     skill: "project-analysis",
     agent: "librarian",
     confidence: 0.95,
   },
-  // Project analysis - general
   {
     keywords: ["analyze", "structure", "health", "metrics", "dependencies"],
     skill: "project-analysis",
     agent: "librarian",
     confidence: 0.85,
   },
-  // State management
+  // ===== END Project analysis =====
+
+  // ===== State management =====
   {
-    keywords: [
-      "state",
-      "store",
-      "redux",
-      "mobx",
-      "context",
-      "cache",
-      "persistence",
-    ],
+    keywords: ["state", "store", "redux", "mobx", "context", "cache", "persistence"],
     skill: "state-manager",
     agent: "architect",
     confidence: 0.85,
   },
-  // Session management
+  // ===== END State management =====
+
+  // ===== Session management =====
   {
     keywords: ["session", "cookie", "token", "jwt", "auth", "login", "logout"],
     skill: "session-management",
     agent: "architect",
     confidence: 0.85,
   },
-  // Git workflow
+  // ===== END Session management =====
+
+  // ===== Git workflow =====
   {
-    keywords: [
-      "git",
-      "commit",
-      "branch",
-      "merge",
-      "pr",
-      "pull request",
-      "rebase",
-      "conflict",
-    ],
+    keywords: ["git", "commit", "branch", "merge", "pr", "pull request", "rebase", "conflict"],
     skill: "git-workflow",
     agent: "librarian",
     confidence: 0.9,
   },
-  // Boot/orchestration
+  // ===== END Git workflow =====
+
+  // ===== Boot/orchestration =====
   {
     keywords: ["boot", "init", "startup", "initialize", "setup", "config"],
     skill: "boot-orchestrator",
     agent: "architect",
     confidence: 0.9,
   },
-  // Processing pipeline
+  // ===== END Boot =====
+
+  // ===== Processing pipeline =====
   {
     keywords: ["pipeline", "batch", "stream", "transform", "filter", "etl"],
     skill: "processor-pipeline",
     agent: "architect",
     confidence: 0.85,
   },
-  // SEO - specific
+  // ===== END Pipeline =====
+
+  // ===== SEO =====
   {
     keywords: ["seo", "search engine", "keyword", "meta", "ranking", "google"],
     skill: "seo-specialist",
     agent: "seo-specialist",
     confidence: 0.95,
   },
-  // Marketing - specific
+  // ===== END SEO =====
+
+  // ===== Marketing =====
   {
     keywords: ["marketing", "campaign", "brand", "growth", "conversion", "cta"],
     skill: "marketing-expert",
     agent: "marketing-expert",
     confidence: 0.9,
   },
-  // Copywriting - specific
-  {
-    keywords: ["copywriting", "landing page", "headline", "marketing copy", "advertising"],
-    skill: "seo-copywriter",
-    agent: "seo-copywriter",
-    confidence: 0.95,
-  },
-  // Code analysis - specific
+  // ===== END Marketing =====
+
+  // ===== Code analysis =====
   {
     keywords: ["code analysis", "metrics", "complexity", "code smell", "technical debt"],
     skill: "code-analyzer",
     agent: "analyzer",
     confidence: 0.9,
   },
-  // Log monitoring - specific
+  // ===== END Code analysis =====
+
+  // ===== Log monitoring =====
   {
     keywords: ["log", "logging", "monitor", "alert", "observability"],
     skill: "log-monitor",
     agent: "log-monitor",
     confidence: 0.9,
   },
-  // Visual analysis - specific
+  // ===== END Log monitoring =====
+
+  // ===== Visual analysis =====
   {
     keywords: ["screenshot", "diagram", "image", "visual", "mockup", "ui design"],
     skill: "multimodal-looker",
     agent: "multimodal-looker",
     confidence: 0.85,
   },
-  // Docker - specific (before DevOps to ensure higher priority)
-  {
-    keywords: ["docker", "container", "dockerfile", "kubernetes", "k8s"],
-    skill: "docker-expert",
-    agent: "devops-engineer",
-    confidence: 0.9,
-  },
-  // TypeScript/JavaScript - maps to code-reviewer
-  {
-    keywords: ["typescript", "javascript", "js", "ts", "type error", "type safety"],
-    skill: "typescript-expert",
-    agent: "code-reviewer",
-    confidence: 0.85,
-  },
-  // Python - maps to backend-engineer (for API work)
-  {
-    keywords: ["python", "django", "flask", "fastapi", "pandas"],
-    skill: "python-patterns",
-    agent: "backend-engineer",
-    confidence: 0.8,
-  },
-  // React - maps to frontend-engineer
-  {
-    keywords: ["react", "jsx", "tsx", "hooks", "component", "state"],
-    skill: "react-patterns",
-    agent: "frontend-engineer",
-    confidence: 0.85,
-  },
-  // Go - maps to backend-engineer
-  {
-    keywords: ["golang", " go ", "goroutine", "channel"],
-    skill: "go-patterns",
-    agent: "backend-engineer",
-    confidence: 0.8,
-  },
-  // Rust - maps to performance-engineer
-  {
-    keywords: ["rust", "rustlang", "cargo", "trait", "borrow checker"],
-    skill: "rust-patterns",
-    agent: "performance-engineer",
-    confidence: 0.8,
-  },
-  // AWS/Serverless - maps to devops-engineer
+  // ===== END Visual analysis =====
+
+  // ===== AWS/Serverless =====
   {
     keywords: ["aws", "lambda", "serverless", "s3", "dynamodb", "cloudformation"],
     skill: "aws-serverless",
     agent: "devops-engineer",
     confidence: 0.85,
   },
-  // Vercel - maps to devops-engineer
-  {
-    keywords: ["vercel", "next.js", "edge", "deployment"],
-    skill: "vercel-deployment",
-    agent: "devops-engineer",
-    confidence: 0.85,
-  },
-  // Vulnerability scanning - maps to security-auditor
+  // ===== END AWS =====
+
+  // ===== Vulnerability scanning =====
   {
     keywords: ["vulnerability", "cve", "exploit", "penetration", "security scan"],
     skill: "vulnerability-scanner",
     agent: "security-auditor",
     confidence: 0.9,
   },
-  // API Security - maps to security-auditor
+  // ===== END Vulnerability =====
+
+  // ===== API Security =====
   {
     keywords: ["api security", "authentication", "authorization", "jwt", "oauth"],
     skill: "api-security-best-practices",
     agent: "security-auditor",
     confidence: 0.9,
   },
-  // Pricing strategy - maps to marketing-expert
+  // ===== END API Security =====
+
+  // ===== React =====
   {
-    keywords: ["pricing", "pricing strategy", "monetization", "saas pricing"],
-    skill: "pricing-strategy",
-    agent: "marketing-expert",
-    confidence: 0.9,
-  },
-  // SEO Fundamentals - maps to seo-specialist
-  {
-    keywords: ["seo audit", "search engine", "web vitals", "core web vitals"],
-    skill: "seo-fundamentals",
-    agent: "seo-specialist",
-    confidence: 0.9,
-  },
-  // RAG Engineer - HIGH PRIORITY (before generic "analyze")
-  {
-    keywords: ["rag", "vector database", "embedding", "chunking", "retrieval", "vector db", "pinecone", "weaviate", "chroma"],
-    skill: "rag-engineer",
-    agent: "librarian",
-    confidence: 0.95,
-  },
-  // Prompt Engineering - HIGH PRIORITY (before generic words)
-  {
-    keywords: ["prompt engineering", "prompt-optimization", "few-shot", "chain-of-thought"],
-    skill: "prompt-engineering",
-    agent: "librarian",
-    confidence: 0.95,
-  },
-  // Pricing strategy - HIGH PRIORITY
-  {
-    keywords: ["pricing strategy", "saas pricing", "monetization", "pricing model", "price optimization"],
-    skill: "pricing-strategy",
-    agent: "marketing-expert",
-    confidence: 0.95,
-  },
-  // Copywriting - HIGH PRIORITY
-  {
-    keywords: ["copywriting", "marketing copy", "landing page copy", "headline", "advertising copy", "cta copy"],
-    skill: "copywriting",
-    agent: "marketing-expert",
-    confidence: 0.95,
-  },
-  // Rust - HIGH PRIORITY (before typescript)
-  {
-    keywords: ["rust", "rustlang", "cargo", "traits", "borrow checker", "rustacean"],
-    skill: "rust-patterns",
-    agent: "performance-engineer",
-    confidence: 0.95,
-  },
-  // Go - HIGH PRIORITY  
-  {
-    keywords: ["golang", " go ", "go ", " goroutine", "goroutines", "channel", "gopher"],
-    skill: "go-patterns",
-    agent: "backend-engineer",
-    confidence: 0.95,
-  },
-  // RAG Engineer - maps to librarian
-  {
-    keywords: ["rag", "vector database", "embedding", "chunking", "retrieval"],
-    skill: "rag-engineer",
-    agent: "librarian",
+    keywords: ["react", "jsx", "tsx", "hooks", "component", "state"],
+    skill: "react-patterns",
+    agent: "frontend-engineer",
     confidence: 0.85,
   },
-  // Prompt Engineering - maps to librarian (for now)
-  {
-    keywords: ["prompt", "prompt engineering", "llm", "few-shot"],
-    skill: "prompt-engineering",
-    agent: "librarian",
-    confidence: 0.8,
-  },
-  // Brainstorming - maps to architect
+  // ===== END React =====
+
+  // ===== Brainstorming =====
   {
     keywords: ["brainstorm", "ideate", "design thinking", "workshop"],
     skill: "brainstorming",
     agent: "architect",
     confidence: 0.85,
   },
-  // Planning - maps to architect
+  // ===== END Brainstorming =====
+
+  // ===== Planning =====
   {
     keywords: ["plan", "roadmap", "milestone", "sprint planning"],
     skill: "planning",
     agent: "architect",
     confidence: 0.85,
   },
+  // ===== END Planning =====
 ];
 
 /**

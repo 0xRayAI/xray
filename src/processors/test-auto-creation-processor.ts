@@ -121,13 +121,21 @@ export const testAutoCreationProcessor = {
         args?.path ||
         innerContext.filePath;
 
-      // ALWAYS scan for the most recent ts file in src/ as fallback
+      // ALWAYS scan for the most recent ts file in src/ or root as fallback
       // This is more reliable than depending on context
       const srcDir = path.join(process.cwd(), 'src');
+      const rootDir = process.cwd();
       
-      const recentFile = findRecentlyModifiedTsFile(srcDir, 60);
+      // Try src first, then root
+      let recentFile = findRecentlyModifiedTsFile(srcDir, 60);
+      if (!recentFile) {
+        recentFile = findRecentlyModifiedTsFile(rootDir, 60);
+      }
+      
       if (recentFile) {
-        filePath = path.join('src', recentFile);
+        // If it's from root, use it directly; if from src, prepend 'src/'
+        const isFromSrc = recentFile.startsWith(srcDir);
+        filePath = isFromSrc ? path.relative(process.cwd(), recentFile) : recentFile;
       }
 
       await frameworkLogger.log("test-auto-creation", "filepath-resolution", "info", {

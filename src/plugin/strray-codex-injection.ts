@@ -571,8 +571,8 @@ export default async function strrayCodexPlugin(input: {
           });
           processorManager.registerProcessor({
             name: "testAutoCreation",
-            type: "post", // FIX #3: Tests should be created AFTER source files
-            priority: 50,
+            type: "post",
+            priority: 5, // FIX: Run BEFORE testExecution so tests exist when we run them
             enabled: true,
           });
           processorManager.registerProcessor({

@@ -10,7 +10,7 @@
     "strray-integration": "dist/scripts/integration.js"
   },
   "opencode": {
-    "plugin": "./dist/plugin/plugins/strray-codex-injection.js",
+    "plugin": "./dist/plugin/strray-codex-injection.js",
     "mcps": "./dist/plugin/mcps/"
   },
   "scripts": {
