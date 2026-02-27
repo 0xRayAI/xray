@@ -40,10 +40,33 @@ const configFiles = [
   "AGENTS-consumer.md:AGENTS.md"  // Minimal version for consumers
 ];
 
-// Directories to copy recursively
-const configDirs = [
-  ".opencode"
-];
+// Copy .opencode directory recursively
+const opencodeSource = path.join(packageRoot, '.opencode');
+const opencodeDest = path.join(targetDir, '.opencode');
+
+if (fs.existsSync(opencodeSource)) {
+  try {
+    function copyDir(src, dest) {
+      if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+      }
+      const entries = fs.readdirSync(src, { withFileTypes: true });
+      for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+        if (entry.isDirectory()) {
+          copyDir(srcPath, destPath);
+        } else {
+          fs.copyFileSync(srcPath, destPath);
+        }
+      }
+    }
+    copyDir(opencodeSource, opencodeDest);
+    console.log(`✅ Copied directory .opencode`);
+  } catch (error) {
+    console.warn(`⚠️ Could not copy directory .opencode:`, error.message);
+  }
+}
 
 console.log("🔧 StrRay Postinstall: Copying configuration files...");
 console.log("📍 Package root:", packageRoot);
@@ -75,41 +98,27 @@ configFiles.forEach(fileMapping => {
   }
 });
 
-// Copy directories recursively
-configDirs.forEach(dirPath => {
-  const sourceDir = path.join(packageRoot, dirPath);
-  const destDir = path.join(targetDir, dirPath);
+// Create symlink to scripts directory for post-processor monitoring
+const scriptsSource = path.join(packageRoot, 'scripts');
+const scriptsDest = path.join(targetDir, 'scripts');
 
-  if (fs.existsSync(sourceDir)) {
-    try {
-      // Recursive copy function
-      function copyDir(src, dest) {
-        if (!fs.existsSync(dest)) {
-          fs.mkdirSync(dest, { recursive: true });
-        }
-
-        const entries = fs.readdirSync(src, { withFileTypes: true });
-        for (const entry of entries) {
-          const srcPath = path.join(src, entry.name);
-          const destPath = path.join(dest, entry.name);
-
-          if (entry.isDirectory()) {
-            copyDir(srcPath, destPath);
-          } else {
-            fs.copyFileSync(srcPath, destPath);
-          }
-        }
+if (fs.existsSync(scriptsSource)) {
+  try {
+    if (fs.existsSync(scriptsDest)) {
+      const stats = fs.lstatSync(scriptsDest);
+      if (stats.isSymbolicLink()) {
+        console.log(`✅ scripts symlink already exists`);
+      } else {
+        console.log(`⚠️ scripts exists but is not a symlink`);
       }
-
-      copyDir(sourceDir, destDir);
-      console.log(`✅ Copied directory ${dirPath}`);
-    } catch (error) {
-      console.warn(`⚠️ Could not copy directory ${dirPath}:`, error.message);
+    } else {
+      fs.symlinkSync(scriptsSource, scriptsDest, 'dir');
+      console.log(`✅ Created scripts symlink → node_modules/strray-ai/scripts`);
     }
-  } else {
-    console.warn(`⚠️ Source directory not found: ${sourceDir}`);
+  } catch (error) {
+    console.warn(`⚠️ Could not create scripts symlink:`, error.message);
   }
-});
+}
 
 // Detect if we're in a consumer environment (installed via npm)
 // Check both the target directory and current working directory
