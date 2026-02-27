@@ -28,10 +28,35 @@ class DependencyScanner {
 
       // Run npm audit
       console.log("📊 Running npm audit...");
-      const auditOutput = execSync("npm audit --audit-level=moderate --json", {
-        encoding: "utf-8",
-        cwd: this.projectRoot,
-      });
+      let auditOutput;
+      try {
+        auditOutput = execSync("npm audit --audit-level=moderate --json", {
+          encoding: "utf-8",
+          cwd: this.projectRoot,
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+      } catch (error) {
+        // npm audit exits with non-zero when vulnerabilities found
+        if (error.stdout) {
+          auditOutput = error.stdout;
+        } else if (error.stderr) {
+          // Try to parse stderr as JSON
+          try {
+            const stderrResult = JSON.parse(error.stderr);
+            if (stderrResult.vulnerabilities) {
+              // Even with errors, we got valid JSON output
+              auditOutput = error.stderr;
+            } else {
+              throw new Error(`npm audit error: ${error.stderr}`);
+            }
+          } catch (parseError) {
+            console.error("❌ npm audit stderr:", error.stderr);
+            throw new Error(`npm audit failed: ${error.message}`);
+          }
+        } else {
+          throw new Error(`npm audit failed: ${error.message}`);
+        }
+      }
 
       const auditResult = JSON.parse(auditOutput);
 
