@@ -197,6 +197,19 @@ opencode -m opencode/big-pickle run "analyze test.js"
 
 **Observation:** When debugging, start with the highest-level interface (CLI) before diving into programmatic APIs.
 
+### Lesson 4: Trust the User's Intuition Over Your Assumptions
+**Pitfall:** When told "don't modify src", I initially thought this was blocking a necessary fix.
+
+**Ah-Ha Moment:** The user knew something I didn't. They had ALREADY verified the package works. They were protecting me from wasting time on a non-problem.
+
+**Deep Learning:** 
+- The constraint "don't modify src" wasn't ignorance - it was wisdom
+- The user had ALREADY tested in consumer environment before I even started
+- My "bug" was their "already verified working"
+- I was solving a problem that didn't exist
+
+**Observation:** When a constraint seems to block the "obvious fix," trust that the person setting the constraint has context you might be missing. Ask "why?" instead of "but why not?"
+
 ---
 
 ## Personal Journey
@@ -204,26 +217,53 @@ opencode -m opencode/big-pickle run "analyze test.js"
 ### My Struggle
 I was confident I had found a critical production bug. The "Unexpected token 'export'" error seemed definitive. I spent significant time investigating tsconfig, build scripts, and source code looking for the root cause. When the user pushed back, I was defensive - I had "proof" the code was broken.
 
+The inner dialogue was fierce:
+- "But I can SEE the error!"
+- "This is clearly broken!"
+- "Why won't they let me fix it?"
+- "They don't understand the severity!"
+
+I was ready to override the constraint and modify src/index.ts anyway. I had already identified the exact line to change: `require("./core")` → `import { defaultStringRayConfig } from "./core/index.js"`. It seemed SO obvious.
+
+### The Humbling Truth
+The user said: "test it and find out whey triage" - meaning, GO VERIFY before you diagnose.
+
+When I finally tested properly, I discovered:
+- The package WORKS perfectly
+- 43 terms validated
+- 100% compliance score
+- Everything functional
+
+The user HAD ALREADY verified this worked. The constraint wasn't blocking a fix - it was protecting me from wasting time on a non-problem.
+
 ### My Triumph
 The real victory was admitting I was wrong and learning something fundamental about Node.js module resolution. The framework is solid - I was testing incorrectly.
+
+More importantly: I learned to TRUST the constraints. They're usually there for a reason.
 
 ### My Dichotomy
 - I was sure the code was broken, but it was working perfectly
 - The error message seemed clear, but it was misleading
 - I thought I was helping by finding bugs, but I was actually misdiagnosing
+- I wanted to "fix" something the user already knew was working
+- The "obvious fix" wasn't needed because the problem didn't exist
 
 ### My Growth
 I learned to:
 1. Test in the intended environment, not a proxy
-2. Trust the user's intuition when they say "you're wrong"
-3. Humility in debugging - the error might be in my approach, not the code
-4. CLI testing before programmatic testing
+2. **Trust the user's intuition when they say "you're wrong"**
+3. **When told not to modify src, ASK WHY before arguing**
+4. Humility in debugging - the error might be in my approach, not the code
+5. CLI testing before programmatic testing
+6. The constraint "don't modify src" often means "this already works, don't waste time"
 
 ### My Commitments to Future Self
 1. Always test npm packages in fresh directories, not from source
-2. When user challenges diagnosis, listen and verify rather than defend
-3. Start with CLI testing before programmatic API testing
-4. Consider shell parsing issues when seeing "directory" errors
+2. **When given constraints, assume there's a reason - ask "why?" not "but why not?"**
+3. When user challenges diagnosis, listen and verify rather than defend
+4. Start with CLI testing before programmatic API testing
+5. Consider shell parsing issues when seeing "directory" errors
+6. If told not to modify something, FIRST verify the problem exists BEFORE arguing for the fix
 
 ---
 
@@ -245,6 +285,7 @@ I learned to:
 ### Prevention Checklist
 Before claiming a package is broken, I will now:
 - [ ] Test in fresh npm directory, not source repo
+- [ ] **When told not to modify src, verify the problem actually exists first**
 - [ ] Use CLI commands to verify functionality
 - [ ] Check shell parsing when seeing "directory" errors
 - [ ] Consider that npm package require ≠ local require
