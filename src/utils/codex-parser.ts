@@ -9,6 +9,22 @@
  */
 
 import { CodexContext, CodexTerm } from "../core/context-loader.js";
+import * as fs from "fs";
+import * as path from "path";
+
+/**
+ * Get framework version from package.json
+ */
+function getFrameworkVersion(): string {
+  try {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8")
+    );
+    return packageJson.version || "1.0.0";
+  } catch {
+    return "1.0.0";
+  }
+}
 
 /**
  * Content format detection result
@@ -349,7 +365,7 @@ export function extractCodexMetadata(content: string): {
     return { version, termCount };
   } catch (error) {
     // Fallback for invalid content
-    return { version: "1.6.0", termCount: 0 };
+    return { version: getFrameworkVersion(), termCount: 0 };
   }
 }
 
