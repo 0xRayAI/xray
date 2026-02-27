@@ -2,16 +2,17 @@
  * Test Auto-Creation Processor
  *
  * Automatically generates test files when new source files are created.
- * This ensures the 85%+ test coverage requirement is maintained.
+ * Supports multiple languages: TypeScript, JavaScript, Python, Go, Rust, Java, C#
+ * Uses direct skill calls (no MCP overhead) for instant test generation.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-02-15
  */
 
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { mcpClientManager } from "../mcps/mcp-client.js";
+import { detectProjectLanguage, getTestFilePath, LANGUAGE_CONFIGS } from "../utils/language-detector.js";
 import { testAutoGenerationMonitor } from "../monitoring/test-auto-generation-monitor.js";
 
 /**
@@ -176,8 +177,12 @@ export const testAutoCreationProcessor = {
         };
       }
 
-      // Only process TypeScript files
-      if (!filePath.endsWith(".ts") || filePath.endsWith(".test.ts")) {
+      // Support multiple file types: .ts, .js, .py, .go, .rs, .java, .cs
+      const supportedExtensions = [".ts", ".js", ".tsx", ".jsx", ".py", ".go", ".rs", ".java", ".cs"];
+      const ext = path.extname(filePath);
+      const isTestFile = filePath.endsWith(".test.ts") || filePath.endsWith(".spec.ts");
+      
+      if (!supportedExtensions.includes(ext) || isTestFile) {
         return {
           success: true,
           processorName: "testAutoCreation",
@@ -185,8 +190,11 @@ export const testAutoCreationProcessor = {
         };
       }
 
-      // Check if test file already exists
-      const testFilePath = filePath.replace(/\.ts$/, ".test.ts");
+      // Get language config for this extension
+      const langConfig = LANGUAGE_CONFIGS.find(c => c.extensions.includes(ext));
+
+      // Check if test file already exists (use language-appropriate extension)
+      let testFilePath = getTestFilePath(filePath, (langConfig?.language as any) || "TypeScript");
       const fullTestPath = path.join(directory, testFilePath);
 
       if (fs.existsSync(fullTestPath)) {
@@ -264,94 +272,19 @@ export const testAutoCreationProcessor = {
         },
       );
 
-      // Try MCP first, fallback to direct method if it fails
-      let mcpSuccess = false;
-      
-      try {
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "mcp-call-start",
-          "info",
-          {
-            message: `Calling MCP testing-strategy for test generation`,
-          },
-        );
+      // Use direct test generation (no MCP - instant!)
+      await createBasicTestStub(fullTestPath, filePath, exports);
 
-        // Call testing-strategy MCP server directly (not through skill-invocation)
-        const mcpResult = await mcpClientManager.callServerTool(
-          "testing-strategy",
-          "generate-test-file",
-          {
-            sourceFile: filePath,
-            sourceContent,
-            exports: exports.map((e: { name: string; type: string; params: string; returnType: string }) => ({
-              name: e.name,
-              type: e.type,
-            })),
-            testFilePath,
-            directory,
-          },
-        );
-
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "mcp-call-result",
-          "info",
-          {
-            message: `MCP result: ${JSON.stringify(mcpResult).slice(0, 200)}`,
-          },
-        );
-
-        // Check if MCP actually created the file
-        const testCreated = fs.existsSync(fullTestPath);
-        
-        if (testCreated) {
-          await frameworkLogger.log(
-            "test-auto-creation",
-            "tests-generated-mcp",
-            "success",
-            {
-              message: `Tests auto-generated via MCP for ${filePath}`,
-              testFile: testFilePath,
-            },
-          );
-          mcpSuccess = true;
-        }
-      } catch (mcpError) {
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "mcp-failed",
-          "info",
-          {
-            message: `MCP failed: ${mcpError instanceof Error ? mcpError.message : String(mcpError)}, using fallback`,
-          },
-        );
-      }
-
-      // If MCP didn't succeed, use direct fallback
-      if (!mcpSuccess) {
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "using-direct-fallback",
-          "info",
-          {
-            message: `Using direct test creation for ${filePath}`,
-          },
-        );
-
-        await createBasicTestStub(fullTestPath, filePath, exports);
-
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "test-stub-created",
-          "success",
-          {
-            message: `Basic test stub created for ${filePath}`,
-            testFile: testFilePath,
-            exportsCount: exports.length,
-          },
-        );
-      }
+      await frameworkLogger.log(
+        "test-auto-creation",
+        "test-stub-created",
+        "success",
+        {
+          message: `Test stub created for ${filePath}`,
+          testFile: testFilePath,
+          exportsCount: exports.length,
+        },
+      );
 
       return {
         success: true,
