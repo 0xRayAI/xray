@@ -7,6 +7,7 @@ import {
   validateJsonSyntax,
   validateBeforeModification,
 } from "../../utils/codex-parser.js";
+import { getFrameworkVersion } from "../utils/test-helpers.js";
 
 // Mock console.log to avoid test output pollution
 vi.spyOn(console, "log").mockImplementation(() => {});
@@ -14,7 +15,7 @@ vi.spyOn(console, "log").mockImplementation(() => {});
 describe("StringRay Codex Parser", () => {
   describe("detectContentFormat", () => {
     it("should detect JSON format with high confidence", () => {
-      const jsonContent = '{"version": "1.6.0", "terms": {}}';
+      const jsonContent = '{"version": "1.0.0", "terms": {}}';
       const result = detectContentFormat(jsonContent);
 
       expect(result.format).toBe("json");
@@ -23,9 +24,9 @@ describe("StringRay Codex Parser", () => {
 
     it("should detect Markdown format as fallback", () => {
       const markdownContent = `**Version**: 1.2.20
-**Last Updated**: 2026-01-06
-#### 1. Test Term
-Description of term.`;
+ **Last Updated**: 2026-01-06
+ #### 1. Test Term
+ Description of term.`;
       const result = detectContentFormat(markdownContent);
 
       expect(result.format).toBe("markdown");
@@ -33,9 +34,9 @@ Description of term.`;
     });
 
     it("should detect markdown when JSON parsing fails despite JSON-like start", () => {
-      const mixedContent = `{"version": "1.6.0"}
-**Version**: 1.2.20
-#### 1. Test Term`;
+      const mixedContent = `{"version": "1.0.0"}
+ **Version**: 1.2.20
+ #### 1. Test Term`;
       const result = detectContentFormat(mixedContent);
 
       expect(result.format).toBe("markdown");
@@ -58,7 +59,7 @@ Description of term.`;
   describe("parseCodexContent", () => {
     it("should parse JSON content successfully as primary format", () => {
       const jsonContent = JSON.stringify({
-        version: "1.6.0",
+        version: getFrameworkVersion(),
         lastUpdated: "2026-01-06",
         errorPreventionTarget: 0.996,
         terms: {
@@ -82,7 +83,7 @@ Description of term.`;
       const result = parseCodexContent(jsonContent, "test.json");
 
       expect(result.success).toBe(true);
-      expect(result.context!.version).toBe("1.6.0");
+      expect(result.context!.version).toBe(getFrameworkVersion());
       expect(result.context!.terms.size).toBe(1);
       expect(result.context!.interweaves).toContain("Test Interweave");
     });
@@ -128,13 +129,13 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
 
     it("should prefer JSON parsing for .json files", () => {
       const jsonContent = JSON.stringify({
-        version: "1.6.0",
+        version: getFrameworkVersion(),
         terms: { "1": { number: 1, title: "JSON Term" } },
       });
 
       const result = parseCodexContent(jsonContent, "test.json");
       expect(result.success).toBe(true);
-      expect(result.context!.version).toBe("1.6.0");
+      expect(result.context!.version).toBe(getFrameworkVersion());
     });
 
     it("should return error for empty content", () => {
@@ -166,12 +167,12 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
   describe("extractCodexMetadata", () => {
     it("should extract version and term count from JSON as primary format", () => {
       const jsonContent = JSON.stringify({
-        version: "1.6.0",
+        version: getFrameworkVersion(),
         terms: { "1": {}, "2": {} },
       });
 
       const metadata = extractCodexMetadata(jsonContent);
-      expect(metadata.version).toBe("1.6.0");
+      expect(metadata.version).toBe(getFrameworkVersion());
       expect(metadata.termCount).toBe(2);
     });
 
@@ -188,7 +189,7 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
 
     it("should handle complex JSON structures", () => {
       const jsonContent = JSON.stringify({
-        version: "1.6.0",
+        version: getFrameworkVersion(),
         terms: {
           "1": { number: 1 },
           "11": { number: 11 },
@@ -198,13 +199,13 @@ Never use \`any\`, \`@ts-ignore\`, or \`@ts-expect-error\`.
       });
 
       const metadata = extractCodexMetadata(jsonContent);
-      expect(metadata.version).toBe("1.6.0");
+      expect(metadata.version).toBe(getFrameworkVersion());
       expect(metadata.termCount).toBe(4);
     });
 
     it("should return defaults for invalid content", () => {
       const metadata = extractCodexMetadata("invalid");
-      expect(metadata.version).toBe("1.6.0");
+      expect(metadata.version).toBe(getFrameworkVersion());
       expect(metadata.termCount).toBe(0);
     });
   });

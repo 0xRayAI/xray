@@ -260,7 +260,7 @@ export class MockCodexGenerator {
    */
   static createMinimalCodex(): string {
     return JSON.stringify({
-      version: "1.6.0",
+      version: "1.6.16",
       lastUpdated: "2026-01-06",
       errorPreventionTarget: 0.996,
       terms: {
@@ -303,7 +303,7 @@ export class MockCodexGenerator {
    */
   static createCodexWithViolations(): string {
     return JSON.stringify({
-      version: "1.6.0",
+      version: "1.6.16",
       lastUpdated: "2026-01-06",
       errorPreventionTarget: 0.996,
       terms: {
@@ -373,7 +373,7 @@ export class MockContextFactory {
     overrides: Partial<CodexContext> = {},
   ): CodexContext {
     const defaultContext: CodexContext = {
-      version: "1.6.0",
+      version: "1.6.16",
       lastUpdated: new Date().toISOString(),
       terms: new Map([
         [
@@ -650,5 +650,20 @@ export class AsyncTestUtils {
         ),
       ),
     ]);
+  }
+}
+
+/**
+ * Get the current framework version from package.json
+ * Avoids hardcoded version in tests
+ */
+export function getFrameworkVersion(): string {
+  try {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8")
+    );
+    return packageJson.version || "unknown";
+  } catch {
+    return "unknown";
   }
 }

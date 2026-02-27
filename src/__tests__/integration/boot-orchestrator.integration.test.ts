@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { BootOrchestrator, BootResult } from "../../core/boot-orchestrator.js";
 import { StringRayStateManager } from "../../state/state-manager.js";
+import { getFrameworkVersion } from "../utils/test-helpers.js";
 
 // Mock all the dependencies that BootOrchestrator uses
 vi.mock("../../state/state-manager");
@@ -504,12 +505,12 @@ describe("BootOrchestrator - Integration Tests", () => {
       expect(stateManager.set).toHaveBeenCalledWith(
         "strray:config",
         expect.objectContaining({
-          version: "1.6.0",
+          version: getFrameworkVersion(),
           codex_enabled: true,
           codex_version: "v1.2.0",
         }),
       );
-      expect(stateManager.set).toHaveBeenCalledWith("strray:version", "1.6.0");
+      expect(stateManager.set).toHaveBeenCalledWith("strray:version", getFrameworkVersion());
       expect(stateManager.set).toHaveBeenCalledWith(
         "strray:codex_enabled",
         true,

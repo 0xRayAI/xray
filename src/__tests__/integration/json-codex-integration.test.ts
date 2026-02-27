@@ -13,10 +13,11 @@ import {
   validateJsonSyntax,
   extractCodexMetadata,
 } from "../../utils/codex-parser.js";
+import { getFrameworkVersion } from "../utils/test-helpers.js";
 
 const testProjectRoot = process.cwd();
 const validJsonCodex = JSON.stringify({
-  version: "1.6.0",
+  version: getFrameworkVersion(),
   lastUpdated: "2026-01-06",
   errorPreventionTarget: 0.996,
   terms: {
@@ -87,7 +88,7 @@ describe("JSON Codex Integration", () => {
 
       expect(result.success).toBe(true);
       expect(result.context).toBeDefined();
-      expect(result.context!.version).toBe("1.6.0");
+      expect(result.context!.version).toBe(getFrameworkVersion());
       expect(result.context!.terms).toBeDefined();
       expect(result.context!.terms.size).toBe(3);
     });
@@ -115,13 +116,13 @@ describe("JSON Codex Integration", () => {
     test("should extract metadata from valid JSON", () => {
       const metadata = extractCodexMetadata(validJsonCodex);
 
-      expect(metadata).toHaveProperty("version", "1.6.0");
+      expect(metadata).toHaveProperty("version", getFrameworkVersion());
       expect(metadata).toHaveProperty("termCount", 3);
     });
 
     test("should handle JSON with different key formats", () => {
       const mixedKeyJson = JSON.stringify({
-        version: "1.6.0",
+        version: getFrameworkVersion(),
         terms: {
           "1": { number: 1, title: "Test 1" },
           "2": { number: 2, title: "Test 2" },
@@ -291,7 +292,7 @@ describe("JSON Codex Integration", () => {
       ];
 
       expect(mockContext).toHaveLength(1);
-      expect(mockContext[0].metadata.version).toBe("1.6.0");
+      expect(mockContext[0].metadata.version).toBe(getFrameworkVersion());
 
       // Step 4: Simulate plugin enforcement
       const testContent = "const validCode: string = 'test';";
