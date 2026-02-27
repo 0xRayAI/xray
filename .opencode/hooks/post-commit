@@ -16,23 +16,29 @@ fi
 # Get changed files
 FILES=$(git diff --name-only HEAD~1 2>/dev/null || git diff --name-only --cached)
 
-# Find StrRay dist
-STRRAY_DIST=""
-for dir in "dist" "node_modules/strray-ai/dist" "node_modules/strray-framework/dist"; do
-  if [ -f "$dir/postprocessor/PostProcessor.js" ]; then
-    STRRAY_DIST=$dir
+# For consumer projects, always use the full node_modules path to avoid symlink issues
+# This ensures imports resolve correctly
+STRRAY_PATH=""
+for pkg in "strray-ai" "strray-framework"; do
+  if [ -d "node_modules/$pkg/dist" ]; then
+    STRRAY_PATH="node_modules/$pkg"
     break
   fi
 done
 
-if [ -z "$STRRAY_DIST" ]; then
-  exit 0
+if [ -z "$STRRAY_PATH" ]; then
+  # Fallback to local dist for development
+  if [ -d "dist" ]; then
+    STRRAY_PATH="."
+  else
+    exit 0
+  fi
 fi
 
 # Run post-processor in background with Node.js
 node --input-type=module << EOF &>/dev/null || true
-import { PostProcessor } from './$STRRAY_DIST/postprocessor/PostProcessor.js';
-import { StrRayStateManager } from './$STRRAY_DIST/state/state-manager.js';
+import { PostProcessor } from './$STRRAY_PATH/dist/postprocessor/PostProcessor.js';
+import { StrRayStateManager } from './$STRRAY_PATH/dist/state/state-manager.js';
 
 const stateManager = new StrRayStateManager();
 const postProcessor = new PostProcessor(stateManager, null, { 

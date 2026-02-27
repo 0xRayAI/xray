@@ -264,143 +264,39 @@ export const testAutoCreationProcessor = {
         },
       );
 
-      // Delegate to test-architect agent via MCP
-      try {
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "mcp-call-start",
-          "info",
-          {
-            message: `Calling MCP for test generation`,
-            skillName: "testing-strategy",
-            toolName: "generate-test-file",
-            args: { sourceFile: filePath, testFilePath, directory },
-          },
-        );
-        
-        const result = await mcpClientManager.callServerTool(
-          "skill-invocation",
-          "invoke-skill",
-          {
-            skillName: "testing-strategy",
-            toolName: "generate-test-file",
-            args: {
-              sourceFile: filePath,
-              sourceContent,
-              exports,
-              testFilePath,
-              directory,
-            },
-          },
-        ).catch((err) => {
-          frameworkLogger.log(
-            "test-auto-creation",
-            "mcp-error",
-            "error",
-            { message: `MCP error: ${err}` },
-          );
-          throw err;
-        });
-        
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "mcp-call-result",
-          "info",
-          {
-            message: `MCP returned`,
-            result: JSON.stringify(result).slice(0, 500),
-          },
-        ).catch((err) => {
-          frameworkLogger.log(
-            "test-auto-creation",
-            "log-error",
-            "error", 
-            { message: `Log error: ${err}` },
-          );
-        });
+      // Skip MCP for now - use direct fallback which is more reliable
+      // TODO: Fix MCP integration later
+      await frameworkLogger.log(
+        "test-auto-creation",
+        "using-direct-fallback",
+        "info",
+        {
+          message: `Skipping MCP, using direct test creation for ${filePath}`,
+        },
+      );
 
-        // MCP creates the file directly - check if it was created
-        const testCreated = fs.existsSync(fullTestPath);
-        
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "test-creation-check",
-          "info",
-          {
-            message: `Test creation check: ${testCreated}`,
-            fullTestPath,
-            directory,
-            filePath,
-            testFilePath,
-          },
-        );
-        
-        if (testCreated) {
-          await frameworkLogger.log(
-            "test-auto-creation",
-            "tests-generated",
-            "success",
-            {
-              message: `Tests auto-generated for ${filePath}`,
-              testFile: testFilePath,
-              exportsTested: exports.length,
-            },
-          );
+      await createBasicTestStub(fullTestPath, filePath, exports);
 
-          // Record success to monitor
-          testAutoGenerationMonitor.recordEvent({
-            type: "generated",
-            filePath,
-            testFile: testFilePath,
-            timestamp: Date.now(),
-          });
+      await frameworkLogger.log(
+        "test-auto-creation",
+        "test-stub-created",
+        "success",
+        {
+          message: `Basic test stub created for ${filePath}`,
+          testFile: testFilePath,
+          exportsCount: exports.length,
+        },
+      );
 
-          return {
-            success: true,
-            processorName: "testAutoCreation",
-            duration: Date.now() - startTime,
-            data: {
-              testFile: testFilePath,
-              exports: exports.map((e: { name: string }) => e.name),
-            },
-          };
-        }
-        // If file not created, fall through to fallback
-      } catch (error) {
-        // Fallback: Create basic test stub if agent fails
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "mcp-failed-using-fallback",
-          "info",
-          {
-            message: `MCP call failed, using fallback stub creation`,
-            error: error instanceof Error ? error.message : String(error),
-          },
-        );
-
-        await createBasicTestStub(fullTestPath, filePath, exports);
-
-        await frameworkLogger.log(
-          "test-auto-creation",
-          "test-stub-created",
-          "success",
-          {
-            message: `Basic test stub created for ${filePath}`,
-            testFile: testFilePath,
-            exportsCount: exports.length,
-          },
-        );
-
-        return {
-          success: true,
-          processorName: "testAutoCreation",
-          duration: Date.now() - startTime,
-          data: {
-            testFile: testFilePath,
-            exports: exports.map((e: { name: string }) => e.name),
-          },
-        };
-      }
+      return {
+        success: true,
+        processorName: "testAutoCreation",
+        duration: Date.now() - startTime,
+        data: {
+          testFile: testFilePath,
+          exports: exports.map((e: { name: string }) => e.name),
+        },
+      };
     } catch (error) {
       await frameworkLogger.log("test-auto-creation", "error", "error", {
         message: `Test auto-creation failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -426,44 +322,53 @@ export const testAutoCreationProcessor = {
 };
 
 /**
- * Extract exports from source file content
+ * Extract exports from source file content with function signatures
  */
 function extractExports(
   content: string,
-): Array<{ name: string; type: string }> {
-  const exports: Array<{ name: string; type: string }> = [];
+): Array<{ name: string; type: string; params: string; returnType: string }> {
+  const exports: Array<{ name: string; type: string; params: string; returnType: string }> = [];
 
-  // Match exported functions
-  const functionMatches = content.match(
-    /export\s+(?:async\s+)?function\s+(\w+)/g,
-  );
-  if (functionMatches) {
-    functionMatches.forEach((match: string) => {
-      const name = match
-        .replace(/export\s+(?:async\s+)?function\s+/, "")
-        .trim();
-      exports.push({ name, type: "function" });
+  // Match exported functions with their full signatures
+  const functionRegex = /export\s+(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?/g;
+  let match;
+  while ((match = functionRegex.exec(content)) !== null) {
+    exports.push({
+      name: match[1] || "anonymous",
+      type: "function",
+      params: match[2]?.trim() || "",
+      returnType: match[3]?.trim() || "void",
     });
   }
 
   // Match exported classes
   const classMatches = content.match(/export\s+class\s+(\w+)/g);
   if (classMatches) {
-    classMatches.forEach((match: string) => {
-      const name = match.replace(/export\s+class\s+/, "").trim();
-      exports.push({ name, type: "class" });
+    classMatches.forEach((m: string) => {
+      const name = m.replace(/export\s+class\s+/, "").trim();
+      exports.push({ name, type: "class", params: "", returnType: "" });
     });
   }
 
-  // Match exported const/let (but not types)
-  const constMatches = content.match(/export\s+const\s+(\w+)\s*[:=]/g);
-  if (constMatches) {
-    constMatches.forEach((match: string) => {
-      const name = match
-        .replace(/export\s+const\s+/, "")
-        .replace(/\s*[:=]/, "")
-        .trim();
-      exports.push({ name, type: "const" });
+  // Match exported const/let arrow functions
+  const arrowFunctionRegex = /export\s+const\s+(\w+)\s*=\s*(?:async\s+)?\(([^)]*)\)\s*(?::\s*(\w+))?\s*=>\s*/g;
+  while ((match = arrowFunctionRegex.exec(content)) !== null) {
+    exports.push({
+      name: match[1] || "",
+      type: "function",
+      params: match[2]?.trim() || "",
+      returnType: match[3]?.trim() || "void",
+    });
+  }
+
+  // Match exported const/let with type annotations
+  const constRegex = /export\s+const\s+(\w+)\s*:\s*([^;]+)/g;
+  while ((match = constRegex.exec(content)) !== null) {
+    exports.push({
+      name: match[1] || "",
+      type: "const",
+      params: "",
+      returnType: match[2]?.trim() || "",
     });
   }
 
@@ -472,7 +377,7 @@ function extractExports(
     /export\s+default\s+(?:class|function)?\s*(\w+)/,
   );
   if (defaultMatch) {
-    exports.push({ name: defaultMatch[1] || "default", type: "default" });
+    exports.push({ name: defaultMatch[1] || "default", type: "default", params: "", returnType: "" });
   }
 
   return exports;
@@ -484,7 +389,7 @@ function extractExports(
 async function createBasicTestStub(
   testFilePath: string,
   sourceFile: string,
-  exports: Array<{ name: string; type: string }>,
+  exports: Array<{ name: string; type: string; params: string; returnType: string }>,
 ): Promise<void> {
   const testDir = path.dirname(testFilePath);
 
@@ -507,18 +412,22 @@ async function createBasicTestStub(
 }
 
 /**
- * Generate test stub content
+ * Generate test stub content with better test cases based on function signatures
  */
 function generateTestStub(
   importPath: string,
-  exports: Array<{ name: string; type: string }>,
+  exports: Array<{ name: string; type: string; params: string; returnType: string }>,
   sourceFile: string,
 ): string {
   const imports = exports.map((e: { name: string }) => e.name).join(", ");
 
   const testCases = exports
-    .map((exp: { name: string; type: string }) => {
+    .map((exp: { name: string; type: string; params: string; returnType: string }) => {
       if (exp.type === "function") {
+        // Generate sample arguments based on params
+        const sampleArgs = generateSampleArgs(exp.params);
+        const returnCheck = generateReturnCheck(exp.returnType);
+        
         return `
   describe("${exp.name}", () => {
     it("should be defined", () => {
@@ -526,9 +435,8 @@ function generateTestStub(
     });
 
     it("should handle basic case", async () => {
-      // TODO: Implement test
-      const result = await ${exp.name}();
-      expect(result).toBeDefined();
+      const result = await ${exp.name}(${sampleArgs});
+      ${returnCheck}
     });
   });`;
       } else if (exp.type === "class") {
@@ -562,6 +470,57 @@ import { ${imports} } from "${importPath}";
 describe("${path.basename(sourceFile, ".ts")}", () => {${testCases}
 });
 `;
+}
+
+/**
+ * Generate sample arguments based on function parameters
+ */
+function generateSampleArgs(params: string): string {
+  if (!params.trim()) return "";
+  
+  const paramList = params.split(",").map(p => p.trim());
+  const sampleValues = paramList.map((param) => {
+    // Extract parameter name (before type annotation if present)
+    const parts = param.split(":");
+    const paramName = (parts[0] || "").trim();
+    const paramType = (parts[1] || "any").trim();
+    
+    // Generate sample value based on type
+    if (paramType.includes("string")) return `"test"`;
+    if (paramType.includes("number")) return "1";
+    if (paramType.includes("boolean")) return "true";
+    if (paramType.includes("array") || paramType.includes("[]")) return "[]";
+    if (paramType.includes("object")) return "{}";
+    if (paramType.includes("Promise")) return "Promise.resolve(undefined)";
+    return "undefined";
+  });
+  
+  return sampleValues.join(", ");
+}
+
+/**
+ * Generate return value check based on return type
+ */
+function generateReturnCheck(returnType: string): string {
+  if (!returnType || returnType === "void" || returnType === "undefined") {
+    return "expect(result).toBeUndefined();";
+  }
+  if (returnType.includes("Promise")) {
+    return "expect(result).toBeDefined();";
+  }
+  if (returnType.includes("number")) {
+    return "expect(typeof result).toBe('number');";
+  }
+  if (returnType.includes("string")) {
+    return "expect(typeof result).toBe('string');";
+  }
+  if (returnType.includes("boolean")) {
+    return "expect(typeof result).toBe('boolean');";
+  }
+  if (returnType.includes("array") || returnType.includes("[]")) {
+    return "expect(Array.isArray(result)).toBe(true);";
+  }
+  return "expect(result).toBeDefined();";
 }
 
 export default testAutoCreationProcessor;
