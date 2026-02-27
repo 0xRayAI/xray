@@ -6,6 +6,14 @@ const path = require('path');
 const mcpConfigPath = path.join(process.cwd(), '.mcp.json');
 const skillsDir = path.join(process.cwd(), '.opencode', 'skills');
 
+// Check if .mcp.json exists (refactored out in newer versions)
+if (!fs.existsSync(mcpConfigPath)) {
+  console.log('⚠️ .mcp.json not found - this file has been refactored out.');
+  console.log('   Skills are now generated dynamically from src/mcps/ directory.');
+  console.log('   This script is obsolete and can be archived.');
+  process.exit(0);
+}
+
 // Read MCP configuration
 const mcpConfig = JSON.parse(fs.readFileSync(mcpConfigPath, 'utf8'));
 const servers = mcpConfig.mcpServers || {};

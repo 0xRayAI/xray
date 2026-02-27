@@ -5,10 +5,21 @@
  * 
  * Fixes incorrect framework-logger import paths throughout the codebase
  * Replaces ../../framework-logger with ../../core/framework-logger
+ * 
+ * ⚠️ WARNING: This script modifies source files!
+ * Run with --force flag to execute: node fix-framework-logger-paths.cjs --force
  */
 
 const fs = require('fs');
 const path = require('path');
+
+// Safety check - require --force flag
+if (!process.argv.includes('--force')) {
+  console.log('⚠️  This script MODIFIES source files.');
+  console.log('   Run with --force flag to execute:');
+  console.log('   node fix-framework-logger-paths.cjs --force');
+  process.exit(0);
+}
 
 function findFiles(dir, pattern) {
   const results = [];
@@ -46,7 +57,8 @@ function fixFrameworkLoggerImports(filePath) {
 
 console.log('🔧 Fixing framework-logger import paths...');
 
-const sourceDir = path.join(__dirname, '..', 'src');
+// Fixed: Use correct path to project src directory
+const sourceDir = path.join(__dirname, '..', '..', 'src');
 const tsFiles = findFiles(sourceDir, /\.ts$/);
 
 let fixedCount = 0;

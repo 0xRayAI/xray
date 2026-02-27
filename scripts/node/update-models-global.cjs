@@ -1,7 +1,24 @@
 #!/usr/bin/env node
 
+/**
+ * Global Model Replacement Script
+ * 
+ * ⚠️ WARNING: This script MODIFIES source files!
+ * Run with --force flag to execute: node update-models-global.cjs --force
+ * 
+ * Note: Current configuration does nothing (search == replace)
+ */
+
 const fs = require('fs');
 const path = require('path');
+
+// Safety check - require --force flag
+if (!process.argv.includes('--force')) {
+  console.log('⚠️  This script may MODIFY source files.');
+  console.log('   Run with --force flag to execute:');
+  console.log('   node update-models-global.cjs --force');
+  process.exit(0);
+}
 
 const searchString = 'openrouter/xai-grok-2-1212-fast-1';
 const replaceString = 'openrouter/xai-grok-2-1212-fast-1';
