@@ -86,4 +86,31 @@ StringRay integrates 17 curated skills from [Antigravity Awesome Skills](https:/
 
 ---
 
+## Plugin Systems (IMPORTANT: Two Different Systems!)
+
+StringRay has **two distinct plugin systems** - do NOT confuse them:
+
+### 1. OpenCode Plugin (`.opencode/plugin/`)
+**Purpose:** Injects StringRay into OpenCode framework
+- Location: `.opencode/plugin/strray-codex-injection.js`
+- What it does: Injects Universal Development Codex into OpenCode's AI agents
+- For: OpenCode integration, NOT for third-party extensions
+
+### 2. StringRay Plugin Ecosystem (`src/plugins/`)
+**Purpose:** Third-party plugin system for extending StringRay
+- Location: `src/plugins/`
+- Components:
+  - `plugin-system.ts` - Core: PluginRegistry, PluginSandbox, PluginValidator
+  - `marketplace/` - Plugin discovery and download service
+- What it does: Allows third-party developers to create custom agents
+- For: Third-party plugins, NOT OpenCode integration
+
+### Quick Reference
+| What You Want | Use This |
+|---------------|----------|
+| Extend StringRay with custom agents | `src/plugins/` |
+| Inject codex into OpenCode | `.opencode/plugin/` |
+
+---
+
 *This AGENTS.md is auto-maintained by StringRay AI Librarian*
