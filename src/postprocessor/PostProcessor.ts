@@ -970,19 +970,22 @@ All path violations will be automatically detected and blocked.
           monitoringResults,
         );
 
-        // Auto-update AGENTS.md via Librarian
-        try {
-          const { librarianAgentsUpdater } =
-            await import("../agents/librarian-agents-updater.js");
-          await librarianAgentsUpdater.updateAgentsMd(process.cwd());
-        } catch (error) {
-          // Non-blocking - log but don't fail
-          await frameworkLogger.log(
-            "-post-processor",
-            "-agents-md-update-failed",
-            "info",
-            { message: `AGENTS.md auto-update failed: ${error}` },
-          );
+        // ⚠️ AGENTS.md auto-update is DISABLED by default
+        // It overwrites ALL manual content - only enable for specific use cases
+        // To enable: set env var ENABLE_AGENTS_AUTO_UPDATE=true
+        if (process.env.ENABLE_AGENTS_AUTO_UPDATE === "true") {
+          try {
+            const { librarianAgentsUpdater } =
+              await import("../agents/librarian-agents-updater.js");
+            await librarianAgentsUpdater.updateAgentsMd(process.cwd());
+          } catch (error) {
+            await frameworkLogger.log(
+              "-post-processor",
+              "-agents-md-update-failed",
+              "info",
+              { message: `AGENTS.md auto-update failed: ${error}` },
+            );
+          }
         }
 
         // Generate automated framework report if threshold met
