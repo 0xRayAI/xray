@@ -957,7 +957,7 @@ export class ProcessorManager {
     context: any,
     cwd: string,
   ): Promise<any> {
-    let testPattern = "src/__tests__/**/*.test.ts";
+    let testPattern = "";
 
     if (context.filePath) {
       // Convert source file to test file
@@ -971,8 +971,11 @@ export class ProcessorManager {
       }
     }
 
-    // Run vitest with the test pattern
-    const command = `npx vitest run --reporter=verbose "${testPattern}"`;
+    // Run vitest (no pattern - uses vitest.config.ts include/exclude)
+    // Only add specific file if we have one
+    const command = testPattern 
+      ? `npx vitest run "${testPattern}"`
+      : `npx vitest run`;
 
     frameworkLogger.log(
       "processor-manager",
