@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 
 // Read activity log
 const logContent = fs.readFileSync('logs/framework/activity.log', 'utf8');
