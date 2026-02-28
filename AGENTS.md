@@ -46,5 +46,98 @@ StringRay has **two distinct plugin systems** - do NOT confuse them:
 |---------------|----------|
 | Extend StringRay with custom agents | `src/plugins/` |
 | Inject codex into OpenCode | `.opencode/plugin/` |
+
 ---
+
+## Activity Logs
+
+StringRay logs all framework activity to help with debugging and monitoring.
+
+### Log Locations
+
+| Log | Path | Description |
+|-----|------|-------------|
+| **Activity Log** | `logs/framework/activity.log` | Main framework log - all operations |
+| **Framework Reports** | `logs/framework/framework-report-*.json` | Job/diagnostic reports |
+| **Analytics** | `logs/framework/activity-report.json` | Pattern analytics output |
+
+### Viewing Logs
+
+```bash
+# View recent activity
+tail -50 logs/framework/activity.log
+
+# Search for errors
+grep "ERROR" logs/framework/activity.log
+
+# Monitor live
+tail -f logs/framework/activity.log
+
+# View framework reports
+ls -la logs/framework/framework-report-*.json
+```
+
+### Log Format
+
+```
+2026-02-28T16:24:36.317Z [auto-1772295876317-wg3drj] [processor-manager] tests-completed - SUCCESS
+        ↓                    ↓                      ↓                    ↓
+   timestamp            job-id               component              message
+```
+
+---
+
+## Reporting & Analytics
+
+Generate reports to understand framework performance and diagnose issues.
+
+### Commands
+
+```bash
+# Generate framework health report (all types)
+npx strray-ai report
+
+# Generate specific report type
+npx strray-ai report -t agent-usage
+npx strray-ai report -t performance
+npx strray-ai report -t full-analysis
+
+# Generate activity analytics
+npx strray-ai analytics
+
+# Save report to file
+npx strray-ai report -o logs/framework/report.json
+npx strray-ai analytics -o logs/framework/activity-report.json
+```
+
+### Report Types
+
+| Type | Description |
+|------|-------------|
+| `full-analysis` | Complete framework health report (default) |
+| `agent-usage` | Agent delegation and usage statistics |
+| `performance` | Performance metrics and timing |
+| `orchestration` | Orchestration flow analysis |
+| `context-awareness` | Context operations report |
+
+### Example Output
+
+```
+📊 StringRay Framework Report: full-analysis
+==========================================
+{
+  "metrics": {
+    "successRate": 95.6,
+    "totalDelegations": 42
+  },
+  "summary": {
+    "totalEvents": 150,
+    "activeComponents": ["orchestrator", "enforcer", "state-manager"],
+    "healthScore": 95.6
+  }
+}
+```
+
+---
+
 *This AGENTS.md is auto-maintained by StringRay AI Librarian*
