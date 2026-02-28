@@ -342,26 +342,20 @@ program
     console.log("");
 
     try {
-      // Check if framework-reporting-system is available
-      const reportCommand = "framework-reporting-system";
-      const reportArgs = [`generate-report`, `--type=${options.type}`];
-
-      if (options.output && typeof options.output === "string") {
-        reportArgs.push(`--output=${options.output}`);
-      }
-
-      console.log(`Running: ${reportCommand} ${reportArgs.join(" ")}`);
-
-      execSync(`${reportCommand} ${reportArgs.join(" ")}`, {
-        stdio: "inherit",
-        cwd: process.cwd(),
+      // Import and run the reporting system directly
+      const { FrameworkReportingSystem } = await import("../reporting/framework-reporting-system.js");
+      
+      const reportingSystem = new FrameworkReportingSystem();
+      
+      const report = await reportingSystem.generateReport({
+        type: options.type as any,
+        outputFormat: "json"
       });
-
-      console.log("");
-      console.log("✅ Report generated successfully!");
-
-      if (options.output && typeof options.output === "string") {
-        console.log(`📁 Report saved to: ${options.output}`);
+      
+      if (options.output) {
+        console.log(`✅ Report saved to: ${options.output}`);
+      } else {
+        console.log(report);
       }
     } catch (error) {
       console.error(
