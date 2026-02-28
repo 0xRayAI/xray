@@ -22,6 +22,8 @@ AGENTS.md is maintained by **two post-processors**:
 
 ---
 
+<!-- AUTO-GENERATED START -->
+
 ## Languages
 - TypeScript
 - JavaScript
@@ -63,6 +65,8 @@ StringRay has **two distinct plugin systems** - do NOT confuse them:
 |---------------|----------|
 | Extend StringRay with custom agents | `src/plugins/` |
 | Inject codex into OpenCode | `.opencode/plugin/` |
+
+<!-- AUTO-GENERATED END -->
 
 ---
 
