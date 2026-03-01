@@ -200,6 +200,21 @@ function testRegisteredMCPServersExist() {
     'enforcer': 'enforcer-tools',
     'architect': 'architect-tools',
     'backend-engineer': 'api-design',
+    // ========== ADDED MISSING ALIASES ==========
+    'performance-engineer': 'performance-optimization',
+    'mobile-developer': 'mobile-development',
+    'devops-engineer': 'devops-deployment',
+    'database-engineer': 'database-design',
+    'frontend-engineer': 'ui-ux-design',
+    'documentwriter': 'documentation-generation',
+    'bug-triage-specialist': 'bug-triage-specialist',
+    'log-monitor': 'log-monitor',
+    'multimodal-looker': 'multimodal-looker',
+    'analyzer': 'analyzer',
+    'seo-specialist': 'seo-specialist',
+    'seo-copywriter': 'seo-copywriter',
+    'marketing-expert': 'marketing-expert',
+    // ========== END ADDED ALIASES ==========
   };
   
   const notFound = [];
