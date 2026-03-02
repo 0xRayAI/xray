@@ -79,7 +79,7 @@ export async function executeCompleteE2ESimulation(
 
     // Simulate complexity analysis
     const complexityScore = Math.floor(Math.random() * 100);
-    const agentAssignments = ["architect", "enforcer", "test-architect"];
+    const agentAssignments = ["architect", "enforcer", "testing-lead"];
 
     await frameworkLogger.log("simulation-e2e", "phase-completed", "success", {
       phase: 3,
@@ -111,7 +111,7 @@ export async function executeCompleteE2ESimulation(
       {
         id: "implement-solution",
         description: "Implement the validated solution",
-        subagentType: "test-architect",
+        subagentType: "testing-lead",
         dependencies: ["analyze-requirements", "validate-approach"],
       },
     ];

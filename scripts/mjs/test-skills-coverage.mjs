@@ -172,7 +172,7 @@ function testNativeSkills() {
     'devops-deployment',
     'documentation-generation',
     'mobile-development',
-    'marketing-expert',
+    'growth-strategist',
     'ui-ux-design',
     'git-workflow',
     'session-management',

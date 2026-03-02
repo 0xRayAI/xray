@@ -132,7 +132,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     "code-reviewer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
     "security-auditor": { "model": "openrouter/xai-grok-2-1212-fast-1" },
     "refactorer": { "model": "openrouter/xai-grok-2-1212-fast-1" },
-    "test-architect": { "model": "openrouter/xai-grok-2-1212-fast-1" },
+    "testing-lead": { "model": "openrouter/xai-grok-2-1212-fast-1" },
     "bug-triage-specialist": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }
 }

@@ -84,7 +84,7 @@ async function simulateCompleteOrchestratorPipeline() {
       id: "implement-auth-components",
       description:
         "Implement the core authentication components based on approved design",
-      subagentType: "test-architect",
+      subagentType: "testing-lead",
       priority: "high" as const,
       dependencies: ["design-auth-architecture", "validate-security-design"],
     },

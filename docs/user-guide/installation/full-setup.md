@@ -76,7 +76,7 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray",
@@ -161,7 +161,7 @@ OpenCode config set model.all openrouter/xai-grok-2-1212-fast-1
        "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
        "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
        "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-       "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+       "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
      }
    }
    ```
@@ -237,7 +237,7 @@ StrRay supports all OpenCode-compatible models. Recommended configurations:
   "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
   "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
   "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-  "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+  "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
 }
 ```
 
@@ -252,7 +252,7 @@ StrRay supports all OpenCode-compatible models. Recommended configurations:
   "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
   "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
   "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-  "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+  "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
 }
 ```
 

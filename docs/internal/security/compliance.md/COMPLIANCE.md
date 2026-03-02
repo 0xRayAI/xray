@@ -68,7 +68,7 @@ curl -s https://raw.githubusercontent.com/code-yeongyu/OpenCode/master/assets/Op
 ```json
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/OpenCode/master/assets/OpenCode.schema.json",
-  "disabled_agents": ["oracle", "librarian"],
+  "disabled_agents": ["strategist", "librarian"],
   "agents": {
     "librarian": { "model": "openrouter/xai-grok-2-1212-fast-1" }
   }

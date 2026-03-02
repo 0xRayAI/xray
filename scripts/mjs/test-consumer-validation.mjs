@@ -803,7 +803,7 @@ class ConsumerValidator {
         "code-reviewer",
         "security-auditor",
         "refactorer",
-        "test-architect",
+        "testing-lead",
       ];
 
       let loadedAgents = 0;

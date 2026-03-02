@@ -24,7 +24,7 @@ Add this section to your `opencode.json` to enable all StringRay agents:
     "temperature": 1.0,
     "mode": "subagent"
   },
-  "test-architect": {
+  "testing-lead": {
     "temperature": 1.0,
     "mode": "subagent"
   },
@@ -83,7 +83,7 @@ These 10 agents form the core StringRay framework:
 | `code-reviewer` | Quality assessment | `subagent` |
 | `security-auditor` | Vulnerability detection | `subagent` |
 | `refactorer` | Technical debt elimination | `subagent` |
-| `test-architect` | Testing strategy & coverage | `subagent` |
+| `testing-lead` | Testing strategy & coverage | `subagent` |
 | `librarian` | Codebase exploration | `subagent` |
 | `log-monitor` | Performance monitoring | `subagent` |
 
@@ -99,10 +99,10 @@ StringRay includes additional specialized agents for specific domains:
 | `database-engineer` | Schema design, migrations |
 | `devops-engineer` | CI/CD, containers, infrastructure |
 | `performance-engineer` | Optimization, profiling |
-| `seo-specialist` | SEO optimization |
-| `seo-copywriter` | Content optimization |
-| `marketing-expert` | Marketing strategy |
-| `documentation-writer` | Technical docs |
+| `seo-consultant` | SEO optimization |
+| `content-creator` | Content optimization |
+| `growth-strategist` | Marketing strategy |
+| `tech-writer` | Technical docs |
 | `multimodal-looker` | Image/video analysis |
 | `code-analyzer` | Code analysis |
 

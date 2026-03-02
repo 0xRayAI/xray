@@ -47,7 +47,7 @@ const REQUIRED_AGENTS = [
   '@orchestrator',
   '@security-auditor',
   '@code-reviewer',
-  '@test-architect',
+  '@testing-lead',
   '@refactorer',
   '@bug-triage-specialist',
   '@librarian'

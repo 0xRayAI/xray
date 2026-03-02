@@ -18,17 +18,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Import all agents
 const agentsToTest = [
   'architect',
-  'test-architect', 
-  'oracle',
-  'seo-specialist',
-  'seo-copywriter',
-  'marketing-expert',
+  'testing-lead', 
+  'strategist',
+  'seo-consultant',
+  'content-creator',
+  'growth-strategist',
   'mobile-developer',
   'database-engineer',
   'devops-engineer',
   'backend-engineer',
   'frontend-engineer',
-  'documentation-writer'
+  'tech-writer'
 ];
 
 // Required fields for AgentConfig

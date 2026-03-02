@@ -16,7 +16,7 @@ According to [OpenCode Agents Documentation](https://opencode.ai/docs/agents/):
 ### Agent Invocation
 
 - **Primary agents**: Use Tab key to cycle through during a session
-- **Subagents**: Use `@agentname` to invoke directly, e.g., `@oracle help me with architecture`
+- **Subagents**: Use `@agentname` to invoke directly, e.g., `@strategist help me with architecture`
 
 ### Agent Configuration Options
 
@@ -104,7 +104,7 @@ Add to skill lists in:
 
 | Method | How | Works for Custom Agents? |
 |--------|-----|-------------------------|
-| `@agent` | Type `@oracle` in chat | ✅ Yes |
+| `@agent` | Type `@strategist` in chat | ✅ Yes |
 | Tab key | Cycle primary agents | ❌ Built-in only |
 | Task tool | Primary agent invokes subagent | ✅ Yes |
 | StringRay MCP | Direct MCP invocation | ✅ Yes |

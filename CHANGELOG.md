@@ -31,10 +31,12 @@ Consolidated MCP servers: analyzer + explore → code-analyzer. Removed enhanced
 
 ### ✨ Added Agents
 
-- `oracle` - Strategic guidance
-- `seo-specialist` - SEO optimization
-- `seo-copywriter` - Content optimization
-- `marketing-expert` - Marketing strategy
+- `strategist` - Strategic guidance (renamed from oracle)
+- `seo-consultant` - SEO optimization (renamed from seo-specialist)
+- `content-creator` - Content optimization (renamed from seo-copywriter)
+- `growth-strategist` - Marketing strategy (renamed from marketing-expert)
+- `tech-writer` - Technical docs (renamed from documentation-writer)
+- `testing-lead` - Testing strategy (renamed from test-architect)
 - `mobile-developer` - Mobile development
 - `database-engineer` - Database design
 - `devops-engineer` - DevOps deployment

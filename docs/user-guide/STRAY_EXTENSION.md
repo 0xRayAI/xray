@@ -87,7 +87,7 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
   "disabled_agents": [
     "security-auditor",
     "refactorer",
-    "test-architect",
+    "testing-lead",
     "bug-triage-specialist"
   ]
 }

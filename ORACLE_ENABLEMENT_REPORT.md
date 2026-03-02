@@ -28,15 +28,15 @@
 
 ---
 
-## 🪄 **Oracle Agent Enabled**
+## 🪄 **Strategist Agent Enabled** (formerly Oracle)
 
 ### **Configuration Change**
-✅ **Removed "oracle" from disabled_agents list** in `.opencode/OpenCode.json`
-✅ **Oracle agent already existed in `src/agents/oracle.ts`** and was already functional
-✅ **Now ENABLED** in opencode runtime
+✅ **Renamed "oracle" to "strategist"** - Fixed OpenCode name conflict
+✅ **Strategist agent now works** via Task tool
+✅ **All agents now functional** via @ invocation
 
 ### **What This Enables**
-- **Strategic Guidance**: Oracle can now provide architectural decision-making
+- **Strategic Guidance**: Strategist can now provide architectural decision-making
 - **Complex Problem Solving**: Handles complex multi-domain challenges
 - **Risk Analysis**: Identifies and assesses project-level risks
 - **Technical Strategy**: Generates technical roadmaps and plans
@@ -45,19 +45,20 @@
 
 ## 📊 **Current Agent Ecosystem Status**
 
-### **✅ Fully Operational (12 agents)**
+### **✅ Fully Operational (13 agents)**
 1. **enforcer** - Primary mode, core framework compliance
 2. **architect** - System design and technical architecture
 3. **orchestrator** - Multi-agent coordination
-4. **test-architect** - Testing strategy and frameworks
+4. **testing-lead** - Testing strategy and frameworks (renamed from test-architect)
+5. **strategist** - Strategic guidance and problem solving (renamed from oracle)
 6. **bug-triage-specialist** - Issue diagnosis and triage
 7. **code-reviewer** - Code quality and review standards
 8. **security-auditor** - Security analysis and vulnerability detection
 9. **refactorer** - Code refactoring and technical debt management
 10. **librarian** - Codebase exploration and documentation search
-11. **multimodal-looker** - Media file analysis and interpretation *(NEW)*
-12. **code-analyzer** - Universal analysis specialist *(NEW)*
-13. **oracle** - Strategic guidance and problem solving *(NOW ENABLED)*
+11. **multimodal-looker** - Media file analysis and interpretation
+12. **code-analyzer** - Universal analysis specialist
+13. **seo-consultant** - SEO optimization (renamed from seo-specialist)
 
 ### **🎯 Complete Agent Coverage**
 All major domains now covered:

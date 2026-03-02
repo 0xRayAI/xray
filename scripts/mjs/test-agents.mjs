@@ -66,7 +66,7 @@ function testCoreAgents() {
     'librarian',
     'explorer',
     'refactorer',
-    'oracle'
+    'strategist'
   ];
   
   for (const agent of coreAgents) {
@@ -82,17 +82,17 @@ function testSpecializedAgents() {
   const specializedAgents = [
     'code-reviewer',
     'security-auditor',
-    'test-architect',
+    'testing-lead',
     'frontend-engineer',
     'frontend-ui-ux-engineer',
     'backend-engineer',
     'devops-engineer',
     'database-engineer',
     'performance-engineer',
-    'marketing-expert',
-    'seo-specialist',
-    'seo-copywriter',
-    'documentation-writer',
+    'growth-strategist',
+    'seo-consultant',
+    'content-creator',
+    'tech-writer',
     'mobile-developer',
     'librarian-agents-updater',
     'bug-triage-specialist',

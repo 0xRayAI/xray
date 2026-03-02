@@ -26,7 +26,7 @@ This guide explains how to configure and update AI models in the StrRay framewor
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
   },
   "logging": {
     "enabled": true,

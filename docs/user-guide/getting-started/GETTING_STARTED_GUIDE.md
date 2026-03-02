@@ -99,13 +99,13 @@ StringRay is an AI-powered development framework that provides:
 @refactorer extract reusable components from this module
 ```
 
-### Test Architect (@test-architect)
+### Testing Lead (@testing-lead)
 **Role**: Testing strategy and coverage optimization
 **Best For**: Test planning, coverage analysis, quality assurance
 ```bash
-@test-architect design integration tests for payment system
-@test-architect create performance test suite
-@test-architect analyze test coverage gaps
+@testing-lead design integration tests for payment system
+@testing-lead create performance test suite
+@testing-lead analyze test coverage gaps
 ```
 
 ### Librarian (@librarian)
@@ -127,7 +127,7 @@ StringRay is an AI-powered development framework that provides:
    ```
 3. **Testing**: Ensure comprehensive test coverage
    ```bash
-   @test-architect review test coverage
+   @testing-lead review test coverage
    ```
 4. **Commit**: Framework validates automatically
 
@@ -263,7 +263,7 @@ node node_modules/strray-ai/scripts/node/postinstall.cjs
 ```bash
 # Automated quality gates
 @enforcer validate ci/cd pipeline
-@test-architect ensure test automation
+@testing-lead ensure test automation
 @security-auditor check deployment security
 ```
 
@@ -273,7 +273,7 @@ node node_modules/strray-ai/scripts/node/postinstall.cjs
 @orchestrator plan system migration
 @architect design migration strategy
 @refactorer implement migration scripts
-@test-architect validate migration testing
+@testing-lead validate migration testing
 ```
 
 ## 🎯 Best Practices
