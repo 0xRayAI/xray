@@ -1,6 +1,6 @@
 {
   "name": "@opencode/OpenCode",
-  "version": "1.6.16",
+  "version": "1.6.21",
   "description": "OpenCode framework configuration",
   "main": "OpenCode.json",
   "scripts": {

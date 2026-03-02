@@ -926,7 +926,7 @@ describe("Plugin Marketplace Service - Download & Security", () => {
   describe("Plugin Download Process", () => {
     it("should successfully download valid plugins", async () => {
       const plugin = generateMockPlugin({
-        versions: [generateMockVersion({ version: "1.6.16" })],
+        versions: [generateMockVersion({ version: "1.6.21" })],
       });
       service.registerPlugin(plugin);
 
@@ -1339,8 +1339,8 @@ describe("Plugin Marketplace Service - Integration Scenarios", () => {
       const plugin = generateMockPlugin({
         latestVersion: "1.0.0",
         versions: [
-          generateMockVersion({ version: "1.6.16" }),
-          generateMockVersion({ version: "1.6.16" }),
+          generateMockVersion({ version: "1.6.21" }),
+          generateMockVersion({ version: "1.6.21" }),
         ],
       });
       service.registerPlugin(plugin);
