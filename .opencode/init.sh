@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # StringRay Framework Version
-STRRAY_VERSION="1.6.19"
+STRRAY_VERSION="1.6.20"
 
 START_TIME=$(date +%s)
 
