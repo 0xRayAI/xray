@@ -9,10 +9,10 @@
   },
   "module-import-performance": {
     "testName": "module-import-performance",
-    "averageDuration": 14.43428234123223,
-    "standardDeviation": 1.5418044681796281,
-    "sampleCount": 211,
-    "lastUpdated": 1772489698293,
+    "averageDuration": 14.44631736792453,
+    "standardDeviation": 1.548113196873885,
+    "sampleCount": 212,
+    "lastUpdated": 1772492846858,
     "tolerance": 10
   },
   "memory-usage-check": {
@@ -25,10 +25,10 @@
   },
   "test-execution-performance": {
     "testName": "test-execution-performance",
-    "averageDuration": 0.10344475132275215,
-    "standardDeviation": 0.01096282018996077,
-    "sampleCount": 567,
-    "lastUpdated": 1772492767470,
+    "averageDuration": 0.10343597183098673,
+    "standardDeviation": 0.01095516394765238,
+    "sampleCount": 568,
+    "lastUpdated": 1772492846858,
     "tolerance": 10
   }
 }
