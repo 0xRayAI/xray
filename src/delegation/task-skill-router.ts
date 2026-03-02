@@ -20,10 +20,16 @@ import { StringRayStateManager } from "../state/state-manager.js";
 const TASK_KEYWORD_MAPPINGS = [
   // ===== USER-FRIENDLY ALIASES (most natural language first) =====
   {
-    keywords: ["marketing", "campaign", "growth", "conversion"],
+    keywords: ["marketing", "campaign", "growth", "conversion", "pricing"],
     skill: "content-marketing-strategy",
     agent: "growth-strategist",
     confidence: 0.95,
+  },
+  {
+    keywords: ["content", "write content", "blog", "article", "seo", "copy"],
+    skill: "copywriting",
+    agent: "content-creator",
+    confidence: 0.9,
   },
   {
     keywords: ["bug", "debug", "triage", "issue", "bug-tester", "tester"],
@@ -42,6 +48,54 @@ const TASK_KEYWORD_MAPPINGS = [
     skill: "documentation-generation",
     agent: "tech-writer",
     confidence: 0.9,
+  },
+  {
+    keywords: ["database", "sql", "postgres", "mysql", "mongodb", "db", "migration"],
+    skill: "database-design",
+    agent: "database-engineer",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["mobile", "ios", "android", "react native", "flutter", "app"],
+    skill: "mobile-development",
+    agent: "mobile-developer",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["ui", "ux", "design system", "component", "figma", "mockup"],
+    skill: "ui-ux-design",
+    agent: "frontend-ui-ux-engineer",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["frontend", "react", "vue", "angular", "css", "html", "javascript"],
+    skill: "frontend-development",
+    agent: "frontend-engineer",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["backend", "api", "server", "rest", "graphql", "microservice"],
+    skill: "backend-development",
+    agent: "backend-engineer",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["devops", "docker", "kubernetes", "ci/cd", "pipeline", "deploy"],
+    skill: "devops-automation",
+    agent: "devops-engineer",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["monitor", "log", "alert", "metrics", "observability"],
+    skill: "log-monitoring",
+    agent: "log-monitor",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["image", "diagram", "pdf", "screenshot", "visual", "multimodal"],
+    skill: "visual-analysis",
+    agent: "multimodal-looker",
+    confidence: 0.95,
   },
   // ===== END ALIASES =====
 
@@ -125,9 +179,15 @@ const TASK_KEYWORD_MAPPINGS = [
       "headline",
       "advertising copy",
       "cta copy",
+      "seo content",
+      "blog post",
+      "meta description",
+      "product description",
+      "social media copy",
+      "email copy",
     ],
     skill: "copywriting",
-    agent: "growth-strategist",
+    agent: "content-creator",
     confidence: 0.98,
   },
   {
