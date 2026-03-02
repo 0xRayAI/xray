@@ -31,9 +31,9 @@ describe("Agent Registry Integration", () => {
       expect(builtinAgents["multimodal-looker"].name).toBe("multimodal-looker");
     });
 
-    it("should register analyzer in builtin agents", () => {
-      expect(builtinAgents["analyzer"]).toBeDefined();
-      expect(builtinAgents["analyzer"].name).toBe("analyzer");
+    it("should register code-analyzer in builtin agents", () => {
+      expect(builtinAgents["code-analyzer"]).toBeDefined();
+      expect(builtinAgents["code-analyzer"].name).toBe("code-analyzer");
     });
 
     it("should maintain existing agents", () => {
@@ -62,7 +62,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should have consistent structure for analyzer", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
 
       expect(agent).toHaveProperty("name");
       expect(agent).toHaveProperty("capabilities");
@@ -95,7 +95,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should load analyzer capabilities", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
       const expectedCapabilities = [
         "code-analysis",
         "system-analysis",
@@ -122,7 +122,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should provide model getter for analyzer", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
       // Model is optional - only check if defined
       if (agent.model) {
         expect(typeof agent.model).toBe("string");
@@ -143,7 +143,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should restrict analyzer tools appropriately", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
 
       expect(agent.tools?.include).toContain("read");
       expect(agent.tools?.include).toContain("security-audit_*");
@@ -161,7 +161,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should have correct mode for analyzer", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
       expect(agent.mode).toBe("subagent");
     });
   });
@@ -174,7 +174,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should have appropriate complexity for analyzer", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
       expect(agent.maxComplexity).toBe(100);
       expect(agent.enabled).toBe(true);
     });
@@ -187,7 +187,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should have appropriate temperature for analyzer", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
       expect(agent.temperature).toBe(0.2);
     });
   });
@@ -243,7 +243,7 @@ describe("Agent Registry Integration", () => {
 
     it("should allow direct import of analyzer", () => {
       expect(analyzer).toBeDefined();
-      expect(analyzer.name).toBe("analyzer");
+      expect(analyzer.name).toBe("code-analyzer");
     });
   });
 
@@ -256,7 +256,7 @@ describe("Agent Registry Integration", () => {
     });
 
     it("should have correct description for analyzer", () => {
-      const agent = builtinAgents["analyzer"];
+      const agent = builtinAgents["code-analyzer"];
 
       expect(agent.description).toContain("Universal analysis specialist");
       expect(agent.description).toContain("technical artifacts");

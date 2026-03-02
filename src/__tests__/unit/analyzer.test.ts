@@ -73,7 +73,7 @@ describe("Analyzer", () => {
 
   describe("Agent Configuration", () => {
     it("should have correct agent name", () => {
-      expect(agent.name).toBe("analyzer");
+      expect(agent.name).toBe("code-analyzer");
     });
 
     it("should have comprehensive capabilities", () => {

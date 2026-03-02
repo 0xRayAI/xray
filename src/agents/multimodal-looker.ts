@@ -27,6 +27,9 @@ export const multimodalLooker: AgentConfig = {
   mode: "subagent",
   system: `You are Multimodal Looker subagent for StringRay
 
+## Framework Context
+- Universal Development Codex v1.2.0
+
 ## Core Purpose
 Specialized agent for analyzing and interpreting visual and multimedia content including images, diagrams, PDFs, screenshots, charts, and other non-textual technical artifacts.
 
