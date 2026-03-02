@@ -206,13 +206,16 @@ function testRegisteredMCPServersExist() {
     'devops-engineer': 'devops-deployment',
     'database-engineer': 'database-design',
     'frontend-engineer': 'ui-ux-design',
-    'documentwriter': 'documentation-generation',
+    'tech-writer': 'documentation-generation',
     'bug-triage-specialist': 'bug-triage-specialist',
     'log-monitor': 'log-monitor',
     'multimodal-looker': 'multimodal-looker',
     'seo-consultant': 'seo-consultant',
     'content-creator': 'content-creator',
     'growth-strategist': 'growth-strategist',
+    // Legacy aliases for renamed agents
+    'document-writer': 'tech-writer',
+    'documentwriter': 'tech-writer',
     // ========== END ADDED ALIASES ==========
   };
   
