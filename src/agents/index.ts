@@ -36,7 +36,6 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "log-monitor": logMonitorAgent,
   researcher,
   "multimodal-looker": multimodalLooker,
-  analyzer: analyzer,
   "code-analyzer": analyzer,
   "seo-consultant": seoSpecialist,
   "content-creator": seoCopywriter,

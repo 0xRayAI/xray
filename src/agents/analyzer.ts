@@ -6,7 +6,7 @@ import { AgentConfig } from "./types.js";
  * Universal analysis specialist for code, systems, and technical artifacts.
  */
 export const analyzer: AgentConfig = {
-  name: "analyzer",
+  name: "code-analyzer",
   capabilities: [
     "code-analysis",
     "system-analysis", 

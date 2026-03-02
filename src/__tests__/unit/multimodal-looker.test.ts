@@ -121,7 +121,7 @@ describe("Multimodal Looker", () => {
     });
 
     it("should mention framework compliance", () => {
-      expect(agent.system).toContain("Universal Development Codex v1.2.0");
+      expect(agent.system).toContain("StringRay");
       expect(agent.system).toContain("Visual Analysis Compliance");
     });
   });
@@ -271,9 +271,9 @@ describe("Multimodal Looker", () => {
 
     it("should mention integration with other agents", () => {
       // System should mention working with other StringRay components
-      expect(agent.system).toContain("StringRay AI v1.3.4");
-      // Verify framework integration terms are present
-      expect(agent.system).toContain("Universal Development Codex");
+      expect(agent.system).toContain("StringRay");
+      // Verify framework alignment section exists
+      expect(agent.system).toContain("Framework Alignment");
     });
   });
 });

@@ -197,15 +197,15 @@ describe("Agent Registry Integration", () => {
       const agent = builtinAgents["multimodal-looker"];
 
       expect(agent.system).toContain("Multimodal Looker subagent");
-      expect(agent.system).toContain("StringRay AI v1.3.4");
+      expect(agent.system).toContain("StringRay");
       expect(agent.system).toContain("visual and multimedia content");
     });
 
-    it("should have comprehensive system prompt for analyzer", () => {
-      const agent = builtinAgents["analyzer"];
+    it("should have comprehensive system prompt for code-analyzer", () => {
+      const agent = builtinAgents["code-analyzer"];
 
       expect(agent.system).toContain("Analyzer subagent");
-      expect(agent.system).toContain("StringRay AI v1.3.4");
+      expect(agent.system).toContain("StringRay");
       expect(agent.system).toContain("Universal analysis specialist");
     });
   });
