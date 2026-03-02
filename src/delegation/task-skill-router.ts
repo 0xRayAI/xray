@@ -149,10 +149,12 @@ const TASK_KEYWORD_MAPPINGS = [
     keywords: [
       "security",
       "vulnerability",
+      "vulnerabilities",
       "audit",
       "credential",
       "encrypt",
       "sanitize",
+      "secure",
     ],
     skill: "security-audit",
     agent: "security-auditor",
@@ -203,13 +205,13 @@ const TASK_KEYWORD_MAPPINGS = [
       "throughput",
     ],
     skill: "performance-optimization",
-    agent: "refactorer",
+    agent: "performance-engineer",
     confidence: 0.9,
   },
   {
     keywords: ["performance", "optimize", "slow", "speed"],
     skill: "performance-optimization",
-    agent: "refactorer",
+    agent: "performance-engineer",
     confidence: 0.8,
   },
   // ===== END Performance =====
@@ -296,13 +298,13 @@ const TASK_KEYWORD_MAPPINGS = [
   {
     keywords: ["readme", "changelog", "api documentation", "markdown"],
     skill: "documentation-generation",
-    agent: "researcher",
+    agent: "tech-writer",
     confidence: 0.9,
   },
   {
-    keywords: ["document", "doc", "comment", "guide", "tutorial"],
+    keywords: ["document", "doc", "comment", "guide", "tutorial", "write documentation"],
     skill: "documentation-generation",
-    agent: "researcher",
+    agent: "tech-writer",
     confidence: 0.8,
   },
   // ===== END Documentation =====
@@ -341,7 +343,7 @@ const TASK_KEYWORD_MAPPINGS = [
   {
     keywords: ["analyze", "structure", "health", "metrics", "dependencies"],
     skill: "project-analysis",
-    agent: "researcher",
+    agent: "code-analyzer",
     confidence: 0.85,
   },
   // ===== END Project analysis =====
