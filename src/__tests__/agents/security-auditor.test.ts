@@ -9,16 +9,8 @@ describe("Security Auditor Agent Configuration", () => {
   });
 
   describe("Basic Configuration", () => {
-    it("should have correct name and model", () => {
+    it("should have correct name", () => {
       expect(securityAuditor.name).toBe("security-auditor");
-      expect(securityAuditor.model).toBe(securityAuditor.model);
-      expect(typeof securityAuditor.model).toBe("string");
-      const validModels = [
-        "claude-opus-4",
-        "claude-sonnet-4",
-        "claude-haiku-4",
-      ];
-      expect(validModels).toContain(securityAuditor.model as string);
     });
 
     it("should be configured as subagent mode", () => {

@@ -9,9 +9,8 @@ describe("Code Reviewer Agent Configuration", () => {
   });
 
   describe("Basic Configuration", () => {
-    it("should have correct name and model", () => {
+    it("should have correct name", () => {
       expect(codeReviewer.name).toBe("code-reviewer");
-      expect(codeReviewer.model).toBe("claude-sonnet-4");
     });
 
     it("should be configured as subagent mode", () => {

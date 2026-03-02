@@ -6,7 +6,7 @@ import { bugTriageSpecialist } from "./bug-triage-specialist.js";
 import { codeReviewer } from "./code-reviewer.js";
 import { securityAuditor } from "./security-auditor.js";
 import { refactorer } from "./refactorer.js";
-import { testArchitect } from "./testing-lead.js";
+import { testingLead } from "./testing-lead.js";
 import { logMonitorAgent } from "./log-monitor.js";
 import { librarian } from "./librarian.js";
 import { multimodalLooker } from "./multimodal-looker.js";
@@ -32,7 +32,7 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "code-reviewer": codeReviewer,
   "security-auditor": securityAuditor,
   refactorer,
-  "testing-lead": testArchitect,
+  "testing-lead": testingLead,
   "log-monitor": logMonitorAgent,
   librarian,
   "multimodal-looker": multimodalLooker,
@@ -59,7 +59,7 @@ export {
   codeReviewer,
   securityAuditor,
   refactorer,
-  testArchitect,
+  testingLead,
   logMonitorAgent,
   librarian,
   multimodalLooker,

@@ -1,6 +1,6 @@
 import type { AgentConfig } from "./types.js";
 
-export const testArchitect: AgentConfig = {
+export const testingLead: AgentConfig = {
   name: "testing-lead",
   capabilities: [
     "test-auto-creation",

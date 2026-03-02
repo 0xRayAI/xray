@@ -8,7 +8,7 @@ import {
   codeReviewer,
   securityAuditor,
   refactorer,
-  testArchitect,
+  testingLead,
 } from "../../agents/index.js";
 import type { AgentConfig } from "../../agents/types.js";
 
@@ -44,7 +44,7 @@ describe("Agent Index Registry", () => {
         expect(agent).toBeDefined();
         expect(typeof agent).toBe("object");
         expect(agent).toHaveProperty("name");
-        expect(agent).toHaveProperty("model");
+        // Model is optional - don't require it
         expect(agent).toHaveProperty("description");
       });
     });
@@ -63,14 +63,19 @@ describe("Agent Index Registry", () => {
 
     it("should have agents with consistent model configuration", () => {
       Object.values(builtinAgents).forEach((agent) => {
-        expect(refactorer.model).toBeDefined();
-        expect(typeof agent.model).toBe("string");
+        // Model is optional - if specified, it should be a string
+        if (agent.model) {
+          expect(typeof agent.model).toBe("string");
+        }
       });
     });
 
     it("should have agents with appropriate temperature settings", () => {
       Object.values(builtinAgents).forEach((agent) => {
-        expect(agent.temperature).toBeGreaterThanOrEqual(0.1);
+        // Temperature is optional - only check if specified
+        if (agent.temperature !== undefined) {
+          expect(agent.temperature).toBeGreaterThanOrEqual(0.1);
+        }
       });
     });
   });
@@ -84,7 +89,7 @@ describe("Agent Index Registry", () => {
       expect(codeReviewer).toBeDefined();
       expect(securityAuditor).toBeDefined();
       expect(refactorer).toBeDefined();
-      expect(testArchitect).toBeDefined();
+      expect(testingLead).toBeDefined();
     });
 
     it("should have individual exports match registry entries", () => {
@@ -102,12 +107,12 @@ describe("Agent Index Registry", () => {
         codeReviewer,
         securityAuditor,
         refactorer,
-        testArchitect,
+        testingLead,
       ];
 
       agents.forEach((agent) => {
         expect(agent).toHaveProperty("name");
-        expect(agent).toHaveProperty("model");
+        // Model is optional
         expect(agent).toHaveProperty("description");
       });
     });

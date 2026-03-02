@@ -97,7 +97,7 @@ describe("StringRay Framework Initialization Integration", () => {
         "refactorer",
         "testing-lead",
       ];
-      const agentNames = agentFiles.map((f) => f.replace(".md", ""));
+      const agentNames = agentFiles.map((f) => f.replace(/\.(yml|yaml)$/, ""));
       requiredAgents.forEach((agent) => {
         expect(agentNames).toContain(agent);
       });

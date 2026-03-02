@@ -1,40 +1,39 @@
 import { describe, it, expect } from "vitest";
-import { testArchitect } from "../../agents/testing-lead.js";
+import { testingLead } from "../../agents/testing-lead.js";
 import type { AgentConfig } from "../../agents/types.js";
 
-describe("Test Architect Agent Configuration", () => {
+describe("Testing Lead Agent Configuration", () => {
   it("should be a valid AgentConfig object", () => {
-    const config: AgentConfig = testArchitect;
+    const config: AgentConfig = testingLead;
     expect(config).toBeDefined();
   });
 
   describe("Basic Configuration", () => {
-    it("should have correct name and model", () => {
-      expect(testArchitect.name).toBe("testing-lead");
-      expect(testArchitect.model).toBe(testArchitect.model);
+    it("should have correct name", () => {
+      expect(testingLead.name).toBe("testing-lead");
     });
 
     it("should be configured as subagent mode", () => {
-      expect(testArchitect.mode).toBe("subagent");
+      expect(testingLead.mode).toBe("subagent");
     });
 
     it("should have low temperature for consistent testing decisions", () => {
-      expect(testArchitect.temperature).toBe(0.1);
+      expect(testingLead.temperature).toBe(0.1);
     });
   });
 
   describe("Description and System Prompt", () => {
     it("should have appropriate test architect description", () => {
-      expect(testArchitect.description).toContain(
+      expect(testingLead.description).toContain(
         "StringRay Framework test architect",
       );
-      expect(testArchitect.description).toContain("automatic test generation");
-      expect(testArchitect.description).toContain("coverage optimization");
-      expect(testArchitect.description).toContain("behavioral testing");
+      expect(testingLead.description).toContain("automatic test generation");
+      expect(testingLead.description).toContain("coverage optimization");
+      expect(testingLead.description).toContain("behavioral testing");
     });
 
     it("should have comprehensive test architect system prompt", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("StringRay Test Architect");
       expect(system).toContain("comprehensive testing strategy");
       expect(system).toContain("quality assurance");
@@ -43,7 +42,7 @@ describe("Test Architect Agent Configuration", () => {
 
   describe("Core Responsibilities", () => {
     it("should define 6 core testing responsibilities", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Test Auto-Creation");
       expect(system).toContain("Test Strategy Design");
       expect(system).toContain("Coverage Optimization");
@@ -53,32 +52,32 @@ describe("Test Architect Agent Configuration", () => {
     });
 
     it("should specify test strategy design capabilities", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("comprehensive testing plans");
       expect(system).toContain("unit, integration, and E2E scenarios");
     });
 
     it("should include coverage optimization focus", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Maximize test coverage");
       expect(system).toContain("minimizing redundancy");
       expect(system).toContain("maintenance overhead");
     });
 
     it("should specify behavioral testing approach", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("behavior validation");
       expect(system).toContain("implementation details");
     });
 
     it("should include performance validation", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("performance requirements");
       expect(system).toContain("scalability");
     });
 
     it("should specify quality assurance goals", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("85%+ test coverage");
       expect(system).toContain("reliable, maintainable test suites");
     });
@@ -86,7 +85,7 @@ describe("Test Architect Agent Configuration", () => {
 
   describe("Key Facilities", () => {
     it("should specify test coverage tracking", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Test coverage tracking");
       expect(system).toContain("coverage_trends");
       expect(system).toContain("test_execution_time");
@@ -94,14 +93,14 @@ describe("Test Architect Agent Configuration", () => {
     });
 
     it("should include performance analytics", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Performance analytics");
       expect(system).toContain("execution timing patterns");
       expect(system).toContain("failure prediction models");
     });
 
     it("should define testing processor pipeline", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Processor pipeline");
       expect(system).toContain("test-validation");
       expect(system).toContain("coverage-analysis");
@@ -110,7 +109,7 @@ describe("Test Architect Agent Configuration", () => {
     });
 
     it("should specify alert thresholds", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Alert thresholds");
       expect(system).toContain("40s response time");
       expect(system).toContain("2% error rate");
@@ -118,7 +117,7 @@ describe("Test Architect Agent Configuration", () => {
     });
 
     it("should specify parallel execution capabilities", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Parallel test execution");
       expect(system).toContain("4+ worker threads");
     });
@@ -126,7 +125,7 @@ describe("Test Architect Agent Configuration", () => {
 
   describe("Testing Strategy", () => {
     it("should define 5-level testing strategy", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Testing Strategy");
       expect(system).toContain("Unit Testing");
       expect(system).toContain("Integration Testing");
@@ -136,34 +135,34 @@ describe("Test Architect Agent Configuration", () => {
     });
 
     it("should specify unit testing focus", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Pure functions");
       expect(system).toContain("component isolation");
       expect(system).toContain("edge case coverage");
     });
 
     it("should include integration testing", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Component interaction");
       expect(system).toContain("API validation");
       expect(system).toContain("data flow testing");
     });
 
     it("should specify end-to-end testing", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Complete user workflows");
       expect(system).toContain("critical path validation");
     });
 
     it("should include performance testing", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Load testing");
       expect(system).toContain("scalability validation");
       expect(system).toContain("bottleneck identification");
     });
 
     it("should specify security testing", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Input validation");
       expect(system).toContain("authentication");
       expect(system).toContain("authorization testing");
@@ -172,37 +171,37 @@ describe("Test Architect Agent Configuration", () => {
 
   describe("Testing Guidelines", () => {
     it("should prioritize behavior over implementation", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("behavior over implementation details");
     });
 
     it("should specify coverage requirements", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("85%+ coverage");
       expect(system).toContain("all test types");
     });
 
     it("should emphasize parallel execution", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("parallel execution");
       expect(system).toContain("efficiency");
     });
 
     it("should include predictive models", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("predictive models");
       expect(system).toContain("failure prevention");
     });
 
     it("should validate both positive and negative scenarios", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("positive and negative test scenarios");
     });
   });
 
   describe("Integration Points", () => {
     it("should define comprehensive testing integration points", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("Integration Points");
       expect(system).toContain("Automated testing frameworks");
       expect(system).toContain("Coverage analysis");
@@ -214,25 +213,25 @@ describe("Test Architect Agent Configuration", () => {
 
   describe("Tools Configuration", () => {
     it("should have essential testing tools", () => {
-      expect(testArchitect.tools?.include).toContain("read");
-      expect(testArchitect.tools?.include).toContain("grep");
-      expect(testArchitect.tools?.include).toContain("lsp_*");
-      expect(testArchitect.tools?.include).toContain("run_terminal_cmd");
-      expect(testArchitect.tools?.include).toContain("write");
+      expect(testingLead.tools?.include).toContain("read");
+      expect(testingLead.tools?.include).toContain("grep");
+      expect(testingLead.tools?.include).toContain("lsp_*");
+      expect(testingLead.tools?.include).toContain("run_terminal_cmd");
+      expect(testingLead.tools?.include).toContain("write");
     });
 
     it("should have 12 testing-specific tools including skill invocation", () => {
-      expect(testArchitect.tools?.include).toHaveLength(12);
+      expect(testingLead.tools?.include).toHaveLength(12);
     });
   });
 
   describe("Permissions Configuration", () => {
     it("should allow edit operations", () => {
-      expect(testArchitect.permission?.edit).toBe("allow");
+      expect(testingLead.permission?.edit).toBe("allow");
     });
 
     it("should have comprehensive testing permissions", () => {
-      const bashPerms = testArchitect.permission?.bash;
+      const bashPerms = testingLead.permission?.bash;
       expect(bashPerms).toBeDefined();
       expect(typeof bashPerms).toBe("object");
 
@@ -246,7 +245,7 @@ describe("Test Architect Agent Configuration", () => {
 
   describe("Testing Goal", () => {
     it("should define clear testing assurance goal", () => {
-      const system = testArchitect.system;
+      const system = testingLead.system;
       expect(system).toContain("comprehensive test coverage");
       expect(system).toContain("reliable validation");
       expect(system).toContain("system behavior");

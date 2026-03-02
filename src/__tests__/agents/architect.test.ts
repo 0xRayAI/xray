@@ -9,9 +9,8 @@ describe("Architect Agent Configuration", () => {
   });
 
   describe("Basic Configuration", () => {
-    it("should have correct name and model", () => {
+    it("should have correct name", () => {
       expect(architect.name).toBe("architect");
-      expect(architect.model).toBe(architect.model);
     });
 
     it("should be configured as subagent mode", () => {

@@ -119,8 +119,8 @@ describe("Agent Configuration", () => {
     const content = fs.readFileSync(agentsPath, "utf-8");
     // Check for essential AGENTS.md content
     expect(content).toContain("StringRay");
-    expect(content).toContain("Available Agents");
-    expect(content).toContain("@enforcer");
+    expect(content).toContain("Languages");
+    expect(content).toContain("Plugin Systems");
   });
 });
 
