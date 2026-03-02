@@ -166,7 +166,7 @@ export class TestAutoHealingSystem {
         severity: "high",
         estimatedFixTime: 15,
         autoFixable: true,
-        recommendedAgent: "test-architect",
+        recommendedAgent: "testing-lead",
         fixStrategy: {
           type: "optimize",
           description:

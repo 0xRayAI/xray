@@ -100,7 +100,7 @@ const TASK_KEYWORD_MAPPINGS = [
       "cta copy",
     ],
     skill: "copywriting",
-    agent: "marketing-expert",
+    agent: "growth-strategist",
     confidence: 0.98,
   },
   {
@@ -112,7 +112,7 @@ const TASK_KEYWORD_MAPPINGS = [
       "price optimization",
     ],
     skill: "pricing-strategy",
-    agent: "marketing-expert",
+    agent: "growth-strategist",
     confidence: 0.98,
   },
   {
@@ -173,13 +173,13 @@ const TASK_KEYWORD_MAPPINGS = [
       "behavior test",
     ],
     skill: "testing-best-practices",
-    agent: "test-architect",
+    agent: "testing-lead",
     confidence: 0.95,
   },
   {
     keywords: ["test", "testing", "spec", "mock", "stub"],
     skill: "testing-strategy",
-    agent: "test-architect",
+    agent: "testing-lead",
     confidence: 0.9,
   },
   // ===== END Testing =====
@@ -408,11 +408,30 @@ const TASK_KEYWORD_MAPPINGS = [
   },
   // ===== END Pipeline =====
 
+  // ===== Strategic/Oracle =====
+  {
+    keywords: [
+      "strategic",
+      "guidance",
+      "architecture decision",
+      "risk assessment",
+      "technical strategy",
+      "planning",
+      "next steps",
+      "recommend",
+      "advice",
+    ],
+    skill: "strategist",
+    agent: "strategist",
+    confidence: 0.85,
+  },
+  // ===== END Strategic =====
+
   // ===== SEO =====
   {
     keywords: ["seo", "search engine", "keyword", "meta", "ranking", "google"],
-    skill: "seo-specialist",
-    agent: "seo-specialist",
+    skill: "seo-consultant",
+    agent: "seo-consultant",
     confidence: 0.95,
   },
   // ===== END SEO =====
@@ -420,8 +439,8 @@ const TASK_KEYWORD_MAPPINGS = [
   // ===== Marketing =====
   {
     keywords: ["marketing", "campaign", "brand", "growth", "conversion", "cta"],
-    skill: "marketing-expert",
-    agent: "marketing-expert",
+    skill: "growth-strategist",
+    agent: "growth-strategist",
     confidence: 0.9,
   },
   // ===== END Marketing =====
@@ -436,7 +455,7 @@ const TASK_KEYWORD_MAPPINGS = [
       "technical debt",
     ],
     skill: "code-analyzer",
-    agent: "analyzer",
+    agent: "code-analyzer",
     confidence: 0.9,
   },
   // ===== END Code analysis =====

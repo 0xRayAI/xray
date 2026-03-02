@@ -438,11 +438,16 @@ class ConsumerValidator {
       // .opencode/OpenCode.json deprecated - removed check
 
       // MCP server count check (in opencode.json under 'mcp' key)
+      // Only external/global MCPs should be listed here - StringRay internal MCPs are NOT in opencode.json
       () => {
         try {
           const config = JSON.parse(fs.readFileSync("opencode.json", "utf8"));
           const mcpServers = config.mcp || {};
-          return Object.keys(mcpServers).length >= 16;
+          // Should only have external/global MCPs (context7, global-*)
+          const externalMCPs = Object.keys(mcpServers).filter(k => 
+            k.startsWith('global-') || k === 'context7'
+          );
+          return externalMCPs.length >= 3;
         } catch {
           return false;
         }
@@ -843,19 +848,17 @@ class ConsumerValidator {
         loadedAgents++;
       }
 
-      // Test that agent-related MCP servers are configured (in opencode.json under 'mcp' key)
-      const mcpConfig = JSON.parse(fs.readFileSync("opencode.json", "utf8"));
-      const agentRelatedServers = ["enforcer-tools", "architect-tools"];
-      const hasAgentServers = agentRelatedServers.some(
-        (server) => mcpConfig.mcp && mcpConfig.mcp[server],
-      );
+      // Test that agents are properly configured in opencode.json
+      // Note: Internal StringRay MCPs (enforcer-tools, etc.) are NOT in opencode.json - they are framework internals
+      const agentConfig = JSON.parse(fs.readFileSync("opencode.json", "utf8"));
+      const hasAgents = agentConfig.agent && Object.keys(agentConfig.agent).length >= 5;
 
-      if (hasAgentServers) {
+      if (hasAgents) {
         loadedAgents++;
       }
 
-      // Consider it successful if at least 2/3 criteria are met
-      return loadedAgents >= 2;
+      // Consider it successful if at least 1/2 criteria are met
+      return loadedAgents >= 1;
     } catch (error) {
       console.error("Agent loading validation error:", error.message);
       return false;

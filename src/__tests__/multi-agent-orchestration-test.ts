@@ -13,7 +13,7 @@
  *
  * This test class demonstrates the framework's ability to:
  * 1. Validate architectural patterns against Universal Development Codex
- * 2. Coordinate multiple specialized agents (architect, test-architect, code-reviewer)
+ * 2. Coordinate multiple specialized agents (architect, testing-lead, code-reviewer)
  * 3. Maintain 99.6% error prevention through systematic validation
  * 4. Provide enterprise-grade observability and activity logging
  *
@@ -133,8 +133,8 @@ export class StringRayAgentOrchestrationTest extends EventEmitter {
     });
 
     // Test Architect Agent: Testing strategy and coverage optimization
-    this.agents.set("test-architect", {
-      name: "test-architect",
+    this.agents.set("testing-lead", {
+      name: "testing-lead",
       model: "opencode/grok-code-fast-1",
       specialization: "testing-strategy",
       capabilities: [
@@ -338,14 +338,14 @@ export class StringRayAgentOrchestrationTest extends EventEmitter {
     };
 
     const agentResult = await this.simulateAgentWork(
-      "test-architect",
+      "testing-lead",
       "strategy-planning",
     );
 
     await this.delayForRealism();
 
     const duration = performance.now() - startTime;
-    this.performanceTracker.recordAgentWork("test-architect", duration);
+    this.performanceTracker.recordAgentWork("testing-lead", duration);
 
     this.emit("test-strategy-complete", {
       sessionId: this.sessionId,

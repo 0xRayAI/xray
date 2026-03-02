@@ -1,6 +1,7 @@
 name: librarian
 description: "Codebase and documentation search specialist"
 version: "1.0.0"
+mode: subagent
 
 # Logging Configuration
 logging:

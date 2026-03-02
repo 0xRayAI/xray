@@ -98,7 +98,7 @@ function testSpecializedAgents() {
     'bug-triage-specialist',
     'log-monitor',
     'multimodal-looker',
-    'analyzer'
+    'code-analyzer'
   ];
   
   for (const agent of specializedAgents) {

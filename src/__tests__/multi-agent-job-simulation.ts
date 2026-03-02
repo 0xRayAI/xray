@@ -69,15 +69,15 @@ export class EnterpriseMultiAgentTestSuite {
 
   private async simulateTestArchitectPhase(jobId: string) {
     console.log(
-      `🧪 [${jobId}] [test-architect] Developing comprehensive testing strategy...`,
+      `🧪 [${jobId}] [testing-lead] Developing comprehensive testing strategy...`,
     );
     await this.simulateWork(120);
     console.log(
-      `📊 [${jobId}] [test-architect] Performance testing validation completed - 95% automation level achieved`,
+      `📊 [${jobId}] [testing-lead] Performance testing validation completed - 95% automation level achieved`,
     );
     await this.simulateWork(90);
     console.log(
-      `📈 [${jobId}] [test-architect] Regression test planning finalized - 85% coverage configured`,
+      `📈 [${jobId}] [testing-lead] Regression test planning finalized - 85% coverage configured`,
     );
   }
 

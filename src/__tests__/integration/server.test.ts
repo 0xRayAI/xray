@@ -76,7 +76,7 @@ const createTestServer = () => {
         "code-reviewer",
         "security-auditor",
         "refactorer",
-        "test-architect",
+        "testing-lead",
       ],
     });
   });

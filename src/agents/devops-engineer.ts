@@ -1,5 +1,4 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * DevOps Engineer Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
 export const devopsEngineer: AgentConfig = {
   name: "devops-engineer",
   mode: "subagent",
-  get model() {
-    return modelRouter.getValidatedModel("devops-engineer");
-  },
   capabilities: [
     "ci-cd-pipeline",
     "infrastructure-as-code",

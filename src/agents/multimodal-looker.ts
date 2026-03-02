@@ -1,5 +1,4 @@
 import { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Multimodal Looker Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
  */
 export const multimodalLooker: AgentConfig = {
   name: "multimodal-looker",
-  get model() {
-    return modelRouter.getValidatedModel("multimodal-looker");
-  },
   capabilities: [
     "media-file-analysis",
     "image-interpretation",

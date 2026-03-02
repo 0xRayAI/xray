@@ -2362,8 +2362,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
   - `mcps/framework-compliance-audit.server.js` - Codex compliance validation
   - `mcps/enforcer-tools.server.js` - Error prevention and monitoring
   - `mcps/architect-tools.server.js` - System design and state management
-  - `mcps/orchestrator.server.js` - Multi-agent coordination
-  - `mcps/enhanced-orchestrator.server.js` - Advanced orchestration
+  - `mcps/orchestrator.server.js` - Multi-agent coordination (includes advanced patterns)
   - `mcps/boot-orchestrator.server.js` - Framework initialization
   - `mcps/state-manager.server.js` - Session and state management
   - `mcps/processor-pipeline.server.js` - Processing pipeline management

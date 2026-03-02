@@ -1012,7 +1012,7 @@ export class RuleEnforcer {
   ): { agent: string; skill: string } | null {
     const ruleMappings: Record<string, { agent: string; skill: string }> = {
       // Existing mappings
-      "tests-required": { agent: "test-architect", skill: "testing-strategy" },
+      "tests-required": { agent: "testing-lead", skill: "testing-strategy" },
       "no-duplicate-code": { agent: "refactorer", skill: "code-review" },
       "no-over-engineering": { agent: "architect", skill: "project-analysis" },
       "resolve-all-errors": {
@@ -1036,7 +1036,7 @@ export class RuleEnforcer {
 
       // Phase 1: Complete Violation-to-Skill Mapping
       "input-validation": {
-        agent: "test-architect",
+        agent: "testing-lead",
         skill: "testing-strategy",
       },
       "type-safety-first": { agent: "enforcer", skill: "code-review" },
@@ -1107,7 +1107,7 @@ export class RuleEnforcer {
       },
       "code-rot-prevention": { agent: "refactorer", skill: "code-review" },
       "fast-feedback-loops": {
-        agent: "test-architect",
+        agent: "testing-lead",
         skill: "testing-strategy",
       },
       "performance-budget-enforcement": {
@@ -1140,7 +1140,7 @@ export class RuleEnforcer {
         skill: "project-analysis",
       },
       "continuous-integration": {
-        agent: "test-architect",
+        agent: "testing-lead",
         skill: "testing-strategy",
       },
       "configuration-management": {
@@ -1148,7 +1148,7 @@ export class RuleEnforcer {
         skill: "project-analysis",
       },
       "functionality-retention": {
-        agent: "test-architect",
+        agent: "testing-lead",
         skill: "testing-strategy",
       },
       "gradual-refactoring": { agent: "refactorer", skill: "code-review" },
@@ -1160,7 +1160,7 @@ export class RuleEnforcer {
         skill: "project-analysis",
       },
       "test-execution-optimization": {
-        agent: "test-architect",
+        agent: "testing-lead",
         skill: "testing-strategy",
       },
 
@@ -1170,7 +1170,7 @@ export class RuleEnforcer {
         skill: "project-analysis",
       },
       "integration-testing-mandate": {
-        agent: "test-architect",
+        agent: "testing-lead",
         skill: "testing-strategy",
       },
       "path-resolution-abstraction": {
@@ -1190,7 +1190,7 @@ export class RuleEnforcer {
         skill: "architecture-patterns",
       },
       "ci-cd-pipeline-enforcement": {
-        agent: "test-architect",
+        agent: "testing-lead",
         skill: "testing-strategy",
       },
       "npm-package-publishing-compliance": {

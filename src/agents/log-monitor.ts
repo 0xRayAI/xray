@@ -1,11 +1,7 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 export const logMonitorAgent: AgentConfig = {
   name: "log-monitor",
-  get model() {
-    return modelRouter.getValidatedModel("log-monitor");
-  },
   capabilities: [
     "real-time-monitoring",
     "anomaly-detection",

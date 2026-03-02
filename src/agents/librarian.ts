@@ -1,18 +1,8 @@
 import { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer.js";
 
 export const librarian: AgentConfig = {
   name: "librarian",
-  get model() {
-    try {
-      return modelRouter.getValidatedModel("librarian");
-    } catch (error) {
-      // Fallback to default model if validation fails
-      console.warn("[Librarian] Model validation failed, using default model");
-      return "openai/gpt-4o";
-    }
-  },
   capabilities: [
     "codebase-exploration",
     "documentation-retrieval",
@@ -53,9 +43,9 @@ Specialized agent for comprehensive codebase exploration, documentation retrieva
 - Persistent codebase awareness maintained across agent interactions
 
 ## Trigger Keywords
-- "explore", "search", "find", "analyze", "investigate", "research", "discover"
+- "code-analyzer", "search", "find", "analyze", "investigate", "research", "discover"
 - "codebase", "documentation", "patterns", "architecture", "dependencies"
-- "librarian", "explore", "investigate", "research"
+- "librarian", "code-analyzer", "investigate", "research"
 
 ## Framework Alignment
 **Universal Development Codex v1.2.0 Research & Analysis Compliance:**

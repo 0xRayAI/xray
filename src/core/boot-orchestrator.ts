@@ -446,7 +446,7 @@ export class BootOrchestrator {
       "code-reviewer",
       "security-auditor",
       "refactorer",
-      "test-architect",
+      "testing-lead",
     ];
     const loadedAgents: string[] = [];
 
@@ -1069,7 +1069,7 @@ export class BootOrchestrator {
             "security-validation",
           ],
           refactorer: ["code-modernization", "debt-reduction", "consolidation"],
-          "test-architect": [
+          "testing-lead": [
             "test-strategy-design",
             "coverage-optimization",
             "behavioral-testing",

@@ -6,21 +6,23 @@ import { bugTriageSpecialist } from "./bug-triage-specialist.js";
 import { codeReviewer } from "./code-reviewer.js";
 import { securityAuditor } from "./security-auditor.js";
 import { refactorer } from "./refactorer.js";
-import { testArchitect } from "./test-architect.js";
+import { testArchitect } from "./testing-lead.js";
 import { logMonitorAgent } from "./log-monitor.js";
 import { librarian } from "./librarian.js";
 import { multimodalLooker } from "./multimodal-looker.js";
 import { analyzer } from "./analyzer.js";
-import { seoSpecialist } from "./seo-specialist.js";
-import { seoCopywriter } from "./seo-copywriter.js";
-import { marketingExpert } from "./marketing-expert.js";
+import { seoSpecialist } from "./seo-consultant.js";
+import { seoCopywriter } from "./content-creator.js";
+import { marketingExpert } from "./growth-strategist.js";
 import { databaseEngineer } from "./database-engineer.js";
 import { devopsEngineer } from "./devops-engineer.js";
 import { backendEngineer } from "./backend-engineer.js";
 import { frontendEngineer } from "./frontend-engineer.js";
-import { documentationWriter } from "./documentation-writer.js";
+import { frontendUiUxEngineer } from "./frontend-ui-ux-engineer.js";
+import { documentationWriter } from "./tech-writer.js";
 import { performanceEngineer } from "./performance-engineer.js";
 import { mobileDeveloper } from "./mobile-developer.js";
+import { strategist } from "./strategist.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   enforcer,
@@ -30,21 +32,23 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "code-reviewer": codeReviewer,
   "security-auditor": securityAuditor,
   refactorer,
-  "test-architect": testArchitect,
+  "testing-lead": testArchitect,
   "log-monitor": logMonitorAgent,
   librarian,
   "multimodal-looker": multimodalLooker,
   analyzer: analyzer,
-  "seo-specialist": seoSpecialist,
-  "seo-copywriter": seoCopywriter,
-  "marketing-expert": marketingExpert,
+  "seo-consultant": seoSpecialist,
+  "content-creator": seoCopywriter,
+  "growth-strategist": marketingExpert,
   "database-engineer": databaseEngineer,
   "devops-engineer": devopsEngineer,
   "backend-engineer": backendEngineer,
   "frontend-engineer": frontendEngineer,
-  "documentation-writer": documentationWriter,
+  "frontend-ui-ux-engineer": frontendUiUxEngineer,
+  "tech-writer": documentationWriter,
   "performance-engineer": performanceEngineer,
   "mobile-developer": mobileDeveloper,
+  strategist,
 };
 
 export {
@@ -67,7 +71,9 @@ export {
   devopsEngineer,
   backendEngineer,
   frontendEngineer,
+  frontendUiUxEngineer,
   documentationWriter,
   performanceEngineer,
   mobileDeveloper,
+  strategist,
 };

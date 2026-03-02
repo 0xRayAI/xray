@@ -82,7 +82,7 @@ class StrRayOrchestratorServer {
       concurrentTasks: 1,
     });
 
-    this.agentCapabilities.set("test-architect", {
+    this.agentCapabilities.set("testing-lead", {
       capabilities: ["testing", "coverage", "validation"],
       complexityThreshold: 38,
       concurrentTasks: 3,
@@ -691,7 +691,7 @@ ${optimizationResults.predictedImprovements.map((i) => `• 📈 ${i.metric}: ${
       validation: ["enforcer", "code-reviewer"],
       security: ["security-auditor", "enforcer"],
       design: ["architect"],
-      testing: ["test-architect"],
+      testing: ["testing-lead"],
       debugging: ["bug-triage-specialist"],
       optimization: ["refactorer"],
       monitoring: ["log-monitor"],

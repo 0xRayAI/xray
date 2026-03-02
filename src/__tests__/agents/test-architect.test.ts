@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { testArchitect } from "../../agents/test-architect.js";
+import { testArchitect } from "../../agents/testing-lead.js";
 import type { AgentConfig } from "../../agents/types.js";
 
 describe("Test Architect Agent Configuration", () => {
@@ -10,7 +10,7 @@ describe("Test Architect Agent Configuration", () => {
 
   describe("Basic Configuration", () => {
     it("should have correct name and model", () => {
-      expect(testArchitect.name).toBe("test-architect");
+      expect(testArchitect.name).toBe("testing-lead");
       expect(testArchitect.model).toBe(testArchitect.model);
     });
 

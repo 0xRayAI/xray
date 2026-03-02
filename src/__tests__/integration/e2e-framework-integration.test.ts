@@ -238,7 +238,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
         {
           id: "task-3",
           description: "Execute test suite",
-          subagentType: "test-architect",
+          subagentType: "testing-lead",
           priority: "medium" as const,
           dependencies: ["task-2"],
         },
@@ -812,7 +812,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
           {
             id: "testing-validation",
             description: "Execute comprehensive tests",
-            subagentType: "test-architect",
+            subagentType: "testing-lead",
             dependencies: ["code-enforcement"],
           },
         ];
@@ -935,7 +935,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
         "architect",
         "enforcer",
         "security-auditor",
-        "test-architect",
+        "testing-lead",
       ];
 
       // Create complex task requiring multiple agents
@@ -961,7 +961,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
         {
           id: "testing-validation",
           description: "Validate through testing",
-          subagentType: "test-architect",
+          subagentType: "testing-lead",
           dependencies: ["enforcement-check"],
         },
       ];
@@ -1447,7 +1447,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
             {
               id: "high-4",
               description: "High task 4",
-              subagentType: "test-architect",
+              subagentType: "testing-lead",
               dependencies: ["high-3"],
             },
             {

@@ -9,86 +9,47 @@
     "context7": { "enabled": false },
     "global-everything": { "enabled": false },
     "global-filesystem": { "enabled": false },
-    "global-git": { "enabled": false },
-    "enforcer": {
-      "type": "local",
-      "command": ["node", "./dist/mcps/enforcer-tools.server.js"],
-      "enabled": true
-    },
-    "orchestrator": { 
-      "type": "local",
-      "command": ["node", "./dist/mcps/orchestrator.server.js"],
-      "enabled": true 
-    },
-    "enhanced-orchestrator": { 
-      "type": "local", 
-      "command": ["node", "./dist/mcps/enhanced-orchestrator.server.js"],
-      "enabled": true 
-    },
-    "code-review": { "enabled": false },
-    "security-audit": { "enabled": false },
-    "project-analysis": { "enabled": false },
-    "testing-strategy": { 
-      "type": "local", 
-      "command": ["node", "./dist/mcps/knowledge-skills/testing-strategy.server.js"],
-      "enabled": true 
-    },
-    "librarian": { 
-      "type": "local", 
-      "command": ["node", "./dist/mcps/librarian.server.js"],
-      "enabled": true 
-    },
-    "api-design": { "enabled": false },
-    "architecture-patterns": { "enabled": false },
-    "git-workflow": { "enabled": false },
-    "performance-optimization": { "enabled": false },
-    "ui-ux-design": { "enabled": false },
-    "refactoring-strategies": { "enabled": false },
-    "testing-best-practices": { "enabled": false }
+    "global-git": { "enabled": false }
   },
   "agent": {
     "orchestrator": {
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "enhanced-orchestrator": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "enforcer": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "primary"
     },
     "architect": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "test-architect": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "bug-triage-specialist": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "code-reviewer": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "security-auditor": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "refactorer": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "librarian": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "log-monitor": {
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "sisyphus": {
@@ -131,9 +92,6 @@
       "disable": true
     },
     "strray-bug-triage-specialist": {
-      "disable": true
-    },
-    "strray-enhanced-orchestrator": {
       "disable": true
     },
     "strray-state-manager": {

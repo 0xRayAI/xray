@@ -14,7 +14,7 @@ graph TB
     subgraph "Plugin Integration Layer"
         OMC[OpenCode<br/>Framework]
         SRP[StrRay Plugin<br/>strray-codex-injection.ts]
-        MCP[MCP Servers<br/>enhanced-orchestrator<br/>enforcer<br/>etc.]
+        MCP[MCP Servers<br/>orchestrator<br/>enforcer<br/>etc.]
     end
 
     %% StrRay Framework Layer
@@ -75,9 +75,9 @@ graph TB
 │
 ├── 🌐 MCP Server Layer
 │   ├── 🔧 Tool Discovery
-│   │   ├── enhanced-orchestrator.spawn-agent
-│   │   ├── enhanced-orchestrator.execute-complex-task
-│   │   └── enhanced-orchestrator.get-monitoring-interface
+│   │   ├── orchestrator.spawn-agent
+│   │   ├── orchestrator.execute-complex-task
+│   │   └── orchestrator.get-monitoring-interface
 │   ├── 📡 Protocol Translation
 │   │   └── MCP → Internal API conversion
 │   └── 🎮 Interactive Controls
@@ -139,7 +139,7 @@ sequenceDiagram
     OMC->>SRP: Plugin activation (codex injection)
     SRP->>OMC: Enhanced prompt with codex context
 
-    OMC->>MCP: Route to enhanced-orchestrator tool
+    OMC->>MCP: Route to orchestrator tool
     MCP->>SO: executeComplexTask(description, tasks)
 
     SO->>EO: spawnAgent() for each subtask
@@ -165,7 +165,7 @@ graph TB
     %% User Entry Points
     subgraph "User Entry Points"
         API[Direct API Call<br/>orchestrator.executeComplexTask()]
-        MCP[MCP Server<br/>enhanced-orchestrator.*]
+        MCP[MCP Server<br/>orchestrator.*]
         CLI[CLI Tools<br/>strray orchestrate]
     end
 
@@ -244,10 +244,10 @@ graph TB
 │   ├── 🔌 Direct API
 │   │   └── orchestrator.executeComplexTask(description, tasks[])
 │   ├── 🌐 MCP Server
-│   │   ├── enhanced-orchestrator.spawn-agent
-│   │   ├── enhanced-orchestrator.get-monitoring-interface
-│   │   ├── enhanced-orchestrator.cancel-agent
-│   │   └── enhanced-orchestrator.execute-complex-task
+│   │   ├── orchestrator.spawn-agent
+│   │   ├── orchestrator.get-monitoring-interface
+│   │   ├── orchestrator.cancel-agent
+│   │   └── orchestrator.execute-complex-task
 │   └── 💻 CLI Tools
 │       └── strray orchestrate <task-file>
 │

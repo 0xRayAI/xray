@@ -1,5 +1,4 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Frontend Engineer Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
 export const frontendEngineer: AgentConfig = {
   name: "frontend-engineer",
   mode: "subagent",
-  get model() {
-    return modelRouter.getValidatedModel("frontend-engineer");
-  },
   capabilities: [
     "react-development",
     "vue-development",

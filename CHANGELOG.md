@@ -5,6 +5,58 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.6.17] - 2026-03-01
+
+### 🔄 Changes
+
+Consolidated MCP servers: analyzer + explore → code-analyzer. Removed enhanced-orchestrator (merged into orchestrator). Removed redundant explore agent.
+
+---
+
+## [1.6.16] - 2026-03-01
+
+### 🔄 Consolidated & Removed
+
+- **MCP Servers**: Consolidated `analyzer.server` + `explore.server` → `code-analyzer.server`
+- **Enhanced-Orchestrator**: Removed redundant server (merged into `orchestrator`)
+- **Agents**: Removed redundant `explore` agent (use `code-analyzer`)
+
+### 🚀 Major Features
+
+- **Oracle Agent**: Strategic guidance and complex problem-solving
+- **Code-Analyzer MCP**: Comprehensive code analysis, metrics, and pattern detection
+- **Session Management**: Full session coordination and state persistence
+- **Enhanced Multi-Agent Orchestration**: Advanced multi-agent coordination
+- **MCP Client**: Unified MCP server registration and management
+
+### ✨ Added Agents
+
+- `oracle` - Strategic guidance
+- `seo-specialist` - SEO optimization
+- `seo-copywriter` - Content optimization
+- `marketing-expert` - Marketing strategy
+- `mobile-developer` - Mobile development
+- `database-engineer` - Database design
+- `devops-engineer` - DevOps deployment
+- `backend-engineer` - API design
+- `frontend-engineer` - Frontend development
+- `performance-engineer` - Performance optimization
+
+### 🛡️ Security & Compliance
+
+- Security audit MCP server
+- Security scanning capabilities
+- Compliance documentation
+
+### 📚 Documentation
+
+- AGENTS.md - Complete agent reference
+- ADDING_AGENTS.md - Guide for adding new agents
+- AGENT_CONFIG.md - Configuration reference
+- ORCHESTRATOR_INTEGRATION_ARCHITECTURE.md - Architecture docs
+
+---
+
 ## [1.0.4] - 2026-01-14
 
 ### 🚀 Deployment & Production Release

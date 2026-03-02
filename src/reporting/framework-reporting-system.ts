@@ -564,7 +564,7 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
     if (component.includes("code-review")) return "code-reviewer";
     if (component.includes("security-audit")) return "security-auditor";
     if (component.includes("refactor")) return "refactorer";
-    if (component.includes("test-architect")) return "test-architect";
+    if (component.includes("testing-lead")) return "testing-lead";
 
     return "system"; // Default for system components
   }

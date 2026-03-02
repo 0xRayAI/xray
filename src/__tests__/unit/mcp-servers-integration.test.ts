@@ -33,26 +33,42 @@ describe("MCP Server Files", () => {
     expect(fs.existsSync(serverPath)).toBe(true);
   });
 
-  it("should have analyzer server file", () => {
+  it("should have seo-consultant server file", () => {
     const serverPath = path.join(
       process.cwd(),
-      "src/mcps/knowledge-skills/analyzer.server.ts",
+      "src/mcps/knowledge-skills/seo-consultant.server.ts",
     );
     expect(fs.existsSync(serverPath)).toBe(true);
   });
 
-  it("should have seo-specialist server file", () => {
+  it("should have strategist server file", () => {
     const serverPath = path.join(
       process.cwd(),
-      "src/mcps/knowledge-skills/seo-specialist.server.ts",
+      "src/mcps/knowledge-skills/strategist.server.ts",
     );
     expect(fs.existsSync(serverPath)).toBe(true);
   });
 
-  it("should have marketing-expert server file", () => {
+  it("should have session-management server file", () => {
     const serverPath = path.join(
       process.cwd(),
-      "src/mcps/knowledge-skills/marketing-expert.server.ts",
+      "src/mcps/knowledge-skills/session-management.server.ts",
+    );
+    expect(fs.existsSync(serverPath)).toBe(true);
+  });
+
+  it("should have code-analyzer server file", () => {
+    const serverPath = path.join(
+      process.cwd(),
+      "src/mcps/knowledge-skills/code-analyzer.server.ts",
+    );
+    expect(fs.existsSync(serverPath)).toBe(true);
+  });
+
+  it("should have growth-strategist server file", () => {
+    const serverPath = path.join(
+      process.cwd(),
+      "src/mcps/knowledge-skills/growth-strategist.server.ts",
     );
     expect(fs.existsSync(serverPath)).toBe(true);
   });
@@ -118,6 +134,6 @@ describe("MCP Client Configuration", () => {
     expect(content).toContain("bug-triage-specialist");
     expect(content).toContain("log-monitor");
     expect(content).toContain("multimodal-looker");
-    expect(content).toContain("analyzer");
+    expect(content).toContain("code-analyzer");
   });
 });

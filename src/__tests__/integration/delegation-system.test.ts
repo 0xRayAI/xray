@@ -34,9 +34,9 @@ describe("StringRay Delegation System Integration", () => {
       }),
       getCapabilities: vi
         .fn()
-        .mockReturnValue({ name: "test-architect", performance: 0.8 }),
+        .mockReturnValue({ name: "testing-lead", performance: 0.8 }),
     };
-    stateManager.set("agent:test-architect", mockAgent);
+    stateManager.set("agent:testing-lead", mockAgent);
     stateManager.set("agent:enforcer", mockAgent);
     stateManager.set("agent:architect", mockAgent);
     stateManager.set("agent:security-auditor", mockAgent);

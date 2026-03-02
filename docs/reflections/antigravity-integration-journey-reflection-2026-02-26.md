@@ -64,7 +64,7 @@ The first task: reconnect all 22 agents to the delegation system.
 - frontend-engineer, documentation-writer
 - performance-engineer, mobile-developer
 - bug-triage-specialist, log-monitor
-- multimodal-looker, analyzer
+- multimodal-looker, code-analyzer
 - orchestrator, librarian
 ```
 
@@ -77,7 +77,7 @@ Four new MCP servers joined the fleet:
 1. **bug-triage-specialist** - Stack trace analysis, root cause detection, fix suggestions
 2. **log-monitor** - Pattern detection, alerting, correlation
 3. **multimodal-looker** - Diagram analysis, UI extraction
-4. **analyzer** - Metrics, code smells, dependency analysis
+4. **code-analyzer** - Metrics, code smells, dependency analysis
 
 **Discovery #4: Every new capability requires TypeScript safety - type casting is not optional.**
 

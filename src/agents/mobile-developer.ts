@@ -1,5 +1,4 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Mobile Developer Agent
@@ -11,9 +10,6 @@ import { modelRouter } from "../core/model-router.js";
 export const mobileDeveloper: AgentConfig = {
   name: "mobile-developer",
   mode: "subagent",
-  get model() {
-    return modelRouter.getValidatedModel("mobile-developer");
-  },
   capabilities: [
     "ios-development",
     "android-development",

@@ -336,7 +336,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
         "code-reviewer",
         "security-auditor",
         "refactorer",
-        "test-architect",
+        "testing-lead",
         "log-monitor",
       ];
 

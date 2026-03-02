@@ -124,7 +124,7 @@ class FrameworkHelpServer {
         "code-reviewer": "Quality assessment & standards validation",
         "security-auditor": "Vulnerability detection & compliance",
         refactorer: "Technical debt elimination & code consolidation",
-        "test-architect": "Testing strategy & coverage optimization",
+        "testing-lead": "Testing strategy & coverage optimization",
       },
       skills: {
         "project-analysis": "Codebase analysis and metrics",
@@ -192,12 +192,12 @@ class FrameworkHelpServer {
 @code-reviewer - Quality assessment & standards validation
 @security-auditor - Vulnerability detection & compliance
 @refactorer - Technical debt elimination & code consolidation
-@test-architect - Testing strategy & coverage optimization
+@testing-lead - Testing strategy & coverage optimization
 @librarian - Codebase exploration & documentation search
-@oracle - Strategic guidance & complex problem-solving
-@seo-specialist - SEO analysis & optimization
-@seo-copywriter - Marketing copy & content writing
-@marketing-expert - Marketing strategy & growth
+@strategist - Strategic guidance & complex problem-solving
+@seo-consultant - SEO analysis & optimization
+@content-creator - Marketing copy & content writing
+@growth-strategist - Marketing strategy & growth
 @multimodal-looker - Visual content & media analysis
 @frontend-ui-ux-engineer - Frontend development & UI/UX
 @document-writer - Technical documentation generation
@@ -214,8 +214,8 @@ class FrameworkHelpServer {
 - "@enforcer analyze this code for violations"
 - "@architect design a scalable solution for X"
 - "@orchestrator coordinate testing for this feature"
-- "@seo-specialist review the website for SEO improvements"
-- "@marketing-expert analyze the marketing strategy"
+- "@seo-consultant review the website for SEO improvements"
+- "@growth-strategist analyze the marketing strategy"
         `.trim();
         break;
 
@@ -424,7 +424,7 @@ ${Object.entries(capabilities.reporting)
       return `
 **StringRay Framework Capabilities:**
 
-**8 Agents:** enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+**8 Agents:** enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
 
 **23 Skills:** project-analysis, testing-strategy, code-review, security-audit, performance-optimization, refactoring-strategies, ui-ux-design, documentation-generation, and more
 

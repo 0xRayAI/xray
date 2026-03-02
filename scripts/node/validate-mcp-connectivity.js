@@ -31,10 +31,6 @@ const MCP_SERVERS = [
     path: `${pathPrefix}dist/mcps/orchestrator.server.js`,
   },
   {
-    name: "enhanced-orchestrator",
-    path: `${pathPrefix}dist/mcps/enhanced-orchestrator.server.js`,
-  },
-  {
     name: "enforcer",
     path: `${pathPrefix}dist/mcps/enforcer-tools.server.js`,
   },

@@ -358,7 +358,7 @@ export class EnhancedMultiAgentOrchestrator {
       librarian: 4000, // 4 seconds
       "code-reviewer": 2500, // 2.5 seconds
       "security-auditor": 3500, // 3.5 seconds
-      "test-architect": 3000, // 3 seconds
+      "testing-lead": 3000, // 3 seconds
       "bug-triage-specialist": 2800, // 2.8 seconds
       refactorer: 3200, // 3.2 seconds
     };

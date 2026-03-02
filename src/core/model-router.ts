@@ -71,11 +71,9 @@ class ModelRouter {
       "claude-opus-4",
       "claude-sonnet-4",
       "claude-haiku-4",
-      // Legacy model names
-      "openrouter/xai-grok-2-1212-fast-1",
+      // Other supported models
       "openai/gpt-4o",
       "openai/gpt-4o-mini",
-      "anthropic/claude-3-5-sonnet-20241022",
       "google/gemini-pro-1.5",
       "google/gemini-flash-1.5",
       "meta/llama-3.1-70b-instruct",

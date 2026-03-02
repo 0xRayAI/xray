@@ -1541,7 +1541,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         "code-reviewer",
         "security-auditor",
         "refactorer",
-        "test-architect",
+        "testing-lead",
       ];
 
       const coordinationTasks: TaskDefinition[] = subagentTypes.map(

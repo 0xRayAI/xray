@@ -140,7 +140,7 @@ describe("StringRay Infrastructure Tests", () => {
         "code-reviewer.yml",
         "security-auditor.yml",
         "refactorer.yml",
-        "test-architect.yml",
+        "testing-lead.yml",
       ];
 
       for (const agentFile of requiredAgents) {

@@ -24,10 +24,6 @@ Add this section to your `opencode.json` to enable all StringRay agents:
     "temperature": 1.0,
     "mode": "subagent"
   },
-  "enhanced-orchestrator": {
-    "temperature": 1.0,
-    "mode": "subagent"
-  },
   "test-architect": {
     "temperature": 1.0,
     "mode": "subagent"
@@ -108,7 +104,7 @@ StringRay includes additional specialized agents for specific domains:
 | `marketing-expert` | Marketing strategy |
 | `documentation-writer` | Technical docs |
 | `multimodal-looker` | Image/video analysis |
-| `analyzer` | Code analysis |
+| `code-analyzer` | Code analysis |
 
 To enable specialized agents, add them to your `opencode.json`:
 
@@ -167,10 +163,6 @@ To disable an agent, set `disable: true`:
       "mode": "subagent"
     },
     "orchestrator": {
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "enhanced-orchestrator": {
       "temperature": 1.0,
       "mode": "subagent"
     },

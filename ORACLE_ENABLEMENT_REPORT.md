@@ -49,27 +49,26 @@
 1. **enforcer** - Primary mode, core framework compliance
 2. **architect** - System design and technical architecture
 3. **orchestrator** - Multi-agent coordination
-4. **enhanced-orchestrator** - Advanced orchestration patterns
-5. **test-architect** - Testing strategy and frameworks
+4. **test-architect** - Testing strategy and frameworks
 6. **bug-triage-specialist** - Issue diagnosis and triage
 7. **code-reviewer** - Code quality and review standards
 8. **security-auditor** - Security analysis and vulnerability detection
 9. **refactorer** - Code refactoring and technical debt management
 10. **librarian** - Codebase exploration and documentation search
 11. **multimodal-looker** - Media file analysis and interpretation *(NEW)*
-12. **analyzer** - Universal analysis specialist *(NEW)*
+12. **code-analyzer** - Universal analysis specialist *(NEW)*
 13. **oracle** - Strategic guidance and problem solving *(NOW ENABLED)*
 
 ### **🎯 Complete Agent Coverage**
 All major domains now covered:
-- **Code Analysis**: analyzer, code-reviewer, refactrer
-- **Architecture**: architect, oracle, analyzer
-- **Security**: security-auditor, analyzer
+- **Code Analysis**: code-analyzer, code-reviewer, refactrer
+- **Architecture**: architect, oracle, code-analyzer
+- **Security**: security-auditor, code-analyzer
 - **Testing**: test-architect, bug-triage-specialist
 - **Documentation**: librarian, document-writer *(archived)*
 - **UI/UX**: frontend-ui-ux-engineer *(archived)*
 - **Multimedia**: multimodal-looker
-- **Orchestration**: orchestrator, enhanced-orchestrator
+- **Orchestration**: orchestrator
 - **Compliance**: enforcer
 
 ---

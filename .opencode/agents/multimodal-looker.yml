@@ -1,6 +1,7 @@
 name: multimodal-looker
 description: "Multimodal file analysis and interpretation specialist for images, diagrams, PDFs, and media files"
 version: "1.0.0"
+mode: subagent
 
 # Logging Configuration
 logging:

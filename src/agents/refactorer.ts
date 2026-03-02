@@ -1,12 +1,8 @@
 import type { AgentConfig } from "./types.js";
 
-import { modelRouter } from "../core/model-router.js";
 
 export const refactorer: AgentConfig = {
   name: "refactorer",
-  get model() {
-    return modelRouter.getValidatedModel("refactorer");
-  },
   capabilities: [
     "technical-debt-elimination",
     "code-consolidation",

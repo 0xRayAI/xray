@@ -79,7 +79,7 @@ export class OrchestrationFlowReporter {
         jobCorrelation: jobId,
       },
       {
-        agent: "test-architect",
+        agent: "testing-lead",
         activities: [
           "testing strategy development",
           "performance testing validation",
@@ -151,7 +151,7 @@ export class OrchestrationFlowReporter {
       agentPerformance: {
         architect: 252,
         "code-reviewer": 140,
-        "test-architect": 210,
+        "testing-lead": 210,
         enforcer: 110,
         orchestrator: 90,
       },

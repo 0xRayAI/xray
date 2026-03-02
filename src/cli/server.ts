@@ -69,7 +69,7 @@ app.get("/api/agents", (req: any, res: any) => {
       "code-reviewer",
       "security-auditor",
       "refactorer",
-      "test-architect",
+      "testing-lead",
     ],
   });
 });

@@ -49,10 +49,10 @@ describe("AgentDelegator", () => {
         result: "security-auditor completed",
       }),
     });
-    stateManager.set("agent:test-architect", {
+    stateManager.set("agent:testing-lead", {
       execute: vi.fn().mockResolvedValue({
         success: true,
-        result: "test-architect completed",
+        result: "testing-lead completed",
       }),
     });
     stateManager.set("agent:refactorer", {
@@ -78,8 +78,9 @@ describe("AgentDelegator", () => {
       expect(agents).toHaveLength(22); // All builtin agents
       expect(agents.some((a) => a.name === "enforcer")).toBe(true);
       expect(agents.some((a) => a.name === "architect")).toBe(true);
-      expect(agents.some((a) => a.name === "seo-specialist")).toBe(true);
-      expect(agents.some((a) => a.name === "marketing-expert")).toBe(true);
+      expect(agents.some((a) => a.name === "seo-consultant")).toBe(true);
+      expect(agents.some((a) => a.name === "strategist")).toBe(true);
+      expect(agents.some((a) => a.name === "growth-strategist")).toBe(true);
       expect(agents.some((a) => a.name === "orchestrator")).toBe(true);
     });
   });
@@ -238,7 +239,7 @@ describe("AgentDelegator", () => {
       const mockAgent = {
         execute: vi.fn().mockRejectedValue(new Error("Execution failed")),
       };
-      stateManager.set("agent:test-architect", mockAgent);
+      stateManager.set("agent:testing-lead", mockAgent);
 
       const delegation = await agentDelegator.analyzeDelegation(request);
       const result = await agentDelegator.executeDelegation(
@@ -493,7 +494,7 @@ describe("AgentDelegator", () => {
       const mockAgent = {
         execute: vi.fn().mockRejectedValue(new Error("Execution failed")),
       };
-      stateManager.set("agent:test-architect", mockAgent);
+      stateManager.set("agent:testing-lead", mockAgent);
 
       const request: DelegationRequest = {
         operation: "test",
@@ -546,7 +547,7 @@ describe("AgentDelegator", () => {
           confidence: 0.95,
         }),
       };
-      stateManager.set("agent:test-architect", mockAgent);
+      stateManager.set("agent:testing-lead", mockAgent);
 
       const request: DelegationRequest = {
         operation: "format",
@@ -720,7 +721,7 @@ describe("AgentDelegator", () => {
       };
 
       const delegation = await agentDelegator.analyzeDelegation(request);
-      expect(delegation.agents).toContain("test-architect");
+      expect(delegation.agents).toContain("testing-lead");
     });
 
     it("should select highest performance agents for critical tasks", async () => {
@@ -968,7 +969,7 @@ describe("AgentDelegator", () => {
       );
 
       expect(result.operation).toBe("test");
-      expect(result.suggestedAgent).toBe("test-architect");
+      expect(result.suggestedAgent).toBe("testing-lead");
       expect(result.suggestedSkill).toBe("testing-strategy");
       expect(result.confidence).toBe(0.9);
     });

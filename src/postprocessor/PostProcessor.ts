@@ -317,10 +317,10 @@ export class PostProcessor {
           },
         );
 
-        // Call test-architect agent for testing strategy
+        // Call testing-lead agent for testing strategy
         const fixed = await this.callAgentForArchitecturalFix(
           "checkIntegrationTesting",
-          "test-architect",
+          "testing-lead",
           "testing-strategy",
           context,
           integrationCheck.message,

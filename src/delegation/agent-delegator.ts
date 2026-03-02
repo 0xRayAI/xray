@@ -172,7 +172,7 @@ export class AgentDelegator {
         specialties: ["images", "diagrams", "screenshots"],
       },
       {
-        name: "analyzer",
+        name: "code-analyzer",
         capabilities: ["code-analysis", "pattern-detection", "metrics"],
         status: "active",
         expertise: "deep code analysis",
@@ -199,7 +199,7 @@ export class AgentDelegator {
         specialties: ["security", "audit"],
       },
       {
-        name: "test-architect",
+        name: "testing-lead",
         capabilities: ["testing", "coverage"],
         status: "active",
         expertise: "test architecture",
@@ -226,7 +226,22 @@ export class AgentDelegator {
         specialties: ["debugging", "analysis"],
       },
       {
-        name: "seo-specialist",
+        name: "strategist",
+        capabilities: [
+          "strategic-planning",
+          "complex-problem-solving",
+          "architecture-design",
+          "technical-strategy",
+          "risk-assessment",
+        ],
+        status: "active",
+        expertise: "strategic guidance and complex problem-solving",
+        capacity: 100,
+        performance: 95,
+        specialties: ["architecture decisions", "technical strategy", "risk analysis"],
+      },
+      {
+        name: "seo-consultant",
         capabilities: [
           "technical-seo-audit",
           "schema-markup-generation",
@@ -241,7 +256,7 @@ export class AgentDelegator {
         specialties: ["schema", "robots.txt", "Core Web Vitals", "AI search"],
       },
       {
-        name: "seo-copywriter",
+        name: "content-creator",
         capabilities: [
           "seo-content-writing",
           "keyword-optimization",
@@ -255,7 +270,7 @@ export class AgentDelegator {
         specialties: ["content", "keywords", "metadata"],
       },
       {
-        name: "marketing-expert",
+        name: "growth-strategist",
         capabilities: [
           "campaign-strategy",
           "market-analysis",
@@ -353,7 +368,7 @@ export class AgentDelegator {
         specialties: ["React Native", "iOS", "Android"],
       },
       {
-        name: "documentation-writer",
+        name: "tech-writer",
         capabilities: [
           "api-documentation",
           "markdown",
@@ -551,7 +566,7 @@ export class AgentDelegator {
         });
       } else if (metrics.operationType === "test") {
         agents.push({
-          name: "test-architect",
+          name: "testing-lead",
           confidence: 0.8,
           role: "testing",
         });

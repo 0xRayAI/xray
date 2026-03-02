@@ -1,5 +1,4 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Database Engineer Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
 export const databaseEngineer: AgentConfig = {
   name: "database-engineer",
   mode: "subagent",
-  get model() {
-    return modelRouter.getValidatedModel("database-engineer");
-  },
   capabilities: [
     "schema-design",
     "query-optimization",

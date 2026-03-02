@@ -55,7 +55,7 @@ Welcome to StringRay AI! This session includes systematic error prevention and p
 - **@enforcer** - Codex compliance & error prevention
 
 **Internal Agent System:**
-All 8 specialized agents (architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect, librarian) are available internally through orchestrator coordination and framework operations.
+All 8 specialized agents (architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, librarian) are available internally through orchestrator coordination and framework operations.
 
 **Skills System (23 lazy-loaded capabilities):**
 - project-analysis, testing-strategy, code-review, security-audit, performance-optimization

@@ -182,7 +182,6 @@ function testNativeSkills() {
     'boot-orchestrator',
     'processor-pipeline',
     'enforcer',
-    'enhanced-orchestrator',
     'framework-compliance-audit',
     'model-health-check',
     'librarian'

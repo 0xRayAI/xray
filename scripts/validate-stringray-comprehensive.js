@@ -210,7 +210,6 @@ class StringRayValidator {
     const mcpServers = [
       'dist/mcps/enforcer-tools.server.js',
       'dist/mcps/orchestrator.server.js',
-      'dist/mcps/enhanced-orchestrator.server.js',
       'dist/mcps/knowledge-skills/project-analysis.server.js',
       'dist/mcps/knowledge-skills/api-design.server.js',
       'dist/mcps/knowledge-skills/architecture-patterns.server.js',

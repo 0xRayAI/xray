@@ -53,7 +53,7 @@ describe("Session Lifecycle Management", () => {
       expect(session).toBeDefined();
       expect(session.sessionId).toBe(sessionId);
       expect(session.active).toBe(true);
-      expect(session.agentCount).toBe(8); // Default agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+      expect(session.agentCount).toBe(8); // Default agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
     });
 
     test("should register session with cleanup manager", () => {

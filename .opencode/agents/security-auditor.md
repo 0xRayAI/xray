@@ -2,7 +2,7 @@
 
 **Role**: Vulnerability detection & compliance
 **Mode**: Subagent
-**Model**: openrouter/xai-grok-2-1212-fast-1
+model: default
 
 ## Purpose
 

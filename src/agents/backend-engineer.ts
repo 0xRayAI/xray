@@ -1,5 +1,4 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Backend Engineer Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
 export const backendEngineer: AgentConfig = {
   name: "backend-engineer",
   mode: "subagent",
-  get model() {
-    return modelRouter.getValidatedModel("backend-engineer");
-  },
   capabilities: [
     "api-design",
     "microservices",

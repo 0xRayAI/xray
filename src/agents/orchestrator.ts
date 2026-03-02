@@ -1,12 +1,8 @@
 import type { AgentConfig } from "./types.js";
 
-import { modelRouter } from "../core/model-router.js";
 
 export const orchestrator: AgentConfig = {
   name: "orchestrator",
-  get model() {
-    return modelRouter.getValidatedModel("orchestrator");
-  },
   capabilities: [
     "multi-agent-orchestration",
     "workflow-management",
@@ -52,7 +48,7 @@ Follow the 6-phase operating protocol, Maximize parallel execution, Maintain cle
 Integration Points: Session management system, Agent delegation framework, Progress tracking and monitoring, Conflict resolution mechanisms, Performance optimization tools.
 
 ## Agent References
-architect, refactorer, test-architect, enforcer.
+architect, refactorer, testing-lead, enforcer.
 
 ## Agent Assignment
 Intelligently assign tasks to specialized agents.

@@ -29,7 +29,7 @@ describe("Agent Index Registry", () => {
         "code-reviewer",
         "security-auditor",
         "refactorer",
-        "test-architect",
+        "testing-lead",
       ];
 
       expectedAgents.forEach((agentName) => {

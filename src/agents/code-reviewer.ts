@@ -1,11 +1,7 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 export const codeReviewer: AgentConfig = {
   name: "code-reviewer",
-  get model() {
-    return modelRouter.getValidatedModel("code-reviewer");
-  },
   capabilities: [
     "code-review",
     "quality-assurance",

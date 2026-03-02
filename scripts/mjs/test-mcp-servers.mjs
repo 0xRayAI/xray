@@ -79,7 +79,8 @@ async function testKnowledgeSkillServers() {
     'bug-triage-specialist',
     'log-monitor', 
     'multimodal-looker',
-    'analyzer',
+    // analyzer consolidated into code-analyzer
+    'code-analyzer',
     'code-review',
     'security-audit',
     'testing-best-practices',
@@ -112,7 +113,6 @@ async function testFrameworkServers() {
   const servers = [
     'boot-orchestrator',
     'orchestrator',
-    'enhanced-orchestrator',
     'processor-pipeline',
     'enforcer-tools',
     'architect-tools',

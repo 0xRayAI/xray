@@ -1,5 +1,4 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Performance Engineer Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
 export const performanceEngineer: AgentConfig = {
   name: "performance-engineer",
   mode: "subagent",
-  get model() {
-    return modelRouter.getValidatedModel("performance-engineer");
-  },
   capabilities: [
     "performance-profiling",
     "benchmarking",

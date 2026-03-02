@@ -49,7 +49,7 @@ describe("TaskSkillRouter", () => {
 
     it("should route testing tasks correctly", () => {
       const result = router.routeTask("write tests for authentication");
-      expect(result.agent).toBe("test-architect");
+      expect(result.agent).toBe("testing-lead");
       expect(result.confidence).toBeGreaterThan(0.8);
     });
 
@@ -149,7 +149,7 @@ describe("TaskSkillRouter", () => {
 
   describe("getSkillForAgent", () => {
     it("should return skill for known agent", () => {
-      const skill = router.getSkillForAgent("test-architect");
+      const skill = router.getSkillForAgent("testing-lead");
       expect(skill).toBeDefined();
       expect(typeof skill).toBe("string");
     });
@@ -161,13 +161,13 @@ describe("TaskSkillRouter", () => {
 
   describe("trackResult", () => {
     it("should track successful results", () => {
-      router.trackResult("task-1", "test-architect", true);
+      router.trackResult("task-1", "testing-lead", true);
       const stats = router.getStats();
       expect(Object.keys(stats).length).toBeGreaterThan(0);
     });
 
     it("should track failed results", () => {
-      router.trackResult("task-2", "test-architect", false);
+      router.trackResult("task-2", "testing-lead", false);
       const stats = router.getStats();
       expect(Object.keys(stats).length).toBeGreaterThan(0);
     });

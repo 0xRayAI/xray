@@ -34,7 +34,7 @@ describe("StringRayConfigLoader", () => {
       progress_tracking: true,
       session_persistence: false,
     },
-    disabled_agents: ["test-architect"],
+    disabled_agents: ["testing-lead"],
   });
 
   beforeEach(() => {
@@ -102,7 +102,7 @@ describe("StringRayConfigLoader", () => {
 
       expect(config.multi_agent_orchestration.enabled).toBe(true);
       expect(config.multi_agent_orchestration.max_concurrent_agents).toBe(5);
-      expect(config.disabled_agents).toEqual(["test-architect"]);
+      expect(config.disabled_agents).toEqual(["testing-lead"]);
     });
 
     it("should return default config when file does not exist", () => {

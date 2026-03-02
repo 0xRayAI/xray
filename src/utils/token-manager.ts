@@ -34,16 +34,12 @@ export class TokenManager {
       const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
       return (
         config.token_management || {
-          maxPromptTokens: 240000,
-          warningThreshold: 200000,
-          modelLimits: {
-            "openrouter/xai-grok-2-1212-fast-1": modelRouter.getValidatedModel(
-              "openrouter/xai-grok-2-1212-fast-1",
-            ),
-          },
+          maxPromptTokens: 20000,
+          warningThreshold: 15000,
+          modelLimits: {},
           contextPruning: {
             enabled: true,
-            aggressivePruning: false,
+            aggressivePruning: true,
             preserveCriticalContext: true,
           },
         }
@@ -51,19 +47,12 @@ export class TokenManager {
     } catch (error) {
       // Fallback defaults if config loading fails
       return {
-        maxPromptTokens: 240000,
-        warningThreshold: 200000,
-        modelLimits: {
-          "openrouter/xai-grok-2-1212-fast-1":
-            Number(
-              modelRouter.getValidatedModel(
-                "openrouter/xai-grok-2-1212-fast-1",
-              ),
-            ) || 256000,
-        },
+        maxPromptTokens: 20000,
+        warningThreshold: 15000,
+        modelLimits: {},
         contextPruning: {
           enabled: true,
-          aggressivePruning: false,
+          aggressivePruning: true,
           preserveCriticalContext: true,
         },
       };

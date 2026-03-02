@@ -1,5 +1,4 @@
 import { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Analyzer Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
  */
 export const analyzer: AgentConfig = {
   name: "analyzer",
-  get model() {
-    return modelRouter.getValidatedModel("analyzer");
-  },
   capabilities: [
     "code-analysis",
     "system-analysis",

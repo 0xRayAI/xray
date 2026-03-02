@@ -1,5 +1,4 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 /**
  * Frontend UI/UX Engineer Agent
@@ -10,9 +9,6 @@ import { modelRouter } from "../core/model-router.js";
 export const frontendUiUxEngineer: AgentConfig = {
   name: "frontend-ui-ux-engineer",
   mode: "subagent",
-  get model() {
-    return modelRouter.getValidatedModel("frontend-ui-ux-engineer");
-  },
   capabilities: [
     "ui-design",
     "ux-design",

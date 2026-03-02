@@ -107,7 +107,7 @@ Production-Ready Code
 **Fixed**: `ProviderModelNotFoundError` when assigning tasks to subagents
 
 **Agents now fully wired**:
-- ✅ `explore` → project-analysis.server.js
+- ✅ `code-analyzer` → code-analyzer.server.js (consolidated from analyzer + explore)
 - ✅ `document-writer` → documentation-generation.server.js
 - ✅ `frontend-ui-ux-engineer` → ui-ux-design.server.js
 - ✅ `librarian` → project-analysis.server.js

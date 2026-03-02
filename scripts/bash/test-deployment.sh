@@ -294,7 +294,7 @@ echo "3.3 MCP Server Accessibility Testing"
 echo "Testing MCP server files exist"
 # MCP servers are in dist/mcps/ not dist/plugin/mcps/
 MCP_SERVERS=(
-    "dist/mcps/enhanced-orchestrator.server.js"
+    # enhanced-orchestrator disabled - redundant with orchestrator
     "dist/mcps/enforcer-tools.server.js"
     "dist/mcps/framework-compliance-audit.server.js"
     "dist/mcps/performance-analysis.server.js"

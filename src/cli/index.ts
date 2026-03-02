@@ -187,7 +187,7 @@ program
       "  @refactorer         - Technical debt elimination & code consolidation",
     );
     console.log(
-      "  @test-architect     - Testing strategy & coverage optimization",
+      "  @testing-lead     - Testing strategy & coverage optimization",
     );
     console.log("  @librarian          - Codebase exploration & documentation");
     console.log("");

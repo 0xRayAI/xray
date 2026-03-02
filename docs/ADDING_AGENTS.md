@@ -1,165 +1,132 @@
 # How to Add an Agent to StringRay Framework
 
-This guide documents all the files that need to be updated when adding a new agent to StringRay.
+This guide documents how to add agents to StringRay using OpenCode's official agent configuration.
 
 ---
 
-## The Problem
+## How OpenCode Agents Work (Official Docs)
 
-Adding a new agent currently requires updating **8+ files** across the codebase. This is error-prone and tedious.
+According to [OpenCode Agents Documentation](https://opencode.ai/docs/agents/):
+
+### Two Types of Agents
+
+1. **Primary Agents** - Main assistants (Build, Plan)
+2. **Subagents** - Specialized assistants invoked via `@` mentions
+
+### Agent Invocation
+
+- **Primary agents**: Use Tab key to cycle through during a session
+- **Subagents**: Use `@agentname` to invoke directly, e.g., `@oracle help me with architecture`
+
+### Agent Configuration Options
+
+OpenCode agents can be configured in two ways:
+
+1. **JSON** - In `opencode.json` under the `agent` key
+2. **Markdown** - In `.opencode/agents/` directory as `.yml` files
+
+Required fields:
+- `description` - Brief description of what the agent does
+- `mode` - `primary`, `subagent`, or `all`
+
+Optional fields:
+- `model` - Override the model for this agent
+- `temperature` - Control randomness (0.0-1.0)
+- `tools` - Control which tools are available
+- `hidden` - Hide from @ autocomplete
 
 ---
 
-## Important: Two Types of Agent Access
+## ProviderModelNotFoundError
 
-### 1. Task Tool (OpenCode native)
-The Task tool has a **hardcoded list** of agent types in OpenCode's framework:
-- general, explore, orchestrator, enhanced-orchestrator, architect, test-architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, librarian, log-monitor, oracle, document-writer, multimodal-looker, frontend-ui-ux-engineer
+This error occurs when:
+1. An explicit model is specified for a subagent
+2. That model is not available in the provider configuration
 
-**To add new agents here**, you must modify OpenCode's Task tool definition.
+**Solution**: According to OpenCode docs:
+> "If you don't specify a model, primary agents use the model globally configured while subagents will use the model of the primary agent that invoked the subagent."
 
-### 2. StringRay Enhanced Access
-StringRay provides additional ways to access agents:
-- **@agent commands** - Via framework-help server
-- **enhanced-orchestrator spawn-agent** - Programmatic access
-- **features.json** - Agent model configuration
-
-This is where seo-specialist, marketing-expert, etc. are accessible.
+**Fix**: Don't specify a model for subagents - they inherit the invoking agent's model.
 
 ---
 
 ## Files That Need to Be Updated
 
-### 1. `.opencode/strray/features.json` (REQUIRED)
-Add the agent to `agent_management.agent_models`:
+### 1. `opencode.json` (RECOMMENDED)
+
+Add the agent to the `agent` section:
 
 ```json
-"agent_management": {
-  "agent_models": {
-    "new-agent": "claude-sonnet-4"
+{
+  "agent": {
+    "my-agent": {
+      "description": "What this agent does",
+      "mode": "subagent",
+      "temperature": 1.0
+    }
   }
 }
 ```
 
-### 2. `src/mcps/mcp-client.ts` (REQUIRED)
+Or use `.opencode/agents/my-agent.yml`:
+
+```yaml
+name: my-agent
+description: What this agent does
+mode: subagent
+version: "1.0.0"
+```
+
+### 2. `src/mcps/mcp-client.ts` (REQUIRED for MCP)
+
 Add MCP server configuration in `serverConfigs`:
 
 ```typescript
-"new-agent": {
-  serverName: "new-agent",
+"my-agent": {
+  serverName: "my-agent",
   command: "node",
   args: [
-    `${process.env.STRRAY_MCP_PATH || "dist"}/mcps/knowledge-skills/new-agent.server.js`,
+    `${basePath}/mcps/knowledge-skills/my-agent.server.js`,
   ],
   timeout: 30000,
 },
 ```
 
-Also update `strray_get_commands` tool to include the new agent.
+### 3. Update Skills List
 
-### 3. `scripts/node/setup.cjs` (REQUIRED for consumer install)
-Add the agent to the `strrayAgents` object so it gets added to opencode.json when user runs `npx strray-ai setup`:
-
-```javascript
-const strrayAgents = {
-  // ... existing agents ...
-  "new-agent": { model: "openrouter/xai-grok-2-1212-fast-1" },
-};
-```
-
-**Note:** `setup.cjs` is run manually by consumers with `npx strray-ai setup` - it's NOT called automatically during npm install.
-
-### 3. `src/mcps/framework-help.server.ts` (REQUIRED)
-Update the `agent-commands` case to include the new agent:
-
-```typescript
-@new-agent - Description of what the agent does
-```
-
-### 4. `src/delegation/agent-delegator.ts` (if applicable)
-Add agent configuration if using delegation.
-
-### 5. `src/delegation/task-skill-router.ts` (if applicable)
-Add keyword mappings for skill-based routing.
-
-### 6. `.opencode/agents/new-agent.yml` (optional)
-Create agent YAML configuration.
-
-### 7. `.opencode/agents/new-agent.md` (optional)
-Create agent documentation.
-
-### 8. `src/agents/new-agent.ts` (optional)
-Create the agent implementation if it has custom logic.
-
-### 9. `src/mcps/knowledge-skills/new-agent.server.ts` (optional)
-Create MCP server if the agent has tools.
+Add to skill lists in:
+- `src/mcps/mcp-client.ts` - `availableSkills` array
+- `src/mcps/knowledge-skills/skill-invocation.server.ts` - skill enum
 
 ---
 
-## Current Agent List
+## Agent Access Methods
 
-### Available via Task Tool (OpenCode native - 16 agents)
-| Agent | Features.json | MCP Client | Framework Help |
-|-------|--------------|------------|----------------|
-| general | - | - | - |
-| explore | ✅ | ✅ (alias) | ✅ |
-| orchestrator | ✅ | ✅ | ✅ |
-| enhanced-orchestrator | ❌ | ✅ | ✅ |
-| architect | ✅ | ✅ (alias) | ✅ |
-| test-architect | ✅ | ✅ (alias) | ✅ |
-| bug-triage-specialist | ✅ | ✅ | ✅ |
-| code-reviewer | ✅ | ✅ (alias) | ✅ |
-| security-auditor | ✅ | ✅ | ✅ |
-| refactorer | ✅ | ✅ (alias) | ✅ |
-| librarian | ✅ | ✅ (alias) | ✅ |
-| log-monitor | ✅ | ✅ | ✅ |
-| oracle | ✅ | ✅ (alias) | ✅ |
-| document-writer | ✅ | ✅ (alias) | ✅ |
-| multimodal-looker | ✅ | ✅ | ✅ |
-| frontend-ui-ux-engineer | ✅ | ✅ (alias) | ✅ |
-
-### Available via enhanced-orchestrator Only (StringRay - 3 agents)
-| Agent | Features.json | MCP Client | Framework Help |
-|-------|--------------|------------|----------------|
-| seo-specialist | ✅ | ✅ | ✅ |
-| seo-copywriter | ✅ | ✅ | ✅ |
-| marketing-expert | ✅ | ✅ | ✅ |
+| Method | How | Works for Custom Agents? |
+|--------|-----|-------------------------|
+| `@agent` | Type `@oracle` in chat | ✅ Yes |
+| Tab key | Cycle primary agents | ❌ Built-in only |
+| Task tool | Primary agent invokes subagent | ✅ Yes |
+| StringRay MCP | Direct MCP invocation | ✅ Yes |
 
 ---
 
-## Aliases
+## Troubleshooting
 
-Many agents use aliases to share MCP servers:
+### ProviderModelNotFoundError
 
-- `code-reviewer` → `code-review.server.js`
-- `security-auditor` → `security-audit.server.js`
-- `refactorer` → `refactoring-strategies.server.js`
-- `test-architect` → `testing-strategy.server.js`
-- `oracle` → `project-analysis.server.js`
-- `librarian` → `project-analysis.server.js`
-- `explore` → `project-analysis.server.js`
-- `document-writer` → `documentation-generation.server.js`
-- `frontend-ui-ux-engineer` → `ui-ux-design.server.js`
-- `enforcer` → `enforcer-tools.server.js`
-- `architect` → `architect-tools.server.js`
-- `backend-engineer` → `api-design.server.js`
+**Cause**: Explicit model specified but not available
 
----
+**Fix**: Remove `model` from agent config - subagents inherit parent's model
 
-## Recommended: Minimal Update Path
+### Agent Not Found
 
-For a new agent, minimum required updates:
+**Cause**: Agent not properly configured in opencode.json
 
-1. **Add to features.json** - Required for OpenCode to know about the agent
-2. **Add MCP config** - Required for the agent to actually work
-3. **Add to framework-help** - So users know about it via `@` commands
+**Fix**: Ensure agent has `description` and `mode` fields
 
----
+### @mention Not Working
 
-## Future: Automated Registration
+**Cause**: Agent missing `mode: subagent`
 
-This system should be automated. Ideas:
-- Generate all docs from a single `agents.json` config
-- Auto-generate help text from agent metadata
-- Single source of truth for agent definitions
-- Work with OpenCode to add agents to Task tool enum
+**Fix**: Add `mode: subagent` to agent configuration

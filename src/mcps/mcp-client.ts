@@ -222,15 +222,14 @@ export class MCPClient {
                   "refactoring-strategies",
                   "architecture-patterns",
                   // ========== ADDED MISSING SKILLS ==========
-                  "oracle",
-                  "explore",
+                  "strategist",
                   "bug-triage-specialist",
                   "log-monitor",
                   "multimodal-looker",
-                  "analyzer",
-                  "seo-specialist",
-                  "seo-copywriter",
-                  "marketing-expert",
+                  // analyzer consolidated into code-analyzer
+                  "seo-consultant",
+                  "content-creator",
+                  "growth-strategist",
                   "mobile-development",
                   "git-workflow",
                   "testing-best-practices",
@@ -322,7 +321,7 @@ export class MCPClient {
         },
       ],
       // ========== MISSING AGENTS ADDED ==========
-      oracle: [
+      strategist: [
         {
           name: "strategic_guidance",
           description: "Strategic guidance and complex problem-solving for architectural decisions",
@@ -452,7 +451,7 @@ export class MCPClient {
           },
         },
       ],
-      "seo-specialist": [
+      "seo-consultant": [
         {
           name: "analyze_seo",
           description: "Analyze and optimize SEO",
@@ -466,7 +465,7 @@ export class MCPClient {
           },
         },
       ],
-      "seo-copywriter": [
+      "content-creator": [
         {
           name: "write_seo_content",
           description: "Write SEO-optimized content",
@@ -481,7 +480,7 @@ export class MCPClient {
           },
         },
       ],
-      "marketing-expert": [
+      "growth-strategist": [
         {
           name: "create_campaign",
           description: "Create marketing campaigns and strategies",
@@ -511,7 +510,7 @@ export class MCPClient {
           },
         },
       ],
-      "test-architect": [
+      "testing-lead": [
         {
           name: "design_test_strategy",
           description: "Design comprehensive testing strategies",
@@ -722,7 +721,7 @@ export class MCPClient {
 - code-reviewer: Quality assessment & standards validation
 - security-auditor: Vulnerability detection & compliance
 - refactorer: Technical debt elimination & code consolidation
-- test-architect: Testing strategy & coverage optimization
+- testing-lead: Testing strategy & coverage optimization
 
 **23 Skills (Lazy Loading):**
 - project-analysis, testing-strategy, code-review, security-audit, performance-optimization, refactoring-strategies, ui-ux-design, documentation-generation, and more
@@ -754,12 +753,12 @@ export class MCPClient {
 @code-reviewer - Quality assessment & standards validation
 @security-auditor - Vulnerability detection & compliance
 @refactorer - Technical debt elimination & code consolidation
-@test-architect - Testing strategy & coverage optimization
+@testing-lead - Testing strategy & coverage optimization
 @librarian - Codebase exploration & documentation search
-@oracle - Strategic guidance & complex problem-solving
-@seo-specialist - SEO analysis & optimization
-@seo-copywriter - Marketing copy & content writing
-@marketing-expert - Marketing strategy & growth
+@strategist - Strategic guidance & complex problem-solving
+@seo-consultant - SEO analysis & optimization
+@content-creator - Marketing copy & content writing
+@growth-strategist - Marketing strategy & growth
 @multimodal-looker - Visual content & media analysis
 @frontend-ui-ux-engineer - Frontend development & UI/UX
 @document-writer - Technical documentation generation
@@ -775,8 +774,8 @@ codex-injector - Apply development standards and quality enforcement
 **Getting Started:**
 1. Use @enforcer for code quality validation
 2. Use @orchestrator for complex development tasks
-3. Use @seo-specialist for SEO reviews
-4. Use @marketing-expert for marketing analysis
+3. Use @seo-consultant for SEO reviews
+4. Use @growth-strategist for marketing analysis
 5. Check framework-reporting-system for activity reports`,
               },
             ],
@@ -840,7 +839,7 @@ Prevents common errors, enforces coding standards, and ensures production-ready 
           ],
         };
 
-      case "oracle":
+      case "strategist":
         if (toolName === "strategic_guidance") {
           const question = args.question || "";
           const isStringRay = question.toLowerCase().includes("stringray");
@@ -1168,7 +1167,7 @@ export class MCPClientManager {
       librarian: {
         serverName: "librarian",
         command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/project-analysis.server.js`],
+        args: [`${basePath}/mcps/librarian.server.js`],
         timeout: 60000,
       },
       "framework-help": {
@@ -1183,11 +1182,23 @@ export class MCPClientManager {
         args: [`${basePath}/mcps/knowledge-skills/skill-invocation.server.js`],
         timeout: 30000,
       },
-      explore: {
-        serverName: "explore",
+      strategist: {
+        serverName: "strategist",
         command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/project-analysis.server.js`],
-        timeout: 25000,
+        args: [`${basePath}/mcps/knowledge-skills/strategist.server.js`],
+        timeout: 60000,
+      },
+      "session-management": {
+        serverName: "session-management",
+        command: "node",
+        args: [`${basePath}/mcps/knowledge-skills/session-management.server.js`],
+        timeout: 30000,
+      },
+      "code-analyzer": {
+        serverName: "code-analyzer",
+        command: "node",
+        args: [`${basePath}/mcps/knowledge-skills/code-analyzer.server.js`],
+        timeout: 45000,
       },
       "document-writer": {
         serverName: "document-writer",
@@ -1247,28 +1258,22 @@ export class MCPClientManager {
         args: [`${basePath}/mcps/knowledge-skills/multimodal-looker.server.js`],
         timeout: 40000,
       },
-      analyzer: {
-        serverName: "analyzer",
+      "seo-consultant": {
+        serverName: "seo-consultant",
         command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/analyzer.server.js`],
-        timeout: 45000,
-      },
-      "seo-specialist": {
-        serverName: "seo-specialist",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/seo-specialist.server.js`],
+        args: [`${basePath}/mcps/knowledge-skills/seo-consultant.server.js`],
         timeout: 30000,
       },
-      "seo-copywriter": {
-        serverName: "seo-copywriter",
+      "content-creator": {
+        serverName: "content-creator",
         command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/seo-copywriter.server.js`],
+        args: [`${basePath}/mcps/knowledge-skills/content-creator.server.js`],
         timeout: 30000,
       },
-      "marketing-expert": {
-        serverName: "marketing-expert",
+      "growth-strategist": {
+        serverName: "growth-strategist",
         command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/marketing-expert.server.js`],
+        args: [`${basePath}/mcps/knowledge-skills/growth-strategist.server.js`],
         timeout: 45000,
       },
       // Aliases to match features.json agent names
@@ -1292,17 +1297,11 @@ export class MCPClientManager {
         ],
         timeout: 40000,
       },
-      "test-architect": {
-        serverName: "test-architect",
+      "testing-lead": {
+        serverName: "testing-lead",
         command: "node",
         args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
         timeout: 30000,
-      },
-      oracle: {
-        serverName: "oracle",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/project-analysis.server.js`],
-        timeout: 60000,
       },
       // ========== MISSING AGENT CONFIGS ==========
       "performance-engineer": {

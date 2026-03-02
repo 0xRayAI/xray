@@ -1,11 +1,7 @@
 import type { AgentConfig } from "./types.js";
-import { modelRouter } from "../core/model-router.js";
 
 export const architect: AgentConfig = {
   name: "architect",
-  get model() {
-    return modelRouter.getValidatedModel("architect");
-  },
   capabilities: [
     "architecture",
     "design",

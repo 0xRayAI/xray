@@ -1,12 +1,8 @@
 import type { AgentConfig } from "./types.js";
 
-import { modelRouter } from "../core/model-router.js";
 
 export const enforcer: AgentConfig = {
   name: "enforcer",
-  get model() {
-    return modelRouter.getValidatedModel("enforcer");
-  },
   capabilities: [
     "error-prevention",
     "compliance-monitoring",

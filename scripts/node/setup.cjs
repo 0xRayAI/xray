@@ -72,43 +72,28 @@ function configureStrRayPlugin() {
 
   let config = loadConfig(configPath);
 
-  // Only add valid opencode configuration keys
-  if (!config.model) {
-    config.model = "openrouter/xai-grok-2-1212-fast-1";
-  }
+  // Use default model from opencode
+  // Don't override - let opencode use its default
 
-  // Add StrRay agent configurations (only valid opencode agent config)
+  // Add StrRay agent configurations
   if (!config.agent) {
     config.agent = {};
   }
 
-  const strrayAgents = {
-    orchestrator: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    enforcer: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    architect: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "test-architect": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "bug-triage-specialist": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "code-reviewer": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "security-auditor": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    refactorer: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    librarian: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "log-monitor": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    oracle: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "document-writer": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    explore: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    analyzer: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "frontend-ui-ux-engineer": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "seo-specialist": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "seo-copywriter": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "marketing-expert": { model: "openrouter/xai-grok-2-1212-fast-1" },
-    general: { model: "openrouter/xai-grok-2-1212-fast-1" },
-    "multimodal-looker": { model: "openrouter/xai-grok-2-1212-fast-1" },
-  };
+  // Agent configs - don't specify model, use opencode default
+  const strrayAgents = [
+    "orchestrator", "enforcer", "architect", "test-architect",
+    "bug-triage-specialist", "code-reviewer", "security-auditor",
+    "refactorer", "librarian", "log-monitor", "oracle",
+    "document-writer", "code-analyzer", "frontend-ui-ux-engineer",
+    "seo-specialist", "seo-copywriter", "marketing-expert",
+    "general", "multimodal-looker"
+  ];
 
   let agentsAdded = 0;
-  for (const [agentName, agentConfig] of Object.entries(strrayAgents)) {
+  for (const agentName of strrayAgents) {
     if (!config.agent[agentName]) {
-      config.agent[agentName] = agentConfig;
+      config.agent[agentName] = { mode: "subagent" };
       agentsAdded++;
     }
   }

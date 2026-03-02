@@ -11,7 +11,7 @@ export const sessionFactory = Factory.define(({ sequence }) => ({
     "enforcer",
     "architect",
     "orchestrator",
-    "test-architect",
+    "testing-lead",
   ]),
   complexity: faker.helpers.arrayElement(["low", "medium", "high"]),
   priority: faker.helpers.arrayElement(["low", "normal", "high", "critical"]),

@@ -40,9 +40,9 @@ Specialized agent for comprehensive codebase exploration, documentation retrieva
 
 ## Trigger Keywords
 
-- "explore", "search", "find", "analyze", "investigate", "research", "discover"
+- "code-analyzer", "search", "find", "analyze", "investigate", "research", "discover"
 - "codebase", "documentation", "patterns", "architecture", "dependencies"
-- "librarian", "explore", "investigate", "research"
+- "librarian", "code-analyzer", "investigate", "research"
 
 ## Framework Alignment
 

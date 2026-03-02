@@ -1255,7 +1255,7 @@ export class ProcessorManager {
     ruleId: string,
   ): { agent: string; skill: string } | null {
     const ruleMappings: Record<string, { agent: string; skill: string }> = {
-      "tests-required": { agent: "test-architect", skill: "testing-strategy" },
+      "tests-required": { agent: "testing-lead", skill: "testing-strategy" },
       "no-duplicate-code": {
         agent: "refactorer",
         skill: "refactoring-strategies",

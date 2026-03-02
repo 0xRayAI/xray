@@ -140,9 +140,9 @@ function testAgentsHaveMCPConfig() {
     'security-auditor': 'security-audit',
     'refactorer': 'refactoring-strategies',
     'test-architect': 'testing-strategy',
-    'oracle': 'project-analysis',
+    'oracle': 'oracle',
     'librarian': 'project-analysis',
-    'explore': 'project-analysis',
+    'explore': 'code-analyzer',
     'document-writer': 'documentation-generation',
     'frontend-ui-ux-engineer': 'ui-ux-design',
     'enforcer': 'enforcer-tools',
@@ -192,9 +192,9 @@ function testRegisteredMCPServersExist() {
     'security-auditor': 'security-audit',
     'refactorer': 'refactoring-strategies',
     'test-architect': 'testing-strategy',
-    'oracle': 'project-analysis',
+    'oracle': 'oracle',
     'librarian': 'project-analysis',
-    'explore': 'project-analysis',
+    'explore': 'code-analyzer',
     'document-writer': 'documentation-generation',
     'frontend-ui-ux-engineer': 'ui-ux-design',
     'enforcer': 'enforcer-tools',
@@ -210,7 +210,6 @@ function testRegisteredMCPServersExist() {
     'bug-triage-specialist': 'bug-triage-specialist',
     'log-monitor': 'log-monitor',
     'multimodal-looker': 'multimodal-looker',
-    'analyzer': 'analyzer',
     'seo-specialist': 'seo-specialist',
     'seo-copywriter': 'seo-copywriter',
     'marketing-expert': 'marketing-expert',
@@ -298,12 +297,12 @@ function testOrchestratorRedundancy() {
   const registeredMCPs = loadMCPClientConfigs();
   
   const hasOrchestrator = registeredMCPs.includes('orchestrator');
-  const hasEnhancedOrchestrator = registeredMCPs.includes('enhanced-orchestrator');
   
-  if (hasOrchestrator && hasEnhancedOrchestrator) {
+  // Just check that orchestrator exists
+  if (!hasOrchestrator) {
     return {
       success: false,
-      error: 'Both orchestrator and enhanced-orchestrator are registered (redundant)'
+      error: 'orchestrator MCP is required'
     };
   }
   

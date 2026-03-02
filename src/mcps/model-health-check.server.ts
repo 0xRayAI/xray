@@ -156,12 +156,12 @@ class StrRayModelHealthCheckServer {
       issues.push("Invalid model format");
     }
 
-    if (model === "openrouter/xai-grok-2-1212-fast-1") {
-      // Known healthy model
-    } else {
-      // Simulate potential issues for other models
+    // Check model format validity
+    const validPrefixes = ["claude-", "gpt-", "gemini-", "llama-", "mistral-"];
+    if (!validPrefixes.some(p => model.includes(p))) {
+      // Unknown model - may have issues
       if (Math.random() < 0.1) {
-        issues.push("Model temporarily unavailable");
+        issues.push("Model may not be available");
         latency = undefined;
       }
     }

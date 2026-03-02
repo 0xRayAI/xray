@@ -120,7 +120,7 @@ export class SessionCoordinator {
       "code-reviewer",
       "security-auditor",
       "refactorer",
-      "test-architect",
+      "testing-lead",
     ];
 
     defaultAgents.forEach((agentName) => {

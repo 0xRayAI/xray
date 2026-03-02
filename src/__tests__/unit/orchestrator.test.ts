@@ -49,7 +49,7 @@ describe("StringRayOrchestrator", () => {
       priority: "medium",
       createdAt: new Date(),
       status: "pending",
-      subagentType: "explore",
+      subagentType: "code-analyzer",
     };
 
     const result = await orchestrator.executeComplexTask("Single task test", [
@@ -78,7 +78,7 @@ describe("StringRayOrchestrator", () => {
       priority: "medium",
       createdAt: new Date(),
       status: "pending",
-      subagentType: "explore",
+      subagentType: "code-analyzer",
     };
 
     const result = await orchestrator.executeComplexTask("Failing task test", [
@@ -104,7 +104,7 @@ describe("StringRayOrchestrator", () => {
         priority: "medium",
         createdAt: new Date(),
         status: "pending",
-        subagentType: "explore",
+        subagentType: "code-analyzer",
       },
       {
         id: "step-2",
@@ -146,7 +146,7 @@ describe("StringRayOrchestrator", () => {
         priority: "medium",
         createdAt: new Date(),
         status: "pending",
-        subagentType: "explore",
+        subagentType: "code-analyzer",
         dependencies: ["non-existent-task"],
       },
     ];
@@ -192,7 +192,7 @@ describe("StringRayOrchestrator", () => {
       priority: "medium",
       createdAt: new Date(),
       status: "pending",
-      subagentType: "explore",
+      subagentType: "code-analyzer",
     };
 
     const result = await orchestrator.executeComplexTask("Timeout test", [
@@ -215,7 +215,7 @@ describe("StringRayOrchestrator", () => {
       priority: "medium",
       createdAt: new Date(),
       status: "pending",
-      subagentType: "explore",
+      subagentType: "code-analyzer",
     }));
 
     const startTime = Date.now();

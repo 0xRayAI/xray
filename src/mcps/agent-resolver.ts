@@ -114,9 +114,13 @@ async function loadAgentConfigFile(
   const agentFileMap: Record<string, string> = {
     "bug-triage-specialist": "bugTriageSpecialist",
     "code-reviewer": "codeReviewer",
-    "test-architect": "testArchitect",
+    "testing-lead": "testArchitect",
     "security-auditor": "securityAuditor",
     "multimodal-looker": "multimodalLooker",
+    "seo-consultant": "seoSpecialist",
+    "content-creator": "seoCopywriter",
+    "growth-strategist": "marketingExpert",
+    "tech-writer": "documentationWriter",
   };
 
   const fileName = agentFileMap[agentName] || agentName;

@@ -163,7 +163,7 @@ describe("Orchestrator Agent Configuration", () => {
       const system = orchestrator.system;
       expect(system).toContain("architect");
       expect(system).toContain("refactorer");
-      expect(system).toContain("test-architect");
+      expect(system).toContain("testing-lead");
       expect(system).toContain("enforcer");
     });
 

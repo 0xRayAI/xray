@@ -266,7 +266,6 @@ class PostinstallConfigValidator {
           "librarian",
           "session-management",
           "orchestrator",
-          "enhanced-orchestrator",
           "enforcer",
           "api-design",
           "architecture-patterns",

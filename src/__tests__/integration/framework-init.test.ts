@@ -95,7 +95,7 @@ describe("StringRay Framework Initialization Integration", () => {
         "code-reviewer",
         "security-auditor",
         "refactorer",
-        "test-architect",
+        "testing-lead",
       ];
       const agentNames = agentFiles.map((f) => f.replace(".md", ""));
       requiredAgents.forEach((agent) => {

@@ -343,15 +343,15 @@ export class StringRayOrchestrator {
 
     if (complexityScore < 25) {
       priorityLevel = "low";
-      agentsNeeded = ["test-architect"];
+      agentsNeeded = ["testing-lead"];
       healingApproach = "simple";
     } else if (complexityScore < 50) {
       priorityLevel = "medium";
-      agentsNeeded = ["test-architect", "refactorer"];
+      agentsNeeded = ["testing-lead", "refactorer"];
       healingApproach = "coordinated";
     } else if (complexityScore < 75) {
       priorityLevel = "high";
-      agentsNeeded = ["test-architect", "refactorer", "bug-triage-specialist"];
+      agentsNeeded = ["testing-lead", "refactorer", "bug-triage-specialist"];
       healingApproach = "coordinated";
     } else {
       priorityLevel = "critical";
@@ -359,7 +359,7 @@ export class StringRayOrchestrator {
         "orchestrator",
         "architect",
         "security-auditor",
-        "test-architect",
+        "testing-lead",
         "refactorer",
         "bug-triage-specialist",
       ];
@@ -399,7 +399,7 @@ export class StringRayOrchestrator {
       tasks.push({
         id: "timeout-optimization",
         description: `Optimize ${failureContext.timeoutIssues.length} timeout issues`,
-        subagentType: "test-architect",
+        subagentType: "testing-lead",
         priority: strategy.priorityLevel === "critical" ? "high" : "medium",
         dependencies: ["failure-analysis"],
       });

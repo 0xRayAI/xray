@@ -67,7 +67,7 @@ class OrchestrationFlowValidator {
       // Step 2: Define simple task
       const tasks = [
         {
-          id: "test-architect",
+          id: "testing-lead",
           description: "Design a simple API endpoint",
           subagentType: "architect",
           priority: "medium" as const,
@@ -176,7 +176,7 @@ class OrchestrationFlowValidator {
         {
           id: "implement-design",
           description: "Implement the validated design",
-          subagentType: "test-architect",
+          subagentType: "testing-lead",
           priority: "medium" as const,
           dependencies: ["design-phase", "validate-design"],
         },
@@ -393,7 +393,7 @@ class OrchestrationFlowValidator {
           "architect",
           "librarian",
           "enforcer",
-          "test-architect",
+          "testing-lead",
           "security-auditor",
         ][i % 5] as any,
         priority: "medium" as const,

@@ -1,4 +1,4 @@
-name: test-architect
+name: testing-lead
 description: "Test architect agent for comprehensive testing strategy and validation"
 version: "1.0.0"
 mode: subagent

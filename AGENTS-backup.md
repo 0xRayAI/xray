@@ -31,7 +31,7 @@
 | Agent | Description |
 |-------|-------------|
 | general | General-purpose agent for complex questions and multi-step tasks |
-| explore | Fast codebase exploration and pattern analysis |
+| code-analyzer | Code analysis, metrics, and pattern detection |
 | orchestrator | Multi-agent workflow coordination *(manual only)* |
 | architect | System design and technical architecture |
 | test-architect | Testing strategy design |
