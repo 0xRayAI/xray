@@ -18,6 +18,33 @@ import { StringRayStateManager } from "../state/state-manager.js";
  * Each skill appears exactly ONCE - no duplicates
  */
 const TASK_KEYWORD_MAPPINGS = [
+  // ===== USER-FRIENDLY ALIASES (most natural language first) =====
+  {
+    keywords: ["marketing", "campaign", "growth", "conversion"],
+    skill: "content-marketing-strategy",
+    agent: "growth-strategist",
+    confidence: 0.95,
+  },
+  {
+    keywords: ["bug", "debug", "triage", "issue", "bug-tester", "tester"],
+    skill: "code-review",
+    agent: "bug-triage-specialist",
+    confidence: 0.9,
+  },
+  {
+    keywords: ["test", "testing", "unit test", "e2e", "tester"],
+    skill: "testing-strategy",
+    agent: "testing-lead",
+    confidence: 0.9,
+  },
+  {
+    keywords: ["docs", "documentation", "document", "write docs"],
+    skill: "documentation-generation",
+    agent: "tech-writer",
+    confidence: 0.9,
+  },
+  // ===== END ALIASES =====
+
   // ===== HIGHEST PRIORITY: Language-specific (most specific first) =====
   {
     keywords: [
