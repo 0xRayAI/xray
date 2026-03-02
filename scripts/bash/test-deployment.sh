@@ -264,7 +264,7 @@ PACK_FILE=$(ls *.tgz | head -1)
 cd test-agents
 npm install "../$PACK_FILE" > /dev/null 2>&1
 
-AGENTS=("orchestrator" "enforcer" "architect" "test-architect" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer")
+AGENTS=("orchestrator" "enforcer" "architect" "testing-lead" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "researcher" "strategist")
 MISSING_AGENTS=()
 
 # Check agents in the main project opencode.json at root (.opencode/OpenCode.json deprecated)

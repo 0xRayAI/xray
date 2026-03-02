@@ -23,8 +23,8 @@ const pathPrefix = isConsumerEnvironment ? "" : "";
 
 const MCP_SERVERS = [
   {
-    name: "librarian",
-    path: `${pathPrefix}dist/mcps/knowledge-skills/project-analysis.server.js`,
+    name: "researcher",
+    path: `${pathPrefix}dist/mcps/researcher.server.js`,
   },
   {
     name: "orchestrator",

@@ -10,7 +10,7 @@ echo "1️⃣ Testing Agent Configurations..."
 echo ""
 
 # Check all agents with complete configurations
-AGENTS=("enforcer" "architect" "test-architect" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "librarian" "code-analyzer" "oracle" "multimodal-looker" "frontend-ui-ux-engineer" "document-writer")
+AGENTS=("enforcer" "architect" "testing-lead" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "researcher" "code-analyzer" "strategist" "multimodal-looker" "frontend-ui-ux-engineer" "tech-writer")
 MISSING_AGENTS=()
 INVALID_AGENTS=()
 

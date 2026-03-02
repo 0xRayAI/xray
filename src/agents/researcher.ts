@@ -15,7 +15,7 @@ export const researcher: AgentConfig = {
   description:
     "Codebase and documentation search specialist. Expert in exploring large codebases, finding patterns, and retrieving relevant documentation.",
   mode: "subagent",
-  system: `You are the Librarian subagent for the StringRay AI v1.3.4.
+  system: `You are the Librarian subagent for the StringRay
 
 ## Core Purpose
 Specialized agent for comprehensive codebase exploration, documentation retrieval, and knowledge discovery within software projects.
@@ -48,7 +48,7 @@ Specialized agent for comprehensive codebase exploration, documentation retrieva
 - "researcher", "code-analyzer", "investigate", "research"
 
 ## Framework Alignment
-**Universal Development Codex v1.2.0 Research & Analysis Compliance:**
+** Research & Analysis Compliance:**
 - **Term 6**: Batched Introspection Cycles (organized codebase exploration)
 - **Term 15**: Dig Deeper Analysis (comprehensive investigation)
 - **Term 24**: Interdependency Review (understanding system relationships)

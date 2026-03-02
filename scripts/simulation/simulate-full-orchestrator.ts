@@ -77,7 +77,7 @@ async function simulateCompleteOrchestratorPipeline() {
       id: "research-auth-patterns",
       description:
         "Research industry best practices for authentication systems and modern security patterns",
-      subagentType: "librarian",
+      subagentType: "researcher",
       priority: "medium" as const,
     },
     {
@@ -110,11 +110,11 @@ async function simulateCompleteOrchestratorPipeline() {
   console.log("\n📊 Execution Plan Generated:");
   console.log("   1. design-auth-architecture (architect) - START IMMEDIATELY");
   console.log(
-    "   2. research-auth-patterns (librarian) - START IMMEDIATELY (parallel)",
+    "   2. research-auth-patterns (researcher) - START IMMEDIATELY (parallel)",
   );
   console.log("   3. validate-security-design (enforcer) - WAIT for #1");
   console.log(
-    "   4. implement-auth-components (test-architect) - WAIT for #1, #3",
+    "   4. implement-auth-components (testing-lead) - WAIT for #1, #3",
   );
 
   // Phase 4: Enhanced orchestrator spawns agents
@@ -159,8 +159,8 @@ async function simulateCompleteOrchestratorPipeline() {
   console.log("🎭 Agent Delegator routing to appropriate agents:");
   console.log("   → architect → OpenCode architect agent");
   console.log("   → enforcer → StrRay enforcer with codex validation");
-  console.log("   → librarian → OpenCode librarian agent");
-  console.log("   → test-architect → OpenCode test-architect agent");
+  console.log("   → researcher → OpenCode researcher agent");
+  console.log("   → testing-lead → OpenCode testing-lead agent");
 
   console.log("\n🔍 Enforcer Agent Special Processing:");
   console.log("   → Loading Universal Development Codex v1.1.1 (50 terms)");

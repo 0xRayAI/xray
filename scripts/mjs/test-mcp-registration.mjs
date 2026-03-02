@@ -141,7 +141,7 @@ function testAgentsHaveMCPConfig() {
     'refactorer': 'refactoring-strategies',
     'testing-lead': 'testing-strategy',
     'strategist': 'strategist',
-    'librarian': 'project-analysis',
+    'researcher': 'researcher',
     'explore': 'code-analyzer',
     'tech-writer': 'documentation-generation',
     'frontend-ui-ux-engineer': 'ui-ux-design',
@@ -193,7 +193,7 @@ function testRegisteredMCPServersExist() {
     'refactorer': 'refactoring-strategies',
     'testing-lead': 'testing-strategy',
     'strategist': 'strategist',
-    'librarian': 'project-analysis',
+    'researcher': 'researcher',
     'explore': 'code-analyzer',
     'tech-writer': 'documentation-generation',
     'frontend-ui-ux-engineer': 'ui-ux-design',
@@ -216,6 +216,12 @@ function testRegisteredMCPServersExist() {
     // Legacy aliases for renamed agents
     'document-writer': 'tech-writer',
     'documentwriter': 'tech-writer',
+    'librarian': 'researcher', // renamed to researcher
+    'test-architect': 'testing-lead', // renamed to testing-lead
+    'oracle': 'strategist', // renamed to strategist
+    'seo-specialist': 'seo-consultant', // renamed
+    'seo-copywriter': 'content-creator', // renamed
+    'marketing-expert': 'growth-strategist', // renamed
     // ========== END ADDED ALIASES ==========
   };
   

@@ -27,7 +27,7 @@ async function testScenario1_NormalChain() {
       id: "task-1",
       type: "analysis",
       description: "Analyze codebase",
-      subagentType: "librarian",
+      subagentType: "researcher",
       dependencies: [],
     },
     {
@@ -71,7 +71,7 @@ async function testScenario2_MissingDependency() {
       id: "task-1",
       type: "analysis",
       description: "Analyze codebase",
-      subagentType: "librarian",
+      subagentType: "researcher",
       dependencies: [],
     },
     // task-2 is NOT included in the batch!
@@ -126,7 +126,7 @@ async function testScenario3_MultipleOrchestrators() {
         id: `orch-${i}-task-1`,
         type: "analysis",
         description: `Analysis ${i}`,
-        subagentType: "librarian",
+        subagentType: "researcher",
         dependencies: [],
       },
       {
@@ -194,7 +194,7 @@ async function testScenario4_TaskFailureCascade() {
       id: "task-1",
       type: "analysis",
       description: "Analyze codebase",
-      subagentType: "librarian",
+      subagentType: "researcher",
       dependencies: [],
     },
     {
@@ -256,7 +256,7 @@ async function testScenario5_RaceCondition() {
           id: `race-task-${i}-1`,
           type: "analysis",
           description: `Race test ${i}`,
-          subagentType: "librarian",
+          subagentType: "researcher",
           dependencies: [],
         },
         {

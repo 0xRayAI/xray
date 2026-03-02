@@ -180,7 +180,7 @@ class AnalyzerAgent {
       "code-reviewer",
       "security-auditor",
       "refactorer",
-      "test-architect",
+      "testing-lead",
     ];
 
     for (const log of logs) {

@@ -36,15 +36,15 @@ async function demonstrateClickableAgentMonitoring() {
     `⏳ Enforcer agent queued: ${enforcerAgent.id} (waiting for dependencies)\n`,
   );
 
-  // Spawn librarian agent (independent)
-  const librarianAgent = await enhancedMultiAgentOrchestrator.spawnAgent({
-    agentType: "librarian",
+  // Spawn researcher agent (independent)
+  const researcherAgent = await enhancedMultiAgentOrchestrator.spawnAgent({
+    agentType: "researcher",
     task: "Research authentication best practices and patterns",
     priority: "medium",
   });
 
   console.log(
-    `✅ Librarian agent spawned: ${librarianAgent.id} (clickable: ${librarianAgent.clickable})\n`,
+    `✅ Researcher agent spawned: ${researcherAgent.id} (clickable: ${researcherAgent.clickable})\n`,
   );
 
   // Demonstrate monitoring interface

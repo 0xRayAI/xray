@@ -82,11 +82,11 @@ function configureStrRayPlugin() {
 
   // Agent configs - don't specify model, use opencode default
   const strrayAgents = [
-    "orchestrator", "enforcer", "architect", "test-architect",
+    "orchestrator", "enforcer", "architect", "testing-lead",
     "bug-triage-specialist", "code-reviewer", "security-auditor",
-    "refactorer", "librarian", "log-monitor", "oracle",
-    "document-writer", "code-analyzer", "frontend-ui-ux-engineer",
-    "seo-specialist", "seo-copywriter", "marketing-expert",
+    "refactorer", "researcher", "log-monitor", "strategist",
+    "tech-writer", "code-analyzer", "frontend-ui-ux-engineer",
+    "seo-consultant", "content-creator", "growth-strategist",
     "general", "multimodal-looker"
   ];
 

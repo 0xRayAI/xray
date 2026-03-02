@@ -263,7 +263,7 @@ class PostinstallConfigValidator {
 
         // Check for required StringRay servers
         const requiredServers = [
-          "librarian",
+          "researcher",
           "session-management",
           "orchestrator",
           "enforcer",

@@ -72,7 +72,7 @@ async function simulateAgentOperations() {
         { agent: 'code-reviewer', operation: 'quality-check', duration: 250 },
         { agent: 'security-auditor', operation: 'vulnerability-scan', duration: 350 },
         { agent: 'refactorer', operation: 'code-optimization', duration: 500 },
-        { agent: 'test-architect', operation: 'test-strategy', duration: 180 },
+        { agent: 'testing-lead', operation: 'test-strategy', duration: 180 },
     ];
 
     console.log('🔄 Simulating agent operations...\n');
@@ -96,7 +96,7 @@ async function simulateAgentOperations() {
     console.log('\n📊 Generating performance metrics...\n');
 
     // Get metrics for each agent
-    const agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'test-architect'];
+    const agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'testing-lead'];
 
     agents.forEach(agent => {
         const metrics = advancedProfiler.getMetrics(agent);

@@ -120,7 +120,7 @@ async function testFrameworkServers() {
     'framework-help',
     'model-health-check',
     'state-manager',
-    'librarian',
+    'researcher',
     'lint',
     'auto-format',
     'security-scan'

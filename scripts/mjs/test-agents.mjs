@@ -63,7 +63,7 @@ function testCoreAgents() {
     'orchestrator',
     'enforcer',
     'architect',
-    'librarian',
+    'researcher',
     'explorer',
     'refactorer',
     'strategist'

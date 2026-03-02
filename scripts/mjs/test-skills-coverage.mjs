@@ -184,7 +184,7 @@ function testNativeSkills() {
     'enforcer',
     'framework-compliance-audit',
     'model-health-check',
-    'librarian'
+    'researcher'
   ];
   
   for (const skill of skills) {

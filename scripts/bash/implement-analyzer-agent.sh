@@ -194,7 +194,7 @@ class AnalyzerAgent {
         };
 
         const agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist',
-                       'code-reviewer', 'security-auditor', 'refactorer', 'test-architect'];
+                       'code-reviewer', 'security-auditor', 'refactorer', 'testing-lead'];
 
         for (const log of logs) {
             for (const line of log.lines) {

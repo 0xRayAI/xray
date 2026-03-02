@@ -20,7 +20,7 @@ const servers = mcpConfig.mcpServers || {};
 
 // Server descriptions and categories
 const serverInfo = {
-  'librarian': {
+  'researcher': {
     description: 'Multi-repo analysis, documentation lookup, and implementation examples',
     category: 'research',
     tools: ['Search repositories', 'Find implementations', 'Analyze documentation']
