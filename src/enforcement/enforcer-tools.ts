@@ -108,6 +108,50 @@ function buildTaskDescription(
   return parts.join(" ");
 }
 
+/**
+ * Run pre-commit validation with auto-fix enabled
+ * This is the integration point that automatically creates test files when needed
+ */
+async function runPreCommitValidationWithAutoFix(
+  files: string[],
+  operation: string = "commit"
+): Promise<{ success: boolean; fixesApplied: number; error?: string }> {
+  try {
+    // Dynamically import to avoid circular dependencies
+    const { testAutoCreationProcessor } = await import(
+      "../processors/test-auto-creation-processor.js"
+    );
+
+    let fixesApplied = 0;
+
+    // Process each file
+    for (const filePath of files) {
+      // Only process TypeScript source files
+      if (filePath.endsWith(".ts") && !filePath.endsWith(".test.ts")) {
+        const result = await testAutoCreationProcessor.execute({
+          tool: "write",
+          args: { filePath },
+          directory: process.cwd(),
+          filePath,
+          operation,
+        });
+
+        if (result.success) {
+          fixesApplied++;
+        }
+      }
+    }
+
+    return { success: true, fixesApplied };
+  } catch (error) {
+    return {
+      success: false,
+      fixesApplied: 0,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export interface EnforcementResult {
   operation: string;
   passed: boolean;
@@ -166,6 +210,27 @@ export async function ruleValidation(
   // Generate fixes for common issues
   if (!report.passed) {
     result.fixes = generateFixes(report, context);
+  }
+
+  // AUTO-FIX: Run pre-commit validation with auto-fix for missing tests
+  // This integrates the auto-fix path into the standard validation flow
+  if (!report.passed && context.files && context.files.length > 0) {
+    const autoFixResult = await runPreCommitValidationWithAutoFix(
+      context.files,
+      operation
+    );
+    if (autoFixResult.success && autoFixResult.fixesApplied > 0) {
+      await frameworkLogger.log(
+        "enforcer-tools",
+        "auto-fix-applied",
+        "info",
+        {
+          jobId,
+          fixesApplied: autoFixResult.fixesApplied,
+          files: context.files,
+        }
+      );
+    }
   }
 
   // INTEGRATION POINT: Check for reporting rules and trigger report generation

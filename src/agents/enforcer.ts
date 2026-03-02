@@ -44,6 +44,8 @@ Stop after giving your answer. Do not loop.`,
       "framework-compliance-audit",
       "pre-commit-introspection",
       "interactive-validator",
+      // Pre-commit validation with auto-fix
+      "run-pre-commit-validation",
       // Skill invocation tools
       "invoke-skill",
       "skill-code-review",
