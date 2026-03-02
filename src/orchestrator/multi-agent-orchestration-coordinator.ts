@@ -601,12 +601,13 @@ export class MultiAgentOrchestrationCoordinator {
       "security-auditor",
       "refactorer",
       "testing-lead",
-      "researcher",
-      "strategist",
-      "seo-consultant",
-      "content-creator",
-      "growth-strategist",
-      "tech-writer",
+      "researcher", // formerly librarian
+      "librarian",  // alias for researcher (legacy)
+      "strategist", // formerly oracle
+      "seo-consultant", // formerly seo-specialist
+      "content-creator", // formerly seo-copywriter
+      "growth-strategist", // formerly marketing-expert
+      "tech-writer", // formerly documentation-writer
       "log-monitor",
       "multimodal-looker",
       "analyzer",
@@ -618,6 +619,25 @@ export class MultiAgentOrchestrationCoordinator {
       "performance-engineer",
       "mobile-developer",
     ];
+
+    // Legacy agent name aliases (map old names to new)
+    const agentAliasMap: Record<string, string> = {
+      librarian: "researcher",
+      oracle: "strategist",
+      "seo-specialist": "seo-consultant",
+      "seo-copywriter": "content-creator",
+      "marketing-expert": "growth-strategist",
+      "documentation-writer": "tech-writer",
+      "test-architect": "testing-lead",
+    };
+
+    // Resolve aliases before validation
+    workflow.tasks.forEach((task) => {
+      const agentType = task.subagentType || "default-agent";
+      if (agentAliasMap[agentType]) {
+        task.subagentType = agentAliasMap[agentType];
+      }
+    });
 
     workflow.tasks.forEach((task) => {
       const agentType = task.subagentType || "default-agent";
