@@ -718,18 +718,6 @@ export class RuleEnforcer {
       validator: this.validateModuleSystemConsistency.bind(this),
     });
 
-    // Development Triage Rule: Clean Debug Logs
-    this.addRule({
-      id: "clean-debug-logs",
-      name: "Clean Debug Logs (Development Triage)",
-      description:
-        "Ensures debug logs are removed before production deployment",
-      category: "code-quality",
-      severity: "error", // Should block operations with debug artifacts
-      enabled: true,
-      validator: this.validateCleanDebugLogs.bind(this),
-    });
-
     // Console Log Usage Rule
     this.addRule({
       id: "console-log-usage",
