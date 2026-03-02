@@ -146,7 +146,7 @@ export class AgentDelegator {
         specialties: ["logs", "monitoring", "alerts"],
       },
       {
-        name: "librarian",
+        name: "researcher",
         capabilities: [
           "code-search",
           "documentation-lookup",

@@ -17,10 +17,10 @@ describe("Orchestrator Concurrent Execution", () => {
   it.skip("should execute tasks concurrently up to maxConcurrentTasks limit", async () => {
     const tasks: TaskDefinition[] = [
       { id: "task-1", description: "Task 1", subagentType: "architect" },
-      { id: "task-2", description: "Task 2", subagentType: "librarian" },
+      { id: "task-2", description: "Task 2", subagentType: "researcher" },
       { id: "task-3", description: "Task 3", subagentType: "enforcer" },
       { id: "task-4", description: "Task 4", subagentType: "architect" },
-      { id: "task-5", description: "Task 5", subagentType: "librarian" },
+      { id: "task-5", description: "Task 5", subagentType: "researcher" },
     ];
 
     const startTime = Date.now();
@@ -47,7 +47,7 @@ describe("Orchestrator Concurrent Execution", () => {
 
     const tasks: TaskDefinition[] = [
       { id: "seq-1", description: "Sequential 1", subagentType: "architect" },
-      { id: "seq-2", description: "Sequential 2", subagentType: "librarian" },
+      { id: "seq-2", description: "Sequential 2", subagentType: "researcher" },
       { id: "seq-3", description: "Sequential 3", subagentType: "enforcer" },
     ];
 

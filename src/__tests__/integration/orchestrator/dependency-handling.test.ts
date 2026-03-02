@@ -20,7 +20,7 @@ describe("Orchestrator Dependency Handling", () => {
       {
         id: "task-2",
         description: "Process",
-        subagentType: "librarian",
+        subagentType: "researcher",
         dependencies: ["task-1"],
       },
       {
@@ -60,7 +60,7 @@ describe("Orchestrator Dependency Handling", () => {
       {
         id: "task-b",
         description: "Task B",
-        subagentType: "librarian",
+        subagentType: "researcher",
         dependencies: ["task-a"],
       },
       {

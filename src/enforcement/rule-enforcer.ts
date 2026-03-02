@@ -1029,7 +1029,7 @@ export class RuleEnforcer {
       },
       "import-consistency": { agent: "refactorer", skill: "code-review" },
       "documentation-required": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
       "clean-debug-logs": { agent: "refactorer", skill: "code-review" },
@@ -1057,7 +1057,7 @@ export class RuleEnforcer {
         skill: "code-review",
       },
       "batched-introspection-cycles": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
       "use-shared-global-state": {
@@ -1132,11 +1132,11 @@ export class RuleEnforcer {
         skill: "project-analysis",
       },
       "documentation-updates": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
       "version-control-best-practices": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
       "continuous-integration": {
@@ -1166,7 +1166,7 @@ export class RuleEnforcer {
 
       // Additional codex terms 44-59
       "system-integrity-cross-check": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
       "integration-testing-mandate": {
@@ -1194,11 +1194,11 @@ export class RuleEnforcer {
         skill: "testing-strategy",
       },
       "npm-package-publishing-compliance": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
       "version-bumping-restrictions": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "git-workflow",
       },
       "framework-command-orchestration": {
@@ -1206,7 +1206,7 @@ export class RuleEnforcer {
         skill: "project-analysis",
       },
       "universal-librarian-consultation": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
     };

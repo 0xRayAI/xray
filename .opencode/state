@@ -1,33 +1,9 @@
 {
-  "postprocessor:postprocessor-76adc0221b61966b3e0f85406ab93e6a8e718dbe-1772452524911": {
-    "success": true,
-    "commitSha": "76adc0221b61966b3e0f85406ab93e6a8e718dbe",
-    "sessionId": "postprocessor-76adc0221b61966b3e0f85406ab93e6a8e718dbe-1772452524911",
-    "attempts": 1,
-    "monitoringResults": [
-      {
-        "commitSha": "76adc0221b61966b3e0f85406ab93e6a8e718dbe",
-        "overallStatus": "success",
-        "timestamp": "2026-03-02T11:55:27.162Z",
-        "ciStatus": {
-          "status": "success",
-          "failedJobs": []
-        },
-        "performanceStatus": {
-          "status": "passed",
-          "score": 1,
-          "regressions": []
-        },
-        "securityStatus": {
-          "status": "passed",
-          "vulnerabilities": 0,
-          "criticalVulnerabilities": 0
-        },
-        "failedJobs": [],
-        "duration": 1669
-      }
-    ],
-    "endTime": 1772452527398,
-    "duration": 2487
+  "memory:baseline": {
+    "heapUsed": 11.76,
+    "heapTotal": 19.05,
+    "external": 2.6,
+    "rss": 56.8,
+    "timestamp": 1772455176541
   }
 }

@@ -294,7 +294,7 @@ export class PostProcessor {
         // Call librarian agent to analyze system components
         const fixed = await this.callAgentForArchitecturalFix(
           "checkSystemIntegrity",
-          "librarian",
+          "researcher",
           "project-analysis",
           context,
           integrityCheck.message,
@@ -344,7 +344,7 @@ export class PostProcessor {
         // Call librarian + refactorer for path analysis and fixes
         const fixed = await this.callAgentForArchitecturalFix(
           "checkPathResolution",
-          "librarian",
+          "researcher",
           "project-analysis",
           context,
           pathCheck.message,

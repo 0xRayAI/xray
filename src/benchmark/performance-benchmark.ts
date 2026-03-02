@@ -319,7 +319,7 @@ export class StringRayPerformanceBenchmark {
         {
           id: "task_c",
           description: "Task C",
-          subagentType: "librarian",
+          subagentType: "researcher",
           dependencies: ["task_b"],
         },
       ];

@@ -8,7 +8,7 @@ import { securityAuditor } from "./security-auditor.js";
 import { refactorer } from "./refactorer.js";
 import { testingLead } from "./testing-lead.js";
 import { logMonitorAgent } from "./log-monitor.js";
-import { librarian } from "./librarian.js";
+import { researcher } from "./researcher.js";
 import { multimodalLooker } from "./multimodal-looker.js";
 import { analyzer } from "./analyzer.js";
 import { seoSpecialist } from "./seo-consultant.js";
@@ -34,7 +34,7 @@ export const builtinAgents: Record<string, AgentConfig> = {
   refactorer,
   "testing-lead": testingLead,
   "log-monitor": logMonitorAgent,
-  librarian,
+  researcher,
   "multimodal-looker": multimodalLooker,
   analyzer: analyzer,
   "seo-consultant": seoSpecialist,
@@ -61,7 +61,7 @@ export {
   refactorer,
   testingLead,
   logMonitorAgent,
-  librarian,
+  researcher,
   multimodalLooker,
   analyzer,
   seoSpecialist,

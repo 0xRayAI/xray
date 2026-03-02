@@ -87,7 +87,7 @@ describe("TaskSkillRouter", () => {
 
     it("should route documentation tasks correctly", () => {
       const result = router.routeTask("update README file");
-      expect(result.agent).toBe("librarian");
+      expect(result.agent).toBe("researcher");
     });
 
     it("should route database tasks correctly", () => {
@@ -102,7 +102,7 @@ describe("TaskSkillRouter", () => {
 
     it("should route git tasks correctly", () => {
       const result = router.routeTask("resolve merge conflict");
-      expect(result.agent).toBe("librarian");
+      expect(result.agent).toBe("researcher");
     });
 
     it("should fallback to enforcer for unknown tasks", () => {

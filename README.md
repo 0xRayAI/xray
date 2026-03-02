@@ -44,7 +44,7 @@ npx strray-ai status
 | `@refactorer` | Technical debt elimination |
 | `@test-architect` | Testing strategy & coverage |
 | `@bug-triage-specialist` | Error investigation |
-| `@librarian` | Codebase exploration |
+| `@researcher` | Codebase exploration |
 | `@mobile-developer` | iOS/Android/React Native/Flutter |
 
 > **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](docs/AGENT_CONFIG.md).

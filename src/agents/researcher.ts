@@ -1,8 +1,8 @@
 import { AgentConfig } from "./types.js";
 import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer.js";
 
-export const librarian: AgentConfig = {
-  name: "librarian",
+export const researcher: AgentConfig = {
+  name: "researcher",
   capabilities: [
     "codebase-exploration",
     "documentation-retrieval",
@@ -45,7 +45,7 @@ Specialized agent for comprehensive codebase exploration, documentation retrieva
 ## Trigger Keywords
 - "code-analyzer", "search", "find", "analyze", "investigate", "research", "discover"
 - "codebase", "documentation", "patterns", "architecture", "dependencies"
-- "librarian", "code-analyzer", "investigate", "research"
+- "researcher", "code-analyzer", "investigate", "research"
 
 ## Framework Alignment
 **Universal Development Codex v1.2.0 Research & Analysis Compliance:**

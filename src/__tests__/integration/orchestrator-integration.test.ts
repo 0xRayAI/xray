@@ -103,7 +103,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
       priority: "high",
       createdAt: new Date(),
       status: "pending",
-      subagentType: "librarian",
+      subagentType: "researcher",
       dependencies: ["task-1"],
     },
     {
@@ -425,7 +425,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         const task: TaskDefinition = {
           id: "fallback-test",
           description: "Test fallback delegation",
-          subagentType: "librarian",
+          subagentType: "researcher",
         };
 
         // The orchestrator should complete the task using its built-in fallback mechanisms
@@ -896,7 +896,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
           (_, i) => ({
             id: `large-task-${i}`,
             description: `Large scale task ${i} with substantial processing requirements`,
-            subagentType: "librarian",
+            subagentType: "researcher",
             priority: "medium",
           }),
         );
@@ -1016,7 +1016,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         {
           id: "b",
           description: "Task B",
-          subagentType: "librarian",
+          subagentType: "researcher",
           dependencies: ["a"],
         },
       ];
@@ -1189,7 +1189,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
       const maxTasks: TaskDefinition[] = Array.from({ length: 10 }, (_, i) => ({
         id: `max-task-${i}`,
         description: `Maximum load task ${i}`,
-        subagentType: "librarian",
+        subagentType: "researcher",
       }));
 
       const results = await orchestrator.executeComplexTask(
@@ -1440,7 +1440,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         {
           id: "worker-processing",
           description: "Process work assigned by coordinator",
-          subagentType: "librarian",
+          subagentType: "researcher",
           priority: "medium",
         },
       ];
@@ -1535,7 +1535,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
       // Test all subagent types
       const subagentTypes = [
         "architect",
-        "librarian",
+        "researcher",
         "enforcer",
         "bug-triage-specialist",
         "code-reviewer",
@@ -1581,7 +1581,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
             {
               id: "b",
               description: "B",
-              subagentType: "librarian",
+              subagentType: "researcher",
               dependencies: ["a"],
             },
           ],

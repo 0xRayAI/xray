@@ -38,9 +38,9 @@ describe("Agent Spawn Governor", () => {
   });
 
   describe("Basic Spawn Authorization", () => {
-    it("should authorize spawn for basic librarian agent", async () => {
+    it("should authorize spawn for basic researcher agent", async () => {
       const context = {
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "analysis",
         sessionId: "test-session",
       };
@@ -53,9 +53,9 @@ describe("Agent Spawn Governor", () => {
     });
 
     it("should deny spawn when agent type limit exceeded", async () => {
-      // Fill up librarian slots (limit is 1)
+      // Fill up researcher slots (limit is 1)
       const context1 = {
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "analysis",
         sessionId: "test-session",
       };
@@ -63,9 +63,9 @@ describe("Agent Spawn Governor", () => {
       const result1 = await governor.authorizeSpawn(context1);
       expect(result1.authorized).toBe(true);
 
-      // Try to spawn another librarian
+      // Try to spawn another researcher
       const context2 = {
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "analysis",
         sessionId: "test-session",
       };
@@ -79,13 +79,13 @@ describe("Agent Spawn Governor", () => {
       // Mock limits to test total concurrent limit
       const testGovernor = new AgentSpawnGovernor({
         totalConcurrent: 2,
-        perAgentType: { librarian: 10, orchestrator: 10 },
+        perAgentType: { researcher: 10, orchestrator: 10 },
       });
 
       // Fill up all slots
       for (let i = 0; i < 2; i++) {
         const result = await testGovernor.authorizeSpawn({
-          agentType: "librarian",
+          agentType: "researcher",
           operation: `test-${i}`,
         });
         expect(result.authorized).toBe(true);
@@ -93,7 +93,7 @@ describe("Agent Spawn Governor", () => {
 
       // Try one more
       const result = await testGovernor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "test-overflow",
       });
 
@@ -105,7 +105,7 @@ describe("Agent Spawn Governor", () => {
   describe("Spawn Rate Limiting", () => {
     it("should deny spawn when rate limit exceeded", async () => {
       const testGovernor = new AgentSpawnGovernor({
-        perAgentType: { librarian: 10 }, // Allow multiple librarians to test rate limit
+        perAgentType: { researcher: 10 }, // Allow multiple researchers to test rate limit
         spawnRateLimit: {
           maxPerMinute: 2,
           windowMs: 60000,
@@ -113,12 +113,12 @@ describe("Agent Spawn Governor", () => {
       });
 
       // Use up the rate limit
-      await testGovernor.authorizeSpawn({ agentType: "librarian" });
-      await testGovernor.authorizeSpawn({ agentType: "librarian" });
+      await testGovernor.authorizeSpawn({ agentType: "researcher" });
+      await testGovernor.authorizeSpawn({ agentType: "researcher" });
 
       // This should be denied
       const result = await testGovernor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
       });
       expect(result.authorized).toBe(false);
       expect(result.reason).toContain("Spawn rate limit exceeded");
@@ -126,7 +126,7 @@ describe("Agent Spawn Governor", () => {
 
     it("should allow spawns after rate limit window", async () => {
       const testGovernor = new AgentSpawnGovernor({
-        perAgentType: { librarian: 10 }, // Allow multiple librarians to test rate limit
+        perAgentType: { researcher: 10 }, // Allow multiple researchers to test rate limit
         spawnRateLimit: {
           maxPerMinute: 1,
           windowMs: 1000, // 1 second for testing
@@ -134,11 +134,11 @@ describe("Agent Spawn Governor", () => {
       });
 
       // Use up rate limit
-      await testGovernor.authorizeSpawn({ agentType: "librarian" });
+      await testGovernor.authorizeSpawn({ agentType: "researcher" });
 
       // Should be denied immediately
       const deniedResult = await testGovernor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
       });
       expect(deniedResult.authorized).toBe(false);
 
@@ -147,7 +147,7 @@ describe("Agent Spawn Governor", () => {
 
       // Should be allowed again
       const allowedResult = await testGovernor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
       });
       expect(allowedResult.authorized).toBe(true);
     });
@@ -156,7 +156,7 @@ describe("Agent Spawn Governor", () => {
   describe("Infinite Spawn Detection", () => {
     it("should detect rapid repeated spawns of same type", async () => {
       const testGovernor = new AgentSpawnGovernor({
-        perAgentType: { librarian: 10 }, // Allow multiple to test infinite detection
+        perAgentType: { researcher: 10 }, // Allow multiple to test infinite detection
       });
 
       // Simulate rapid spawns (more than 5 in 5 minutes)
@@ -165,7 +165,7 @@ describe("Agent Spawn Governor", () => {
         vi.setSystemTime(mockDate);
 
         const result = await testGovernor.authorizeSpawn({
-          agentType: "librarian",
+          agentType: "researcher",
           operation: `rapid-test-${i}`,
         });
 
@@ -179,7 +179,7 @@ describe("Agent Spawn Governor", () => {
       vi.setSystemTime(new Date(2026, 0, 24, 0, 6));
 
       const result = await testGovernor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "infinite-test",
       });
 
@@ -189,8 +189,8 @@ describe("Agent Spawn Governor", () => {
 
     it("should detect recursive spawning (agent spawning itself)", async () => {
       const result = await governor.authorizeSpawn({
-        agentType: "librarian",
-        parentAgent: "librarian", // Recursive!
+        agentType: "researcher",
+        parentAgent: "researcher", // Recursive!
         operation: "recursive-test",
       });
 
@@ -198,15 +198,15 @@ describe("Agent Spawn Governor", () => {
       expect(result.reason).toContain("Infinite spawn pattern detected");
     });
 
-    it("should detect cascading librarian spawns", async () => {
+    it("should detect cascading researcher spawns", async () => {
       const testGovernor = new AgentSpawnGovernor({
-        perAgentType: { librarian: 10 }, // Allow multiple to test cascading detection
+        perAgentType: { researcher: 10 }, // Allow multiple to test cascading detection
       });
 
-      // Fill up normal librarian slots
+      // Fill up normal researcher slots
       for (let i = 0; i < 3; i++) {
         const result = await testGovernor.authorizeSpawn({
-          agentType: "librarian",
+          agentType: "researcher",
           operation: `cascade-test-${i}`,
         });
         // Complete to avoid limit issues
@@ -215,7 +215,7 @@ describe("Agent Spawn Governor", () => {
 
       // This should trigger cascading detection
       const result = await testGovernor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "cascade-overflow",
       });
 
@@ -226,7 +226,7 @@ describe("Agent Spawn Governor", () => {
   describe("Spawn Lifecycle Management", () => {
     it("should track spawn completion", async () => {
       const context = {
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "lifecycle-test",
       };
 
@@ -240,14 +240,14 @@ describe("Agent Spawn Governor", () => {
 
       // Check that it's marked as completed
       const stats = governor.getSpawnStats();
-      expect(stats.perAgentType.librarian?.total).toBe(1);
+      expect(stats.perAgentType.researcher?.total).toBe(1);
 
       // Logger is mocked and called during completion
     });
 
     it("should handle spawn failures", async () => {
       const context = {
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "failure-test",
       };
 
@@ -262,7 +262,7 @@ describe("Agent Spawn Governor", () => {
 
     it("should allow spawn termination", async () => {
       const context = {
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "termination-test",
       };
 
@@ -278,21 +278,21 @@ describe("Agent Spawn Governor", () => {
 
   describe("Statistics and Monitoring", () => {
     it("should provide accurate spawn statistics", async () => {
-      await governor.authorizeSpawn({ agentType: "librarian" });
+      await governor.authorizeSpawn({ agentType: "researcher" });
       await governor.authorizeSpawn({ agentType: "orchestrator" });
       await governor.authorizeSpawn({ agentType: "enforcer" });
 
       const stats = governor.getSpawnStats();
 
       expect(stats.totalActive).toBe(3);
-      expect(stats.perAgentType.librarian?.active).toBe(1);
+      expect(stats.perAgentType.researcher?.active).toBe(1);
       expect(stats.perAgentType.orchestrator?.active).toBe(1);
       expect(stats.perAgentType.enforcer?.active).toBe(1);
     });
 
     it("should track spawn history correctly", async () => {
       // Create and complete some spawns
-      const result1 = await governor.authorizeSpawn({ agentType: "librarian" });
+      const result1 = await governor.authorizeSpawn({ agentType: "researcher" });
       const result2 = await governor.authorizeSpawn({
         agentType: "orchestrator",
       });
@@ -311,7 +311,7 @@ describe("Agent Spawn Governor", () => {
   describe("Emergency Controls", () => {
     it("should support emergency shutdown", async () => {
       // Create some active spawns
-      await governor.authorizeSpawn({ agentType: "librarian" });
+      await governor.authorizeSpawn({ agentType: "researcher" });
       await governor.authorizeSpawn({ agentType: "orchestrator" });
 
       expect(governor.getSpawnStats().totalActive).toBe(2);
@@ -325,12 +325,12 @@ describe("Agent Spawn Governor", () => {
 
     it("should maintain separate tracking for different agent types", async () => {
       // Test that different agent types are tracked separately
-      await governor.authorizeSpawn({ agentType: "librarian" });
-      await governor.authorizeSpawn({ agentType: "librarian" }); // Should fail
+      await governor.authorizeSpawn({ agentType: "researcher" });
+      await governor.authorizeSpawn({ agentType: "researcher" }); // Should fail
       await governor.authorizeSpawn({ agentType: "orchestrator" }); // Should succeed
 
       const stats = governor.getSpawnStats();
-      expect(stats.perAgentType.librarian?.active).toBe(1);
+      expect(stats.perAgentType.researcher?.active).toBe(1);
       expect(stats.perAgentType.orchestrator?.active).toBe(1);
     });
   });
@@ -363,11 +363,11 @@ describe("Agent Spawn Governor", () => {
     it("should use default limits when not specified", async () => {
       const defaultGovernor = new AgentSpawnGovernor();
 
-      // Should use default librarian limit (1)
-      await defaultGovernor.authorizeSpawn({ agentType: "librarian" });
+      // Should use default researcher limit (1)
+      await defaultGovernor.authorizeSpawn({ agentType: "researcher" });
 
       const result = await defaultGovernor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
       });
       expect(result.authorized).toBe(false);
       expect(result.reason).toContain("Agent type limit exceeded");
@@ -378,7 +378,7 @@ describe("Agent Spawn Governor", () => {
     it("should work with consultation system metadata", async () => {
       // Test spawn with consultation metadata
       const result = await governor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "consultation-test",
         triggeredBy: "agent-delegator", // This should not trigger recursion detection
       });
@@ -389,9 +389,9 @@ describe("Agent Spawn Governor", () => {
     it("should prevent consultation-triggered infinite loops", async () => {
       // This simulates the bug we fixed - consultation triggering more consultation
       const context = {
-        agentType: "librarian",
+        agentType: "researcher",
         operation: "consultation-recursion",
-        metadata: { triggeredBy: "universal-librarian-consultation" },
+        metadata: { triggeredBy: "universal-researcher-consultation" },
       };
 
       // This should still be allowed since it's not recursive agent spawning
@@ -441,7 +441,7 @@ describe("Agent Spawn Governor", () => {
     it("should maintain state consistency across operations", async () => {
       // Complex sequence: authorize, complete, fail, terminate
       const authResult = await governor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
       });
       const trackingId = authResult.trackingId!;
 
@@ -450,7 +450,7 @@ describe("Agent Spawn Governor", () => {
 
       // Authorize another
       const authResult2 = await governor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
       });
       const trackingId2 = authResult2.trackingId!;
 
@@ -459,7 +459,7 @@ describe("Agent Spawn Governor", () => {
 
       // Authorize third
       const authResult3 = await governor.authorizeSpawn({
-        agentType: "librarian",
+        agentType: "researcher",
       });
       const trackingId3 = authResult3.trackingId!;
 

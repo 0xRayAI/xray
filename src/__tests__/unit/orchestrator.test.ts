@@ -114,7 +114,7 @@ describe("StringRayOrchestrator", () => {
         priority: "medium",
         createdAt: new Date(),
         status: "pending",
-        subagentType: "librarian",
+        subagentType: "researcher",
       },
     ];
 

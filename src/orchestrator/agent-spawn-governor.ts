@@ -64,7 +64,7 @@ export class AgentSpawnGovernor {
 
   private readonly defaultLimits: SpawnLimits = {
     perAgentType: {
-      librarian: 1, // Solo agent - only 1 instance allowed
+      researcher: 1, // Solo agent - only 1 instance allowed
       orchestrator: 3,
       enforcer: 2,
       architect: 2,
@@ -77,7 +77,7 @@ export class AgentSpawnGovernor {
       strategist: 1,
       "multimodal-looker": 1,
       "frontend-ui-ux-engineer": 1,
-      "document-writer": 1,
+      "tech-writer": 1,
     },
     totalConcurrent: 8, // System-wide concurrent limit
     spawnRateLimit: {
@@ -605,9 +605,9 @@ export class AgentSpawnGovernor {
     }
 
     // Check for cascading librarian spawns (specific known issue)
-    if (agentType === "librarian") {
+    if (agentType === "researcher") {
       const librarianSpawns = recentSpawns.filter(
-        (r) => r.agentType === "librarian",
+        (r) => r.agentType === "researcher",
       );
       if (librarianSpawns.length > 2) {
         return true;

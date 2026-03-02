@@ -48,7 +48,7 @@ The plugin automatically configures the following agents:
 - **@security-auditor**: Security vulnerability detection
 - **@refactorer**: Technical debt elimination
 - **@test-architect**: Testing strategy and coverage
-- **@librarian**: Codebase exploration and documentation
+- **@researcher**: Codebase exploration and documentation
 
 ### Advanced Configuration
 

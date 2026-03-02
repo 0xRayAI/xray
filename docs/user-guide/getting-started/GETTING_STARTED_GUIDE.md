@@ -108,13 +108,13 @@ StringRay is an AI-powered development framework that provides:
 @testing-lead analyze test coverage gaps
 ```
 
-### Librarian (@librarian)
+### Librarian (@researcher)
 **Role**: Codebase exploration and documentation
 **Best For**: Code understanding, documentation, knowledge discovery
 ```bash
-@librarian analyze codebase structure and patterns
-@librarian document API endpoints
-@librarian find all database models
+@researcher analyze codebase structure and patterns
+@researcher document API endpoints
+@researcher find all database models
 ```
 
 ## 🛠️ Development Workflow

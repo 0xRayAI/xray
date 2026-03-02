@@ -695,7 +695,7 @@ export class MCPClient {
           ],
         };
 
-      case "librarian":
+      case "researcher":
         return {
           content: [
             {
@@ -1165,7 +1165,7 @@ export class MCPClientManager {
         timeout: 25000,
       },
       librarian: {
-        serverName: "librarian",
+        serverName: "researcher",
         command: "node",
         args: [`${basePath}/mcps/librarian.server.js`],
         timeout: 60000,
@@ -1390,7 +1390,7 @@ export class MCPClientManager {
       "security-audit",
       "performance-optimization",
       "testing-strategy",
-      "librarian",
+      "researcher",
       "skill-invocation",
     ]) {
       try {

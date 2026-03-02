@@ -1281,7 +1281,7 @@ export class ProcessorManager {
         skill: "refactoring-strategies",
       },
       "documentation-required": {
-        agent: "librarian",
+        agent: "researcher",
         skill: "project-analysis",
       },
       "clean-debug-logs": {

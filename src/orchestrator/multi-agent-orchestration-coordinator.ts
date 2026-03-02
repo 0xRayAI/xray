@@ -601,7 +601,7 @@ export class MultiAgentOrchestrationCoordinator {
       "security-auditor",
       "refactorer",
       "testing-lead",
-      "librarian",
+      "researcher",
       "strategist",
       "seo-consultant",
       "content-creator",

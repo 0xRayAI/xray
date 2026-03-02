@@ -1,17 +1,17 @@
 ---
-name: librarian
+name: researcher
 description: Multi-repo analysis, documentation lookup, and implementation examples
 author: StrRay Framework
 version: 1.0.0
-tags: [research, librarian]
+tags: [research, researcher]
 
 mcp:
-  librarian:
+  researcher:
     command: node
-    args: [node_modules/strray-ai/dist/plugin/mcps/dist/mcps/knowledge-skills/project-analysis.server.js]
+    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/project-analysis.server.js]
 ---
 
-# Librarian Skill
+# Researcher Skill
 
 Multi-repo analysis, documentation lookup, and implementation examples.
 

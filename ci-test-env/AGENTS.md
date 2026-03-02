@@ -18,7 +18,7 @@ StringRay provides intelligent multi-agent orchestration with automatic delegati
 | `@refactorer` | Technical debt elimination | `@refactorer optimize code` |
 | `@test-architect` | Testing strategy | `@test-architect plan tests` |
 | `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
-| `@librarian` | Codebase exploration | `@librarian find implementation` |
+| `@researcher` | Codebase exploration | `@researcher find implementation` |
 
 ## Complexity Routing
 

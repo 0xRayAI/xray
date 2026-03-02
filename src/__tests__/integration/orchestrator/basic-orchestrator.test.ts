@@ -41,7 +41,7 @@ describe("Basic Orchestrator Functionality", () => {
   it("should execute multiple independent tasks", async () => {
     const tasks: TaskDefinition[] = [
       { id: "task-1", description: "Task 1", subagentType: "architect" },
-      { id: "task-2", description: "Task 2", subagentType: "librarian" },
+      { id: "task-2", description: "Task 2", subagentType: "researcher" },
       { id: "task-3", description: "Task 3", subagentType: "enforcer" },
     ];
 

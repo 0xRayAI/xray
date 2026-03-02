@@ -1039,7 +1039,7 @@ describe("AgentDelegator", () => {
         "update documentation",
       );
 
-      expect(result.suggestedAgent).toBe("librarian");
+      expect(result.suggestedAgent).toBe("researcher");
       expect(result.suggestedSkill).toBe("documentation-generation");
     });
 
@@ -1124,7 +1124,7 @@ describe("AgentDelegator", () => {
         "resolve merge conflict",
       );
 
-      expect(result.suggestedAgent).toBe("librarian");
+      expect(result.suggestedAgent).toBe("researcher");
       expect(result.suggestedSkill).toBe("git-workflow");
     });
   });

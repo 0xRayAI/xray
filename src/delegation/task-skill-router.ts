@@ -128,7 +128,7 @@ const TASK_KEYWORD_MAPPINGS = [
       "chroma",
     ],
     skill: "rag-engineer",
-    agent: "librarian",
+    agent: "researcher",
     confidence: 0.98,
   },
   {
@@ -139,7 +139,7 @@ const TASK_KEYWORD_MAPPINGS = [
       "chain-of-thought",
     ],
     skill: "prompt-engineering",
-    agent: "librarian",
+    agent: "researcher",
     confidence: 0.98,
   },
   // ===== END Antigravity Skills =====
@@ -296,13 +296,13 @@ const TASK_KEYWORD_MAPPINGS = [
   {
     keywords: ["readme", "changelog", "api documentation", "markdown"],
     skill: "documentation-generation",
-    agent: "librarian",
+    agent: "researcher",
     confidence: 0.9,
   },
   {
     keywords: ["document", "doc", "comment", "guide", "tutorial"],
     skill: "documentation-generation",
-    agent: "librarian",
+    agent: "researcher",
     confidence: 0.8,
   },
   // ===== END Documentation =====
@@ -335,13 +335,13 @@ const TASK_KEYWORD_MAPPINGS = [
   {
     keywords: ["code complexity", "maintainability", "cyclomatic"],
     skill: "project-analysis",
-    agent: "librarian",
+    agent: "researcher",
     confidence: 0.95,
   },
   {
     keywords: ["analyze", "structure", "health", "metrics", "dependencies"],
     skill: "project-analysis",
-    agent: "librarian",
+    agent: "researcher",
     confidence: 0.85,
   },
   // ===== END Project analysis =====
@@ -385,7 +385,7 @@ const TASK_KEYWORD_MAPPINGS = [
       "conflict",
     ],
     skill: "git-workflow",
-    agent: "librarian",
+    agent: "researcher",
     confidence: 0.9,
   },
   // ===== END Git workflow =====

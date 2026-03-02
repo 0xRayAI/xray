@@ -391,7 +391,7 @@ class OrchestrationFlowValidator {
         description: `Performance test task ${i}`,
         subagentType: [
           "architect",
-          "librarian",
+          "researcher",
           "enforcer",
           "testing-lead",
           "security-auditor",
@@ -496,7 +496,7 @@ class OrchestrationFlowValidator {
         {
           id: "monitor-test-2",
           description: "Test cleanup mechanisms",
-          subagentType: "librarian",
+          subagentType: "researcher",
           priority: "medium" as const,
         },
       ];

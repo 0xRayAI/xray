@@ -40,7 +40,7 @@ describe("Agent Registry Integration", () => {
       // Check existing agents are still registered
       expect(builtinAgents["enforcer"]).toBeDefined();
       expect(builtinAgents["architect"]).toBeDefined();
-      expect(builtinAgents["librarian"]).toBeDefined();
+      expect(builtinAgents["researcher"]).toBeDefined();
       expect(builtinAgents["orchestrator"]).toBeDefined();
     });
   });
@@ -213,7 +213,7 @@ describe("Agent Registry Integration", () => {
   describe("Integration Safety", () => {
     it("should not break existing agent functionality", () => {
       // Ensure existing agents still work
-      const existingAgents = ["enforcer", "architect", "librarian"];
+      const existingAgents = ["enforcer", "architect", "researcher"];
 
       existingAgents.forEach((agentName) => {
         expect(builtinAgents[agentName]).toBeDefined();

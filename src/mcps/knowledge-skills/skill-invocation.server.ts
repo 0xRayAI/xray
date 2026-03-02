@@ -440,7 +440,7 @@ class SkillInvocationServer {
 
   private async handleSkillProjectAnalysis(args: any) {
     const result = await mcpClientManager.callServerTool(
-      "librarian",
+      "researcher",
       "analyze-project-health",
       args,
     );
