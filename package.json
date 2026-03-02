@@ -68,7 +68,9 @@
     "enforce:versions": "bash scripts/node/enforce-version-compliance.sh",
     "version:sync": "node scripts/node/universal-version-manager.js",
     "preversion": "npm run version:sync",
-    "safe-publish": "npm run enforce:versions && npm run build && npm publish"
+    "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
+    "safe-publish": "npm run pre-publish-guard && npm run prepare-consumer && npm run build && npm publish",
+    "publish": "npm run pre-publish-guard && npm run safe-publish"
   },
   "files": [
     "dist/",
