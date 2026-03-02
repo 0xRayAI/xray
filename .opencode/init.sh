@@ -45,10 +45,10 @@ if [ "$MCPS_COUNT" -eq 0 ]; then
     MCPS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/strray-ai/dist/mcps/"*.server.js 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Agents - check .opencode/agents, then node_modules
-AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/.opencode/agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
+# Agents - check .opencode/agents (.yml files), then node_modules
+AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 if [ "$AGENTS_COUNT" -eq 0 ]; then
-    AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/strray-ai/.opencode/agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
+    AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/strray-ai/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 fi
 
 # Skills - check .opencode/skills, then node_modules

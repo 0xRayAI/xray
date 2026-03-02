@@ -39,7 +39,7 @@ MCPS_COUNT=$(ls -1 "$PROJECT_ROOT/dist/mcps/"*.server.js 2>/dev/null | wc -l | t
 if [ "$MCPS_COUNT" -eq 0 ]; then
     MCPS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/strray-ai/dist/mcps/"*.server.js 2>/dev/null | wc -l | tr -d ' ')
 fi
-AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/.opencode/agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
+AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 SKILLS_COUNT=$(ls -1 "$PROJECT_ROOT/.opencode/skills/" 2>/dev/null | wc -l | tr -d ' ')
 
 # Plugin status (check .opencode/plugin/ directory - singular)
