@@ -462,10 +462,13 @@ fi
       # Log metrics for monitoring (convert to milliseconds)
       DURATION_MS=\$((DURATION * 1000))
       # LOG CLEANUP: Remove old log files after validation
+      # Use relative path from CWD - works in both dev and consumer
       node -e "
       (async () => {
         try {
-          const { cleanupLogFiles } = await import('./dist/postprocessor/triggers/GitHookTrigger.js');
+          // Use dynamic import that works in both dev and consumer
+          const basePath = process.env.STRRAY_BASE_PATH || '.';
+          const { cleanupLogFiles } = await import(basePath + '/dist/postprocessor/triggers/GitHookTrigger.js');
           const result = await cleanupLogFiles({
             maxAgeHours: 24,
             excludePatterns: ['logs/framework/activity.log', 'logs/agents/refactoring-log.md', 'current-session.log'],
@@ -496,10 +499,13 @@ fi
       echo "HOOK_METRICS: post-push duration=\${DURATION_MS}ms exit_code=\${EXIT_CODE}" >&2
 
       # Record metrics using metrics collector (direct import for reliability)
+      # Use environment variable for base path - works in both dev and consumer
       node -e "
       (async () => {
         try {
-          const { HookMetricsCollector } = await import('./dist/postprocessor/validation/HookMetricsCollector.js');
+          const basePath = process.env.STRRAY_BASE_PATH || '.';
+          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
+          const { HookMetricsCollector } = await import(basePath + '/' + distPath + '/postprocessor/validation/HookMetricsCollector.js');
           const collector = new HookMetricsCollector();
           collector.recordMetrics('post-push', \${DURATION_MS}, \${EXIT_CODE});
         } catch (error) {
