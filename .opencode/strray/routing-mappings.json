@@ -1,0 +1,60 @@
+[
+  // ===== USER-FRIENDLY ALIASES =====
+  {
+    "keywords": ["marketing", "campaign", "growth", "conversion", "pricing"],
+    "skill": "content-marketing-strategy",
+    "agent": "growth-strategist",
+    "confidence": 0.95
+  },
+  {
+    "keywords": ["content", "write content", "blog", "article", "seo", "copy"],
+    "skill": "copywriting",
+    "agent": "content-creator",
+    "confidence": 0.9
+  },
+  {
+    "keywords": ["bug", "debug", "triage", "issue", "bug-tester", "tester"],
+    "skill": "code-review",
+    "agent": "bug-triage-specialist",
+    "confidence": 0.9
+  },
+  {
+    "keywords": ["test", "testing", "unit test", "e2e"],
+    "skill": "testing-strategy",
+    "agent": "testing-lead",
+    "confidence": 0.9
+  },
+  {
+    "keywords": ["docs", "documentation", "document", "write docs"],
+    "skill": "documentation-generation",
+    "agent": "tech-writer",
+    "confidence": 0.9
+  },
+  // ===== LANGUAGES & FRAMEWORKS =====
+  {
+    "keywords": ["rust", "rustlang", "cargo", "traits", "borrow checker"],
+    "skill": "rust-patterns",
+    "agent": "performance-engineer",
+    "confidence": 0.99
+  },
+  {
+    "keywords": ["typescript", "type error", "type safety"],
+    "skill": "typescript-expert",
+    "agent": "code-reviewer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["python", "django", "flask", "pandas"],
+    "skill": "python-patterns",
+    "agent": "backend-engineer",
+    "confidence": 0.99
+  },
+  // ===== ADD YOUR CUSTOM MAPPINGS HERE =====
+  // Example:
+  // {
+  //   "keywords": ["custom keyword"],
+  //   "skill": "custom-skill",
+  //   "agent": "your-custom-agent",
+  //   "confidence": 0.95
+  // }
+]

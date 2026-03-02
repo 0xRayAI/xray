@@ -5,19 +5,126 @@
  * Complements the AgentDelegator by providing keyword-based preprocessing
  * that feeds into the complexity-based delegation system.
  *
- * @version 1.2.0 - Deduplicated
+ * @version 1.3.0 - Added confidence threshold + data-driven mappings + outcome tracking
  * @since 2026-02-22
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
 import { StringRayStateManager } from "../state/state-manager.js";
+import * as fs from "fs";
+import * as path from "path";
+
+// ===== CONFIGURATION =====
+const ROUTING_CONFIG = {
+  // Minimum confidence threshold - below this, escalate to LLM
+  MIN_CONFIDENCE_THRESHOLD: 0.75,
+  
+  // Minimum historical success rate to trust history
+  MIN_HISTORY_SUCCESS_RATE: 0.7,
+  
+  // Enable data-driven mappings from config file
+  ENABLE_CONFIG_FILE: process.env.ROUTER_CONFIG_FILE !== "false",
+  CONFIG_FILE_PATH: process.env.ROUTER_CONFIG_FILE || ".opencode/strray/routing-mappings.json",
+  
+  // Enable outcome tracking
+  ENABLE_OUTCOME_TRACKING: process.env.ROUTING_OUTCOMES !== "false",
+  
+  // Fallback to LLM when confidence is low
+  ESCALATE_ON_LOW_CONFIDENCE: true,
+};
+
+// ===== ROUTING OUTCOME TRACKING =====
+export interface RoutingOutcome {
+  taskId: string;
+  taskDescription: string;
+  routedAgent: string;
+  routedSkill: string;
+  confidence: number;
+  timestamp: Date;
+  success?: boolean;
+  feedback?: string;
+}
+
+class RoutingOutcomeTracker {
+  private outcomes: RoutingOutcome[] = [];
+  private maxOutcomes = 1000;
+
+  recordOutcome(outcome: Omit<RoutingOutcome, "timestamp">): void {
+    if (!ROUTING_CONFIG.ENABLE_OUTCOME_TRACKING) return;
+    
+    this.outcomes.push({ ...outcome, timestamp: new Date() });
+    
+    // Keep only recent outcomes
+    if (this.outcomes.length > this.maxOutcomes) {
+      this.outcomes = this.outcomes.slice(-this.maxOutcomes);
+    }
+  }
+
+  getOutcomes(agent?: string): RoutingOutcome[] {
+    if (agent) {
+      return this.outcomes.filter(o => o.routedAgent === agent);
+    }
+    return this.outcomes;
+  }
+
+  getSuccessRate(agent: string): number {
+    const agentOutcomes = this.outcomes.filter(o => o.routedAgent === agent && o.success !== undefined);
+    if (agentOutcomes.length === 0) return 0;
+    
+    const successes = agentOutcomes.filter(o => o.success).length;
+    return successes / agentOutcomes.length;
+  }
+
+  getStats(): { agent: string; total: number; successRate: number }[] {
+    const stats = new Map<string, { total: number; successes: number }>();
+    
+    for (const outcome of this.outcomes) {
+      if (outcome.success === undefined) continue;
+      
+      const current = stats.get(outcome.routedAgent) || { total: 0, successes: 0 };
+      current.total++;
+      if (outcome.success) current.successes++;
+      stats.set(outcome.routedAgent, current);
+    }
+
+    return Array.from(stats.entries()).map(([agent, data]) => ({
+      agent,
+      total: data.total,
+      successRate: data.total > 0 ? data.successes / data.total : 0,
+    }));
+  }
+
+  clear(): void {
+    this.outcomes = [];
+  }
+}
+
+export const routingOutcomeTracker = new RoutingOutcomeTracker();
+
+// ===== LOAD MAPPINGS FROM CONFIG FILE =====
+function loadMappingsFromConfig(): any[] | null {
+  if (!ROUTING_CONFIG.ENABLE_CONFIG_FILE) return null;
+  
+  try {
+    const configPath = path.resolve(process.cwd(), ROUTING_CONFIG.CONFIG_FILE_PATH);
+    if (fs.existsSync(configPath)) {
+      const content = fs.readFileSync(configPath, "utf-8");
+      return JSON.parse(content);
+    }
+  } catch (error) {
+    // Config file is optional - fall back to hardcoded
+  }
+  return null;
+}
 
 /**
  * Keyword to skill/agent mapping
  * ORDERED BY SPECIFICITY - most specific keywords must come FIRST
  * Each skill appears exactly ONCE - no duplicates
+ * 
+ * Can be extended via config file at .opencode/strray/routing-mappings.json
  */
-const TASK_KEYWORD_MAPPINGS = [
+const DEFAULT_MAPPINGS = [
   // ===== USER-FRIENDLY ALIASES (most natural language first) =====
   {
     keywords: ["marketing", "campaign", "growth", "conversion", "pricing"],
@@ -660,6 +767,7 @@ export interface RoutingResult {
   reason?: string;
   operation?: string; // For AgentDelegator integration
   context?: Record<string, unknown>; // Extracted context for delegation
+  escalateToLlm?: boolean; // Flag to indicate should escalate to LLM for better judgment
 }
 
 /**
@@ -679,7 +787,7 @@ export interface RoutingOptions {
  * Designed as a PRE-PROCESSOR to AgentDelegator, not a replacement
  */
 export class TaskSkillRouter {
-  private mappings = [...TASK_KEYWORD_MAPPINGS];
+  private mappings: any[];
   private stateManager: StringRayStateManager | undefined;
 
   // In-memory cache for immediate access (persisted via stateManager)
@@ -695,6 +803,18 @@ export class TaskSkillRouter {
   > = new Map();
 
   constructor(stateManager?: StringRayStateManager) {
+    // Try to load mappings from config file first
+    const configMappings = loadMappingsFromConfig();
+    if (configMappings) {
+      this.mappings = configMappings;
+      frameworkLogger.log("task-skill-router", "loaded-from-config", "info", {
+        count: configMappings.length,
+        source: ROUTING_CONFIG.CONFIG_FILE_PATH,
+      });
+    } else {
+      this.mappings = [...DEFAULT_MAPPINGS];
+    }
+    
     if (stateManager) {
       this.stateManager = stateManager;
       this.loadHistory();
@@ -798,6 +918,7 @@ export class TaskSkillRouter {
 
   /**
    * Route a task to the appropriate agent and skill
+   * Returns result with escalateToLlm flag when confidence is below threshold
    */
   routeTask(
     taskDescription: string,
@@ -814,6 +935,11 @@ export class TaskSkillRouter {
     // 1. Try keyword matching first (highest priority)
     const keywordResult = this.matchByKeywords(descLower);
     if (keywordResult) {
+      // Check confidence threshold
+      const shouldEscalate = 
+        ROUTING_CONFIG.ESCALATE_ON_LOW_CONFIDENCE && 
+        keywordResult.confidence < ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD;
+      
       frameworkLogger.log(
         "task-skill-router",
         "keyword-matched",
@@ -823,9 +949,16 @@ export class TaskSkillRouter {
           matchedKeyword: keywordResult.matchedKeyword,
           agent: keywordResult.agent,
           skill: keywordResult.skill,
+          confidence: keywordResult.confidence,
+          belowThreshold: shouldEscalate,
         },
         options.sessionId,
       );
+      
+      // Add escalation flag if below threshold
+      if (shouldEscalate) {
+        return { ...keywordResult, escalateToLlm: true };
+      }
       return keywordResult;
     }
 
@@ -852,8 +985,8 @@ export class TaskSkillRouter {
       }
     }
 
-    // Default fallback - use enforcer as per codex
-    return this.getDefaultRouting("No keyword match found");
+    // Default fallback - use enforcer as per codex (should always escalate)
+    return { ...this.getDefaultRouting("No keyword match found"), escalateToLlm: true };
   }
 
   /**
@@ -884,7 +1017,7 @@ export class TaskSkillRouter {
     if (historyEntry && historyEntry.totalAttempts > 0) {
       const successRate =
         historyEntry.successCount / historyEntry.totalAttempts;
-      if (successRate >= 0.7) {
+      if (successRate >= ROUTING_CONFIG.MIN_HISTORY_SUCCESS_RATE) {
         return {
           skill: historyEntry.skill,
           agent: historyEntry.agent,
