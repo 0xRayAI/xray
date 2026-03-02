@@ -10,8 +10,103 @@ import {
 } from "./rule-enforcer.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
+import { createTaskSkillRouter } from "../delegation/task-skill-router.js";
 import * as fs from "fs";
 import * as path from "path";
+
+// Create TaskSkillRouter instance for intelligent routing
+const taskSkillRouter = createTaskSkillRouter();
+
+export interface RoutingRecommendation {
+  suggestedAgent: string;
+  suggestedSkill: string;
+  confidence: number;
+  matchedKeyword?: string;
+}
+
+/**
+ * Pre-process task description to get intelligent routing recommendation
+ * Uses TaskSkillRouter to determine the best agent/skill for the task
+ */
+export function getTaskRoutingRecommendation(
+  taskDescription: string,
+): RoutingRecommendation {
+  const result = taskSkillRouter.routeTask(taskDescription, {
+    useHistoricalData: false, // Skip history for fresh decisions
+  });
+
+  return {
+    suggestedAgent: result.agent,
+    suggestedSkill: result.skill,
+    confidence: result.confidence,
+    matchedKeyword: result.matchedKeyword || "none",
+  };
+}
+
+/**
+ * Pre-process and validate that the routing is appropriate for the operation
+ * This is the integration point between TaskSkillRouter and RuleEnforcer
+ */
+export async function preProcessAndRoute(
+  operation: string,
+  context: RuleValidationContext,
+): Promise<{
+  enhancedContext: RuleValidationContext;
+  routing: RoutingRecommendation;
+}> {
+  // Build task description from operation and context
+  const taskDescription = buildTaskDescription(operation, context);
+
+  // Get routing recommendation
+  const routing = getTaskRoutingRecommendation(taskDescription);
+
+  // Log the routing decision
+  await frameworkLogger.log(
+    "enforcer-tools",
+    "task-routed",
+    "debug",
+    {
+      operation,
+      taskDescription: taskDescription.substring(0, 100),
+      suggestedAgent: routing.suggestedAgent,
+      suggestedSkill: routing.suggestedSkill,
+      confidence: routing.confidence,
+    },
+  );
+
+  // Enhance context with routing information
+  const enhancedContext: RuleValidationContext = {
+    ...context,
+    operation,
+    // Add routing info to context for rule validators to use
+    ...(context as any).routing,
+  };
+
+  return {
+    enhancedContext,
+    routing,
+  };
+}
+
+/**
+ * Build a task description from operation and context for routing
+ */
+function buildTaskDescription(
+  operation: string,
+  context: RuleValidationContext,
+): string {
+  const parts: string[] = [operation];
+
+  if (context.component) {
+    parts.push(context.component);
+  }
+
+  if (context.files && context.files.length > 0) {
+    parts.push(`files: ${context.files.join(", ")}`);
+  }
+
+  return parts.join(" ");
+}
 
 export interface EnforcementResult {
   operation: string;
@@ -29,6 +124,7 @@ export interface EnforcementResult {
 
 /**
  * Rule Validation Tool - Validates operations against rule hierarchy
+ * Now with intelligent task routing via TaskSkillRouter
  */
 export async function ruleValidation(
   operation: string,
@@ -36,14 +132,22 @@ export async function ruleValidation(
 ): Promise<EnforcementResult> {
   const jobId = `rule-validation-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  // PRE-PROCESS: Get intelligent routing recommendation
+  const { enhancedContext, routing } = await preProcessAndRoute(operation, context);
+
   await frameworkLogger.log("enforcer-tools", "rule-validation-start", "info", {
     jobId,
     operation,
     files: context.files?.length || 0,
     hasExistingCode: !!context.existingCode,
+    // Add routing info to logs
+    routedTo: routing.suggestedAgent,
+    routingSkill: routing.suggestedSkill,
+    routingConfidence: routing.confidence,
   });
 
-  const report = await ruleEnforcer.validateOperation(operation, context);
+  // Use enhanced context with routing for validation
+  const report = await ruleEnforcer.validateOperation(operation, enhancedContext);
 
   const result: EnforcementResult = {
     operation,
