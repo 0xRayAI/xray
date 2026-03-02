@@ -143,29 +143,29 @@ function checkVersionManagerRan() {
 function runTests() {
   log('Running tests...', 'step');
   
-  const result = run('npm test', { stdio: 'inherit' });
-  if (!result) {
+  try {
+    execSync('npm test', { cwd: rootDir, stdio: 'inherit' });
+    log('Tests passed', 'success');
+    return true;
+  } catch (e) {
     errors.push('Tests failed');
     log('Tests failed', 'error');
     return false;
   }
-  
-  log('Tests passed', 'success');
-  return true;
 }
 
 function runBuild() {
   log('Running build...', 'step');
   
-  const result = run('npm run build', { stdio: 'inherit' });
-  if (!result) {
+  try {
+    execSync('npm run build', { cwd: rootDir, stdio: 'inherit' });
+    log('Build succeeded', 'success');
+    return true;
+  } catch (e) {
     errors.push('Build failed');
     log('Build failed', 'error');
     return false;
   }
-  
-  log('Build succeeded', 'success');
-  return true;
 }
 
 function main() {
