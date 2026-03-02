@@ -44,7 +44,7 @@
       "temperature": 1,
       "mode": "subagent"
     },
-    "librarian": {
+    "researcher": {
       "temperature": 1,
       "mode": "subagent"
     },
@@ -73,7 +73,7 @@
     "strray-orchestrator": {
       "disable": true
     },
-    "strray-librarian": {
+    "strray-researcher": {
       "disable": true
     },
     "strray-refactorer": {
