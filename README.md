@@ -49,7 +49,7 @@ npx strray-ai status
 
 > **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](docs/AGENT_CONFIG.md).
 
-[View all 23 agents →](AGENTS.md)
+[View all 27 agents →](AGENTS.md)
 
 ## 📖 Documentation
 
