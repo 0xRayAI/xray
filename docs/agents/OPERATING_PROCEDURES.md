@@ -344,7 +344,7 @@ strray_review:
 performance_monitoring:
   stage: test
   script:
-    - strray test-architect --performance-analysis
+    - strray testing-lead --performance-analysis
   artifacts:
     reports:
       performance: reports/performance.json

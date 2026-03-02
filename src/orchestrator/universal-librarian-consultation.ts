@@ -1,6 +1,6 @@
 /**
  * Universal Librarian Consultation System
- * Ensures librarian is involved in all major system actions for documentation and versioning
+ * Ensures researcher is involved in all major system actions for documentation and versioning
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -51,7 +51,7 @@ export class UniversalLibrarianConsultation {
     action: SystemAction,
   ): Promise<LibrarianConsultationResult> {
     await frameworkLogger.log(
-      "universal-librarian-consultation",
+      "universal-researcher-consultation",
       "pre-action-consultation-started",
       "info",
       {
@@ -61,15 +61,15 @@ export class UniversalLibrarianConsultation {
       },
     );
 
-    // Prevent recursive consultation loops (librarian operations triggering more librarian consultations)
+    // Prevent recursive consultation loops (researcher operations triggering more researcher consultations)
     if (this.isLibrarianOperation(action)) {
       await frameworkLogger.log(
-        "universal-librarian-consultation",
+        "universal-researcher-consultation",
         "pre-action-consultation-skipped",
         "info",
         {
           reason:
-            "librarian operation detected - skipping to prevent recursion",
+            "researcher operation detected - skipping to prevent recursion",
           actionType: action.type,
           scope: action.scope,
         },
@@ -103,7 +103,7 @@ export class UniversalLibrarianConsultation {
     };
 
     await frameworkLogger.log(
-      "universal-librarian-consultation",
+      "universal-researcher-consultation",
       "pre-action-consultation-completed",
       approved ? "success" : "error",
       {
@@ -122,7 +122,7 @@ export class UniversalLibrarianConsultation {
    */
   async consultAfterAction(action: SystemAction, result: any): Promise<void> {
     await frameworkLogger.log(
-      "universal-librarian-consultation",
+      "universal-researcher-consultation",
       "post-action-consultation-started",
       "info",
       {
@@ -137,7 +137,7 @@ export class UniversalLibrarianConsultation {
     await this.validateDocumentationIntegrity(action);
 
     await frameworkLogger.log(
-      "universal-librarian-consultation",
+      "universal-researcher-consultation",
       "post-action-consultation-completed",
       "success",
       {
@@ -150,15 +150,15 @@ export class UniversalLibrarianConsultation {
   }
 
   /**
-   * Check if this action is related to librarian operations (to prevent recursion)
+   * Check if this action is related to researcher operations (to prevent recursion)
    */
   private isLibrarianOperation(action: SystemAction): boolean {
     return (
       action.scope === "documentation" ||
       (action.type === "rule-modification" &&
-        action.description.includes("librarian")) ||
-      action.metadata?.triggeredBy === "librarian" ||
-      action.description.includes("librarian consultation")
+        action.description.includes("researcher")) ||
+      action.metadata?.triggeredBy === "researcher" ||
+      action.description.includes("researcher consultation")
     );
   }
 
@@ -219,7 +219,7 @@ export class UniversalLibrarianConsultation {
   }
 
   /**
-   * Check if pair programming with librarian is required
+   * Check if pair programming with researcher is required
    */
   private requiresPairProgramming(action: SystemAction): boolean {
     return (
@@ -275,7 +275,7 @@ export class UniversalLibrarianConsultation {
     result: any,
   ): Promise<void> {
     await frameworkLogger.log(
-      "universal-librarian-consultation",
+      "universal-researcher-consultation",
       "documentation-update-triggered",
       "info",
       {
@@ -294,7 +294,7 @@ export class UniversalLibrarianConsultation {
     result: any,
   ): Promise<void> {
     await frameworkLogger.log(
-      "universal-librarian-consultation",
+      "universal-researcher-consultation",
       "version-update-triggered",
       "info",
       {
@@ -312,7 +312,7 @@ export class UniversalLibrarianConsultation {
     action: SystemAction,
   ): Promise<void> {
     await frameworkLogger.log(
-      "universal-librarian-consultation",
+      "universal-researcher-consultation",
       "documentation-integrity-validation",
       "info",
       {

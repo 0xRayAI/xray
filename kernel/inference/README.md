@@ -209,7 +209,7 @@ From 50+ reflections, these principles emerged as the foundation of StringRay's 
 
 **Definition:** Tests validate what they are designed to validate. What isn't tested isn't validated — it's assumed to work.
 
-**Evidence:** The librarian infinite loop existed despite 1044/1114 tests passing. The tests didn't test for infinite recursion.
+**Evidence:** The researcher infinite loop existed despite 1044/1114 tests passing. The tests didn't test for infinite recursion.
 
 **Inference:** Test coverage is a measure of what's tested, not a measure of quality.
 
@@ -284,12 +284,12 @@ USERS REPORT BUGS
 
 **Date:** January 2026  
 **Version:** 1.3.x  
-**Reflection:** `librarian-bug-fix-and-framework-analysis-reflection.md`
+**Reflection:** `researcher-bug-fix-and-framework-analysis-reflection.md`
 
 **What Happened:**
 1. 1044 out of 1114 tests passed
 2. The framework appeared functional
-3. Users reported "librarian spawns infinite subagents"
+3. Users reported "researcher spawns infinite subagents"
 4. Activity log analysis revealed 1,057 operations in 15 minutes
 5. Root cause: recursive consultation loop
 

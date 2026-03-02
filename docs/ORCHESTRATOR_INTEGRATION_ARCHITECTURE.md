@@ -51,7 +51,7 @@ The orchestrator uses a 6-metric complexity analysis system:
 | bug-triage-specialist | Error investigation | Debug operations | Analysis tools |
 | security-auditor | Vulnerability detection | Security operations | Security tools |
 | refactorer | Technical debt | Refactor operations | Transform tools |
-| test-architect | Testing strategy | Test operations | Testing tools |
+| testing-lead | Testing strategy | Test operations | Testing tools |
 
 ## Integration Patterns
 
@@ -80,7 +80,7 @@ orchestrator.execute({
   },
   priority: "high"
 });
-// → Routes to: architect → code-reviewer → test-architect
+// → Routes to: architect → code-reviewer → testing-lead
 ```
 
 ### Orchestrator-Led Workflows
@@ -97,7 +97,7 @@ orchestrator.execute({
   },
   priority: "critical"
 });
-// → Coordinator manages: architect → security-auditor → refactorer → test-architect
+// → Coordinator manages: architect → security-auditor → refactorer → testing-lead
 ```
 
 ## State Management

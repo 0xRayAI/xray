@@ -23,7 +23,7 @@ Multi-repo analysis, documentation lookup, and implementation examples.
 
 ## Usage
 
-This skill provides research capabilities for librarian functionality.
+This skill provides research capabilities for researcher functionality.
 
 ## Integration
 

@@ -70,7 +70,7 @@ scrape_configs:
           - "localhost:3005" # bug-triage-specialist
           - "localhost:3006" # code-reviewer
           - "localhost:3007" # refactorer
-          - "localhost:3008" # test-architect
+          - "localhost:3008" # testing-lead
     scrape_interval: 10s
     metrics_path: "/metrics"
     labels:

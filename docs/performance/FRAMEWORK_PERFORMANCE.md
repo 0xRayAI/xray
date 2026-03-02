@@ -240,7 +240,7 @@ Type Checking         | 1.8    | 3.1   | Lite for speed
 {
   "strray_agents": {
     "enabled": ["enforcer", "code-reviewer"],
-    "disabled": ["architect", "orchestrator", "security-auditor", "refactorer", "test-architect"]
+    "disabled": ["architect", "orchestrator", "security-auditor", "refactorer", "testing-lead"]
   },
   "validation": {
     "parallel": false,

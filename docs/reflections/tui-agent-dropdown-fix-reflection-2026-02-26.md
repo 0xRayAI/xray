@@ -34,7 +34,7 @@ OpenCode reads agents from **two merged sources**:
 | Agent | In opencode.json | Has .yml |
 |-------|-----------------|----------|
 | general | ✅ | ❌ MISSING |
-| document-writer | ✅ | ❌ MISSING |
+| tech-writer | ✅ | ❌ MISSING |
 
 The framework had 21 agents defined in JSON config but only 26 yml files - two were missing.
 
@@ -55,7 +55,7 @@ ls .opencode/agents/*.yml | wc -l  # 26 files
 Comparing active agents in `opencode.json` against existing `.yml` files revealed the gaps.
 
 ### Step 3: Pattern Matching
-Studied existing yml files (orchestrator.yml, librarian.yml) to understand the required schema:
+Studied existing yml files (orchestrator.yml, researcher.yml) to understand the required schema:
 - name
 - description
 - version
@@ -76,7 +76,7 @@ Studied existing yml files (orchestrator.yml, librarian.yml) to understand the r
    - General-purpose agent for research and task execution
    - Configured with task-analysis, execution-planning, task-execution pipelines
 
-2. **`.opencode/agents/document-writer.yml`** (87 lines)
+2. **`.opencode/agents/tech-writer.yml`** (87 lines)
    - Technical documentation generation specialist
    - Configured with content-analysis, document-structure, content-generation pipelines
 
@@ -170,12 +170,12 @@ This session demonstrated that promise in action:
 
 The TUI dropdown now shows all 20 StringRay agents + 2 built-ins. Users can access:
 - orchestrator, enforcer, architect
-- test-architect, bug-triage-specialist, code-reviewer
-- security-auditor, refactorer, librarian
+- testing-lead, bug-triage-specialist, code-reviewer
+- security-auditor, refactorer, researcher
 - log-monitor, general, explore
-- oracle, document-writer, multimodal-looker
-- frontend-ui-ux-engineer, seo-specialist
-- seo-copywriter, marketing-expert
+- strategist, tech-writer, multimodal-looker
+- frontend-ui-ux-engineer, seo-consultant
+- content-creator, growth-strategist
 
 **Configuration synchronized. Agents accessible. Promise kept.**
 
@@ -184,7 +184,7 @@ The TUI dropdown now shows all 20 StringRay agents + 2 built-ins. Users can acce
 ## Files Modified
 
 - `.opencode/agents/general.yml` (NEW)
-- `.opencode/agents/document-writer.yml` (NEW)
+- `.opencode/agents/tech-writer.yml` (NEW)
 - `package.json` (version bump)
 - `.opencode/init.sh` (version bump)
 - `AGENTS.md` (updated)

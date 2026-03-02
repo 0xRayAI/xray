@@ -24,7 +24,7 @@
       "temperature": 1,
       "mode": "subagent"
     },
-    "test-architect": {
+    "testing-lead": {
       "temperature": 1,
       "mode": "subagent"
     },
@@ -82,7 +82,7 @@
     "strray-security-auditor": {
       "disable": true
     },
-    "strray-test-architect": {
+    "strray-testing-lead": {
       "disable": true
     },
     "strray-enforcer": {

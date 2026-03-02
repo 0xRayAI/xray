@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-After comprehensive analysis by all key agents (enforcer, orchestrator, test-architect, bug-triage-specialist), the StringRay Framework has **all necessary components** for excellent orchestration but suffers from **alignment issues**. The framework is "almost there" - it just needs better integration of existing pieces.
+After comprehensive analysis by all key agents (enforcer, orchestrator, testing-lead, bug-triage-specialist), the StringRay Framework has **all necessary components** for excellent orchestration but suffers from **alignment issues**. The framework is "almost there" - it just needs better integration of existing pieces.
 
 ## Phase 1: Quick Wins (1-2 weeks) - IMPLEMENT NOW
 
@@ -16,8 +16,8 @@ After comprehensive analysis by all key agents (enforcer, orchestrator, test-arc
 1. **Extend Rule-to-Agent Mappings** in `src/processors/processor-manager.ts`:
    ```typescript
    // Add missing mappings
-   'input-validation': 'test-architect',
-   'documentation-required': 'librarian', 
+   'input-validation': 'testing-lead',
+   'documentation-required': 'researcher', 
    'no-over-engineering': 'architect',
    'prevent-infinite-loops': 'bug-triage-specialist',
    'state-management-patterns': 'architect',
@@ -62,7 +62,7 @@ After comprehensive analysis by all key agents (enforcer, orchestrator, test-arc
    const result = await task({
      description: "Analyze codebase",
      prompt: analysisRequest,
-     subagent_type: "librarian"
+     subagent_type: "researcher"
    });
    ```
 

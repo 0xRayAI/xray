@@ -54,7 +54,7 @@ Update your `.opencode/OpenCode.json`:
     "code-reviewer": "grok-code",
     "security-auditor": "grok-code",
     "refactorer": "grok-code",
-    "test-architect": "grok-code"
+    "testing-lead": "grok-code"
   },
   "framework": {
     "name": "strray",
@@ -167,7 +167,7 @@ npm run dev
     "code-reviewer": "grok-code",
     "security-auditor": "grok-code",
     "refactorer": "grok-code",
-    "test-architect": "grok-code"
+    "testing-lead": "grok-code"
   }
 }
 ```

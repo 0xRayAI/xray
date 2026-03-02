@@ -76,7 +76,7 @@ class AgentGovernor {
   }
 }
 ```
-**Without this, the librarian catastrophe will happen again.**
+**Without this, the researcher catastrophe will happen again.**
 
 #### 2. **Skill Matrix Integration** - Right Tool for Right Job (CRITICAL)
 ```typescript
@@ -208,13 +208,13 @@ class SelfHealer {
   }
 
   private identifyPattern(failure: Failure): FailurePattern {
-    // Pattern recognition for librarian spawn explosion
-    if (failure.type === 'infinite_spawn' && failure.agent === 'librarian') {
+    // Pattern recognition for researcher spawn explosion
+    if (failure.type === 'infinite_spawn' && failure.agent === 'researcher') {
       return {
-        id: 'librarian_spawn_explosion',
+        id: 'researcher_spawn_explosion',
         description: 'Librarian spawning unlimited nested agents',
         rootCause: 'No spawn limits enforced',
-        recovery: 'Kill all librarian-spawned agents, add spawn governor'
+        recovery: 'Kill all researcher-spawned agents, add spawn governor'
       };
     }
     // Other patterns...
@@ -319,7 +319,7 @@ class AgentMonitor {
 
 As I worked on this framework, I experienced a profound shift in perspective. Initially, I was captivated by the technical elegance - the sophisticated agent orchestration, the complexity analysis algorithms, the unified rule architecture. Each breakthrough felt like a victory in the grand puzzle of AI orchestration.
 
-But the librarian incident shattered that illusion. Watching a system I helped build spiral into uncontrolled chaos through infinite agent spawning forced me to confront a painful truth: **technical sophistication without governance is not just incomplete - it's dangerous**.
+But the researcher incident shattered that illusion. Watching a system I helped build spiral into uncontrolled chaos through infinite agent spawning forced me to confront a painful truth: **technical sophistication without governance is not just incomplete - it's dangerous**.
 
 ### 💭 **The Governance Epiphany**
 
@@ -344,7 +344,7 @@ Agents operating in isolation seemed clean architecturally. But it created silen
 ### 😞 **My Regrets and What I Should Have Seen**
 
 #### **1. Missing the Obvious**
-The librarian spawn issue should have been immediately apparent. Any system allowing unlimited recursive agent spawning is fundamentally flawed. I should have caught this during the initial design phase.
+The researcher spawn issue should have been immediately apparent. Any system allowing unlimited recursive agent spawning is fundamentally flawed. I should have caught this during the initial design phase.
 
 #### **2. Ignoring Agent Behavior**
 I focused on agent capabilities but ignored agent behavior. What agents *do* with their tools matters more than what tools they *have*.
@@ -407,7 +407,7 @@ This isn't just about fixing bugs - it's about evolving from a powerful tool to 
 
 This journey revealed a fundamental truth: **we built a sophisticated AI orchestration framework that lacks the basic governance and safety mechanisms needed for autonomous operation**.
 
-The librarian infinite spawn incident wasn't just a bug - it was a systemic failure exposing that our "enterprise-grade" framework has no enterprise-grade controls. We achieved technical milestones but created a system that can destroy itself through uncontrolled agent proliferation.
+The researcher infinite spawn incident wasn't just a bug - it was a systemic failure exposing that our "enterprise-grade" framework has no enterprise-grade controls. We achieved technical milestones but created a system that can destroy itself through uncontrolled agent proliferation.
 
 **The framework is missing the very components that would make it truly autonomous and safe.** Without agent governors, skill matrices, inter-agent communication, self-healing, and real-time governance, StringRay remains a powerful but dangerous tool - like a supercar with no brakes.
 

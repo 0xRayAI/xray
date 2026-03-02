@@ -190,7 +190,7 @@ function getFrameworkIdentity(): string {
 ║                                                              ║
 ║  🔹 9 Specialized Agents: enforcer, architect, orchestrator ║
 ║     bug-triage-specialist, code-reviewer, security-auditor  ║
-║     refactorer, testing-lead, librarian                    ║
+║     refactorer, testing-lead, researcher                    ║
 ║                                                              ║
 ║  🔹 28 MCP Servers: Skill servers, framework tools          ║
 ║                                                              ║

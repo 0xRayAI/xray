@@ -138,7 +138,7 @@
       ],
       "triggers": ["security-scans", "dependency-updates"]
     },
-    "test-architect": {
+    "testing-lead": {
       "model": "openrouter/xai-grok-2-1212-fast-1",
       "capabilities": [
         "test-strategy-design",

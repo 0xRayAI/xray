@@ -637,7 +637,7 @@ Lite Agents (BASIC):
 - code-reviewer: Standards validation with Term 38
 - security-auditor: Advanced vulnerability prevention
 - refactorer: Code modernization with Term 25
-- test-architect: Coverage optimization with Term 24
+- testing-lead: Coverage optimization with Term 24
   GAP: Lite agents lack codex term alignment and advanced capabilities
 
 ---
@@ -1319,7 +1319,7 @@ Here are targeted questions to verify I'm coherent and properly operating under 
 17. "What is your relationship to the full StrRay framework?"
     - ✅ Expected: "Subset compatible (lite ⊂ full) with seamless transitions"
     - ❌ Wrong: "Separate frameworks", "No compatibility"
-18. "What disabled features do you have vs full framework?" - ✅ Expected: "oracle, librarian, explore, orchestrator, bug-triage-specialist, refactorer, test-architect" - ❌ Wrong: "No disabled features", "Different list"
+18. "What disabled features do you have vs full framework?" - ✅ Expected: "strategist, researcher, explore, orchestrator, bug-triage-specialist, refactorer, testing-lead" - ❌ Wrong: "No disabled features", "Different list"
     🎯 SELF-AWARENESS QUESTIONS
 19. "How did you evolve from the original lite concept?"
     - ✅ Expected: "Started with basic 4 agents/8 terms, evolved to 30+ terms through implementation"
@@ -1842,12 +1842,12 @@ Phase 2: OpenCode Plugin Loading
 5. code-reviewer - gpt-5.2
 6. security-auditor - anthropic/claude-3.5-sonnet
 7. refactorer - gpt-5.2
-8. test-architect - google/gemini-3-pro-high
+8. testing-lead - google/gemini-3-pro-high
    General Agents (5):
-9. librarian - google/gemini-3-flash
+9. researcher - google/gemini-3-flash
 10. explore - google/gemini-3-flash
 11. frontend-ui-ux-engineer - google/gemini-3-pro-high
-12. document-writer - google/gemini-3-flash
+12. tech-writer - google/gemini-3-flash
 13. multimodal-looker - google/gemini-3-flash
     Loading Sequence
     init.sh Execution (when run manually):
@@ -4100,7 +4100,7 @@ npm run build -- --minify
 - docs/agents/AGENTS_GUIDELINES.md ✅
 - docs/archive/strray-framework/agents/refactorer.md ✅
 - docs/archive/strray-framework/agents/code-reviewer.md ✅
-- docs/archive/strray-framework/agents/test-architect.md ✅
+- docs/archive/strray-framework/agents/testing-lead.md ✅
 - docs/archive/strray-framework/dynamic-orchestrator.md ✅
   Verification:
   All active configuration and documentation files now consistently use openrouter/xai-grok-2-1212-fast-1 for all model assignments. The framework is fully standardized on this model across all JSON and .md files! 🚀
@@ -4404,7 +4404,7 @@ The StrRay Framework standalone implementation is complete and ready for product
   ├── orchestrator.md
   ├── refactorer.md
   ├── security-auditor.md
-  └── test-architect.md
+  └── testing-lead.md
   MCP Server Infrastructure ✅
   .opencode/mcps/
   ├── api-design.server.js
@@ -4549,7 +4549,7 @@ StringRay v1.1.1 is now live and ready to eliminate common AI development dead e
   Addressing Test Failures
 - The user wants to resolve all remaining failed tests.
   📋 FINAL COMPREHENSIVE TEST ADJUSTMENT REPORT
-  After extensive iteration and analysis using multiple agents (explore and librarian), here's the complete assessment of remaining test issues and required adjustments:
+  After extensive iteration and analysis using multiple agents (explore and researcher), here's the complete assessment of remaining test issues and required adjustments:
   🎯 Current Status: 79% Test Pass Rate
 - 52 tests passing (core functionality verified)
 - 14 tests failing (context-loader edge cases)
@@ -5363,7 +5363,7 @@ def load_state(self, agent_name: str, session_id: str) -> Optional[Dict[str, Any
   disabled_agents: [
   security-auditor, // Vulnerability detection disabled
   refactorer, // Code modernization disabled
-   test-architect, // Coverage optimization disabled
+   testing-lead, // Coverage optimization disabled
   bug-triage-specialist // Error analysis disabled
   ]
   Validation Gaps:
@@ -5526,7 +5526,7 @@ def load_state(self, agent_name: str, session_id: str) -> Optional[Dict[str, Any
   disabled_agents: [
   security-auditor, // Vulnerability detection disabled
   refactorer, // Code modernization disabled
-   test-architect, // Coverage optimization disabled
+   testing-lead, // Coverage optimization disabled
   bug-triage-specialist // Error analysis disabled
   ]
   Validation Gaps:
@@ -5906,7 +5906,7 @@ I have successfully implemented the orchestrator-first boot sequence fixes with 
 🔄 Orchestrator-First Boot Sequence
 
 1. Modified .opencode/init.sh: Updated agent loading order to prioritize orchestrator first:
-   AGENTS=("orchestrator" "enforcer" "architect" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "test-architect")
+   AGENTS=("orchestrator" "enforcer" "architect" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "testing-lead")
 2. Created BootOrchestrator class (src/boot-orchestrator.ts):
    - Implements complete orchestrator-led initialization sequence
    - Loads orchestrator first, then session management, processors, and remaining agents
@@ -6138,7 +6138,7 @@ I have successfully implemented the orchestrator-first boot sequence fixes with 
    - Scoring algorithm considers change volume and dependencies
 10. Automatic agent selection and delegation ✅ VERIFIED
     - AgentDelegator selects optimal agents based on expertise and capacity
-    - 7 specialized agents: enforcer, architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+    - 7 specialized agents: enforcer, architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
     - Capacity management prevents overloading
 11. Conflict resolution mechanisms work ✅ VERIFIED
     - 3 resolution strategies: majority_vote, expert_priority, consensus
@@ -6399,7 +6399,7 @@ All requested features implemented with comprehensive multi-agent verification. 
 I have successfully fixed the session management test failures as requested. Here's a summary of the changes made:
 Root Causes Identified & Fixed:
 
-1. initializeSession returned agentCount: 0 → Fixed: Now initializes with all 8 default agents (enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect)
+1. initializeSession returned agentCount: 0 → Fixed: Now initializes with all 8 default agents (enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead)
 2. getSessionStatus returned active: false → Fixed: Sessions are now considered active when initialized (added isActive: true flag)
 3. cleanupSession deleted sessions entirely → Fixed: Now marks sessions inactive instead of deleting them, preserving session state for status queries
    Code Changes Made:
@@ -8838,7 +8838,7 @@ The fundamental issue: I was testing the StrRay framework but not using it. This
 
 - What I did: Created all tests myself sequentially
 - What I should have done: Define tasks → Delegate to specialized subagents → Coordinate results
-- Missing: test-architect, code-reviewer, security-auditor, architect working in parallel
+- Missing: testing-lead, code-reviewer, security-auditor, architect working in parallel
 
 3. No Orchestrator Utilization
 
@@ -8851,7 +8851,7 @@ The fundamental issue: I was testing the StrRay framework but not using it. This
   {
   id: 'agent-delegator-tests',
   description: 'Implement comprehensive agent delegator tests',
-  subagentType: 'test-architect',
+  subagentType: 'testing-lead',
   priority: 'high'
   },
   {
@@ -8884,7 +8884,7 @@ The fundamental issue: I was testing the StrRay framework but not using it. This
 
 1. Be in "Framework Mode": Use the orchestrator APIs instead of manual execution
 2. Define Task Dependencies: Use the TaskDefinition interface with proper dependencies
-3. Specify Subagent Types: Use test-architect, code-reviewer, etc. for specialization
+3. Specify Subagent Types: Use testing-lead, code-reviewer, etc. for specialization
 4. Monitor via Sessions: Track progress through session management
 5. Handle Conflicts: Let the orchestrator resolve subagent disagreements
    💡 Why This Matters
@@ -9423,18 +9423,18 @@ Based on initial exploration:
 - Architecture Patterns: Modular design with separation of concerns, supporting parallel test execution
 - Best Practices Research: Librarian agent researching delegation testing patterns, concurrent execution mocks, and session lifecycle validation approaches
   Delegation Strategy
-  I've assigned each major task to specialized test-architect subagents working in parallel for maximum efficiency:
+  I've assigned each major task to specialized testing-lead subagents working in parallel for maximum efficiency:
   Task 1: Enhanced Agent Delegator Tests (56.75% → 85%)
-  Assigned to: test-architect subagent (bg_5e731b81)
+  Assigned to: testing-lead subagent (bg_5e731b81)
   Scope: Fix 3 failing tests, add delegation logic coverage, capability matching, performance-based selection validation
   Task 2: Processor Manager Enhancement (73.54% → 85%)  
-  Assigned to: test-architect subagent (bg_2151f4f0)
+  Assigned to: testing-lead subagent (bg_2151f4f0)
   Scope: Registration/deregistration tests, concurrent execution, resource allocation, health monitoring
   Task 3: Session Management Integration (48.01% → 80%)
-  Assigned to: test-architect subagent (bg_2fb6a9d7)
+  Assigned to: testing-lead subagent (bg_2fb6a9d7)
   Scope: Lifecycle tests, cross-session state sharing, cleanup mechanisms, monitoring integration
   Task 4: Cross-Module Integration Tests
-  Assigned to: test-architect subagent (bg_ff45ead8)
+  Assigned to: testing-lead subagent (bg_ff45ead8)
   Scope: End-to-end flows (Boot→Orchestrator→Session, Security→Delegation, Processor→Session coordination)
   Quality Assurance
   Assigned to: code-reviewer subagent (bg_671e56e3)
@@ -9454,10 +9454,10 @@ Based on initial exploration:
 - Coverage Gaps: Integration tests exist but need expansion for edge cases, performance/load testing
   Delegated Tasks Status
   All 5 subagents are actively working in parallel:
-- Task 1 (Agent Delegator): bg_5e731b81 - Running (test-architect)
-- Task 2 (Processor Manager): bg_2151f4f0 - Running (test-architect)
-- Task 3 (Session Management): bg_2fb6a9d7 - Running (test-architect)
-- Task 4 (Cross-Module Integration): bg_ff45ead8 - Running (test-architect)
+- Task 1 (Agent Delegator): bg_5e731b81 - Running (testing-lead)
+- Task 2 (Processor Manager): bg_2151f4f0 - Running (testing-lead)
+- Task 3 (Session Management): bg_2fb6a9d7 - Running (testing-lead)
+- Task 4 (Cross-Module Integration): bg_ff45ead8 - Running (testing-lead)
 - QA Review: bg_671e56e3 - Running (code-reviewer)
   Next Steps
 - Awaiting completion notifications from all subagents
@@ -9475,14 +9475,14 @@ Based on initial exploration:
   - Estimated Coverage: 75-85% behavioral coverage across components
     🔄 Best Practices Research: In progress - Librarian agent gathering patterns for delegation logic, concurrent execution, and session lifecycle testing
     Delegated Tasks Status
-    All test-architect subagents actively implementing enhancements:
+    All testing-lead subagents actively implementing enhancements:
 - Task 1 (Agent Delegator): bg_5e731b81 - Running (implementing mock agents, delegation logic tests)
 - Task 2 (Processor Manager): bg_2151f4f0 - Running (adding registration/deregistration, concurrency tests)
 - Task 3 (Session Management): bg_2fb6a9d7 - Running (implementing lifecycle, state sharing tests)
 - Task 4 (Cross-Module Integration): bg_ff45ead8 - Running (creating end-to-end workflow tests)
 - QA Review: bg_671e56e3 - Running (preparing comprehensive validation framework)
   Key Implementation Insights
-  Based on analysis, the main blocker for AgentDelegator coverage is missing mock implementations for code-reviewer, security-auditor, and test-architect agents. The test-architect subagents are addressing this by implementing proper mocks and expanding test scenarios.
+  Based on analysis, the main blocker for AgentDelegator coverage is missing mock implementations for code-reviewer, security-auditor, and testing-lead agents. The testing-lead subagents are addressing this by implementing proper mocks and expanding test scenarios.
   All components show solid test foundations with high-quality patterns (Vitest + TypeScript, comprehensive mocking, edge case coverage). Phase 2 will focus on filling coverage gaps and adding integration/performance tests.
   Awaiting completion of all delegated tasks for final validation.
   Comprehensive Phase 2 Implementation Status
@@ -9525,7 +9525,7 @@ Based on initial exploration:
 - Best Practices Research: Complete - Detailed patterns for delegation, concurrency, and session lifecycle testing
 - Implementation Strategy: Parallel execution with 5 specialized subagents
   🔄 IN PROGRESS: Core Implementation Tasks
-  All 4 test-architect subagents actively implementing enhancements:
+  All 4 testing-lead subagents actively implementing enhancements:
 - Task 1: Agent Delegator Tests (bg_5e731b81) - Adding mock agents, delegation logic, capability matching
 - Task 2: Processor Manager Tests (bg_2151f4f0) - Concurrent execution, resource allocation, health monitoring
 - Task 3: Session Management Tests (bg_2fb6a9d7) - Lifecycle, state sharing, cleanup mechanisms
@@ -9545,7 +9545,7 @@ Based on initial exploration:
   Issue 2: Agent dependency assumptions causing "Agent code-reviewer not found" failures  
   Issue 3: External dependency assumptions preventing full test suite execution
   🔧 INITIATED: Critical Fix Implementation
-  New Task Launched: bg_efa3a8b1 (test-architect) - Fixing blocking integration test issues
+  New Task Launched: bg_efa3a8b1 (testing-lead) - Fixing blocking integration test issues
 - Resolve syntax error in integration tests
 - Implement proper agent dependency mocking
 - Add guards for external dependency assumptions
@@ -10283,7 +10283,7 @@ All critical blocking issues resolved:
   - code-reviewer.ts
   - security-auditor.ts
   - refactorer.ts
-  - test-architect.ts
+  - testing-lead.ts
 
 2. Stub Agent Design ✅
    Each stub agent:
@@ -10611,8 +10611,8 @@ The is now fully committed and pushed with:
 - Enforcement Layers: Multiple validation gates prevent architectural violations
 
 2. Agent Profile Analysis: Why I'm Not Using Orchestrator Processes
-   Looking at my .opencode/agents/test-architect.md profile:
-   name: test-architect
+   Looking at my .opencode/agents/testing-lead.md profile:
+   name: testing-lead
    description: Designs comprehensive test strategies, behavioral testing frameworks, and validation approaches. Triggers on test, coverage, validate, behavioral.
    model: openrouter/xai-grok-2-1212-fast-1
    temperature: 0.2
@@ -10669,13 +10669,13 @@ The is now fully committed and pushed with:
 - Integration Gap: Not connected to the OpenCode framework runtime
   Framework Usage Barriers:
 
-1. Profile Limitations: My test-architect role doesn't include orchestrator tools
+1. Profile Limitations: My testing-lead role doesn't include orchestrator tools
 2. Integration Requirements: Need OpenCode framework runtime connection
 3. Tool Mapping: Framework tools need to map to agent profile capabilities
 4. Activation Triggers: My triggers are test-specific, not framework-general
 5. Framework Integration Path Forward
    To Use StrRay Intrinsically:
-6. Profile Enhancement: Add orchestrator and delegation tools to test-architect profile
+6. Profile Enhancement: Add orchestrator and delegation tools to testing-lead profile
 7. Framework Connection: Integrate with OpenCode runtime environment
 8. Tool Mapping: Map framework tools to agent capabilities
 9. Trigger Expansion: Include framework orchestration keywords
@@ -10711,7 +10711,7 @@ The StrRay framework's success demonstrates:
 - maxSteps: 20 - Controlled compliance iterations
 - mode: subagent - Specialized compliance focus
 - Read-only permissions - Secure compliance monitoring
-- Task integration - Code-reviewer and test-architect coordination
+- Task integration - Code-reviewer and testing-lead coordination
 
 2. 🏗️ Architect - Enterprise System Designer
 
@@ -11030,7 +11030,7 @@ The orchestrator's higher step limit reflects its role as:
 
 # Example: Test-Architect Profile Enhancement
 
-name: test-architect
+name: testing-lead
 
 # ... existing config ...
 
@@ -11230,7 +11230,7 @@ enabled: true
 tracking: ["code-quality-trends", "review-efficiency"]
 Test Architect Integration:
 
-# .opencode/agents/test-architect.md
+# .opencode/agents/testing-lead.md
 
 monitoring:
 enabled: true
@@ -11286,7 +11286,7 @@ Boot Sequence Integration:
 // In boot-orchestrator.ts
 private async validateAgentIntegration(): Promise<boolean> {
 const agents = ['security-auditor', 'enforcer', 'architect', 'orchestrator',
-'code-reviewer', 'test-architect', 'bug-triage-specialist', 'refactorer'];
+'code-reviewer', 'testing-lead', 'bug-triage-specialist', 'refactorer'];
 
 for (const agent of agents) {
 // Validate all facilities integrated
@@ -11685,7 +11685,7 @@ Files Created/Modified:
 - performance-impact (analysis, medium priority)
 
 2. Test Architect Agent Integration
-   YAML Configuration (.opencode/agents/test-architect.yml):
+   YAML Configuration (.opencode/agents/testing-lead.yml):
    monitoring:
    enabled: true
    metrics: - coverage_trends - test_execution_time - flaky_test_rate - test_failure_patterns - integration_test_coverage
@@ -11715,7 +11715,7 @@ Files Created/Modified:
 📊 Subagent Validation Results
 ✅ Librarian Agent: Configuration Validation
 
-- YAML File Creation: ✅ Both code-reviewer.yml and test-architect.yml created
+- YAML File Creation: ✅ Both code-reviewer.yml and testing-lead.yml created
 - Monitoring Configuration: ✅ Agent-specific metrics and alert thresholds configured
 - Analytics Configuration: ✅ Performance patterns and predictive models configured
 - YAML Syntax: ✅ Valid syntax and OpenCode schema compliance
@@ -11787,7 +11787,7 @@ Commit: 9650f1e - "Phase 3 Complete: Code Reviewer + Test Architect Monitoring +
 Files Created:
 
 - .opencode/agents/code-reviewer.yml (92 lines)
-- .opencode/agents/test-architect.yml (92 lines)
+- .opencode/agents/testing-lead.yml (92 lines)
   Changes:
 - Created comprehensive YAML configuration files for both agents
 - Added monitoring configurations with agent-specific metrics and alert thresholds
@@ -11901,7 +11901,7 @@ The StrRay Framework is now enterprise-grade production-ready with:
 - code-reviewer: Monitoring + analytics capabilities
 - security-auditor: Compliance + vulnerability detection
 - refactorer: Technical debt elimination + consolidation
-- test-architect: Coverage optimization + behavioral testing
+- testing-lead: Coverage optimization + behavioral testing
   🔧 CONFIGURATION DETAILS:
 - All agents use openrouter/xai-grok-2-1212-fast-1 model
 - Subagent mode with temperature 0.1 for consistency
@@ -11921,7 +11921,7 @@ The StrRay Framework is now enterprise-grade production-ready with:
 - code-reviewer: Monitoring + analytics + quality assurance + security review
 - security-auditor: Compliance monitoring + vulnerability detection + threat analysis
 - refactorer: Technical debt elimination + code consolidation + surgical refactoring
-- test-architect: Coverage optimization + behavioral testing + performance validation
+- testing-lead: Coverage optimization + behavioral testing + performance validation
   ✅ TECHNICAL IMPLEMENTATION:
 - Created src/agents/types.ts with AgentConfig interface
 - Updated all 8 agent files to export proper AgentConfig objects
@@ -11969,7 +11969,7 @@ The StrRay Framework is now enterprise-grade production-ready with:
   - code-reviewer (monitoring + analytics)
   - security-auditor (compliance + vulnerability detection)
   - refactorer (technical debt elimination + consolidation)
-  - test-architect (coverage optimization + behavioral testing)
+  - testing-lead (coverage optimization + behavioral testing)
     Technical Implementation:
 - Created src/agents/types.ts with proper AgentConfig interface
 - Updated all 8 agent files with comprehensive system prompts and configurations
@@ -12032,7 +12032,7 @@ Agent Loading Status: ✅ SUCCESS
 ✅ code-reviewer: Loaded with monitoring & analytics capabilities
 ✅ security-auditor: Loaded with compliance & vulnerability detection
 ✅ refactorer: Loaded with technical debt elimination & consolidation
-✅ test-architect: Loaded with coverage optimization & behavioral testing
+✅ testing-lead: Loaded with coverage optimization & behavioral testing
 Framework Integration: ✅ COMPLETE
 
 - 8/8 agents properly registered in builtinAgents registry
@@ -12088,7 +12088,7 @@ Phase 11: Test agent loading, functionality, and integration with OpenCode frame
   🧪 Testing StrRay Agent Integration with OpenCode Framework
   📦 Test 1: Agent Loading
   Available agents: 8/8 ✅
-  Loaded agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+  Loaded agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
   ⚙️ Test 2: Agent Configuration Validation
   ✅ All 8 agents have valid configurations
   🔗 Test 3: Framework Integration Check
@@ -12217,7 +12217,7 @@ Major documentation corrections accomplished:
   Maximum steps reached - cannot execute further tools. Ready for user direction on final documentation update. 🤖
   🎯 PHASE 12 COMPLETION: All YAML agent configurations converted to TypeScript
   ✅ FINAL DOCUMENTATION UPDATE:
-- Converted test-architect YAML block to TypeScript AgentConfig format
+- Converted testing-lead YAML block to TypeScript AgentConfig format
 - All 8 StrRay agents now show proper TypeScript implementation examples
 - Eliminated all incorrect YAML agent configuration references
   ✅ COMPLETE AGENT DOCUMENTATION OVERHAUL:
@@ -12228,7 +12228,7 @@ Major documentation corrections accomplished:
 - code-reviewer: ✅ TypeScript AgentConfig example
 - security-auditor: ✅ TypeScript AgentConfig example
 - refactorer: ✅ TypeScript AgentConfig example
-- test-architect: ✅ TypeScript AgentConfig example
+- testing-lead: ✅ TypeScript AgentConfig example
   ✅ DOCUMENTATION CONSISTENCY ACHIEVED:
 - All agent examples now show correct TypeScript AgentConfig objects
 - Clear explanations that OpenCode loads from TypeScript modules
@@ -12239,7 +12239,7 @@ Major documentation corrections accomplished:
   ⚡ Framework Integration: Properly explained with ES module loading
   Codex Terms Enforced: All 55 Universal Development Codex v1.1.1 terms
   Final Documentation: Complete and accurate for production use"
-  [master 4954316] docs: Complete Phase 12 - Convert final test-architect YAML block to TypeScript AgentConfig format
+  [master 4954316] docs: Complete Phase 12 - Convert final testing-lead YAML block to TypeScript AgentConfig format
   1 file changed, 176 insertions(+), 65 deletions(-)
   🎉 PHASE 12 (User's "Phase 13") COMPLETED SUCCESSFULLY
   All documentation now accurately reflects the correct TypeScript AgentConfig implementation approach.
@@ -12249,7 +12249,7 @@ Major documentation corrections accomplished:
 ✅ PHASE 12 FINAL ACCOMPLISHMENTS
 ✅ Subagent Verification
 
-- Librarian Agent: ✅ Verified final test-architect YAML block conversion
+- Librarian Agent: ✅ Verified final testing-lead YAML block conversion
 - Documentation Audit: ✅ Confirmed all YAML agent configurations eliminated
   ✅ Complete YAML-to-TypeScript Conversion
   Successfully converted ALL 8 StrRay agent YAML blocks to proper TypeScript AgentConfig format in docs/agents/COMPREHENSIVE_AGENTS.md:
@@ -12322,7 +12322,7 @@ Phase 1-4: Framework Integration & Agent Creation
 - ✅ Validated agent registry and loading mechanisms
   Phase 5-8: Specialized Agent Implementation
 - ✅ Created enforcer, architect, orchestrator, bug-triage-specialist
-- ✅ Implemented code-reviewer, security-auditor, refactorer, test-architect
+- ✅ Implemented code-reviewer, security-auditor, refactorer, testing-lead
 - ✅ All agents follow OpenCode AgentConfig interface standards
 - ✅ Comprehensive system prompts with role-appropriate capabilities
   Phase 9-12: Validation & Documentation
@@ -12406,7 +12406,7 @@ Phase 1: Framework Integration ✅
 - ✅ code-reviewer.ts: AgentConfig export with monitoring & analytics
 - ✅ security-auditor.ts: AgentConfig export with compliance & vulnerability detection
 - ✅ refactorer.ts: AgentConfig export with technical debt elimination & consolidation
-- ✅ test-architect.ts: AgentConfig export with coverage optimization & behavioral testing
+- ✅ testing-lead.ts: AgentConfig export with coverage optimization & behavioral testing
   Phase 10: Registry & Loading ✅
 - ✅ All 8 agents properly imported in src/agents/index.ts
 - ✅ builtinAgents registry exports all agents correctly
@@ -12435,7 +12435,7 @@ Agent File Verification ✅
 ├── code-reviewer.ts ✅ AgentConfig export
 ├── security-auditor.ts ✅ AgentConfig export
 ├── refactorer.ts ✅ AgentConfig export
-├── test-architect.ts ✅ AgentConfig export
+├── testing-lead.ts ✅ AgentConfig export
 ├── index.ts ✅ Complete registry
 └── types.ts ✅ AgentConfig interface
 Registry Validation ✅
@@ -12530,13 +12530,13 @@ StrRay Framework Enterprise Agent System: FULLY OPERATIONAL
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Refactorer, a specialized agent..."
   ✅ Agent refactorer: PASSES OpenCode standards
-  🔍 Testing agent: test-architect
-  ✅ Required property: name = "test-architect"
+  🔍 Testing agent: testing-lead
+  ✅ Required property: name = "testing-lead"
   ✅ Required property: model = "openrouter/xai-grok-2-1212-fast-1"
   ✅ Required property: description = "StrRay Framework test architect with coverage opti..."
   ✅ Required property: mode = "subagent"
   ✅ Required property: system = "You are the StrRay Test Architect, a specialized a..."
-  ✅ Agent test-architect: PASSES OpenCode standards
+  ✅ Agent testing-lead: PASSES OpenCode standards
   📊 FINAL VALIDATION RESULTS
   ============================================================
   ✅ Valid Agents: 8/8
@@ -12561,7 +12561,7 @@ All 8 agents pass 100% compliance with OpenCode standards:
 - ✅ code-reviewer: All required properties present, valid configuration
 - ✅ security-auditor: All required properties present, valid configuration
 - ✅ refactorer: All required properties present, valid configuration
-- ✅ test-architect: All required properties present, valid configuration
+- ✅ testing-lead: All required properties present, valid configuration
   Required Properties Validation ✅
   Each agent correctly implements all mandatory AgentConfig properties:
   | Property | Status | Validation |
@@ -12602,7 +12602,7 @@ Framework Loading Mechanism ✅
   "code-reviewer": codeReviewer, // ✅ Loaded
   "security-auditor": securityAuditor, // ✅ Loaded
   refactorer, // ✅ Loaded
-  "test-architect": testArchitect // ✅ Loaded
+  "testing-lead": testArchitect // ✅ Loaded
   };
   Configuration Standards ✅
 - ✅ Model Selection: All agents use openrouter/xai-grok-2-1212-fast-1 (compatible with OpenCode)
@@ -14333,7 +14333,7 @@ Successfully unborked a complex AI agent orchestration framework through systema
   🎯 Phase 5-8: Advanced Fixes & Validation
 - ✅ Final Test Corrections: Fixed attribute naming, validation logic, test expectations
 - ✅ Complete Validation: All compliance tests passing, framework integrity verified
-- ✅ Subagent Double-Checking: Comprehensive validation by librarian and oracle agents
+- ✅ Subagent Double-Checking: Comprehensive validation by researcher and strategist agents
 - ✅ Production Readiness: Full framework operational with 99.6% error prevention
 
 ---
@@ -14737,7 +14737,7 @@ Mission Accomplishment Summary:
 - ✅ Daily Maintenance Burden: Eliminated through systematic fixes
 - ✅ Enterprise Architecture: 8-agent orchestration with 99.6% error prevention
 - ✅ Production Deployment: Ready for immediate enterprise use
-- ✅ Subagent Validation: Double-checked by librarian and direct validation
+- ✅ Subagent Validation: Double-checked by researcher and direct validation
   Key Achievements:
 - From Chaos to Order: Transformed daily maintenance nightmare into stable system
 - 99.6% Error Prevention: Systematic validation prevents runtime errors
@@ -18499,14 +18499,14 @@ Phase 1A Progress Summary - Maximum Steps Reached
    🔄 Remaining Tasks (3 agents + core implementation):
 6. refactorer.md - Add processor pipeline configuration
 7. security-auditor.md - Add processor pipeline configuration
-8. test-architect.md - Add processor pipeline configuration
+8. testing-lead.md - Add processor pipeline configuration
 9. Agent Base Classes - Update to support pre/post processor execution
 10. Logging Integration - Connect all agents to REFACTORING_LOG.md
 11. Pre-commit Hooks - Ensure processor validation runs
 12. QA Processors - Add codex validation, security audit, performance monitoring
 13. Integration Testing - Test pipeline with all 8 agents
     🎯 Next Steps Recommendation:
-    Continue with the remaining 3 agents (refactorer, security-auditor, test-architect) using the same processor pipeline format, then implement the core agent base class updates to actually execute the processors. The standardized format includes:
+    Continue with the remaining 3 agents (refactorer, security-auditor, testing-lead) using the same processor pipeline format, then implement the core agent base class updates to actually execute the processors. The standardized format includes:
 
 - Pre-processors: preValidate (100), codexCompliance (90), errorBoundary (80)
 - Post-processors: stateValidation (100), testExecution (90), regressionTesting (80)
@@ -18516,7 +18516,7 @@ Phase 1A Progress Summary - Maximum Steps Reached
   Phase 1A Implementation Progress - Maximum Steps Reached
   ✅ Completed Tasks (4/6):
 
-1. Agent Pipeline Configuration ✅ - Added processor pipeline configs to all 8 agents (orchestrator, architect, enforcer, bug-triage-specialist, code-reviewer, refactorer, security-auditor, test-architect)
+1. Agent Pipeline Configuration ✅ - Added processor pipeline configs to all 8 agents (orchestrator, architect, enforcer, bug-triage-specialist, code-reviewer, refactorer, security-auditor, testing-lead)
 2. Agent Base Class Updates ✅ - Enhanced BaseAgent class with:
    - Processor pipeline support (lazy-loaded ProcessorManager)
    - Pre/post processor execution methods
@@ -18546,7 +18546,7 @@ Phase 1A Progress Summary - Maximum Steps Reached
 
 - Updated all 8 agent YAML files with standardized processor pipeline configurations
 - Standardized format: Separate pre_processors and post_processors arrays with priority, timeout, and enabled flags
-- Agents configured: orchestrator, architect, enforcer, bug-triage-specialist, code-reviewer, refactorer, security-auditor, test-architect
+- Agents configured: orchestrator, architect, enforcer, bug-triage-specialist, code-reviewer, refactorer, security-auditor, testing-lead
 
 2. ✅ Agent Base Class Updates
 
@@ -19021,7 +19021,7 @@ Git History Analysis: The lite framework's pre-commit-guardian.md contains the o
   Phase 3: Complete Python Backend (MEDIUM)
   Current Status: 40% complete with excellent architecture but missing specialized agents.
   3.1 Implement Missing Specialized Agents
-- 8 agents needed: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+- 8 agents needed: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
 - BaseAgent exists: Well-implemented foundation for all agents
 - Integration points: Designed for OpenCode compatibility
   3.2 Add Real AI Service Integrations
@@ -19157,7 +19157,7 @@ Week 1: Boot Process Restoration
   - orchestrator.yml - Coordination, workflow patterns
   - code-reviewer.yml - Quality assessment, security review
   - refactorer.yml - Technical debt elimination
-  - test-architect.yml - Coverage optimization
+  - testing-lead.yml - Coverage optimization
   - bug-triage-specialist.yml - Error analysis
 - ✅ Fixed YAML syntax errors
 - ✅ ConfigManager loads and merges YAML configs
@@ -19960,7 +19960,7 @@ Create tests for code-reviewer.ts - quality assessment, LSP integration, perform
 [ ]
 Create tests for refactorer.ts - technical debt elimination, AST manipulation, consolidation metrics
 [ ]
-Create tests for test-architect.ts - testing strategy design, coverage optimization, parallel execution
+Create tests for testing-lead.ts - testing strategy design, coverage optimization, parallel execution
 [ ]
 Create tests for bug-triage-specialist.ts - root cause analysis, surgical fixes, impact assessment
 [ ]
@@ -20005,7 +20005,7 @@ Create tests for index.ts - agent registry completeness, export consistency, ini
 
 🔄 Remaining Agent Tests (7/11)
 Next Priority Order: 6. security-auditor.ts - Vulnerability detection, OWASP compliance 7. code-reviewer.ts - Quality assessment, LSP integration  
-8. refactorer.ts - Technical debt elimination, AST manipulation 9. test-architect.ts - Testing strategy design, parallel execution 10. bug-triage-specialist.ts - Root cause analysis, surgical fixes 11. index.ts - Agent registry completeness, exports validation
+8. refactorer.ts - Technical debt elimination, AST manipulation 9. testing-lead.ts - Testing strategy design, parallel execution 10. bug-triage-specialist.ts - Root cause analysis, surgical fixes 11. index.ts - Agent registry completeness, exports validation
 
 ---
 
@@ -20066,7 +20066,7 @@ Immediate (Continue with current session):
 ---
 
 🔄 Remaining Agent Tests (4/11)
-Next Priority Order: 8. refactorer.ts - Technical debt elimination, AST manipulation 9. test-architect.ts - Testing strategy design, parallel execution  
+Next Priority Order: 8. refactorer.ts - Technical debt elimination, AST manipulation 9. testing-lead.ts - Testing strategy design, parallel execution  
 10. bug-triage-specialist.ts - Root cause analysis, surgical fixes 11. index.ts - Agent registry completeness, exports validation
 
 ---
@@ -20119,7 +20119,7 @@ Next Priority Order: 8. refactorer.ts - Technical debt elimination, AST manipula
 Continue with remaining 4 agents:
 
 - refactorer.ts - Technical debt elimination (AST manipulation focus)
-- test-architect.ts - Testing strategy design (parallel execution focus)
+- testing-lead.ts - Testing strategy design (parallel execution focus)
 - bug-triage-specialist.ts - Root cause analysis (surgical fixes focus)
 - index.ts - Agent registry validation (exports completeness focus)
   Post-Completion Actions:
@@ -20171,7 +20171,7 @@ Final Status: 11/11 Agent Tests Complete (100%)
 6. ✅ security-auditor.ts (32 tests) - Vulnerability detection & OWASP compliance
 7. ✅ code-reviewer.ts (32 tests) - Quality assessment & LSP integration
 8. ✅ refactorer.ts (34 tests) - Technical debt elimination & AST manipulation
-9. ✅ test-architect.ts (34 tests) - Testing strategy & parallel execution
+9. ✅ testing-lead.ts (34 tests) - Testing strategy & parallel execution
 10. ✅ bug-triage-specialist.ts (34 tests) - Root cause analysis & surgical fixes
 11. ✅ index.ts (19 tests) - Agent registry completeness & exports
 
@@ -20474,7 +20474,7 @@ Production Readiness: 85% ✅
 - src/**tests**/agents/security-auditor.test.ts - Vulnerability detection & OWASP
 - src/**tests**/agents/code-reviewer.test.ts - Quality assessment & LSP integration
 - src/**tests**/agents/refactorer.ts - Technical debt elimination & AST manipulation
-- src/**tests**/agents/test-architect.ts - Testing strategy design & parallel execution
+- src/**tests**/agents/testing-lead.ts - Testing strategy design & parallel execution
 - src/**tests**/agents/bug-triage-specialist.ts - Root cause analysis & surgical fixes
 - src/**tests**/agents/index.test.ts - Agent registry completeness & exports
   🔧 Evaluation System Enhancement
@@ -20532,11 +20532,11 @@ The StrRay Framework now has enterprise-grade quality assurance with:
 - Impact: Phase 1 evaluation now fully functional
   🔄 NEXT: PRIMARY PRIORITY #2 - Complete Agent Integration
   Status: 8/11 agents tested (73% complete)
-- ✅ base-agent, types, enforcer, orchestrator, architect, security-auditor, code-reviewer, refactorer, test-architect, bug-triage-specialist, index
+- ✅ base-agent, types, enforcer, orchestrator, architect, security-auditor, code-reviewer, refactorer, testing-lead, bug-triage-specialist, index
 - 🔄 Remaining: 3 agents (27% remaining)
   - refactorer.ts ❌ (already completed above)
   - Wait, let me check - refactorer was completed, so actually we have:
-  - Remaining: test-architect.ts, bug-triage-specialist.ts (already completed), and index.ts (already completed)
+  - Remaining: testing-lead.ts, bug-triage-specialist.ts (already completed), and index.ts (already completed)
     Wait, let me verify the actual status. From my earlier summary:
 - ✅ base-agent.ts (11 tests)
 - ✅ types.ts (12 tests)
@@ -20546,7 +20546,7 @@ The StrRay Framework now has enterprise-grade quality assurance with:
 - ✅ security-auditor.ts (32 tests)
 - ✅ code-reviewer.ts (32 tests)
 - ✅ refactorer.ts (34 tests)
-- ✅ test-architect.ts (34 tests)
+- ✅ testing-lead.ts (34 tests)
 - ✅ bug-triage-specialist.ts (34 tests)
 - ✅ index.ts (19 tests)
   Actually, ALL 11 agents are now complete! Let me verify...
@@ -20555,11 +20555,11 @@ The StrRay Framework now has enterprise-grade quality assurance with:
 - ✅ test-types: completed
 - ✅ test-enforcer: completed
 - ✅ test-orchestrator: completed
-- ✅ test-architect: completed
+- ✅ testing-lead: completed
 - ✅ test-security-auditor: completed
 - ✅ test-code-reviewer: completed
 - ✅ test-refactorer: completed
-- ✅ test-test-architect: completed
+- ✅ test-testing-lead: completed
 - ✅ test-bug-triage-specialist: completed
 - ✅ test-index: completed
   ALL AGENTS ARE COMPLETE! 🎉
@@ -20821,7 +20821,7 @@ npm run eval:processors # Processor activation
    Result: Zero false alerts, clean session lifecycle management
 2. ✅ AI Agent Testing - COMPLETE
    Achievement: 8/11 AI agents fully tested (272 comprehensive tests)
-   Coverage: Base-agent, types, enforcer, orchestrator, architect, security-auditor, code-reviewer, refactorer, test-architect, bug-triage-specialist, index
+   Coverage: Base-agent, types, enforcer, orchestrator, architect, security-auditor, code-reviewer, refactorer, testing-lead, bug-triage-specialist, index
    Quality: Type safety, behavioral validation, codex compliance
 3. ✅ Framework Evaluation System - COMPLETE
    Scripts Added: Phase 1 verification, boot health check, processor activation
@@ -20863,7 +20863,7 @@ The StrRay Framework is now enterprise-ready with:
   All major technical debt resolved and framework production-ready! 🚀
   The validation command npm run validate:all now provides complete confidence in framework health and readiness for production deployment.
   🔍 FRAMEWORK COMPLIANCE AUDIT - ISSUES IDENTIFIED
-  You are absolutely correct. The librarian agent analysis reveals critical framework compliance gaps that I need to address immediately.
+  You are absolutely correct. The researcher agent analysis reveals critical framework compliance gaps that I need to address immediately.
 
 ---
 
@@ -21018,20 +21018,20 @@ Going Forward: Strict Framework Compliance
 1. 🎯 Surgical Precision: Subagents are expensive resources - I only call them for specific, complex tasks where their specialization provides clear value
 2. ⚡ Performance Optimization: Background tasks run in parallel but consume resources. I reserve them for:
    - Multi-file analysis (explore agent)
-   - External library research (librarian agent)
+   - External library research (researcher agent)
    - Complex UI/UX work (frontend-ui-ux-engineer)
-   - Architecture decisions (oracle)
+   - Architecture decisions (strategist)
 3. 🔄 Context Preservation: Direct tools maintain conversation context better than spawning subagents
 4. 📊 Cost-Benefit Analysis: Most tasks (75%+) can be solved with direct tools faster and more efficiently
    When I DO Use Subagents:
    // ✅ COMPLEX MULTI-FILE ANALYSIS
    background_task(agent="explore", prompt="Find auth patterns across 20+ files")
    // ✅ EXTERNAL LIBRARY RESEARCH  
-   background_task(agent="librarian", prompt="How does React Query handle caching?")
+   background_task(agent="researcher", prompt="How does React Query handle caching?")
    // ✅ FRONTEND VISUAL CHANGES
    background_task(agent="frontend-ui-ux-engineer", prompt="Redesign dashboard layout")
    // ✅ ARCHITECTURE DECISIONS
-   background_task(agent="oracle", prompt="Should we use Context API or Redux?")
+   background_task(agent="strategist", prompt="Should we use Context API or Redux?")
    When I DON'T Use Subagents:
 
 - Single file operations
@@ -21048,7 +21048,7 @@ Going Forward: Strict Framework Compliance
 5. bug-triage-specialist - Error investigation & fixes
 6. security-auditor - Vulnerability detection
 7. refactorer - Technical debt elimination
-8. test-architect - Testing strategy & coverage
+8. testing-lead - Testing strategy & coverage
    🎪 Why This Design?
    StrRay Framework Principle: "Orchestrate when beneficial, execute directly when sufficient"
 
@@ -21069,7 +21069,7 @@ Going Forward: Strict Framework Compliance
   ✅ code-reviewer (subagent) - Quality assessment & standards
   ✅ security-auditor (subagent) - Vulnerability detection
   ✅ refactorer (subagent) - Technical debt elimination
-  ✅ test-architect (subagent) - Testing strategy & coverage
+  ✅ testing-lead (subagent) - Testing strategy & coverage
   ⚙️ Multi-Agent Orchestration Configuration
   Orchestrator Settings
   {
@@ -21550,7 +21550,7 @@ The Framework is Enterprise-Grade, But I'm Operating Like a Senior Engineer
   | HEAD | ✅ | ✅ | ✅ | ✅ | ✅ Complete |
   🎪 Current HEAD Configuration Status
   ✅ StrRay Framework Agents (8/8):
-- enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+- enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
   ✅ All Agents Configured As:
 - mode: "subagent" (correct for OpenCode integration)
 - Full tool access with appropriate permissions
@@ -21987,8 +21987,8 @@ Current State:
   The framework successfully implements systematic error prevention with the Universal Development Codex, featuring 8 specialized AI agents and comprehensive enterprise monitoring capabilities. All components are properly initialized, tested, and validated.
   Current Agent Count Analysis
   Current Configuration (13 agents total):
-- 8 StrRay Framework agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
-- 5 General OpenCode agents: librarian, explore, frontend-ui-ux-engineer, document-writer, multimodal-looker
+- 8 StrRay Framework agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
+- 5 General OpenCode agents: researcher, explore, frontend-ui-ux-engineer, tech-writer, multimodal-looker
   Historical Maximum (11-12 agents):
   From the MCP servers, there were additional agents/knowledge skills that got removed:
 - testing-strategy - Test planning and strategy
@@ -21998,14 +21998,14 @@ Current State:
 - git-workflow - Version control
 - api-design - API development
   Recommendation: Enhanced Test Architect with Auto-Creation
-  Yes, we should enhance the test-architect agent to auto-create tests when called with a "create" tool. Here's the proposed implementation:
-  Current test-architect Capabilities:
+  Yes, we should enhance the testing-lead agent to auto-create tests when called with a "create" tool. Here's the proposed implementation:
+  Current testing-lead Capabilities:
 - ✅ Test strategy design
 - ✅ Coverage optimization
 - ✅ Behavioral testing focus
 - ❌ No automatic test file creation
   Proposed Enhancement:
-  // Add to test-architect tools
+  // Add to testing-lead tools
   tools: {
   include: ["read", "grep", "lsp_*", "run_terminal_cmd", "run_terminal_cmd", "create"],
   }
@@ -22029,9 +22029,9 @@ Current State:
 - Consistency: Standardized test structure across codebase
 - Developer Productivity: No manual test file creation
 - Quality Assurance: Automatic test generation reduces human error
-  Would you like me to implement this enhancement to the test-architect agent? It would add automatic test creation capabilities while maintaining the existing test strategy and coverage optimization features.
+  Would you like me to implement this enhancement to the testing-lead agent? It would add automatic test creation capabilities while maintaining the existing test strategy and coverage optimization features.
   ✅ Enhanced Test-Architect Agent Implementation Complete!
-  I have successfully implemented automatic test generation capabilities for the test-architect agent. Here's what was accomplished:
+  I have successfully implemented automatic test generation capabilities for the testing-lead agent. Here's what was accomplished:
   🔧 Key Enhancements Made
 
 1. Test-Architect Agent Upgrade
@@ -22097,8 +22097,8 @@ Current State:
 
 - Simply create new source files using the write tool
 - Test files are generated automatically in the background
-  Manual (via test-architect agent):
-- Call the test-architect agent directly for existing files
+  Manual (via testing-lead agent):
+- Call the testing-lead agent directly for existing files
 - Specify test type, framework, and other options
   📊 Coverage & Quality
 - File Type Support: TypeScript, JavaScript, React components
@@ -22113,7 +22113,7 @@ Current State:
 3. Developer Productivity - No manual test file creation
 4. Quality Assurance - Framework ensures test coverage
 5. Framework Integration - Seamless with existing StrRay workflow
-   The test-architect agent now provides comprehensive automatic test generation, transforming the development workflow to include instant test coverage for all new code! 🎯
+   The testing-lead agent now provides comprehensive automatic test generation, transforming the development workflow to include instant test coverage for all new code! 🎯
    The framework now achieves true test-driven development with automatic test scaffolding, maintaining the 85%+ coverage target while dramatically improving developer efficiency.
    ✅ Yes, Automatically Generated Tests Are Included in the Test Suite!
    The smart test runner automatically discovers and executes all generated test files. Here's how it works:
@@ -22187,7 +22187,7 @@ Current State:
 
 5. Test Suite Updates
 
-- ✅ Updated Test Expectations: Modified test-architect.test.ts for new capabilities
+- ✅ Updated Test Expectations: Modified testing-lead.test.ts for new capabilities
 - ✅ All Tests Passing: 34/34 tests pass with enhanced functionality
 - ✅ Quality Assurance: Verified auto-generation works correctly
   🎯 Auto-Test Generation Features
@@ -22221,7 +22221,7 @@ Current State:
 4. Framework Integration: Seamless with existing StrRay workflow
 5. Quality Assurance: Automatic test generation with 85%+ coverage targets
    🎉 Implementation Complete!
-   The test-architect agent now provides automatic test generation as a core capability. When developers create new source files, comprehensive test files are automatically generated, ensuring instant test coverage and consistent testing practices throughout the entire StrRay Framework ecosystem.
+   The testing-lead agent now provides automatic test generation as a core capability. When developers create new source files, comprehensive test files are automatically generated, ensuring instant test coverage and consistent testing practices throughout the entire StrRay Framework ecosystem.
    The framework now achieves true test-driven development with automatic test scaffolding! 🚀
    ✅ COMPLETE: StrRay Framework Enhancement - All Tasks Accomplished!
    🎯 Major Achievements
@@ -22347,7 +22347,7 @@ All changes have been committed and pushed to the remote repository. Here's a fi
 2. Framework Alignment ✅
    - All 8 StrRay subagents correctly configured with specialized, limited tool sets
    - Sisyphus now properly delegates instead of doing everything itself
-   - OpenCode agents (librarian, explore, etc.) correctly configured as basic model-only agents
+   - OpenCode agents (researcher, explore, etc.) correctly configured as basic model-only agents
      Current Agent Configuration Status:
      | Agent | Mode | Tools Count | Status |
      |-------|------|-------------|--------|
@@ -22359,7 +22359,7 @@ All changes have been committed and pushed to the remote repository. Here's a fi
      | code-reviewer | subagent | 6 (review tools) | ✅ Correct |
      | security-auditor | subagent | 5 (security tools) | ✅ Correct |
      | refactorer | subagent | 7 (refactor tools) | ✅ Correct |
-     | test-architect | subagent | 6 (test tools) | ✅ Correct |
+     | testing-lead | subagent | 6 (test tools) | ✅ Correct |
      The framework now properly enforces the delegate-first architecture where Sisyphus orchestrates and delegates specialized work to appropriate subagents, rather than having god-like permissions.
      ✅ Agent .yml Files Verification Complete
      Issues Found & Fixed:
@@ -22380,7 +22380,7 @@ All changes have been committed and pushed to the remote repository. Here's a fi
      | code-reviewer | ✅ code-reviewer.yml | ✅ code-reviewer.md | ✅ Complete | Quality assessment, compliance validation |
      | security-auditor | ✅ security-auditor.yml | ✅ security-auditor.md | ✅ Complete | Vulnerability detection, threat analysis |
      | refactorer | ✅ refactorer.yml | ✅ refactorer.md | ✅ Complete | Technical debt elimination, code consolidation |
-     | test-architect | ✅ test-architect.yml | ✅ test-architect.md | ✅ Complete | Testing strategy, coverage optimization |
+     | testing-lead | ✅ testing-lead.yml | ✅ testing-lead.md | ✅ Complete | Testing strategy, coverage optimization |
      Configuration Consistency Verified:
 
 - All YAML files: Follow consistent structure (logging, processor_pipeline, capabilities, error_handling, etc.)
@@ -22441,7 +22441,7 @@ Configuration Files:
   ✅ Fixed During Review:
 - Sisyphus had excessive permissions (reduced from 60+ to 10 tools)
 - Missing agent .yml files (created enforcer.yml, security-auditor.yml)
-- Incomplete agent configurations (added oracle, fixed disabled agents)
+- Incomplete agent configurations (added strategist, fixed disabled agents)
 - Version inconsistencies (standardized to v1.1.1)
   ⚠️ Remaining Issues:
 
@@ -22501,10 +22501,10 @@ Configuration Files:
   | code-reviewer | subagent | ✅ | review tools | ✅ Enabled | Quality assessment |
   | security-auditor | subagent | ✅ | security tools | ✅ Enabled | Vulnerability detection |
   | refactorer | subagent | ✅ | refactor tools | ✅ Enabled | Code consolidation |
-  | test-architect | subagent | ✅ | test tools | ✅ Enabled | Testing strategy |
-  | librarian | subagent | ✅ | search tools | ✅ Enabled | Documentation search |
+  | testing-lead | subagent | ✅ | test tools | ✅ Enabled | Testing strategy |
+  | researcher | subagent | ✅ | search tools | ✅ Enabled | Documentation search |
   | explore | subagent | ✅ | exploration tools | ✅ Enabled | Codebase analysis |
-  | oracle | subagent | ✅ | reasoning tools | ✅ Enabled | Strategic guidance |
+  | strategist | subagent | ✅ | reasoning tools | ✅ Enabled | Strategic guidance |
   | multimodal-looker | subagent | ✅ | look_at tool | ✅ Enabled | Media file analysis |
   | Total: 14 agents | 13 subagents + 1 primary | All 13 with routing | Specialized tools | All enabled |
   multimodal-looker Capabilities
@@ -22524,17 +22524,17 @@ Configuration Files:
   | code-reviewer | ✅ code-reviewer.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
   | security-auditor | ✅ security-auditor.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
   | refactorer | ✅ refactorer.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
-  | test-architect | ✅ test-architect.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
-  | librarian | ✅ librarian.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | testing-lead | ✅ testing-lead.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | researcher | ✅ researcher.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
   | explore | ✅ explore.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
-  | oracle | ✅ oracle.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
+  | strategist | ✅ strategist.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
   | multimodal-looker | ✅ multimodal-looker.yml | 1.0.0 | openrouter/xai-grok-2-1212-fast-1 | ✅ Complete |
   Fixed: Missing .yml Files Created
   | Missing File | ✅ Now Created | Purpose |
   |--------------|----------------|---------|
-  | librarian.yml | ✅ Complete config | Codebase search specialist |
+  | researcher.yml | ✅ Complete config | Codebase search specialist |
   | explore.yml | ✅ Complete config | Codebase exploration specialist |
-  | oracle.yml | ✅ Complete config | Strategic guidance specialist |
+  | strategist.yml | ✅ Complete config | Strategic guidance specialist |
   | multimodal-looker.yml | ✅ Complete config | Media file analysis specialist |
   Configuration Consistency Verified
 - ✅ All 13 .yml files: Have version "1.0.0"
@@ -22551,7 +22551,7 @@ Configuration Files:
   Key Changes Committed:
   Agent Configuration Fixes:
 - ✅ Fixed Sisyphus permissions: Reduced from 60+ tools to 10 orchestration tools
-- ✅ Enabled disabled agents: librarian, explore, oracle, multimodal-looker now fully configured
+- ✅ Enabled disabled agents: researcher, explore, strategist, multimodal-looker now fully configured
 - ✅ Created missing .yml files: 6 new agent configuration files
 - ✅ Standardized versions: All agents now at version 1.0.0
 - ✅ Added model routing: All 13 enabled agents have model assignments
@@ -22574,7 +22574,7 @@ Configuration Files:
   What Was Fixed:
 
 1. Sisyphus over-permissioned → Reduced to 10 essential orchestration tools
-2. 4 agents effectively disabled → librarian, explore, oracle, multimodal-looker now fully enabled
+2. 4 agents effectively disabled → researcher, explore, strategist, multimodal-looker now fully enabled
 3. Missing .yml files → Created 6 complete agent specification files
 4. Inconsistent versions → Standardized all agents to v1.1.1
 5. Missing model routing → All 13 enabled agents now have model assignments
@@ -22645,8 +22645,8 @@ Configuration Files:
 - ✅ All agents can now initialize without schema validation errors
   Agents Fixed:
 - Sisyphus (primary orchestrator)
-- 8 StrRay core agents (enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect)
-- 5 optional agents (librarian, explore, oracle, multimodal-looker, document-writer, frontend-ui-ux-engineer)
+- 8 StrRay core agents (enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead)
+- 5 optional agents (researcher, explore, strategist, multimodal-looker, tech-writer, frontend-ui-ux-engineer)
   The StrRay Framework agents can now load properly without configuration validation errors! 🔧✅
   Note: Pre-commit validation still detects existing codex violations in the codebase (61 any types, 62 oversized components) that are separate from this configuration fix and should be addressed gradually in future development.
   🔬 Deep Review: Agent Configurations Across StrRay Framework
@@ -22766,7 +22766,7 @@ Configuration Files:
    - Identified critical configuration mismatches and missing components
 2. Agent Configuration Fixes
    - Fixed Sisyphus permissions: Reduced from 60+ tools to 10 orchestration-focused tools
-   - Enabled disabled agents: librarian, explore, oracle, multimodal-looker now fully configured
+   - Enabled disabled agents: researcher, explore, strategist, multimodal-looker now fully configured
    - Created missing .yml files: Added complete specification files for all 13 agents
    - Standardized versions: All agents updated to version 1.0.0
 3. Schema Compliance Corrections
@@ -22798,7 +22798,7 @@ You are continuing a comprehensive StrRay Framework configuration and agent setu
 1. **Framework Analysis**: Deep review of StrRay hybrid TypeScript/Python architecture, agent capabilities, and documentation alignment
 2. **Agent Configuration Fixes**:
    - Fixed Sisyphus excessive permissions (reduced from 60+ to 10 tools)
-   - Enabled disabled agents (librarian, explore, oracle, multimodal-looker)
+   - Enabled disabled agents (researcher, explore, strategist, multimodal-looker)
    - Created missing .yml specification files for all 13 agents
    - Standardized all agent versions to 1.0.0
 3. **Schema Compliance**: Fixed OpenCode validation errors by correcting tools configuration from array format to boolean object format
@@ -22807,7 +22807,7 @@ You are continuing a comprehensive StrRay Framework configuration and agent setu
 ### 🔄 CURRENTLY WORKING ON:
 
 - **Agent Tool Updates**: Replacing inappropriate `background_task` usage with proper delegation tools
-- **Framework Alignment**: Ensuring agents use `call_omo_agent` (for explore/librarian) and `task` (for other agents) instead of generic background processing
+- **Framework Alignment**: Ensuring agents use `call_omo_agent` (for explore/researcher) and `task` (for other agents) instead of generic background processing
 
 ### 📁 KEY FILES MODIFIED:
 
@@ -22922,7 +22922,7 @@ You are continuing a comprehensive StrRay Framework configuration and agent setu
 - code-reviewer.md + code-reviewer.yml - Quality assessment
 - security-auditor.md + security-auditor.yml - Vulnerability detection
 - refactorer.md + refactorer.yml - Technical debt elimination
-- test-architect.md + test-architect.yml - Testing strategy
+- testing-lead.md + testing-lead.yml - Testing strategy
   All agents configured with:
 - Model routing to openrouter/xai-grok-2-1212-fast-1
 - Subagent mode with specific tools/permissions
@@ -23021,8 +23021,8 @@ You are continuing a comprehensive StrRay Framework configuration and agent setu
     {
     disabled_agents: [
     frontend-ui-ux-engineer,
-    document-writer,
-    oracle,
+    tech-writer,
+    strategist,
     multimodal-looker
     ]
     }
@@ -23040,11 +23040,11 @@ You are continuing a comprehensive StrRay Framework configuration and agent setu
 
 bunx OpenCode mode-switch lite
 
-# This sets: disabled_agents: ["security-auditor", "refactorer", "test-architect", "bug-triage-specialist"]
+# This sets: disabled_agents: ["security-auditor", "refactorer", "testing-lead", "bug-triage-specialist"]
 
 Manual Configuration:
 {
-disabled_agents: [oracle, librarian, explore]
+disabled_agents: [strategist, researcher, explore]
 } 4. Framework Integration
 The framework automatically respects disabled_agents:
 
@@ -23055,11 +23055,11 @@ The framework automatically respects disabled_agents:
   Our approach of adding disabled_agents to both configuration files follows the official OpenCode method:
   // .opencode/OpenCode.json
   {
-  disabled_agents: [frontend-ui-ux-engineer, document-writer, oracle, multimodal-looker]
+  disabled_agents: [frontend-ui-ux-engineer, tech-writer, strategist, multimodal-looker]
   }
   // .opencode/enforcer-config.json  
   {
-  disabled_agents: [frontend-ui-ux-engineer, document-writer, oracle, multimodal-looker]
+  disabled_agents: [frontend-ui-ux-engineer, tech-writer, strategist, multimodal-looker]
   }
   Additional Official Methods
   Skills Disabling (Related Feature):
@@ -23088,8 +23088,8 @@ The agent disabling has been successfully implemented using the official OpenCod
 1. Disabled Agents Configuration:
    disabled_agents: [
    frontend-ui-ux-engineer,
-   document-writer,
-   oracle,
+   tech-writer,
+   strategist,
    multimodal-looker
    ]
 2. Configuration Files Updated:
@@ -23104,12 +23104,12 @@ The agent disabling has been successfully implemented using the official OpenCod
 - ✅ Plugin registration working correctly
   🎯 Final Agent Configuration
   Active Agents (11):
-- StrRay Core (8): enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
-- Essential Add-ons (3): librarian, explore, Sisyphus
+- StrRay Core (8): enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
+- Essential Add-ons (3): researcher, explore, Sisyphus
   Disabled Agents (4):
 - ❌ frontend-ui-ux-engineer (redundant UI specialization)
-- ❌ document-writer (documentation can be handled by developers/agents)
-- ❌ oracle (overlaps with architect agent)
+- ❌ tech-writer (documentation can be handled by developers/agents)
+- ❌ strategist (overlaps with architect agent)
 - ❌ multimodal-looker (specialized media analysis not required)
   🔧 Technical Implementation
   The disabling works through:
@@ -23134,7 +23134,7 @@ The agent disabling has been successfully implemented using the official OpenCod
 
 jq '.disabled_agents' .opencode/OpenCode.json
 
-# Output: ["frontend-ui-ux-engineer", "document-writer", "oracle", "multimodal-looker"]
+# Output: ["frontend-ui-ux-engineer", "tech-writer", "strategist", "multimodal-looker"]
 
 # Framework health check
 
@@ -23200,8 +23200,8 @@ Key Changes Made:
 - $schema ✓ - Correctly references the official schema URL
 - disabled_agents ✓ - Uses valid enum values from schema:
   - "frontend-ui-ux-engineer" ✓
-  - "document-writer" ✓
-  - "oracle" ✓
+  - "tech-writer" ✓
+  - "strategist" ✓
   - "multimodal-looker" ✓
 - JSON Structure ✓ - Valid JSON format, all required properties present
 
@@ -23685,7 +23685,7 @@ User Request → Plugin Hook → Codex Validation → Complexity Analysis → De
 
 3. ✅ Agent Ecosystem Integration
 
-- No naming conflicts: StrRay agents (enforcer, architect, etc.) vs OpenCode agents (librarian, explore, etc.)
+- No naming conflicts: StrRay agents (enforcer, architect, etc.) vs OpenCode agents (researcher, explore, etc.)
 - Both systems active: All agents from both frameworks available
 - Complementary functionality: Each system handles appropriate task types
 
@@ -23743,7 +23743,7 @@ User Request → Plugin Hook → Codex Validation → Complexity Analysis → De
 
 3. ✅ Agent Ecosystem Integration
 
-- No naming conflicts: StrRay agents (enforcer, architect, etc.) vs OpenCode agents (librarian, explore, etc.)
+- No naming conflicts: StrRay agents (enforcer, architect, etc.) vs OpenCode agents (researcher, explore, etc.)
 - Both systems active: All agents from both frameworks available
 - Complementary functionality: Each system handles appropriate task types
 
@@ -24556,7 +24556,7 @@ These should be moved to .opencode/OpenCode.json.
 The documentation states: "All 8 agents configured to use openrouter/xai-grok-2-1212-fast-1 model", but this file assigns different models:
 - Most agents: openrouter/xai-grok-2-1212-fast-1 ✅
 - code-reviewer: openai/gpt-5.2 ❌
-- test-architect: openai/gpt-5.2 ❌
+- testing-lead: openai/gpt-5.2 ❌
 - refactorer: openai/gpt-5.2 ❌
 Recommended Corrections
 1. Move plugin array to .opencode/OpenCode.json
@@ -24636,7 +24636,7 @@ Current Configured Agents:
 - ✅ code-reviewer - Quality assessment & standards validation
 - ✅ security-auditor - Vulnerability detection & compliance
 - ✅ refactorer - Technical debt elimination & code consolidation
-- ✅ test-architect - Testing strategy & coverage optimization
+- ✅ testing-lead - Testing strategy & coverage optimization
 - ✅ log-monitor - Framework monitoring & log analysis (newly created)
 Configuration Format: JSON files with complete agent specifications including tools, capabilities, system prompts, and model routing.
 ---
@@ -24736,7 +24736,7 @@ The framework is now properly enforced and transparent. Every operation I perfor
 ✅ All StrRay Agents Now Properly Configured
 You're absolutely right - I needed to add all agents to the configuration. I've now added all 10 StrRay agents to .opencode/OpenCode.json:
 🤖 Complete Agent Configuration
-Priority Order: sisyphus, enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect, log-monitor
+Priority Order: sisyphus, enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, log-monitor
 Each Agent Configured With:
 - ✅ enabled: true
 - ✅ model: openrouter/xai-grok-2-1212-fast-1
@@ -24754,7 +24754,7 @@ Each Agent Configured With:
 | code-reviewer | quality_assessment, standards_validation | lsp_diagnostics, lsp_code_actions |
 | security-auditor | vulnerability_detection, threat_analysis | grep_app_searchGitHub, security tools |
 | refactorer | technical_debt_elimination, code_consolidation | ast_grep tools, lsp_rename |
-| test-architect | testing_strategy, coverage_optimization | run_terminal_cmd, testing tools |
+| testing-lead | testing_strategy, coverage_optimization | run_terminal_cmd, testing tools |
 | log-monitor | framework_monitoring, log_analysis | read, grep, background_task |
 🎯 Impact
 Now all StrRay agents are properly registered with OpenCode, which means:
@@ -24779,7 +24779,7 @@ All Other Agents: Updated to match the official matrix:
 | code-reviewer | read, grep, lsp_*, run_terminal_cmd, lsp_diagnostics, lsp_code_actions | ✅ Fixed |
 | security-auditor | read, grep, lsp_*, run_terminal_cmd, grep_app_searchGitHub | ✅ Fixed |
 | refactorer | read, grep, lsp_*, run_terminal_cmd, ast_grep_search, ast_grep_replace, lsp_rename | ✅ Fixed |
-| test-architect | read, grep, lsp_*, run_terminal_cmd, run_terminal_cmd | ✅ Fixed |
+| testing-lead | read, grep, lsp_*, run_terminal_cmd, run_terminal_cmd | ✅ Fixed |
 | log-monitor | read, grep, run_terminal_cmd, background_task | ✅ (Custom - no official spec) |
 🎯 Key Fixes
 1. Sisyphus Tool Reduction: Removed excessive tools (webfetch, codesearch, websearch, etc.) - now matches orchestrator exactly
@@ -24832,7 +24832,7 @@ Agents Loaded from TypeScript Modules:
 - ✅ code-reviewer - Quality assessment (mode: subagent)
 - ✅ security-auditor - Vulnerability detection (mode: subagent)
 - ✅ refactorer - Technical debt elimination (mode: subagent)
-- ✅ test-architect - Testing strategy (mode: subagent)
+- ✅ testing-lead - Testing strategy (mode: subagent)
 - ✅ log-monitor - Framework monitoring (mode: subagent)
 🎯 Configuration Now Matches OpenCode Standards
 - ✅ Agents: Loaded from src/agents/*.ts files (not JSON config)
@@ -24865,7 +24865,7 @@ You're absolutely right! Based on the OpenCode documentation and migration guide
 🎯 Current Configuration Status
 ✅ Properly Configured MCP Servers:
 - 3 Standard MCP Servers: filesystem, git, sqlite
-- 10 StrRay Agent Servers: sisyphus, enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect, log-monitor
+- 10 StrRay Agent Servers: sisyphus, enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, log-monitor
 - 6 Knowledge Skill Servers: project-analysis, testing-strategy, architecture-patterns, performance-optimization, git-workflow, api-design
 ✅ File References Verified:
 - All .server.js files exist in .opencode/mcps/
@@ -25901,7 +25901,7 @@ Recommendation: Accept the test compatibility limitation for now and proceed to 
   - architect.ts → Architecture Sentinel with dependency analysis
   - code-reviewer.ts → Code Guardian with syntax validation
   - orchestrator.ts → Enterprise coordinator with workflow management
-  - test-architect.ts → Test Validator with coverage assessment
+  - testing-lead.ts → Test Validator with coverage assessment
   - security-auditor.ts → Security Guardian with vulnerability detection
   - refactorer.ts → Code Optimization Specialist with technical debt reduction
   - bug-triage-specialist.ts → Bug Investigation Specialist with systematic fixes
@@ -25938,7 +25938,7 @@ Agent Files (Enhanced):
 - src/agents/architect.ts ✅ Enhanced
 - src/agents/code-reviewer.ts ✅ Enhanced
 - src/agents/orchestrator.ts ✅ Enhanced
-- src/agents/test-architect.ts ✅ Enhanced
+- src/agents/testing-lead.ts ✅ Enhanced
 - src/agents/security-auditor.ts ✅ Enhanced
 - src/agents/refactorer.ts ✅ Enhanced
 - src/agents/bug-triage-specialist.ts ✅ Enhanced
@@ -26031,7 +26031,7 @@ Critical Fixes Applied:
 7. Async function return types → Fixed return type annotations for async methods
 🚀 Current Framework State
 ✅ Fully Operational Components:
-- 8 Enhanced Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+- 8 Enhanced Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
 - 17 MCP Servers: All created and TypeScript-compliant
 - Agent Delegation System: Real agent execution with state management
 - Codex Integration: 55-term compliance enforcement
@@ -26122,7 +26122,7 @@ Agent-Specific Test Issues:
 |-----------|-------------------|--------------|
 | enforcer | System prompt strings, tool permissions, bash permissions | 🔄 Partial fixes applied |
 | architect | Missing "Dependency Mapping", "Maintain global state" | ✅ Fixed |
-| test-architect | Missing "comprehensive testing strategy", "Test Auto-Creation" | ✅ Fixed |
+| testing-lead | Missing "comprehensive testing strategy", "Test Auto-Creation" | ✅ Fixed |
 | refactorer | Missing "Technical Debt Elimination", "surgical code improvements" | ✅ Fixed |
 | bug-triage-specialist | Missing "surgical code fixes", "Error Investigation" | ✅ Fixed |
 | code-reviewer | Missing "code quality assurance", "Code Quality Assessment" | ✅ Fixed |
@@ -26191,7 +26191,7 @@ Agent Test Fixes Applied:
 |-----------|---------------|------------------|------------|
 | enforcer | enforcer.test.ts | System prompts, tools, permissions, temperature | ✅ 25/25 PASS |
 | architect | architect.test.ts | System prompts, tools, dependencies, state management | ✅ 14/14 PASS |
-| test-architect | test-architect.test.ts | System prompts, testing strategies, coverage optimization | ✅ 34/34 PASS |
+| testing-lead | testing-lead.test.ts | System prompts, testing strategies, coverage optimization | ✅ 34/34 PASS |
 | refactorer | refactorer.test.ts | System prompts, technical debt, code consolidation | ✅ 34/34 PASS |
 | bug-triage-specialist | bug-triage-specialist.test.ts | System prompts, error investigation, surgical fixes | ✅ 34/34 PASS |
 | code-reviewer | code-reviewer.test.ts | System prompts, quality assessment, compliance | ✅ 32/32 PASS |
@@ -26295,7 +26295,7 @@ Phase 3 Complete: StrRay Framework Enterprise Implementation Successfully Delive
 ### Agent System Prompt Updates
 - **enforcer**: 99.6% error prevention, compliance monitoring, actionable error messages
 - **architect**: Dependency mapping, global state management, complexity analysis
-- **test-architect**: Comprehensive testing strategy, coverage optimization, behavioral testing
+- **testing-lead**: Comprehensive testing strategy, coverage optimization, behavioral testing
 - **refactorer**: Technical debt elimination, surgical code improvements, code consolidation
 - **bug-triage-specialist**: Systematic error investigation, root cause analysis, surgical fixes
 - **code-reviewer**: Code quality assurance, monitoring analytics, best practice validation
@@ -26603,7 +26603,7 @@ The path updates were validated through:
 ---
 🏆 COMPLETE ACHIEVEMENT SUMMARY
 🎯 Core Framework Delivered
-- 8 Specialized AI Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+- 8 Specialized AI Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
 - 17 MCP Servers: Complete Model Context Protocol ecosystem
 - Hybrid Architecture: TypeScript/Python cross-language integration
 - 99.6% Error Prevention: Systematic validation with 55-term codex compliance
@@ -27550,7 +27550,7 @@ Agent Files (.opencode/agents/):
 - ✅ 27 total files (was 8, now complete)
   - 8 original .md documentation files
   - 13 detailed .yml configuration files (logging, processors, security, monitoring)
-  - 6 additional agents: document-writer, explore, frontend-ui-ux-engineer, librarian, multimodal-looker, oracle
+  - 6 additional agents: tech-writer, explore, frontend-ui-ux-engineer, researcher, multimodal-looker, strategist
 MCP Server Files (.opencode/mcps/):
 - ✅ 11 MCP JSON configuration files (was 0)
 - ✅ 11 MCP JavaScript server implementations (was 1 stub)
@@ -27598,7 +27598,7 @@ Total Files Restored:
 1. Agent Ecosystem (27 files):
 - ✅ 8 core agents with full documentation
 - ✅ 13 detailed YML configurations (logging, processors, security, monitoring)
-- ✅ 6 additional agents (document-writer, explore, frontend-ui-ux-engineer, librarian, multimodal-looker, oracle)
+- ✅ 6 additional agents (tech-writer, explore, frontend-ui-ux-engineer, researcher, multimodal-looker, strategist)
 2. MCP Server Infrastructure (23 files):
 - ✅ 11 MCP JSON configurations with proper tool definitions
 - ✅ 11 MCP JavaScript implementations with full server code
@@ -27672,7 +27672,7 @@ All tests and validations have been successfully resolved!
 1. Missing Agent Documentation
 - Before: 0 agent files found
 - After: ✅ 27 agent files (8 core + 13 YML configs + 6 additional agents)
-- Restored: enforcer.md, architect.md, orchestrator.md, bug-triage-specialist.md, code-reviewer.md, security-auditor.md, refactorer.md, test-architect.md + 13 detailed YML configurations + 6 additional agents
+- Restored: enforcer.md, architect.md, orchestrator.md, bug-triage-specialist.md, code-reviewer.md, security-auditor.md, refactorer.md, testing-lead.md + 13 detailed YML configurations + 6 additional agents
 2. Missing MCP Server Implementations
 - Before: 0 MCP server files
 - After: ✅ 11 MCP server implementations + 11 MCP configurations
@@ -28037,7 +28037,7 @@ KEY FILES WE'VE WORKED ON
 You are continuing work on the  - a production-ready AI agent orchestration platform with 99.6% error prevention.
 ## CURRENT STATE (COMPLETED WORK):
 ### ✅ FRAMEWORK STATUS: FULLY OPERATIONAL
-- **Agent Ecosystem**: 15 specialized agents loaded (enforcer, architect, orchestrator, code-reviewer, security-auditor, refactorer, test-architect, + 8 additional)
+- **Agent Ecosystem**: 15 specialized agents loaded (enforcer, architect, orchestrator, code-reviewer, security-auditor, refactorer, testing-lead, + 8 additional)
 - **MCP Infrastructure**: 11 servers operational (10 StrRay + standard filesystem/git/sqlite)
 - **Test Coverage**: 99.3% pass rate (858/858 tests passing)
 - **Configuration**: Unified global/project/StrRay config layers
@@ -28196,7 +28196,7 @@ The configuration is now clean, properly scoped, and follows OpenCode best pract
 ✅ Final Clean Configuration:
 Agent Hierarchy (Correct):
 - orchestrator: mode: "primary" - Main coordinator
-- 7 subagents: enforcer, architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+- 7 subagents: enforcer, architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
 MCP Server Management:
 - Removed OpenCode MCP config - Not needed since StrRay handles its own MCP servers
 - StrRay's 10 custom MCP servers loaded by boot-orchestrator.server.ts:
@@ -29542,7 +29542,7 @@ Evidence: 200+ agent delegation logs, plugin hook execution logs, processor orch
 - ✅ Agent Roles: 8 core agents properly defined (1 primary orchestrator + 7 subagents)
 - ✅ Capability Mapping: All agents have comprehensive capability definitions
 - ✅ Processor Integration: Each agent has 5-processor pipelines
-- ⚠️ Mode Configuration: Some agents missing mode settings (explore, librarian, multimodal-looker, oracle)
+- ⚠️ Mode Configuration: Some agents missing mode settings (explore, researcher, multimodal-looker, strategist)
 ✅ Phase 2: Agent Responsibility & Capability Validation
 - ✅ Configuration Structure: All agents have proper YAML structure
 - ✅ Capability Definitions: Agents have appropriate specialized capabilities
@@ -29568,11 +29568,11 @@ Evidence: 200+ agent delegation logs, plugin hook execution logs, processor orch
 │ code-reviewer      │ Quality assessment & standards     │ subagent   │ ✅ Valid  │
 │ security-auditor   │ Vulnerability detection & compliance│ subagent   │ ✅ Valid  │
 │ refactorer         │ Technical debt elimination         │ subagent   │ ✅ Valid  │
-│ test-architect     │ Testing strategy & coverage        │ subagent   │ ✅ Valid  │
+│ testing-lead     │ Testing strategy & coverage        │ subagent   │ ✅ Valid  │
 │ explore            │ Codebase exploration & patterns    │ (empty)    │ ⚠️ Fix    │
-│ librarian          │ Documentation & knowledge search   │ (empty)    │ ⚠️ Fix    │
+│ researcher          │ Documentation & knowledge search   │ (empty)    │ ⚠️ Fix    │
 │ multimodal-looker  │ Media file analysis               │ (empty)    │ ⚠️ Fix    │
-│ oracle             │ Strategic guidance & decisions     │ (empty)    │ ⚠️ Fix    │
+│ strategist             │ Strategic guidance & decisions     │ (empty)    │ ⚠️ Fix    │
 └─────────────────────┴─────────────────────────────────────┴─────────────┴───────────┘
 ✅ Agent Capabilities Validated:
 - Orchestrator: workflow_orchestration, agent_coordination, task_management ✅
@@ -29591,7 +29591,7 @@ Evidence: 200+ agent delegation logs, plugin hook execution logs, processor orch
 ---
 🔧 ISSUES IDENTIFIED & RESOLVED
 ⚠️ Agent Mode Configuration Issues:
-Problem: 4 agents missing mode settings (explore, librarian, multimodal-looker, oracle)
+Problem: 4 agents missing mode settings (explore, researcher, multimodal-looker, strategist)
 Impact: These agents may not participate properly in delegation flows
 Status: ✅ Identified for fixing
 🔧 Capability Validation Logic:
@@ -29658,7 +29658,7 @@ MULTI-AGENT SYSTEM VALIDATION: COMPLETE ✅
 - Codex Compliance: Universal Development Codex enforcement active
 - Error Prevention: 99.6% error prevention through comprehensive validation
 ⚠️ MINOR ISSUES IDENTIFIED:
-- 4 Agent Mode Settings: Need to be set to "subagent" (explore, librarian, multimodal-looker, oracle)
+- 4 Agent Mode Settings: Need to be set to "subagent" (explore, researcher, multimodal-looker, strategist)
 - Capability Validation: Test script logic corrected for accurate validation
 🚀 READY FOR PRODUCTION:
 - Comprehensive Testing Plan: 24 test cases + 6 coordination scenarios + failure testing
@@ -30908,11 +30908,11 @@ Based on my comprehensive review of the git commit history, here's what was lost
 What Was Removed:
 Commit: 153a867 - "Revert OpenCode agent config to single orchestrator"
 Lost Files:
-- .opencode/agents/test-architect.md ❌
-- .opencode/agents/test-architect.yml ❌
+- .opencode/agents/testing-lead.md ❌
+- .opencode/agents/testing-lead.yml ❌
 Lost Functionality:
 # Test Architect Agent Configuration (LOST)
-name: test-architect
+name: testing-lead
 description: "Test architect agent for comprehensive testing strategy and validation"
 capabilities:
   - test_strategy_design
@@ -30924,7 +30924,7 @@ capabilities:
 Lost Integration:
 // Agent Capabilities (LOST from agent-delegator.ts)
 {
-  name: "test-architect",
+  name: "testing-lead",
   expertise: ["testing", "quality-assurance", "automation"],
   capacity: 3,
   performance: 87,
@@ -30989,12 +30989,12 @@ Lost Capabilities:
 Immediate Restoration Needed:
 1. Restore Test Architect Agent:
 # Recreate agent configuration
-cp lost-backup/test-architect.* .opencode/agents/
+cp lost-backup/testing-lead.* .opencode/agents/
 2. Restore Agent Delegation Logic:
 // Add back to agent-delegator.ts
 private async handleFileCreation(filePath: string): Promise<void> {
   if (this.shouldConsultTestArchitect(filePath)) {
-    await this.delegateToAgent('test-architect', {
+    await this.delegateToAgent('testing-lead', {
       operation: 'new-file-analysis',
       description: `Analyze new file: ${filePath}`,
       context: { filePath, fileType: this.getFileType(filePath) }
@@ -31011,7 +31011,7 @@ private async handleFileCreation(filePath: string): Promise<void> {
   agents: {
     enforcer: {model: openrouter/xai-grok-2-1212-fast-1},
     architect: {model: openrouter/xai-grok-2-1212-fast-1},
-    test-architect: {model: openrouter/xai-grok-2-1212-fast-1}
+    testing-lead: {model: openrouter/xai-grok-2-1212-fast-1}
   }
 }
 ---
@@ -31204,7 +31204,7 @@ Monitors:
 📊 Validation Results
 ✅ Agent Configuration Status
 All 8 agents properly configured:
-- enforcer, architect, test-architect, bug-triage-specialist
+- enforcer, architect, testing-lead, bug-triage-specialist
 - code-reviewer, security-auditor, refactorer
 - All with openrouter/xai-grok-2-1212-fast-1 model
 - All with proper capabilities and settings
@@ -31479,7 +31479,7 @@ Summary: ✅ HYBRID ARCHITECTURE ACTIVE - Both TypeScript and Python are activel
 🤖 Intelligent Agent System
 // Multi-agent orchestration in action
 const delegator = createAgentDelegator(stateManager);
-await delegator.handleFileCreation('new-service.ts'); // Automatically consults test-architect
+await delegator.handleFileCreation('new-service.ts'); // Automatically consults testing-lead
 await delegator.handleFileModification('security-module.ts', changes); // Triggers security-auditor
 🧠 Memory Excellence
 // Memory monitoring and optimization
@@ -31925,7 +31925,7 @@ Subagents (Activated On-Demand):
 4. code-reviewer: Quality assessment & standards
 5. security-auditor: Vulnerability detection & compliance
 6. refactorer: Technical debt elimination
-7. test-architect: Testing strategy & coverage
+7. testing-lead: Testing strategy & coverage
 Total: 1 primary + 7 subagents = 8 agents configured
 ---
 🚨 WHY SUBAGENTS AREN'T SHOWING IN OPENCONSOLE
@@ -31957,7 +31957,7 @@ After exhaustive investigation across git history, codebase patterns, and agent 
 - Impact: Subagents couldn't be invoked through OpenCode's interface
 - Fix Applied: ✅ Restored all 14 agents in OpenCode.json:
   - 8 StrRay agents (orchestrator, enforcer, architect, etc.)
-  - 6 Built-in agents (librarian, explore, oracle, etc.)
+  - 6 Built-in agents (researcher, explore, strategist, etc.)
 ❌ BROKEN: Agent Invocation Method (Partially Fixed ⚠️)
 - Issue: Delegation system calls agents directly instead of through OpenCode
 - Impact: Agents never appear in OpenConsole interface
@@ -32024,10 +32024,10 @@ Solution: Implemented proper OpenCode agent integration
 ---
 🚀 CURRENT SYSTEM STATUS
 ✅ All 14 Agents Available
-orchestrator, enforcer, architect, test-architect,
+orchestrator, enforcer, architect, testing-lead,
 bug-triage-specialist, code-reviewer, security-auditor, refactorer,
-librarian, explore, oracle, frontend-ui-ux-engineer,
-document-writer, multimodal-looker
+researcher, explore, strategist, frontend-ui-ux-engineer,
+tech-writer, multimodal-looker
 ✅ Invocation Methods
 1. Automatic: Framework analyzes complexity and selects agents
 2. Manual: forceMultiAgent: true with requiredAgents[]
@@ -32084,7 +32084,7 @@ Framework Status: 🏆 SUBAGENTS VISIBLE & FULLY OPERATIONAL 🎯🏆✨
 - Status: ✅ Updated and working
 - Changes Made:
   - Added all 13 agents to validation list
-  - Created missing YML configurations for frontend-ui-ux-engineer and document-writer
+  - Created missing YML configurations for frontend-ui-ux-engineer and tech-writer
   - Now validates complete agent ecosystem
 ✅ 3. Profiling Validation (validate-profiling.sh)
 - Status: ✅ Already working correctly
@@ -32100,7 +32100,7 @@ Added Complete Configurations:
 - Accessibility compliance validation
 - Design system creation
 - Performance optimization
-# document-writer.yml
+# tech-writer.yml
 - Technical documentation
 - API documentation
 - Content organization
@@ -32713,12 +32713,12 @@ Core Framework Files:
 - src/monitoring/advanced-profiler.ts - Performance profiling system
 - src/monitoring/enterprise-monitoring-system.ts - Enterprise monitoring integration
 Configuration Files:
-- .opencode/OpenCode.json - Added 6 missing built-in agents (librarian, explore, oracle, etc.)
+- .opencode/OpenCode.json - Added 6 missing built-in agents (researcher, explore, strategist, etc.)
 - .strray/config.json - Updated multi-agent settings, increased max_concurrent_agents to 7
 - .mcp.json - MCP server configurations for agent integration
 Agent Configuration Files:
 - .opencode/agents/analyzer.yml - New analyzer agent for system monitoring
-- .opencode/agents/document-writer.yml - Additional agent configuration
+- .opencode/agents/tech-writer.yml - Additional agent configuration
 - .opencode/agents/frontend-ui-ux-engineer.yml - Additional agent configuration
 Documentation Files:
 - AGENTS.md - Complete rewrite with accurate technical specifications
@@ -35050,7 +35050,7 @@ Each agent has dedicated MCP server tools for their specialized capabilities:
 - architect.server.ts - Design & architecture tools
 - code-reviewer.server.ts - Code quality analysis tools
 - security-auditor.server.ts - Security scanning tools
-- test-architect.server.ts - Testing strategy tools
+- testing-lead.server.ts - Testing strategy tools
 - refactorer.server.ts - Code optimization tools
 2. 🔧 Utility MCP Servers (4 servers)
 Infrastructure and development support tools:
@@ -38732,9 +38732,9 @@ The Enhanced Multi-Agent Orchestration system with clickable monitoring is now F
 Test Results ✅ SUCCESSFUL
 🎯 Orchestrator: Executing complex task - Build secure authentication system
 🔗 SPAWNED: architect agent (agent_1768169816261_gp5se3m8d) - Click to monitor
-🔗 SPAWNED: librarian agent (agent_1768169816262_ctw0grw6c) - Click to monitor
+🔗 SPAWNED: researcher agent (agent_1768169816262_ctw0grw6c) - Click to monitor
 ✅ COMPLETED: architect agent (agent_1768169816261_gp5se3m8d)
-✅ COMPLETED: librarian agent (agent_1768169816262_ctw0grw6c)
+✅ COMPLETED: researcher agent (agent_1768169816262_ctw0grw6c)
 🔗 SPAWNED: enforcer agent (agent_1768169822270_jmp3q96va) - Click to monitor
 ✅ COMPLETED: enforcer agent (agent_1768169822270_jmp3q96va)
 📊 Task Execution Results:
@@ -38928,7 +38928,7 @@ const tasks = [
   { id: 'design', subagentType: 'architect', description: 'Design system' },
   { id: 'validate', subagentType: 'enforcer', description: 'Validate against codex',
     dependencies: ['design'] }, // Depends on architect completion
-  { id: 'implement', subagentType: 'librarian', description: 'Research implementation' }
+  { id: 'implement', subagentType: 'researcher', description: 'Research implementation' }
 ];
 2. Enhanced Multi-Agent Orchestration Layer
 // Enhanced orchestrator provides clickable monitoring
@@ -39084,8 +39084,8 @@ Phase 2: Complex Task Submission
 const tasks = [
   { id: 'design', subagentType: 'architect', priority: 'high' },
   { id: 'validate', subagentType: 'enforcer', dependencies: ['design'] },
-  { id: 'research', subagentType: 'librarian' },
-  { id: 'implement', subagentType: 'test-architect', dependencies: ['design', 'validate'] }
+  { id: 'research', subagentType: 'researcher' },
+  { id: 'implement', subagentType: 'testing-lead', dependencies: ['design', 'validate'] }
 ];
 const results = await orchestrator.executeComplexTask(description, tasks);
 Phase 3: Orchestrator Task Processing
@@ -39184,9 +39184,9 @@ Successful Integration Demonstrated
 📊 Tasks: 4 subtasks with dependencies
 🔗 Dependencies: 2 tasks have dependency requirements
 ✅ COMPLETED: architect agent (4507ms)
-✅ COMPLETED: librarian agent (6009ms)
+✅ COMPLETED: researcher agent (6009ms)
 ✅ COMPLETED: enforcer agent (3006ms)
-✅ COMPLETED: test-architect agent (4504ms)
+✅ COMPLETED: testing-lead agent (4504ms)
 📈 Final Stats: 4/4 agents completed successfully
 🖱️ All agents clickable and monitorable
 Key Integration Achievements
@@ -40493,7 +40493,7 @@ The StrRay Framework now includes enterprise-grade automatic test optimization a
 - Mock Integration: Adds mocks to speed up slow integration tests
 - Performance Tuning: Optimizes test data setup and teardown
 🤖 Multi-Agent Coordination for Complex Fixes
-- test-architect: Handles complex test strategy optimization
+- testing-lead: Handles complex test strategy optimization
 - refactorer: Performs automatic code refactoring for slow tests
 - bug-triage-specialist: Investigates and fixes flaky/race condition tests
 - Intelligent Routing: Automatically selects appropriate agent based on issue type
@@ -40545,7 +40545,7 @@ No More Manual Test Maintenance:
 🎯 ENTERPRISE AUTO-HEALING CAPABILITIES
 | Issue Type | Auto-Fix Level | Agent Coordination | Expected Improvement |
 |----------------|-------------------|----------------------|-------------------------|
-| Timeouts | ✅ Full Auto | test-architect | 60-70% |
+| Timeouts | ✅ Full Auto | testing-lead | 60-70% |
 | Slow Tests | ✅ Full Auto | refactorer | 70-80% |
 | Flaky Tests | ⚠️ Assisted | bug-triage-specialist | 80-90% |
 | Performance | ✅ Full Auto | Multiple agents | 75-85% |
@@ -40691,7 +40691,7 @@ What Happens When Tests Get Slow:
 1. Detection: Smart test runner identifies timeouts, performance issues, flaky tests
 2. Analysis: Multi-agent orchestration analyzes root causes
 3. Simple Fixes: Automatic parallel execution, mocking, timeout optimization
-4. Complex Fixes: Specialized agents (test-architect, refactorer, bug-triage-specialist) coordinate solutions
+4. Complex Fixes: Specialized agents (testing-lead, refactorer, bug-triage-specialist) coordinate solutions
 5. Evolution: Test suites continuously optimize themselves
 Zero Manual Intervention:
 # Before: Manual optimization required
@@ -40891,7 +40891,7 @@ User Prompt: "Build a user authentication system"
 - State persistence and agent delegation setup
 📋 Phase 3: ✅ Complexity Analysis
 - Task complexity scoring (47/100)
-- Agent routing and assignment (architect, enforcer, test-architect)
+- Agent routing and assignment (architect, enforcer, testing-lead)
 📋 Phase 4: ✅ Agent Execution
 - Multi-agent orchestration with 3 tasks
 - Real agent spawning and execution monitoring
@@ -41306,7 +41306,7 @@ Future (Week 7+): Phase 3
 ---
 📝 CRITICAL NOTE: TODO FEATURE USAGE BY ALL PLANNING AGENTS
 MANDATORY REQUIREMENT FOR ALL PLANNING AGENTS:
-All planning agents (architect, orchestrator, enforcer, test-architect, etc.) MUST use the todowrite tool when creating any plan, roadmap, or implementation strategy. This ensures:
+All planning agents (architect, orchestrator, enforcer, testing-lead, etc.) MUST use the todowrite tool when creating any plan, roadmap, or implementation strategy. This ensures:
 1. Structured Planning: All plans broken down into actionable, prioritized todos
 2. Progress Tracking: Real-time visibility into plan execution status
 3. Coordination: Multiple agents can collaborate on shared todo lists
@@ -42360,7 +42360,7 @@ After thoroughly reviewing the OpenCode documentation, here's our compliance ass
 - ✅ strray auth - Authentication management
 - ✅ strray status - System status display
 2. Agent Architecture
-- ✅ 8 Specialized Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+- ✅ 8 Specialized Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
 - ✅ Background Agent Support: Parallel execution capabilities
 - ✅ Agent Model Configuration: Custom models per agent
 - ✅ Permission System: Granular bash command permissions
@@ -42624,7 +42624,7 @@ $ opencode agent list
 architect (all)
 enforcer (all)
 orchestrator (all)
-test-architect (all)
+testing-lead (all)
 All 8 StrRay agents are registered and callable via @ commands in OpenCode!
 4. ⚠️ MCP Server Registration - PARTIALLY COMPLETE
 - MCP Servers Built: ✅ All 11 servers compiled to dist/mcps/
@@ -42831,7 +42831,7 @@ opencode
 @orchestrator implement feature
 What Users Get:
 - ✅ Zero-Config Plugin Loading: Automatic OpenCode integration
-- ✅ 9 Enterprise Agents: orchestrator, enforcer, architect, test-architect, etc.
+- ✅ 9 Enterprise Agents: orchestrator, enforcer, architect, testing-lead, etc.
 - ✅ 99.6% Error Prevention: Codex compliance validation on all code
 - ✅ Intelligent Orchestration: Complexity-based task delegation
 - ✅ Production Ready: Enterprise-grade AI orchestration
@@ -42921,7 +42921,7 @@ Perfect! The StrRay plugin is now properly packaged and ready for publication. W
 ---
 ✅ COMPLETED ACHIEVEMENTS
 🚀 Enterprise AI Orchestration Framework
-- 8 Specialized Agents: orchestrator, enforcer, architect, test-architect, etc.
+- 8 Specialized Agents: orchestrator, enforcer, architect, testing-lead, etc.
 - 99.6% Error Prevention: Codex compliance validation
 - Intelligent Task Routing: Complexity-based agent delegation
 - Performance Optimization: 87% faster test execution
@@ -43136,7 +43136,7 @@ StrRay Framework has been successfully transformed from a development prototype 
 ---
 📋 WHAT WE ACCOMPLISHED
 Phase 1: ✅ StrRay Framework Development
-- Enterprise AI Orchestration Platform: 8 specialized agents (orchestrator, enforcer, architect, test-architect, etc.)
+- Enterprise AI Orchestration Platform: 8 specialized agents (orchestrator, enforcer, architect, testing-lead, etc.)
 - Codex Compliance System: 99.6% error prevention with automated validation
 - Performance Monitoring: Real-time metrics, memory optimization, sub-millisecond response times
 - Multi-Agent Coordination: Intelligent task delegation and conflict resolution
@@ -43275,7 +43275,7 @@ StrRay Framework Plugin has been successfully transformed from prototype to ente
 ---
 🎯 COMPLETED ACHIEVEMENTS
 Phase 1: ✅ Framework Development
-- 8 Specialized AI Agents: orchestrator, enforcer, architect, test-architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer
+- 8 Specialized AI Agents: orchestrator, enforcer, architect, testing-lead, bug-triage-specialist, code-reviewer, security-auditor, refactorer
 - 99.6% Error Prevention: Universal Development Codex with systematic validation
 - Performance Optimization: 87% faster execution with intelligent caching
 - Enterprise Security: Comprehensive validation and monitoring
@@ -43332,7 +43332,7 @@ Configuration Generated
     orchestrator: {model: openrouter/xai-grok-2-1212-fast-1},
     enforcer: {model: openrouter/xai-grok-2-1212-fast-1},
     architect: {model: openrouter/xai-grok-2-1212-fast-1},
-    test-architect: {model: openrouter/xai-grok-2-1212-fast-1},
+    testing-lead: {model: openrouter/xai-grok-2-1212-fast-1},
     bug-triage-specialist: {model: openrouter/xai-grok-2-1212-fast-1},
     code-reviewer: {model: openrouter/xai-grok-2-1212-fast-1},
     security-auditor: {model: openrouter/xai-grok-2-1212-fast-1},
@@ -43353,7 +43353,7 @@ Usage Examples
 # System design
 @architect design database schema for e-commerce
 # Testing strategy
-@test-architect create test plan for payment module
+@testing-lead create test plan for payment module
 # Security audit
 @security-auditor scan for vulnerabilities
 ---
@@ -43491,7 +43491,7 @@ Key Insight: npm intentionally skips postinstall scripts for local packages for 
 ✅ Configuration Verified
 - Plugin Registration: ✅ "OpenCode-strray/dist/plugin/strray-codex-injection.js"
 - Agent Count: ✅ All 9 StrRay agents configured
-- Agent List: ✅ architect, bug-triage-specialist, code-reviewer, enforcer, enhanced-orchestrator, orchestrator, refactorer, security-auditor, test-architect
+- Agent List: ✅ architect, bug-triage-specialist, code-reviewer, enforcer, enhanced-orchestrator, orchestrator, refactorer, security-auditor, testing-lead
 - Model Routing: ✅ All agents use openrouter/xai-grok-2-1212-fast-1
 - Multi-Agent Settings: ✅ Enabled with max 5 concurrent agents
 ✅ Package Integrity Confirmed
@@ -43545,7 +43545,7 @@ Simple Flows:
 - ✅ @security-auditor scan code → Agent ready
 Complex Flows:
 - ✅ @orchestrator refactor system → Multi-agent coordination ready
-- ✅ @test-architect create test plan → Strategy development ready
+- ✅ @testing-lead create test plan → Strategy development ready
 - ✅ @bug-triage-specialist investigate → Analysis ready
 ✅ Edge Cases & Error Handling
 - ✅ Invalid Agent Loading: Graceful ERR_MODULE_NOT_FOUND
@@ -43695,7 +43695,7 @@ Full Test Suite Results
 - ✅ Performance: Fast execution with proper memory/timeout handling
 - ✅ Codex Compliance: 99.6% error prevention mechanisms active
 Framework Status Confirmed
-- 🔧 8 Specialized Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, test-architect
+- 🔧 8 Specialized Agents: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead
 - 🧠 11 MCP Servers: All knowledge skills and orchestration servers active
 - 📋 4 Automation Hooks: Pre-commit introspection, auto-format, security-scan, enforcer-daily-scan
 - ⚙️ 6 MCP Skills: Project analysis, testing strategy, architecture patterns, performance optimization, git workflow, API design
@@ -43838,7 +43838,7 @@ Performance tests run successfully, reports generated, and CI/CD pipeline enhanc
 ✅ Architect & E2E Testing Successfully Added to CI/CD Pipeline!
 🎯 What We Accomplished
 ✅ Architect Agent Tests Added:
-- 48 tests covering architect and test-architect agent configurations
+- 48 tests covering architect and testing-lead agent configurations
 - Validates agent setup, responsibilities, and system prompts
 - Fast execution (~18 seconds)
 - 100% pass rate in CI/CD
@@ -43895,7 +43895,7 @@ All major test categories integrated, pipeline passing reliably, framework quali
 ✅ Architect & E2E Testing Successfully Added to CI/CD Pipeline!
 🎯 What We Accomplished
 ✅ Architect Agent Tests Added:
-- 48 tests covering architect and test-architect agent configurations
+- 48 tests covering architect and testing-lead agent configurations
 - Validates agent setup, responsibilities, and system prompts
 - Fast execution (~18 seconds)
 - 100% pass rate in CI/CD
@@ -44288,7 +44288,7 @@ We have a comprehensive ecosystem of working components we can orchestrate immed
 | architect | System fixes & refactoring |
 | code-reviewer | Fix validation & quality assurance |
 | security-auditor | Security issue analysis |
-| test-architect | Test regeneration & fixes |
+| testing-lead | Test regeneration & fixes |
 | enforcer | Codex compliance validation |
 🚀 Immediate Implementation Plan
 Instead of building from scratch, we can create a lightweight orchestrator that leverages existing components:
@@ -44324,7 +44324,7 @@ class PostProcessor extends EnhancedMultiAgentOrchestrator {
 - Integrate with security-auditor for security-related failures
 4. Auto-Fix Coordination (3-4 days)
 - Use architect agent for system-level fixes
-- Leverage test-architect for test-related issues
+- Leverage testing-lead for test-related issues
 - Integrate with existing TestAutoHealing system
 5. Redeploy Logic (2-3 days)
 - Use existing deploy-strray-plugin.sh for redeployment
@@ -45373,7 +45373,7 @@ All critical systems validated and operational:
 3. ✅ Security: Audit passed with known dependency issue (fixable)
 4. ✅ Performance: Budget compliance, regression monitoring active
 5. ✅ Integration: E2E tests, path resolution, orchestrator-first architecture
-6. ✅ Agent Systems: Architect/test-architect agents validated
+6. ✅ Agent Systems: Architect/testing-lead agents validated
 7. ✅ Environment Support: Dev/build/deploy environments fully supported
 🚀 Framework is production-ready with 99.6% error prevention and enterprise-grade reliability! ✨
 Next Recommended Actions:
@@ -46546,7 +46546,7 @@ interface ReportConfig {
 **Each report now contains ONLY the events from its specific session, providing precise,
 The framework now has complete session-event correlation for accurate, scoped reporting and analysis.
 🔍 DEEP SESSION MANAGEMENT REVIEW - COMPLETE ANALYSIS 🔍
-Based on comprehensive analysis from both librarian and explore agents, here's the complete assessment of StrRay's session management system:
+Based on comprehensive analysis from both researcher and explore agents, here's the complete assessment of StrRay's session management system:
 📊 OVERALL COMPLETENESS: 72%
 Architecture: ⭐⭐⭐⭐⭐ (Excellent multi-layered design)
 Implementation: ⭐⭐⭐⭐ (Good core functionality)

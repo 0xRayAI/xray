@@ -1,5 +1,5 @@
 ---
-name: document-writer
+name: tech-writer
 description: Technical documentation and content creation specialist. Expert in creating clear, comprehensive documentation for developers and users.
 model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.4

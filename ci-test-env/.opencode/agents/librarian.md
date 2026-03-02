@@ -1,5 +1,5 @@
 ---
-name: librarian
+name: researcher
 description: Codebase and documentation search specialist. Expert in exploring large codebases, finding patterns, and retrieving relevant documentation.
 model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.4
@@ -42,7 +42,7 @@ Specialized agent for comprehensive codebase exploration, documentation retrieva
 
 - "code-analyzer", "search", "find", "analyze", "investigate", "research", "discover"
 - "codebase", "documentation", "patterns", "architecture", "dependencies"
-- "librarian", "code-analyzer", "investigate", "research"
+- "researcher", "code-analyzer", "investigate", "research"
 
 ## Framework Alignment
 

@@ -37,6 +37,7 @@ export const builtinAgents: Record<string, AgentConfig> = {
   researcher,
   "multimodal-looker": multimodalLooker,
   analyzer: analyzer,
+  "code-analyzer": analyzer,
   "seo-consultant": seoSpecialist,
   "content-creator": seoCopywriter,
   "growth-strategist": marketingExpert,

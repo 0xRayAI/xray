@@ -59,13 +59,13 @@ The first task: reconnect all 22 agents to the delegation system.
 
 ```typescript
 // Added 15 missing agents:
-- seo-specialist, seo-copywriter, marketing-expert
+- seo-consultant, content-creator, growth-strategist
 - database-engineer, devops-engineer, backend-engineer
 - frontend-engineer, documentation-writer
 - performance-engineer, mobile-developer
 - bug-triage-specialist, log-monitor
 - multimodal-looker, code-analyzer
-- orchestrator, librarian
+- orchestrator, researcher
 ```
 
 **Discovery #3: Configuration without implementation is decoration, not functionality.**
@@ -109,7 +109,7 @@ We removed the `@integrations/` prefix entirely. Instead, skills activate throug
     → typescript-expert → code-reviewer
 
 "write landing page copy"
-    → copywriting → marketing-expert
+    → copywriting → growth-strategist
 
 "set up AWS Lambda"
     → aws-serverless → devops-engineer

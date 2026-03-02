@@ -59,7 +59,7 @@
 
 ### **Framework Configuration** (`.opencode/OpenCode.json`) ✅
 
-- ✅ Removed "librarian" from disabled_agents list (now ENABLED)
+- ✅ Removed "researcher" from disabled_agents list (now ENABLED)
 - ✅ Added both new agents to agent configuration section
 - ✅ Both agents set as "subagent" mode
 - ✅ Maintains existing agent configurations

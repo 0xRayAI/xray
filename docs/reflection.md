@@ -61,8 +61,8 @@ StringRay's agent architecture represents a new paradigm in AI-assisted developm
 | **code-reviewer** | Quality assessment & standards validation | All code changes | Automated best practices enforcement |
 | **security-auditor** | Vulnerability detection & compliance | Security operations | Threat pattern recognition |
 | **refactorer** | Technical debt elimination | Refactor operations | Code consolidation optimization |
-| **test-architect** | Testing strategy & coverage optimization | Test operations | Coverage gap analysis |
-| **librarian** | Codebase exploration & documentation | Analysis operations | Knowledge base integration |
+| **testing-lead** | Testing strategy & coverage optimization | Test operations | Coverage gap analysis |
+| **researcher** | Codebase exploration & documentation | Analysis operations | Knowledge base integration |
 
 Each agent operates with domain-specific expertise while maintaining the framework's core principles of systematic error prevention and progressive code quality.
 

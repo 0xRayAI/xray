@@ -9,7 +9,7 @@ echo "==================================================================="
 
 # Initialize orchestration test
 
-AGENTS=("enforcer" "architect" "code-reviewer" "test-architect" "security-auditor")
+AGENTS=("enforcer" "architect" "code-reviewer" "testing-lead" "security-auditor")
 COORDINATION_SUCCESS=true
 TASK_RESULTS=()
 
@@ -46,16 +46,16 @@ echo "🔄 Coordinating ${pattern} workflow..."
 
     case $pattern in
         "complex-refactor")
-            REQUIRED_AGENTS=("architect" "refactorer" "test-architect")
+            REQUIRED_AGENTS=("architect" "refactorer" "testing-lead")
             ;;
         "security-audit")
             REQUIRED_AGENTS=("security-auditor" "enforcer" "code-reviewer")
             ;;
         "new-feature")
-            REQUIRED_AGENTS=("architect" "code-reviewer" "test-architect")
+            REQUIRED_AGENTS=("architect" "code-reviewer" "testing-lead")
             ;;
         "bug-fix")
-            REQUIRED_AGENTS=("bug-triage-specialist" "code-reviewer" "test-architect")
+            REQUIRED_AGENTS=("bug-triage-specialist" "code-reviewer" "testing-lead")
             ;;
     esac
 

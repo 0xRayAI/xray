@@ -63,7 +63,7 @@ disabled = agents.get('disabled', [])
 if not isinstance(enabled, list) or not isinstance(disabled, list):
     exit(1)
 
-expected_agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'test-architect']
+expected_agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'testing-lead']
 if set(enabled) != set(expected_agents):
     exit(1)
 

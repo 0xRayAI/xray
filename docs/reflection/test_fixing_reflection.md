@@ -196,7 +196,7 @@ Every test failure was evaluated using a systematic complexity analysis:
 | **architect** | 1 | Agent selection | 3 minutes |
 | **orchestrator** | 12 | Missing implementations | 45 minutes |
 | **code-reviewer** | 2 | Complexity calculations | 8 minutes |
-| **test-architect** | 1 | Specialty matching | 2 minutes |
+| **testing-lead** | 1 | Specialty matching | 2 minutes |
 | **refactorer** | 4 | Dependency analysis | 12 minutes |
 | **security-auditor** | 1 | Expertise mapping | 2 minutes |
 

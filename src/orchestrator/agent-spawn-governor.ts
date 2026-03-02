@@ -604,12 +604,12 @@ export class AgentSpawnGovernor {
       return true;
     }
 
-    // Check for cascading librarian spawns (specific known issue)
+    // Check for cascading researcher spawns (specific known issue)
     if (agentType === "researcher") {
-      const librarianSpawns = recentSpawns.filter(
+      const researcherSpawns = recentSpawns.filter(
         (r) => r.agentType === "researcher",
       );
-      if (librarianSpawns.length > 2) {
+      if (researcherSpawns.length > 2) {
         return true;
       }
     }

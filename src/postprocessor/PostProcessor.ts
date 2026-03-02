@@ -291,7 +291,7 @@ export class PostProcessor {
           },
         );
 
-        // Call librarian agent to analyze system components
+        // Call researcher agent to analyze system components
         const fixed = await this.callAgentForArchitecturalFix(
           "checkSystemIntegrity",
           "researcher",
@@ -341,7 +341,7 @@ export class PostProcessor {
           { message: `❌ Path resolution violation: ${pathCheck.message}` },
         );
 
-        // Call librarian + refactorer for path analysis and fixes
+        // Call researcher + refactorer for path analysis and fixes
         const fixed = await this.callAgentForArchitecturalFix(
           "checkPathResolution",
           "researcher",
@@ -975,9 +975,9 @@ All path violations will be automatically detected and blocked.
         // To enable: set env var ENABLE_AGENTS_AUTO_UPDATE=true
         if (process.env.ENABLE_AGENTS_AUTO_UPDATE === "true") {
           try {
-            const { librarianAgentsUpdater } =
-              await import("../agents/librarian-agents-updater.js");
-            await librarianAgentsUpdater.updateAgentsMd(process.cwd());
+            const { researcherAgentsUpdater } =
+              await import("../agents/researcher-agents-updater.js");
+            await researcherAgentsUpdater.updateAgentsMd(process.cwd());
           } catch (error) {
             await frameworkLogger.log(
               "-post-processor",

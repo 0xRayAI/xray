@@ -7,7 +7,7 @@
 ## 🗃️ **Archived Orphaned Configurations**
 
 ### **Moved to Archive**
-✅ `.opencode/agents/archive/document-writer.yml` (2192 bytes)  
+✅ `.opencode/agents/archive/tech-writer.yml` (2192 bytes)  
 ✅ `.opencode/agents/archive/frontend-ui-ux-engineer.yml` (2214 bytes)
 
 ### **Reasoning**
@@ -16,7 +16,7 @@
 - **Maintains clean working directory** with only implemented agents
 
 ### **Archive Content Preserved**
-- **document-writer**: Complete configuration including:
+- **tech-writer**: Complete configuration including:
   - State management, processor pipeline, capabilities
   - Logging, performance, security, monitoring configs
   - Integration hooks and webhook endpoints
@@ -31,7 +31,7 @@
 ## 🪄 **Strategist Agent Enabled** (formerly Oracle)
 
 ### **Configuration Change**
-✅ **Renamed "oracle" to "strategist"** - Fixed OpenCode name conflict
+✅ **Renamed "strategist" to "strategist"** - Fixed OpenCode name conflict
 ✅ **Strategist agent now works** via Task tool
 ✅ **All agents now functional** via @ invocation
 
@@ -49,24 +49,24 @@
 1. **enforcer** - Primary mode, core framework compliance
 2. **architect** - System design and technical architecture
 3. **orchestrator** - Multi-agent coordination
-4. **testing-lead** - Testing strategy and frameworks (renamed from test-architect)
-5. **strategist** - Strategic guidance and problem solving (renamed from oracle)
+4. **testing-lead** - Testing strategy and frameworks (renamed from testing-lead)
+5. **strategist** - Strategic guidance and problem solving (renamed from strategist)
 6. **bug-triage-specialist** - Issue diagnosis and triage
 7. **code-reviewer** - Code quality and review standards
 8. **security-auditor** - Security analysis and vulnerability detection
 9. **refactorer** - Code refactoring and technical debt management
-10. **librarian** - Codebase exploration and documentation search
+10. **researcher** - Codebase exploration and documentation search
 11. **multimodal-looker** - Media file analysis and interpretation
 12. **code-analyzer** - Universal analysis specialist
-13. **seo-consultant** - SEO optimization (renamed from seo-specialist)
+13. **seo-consultant** - SEO optimization (renamed from seo-consultant)
 
 ### **🎯 Complete Agent Coverage**
 All major domains now covered:
 - **Code Analysis**: code-analyzer, code-reviewer, refactrer
-- **Architecture**: architect, oracle, code-analyzer
+- **Architecture**: architect, strategist, code-analyzer
 - **Security**: security-auditor, code-analyzer
-- **Testing**: test-architect, bug-triage-specialist
-- **Documentation**: librarian, document-writer *(archived)*
+- **Testing**: testing-lead, bug-triage-specialist
+- **Documentation**: researcher, tech-writer *(archived)*
 - **UI/UX**: frontend-ui-ux-engineer *(archived)*
 - **Multimedia**: multimodal-looker
 - **Orchestration**: orchestrator
@@ -123,7 +123,7 @@ All major domains now covered:
 
 **StringRay now has a complete, well-tested, and properly orchestrated agent ecosystem:**
 - ✅ **13 operational agents** covering all development domains
-- ✅ **Strategic guidance** via enabled oracle agent
+- ✅ **Strategic guidance** via enabled strategist agent
 - ✅ **Comprehensive testing** with 85%+ coverage
 - ✅ **Clean architecture** with no orphaned configurations
 - ✅ **Future-ready** for enhanced multi-agent workflows

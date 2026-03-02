@@ -12,7 +12,7 @@ Little did I know that these deployment tribulations were merely the opening cha
 
 The first battle was with npm itself. The `.mcp.json` configuration file, crucial for the framework's multi-agent communication, simply refused to be included in the package. I learned that **npm packaging is not magic** - you must explicitly declare every file in the `files` array, or it vanishes into the void.
 
-**Discovery #1: NPM is a meticulous librarian who only shelves books you explicitly hand her.**
+**Discovery #1: NPM is a meticulous researcher who only shelves books you explicitly hand her.**
 
 ### The CLI Conundrum
 

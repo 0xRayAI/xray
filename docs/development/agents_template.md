@@ -54,7 +54,7 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 5. **code-reviewer** - Quality assessment & standards validation
 6. **security-auditor** - Vulnerability detection & compliance
 7. **refactorer** - Technical debt elimination & code consolidation
-8. **test-architect** - Testing strategy & coverage optimization
+8. **testing-lead** - Testing strategy & coverage optimization
 
 ### OpenCode Plugin Integration
 
@@ -799,7 +799,7 @@ Evaluate performance characteristics:
 | **code-reviewer**         | Quality assessment & standards validation       | All code changes      | `read`, `grep`, `lsp_*`, `run_terminal_cmd`, `lsp_diagnostics`, `lsp_code_actions`               | edit: allow, bash: git/npm/bun      | Expert priority     |
 | **security-auditor**      | Vulnerability detection & compliance            | Security operations   | `read`, `grep`, `lsp_*`, `run_terminal_cmd`, `grep_app_searchGitHub`                             | edit: allow, bash: git/npm/bun      | Block on critical   |
 | **refactorer**            | Technical debt elimination & code consolidation | Refactor operations   | `read`, `grep`, `lsp_*`, `run_terminal_cmd`, `ast_grep_search`, `ast_grep_replace`, `lsp_rename` | edit: allow, bash: git/npm/bun      | Majority vote       |
-| **test-architect**        | Testing strategy & coverage optimization        | Test operations       | `read`, `grep`, `lsp_*`, `run_terminal_cmd`, `run_terminal_cmd`                                  | edit: allow, bash: git/npm/bun/test | Expert priority     |
+| **testing-lead**        | Testing strategy & coverage optimization        | Test operations       | `read`, `grep`, `lsp_*`, `run_terminal_cmd`, `run_terminal_cmd`                                  | edit: allow, bash: git/npm/bun/test | Expert priority     |
 
 #### MCP Server Integration
 

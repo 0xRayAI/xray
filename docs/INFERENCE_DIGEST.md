@@ -113,7 +113,7 @@ Every major bug in StringRay's history traced back to one of these assumptions:
 **Counter:** Dev has dormant MCP servers. Consumer has active ones. Test in production-equivalent environments.
 
 ### Assumption 2: "The Tests Pass, So It's Working"
-**Counter:** Tests only validate what they're designed to validate. The librarian infinite loop existed despite 1044/1114 tests passing.
+**Counter:** Tests only validate what they're designed to validate. The researcher infinite loop existed despite 1044/1114 tests passing.
 
 ### Assumption 3: "The Code Is Written, So It's Implemented"
 **Counter:** `fixMCPServerImports()` was defined but never called. Verify function calls, not definitions.

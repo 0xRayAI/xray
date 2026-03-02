@@ -213,7 +213,7 @@ select_model_for_agent() {
                 fi
             done
             ;;
-        "test-architect")
+        "testing-lead")
             # Test architect needs systematic thinking
             for model in "google/gemini-3-pro-high" "gpt-5.2" "openrouter/xai-grok-2-1212-fast-1" "openrouter/xai-grok-2-1212-fast-1"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
@@ -222,7 +222,7 @@ select_model_for_agent() {
                 fi
             done
             ;;
-        "librarian")
+        "researcher")
             # Librarian needs broad knowledge access
             for model in "google/gemini-3-flash" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1" "google/gemini-3-pro-high"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
@@ -249,7 +249,7 @@ select_model_for_agent() {
                 fi
             done
             ;;
-        "document-writer")
+        "tech-writer")
             # Document writer needs clear communication
             for model in "google/gemini-3-flash" "gpt-4o" "openrouter/xai-grok-2-1212-fast-1" "google/gemini-3-pro-high"; do
                 if echo "$available_models" | grep -q "^${model}$"; then
@@ -288,7 +288,7 @@ main() {
 
     if [[ -z "$agent_type" ]]; then
         log_error "Usage: $0 <agent_type>"
-        log_error "Available agent types: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, refactorer, security-auditor, test-architect, librarian, explore, frontend-ui-ux-engineer, document-writer, multimodal-looker"
+        log_error "Available agent types: enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, refactorer, security-auditor, testing-lead, researcher, explore, frontend-ui-ux-engineer, tech-writer, multimodal-looker"
         exit 1
     fi
 

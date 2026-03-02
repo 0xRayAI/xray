@@ -35,7 +35,7 @@ for mcp in "${MCPS[@]}"; do
 done
 
 # Load agent configurations
-AGENTS=("enforcer" "architect" "orchestrator" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "test-architect")
+AGENTS=("enforcer" "architect" "orchestrator" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "testing-lead")
 for agent in "${AGENTS[@]}"; do
     if [ -f "strray/agents/${agent}.md" ]; then
         echo "✅ Agent configuration loaded: ${agent}"

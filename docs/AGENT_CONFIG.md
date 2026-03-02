@@ -44,7 +44,7 @@ Add this section to your `opencode.json` to enable all StringRay agents:
     "temperature": 1.0,
     "mode": "subagent"
   },
-  "librarian": {
+  "researcher": {
     "temperature": 1.0,
     "mode": "subagent"
   },
@@ -84,7 +84,7 @@ These 10 agents form the core StringRay framework:
 | `security-auditor` | Vulnerability detection | `subagent` |
 | `refactorer` | Technical debt elimination | `subagent` |
 | `testing-lead` | Testing strategy & coverage | `subagent` |
-| `librarian` | Codebase exploration | `subagent` |
+| `researcher` | Codebase exploration | `subagent` |
 | `log-monitor` | Performance monitoring | `subagent` |
 
 ## Specialized Agents
@@ -166,7 +166,7 @@ To disable an agent, set `disable: true`:
       "temperature": 1.0,
       "mode": "subagent"
     },
-    "test-architect": {
+    "testing-lead": {
       "temperature": 1.0,
       "mode": "subagent"
     },
@@ -186,7 +186,7 @@ To disable an agent, set `disable: true`:
       "temperature": 1.0,
       "mode": "subagent"
     },
-    "librarian": {
+    "researcher": {
       "temperature": 1.0,
       "mode": "subagent"
     },

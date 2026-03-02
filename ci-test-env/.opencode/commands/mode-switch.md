@@ -22,7 +22,7 @@ CURRENT_MODE="full"
 echo "🎯 Current Mode: $CURRENT_MODE"
             echo "📝 Description: All 8 agents active for comprehensive development support"
             echo "🤖 Active Agents: 8"
-            echo "   enforcer architect orchestrator bug-triage-specialist code-reviewer security-auditor refactorer test-architect"
+            echo "   enforcer architect orchestrator bug-triage-specialist code-reviewer security-auditor refactorer testing-lead"
         elif [ "$DISABLED_COUNT" -eq 4 ]; then
 CURRENT_MODE="lite"
 echo "🎯 Current Mode: $CURRENT_MODE"
@@ -63,9 +63,9 @@ local new_mode="$1"
         fi
     else
         # Set disabled_agents for lite mode (4 agents disabled)
-        jq '.disabled_agents = ["security-auditor", "refactorer", "test-architect", "bug-triage-specialist"]' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+        jq '.disabled_agents = ["security-auditor", "refactorer", "testing-lead", "bug-triage-specialist"]' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
         if [ -f "$ENFORCER_CONFIG_FILE" ]; then
-            jq '.disabled_agents = ["security-auditor", "refactorer", "test-architect", "bug-triage-specialist"]' "$ENFORCER_CONFIG_FILE" > "${ENFORCER_CONFIG_FILE}.tmp" && mv "${ENFORCER_CONFIG_FILE}.tmp" "$ENFORCER_CONFIG_FILE"
+            jq '.disabled_agents = ["security-auditor", "refactorer", "testing-lead", "bug-triage-specialist"]' "$ENFORCER_CONFIG_FILE" > "${ENFORCER_CONFIG_FILE}.tmp" && mv "${ENFORCER_CONFIG_FILE}.tmp" "$ENFORCER_CONFIG_FILE"
         fi
     fi
 

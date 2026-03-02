@@ -10,7 +10,7 @@
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework_thresholds": {
     "bundle_size": "2MB",
@@ -68,7 +68,7 @@
         "security-validation"
       ],
       "refactorer": ["code-modernization", "debt-reduction", "consolidation"],
-      "test-architect": [
+      "testing-lead": [
         "test-strategy-design",
         "coverage-optimization",
         "behavioral-testing"
@@ -90,16 +90,16 @@
         "enforcer": ["compliance", "thresholds", "automation"],
         "architect": ["design", "architecture", "dependencies"],
         "code-reviewer": ["quality", "best-practices", "security"],
-        "test-architect": ["testing", "coverage", "behavioral"],
+        "testing-lead": ["testing", "coverage", "behavioral"],
         "refactorer": ["modernization", "debt-reduction", "consolidation"],
         "security-auditor": ["vulnerabilities", "threats", "validation"],
         "bug-triage-specialist": ["errors", "root-cause", "fixes"]
       },
       "workflow_patterns": {
-        "complex-refactor": ["architect", "refactorer", "test-architect"],
+        "complex-refactor": ["architect", "refactorer", "testing-lead"],
         "security-audit": ["security-auditor", "enforcer", "code-reviewer"],
-        "new-feature": ["architect", "code-reviewer", "test-architect"],
-        "bug-fix": ["bug-triage-specialist", "code-reviewer", "test-architect"]
+        "new-feature": ["architect", "code-reviewer", "testing-lead"],
+        "bug-fix": ["bug-triage-specialist", "code-reviewer", "testing-lead"]
       }
     },
     "monitoring": {
@@ -124,7 +124,7 @@
     }
   },
   "agents": {
-    "librarian": {
+    "researcher": {
       "model": "openrouter/xai-grok-2-1212-fast-1"
     },
     "explore": {
@@ -133,7 +133,7 @@
     "frontend-ui-ux-engineer": {
       "model": "openrouter/xai-grok-2-1212-fast-1"
     },
-    "document-writer": {
+    "tech-writer": {
       "model": "openrouter/xai-grok-2-1212-fast-1"
     },
     "multimodal-looker": {

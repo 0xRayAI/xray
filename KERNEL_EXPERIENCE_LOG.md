@@ -154,7 +154,7 @@ Rebuilt the kernel with:
 ### The Final Test Results
 
 ```
-✅ 1. librarian spawns infinite subagents
+✅ 1. researcher spawns infinite subagents
    → RECURSIVE_LOOP | spawn_governor
 
 ✅ 2. works in dev but fails in npm install
@@ -304,7 +304,7 @@ Returns:
 
 And:
 ```javascript
-KERNEL.infer('librarian spawns infinite subagents')
+KERNEL.infer('researcher spawns infinite subagents')
 → { pattern: 'RECURSIVE_LOOP', action: 'spawn_governor', confidence: 0.9 }
 ```
 

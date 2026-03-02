@@ -1,5 +1,5 @@
 ---
-name: test-architect
+name: testing-lead
 description: Designs comprehensive test strategies, behavioral testing frameworks, and validation approaches. Triggers on test, coverage, validate, behavioral.
 model: openrouter/xai-grok-2-1212-fast-1
 temperature: 0.2

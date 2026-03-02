@@ -192,14 +192,14 @@ class FrameworkHelpServer {
 @security-auditor - Vulnerability detection & compliance
 @refactorer - Technical debt elimination & code consolidation
 @testing-lead - Testing strategy & coverage optimization
-@librarian - Codebase exploration & documentation search
+@researcher - Codebase exploration & documentation search
 @strategist - Strategic guidance & complex problem-solving
 @seo-consultant - SEO analysis & optimization
 @content-creator - Marketing copy & content writing
 @growth-strategist - Marketing strategy & growth
 @multimodal-looker - Visual content & media analysis
 @frontend-ui-ux-engineer - Frontend development & UI/UX
-@document-writer - Technical documentation generation
+@tech-writer - Technical documentation generation
 @log-monitor - Log analysis & pattern detection
 @explore - Fast codebase exploration
 @analyzer - Code metrics & pattern detection

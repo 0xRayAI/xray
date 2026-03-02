@@ -31,7 +31,7 @@ fi
 
 echo ""
 echo "🤖 Auditing agent configurations..."
-AGENTS=("enforcer" "architect" "orchestrator" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "test-architect")
+AGENTS=("enforcer" "architect" "orchestrator" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "testing-lead")
 AGENT_SCORE=0
 for agent in "${AGENTS[@]}"; do
     if [ -f ".opencode/agents/${agent}.md" ]; then

@@ -42,7 +42,7 @@ npx strray-ai status
 | `@security-auditor` | Vulnerability detection |
 | `@code-reviewer` | Quality assessment |
 | `@refactorer` | Technical debt elimination |
-| `@test-architect` | Testing strategy & coverage |
+| `@testing-lead` | Testing strategy & coverage |
 | `@bug-triage-specialist` | Error investigation |
 | `@researcher` | Codebase exploration |
 | `@mobile-developer` | iOS/Android/React Native/Flutter |

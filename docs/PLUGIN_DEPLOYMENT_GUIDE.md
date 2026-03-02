@@ -47,7 +47,7 @@ The plugin automatically configures the following agents:
 - **@bug-triage-specialist**: Error investigation and fixes
 - **@security-auditor**: Security vulnerability detection
 - **@refactorer**: Technical debt elimination
-- **@test-architect**: Testing strategy and coverage
+- **@testing-lead**: Testing strategy and coverage
 - **@researcher**: Codebase exploration and documentation
 
 ### Advanced Configuration
@@ -86,7 +86,7 @@ Create `.opencode/strray/config.json` for advanced settings:
 # Complex task delegation
 @orchestrator implement user authentication system
 
-# Results: orchestrator → architect → code-reviewer → test-architect
+# Results: orchestrator → architect → code-reviewer → testing-lead
 ```
 
 ## Troubleshooting

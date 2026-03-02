@@ -55,7 +55,7 @@ Welcome to StringRay AI! This session includes systematic error prevention and p
 - **@enforcer** - Codex compliance & error prevention
 
 **Internal Agent System:**
-All 8 specialized agents (architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, librarian) are available internally through orchestrator coordination and framework operations.
+All 8 specialized agents (architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, researcher) are available internally through orchestrator coordination and framework operations.
 
 **Skills System (23 lazy-loaded capabilities):**
 - project-analysis, testing-strategy, code-review, security-audit, performance-optimization
@@ -94,7 +94,7 @@ For complete codex documentation, see: .opencode/strray/codex.json
 
 - **Maximum 2 subagents total** across all operations within a single agent session
 - **No nested subagent spawning** - subagents cannot spawn their own subagents
-- **Solo agents (librarian)** can spawn 0 subagents - they are terminal agents
+- **Solo agents (researcher)** can spawn 0 subagents - they are terminal agents
 - **Always check spawn authorization** before creating new agents via agentSpawnGovernor
 - **Report spawn attempts** to monitoring system before execution
 - **Terminate gracefully** if spawn limits exceeded - do not attempt workarounds

@@ -21,7 +21,7 @@ export default function () {
   // Simulate user journey: orchestrator task execution
   const payload = JSON.stringify({
     task: "complex-analysis",
-    agent: "test-architect",
+    agent: "testing-lead",
     parameters: {
       complexity: "high",
       priority: "normal",

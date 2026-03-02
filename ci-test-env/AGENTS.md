@@ -16,7 +16,7 @@ StringRay provides intelligent multi-agent orchestration with automatic delegati
 | `@security-auditor` | Vulnerability detection | `@security-auditor scan` |
 | `@code-reviewer` | Quality assessment | `@code-reviewer review PR` |
 | `@refactorer` | Technical debt elimination | `@refactorer optimize code` |
-| `@test-architect` | Testing strategy | `@test-architect plan tests` |
+| `@testing-lead` | Testing strategy | `@testing-lead plan tests` |
 | `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
 | `@researcher` | Codebase exploration | `@researcher find implementation` |
 

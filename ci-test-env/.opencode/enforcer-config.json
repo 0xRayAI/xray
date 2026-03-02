@@ -114,7 +114,7 @@
         ],
         "triggers": ["security-scans", "dependency-updates"]
       },
-      "test-architect": {
+      "testing-lead": {
         "capabilities": [
           "test-strategy-design",
           "coverage-optimization",
@@ -214,7 +214,7 @@
   },
   "disabled_agents": [
     "frontend-ui-ux-engineer",
-    "document-writer",
+    "tech-writer",
     "strategist",
     "multimodal-looker"
   ]

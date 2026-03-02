@@ -132,7 +132,7 @@ run_test "Agent count validation" "python3 -c \"
 import json
 config = json.load(open('./.opencode/OpenCode.json'))
 agents = config.get('strray_agents', {}).get('enabled', [])
-expected_agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'test-architect']
+expected_agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'testing-lead']
 if set(agents) == set(expected_agents):
     exit(0)
 exit(1)

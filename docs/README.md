@@ -156,7 +156,7 @@ Update your `.opencode/OpenCode.json`:
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray",
@@ -386,7 +386,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray",

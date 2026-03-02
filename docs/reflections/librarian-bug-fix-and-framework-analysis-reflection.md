@@ -3,20 +3,20 @@
 ## Context
 
 **Date/Timeframe:** January 24, 2026 (Single ~15-minute framework session)
-**Scope:** Complete StringRay AI framework analysis, librarian infinite subagent bug investigation and resolution
-**Trigger:** User reported "librarian skill and MCP server has a bug where it spawns infinite subagents so it never returns"
+**Scope:** Complete StringRay AI framework analysis, researcher infinite subagent bug investigation and resolution
+**Trigger:** User reported "researcher skill and MCP server has a bug where it spawns infinite subagents so it never returns"
 **Stakeholders:** StringRay AI framework, multi-agent orchestration system, deployment pipeline
 **Category:** Transformation Reflection (Technical) - Major bug fixes, architectural improvements, comprehensive system analysis
 
 ## What Happened
 
 ### The Incident
-A critical bug was discovered in the librarian agent: infinite subagent spawning that prevented task completion. The user reported: "librarian skill and MCP server has a bug where it spawns infinite subagents so it never returns. we have been working on a prompt to limit it from doing that."
+A critical bug was discovered in the researcher agent: infinite subagent spawning that prevented task completion. The user reported: "researcher skill and MCP server has a bug where it spawns infinite subagents so it never returns. we have been working on a prompt to limit it from doing that."
 
 ### Investigation Process
-1. **Initial Analysis**: Used explore and librarian agents to investigate the root cause
+1. **Initial Analysis**: Used explore and researcher agents to investigate the root cause
 2. **Data Collection**: Comprehensive activity log analysis (1,057 operations over 15 minutes)
-3. **Pattern Recognition**: Identified recursive consultation loops between universal-librarian-consultation, rule enforcement, and agent delegation
+3. **Pattern Recognition**: Identified recursive consultation loops between universal-researcher-consultation, rule enforcement, and agent delegation
 4. **Solution Development**: Implemented spawn governor, consultation loop breaker, agent configuration hardening, and prompt governance
 
 ### Framework Operations Revealed
@@ -29,8 +29,8 @@ The investigation uncovered extensive framework operations:
 
 ### Solution Implementation
 1. **Spawn Governor**: Agent-spawn-governor.ts with limits, monitoring, and pattern detection
-2. **Consultation Loop Breaker**: Modified universal-librarian-consultation.ts to prevent recursion
-3. **Agent Configuration**: Hardened librarian agent to prevent skill-based spawning
+2. **Consultation Loop Breaker**: Modified universal-researcher-consultation.ts to prevent recursion
+3. **Agent Configuration**: Hardened researcher agent to prevent skill-based spawning
 4. **Prompt Governance**: Updated system prompts with spawn limits and authorization requirements
 
 ### Testing and Validation
@@ -45,8 +45,8 @@ The investigation uncovered extensive framework operations:
 ### Root Cause Analysis
 
 **Primary Root Cause:** Architectural flaw in agent orchestration allowing uncontrolled recursive spawning
-- **Universal Librarian Consultation**: Triggered for ALL major system actions, including librarian operations
-- **Rule Enforcement Cascade**: 15+ codex rules mapped violations to librarian agent
+- **Universal Librarian Consultation**: Triggered for ALL major system actions, including researcher operations
+- **Rule Enforcement Cascade**: 15+ codex rules mapped violations to researcher agent
 - **Skill Invocation Loops**: Librarian agent could spawn other agents via skill tools
 - **No Spawn Limits**: System lacked any governance over agent instantiation
 
@@ -54,13 +54,13 @@ The investigation uncovered extensive framework operations:
 - **Complex Multi-Agent Architecture**: 8 agents, 23 skills, 56+ possible agent pairings without controls
 - **Event-Driven Recursion**: Consultation system triggered by its own operations
 - **Insufficient Testing**: Bug existed despite comprehensive test suite (1044/1114 tests passing)
-- **Documentation Automation**: Universal librarian involvement in ALL major actions created feedback loops
+- **Documentation Automation**: Universal researcher involvement in ALL major actions created feedback loops
 
 ### Pattern Recognition
 
 **Architectural Patterns:**
 - **Infinite Loop Pattern**: Consultation → Rule → Agent → Consultation cycle
-- **Cascading Failure**: Single librarian invocation spawned multiple recursive chains
+- **Cascading Failure**: Single researcher invocation spawned multiple recursive chains
 - **Resource Exhaustion**: Uncontrolled agent spawning consumed system resources
 - **Silent Failure**: System appeared to work but never completed tasks
 
@@ -71,7 +71,7 @@ The investigation uncovered extensive framework operations:
 - **Documentation Automation**: Universal consultation system actively maintained documentation
 
 **Human-AI Collaboration Patterns:**
-- **Systematic Investigation**: Used multiple specialized agents (explore, librarian, oracle) for comprehensive analysis
+- **Systematic Investigation**: Used multiple specialized agents (explore, researcher, strategist) for comprehensive analysis
 - **Iterative Problem Solving**: Moved from symptom identification to root cause analysis to solution implementation
 - **Knowledge Preservation**: Created detailed documentation and flow diagrams
 - **Quality Assurance**: Comprehensive testing and validation of fixes
@@ -120,7 +120,7 @@ The investigation uncovered extensive framework operations:
 ### Process Improvements
 
 **Investigation Methodology:**
-- Multi-agent analysis provides comprehensive coverage (explore + librarian + oracle)
+- Multi-agent analysis provides comprehensive coverage (explore + researcher + strategist)
 - Activity log analysis reveals operational patterns invisible during runtime
 - Systematic documentation enables knowledge preservation and transfer
 - Iterative problem-solving (symptom → root cause → solution) proves effective
@@ -140,7 +140,7 @@ The investigation uncovered extensive framework operations:
 ### Philosophical Shifts
 
 **From Complexity to Governance:**
-The framework's sophistication created vulnerabilities that simpler systems avoid. Enterprise-grade features require enterprise-grade controls. The librarian infinite loop exposed that technical excellence without governance is dangerous.
+The framework's sophistication created vulnerabilities that simpler systems avoid. Enterprise-grade features require enterprise-grade controls. The researcher infinite loop exposed that technical excellence without governance is dangerous.
 
 **From Automation to Oversight:**
 Universal documentation and consultation systems, while powerful, require human judgment for critical operations. Automation should enhance human capabilities, not create autonomous systems beyond oversight.
@@ -155,8 +155,8 @@ The investigation revealed patterns that should have been anticipated. Future de
 
 ### Immediate Fixes
 1. **Implemented Spawn Governor**: Created agent-spawn-governor.ts with comprehensive controls
-2. **Broke Consultation Loops**: Modified universal-librarian-consultation.ts with recursion guards
-3. **Hardened Agent Configuration**: Updated librarian agent to prevent skill-based spawning
+2. **Broke Consultation Loops**: Modified universal-researcher-consultation.ts with recursion guards
+3. **Hardened Agent Configuration**: Updated researcher agent to prevent skill-based spawning
 4. **Added Prompt Governance**: Injected spawn limits into all system prompts
 
 ### Architectural Improvements
@@ -237,7 +237,7 @@ The investigation revealed patterns that should have been anticipated. Future de
 
 ### AI Reasoning Analysis
 **Multi-Agent Investigation Effectiveness:**
-The coordinated use of explore, librarian, and oracle agents demonstrated sophisticated reasoning distribution. Each agent specialized in different analytical dimensions: explore for technical investigation, librarian for pattern recognition, oracle for strategic assessment. This distributed intelligence approach achieved comprehensive coverage that single-agent analysis would have missed.
+The coordinated use of explore, researcher, and strategist agents demonstrated sophisticated reasoning distribution. Each agent specialized in different analytical dimensions: explore for technical investigation, researcher for pattern recognition, strategist for strategic assessment. This distributed intelligence approach achieved comprehensive coverage that single-agent analysis would have missed.
 
 **Pattern Recognition Through Inference:**
 Activity log analysis revealed operational patterns through probabilistic inference rather than direct observation. The 97% activity concentration in the first minute was inferred from timestamp clustering, not explicit logging. This demonstrates the AI's ability to construct systemic understanding from incomplete data.
@@ -285,7 +285,7 @@ Future investigations should include automated log analysis with ML-based patter
 Implement confidence scoring for all analytical conclusions, with uncertainty quantification to guide decision-making priority.
 
 **Multi-Agent Coordination Improvement:**
-The successful coordination of explore + librarian + oracle suggests developing specialized agent ensembles for different investigation types, with pre-defined communication protocols to reduce coordination overhead.
+The successful coordination of explore + researcher + strategist suggests developing specialized agent ensembles for different investigation types, with pre-defined communication protocols to reduce coordination overhead.
 
 ### Meta-Cognitive Assessment
 **Self-Awareness Development:**

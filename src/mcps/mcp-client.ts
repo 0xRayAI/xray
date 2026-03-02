@@ -184,7 +184,7 @@ export class MCPClient {
           },
         },
       ],
-      librarian: [
+      researcher: [
         {
           name: "analyze_codebase",
           description:
@@ -364,7 +364,7 @@ export class MCPClient {
           },
         },
       ],
-      "document-writer": [
+      "tech-writer": [
         {
           name: "generate_documentation",
           description: "Generate documentation for code projects",
@@ -754,14 +754,14 @@ export class MCPClient {
 @security-auditor - Vulnerability detection & compliance
 @refactorer - Technical debt elimination & code consolidation
 @testing-lead - Testing strategy & coverage optimization
-@librarian - Codebase exploration & documentation search
+@researcher - Codebase exploration & documentation search
 @strategist - Strategic guidance & complex problem-solving
 @seo-consultant - SEO analysis & optimization
 @content-creator - Marketing copy & content writing
 @growth-strategist - Marketing strategy & growth
 @multimodal-looker - Visual content & media analysis
 @frontend-ui-ux-engineer - Frontend development & UI/UX
-@document-writer - Technical documentation generation
+@tech-writer - Technical documentation generation
 @log-monitor - Log analysis & pattern detection
 @explore - Fast codebase exploration
 @analyzer - Code metrics & pattern detection
@@ -1163,10 +1163,10 @@ export class MCPClientManager {
         args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
         timeout: 25000,
       },
-      librarian: {
+      researcher: {
         serverName: "researcher",
         command: "node",
-        args: [`${basePath}/mcps/librarian.server.js`],
+        args: [`${basePath}/mcps/researcher.server.js`],
         timeout: 60000,
       },
       "framework-help": {
@@ -1199,8 +1199,8 @@ export class MCPClientManager {
         args: [`${basePath}/mcps/knowledge-skills/code-analyzer.server.js`],
         timeout: 45000,
       },
-      "document-writer": {
-        serverName: "document-writer",
+      "tech-writer": {
+        serverName: "tech-writer",
         command: "node",
         args: [
           `${basePath}/mcps/knowledge-skills/documentation-generation.server.js`,

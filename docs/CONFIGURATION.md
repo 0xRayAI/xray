@@ -133,8 +133,8 @@ Create `.opencode/strray/features.json` in your project root:
       "code-reviewer": "claude-sonnet-4",
       "security-auditor": "claude-opus-4",
       "refactorer": "claude-sonnet-4",
-      "test-architect": "claude-sonnet-4",
-      "librarian": "claude-sonnet-4"
+      "testing-lead": "claude-sonnet-4",
+      "researcher": "claude-sonnet-4"
     },
     "performance_limits": {
       "max_task_duration_ms": 30000,
@@ -326,11 +326,11 @@ The main OpenCode configuration file for agent routing:
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1",
-    "librarian": "openrouter/xai-grok-2-1212-fast-1",
-    "seo-specialist": "openrouter/xai-grok-2-1212-fast-1",
-    "seo-copywriter": "openrouter/xai-grok-2-1212-fast-1",
-    "marketing-expert": "openrouter/xai-grok-2-1212-fast-1",
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1",
+    "researcher": "openrouter/xai-grok-2-1212-fast-1",
+    "seo-consultant": "openrouter/xai-grok-2-1212-fast-1",
+    "content-creator": "openrouter/xai-grok-2-1212-fast-1",
+    "growth-strategist": "openrouter/xai-grok-2-1212-fast-1",
     "database-engineer": "openrouter/xai-grok-2-1212-fast-1",
     "devops-engineer": "openrouter/xai-grok-2-1212-fast-1",
     "backend-engineer": "openrouter/xai-grok-2-1212-fast-1",
@@ -381,7 +381,7 @@ MCP server registration for StringRay tools:
       "args": ["${workspaceFolder}/dist/mcps/orchestrator.server.js"],
       "env": {}
     },
-    "strray/librarian": {
+    "strray/researcher": {
       "command": "node",
       "args": ["${workspaceFolder}/dist/mcps/knowledge-skills/project-analysis.server.js"],
       "env": {}

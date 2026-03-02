@@ -23,7 +23,7 @@ Then I found:
 
 1. Two agents in opencode.json had no corresponding .yml files
 2. The yml files existed for 26 agents, but some were ignored by git
-3. Some agents had documentation-writer.yml, others had document-writer.yml - naming inconsistency from months ago
+3. Some agents had documentation-writer.yml, others had tech-writer.yml - naming inconsistency from months ago
 4. The gitignore had `!.opencode/agents/` forcing inclusion, but individual files were still being skipped
 5. The test that was supposed to catch this was checking for "Antigravity" in AGENTS.md which hadn't been updated
 
@@ -122,7 +122,7 @@ And that world only exists if someone does the boring work. The maintenance. The
 
 Today I added two yml files:
 - general.yml (88 lines)
-- document-writer.yml (87 lines)
+- tech-writer.yml (87 lines)
 
 That's 175 lines of YAML. Two files. One version bump.
 
@@ -131,7 +131,7 @@ But behind those 175 lines is the understanding of:
 - Why gitignore patterns matter for npm packages
 - How pre-commit validation catches test failures
 - Why AGENTS.md needs to mention "Antigravity" (a legacy requirement from a test we never fixed properly)
-- The difference between documentation-writer and document-writer (and why it matters)
+- The difference between documentation-writer and tech-writer (and why it matters)
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Context
 - **Date/Timeframe**: January 22, 2026 - 2 hour intensive analysis and correction session
-- **Scope**: Agent delegation system, rule enforcement, universal librarian consultation, MCP skill integration
+- **Scope**: Agent delegation system, rule enforcement, universal researcher consultation, MCP skill integration
 - **Trigger**: Critical architectural flaw discovered - "super flows" (agent-delegator, processor-manager) were bypassing enforcer authority
 - **Stakeholders**: Enforcer agent (rule governance), Orchestrator agent (workflow coordination), Test-Architect (testing validation), Bug-Triage-Specialist (error handling), Librarian agent (documentation/versioning)
 
@@ -12,7 +12,7 @@
 During routine architectural review, I noticed that agent-delegator.ts and processor-manager.ts had grown into "super flows" containing extensive rule enforcement logic. This created a fundamental governance violation - the enforcer agent's rules were being implemented in delegation/processing layers rather than being enforced by the central authority.
 
 ### The Investigation
-Consulted all four core agents (enforcer, orchestrator, test-architect, bug-triage-specialist) for comprehensive analysis. Each agent revealed different aspects:
+Consulted all four core agents (enforcer, orchestrator, testing-lead, bug-triage-specialist) for comprehensive analysis. Each agent revealed different aspects:
 
 - **Enforcer**: Confirmed bypass - violation-to-skill mapping logic existed in processor-manager instead of centralized RuleEnforcer
 - **Orchestrator**: Identified workflow fragmentation - inconsistent trigger mechanisms created coordination silos
@@ -20,7 +20,7 @@ Consulted all four core agents (enforcer, orchestrator, test-architect, bug-tria
 - **Bug-Triage-Specialist**: Revealed error handling inconsistencies - surgical fixes weren't systematically triggered
 
 ### The Root Cause Revelation
-The librarian agent delivered the critical insight: **The framework has all necessary components for excellent orchestration, but suffers from alignment issues rather than missing pieces.** The problem wasn't what we lacked, but how the existing components interacted (or failed to interact).
+The researcher agent delivered the critical insight: **The framework has all necessary components for excellent orchestration, but suffers from alignment issues rather than missing pieces.** The problem wasn't what we lacked, but how the existing components interacted (or failed to interact).
 
 ### The Correction Implementation
 Systematically corrected all agent/skill mappings from non-existent skills to actual MCP skills:
@@ -32,7 +32,7 @@ Systematically corrected all agent/skill mappings from non-existent skills to ac
 - `ui-ux-design` → `project-analysis`
 
 ### The Universal Librarian Integration
-Implemented universal librarian consultation system with pre/post-action hooks to ensure all major framework actions involve librarian for documentation and versioning oversight.
+Implemented universal researcher consultation system with pre/post-action hooks to ensure all major framework actions involve researcher for documentation and versioning oversight.
 
 ## Analysis
 
@@ -49,7 +49,7 @@ Implemented universal librarian consultation system with pre/post-action hooks t
 - **Philosophical Cause**: Assumption that skill names were descriptive rather than literal server identifiers
 
 #### 3. **Documentation Culture Gap**
-- **Technical Cause**: No systematic triggers for librarian involvement in framework operations
+- **Technical Cause**: No systematic triggers for researcher involvement in framework operations
 - **Process Cause**: Documentation treated as optional rather than fundamental to system integrity
 - **Philosophical Cause**: View of documentation as "implementation detail" rather than core architectural requirement
 
@@ -62,7 +62,7 @@ Implemented universal librarian consultation system with pre/post-action hooks t
 
 #### **Communication Silos**
 - Agents operated with insufficient cross-agent awareness
-- No systematic mechanism for agents to consult librarian for documentation impacts
+- No systematic mechanism for agents to consult researcher for documentation impacts
 - Lack of universal hooks for documentation/versioning requirements
 
 #### **Validation Gaps**
@@ -86,7 +86,7 @@ Implemented universal librarian consultation system with pre/post-action hooks t
 
 #### **Documentation Is Not Optional**
 - **Lesson**: Documentation requirements need systematic enforcement, not just theoretical rules
-- **Implication**: Universal librarian consultation must be built into all major operations
+- **Implication**: Universal researcher consultation must be built into all major operations
 - **Prevention**: Documentation as blocking requirement with automated verification
 
 ### Process Improvements
@@ -135,7 +135,7 @@ Implemented universal librarian consultation system with pre/post-action hooks t
 #### **Universal Librarian Consultation**
 - Implemented pre/post-action hooks for all major framework operations
 - Created consultation system for documentation and versioning requirements
-- Integrated librarian involvement into delegation and processing workflows
+- Integrated researcher involvement into delegation and processing workflows
 
 #### **Architectural Validation**
 - Added automated checks for architectural compliance
@@ -150,7 +150,7 @@ Implemented universal librarian consultation system with pre/post-action hooks t
 - Created systematic validation of skill references against MCP registry
 
 #### **Documentation Infrastructure**
-- Established universal librarian consultation as blocking requirement
+- Established universal researcher consultation as blocking requirement
 - Built documentation impact assessment into all major operations
 - Created automated versioning triggers for codex and configuration changes
 
@@ -192,7 +192,7 @@ Implemented universal librarian consultation system with pre/post-action hooks t
 
 #### **Documentation Integrity**
 - **Risk**: Documentation requirements becoming optional or inconsistently applied
-- **Mitigation**: Universal librarian consultation as blocking requirement for all operations
+- **Mitigation**: Universal researcher consultation as blocking requirement for all operations
 - **Monitoring**: Automated documentation completeness verification
 
 ### Opportunity Areas

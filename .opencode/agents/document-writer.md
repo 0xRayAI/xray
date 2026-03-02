@@ -1,5 +1,5 @@
 ---
-name: document-writer
+name: tech-writer
 description: Technical documentation and content creation specialist. Expert in creating clear, comprehensive documentation for developers and users.
 model: default
 temperature: 0.4

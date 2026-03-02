@@ -167,6 +167,36 @@ const UPDATE_PATTERNS = [
       replacement: `"strray:version": "${OFFICIAL_VERSIONS.framework.version}"`,
     },
 
+    // === AGENT NAME RENAMES (v1.6.17+) ===
+    {
+      pattern: /testing-lead/g,
+      replacement: "testing-lead",
+    },
+    {
+      pattern: /researcher/g,
+      replacement: "researcher",
+    },
+    {
+      pattern: /strategist(?![-:])/g,
+      replacement: "strategist",
+    },
+    {
+      pattern: /seo-consultant/g,
+      replacement: "seo-consultant",
+    },
+    {
+      pattern: /content-creator/g,
+      replacement: "content-creator",
+    },
+    {
+      pattern: /growth-strategist/g,
+      replacement: "growth-strategist",
+    },
+    {
+      pattern: /tech-writer/g,
+      replacement: "tech-writer",
+    },
+
   ];
 
 async function standardizeVersions() {

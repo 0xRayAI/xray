@@ -471,7 +471,7 @@ const batchResult = await orchestrator.batchExecute({
       input: { files: "src/**/*.ts" },
     },
     {
-      agent: "test-architect",
+      agent: "testing-lead",
       task: "analyze-coverage",
       input: { files: "tests/**/*.spec.ts" },
     },
@@ -503,7 +503,7 @@ for (const result of batchResult.results) {
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "name": "strray",

@@ -17,8 +17,8 @@ From configuration analysis, autonomous modules appear to be **legacy OpenCode f
 "disabled_agents": [
   "Sisyphus",        // <- Autonomous agent
   "Planner-Sisyphus", // <- Autonomous planner
-  "oracle",          // <- Autonomous oracle
-  "librarian"        // <- Autonomous librarian
+  "strategist",          // <- Autonomous strategist
+  "researcher"        // <- Autonomous researcher
 ],
 "sisyphus_agent": {
   "disabled": true   // <- Explicitly disabled

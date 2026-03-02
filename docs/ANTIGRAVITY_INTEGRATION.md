@@ -46,7 +46,7 @@ When you describe what you need, StringRay's TaskSkillRouter automatically detec
 ```
 "help me fix this TypeScript error"     → routes to code-reviewer
 "write a Dockerfile for my API"          → routes to devops-engineer  
-"analyze my landing page copy"          → routes to marketing-expert
+"analyze my landing page copy"          → routes to growth-strategist
 "optimize this React component"         → routes to frontend-engineer
 "set up AWS Lambda function"            → routes to devops-engineer
 ```

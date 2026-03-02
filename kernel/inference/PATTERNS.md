@@ -49,13 +49,13 @@ Bug cascades are not random — they follow predictable structures. From the 50+
 ### Case Study: The Librarian Infinite Loop
 
 **Date:** January 24, 2026  
-**Reflection:** `librarian-bug-fix-and-framework-analysis-reflection.md`  
+**Reflection:** `researcher-bug-fix-and-framework-analysis-reflection.md`  
 **Version:** 1.3.4
 
 #### The Symptom
 
 ```
-Users reported: "librarian spawns infinite subagents so it never returns"
+Users reported: "researcher spawns infinite subagents so it never returns"
 Framework appeared to work but tasks never completed
 ```
 
@@ -97,7 +97,7 @@ INFINITE LOOP
    - Log warning
 
 3. Hardened agent configuration:
-   - Prevent librarian from spawning via skills
+   - Prevent researcher from spawning via skills
    - Explicit authorization required
 ```
 
@@ -484,8 +484,8 @@ In StringRay, this is how the recursive loop formed:
 │                                                                         │
 │  THE KILLER INSIGHT:                                                   │
 │  ═══════════════════                                                   │
-│  The librarian was consulted FOR the rules that                        │
-│  were supposed to PREVENT the librarian from being consulted.          │
+│  The researcher was consulted FOR the rules that                        │
+│  were supposed to PREVENT the researcher from being consulted.          │
 │                                                                         │
 │  Meta-consultation about consultation prevention                       │
 │  causes consultation.                                                  │

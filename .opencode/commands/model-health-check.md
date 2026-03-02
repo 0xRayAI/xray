@@ -161,7 +161,7 @@ local resolved_model
 
 }
 
-for agent in "enforcer" "architect" "code-reviewer" "test-architect"; do
+for agent in "enforcer" "architect" "code-reviewer" "testing-lead"; do
 test_resolution "$agent" || resolution_tests_passed=false
 done
 

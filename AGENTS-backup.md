@@ -34,20 +34,20 @@
 | code-analyzer | Code analysis, metrics, and pattern detection |
 | orchestrator | Multi-agent workflow coordination *(manual only)* |
 | architect | System design and technical architecture |
-| test-architect | Testing strategy design |
+| testing-lead | Testing strategy design |
 | bug-triage-specialist | Debugging analysis and issue prioritization |
 | code-reviewer | Code quality assessment |
 | security-auditor | Security vulnerability scanning |
 | refactorer | Code refactoring techniques |
-| librarian | Codebase and documentation search |
+| researcher | Codebase and documentation search |
 | log-monitor | Log analysis and pattern detection |
-| oracle | Strategic guidance and complex problem-solving |
-| document-writer | Technical documentation creation |
+| strategist | Strategic guidance and complex problem-solving |
+| tech-writer | Technical documentation creation |
 | multimodal-looker | Media file analysis (images, diagrams, PDFs) |
 | frontend-ui-ux-engineer | Frontend development and UI/UX |
-| seo-specialist | SEO analysis & optimization |
-| seo-copywriter | Marketing copy & content writing |
-| marketing-expert | Marketing strategy & growth |
+| seo-consultant | SEO analysis & optimization |
+| content-creator | Marketing copy & content writing |
+| growth-strategist | Marketing strategy & growth |
 
 ---
 

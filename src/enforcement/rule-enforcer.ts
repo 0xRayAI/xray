@@ -1205,7 +1205,7 @@ export class RuleEnforcer {
         agent: "orchestrator",
         skill: "project-analysis",
       },
-      "universal-librarian-consultation": {
+      "universal-researcher-consultation": {
         agent: "researcher",
         skill: "project-analysis",
       },
@@ -1768,7 +1768,7 @@ export class RuleEnforcer {
 
   /**
    * Validate comprehensive documentation requirements (Codex Term #46)
-   * Enforces universal librarian consultation and comprehensive documentation
+   * Enforces universal researcher consultation and comprehensive documentation
    */
   private async validateDocumentationRequired(
     context: RuleValidationContext,
@@ -1849,12 +1849,12 @@ export class RuleEnforcer {
       suggestions.push("Update version fields in package.json and codex.json");
     }
 
-    // 5. Universal librarian consultation requirement
+    // 5. Universal researcher consultation requirement
     violations.push(
-      "Universal librarian consultation required for all code changes",
+      "Universal researcher consultation required for all code changes",
     );
     suggestions.push(
-      "Consult librarian for documentation review and version updates",
+      "Consult researcher for documentation review and version updates",
     );
     suggestions.push(
       "Ensure README.md, architecture docs, and API docs are current",
@@ -1866,7 +1866,7 @@ export class RuleEnforcer {
         message: `Documentation violations: ${violations.join(", ")}`,
         suggestions: [
           ...suggestions,
-          "Run: Consult librarian for comprehensive documentation review",
+          "Run: Consult researcher for comprehensive documentation review",
           "Update AGENTS.md if agent capabilities changed",
           "Update version fields in relevant configuration files",
         ],

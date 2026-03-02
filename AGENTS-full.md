@@ -349,8 +349,8 @@ User Request → boot-orchestrator → agent-delegator → rule-enforcer → Pos
 | **code-reviewer** | Rule Enforcement | `rule-enforcer.ts`, `enforcer-tools.ts` | `read`, `grep`, `lsp_*`, `bash`, `lsp_diagnostics` | Expert priority |
 | **security-auditor** | Security & Monitoring | `security-auditor.ts`, `security-scanner.ts` | `read`, `grep`, `lsp_*`, `bash`, `grep_app_searchGitHub` | Block critical |
 | **refactorer** | Agent Delegation | `agent-delegator.ts`, `dependency-graph-builder.ts` | `read`, `grep`, `lsp_*`, `bash`, `ast_grep_*`, `lsp_rename` | Majority vote |
-| **test-architect** | Rule Enforcement | `test-auto-healing.ts`, `rule-enforcer.ts` | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
-| **librarian** | Agent Delegation | `codebase-context-analyzer.ts`, `project-analysis.server.ts` | `project-analysis_*` | N/A (solo agent) |
+| **testing-lead** | Rule Enforcement | `test-auto-healing.ts`, `rule-enforcer.ts` | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **researcher** | Agent Delegation | `codebase-context-analyzer.ts`, `project-analysis.server.ts` | `project-analysis_*` | N/A (solo agent) |
 
 ---
 
@@ -504,8 +504,8 @@ Data Flow: User Input → Framework Processing → Agent Execution → Validatio
 | **code-reviewer** | Quality assessment & standards | All code changes | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash`, `lsp_diagnostics` | Expert priority |
 | **security-auditor** | Vulnerability detection | Security operations | Security & Monitoring | `read`, `grep`, `lsp_*`, `bash`, `grep_app_searchGitHub` | Block critical |
 | **refactorer** | Technical debt elimination | Refactor operations | Agent Delegation | `read`, `grep`, `lsp_*`, `bash`, `ast_grep_*`, `lsp_rename` | Majority vote |
-| **test-architect** | Testing strategy & coverage | Test operations | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
-| **librarian** | Codebase exploration & documentation | Analysis operations | Agent Delegation | `project-analysis_*` | N/A (solo agent) |
+| **testing-lead** | Testing strategy & coverage | Test operations | Rule Enforcement | `read`, `grep`, `lsp_*`, `bash` | Expert priority |
+| **researcher** | Codebase exploration & documentation | Analysis operations | Agent Delegation | `project-analysis_*` | N/A (solo agent) |
 
 ### 5.2 Pipeline Integration Points
 
@@ -520,8 +520,8 @@ Data Flow: User Input → Framework Processing → Agent Execution → Validatio
 | **code-reviewer** | Code submission events | `rule-enforcer.ts`, `enforcer-tools.ts` | Rule enforcement pipeline |
 | **security-auditor** | Security scan triggers | `security-auditor.ts`, `security-scanner.ts` | Security & monitoring pipeline |
 | **refactorer** | Refactoring requests OR code quality issues | `agent-delegator.ts`, `dependency-graph-builder.ts` | Agent delegation pipeline |
-| **test-architect** | Test generation/validation needs | `test-auto-healing.ts`, `rule-enforcer.ts` | Rule enforcement pipeline |
-| **librarian** | Analysis/documentation requests | `codebase-context-analyzer.ts`, `project-analysis.server.ts` | Agent delegation pipeline |
+| **testing-lead** | Test generation/validation needs | `test-auto-healing.ts`, `rule-enforcer.ts` | Rule enforcement pipeline |
+| **researcher** | Analysis/documentation requests | `codebase-context-analyzer.ts`, `project-analysis.server.ts` | Agent delegation pipeline |
 
 ### Practical Agent Usage Examples
 
@@ -636,8 +636,8 @@ Rollback on Failure → Escalation Path → Manual Intervention
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1",
-    "librarian": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1",
+    "researcher": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "version": "1.6.21",
@@ -764,7 +764,7 @@ npm run monitoring
 @code-reviewer review pull request
 @security-auditor scan for vulnerabilities
 @refactorer consolidate duplicate code
-@test-architect design test strategy
+@testing-lead design test strategy
 ```
 
 #### CLI Management Commands
@@ -897,8 +897,8 @@ Framework components:
 | code-reviewer | Quality assessment & standards | All code changes | read, grep, lsp_*, bash, lsp_diagnostics | Expert priority |
 | security-auditor | Vulnerability detection | Security operations | read, grep, lsp_*, bash, grep_app_searchGitHub | Block critical |
 | refactorer | Technical debt elimination | Refactor operations | read, grep, lsp_*, bash, ast_grep_*, lsp_rename | Majority vote |
-| test-architect | Testing strategy & coverage | Test operations | read, grep, lsp_*, bash | Expert priority |
-| librarian | Codebase exploration & documentation | Analysis operations | project-analysis_* | N/A (solo agent) |
+| testing-lead | Testing strategy & coverage | Test operations | read, grep, lsp_*, bash | Expert priority |
+| researcher | Codebase exploration & documentation | Analysis operations | project-analysis_* | N/A (solo agent) |
 
 ### 2.3 Complexity Analysis
 
@@ -950,8 +950,8 @@ Tasks are evaluated using 6 metrics:
 | **code-reviewer**         | Quality assessment  | All code changes    | lsp_*, diagnostics | ✅ All skills | Expert priority |
 | **security-auditor**      | Vulnerability       | Security operations | grep_app_searchGitHub | ✅ All skills | Block critical |
 | **refactorer**            | Technical debt      | Refactor operations | ast_grep_*, lsp_rename | ✅ All skills | Majority vote |
-| **test-architect**        | Testing strategy    | Test operations     | run_terminal_cmd | ✅ All skills | Expert priority |
-| **librarian**             | Codebase exploration| Analysis operations | project-analysis_* | ✅ All skills | N/A (solo agent) |
+| **testing-lead**        | Testing strategy    | Test operations     | run_terminal_cmd | ✅ All skills | Expert priority |
+| **researcher**             | Codebase exploration| Analysis operations | project-analysis_* | ✅ All skills | N/A (solo agent) |
 
 **[Agent Matrix](#51-agent-matrix)** determines which agents handle each complexity level.
 
@@ -970,9 +970,9 @@ When codex rules are violated, the system automatically delegates to appropriate
 
 | Rule Violation | Delegated Agent | Action |
 |----------------|-----------------|--------|
-| `tests-required` | test-architect | Generate comprehensive tests |
-| `documentation-required` | librarian | Create/update documentation |
-| `understand-before-write` | librarian | Analyze codebase before new code |
+| `tests-required` | testing-lead | Generate comprehensive tests |
+| `documentation-required` | researcher | Create/update documentation |
+| `understand-before-write` | researcher | Analyze codebase before new code |
 | `security-audit` | security-auditor | Perform security validation |
 | `performance-optimization` | refactorer | Optimize code performance |
 
@@ -1167,7 +1167,7 @@ Parallel analysis → Results → Majority vote consensus → Final report
 - **Consensus Filtering**: Results filtered by confidence and agreement levels
 - **Fallback Handling**: Single agent response if consensus fails
 
-**Framework Introspection**: Agents can analyze their own operations and improve collaboration patterns through the librarian agent and complexity analysis system.
+**Framework Introspection**: Agents can analyze their own operations and improve collaboration patterns through the researcher agent and complexity analysis system.
 
 ### 3.6 Agent Operational Procedures
 
@@ -1190,12 +1190,12 @@ Parallel analysis → Results → Majority vote consensus → Final report
 - `@code-reviewer review <code>` - Perform comprehensive code review
 - `@security-auditor scan <codebase>` - Run security vulnerability assessment
 - `@refactorer optimize <code>` - Identify and implement code improvements
-- `@test-architect plan <feature>` - Design comprehensive testing strategy
+- `@testing-lead plan <feature>` - Design comprehensive testing strategy
 
 **Subagent Invocation Syntax**:
 ```typescript
 // Primary method: task() provides visibility and monitoring
-task(description="Analyze codebase", prompt="...", subagent_type="librarian")
+task(description="Analyze codebase", prompt="...", subagent_type="researcher")
 
 // Alternative method: call_omo_agent runs in background
 call_omo_agent(description="Code review", prompt="...", subagent_type="architect")
@@ -1223,7 +1223,7 @@ call_omo_agent(description="Code review", prompt="...", subagent_type="architect
 
 #### **task() (Internal Agent Coordination with Visibility)**
 ```typescript
-task(description="Analyze codebase", prompt="...", subagent_type="librarian")
+task(description="Analyze codebase", prompt="...", subagent_type="researcher")
 ```
 
 **When to use**:
@@ -1961,9 +1961,9 @@ This comprehensive logging and reporting system ensures complete visibility into
 
 | Post-Processor Check | Description | Should Call Agent/Skill | Status |
 |---------------------|-------------|-------------------------|---------|
-| **checkSystemIntegrity** | Validates framework components are active | `librarian` (`skill-project-analysis`) | ✅ **IMPLEMENTED** |
-| **checkIntegrationTesting** | Ensures integration tests exist | `test-architect` (`skill-testing-strategy`) | ✅ **IMPLEMENTED** |
-| **checkPathResolution** | Validates environment-agnostic paths | `librarian` + `refactorer` (`skill-project-analysis` + `skill-refactoring-strategies`) | ✅ **IMPLEMENTED** |
+| **checkSystemIntegrity** | Validates framework components are active | `researcher` (`skill-project-analysis`) | ✅ **IMPLEMENTED** |
+| **checkIntegrationTesting** | Ensures integration tests exist | `testing-lead` (`skill-testing-strategy`) | ✅ **IMPLEMENTED** |
+| **checkPathResolution** | Validates environment-agnostic paths | `researcher` + `refactorer` (`skill-project-analysis` + `skill-refactoring-strategies`) | ✅ **IMPLEMENTED** |
 | **checkFeatureCompleteness** | Ensures features are fully integrated | `architect` (`skill-architecture-patterns`) | ✅ **IMPLEMENTED** |
 | **checkPathAnalysisGuidelines** | Enforces path resolution best practices | `refactorer` (`skill-refactoring-strategies`) | ✅ **IMPLEMENTED** |
 
@@ -1971,14 +1971,14 @@ This comprehensive logging and reporting system ensures complete visibility into
 
 | Rule | Description | Should Call Agent/Skill | Status |
 |------|-------------|-------------------------|---------|
-| **tests-required** | New code requires tests | `test-architect` (`skill-testing-strategy`) | ✅ **IMPLEMENTED** |
+| **tests-required** | New code requires tests | `testing-lead` (`skill-testing-strategy`) | ✅ **IMPLEMENTED** |
 | **no-duplicate-code** | Prevents duplicate code creation | `refactorer` (`skill-refactoring-strategies`) | ✅ **IMPLEMENTED** |
 | **no-over-engineering** | Prevents unnecessary complexity | `architect` (`skill-architecture-patterns`) | ✅ **IMPLEMENTED** |
 | **resolve-all-errors** | All errors must be resolved | `bug-triage-specialist` (`skill-code-review`) | ✅ **IMPLEMENTED** |
 | **prevent-infinite-loops** | Prevents infinite loop patterns | `bug-triage-specialist` (`skill-code-review`) | ✅ **IMPLEMENTED** |
 | **state-management-patterns** | Enforces proper state management | `architect` (`skill-architecture-patterns`) | ✅ **IMPLEMENTED** |
 | **import-consistency** | Maintains consistent import patterns | `refactorer` (`skill-refactoring-strategies`) | ✅ **IMPLEMENTED** |
-| **documentation-required** | New features require documentation | `librarian` (`skill-project-analysis` + documentation-generation) | ✅ **IMPLEMENTED** |
+| **documentation-required** | New features require documentation | `researcher` (`skill-project-analysis` + documentation-generation) | ✅ **IMPLEMENTED** |
 | **clean-debug-logs** | Removes debug logging from production | `refactorer` (`skill-refactoring-strategies`) | ✅ **IMPLEMENTED** |
 
 ### Implementation Priority
@@ -1986,11 +1986,11 @@ This comprehensive logging and reporting system ensures complete visibility into
 **HIGH PRIORITY** (Block commits, critical violations):
 - `resolve-all-errors` → `bug-triage-specialist`
 - `prevent-infinite-loops` → `bug-triage-specialist`
-- `checkSystemIntegrity` → `librarian`
+- `checkSystemIntegrity` → `researcher`
 
 **MEDIUM PRIORITY** (Quality improvements):
-- `tests-required` → `test-architect`
-- `documentation-required` → `librarian`
+- `tests-required` → `testing-lead`
+- `documentation-required` → `researcher`
 - `no-duplicate-code` → `refactorer`
 
 **LOW PRIORITY** (Code consistency):
@@ -2035,9 +2035,9 @@ The framework currently validates that documentation is required but does not au
 ### Automated Rule Violation Fixes
 When codex rules are violated, the system automatically attempts fixes:
 
-- **tests-required** → Delegates to `test-architect` for automated test generation
-- **documentation-required** → Delegates to `librarian` for automated documentation
-- **understand-before-write** → Delegates to `librarian` for codebase analysis
+- **tests-required** → Delegates to `testing-lead` for automated test generation
+- **documentation-required** → Delegates to `researcher` for automated documentation
+- **understand-before-write** → Delegates to `researcher` for codebase analysis
 - **security-audit** → Delegates to `security-auditor` for automated scanning
 
 ### Agent Responsibility Matrix
@@ -2470,8 +2470,8 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
     "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "test-architect": "openrouter/xai-grok-2-1212-fast-1",
-    "librarian": "openrouter/xai-grok-2-1212-fast-1"
+    "testing-lead": "openrouter/xai-grok-2-1212-fast-1",
+    "researcher": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
     "version": "1.6.21",

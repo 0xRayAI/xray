@@ -189,7 +189,7 @@ program
     console.log(
       "  @testing-lead     - Testing strategy & coverage optimization",
     );
-    console.log("  @librarian          - Codebase exploration & documentation");
+    console.log("  @researcher          - Codebase exploration & documentation");
     console.log("");
 
     console.log("🛠️ Framework Tools:");

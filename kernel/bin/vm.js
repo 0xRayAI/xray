@@ -155,7 +155,7 @@ const vm = new VM();
   OPS.BOOT,
   
   // Test 1
-  OPS.PUSH, 'librarian spawns infinite subagents',
+  OPS.PUSH, 'researcher spawns infinite subagents',
   OPS.INFER,
   OPS.PRINTLN,
   

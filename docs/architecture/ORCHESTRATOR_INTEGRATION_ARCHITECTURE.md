@@ -382,7 +382,7 @@ graph TD
 
     subgraph "Agent Dependencies"
         H[architect_agent] --> I[enforcer_agent]
-        H --> J[test-architect_agent]
+        H --> J[testing-lead_agent]
         I --> J
     end
 

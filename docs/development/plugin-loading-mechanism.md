@@ -68,7 +68,7 @@ export default async function strrayCodexPlugin(input: {
 
 - **When**: After successful tool execution
 - **Purpose**: Automatic test generation for new source files
-- **Mechanism**: Detects new `.ts/.tsx/.js/.jsx` files and calls test-architect MCP server
+- **Mechanism**: Detects new `.ts/.tsx/.js/.jsx` files and calls testing-lead MCP server
 
 #### Configuration Setup (`config`)
 
