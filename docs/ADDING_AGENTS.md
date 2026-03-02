@@ -74,7 +74,7 @@ Or use `.opencode/agents/my-agent.yml`:
 name: my-agent
 description: What this agent does
 mode: subagent
-version: "1.0.0"
+version: "1.6.16"
 ```
 
 ### 2. `src/mcps/mcp-client.ts` (REQUIRED for MCP)
