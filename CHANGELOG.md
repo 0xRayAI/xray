@@ -5,6 +5,14 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.6.18] - 2026-03-02
+
+### 🔄 Changes
+
+Fix agent naming conflicts and test updates
+
+---
+
 ## [1.6.17] - 2026-03-01
 
 ### 🔄 Changes
