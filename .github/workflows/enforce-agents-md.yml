@@ -26,7 +26,7 @@ jobs:
       run: npm ci
     
     - name: Validate AGENTS.md
-      run: node scripts/node/enforce-agents-md.js
+      run: node scripts/node/enforce-agents-md.mjs
       id: validate
       
     - name: Comment on PR (if failed)
@@ -44,9 +44,9 @@ jobs:
 
           Please:
           1. Ensure AGENTS.md exists in project root
-          2. Run \`node scripts/node/enforce-agents-md.js\` locally
+          2. Run \`node scripts/node/enforce-agents-md.mjs\` locally
           3. Fix any reported errors
-          4. If missing, run \`node scripts/node/enforce-agents-md.js --generate\`
+          4. If missing, run \`node scripts/node/enforce-agents-md.mjs --generate\`
 
           AGENTS.md is required for:
           - Agent triage rules
@@ -61,7 +61,7 @@ jobs:
       if: failure() && github.event_name == 'pull_request'
       run: |
         echo "Attempting to auto-generate AGENTS.md..."
-        node scripts/node/enforce-agents-md.js --generate || true
+        node scripts/node/enforce-agents-md.mjs --generate || true
         
     - name: Upload AGENTS.md report
       if: always()

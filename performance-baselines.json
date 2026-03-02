@@ -9,26 +9,26 @@
   },
   "module-import-performance": {
     "testName": "module-import-performance",
-    "averageDuration": 14.384951368983959,
-    "standardDeviation": 1.5071326200954644,
-    "sampleCount": 187,
-    "lastUpdated": 1772455796332,
+    "averageDuration": 14.386721797872342,
+    "standardDeviation": 1.503314947409298,
+    "sampleCount": 188,
+    "lastUpdated": 1772456177145,
     "tolerance": 10
   },
   "memory-usage-check": {
     "testName": "memory-usage-check",
-    "averageDuration": 0.040789352272728514,
-    "standardDeviation": 0.0023474344636095316,
-    "sampleCount": 88,
-    "lastUpdated": 1772450823287,
+    "averageDuration": 0.04082823595505746,
+    "standardDeviation": 0.002362857620647396,
+    "sampleCount": 89,
+    "lastUpdated": 1772456320457,
     "tolerance": 10
   },
   "test-execution-performance": {
     "testName": "test-execution-performance",
-    "averageDuration": 0.10428592650334155,
-    "standardDeviation": 0.011816038060694542,
-    "sampleCount": 449,
-    "lastUpdated": 1772455796332,
+    "averageDuration": 0.10421484835164922,
+    "standardDeviation": 0.011765088024764968,
+    "sampleCount": 455,
+    "lastUpdated": 1772456320457,
     "tolerance": 10
   }
 }
