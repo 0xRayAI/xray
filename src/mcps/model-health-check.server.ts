@@ -20,7 +20,7 @@ class StrRayModelHealthCheckServer {
   constructor() {
     this.server = new Server(
       {
-        name: "model-health-check", version: "1.6.21",
+        name: "model-health-check", version: "1.6.22",
       },
       {
         capabilities: {

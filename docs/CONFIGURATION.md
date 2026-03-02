@@ -19,7 +19,7 @@ Create `.opencode/strray/features.json` in your project root:
 
 ```json
 {
-  "version": "1.6.21",
+  "version": "1.6.22",
   "description": "StringRay Framework Configuration",
   
   "token_optimization": {
@@ -340,7 +340,7 @@ The main OpenCode configuration file for agent routing:
     "mobile-developer": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.6.21",
+    "version": "1.6.22",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true

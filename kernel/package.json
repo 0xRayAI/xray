@@ -1,6 +1,6 @@
 {
   "name": "@stringray/kernel",
-  "version": "1.6.21",
+  "version": "1.6.22",
   "description": "StringRay Inference Kernel - The invisible core",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

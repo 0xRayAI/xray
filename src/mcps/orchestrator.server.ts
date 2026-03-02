@@ -21,7 +21,7 @@ class StrRayOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "orchestrator", version: "1.6.21",
+        name: "orchestrator", version: "1.6.22",
       },
       {
         capabilities: {

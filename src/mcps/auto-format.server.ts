@@ -21,7 +21,7 @@ class StrRayAutoFormatServer {
   constructor() {
     this.server = new Server(
       {
-        name: "auto-format", version: "1.6.21",
+        name: "auto-format", version: "1.6.22",
       },
       {
         capabilities: {

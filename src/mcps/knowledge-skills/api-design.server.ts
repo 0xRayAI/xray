@@ -19,7 +19,7 @@ class StrRayApiDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "api-design", version: "1.6.21",
+        name: "api-design", version: "1.6.22",
       },
       {
         capabilities: {

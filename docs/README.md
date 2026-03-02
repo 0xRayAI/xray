@@ -1,6 +1,6 @@
 # ⚡ StringRay AI v1.3.4 – Enterprise AI Agent Coordination Platform
 
-[![Version](https://img.shields.io/badge/version-1.6.21-blue.svg)](https://github.com/htafolla/strray)
+[![Version](https://img.shields.io/badge/version-1.6.22-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
@@ -160,7 +160,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.6.21"
+    "version": "1.6.22"
   }
 }
 ```
@@ -390,7 +390,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray",
-    "version": "1.6.21",
+    "version": "1.6.22",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

@@ -13,7 +13,7 @@ class FrameworkHelpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray/framework-help", version: "1.6.21",
+        name: "strray/framework-help", version: "1.6.22",
       },
       {
         capabilities: {
