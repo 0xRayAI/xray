@@ -30,23 +30,11 @@ Required fields:
 - `mode` - `primary`, `subagent`, or `all`
 
 Optional fields:
-- `model` - Override the model for this agent
 - `temperature` - Control randomness (0.0-1.0)
 - `tools` - Control which tools are available
 - `hidden` - Hide from @ autocomplete
 
----
-
-## ProviderModelNotFoundError
-
-This error occurs when:
-1. An explicit model is specified for a subagent
-2. That model is not available in the provider configuration
-
-**Solution**: According to OpenCode docs:
-> "If you don't specify a model, primary agents use the model globally configured while subagents will use the model of the primary agent that invoked the subagent."
-
-**Fix**: Don't specify a model for subagents - they inherit the invoking agent's model.
+**IMPORTANT**: Do NOT set `model:` in yml files - this causes ProviderModelNotFoundError. Subagents inherit the model's from the primary agent.
 
 ---
 
@@ -113,17 +101,56 @@ Add to skill lists in:
 
 ## Troubleshooting
 
-### ProviderModelNotFoundError
+### Issue 1: ProviderModelNotFoundError
 
-**Cause**: Explicit model specified but not available
+**Error**: `ProviderModelNotFoundError: ProviderModelNotFoundError`
 
-**Fix**: Remove `model` from agent config - subagents inherit parent's model
+**Cause**: A `.yml` file in `.opencode/agents/` has an explicit `model:` setting that references a model not available in your provider configuration.
 
-### Agent Not Found
+**Solution**:
+1. Check `.opencode/agents/*.yml` files for `model:` field
+2. Remove any `model:` lines from yml files - they should NOT have models set
+3. Subagents inherit the model from the primary agent that invokes them
 
-**Cause**: Agent not properly configured in opencode.json
+```yaml
+# WRONG - will cause ProviderModelNotFoundError
+name: my-agent
+model: openrouter/xai-grok-2
+mode: subagent
 
-**Fix**: Ensure agent has `description` and `mode` fields
+# CORRECT - no model field
+name: my-agent
+mode: subagent
+```
+
+---
+
+### Issue 2: Unknown agent type
+
+**Error**: `Error: Unknown agent type: my-agent is not a valid agent type`
+
+**Cause**: Agent is missing from `opencode.json` OR OpenCode hasn't reloaded the configuration after you added it.
+
+**Solution**:
+1. Add agent to `opencode.json` under the `agent` key:
+
+```json
+{
+  "agent": {
+    "my-agent": {
+      "description": "What this agent does",
+      "mode": "subagent",
+      "temperature": 1.0
+    }
+  }
+}
+```
+
+2. **Reboot OpenCode** - The configuration is cached. You MUST restart OpenCode for new agents to work.
+
+3. After reboot, test with `@my-agent hello`
+
+---
 
 ### @mention Not Working
 

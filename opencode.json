@@ -64,6 +64,10 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
+    "code-analyzer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
     "tech-writer": {
       "temperature": 1.0,
       "mode": "subagent"
@@ -85,6 +89,34 @@
       "mode": "subagent"
     },
     "growth-strategist": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "database-engineer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "devops-engineer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "backend-engineer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "frontend-engineer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "frontend-ui-ux-engineer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "performance-engineer": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "mobile-developer": {
       "temperature": 1.0,
       "mode": "subagent"
     },

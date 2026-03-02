@@ -2,7 +2,6 @@
 
 **Role**: Vulnerability detection & compliance
 **Mode**: Subagent
-model: default
 
 ## Purpose
 

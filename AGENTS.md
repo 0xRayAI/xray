@@ -46,5 +46,22 @@ StringRay has **two distinct plugin systems** - do NOT confuse them:
 |---------------|----------|
 | Extend StringRay with custom agents | `src/plugins/` |
 | Inject codex into OpenCode | `.opencode/plugin/` |
+
+---
+
+## Troubleshooting
+
+### Issue 1: ProviderModelNotFoundError
+**Cause**: `.opencode/agents/*.yml` file has `model:` field set to a model not available in your provider.
+
+**Fix**: Remove `model:` from any yml files in `.opencode/agents/`. Yml files should NOT have models set.
+
+### Issue 2: Unknown agent type error
+**Cause**: Agent missing from `opencode.json` OR OpenCode hasn't been rebooted after adding.
+
+**Fix**: 
+1. Add agent to `opencode.json` under `agent` key
+2. Reboot OpenCode
+
 ---
 *This AGENTS.md is auto-maintained by StringRay AI Librarian*

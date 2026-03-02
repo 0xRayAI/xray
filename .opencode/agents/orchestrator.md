@@ -2,7 +2,6 @@
 
 **Role**: Multi-agent workflow coordination
 **Mode**: Subagent
-model: default
 
 ## Purpose
 

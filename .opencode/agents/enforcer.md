@@ -2,7 +2,6 @@
 
 **Role**: Codex compliance & error prevention
 **Mode**: Subagent
-model: default
 
 ## Purpose
 

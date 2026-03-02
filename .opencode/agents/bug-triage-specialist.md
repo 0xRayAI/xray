@@ -2,7 +2,6 @@
 
 **Role**: Error investigation & surgical fixes
 **Mode**: Subagent
-model: default
 
 ## Purpose
 

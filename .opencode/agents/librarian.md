@@ -1,7 +1,6 @@
 ---
 name: researcher
 description: Codebase and documentation search specialist. Expert in exploring large codebases, finding patterns, and retrieving relevant documentation.
-model: default
 temperature: 0.4
 maxSteps: 25
 mode: subagent

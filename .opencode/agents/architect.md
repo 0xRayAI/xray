@@ -2,7 +2,6 @@
 
 **Role**: System design & technical decisions
 **Mode**: Subagent
-model: default
 
 ## Purpose
 
