@@ -54,6 +54,9 @@ function findFiles(
     "SIMULATION_TEST_RESULTS.md",  // Test record - keep original
     "TEST_INVENTORY.md",  // Test inventory - keep original
     "CHANGELOG.md", "CHANGELOG-v1.2.0.md",  // Version history
+    // Files with old agent names in filename (rename manually if needed)
+    "universal-librarian-consultation.ts",
+    "librarian-agents-updater.ts",
   ],
 ) {
   const files = [];

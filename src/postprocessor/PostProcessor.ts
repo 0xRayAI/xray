@@ -976,7 +976,7 @@ All path violations will be automatically detected and blocked.
         if (process.env.ENABLE_AGENTS_AUTO_UPDATE === "true") {
           try {
             const { researcherAgentsUpdater } =
-              await import("../agents/researcher-agents-updater.js");
+              await import("../agents/librarian-agents-updater.js");
             await researcherAgentsUpdater.updateAgentsMd(process.cwd());
           } catch (error) {
             await frameworkLogger.log(

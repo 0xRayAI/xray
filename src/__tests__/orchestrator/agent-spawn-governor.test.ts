@@ -391,7 +391,7 @@ describe("Agent Spawn Governor", () => {
       const context = {
         agentType: "researcher",
         operation: "consultation-recursion",
-        metadata: { triggeredBy: "universal-researcher-consultation" },
+        metadata: { triggeredBy: "universal-librarian-consultation" },
       };
 
       // This should still be allowed since it's not recursive agent spawning

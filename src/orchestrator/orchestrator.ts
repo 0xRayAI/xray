@@ -13,7 +13,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import {
   universalLibrarianConsultation,
   SystemAction,
-} from "./universal-researcher-consultation.js";
+} from "./universal-librarian-consultation.js";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 

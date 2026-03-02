@@ -37,7 +37,7 @@ async function testJobCorrelation() {
 
   console.log("🎯 EXPECTED: Check activity.log for jobId entries like:", {
     format: "[job-JOBID-12345] [component] event - level",
-    example: `[${jobId}] [universal-researcher-consultation] post-action-consultation-started - INFO`,
+    example: `[${jobId}] [universal-librarian-consultation] post-action-consultation-started - INFO`,
   });
 }
 

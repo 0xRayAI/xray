@@ -1205,7 +1205,7 @@ export class RuleEnforcer {
         agent: "orchestrator",
         skill: "project-analysis",
       },
-      "universal-researcher-consultation": {
+      "universal-librarian-consultation": {
         agent: "researcher",
         skill: "project-analysis",
       },
