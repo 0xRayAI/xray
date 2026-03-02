@@ -144,7 +144,7 @@ jobs:
       run: |
         cd test-install
         node node_modules/strray-ai/scripts/node/validate-postinstall-config.mjs
-        node node_modules/strray-ai/scripts/node/validate-mcp-connectivity.mjs
+        node node_modules/strray-ai/scripts/node/validate-mcp-connectivity.js
 
   # Manual deployment and publish jobs removed - uncomment when needed
   # deploy-validation:
