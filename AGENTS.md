@@ -5,6 +5,57 @@
 
 ---
 
+## Important: Agents vs Skills - Don't Confuse Them!
+
+### ❌ WRONG - Using @ for Skills
+Do NOT use `@project-analysis` or `@testing-strategy` - these are **skills**, not agents!
+
+### ✅ CORRECT - Invoking Skills as Tools
+Skills are invoked as **tools**, not agent mentions. Use them like:
+- `project-analysis` - Codebase analysis tool
+- `testing-strategy` - Test planning tool  
+- `performance-optimization` - Performance analysis tool
+- `code-review` - Code review tool
+- `security-audit` - Security analysis tool
+
+Example correct usage in prompts:
+> "Use the project-analysis tool to assess the codebase complexity"
+> "Call testing-strategy to create a test plan"
+
+---
+
+## Available Agents (Use @ Mention)
+
+These are agents you can mention with @ in prompts:
+- @orchestrator - Main task coordination
+- @enforcer - Code quality & compliance
+- @architect - System design
+- @testing-lead - Test planning
+- @bug-triage-specialist - Issue analysis
+- @code-reviewer - Code review
+- @security-auditor - Security analysis
+- @refactorer - Code refactoring
+- @researcher - Research tasks
+
+---
+
+## Available Skills (Use as Tools)
+
+These are skills you invoke as tools:
+- `project-analysis` - Codebase metrics and complexity analysis
+- `testing-strategy` - Test planning and coverage analysis
+- `performance-optimization` - Performance profiling and optimization
+- `architecture-patterns` - Software architecture patterns
+- `git-workflow` - Git operations and workflows
+- `api-design` - REST API design
+- `code-review` - Automated code review
+- `security-audit` - Security vulnerability scanning
+- `refactoring-strategies` - Refactoring recommendations
+- `ui-ux-design` - User interface design patterns
+- `documentation-generation` - Documentation creation
+
+---
+
 ## Languages
 - TypeScript
 - JavaScript

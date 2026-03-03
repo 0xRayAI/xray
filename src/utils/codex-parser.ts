@@ -4,13 +4,50 @@
  * Unified parsing utility for codex content in both JSON and Markdown formats.
  * Provides consistent parsing across all components with format detection and validation.
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @since 2026-01-07
  */
 
 import { CodexContext, CodexTerm } from "../core/context-loader.js";
 import * as fs from "fs";
 import * as path from "path";
+
+/**
+ * Maximum length for term descriptions to prevent runaway expansion
+ */
+const MAX_TERM_DESCRIPTION_LENGTH = 2000;
+
+/**
+ * Sanitize term description to prevent runaway expansion
+ * This guards against corrupted prompts from malformed codex data
+ */
+function sanitizeTermDescription(description: string): string {
+  if (!description || typeof description !== "string") {
+    return "";
+  }
+  
+  // Check for potential runaway expansion patterns
+  if (description.length > MAX_TERM_DESCRIPTION_LENGTH) {
+    console.warn(
+      `⚠️ Codex term description exceeded ${MAX_TERM_DESCRIPTION_LENGTH} chars, truncating. ` +
+      `This may indicate corrupted codex data.`
+    );
+    return description.substring(0, MAX_TERM_DESCRIPTION_LENGTH) + "... [TRUNCATED]";
+  }
+  
+  // Check for repeated patterns that indicate corruption
+  const repeatedPattern = /(.+?)\1{5,}/;
+  if (repeatedPattern.test(description)) {
+    console.warn(
+      "⚠️ Codex term description contains repeated patterns, indicating potential corruption. " +
+      "Returning sanitized version."
+    );
+    // Return a minimal safe description
+    return "Term description contains potential corruption.";
+  }
+  
+  return description;
+}
 
 /**
  * Get framework version from package.json
@@ -101,6 +138,10 @@ function parseJsonContent(content: string): ParsingResult {
     const termsMap = new Map<number, CodexTerm>();
     if (jsonData.terms) {
       Object.entries(jsonData.terms).forEach(([key, term]: [string, any]) => {
+        // Sanitize term description to prevent runaway expansion
+        if (term && term.description) {
+          term.description = sanitizeTermDescription(term.description);
+        }
         termsMap.set(parseInt(key, 10), term);
       });
     }
@@ -157,7 +198,7 @@ function parseMarkdownContent(content: string): ParsingResult {
     while ((match = termRegex.exec(content)) !== null) {
       const termNumber = parseInt(match[1]!, 10);
       const termTitle = match[2]!.trim();
-      const termDescription = (match[3] || "").trim();
+      const termDescription = sanitizeTermDescription((match[3] || "").trim());
 
       // Infer category from term number
       let category: CodexTerm["category"];

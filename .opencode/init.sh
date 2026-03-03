@@ -4,8 +4,23 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PROJECT_ROOT=$(realpath "$SCRIPT_DIR/..")
 
-# StringRay Framework Version - read dynamically from package.json
-STRRAY_VERSION=$(node -e "console.log(require('$PROJECT_ROOT/package.json').version)")
+# Try to find framework package.json - check source first (dev), then node_modules (consumer)
+# For development, prefer the source version over node_modules
+SOURCE_PACKAGE_JSON="$SCRIPT_DIR/../package.json"
+NODE_MODULES_PACKAGE_JSON="$PROJECT_ROOT/node_modules/strray-ai/package.json"
+
+if [ -f "$SOURCE_PACKAGE_JSON" ]; then
+    # Development mode: use source version
+    FRAMEWORK_ROOT="$SCRIPT_DIR/.."
+elif [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
+    # Consumer mode: use installed version
+    FRAMEWORK_ROOT="$PROJECT_ROOT/node_modules/strray-ai"
+else
+    FRAMEWORK_ROOT="$PROJECT_ROOT"
+fi
+
+# StringRay Framework Version - read dynamically from framework's package.json
+STRRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)")
 
 START_TIME=$(date +%s)
 

@@ -204,6 +204,10 @@
     "strray-project-analysis": {
       "disable": true
     },
+    "project-analysis": {
+      "disable": true,
+      "note": "This is a skill/MCP, not an agent. Use as tool: call the project-analysis skill instead of @mention"
+    },
     "strray-performance-optimization": {
       "disable": true
     },
@@ -230,6 +234,50 @@
     },
     "strray-enforcer-tools": {
       "disable": true
+    },
+    "project-analysis": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "testing-strategy": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "performance-optimization": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "code-review": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "security-audit": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "architecture-patterns": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "git-workflow": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "api-design": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "ui-ux-design": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "documentation-generation": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
+    },
+    "refactoring-strategies": {
+      "disable": true,
+      "note": "SKILL - Use as tool, not @mention"
     }
   }
 }
