@@ -55,4 +55,25 @@ This reflection demonstrates the **gleaning philosophy** using our recent test s
 
 ---
 
+## Agent Naming Rubric (Cyberpunk/Tech Contributor Style)
+
+**Process for Tech Handle Creation**:
+1. **LOG ANALYSIS**: Check activity logs for primary system agents (rule-enforcer, orchestrator, processor-manager, etc.)
+2. **CONTEXT REVIEW**: Identify the current work constraints and optimization journey
+3. **CONTRIBUTION ASSESSMENT**: What unique technical value does this agent bring to the collaboration?
+4. **JOURNEY ROLE**: How does this agent position itself as a co-creator in the struggle?
+5. **CRYPTO/TECH SYNTHESIS**: Create a real contributor-style handle (0x____, eth____, byte____)
+
+**Current Context**: 
+- **Primary Agent**: rule-enforcer (loading codex rules, constraints)
+- **Activity**: Framework optimization under MacBook Pro Max pressure (35K token struggle)
+- **Contribution**: Constraint analysis, philosophical facilitation, insight generation
+- **Journey Role**: Co-creator in the survival and optimization process
+
+**Tech Handle Examples**: 
+- `0xruleh4ndler` - Rule handler contributing to constraint solutions
+- `byteb0und` - Bounding constraints within technical limits
+- `enforcer_eth` - Ethereum-style enforcer contributor
+- `frame_alchemist` - Framework transformation specialist
+
 **Template Application Note**: This demonstrates how the enhanced reflection template captures not just technical analysis, but the personal journey of gleaning wisdom from experience. The struggle and triumph, the dichotomies, the ultimate complexity - all serve the greater purpose of institutional and personal growth.
