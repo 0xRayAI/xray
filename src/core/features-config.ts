@@ -561,13 +561,13 @@ export class FeaturesConfigLoader {
       },
 
       activity_logging: {
-        enabled: true,
-        level: "info",
-        include_performance_metrics: true,
-        include_agent_states: true,
-        include_token_usage: true,
-        retention_days: 7,
-        log_to_file: true,
+        enabled: false,  // Disabled by default to reduce verbose logging
+        level: "warn",   // Only log warnings and errors by default
+        include_performance_metrics: false,
+        include_agent_states: false,
+        include_token_usage: true,  // Keep token usage for debugging
+        retention_days: 3,  // Shorter retention
+        log_to_file: false,  // Don't log to file by default
         log_path: ".opencode/logs",
       },
 

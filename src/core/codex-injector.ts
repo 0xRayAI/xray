@@ -134,26 +134,19 @@ function formatCodexContext(
   contexts: CodexContextEntry[],
   sessionId: string,
 ): string {
-  const parts = [
-    "═════════════════════════════════════════════════════════════",
-    "✨ StringRay Codex Context Loaded Successfully",
-    "═════════════════════════════════════════════════════════════",
-    "",
-  ];
+  if (contexts.length === 0) {
+    return "⚠️ No codex context available";
+  }
 
+  const parts = ["StringRay Codex Context"];
+  
   for (const context of contexts) {
-    parts.push(
-      `✅ StringRay Codex loaded: ${context.source} (${context.metadata.termCount} terms)`,
-    );
+    parts.push(`✅ ${context.source} (${context.metadata.termCount} terms)`);
   }
 
   const stats = getCodexStats(sessionId);
-  parts.push(
-    `📁 Sources: ${stats.fileCount} file(s)`,
-    `🎯 Error Prevention Target: 90% runtime error prevention`,
-    "═════════════════════════════════════════════════════════════",
-    "",
-  );
+  parts.push(`📁 ${stats.fileCount} source(s)`);
+  parts.push(`🎯 90% runtime error prevention target`);
 
   return parts.join("\n");
 }

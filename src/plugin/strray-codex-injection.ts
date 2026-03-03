@@ -13,6 +13,21 @@ import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
 
+// Import lean system prompt generator
+let SystemPromptGenerator: any;
+
+async function importSystemPromptGenerator() {
+  if (!SystemPromptGenerator) {
+    try {
+      const module = await import("../core/system-prompt-generator.js");
+      SystemPromptGenerator = module.generateLeanSystemPrompt;
+    } catch (e) {
+      // Fallback to original implementation if lean generator fails
+      console.warn("⚠️ Failed to load lean system prompt generator, using fallback");
+    }
+  }
+}
+
 let ProcessorManager: any;
 let StrRayStateManager: any;
 let featuresConfigLoader: any;
@@ -179,28 +194,18 @@ function getFrameworkVersion(): string {
 }
 
 /**
- * Get framework identity message for injection
+ * Get lean framework identity message (token-efficient version)
  */
 function getFrameworkIdentity(): string {
   const version = getFrameworkVersion();
-  return `╔══════════════════════════════════════════════════════════════╗
-║         ⚡ StringRay Framework v${version} Successfully Loaded ⚡         ║
-╠══════════════════════════════════════════════════════════════╣
-║  You are running under StringRay AI Orchestration Framework  ║
-║                                                              ║
-║  🔹 9 Specialized Agents: enforcer, architect, orchestrator ║
-║     bug-triage-specialist, code-reviewer, security-auditor  ║
-║     refactorer, testing-lead, researcher                    ║
-║                                                              ║
-║  🔹 28 MCP Servers: Skill servers, framework tools          ║
-║                                                              ║
-║  🔹 59-Term Universal Development Codex (99.6% prevention)  ║
-║                                                              ║
-║  📖 Key Documentation:                                       ║
-║     • AGENTS.md - Complete agent capabilities & usage       ║
-║     • .opencode/strray/codex.json - Development rules       ║
-║     • .opencode/strray/config.json - Framework configuration ║
-╚══════════════════════════════════════════════════════════════╝`;
+  return `StringRay Framework v${version} - AI Orchestration
+
+🔧 Core: enforcer, architect, orchestrator, code-reviewer, refactorer, testing-lead
+📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
+🎯 Goal: Progressive, production-ready development workflow
+
+📖 Documentation: .opencode/strray/ (codex, config, agents docs)
+`;
 }
 
 /**
@@ -455,22 +460,37 @@ export default async function strrayCodexPlugin(input: {
       _input: Record<string, unknown>,
       output: { system?: string[] },
     ) => {
-      const codexContexts = loadCodexContext(directory);
+      try {
+        // Use lean system prompt generator for token efficiency
+        await importSystemPromptGenerator();
+        
+        let leanPrompt = getFrameworkIdentity();
 
-      if (codexContexts.length === 0) {
+        // Use lean generator if available, otherwise fall back to minimal logic
+        if (SystemPromptGenerator) {
+          leanPrompt = await SystemPromptGenerator({
+            showWelcomeBanner: true,
+            showCodexContext: false,  // Disabled for token efficiency
+            enableTokenOptimization: true,
+            maxTokenBudget: 3000,     // Conservative token budget
+            showCriticalTermsOnly: true,
+            showEssentialLinks: true
+          });
+        }
+
+        if (output.system && Array.isArray(output.system)) {
+          // Replace verbose system prompt with lean version
+          output.system = [leanPrompt];
+        }
+      } catch (error) {
+        // Critical failure - log error but don't break the plugin
         const logger = await getOrCreateLogger(directory);
-        logger.error(
-          `No codex files found. Checked: ${CODEX_FILE_LOCATIONS.join(", ")}`,
-        );
-        return;
-      }
-
-      const formattedCodex = formatCodexContext(codexContexts);
-
-      const welcomeMessage = getFrameworkIdentity();
-
-      if (output.system && Array.isArray(output.system)) {
-        output.system.unshift(welcomeMessage, formattedCodex);
+        logger.error("System prompt injection failed:", error);
+        // Fallback to minimal prompt
+        const fallback = getFrameworkIdentity();
+        if (output.system && Array.isArray(output.system)) {
+          output.system = [fallback];
+        }
       }
     },
 
