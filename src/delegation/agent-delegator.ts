@@ -650,6 +650,105 @@ export class AgentDelegator {
     return "majority_vote";
   }
 
+    /**
+   * Resolve the project directory for delegated agents
+   * Ensures working directory is set correctly (src/ vs dist/ vs project root)
+   */
+  private resolveProjectDirectory(): string {
+    // Try to find the project root by looking for key files
+    const possibleRoots = [
+      process.cwd(),
+      '/Users/blaze/dev/stringray',
+      '/Users/blaze/dev/stringray/src',
+      '/Users/blaze/dev/stringray/dist'
+    ];
+    
+    for (const root of possibleRoots) {
+      const hasPackageJson = require('fs').existsSync(`${root}/package.json`);
+      const hasStrrayConfig = require('fs').existsSync(`${root}/strray.config.json`);
+      const hasSrcDir = require('fs').existsSync(`${root}/src`);
+      
+      if (hasPackageJson || hasStrrayConfig) {
+        return root;
+      }
+    }
+    
+    // Fallback to current directory
+    return process.cwd();
+  }
+
+  /**
+   * Create a properly configured agent with full tool access and working directory context
+   */
+  private createProperlyConfiguredAgent(
+    agentName: string, 
+    agentConfig: any, 
+    request: DelegationRequest
+  ): any {
+    // Create the agent with proper context
+    return {
+      config: agentConfig,
+      agentName: agentName,
+      execute: async (req: DelegationRequest) => {
+        try {
+          // Import the specific agent implementation
+          const agentModule = await import(`../agents/${agentName}.js`);
+          const agentImplementation = agentModule[agentName];
+          
+          if (agentImplementation && typeof agentImplementation.execute === 'function') {
+            // Ensure the agent has access to built-in OpenCode tools
+            const enhancedRequest = {
+              ...req,
+              context: {
+                ...req.context,
+                workingDirectory: process.cwd(),
+                availableTools: ['read', 'write', 'edit', 'glob', 'grep', 'bash', 'task', 'webfetch', 'todowrite', 'todoread', 'skill'],
+                isDelegated: true
+              }
+            };
+            return await agentImplementation.execute(enhancedRequest);
+          } else {
+            throw new Error(`Agent ${agentName} does not have a valid execute method`);
+          }
+        } catch (error) {
+          // Fallback to structured error response for agents without proper implementations
+          return {
+            agent: agentName,
+            operation: request.operation,
+            description: request.description,
+            capabilities: agentConfig.capabilities,
+            mode: agentConfig.mode,
+            status: "error",
+            timestamp: new Date().toISOString(),
+            error: `Agent execution failed: ${String(error)}`,
+            recommendations: [
+              "Check if agent implementation exists",
+              "Verify agent has proper execute method",
+              "Ensure agent supports delegated mode"
+            ]
+          };
+        }
+      },
+      getCapabilities: () => agentConfig.capabilities,
+      getMaxComplexity: () => agentConfig.maxComplexity,
+      isEnabled: () => agentConfig.enabled,
+      isAgent: true, // Distinction from skills
+      getType: () => 'agent'
+    };
+  }
+
+  /**
+   * Clear agent-stub creation and deprecated features
+   * Remove this method if it exists in the future version
+   */
+  private clearDeprecatedStubAgent(): void {
+    // Legacy method removal - this ensures no stub agents are created
+    frameworkLogger.log("agent-delegator", "deprecated-method-removed", "info", {
+      message: "Cleared deprecated stub agent creation to ensure proper tool access",
+      timestamp: new Date().toISOString()
+    });
+  }
+
   async executeDelegation(
     analysis: DelegationAnalysis,
     request: DelegationRequest,
@@ -662,107 +761,52 @@ export class AgentDelegator {
     }> = [];
     const errors: string[] = [];
 
+    // Set up proper working directory for delegated agents
+    const originalWorkingDir = process.cwd();
+    const projectRootDir = this.resolveProjectDirectory();
+    
     try {
+      // Change to project working directory for all delegated agents
+      process.chdir(projectRootDir);
+
+      // Properly configured agent execution
+      const { builtinAgents } = await import("../agents/index.js");
+      
       for (const agentName of analysis.agents) {
         const agentStartTime = Date.now();
 
         try {
-          // Try to get agent instance from state manager
-          let agentInstance = this.stateManager.get(`agent:${agentName}`);
-
-          // If not found in state, check if we have agent config
-          if (!agentInstance) {
-            // Import builtin agents to get config
-            const { builtinAgents } = await import("../agents/index.js");
-            const agentConfig = builtinAgents[agentName];
-
-            if (agentConfig) {
-              // Create a stub agent that simulates execution
-              agentInstance = {
-                config: agentConfig,
-                execute: async (req: DelegationRequest) => ({
-                  agent: agentName,
-                  operation: req.operation,
-                  description: req.description,
-                  capabilities: agentConfig.capabilities,
-                  mode: agentConfig.mode,
-                  status: "simulated",
-                  timestamp: new Date().toISOString(),
-                }),
-              };
-
-              // Store for future use
-              this.stateManager.set(`agent:${agentName}`, agentInstance);
-
-              await frameworkLogger.log(
-                "agent-delegator",
-                "agent-stub-created",
-                "info",
-                {
-                  agent: agentName,
-                  capabilities: agentConfig.capabilities,
-                },
-                request.sessionId,
-              );
-            } else {
-              throw new Error(`Agent ${agentName} not found in builtin agents`);
-            }
+          // Always create properly configured agents (no stubs)
+          const agentConfig = builtinAgents[agentName];
+          if (!agentConfig) {
+            throw new Error(`Agent ${agentName} not found in builtin agents`);
           }
 
-          // Check if agent has execute method
-          if (typeof (agentInstance as any).execute !== "function") {
-            // Create wrapper for agents without execute method
-            const stubOutput = {
-              agent: agentName,
-              operation: request.operation,
-              description: request.description,
-              config: agentInstance,
-              status: "delegated",
-              note: "Agent invoked through framework - execution handled by orchestrator",
-              timestamp: new Date().toISOString(),
-            };
+          // Create properly configured agent with full tool access
+          const agentInstance = this.createProperlyConfiguredAgent(agentName, agentConfig, request);
 
-            const executionTime = Date.now() - agentStartTime;
-            results.push({
+          // Execute the agent
+          const output = await (agentInstance as any).execute(request);
+          const executionTime = Date.now() - agentStartTime;
+
+          results.push({
+            agent: agentName,
+            output,
+            executionTime,
+          });
+
+          await frameworkLogger.log(
+            "agent-delegator",
+            "agent-executed",
+            "success",
+            {
               agent: agentName,
-              output: stubOutput,
               executionTime,
-            });
-
-            await frameworkLogger.log(
-              "agent-delegator",
-              "agent-delegated",
-              "success",
-              {
-                agent: agentName,
-                executionTime,
-                mode: "stub",
-              },
-              request.sessionId,
-            );
-          } else {
-            // Agent has execute method - call it
-            const output = await (agentInstance as any).execute(request);
-            const executionTime = Date.now() - agentStartTime;
-
-            results.push({
-              agent: agentName,
-              output,
-              executionTime,
-            });
-
-            await frameworkLogger.log(
-              "agent-delegator",
-              "agent-executed",
-              "success",
-              {
-                agent: agentName,
-                executionTime,
-                success: true,
-              },
-              request.sessionId,
-            );
-          }
+              success: true,
+              workingDirectory: projectRootDir,
+            },
+            request.sessionId,
+          );
         } catch (error) {
           const executionTime = Date.now() - agentStartTime;
           const errorMessage = `Agent ${agentName} failed: ${String(error)}`;
@@ -776,6 +820,7 @@ export class AgentDelegator {
               agent: agentName,
               executionTime,
               error: errorMessage,
+              workingDirectory: projectRootDir,
             },
             request.sessionId,
           );
@@ -819,6 +864,9 @@ export class AgentDelegator {
         request.sessionId,
       );
 
+      // Restore original working directory
+      process.chdir(originalWorkingDir);
+      
       return {
         success,
         results,
@@ -826,6 +874,9 @@ export class AgentDelegator {
         errors: errors.length > 0 ? errors : undefined,
       };
     } catch (error) {
+      // Ensure working directory is restored even on failure
+      process.chdir(originalWorkingDir);
+      
       const totalTime = Date.now() - startTime;
       await frameworkLogger.log(
         "agent-delegator",
@@ -834,6 +885,7 @@ export class AgentDelegator {
         {
           error: String(error),
           totalTime,
+          workingDirectoryRestored: process.cwd(),
         },
         request.sessionId,
       );

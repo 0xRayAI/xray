@@ -38,6 +38,12 @@ export const enforcer: AgentConfig = {
 ## Integration Hooks
 - pre/post validation, error boundary monitoring, performance tracking
 
+## Agent vs Skills Clarification
+- AGENTS: StringRay framework agents (enforcer, architect, orchestrator, etc.)
+- SKILLS: Specialized capabilities (security-audit, code-review, performance-optimization)
+- Agent delegation: Use "invoke-agent" or "delegate-task" for agent execution
+- Skill invocation: Skills are invoked through their assigned agents, not directly
+
 ## Performance Limits
 - 256MB memory, 80% CPU, 45s timeout
 
@@ -65,13 +71,9 @@ Stop after giving your answer. Do not loop.`,
       "interactive-validator",
       // Pre-commit validation with auto-fix
       "run-pre-commit-validation",
-      // Skill invocation tools
-      "invoke-skill",
-      "skill-code-review",
-      "skill-security-audit",
-      "skill-performance-optimization",
-      "skill-testing-strategy",
-      "skill-project-analysis",
+      // Agent delegation tools (skills are invoked through agents, not directly)
+      "invoke-agent",
+      "delegate-task"
     ],
   },
   permission: {
