@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework**
 
-[![Version](https://img.shields.io/badge/version-1.6.28-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.6.29-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-1489%20passed-brightgreen?style=flat-square)](src/__tests__)
 

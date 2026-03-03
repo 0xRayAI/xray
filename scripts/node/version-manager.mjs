@@ -109,9 +109,9 @@ function updateChangelog(newVersion, changeDescription) {
 }
 
 /**
- * Update README.md with actual framework counts
+ * Update README.md with actual framework counts and version
  */
-function updateReadme(counts) {
+function updateReadme(counts, newVersion) {
   const readmePath = path.join(rootDir, 'README.md');
   if (!fs.existsSync(readmePath)) {
     console.log(`⚠️  README.md not found, skipping`);
@@ -119,6 +119,12 @@ function updateReadme(counts) {
   }
   
   let readme = fs.readFileSync(readmePath, 'utf-8');
+  
+  // Update version badge: [![Version](https://img.shields.io/badge/version-1.6.x-blue...)]
+  readme = readme.replace(
+    /img.shields.io\/badge\/version-[\d.]+/,
+    `img.shields.io/badge/version-${newVersion}`
+  );
   
   // Update agent count: [View all 23 agents →](AGENTS.md)
   readme = readme.replace(
@@ -145,7 +151,7 @@ function updateReadme(counts) {
   );
   
   fs.writeFileSync(readmePath, readme);
-  console.log(`✅ Updated README.md (agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills})`);
+  console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills})`);
 }
 
 /**
@@ -237,6 +243,27 @@ function updateVersion(newVersion, changeDescription = '') {
   );
   fs.writeFileSync(initPath, initContent);
   console.log(`✅ Updated init.sh`);
+/**
+ * Update docs/README.md version badge
+ */
+function updateDocsReadme(newVersion) {
+  const docsReadmePath = path.join(rootDir, 'docs/README.md');
+  if (!fs.existsSync(docsReadmePath)) {
+    console.log(`⚠️  docs/README.md not found, skipping`);
+    return;
+  }
+  
+  let readme = fs.readFileSync(docsReadmePath, 'utf-8');
+  
+  // Update version badge: [![Version](https://img.shields.io/badge/version-1.6.x-blue...)]
+  readme = readme.replace(
+    /img.shields.io\/badge\/version-[\d.]+/,
+    `img.shields.io/badge/version-${newVersion}`
+  );
+  
+  fs.writeFileSync(docsReadmePath, readme);
+  console.log(`✅ Updated docs/README.md (version: ${newVersion})`);
+}
   
   // Update CHANGELOG.md
   updateChangelog(newVersion, changeDescription);
@@ -245,8 +272,9 @@ function updateVersion(newVersion, changeDescription = '') {
   const counts = getFrameworkCounts();
   console.log(`\n📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
   
-  updateReadme(counts);
+  updateReadme(counts, newVersion);
   updateAgentsMd(counts);
+  updateDocsReadme(newVersion);
   
   console.log(`\n🎉 Version updated to ${newVersion}\n`);
 }
