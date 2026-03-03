@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# StringRay Framework Version - read dynamically from package.json
-STRRAY_VERSION=$(node -e "console.log(require('./package.json').version)")
-
-START_TIME=$(date +%s)
-
 # Get script directory for robust path handling
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PROJECT_ROOT=$(realpath "$SCRIPT_DIR/..")
+
+# StringRay Framework Version - read dynamically from package.json
+STRRAY_VERSION=$(node -e "console.log(require('$PROJECT_ROOT/package.json').version)")
+
+START_TIME=$(date +%s)
 
 LOG_FILE="$PROJECT_ROOT/.opencode/logs/strray-init-$(date +%Y%m%d-%H%M%S).log"
 mkdir -p "$PROJECT_ROOT/.opencode/logs"
