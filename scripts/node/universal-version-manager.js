@@ -202,6 +202,14 @@ const UPDATE_PATTERNS = [
 
   ];
 
+// Additional patterns for bash scripts (STRRAY_VERSION)
+const BASH_VERSION_PATTERNS = [
+  {
+    pattern: /STRRAY_VERSION="[0-9]+\.[0-9]+\.[0-9]+"/g,
+    replacement: `STRRAY_VERSION="${OFFICIAL_VERSIONS.framework.version}"`,
+  },
+];
+
 async function standardizeVersions() {
   console.log("🔧 Starting Universal Version Standardization");
   console.log(`📋 Framework: ${OFFICIAL_VERSIONS.framework.displayName}`);
@@ -316,6 +324,16 @@ async function standardizeVersions() {
 
       // Apply all version update patterns
       for (const { pattern, replacement } of UPDATE_PATTERNS) {
+        const matches = content.match(pattern);
+        if (matches) {
+          updatedContent = updatedContent.replace(pattern, replacement);
+          totalChanges += matches.length;
+          fileChanged = true;
+        }
+      }
+
+      // Apply bash script version patterns
+      for (const { pattern, replacement } of BASH_VERSION_PATTERNS) {
         const matches = content.match(pattern);
         if (matches) {
           updatedContent = updatedContent.replace(pattern, replacement);

@@ -7,6 +7,10 @@ import * as fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Read version dynamically from package.json
+const packageJsonPath = join(__dirname, "..", "package.json");
+const { version } = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+
 const app = express();
 const PORT = 3000;
 
@@ -49,9 +53,9 @@ app.use(express.static(join(__dirname, "public")));
 // API endpoints
 app.get("/api/status", (req: Request, res: Response) => {
   // Return framework status
-  res.json({
+    res.json({
     framework: "StringRay",
-    version: "1.6.22",
+    version,
     status: "active",
     agents: 8,
     timestamp: new Date().toISOString(),

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# StringRay Framework Version
-STRRAY_VERSION="1.6.20"
+# StringRay Framework Version - read dynamically from package.json
+STRRAY_VERSION=$(node -e "console.log(require('./package.json').version)")
 
 START_TIME=$(date +%s)
 

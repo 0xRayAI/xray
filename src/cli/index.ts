@@ -10,8 +10,14 @@ import { Command } from "commander";
 import { execSync } from "child_process";
 import { join } from "path";
 
+import { readFileSync } from "fs";
+
 // Get package root relative to this script location
 const packageRoot = join(new URL(".", import.meta.url).pathname, "..", "..");
+
+// Read version dynamically from package.json
+const packageJsonPath = join(packageRoot, "package.json");
+const { version } = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
 
 const program = new Command();
 
@@ -20,7 +26,7 @@ program
   .description(
     "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention",
   )
-  .version("1.6.22");
+  .version(version);
 
 program
   .command("install")
