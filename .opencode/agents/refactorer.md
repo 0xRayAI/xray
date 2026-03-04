@@ -2,7 +2,7 @@
 
 **Role**: Technical debt elimination & code consolidation
 **Mode**: Subagent
-**Model**: openai/gpt-5.2
+
 
 ## Purpose
 

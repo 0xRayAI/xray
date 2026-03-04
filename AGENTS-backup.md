@@ -30,7 +30,7 @@
 
 | Agent | Description |
 |-------|-------------|
-| general | General-purpose agent for complex questions and multi-step tasks |
+
 | code-analyzer | Code analysis, metrics, and pattern detection |
 | orchestrator | Multi-agent workflow coordination *(manual only)* |
 | architect | System design and technical architecture |

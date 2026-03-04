@@ -48,7 +48,7 @@ describe("Predictive Analytics System", () => {
           successProbability: 0.92,
         },
         {
-          agentId: "general-agent",
+          agentId: "enforcer",
           confidence: 0.78,
           estimatedDuration: 180,
           successProbability: 0.85,

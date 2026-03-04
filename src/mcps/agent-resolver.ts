@@ -40,9 +40,9 @@ interface AgentRegistry {
  * Default fallback configuration for agents
  */
 const DEFAULT_AGENT_CONFIG: AgentConfig = {
-  name: "unknown",
-  description: "Default agent configuration",
-  capabilities: ["general-purpose"],
+  name: "enforcer",
+  description: "Default agent configuration - falls back to enforcer",
+  capabilities: ["codex-compliance-validation", "error-prevention", "threshold-enforcement"],
   tools: {
     include: ["read", "grep", "edit", "bash"],
   },

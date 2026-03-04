@@ -2,7 +2,7 @@
 
 **Role**: Testing strategy & coverage optimization
 **Mode**: Subagent
-**Model**: openai/gpt-5.2
+
 
 ## Purpose
 

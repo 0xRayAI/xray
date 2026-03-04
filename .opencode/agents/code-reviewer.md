@@ -2,7 +2,7 @@
 
 **Role**: Quality assessment & standards validation
 **Mode**: Subagent
-**Model**: openai/gpt-5.2
+
 
 ## Purpose
 
