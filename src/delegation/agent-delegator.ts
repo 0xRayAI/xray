@@ -776,14 +776,18 @@ export class AgentDelegator {
         const agentStartTime = Date.now();
 
         try {
-          // Always create properly configured agents (no stubs)
-          const agentConfig = builtinAgents[agentName];
-          if (!agentConfig) {
-            throw new Error(`Agent ${agentName} not found in builtin agents`);
+          // First check state manager for custom/mock agents (for testing)
+          let agentInstance = this.stateManager.get(`agent:${agentName}`);
+          
+          // If no custom agent in state, use builtin configuration
+          if (!agentInstance) {
+            const agentConfig = builtinAgents[agentName];
+            if (!agentConfig) {
+              throw new Error(`Agent ${agentName} not found in builtin agents`);
+            }
+            // Create properly configured agent with full tool access
+            agentInstance = this.createProperlyConfiguredAgent(agentName, agentConfig, request);
           }
-
-          // Create properly configured agent with full tool access
-          const agentInstance = this.createProperlyConfiguredAgent(agentName, agentConfig, request);
 
           // Execute the agent
           const output = await (agentInstance as any).execute(request);

@@ -1,13 +1,12 @@
 /**
- * Enhanced Multi-Agent Orchestration with Clickable Monitoring
- * Integrates subagent spawning visibility and lifecycle management
+ * Enhanced Multi-Agent Orchestration
+ * Real functionality for agent lifecycle management and security
  */
 
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import {
   ComplexityAnalyzer,
-  ComplexityMetrics,
 } from "../delegation/complexity-analyzer.js";
 import { createAgentDelegator } from "../delegation/agent-delegator.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
@@ -30,9 +29,6 @@ export interface SpawnedAgent {
   endTime?: number;
   result?: any;
   error?: string;
-  progress: number;
-  clickable: boolean;
-  monitorable: boolean;
   cleanupRequired: boolean;
 }
 
@@ -42,9 +38,7 @@ export interface AgentOrchestrationState {
   completedAgents: Map<string, SpawnedAgent>;
   failedAgents: Map<string, SpawnedAgent>;
   agentDependencies: Map<string, string[]>;
-  monitoringEnabled: boolean;
-  cleanupInterval: number;
-  isMainOrchestrator: boolean; // Flag to indicate if this is the main orchestrator
+  isMainOrchestrator: boolean;
 }
 
 export class EnhancedMultiAgentOrchestrator {
@@ -52,8 +46,6 @@ export class EnhancedMultiAgentOrchestrator {
   private stateManager: StringRayStateManager;
   private complexityAnalyzer: ComplexityAnalyzer;
   private agentDelegator: any;
-  private executionContext: any;
-  private cleanupTimer: any;
 
   constructor(
     stateManager?: StringRayStateManager,
@@ -72,45 +64,31 @@ export class EnhancedMultiAgentOrchestrator {
       completedAgents: new Map(),
       failedAgents: new Map(),
       agentDependencies: new Map(),
-      monitoringEnabled: true,
-      cleanupInterval: stateManager ? 300000 : 30000, // 5 minutes for main, 30 seconds for sub
       isMainOrchestrator,
     };
-
-    // Initialize execution context for security tracking
-    this.executionContext = {
-      isExecutingAsSubagent: false,
-      currentAgentId: null,
-      spawnStack: [],
-    };
-
-    this.initializeCleanupSystem();
   }
 
   /**
-   * 🚨 SECURITY: Check if currently executing as a subagent
-   * Prevents subagents from spawning other subagents (infinite loops, resource exhaustion)
+   * SECURITY: Prevent subagents from spawning other subagents
    */
   private isCurrentlyExecutingAsSubagent(): boolean {
-    // Main orchestrator can spawn agents, subagents cannot
     return !this.state.isMainOrchestrator;
   }
 
   /**
-   * Enhanced agent spawning with clickable monitoring integration
+   * Spawn an agent with dependency management
    */
   async spawnAgent(request: AgentSpawnRequest): Promise<SpawnedAgent> {
-    const jobId = `spawn-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    // 🚨 SECURITY: Prevent subagents from spawning other subagents
-    // This prevents infinite loops, resource exhaustion, and uncontrolled agent spawning
+    // SECURITY: Prevent subagents from spawning more agents
     if (this.isCurrentlyExecutingAsSubagent()) {
       const error = new Error(
-        `SECURITY VIOLATION: Subagent attempted to spawn another agent. ` +
-          `Only the main orchestrator may spawn agents. ` +
-          `Subagent spawning is strictly prohibited to prevent infinite loops and resource exhaustion.`,
+        `SECURITY: Subagent attempted to spawn another agent. ` +
+        `Only the main orchestrator may spawn agents.`,
       );
-      console.error(`🚨 ${error.message}`);
+      frameworkLogger.log("orchestrator", "security-violation", "error", {
+        message: error.message,
+        requestedAgent: request.agentType,
+      });
       throw error;
     }
 
@@ -122,20 +100,15 @@ export class EnhancedMultiAgentOrchestrator {
       task: request.task,
       status: "spawning",
       startTime: Date.now(),
-      progress: 0,
-      clickable: true, // Enable clickable monitoring
-      monitorable: true, // Enable real-time monitoring
       cleanupRequired: true,
     };
 
-    // Register agent in active pool
     this.state.activeAgents.set(agentId, spawnedAgent);
 
     // Handle dependencies
     if (request.dependencies && request.dependencies.length > 0) {
       this.state.agentDependencies.set(agentId, request.dependencies);
 
-      // Check if dependencies are met
       const unmetDeps = request.dependencies.filter(
         (depId) =>
           !this.state.completedAgents.has(depId) ||
@@ -145,37 +118,22 @@ export class EnhancedMultiAgentOrchestrator {
       if (unmetDeps.length > 0) {
         frameworkLogger.log(
           "orchestrator",
-          `Agent ${agentId} waiting for dependencies: ${unmetDeps.join(", ")}`,
+          "agent-waiting-dependencies",
           "info",
-          { jobId },
+          { agentId, waitingFor: unmetDeps },
         );
         this.state.pendingSpawns.push(request);
         return spawnedAgent;
       }
     }
 
-    // Log clickable spawn event
-    frameworkLogger.log(
-      "orchestrator",
-      `🔗 SPAWNED: ${request.agentType} agent (${agentId}) - Click to monitor`,
-      "info",
-      {
-        jobId,
-        agentId,
-        agentType: request.agentType,
-        task: request.task,
-        clickable: true,
-        timestamp: Date.now(),
-      },
-    );
-
-    // Start agent execution
-    this.executeAgent(spawnedAgent, request, jobId).catch((error) => {
+    // Execute the agent
+    this.executeAgent(spawnedAgent, request).catch((error) => {
       frameworkLogger.log(
         "orchestrator",
-        `Agent execution failed: ${error}`,
+        "agent-execution-failed",
         "error",
-        { jobId },
+        { agentId, error: error.message },
       );
     });
 
@@ -183,95 +141,16 @@ export class EnhancedMultiAgentOrchestrator {
   }
 
   /**
-   * Execute agent with monitoring and cleanup
+   * Execute agent using the agent delegator
    */
   private async executeAgent(
     agent: SpawnedAgent,
     request: AgentSpawnRequest,
-    jobId: string,
   ): Promise<void> {
-    const executeJobId = `execute-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
     try {
       agent.status = "active";
-      agent.progress = 10;
 
-      // Execute agent with progress updates
-      const executionPromise = this.executeAgentWithDelegator(
-        agent,
-        request,
-        executeJobId,
-      );
-
-      // Set up monitoring updates
-      const monitorInterval = setInterval(() => {
-        if (agent.status === "active") {
-          agent.progress = Math.min(agent.progress + 10, 90);
-          this.updateAgentMonitoring(agent);
-        }
-      }, 1000);
-
-      const result = await executionPromise;
-      clearInterval(monitorInterval);
-
-      // Mark as completed
-      agent.status = "completed";
-      agent.endTime = Date.now();
-      agent.progress = 100;
-      agent.result = result;
-
-      // Move to completed pool
-      this.state.activeAgents.delete(agent.id);
-      this.state.completedAgents.set(agent.id, agent);
-
-      frameworkLogger.log(
-        "orchestrator",
-        `✅ COMPLETED: ${agent.agentType} agent (${agent.id})`,
-        "info",
-        {
-          executeJobId,
-          agentId: agent.id,
-          duration: agent.endTime - agent.startTime,
-          result: typeof result,
-        },
-      );
-
-      // Check for dependent agents that can now spawn
-      this.checkPendingSpawns();
-    } catch (error) {
-      agent.status = "failed";
-      agent.endTime = Date.now();
-      agent.error = error instanceof Error ? error.message : String(error);
-      agent.progress = 0;
-
-      // Move to failed pool
-      this.state.activeAgents.delete(agent.id);
-      this.state.failedAgents.set(agent.id, agent);
-
-      frameworkLogger.log(
-        "orchestrator",
-        `❌ FAILED: ${agent.agentType} agent (${agent.id}): ${agent.error}`,
-        "error",
-        {
-          executeJobId,
-          agentId: agent.id,
-          error: agent.error,
-          duration: agent.endTime - agent.startTime,
-        },
-      );
-    }
-  }
-
-  /**
-   * Execute agent using the agent delegator system
-   */
-  private async executeAgentWithDelegator(
-    agent: SpawnedAgent,
-    request: AgentSpawnRequest,
-    jobId: string,
-  ): Promise<any> {
-    try {
-      // Use the agent delegator system - first analyze, then execute
+      // Execute via agent delegator
       const delegationRequest = {
         operation: "execute",
         files: [`task-${agent.id}.txt`],
@@ -284,106 +163,49 @@ export class EnhancedMultiAgentOrchestrator {
         },
       };
 
-      // Analyze the delegation to get strategy
-      const delegation =
-        await this.agentDelegator.analyzeDelegation(delegationRequest);
+      const delegation = await this.agentDelegator.analyzeDelegation(delegationRequest);
+      const result = await this.agentDelegator.executeDelegation(delegation, delegationRequest);
 
-      // Execute the delegation
-      const result = await this.agentDelegator.executeDelegation(
-        delegation,
-        delegationRequest,
-      );
+      // Mark as completed
+      agent.status = "completed";
+      agent.endTime = Date.now();
+      agent.result = result;
 
-      return {
-        success: true,
-        agentType: request.agentType,
-        task: request.task,
-        executionTime: result.executionTime || 0,
-        complexity: delegation.complexity || 0,
-        result:
-          result.result ||
-          `Completed ${request.agentType} task: ${request.task}`,
-        delegationResult: result,
-      };
-    } catch (error) {
-      // Fallback to simulation if delegation fails
+      this.state.activeAgents.delete(agent.id);
+      this.state.completedAgents.set(agent.id, agent);
+
       frameworkLogger.log(
         "orchestrator",
-        `Agent delegation failed, using simulation: ${error}`,
+        "agent-completed",
         "info",
-        { jobId },
+        {
+          agentId: agent.id,
+          agentType: agent.agentType,
+          duration: agent.endTime - agent.startTime,
+        },
       );
-      return this.simulateAgentExecution(agent, request);
+
+      // Check pending spawns
+      this.checkPendingSpawns();
+    } catch (error) {
+      agent.status = "failed";
+      agent.endTime = Date.now();
+      agent.error = error instanceof Error ? error.message : String(error);
+
+      this.state.activeAgents.delete(agent.id);
+      this.state.failedAgents.set(agent.id, agent);
+
+      frameworkLogger.log(
+        "orchestrator",
+        "agent-failed",
+        "error",
+        {
+          agentId: agent.id,
+          agentType: agent.agentType,
+          error: agent.error,
+        },
+      );
     }
-  }
-
-  /**
-   * Simulate agent execution (fallback when delegation fails)
-   */
-  private async simulateAgentExecution(
-    agent: SpawnedAgent,
-    request: AgentSpawnRequest,
-  ): Promise<any> {
-    // Simulate different execution times based on agent type and complexity
-    const baseTime = this.getAgentExecutionTime(request.agentType);
-    const complexityMetrics = await this.complexityAnalyzer.analyzeComplexity(
-      "execute",
-      {
-        newCode: request.task,
-        files: [`task-${agent.id}.txt`],
-      },
-    );
-
-    const executionTime = baseTime * (1 + complexityMetrics.changeVolume / 100);
-
-    await new Promise((resolve) => setTimeout(resolve, executionTime));
-
-    return {
-      success: true,
-      agentType: request.agentType,
-      task: request.task,
-      executionTime,
-      complexity: complexityMetrics.changeVolume,
-      result: `Completed ${request.agentType} task: ${request.task}`,
-    };
-  }
-
-  /**
-   * Get estimated execution time for agent type
-   */
-  private getAgentExecutionTime(agentType: string): number {
-    const times: Record<string, number> = {
-      architect: 3000, // 3 seconds
-      enforcer: 2000, // 2 seconds
-      researcher: 4000, // 4 seconds
-      "code-reviewer": 2500, // 2.5 seconds
-      "security-auditor": 3500, // 3.5 seconds
-      "testing-lead": 3000, // 3 seconds
-      "bug-triage-specialist": 2800, // 2.8 seconds
-      refactorer: 3200, // 3.2 seconds
-    };
-    return times[agentType] || 3000;
-  }
-
-  /**
-   * Update agent monitoring (integrates with clickable interface)
-   */
-  private updateAgentMonitoring(agent: SpawnedAgent): void {
-    if (!this.state.monitoringEnabled) return;
-
-    // Log monitoring update for clickable interface
-    frameworkLogger.log(
-      "orchestrator",
-      `📊 MONITOR: ${agent.agentType} (${agent.id}) - ${agent.progress}%`,
-      "debug",
-      {
-        agentId: agent.id,
-        progress: agent.progress,
-        status: agent.status,
-        clickable: agent.clickable,
-        timestamp: Date.now(),
-      },
-    );
   }
 
   /**
@@ -392,7 +214,6 @@ export class EnhancedMultiAgentOrchestrator {
   private checkPendingSpawns(): void {
     const readySpawns = this.state.pendingSpawns.filter((spawn) => {
       if (!spawn.dependencies) return true;
-
       return spawn.dependencies.every(
         (depId) =>
           this.state.completedAgents.has(depId) &&
@@ -400,26 +221,23 @@ export class EnhancedMultiAgentOrchestrator {
       );
     });
 
-    // Execute ready spawns
     readySpawns.forEach((spawn) => {
       this.state.pendingSpawns = this.state.pendingSpawns.filter(
         (s) => s !== spawn,
       );
       this.spawnAgent(spawn);
     });
-  }
+}
 
   /**
-   * Get clickable agent monitoring interface
+   * Get monitoring interface for external callers
    */
-  getMonitoringInterface(): Record<string, SpawnedAgent> {
-    const allAgents = {
+  getState(): Record<string, SpawnedAgent> {
+    return {
       ...Object.fromEntries(this.state.activeAgents),
       ...Object.fromEntries(this.state.completedAgents),
       ...Object.fromEntries(this.state.failedAgents),
     };
-
-    return allAgents;
   }
 
   /**
@@ -438,52 +256,12 @@ export class EnhancedMultiAgentOrchestrator {
 
     frameworkLogger.log(
       "orchestrator",
-      `🚫 CANCELLED: ${agent.agentType} agent (${agentId})`,
+      "agent-cancelled",
       "info",
+      { agentId, agentType: agent.agentType },
     );
 
     return true;
-  }
-
-  /**
-   * Initialize cleanup system for completed agents
-   */
-  private initializeCleanupSystem(): void {
-    this.cleanupTimer = setInterval(() => {
-      this.performCleanup();
-    }, this.state.cleanupInterval);
-  }
-
-  /**
-   * Perform cleanup of completed/failed agents
-   */
-  private performCleanup(): void {
-    const now = Date.now();
-    const cleanupThreshold = 5 * 60 * 1000; // 5 minutes
-
-    // Clean up old completed agents
-    for (const [agentId, agent] of this.state.completedAgents) {
-      if (agent.endTime && now - agent.endTime > cleanupThreshold) {
-        this.state.completedAgents.delete(agentId);
-        frameworkLogger.log(
-          "orchestrator",
-          `🧹 CLEANED: Completed agent ${agentId}`,
-          "debug",
-        );
-      }
-    }
-
-    // Clean up old failed agents
-    for (const [agentId, agent] of this.state.failedAgents) {
-      if (agent.endTime && now - agent.endTime > cleanupThreshold) {
-        this.state.failedAgents.delete(agentId);
-        frameworkLogger.log(
-          "orchestrator",
-          `🧹 CLEANED: Failed agent ${agentId}`,
-          "debug",
-        );
-      }
-    }
   }
 
   /**
@@ -494,17 +272,23 @@ export class EnhancedMultiAgentOrchestrator {
     completedAgents: number;
     failedAgents: number;
     pendingSpawns: number;
-    totalSpawned: number;
   } {
     return {
       activeAgents: this.state.activeAgents.size,
       completedAgents: this.state.completedAgents.size,
       failedAgents: this.state.failedAgents.size,
       pendingSpawns: this.state.pendingSpawns.length,
-      totalSpawned:
-        this.state.activeAgents.size +
-        this.state.completedAgents.size +
-        this.state.failedAgents.size,
+    };
+  }
+
+  /**
+   * Get monitoring interface for external callers
+   */
+  getMonitoringInterface(): Record<string, SpawnedAgent> {
+    return {
+      ...Object.fromEntries(this.state.activeAgents),
+      ...Object.fromEntries(this.state.completedAgents),
+      ...Object.fromEntries(this.state.failedAgents),
     };
   }
 
@@ -512,11 +296,6 @@ export class EnhancedMultiAgentOrchestrator {
    * Shutdown orchestration system
    */
   async shutdown(): Promise<void> {
-    if (this.cleanupTimer) {
-      clearInterval(this.cleanupTimer);
-      this.cleanupTimer = null;
-    }
-
     // Cancel all active agents
     const activeAgentIds = Array.from(this.state.activeAgents.keys());
     await Promise.all(activeAgentIds.map((id) => this.cancelAgent(id)));
@@ -531,4 +310,4 @@ export class EnhancedMultiAgentOrchestrator {
 
 // Export singleton instance
 export const enhancedMultiAgentOrchestrator =
-  new EnhancedMultiAgentOrchestrator(undefined, true); // Main orchestrator
+  new EnhancedMultiAgentOrchestrator(undefined, true);
