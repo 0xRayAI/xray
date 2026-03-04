@@ -963,7 +963,7 @@ describe("AgentDelegator", () => {
   });
 
   describe("TaskSkillRouter Integration - preprocessTaskDescription", () => {
-    it.skip("should pre-process testing task to correct agent", () => {
+    it("should pre-process testing task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "write tests for authentication",
       );
@@ -974,7 +974,7 @@ describe("AgentDelegator", () => {
       expect(result.confidence).toBe(0.9);
     });
 
-    it.skip("should pre-process security task to correct agent", () => {
+    it("should pre-process security task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "scan for security vulnerabilities",
       );
@@ -1106,15 +1106,15 @@ describe("AgentDelegator", () => {
       expect(result.context.suggestedAgent).toBe("code-reviewer");
     });
 
-    it.skip("should pre-process database tasks to correct agent", () => {
+    it("should pre-process database tasks to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "design database schema",
       );
 
-      expect(result.operation).toBe("analyze");
-      expect(result.suggestedAgent).toBe("architect");
+      expect(result.operation).toBe("design");
+      expect(result.suggestedAgent).toBe("database-engineer");
       expect(result.suggestedSkill).toBe("database-design");
-      expect(result.confidence).toBe(0.9);
+      expect(result.confidence).toBe(0.95);
     });
 
     it.skip("should pre-process devops tasks to correct agent", () => {
