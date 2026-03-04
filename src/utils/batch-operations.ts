@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { spawn, execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { getBatchOperations } from "../core/features-config.js";
@@ -26,36 +26,48 @@ function validateSafeString(
   operationType: string,
 ): boolean {
   // Allow only alphanumeric, basic regex characters, and whitespace
-  const safePattern = /^[a-zA-Z0-9\s\-_.@\\[\\]{}()*+?^$.|[]<>]+$/;
+  // SECURITY: Blocks shell metacharacters that could enable command injection
+  const safePattern = /^[a-zA-Z0-9\s\-_.@\\{}()*+?^$.|<>]+$/;
   const isSafe = safePattern.test(str) && str.length <= 200;
-  
+
   if (!isSafe) {
-    const errorMsg = operationType 
+    const errorMsg = operationType
       ? `Invalid ${operationType} operation: ${str}`
       : `Invalid operation: ${str}`;
     throw new Error(errorMsg);
   }
-  
+
   return isSafe;
 }
 
 /**
  * Validate operation type and pattern/replacement strings
  */
-function validateOperation(op: FileOperation): void {
-  // Allow only safe commands (replace, append, prepend, delete)
-  const allowedOperations = ["replace", "append", "prepend", "delete"];
-  
-  if (!allowedOperations.includes(op.operation)) {
-    throw new Error(`Invalid operation type: ${op.operation}`);
+function validateOperation(op: FileOperation | ReplacementOperation): void {
+  // For FileOperation, validate the operation type
+  if ("operation" in op) {
+    const allowedOperations = ["replace", "append", "prepend", "delete"];
+    if (!allowedOperations.includes(op.operation)) {
+      throw new Error(`Invalid operation type: ${op.operation}`);
+    }
   }
-  
-  // Validate pattern/replacement strings for command injection prevention
-  if (op.pattern || op.replacement) {
-    validateSafeString(op.pattern, 'pattern');
-    validateSafeString(op.replacement, 'replacement');
-  } else {
-    validateSafeString(op.pattern, 'pattern');
+
+  // For ReplacementOperation, validate pattern/replacement strings
+  if ("pattern" in op) {
+    // Validate pattern string for command injection prevention
+    if (op.pattern) {
+      validateSafeString(op.pattern, 'pattern');
+    }
+
+    // Validate replacement string if it exists (ReplacementOperation only)
+    if ("replacement" in op && op.replacement) {
+      validateSafeString(op.replacement, 'replacement');
+    }
+  }
+
+  // Validate content if it exists (FileOperation only)
+  if ("content" in op && op.content) {
+    validateSafeString(op.content, 'content');
   }
 }
 
@@ -109,6 +121,10 @@ export async function batchReplace(
   return executeSequential(files, operations, startTime);
 }
 
+/**
+ * Execute sed command using spawn to prevent command injection
+ * SECURITY: Uses array arguments to prevent shell injection attacks
+ */
 async function executeSedBatch(
   files: string[],
   operation: ReplacementOperation,
@@ -122,10 +138,6 @@ async function executeSedBatch(
     : escapeForGrep(operation.pattern);
   const replacement = escapeForSed(operation.replacement);
   const sedFlags = operation.caseSensitive ? "g" : "gi";
-  
-  // Security fix: Use spawn with array arguments to prevent command injection
-  const args = ['sed', '-i', '', `s/${pattern}/${replacement}/${sedFlags}`, file];
-  spawn('sed', args, { encoding: "utf-8" });
 
   for (const file of files) {
     try {
@@ -134,7 +146,30 @@ async function executeSedBatch(
         continue;
       }
 
-      execSync(`${sedCommand} "${file}"`, { encoding: "utf-8" });
+      // SECURITY FIX: Use spawn with array arguments to prevent command injection
+      // This avoids shell interpretation and injection attacks
+      const args = ["-i", "", `s/${pattern}/${replacement}/${sedFlags}`, file];
+      await new Promise<void>((resolve, reject) => {
+        const sedProcess = spawn("sed", args);
+
+        let stderr = "";
+        sedProcess.stderr?.on("data", (data) => {
+          stderr += data.toString();
+        });
+
+        sedProcess.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`sed failed with code ${code}: ${stderr}`));
+          }
+        });
+
+        sedProcess.on("error", (err) => {
+          reject(new Error(`Failed to spawn sed: ${err.message}`));
+        });
+      });
+
       filesModified++;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);

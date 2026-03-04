@@ -8,16 +8,43 @@
 
 import { Command } from "commander";
 import { execSync } from "child_process";
-import { join } from "path";
+import { join, resolve } from "path";
 
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 
 // Get package root relative to this script location
-const packageRoot = join(new URL(".", import.meta.url).pathname, "..", "..");
+const packageRoot = resolve(join(new URL(".", import.meta.url).pathname, "..", ".."));
 
 // Read version dynamically from package.json
 const packageJsonPath = join(packageRoot, "package.json");
 const { version } = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+
+/**
+ * SECURITY: Validate script path to prevent command injection
+ * Ensures the script is within the package root directory
+ */
+function validateScriptPath(scriptPath: string, scriptName: string): void {
+  // Resolve to absolute path
+  const resolvedPath = resolve(scriptPath);
+
+  // Check if file exists
+  if (!existsSync(resolvedPath)) {
+    throw new Error(`${scriptName} not found: ${resolvedPath}`);
+  }
+
+  // Check if path is within package root (prevent directory traversal)
+  const relativePath = resolve(packageRoot);
+  if (!resolvedPath.startsWith(relativePath)) {
+    throw new Error(`Security violation: ${scriptName} outside package root: ${resolvedPath}`);
+  }
+
+  // Check file extension (allow only .js, .cjs, .sh)
+  const allowedExtensions = ['.js', '.cjs', '.sh'];
+  const extension = resolve(resolvedPath).slice(-4);
+  if (!allowedExtensions.some(ext => resolvedPath.endsWith(ext))) {
+    throw new Error(`Security violation: ${scriptName} has disallowed extension: ${resolvedPath}`);
+  }
+}
 
 const program = new Command();
 
@@ -42,6 +69,10 @@ program
         "node",
         "postinstall.cjs",
       );
+
+      // SECURITY: Validate script path before execution
+      validateScriptPath(postinstallScript, "postinstall script");
+
       execSync(`node "${postinstallScript}"`, {
         stdio: "inherit",
         cwd: process.cwd(),
@@ -76,6 +107,10 @@ program
         "node",
         "postinstall.cjs",
       );
+
+      // SECURITY: Validate script path before execution
+      validateScriptPath(postinstallScript, "postinstall script");
+
       execSync(`node "${postinstallScript}"`, {
         stdio: "inherit",
         cwd: process.cwd(),
@@ -147,6 +182,10 @@ program
     try {
       // Run the init.sh script to validate
       const initScript = join(packageRoot, ".opencode", "init.sh");
+
+      // SECURITY: Validate script path before execution
+      validateScriptPath(initScript, "init script");
+
       execSync(`bash "${initScript}"`, {
         stdio: "inherit",
         cwd: process.cwd(),
@@ -399,6 +438,10 @@ program
         "node",
         "postinstall.cjs",
       );
+
+      // SECURITY: Validate script path before execution
+      validateScriptPath(postinstallScript, "postinstall script");
+
       execSync(`node "${postinstallScript}"`, {
         stdio: "inherit",
         cwd: process.cwd(),

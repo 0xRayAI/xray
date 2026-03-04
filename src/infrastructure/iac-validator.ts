@@ -11,7 +11,7 @@
 import { z } from "zod";
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { spawn } from "child_process";
 import { frameworkLogger } from "../core/framework-logger.js";
 
 // ============================================================================
@@ -440,19 +440,43 @@ export class PreCommitValidator {
     results: ValidationResult[];
   }> {
     try {
-      // Get staged files
-      const stagedFiles = execSync("git diff --cached --name-only", {
-        encoding: "utf-8",
-      })
-        .split("\n")
-        .filter(
-          (file) =>
-            file.trim() &&
-            (file.endsWith(".yaml") ||
-              file.endsWith(".yml") ||
-              file.endsWith(".json") ||
-              file.endsWith(".tf")),
-        );
+      // Get staged files using spawn to prevent command injection
+      const stagedFiles = await new Promise<string[]>((resolve, reject) => {
+        const gitProcess = spawn("git", ["diff", "--cached", "--name-only"]);
+
+        let stdout = "";
+        let stderr = "";
+
+        gitProcess.stdout?.on("data", (data) => {
+          stdout += data.toString();
+        });
+
+        gitProcess.stderr?.on("data", (data) => {
+          stderr += data.toString();
+        });
+
+        gitProcess.on("close", (code) => {
+          if (code === 0) {
+            const files = stdout
+              .split("\n")
+              .filter(
+                (file) =>
+                  file.trim() &&
+                  (file.endsWith(".yaml") ||
+                    file.endsWith(".yml") ||
+                    file.endsWith(".json") ||
+                    file.endsWith(".tf")),
+              );
+            resolve(files);
+          } else {
+            reject(new Error(`git failed with code ${code}: ${stderr}`));
+          }
+        });
+
+        gitProcess.on("error", (err) => {
+          reject(new Error(`Failed to spawn git: ${err.message}`));
+        });
+      });
 
       const results: ValidationResult[] = [];
 

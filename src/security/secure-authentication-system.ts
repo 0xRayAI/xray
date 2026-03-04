@@ -273,9 +273,12 @@ export class SecureAuthenticationSystem extends EventEmitter {
       return undefined;
     }
 
-     // In a real implementation, this would verify against stored password hash
-     // For demo purposes, we'll assume password verification
-     const isValidPassword = await this.verifyPassword(
+     // Verify password using stored hash and salt
+     if (!user.passwordHash || !user.passwordSalt) {
+       return undefined;
+     }
+
+     const isValidPassword = await securityHardeningSystem.verifyPassword(
        request.password,
        user.passwordHash,
        user.passwordSalt,
