@@ -18,6 +18,8 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  passwordHash?: string;
+  passwordSalt?: string;
   roles: string[];
   permissions: string[];
   metadata: Record<string, any>;
@@ -271,12 +273,13 @@ export class SecureAuthenticationSystem extends EventEmitter {
       return undefined;
     }
 
-    // In a real implementation, this would verify against stored password hash
-    // For demo purposes, we'll assume password verification
-    const isValidPassword = await this.verifyPassword(
-      request.password,
-      user.id,
-    );
+     // In a real implementation, this would verify against stored password hash
+     // For demo purposes, we'll assume password verification
+     const isValidPassword = await this.verifyPassword(
+       request.password,
+       user.passwordHash,
+       user.passwordSalt,
+     );
 
     return isValidPassword ? user : undefined;
   }
@@ -503,22 +506,24 @@ export class SecureAuthenticationSystem extends EventEmitter {
       }
     }
 
-    // Hash password
-    const passwordHash = await securityHardeningSystem.hashPassword(
-      userData.password,
-    );
-
-    // Create user
-    const user: User = {
-      id: securityHardeningSystem.generateSecureToken(16),
-      username: userData.username,
-      email: userData.email,
-      roles: userData.roles || ["user"],
-      permissions: this.getPermissionsForRoles(userData.roles || ["user"]),
-      metadata: userData.metadata || {},
-      createdAt: new Date(),
-      isActive: true,
-    };
+     // Hash password
+     const passwordResult = await securityHardeningSystem.hashPassword(
+       userData.password,
+     );
+     
+     // Create user
+     const user: User = {
+       id: securityHardeningSystem.generateSecureToken(16),
+       username: userData.username,
+       email: userData.email,
+       roles: userData.roles || ["user"],
+       permissions: this.getPermissionsForRoles(userData.roles || ["user"]),
+       metadata: userData.metadata || {},
+       createdAt: new Date(),
+       isActive: true,
+       passwordHash: passwordResult.hash,
+       passwordSalt: passwordResult.salt,
+     };
 
     // Store user (in production, this would be in a database)
     this.users.set(user.id, user);
