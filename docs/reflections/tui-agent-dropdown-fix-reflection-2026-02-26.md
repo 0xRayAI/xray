@@ -33,7 +33,7 @@ OpenCode reads agents from **two merged sources**:
 
 | Agent | In opencode.json | Has .yml |
 |-------|-----------------|----------|
-
+| general | ✅ | ❌ MISSING |
 | tech-writer | ✅ | ❌ MISSING |
 
 The framework had 21 agents defined in JSON config but only 26 yml files - two were missing.
@@ -72,9 +72,13 @@ Studied existing yml files (orchestrator.yml, researcher.yml) to understand the 
 
 ### Created Files
 
-1. **`.opencode/agents/tech-writer.yml`** (87 lines)
-    - Technical documentation generation specialist
-    - Configured with content-analysis, document-structure, content-generation pipelines
+1. **`.opencode/agents/general.yml`** (88 lines)
+   - General-purpose agent for research and task execution
+   - Configured with task-analysis, execution-planning, task-execution pipelines
+
+2. **`.opencode/agents/tech-writer.yml`** (87 lines)
+   - Technical documentation generation specialist
+   - Configured with content-analysis, document-structure, content-generation pipelines
 
 ### Verification
 ```bash
@@ -168,7 +172,7 @@ The TUI dropdown now shows all 20 StringRay agents + 2 built-ins. Users can acce
 - orchestrator, enforcer, architect
 - testing-lead, bug-triage-specialist, code-reviewer
 - security-auditor, refactorer, researcher
-- log-monitor, explore
+- log-monitor, general, explore
 - strategist, tech-writer, multimodal-looker
 - frontend-ui-ux-engineer, seo-consultant
 - content-creator, growth-strategist
@@ -179,6 +183,7 @@ The TUI dropdown now shows all 20 StringRay agents + 2 built-ins. Users can acce
 
 ## Files Modified
 
+- `.opencode/agents/general.yml` (NEW)
 - `.opencode/agents/tech-writer.yml` (NEW)
 - `package.json` (version bump)
 - `.opencode/init.sh` (version bump)

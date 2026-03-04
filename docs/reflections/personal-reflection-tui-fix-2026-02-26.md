@@ -120,7 +120,8 @@ And that world only exists if someone does the boring work. The maintenance. The
 
 ## The Fix Was Small. The Understanding Was Large.
 
-Today I added one yml file:
+Today I added two yml files:
+- general.yml (88 lines)
 - tech-writer.yml (87 lines)
 
 That's 175 lines of YAML. Two files. One version bump.

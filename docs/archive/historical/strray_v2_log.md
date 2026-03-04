@@ -1801,7 +1801,7 @@ Phase 2: OpenCode Plugin Loading
   Mode: FULL FRAMEWORK (not Lite)
 - Config file: OpenCode.json (not OpenCode.minimal.json)
 - All 8 StrRay agents configured
-- All specialized agents available
+- All 5 general agents available
 - No LITE_MODE environment variable set
   Codex Loading
   ✅ Codex Loading: WORKING
