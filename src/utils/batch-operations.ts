@@ -17,6 +17,48 @@ export interface BatchResult {
   duration: number;
 }
 
+/**
+ * Validate operation is safe for command execution
+ * Prevents command injection by validating patterns and replacements
+ */
+function validateSafeString(
+  str: string,
+  operationType: string,
+): boolean {
+  // Allow only alphanumeric, basic regex characters, and whitespace
+  const safePattern = /^[a-zA-Z0-9\s\-_.@\\[\\]{}()*+?^$.|[]<>]+$/;
+  const isSafe = safePattern.test(str) && str.length <= 200;
+  
+  if (!isSafe) {
+    const errorMsg = operationType 
+      ? `Invalid ${operationType} operation: ${str}`
+      : `Invalid operation: ${str}`;
+    throw new Error(errorMsg);
+  }
+  
+  return isSafe;
+}
+
+/**
+ * Validate operation type and pattern/replacement strings
+ */
+function validateOperation(op: FileOperation): void {
+  // Allow only safe commands (replace, append, prepend, delete)
+  const allowedOperations = ["replace", "append", "prepend", "delete"];
+  
+  if (!allowedOperations.includes(op.operation)) {
+    throw new Error(`Invalid operation type: ${op.operation}`);
+  }
+  
+  // Validate pattern/replacement strings for command injection prevention
+  if (op.pattern || op.replacement) {
+    validateSafeString(op.pattern, 'pattern');
+    validateSafeString(op.replacement, 'replacement');
+  } else {
+    validateSafeString(op.pattern, 'pattern');
+  }
+}
+
 export interface FileOperation {
   filePath: string;
   operation: "replace" | "append" | "prepend" | "delete";
