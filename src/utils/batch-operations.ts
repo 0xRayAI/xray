@@ -122,8 +122,10 @@ async function executeSedBatch(
     : escapeForGrep(operation.pattern);
   const replacement = escapeForSed(operation.replacement);
   const sedFlags = operation.caseSensitive ? "g" : "gi";
-
-  const sedCommand = `sed -i '' 's/${pattern}/${replacement}/${sedFlags}'`;
+  
+  // Security fix: Use spawn with array arguments to prevent command injection
+  const args = ['sed', '-i', '', `s/${pattern}/${replacement}/${sedFlags}`, file];
+  spawn('sed', args, { encoding: "utf-8" });
 
   for (const file of files) {
     try {
