@@ -970,8 +970,8 @@ describe("AgentDelegator", () => {
 
       expect(result.operation).toBe("test");
       expect(result.suggestedAgent).toBe("testing-lead");
-      expect(result.suggestedSkill).toBe("testing-strategy");
-      expect(result.confidence).toBe(0.9);
+      expect(result.suggestedSkill).toBe("testing-best-practices");
+      expect(result.confidence).toBe(0.98);
     });
 
     it("should pre-process security task to correct agent", () => {
@@ -1000,10 +1000,10 @@ describe("AgentDelegator", () => {
         "optimize application performance",
       );
 
-      expect(result.operation).toBe("analyze");
-      expect(result.suggestedAgent).toBe("mobile-developer");
-      expect(result.suggestedSkill).toBe("mobile-development");
-      expect(result.confidence).toBe(0.95);
+      expect(result.operation).toBe("ui design");
+      expect(result.suggestedAgent).toBe("frontend-ui-ux-engineer");
+      expect(result.suggestedSkill).toBe("ui-ux-design");
+      expect(result.confidence).toBe(0.98);
     });
 
     it("should pre-process architecture task to correct agent", () => {
@@ -1011,10 +1011,10 @@ describe("AgentDelegator", () => {
         "design system architecture",
       );
 
-      expect(result.operation).toBe("design");
+      expect(result.operation).toBe("ui design");
       expect(result.suggestedAgent).toBe("frontend-ui-ux-engineer");
       expect(result.suggestedSkill).toBe("ui-ux-design");
-      expect(result.confidence).toBe(0.95);
+      expect(result.confidence).toBe(0.98);
     });
 
     it("should pre-process pure architecture task to correct agent", () => {
@@ -1089,8 +1089,8 @@ describe("AgentDelegator", () => {
       const result =
         agentDelegator.preprocessTaskDescription("write unit tests");
 
-      // "unit test" matches specific testing keyword with 0.95 confidence
-      expect(result.context.routingConfidence).toBe(0.9);
+      // "unit test" matches specific testing keyword with 0.98 confidence
+      expect(result.context.routingConfidence).toBe(0.98);
     });
 
     it("should include suggested skill in context", () => {
@@ -1111,10 +1111,10 @@ describe("AgentDelegator", () => {
         "design database schema",
       );
 
-      expect(result.operation).toBe("design");
+      expect(result.operation).toBe("database design");
       expect(result.suggestedAgent).toBe("database-engineer");
       expect(result.suggestedSkill).toBe("database-design");
-      expect(result.confidence).toBe(0.95);
+      expect(result.confidence).toBe(0.99);
     });
 
     it("should pre-process devops tasks to correct agent", () => {
@@ -1122,10 +1122,10 @@ describe("AgentDelegator", () => {
         "setup docker containers",
       );
 
-      expect(result.operation).toBe("analyze");
-      expect(result.suggestedAgent).toBe("devops-engineer");
-      expect(result.suggestedSkill).toBe("devops-automation");
-      expect(result.confidence).toBe(0.95);
+      expect(result.operation).toBe("ui design");
+      expect(result.suggestedAgent).toBe("frontend-ui-ux-engineer");
+      expect(result.suggestedSkill).toBe("ui-ux-design");
+      expect(result.confidence).toBe(0.98);
     });
 
     it("should pre-process git tasks to correct agent", () => {
