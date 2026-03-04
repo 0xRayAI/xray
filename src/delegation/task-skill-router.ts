@@ -142,7 +142,7 @@ const DEFAULT_MAPPINGS = [
       "design layout", "create layout", "build layout", "make layout", "implement layout",
       "design interface", "create interface", "build interface", "make interface", "implement interface",
 
-      // === UI OBJECTS ===
+      // === UI OBJECTS (ACTION-ORIENTED ONLY) ===
       "component", "button", "form", "modal", "dialog", "dropdown", "input", "textarea",
       "page", "layout", "interface", "header", "footer", "sidebar", "navbar",
       "card", "list", "table", "grid", "flex", "container", "wrapper",
@@ -548,10 +548,20 @@ const DEFAULT_MAPPINGS = [
 
   // ===== Frontend/UI =====
   {
-    keywords: ["design system", "component library", "ui component"],
+    keywords: [
+      // === ACTION VERB + PATTERNS ===
+      "design ui", "design frontend", "build ui", "create ui", "implement ui",
+      "design css", "build css", "create css", "implement css",
+      "design page", "create page", "build page", "make page",
+      "design interface", "create interface", "build interface", "make interface",
+
+      // === UI OBJECTS ===
+      "component", "button", "form", "modal", "dialog", "dropdown", "input", "textarea",
+      "page", "layout", "interface", "header", "footer", "sidebar", "navbar",
+    ],
     skill: "ui-ux-design",
-    agent: "enforcer",
-    confidence: 0.85,
+    agent: "frontend-ui-ux-engineer",
+    confidence: 0.75,
   },
   {
     keywords: [
@@ -1250,10 +1260,10 @@ export class TaskSkillRouter {
       "refactoring-strategies": "refactor",
       "performance-optimization": "optimize",
       "code-review": "review",
-      "ui-ux-design": "design",
-      "architecture-patterns": "design",
-      "api-design": "design",
-      "database-design": "design",
+      "ui-ux-design": "ui design",  // Changed from "design"
+      "architecture-patterns": "architecture",  // Changed from "design"
+      "api-design": "api design",  // Changed from "design"
+      "database-design": "database design",  // Changed from "design"
       "documentation-generation": "document",
       "project-analysis": "analyze",
       "state-manager": "configure",
