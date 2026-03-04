@@ -73,7 +73,7 @@ class StrRayDevOpsDeploymentServer {
   constructor() {
     this.server = new Server(
       {
-        name: "devops-deployment", version: "1.6.22",
+        name: "devops-deployment", version: "1.7.1",
       },
       {
         capabilities: {

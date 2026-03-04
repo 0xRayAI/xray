@@ -19,9 +19,9 @@ import path from "path";
 const OFFICIAL_VERSIONS = {
   // Framework versions
   framework: {
-    version: "1.6.22",
-    displayName: "StringRay AI v1.6.22",
-    lastUpdated: "2026-03-02",
+    version: "1.7.1",
+    displayName: "StringRay AI v1.7.1",
+    lastUpdated: "2026-03-04",
   },
 
   // Codex versions

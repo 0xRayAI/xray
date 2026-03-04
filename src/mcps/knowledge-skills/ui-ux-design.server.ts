@@ -98,7 +98,7 @@ class StrRayUIUXDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "ui-ux-design", version: "1.6.22",
+        name: "ui-ux-design", version: "1.7.1",
       },
       {
         capabilities: {

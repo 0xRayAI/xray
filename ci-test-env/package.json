@@ -1,6 +1,6 @@
 {
   "name": "ci-test-env",
-  "version": "1.6.22",
+  "version": "1.7.1",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

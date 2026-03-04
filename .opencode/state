@@ -1,10 +1,10 @@
 {
   "memory:baseline": {
-    "heapUsed": 11.61,
+    "heapUsed": 11.53,
     "heapTotal": 20.78,
     "external": 1.88,
-    "rss": 58.39,
-    "timestamp": 1772648448136
+    "rss": 57.52,
+    "timestamp": 1772648553364
   },
   "strray:config": {
     "version": "1.6.22",
@@ -1473,7 +1473,7 @@
   },
   "session:default:coordinator": {
     "sessionId": "default",
-    "startTime": 1772648448145,
+    "startTime": 1772648553370,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -1494,12 +1494,12 @@
   },
   "delegation:default_session": {
     "sessionId": "default",
-    "createdAt": "2026-03-04T18:20:48.145Z",
+    "createdAt": "2026-03-04T18:22:33.370Z",
     "active": true,
     "agentCount": 8
   },
   "session:active": true,
-  "session:boot_time": 1772648448145,
+  "session:boot_time": 1772648553370,
   "session:agents": [],
   "session:state_manager": {
     "stateManager": {
@@ -1528,8 +1528,8 @@
   "cleanup:session_metadata": {
     "default": {
       "sessionId": "default",
-      "createdAt": 1772648448146,
-      "lastActivity": 1772648448146,
+      "createdAt": 1772648553370,
+      "lastActivity": 1772648553370,
       "ttlMs": 86400000,
       "isActive": true,
       "agentCount": 0,
@@ -1605,7 +1605,7 @@
       "enforcementLevel": "blocking"
     }
   ],
-  "enforcement:enabled_at": 1772648448521,
+  "enforcement:enabled_at": 1772648553652,
   "security:initial_audit": {
     "score": 0,
     "issues": []

@@ -939,7 +939,7 @@ I'm here to help with architectural decisions, technical strategy, and complex p
           protocolVersion: "2024-11-05",
           capabilities: {},
           clientInfo: {
-            name: "strray-mcp-client", version: "1.6.22",
+            name: "strray-mcp-client", version: "1.7.1",
           },
         },
       };

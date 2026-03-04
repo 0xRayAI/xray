@@ -24,7 +24,7 @@ class StrRaySecurityScanServer {
   constructor() {
     this.server = new Server(
       {
-        name: "security-scan", version: "1.6.22",
+        name: "security-scan", version: "1.7.1",
       },
       {
         capabilities: {
