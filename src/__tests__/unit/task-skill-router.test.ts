@@ -132,7 +132,7 @@ describe("TaskSkillRouter", () => {
     });
   });
 
-  describe.skip("preprocess", () => {
+  describe("preprocess", () => {
     it("should return operation and context", () => {
       const result = router.preprocess("write tests for auth");
       expect(result.operation).toBe("test");
@@ -146,7 +146,7 @@ describe("TaskSkillRouter", () => {
     });
   });
 
-  describe.skip("getSkillForAgent", () => {
+  describe("getSkillForAgent", () => {
     it("should return skill for known agent", () => {
       const skill = router.getSkillForAgent("testing-lead");
       expect(skill).toBeDefined();
@@ -158,7 +158,7 @@ describe("TaskSkillRouter", () => {
     });
   });
 
-  describe.skip("trackResult", () => {
+  describe("trackResult", () => {
     it("should track successful results", () => {
       router.trackResult("task-1", "testing-lead", true);
       const stats = router.getStats();

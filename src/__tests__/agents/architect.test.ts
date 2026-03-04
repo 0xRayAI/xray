@@ -22,7 +22,7 @@ describe("Architect Agent Configuration", () => {
     });
   });
 
-  describe.skip("Core Responsibilities", () => {
+  describe("Core Responsibilities", () => {
     it("should have concise system prompt", () => {
       const system = architect.system;
       // New simplified prompt
@@ -40,7 +40,7 @@ describe("Architect Agent Configuration", () => {
     });
   });
 
-  describe.skip("Key Facilities", () => {
+  describe("Key Facilities", () => {
     it("should have concise prompt", () => {
       const system = architect.system;
       // Simplified prompt
@@ -54,7 +54,7 @@ describe("Architect Agent Configuration", () => {
     });
   });
 
-  describe.skip("Architectural Principles", () => {
+  describe("Architectural Principles", () => {
     it("should have concise system prompt", () => {
       const system = architect.system;
       // New simplified prompt

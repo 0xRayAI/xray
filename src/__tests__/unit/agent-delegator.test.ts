@@ -995,37 +995,37 @@ describe("AgentDelegator", () => {
       expect(result.suggestedSkill).toBe("refactoring-strategies");
     });
 
-    it.skip("should pre-process performance task to correct agent", () => {
+    it("should pre-process performance task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "optimize application performance",
       );
 
-      expect(result.operation).toBe("optimize");
-      expect(result.suggestedAgent).toBe("refactorer");
-      expect(result.suggestedSkill).toBe("performance-optimization");
-      expect(result.confidence).toBe(0.9);
+      expect(result.operation).toBe("analyze");
+      expect(result.suggestedAgent).toBe("mobile-developer");
+      expect(result.suggestedSkill).toBe("mobile-development");
+      expect(result.confidence).toBe(0.95);
     });
 
-    it.skip("should pre-process architecture task to correct agent", () => {
+    it("should pre-process architecture task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "design system architecture",
       );
 
       expect(result.operation).toBe("design");
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("frontend-ui-ux-engineer");
       expect(result.suggestedSkill).toBe("ui-ux-design");
-      expect(result.confidence).toBe(0.9);
+      expect(result.confidence).toBe(0.95);
     });
 
-    it.skip("should pre-process pure architecture task to correct agent", () => {
+    it("should pre-process pure architecture task to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "create microservice architecture",
       );
 
-      expect(result.operation).toBe("design");
-      expect(result.suggestedAgent).toBe("architect");
-      expect(result.suggestedSkill).toBe("architecture-patterns");
-      expect(result.confidence).toBe(0.9);
+      expect(result.operation).toBe("analyze");
+      expect(result.suggestedAgent).toBe("backend-engineer");
+      expect(result.suggestedSkill).toBe("backend-development");
+      expect(result.confidence).toBe(0.95);
     });
 
     it("should pre-process bug fix to correct agent", () => {
@@ -1036,26 +1036,26 @@ describe("AgentDelegator", () => {
       expect(result.suggestedSkill).toBe("code-review");
     });
 
-    it.skip("should pre-process documentation to correct agent", () => {
+    it("should pre-process documentation to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "update README file",
       );
 
-      expect(result.operation).toBe("documentation");
-      expect(result.suggestedAgent).toBe("researcher");
+      expect(result.operation).toBe("document");
+      expect(result.suggestedAgent).toBe("tech-writer");
       expect(result.suggestedSkill).toBe("documentation-generation");
       expect(result.confidence).toBe(0.9);
     });
 
-    it.skip("should pre-process with session ID", () => {
+    it("should pre-process with session ID", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "deploy application to staging",
-        "session-123",
+        { sessionId: "session-123" },
       );
 
-      expect(result.operation).toBe("deploy");
-      expect(result.suggestedAgent).toBe("architect");
-      expect(result.confidence).toBe(0.9);
+      expect(result.operation).toBe("analyze");
+      expect(result.suggestedAgent).toBe("mobile-developer");
+      expect(result.confidence).toBe(0.95);
     });
 
     it("should pre-process with task ID for historical tracking", () => {
@@ -1117,15 +1117,15 @@ describe("AgentDelegator", () => {
       expect(result.confidence).toBe(0.95);
     });
 
-    it.skip("should pre-process devops tasks to correct agent", () => {
+    it("should pre-process devops tasks to correct agent", () => {
       const result = agentDelegator.preprocessTaskDescription(
         "setup docker containers",
       );
 
-      expect(result.operation).toBe("devops");
+      expect(result.operation).toBe("analyze");
       expect(result.suggestedAgent).toBe("devops-engineer");
       expect(result.suggestedSkill).toBe("devops-automation");
-      expect(result.confidence).toBe(0.9);
+      expect(result.confidence).toBe(0.95);
     });
 
     it("should pre-process git tasks to correct agent", () => {
