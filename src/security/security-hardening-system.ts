@@ -601,17 +601,108 @@ export class SecurityHardeningSystem extends EventEmitter {
   }
 
   /**
-   * Encrypt sensitive data
+   * Encrypt sensitive data using AES-256-GCM
+   * SECURITY: Proper encryption with random IV and authentication tag (H-001 fix)
+   *
+   * @param data - Plaintext data to encrypt
+   * @returns Base64-encoded string containing encrypted data + IV + auth tag
    */
   encryptData(data: string): string {
-    return Buffer.from(data).toString("base64");
+    try {
+      // Generate random IV (Initialization Vector) for each encryption
+      const iv = crypto.randomBytes(SECURITY_CONFIG.encryption.ivLength);
+
+      // Create cipher with AES-256-GCM
+      const cipher = crypto.createCipheriv(
+        SECURITY_CONFIG.encryption.algorithm,
+        this.encryptionKey,
+        iv,
+      );
+
+      // Encrypt the data
+      let encrypted = cipher.update(data, "utf8", "binary");
+      encrypted += cipher.final("binary");
+
+      // Get authentication tag (for integrity verification)
+      const authTag = cipher.getAuthTag();
+
+      // Combine: IV + encrypted data + auth tag (all in binary)
+      const combined = Buffer.concat([
+        iv,
+        Buffer.from(encrypted, "binary"),
+        authTag,
+      ]);
+
+      // Return as Base64 string for storage/transmission
+      return combined.toString("base64");
+    } catch (error) {
+      frameworkLogger.log(
+        "security-hardening-system",
+        "-security-data-encryption-failed-error-instanceof-",
+        "error",
+        {
+          message: `[SECURITY] Data encryption failed: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      );
+
+      throw new Error(`Encryption failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   /**
-   * Decrypt sensitive data
+   * Decrypt sensitive data using AES-256-GCM
+   * SECURITY: Proper decryption with IV and auth tag verification (H-001 fix)
+   *
+   * @param encryptedData - Base64-encoded string containing encrypted data + IV + auth tag
+   * @returns Decrypted plaintext data
+   * @throws Error if decryption fails or authentication tag doesn't match
    */
   decryptData(encryptedData: string): string {
-    return Buffer.from(encryptedData, "base64").toString();
+    try {
+      // Decode Base64 to get combined buffer
+      const combined = Buffer.from(encryptedData, "base64");
+
+      // Extract IV (first 16 bytes)
+      const iv = combined.subarray(0, SECURITY_CONFIG.encryption.ivLength);
+
+      // Extract auth tag (last 16 bytes)
+      const authTag = combined.subarray(combined.length - 16);
+
+      // Extract encrypted data (middle part)
+      const encrypted = combined.subarray(
+        SECURITY_CONFIG.encryption.ivLength,
+        combined.length - 16,
+      );
+
+      // Create decipher with AES-256-GCM
+      const decipher = crypto.createDecipheriv(
+        SECURITY_CONFIG.encryption.algorithm,
+        this.encryptionKey,
+        iv,
+      );
+
+      // Set authentication tag (for integrity verification)
+      decipher.setAuthTag(authTag);
+
+      // Decrypt the data (Buffer to string)
+      const decrypted = Buffer.concat([
+        decipher.update(encrypted),
+        decipher.final(),
+      ]).toString("utf8");
+
+      return decrypted;
+    } catch (error) {
+      frameworkLogger.log(
+        "security-hardening-system",
+        "-security-data-decryption-failed-error-instanceof-",
+        "error",
+        {
+          message: `[SECURITY] Data decryption failed: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      );
+
+      throw new Error(`Decryption failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   /**
