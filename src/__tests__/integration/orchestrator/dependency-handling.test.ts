@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   StringRayOrchestrator,
   TaskDefinition,
@@ -6,15 +6,28 @@ import {
 
 describe("Orchestrator Dependency Handling", () => {
   let orchestrator: StringRayOrchestrator;
-
+  
   beforeEach(() => {
     orchestrator = new StringRayOrchestrator({
       maxConcurrentTasks: 2,
       taskTimeout: 15000,
     });
+    
+    // Mock delegateToSubagent to simulate task execution with result tracking
+    vi.spyOn(orchestrator as any, "delegateToSubagent").mockImplementation(
+      async (...args: unknown[]) => {
+        const task = args[0] as TaskDefinition;
+        return {
+          id: task.id,
+          success: true,
+          result: { id: task.id, message: "Task completed" },
+          duration: 100,
+        };
+      }
+    );
   });
 
-  it.skip("should execute tasks with dependencies in correct order", async () => {
+  it("should execute tasks with dependencies in correct order", async () => {
     const tasks: TaskDefinition[] = [
       { id: "task-1", description: "Initialize", subagentType: "architect" },
       {

@@ -5,6 +5,22 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.6.33] - 2026-03-04
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [--patch] - 2026-03-04
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
 ## [1.6.31] - 2026-03-03
 
 ### 🔄 Changes
