@@ -11,6 +11,7 @@
 
 import { frameworkLogger } from "../core/framework-logger.js";
 import { StringRayStateManager } from "../state/state-manager.js";
+import { getKernel, KernelInferenceResult } from "../core/kernel-patterns.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -1066,6 +1067,7 @@ export interface RoutingOptions {
 export class TaskSkillRouter {
   private mappings: any[];
   private stateManager: StringRayStateManager | undefined;
+  private kernel: ReturnType<typeof getKernel>;
 
   // In-memory cache for immediate access (persisted via stateManager)
   private routingHistoryCache: Map<
@@ -1096,6 +1098,9 @@ export class TaskSkillRouter {
       this.stateManager = stateManager;
       this.loadHistory();
     }
+    
+    // Initialize kernel instance for pattern-aware routing
+    this.kernel = getKernel();
   }
 
   /**
@@ -1232,11 +1237,41 @@ export class TaskSkillRouter {
         options.sessionId,
       );
       
-      // Add escalation flag if below threshold
+       // Add escalation flag if below threshold
       if (shouldEscalate) {
         return { ...keywordResult, escalateToLlm: true };
       }
-      return keywordResult;
+      
+      // KERNEL PATTERN ANALYSIS: Add kernel intelligence to routing
+      const kernelInsights = this.kernel.analyze(taskDescription);
+      
+      // Apply P8 (Infrastructure Hardening) pattern detection
+      if (kernelInsights.cascadePatterns?.some(p => p.id === 'P8')) {
+        const p8Pattern = kernelInsights.cascadePatterns?.find(p => p.id === 'P8');
+        if (p8Pattern) {
+          frameworkLogger.log(
+            "task-skill-router",
+            "kernel-guided-infrastructure",
+            "info",
+            {
+              taskDescription: taskDescription.substring(0, 100),
+              detectedPattern: p8Pattern.id,
+              guidance: 'Handle infrastructure issues before routing',
+              kernelAction: p8Pattern.fix,
+            }
+          );
+        }
+      }
+      
+      // Kernel-guided routing decision
+      const routingDecision = {
+        ...keywordResult,
+        kernelInsights,
+        escalateToLlm: keywordResult.escalateToLlm || 
+                         (kernelInsights.confidence < ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD)
+      };
+      
+      return routingDecision;
     }
 
     // 2. Try historical data

@@ -11,14 +11,15 @@
  */
 
 import {
-  ComplexityAnalyzer,
-  ComplexityMetrics,
-  ComplexityScore,
+   ComplexityAnalyzer,
+   ComplexityMetrics,
+   ComplexityScore,
 } from "./complexity-analyzer.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { TaskSkillRouter, createTaskSkillRouter } from "./task-skill-router.js";
+import { getKernel, KernelInferenceResult } from "../core/kernel-patterns.js";
 
 export interface AgentCapability {
   name: string;
@@ -92,6 +93,7 @@ export class AgentDelegator {
   private stateManager: StringRayStateManager;
   private configLoader: typeof strRayConfigLoader;
   private taskSkillRouter: TaskSkillRouter;
+  private kernel: ReturnType<typeof getKernel>;
 
   constructor(
     stateManager: StringRayStateManager,
@@ -101,6 +103,7 @@ export class AgentDelegator {
     this.configLoader = configLoader;
     this.complexityAnalyzer = new ComplexityAnalyzer();
     this.taskSkillRouter = createTaskSkillRouter(stateManager);
+    this.kernel = getKernel();
   }
 
   getAvailableAgents(): AgentCapability[] {
@@ -450,7 +453,24 @@ export class AgentDelegator {
       const complexityScore =
         this.complexityAnalyzer.calculateComplexityScore(metrics);
 
-      const agentDetails = this.determineAgents(metrics, complexityScore);
+      // KERNEL ANALYSIS: Apply kernel pattern detection
+      const kernelInsights = this.kernel.analyze(request.description);
+      
+      // Log kernel insights for debugging and learning
+      frameworkLogger.log(
+        "agent-delegator",
+        "kernel-analysis",
+        "info",
+        {
+          operation: request.operation,
+          kernelLevel: kernelInsights.level,
+          kernelConfidence: kernelInsights.confidence,
+          detectedPatterns: kernelInsights.cascadePatterns?.length || 0,
+          detectedAssumptions: kernelInsights.fatalAssumptions?.length || 0,
+        }
+      );
+
+      const agentDetails = this.determineAgents(metrics, complexityScore, kernelInsights);
       const conflictResolution = this.determineConflictResolution(
         metrics,
         complexityScore,
@@ -512,6 +532,7 @@ export class AgentDelegator {
   private determineAgents(
     metrics: ComplexityMetrics,
     complexityScore: ComplexityScore,
+    kernelInsights: KernelInferenceResult,
   ): Array<{ name: string; confidence: number; role: string }> {
     const agents: Array<{ name: string; confidence: number; role: string }> =
       [];
@@ -519,6 +540,22 @@ export class AgentDelegator {
     const operation = (metrics as any).operation;
 
     if (operation === "security") {
+      // KERNEL-AWARE: Apply P6 (Security Vulnerability) and A8/A9 patterns
+      if (kernelInsights.fatalAssumptions?.some(a => 
+        a.id === 'A8' || a.id === 'A9')) {
+        // Kernel detected security foundation assumption
+        frameworkLogger.log(
+          "agent-delegator",
+          "kernel-guided-security",
+          "info",
+          {
+            detectedPattern: kernelInsights.fatalAssumptions?.find(a => a.id)?.id,
+            guidance: 'Apply security foundation protocols first',
+            kernelAction: kernelInsights.fatalAssumptions?.find(a => a.id)?.action,
+          }
+        );
+      }
+      
       agents.push({
         name: "security-auditor",
         confidence: 0.95,
