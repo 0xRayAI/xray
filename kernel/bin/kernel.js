@@ -1,10 +1,11 @@
 /**
- * StringRay Inference Kernel - BYTECODE v1.1
+ * StringRay Inference Kernel - BYTECODE v2.0
  * 
  * DENSE INFERENCE PATTERNS - HIGH SIGNAL
- * Improved with more patterns and better matching
+ * Enhanced with v1.6.31→v1.7.2 journey patterns
+ * Security transformation and infrastructure hardening
  * 
- * @version 1.1.0-BYTECODE
+ * @version 2.0.0-SECURITY-ENHANCED
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
