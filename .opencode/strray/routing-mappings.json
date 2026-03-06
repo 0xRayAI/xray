@@ -1,60 +1,116 @@
 [
-  // ===== USER-FRIENDLY ALIASES =====
   {
-    "keywords": ["marketing", "campaign", "growth", "conversion", "pricing"],
-    "skill": "content-marketing-strategy",
-    "agent": "growth-strategist",
-    "confidence": 0.95
+    "keywords": ["@architect", "system architect", "solution architect"],
+    "skill": "architecture-patterns",
+    "agent": "architect",
+    "confidence": 0.98
   },
   {
-    "keywords": ["content", "write content", "blog", "article", "seo", "copy"],
-    "skill": "copywriting",
-    "agent": "content-creator",
-    "confidence": 0.9
-  },
-  {
-    "keywords": ["bug", "debug", "triage", "issue", "bug-tester", "tester"],
+    "keywords": ["@code-reviewer", "code review"],
     "skill": "code-review",
-    "agent": "bug-triage-specialist",
-    "confidence": 0.9
-  },
-  {
-    "keywords": ["test", "testing", "unit test", "e2e"],
-    "skill": "testing-strategy",
-    "agent": "testing-lead",
-    "confidence": 0.9
-  },
-  {
-    "keywords": ["docs", "documentation", "document", "write docs"],
-    "skill": "documentation-generation",
-    "agent": "tech-writer",
-    "confidence": 0.9
-  },
-  // ===== LANGUAGES & FRAMEWORKS =====
-  {
-    "keywords": ["rust", "rustlang", "cargo", "traits", "borrow checker"],
-    "skill": "rust-patterns",
-    "agent": "performance-engineer",
-    "confidence": 0.99
-  },
-  {
-    "keywords": ["typescript", "type error", "type safety"],
-    "skill": "typescript-expert",
     "agent": "code-reviewer",
     "confidence": 0.98
   },
   {
-    "keywords": ["python", "django", "flask", "pandas"],
-    "skill": "python-patterns",
+    "keywords": ["@security-auditor", "security audit", "vulnerability scan"],
+    "skill": "security-audit",
+    "agent": "security-auditor",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@enforcer"],
+    "skill": "enforcer",
+    "agent": "enforcer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@orchestrator"],
+    "skill": "orchestrator",
+    "agent": "orchestrator",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@refactorer", "refactor code"],
+    "skill": "refactoring-strategies",
+    "agent": "refactorer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@testing-lead", "test strategy"],
+    "skill": "testing-strategy",
+    "agent": "testing-lead",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@bug-triage-specialist", "debug", "triage bug"],
+    "skill": "code-review",
+    "agent": "bug-triage-specialist",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@strategist", "planning", "roadmap"],
+    "skill": "strategist",
+    "agent": "strategist",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@tech-writer", "documentation", "write docs"],
+    "skill": "documentation-generation",
+    "agent": "tech-writer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@researcher", "find code"],
+    "skill": "git-workflow",
+    "agent": "researcher",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@performance-engineer", "optimize performance", "speed up"],
+    "skill": "performance-optimization",
+    "agent": "performance-engineer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@database-engineer", "database schema", "sql", "migration"],
+    "skill": "database-design",
+    "agent": "database-engineer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@devops-engineer", "deploy", "ci/cd", "docker"],
+    "skill": "devops-deployment",
+    "agent": "devops-engineer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@frontend-engineer", "frontend", "react", "vue"],
+    "skill": "frontend-development",
+    "agent": "frontend-engineer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["@backend-engineer", "backend", "api", "server"],
+    "skill": "backend-development",
     "agent": "backend-engineer",
+    "confidence": 0.98
+  },
+  {
+    "keywords": ["resolve merge conflict", "merge conflict"],
+    "skill": "git-workflow",
+    "agent": "researcher",
     "confidence": 0.99
   },
-  // ===== ADD YOUR CUSTOM MAPPINGS HERE =====
-  // Example:
-  // {
-  //   "keywords": ["custom keyword"],
-  //   "skill": "custom-skill",
-  //   "agent": "your-custom-agent",
-  //   "confidence": 0.95
-  // }
+  {
+    "keywords": ["improve application performance", "speed up application"],
+    "skill": "performance-optimization",
+    "agent": "mobile-developer",
+    "confidence": 0.99
+  },
+  {
+    "keywords": ["design database schema", "query optimization"],
+    "skill": "database-design",
+    "agent": "database-engineer",
+    "confidence": 0.99
+  }
 ]

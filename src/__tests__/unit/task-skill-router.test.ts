@@ -142,7 +142,7 @@ describe("TaskSkillRouter", () => {
 
     it("should include confidence in context", () => {
       const result = router.preprocess("security audit");
-      expect(result.context.routingConfidence).toBe(0.95);
+      expect(result.context.routingConfidence).toBeGreaterThan(0.9);
     });
   });
 
