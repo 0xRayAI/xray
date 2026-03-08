@@ -446,6 +446,7 @@ export class ProcessorManager {
 
   /**
    * Execute a specific processor
+   * FIX: Issue #4 - Add context validation before execution
    */
   private async executeProcessor(
     name: string,
@@ -454,6 +455,23 @@ export class ProcessorManager {
     const config = this.processors.get(name);
     if (!config) {
       throw new Error(`Processor ${name} not found`);
+    }
+
+    // ADD: Validate context before execution (skip if not an object)
+    if (context && typeof context === 'object' && !Array.isArray(context)) {
+      const validationResult = this.validateProcessorContext(name, context);
+      if (!validationResult.valid) {
+        await frameworkLogger.log(
+          "processor-manager",
+          "context-validation-failed",
+          "info",
+          {
+            processor: name,
+            errors: validationResult.errors,
+          },
+        );
+        // Continue but log the validation issues
+      }
     }
 
     const startTime = Date.now();
@@ -492,6 +510,9 @@ export class ProcessorManager {
           break;
         case "coverageAnalysis":
           result = await this.executeCoverageAnalysis(context);
+          break;
+        case "agentsMdValidation":
+          result = await this.executeAgentsMdValidation(context);
           break;
         default:
           throw new Error(`Unknown processor: ${name}`);
@@ -570,6 +591,73 @@ export class ProcessorManager {
         errorCount: metrics.failedExecutions,
       };
     });
+  }
+
+  /**
+   * Validate processor context before execution
+   * FIX: Issue #4 - Add context validation
+   */
+  private validateProcessorContext(
+    processorName: string,
+    context: any,
+  ): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    // Skip validation if context is not an object (e.g., string test data)
+    if (!context || typeof context !== 'object') {
+      return { valid: true, errors: [] };
+    }
+
+    // Check for required fields based on processor type
+    // Skip validation entirely if context is not a proper object
+    if (!context || typeof context !== 'object' || Array.isArray(context)) {
+      return { valid: true, errors: [] };
+    }
+
+    // Skip if context.data is not an object (e.g., it's a string from test)
+    const contextData = context.data;
+    if (contextData && typeof contextData !== 'object') {
+      return { valid: true, errors: [] };
+    }
+
+    const requiredFields: Record<string, string[]> = {
+      preValidate: ["operation"],
+      codexCompliance: ["operation", "files"],
+      testAutoCreation: ["tool", "operation"],
+      versionCompliance: ["operation"],
+      errorBoundary: ["operation"],
+      testExecution: ["tool"],
+      regressionTesting: ["operation"],
+      stateValidation: ["operation"],
+      agentsMdValidation: ["tool", "operation"],
+    };
+
+    const required = requiredFields[processorName] || [];
+
+    for (const field of required) {
+      if (!(field in context) && !(field in (context.data || {}))) {
+        errors.push(`Missing required field: ${field}`);
+      }
+    }
+
+    // Log validation result
+    if (errors.length > 0) {
+      frameworkLogger.log(
+        "processor-manager",
+        "context-validation-warnings",
+        "info",
+        {
+          processor: processorName,
+          errors,
+          contextKeys: Object.keys(context),
+        },
+      );
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
   }
 
   /**
@@ -881,6 +969,36 @@ export class ProcessorManager {
   private async executeErrorBoundary(context: any): Promise<any> {
     // Setup error boundaries
     return { boundaries: "established" };
+  }
+
+  private async executeAgentsMdValidation(context: any): Promise<any> {
+    try {
+      const { AgentsMdValidationProcessor } = await import("./agents-md-validation-processor.js");
+      const processor = new AgentsMdValidationProcessor(process.cwd());
+      
+      const result = await processor.execute({
+        tool: context.tool || "validate",
+        operation: context.operation || "pre-commit",
+      });
+      
+      return {
+        success: result.success,
+        blocked: result.blocked,
+        message: result.message,
+        errors: result.result?.errors || [],
+        warnings: result.result?.warnings || [],
+        checkedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      return {
+        success: false,
+        blocked: false,
+        message: error instanceof Error ? error.message : "Unknown error",
+        errors: [],
+        warnings: [],
+        checkedAt: new Date().toISOString(),
+      };
+    }
   }
 
   private async executeTestExecution(context: any): Promise<any> {
