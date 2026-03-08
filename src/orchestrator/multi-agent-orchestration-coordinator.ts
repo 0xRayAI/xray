@@ -58,30 +58,47 @@ export class MultiAgentOrchestrationCoordinator {
   private enhancedOrchestrator: EnhancedMultiAgentOrchestrator;
   private agentDelegator: any;
   private stateManager: StringRayStateManager;
-  private complexityAnalyzer: ComplexityAnalyzer;
-  private coordinationMetrics: CoordinationMetrics;
 
-  constructor(stateManager?: StringRayStateManager) {
+  constructor(
+    stateManager?: StringRayStateManager,
+    governor?: OrchestrationGovernor,
+    agentSpawnGovernor?: AgentSpawnGovernor,
+  ) {
     this.stateManager = stateManager || new StringRayStateManager();
-    this.strRayOrchestrator = new StringRayOrchestrator();
-    this.enhancedOrchestrator = new EnhancedMultiAgentOrchestrator();
+    this.governor = governor || this.strRayOrchestrator;
+    this.agentSpawnGovernor = agentSpawnGovernor || undefined;
+
+    if (agentSpawnGovernor) {
+      this.agentSpawnGovernor.initialize();
+    }
+
+    this.enhancedOrchestrator = new EnhancedMultiAgentOrchestrator(this.stateManager, this.governor, this.agentSpawnGovernor);
     this.agentDelegator = createAgentDelegator(
       this.stateManager,
       strRayConfigLoader,
-    );
+      governor: this.governor,
+      agentSpawnGovernor: this.agentSpawnGovernor,
+      );
     this.complexityAnalyzer = new ComplexityAnalyzer();
-
-    this.coordinationMetrics = {
-      totalWorkflows: 0,
-      successfulWorkflows: 0,
-      failedWorkflows: 0,
-      averageDuration: 0,
-      agentUtilization: {},
-      coordinationEfficiency: 0,
-    };
-
-    this.initializeCoordinationSystem();
   }
+
+  private async initializeCoordinationSystem(): Promise<void> {
+    // Register coordination components in state manager
+    this.stateManager.set("coordination:main_coordinator", this);
+    this.stateManager.set("coordination:metrics", this);
+    this.stateManager.set("coordination:agent_delegator", this.agentDelegator);
+  }
+
+    this.enhancedOrchestrator = new EnhancedMultiAgentOrchestrator(this.stateManager, this.governor, this.agentSpawnGovernor);
+    this.agentDelegator = createAgentDelegator(
+      this.stateManager,
+      strRayConfigLoader,
+      governor: this.governor,
+      agentSpawnGovernor: this.agentSpawnGovernor,
+      );
+    this.complexityAnalyzer = new ComplexityAnalyzer();
+  }
+}
 
   /**
    * Initialize the coordination system with all components
