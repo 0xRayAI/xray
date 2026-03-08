@@ -1,0 +1,62 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║         📊 StringRay Daily Routing Analytics Report            ║
+║                    2026-03-05                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📈 KEY METRICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Total Routings:     0
+Average Confidence: 0.00
+Template Match Rate: 0.0%
+Success Rate:        0.0%
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 INSIGHTS & RECOMMENDATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ Low template match rate (0.0%) - consider adding more templates
+⚠️ Routing success rate below target (0.0%) - review mapping accuracy
+💡 Average routing confidence low (0.00) - consider confidence threshold adjustments
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 AUTOMATED IMPROVEMENTS AVAILABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+To apply automated routing improvements, run:
+  node scripts/analytics/daily-routing-analysis.ts --apply
+
+This will:
+  • Add new high-priority keyword mappings
+  • Optimize existing mapping confidence scores
+  • Remove low-performing mappings
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 FULL ANALYTICS DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+Prompt Pattern Analysis:
+  • Total Prompts: 0
+  • Template Matches: 0
+  • Template Match Rate: 0.0%
+  • Template Gaps Detected: 0
+  • Emerging Patterns: 0
+
+Routing Performance:
+  • Total Routings: 0
+  • Overall Success Rate: 0.0%
+  • Average Confidence: 0.00
+  • Time Range: 2026-03-05 to 2026-03-05
+  • Recommendations: 1
+
+  • Agent Metrics: 0 agents tracked
+  • Keyword Effectiveness: 0 keywords analyzed
+  • Confidence Metrics: 0 thresholds evaluated
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Report generated at: 2026-03-05T19:40:31.350Z
+╚══════════════════════════════════════════════════════════════╝

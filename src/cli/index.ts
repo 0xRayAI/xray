@@ -83,7 +83,7 @@ program
       console.log("📋 Next steps:");
       console.log("1. Restart OpenCode to load the plugin");
       console.log('2. Run "opencode agent list" to see StrRay agents');
-      console.log('3. Try "@enforcer analyze this code" to test the plugin');
+      console.log('3. Try "@architect analyze this code" or "@enforcer validate this code" to test the plugin');
     } catch (error) {
       console.error(
         "❌ Installation failed:",
@@ -468,10 +468,13 @@ program
     }
   });
 
-// Analytics command - pattern analysis and insights
+// Analytics command - pattern analysis, insights, and consent management
 program
   .command("analytics")
-  .description("Generate pattern analytics report from activity logs")
+  .description("StringRay Central Analytics - Pattern analysis, insights, and consent management\n" +
+               "  In v1.7.2+: Includes consent management with granular control\n" +
+               "  Use 'npx strray-ai analytics enable' to opt-in to data sharing\n" +
+               "  Core classes: ConsentManager, AnonymizationEngine available programmatically")
   .option("-l, --limit <number>", "Limit analysis to last N entries", "1000")
   .option("-o, --output <file>", "Save report to file")
   .action(async (opts) => {

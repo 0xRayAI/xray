@@ -5,6 +5,20 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.7.5] - 2026-03-08
+
+### 🔄 Changes
+
+Core engine security and type safety improvements
+
+- Replace `any` types with proper interfaces
+- Fix path traversal vulnerability in agent-delegator
+- Add agent allowlist validation
+- Remove hardcoded developer paths
+- All 1598 tests passing
+
+---
+
 ## [1.7.0] - 2026-03-04
 
 ### 🔄 Changes

@@ -225,6 +225,119 @@ export class PostProcessor {
   }
 
   /**
+   * Analyze code changes to provide meaningful context to processors
+   * FIX: Issue #1 - Pass actual code analysis to processors
+   */
+  private async analyzeCodeChanges(context: PostProcessorContext): Promise<{
+    operation: "commit";
+    files: string[];
+    newCode: Map<string, string>;
+    existingCode: Map<string, string>;
+    tests: string[];
+    dependencies: string[];
+  }> {
+    const fs = await import("fs");
+    const path = await import("path");
+    
+    const newCode = new Map<string, string>();
+    const existingCode = new Map<string, string>();
+    const tests: string[] = [];
+    const dependencies: string[] = [];
+    
+    try {
+      // Read new/changed files
+      for (const file of context.files || []) {
+        try {
+          const fullPath = path.join(process.cwd(), file);
+          if (fs.existsSync(fullPath)) {
+            // Read new code
+            const content = fs.readFileSync(fullPath, "utf-8");
+            newCode.set(file, content);
+            
+            // Check for test files
+            if (file.includes(".test.") || file.includes(".spec.")) {
+              tests.push(file);
+            }
+            
+            // Check for package.json or dependency files
+            if (file.includes("package.json") || file.includes("requirements.txt") || file.includes("Cargo.toml")) {
+              dependencies.push(file);
+            }
+          }
+        } catch (error) {
+          // Skip files that can't be read
+          await frameworkLogger.log(
+            "-post-processor",
+            "-code-analysis-file-error",
+            "info",
+            { message: `Could not analyze ${file}: ${error}` },
+          );
+        }
+      }
+      
+      await frameworkLogger.log(
+        "-post-processor",
+        "-code-analysis-complete",
+        "info",
+        { 
+          message: `Analyzed ${newCode.size} files, ${tests.length} tests, ${dependencies.length} dependencies`,
+        },
+      );
+    } catch (error) {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-code-analysis-failed",
+        "error",
+        { message: `Code analysis failed: ${error}` },
+      );
+    }
+    
+    return {
+      operation: "commit",
+      files: context.files || [],
+      newCode,
+      existingCode,
+      tests,
+      dependencies,
+    };
+  }
+
+  /**
+   * Load processor configuration from features.json
+   * FIX: Issue #2 - Make processor registration configurable
+   */
+  private async loadProcessorConfig(): Promise<{
+    preValidate?: { enabled?: boolean };
+    codexCompliance?: { enabled?: boolean };
+    testAutoCreation?: { enabled?: boolean };
+    versionCompliance?: { enabled?: boolean };
+    errorBoundary?: { enabled?: boolean };
+    agentsMdValidation?: { enabled?: boolean };
+    stateValidation?: { enabled?: boolean };
+  }> {
+    const fs = await import("fs");
+    const path = await import("path");
+    
+    try {
+      const configPath = path.join(process.cwd(), ".opencode/strray/features.json");
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        return config.processors || {};
+      }
+    } catch (error) {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-processor-config-load-failed",
+        "info",
+        { message: `Could not load processor config: ${error}` },
+      );
+    }
+    
+    // Return default configuration if no config found
+    return {};
+  }
+
+  /**
    * Initialize the post-processor system
    */
   async initialize(): Promise<void> {
@@ -721,14 +834,8 @@ All path violations will be automatically detected and blocked.
     }
 
     // Codex compliance validation: Use processor-manager for proper rule enforcement and agent delegation
-    const processorContext = {
-      operation: "commit" as const,
-      files: context.files,
-      newCode: "", // Could be enhanced to analyze actual code changes
-      existingCode: new Map(),
-      tests: [],
-      dependencies: [],
-    };
+    // IMPROVED: Analyze actual code changes and pass meaningful context to processors
+    const processorContext = await this.analyzeCodeChanges(context);
 
     try {
       const { importResolver } = await import("../utils/import-resolver.js");
@@ -738,37 +845,39 @@ All path violations will be automatically detected and blocked.
 
       const processorManager = new ProcessorManager();
 
-      // Register processors needed for post-processing
-      // (same registrations as boot-orchestrator.ts)
+      // IMPROVED: Register processors with configuration from features.json
+      const processorConfig = await this.loadProcessorConfig();
+      
+      // Register processors needed for post-processing (now configurable)
       processorManager.registerProcessor({
         name: "preValidate",
         type: "pre",
         priority: 10,
-        enabled: true,
+        enabled: processorConfig.preValidate?.enabled ?? true,
       });
       processorManager.registerProcessor({
         name: "codexCompliance",
         type: "pre",
         priority: 20,
-        enabled: true,
+        enabled: processorConfig.codexCompliance?.enabled ?? true,
       });
       processorManager.registerProcessor({
         name: "testAutoCreation",
         type: "pre",
         priority: 22,
-        enabled: true,
+        enabled: processorConfig.testAutoCreation?.enabled ?? true,
       });
       processorManager.registerProcessor({
         name: "versionCompliance",
         type: "pre",
         priority: 25,
-        enabled: true,
+        enabled: processorConfig.versionCompliance?.enabled ?? true,
       });
       processorManager.registerProcessor({
         name: "errorBoundary",
         type: "pre",
         priority: 30,
-        enabled: true,
+        enabled: processorConfig.errorBoundary?.enabled ?? true,
       });
       processorManager.registerProcessor({
         name: "agentsMdValidation",
@@ -796,19 +905,23 @@ All path violations will be automatically detected and blocked.
           // Only process TypeScript source files (not test files)
           if (filePath.endsWith(".ts") && !filePath.endsWith(".test.ts")) {
             try {
-              // 1. First create the test
-              await processorManager.executeProcessor("testAutoCreation", {
-                tool: "write",
-                operation: "commit",
-                filePath: filePath, // FIX #2: Pass filePath (string), not files (array)
-                directory: process.cwd(),
-              });
+// 1. First create the test
+               await processorManager.executeProcessor("testAutoCreation", {
+                 tool: "write",
+                 operation: "commit",
+                 args: {
+                   filePath: filePath, // Pass filePath in args structure
+                 },
+                 directory: process.cwd(),
+               });
 
               // 2. Then run the generated test
               await processorManager.executeProcessor("testExecution", {
                 tool: "write",
                 operation: "commit",
-                filePath: filePath,
+                args: {
+                  filePath: filePath,
+                },
                 directory: process.cwd(),
               });
             } catch (testError) {

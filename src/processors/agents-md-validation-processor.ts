@@ -27,21 +27,36 @@ export class AgentsMdValidationProcessor {
   private projectRoot: string;
   private agentsPath: string;
 
-  // Required sections that must exist in AGENTS.md
+  // Required sections that must exist in AGENTS.md (v1.7+ format)
   private readonly REQUIRED_SECTIONS = [
-    "## Agent Triage Rules",
-    "## Universal Development Codex",
-    "## Agent Commands",
-    "## Rule Hierarchy",
-    "## Agent Capabilities Matrix",
+    "## Available Agents",
+    "## Complexity Routing",
+    "## CLI Commands",
+    "## Codex",
   ];
 
-  // Required agent definitions
+  // Required agent definitions (v1.7+ agents)
   private readonly REQUIRED_AGENTS = [
     "@enforcer",
-    "@architect",
     "@orchestrator",
+    "@architect",
     "@security-auditor",
+    "@code-reviewer",
+    "@refactorer",
+    "@testing-lead",
+    "@bug-triage-specialist",
+    "@researcher",
+    "@strategist",       // v1.7.2
+    "@tech-writer",     // v1.7.2
+  ];
+
+  // Recommended sections that should exist
+  private readonly RECOMMENDED_SECTIONS = [
+    "## Reflection System",
+    "## Kernel Patterns",
+    "## Analytics",
+    "## Languages",
+    "## Plugin Systems",
   ];
 
   constructor(projectRoot: string = process.cwd()) {
@@ -226,11 +241,25 @@ export class AgentsMdValidationProcessor {
       result.warnings.push("No date stamp found in AGENTS.md");
     }
 
-    // Check 7: Codex terms
-    const codexTerms = (content.match(/####\s*\d+\./g) || []).length;
-    if (codexTerms < 10) {
+    // Check 7: Kernel patterns section (v1.7+ feature)
+    if (!content.includes("Kernel Patterns") && !content.includes("P9")) {
       result.warnings.push(
-        `Only ${codexTerms} codex terms found (recommend 20+)`,
+        "Consider adding Kernel Patterns section (v1.7+)",
+      );
+    }
+
+    // Check 8: Reflection system section (required for v1.7.2+)
+    if (!content.includes("Reflection System")) {
+      result.warnings.push(
+        "Consider adding Reflection System section (v1.7.2+)",
+      );
+    }
+
+    // Check 9: Total agent count (should have 20+)
+    const agentCount = (content.match(/@\[?[a-z-]+\]?/gi) || []).length;
+    if (agentCount < 15) {
+      result.warnings.push(
+        `Only ${agentCount} agents found (recommend 20+ for v1.7+)`,
       );
     }
 

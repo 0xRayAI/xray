@@ -22,11 +22,24 @@ import { testAutoGenerationMonitor } from "../monitoring/test-auto-generation-mo
 /**
  * Find the most recently modified TypeScript file in a directory
  * This is used as a fallback when filePath is not provided in the hook context
+ * OPTIMIZED: Added caching to reduce expensive directory scans
  */
+
+// Cache for recent file scans (30 second TTL)
+const fileScanCache = new Map<string, { file: string | null; expires: number }>();
+const SCAN_CACHE_TTL_MS = 30000; // 30 seconds
+
 function findRecentlyModifiedTsFile(
   dir: string,
   maxAgeSeconds: number = 60, // Increased to 60 seconds
 ): string | null {
+  // Check cache first
+  const cacheKey = `${dir}:${maxAgeSeconds}`;
+  const cached = fileScanCache.get(cacheKey);
+  if (cached && Date.now() < cached.expires) {
+    return cached.file;
+  }
+
   try {
     // Recursive walk to find all .ts files
     const files: string[] = [];
@@ -83,7 +96,15 @@ function findRecentlyModifiedTsFile(
       }
     }
 
-    return mostRecent?.path || null;
+    const result = mostRecent?.path || null;
+    
+    // Cache the result
+    fileScanCache.set(cacheKey, {
+      file: result,
+      expires: Date.now() + SCAN_CACHE_TTL_MS,
+    });
+
+    return result;
   } catch {
     return null;
   }
@@ -98,7 +119,7 @@ export const testAutoCreationProcessor = {
     const startTime = Date.now();
 
     try {
-      // Handle both direct context and context.data (from ProcessorManager)
+// Handle both direct context and context.data (from ProcessorManager)
       // ProcessorManager passes: { operation, data: { directory, filePath, ... }, preResults }
       const innerContext = context.data || context;
 
@@ -114,48 +135,44 @@ export const testAutoCreationProcessor = {
       const outerFilePath = context.filePath || contextFilePath;
       const outerDirectory = context.directory || directory;
 
-      await frameworkLogger.log("test-auto-creation", "execute-start", "info", {
-        message: `TestAutoCreation processor executing`,
-        tool,
-        hasArgs: !!args,
-        hasDirectory: !!outerDirectory,
-        directoryValue: outerDirectory,
-        contextFilePath,
-        argsFilePath: args?.filePath,
-        fullContext: JSON.stringify({
-          tool,
-          directory,
-          filePath: contextFilePath,
-          argsFilePath: args?.filePath,
-        }).slice(0, 200),
-      });
+      // SIMPLIFIED: Clear filePath resolution with explicit priority
+      // Priority 1: args.filePath (explicit argument)
+      // Priority 2: context.filePath (from ProcessorManager)
+      // Priority 3: Scan for recent files (fallback)
+      
+      let filePath: string | undefined;
+      let resolutionSource: string;
 
-      // Get file path from various possible locations in context
-      // Check: innerContext.filePath, context.filePath, args.filePath, context.filePath
-      let filePath =
-        outerFilePath ||
-        contextFilePath ||
-        args?.filePath ||
-        args?.path ||
-        innerContext.filePath;
-
-      // ALWAYS scan for the most recent ts file in src/ or root as fallback
-      // This is more reliable than depending on context
-      const srcDir = path.join(process.cwd(), "src");
-      const rootDir = process.cwd();
-
-      // Try src first, then root
-      let recentFile = findRecentlyModifiedTsFile(srcDir, 60);
-      if (!recentFile) {
-        recentFile = findRecentlyModifiedTsFile(rootDir, 60);
+      // Priority 1: Explicit args.filePath
+      if (args?.filePath) {
+        filePath = args.filePath;
+        resolutionSource = "args.filePath";
       }
+      // Priority 2: Context filePath from ProcessorManager
+      else if (outerFilePath) {
+        filePath = outerFilePath;
+        resolutionSource = "context.filePath";
+      }
+      // Priority 3: Fallback - scan for recent files
+      else {
+        const srcDir = path.join(process.cwd(), "src");
+        const rootDir = process.cwd();
 
-      if (recentFile) {
-        // If it's from root, use it directly; if from src, prepend 'src/'
-        const isFromSrc = recentFile.startsWith(srcDir);
-        filePath = isFromSrc
-          ? path.relative(process.cwd(), recentFile)
-          : recentFile;
+        // Try src first, then root
+        let recentFile = findRecentlyModifiedTsFile(srcDir, 60);
+        if (!recentFile) {
+          recentFile = findRecentlyModifiedTsFile(rootDir, 60);
+        }
+
+        if (recentFile) {
+          const isFromSrc = recentFile.startsWith(srcDir);
+          filePath = isFromSrc
+            ? path.relative(process.cwd(), recentFile)
+            : recentFile;
+          resolutionSource = "file-scan-fallback";
+        } else {
+          resolutionSource = "none-found";
+        }
       }
 
       await frameworkLogger.log(
@@ -163,7 +180,7 @@ export const testAutoCreationProcessor = {
         "filepath-resolution",
         "info",
         {
-          message: `Resolved filePath: ${filePath || "UNDEFINED"}`,
+          message: `Resolved filePath: ${filePath || "UNDEFINED"} (source: ${resolutionSource})`,
         },
       );
 
