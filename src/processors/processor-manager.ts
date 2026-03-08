@@ -10,7 +10,7 @@
 
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { ProcessorRegistration } from "./processor-types.js";
+import { ProcessorRegistration, ProcessorHook } from "./processor-types.js";
 import {
   detectProjectLanguage,
   getTestFilePath,
@@ -28,12 +28,12 @@ export interface ProcessorConfig {
   enabled: boolean;
   timeout?: number;
   retryAttempts?: number;
-  hook?: any; // Optional hook for processors registered with hooks
+  hook?: ProcessorHook;
 }
 
 export interface ProcessorResult {
   success: boolean;
-  data?: any;
+  data?: unknown;
   error?: string;
   duration: number;
   processorName: string;
@@ -285,8 +285,8 @@ export class ProcessorManager {
    */
   async executePreProcessors(input: {
     tool: string;
-    args?: any;
-    context?: any;
+    args?: Record<string, unknown>;
+    context?: Record<string, unknown>;
   }): Promise<{ success: boolean; results: ProcessorResult[] }> {
     const jobId = `execute-pre-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const { tool, args, context } = input;
@@ -444,21 +444,24 @@ export class ProcessorManager {
     return results;
   }
 
-  /**
-   * Execute a specific processor
-   * FIX: Issue #4 - Add context validation before execution
-   */
+   /**
+    * Execute a specific processor
+    * FIX: Issue #4 - Add context validation before execution
+    */
   private async executeProcessor(
     name: string,
-    context: any,
+    context: Record<string, unknown> | undefined,
   ): Promise<ProcessorResult> {
     const config = this.processors.get(name);
     if (!config) {
       throw new Error(`Processor ${name} not found`);
     }
 
+    // Default to empty object if context is undefined
+    const safeContext = context ?? {};
+
     // ADD: Validate context before execution (skip if not an object)
-    if (context && typeof context === 'object' && !Array.isArray(context)) {
+    if (safeContext && typeof safeContext === 'object' && !Array.isArray(safeContext)) {
       const validationResult = this.validateProcessorContext(name, context);
       if (!validationResult.valid) {
         await frameworkLogger.log(
@@ -475,44 +478,44 @@ export class ProcessorManager {
     }
 
     const startTime = Date.now();
-    const metrics = this.metrics.get(name)!;
+     const metrics = this.metrics.get(name)!;
 
     try {
-      let result: any;
+      let result: unknown;
 
       switch (name) {
         case "preValidate":
-          result = await this.executePreValidate(context);
+          result = await this.executePreValidate(safeContext);
           break;
         case "codexCompliance":
-          result = await this.executeCodexCompliance(context);
+          result = await this.executeCodexCompliance(safeContext);
           break;
         case "versionCompliance":
-          result = await this.executeVersionCompliance(context);
+          result = await this.executeVersionCompliance(safeContext);
           break;
         case "errorBoundary":
-          result = await this.executeErrorBoundary(context);
+          result = await this.executeErrorBoundary(safeContext);
           break;
         case "testExecution":
-          result = await this.executeTestExecution(context);
+          result = await this.executeTestExecution(safeContext);
           break;
         case "regressionTesting":
-          result = await this.executeRegressionTesting(context);
+          result = await this.executeRegressionTesting(safeContext);
           break;
         case "stateValidation":
-          result = await this.executeStateValidation(context);
+          result = await this.executeStateValidation(safeContext);
           break;
         case "refactoringLogging":
-          result = await this.executeRefactoringLogging(context);
+          result = await this.executeRefactoringLogging(safeContext);
           break;
         case "testAutoCreation":
-          result = await this.executeTestAutoCreation(context);
+          result = await this.executeTestAutoCreation(safeContext);
           break;
         case "coverageAnalysis":
-          result = await this.executeCoverageAnalysis(context);
+          result = await this.executeCoverageAnalysis(safeContext);
           break;
         case "agentsMdValidation":
-          result = await this.executeAgentsMdValidation(context);
+          result = await this.executeAgentsMdValidation(safeContext);
           break;
         default:
           throw new Error(`Unknown processor: ${name}`);
@@ -859,7 +862,7 @@ export class ProcessorManager {
     }
   }
 
-  private async executePreValidate(context: any): Promise<any> {
+  private async executePreValidate(context: Record<string, unknown>): Promise<Record<string, unknown>> {
     // Implement comprehensive pre-validation with syntax checking
     const { data, filePath } = context;
 

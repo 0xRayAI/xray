@@ -693,25 +693,80 @@ export class AgentDelegator {
    */
   private resolveProjectDirectory(): string {
     // Try to find the project root by looking for key files
-    const possibleRoots = [
-      process.cwd(),
-      '/Users/blaze/dev/stringray',
-      '/Users/blaze/dev/stringray/src',
-      '/Users/blaze/dev/stringray/dist'
-    ];
+    // Only use process.cwd() and validate it exists
+    const root = process.cwd();
+    const fs = require('fs');
     
-    for (const root of possibleRoots) {
-      const hasPackageJson = require('fs').existsSync(`${root}/package.json`);
-      const hasStrrayConfig = require('fs').existsSync(`${root}/strray.config.json`);
-      const hasSrcDir = require('fs').existsSync(`${root}/src`);
-      
-      if (hasPackageJson || hasStrrayConfig) {
-        return root;
-      }
+    // Check if this looks like a valid project root
+    if (fs.existsSync(`${root}/package.json`) || fs.existsSync(`${root}/strray.config.json`)) {
+      return root;
     }
     
-    // Fallback to current directory
-    return process.cwd();
+    // Fallback - try to find a parent with package.json
+    let current = root;
+    const maxLevels = 5;
+    for (let i = 0; i < maxLevels; i++) {
+      const parent = require('path').dirname(current);
+      if (fs.existsSync(`${parent}/package.json`)) {
+        return parent;
+      }
+      current = parent;
+    }
+    
+    // Last resort fallback
+    return root;
+  }
+
+  /**
+   * Allowlist of valid agent names for dynamic imports
+   * Prevents path traversal and unauthorized agent loading
+   */
+  private static readonly ALLOWED_AGENTS = new Set([
+    'enforcer',
+    'architect', 
+    'orchestrator',
+    'bug-triage-specialist',
+    'code-reviewer',
+    'security-auditor',
+    'refactorer',
+    'testing-lead',
+    'log-monitor',
+    'researcher',
+    'multimodal-looker',
+    'analyzer',
+    'seo-consultant',
+    'content-creator',
+    'growth-strategist',
+    'database-engineer',
+    'devops-engineer',
+    'backend-engineer',
+    'frontend-engineer',
+    'frontend-ui-ux-engineer',
+    'tech-writer',
+    'performance-engineer',
+    'mobile-developer',
+    'strategist',
+  ]);
+
+  /**
+   * Validate agent name for security
+   * @throws Error if agent name is invalid or not allowed
+   */
+  private validateAgentName(agentName: string): void {
+    // Check for path traversal attempts
+    if (agentName.includes('..') || agentName.includes('/') || agentName.includes('\\')) {
+      throw new Error(`Invalid agent name: path traversal detected in "${agentName}"`);
+    }
+    
+    // Check for other dangerous characters
+    if (!/^[a-zA-Z0-9_-]+$/.test(agentName)) {
+      throw new Error(`Invalid agent name: only alphanumeric, underscore, and hyphen allowed in "${agentName}"`);
+    }
+    
+    // Check allowlist
+    if (!AgentDelegator.ALLOWED_AGENTS.has(agentName)) {
+      throw new Error(`Agent "${agentName}" is not in the allowed list`);
+    }
   }
 
   /**
@@ -722,6 +777,9 @@ export class AgentDelegator {
     agentConfig: any, 
     request: DelegationRequest
   ): any {
+    // Validate agent name before any operation (security)
+    this.validateAgentName(agentName);
+    
     // Create the agent with proper context
     return {
       config: agentConfig,

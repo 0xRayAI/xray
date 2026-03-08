@@ -2,35 +2,41 @@
  * Processor Types
  *
  * Type definitions for the processor activation system.
+ * Replaces `any` types with proper interfaces for type safety.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2026-01-07
  */
 
 export interface PreValidateContext {
   operation: string;
-  data: any;
+  data?: string;
   syntaxCheck?: boolean;
   codexCompliance?: boolean;
   agentName?: string;
   filesChanged?: string[];
   riskLevel?: "low" | "medium" | "high" | "critical";
+  [key: string]: unknown;
 }
 
 export interface PostValidateContext {
   operation: string;
-  data: any;
-  preResults: any[];
-  testResults?: any;
-  regressionResults?: any;
+  data?: unknown;
+  preResults: ProcessorExecutionResult[];
+  testResults?: TestResults;
+  regressionResults?: RegressionResults;
   stateValidation?: boolean;
+  [key: string]: unknown;
 }
 
 export interface ProcessorHook {
   name: string;
-  execute: (context: PreValidateContext | PostValidateContext) => Promise<any>;
+  execute: (context: PreValidateContext | PostValidateContext) => Promise<ProcessorExecutionResult>;
   priority: number;
   enabled: boolean;
+  before?: (context: PreValidateContext | PostValidateContext) => Promise<void>;
+  after?: (result: ProcessorExecutionResult) => Promise<void>;
+  onError?: (error: Error) => Promise<void>;
 }
 
 export interface ProcessorRegistration {
@@ -41,10 +47,11 @@ export interface ProcessorRegistration {
 
 export interface ProcessorExecutionResult {
   success: boolean;
-  result?: any;
+  result?: unknown;
   error?: string;
   duration: number;
   processorName: string;
+  data?: unknown;
 }
 
 export interface ProcessorHealthCheck {
@@ -55,4 +62,17 @@ export interface ProcessorHealthCheck {
   averageExecutionTime: number;
   totalRuns: number;
   failedRuns: number;
+}
+
+// Additional types for better type safety
+export interface TestResults {
+  passed: number;
+  failed: number;
+  total: number;
+  duration: number;
+}
+
+export interface RegressionResults {
+  issues: string[];
+  passed: boolean;
 }
