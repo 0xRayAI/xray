@@ -80,7 +80,7 @@ export class PostProcessor {
     this.triggers = {
       gitHook: new GitHookTrigger(this),
       webhook: new WebhookTrigger(this),
-      api: new APITrigger(this),
+      api: new APITrigger(this, {}),  // Pass empty config object
     };
   }
 
