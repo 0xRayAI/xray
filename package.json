@@ -1,13 +1,14 @@
 {
   "name": "strray-ai",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.",
   "type": "module",
   "main": "./dist/plugin/strray-codex-injection.js",
   "types": "./dist/plugin/strray-codex-injection.d.ts",
   "bin": {
     "strray-ai": "dist/cli/index.js",
-    "strray-integration": "dist/scripts/integration.js"
+    "strray-integration": "dist/scripts/integration.js",
+    "strray-analytics": "dist/scripts/analytics/daily-routing-analysis.js"
   },
   "opencode": {
     "plugin": "./dist/plugin/strray-codex-injection.js",
@@ -38,6 +39,9 @@
     "test:agents-all": "npm test -- src/__tests__/agents/",
     "test:infrastructure": "npm test -- src/__tests__/infrastructure/",
     "test:root": "npm test -- src/__tests__/integration/server.test.ts src/__tests__/framework-enforcement-integration.test.ts",
+    "analytics:daily": "node dist/scripts/analytics/daily-routing-analysis.js",
+    "analytics:daily:preview": "node dist/scripts/analytics/daily-routing-analysis.js --preview",
+    "analytics:daily:apply": "node dist/scripts/analytics/daily-routing-analysis.js --apply",
     "test:full-suite": "npm run test:integration-all && npm run test:performance-all && npm run test:agents-all && npm run test:infrastructure && npm run test:root",
     "postinstall": "node scripts/node/postinstall.cjs",
     "setup-dev": "node scripts/node/setup-dev.cjs",
