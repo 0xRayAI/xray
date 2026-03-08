@@ -6,11 +6,13 @@
 
 import { describe, it, expect } from "vitest";
 import { PostProcessor } from "./PostProcessor";
+import { StringRayStateManager } from "../state/state-manager.js";
 
 describe("PostProcessor", () => {
   describe("PostProcessor", () => {
     it("should instantiate", () => {
-      const instance = new PostProcessor();
+      const stateManager = new StringRayStateManager();
+      const instance = new PostProcessor(stateManager);
       expect(instance).toBeInstanceOf(PostProcessor);
     });
   });

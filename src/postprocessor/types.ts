@@ -72,12 +72,18 @@ export interface PostProcessorContext {
   author: string;
   files: string[];
   trigger: "git-hook" | "webhook" | "api" | "manual";
+  tool?: string | undefined;  // Make tool optional to handle undefined
+  operation?: string | undefined;  // Make operation optional
   testResults?: {
     unit?: { passed: boolean; coverage: number };
     integration?: { passed: boolean; coverage: number };
     e2e?: { passed: boolean; coverage: number };
     performance?: { passed: boolean; coverage: number };
   };
+  // Optional fields for processors
+  directory?: string;
+  filePath?: string;
+  args?: Record<string, unknown>;
 }
 
 export interface PostProcessorResult {

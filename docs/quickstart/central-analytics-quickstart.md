@@ -8,7 +8,7 @@ This guide walks through setting up your project to contribute anonymized reflec
 
 ## Prerequisites
 
-- StringRay Framework v1.7.2+ installed
+- StringRay AI v1.7.1+ installed
 - Project initialized with `npx strray-ai init`
 - Basic understanding of privacy and data protection
 

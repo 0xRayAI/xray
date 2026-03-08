@@ -54,15 +54,18 @@ export function withJobContext<T>(
   }
 }
 
+export type LogStatus = "success" | "error" | "info" | "debug" | "warning";
+
 /**
  * Job context for tracking work sessions
  * Enhanced with outcome and complexity accuracy tracking for pattern analytics
  */
 export type Outcome = "success" | "fail" | "escalated" | "auto-fixed";
+
 export type ComplexityAccuracy =
-  | "underestimated"
-  | "accurate"
-  | "overestimated";
+   | "underestimated"
+   | "accurate"
+   | "overestimated";
 
 export class JobContext {
   public readonly jobId: string;
@@ -78,7 +81,7 @@ export class JobContext {
   public predictedDuration?: number;
 
   constructor(jobId?: string) {
-    this.jobId = jobId || generateJobId();
+    this.jobId = jobId || generateJobId("auto");
     this.startTime = Date.now();
   }
 
@@ -145,7 +148,6 @@ export class JobContext {
         complexityScore: this.complexityScore,
         agentUsed: this.agentUsed,
         operationType: this.operationType,
-        // NEW: Enhanced analytics fields
         outcome: finalOutcome,
         complexityAccuracy,
         predictedDuration: this.predictedDuration,
@@ -161,23 +163,11 @@ export interface FrameworkLogEntry {
   timestamp: number;
   component: string;
   action: string;
+  status: LogStatus;
   agent: string;
-  sessionId?: string | undefined;
-  jobId?: string | undefined;
-  status: "success" | "error" | "info" | "debug";
-  details?: {
-    // Core fields
-    duration?: number;
-    complexityScore?: number;
-    agentUsed?: string;
-    operationType?: string;
-    // NEW: Enhanced analytics fields
-    outcome?: Outcome;
-    complexityAccuracy?: ComplexityAccuracy;
-    predictedDuration?: number;
-    // Additional details
-    [key: string]: unknown;
-  };
+  sessionId?: string;
+  jobId?: string;
+  details?: any;
 }
 
 export class FrameworkUsageLogger {
@@ -187,7 +177,7 @@ export class FrameworkUsageLogger {
   async log(
     component: string,
     action: string,
-    status: "success" | "error" | "info" | "debug" = "info",
+    status: LogStatus,
     details?: any,
     sessionId?: string,
     jobId?: string,
@@ -214,10 +204,10 @@ export class FrameworkUsageLogger {
       timestamp: Date.now(),
       component,
       action,
+      status,
       agent: "orchestrator",
       sessionId,
       jobId: actualJobId,
-      status,
       details,
     };
 
@@ -231,7 +221,7 @@ export class FrameworkUsageLogger {
     try {
       this.persistLog(entry);
     } catch (error) {
-      // Silently fail - logging should never break the application
+      // Silently fail - logging should never break application
     }
   }
 
