@@ -373,3 +373,7 @@ build/Release/
 dist/
 build/
 out/
+# Runtime data and test artifacts
+performance-baselines.json
+Users/blaze/dev/stringray/test-consent.json
+
