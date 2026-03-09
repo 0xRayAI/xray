@@ -32,42 +32,6 @@ export interface BugCascade {
   priority: number;
 }
 
-// P9: ADAPTIVE_PATTERN_LEARNING interfaces
-export interface PatternDriftInfo {
-  detected: boolean;
-  patternId: string;
-  driftMagnitude: number;
-  driftDirection: 'increasing' | 'decreasing' | 'unstable';
-  timeRange: { start: Date; end: Date };
-  recommendedAction: string;
-}
-
-export interface EmergentPattern {
-  pattern: string;
-  confidence: number;
-  frequency: number;
-  firstSeen: Date;
-  lastSeen: Date;
-  evidence: string[];
-  suggestedAction: string;
-}
-
-export interface AdaptiveThresholds {
-  perAgent: Map<string, number>;
-  perSkill: Map<string, number>;
-  overall: number;
-  calibrationDate: Date;
-}
-
-export interface PatternUpdate {
-  updateType: 'add' | 'remove' | 'modify';
-  patternId: string;
-  changes: Record<string, unknown>;
-  reason: string;
-  confidence: number;
-  validated: boolean;
-}
-
 export interface KernelInferenceResult {
   pattern?: KernelPattern;
   actionRequired?: string;
@@ -76,13 +40,6 @@ export interface KernelInferenceResult {
   cascadePatterns?: BugCascade[];
   level?: 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
   recommendations?: string[];
-  
-  // P9: ADAPTIVE_PATTERN_LEARNING fields
-  adapted?: boolean;
-  patternDrift?: PatternDriftInfo;
-  emergentPatterns?: EmergentPattern[];
-  adaptiveThresholds?: AdaptiveThresholds;
-  suggestedUpdates?: PatternUpdate[];
 }
 
 export interface KernelConfig {
@@ -186,63 +143,12 @@ export class KernelAnalyzer {
       level: 2
     });
 
-    // A10-A15: AI Degradation & Pre-Processor Requirements
-    // CRITICAL: Prevent AI from making destructive changes without understanding
-    
-    this.assumptions.set('A10', {
-      id: 'A10',
-      trigger: ['change code', 'modify file', 'update production', 'edit system files'],
-      action: 'UNDERSTAND_BEFORE_CHANGING',
-      reason: 'AI must read and understand current code state before making any changes',
-      level: 1  // FATAL - immediate blocking required
-    });
-
-    this.assumptions.set('A11', {
-      id: 'A11',
-      trigger: ['stuck', 'trying again', 'same operation', 'loop', 'degraded state'],
-      action: 'OPERATION_LIMIT_EXCEEDED',
-      reason: 'AI exceeded operation limits and must switch approach or request conference',
-      level: 1  // FATAL - immediate blocking required
-    });
-
-    this.assumptions.set('A12', {
-      id: 'A12',
-      trigger: ['read file', 'check file', 'analyze code'],
-      action: 'READ_OPERATION_LIMIT',
-      reason: 'Maximum 3 read attempts per file exceeded - cannot read again',
-      level: 1  // FATAL - immediate blocking required
-    });
-
-    this.assumptions.set('A13', {
-      id: 'A13',
-      trigger: ['comprehensive change', 'refactor', 'major modification'],
-      action: 'SURGICAL_CHANGE_REQUIRED',
-      reason: 'Large changes require explicit "comprehensive" keyword and multi-agent conference',
-      level: 2  // HIGH PRIORITY
-    });
-
-    this.assumptions.set('A14', {
-      id: 'A14',
-      trigger: ['ai degradation', 'quality decline', 'regression', 'introducing bugs'],
-      action: 'QUALITY_DECLINE_PREVENTION',
-      reason: 'AI is making changes that degrade code quality - immediate stop and analysis required',
-      level: 1  // FATAL - immediate blocking required
-    });
-
-    this.assumptions.set('A15', {
-      id: 'A15',
-      trigger: ['complex issue', 'major problem', 'architectural decision'],
-      action: 'MULTI_AGENT_CONFERENCE_REQUIRED',
-      reason: 'Complex issues require conference of 3+ agents before making changes',
-      level: 2  // HIGH PRIORITY
-    });
-
     // BUG CASCADE PATTERNS (P1-P8)
     this.cascades.set('P1', {
       id: 'P1',
-      pattern: 'AI_DEGRADATION_LOOP',
-      detection: 'activity_log | spawn_governor | file_read_loop | change_attempt_loop | stuck_operation',
-      fix: 'PRE_PROCESSOR_ENFORCEMENT + OPERATION_LIMITS + MULTI_AGENT_CONFERENCE',
+      pattern: 'RECURSIVE_LOOP',
+      detection: 'activity_log | spawn_governor',
+      fix: 'loop breaker + consultation limit',
       priority: 1
     });
 
@@ -297,35 +203,10 @@ export class KernelAnalyzer {
 
     this.cascades.set('P8', {
       id: 'P8',
-      pattern: 'FILE_READ_LOOP',
-      detection: 'file_read_attempt > 3',
-      fix: 'BLOCK_READ_OPERATION + REQUIRE_CODE_UNDERSTANDING',
-      priority: 1
-    });
-
-    this.cascades.set('P9', {
-      id: 'P9',
-      pattern: 'CHANGE_ATTEMPT_LOOP',
-      detection: 'change_attempt > 3 | same_change_repeatedly',
-      fix: 'BLOCK_CHANGES + REQUIRE_MULTI_AGENT_CONFERENCE',
-      priority: 1
-    });
-
-    this.cascades.set('P10', {
-      id: 'P10',
-      pattern: 'SURGICAL_VS_COMPREHENSIVE_MISMATCH',
-      detection: 'large_change_without_comprehensive_keyword | system_change_without_context',
-      fix: 'REQUIRE_SURGICAL_SPECIFICATION + MULTI_AGENT_REVIEW',
-      priority: 1
-    });
-
-    // ADAPTIVE PATTERN LEARNING (P9) - Self-modifying patterns
-    this.cascades.set('P9', {
-      id: 'P9',
-      pattern: 'ADAPTIVE_PATTERN_LEARNING',
-      detection: 'low_performance | pattern_drift | emergent_behavior',
-      fix: 'pattern_update + threshold_calibration + rule_generation',
-      priority: 1  // Highest priority - continuous improvement
+      pattern: 'INFRASTRUCTURE_HARDENING',
+      detection: 'execution_failures | chmod+typecheck',
+      fix: 'script permission fixes',
+      priority: 2
     });
   }
 
@@ -336,59 +217,55 @@ export class KernelAnalyzer {
 
     const lowerObs = observation.toLowerCase();
     const result: KernelInferenceResult = {
-      confidence: 0.5, // Base confidence - start with reasonable value
+      confidence: 0,
       recommendations: [],
       fatalAssumptions: [],
       cascadePatterns: []
     };
 
     // Check fatal assumptions
-    let maxAssumptionConfidence = 0;
     for (const [id, assumption] of this.assumptions.entries()) {
       for (const trigger of assumption.trigger) {
         if (lowerObs.includes(trigger.toLowerCase())) {
-          result.fatalAssumptions = result.fatalAssumptions || [];
+          if (!result.fatalAssumptions) result.fatalAssumptions = [];
           result.fatalAssumptions.push(assumption);
-          maxAssumptionConfidence = Math.max(maxAssumptionConfidence, 0.8);
+          result.confidence = Math.max(result.confidence, 0.8);
           result.actionRequired = assumption.action;
-          result.recommendations = result.recommendations || [];
+          if (!result.recommendations) result.recommendations = [];
           result.recommendations.push(`Detected assumption ${id}: ${assumption.reason}`);
         }
       }
     }
 
     // Check cascade patterns
-    let maxCascadeConfidence = 0;
     for (const [id, cascade] of this.cascades.entries()) {
       if (lowerObs.includes(cascade.pattern.toLowerCase()) ||
           lowerObs.includes(cascade.detection.toLowerCase()) ||
           lowerObs.includes(cascade.id.toLowerCase())) {
-        result.cascadePatterns = result.cascadePatterns || [];
+        if (!result.cascadePatterns) result.cascadePatterns = [];
         result.cascadePatterns.push(cascade);
-        maxCascadeConfidence = Math.max(maxCascadeConfidence, 0.9);
+        result.confidence = Math.max(result.confidence, 0.9);
         result.actionRequired = cascade.fix;
-        result.recommendations = result.recommendations || [];
+        if (!result.recommendations) result.recommendations = [];
         result.recommendations.push(`Detected cascade ${id}: ${cascade.pattern}`);
       }
     }
 
-    // Combine confidences - use highest match
-    result.confidence = Math.max(0.5, maxAssumptionConfidence, maxCascadeConfidence);
-
     // Apply confidence threshold
     if (result.confidence < this.config.confidenceThreshold) {
-      result.recommendations = result.recommendations || [];
-      if (result.confidence === 0.5) {
-        result.recommendations.push('Standard routing - no specific patterns detected');
-      } else {
-        result.recommendations.push('Low confidence - investigate manually');
-      }
+      result.recommendations?.push('Low confidence - investigate manually');
     }
 
     // Determine inference level
-    if (result.fatalAssumptions && result.fatalAssumptions.length > 0) {
+    if (!result.fatalAssumptions!.length) {
+      result.fatalAssumptions = [];
+    } else if (!result.cascadePatterns!.length) {
+      result.cascadePatterns = [];
+    }
+    
+    if (result.fatalAssumptions!.length > 0) {
       result.level = 'L3'; // Assumption surfacing
-    } else if (result.cascadePatterns && result.cascadePatterns.length > 0) {
+    } else if (result.cascadePatterns!.length > 0) {
       result.level = 'L2'; // Causal mapping
     } else {
       result.level = 'L1'; // Pattern recognition

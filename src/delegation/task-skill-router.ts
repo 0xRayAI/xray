@@ -15,80 +15,6 @@ import { getKernel, KernelInferenceResult } from "../core/kernel-patterns.js";
 import * as fs from "fs";
 import * as path from "path";
 
-// Import analytics components
-import { promptPatternAnalyzer } from "../analytics/prompt-pattern-analyzer.js";
-import { routingPerformanceAnalyzer } from "../analytics/routing-performance-analyzer.js";
-import { routingRefiner } from "../analytics/routing-refiner.js";
-
-// Import P9 adaptive kernel components
-import { getAdaptiveKernel } from "../core/adaptive-kernel.js";
-import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
-import { emergingPatternDetector } from "../analytics/emerging-pattern-detector.js";
-
-// ===== SIMPLE NAME MAPPINGS =====
-/**
- * Simple name mappings for agents - user-friendly names with strategic [Function] + [Role] pattern
- * Recommended by marketing strategist for optimal user understanding and brand consistency
- */
-const AGENT_SIMPLE_NAMES: Record<string, string> = {
-  // Core Agents - Strategic Leadership
-  "enforcer": "Quality Guardian",
-  "orchestrator": "Task Orchestrator", 
-  "architect": "Solution Designer",
-  
-// Specialized Agents - Technical Experts
-  "security-auditor": "Security Specialist",
-  "code-reviewer": "Quality Validator",
-  "refactorer": "Code Optimizer",
-  "testing-lead": "Quality Assurance Lead",
-  "bug-triage-specialist": "Error Resolver",
-  "researcher": "Code Researcher", // Changed from "Code Analyst" to avoid duplicate
-  
-  // Strategy & Content - Business Value
-  "strategist": "Strategic Planner",
-  "seo-consultant": "Visibility Expert",
-  "content-creator": "Content Builder",
-  "growth-strategist": "Growth Strategist",
-  "tech-writer": "Documentation Expert",
-  
-  // Technical Specialists - Implementation Experts
-  "log-monitor": "Log Analyst",
-  "multimodal-looker": "Visual Analyst",
-  "analyzer": "Data Analyst",
-  "code-analyzer": "Code Analyst", // Kept as "Code Analyst"
-  "database-engineer": "Database Specialist",
-  "devops-engineer": "Deployment Specialist",
-  "backend-engineer": "Backend Specialist",
-  "frontend-engineer": "Frontend Specialist",
-  "frontend-ui-ux-engineer": "UI/UX Designer",
-  "performance-engineer": "Performance Optimizer",
-  "mobile-developer": "App Developer",
-  
-  // Legacy Aliases - Clear Migration Path
-  "librarian": "Research Analyst",
-  "seo-specialist": "SEO Expert",
-  "seo-copywriter": "Content Specialist",
-  "marketing-expert": "Growth Specialist",
-  "documentation-writer": "Documentation Writer",
-};
-
-/**
- * Get the simple/human-readable name for an agent
- * @param agentName - The technical agent name (e.g., "strategist")
- * @returns Human-readable name (e.g., "Planner")
- */
-export function getAgentSimpleName(agentName: string): string {
-  return AGENT_SIMPLE_NAMES[agentName] || agentName;
-}
-
-/**
- * Get all simple name mappings
- * @returns Record of technical name -> simple name
- */
-export function getAllSimpleNames(): Record<string, string> {
-  return { ...AGENT_SIMPLE_NAMES };
-}
-
 // ===== CONFIGURATION =====
 const ROUTING_CONFIG = {
   // Minimum confidence threshold - below this, escalate to LLM
@@ -108,48 +34,7 @@ const ROUTING_CONFIG = {
   ESCALATE_ON_LOW_CONFIDENCE: true,
 };
 
-// ===== ENHANCED ROUTING ANALYTICS =====
-
-// Prompt and request data collection
-export interface PromptDataPoint {
-  taskId: string;
-  userRequest: string;           // Raw user input
-  generatedPrompt: string;       // Actual prompt generated
-  templatePrompt: string;        // Template used (or empty if no match)
-  routedAgent: string;
-  routedSkill: string;
-  confidence: number;
-  sessionContext?: {
-    sessionId?: string;
-    userId?: string;
-    complexityScore?: number;
-    estimatedTokens?: number;
-    executionTime?: number;
-  };
-  usageMetadata?: {
-    userAgent?: string;
-    source?: 'cli' | 'api' | 'web' | 'integration';
-    retryCount?: number;
-    errors?: string[];
-  };
-  timestamp: Date;
-}
-
-export interface RoutingDecision {
-  taskId: string;
-  taskDescription: string;
-  originalTaskDescription: string;
-  keywordMatched?: string;       // Keyword that triggered match
-  selectedAgent: string;
-  selectedSkill: string;
-  confidence: number;
-  alternatives: string[];        // Other possible agents considered
-  executionTime?: number;        // Time taken for routing decision
-  success?: boolean;
-  feedback?: string;
-  templateUsed?: string;         // Template name if applicable
-}
-
+// ===== ROUTING OUTCOME TRACKING =====
 export interface RoutingOutcome {
   taskId: string;
   taskDescription: string;
@@ -159,74 +44,20 @@ export interface RoutingOutcome {
   timestamp: Date;
   success?: boolean;
   feedback?: string;
-  successRate?: number; // Added for analytics-based routing
-  // Enhanced data from routing decision
-  routingDecision?: RoutingDecision;
-  promptData?: PromptDataPoint;
 }
 
 class RoutingOutcomeTracker {
   private outcomes: RoutingOutcome[] = [];
-  private promptData: PromptDataPoint[] = [];
-  private routingDecisions: RoutingDecision[] = [];
-  private maxOutcomes = 5000;  // Increased capacity for comprehensive analytics
-  private maxPromptData = 10000;
-  private maxDecisions = 10000;
+  private maxOutcomes = 1000;
 
-  // Enable/disable enhanced analytics
-  private enhancedAnalyticsEnabled = process.env.ROUTING_ENHANCED_ANALYTICS !== "false";
-
-/**
-    * Enhanced outcome recording with prompt data
-    */
-   recordOutcome(outcome: Omit<RoutingOutcome, "timestamp">): void {
-     if (!ROUTING_CONFIG.ENABLE_OUTCOME_TRACKING) return;
-     
-     const timestamp = new Date();
-     this.outcomes.push({ ...outcome, timestamp });
-     
-// Link to related prompt data if available
-       const relatedPromptData = this.promptData.find(p => p.taskId === outcome.taskId);
-       const promptAssign = relatedPromptData;
-       if (promptAssign && this.outcomes.length > 0) {
-         this.outcomes[this.outcomes.length - 1]!.promptData = promptAssign;
-       }
-
-      this.manageDataLimits();
-   }
-
-  /**
-   * Record prompt data point with template comparison
-   */
-  recordPromptData(promptData: PromptDataPoint): void {
-    if (!this.enhancedAnalyticsEnabled) return;
-    
-    this.promptData.push(promptData);
-    this.manageDataLimits();
-  }
-
-  /**
-   * Record routing decision with alternatives and context
-   */
-  recordRoutingDecision(decision: RoutingDecision): void {
+  recordOutcome(outcome: Omit<RoutingOutcome, "timestamp">): void {
     if (!ROUTING_CONFIG.ENABLE_OUTCOME_TRACKING) return;
     
-    this.routingDecisions.push(decision);
-    this.manageDataLimits();
-  }
-
-  /**
-   * Data management: keep only recent data
-   */
-  private manageDataLimits(): void {
+    this.outcomes.push({ ...outcome, timestamp: new Date() });
+    
+    // Keep only recent outcomes
     if (this.outcomes.length > this.maxOutcomes) {
       this.outcomes = this.outcomes.slice(-this.maxOutcomes);
-    }
-    if (this.promptData.length > this.maxPromptData) {
-      this.promptData = this.promptData.slice(-this.maxPromptData);
-    }
-    if (this.routingDecisions.length > this.maxDecisions) {
-      this.routingDecisions = this.routingDecisions.slice(-this.maxDecisions);
     }
   }
 
@@ -264,37 +95,6 @@ class RoutingOutcomeTracker {
     }));
   }
 
-  /**
-   * Get prompt data analytics
-   */
-  getPromptData(): PromptDataPoint[] {
-    return this.promptData;
-  }
-
-  /**
-   * Get routing decision analytics
-   */
-  getRoutingDecisions(): RoutingDecision[] {
-    return this.routingDecisions;
-  }
-
-  /**
-   * Get template match rate
-   */
-  getTemplateMatchRate(): number {
-    const templateMatches = this.promptData.filter(p => p.templatePrompt && p.templatePrompt.length > 0);
-    return this.promptData.length > 0 ? templateMatches.length / this.promptData.length : 0;
-  }
-
-  /**
-   * Get average confidence score
-   */
-  getAverageConfidence(): number {
-    if (this.promptData.length === 0) return 0;
-    const totalConfidence = this.promptData.reduce((sum, p) => sum + p.confidence, 0);
-    return totalConfidence / this.promptData.length;
-  }
-
   clear(): void {
     this.outcomes = [];
   }
@@ -310,10 +110,7 @@ function loadMappingsFromConfig(): any[] | null {
     const configPath = path.resolve(process.cwd(), ROUTING_CONFIG.CONFIG_FILE_PATH);
     if (fs.existsSync(configPath)) {
       const content = fs.readFileSync(configPath, "utf-8");
-      const configMappings = JSON.parse(content);
-      
-      // Return config mappings - they will be merged with DEFAULT_MAPPINGS in constructor
-      return configMappings;
+      return JSON.parse(content);
     }
   } catch (error) {
     // Config file is optional - fall back to hardcoded
@@ -1249,17 +1046,6 @@ export interface RoutingResult {
   operation?: string; // For AgentDelegator integration
   context?: Record<string, unknown>; // Extracted context for delegation
   escalateToLlm?: boolean; // Flag to indicate should escalate to LLM for better judgment
-
-  // KERNEL-ENHANCED FIELDS
-  kernelInsights?: KernelInferenceResult; // Kernel pattern analysis results
-  kernelGuided?: boolean; // Flag indicating kernel-guided routing
-  analyticsGuided?: boolean; // Flag indicating analytics-guided routing
-  alternatives?: Array<{
-    skill: string;
-    agent: string;
-    confidence: number;
-    reason: string;
-  }>; // Alternative routing suggestions
 }
 
 /**
@@ -1282,10 +1068,6 @@ export class TaskSkillRouter {
   private mappings: any[];
   private stateManager: StringRayStateManager | undefined;
   private kernel: ReturnType<typeof getKernel>;
-  private adaptiveKernel: ReturnType<typeof getAdaptiveKernel> | null = null;
-
-  // P9: Enable adaptive pattern learning
-  private readonly p9Enabled = process.env.P9_ENABLED !== "false";
 
   // In-memory cache for immediate access (persisted via stateManager)
   private routingHistoryCache: Map<
@@ -1302,13 +1084,10 @@ export class TaskSkillRouter {
   constructor(stateManager?: StringRayStateManager) {
     // Try to load mappings from config file first
     const configMappings = loadMappingsFromConfig();
-    if (configMappings && configMappings.length > 0) {
-      // MERGE: DEFAULT_MAPPINGS first (as base), then config mappings (to override)
-      this.mappings = [...DEFAULT_MAPPINGS, ...configMappings];
+    if (configMappings) {
+      this.mappings = configMappings;
       frameworkLogger.log("task-skill-router", "loaded-from-config", "info", {
         count: configMappings.length,
-        defaultCount: DEFAULT_MAPPINGS.length,
-        totalCount: this.mappings.length,
         source: ROUTING_CONFIG.CONFIG_FILE_PATH,
       });
     } else {
@@ -1318,24 +1097,6 @@ export class TaskSkillRouter {
     if (stateManager) {
       this.stateManager = stateManager;
       this.loadHistory();
-    }
-
-    // Initialize P9 adaptive kernel if enabled
-    if (this.p9Enabled) {
-      try {
-        this.adaptiveKernel = getAdaptiveKernel({
-          enableP9Learning: true,
-          learningIntervalMs: 300000, // 5 minutes
-          autoApplyThreshold: 0.9
-        });
-        frameworkLogger.log("task-skill-router", "p9-initialized", "info", {
-          p9Enabled: true
-        });
-      } catch (error) {
-        frameworkLogger.log("task-skill-router", "p9-init-failed", "info", {
-          error: String(error)
-        });
-      }
     }
     
     // Initialize kernel instance for pattern-aware routing
@@ -1437,109 +1198,81 @@ export class TaskSkillRouter {
     };
   }
 
-/**
-    * Route a task to the appropriate agent and skill
-    * Returns result with escalateToLlm flag when confidence is below threshold
-    *
-    * ENHANCED: Kernel patterns actively guide routing decisions
-    */
-   routeTask(
-     taskDescription: string,
-     options: RoutingOptions = {},
-   ): RoutingResult {
-     const { complexity, taskId, useHistoricalData = true } = options;
+  /**
+   * Route a task to the appropriate agent and skill
+   * Returns result with escalateToLlm flag when confidence is below threshold
+   */
+  routeTask(
+    taskDescription: string,
+    options: RoutingOptions = {},
+  ): RoutingResult {
+    const { complexity, taskId, useHistoricalData = true } = options;
 
-     if (!taskDescription || typeof taskDescription !== "string") {
-       return this.getDefaultRouting("Invalid task description");
-     }
+    if (!taskDescription || typeof taskDescription !== "string") {
+      return this.getDefaultRouting("Invalid task description");
+    }
 
-     const descLower = taskDescription.toLowerCase();
+    const descLower = taskDescription.toLowerCase();
 
-     // KERNEL-FIRST APPROACH: Get kernel insights before routing
-     const kernelInsights = this.kernel.analyze(taskDescription);
-
-     // Apply P8 (Infrastructure Hardening) pattern detection FIRST
-     if (kernelInsights.cascadePatterns?.some(p => p.id === 'P8')) {
-       const p8Pattern = kernelInsights.cascadePatterns?.find(p => p.id === 'P8');
-       if (p8Pattern) {
-         frameworkLogger.log(
-           "task-skill-router",
-           "kernel-guided-infrastructure",
-           "info",
-           {
-             taskDescription: taskDescription.substring(0, 100),
-             detectedPattern: p8Pattern.id,
-             guidance: 'Handle infrastructure issues before routing',
-             kernelAction: p8Pattern.fix,
-           }
-         );
-       }
-     }
-
-     // REAL-TIME ANALYTICS: Check if we have performance data for this task
-     const analyticsBasedRouting = this.getAnalyticsBasedRouting(taskDescription, kernelInsights);
-     if (analyticsBasedRouting && analyticsBasedRouting.confidence > ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD) {
-       frameworkLogger.log(
-         "task-skill-router",
-         "analytics-guided-routing",
-         "debug",
-         {
-           taskDescription: taskDescription.substring(0, 100),
-           analyticsConfidence: analyticsBasedRouting.confidence,
-           routingReason: analyticsBasedRouting.reason,
-         },
-         options.sessionId,
-       );
-       return {
-         ...analyticsBasedRouting,
-         kernelInsights,
-         escalateToLlm: analyticsBasedRouting.confidence < ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD,
-         analyticsGuided: true
-       };
-     }
-
-     // KERNEL-ENHANCED KEYWORD MATCHING: Use kernel insights to improve matching
-     const keywordResult = this.matchByKeywordsWithKernel(descLower, kernelInsights);
-     if (keywordResult) {
-       // Combine keyword confidence with kernel confidence
-       const combinedConfidence = this.combineConfidence(
-         keywordResult.confidence,
-         kernelInsights.confidence
-       );
-
-       frameworkLogger.log(
-         "task-skill-router",
-         "kernel-enhanced-routing",
-         "debug",
-         {
-           taskDescription: taskDescription.substring(0, 100),
-           matchedKeyword: keywordResult.matchedKeyword,
-           agent: keywordResult.agent,
-           skill: keywordResult.skill,
-           keywordConfidence: keywordResult.confidence,
-           kernelConfidence: kernelInsights.confidence,
-           combinedConfidence,
-           alternatives: keywordResult.alternatives?.length || 0,
-         },
-         options.sessionId,
-       );
-
-// Return kernel-enhanced routing with alternatives
-const result: RoutingResult = {
-          ...keywordResult,
-          confidence: combinedConfidence,
-          kernelInsights,
-          escalateToLlm: combinedConfidence < ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD,
-          kernelGuided: true,
-        };
-
-        // Only add alternatives if they exist (P2 compliance)
-        if (keywordResult.alternatives !== undefined && keywordResult.alternatives.length > 0) {
-          result.alternatives = keywordResult.alternatives;
+    // 1. Try keyword matching first (highest priority)
+    const keywordResult = this.matchByKeywords(descLower);
+    if (keywordResult) {
+      // Check confidence threshold
+      const shouldEscalate = 
+        ROUTING_CONFIG.ESCALATE_ON_LOW_CONFIDENCE && 
+        keywordResult.confidence < ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD;
+      
+      frameworkLogger.log(
+        "task-skill-router",
+        "keyword-matched",
+        "debug",
+        {
+          taskDescription: taskDescription.substring(0, 100),
+          matchedKeyword: keywordResult.matchedKeyword,
+          agent: keywordResult.agent,
+          skill: keywordResult.skill,
+          confidence: keywordResult.confidence,
+          belowThreshold: shouldEscalate,
+        },
+        options.sessionId,
+      );
+      
+       // Add escalation flag if below threshold
+      if (shouldEscalate) {
+        return { ...keywordResult, escalateToLlm: true };
+      }
+      
+      // KERNEL PATTERN ANALYSIS: Add kernel intelligence to routing
+      const kernelInsights = this.kernel.analyze(taskDescription);
+      
+      // Apply P8 (Infrastructure Hardening) pattern detection
+      if (kernelInsights.cascadePatterns?.some(p => p.id === 'P8')) {
+        const p8Pattern = kernelInsights.cascadePatterns?.find(p => p.id === 'P8');
+        if (p8Pattern) {
+          frameworkLogger.log(
+            "task-skill-router",
+            "kernel-guided-infrastructure",
+            "info",
+            {
+              taskDescription: taskDescription.substring(0, 100),
+              detectedPattern: p8Pattern.id,
+              guidance: 'Handle infrastructure issues before routing',
+              kernelAction: p8Pattern.fix,
+            }
+          );
         }
-
-        return result;
-     }
+      }
+      
+      // Kernel-guided routing decision
+      const routingDecision = {
+        ...keywordResult,
+        kernelInsights,
+        escalateToLlm: keywordResult.escalateToLlm || 
+                         (kernelInsights.confidence < ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD)
+      };
+      
+      return routingDecision;
+    }
 
     // 2. Try historical data
     if (useHistoricalData && taskId) {
@@ -1572,24 +1305,6 @@ const result: RoutingResult = {
    * Match task by keywords (ordered by specificity)
    */
   private matchByKeywords(descLower: string): RoutingResult | null {
-    // First, check for direct @agent mentions and extract the agent name
-    const atAgentMatch = descLower.match(/@(\w+)/);
-    if (atAgentMatch && atAgentMatch[1]) {
-      const agentName = atAgentMatch[1].toLowerCase();
-      // Look for a mapping where the agent matches
-      const agentMapping = this.mappings.find(m => m.agent?.toLowerCase() === agentName);
-      if (agentMapping) {
-        return {
-          skill: agentMapping.skill,
-          agent: agentMapping.agent,
-          confidence: agentMapping.confidence,
-          matchedKeyword: `@${agentName}`,
-          reason: `Matched direct agent: @${agentName}`,
-        };
-      }
-    }
-    
-    // Then try keyword matching
     for (const mapping of this.mappings) {
       for (const keyword of mapping.keywords) {
         if (descLower.includes(keyword.toLowerCase())) {
@@ -1782,775 +1497,17 @@ const result: RoutingResult = {
     this.mappings.push(newMapping);
   }
 
-/**
-    * Get all available mappings (for debugging/testing)
-    */
-   getMappings(): Array<{
-     keywords: string[];
-     skill: string;
-     agent: string;
-     confidence: number;
-   }> {
-     return [...this.mappings];
-   }
-
-   /**
-    * KERNEL-ENHANCED: Get routing based on real-time analytics data
-    * Uses analytics to improve routing decisions
-    */
-   private getAnalyticsBasedRouting(
-     taskDescription: string,
-     kernelInsights: KernelInferenceResult
-   ): RoutingResult | null {
-     // Check if we have enough analytics data
-     const promptAnalysis = promptPatternAnalyzer.analyzePromptPatterns();
-     if (promptAnalysis.totalPrompts < 10) {
-       return null; // Not enough data for analytics-based routing
-     }
-
-     // Look for similar tasks in analytics data
-     const outcomes = routingOutcomeTracker.getOutcomes();
-     const similarTasks = this.findSimilarTasks(taskDescription, outcomes);
-
-     if (similarTasks.length === 0) {
-       return null; // No similar tasks found
-     }
-
-     // Find the most successful similar routing
-     const bestRouting = this.findBestRoutingFromSimilar(similarTasks);
-     if (!bestRouting) {
-       return null;
-     }
-
-     frameworkLogger.log(
-       "task-skill-router",
-       "analytics-routing-match",
-       "debug",
-       {
-         taskDescription: taskDescription.substring(0, 100),
-         matchedSimilarTaskCount: similarTasks.length,
-         bestAgent: bestRouting.routedAgent,
-         bestSkill: bestRouting.routedSkill,
-         confidence: bestRouting.successRate || 0.8,
-       },
-       undefined,
-     );
-
-     return {
-       skill: bestRouting.routedSkill,
-       agent: bestRouting.routedAgent,
-       confidence: bestRouting.successRate || 0.8,
-       reason: `Analytics-based routing: ${similarTasks.length} similar tasks found`,
-       fromHistory: true,
-       kernelGuided: true,
-       analyticsGuided: true
-     };
-   }
-
-   /**
-    * Find similar tasks based on semantic similarity and keywords
-    */
-   private findSimilarTasks(taskDescription: string, outcomes: RoutingOutcome[]): RoutingOutcome[] {
-     const keywords = this.extractKeywords(taskDescription.toLowerCase());
-     const similarTasks: RoutingOutcome[] = [];
-
-     for (const outcome of outcomes) {
-       if (!outcome.taskDescription) continue;
-
-       // Check for keyword overlap
-       const outcomeKeywords = this.extractKeywords(outcome.taskDescription.toLowerCase());
-       const keywordOverlap = this.calculateKeywordOverlap(keywords, outcomeKeywords);
-
-       // Check for semantic similarity (simple implementation)
-       const semanticSimilarity = this.calculateSemanticSimilarity(taskDescription, outcome.taskDescription);
-
-       // Consider task similar if it has significant keyword overlap or semantic similarity
-       if (keywordOverlap > 0.3 || semanticSimilarity > 0.5) {
-         similarTasks.push(outcome);
-       }
-     }
-
-// Return top 10 most similar tasks, sorted by success rate
-      return similarTasks
-        .filter(o => o.success !== undefined || o.successRate !== undefined)
-        .sort((a, b) => {
-          const aRate = a.successRate ?? (a.success ? 1 : 0);
-          const bRate = b.successRate ?? (b.success ? 1 : 0);
-          return bRate - aRate;
-        })
-        .slice(0, 10);
-   }
-
-   /**
-    * Find the best routing from similar tasks based on success rate
-    */
-private findBestRoutingFromSimilar(similarTasks: RoutingOutcome[]): RoutingOutcome | null {
-      if (similarTasks.length === 0) return null;
-
-      // Return the most successful routing
-      return similarTasks.reduce((best, current) => {
-        if (!best) return current;
-
-        const bestRate = best.successRate ?? (best.success ? 1 : 0);
-        const currentRate = current.successRate ?? (current.success ? 1 : 0);
-
-        if (currentRate > bestRate) {
-          return current;
-        }
-        return best;
-      });
-    }
-
-   /**
-    * Extract keywords from task description
-    */
-   private extractKeywords(text: string): string[] {
-     // Remove common words and extract meaningful keywords
-     const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'as']);
-     const words = text.split(/\s+/).filter(word => word.length > 2 && !stopWords.has(word));
-     return words;
-   }
-
-   /**
-    * Calculate keyword overlap between two sets of keywords
-    */
-   private calculateKeywordOverlap(keywords1: string[], keywords2: string[]): number {
-     if (keywords1.length === 0 || keywords2.length === 0) return 0;
-
-     const set1 = new Set(keywords1);
-     const set2 = new Set(keywords2);
-     const intersection = new Set([...set1].filter(x => set2.has(x)));
-
-     return intersection.size / Math.max(set1.size, set2.size);
-   }
-
-   /**
-    * Calculate semantic similarity between two texts (simplified implementation)
-    */
-   private calculateSemanticSimilarity(text1: string, text2: string): number {
-     const words1 = new Set(this.extractKeywords(text1.toLowerCase()));
-     const words2 = new Set(this.extractKeywords(text2.toLowerCase()));
-
-     if (words1.size === 0 && words2.size === 0) return 1;
-     if (words1.size === 0 || words2.size === 0) return 0;
-
-     const intersection = new Set([...words1].filter(x => words2.has(x)));
-     const union = new Set([...words1, ...words2]);
-
-     return intersection.size / union.size;
-   }
-
-   /**
-    * KERNEL-ENHANCED: Match keywords with kernel insights
-    * Uses kernel patterns to improve keyword matching quality
-    */
-   private matchByKeywordsWithKernel(
-     descLower: string,
-     kernelInsights: KernelInferenceResult
-   ): RoutingResult | null {
-     const candidates: Array<{
-       mapping: any;
-       keyword: string;
-       score: number;
-       kernelMatch: boolean;
-     }> = [];
-
-     // Score all keyword matches
-     for (const mapping of this.mappings) {
-       for (const keyword of mapping.keywords) {
-         if (descLower.includes(keyword.toLowerCase())) {
-           // Calculate enhanced score using kernel insights
-           const kernelScore = this.calculateKernelEnhancementScore(
-             descLower,
-             keyword,
-             mapping,
-             kernelInsights
-           );
-
-           candidates.push({
-             mapping,
-             keyword,
-             score: kernelScore,
-             kernelMatch: true
-           });
-         }
-       }
-     }
-
-     if (candidates.length === 0) {
-       return null;
-     }
-
-     // Sort by combined score and get best match
-     candidates.sort((a, b) => b.score - a.score);
-     const bestMatch = candidates[0];
-
-     // Generate alternatives from top candidates
-     const alternatives = candidates.slice(1, 4).map(c => ({
-       skill: c.mapping.skill,
-       agent: c.mapping.agent,
-       confidence: c.score,
-       reason: `Alternative match: ${c.keyword}`
-     }));
-
-// Add kernel recommendations as alternatives if available
-      if (kernelInsights.recommendations && kernelInsights.recommendations.length > 0) {
-        for (const recommendation of kernelInsights.recommendations) {
-          // P2: Check if bestMatch exists before accessing properties
-          if (bestMatch) {
-            alternatives.push({
-              skill: bestMatch.mapping.skill,
-              agent: bestMatch.mapping.agent,
-              confidence: kernelInsights.confidence * 0.8,
-              reason: `Kernel recommendation: ${String(recommendation)}`
-            });
-          }
-        }
-      }
-
-      // P2: Check if bestMatch exists before logging
-      const bestMatchLog = bestMatch ? {
-        keyword: bestMatch.keyword,
-        score: bestMatch.score
-      } : null;
-
-      frameworkLogger.log(
-        "task-skill-router",
-        "kernel-keyword-matching",
-        "debug",
-        {
-          taskDescription: descLower.substring(0, 100),
-          totalCandidates: candidates.length,
-          bestMatch: bestMatchLog?.keyword || 'none',
-          bestScore: bestMatchLog?.score || 0,
-          alternativesCount: alternatives.length
-        },
-        undefined,
-);
-
-      // P2: Check if bestMatch exists before returning (null safety)
-      if (!bestMatch) {
-        return null;
-      }
-
-      return {
-        skill: bestMatch.mapping.skill,
-        agent: bestMatch.mapping.agent,
-        confidence: bestMatch.score,
-        matchedKeyword: bestMatch.keyword,
-        reason: `Kernel-enhanced match: ${bestMatch.keyword}`,
-        alternatives,
-        kernelGuided: true
-      };
-    }
-
-    /**
-     * Calculate kernel-enhanced score for keyword matches
-     */
-    private calculateKernelEnhancementScore(
-      taskDescription: string,
-      keyword: string,
-      mapping: any,
-      kernelInsights: KernelInferenceResult
-    ): number {
-      const baseScore = mapping.confidence;
-
-      // P2: UNDEFINED_PROPAGATION - Ensure all scores are defined
-      if (baseScore === undefined || baseScore === null) {
-        return 0.5; // Default score for undefined confidence
-      }
-
-      let enhancementFactor = 1.0;
-
-      // Enhance based on kernel confidence
-      if (kernelInsights.confidence > 0.7) {
-        enhancementFactor *= 1.1; // 10% boost for high kernel confidence
-      }
-
-      // INTENT KEYWORD BOOST: Prioritize clear action/intent keywords
-      // These keywords strongly indicate user intent and should be weighted higher
-      const intentKeywords = [
-        'test', 'testing', 'write test', 'create test', 'run test',
-        'fix', 'debug', 'bug', 'triage',
-        'review', 'refactor', 'optimize', 'performance',
-        'security', 'audit', 'vulnerability',
-        'build', 'develop', 'create', 'implement',
-        'design', 'architecture', 'plan'
-      ];
-      const keywordLower = keyword.toLowerCase();
-      if (intentKeywords.some(intent => keywordLower === intent || keywordLower.includes(intent + ' '))) {
-        enhancementFactor *= 1.08; // 8% boost for intent keywords
-      }
-
-      // Enhance based on keyword specificity (longer keywords are more specific)
-      // BUT only if it's NOT an intent keyword (to prevent "login" beating "bug")
-      const keywordLength = keyword.length;
-      if (keywordLength > 10 && !intentKeywords.some(intent => keywordLower === intent)) {
-        enhancementFactor *= 1.05; // 5% boost for specific non-intent keywords
-      }
-
-      // Enhance based on pattern matches
-      if (kernelInsights.cascadePatterns && kernelInsights.cascadePatterns.length > 0) {
-        // Check if this mapping aligns with detected patterns
-        const patternAlignment = this.checkPatternAlignment(mapping, kernelInsights);
-        if (patternAlignment > 0.5) {
-          enhancementFactor *= 1.08; // 8% boost for pattern alignment
-        }
-      }
-
-      // P2: Prevent score from exceeding 1.0
-      const enhancedScore = Math.min(baseScore * enhancementFactor, 1.0);
-
-      return enhancedScore;
-    }
-
-   /**
-    * Check if mapping aligns with detected kernel patterns
-    */
-   private checkPatternAlignment(mapping: any, kernelInsights: KernelInferenceResult): number {
-     if (!kernelInsights.cascadePatterns || kernelInsights.cascadePatterns.length === 0) {
-       return 0.5; // Default alignment score
-     }
-
-     let alignmentScore = 0.5;
-     const patternsChecked = new Set();
-
-     for (const pattern of kernelInsights.cascadePatterns) {
-       if (patternsChecked.has(pattern.id)) continue;
-
-       // Check if this mapping relates to the pattern
-       if (this.mappingRelatesToPattern(mapping, pattern)) {
-         alignmentScore += 0.15; // 15% boost per matching pattern
-         patternsChecked.add(pattern.id);
-       }
-     }
-
-     // P2: Prevent alignment from exceeding 1.0
-     return Math.min(alignmentScore, 1.0);
-   }
-
-   /**
-    * Check if a mapping relates to a kernel pattern
-    */
-   private mappingRelatesToPattern(mapping: any, pattern: any): boolean {
-     // P2: Undefined checks for mapping properties
-     const mappingKeywords = mapping.keywords || [];
-     const patternTriggers = pattern.trigger || [];
-
-     // Check if any keyword overlaps with pattern triggers
-     return mappingKeywords.some((kw: string) =>
-       patternTriggers.some((trigger: string) =>
-         kw.toLowerCase().includes(trigger.toLowerCase()) ||
-         trigger.toLowerCase().includes(kw.toLowerCase())
-       )
-     );
-   }
-
-    /**
-     * KERNEL-ENHANCED: Combine keyword and kernel confidence scores
-     * Only blend kernel confidence when it has meaningful detection (> 0.5)
-     */
-    private combineConfidence(keywordConfidence: number, kernelConfidence: number): number {
-      // P2: Prevent undefined propagation
-      const safeKeywordConfidence = keywordConfidence ?? 0.7;
-      const safeKernelConfidence = kernelConfidence ?? 0.5;
-
-      // If kernel has no meaningful detection (base 0.5), use keyword confidence directly
-      // This prevents diluting high-confidence keyword matches with low-confidence kernel
-      if (safeKernelConfidence <= 0.5) {
-        return safeKeywordConfidence;
-      }
-
-      // Weighted combination: keyword confidence has more weight (60%), kernel has less (40%)
-      const combinedConfidence = (safeKeywordConfidence * 0.6) + (safeKernelConfidence * 0.4);
-
-      // Ensure confidence is within valid range
-      return Math.max(0.0, Math.min(1.0, combinedConfidence));
-    }
-
   /**
-   * Get the simple/human-readable name for an agent
-   * @param agentName - The technical agent name (e.g., "strategist")
-   * @returns Human-readable name (e.g., "Planner")
+   * Get all available mappings (for debugging/testing)
    */
-  getSimpleName(agentName: string): string {
-    return getAgentSimpleName(agentName);
+  getMappings(): Array<{
+    keywords: string[];
+    skill: string;
+    agent: string;
+    confidence: number;
+  }> {
+    return [...this.mappings];
   }
-
-/**
-    * Get all simple name mappings
-    * @returns Record of technical name -> simple name
-    */
-   getAllSimpleNames(): Record<string, string> {
-     return getAllSimpleNames();
-   }
-
-   // ===== ENHANCED ROUTING ANALYTICS INTEGRATION =====
-
-   /**
-    * Get comprehensive routing analytics using all analytics components
-    * @returns Complete routing analytics report
-    */
-   getRoutingAnalytics(): {
-     promptPatterns: ReturnType<typeof promptPatternAnalyzer.analyzePromptPatterns>;
-     routingPerformance: ReturnType<typeof routingPerformanceAnalyzer.generatePerformanceReport>;
-     refinementSuggestions: ReturnType<typeof routingRefiner.generateRefinementReport>;
-   } {
-     return {
-       promptPatterns: promptPatternAnalyzer.analyzePromptPatterns(),
-       routingPerformance: routingPerformanceAnalyzer.generatePerformanceReport(),
-       refinementSuggestions: routingRefiner.generateRefinementReport(),
-     };
-   }
-
-   /**
-    * Get prompt pattern analysis results
-    */
-   getPromptPatternAnalysis(): ReturnType<typeof promptPatternAnalyzer.analyzePromptPatterns> {
-     return promptPatternAnalyzer.analyzePromptPatterns();
-   }
-
-   /**
-    * Get routing performance metrics
-    */
-   getRoutingPerformanceMetrics(): ReturnType<typeof routingPerformanceAnalyzer.generatePerformanceReport> {
-     return routingPerformanceAnalyzer.generatePerformanceReport();
-   }
-
-   /**
-    * Get routing optimization suggestions
-    */
-   getRoutingOptimizations(): ReturnType<typeof routingRefiner.generateRefinementReport> {
-     return routingRefiner.generateRefinementReport();
-   }
-
-   /**
-    * Apply automated routing refinements to mappings
-    * @param applyChanges - Whether to actually apply changes or just preview
-    * @returns Results of the refinement process
-    */
-   applyRoutingRefinements(applyChanges: boolean = false): {
-     appliedMappings: number;
-     optimizedMappings: number;
-     removedMappings: number;
-     changes: Array<{
-       type: 'added' | 'optimized' | 'removed';
-       mapping: any;
-       reason: string;
-     }>;
-   } {
-     const refinements = routingRefiner.generateRefinementReport();
-     const configUpdate = refinements.configurationUpdate;
-     const changes: Array<{
-       type: 'added' | 'optimized' | 'removed';
-       mapping: any;
-       reason: string;
-     }> = [];
-
-     let appliedMappings = 0;
-     let optimizedMappings = 0;
-     let removedMappings = 0;
-
-     if (applyChanges) {
-       // Apply suggested additions
-       for (const newMapping of configUpdate.newMappings) {
-         if (newMapping.priority === 'high' || newMapping.priority === 'medium') {
-           this.addMapping(
-             newMapping.keyword,
-             newMapping.targetSkill,
-             newMapping.targetAgent,
-             newMapping.suggestedConfidence
-           );
-           appliedMappings++;
-           changes.push({
-             type: 'added',
-             mapping: newMapping,
-             reason: newMapping.reason
-           });
-         }
-       }
-
-       // Apply suggested optimizations
-       for (const optimization of configUpdate.optimizations) {
-         const mappingIndex = this.mappings.findIndex(
-           m => m.skill === optimization.currentSkill && m.agent === optimization.currentAgent
-         );
-         if (mappingIndex >= 0 && optimization.suggestedChanges.newConfidence) {
-           this.mappings[mappingIndex].confidence = optimization.suggestedChanges.newConfidence;
-           optimizedMappings++;
-           changes.push({
-             type: 'optimized',
-             mapping: this.mappings[mappingIndex],
-             reason: optimization.reason
-           });
-         }
-       }
-
-       // Note: removals are handled via warnings in ConfigurationUpdate
-       // We can extract removal suggestions from warnings if needed
-       for (const warning of configUpdate.warnings) {
-         if (warning.includes('remove') || warning.includes('deprecated')) {
-           // Parse warning for potential removal actions
-           removedMappings++;
-           changes.push({
-             type: 'removed',
-             mapping: { reason: warning },
-             reason: warning
-           });
-         }
-       }
-     } else {
-       // Preview mode - just count what would be done
-       appliedMappings = configUpdate.newMappings.filter(
-         m => m.priority === 'high' || m.priority === 'medium'
-       ).length;
-       optimizedMappings = configUpdate.optimizations.length;
-       // Count removal suggestions from warnings
-       removedMappings = configUpdate.warnings.filter(w =>
-         w.includes('remove') || w.includes('deprecated')
-       ).length;
-     }
-
-     frameworkLogger.log(
-       "task-skill-router",
-       "routing-refinements-applied",
-       "info",
-       {
-         appliedMappings,
-         optimizedMappings,
-         removedMappings,
-         applyChanges,
-         totalChanges: changes.length
-       }
-     );
-
-     return {
-       appliedMappings,
-       optimizedMappings,
-       removedMappings,
-       changes
-     };
-   }
-
-/**
-    * Get daily routing analytics summary
-    * Useful for monitoring and reporting
-    */
-   getDailyAnalyticsSummary(): {
-     date: string;
-     totalRoutings: number;
-     averageConfidence: number;
-     templateMatchRate: number;
-     successRate: number;
-     topAgents: Array<{ agent: string; count: number; successRate: number }>;
-     topKeywords: Array<{ keyword: string; count: number; successRate: number }>;
-     insights: string[];
-   } {
-     const promptAnalysis = promptPatternAnalyzer.analyzePromptPatterns();
-     const performanceAnalysis = routingPerformanceAnalyzer.generatePerformanceReport();
-
-     const date = new Date().toISOString().split('T')[0] || new Date().toISOString();
-     const totalRoutings = routingOutcomeTracker.getOutcomes().length;
-     const averageConfidence = performanceAnalysis.avgConfidence;
-     const templateMatchRate = promptAnalysis.templateMatchRate;
-
-     // Calculate overall success rate
-     const outcomes = routingOutcomeTracker.getOutcomes();
-     const successCount = outcomes.filter(o => o.success === true).length;
-     const successRate = totalRoutings > 0 ? successCount / totalRoutings : 0;
-
-     // Get top performing agents
-     const topAgents = performanceAnalysis.agentMetrics
-       .sort((a: any, b: any) => b.totalRoutings - a.totalRoutings)
-       .slice(0, 5)
-       .map((ap: any) => ({
-         agent: ap.agent,
-         count: ap.totalRoutings,
-         successRate: ap.successRate
-       }));
-
-     // Get top performing keywords
-     const topKeywords = performanceAnalysis.keywordEffectiveness
-       .sort((a: any, b: any) => b.matchCount - a.matchCount)
-       .slice(0, 10)
-       .map((kp: any) => ({
-         keyword: kp.keyword,
-         count: kp.matchCount,
-         successRate: kp.successRate
-       }));
-
-     // Generate insights
-     const insights: string[] = [];
-
-     if (templateMatchRate < 0.5) {
-       insights.push(`Low template match rate (${(templateMatchRate * 100).toFixed(1)}%) - consider adding more templates`);
-     }
-
-     if (successRate < 0.7) {
-       insights.push(`Routing success rate below target (${(successRate * 100).toFixed(1)}%) - review mapping accuracy`);
-     }
-
-     if (promptAnalysis.gaps.length > 5) {
-       insights.push(`${promptAnalysis.gaps.length} template gaps detected - review emerging patterns`);
-     }
-
-     if (averageConfidence < 0.8) {
-       insights.push(`Average routing confidence low (${averageConfidence.toFixed(2)}) - consider confidence threshold adjustments`);
-     }
-
-     if (insights.length === 0) {
-       insights.push('Routing system performing within normal parameters');
-     }
-
-return {
-        date,
-        totalRoutings,
-        averageConfidence,
-        templateMatchRate,
-        successRate,
-        topAgents,
-        topKeywords,
-        insights
-      };
-    }
-
-    // ===== P9: ADAPTIVE PATTERN LEARNING =====
-
-    /**
-     * P9: Get adaptive learning statistics
-     */
-    getP9LearningStats(): {
-      enabled: boolean;
-      lastLearningRun: Date | null;
-      cacheValid: boolean;
-      patternsTracked: number;
-      driftDetected: number;
-      thresholdsCalibrated: boolean;
-    } {
-      if (!this.adaptiveKernel) {
-        return {
-          enabled: false,
-          lastLearningRun: null,
-          cacheValid: false,
-          patternsTracked: 0,
-          driftDetected: 0,
-          thresholdsCalibrated: false
-        };
-      }
-
-      const stats = this.adaptiveKernel.getLearningStats();
-      return {
-        enabled: true,
-        lastLearningRun: stats.lastLearningRun,
-        cacheValid: stats.cacheValid,
-        patternsTracked: stats.patternsTracked,
-        driftDetected: stats.driftDetected,
-        thresholdsCalibrated: stats.thresholdsCalibrated
-      };
-    }
-
-    /**
-     * P9: Get pattern drift analysis
-     */
-    getPatternDriftAnalysis(): Array<{
-      patternId: string;
-      driftMagnitude: number;
-      driftDirection: 'increasing' | 'decreasing' | 'unstable';
-      recommendedAction: string;
-    }> {
-      if (!this.adaptiveKernel) {
-        return [];
-      }
-
-      return this.adaptiveKernel.getPatternDrift();
-    }
-
-    /**
-     * P9: Get adaptive confidence thresholds
-     */
-    getAdaptiveThresholds(): {
-      overall: number;
-      perAgent: Record<string, number>;
-      perSkill: Record<string, number>;
-      calibrationDate: Date;
-    } | null {
-      if (!this.adaptiveKernel) {
-        return null;
-      }
-
-      const thresholds = this.adaptiveKernel.getAdaptiveThresholds();
-      return {
-        overall: thresholds.overall,
-        perAgent: Object.fromEntries(thresholds.perAgent),
-        perSkill: Object.fromEntries(thresholds.perSkill),
-        calibrationDate: thresholds.calibrationDate
-      };
-    }
-
-    /**
-     * P9: Trigger manual learning cycle
-     */
-    triggerP9Learning(): {
-      newPatterns: number;
-      modifiedPatterns: number;
-      removedPatterns: number;
-      thresholdUpdates: number;
-      recommendations: string[];
-    } {
-      if (!this.adaptiveKernel) {
-        return {
-          newPatterns: 0,
-          modifiedPatterns: 0,
-          removedPatterns: 0,
-          thresholdUpdates: 0,
-          recommendations: ['P9 not enabled']
-        };
-      }
-
-      // Collect current routing data
-      const outcomes = routingOutcomeTracker.getOutcomes().map(o => ({
-        taskId: o.taskId,
-        taskDescription: o.taskDescription || '',
-        routedAgent: o.routedAgent,
-        routedSkill: o.routedSkill,
-        confidence: o.confidence,
-        success: o.success ?? false
-      }));
-
-      // Get existing mappings
-      const existingMappings = this.getMappings();
-
-      return this.adaptiveKernel.triggerLearning(outcomes, existingMappings);
-    }
-
-    /**
-     * P9: Track routing outcome for learning
-     */
-    trackOutcomeForLearning(
-      taskId: string,
-      taskDescription: string,
-      agent: string,
-      skill: string,
-      confidence: number,
-      success: boolean
-    ): void {
-      // Track in performance tracker
-      const patternId = `${agent}:${skill}`;
-      patternPerformanceTracker.trackPatternPerformance(patternId, {
-        success,
-        confidence
-      });
-
-      // Record in outcome tracker
-      routingOutcomeTracker.recordOutcome({
-        taskId,
-        taskDescription,
-        routedAgent: agent,
-        routedSkill: skill,
-        confidence,
-        success
-      });
-    }
 }
 
 // Default instance (without state manager - must be set separately)
