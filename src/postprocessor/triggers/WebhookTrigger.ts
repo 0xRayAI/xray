@@ -151,6 +151,7 @@ export class WebhookTrigger {
         await this.triggerPostProcessor(context);
 
         res.json({ received: true, event });
+        return;
       } catch (error) {
         frameworkLogger.log(
           'webhook-trigger',
@@ -159,6 +160,7 @@ export class WebhookTrigger {
           { provider: this.config.provider, error: error instanceof Error ? error.message : String(error) }
         );
         res.status(500).json({ error: 'Webhook processing failed' });
+        return;
       }
     });
   }
@@ -178,10 +180,10 @@ export class WebhookTrigger {
           const githubHmac = crypto.createHmac(algo, secret);
           githubHmac.update(payload);
           const githubComputed = `${algo}=${githubHmac.digest('hex')}`;
-          
+
            // SECURITY FIX: Use timingSafeEqual to prevent timing attacks
           try {
-            const ghSigBuffer = Buffer.from(ghSignature);
+            const ghSigBuffer = Buffer.from(ghSignature || '');
             const ghComputedBuffer = Buffer.from(githubComputed);
             return crypto.timingSafeEqual(ghComputedBuffer, ghSigBuffer);
           } catch {
@@ -191,11 +193,11 @@ export class WebhookTrigger {
         case 'gitlab':
           // GitLab X-Gitlab-Token: just a token compare
           const token = signature;
-          
+
           // SECURITY FIX: Use timingSafeEqual to prevent timing attacks
           try {
             const secretBuffer = Buffer.from(secret);
-            const tokenBuffer = Buffer.from(token);
+            const tokenBuffer = Buffer.from(token || '');
             return crypto.timingSafeEqual(secretBuffer, tokenBuffer);
           } catch {
             return false;
@@ -215,7 +217,7 @@ export class WebhookTrigger {
 
           // SECURITY FIX: Use timingSafeEqual to prevent timing attacks
           try {
-            const stripeSigBuffer = Buffer.from(stripeSignature);
+            const stripeSigBuffer = Buffer.from(stripeSignature || '');
             const stripeComputedBuffer = Buffer.from(stripeComputed);
             return crypto.timingSafeEqual(stripeComputedBuffer, stripeSigBuffer);
           } catch {

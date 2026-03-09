@@ -50,6 +50,75 @@ export interface KernelConfig {
   autoPrevention: boolean;
 }
 
+// NEW v2.0 interfaces for analytics and learning
+export interface EmergentPattern {
+  id: string;
+  pattern: string;
+  trigger: string[];
+  action: string;
+  confidence: number;
+  category: 'FATAL' | 'CASCADE' | 'PREVENTION' | 'DECISION';
+  frequency: number;
+  lastDetected: Date;
+  effectiveness: number;
+  firstSeen?: Date;
+  lastSeen?: Date;
+  suggestedAction?: string;
+  userRequest?: string;
+  generatedPrompt?: string;
+  templatePrompt?: string;
+  evidence?: any[];
+}
+
+export interface PatternUpdate {
+  patternId: string;
+  type: 'CONFIDENCE' | 'FREQUENCY' | 'TRIGGER' | 'ACTION';
+  oldValue: any;
+  newValue: any;
+  timestamp: Date;
+  reason: string;
+  updateType?: string;
+  confidence?: number;
+  validated?: boolean;
+  changes?: any[];
+}
+
+export interface PatternDriftInfo {
+  patternId: string;
+  driftDetected: boolean;
+  severity: 'low' | 'medium' | 'high';
+  metrics: {
+    confidenceDrift: number;
+    frequencyChange: number;
+    effectivenessDecline: number;
+  };
+}
+
+export interface AdaptiveThresholds {
+  confidenceMin: number;
+  confidenceMax: number;
+  frequencyMin: number;
+  frequencyMax: number;
+  effectivenessMin: number;
+  effectivenessMax: number;
+  learningRate: number;
+  adaptationWindow: number; // in minutes
+  perAgent?: Record<string, {
+    confidenceMin: number;
+    confidenceMax: number;
+    frequencyMin: number;
+    frequencyMax: number;
+    effectivenessMin: number;
+    effectivenessMax: number;
+  }>;
+  overall?: {
+    confidenceMin: number;
+    confidenceMax: number;
+    frequencyMin: number;
+    frequencyMax: number;
+  };
+}
+
 export class KernelAnalyzer {
   private config: KernelConfig;
   private patterns: Map<string, KernelPattern> = new Map();

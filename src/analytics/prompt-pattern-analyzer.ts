@@ -113,7 +113,7 @@ class PromptPatternAnalyzer {
 
     for (const prompt of promptData) {
       if (!prompt.templatePrompt || prompt.templatePrompt.length === 0) {
-        const key = this.normalizeRequest(prompt.userRequest);
+        const key = this.normalizeRequest(prompt.userRequest || '');
 
         if (gapMap.has(key)) {
           const existing = gapMap.get(key);
@@ -125,13 +125,13 @@ class PromptPatternAnalyzer {
           const outcome = outcomes.find((o) => o.taskId === prompt.taskId);
           gaps.push({
             gapType: this.classifyGapType(prompt, outcome),
-            userRequest: prompt.userRequest,
-            generatedPrompt: prompt.generatedPrompt,
+            userRequest: prompt.userRequest || '',
+            generatedPrompt: prompt.generatedPrompt || '',
             suggestedAgent: outcome?.routedAgent ?? "enforcer",
             suggestedSkill: outcome?.routedSkill ?? "code-review",
             frequency: 1,
             lastSeen: prompt.timestamp,
-            confidence: prompt.confidence,
+            confidence: prompt.confidence ?? 0.5,
           });
           const newGap = gaps[gaps.length - 1];
           if (newGap) {
@@ -157,7 +157,7 @@ class PromptPatternAnalyzer {
     const keywordFrequency = new Map<string, number>();
 
     for (const prompt of promptData) {
-      const keywords = this.extractKeywords(prompt.userRequest);
+      const keywords = this.extractKeywords(prompt.userRequest || '');
 
       for (const keyword of keywords) {
         keywordFrequency.set(keyword, (keywordFrequency.get(keyword) || 0) + 1);
@@ -170,7 +170,7 @@ class PromptPatternAnalyzer {
       .slice(0, 50);
 
     for (const prompt of promptData) {
-      const keywords = this.extractKeywords(prompt.userRequest);
+      const keywords = this.extractKeywords(prompt.userRequest || '');
       const significantKeywordsInPrompt = keywords.filter((kw) =>
         significantKeywords.some(([sigKw]) => kw === sigKw),
       );
@@ -186,7 +186,7 @@ class PromptPatternAnalyzer {
         const existing = patternMap.get(patternKey)!;
         existing.frequency++;
         existing.avgConfidence =
-          (existing.avgConfidence * (existing.frequency - 1) + prompt.confidence) /
+          (existing.avgConfidence * (existing.frequency - 1) + (prompt.confidence || 0.5)) /
           existing.frequency;
 
         if (outcome.success !== undefined) {
@@ -197,18 +197,18 @@ class PromptPatternAnalyzer {
         }
 
         if (existing.sampleRequests.length < 3) {
-          existing.sampleRequests.push(prompt.userRequest);
+          existing.sampleRequests.push(prompt.userRequest || '');
         }
       } else {
         patternMap.set(patternKey, {
           patternId: this.generatePatternId(significantKeywordsInPrompt),
           keywords: significantKeywordsInPrompt,
-          sampleRequests: [prompt.userRequest],
-          suggestedAgent: outcome.routedAgent,
-          suggestedSkill: outcome.routedSkill,
-          confidence: prompt.confidence,
+          sampleRequests: [prompt.userRequest || ''],
+          suggestedAgent: outcome.routedAgent || 'enforcer',
+          suggestedSkill: outcome.routedSkill || 'code-review',
+          confidence: prompt.confidence || 0.5,
           frequency: 1,
-          avgConfidence: prompt.confidence,
+          avgConfidence: prompt.confidence || 0.5,
           successRate: outcome.success !== undefined ? (outcome.success ? 1 : 0) : 0,
         });
       }
@@ -235,7 +235,7 @@ class PromptPatternAnalyzer {
 
     for (const prompt of promptData) {
       if (!prompt.templatePrompt || prompt.templatePrompt.length === 0) {
-        const keywords = this.extractKeywords(prompt.userRequest);
+        const keywords = this.extractKeywords(prompt.userRequest || '');
 
         for (const keyword of keywords) {
           if (keyword.length > 3) {
@@ -244,7 +244,7 @@ class PromptPatternAnalyzer {
             if (!keywordToAgent.has(keyword)) {
               keywordToAgent.set(keyword, new Set());
             }
-            keywordToAgent.get(keyword)!.add(prompt.routedAgent);
+            keywordToAgent.get(keyword)!.add(prompt.routedAgent || 'enforcer');
           }
         }
       }
@@ -273,7 +273,7 @@ class PromptPatternAnalyzer {
     >();
 
     for (const prompt of promptData) {
-      const agent = prompt.routedAgent;
+      const agent = prompt.routedAgent || 'enforcer';
       const hasTemplate = prompt.templatePrompt && prompt.templatePrompt.length > 0;
 
       if (!coverage.has(agent)) {
@@ -428,7 +428,7 @@ class PromptPatternAnalyzer {
       }
     }
 
-    const hasHighConfidence = prompt.confidence >= this.confidenceThreshold;
+    const hasHighConfidence = (prompt.confidence || 0) >= this.confidenceThreshold;
     const hasSuccess = outcome?.success === true;
 
     if (hasHighConfidence && hasSuccess) {

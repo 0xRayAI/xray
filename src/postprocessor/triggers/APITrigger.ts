@@ -59,27 +59,30 @@ export class APITrigger {
   }
 
   private setupAPIEndpoints(): void {
-    const { path, apiKey } = this.config;
+    const { path: apiPath, apiKey } = this.config;
+    const endpointPath = apiPath || '/api/post-process';
 
     // Rate limiting
     this.app.use(express.json({ limit: '10mb' }));
 
     // Middleware: API key authentication (if configured)
     if (apiKey) {
-      this.app.use((req, res, next) => {
-        const providedKey = req.headers['x-api-key'];
+      this.app.use((req, res, next): void => {
+        const providedKey = req.headers['x-api-key'] as string;
         if (!providedKey) {
-          return res.status(401).json({ error: 'API key required' });
+          res.status(401).json({ error: 'API key required' });
+          return;
         }
         if (providedKey !== apiKey) {
-          return res.status(403).json({ error: 'Invalid API key' });
+          res.status(403).json({ error: 'Invalid API key' });
+          return;
         }
         next();
       });
     }
 
     // POST endpoint to trigger PostProcessor
-    this.app.post(path, async (req, res) => {
+    this.app.post(endpointPath, async (req, res): Promise<void> => {
       try {
         const body = req.body as APIRequest;
 
@@ -131,7 +134,7 @@ export class APITrigger {
     });
 
     // GET endpoint for status
-    this.app.get(path + '/status', (req, res) => {
+    this.app.get(endpointPath + '/status', (req, res): void => {
       res.json({
         status: 'operational',
         triggerType: 'api',

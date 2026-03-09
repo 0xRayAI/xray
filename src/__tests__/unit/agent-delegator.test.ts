@@ -1000,9 +1000,9 @@ describe("AgentDelegator", () => {
         "optimize application performance",
       );
 
-      expect(result.operation).toBe("ui design");
-      expect(result.suggestedAgent).toBe("frontend-ui-ux-engineer");
-      expect(result.suggestedSkill).toBe("ui-ux-design");
+      // "optimize application performance" should route to mobile-developer
+      expect(result.suggestedAgent).toBe("mobile-developer");
+      expect(result.suggestedSkill).toBe("performance-optimization");
       expect(result.confidence).toBeGreaterThan(0.9);
     });
 

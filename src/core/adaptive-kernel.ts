@@ -150,7 +150,7 @@ export class AdaptiveKernelAnalyzer {
 
       // Auto-apply high-confidence updates
       const autoApply = p9Result.suggestedUpdates.filter(
-        (u: PatternUpdate) => u.confidence >= this.adaptiveConfig.autoApplyThreshold && u.validated
+        (u: PatternUpdate) => (u.confidence || 0) >= this.adaptiveConfig.autoApplyThreshold && u.validated
       );
 
       if (autoApply.length > 0) {

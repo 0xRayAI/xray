@@ -185,9 +185,13 @@ export class PatternLearningEngine {
         updates.push({
           updateType: 'modify',
           patternId,
-          changes: {
-            confidence: newConfidence
-          },
+          changes: [
+            { type: 'CONFIDENCE', oldValue: metric.avgConfidence, newValue: newConfidence }
+          ],
+          type: 'CONFIDENCE',
+          oldValue: metric.avgConfidence,
+          newValue: newConfidence,
+          timestamp: new Date(),
           reason: `Performance-based confidence adjustment: ${metric.successRate.toFixed(2)} success rate`,
           confidence: Math.min(1, metric.totalUsages / 20),
           validated: false
@@ -219,7 +223,13 @@ export class PatternLearningEngine {
         removals.push({
           updateType: 'remove',
           patternId,
-          changes: {},
+          changes: [
+            { type: 'REMOVAL', oldValue: patternId, newValue: 'REMOVED' }
+          ],
+          type: 'FREQUENCY',
+          oldValue: patternId,
+          newValue: 'REMOVED',
+          timestamp: new Date(),
           reason: `Low success rate: ${(metric.successRate * 100).toFixed(1)}% over ${metric.totalUsages} usages`,
           confidence: Math.min(1, metric.totalUsages / 30),
           validated: false
@@ -242,19 +252,25 @@ export class PatternLearningEngine {
     const thresholds = patternPerformanceTracker.calculateAdaptiveThresholds();
 
     // Generate updates for agents with enough data
-    for (const [agent, threshold] of thresholds.perAgent.entries()) {
-      const metric = metrics.get(agent);
-      if (metric && metric.totalUsages >= 10) {
-        updates.push({
-          updateType: 'modify',
-          patternId: `threshold:${agent}`,
-          changes: {
-            threshold
-          },
-          reason: `Adaptive threshold calibration based on ${metric.totalUsages} historical usages`,
-          confidence: Math.min(1, metric.totalUsages / 20),
-          validated: false
-        });
+    if (thresholds.perAgent) {
+      for (const [agent, threshold] of Object.entries(thresholds.perAgent)) {
+        const metric = metrics.get(agent);
+        if (metric && metric.totalUsages >= 10) {
+          updates.push({
+            updateType: 'modify',
+            patternId: `threshold:${agent}`,
+            changes: [
+              { type: 'TRIGGER', oldValue: agent, newValue: JSON.stringify(threshold) }
+            ],
+            type: 'TRIGGER',
+            oldValue: agent,
+            newValue: JSON.stringify(threshold),
+            timestamp: new Date(),
+            reason: `Adaptive threshold calibration based on ${metric.totalUsages} historical usages`,
+            confidence: Math.min(1, metric.totalUsages / 20),
+            validated: false
+          });
+        }
       }
     }
 
@@ -286,12 +302,13 @@ export class PatternLearningEngine {
       newPatterns.push({
         updateType: 'add',
         patternId: `emerging_${emergent.pattern.substring(0, 20)}`,
-        changes: {
-          keywords,
-          skill: emergent.suggestedAction.includes('testing') ? 'testing-strategy' : 'code-review',
-          agent: emergent.suggestedAction.includes('testing') ? 'testing-lead' : 'enforcer',
-          confidence: emergent.confidence
-        },
+        changes: [
+          { type: 'ACTION', oldValue: '', newValue: emergent.suggestedAction || 'monitor' }
+        ],
+        type: 'ACTION',
+        oldValue: '',
+        newValue: JSON.stringify({ keywords, confidence: emergent.confidence }),
+        timestamp: new Date(),
         reason: `Emerging pattern with ${emergent.frequency} occurrences and ${(emergent.confidence * 100).toFixed(0)}% confidence`,
         confidence: emergent.confidence,
         validated: false

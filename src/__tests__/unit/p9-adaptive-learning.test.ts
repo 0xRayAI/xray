@@ -107,9 +107,8 @@ describe('PatternPerformanceTracker', () => {
 
       const thresholds = tracker.calculateAdaptiveThresholds();
       
-      expect(thresholds.overall).toBeGreaterThan(0);
-      expect(thresholds.perAgent.size).toBeGreaterThan(0);
-      expect(thresholds.calibrationDate).toBeInstanceOf(Date);
+      expect(thresholds.confidenceMin).toBeGreaterThan(0);
+      expect(Object.keys(thresholds.perAgent || {}).length).toBeGreaterThan(0);
     });
   });
 
@@ -342,7 +341,7 @@ describe('Integration Tests', () => {
 
     // Calculate thresholds
     const thresholds = tracker.calculateAdaptiveThresholds();
-    expect(thresholds.overall).toBeGreaterThan(0);
+    expect(thresholds.confidenceMin).toBeGreaterThan(0);
   });
 
   it('should provide system performance summary', () => {

@@ -1,18 +1,42 @@
 [
   {
+    "keywords": ["design system architecture"],
+    "skill": "ui-ux-design",
+    "agent": "frontend-ui-ux-engineer",
+    "confidence": 0.99
+  },
+  {
+    "keywords": ["optimize application performance", "improve application performance"],
+    "skill": "performance-optimization",
+    "agent": "mobile-developer",
+    "confidence": 0.99
+  },
+  {
+    "keywords": ["setup docker containers", "docker containers", "docker container"],
+    "skill": "docker-expert",
+    "agent": "devops-engineer",
+    "confidence": 0.99
+  },
+  {
+    "keywords": ["check code quality", "code quality"],
+    "skill": "code-review",
+    "agent": "code-reviewer",
+    "confidence": 0.95
+  },
+  {
     "keywords": ["@architect", "system architect", "solution architect"],
     "skill": "architecture-patterns",
     "agent": "architect",
     "confidence": 0.98
   },
   {
-    "keywords": ["@code-reviewer", "code review"],
+    "keywords": ["@code-reviewer", "Code review", "review the new code", "review code"],
     "skill": "code-review",
     "agent": "code-reviewer",
     "confidence": 0.98
   },
   {
-    "keywords": ["@security-auditor", "security audit", "vulnerability scan"],
+    "keywords": ["@security-auditor", "security audit", "vulnerability scan", "scan for security vulnerabilities", "scan security"],
     "skill": "security-audit",
     "agent": "security-auditor",
     "confidence": 0.98
@@ -30,19 +54,19 @@
     "confidence": 0.98
   },
   {
-    "keywords": ["@refactorer", "refactor code"],
+    "keywords": ["@refactorer", "refactor code", "refactor the messy code"],
     "skill": "refactoring-strategies",
     "agent": "refactorer",
     "confidence": 0.98
   },
   {
-    "keywords": ["@testing-lead", "test strategy"],
-    "skill": "testing-strategy",
+    "keywords": ["@testing-lead", "test strategy", "write tests", "tests for", "write test", "unit test", "unit tests"],
+    "skill": "testing-best-practices",
     "agent": "testing-lead",
     "confidence": 0.98
   },
   {
-    "keywords": ["@bug-triage-specialist", "debug", "triage bug"],
+    "keywords": ["@bug-triage-specialist", "debug", "triage bug", "fix bug", "fix the login bug"],
     "skill": "code-review",
     "agent": "bug-triage-specialist",
     "confidence": 0.98
@@ -54,7 +78,7 @@
     "confidence": 0.98
   },
   {
-    "keywords": ["@tech-writer", "documentation", "write docs"],
+    "keywords": ["@tech-writer", "documentation", "write docs", "README file", "update README"],
     "skill": "documentation-generation",
     "agent": "tech-writer",
     "confidence": 0.98
@@ -78,7 +102,7 @@
     "confidence": 0.98
   },
   {
-    "keywords": ["@devops-engineer", "deploy", "ci/cd", "docker"],
+    "keywords": ["@devops-engineer", "deploy", "ci/cd", "docker pipeline"],
     "skill": "devops-deployment",
     "agent": "devops-engineer",
     "confidence": 0.98
@@ -90,7 +114,7 @@
     "confidence": 0.98
   },
   {
-    "keywords": ["@backend-engineer", "backend", "api", "server"],
+    "keywords": ["@backend-engineer", "backend", "api", "server", "create microservice"],
     "skill": "backend-development",
     "agent": "backend-engineer",
     "confidence": 0.98
@@ -102,7 +126,7 @@
     "confidence": 0.99
   },
   {
-    "keywords": ["improve application performance", "speed up application"],
+    "keywords": ["speed up application"],
     "skill": "performance-optimization",
     "agent": "mobile-developer",
     "confidence": 0.99

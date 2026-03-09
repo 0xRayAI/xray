@@ -195,9 +195,19 @@ export class EmergingPatternDetector {
 
       // Create emergent pattern
       const emergentPattern: EmergentPattern = {
+        id: `emergent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         pattern: cluster.keywords.join(' | '),
+        trigger: cluster.keywords,
+        action: successRate < 0.7
+          ? 'Improve routing for this pattern'
+          : successRate > 0.9
+            ? 'Add as new keyword mapping'
+            : 'Monitor pattern performance',
         confidence: cluster.confidence,
+        category: 'PREVENTION',
         frequency: cluster.frequency,
+        lastDetected: new Date(),
+        effectiveness: successRate,
         firstSeen: clusterOutcomes[0]?.success ? new Date() : new Date(),
         lastSeen: new Date(),
         evidence: cluster.patterns.slice(0, 3),

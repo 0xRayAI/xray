@@ -244,8 +244,8 @@ class RoutingPerformanceAnalyzer {
           successes: 0,
           failures: 0,
           confidenceSum: 0,
-          agent: decision.selectedAgent,
-          skill: decision.selectedSkill,
+          agent: decision.selectedAgent || 'enforcer',
+          skill: decision.selectedSkill || 'code-review',
           lastUsed: decision.executionTime ? new Date() : new Date(),
         });
       }
@@ -331,7 +331,7 @@ class RoutingPerformanceAnalyzer {
       outcomes.length > 0 ? successful / outcomes.length : 0;
 
     const promptData = routingOutcomeTracker.getPromptData();
-    const totalConfidence = promptData.reduce((sum, p) => sum + p.confidence, 0);
+    const totalConfidence = promptData.reduce((sum, p) => sum + (p.confidence || 0), 0);
     const avgConfidence =
       promptData.length > 0 ? totalConfidence / promptData.length : 0;
 

@@ -230,10 +230,7 @@ export class PatternPerformanceTracker {
   /**
    * Calculate adaptive confidence thresholds based on performance
    */
-  calculateAdaptiveThresholds(): AdaptiveThresholds {
-    const perAgent: Map<string, number> = new Map();
-    const perSkill: Map<string, number> = new Map();
-
+   calculateAdaptiveThresholds(): AdaptiveThresholds {
     // Group metrics by agent/skill and calculate thresholds
     const agentMetrics = new Map<string, { successRates: number[]; confidences: number[] }>();
     const skillMetrics = new Map<string, { successRates: number[]; confidences: number[] }>();
@@ -257,6 +254,8 @@ export class PatternPerformanceTracker {
       skillMetrics.get(skill)!.confidences.push(metrics.avgConfidence);
     }
 
+    const perAgent: Record<string, { confidenceMin: number; confidenceMax: number; frequencyMin: number; frequencyMax: number; effectivenessMin: number; effectivenessMax: number }> = {};
+
     // Calculate thresholds for each agent
     for (const [agent, data] of agentMetrics.entries()) {
       if (data.successRates.length > 0) {
@@ -265,18 +264,14 @@ export class PatternPerformanceTracker {
 
         // Threshold is based on performance: higher performance = lower threshold needed
         const threshold = Math.max(0.5, Math.min(0.9, avgSuccessRate * 0.8 + avgConfidence * 0.2));
-        perAgent.set(agent, threshold);
-      }
-    }
-
-    // Calculate thresholds for each skill
-    for (const [skill, data] of skillMetrics.entries()) {
-      if (data.successRates.length > 0) {
-        const avgSuccessRate = data.successRates.reduce((a, b) => a + b, 0) / data.successRates.length;
-        const avgConfidence = data.confidences.reduce((a, b) => a + b, 0) / data.confidences.length;
-
-        const threshold = Math.max(0.5, Math.min(0.9, avgSuccessRate * 0.8 + avgConfidence * 0.2));
-        perSkill.set(skill, threshold);
+        perAgent[agent] = {
+          confidenceMin: threshold * 0.8,
+          confidenceMax: Math.min(0.99, threshold * 1.2),
+          frequencyMin: 5,
+          frequencyMax: 100,
+          effectivenessMin: 0.5,
+          effectivenessMax: 1.0
+        };
       }
     }
 
@@ -290,9 +285,14 @@ export class PatternPerformanceTracker {
 
     return {
       perAgent,
-      perSkill,
-      overall,
-      calibrationDate: new Date()
+      confidenceMin: overall * 0.8,
+      confidenceMax: Math.min(0.99, overall * 1.2),
+      frequencyMin: 5,
+      frequencyMax: 100,
+      effectivenessMin: 0.5,
+      effectivenessMax: 1.0,
+      learningRate: 0.1,
+      adaptationWindow: 60
     };
   }
 

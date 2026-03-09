@@ -206,7 +206,7 @@ export class FrameworkUsageLogger {
       action,
       status,
       agent: "orchestrator",
-      sessionId,
+      ...(sessionId && { sessionId }),
       jobId: actualJobId,
       details,
     };

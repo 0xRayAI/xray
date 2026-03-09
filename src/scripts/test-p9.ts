@@ -103,7 +103,7 @@ async function runTests(): Promise<void> {
     
     // Adaptive thresholds
     const thresholds = patternPerformanceTracker.calculateAdaptiveThresholds();
-    logTest("  Calculate adaptive thresholds", thresholds.overall > 0);
+    logTest("  Calculate adaptive thresholds", thresholds.confidenceMin > 0);
     
     // System summary
     const summary = patternPerformanceTracker.getSystemPerformanceSummary();
@@ -224,12 +224,12 @@ async function runTests(): Promise<void> {
     
     // Test adaptive thresholds
     const thresholds = taskSkillRouter.getAdaptiveThresholds();
-    logTest("  Get adaptive thresholds", thresholds === null || thresholds.overall >= 0);
+    logTest("  Get adaptive thresholds", thresholds !== null && thresholds.overall !== undefined);
     
     // Test trigger P9 learning
-    const learningResult = taskSkillRouter.triggerP9Learning();
+    const learningResult = await taskSkillRouter.triggerP9Learning();
     logTest("  Trigger P9 learning", learningResult !== undefined);
-    logTest("  Learning recommendations", Array.isArray(learningResult.recommendations));
+    logTest("  Learning adaptations", learningResult.adaptations !== undefined);
     
     passed += 7;
   } catch (error) {
