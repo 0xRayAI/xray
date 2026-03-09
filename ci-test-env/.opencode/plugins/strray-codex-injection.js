@@ -150,7 +150,7 @@ function getFrameworkIdentity() {
 ╠══════════════════════════════════════════════════════════════╣
 ║  You are running under StringRay AI Orchestration Framework  ║
 ║                                                              ║
-║  🔹 9 Specialized Agents: enforcer, architect, orchestrator ║
+║  🔹 27 Specialized Agents: enforcer, architect, orchestrator ║
 ║     bug-triage-specialist, code-reviewer, security-auditor  ║
 ║     refactorer, testing-lead, researcher                    ║
 ║                                                              ║

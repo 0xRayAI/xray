@@ -2,6 +2,32 @@
   "name": "strray-ai",
   "version": "1.7.5",
   "description": "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/htafolla/stringray.git"
+  },
+  "homepage": "https://github.com/htafolla/stringray#readme",
+  "bugs": {
+    "url": "https://github.com/htafolla/stringray/issues"
+  },
+  "keywords": [
+    "ai",
+    "claude",
+    "opencode",
+    "mcp",
+    "agent",
+    "orchestration",
+    "codex",
+    "error-prevention",
+    "seo",
+    "multi-agent",
+    "framework",
+    "development",
+    "automation",
+    "testing",
+    "security"
+  ],
   "type": "module",
   "main": "./dist/plugin/strray-codex-injection.js",
   "types": "./dist/plugin/strray-codex-injection.d.ts",
@@ -80,10 +106,12 @@
     "dist/",
     "scripts/node/",
     "scripts/mjs/",
+    "scripts/integrations/",
     ".opencode/agents/",
     ".opencode/commands/",
     ".opencode/hooks/",
     ".opencode/skills/",
+    ".opencode/integrations/",
     ".opencode/strray/",
     ".opencode/workflows/",
     ".opencode/state/",
@@ -97,7 +125,9 @@
     "README.md",
     "AGENTS.md",
     "AGENTS-consumer.md",
-    "LICENSE"
+    "LICENSE",
+    "LICENSE.claude-seo",
+    "LICENSE.antigravity"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",

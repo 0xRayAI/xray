@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # StrRay Framework MCP Server Registration Script
-# registers all 18 MCP servers with OpenCode skill registry
+# registers all 14 MCP servers with OpenCode skill registry
 
 set -e
 

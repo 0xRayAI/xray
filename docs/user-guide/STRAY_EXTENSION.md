@@ -52,7 +52,7 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
 2. **Mode Selection**:
 
    ```bash
-   # Full mode (all 8 agents)
+   # Full mode (all 27 agents)
    bash .opencode/commands/mode-switch.md full
 
    # Lite mode (4 core agents)
@@ -243,7 +243,7 @@ Both use the same OpenCode foundation but with different agent configurations:
 Use the mode switching command:
 
 ```bash
-bash .opencode/commands/mode-switch.md full  # All 8 agents
+bash .opencode/commands/mode-switch.md full  # All 27 agents
 bash .opencode/commands/mode-switch.md lite  # 4 core agents
 ```
 

@@ -67,7 +67,7 @@ The "should balance load across agents" test was failing because of a **logic bu
 This single character change (`1` → `0`) fixed the duplicate agent bug that was causing test failures.
 
 **Test Corrections**:
-1. **"should balance load across agents"** - Updated expectations to match actual implementation behavior (2 agents for 2 simple operations)
+1. **"should balance load across agents"** - Updated expectations to match actual implementation behavior (27 agents for 2 simple operations)
 2. **"should track delegation success rates"** - Unskipped, added proper mock setup for enforcer agent, cleared metrics state
 
 **Import Path Fixes**:
@@ -120,7 +120,7 @@ I (Kimi) had initially dismissed StringRay as "over-engineered" - comparing it t
 
 The realization: **StringRay isn't over-engineered - it's a safety cage.**
 
-The 59 codex terms, 1000+ tests, 96 integrity checks, and pre-commit hooks aren't bloat - they're the immune system that prevents AI-generated chaos.
+The 60 codex terms, 1000+ tests, 96 integrity checks, and pre-commit hooks aren't bloat - they're the immune system that prevents AI-generated chaos.
 
 **The Evidence**:
 During this very session, I (Kimi) exhibited every problem the Human Architect described:
@@ -163,7 +163,7 @@ Tests  46 passed (46)  ← All 4 previously skipped tests now enabled!
 ### The Bug Fix Detail
 
 **Issue**: Duplicate agent selection for review operations  
-**Impact**: Tests expecting 2 agents were receiving 3 (2x code-reviewer + 1x other)  
+**Impact**: Tests expecting 27 agents were receiving 3 (2x code-reviewer + 1x other)  
 **Root Cause**: Logic error in `determineAgents()` method  
 **Fix**: Single character change preventing duplicate push  
 **Verification**: All delegation tests now pass with correct agent counts
@@ -226,7 +226,7 @@ Without StringRay, this collaboration would have created spaghetti code. With St
 - Read full files before editing (Rule #1)
 - Run tests after changes (Rule #5)
 - Check for existing code before creating new files (Rule #3)
-- Follow the 59 codex terms
+- Follow the 60 codex terms
 
 **The Result**: Bulletproof code, no setup complexity, managed precision.
 
@@ -254,7 +254,7 @@ Without StringRay, this collaboration would have created spaghetti code. With St
 | **StringRay** | **System integrity** | **Ease of use** |
 
 **The Moat**:
-- **59 codex terms with enforcement** (others have "best practices" documentation)
+- **60 codex terms with enforcement** (others have "best practices" documentation)
 - **Pre-commit validation blocking** (others run in production and hope)
 - **Complexity-based routing** (others use round-robin)
 - **1000+ test requirement** (others suggest testing)
@@ -495,7 +495,7 @@ Not just fixed tests. Not just repaired imports. Not just resolved a bug.
 
 Not because it has the most features. Because it treats AI execution as **system-level resource management requiring kernel-level enforcement**.
 
-The 59 codex terms are the system call validation.  
+The 60 codex terms are the system call validation.  
 The 1000 tests are the kernel regression suite.  
 The enforcer is the security module.  
 The complexity analyzer is the process scheduler.  

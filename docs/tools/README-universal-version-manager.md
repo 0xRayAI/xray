@@ -17,12 +17,12 @@ The Universal Version Manager (`scripts/universal-version-manager.js`) maintains
 ```javascript
 const OFFICIAL_VERSIONS = {
   framework: {
-    version: "1.7.1",
+    version: "1.7.5",
     displayName: "StringRay AI v1.3.4",
     lastUpdated: "2026-01-15",
   },
   codex: {
-    version: "v1.1.1",
+    version: "v1.3.0",
     termsCount: 50,
     lastUpdated: "2026-01-15",
   },

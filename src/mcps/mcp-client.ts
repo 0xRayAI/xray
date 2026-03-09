@@ -713,7 +713,7 @@ export class MCPClient {
                 type: "text",
                 text: `**StringRay Framework Capabilities:**
 
-**8 Specialized Agents:**
+**27 Specialized Agents:**
 - enforcer: Codex compliance & error prevention
 - architect: System design & technical decisions
 - orchestrator: Multi-agent workflow coordination
@@ -939,7 +939,7 @@ I'm here to help with architectural decisions, technical strategy, and complex p
           protocolVersion: "2024-11-05",
           capabilities: {},
           clientInfo: {
-            name: "strray-mcp-client", version: "1.7.1",
+            name: "strray-mcp-client", version: "1.7.5",
           },
         },
       };

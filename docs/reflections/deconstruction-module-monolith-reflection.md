@@ -55,7 +55,7 @@ The user insight reveals that our current architecture is a **construct** - an a
 StringRay AI v1.3.4
 ├── Core Monolith
 │   ├── Context Loading (Singleton)
-│   ├── Agent Orchestration (8 agents)
+│   ├── Agent Orchestration (27 agents)
 │   ├── Codex Integration (Embedded)
 │   └── MCP Servers (28 integrated)
 ├── Testing Infrastructure

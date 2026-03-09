@@ -1,9 +1,9 @@
-# - Complete Agent Context & Universal Development Codex v1.1.1
+# - Complete Agent Context & Universal Development Codex v1.3.0
 
-**Framework Version**: 1.3.4
-**Codex Version**: 1.3.4
-**Last Updated**: 2026-01-16
-**Terms Count**: 55 mandatory terms
+**Framework Version**: 1.7.5
+**Codex Version**: 1.3.0
+**Last Updated**: 2026-02-18
+**Terms Count**: 60 mandatory terms
 **Purpose**: Enterprise AI orchestration with systematic error prevention and production-ready development
 
 ## 🚀 StrRay Framework Overview
@@ -69,8 +69,8 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: 14 MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 27 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -135,7 +135,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 
 **Key Files:**
 
-- `codex.json` - 45 detailed codex terms with enforcement levels
+- `codex.json` - 60 detailed codex terms with enforcement levels
 - `agents_template.md` - Master agent architecture template
 - `context-loader.ts` - Context loading utilities
 
@@ -206,8 +206,8 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: 14 MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 27 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -223,7 +223,7 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 
 **Purpose**: Systematic error prevention and production-ready development framework
 
-The codex defines 45 mandatory terms that guide AI-assisted development under the StrRay Framework. Every agent loads this codex during initialization and validates all actions against these terms to achieve 99.6% error prevention.
+The codex defines 60 mandatory terms that guide AI-assisted development under the StrRay Framework. Every agent loads this codex during initialization and validates all actions against these terms to achieve 99.6% error prevention.
 
 ## Critical Codex Terms for Enforcement
 
@@ -613,6 +613,133 @@ Test execution must be optimized for speed and reliability:
 - Implement chunked output processing for large test results
 - Stop execution if 5+ tests fail (triage threshold)
 - Use sub-agents for handling large test outputs (>30k characters)
+
+#### 46. Progressive Error Prevention
+
+Implement systematic error prevention throughout the development process:
+
+- Validate inputs at all boundaries
+- Implement circuit breaker patterns
+- Add redundancy for critical operations
+- Monitor for failure conditions
+- Proactive rather than reactive error handling
+
+#### 47. Defensive Programming
+
+Write code that anticipates and handles edge cases:
+
+- Validate all function inputs
+- Check for null/undefined values
+- Handle unexpected state gracefully
+- Add assertions for invariants
+- Fail fast with clear error messages
+
+#### 48. Regression Prevention
+
+All changes must preserve existing functionality:
+
+- Run full test suite before completion
+- Verify no functionality is broken
+- Validate integration points
+- Document any intentional behavior changes
+
+#### 49. Comprehensive Validation
+
+Validate all changes against multiple criteria:
+
+- Syntax validation
+- Type safety checks
+- Security scanning
+- No single-point validation failures
+
+#### 50. Self-Healing Validation
+
+Automated systems must detect and recover from failures:
+
+- Self-correction mechanisms for common errors
+- Automatic retry with backoff
+- Circuit breaker patterns
+- Fallback strategies
+
+#### 51. Graceful Degradation
+
+Systems must handle failures gracefully:
+
+- Provide meaningful error messages
+- Fallback behavior when primary path fails
+- Maintain partial functionality during failures
+- Log errors without crashing
+
+#### 52. Agent Spawn Governance
+
+All agent spawning must go through the AgentSpawnGovernor:
+
+- No unauthorized agent creation
+- All spawns must be authorized, tracked, and monitored
+- Rate limits must be enforced
+- Concurrent limits must be enforced
+
+#### 53. Subagent Spawning Prevention
+
+Subagents cannot spawn other subagents:
+
+- Only the main orchestrator may spawn agents
+- Prevents infinite loops and resource exhaustion
+- Violations result in immediate termination
+
+#### 54. Concurrent Agent Limits
+
+Maximum concurrent agents must be limited:
+
+- Default limit: 8 total concurrent
+- Per-agent type limits enforced
+- Exceeding limits requires authorization
+
+#### 55. Emergency Memory Cleanup
+
+Automatic cleanup when memory threshold exceeded:
+
+- Emergency threshold: 80MB
+- Trigger cleanup when exceeded
+- Log all cleanup actions
+
+#### 56. Infinite Spawn Pattern Detection
+
+Detect and prevent recursive spawning patterns:
+
+- Monitor spawn history
+- Block patterns that indicate infinite recursion
+- Log all blocked attempts
+
+#### 57. Spawn Rate Limiting
+
+Limit on how many agents can spawn per time window:
+
+- Prevents rapid spawn accumulation
+- Requires cooldown period between spawns
+
+#### 58. PostProcessor Validation Chain
+
+All code changes must pass through PostProcessor validation:
+
+- Pre-deployment validation required
+- Security scanning required
+- Regression detection required
+
+#### 59. Multi-Agent Coordination
+
+Complex tasks require multi-agent coordination through orchestrator:
+
+- Direct agent-to-agent communication prohibited
+- All coordination through coordinator
+
+#### 60. Regression Analysis Integration
+
+Changes must be analyzed for regression potential:
+
+- Cascade pattern detection
+- Code removal attempt detection
+- AI degradation pattern detection
 
 ## Interweaves (Cross-Cutting Concerns)
 
@@ -1228,8 +1355,8 @@ Framework initializes in strict dependency order:
 
 ### Implemented Features ✅
 
-- **8 Specialized Agents**: All configured with proper tools and permissions
-- **Codex Compliance**: 55-term validation with zero-tolerance blocking
+- **27 Specialized Agents**: All configured with proper tools and permissions
+- **Codex Compliance**: 60-term validation with zero-tolerance blocking
 - **Hybrid Architecture**: TypeScript/Python integration operational
 - **Boot Orchestration**: Dependency-ordered initialization working
 - **State Management**: Session persistence and cross-session coordination

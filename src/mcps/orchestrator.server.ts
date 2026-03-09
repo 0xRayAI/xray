@@ -30,7 +30,7 @@ class StrRayOrchestratorServer {
     
     this.server = new Server(
       {
-        name: "orchestrator", version: "1.7.1",
+        name: "orchestrator", version: "1.7.5",
       },
       {
         capabilities: {

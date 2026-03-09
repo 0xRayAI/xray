@@ -48,7 +48,7 @@ This quantitative approach to task delegation ensures optimal resource utilizati
 
 ## Agent Ecosystem
 
-### The 8 Specialized Agents
+### The 27 Specialized Agents
 
 StringRay's agent architecture represents a new paradigm in AI-assisted development:
 

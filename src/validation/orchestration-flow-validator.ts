@@ -222,7 +222,7 @@ class OrchestrationFlowValidator {
       // Check for parallel execution where possible
       const monitoringData =
         enhancedMultiAgentOrchestrator.getMonitoringInterface();
-      const parallelExecution = Object.keys(monitoringData).length >= 2; // At least 2 agents ran
+      const parallelExecution = Object.keys(monitoringData).length >= 2; // At least 27 agents ran
 
       validationSteps.push({
         step: "Parallel Execution Validation",

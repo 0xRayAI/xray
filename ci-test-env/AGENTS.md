@@ -44,7 +44,7 @@ npx strray-ai calibrate    # Calibrate complexity
 
 ## Codex
 
-StringRay enforces the Universal Development Codex (59 terms) for systematic error prevention. See [.opencode/strray/codex.json](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) for full reference.
+StringRay enforces the Universal Development Codex (60 terms) for systematic error prevention. See [.opencode/strray/codex.json](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) for full reference.
 
 ## Documentation
 
@@ -53,4 +53,4 @@ StringRay enforces the Universal Development Codex (59 terms) for systematic err
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.6.1 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.7.5 | [GitHub](https://github.com/htafolla/stringray)

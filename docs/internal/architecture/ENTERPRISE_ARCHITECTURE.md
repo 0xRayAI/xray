@@ -34,7 +34,7 @@ The StrRay Framework implements an enterprise-grade AI agent coordination platfo
 
 ### 1. Universal Development Codex
 
-All framework operations are governed by 45 mandatory codex terms divided into:
+All framework operations are governed by 60 mandatory codex terms divided into:
 
 - **Core Terms (1-10)**: Progressive prod-ready code, surgical fixes, single source of truth
 - **Extended Terms (11-20)**: Type safety first, error boundaries, separation of concerns
@@ -464,14 +464,14 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.7.1"
+    "version": "1.7.5"
   }
 }
 ```
 
 ### MCP Server Integration
 
-The framework exposes 9 MCP servers for AI integration:
+The framework exposes 14 MCP servers for AI integration:
 
 1. **Agent Servers**: Individual agent capabilities
 2. **Knowledge Servers**: Project analysis and patterns
@@ -573,7 +573,7 @@ query GetSystemStatus {
 
 #### Automated Compliance
 
-- **Codex Enforcement**: Runtime validation of 45 codex terms
+- **Codex Enforcement**: Runtime validation of 60 codex terms
 - **Architecture Reviews**: Automated architectural compliance checks
 - **Dependency Scanning**: Continuous vulnerability assessment
 

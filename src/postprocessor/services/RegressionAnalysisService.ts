@@ -13,6 +13,8 @@ import { getKernel } from '../../core/kernel-patterns.js';
 import { createAgentDelegator } from '../../delegation/agent-delegator.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { PostProcessorContext } from '../types.js';
+import { StringRayStateManager } from '../../state/state-manager.js';
+import { strRayConfigLoader } from '../../core/config-loader.js';
 
 export interface AnalysisDecision {
   required: boolean;
@@ -48,21 +50,11 @@ export class RegressionAnalysisService {
     }
     
     // Check for cascade patterns that require analysis
-    if (kernelAnalysis.patterns && kernelAnalysis.patterns.length > 0) {
+    const cascadePatterns = kernelAnalysis.cascadePatterns;
+    if (cascadePatterns && cascadePatterns.length > 0) {
       return {
         required: true,
-        reason: `Cascade pattern detected: ${kernelAnalysis.patterns[0].pattern}`,
-        agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
-        depth: 'comprehensive',
-        confidence: 0.9
-      };
-    }
-    
-    // Check for cascade patterns that require analysis
-    if (kernelAnalysis.patterns && kernelAnalysis.patterns.length > 0) {
-      return {
-        required: true,
-        reason: `Cascade pattern detected: ${kernelAnalysis.patterns[0].pattern}`,
+        reason: `Cascade pattern detected: ${cascadePatterns[0].pattern}`,
         agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
         depth: 'comprehensive',
         confidence: 0.9
@@ -81,18 +73,15 @@ export class RegressionAnalysisService {
     }
     
     // Check for AI degradation patterns
-    if (kernelAnalysis.patterns && kernelAnalysis.patterns.length > 0) {
-      const aiDegradationPattern = kernelAnalysis.patterns.find(p => p.id === 'A10' || p.id === 'A15');
-      
-      if (aiDegradationPattern) {
-        return {
-          required: true,
-          reason: 'AI degradation pattern detected - quality check required',
-          agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
-          depth: 'comprehensive',
-          confidence: 0.9
-        };
-      }
+    const pattern = kernelAnalysis.pattern;
+    if (pattern && (pattern.id === 'A10' || pattern.id === 'A15')) {
+      return {
+        required: true,
+        reason: 'AI degradation pattern detected - quality check required',
+        agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
+        depth: 'comprehensive',
+        confidence: 0.9
+      };
     }
     
     // No analysis required
@@ -133,7 +122,8 @@ export class RegressionAnalysisService {
     };
 
     // Create agent delegator for this operation
-    const agentDelegator = createAgentDelegator();
+    const stateManager = new StringRayStateManager();
+    const agentDelegator = createAgentDelegator(stateManager, strRayConfigLoader);
 
     // Analyze delegation strategy
     const analysis = await agentDelegator.analyzeDelegation(delegationRequest);

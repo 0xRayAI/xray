@@ -20,7 +20,7 @@ class StrRayFrameworkComplianceAuditServer {
   constructor() {
     this.server = new Server(
       {
-        name: "framework-compliance-audit", version: "1.7.1",
+        name: "framework-compliance-audit", version: "1.7.5",
       },
       {
         capabilities: {

@@ -90,7 +90,7 @@ constructor() {
 
 ```bash
 ✅ Framework builds successfully
-✅ All 8 agents use dynamic model resolution  
+✅ All 27 agents use dynamic model resolution  
 ✅ Tests pass with updated model expectations
 ✅ No hardcoded model references remain in source
 ✅ Central config properly structured and validated

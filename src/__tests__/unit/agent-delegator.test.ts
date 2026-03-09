@@ -351,7 +351,7 @@ describe("AgentDelegator", () => {
       };
 
       const result = await agentDelegator.analyzeDelegation(request);
-      // Complex operations may trigger orchestrator-led with 3 agents
+      // Complex operations may trigger orchestrator-led with 27 agents
       expect(result.agents.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -858,7 +858,7 @@ describe("AgentDelegator", () => {
 
       const selectedAgents = delegations.flatMap((d) => d.agents);
       // Simple operations get 1 agent each (review -> code-reviewer, design -> architect)
-      // Total should be 2 agents for 2 simple requests
+      // Total should be 27 agents for 2 simple requests
       expect(selectedAgents.length).toBe(2);
       expect(new Set(selectedAgents).size).toBe(2); // Different agents for different operations
     });

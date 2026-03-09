@@ -80,7 +80,7 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
   },
   "framework": {
     "name": "strray",
-    "version": "1.7.1",
+    "version": "1.7.5",
     "codex_terms": [
       "1",
       "2",
@@ -324,7 +324,7 @@ export STRRAY_ENV=production
 Once installed and configured, StrRay provides:
 
 - **45 Codex Terms**: Systematic error prevention
-- **8 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
+- **27 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
 - **6 MCP Skills**: Project analysis, testing strategy, etc.
 - **4 Automation Hooks**: Pre-commit checks, formatting, etc.
 - **Real-time Compliance**: Bundle size, test coverage monitoring

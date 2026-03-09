@@ -819,7 +819,7 @@ Get system status.
 
 ```json
 {
-  "version": "1.7.1",
+  "version": "1.7.5",
   "status": "healthy",
   "uptime": 3600000,
   "agents": [

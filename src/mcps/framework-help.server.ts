@@ -13,7 +13,7 @@ class FrameworkHelpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray/framework-help", version: "1.7.1",
+        name: "strray/framework-help", version: "1.7.5",
       },
       {
         capabilities: {
@@ -386,7 +386,7 @@ ${Object.entries(capabilities.reporting)
       return `
 **StringRay Framework - Complete Capabilities Overview**
 
-**8 Specialized Agents:**
+**27 Specialized Agents:**
 ${Object.entries(capabilities.agents)
   .map(([name, desc]) => `- **${name}**: ${desc}`)
   .join("\n")}

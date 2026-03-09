@@ -63,7 +63,7 @@ class StrRaySecurityAuditServer {
   constructor() {
     this.server = new Server(
       {
-        name: "security-audit", version: "1.7.1",
+        name: "security-audit", version: "1.7.5",
       },
       {
         capabilities: {

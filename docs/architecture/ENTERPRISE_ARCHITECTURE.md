@@ -508,14 +508,14 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.7.1"
+    "version": "1.7.5"
   }
 }
 ```
 
 ### MCP Server Integration
 
-The framework exposes 9 MCP servers for AI integration:
+The framework exposes 14 MCP servers for AI integration:
 
 1. **Agent Servers**: Individual agent capabilities
 2. **Knowledge Servers**: Project analysis and patterns

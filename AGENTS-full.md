@@ -640,7 +640,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
     "researcher": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.7.1",
+    "version": "1.7.5",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -659,7 +659,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
 ```json
 {
   "framework": {
-    "version": "1.7.1",
+    "version": "1.7.5",
     "logging": {
       "level": "info",
       "jobIdTracking": true,
@@ -668,7 +668,7 @@ Rollback on Failure → Escalation Path → Manual Intervention
   },
   "codex": {
     "enabled": true,
-    "termCount": 59,
+    "termCount": 60,
     "enforcement": "strict"
   },
   "performance": {
@@ -745,7 +745,7 @@ npm run monitoring
 
 **Framework Status**: Production-ready with complete system mapping
 **Documentation**: Comprehensive pipeline architecture with full traceability
-**Components**: 9 agents, 28 MCP servers, 8 interconnected pipelines
+**Components**: 27 agents, 14 MCP servers, 8 interconnected pipelines
 **Error Prevention**: 99.6% systematic validation with jobId tracking
 **Scalability**: Multi-agent orchestration with performance monitoring
 ```
@@ -994,11 +994,11 @@ User Input → Complexity Analysis → Rule Validation → Agent Routing → Exe
 ### 3.0 Version History
 - **v1.1.1** (2026-01-21): Token management integration, AGENTS.md optimization, enhanced testing framework
 - **v1.1.1**: Optimized core architecture, process safeguards, clean production deployment
-- **v1.0.0**: Initial production release with 8 agents and MCP server integration
+- **v1.0.0**: Initial production release with 27 agents and MCP server integration
 
 ### 3.1 Universal Development Codex
 
-59 mandatory terms for systematic error prevention (99.6% effectiveness):
+60 mandatory terms for systematic error prevention (99.6% effectiveness):
 
 **Core Terms (1-10)**:
 1. Progressive production-ready code
@@ -1405,9 +1405,9 @@ npm publish --tag latest
 | **3. Plugin Discovery**     | Plugin System    | `.opencode/plugin/`               | Scan for StrRay plugin                 | Plugin detected       | OpenCode     |
 | **4. Plugin Loading**       | Codex Injection  | `plugin/strray-codex-injection.ts` | Load plugin with codex injection       | Plugin active         | Plugin discovery   |
 | **5. Claude Override**      | MCP Exclusion    | `.claude/.mcp.json`                | Disable problematic global MCP servers | Clean MCP environment | Plugin loading     |
-| **6. MCP Registration**     | Server Registry  | `.mcp.json`                        | Register 28 MCP servers                | Servers available     | Claude override    |
+| **6. MCP Registration**     | Server Registry  | `.mcp.json`                        | Register 14 MCP servers                | Servers available     | Claude override    |
 | **7. Agent Initialization** | Agent System     | `src/agents/`                      | Load 8 specialized agents              | Agents ready          | Plugin loading     |
-| **8. Context Loading**      | Codex System     | `.opencode/strray/codex.json`               | Load 59 codex terms                    | Validation active     | Plugin loading     |
+| **8. Context Loading**      | Codex System     | `.opencode/strray/codex.json`               | Load 60 codex terms                    | Validation active     | Plugin loading     |
 | **9. State Manager**        | Persistence      | `src/state/state-manager.ts`       | Initialize state management            | State ready           | Context loading    |
 | **10. Orchestrator**        | Coordination     | `src/orchestrator.ts`              | Load task orchestration                | Delegation ready      | State manager      |
 | **11. Delegation System**   | Routing          | `src/delegation/`                  | Setup complexity analysis              | Routing active        | Orchestrator       |
@@ -2203,11 +2203,11 @@ When codex rules are violated, the system automatically attempts fixes:
 ```
 strray-framework/
 ├── .opencode/strray/               # Framework configuration
-│   ├── codex.json         # Universal Development Codex (59 terms)
+│   ├── codex.json         # Universal Development Codex (60 terms)
 │   ├── config.json        # Framework settings
 │   └── agents_template.md # Agent documentation
 ├── src/                   # Core implementation
-│   ├── agents/            # Agent implementations (8 agents)
+│   ├── agents/            # Agent implementations (27 agents)
 │   ├── delegation/        # Task routing & complexity analysis
 │   ├── processors/        # Operation processing
 │   ├── mcps/              # MCP server implementations (28 servers)
@@ -2327,7 +2327,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 - [Plugin Loading Mechanism](docs/advanced/plugin-loading-mechanism.md) - Plugin system details
 - [Deployment Reflections](docs/reflections/) - Framework evolution insights
 - [Documentation Reorganization](docs/DOCUMENTATION_REORGANIZATION_PLAN.md) - Organization strategy
-- [Universal Development Codex](.opencode/strray/codex.json) - Complete 59-term codex reference
+- [Universal Development Codex](.opencode/strray/codex.json) - Complete 60-term codex reference
 - [API Reference](#appendix-a-api-reference) - Complete API documentation
 - [Configuration Templates](#appendix-b-configuration-templates) - Copy-paste configuration examples
 - [Troubleshooting Guide](#appendix-c-troubleshooting-guide) - Common issues and solutions
@@ -2339,7 +2339,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 #### Critical File Path Reference
 
 **Configuration Files**:
-- **Codex Terms**: `.opencode/strray/codex.json` - Universal Development Codex (59 terms)
+- **Codex Terms**: `.opencode/strray/codex.json` - Universal Development Codex (60 terms)
 - **Framework Config**: `.opencode/strray/config.json` - Framework settings and thresholds
 - **Agent Templates**: `.opencode/strray/agents_template.md` - Agent documentation templates
 - **OpenCode Config**: `.opencode/OpenCode.json` - OpenCode plugin configuration
@@ -2422,7 +2422,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 
 **Framework Status**: Production-ready with 99.6% error prevention.
 **Documentation**: Complete operational flows with pipeline integration maps and consensus mechanisms.
-**Components**: 8 agents, 28 MCP servers, 148 scripts, 152 documentation files.
+**Components**: 27 agents, 14 MCP servers, 148 scripts, 152 documentation files.
 **Pipeline Integration**: Rules engine connected at 6 critical intersection points (RuleEnforcer integration completed, skill invocation implemented, agent delegation implemented).
 **Boot Sequence**: 14-stage initialization with full component orchestration.
 **Version Management**: Semantic versioning with zero-tolerance CI/CD enforcement.
@@ -2474,7 +2474,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
     "researcher": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.7.1",
+    "version": "1.7.5",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -2498,7 +2498,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
 ```json
 {
   "framework": {
-    "version": "1.7.1",
+    "version": "1.7.5",
     "logging": {
       "level": "info",
       "jobIdTracking": true,
@@ -2507,7 +2507,7 @@ node -e "const {TokenManager} = require('./dist/utils/token-manager.js'); consol
   },
   "codex": {
     "enabled": true,
-    "termCount": 59,
+    "termCount": 60,
     "enforcement": "strict"
   },
   "performance": {
@@ -2647,7 +2647,7 @@ The following triage guidelines are now **automatically enforced** by the framew
 #### **Rule: codex-enforcer-inference-engine**
 - **Trigger**: All rule additions, modifications, or enforcement changes
 - **Enforcement**: Requires new rules to be added/reinforced in codex.json first, then loaded by enforcer
-- **Validation**: RuleEnforcer must dynamically load all 59+ codex terms; manual rule additions in code are prohibited
+- **Validation**: RuleEnforcer must dynamically load all 60+ codex terms; manual rule additions in code are prohibited
 - **Rationale**: Codex is the single source of truth for development rules; enforcer is the inference engine that loads and enforces them
 - **Version Requirement**: Codex version must be updated when new rules are added (update "version" field in .opencode/strray/codex.json)
 - **Workflow**: Add/modify rules in .opencode/strray/codex.json → update version → enforcer auto-loads → rule mappings auto-generated → violations auto-remediated

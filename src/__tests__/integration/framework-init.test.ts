@@ -84,7 +84,7 @@ describe("StringRay Framework Initialization Integration", () => {
 
     test("should validate agent configurations", () => {
       const agentFiles = fs.readdirSync(".opencode/agents");
-      expect(agentFiles.length).toBeGreaterThanOrEqual(8); // At least 8 agents
+      expect(agentFiles.length).toBeGreaterThanOrEqual(8); // At least 27 agents
 
       // Check for required agents
       const requiredAgents = [
@@ -199,12 +199,20 @@ describe("StringRay Framework Initialization Integration", () => {
         expect(term).toHaveProperty("category");
         expect([
           "core",
-          "extended",
           "architecture",
-          "architectural",
-          "advanced",
-          "self-evolution",
+          "testing",
+          "performance",
+          "security",
+          "accessibility",
+          "operations",
+          "documentation",
+          "process",
           "ci-cd",
+          "infrastructure",
+          "quality",
+          "validation",
+          "resilience",
+          "governance",
         ]).toContain(term.category);
       });
     });
@@ -251,7 +259,7 @@ describe("StringRay Framework Initialization Integration", () => {
       expect(checkDir(".opencode/skills")).toBe(true);
       const skillDirs = fs.readdirSync(".opencode/skills");
 
-      // At least 15 skills should be registered (based on current implementation)
+      // At least 46 skills should be registered (based on current implementation)
       expect(skillDirs.length).toBeGreaterThanOrEqual(15);
     });
   });

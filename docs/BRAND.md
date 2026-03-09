@@ -53,7 +53,7 @@ GitHub Copilot is a great autocomplete tool—fast suggestions based on patterns
 **Key Differences:**
 
 - **Copilot**: Autocompletes based on training data; can suggest hallucinated or insecure code if the context is off. No oversight or iteration.
-- **StringRay**: Orchestrates 8 agents with 45 codex rules for proactive prevention. Agents cross-validate output, enforce modular structure, and generate tests—eliminating the root causes Copilot leaves untouched.
+- **StringRay**: Orchestrates 27 agents with 45 codex rules for proactive prevention. Agents cross-validate output, enforce modular structure, and generate tests—eliminating the root causes Copilot leaves untouched.
 
 In short, Copilot is a coding assistant for speed; StringRay is a quality guardian that ensures what you build with Copilot (or any AI) is production-ready and maintainable.
 

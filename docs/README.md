@@ -160,7 +160,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.7.1"
+    "version": "1.7.5"
   }
 }
 ```
@@ -186,7 +186,7 @@ Update your `.opencode/OpenCode.json`:
 ### 🛡️ 9 VIGILANT SENTRIES - ETERNALLY GUARDING
 
 - **🧠 SISYPHUS (COMMAND CENTER)**: VERIFIED multi-agent coordination with async delegation and conflict resolution - THE STRATEGIC OVERSEER
-- **🛡️ ENFORCER (LAW KEEPER)**: VERIFIED framework compliance auditor with 45 codex terms enforcement (99.6% error prevention) - THE JUDGE
+- **🛡️ ENFORCER (LAW KEEPER)**: VERIFIED framework compliance auditor with 60 codex terms enforcement (99.6% error prevention) - THE JUDGE
 - **🏗️ ARCHITECT (MASTER BUILDER)**: VERIFIED system design and dependency mapping with architectural validation - THE VISIONARY
 - **🔍 BUG TRIAGE SPECIALIST (DETECTIVE)**: VERIFIED error investigation and surgical code fixes with root cause analysis - THE INVESTIGATOR
 - **👁️ CODE REVIEWER (INSPECTOR)**: VERIFIED code quality assurance with best practices validation and recommendations - THE CRITIC
@@ -246,7 +246,7 @@ npm run init
 ### Core Documentation
 
 - **[Architecture Overview](./architecture/ENTERPRISE_ARCHITECTURE.md)** - Complete 28-component system overview with testing coverage
-- **[Agent Documentation](./agents/)** - Detailed specifications for all 9 agents with operating procedures
+- **[Agent Documentation](./agents/)** - Detailed specifications for all 27 agents with operating procedures
 - **[API Reference](./api/API_REFERENCE.md)** - Developer API documentation for programmatic access
 - **[Installation Guide](./user-guide/installation/INSTALLATION.md)** - Complete setup and configuration guide
 - **[Model Configuration](./user-guide/configuration/model-configuration.md)** - Model setup with openrouter/xai-grok-2-1212-fast-1 assignments
@@ -390,7 +390,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray",
-    "version": "1.7.1",
+    "version": "1.7.5",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

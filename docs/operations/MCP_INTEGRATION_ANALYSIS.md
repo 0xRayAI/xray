@@ -50,7 +50,7 @@ We have **10 infrastructure MCP servers** but **0 knowledge skill MCP servers**:
 - ✅ `lint.server.ts`
 - ✅ `auto-format.server.ts`
 
-**TOTAL: 10 MCP servers (all infrastructure, 0 knowledge skills)**
+**TOTAL: 14 MCP servers (all infrastructure, 0 knowledge skills)**
 
 ---
 
@@ -95,7 +95,7 @@ OpenCode uses **MCP (Model Context Protocol) servers** as "skills" - each skill 
 
 - Listed in config but never implemented as MCP servers
 - No actual "project-analysis" or "testing-strategy" skills
-- Documentation claims 11 MCP servers, but we have 10 + 0 knowledge skills
+- Documentation claims 14 MCP servers, but we have 10 + 0 knowledge skills
 
 #### **3. Agent-Side Only**
 
@@ -181,7 +181,7 @@ const context = await callMcpSkill("context-analysis", { projectRoot });
 ### **📊 Reality Check:**
 
 ```
-Claimed: "11 MCP servers (7 agent-specific + 4 knowledge skills)"
+Claimed: "14 MCP servers (7 agent-specific + 4 knowledge skills)"
 Reality: "10 infrastructure servers + 0 knowledge skills"
 Status: "Purely agent-side, no MCP integration"
 ```

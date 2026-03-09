@@ -69,8 +69,8 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: 14 MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 27 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -135,7 +135,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 
 **Key Files:**
 
-- `codex.json` - 45 detailed codex terms with enforcement levels
+- `codex.json` - 60 detailed codex terms with enforcement levels
 - `agents_template.md` - Master agent architecture template
 - `context-loader.ts` - Context loading utilities
 
@@ -206,8 +206,8 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 9 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 8 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: 14 MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 27 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -1220,7 +1220,7 @@ Framework initializes in strict dependency order:
 ### Configuration Files
 
 - **`.opencode/OpenCode.json`**: Main framework configuration with plugin declarations
-- **`.opencode/strray/codex.json`**: 45 detailed codex terms with enforcement levels
+- **`.opencode/strray/codex.json`**: 60 detailed codex terms with enforcement levels
 - **`.opencode/enforcer-config.json`**: Enforcer-specific threshold settings
 - **`.opencode/.opencode/strray/workflow_state.json`**: Workflow state persistence
 
@@ -1244,7 +1244,7 @@ Framework initializes in strict dependency order:
 
 ### Implemented Features ✅
 
-- **8 Specialized Agents**: All configured with proper tools and permissions
+- **27 Specialized Agents**: All configured with proper tools and permissions
 - **Codex Compliance**: 55-term validation with zero-tolerance blocking
 - **Hybrid Architecture**: TypeScript/Python integration operational
 - **Boot Orchestration**: Dependency-ordered initialization working
