@@ -11,11 +11,20 @@ import {
 import { frameworkLogger } from "../core/framework-logger.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
 import { createTaskSkillRouter } from "../delegation/task-skill-router.js";
+import { AgentDelegator } from "../delegation/agent-delegator.js";
+import { StringRayStateManager } from "../state/state-manager.js";
+import { strRayConfigLoader } from "../core/config-loader.js";
 import * as fs from "fs";
 import * as path from "path";
 
 // Create TaskSkillRouter instance for intelligent routing
 const taskSkillRouter = createTaskSkillRouter();
+
+// Minimum confidence to auto-delegate to another agent
+const DELEGATION_CONFIDENCE_THRESHOLD = 0.75;
+
+// Agents that enforcer should NOT delegate to (enforcer handles these itself)
+const ENFORCER_HANDLES = new Set(["enforcer", "code-reviewer"]);
 
 export interface RoutingRecommendation {
   suggestedAgent: string;
@@ -109,6 +118,112 @@ function buildTaskDescription(
 }
 
 /**
+ * Delegate a task to another agent via AgentDelegator
+ * This is the key integration that ensures enforcer routes to best agent
+ */
+async function delegateToAgent(
+  agentName: string,
+  operation: string,
+  context: RuleValidationContext,
+  jobId: string,
+): Promise<EnforcementResult> {
+  try {
+    // Create a minimal state manager and config loader for the delegator
+    const stateManager = new StringRayStateManager();
+    
+    // Create the delegator
+    const delegator = new AgentDelegator(stateManager, strRayConfigLoader);
+    
+    // Build task description for the delegated agent
+    const taskDescription = buildTaskDescription(operation, context);
+    
+    // Build the delegation request
+    const request = {
+      operation,
+      description: taskDescription,
+      context: {
+        ...context,
+        originalJobId: jobId,
+      },
+      sessionId: stateManager.get("current_session_id") as string || `delegated-${jobId}`,
+    };
+
+    // Analyze and get delegation strategy
+    const analysis = await (delegator as any).analyzeDelegation(request);
+    
+    // Execute the delegation
+    const result = await delegator.executeDelegation(analysis, request);
+
+    await frameworkLogger.log(
+      "enforcer-tools",
+      "delegation-complete",
+      "info",
+      {
+        jobId,
+        delegatedTo: agentName,
+        success: result.success,
+        agentsUsed: result.agents,
+      },
+    );
+
+    // Convert delegation result to EnforcementResult format
+    return {
+      operation,
+      passed: result.success,
+      blocked: !result.success,
+      errors: result.errors || [],
+      warnings: [],
+      fixes: [],
+      report: {
+        passed: result.success,
+        operation,
+        timestamp: new Date(),
+        errors: result.errors || [],
+        warnings: [],
+        results: [],
+      } as ValidationReport,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    await frameworkLogger.log(
+      "enforcer-tools",
+      "delegation-failed",
+      "error",
+      {
+        jobId,
+        delegatedTo: agentName,
+        error: errorMessage,
+      },
+    );
+
+    // Fall back to self-execution if delegation fails
+    return await ruleValidationSelf(operation, context, jobId);
+  }
+}
+
+/**
+ * Fallback: Execute validation ourselves if delegation fails
+ */
+async function ruleValidationSelf(
+  operation: string,
+  context: RuleValidationContext,
+  jobId: string,
+): Promise<EnforcementResult> {
+  const report = await ruleEnforcer.validateOperation(operation, context);
+  
+  return {
+    operation,
+    passed: report.passed,
+    blocked: !report.passed && report.errors.some(e => e.includes("required") || e.includes("violation")),
+    errors: report.errors,
+    warnings: report.warnings,
+    fixes: [],
+    report,
+  };
+}
+
+/**
  * Run pre-commit validation with auto-fix enabled
  * This is the integration point that automatically creates test files when needed
  */
@@ -169,6 +284,7 @@ export interface EnforcementResult {
 /**
  * Rule Validation Tool - Validates operations against rule hierarchy
  * Now with intelligent task routing via TaskSkillRouter
+ * Automatically delegates to best agent when confidence is high
  */
 export async function ruleValidation(
   operation: string,
@@ -189,6 +305,30 @@ export async function ruleValidation(
     routingSkill: routing.suggestedSkill,
     routingConfidence: routing.confidence,
   });
+
+  // DELEGATION LOGIC: If high confidence and recommended agent is not enforcer, delegate!
+  const shouldDelegate = 
+    routing.confidence >= DELEGATION_CONFIDENCE_THRESHOLD &&
+    !ENFORCER_HANDLES.has(routing.suggestedAgent) &&
+    routing.suggestedAgent !== "enforcer";
+
+  if (shouldDelegate) {
+    await frameworkLogger.log(
+      "enforcer-tools",
+      "delegating-to-agent",
+      "info",
+      {
+        jobId,
+        operation,
+        delegatedTo: routing.suggestedAgent,
+        confidence: routing.confidence,
+        reason: `High confidence (${routing.confidence}) routing to specialized agent`,
+      },
+    );
+
+    // Delegate to the recommended agent instead of doing work itself
+    return await delegateToAgent(routing.suggestedAgent, operation, context, jobId);
+  }
 
   // Use enhanced context with routing for validation
   const report = await ruleEnforcer.validateOperation(operation, enhancedContext);
