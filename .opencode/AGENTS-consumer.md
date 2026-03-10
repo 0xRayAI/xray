@@ -45,6 +45,28 @@ These documents capture:
 **Never save to root** - Root directory is for essential files only:
 - `README.md`, `CHANGELOG.md`, `package.json`, `tsconfig.json`
 
+### Logging Guidelines
+
+**IMPORTANT**: Never use `console.log`, `console.warn`, or `console.error`. Use the framework logger instead.
+
+| Use This | Not This |
+|----------|-----------|
+| `frameworkLogger.log(module, event, 'info', { data })` | `console.log()` |
+| `frameworkLogger.log(module, event, 'error', { error })` | `console.error()` |
+| `frameworkLogger.log(module, event, 'warning', { warning })` | `console.warn()` |
+
+**Why**: Console statements bleed through to OpenCode console and create noise. Framework logger is structured and filtered.
+
+**Example**:
+```typescript
+// WRONG ❌
+console.log("Starting process");
+
+// CORRECT ✅
+import { frameworkLogger } from "../core/framework-logger.js";
+frameworkLogger.log("my-module", "process-start", "info", { message: "Starting process" });
+```
+
 Reflection Template Paths
 
 StringRay uses **two reflection folders** for different purposes:

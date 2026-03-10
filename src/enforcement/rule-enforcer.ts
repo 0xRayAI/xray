@@ -196,7 +196,8 @@ export class RuleEnforcer {
         );
       }
     } catch (error) {
-      console.warn("Failed to load agent triage rules:", error);
+      // Silent failure - AGENTS.md may not exist in all installations
+      // Use frameworkLogger for any logging if needed
     }
   }
 
