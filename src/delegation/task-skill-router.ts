@@ -1166,6 +1166,7 @@ export interface RoutingResult {
   operation?: string; // For AgentDelegator integration
   context?: Record<string, unknown>; // Extracted context for delegation
   escalateToLlm?: boolean; // Flag to indicate should escalate to LLM for better judgment
+  isRelease?: boolean; // Flag to indicate this is a release workflow
 }
 
 /**
@@ -1333,6 +1334,60 @@ export class TaskSkillRouter {
     }
 
     const descLower = taskDescription.toLowerCase();
+
+    // 0. SPECIAL CASE: Release/Publish detection - auto-handle npm release workflow
+    // Trigger words: release, npm publish, publish to npm, bump and publish, ship it
+    const releaseKeywords = [
+      'release', 'npm publish', 'publish to npm', 'bump and publish', 
+      'ship it', 'ship to npm', 'publish package', 'release to npm',
+      'bump version', 'version bump'
+    ];
+    
+    const isReleaseTask = releaseKeywords.some(keyword => 
+      descLower.includes(keyword.toLowerCase())
+    );
+    
+    if (isReleaseTask) {
+      // Extract version bump type if specified
+      let bumpType = 'patch';
+      if (descLower.includes('major')) bumpType = 'major';
+      else if (descLower.includes('minor')) bumpType = 'minor';
+      else if (descLower.includes('patch')) bumpType = 'patch';
+      
+      const shouldCreateTag = descLower.includes('--tag') || descLower.includes('git tag');
+      
+      frameworkLogger.log(
+        "task-skill-router",
+        "release-workflow-detected",
+        "info",
+        {
+          taskDescription: taskDescription.substring(0, 100),
+          bumpType,
+          createTag: shouldCreateTag,
+        },
+        options.sessionId
+      );
+      
+      // Return special release routing - handled by orchestrator for full workflow
+      return {
+        agent: "orchestrator",
+        skill: "release-workflow",
+        confidence: 0.99,
+        matchedKeyword: "release-workflow",
+        isRelease: true,
+        context: {
+          bumpType,
+          createTag: shouldCreateTag,
+          workflow: [
+            "1. Run version-manager (auto-generates changelog from git)",
+            "2. Git commit + push",
+            "3. npm publish",
+            "4. Generate tweet via release-tweet.mjs",
+            "5. @growth-strategist posts tweet"
+          ]
+        }
+      };
+    }
 
     // 1. Try keyword matching first (highest priority)
     const keywordResult = this.matchByKeywords(descLower);

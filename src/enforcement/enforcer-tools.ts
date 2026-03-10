@@ -119,6 +119,105 @@ function buildTaskDescription(
 }
 
 /**
+ * Execute the full release workflow
+ * Triggered when user says: release, npm publish, publish to npm, bump and publish, ship it
+ */
+async function executeReleaseWorkflow(
+  operation: string,
+  context: RuleValidationContext,
+  jobId: string,
+  routing: RoutingRecommendation,
+): Promise<EnforcementResult> {
+  const { execSync } = await import('child_process');
+  
+  // Extract release options from routing context
+  const releaseContext = (routing as any).context || {};
+  const bumpType = releaseContext.bumpType || 'patch';
+  const createTag = releaseContext.createTag || false;
+  
+  await frameworkLogger.log(
+    "enforcer-tools",
+    "release-workflow-starting",
+    "info",
+    { jobId, bumpType, createTag },
+  );
+  
+  const steps: string[] = [];
+  const errors: string[] = [];
+  
+  try {
+    // Step 1: Run version-manager to bump version and generate changelog
+    await frameworkLogger.log("enforcer-tools", "release-step-1-version", "info", { step: "Bumping version..." });
+    try {
+      const versionArg = createTag ? '--tag' : '';
+      execSync(`node scripts/node/version-manager.mjs ${bumpType} ${versionArg}`, {
+        cwd: process.cwd(),
+        stdio: 'inherit'
+      });
+      steps.push("✅ Version bumped + changelog generated");
+    } catch (e) {
+      errors.push(`Version bump failed: ${e}`);
+    }
+    
+    // Step 2: Git commit and push
+    await frameworkLogger.log("enforcer-tools", "release-step-2-git", "info", { step: "Committing and pushing..." });
+    try {
+      execSync(`git add -A && git commit -m "release: v${bumpType} - Changelog updated" && git push`, {
+        cwd: process.cwd(),
+        stdio: 'inherit'
+      });
+      steps.push("✅ Git commit + push");
+    } catch (e) {
+      errors.push(`Git commit/push failed: ${e}`);
+    }
+    
+    // Step 3: npm publish
+    await frameworkLogger.log("enforcer-tools", "release-step-3-npm", "info", { step: "Publishing to npm..." });
+    try {
+      execSync(`npm publish`, {
+        cwd: process.cwd(),
+        stdio: 'inherit'
+      });
+      steps.push("✅ npm published");
+    } catch (e) {
+      errors.push(`npm publish failed: ${e}`);
+    }
+    
+    // Step 4: Generate tweet context
+    await frameworkLogger.log("enforcer-tools", "release-step-4-tweet", "info", { step: "Generating tweet..." });
+    try {
+      execSync(`node scripts/node/release-tweet.mjs`, {
+        cwd: process.cwd(),
+        stdio: 'inherit'
+      });
+      steps.push("✅ Tweet context generated - ready for @growth-strategist");
+    } catch (e) {
+      errors.push(`Tweet generation failed: ${e}`);
+    }
+    
+  } catch (e) {
+    errors.push(`Release workflow failed: ${e}`);
+  }
+  
+  return {
+    operation: "release",
+    passed: errors.length === 0,
+    blocked: false,
+    errors,
+    warnings: [],
+    fixes: [],
+    report: {
+      passed: errors.length === 0,
+      operation: "release",
+      errors,
+      warnings: steps,
+      results: steps.map(s => ({ rule: 'release', passed: true, message: s })),
+      timestamp: new Date(),
+    },
+  };
+}
+
+/**
  * Delegate a task to another agent via AgentDelegator
  * This is the key integration that ensures enforcer routes to best agent
  */
@@ -312,6 +411,24 @@ export async function ruleValidation(
     routing.confidence >= DELEGATION_CONFIDENCE_THRESHOLD &&
     !ENFORCER_HANDLES.has(routing.suggestedAgent) &&
     routing.suggestedAgent !== "enforcer";
+
+  // SPECIAL CASE: Release workflow - execute full release process
+  if (routing.matchedKeyword === "release-workflow") {
+    await frameworkLogger.log(
+      "enforcer-tools",
+      "release-workflow-triggered",
+      "info",
+      {
+        jobId,
+        operation,
+        bumpType: (routing as any).context?.bumpType || 'patch',
+        createTag: (routing as any).context?.createTag || false,
+      },
+    );
+    
+    // Execute the release workflow
+    return await executeReleaseWorkflow(operation, context, jobId, routing);
+  }
 
   if (shouldDelegate) {
     await frameworkLogger.log(
