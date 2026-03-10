@@ -303,14 +303,20 @@ const DEFAULT_MAPPINGS = [
     keywords: [
       // === ACTION VERB + TESTING PATTERNS ===
       "write test", "create test", "design test", "plan test",
+      "add test", "add tests", "write tests", "create tests",
+      "implement test", "implement tests", "generate test", "generate tests",
+      "need test", "need tests", "create unit test", "create integration test",
+      "write unit test", "write integration test", "test coverage", "coverage report",
 
       // === TESTING OBJECTS ===
-      "test", "testing", "spec", "mock", "stub",
-      "test case", "test scenario", "test suite",
+      "test", "testing", "spec", "mock", "stub", "fixture",
+      "test case", "test scenario", "test suite", "test plan",
+      "unit test", "e2e test", "integration test", "end-to-end test",
+      "regression test", "smoke test", "performance test", "load test",
     ],
     skill: "testing-strategy",
     agent: "testing-lead",
-    confidence: 0.9,
+    confidence: 0.92,
   },
 
   // ===== Database =====
@@ -649,10 +655,16 @@ const DEFAULT_MAPPINGS = [
 
   // ===== Refactoring =====
   {
-    keywords: ["refactor", "technical debt", "code smell", "consolidate"],
+    keywords: [
+      "refactor", "technical debt", "code smell", "consolidate",
+      "clean up code", "clean code", "improve code", "code cleanup",
+      "simplify code", "simplify", "reduce complexity", "optimize code",
+      "reorganize", "restructure", "modernize", "update code",
+      "legacy code", "improve maintainability", "code quality",
+    ],
     skill: "refactoring-strategies",
     agent: "refactorer",
-    confidence: 0.9,
+    confidence: 0.92,
   },
   // ===== END Refactoring =====
 
@@ -770,10 +782,26 @@ const DEFAULT_MAPPINGS = [
     confidence: 0.95,
   },
   {
-    keywords: ["architect", "architecture", "structure", "pattern"],
+    keywords: [
+      // === SYSTEM DESIGN ===
+      "system architecture", "microservice", "distributed system", "system design",
+      "design system", "architecture design", "high-level design", "technical design",
+      "system structure", "component design", "module design", "service design",
+
+      // === ARCHITECTURE PATTERNS ===
+      "architect", "architecture", "structure", "pattern", "architectural",
+      "design pattern", "architecture pattern", "patterns", "best practices",
+      
+      // === NEW FEATURE ===
+      "new feature", "add feature", "create feature", "implement feature",
+      "feature design", "feature architecture", "build new", "design new",
+      
+      // === REFACTOR ===
+      "refactor", "restructure", "reorganize", "improve structure",
+    ],
     skill: "architecture-patterns",
     agent: "architect",
-    confidence: 0.85,
+    confidence: 0.9,
   },
   // ===== END Architecture =====
 

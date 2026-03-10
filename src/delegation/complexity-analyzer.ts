@@ -43,13 +43,15 @@ export class ComplexityAnalyzer {
    * CALIBRATED: Adjusted thresholds for balanced orchestration utilization
    * - simple: 20 (was 25) - only truly trivial tasks
    * - moderate: 35 (was 50) - medium complexity triggers earlier
-   * - complex: 75 (was 95) - complex tasks get multi-agent coordination
+   * - simple: 15 (lowered from 20) - most tasks trigger single-agent
+   * - moderate: 25 (lowered from 35) - tasks start triggering additional agents
+   * - complex: 50 (lowered from 75) - complex tasks get multi-agent coordination
    * - enterprise: 100 (unchanged) - maximum complexity (only extreme cases)
    */
   private thresholds: ComplexityThresholds = {
-    simple: 20,
-    moderate: 35,
-    complex: 75,
+    simple: 15,
+    moderate: 25,
+    complex: 50,
     enterprise: 100,
   };
 
