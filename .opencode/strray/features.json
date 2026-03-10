@@ -100,5 +100,21 @@
     "search_result_cache": true,
     "cache_ttl_seconds": 60,
     "max_cache_size_mb": 25
+  },
+  "agent_spawn": {
+    "max_concurrent": 8,
+    "max_per_type": 3,
+    "spawn_cooldown_ms": 500,
+    "rate_limit_per_minute": 20
+  },
+  "delegation": {
+    "confidence_threshold": 0.50,
+    "enable_intelligent_routing": true
+  },
+  "complexity_thresholds": {
+    "simple": 15,
+    "moderate": 25,
+    "complex": 50,
+    "enterprise": 100
   }
 }

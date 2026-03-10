@@ -21,7 +21,8 @@ import * as path from "path";
 const taskSkillRouter = createTaskSkillRouter();
 
 // Minimum confidence to auto-delegate to another agent
-const DELEGATION_CONFIDENCE_THRESHOLD = 0.75;
+// Lowered from 0.75 to 0.50 per Option D vote for better agent utilization
+const DELEGATION_CONFIDENCE_THRESHOLD = 0.50;
 
 // Agents that enforcer should NOT delegate to (enforcer handles these itself)
 const ENFORCER_HANDLES = new Set(["enforcer", "code-reviewer"]);
