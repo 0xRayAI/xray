@@ -617,6 +617,12 @@ export default async function strrayCodexPlugin(input: {
 
         // PHASE 2: Execute pre-processors with detailed logging
         try {
+          // Check if processorManager and method exist
+          if (!processorManager || typeof processorManager.executePreProcessors !== 'function') {
+            logger.log(`⏭️ Pre-processors skipped: processor manager not available`);
+            return;
+          }
+          
           logger.log(`▶️ Executing pre-processors for ${tool}...`);
           const result = await processorManager.executePreProcessors({
             tool,
@@ -653,6 +659,12 @@ export default async function strrayCodexPlugin(input: {
 
         // PHASE 3: Execute post-processors after tool completion
         try {
+          // Check if processorManager and method exist
+          if (!processorManager || typeof processorManager.executePostProcessors !== 'function') {
+            logger.log(`⏭️ Post-processors skipped: processor manager not available`);
+            return;
+          }
+          
           logger.log(`▶️ Executing post-processors for ${tool}...`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
           const postResults = await processorManager.executePostProcessors(
@@ -737,6 +749,12 @@ export default async function strrayCodexPlugin(input: {
         });
 
         try {
+          // Check if processorManager and method exist
+          if (!processorManager || typeof processorManager.executePostProcessors !== 'function') {
+            logger.log(`⏭️ Post-processors skipped: processor manager not available`);
+            return;
+          }
+          
           // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
           logger.log(`📝 Post-processor tool: ${tool}`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
