@@ -5,6 +5,27 @@
 **Last Updated**: 2026-01-22
 **System Complexity**: 51 core files, 8 interconnected pipelines, 338 logging points
 
+---
+
+## File Organization Guidelines
+
+**IMPORTANT**: Save all generated files to their proper directories. Do NOT save to root.
+
+| File Type | Save To | Example |
+|-----------|---------|---------|
+| **Reflections** | `docs/reflections/` or `docs/deep-reflections/` | `docs/reflections/my-fix-reflection.md` |
+| **Logs** | `logs/` | `logs/framework/activity.log` |
+| **Scripts** | `scripts/` or `scripts/bash/` | `scripts/bash/my-script.sh` |
+| **Test Files** | `src/__tests__/` | `src/__tests__/unit/my-test.test.ts` |
+| **Source Code** | `src/` | `src/my-module.ts` |
+| **Config** | `config/` or `.opencode/strray/` | `config/my-config.json` |
+| **Docs** | `docs/` | `docs/my-feature.md` |
+
+**Never save to root** - Root directory is for essential files only:
+- `README.md`, `CHANGELOG.md`, `AGENTS-*.md`, `package.json`, `tsconfig.json`
+
+---
+
 ## Table of Contents
 
 - [1. Executive Overview](#1-executive-overview)

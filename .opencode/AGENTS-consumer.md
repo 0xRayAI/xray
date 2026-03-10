@@ -29,7 +29,23 @@ These documents capture:
 - Lessons learned for future development
 - Best practices established
 
-### Reflection Template Paths
+### File Organization Guidelines
+
+**IMPORTANT**: Save all generated files to their proper directories. Do NOT save to root.
+
+| File Type | Save To | Example |
+|-----------|---------|---------|
+| **Reflections** | `docs/reflections/` or `docs/deep-reflections/` | `docs/reflections/my-fix-reflection.md` |
+| **Logs** | `logs/` | `logs/framework/activity.log` |
+| **Scripts** | `scripts/` or `scripts/bash/` | `scripts/bash/my-script.sh` |
+| **Test Files** | `src/__tests__/` | `src/__tests__/unit/my-test.test.ts` |
+| **Source Code** | `src/` | `src/my-module.ts` |
+| **Config** | `config/` or `.opencode/strray/` | `.opencode/strray/config.json` |
+
+**Never save to root** - Root directory is for essential files only:
+- `README.md`, `CHANGELOG.md`, `package.json`, `tsconfig.json`
+
+Reflection Template Paths
 
 StringRay uses **two reflection folders** for different purposes:
 
