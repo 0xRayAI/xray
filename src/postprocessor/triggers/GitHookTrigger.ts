@@ -471,7 +471,7 @@ fi
           const { cleanupLogFiles } = await import(basePath + '/dist/postprocessor/triggers/GitHookTrigger.js');
           const result = await cleanupLogFiles({
             maxAgeHours: 24,
-            excludePatterns: ['logs/framework/activity.log', 'logs/agents/refactoring-log.md', 'current-session.log'],
+            excludePatterns: ['logs/agents/refactoring-log.md', 'current-session.log'],
             directories: ['logs/'],
             enabled: true
           });

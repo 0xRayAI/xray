@@ -60,8 +60,32 @@ afterAll(() => {
   delete process.env.STRRAY_TEST_MODE;
 });
 
-// Reset console methods after each test
-afterEach(() => {});
+  // Reset console methods after each test
+  afterEach(() => {});
+  
+  // Clean up temporary test log files
+  afterEach(() => {
+    const fs = require("fs");
+    const path = require("path");
+    const os = require("os");
+    
+    try {
+      // Remove test-activity-*.log and test-calibration-*.log files
+      const tempDir = os.tmpdir();
+      const files = fs.readdirSync(process.cwd());
+      
+      files.forEach((file) => {
+        if (file.startsWith("test-activity-") || file.startsWith("test-calibration-")) {
+          const filePath = path.join(process.cwd(), file);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        }
+      });
+    } catch (error) {
+      // Silently ignore cleanup errors
+    }
+  });
 
 // Global test utilities
 global.testUtils = {
