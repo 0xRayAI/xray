@@ -145,6 +145,36 @@ async function executeReleaseWorkflow(
   const steps: string[] = [];
   const errors: string[] = [];
   
+  // HARD STOP: Build must pass before release
+  await frameworkLogger.log("enforcer-tools", "release-build-check", "info", { step: "Verifying build passes..." });
+  try {
+    execSync(`npm run build`, {
+      cwd: process.cwd(),
+      stdio: 'pipe'
+    });
+    steps.push("✅ Build verified");
+  } catch (e) {
+    const errorMsg = `🛑 RELEASE STOPPED: Build failed before publishing. Fix build errors first.`;
+    console.error(errorMsg);
+    console.error(`Error: ${e}`);
+    return {
+      operation: "release",
+      passed: false,
+      blocked: true,
+      errors: [errorMsg, `Build error: ${e}`],
+      warnings: [],
+      fixes: [],
+      report: {
+        passed: false,
+        operation: "release",
+        errors: [errorMsg, `Build error: ${e}`],
+        warnings: [],
+        results: [],
+        timestamp: new Date(),
+      },
+    };
+  }
+  
   try {
     // Step 1: Run version-manager to bump version and generate changelog
     await frameworkLogger.log("enforcer-tools", "release-step-1-version", "info", { step: "Bumping version..." });

@@ -1,18 +1,18 @@
-import { advancedProfiler } from './src/monitoring/advanced-profiler';
-import { enterpriseMonitoringSystem } from './src/monitoring/enterprise-monitoring-system';
+import { advancedProfiler } from '../monitoring/advanced-profiler';
+import { enterpriseMonitoringSystem } from '../monitoring/enterprise-monitoring-system';
 
 // Simulate agent operations with profiling
 async function simulateAgentOperations() {
     console.log('🎯 Starting Advanced Profiling Demo...\n');
-
+    
     // Enable profiling
     advancedProfiler.enableProfiling();
     console.log('📊 Advanced profiler enabled\n');
-
+    
     // Start monitoring system
     await enterpriseMonitoringSystem.start();
     console.log('📈 Enterprise monitoring system started\n');
-
+    
     const operations = [
         { agent: 'enforcer', operation: 'codex-validation', duration: 150 },
         { agent: 'architect', operation: 'design-review', duration: 300 },
@@ -23,14 +23,15 @@ async function simulateAgentOperations() {
         { agent: 'refactorer', operation: 'code-optimization', duration: 500 },
         { agent: 'testing-lead', operation: 'test-strategy', duration: 180 },
     ];
-
+    
     console.log('🔄 Simulating agent operations...\n');
-
+    
     // Simulate agent operations
     for (let i = 0; i < operations.length; i++) {
         const op = operations[i];
+        if (!op) continue;
         const operationId = `demo-op-${i}`;
-
+        
         // Start profiling
         advancedProfiler.startProfiling(operationId, op.agent, op.operation);
 
