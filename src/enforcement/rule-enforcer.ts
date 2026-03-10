@@ -109,7 +109,7 @@ export class RuleEnforcer {
 
       this.initialized = true;
     } catch (error) {
-      console.warn("Failed to load async rules:", error);
+      // Silent failure - async rules may not load in all environments
     }
   }
 
@@ -156,7 +156,7 @@ export class RuleEnforcer {
         { message: `Loaded ${Object.keys(codexData).length} codex rules` },
       );
     } catch (error) {
-      console.warn("Failed to load codex rules:", error);
+      // Silent failure - codex may not exist in all environments
     }
   }
 
@@ -236,7 +236,7 @@ export class RuleEnforcer {
         { message: "Loaded AGENTS.md validation rules" },
       );
     } catch (error) {
-      console.warn("Failed to load AGENTS.md validation rules:", error);
+      // Silent failure - AGENTS.md validation may not be needed
     }
   }
 
