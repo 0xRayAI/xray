@@ -20,7 +20,8 @@ else
 fi
 
 # StringRay Framework Version - read dynamically from framework's package.json
-STRRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)")
+# Fallback to default version if loading fails
+STRRAY_VERSION=$(node -e "try { console.log(require('$FRAMEWORK_ROOT/package.json').version) } catch(e) { console.log('1.7.8') }" 2>/dev/null || echo "1.7.8")
 
 START_TIME=$(date +%s)
 
