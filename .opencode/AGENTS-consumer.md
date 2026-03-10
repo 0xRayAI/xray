@@ -31,26 +31,40 @@ These documents capture:
 
 ### Reflection Template Paths
 
-**Template Location**: `docs/reflections/` and `docs/deep-reflections/`
+StringRay uses **two reflection folders** for different purposes:
 
-**Naming Convention**: `{YYYY-MM-DD}-{feature-name}.md`
+#### Option 1: Standard Reflections (`docs/reflections/`)
+**When to use:** Single-session work, specific bug fixes, targeted implementations
+- **Template:** `docs/reflections/TEMPLATE.md` (442 lines)
+- **Naming:** `{topic}-reflection.md` or `{topic}-YYYY-MM-DD.md`
+- **Length:** 1,000-5,000 lines
+- **Format:** 11 structured sections (Executive Summary, Dichotomy, Counterfactual, etc.)
 
-**Example Files**:
-- `docs/reflections/stringray-framework-deep-reflection-v1.4.21.md`
-- `docs/deep-reflections/typescript-build-fix-journey-2026-03-09.md`
-- `docs/deep-reflections/kernel-v2.0-skill-system-fix-journey.md`
+**Examples:**
+- `docs/reflections/deployment-crisis-v12x-reflection.md`
+- `docs/reflections/kernel-confidence-fix.md`
 
-Each reflection document includes:
-1. Executive Summary
-2. The Journey in Retrospective
-3. Technical Deep Dive
-4. Cognitive Insights
-5. Strategic Implications
-6. Key Metrics and Impact
-7. Looking Forward
-8. Lessons Learned
-9. Acknowledgments
-10. Final Thoughts
+#### Option 2: Deep Reflections (`docs/deep-reflections/`)
+**When to use:** Multi-session journeys, complex investigations, architectural transformations
+- **Template:** `docs/deep-reflections/TEMPLATE.md` (NEW - 300 lines)
+- **Naming:** `{topic}-journey-YYYY-MM-DD.md` or `DEEP_REFLECTION_{topic}.md`
+- **Length:** 10,000+ lines
+- **Format:** Narrative journey with session chronology, investigation narrative, technical deep dives
+
+**Examples:**
+- `docs/deep-reflections/kernel-journey-2026-03-09.md`
+- `docs/deep-reflections/AGENTS-consumer-documentation-strategy-journey-2026-03-09.md`
+
+#### Quick Decision Guide
+
+| Scenario | Use |
+|----------|------|
+| Fixed a bug in one session | `docs/reflections/` |
+| Investigated something complex over multiple days | `docs/deep-reflections/` |
+| Single architectural change | `docs/reflections/` |
+| System-wide transformation | `docs/deep-reflections/` |
+| Quick learning/insight | `docs/reflections/` |
+| Deep investigation with many discoveries | `docs/deep-reflections/` |
 
 ## Available Agents
 
