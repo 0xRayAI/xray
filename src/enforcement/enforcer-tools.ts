@@ -866,14 +866,19 @@ async function generateCodexComplianceReport(
       );
     }
 
-    if (
-      newCode.includes("console.log") &&
-      !newCode.includes("// TODO") &&
-      !newCode.includes("// DEBUG")
-    ) {
-      warnings.push(
-        "Codex warning: Consider removing console.log statements in production code",
-      );
+    // Check for actual console.log() calls (more precise than just string containment)
+    const consoleLogCallMatches = newCode.match(/console\.log\(/g);
+    if (consoleLogCallMatches && consoleLogCallMatches.length > 0) {
+      // Only flag console.log if it's not in comments
+      const isNotInComment = !newCode.includes("//") && !newCode.includes("/*");
+      if (isNotInComment) {
+        violations.push(
+          'Codex violation: console.log() statements detected in production code - use frameworkLogger instead',
+          );
+      }
+    } else {
+        // console.log found in comments - this is okay
+      }
     }
 
     if (

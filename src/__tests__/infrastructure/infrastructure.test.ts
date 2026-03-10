@@ -35,7 +35,7 @@ describe("StringRay Infrastructure Tests", () => {
       const requiredFiles = [
         ".opencode/strray/codex.json",
         "package.json",
-        "vitest.config.ts",
+        "tests/config/vitest.config.ts",
       ].map((f) => path.join(projectRoot, f));
 
       for (const file of requiredFiles) {
@@ -173,7 +173,15 @@ describe("StringRay Infrastructure Tests", () => {
     });
 
     it("should have TypeScript configuration", () => {
-      expect(fs.existsSync("tsconfig.json")).toBe(true);
+      // TypeScript config may be in tests/config/ or root
+      const tsconfigPaths = [
+        "tsconfig.json",
+        "tests/config/tsconfig.json",
+        "kernel/tsconfig.json",
+      ];
+
+      const exists = tsconfigPaths.some((p) => fs.existsSync(path.join(projectRoot, p)));
+      expect(exists).toBe(true);
     });
   });
 
