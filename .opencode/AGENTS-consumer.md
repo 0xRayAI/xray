@@ -203,6 +203,342 @@ module.exports = async (context, tool) => {
 
 StringRay enforces Universal Development Codex (60 terms) for systematic error prevention. See [.opencode/strray/codex.json](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) for full reference.
 
+## Configuration Files Reference
+
+StringRay uses multiple configuration files to control behavior:
+
+### Main Configuration Files
+
+| File | Purpose | Key Settings |
+|------|---------|--------------|
+| `.opencode/opencode.json` | Main framework config | mode, plugins, paths |
+| `.opencode/strray/features.json` | Feature flags | enabled/disabled features |
+| `.opencode/agents/` | Custom agent configs | agent-specific settings |
+| `.opencode/strray/codex.json` | Codex terms | 60 error prevention rules |
+
+### Configuration Hierarchy
+
+```
+1. .opencode/opencode.json           # Highest priority - project overrides
+2. .opencode/strray/features.json    # Feature flags
+3. node_modules/strray-ai/.opencode/ # Package defaults (lowest)
+```
+
+### Environment Variables
+
+```bash
+# Optional overrides
+STRRAY_MODE=development              # or 'consumer'
+STRRAY_LOG_LEVEL=info              # debug, info, warn, error
+STRRAY_CONFIG_PATH=.opencode/      # Custom config directory
+STRRAY_NO_TELEMETRY=1              # Disable analytics
+```
+
+## Integration Points
+
+### Git Hooks Integration
+
+StringRay integrates with Git hooks for automated validation:
+
+```bash
+# Install Git hooks
+npx strray-ai install --hooks
+
+# Hooks available:
+# - pre-commit: TypeScript check, linting, Codex validation
+# - post-commit: Activity logging, analytics
+# - pre-push: Full validation suite
+```
+
+**Manual Hook Setup** (if not using --hooks):
+```bash
+# .git/hooks/pre-commit
+#!/bin/bash
+npx strray-ai validate --pre-commit
+
+# .git/hooks/post-commit  
+#!/bin/bash
+npx strray-ai report --auto
+```
+
+### CI/CD Pipeline Integration
+
+**GitHub Actions Example**:
+```yaml
+- name: StringRay Validation
+  run: |
+    npx strray-ai validate
+    npx strray-ai report --ci
+```
+
+**GitLab CI Example**:
+```yaml
+strray-validate:
+  script:
+    - npx strray-ai validate
+    - npx strray-ai report --ci
+```
+
+### MCP Server Configuration
+
+MCP (Model Context Protocol) servers extend agent capabilities:
+
+```bash
+# List available MCP servers
+npx strray-ai capabilities --mcp
+
+# MCP server types:
+# - knowledge-skills/     # Domain-specific skills
+# - framework-help.server.ts # Framework utilities
+# - orchestrator.server.ts  # Task orchestration
+```
+
+### Marketplace Plugin Installation
+
+```bash
+# Search for plugins
+npx strray-ai marketplace search <keyword>
+
+# Install plugin
+npx strray-ai marketplace install <plugin-name>
+
+# List installed plugins
+npx strray-ai marketplace list
+```
+
+## Tuning & Optimization
+
+### Complexity Calibration
+
+StringRay uses complexity scoring to route tasks to appropriate agents:
+
+```bash
+# Calibrate complexity scoring
+npx strray-ai calibrate
+
+# View current complexity settings
+cat .opencode/strray/features.json | jq '.complexity'
+```
+
+**Complexity Factors**:
+- File count and size
+- Import dependencies
+- Test coverage percentage
+- Code duplication
+- Architectural patterns
+
+### Performance Tuning
+
+**Memory Management**:
+```bash
+# View memory settings
+cat .opencode/strray/features.json | jq '.memory'
+
+# Key settings:
+# - memory_threshold_mb: Emergency cleanup trigger (default: 80MB)
+# - gc_interval_ms: Garbage collection frequency
+# - cache_size: Agent state cache limit
+```
+
+**Token Optimization**:
+```bash
+# Configure token limits
+npx strray-ai config set --feature token_optimization.max_context_tokens --value 8000
+npx strray-ai config set --feature token_optimization.compression_enabled --value true
+```
+
+### Agent Spawn Limits
+
+Control how agents are spawned and coordinated:
+
+```json
+// In features.json
+{
+  "agent_spawn": {
+    "max_concurrent": 8,
+    "max_per_type": 3,
+    "spawn_cooldown_ms": 500,
+    "rate_limit_per_minute": 20
+  }
+}
+```
+
+## CLI Command Details
+
+### Core Commands
+
+| Command | Description | Common Use |
+|---------|-------------|------------|
+| `npx strray-ai install` | Install and configure framework | Initial setup |
+| `npx strray-ai status` | Show current configuration status | Debug setup issues |
+| `npx strray-ai health` | Run health check | Verify installation |
+| `npx strray-ai validate` | Run full validation suite | Pre-commit validation |
+| `npx strray-ai capabilities` | List all available features | Discover capabilities |
+| `npx strray-ai calibrate` | Recalibrate complexity scoring | After major refactors |
+| `npx strray-ai report` | Generate analytics reports | Review performance |
+| `npx strray-ai analytics` | View pattern analytics | Understand agent behavior |
+| `npx strray-ai config` | Manage configuration | Tune settings |
+
+### Configuration Commands
+
+```bash
+# Get a specific config value
+npx strray-ai config get --feature activity_logging.enabled
+
+# Set a config value
+npx strray-ai config set --feature token_optimization.enabled --value false
+
+# Reset to defaults
+npx strray-ai config reset
+
+# Export current config
+npx strray-ai config export > strray-config.json
+```
+
+### Report Commands
+
+```bash
+# Daily summary report
+npx strray-ai report --daily
+
+# Performance analysis
+npx strray-ai report --performance
+
+# Compliance report (Codex violations)
+npx strray-ai report --compliance
+
+# Session report
+npx strray-ai report --session
+
+# Generate CI-friendly report
+npx strray-ai report --ci --output json
+```
+
+## Common Agent Workflows
+
+### Invoking Agents
+
+**Basic Invocation**:
+```bash
+# In code comment or prompt
+@architect design a REST API for user management
+
+@enforcer analyze this code for security issues
+
+@testing-lead create tests for authentication module
+```
+
+**Chaining Agents**:
+```
+@orchestrator implement feature:user-authentication
+  → Spawns @architect → @testing-lead → @code-reviewer
+```
+
+### Agent Selection Guide
+
+| Task Type | Primary Agent | Supporting Agents |
+|-----------|---------------|-------------------|
+| New feature | @orchestrator | @architect, @testing-lead |
+| Bug fix | @bug-triage-specialist | @enforcer, @code-reviewer |
+| Refactor | @refactorer | @architect, @testing-lead |
+| Security audit | @security-auditor | @enforcer |
+| Code review | @code-reviewer | @enforcer |
+| Research | @researcher | @architect |
+
+### Session Management
+
+**Start a Session**:
+```bash
+# Sessions are automatic - invoke agent to start
+@orchestrator implement login feature
+```
+
+**View Active Sessions**:
+```bash
+# Active sessions shown in status
+npx strray-ai status
+```
+
+**End a Session**:
+```bash
+# Sessions auto-end after inactivity timeout
+# Or manually via:
+npx strray-ai session end <session-id>
+```
+
+### Error Recovery
+
+**Common Error Patterns**:
+
+1. **Agent Spawn Failure**
+   ```bash
+   # Check spawn limits
+   npx strray-ai status | grep -A5 "spawn"
+   
+   # Solution: Wait for cooldown or increase limit
+   npx strray-ai config set --feature agent_spawn.max_concurrent --value 10
+   ```
+
+2. **Memory Exhaustion**
+   ```bash
+   # Check memory settings
+   npx strray-ai health
+   
+   # Solution: Clear cache
+   npx strray-ai session clear-cache
+   ```
+
+3. **Validation Failures**
+   ```bash
+   # Run detailed validation
+   npx strray-ai validate --detailed
+   
+   # View specific failures
+   npx strray-ai report --compliance --detailed
+   ```
+
+## Troubleshooting Guide
+
+### Quick Diagnostics
+
+```bash
+# Full health check
+npx strray-ai health
+
+# Validate installation
+npx strray-ai validate
+
+# View recent activity
+ls -la .opencode/logs/
+cat .opencode/logs/strray-plugin-$(date +%Y-%m-%d).log | tail -50
+
+# Check configuration
+npx strray-ai status
+```
+
+### Common Issues
+
+| Issue | Symptom | Solution |
+|-------|---------|----------|
+| Agents not spawning | Timeout on @invoke | Run `npx strray-ai health` |
+| Validation failures | Pre-commit blocks | Run `npx strray-ai validate --fix` |
+| Memory issues | Slow performance | `npx strray-ai session clear-cache` |
+| Config not loading | Settings ignored | Check `.opencode/opencode.json` syntax |
+| MCP servers unavailable | Tools missing | `npx strray-ai capabilities --mcp` |
+
+### Getting Help
+
+```bash
+# Framework help
+npx strray-ai help
+
+# View capabilities
+npx strray-ai capabilities
+
+# Check version
+npx strray-ai --version
+```
+
 ## Framework Configuration Limits
 
 ### Consumer Environment Limitations
