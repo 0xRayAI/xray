@@ -439,10 +439,118 @@ This guide provides solutions for common issues encountered when using the StrRa
    strray init --force
    ```
 
-3. **Restore from Backup**:
-   ```bash
-   strray backup restore
-   ```
+ 3. **Restore from Backup**:
+    ```bash
+    strray backup restore
+    ```
+
+### Misnamed Directories (Users/home/blaze)
+
+**Symptoms**:
+
+- `Users/`, `home/`, or `blaze/` directories found at project root
+- Nested directory structures like `Users/blaze/dev/stringray/`
+- Confusing directory layout with duplicate paths
+
+**Root Cause**:
+
+This occurs when full absolute paths are used incorrectly, creating nested directory structures. For example:
+
+```bash
+# Someone accidentally used full path as relative:
+mkdir /Users/blaze/dev/stringray/test-consent.json
+# When running from ~/dev/stringray, this creates:
+#   ~/dev/stringray/Users/blaze/dev/stringray/test-consent.json
+```
+
+**Solutions**:
+
+1. **Detect Misnamed Directories**:
+    ```bash
+    # Find common misnamed directories
+    find . -maxdepth 1 -type d \( -name "Users" -o -name "home" -o -name "blaze" \)
+
+    # Check for nested structures
+    find . -type d -path "*/Users/*" -o -path "*/home/*"
+    ```
+
+2. **Verify Contents Before Deletion**:
+    ```bash
+    # Always check what's inside
+    ls -la Users/
+    du -sh Users/
+    find Users/ -type f
+    git status  # Check if tracked
+    ```
+
+ 3. **Rename Misnamed Directory (SAFER)**:
+     ```bash
+     # BETTER: Rename instead of delete (can always undo)
+     mv Users/ Users.deleted/
+
+     # Verify contents before final deletion
+     ls -la Users.deleted/
+     git status  # Check if tracked
+
+     # Only delete after verification and if certain
+     rm -rf Users.deleted/
+
+     # Remove from git if tracked
+     git rm -r "Users/blaze/dev/stringray/test-consent.json"
+     git commit -m "chore: Remove incorrect Users/ directory structure"
+     ```
+
+**Prevention**:
+
+1. **Use Relative Paths**:
+    ```bash
+    # BAD: Absolute paths
+    /Users/blaze/dev/stringray/test-consent.json
+
+    # GOOD: Relative paths
+    ./test-consent.json
+    ```
+
+2. **Path Validation in Scripts**:
+    ```javascript
+    // Validate paths don't create nested structures
+    function validatePath(path) {
+      const normalized = path.normalize(path);
+      const projectRoot = process.cwd();
+
+      // Prevent creating Users/, home/, blaze/ nested structures
+      if (normalized.includes(projectRoot + '/Users/') ||
+          normalized.includes(projectRoot + '/home/')) {
+        throw new Error('Potential nested directory structure detected');
+      }
+
+      return normalized;
+    }
+    ```
+
+3. **Add Pre-commit Checks**:
+    ```bash
+    # .opencode/hooks/pre-commit
+    if [ -d "Users" ] || [ -d "home" ] || [ -d "blaze" ]; then
+      echo "⚠️  Warning: Misnamed directory detected (Users/home/blaze)"
+      echo "This may indicate accidental full path operations."
+      echo "Please review before committing."
+      exit 1
+    fi
+    ```
+
+**Critical Safety Warning**:
+
+⚠️ **Always verify before deleting!** Especially when working in development directories like `~/dev/`:
+
+```bash
+# Safety checklist before rm -rf:
+# - [ ] Checked directory contents with ls -la
+# - [ ] Verified size with du -sh
+# - [ ] Confirmed with git status (if tracked)
+# - [ ] Listed files with find
+# - [ ] Verified not deleting critical paths (~/dev/, ~/, etc.)
+```
 
 ## Logging and Debugging
 
