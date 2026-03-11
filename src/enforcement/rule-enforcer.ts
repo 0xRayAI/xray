@@ -4,78 +4,26 @@
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
+import {
+  RuleDefinition,
+  RuleValidationContext,
+  RuleValidationResult,
+  ValidationReport,
+  ViolationFix,
+  RuleFix,
+  isRuleValidationResult,
+} from "./types.js";
 
-export interface RuleDefinition {
-  id: string;
-  name: string;
-  description: string;
-  category:
-    | "code-quality"
-    | "architecture"
-    | "performance"
-    | "security"
-    | "testing"
-    | "reporting";
-  severity: "error" | "warning" | "info" | "blocking" | "high";
-  validator: (context: RuleValidationContext) => Promise<RuleValidationResult>;
-  enabled: boolean;
-}
-
-export interface RuleValidationContext {
-  operation: string;
-  files?: string[];
-  component?: string;
-  existingCode?: Map<string, string>;
-  newCode?: string;
-  dependencies?: string[];
-  tests?: string[];
-}
-
-export interface RuleValidationResult {
-  passed: boolean;
-  message: string;
-  suggestions?: string[];
-  fixes?: RuleFix[];
-}
-
-export interface ValidationReport {
-  operation: string;
-  passed: boolean;
-  errors: string[];
-  warnings: string[];
-  results: RuleValidationResult[];
-  timestamp: Date;
-}
-
-export interface ViolationFix {
-  ruleId: string;
-  agent: string;
-  skill: string;
-  context: any;
-  attempted: boolean;
-  success?: boolean;
-  error?: string;
-}
-
-function isRuleValidationResult(obj: any): obj is RuleValidationResult {
-  return (
-    obj &&
-    typeof obj === "object" &&
-    obj !== null &&
-    "passed" in obj &&
-    typeof obj.passed === "boolean" &&
-    "message" in obj &&
-    typeof obj.message === "string"
-  );
-}
-
-export interface RuleFix {
-  type: "create-file" | "modify-file" | "add-dependency" | "run-command";
-  description: string;
-  filePath?: string;
-  content?: string;
-  command?: string;
-}
+// Re-export types for backward compatibility
+export {
+  RuleDefinition,
+  RuleValidationContext,
+  RuleValidationResult,
+  ValidationReport,
+  ViolationFix,
+  RuleFix,
+  isRuleValidationResult,
+} from "./types.js";
 
 export class RuleEnforcer {
   private rules: Map<string, RuleDefinition> = new Map();
