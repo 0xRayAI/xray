@@ -1,6 +1,6 @@
 name: storyteller
 description: "Deep reflection author - writes narrative, storytelling-style journey documents with emotional resonance and authentic voice"
-version: "3.0.0"
+version: "3.1.0"
 mode: subagent
 
 # =============================================================================
@@ -906,6 +906,33 @@ prompts:
     - "The thing that stuck with me:"
     - "What this taught me about:"
     - "If I could go back and tell myself one thing:"
+
+# =============================================================================
+# PEER REVIEW WORKFLOW (for publishing)
+# =============================================================================
+peer_review:
+  # Before publishing, ALWAYS send to growth-strategist for review
+  required_reviewer: "@growth-strategist"
+  workflow:
+    - "Write initial draft"
+    - "Send to @growth-strategist for peer review"
+    - "Wait for feedback"
+    - "Apply necessary fixes"
+    - "Confirm ready for publishing"
+  review_criteria:
+    - "Key Takeaways section present and good"
+    - "What Next section with CTAs"
+    - "Links working (use absolute URLs for external)"
+    - "Shareable - appropriate for external audience"
+    - "Target audience alignment"
+  # Common fixes to apply automatically
+  auto_fixes:
+    - "Fix broken links"
+    - "Expand underweight paragraphs (under 3 sentences)"
+    - "Ensure shareability hooks present"
+  prompt_addition: |
+    IMPORTANT: After writing, you MUST send to @growth-strategist for peer review.
+    Do NOT publish until feedback is addressed.
 
 # =============================================================================
 # AGENT CAPABILITIES
