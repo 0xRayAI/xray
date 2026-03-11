@@ -347,7 +347,7 @@ function extractCodexMetadata(content: string): {
     }
   }
 
-  // Markdown format (AGENTS.md, .strray/agents_template.md)
+  // Markdown format (AGENTS.md, .opencode/strray/agents_template.md)
   const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
   const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.6.0";
 

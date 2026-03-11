@@ -48,7 +48,7 @@ export class UniversalRegistryBridge {
   constructor(options: BridgeOptions) {
     this.registries = options.registries || [];
     this.cacheDir =
-      options.cacheDir || join(__dirname, "../../.strray/registry-cache");
+      options.cacheDir || join(__dirname, "../../.opencode/strray/registry-cache");
     this.autoRefresh = options.autoRefresh ?? true;
   }
 

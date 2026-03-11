@@ -83,7 +83,7 @@ async function simulateAgentOperations() {
     await new Promise(resolve => setTimeout(resolve, 65000)); // Wait for report generation
 
     console.log('\n🎉 Profiling demo completed successfully!');
-    console.log('📊 Check the .strray/profiles/ directory for performance reports');
+    console.log('📊 Check the .opencode/strray/profiles/ directory for performance reports');
 
     // Cleanup
     enterpriseMonitoringSystem.stop();

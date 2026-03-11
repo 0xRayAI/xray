@@ -418,7 +418,7 @@ try {
   const path = require('path');
   
   // Check codex files exist
-  const codexFiles = ['.strray/agents_template.md', 'AGENTS.md'];
+  const codexFiles = ['.opencode/strray/agents_template.md', 'AGENTS.md'];
   let foundCodex = false;
   
   for (const file of codexFiles) {
