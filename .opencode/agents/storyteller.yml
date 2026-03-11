@@ -767,3 +767,59 @@ version_history:
       
       Consolidated contributions from: @architect, @content-creator,
       @growth-strategist, @strategist
+  - version: "2.1.0"
+    date: "2026-03-11"
+    changes: |
+      Feedback iteration 1 + 2 improvements:
+      
+      From @content-creator feedback:
+      - Added paragraph structure: 3-8 sentences max
+      - Added repetition anti_patterns (time refs, phrases)
+      - Added AI-sound patterns (hollow transitions, polished stats)
+      
+      From @growth-strategist feedback:
+      - Added structured_sections: Key Takeaways, What Next
+      - Added shareability section (optional)
+      
+      From @strategist feedback:
+      - Added frontmatter requirement (story_type, emotional_arc, codex_terms)
+      
+      Story improvements:
+      - Removed repetitive time references
+      - Fixed broken links
+      - Added proper path resolution
+
+# =============================================================================
+# FEEDBACK CORRELATION SUMMARY
+# =============================================================================
+feedback_iterations:
+  round_1:
+    agents: ["@architect", "@content-creator", "@growth-strategist", "@strategist"]
+    scores: {"architect": "8/10", "content-creator": "8/10", "growth-strategist": "8.5/10", "strategist": "8/10"}
+    key_improvements:
+      - "Add YAML frontmatter with story_type, emotional_arc, codex_terms"
+      - "Break paragraphs into 3-8 sentences"
+      - "Add Key Takeaways and What Next sections"
+      - "Add more technical depth with pattern stats"
+      - "Add Codex term references"
+    resulting_version: "2.0.0"
+
+  round_2:
+    agents: ["@content-creator", "@growth-strategist", "@strategist"]
+    scores: {"content-creator": "7.5/10", "growth-strategist": "8/10", "strategist": "9/10"}
+    key_improvements:
+      - "Remove repetition (2:47 AM x5, Clark Kent twice)"
+      - "Fix broken link in What Next"
+      - "Add shareability hooks"
+      - "Remove AI-sound phrases"
+    resulting_version: "2.1.0"
+
+  round_3:
+    agents: ["@content-creator", "@growth-strategist"]
+    scores: {"content-creator": "8/10", "growth-strategist": "8/10"}
+    key_improvements:
+      - "Time references used once only"
+      - "Fixed link path to ../../.opencode/strray/codex.json"
+      - "Removed duplicate Clark Kent framing"
+      - "AI-sound patterns removed"
+
