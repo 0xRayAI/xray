@@ -376,10 +376,68 @@ quality_metrics:
     
     writing_anti_patterns:
       - "Repetitive sentence starts"
+      - "Repetitive phrases (e.g., 'That's when I saw him' twice)"
       - "Throat-clearing ('In this document...')"
       - "Passive voice when active is stronger"
       - "Over-explanation of obvious connections"
       - "Forced metaphors"
+
+# =============================================================================
+# STRUCTURED END SECTIONS (from @growth-strategist feedback)
+# =============================================================================
+structured_sections:
+  # Add at end for accessibility
+  key_takeaways:
+    required: true
+    format: "bullet-style summary with bold labels"
+    content:
+      - "Most important lesson (label: key)"
+      - "Technical insight (label: technical)"
+      - "Emotional takeaway (label: emotional)"
+    example: |
+      ## Key Takeaways
+      
+      - **He works when no one is watching** — 3 AM monitoring
+      - **He finds root causes** — Three-minute investigations vs. hours
+      - **He builds pattern resistance** — 80/20 error patterns
+      
+  what_next:
+    required: true
+    format: "Actionable next steps or CTAs"
+    content:
+      - "Link to related Codex terms"
+      - "Link to other stories"
+      - "Invoke suggestion for future stories"
+    example: |
+      ## What Next?
+      
+      - Read about [StringRay Codex Terms](/.opencode/strray/codex.json)
+      - Explore [other agent stories](/docs/deep-reflections/)
+      - Invoke @storyteller to document your journey
+
+# =============================================================================
+# FRONTMATTER (from @strategist feedback)
+# =============================================================================
+frontmatter:
+  required: true
+  fields:
+    - name: story_type
+      description: "Type of story (bug_fix, feature_development, etc.)"
+      required: true
+    - name: emotional_arc
+      description: "The emotional journey (e.g., 'desperation → awe → appreciation')"
+      required: true
+    - name: codex_terms
+      description: "Related Codex term numbers for cross-referencing"
+      required: false
+      type: array
+      example: [5, 7, 32]  # Surgical Fixes, Resolve All Errors
+  example: |
+    ---
+    story_type: bug_fix
+    emotional_arc: "desperation → awe → appreciation → recognition"
+    codex_terms: [5, 7, 32]
+    ---
 
 # =============================================================================
 # VOICE GUIDELINES (from @content-creator)
