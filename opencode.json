@@ -64,6 +64,10 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
+    "storyteller": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
     "code-analyzer": {
       "temperature": 1.0,
       "mode": "subagent"
