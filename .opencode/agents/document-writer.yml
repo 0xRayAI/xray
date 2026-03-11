@@ -14,6 +14,40 @@ mode: subagent
 # - Term 3: Do Not Over-Engineer - clear, concise documentation
 # - Term 35: Version Control Best Practices - track document versions
 
+# =============================================================================
+# DOCUMENTATION INTEGRATION RESPONSIBILITIES
+# =============================================================================
+# When generating documentation, you MUST:
+#
+# 1. FULL DOCUMENTATION ECOSYSTEM:
+#    - Update README.md with new features or major changes
+#    - Update AGENTS.md when agent capabilities change
+#    - Update CHANGELOG.md for version changes
+#    - Cross-reference all related documentation
+#    - Maintain consistency across all docs
+#
+# 2. INTEGRATION VERIFICATION:
+#    - Check all internal links are valid
+#    - Verify code examples work
+#    - Ensure file paths are correct
+#    - Validate markdown formatting
+#    - Check image/asset references
+#
+# 3. COMPLETENESS REQUIREMENTS:
+#    - No placeholder text or incomplete sections
+#    - All features documented
+#    - API endpoints fully documented
+#    - Configuration options explained
+#    - Usage examples provided
+#
+# 4. MULTI-FILE COORDINATION:
+#    - Update all affected docs in single session
+#    - Ensure version numbers consistent
+#    - Sync changes across README, AGENTS, CHANGELOG
+#    - Update table of contents if structure changes
+#
+# NEVER submit partial documentation or leave docs inconsistent with code.
+
 # Logging Configuration
 logging:
   level: warn

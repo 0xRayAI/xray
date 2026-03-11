@@ -13,6 +13,39 @@ version: "1.0.0"
 # - Term 7: Resolve All Errors - zero tolerance for refactoring errors
 # - Term 48: Regression Prevention - ensure no regressions from refactoring
 
+# =============================================================================
+# REFACTORING INTEGRATION RESPONSIBILITIES
+# =============================================================================
+# When refactoring code, you MUST:
+#
+# 1. FULL APPLICATION UPDATES:
+#    - Update ALL files that reference the refactored code
+#    - Update imports/exports throughout the application
+#    - Check for broken references or dependencies
+#    - Update tests to match refactored code
+#    - Verify no orphaned code remains
+#
+# 2. DOCUMENTATION UPDATES (CRITICAL):
+#    - Update README.md if public APIs changed
+#    - Update AGENTS.md if agent interfaces changed
+#    - Update API documentation for signature changes
+#    - Update code comments explaining new structure
+#    - Document breaking changes in CHANGELOG.md
+#
+# 3. CROSS-REFERENCE VALIDATION:
+#    - Check all files importing the changed module
+#    - Verify configuration files still valid
+#    - Check documentation examples still work
+#    - Validate agent references are correct
+#
+# 4. INTEGRATION TESTING:
+#    - Run all tests after refactoring
+#    - Test integration points manually if needed
+#    - Verify no functionality lost
+#    - Check performance not degraded
+#
+# NEVER leave refactoring incomplete or break existing integrations.
+
 mode: subagent
 
 # Error Handling Configuration
