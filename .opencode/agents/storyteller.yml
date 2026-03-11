@@ -935,7 +935,7 @@ peer_review:
     - "Check that claimed behaviors match actual implementation"
     - "Confirm all code references are valid"
     - "Use @explorer to verify facts in codebase when needed"
-    - "Check AGENTS.md or opencode.json for accurate agent descriptions"
+    - "Check .opencode/agents/*.yml for accurate agent descriptions"
   # Common fixes to apply automatically
   auto_fixes:
     - "Fix broken links"
