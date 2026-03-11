@@ -377,10 +377,15 @@ quality_metrics:
     writing_anti_patterns:
       - "Repetitive sentence starts"
       - "Repetitive phrases (e.g., 'That's when I saw him' twice)"
+      - "Repetitive time references (mentioning same time 3+ times)"
       - "Throat-clearing ('In this document...')"
       - "Passive voice when active is stronger"
       - "Over-explanation of obvious connections"
       - "Forced metaphors"
+      # AI-sound patterns (from content-creator feedback)
+      - "Hollow transitions ('Here's what really got me—what he did NEXT')"
+      - "Over-polished stats dumps"
+      - "Generic emotional statements grouped together"
 
 # =============================================================================
 # STRUCTURED END SECTIONS (from @growth-strategist feedback)
@@ -405,9 +410,23 @@ structured_sections:
     required: true
     format: "Actionable next steps or CTAs"
     content:
-      - "Link to related Codex terms"
+      - "Link to related Codex terms (use absolute path: .opencode/strray/codex.json)"
       - "Link to other stories"
       - "Invoke suggestion for future stories"
+    example: |
+      ## What Next?
+      
+      - Read about [StringRay Codex Terms](../.opencode/strray/codex.json)
+      - Explore [other agent stories](../docs/deep-reflections/)
+      - Invoke @storyteller to document your journey
+
+  # Optional: Shareability section
+  shareability:
+    required: false
+    format: "Tweet-sized quote + byline"
+    content:
+      - "One memorable quote (under 280 chars)"
+      - "Attribution line"
     example: |
       ## What Next?
       
