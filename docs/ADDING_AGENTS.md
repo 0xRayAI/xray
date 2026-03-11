@@ -283,6 +283,59 @@ After reboot, test with:
 
 ---
 
+## Agent Removal Checklist
+
+When removing an agent, you MUST update these files (reverse of adding):
+
+| # | File | What to Remove |
+|---|------|----------------|
+| 1 | `opencode.json` | Agent entry in `agent` section |
+| 2 | `.opencode/agents/{agent}.yml` | Agent YAML configuration file |
+| 3 | `AGENTS.md` | Agent from the agents table |
+| 4 | `README.md` | Agent from the agents table |
+| 5 | `docs/README.md` | Agent from model routing config |
+| 6 | `src/mcps/mcp-client.ts` | Server config + availableSkills |
+| 7 | `src/mcps/knowledge-skills/skill-invocation.server.ts` | Skill enum |
+| 8 | `src/delegation/task-skill-router.ts` | Task routing rules |
+| 9 | `src/enforcement/rule-enforcer.ts` | Rule enforcement mapping |
+| 10 | `src/orchestrator/orchestrator.ts` | Orchestration routing |
+| 11 | `src/orchestrator/multi-agent-orchestration-coordinator.ts` | Coordination |
+| 12 | `src/orchestrator/agent-spawn-governor.ts` | Spawn limits |
+| 13 | `src/orchestrator/enhanced-multi-agent-orchestrator.ts` | Timeout config |
+| 14 | `src/mcps/orchestrator.server.ts` | Agent capabilities |
+| 15 | `src/reporting/framework-reporting-system.ts` | Reporting mapping |
+| 16 | `src/processors/processor-manager.ts` | Processor routing |
+| 17 | `src/processors/agents-md-validation-processor.ts` | Validation |
+| 18 | `AGENTS-full.md` | Full agent documentation |
+| 19 | `AGENTS-consumer.md` | Consumer agent documentation |
+| 20 | `src/scripts/profiling-demo.ts` | Profiling support |
+| 21 | `tests/validation/config-loader.sh` | Config validation |
+| 22 | `tests/validation/config-integration-tests.sh` | Integration tests |
+| 23 | `src/__tests__/test-governance-systems.ts` | Governance tests |
+| 24 | `scripts/node/setup.cjs` | Agent from strrayAgents array |
+
+### Disable Instead of Remove (Recommended)
+
+Instead of removing an agent completely, consider disabling it in `opencode.json`:
+
+```json
+"my-agent": {
+  "disable": true,
+  "note": "Reason for disabling"
+}
+```
+
+This preserves the configuration for future reference while preventing the agent from being used.
+
+### Removing vs Disabling
+
+| Action | When to Use |
+|--------|-------------|
+| **Disable** | Agent is temporarily not needed, or replaced by another agent |
+| **Remove** | Agent is completely obsolete and will never be used again |
+
+---
+
 ## Current Agents List
 
 | Agent | Mode | Description |

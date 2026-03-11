@@ -1366,7 +1366,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
       // Verify system remained stable
       expect(operationCount).toBeGreaterThan(2); // At least 3 operations completed
       expect(actualDuration).toBeGreaterThanOrEqual(testDuration * 0.8); // Ran for most of the test duration
-    });
+    }, 10000); // 10 second timeout to accommodate 5 second test duration
 
     it("should benchmark orchestrator performance across different task complexities", async () => {
       const orchestrator = new StringRayOrchestrator();

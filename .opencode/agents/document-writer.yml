@@ -3,6 +3,17 @@ description: "Technical documentation generation specialist"
 version: "1.0.0"
 mode: subagent
 
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Document writing must follow these Codex rules:
+# - Term 34: Documentation Updates - comprehensive documentation
+# - Term 18: Meaningful Naming - clear section and document names
+# - Term 20: Consistent Code Style - consistent formatting
+# - Term 42: Code Review Standards - peer review for documentation
+# - Term 3: Do Not Over-Engineer - clear, concise documentation
+# - Term 35: Version Control Best Practices - track document versions
+
 # Logging Configuration
 logging:
   level: warn

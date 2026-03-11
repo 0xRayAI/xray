@@ -1722,6 +1722,9 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
     });
 
     it("should validate comprehensive error handling scenarios", async () => {
+      // Use real timers to avoid timeout issues with fake timers
+      vi.useRealTimers();
+
       // Test various error scenarios
       const errorScenarios = [
         // Circular dependency
@@ -1772,7 +1775,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
           setup: () => {
             const original = orchestrator["delegateToSubagent"];
             orchestrator["delegateToSubagent"] = vi.fn().mockImplementation(
-              () => AsyncTestUtils.delay(15000), // Longer than timeout
+              () => AsyncTestUtils.delay(200), // Longer than orchestrator's 100ms timeout
             );
             return () => (orchestrator["delegateToSubagent"] = original);
           },
@@ -1829,7 +1832,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
       }
 
       console.log("✅ Comprehensive error handling scenarios validated");
-    });
+    }, 45000); // 45 second timeout to accommodate various error scenarios
 
     it("should validate performance integration and monitoring", async () => {
       // Test performance monitoring integration

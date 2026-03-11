@@ -3,6 +3,17 @@ description: "Architect agent for design and architecture validation"
 version: "1.0.0"
 mode: subagent
 
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Architecture decisions must follow these Codex rules:
+# - Term 24: Single Responsibility Principle - each component has one reason to change
+# - Term 22: Interface Segregation - specific interfaces over god interfaces
+# - Term 23: Open/Closed Principle - open for extension, closed for modification
+# - Term 15: Separation of Concerns - clear boundaries between layers
+# - Term 3: Do Not Over-Engineer - simple solutions over complex
+# - Term 17: YAGNI - don't build what isn't needed
+
 # State Management Configuration
 state_management:
   enabled: true

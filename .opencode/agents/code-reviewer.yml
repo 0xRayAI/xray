@@ -1,6 +1,18 @@
 name: code-reviewer
 description: "Code reviewer agent for quality assessment and compliance validation"
 version: "1.0.0"
+
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Code review must enforce these Codex rules:
+# - Term 11: Type Safety First - no @ts-ignore, no any types
+# - Term 7: Resolve All Errors - no unresolved errors
+# - Term 39: Avoid Syntax Errors - code must compile
+# - Term 32: Proper Error Handling - never ignore errors
+# - Term 48: Regression Prevention - preserve functionality
+# - Term 46: Import Consistency - consistent imports
+
 mode: subagent
 
 # Logging Configuration

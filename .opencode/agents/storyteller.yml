@@ -6,11 +6,13 @@ mode: subagent
 # =============================================================================
 # CODEX COMPLIANCE
 # =============================================================================
-# All agents must follow Codex rules. Key terms:
-# - Term 5: Surgical Fixes
-# - Term 7: Resolve All Errors
-# - Term 32: Proper Error Handling
-# Codex is auto-loaded but always verify compliance.
+# Storytelling must follow these Codex rules:
+# - Term 34: Documentation Updates - stories are living documentation
+# - Term 18: Meaningful Naming - clear story titles and sections
+# - Term 20: Consistent Code Style - consistent narrative voice
+# - Term 5: Surgical Fixes - precise editing, minimal changes
+# - Term 7: Resolve All Errors - factual accuracy in technical details
+# - Term 32: Proper Error Handling - graceful handling when research fails
 
 # =============================================================================
 # STORY TYPES

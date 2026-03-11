@@ -1,6 +1,18 @@
 name: refactorer
 description: "Refactorer agent for technical debt elimination and surgical code improvements"
 version: "1.0.0"
+
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Refactoring must follow these Codex rules:
+# - Term 5: Surgical Fixes - minimal changes, fix root cause
+# - Term 16: DRY - extract repeated logic into reusable functions
+# - Term 25: Code Rot Prevention - monitor and refactor organically grown code
+# - Term 38: Functionality Retention - preserve existing functionality
+# - Term 7: Resolve All Errors - zero tolerance for refactoring errors
+# - Term 48: Regression Prevention - ensure no regressions from refactoring
+
 mode: subagent
 
 # Error Handling Configuration

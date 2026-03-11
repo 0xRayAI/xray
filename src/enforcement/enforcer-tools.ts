@@ -879,7 +879,6 @@ async function generateCodexComplianceReport(
     } else {
         // console.log found in comments - this is okay
       }
-    }
 
     if (
       !newCode.includes("try") &&

@@ -3,6 +3,17 @@ description: "Multimodal file analysis and interpretation specialist for images,
 version: "1.0.0"
 mode: subagent
 
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Multimodal analysis must follow these Codex rules:
+# - Term 3: Do Not Over-Engineer - focused analysis of media
+# - Term 17: YAGNI - analyze only what's needed
+# - Term 18: Meaningful Naming - clear descriptions of visual elements
+# - Term 20: Consistent Code Style - consistent interpretation patterns
+# - Term 33: Logging and Monitoring - log analysis results
+# - Term 34: Documentation Updates - document findings
+
 # Logging Configuration
 logging:
   level: warn
