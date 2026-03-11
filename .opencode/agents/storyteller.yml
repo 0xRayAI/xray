@@ -915,21 +915,31 @@ peer_review:
   required_reviewer: "@growth-strategist"
   workflow:
     - "Write initial draft"
+    - "Fact-check: Verify all technical details, agent capabilities, and framework facts are accurate"
     - "Send to @growth-strategist for peer review"
     - "Wait for feedback"
     - "Apply necessary fixes"
     - "Confirm ready for publishing"
   review_criteria:
+    - "FACT-CHECK: Verify agent roles, capabilities, and framework facts are accurate"
     - "Key Takeaways section present and good"
     - "What Next section with CTAs"
     - "Links working (use absolute URLs for external)"
     - "Shareable - appropriate for external audience"
     - "Target audience alignment"
+  # Fact-checking requirements
+  fact_check:
+    - "Verify agent's actual role in StringRay framework"
+    - "Verify how the agent is invoked (@mention vs default)"
+    - "Verify technical details about capabilities"
+    - "Check that claimed behaviors match actual implementation"
+    - "Confirm all code references are valid"
   # Common fixes to apply automatically
   auto_fixes:
     - "Fix broken links"
     - "Expand underweight paragraphs (under 3 sentences)"
     - "Ensure shareability hooks present"
+    - "Correct any factual inaccuracies about agents"
   prompt_addition: |
     IMPORTANT: After writing, you MUST send to @growth-strategist for peer review.
     Do NOT publish until feedback is addressed.
