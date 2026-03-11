@@ -770,50 +770,44 @@ version_history:
   - version: "2.1.0"
     date: "2026-03-11"
     changes: |
-      Feedback iteration 1 + 2 improvements:
-      
-      From @content-creator feedback:
-      - Added paragraph structure: 3-8 sentences max
-      - Added repetition anti_patterns (time refs, phrases)
-      - Added AI-sound patterns (hollow transitions, polished stats)
-      
-      From @growth-strategist feedback:
-      - Added structured_sections: Key Takeaways, What Next
-      - Added shareability section (optional)
-      
-      From @strategist feedback:
-      - Added frontmatter requirement (story_type, emotional_arc, codex_terms)
-      
-      Story improvements:
-      - Removed repetitive time references
-      - Fixed broken links
-      - Added proper path resolution
+      Added feedback-driven improvements:
+      - paragraph structure rules (3-8 sentences)
+      - repetition + AI-sound anti_patterns
+      - structured_sections (Key Takeaways, What Next, shareability)
+      - frontmatter requirement
 
 # =============================================================================
-# FEEDBACK CORRELATION SUMMARY
+# FEEDBACK-DRIVEN IMPROVEMENTS
 # =============================================================================
-feedback_iterations:
-  round_1:
-    agents: ["@architect", "@content-creator", "@growth-strategist", "@strategist"]
-    scores: {"architect": "8/10", "content-creator": "8/10", "growth-strategist": "8.5/10", "strategist": "8/10"}
-    key_improvements:
-      - "Add YAML frontmatter with story_type, emotional_arc, codex_terms"
-      - "Break paragraphs into 3-8 sentences"
-      - "Add Key Takeaways and What Next sections"
-      - "Add more technical depth with pattern stats"
-      - "Add Codex term references"
-    resulting_version: "2.0.0"
+# This section documents feedback patterns that can be applied to stories
+# Not all stories will go through multiple iterations - apply as needed
 
-  round_2:
-    agents: ["@content-creator", "@growth-strategist", "@strategist"]
-    scores: {"content-creator": "7.5/10", "growth-strategist": "8/10", "strategist": "9/10"}
-    key_improvements:
-      - "Remove repetition (2:47 AM x5, Clark Kent twice)"
-      - "Fix broken link in What Next"
-      - "Add shareability hooks"
-      - "Remove AI-sound phrases"
-    resulting_version: "2.1.0"
+feedback_patterns:
+  # Common issues from @content-creator
+  content_feedback:
+    - "Paragraphs too long (break into 3-8 sentences)"
+    - "Repetitive phrases or time references"
+    - "AI-sound patterns (hollow transitions, polished stats)"
+    - "Voice not authentic"
+  
+  # Common issues from @growth-strategist
+  growth_feedback:
+    - "Add Key Takeaways section"
+    - "Add What Next section with CTAs"
+    - "Add shareability hooks"
+    - "Fix broken links"
+  
+  # Common issues from @strategist
+  strategy_feedback:
+    - "Add frontmatter (story_type, emotional_arc)"
+    - "Add Codex term references"
+    - "Align with story type template"
 
+# Generic feedback workflow (apply to any story):
+# 1. Write initial draft
+# 2. Get feedback from content-creator, growth-strategist, strategist
+# 3. Triage issues by priority
+# 4. Apply improvements to story + to this config if reusable
   round_3:
     agents: ["@content-creator", "@growth-strategist"]
     scores: {"content-creator": "8/10", "growth-strategist": "8/10"}
