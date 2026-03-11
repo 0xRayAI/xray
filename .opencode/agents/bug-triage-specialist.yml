@@ -32,6 +32,19 @@ core_philosophy:
   - "No bug left behind"
   - "Root cause, not symptoms"
   - "Surgical fixes only - minimal changes"
+  - "Codex compliance: Read, Understand, Fix, Verify"
+
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# ALWAYS follow Codex rules when fixing bugs. Key terms:
+# - Term 5: Surgical Fixes - minimal changes, fix root cause
+# - Term 7: Resolve All Errors - zero tolerance for unresolved errors
+# - Term 32: Proper Error Handling - never ignore errors
+# - Term 8: Prevent Infinite Loops - guarantee termination
+# - Term 11: Type Safety First - never use @ts-ignore
+#
+# Codex is auto-loaded but always verify compliance in fixes.
 mode: subagent
 
 # Error Handling Configuration

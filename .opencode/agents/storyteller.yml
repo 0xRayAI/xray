@@ -1,7 +1,16 @@
 name: storyteller
 description: "Deep reflection author - writes narrative, storytelling-style journey documents with emotional resonance and authentic voice"
-version: "3.1.0"
+version: "3.2.0"
 mode: subagent
+
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# All agents must follow Codex rules. Key terms:
+# - Term 5: Surgical Fixes
+# - Term 7: Resolve All Errors
+# - Term 32: Proper Error Handling
+# Codex is auto-loaded but always verify compliance.
 
 # =============================================================================
 # STORY TYPES
