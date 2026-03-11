@@ -27,3 +27,9 @@ export {
   CleanDebugLogsValidator,
   ConsoleLogUsageValidator,
 } from "./code-quality-validators.js";
+
+// Security validators
+export {
+  InputValidationValidator,
+  SecurityByDesignValidator,
+} from "./security-validators.js";
