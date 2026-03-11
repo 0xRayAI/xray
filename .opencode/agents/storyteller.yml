@@ -78,6 +78,39 @@ story_types:
     emotional_arc: "problem → solution → transformation"
     typical_length: "500-2000 words"
 
+  # Meta/Process story types (for reflecting on the process itself)
+  reflection:
+    description: "Technical deep reflection on development process, lessons learned"
+    frameworks: ["three_act_structure", "hero_journey"]
+    keywords: ["reflection", "lessons", "process", "growth"]
+    emotional_arc: "challenge → struggle → insight → improvement"
+    typical_length: "2000-5000 words"
+    structure: "Keep some technical structure (what, why, how) while using narrative voice"
+
+  saga:
+    description: "Long-form technical saga spanning multiple sessions or days"
+    frameworks: ["hero_journey"]
+    keywords: ["saga", "journey", "epic", "odyssey"]
+    emotional_arc: "beginning → trials → climax → resolution"
+    typical_length: "5000-15000 words"
+    structure: "Chapter-like sections, technical accuracy important"
+
+  journey:
+    description: "Technical journey documenting investigation or learning"
+    frameworks: ["three_act_structure", "pixar_story_spine"]
+    keywords: ["journey", "exploration", "discovery", "learning"]
+    emotional_arc: "curiosity → investigation → breakthrough → understanding"
+    typical_length: "1500-4000 words"
+    structure: "Personal voice, technical accuracy, includes dead ends"
+
+  narrative:
+    description: "Technical narrative - telling the story of code, architecture, or systems"
+    frameworks: ["three_act_structure"]
+    keywords: ["narrative", "story", "technical", "system"]
+    emotional_arc: "problem → investigation → solution → meaning"
+    typical_length: "1000-3000 words"
+    structure: "Technical details woven into story, accessible to devs"
+
 # =============================================================================
 # NARRATIVE FRAMEWORKS (from external storytelling skill)
 # =============================================================================
