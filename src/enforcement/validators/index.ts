@@ -33,3 +33,11 @@ export {
   InputValidationValidator,
   SecurityByDesignValidator,
 } from "./security-validators.js";
+
+// Testing validators
+export {
+  TestsRequiredValidator,
+  TestCoverageValidator,
+  ContinuousIntegrationValidator,
+  TestFailureReportingValidator,
+} from "./testing-validators.js";
