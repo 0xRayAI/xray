@@ -1,73 +1,99 @@
 # How to Add an Agent to StringRay Framework
 
-This guide documents how to add agents to StringRay using OpenCode's official agent configuration.
+This guide documents how to add agents to StringRay and lists **every single file** that needs to be updated.
 
 ---
 
-## How OpenCode Agents Work (Official Docs)
+## Quick Checklist
 
-According to [OpenCode Agents Documentation](https://opencode.ai/docs/agents/):
+When adding a new agent, you MUST update these files:
 
-### Two Types of Agents
-
-1. **Primary Agents** - Main assistants (Build, Plan)
-2. **Subagents** - Specialized assistants invoked via `@` mentions
-
-### Agent Invocation
-
-- **Primary agents**: Use Tab key to cycle through during a session
-- **Subagents**: Use `@agentname` to invoke directly, e.g., `@strategist help me with architecture`
-
-### Agent Configuration Options
-
-OpenCode agents can be configured in two ways:
-
-1. **JSON** - In `opencode.json` under the `agent` key
-2. **Markdown** - In `.opencode/agents/` directory as `.yml` files
-
-Required fields:
-- `description` - Brief description of what the agent does
-- `mode` - `primary`, `subagent`, or `all`
-
-Optional fields:
-- `temperature` - Control randomness (0.0-1.0)
-- `tools` - Control which tools are available
-- `hidden` - Hide from @ autocomplete
-
-**IMPORTANT**: Do NOT set `model:` in yml files - this causes ProviderModelNotFoundError. Subagents inherit the model's from the primary agent.
+| # | File | What to Add |
+|---|------|-------------|
+| 1 | `opencode.json` | Agent entry in `agent` section |
+| 2 | `.opencode/agents/{agent}.yml` | Agent YAML configuration |
+| 3 | `AGENTS.md` | Agent in the agents table |
+| 4 | `README.md` | Agent in the agents table |
+| 5 | `docs/README.md` | Agent in model routing config |
+| 6 | `src/mcps/mcp-client.ts` | Server config + availableSkills |
+| 7 | `src/mcps/knowledge-skills/skill-invocation.server.ts` | Skill enum |
+| 8 | `src/delegation/task-skill-router.ts` | Task routing rules |
+| 9 | `src/enforcement/rule-enforcer.ts` | Rule enforcement mapping |
+| 10 | `src/orchestrator/orchestrator.ts` | Orchestration routing |
+| 11 | `src/orchestrator/multi-agent-orchestration-coordinator.ts` | Coordination |
+| 12 | `src/orchestrator/agent-spawn-governor.ts` | Spawn limits |
+| 13 | `src/orchestrator/enhanced-multi-agent-orchestrator.ts` | Timeout config |
+| 14 | `src/mcps/orchestrator.server.ts` | Agent capabilities |
+| 15 | `src/reporting/framework-reporting-system.ts` | Reporting mapping |
+| 16 | `src/processors/processor-manager.ts` | Processor routing |
+| 17 | `src/processors/agents-md-validation-processor.ts` | Validation |
+| 18 | `AGENTS-full.md` | Full agent documentation |
+| 19 | `AGENTS-consumer.md` | Consumer agent documentation |
+| 20 | `src/scripts/profiling-demo.ts` | Profiling support |
+| 21 | `tests/validation/config-loader.sh` | Config validation |
+| 22 | `tests/validation/config-integration-tests.sh` | Integration tests |
+| 23 | `src/__tests__/test-governance-systems.ts` | Governance tests |
+| 24 | `docs/ADDING_AGENTS.md` | Update this guide |
 
 ---
 
-## Files That Need to Be Updated
+## Detailed Instructions
 
-### 1. `opencode.json` (RECOMMENDED)
+### 1. opencode.json
 
-Add the agent to the `agent` section:
+Add agent entry in the `agent` section:
 
 ```json
 {
   "agent": {
     "my-agent": {
-      "description": "What this agent does",
-      "mode": "subagent",
-      "temperature": 1.0
+      "temperature": 1.0,
+      "mode": "subagent"
     }
   }
 }
 ```
 
-Or use `.opencode/agents/my-agent.yml`:
+### 2. .opencode/agents/{agent}.yml
+
+Create the agent YAML file:
 
 ```yaml
 name: my-agent
-description: What this agent does
+description: "What this agent does"
+version: "1.0.0"
 mode: subagent
-version: "1.7.5"
 ```
 
-### 2. `src/mcps/mcp-client.ts` (REQUIRED for MCP)
+**Note:** Do NOT set `model:` in yml files - causes ProviderModelNotFoundError.
 
-Add MCP server configuration in `serverConfigs`:
+### 3. AGENTS.md
+
+Add to the Available Agents table:
+
+```markdown
+| `@my-agent` | Purpose | `@my-agent do something` |
+```
+
+### 4. README.md
+
+Add to the agents table (line ~72):
+
+```markdown
+| `@my-agent` | Purpose |
+```
+
+### 5. docs/README.md
+
+Add to model routing config (around line 155):
+
+```json
+"my-agent": "openrouter/xai-grok-2-1212-fast-1",
+```
+
+### 6. src/mcps/mcp-client.ts
+
+**A)** Add to serverConfigs (around line 720):
 
 ```typescript
 "my-agent": {
@@ -80,166 +106,179 @@ Add MCP server configuration in `serverConfigs`:
 },
 ```
 
-### 3. Update Skills List
+**B)** Add to availableSkills array (around line 396):
 
-Add to skill lists in:
-- `src/mcps/mcp-client.ts` - `availableSkills` array
-- `src/mcps/knowledge-skills/skill-invocation.server.ts` - skill enum
-
----
-
-## Agent Access Methods
-
-| Method | How | Works for Custom Agents? |
-|--------|-----|-------------------------|
-| `@agent` | Type `@strategist` in chat | ✅ Yes |
-| Tab key | Cycle primary agents | ❌ Built-in only |
-| Task tool | Primary agent invokes subagent | ✅ Yes |
-| StringRay MCP | Direct MCP invocation | ✅ Yes |
-
----
-
-## Troubleshooting
-
-### Issue 1: ProviderModelNotFoundError
-
-**Error**: `ProviderModelNotFoundError: ProviderModelNotFoundError`
-
-**Cause**: A `.yml` file in `.opencode/agents/` has an explicit `model:` setting that references a model not available in your provider configuration.
-
-**Solution**:
-1. Check `.opencode/agents/*.yml` files for `model:` field
-2. Remove any `model:` lines from yml files - they should NOT have models set
-3. Subagents inherit the model from the primary agent that invokes them
-
-```yaml
-# WRONG - will cause ProviderModelNotFoundError
-name: my-agent
-model: openrouter/xai-grok-2
-mode: subagent
-
-# CORRECT - no model field
-name: my-agent
-mode: subagent
+```typescript
+"my-agent": [
+  "skill-name",
+],
 ```
 
----
+### 7. src/mcps/knowledge-skills/skill-invocation.server.ts
 
-### Issue 2: Unknown agent type
+Add to the skills enum (around line 71):
 
-**Error**: `Error: Unknown agent type: my-agent is not a valid agent type`
-
-**Cause**: Agent is missing from `opencode.json` OR OpenCode hasn't reloaded the configuration after you added it.
-
-**Solution**:
-1. Add agent to `opencode.json` under the `agent` key:
-
-```json
-{
-  "agent": {
-    "my-agent": {
-      "description": "What this agent does",
-      "mode": "subagent",
-      "temperature": 1.0
-    }
-  }
-}
+```typescript
+"my-agent",
 ```
 
-2. **Reboot OpenCode** - The configuration is cached. You MUST restart OpenCode for new agents to work.
+### 8. src/delegation/task-skill-router.ts
 
-3. After reboot, test with `@my-agent hello`
+Add routing rules (around line 401):
+
+```typescript
+agent: "my-agent",
+```
+
+Search for other agents to see the pattern - there are multiple routing locations.
+
+### 9. src/enforcement/rule-enforcer.ts
+
+Add enforcement mapping (around line 1008):
+
+```typescript
+agent: "my-agent",
+```
+
+### 10. src/orchestrator/orchestrator.ts
+
+Add orchestration routing (around line 354):
+
+```typescript
+agentsNeeded = ["my-agent"];
+```
+
+### 11. src/orchestrator/multi-agent-orchestration-coordinator.ts
+
+Add coordination config (around line 599):
+
+```typescript
+"my-agent",
+```
+
+### 12. src/orchestrator/agent-spawn-governor.ts
+
+Add spawn limits (around line 71):
+
+```typescript
+"my-agent": 2,
+```
+
+### 13. src/orchestrator/enhanced-multi-agent-orchestrator.ts
+
+Add timeout config (around line 362):
+
+```typescript
+"my-agent": 2800,
+```
+
+### 14. src/mcps/orchestrator.server.ts
+
+Add agent capabilities (around line 75):
+
+```typescript
+this.agentCapabilities.set("my-agent", {
+  // capabilities
+});
+```
+
+### 15. src/reporting/framework-reporting-system.ts
+
+Add reporting mapping (around line 563):
+
+```typescript
+if (component.includes("my-agent")) return "my-agent";
+```
+
+### 16. src/processors/processor-manager.ts
+
+Add processor routing (around line 1389):
+
+```typescript
+agent: "my-agent",
+```
+
+### 17. src/processors/agents-md-validation-processor.ts
+
+Add validation (around line 47):
+
+```typescript
+"@my-agent",
+```
+
+### 18. AGENTS-full.md
+
+Add comprehensive agent documentation:
+- Agent table entry
+- Capabilities section
+- Model routing config
+- Skill routing
+
+### 19. AGENTS-consumer.md
+
+Add consumer-facing agent documentation (mirrors AGENTS.md).
+
+### 20. src/scripts/profiling-demo.ts
+
+Add profiling support (around line 49):
+
+```typescript
+const agents = ['enforcer', 'architect', 'my-agent', ...];
+```
+
+### 21. tests/validation/config-loader.sh
+
+Add to expected_agents (around line 66):
+
+```bash
+expected_agents = ['enforcer', 'architect', 'my-agent', ...]
+```
+
+### 22. tests/validation/config-integration-tests.sh
+
+Add to expected_agents (around line 135):
+
+```bash
+expected_agents = ['enforcer', 'architect', 'my-agent', ...]
+```
+
+### 23. src/__tests__/test-governance-systems.ts
+
+Add test cases (around line 186):
+
+```typescript
+agentType: "my-agent",
+```
+
+### 24. docs/ADDING_AGENTS.md
+
+Update the Current Agents List table with your new agent.
 
 ---
 
-### @mention Not Working
-
-**Cause**: Agent missing `mode: subagent`
-
-**Fix**: Add `mode: subagent` to agent configuration
-
----
-
-## Example: Adding the Storyteller Agent
-
-This section documents how the storyteller agent was added as a real example.
-
-### 1. Create Agent YAML Configuration
-
-Create `.opencode/agents/storyteller.yml`:
-
-```yaml
-name: storyteller
-description: "Deep reflection author - writes narrative, storytelling-style journey documents"
-version: "2.0.0"
-mode: subagent
-
-# Story types supported
-story_types:
-  bug_fix:
-    description: "Technical debugging narratives"
-    emotional_arc: "frustration → confusion → breakthrough → satisfaction"
-  feature_development:
-    description: "Stories about building new features"
-    emotional_arc: "excitement → challenge → perseverance → accomplishment"
-  # ... more types
-
-# Story components
-story_components:
-  scene_builder:
-    description: "Creates vivid scene-setting"
-  emotional_architect:
-    description: "Shapes emotional journey"
-  # ... more components
-
-# Integration with other agents
-integration:
-  complementary_agents:
-    - researcher  # Gather facts first
-    - tech-writer # Technical accuracy
-    - code-reviewer # Validate details
-```
-
-### 2. Add to opencode.json
-
-In `opencode.json`, add to the `agent` section:
-
-```json
-{
-  "agent": {
-    "storyteller": {
-      "temperature": 1.0,
-      "mode": "subagent"
-    }
-  }
-}
-```
-
-### 3. Supporting Documentation (Optional but Recommended)
-
-Create supporting documents for reference:
-- `.opencode/agents/storyteller-style-guide.md` - Voice and tone guidelines
-- `.opencode/agents/storyteller-growth-strategy.md` - Audience and use cases
-- `docs/storyteller-strategic-roadmap.md` - Development roadmap
-
-### 4. Force-Add to Git (If Needed)
+## Force-Add to Git
 
 Agent files may be gitignored. Use `-f` to force add:
 
 ```bash
-git add -f .opencode/agents/storyteller.yml
+git add -f .opencode/agents/my-agent.yml
+git add -f .opencode/agents/my-agent-*.md
 ```
 
-### 5. Reboot OpenCode
+---
+
+## Reboot OpenCode
 
 After adding, you MUST restart OpenCode for the agent to be recognized.
 
-### Usage
+---
 
-After reboot, invoke with:
+## Verification
+
+After reboot, test with:
 
 ```
-@storyteller write a deep reflection about fixing the memory leak
+@my-agent hello
 ```
 
 ---

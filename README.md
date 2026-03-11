@@ -70,6 +70,7 @@ npx strray-ai status
 | `@refactorer` | Technical debt elimination |
 | `@testing-lead` | Testing strategy & coverage |
 | `@bug-triage-specialist` | Error investigation |
+| `@storyteller` | Narrative deep reflections |
 | `@researcher` | Codebase exploration |
 | `@mobile-developer` | iOS/Android/React Native/Flutter |
 
