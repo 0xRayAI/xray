@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 import { StringRayStateManager } from "../../state/state-manager.js";
 import { SessionCoordinator } from "../../delegation/session-coordinator.js";
 import { SessionCleanupManager } from "../../session/session-cleanup-manager.js";

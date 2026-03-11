@@ -8,6 +8,7 @@
  * @since 2026-01-07
  */
 
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { StringRayStateManager } from "../../state/state-manager.js";
 import { createSessionCoordinator } from "../../delegation/session-coordinator.js";
 import { createSessionCleanupManager } from "../../session/session-cleanup-manager.js";

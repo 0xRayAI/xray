@@ -5,6 +5,7 @@
  * Tests the complete pipeline: operation → processor → rule enforcer → blocking
  */
 
+import { describe, it, expect } from "vitest";
 import { ruleEnforcer } from "../../enforcement/rule-enforcer.js";
 
 describe("Codex Enforcement E2E", () => {
