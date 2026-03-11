@@ -87,14 +87,13 @@ story_types:
     typical_length: "2000-5000 words"
     structure: "Keep some technical structure (what, why, how) while using narrative voice"
     recommended_sections:
-      - "The Call to Create Something New"    # What started this
-      - "Where Things Were Fine"             # Context/background
-      - "The First Attempts"                 # Initial approach
-      - "Five Rounds of Failing Forward"     # The iterations
-      - "What We Brought Back"              # What we learned/results
-      - "The Lessons That Remain"           # Takeaways
+      - "The Call to Create Something New"    # Opening - what prompted this
+      - "Where Things Were Fine, Sort Of"    # Background - what existed before
+      - "Crossing the Threshold"             # First attempt - entering new territory
+      - "Five Rounds of Failing Forward"     # Iteration - the work
+      - "What We Brought Back"              # Resolution - what was achieved
+      - "The Lessons That Remain"           # Closing insights
       - "What's Next"                        # Forward-looking
-      - "Technical Notes"                    # Implementation details
 
   saga:
     description: "Long-form technical saga spanning multiple sessions or days"

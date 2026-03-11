@@ -28,7 +28,7 @@ A difference we would spend the next several weeks learning to articulate.
 
 ---
 
-## The First Attempts
+## Crossing the Threshold
 
 We assembled what we thought we needed: input from @architect on the structural requirements, @content-creator on the existing content patterns, @growth-strategist on voice and audience, and @strategist on the philosophical underpinnings of what makes a story actually work.
 
