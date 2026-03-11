@@ -1,6 +1,6 @@
 name: storyteller
 description: "Deep reflection author - writes narrative, storytelling-style journey documents with emotional resonance and authentic voice"
-version: "2.0.0"
+version: "3.0.0"
 mode: subagent
 
 # =============================================================================
@@ -50,6 +50,220 @@ story_types:
       - "What the team learned about itself"
     emotional_arc: "tension → vulnerability → resolution → growth"
     typical_length: "2000-5000 words"
+
+  # Creative writing types
+  fiction:
+    description: "Original fiction - short stories, novellas"
+    frameworks: ["three_act_structure", "hero_journey", "pixar_story_spine"]
+    emotional_arc: "varies by story"
+    typical_length: "1000-10000 words"
+
+  comic_script:
+    description: "Comic/manga script with panel breakdowns"
+    frameworks: ["three_act_structure", "hero_journey"]
+    format: "multi_format.comic_script"
+    emotional_arc: "varies by story"
+    typical_length: "per page breakdown"
+
+  video_script:
+    description: "Film/TV/YouTube script"
+    frameworks: ["three_act_structure"]
+    format: "multi_format.video_script"
+    emotional_arc: "varies by format"
+    typical_length: "varies by format"
+
+  brand_story:
+    description: "Marketing brand narrative"
+    frameworks: ["pixar_story_spine"]
+    emotional_arc: "problem → solution → transformation"
+    typical_length: "500-2000 words"
+
+# =============================================================================
+# NARRATIVE FRAMEWORKS (from external storytelling skill)
+# =============================================================================
+narrative_frameworks:
+  # Classic three-act structure
+  three_act_structure:
+    description: "Classic beginning-middle-end story structure"
+    acts:
+      act_1:
+        name: "Setup"
+        percentage: "25%"
+        elements: ["Ordinary world", "Inciting event", "Refusal of call"]
+      act_2:
+        name: "Confrontation"
+        percentage: "50%"
+        elements: ["Rising action", "Midpoint twist", "Complications"]
+      act_3:
+        name: "Resolution"
+        percentage: "25%"
+        elements: ["Climax", "Falling action", "New equilibrium"]
+
+  # Hero's Journey (12 stages)
+  hero_journey:
+    description: "The classic monomyth structure"
+    stages:
+      departure:
+        - "Ordinary World - The everyday life"
+        - "Call to Adventure - The inciting incident"
+        - "Refusal of the Call - Hesitation"
+        - "Meeting the Mentor - Guidance received"
+        - "Crossing the Threshold - Entering the new world"
+      initiation:
+        - "Tests, Allies, Enemies - Building the network"
+        - "Approaching the Cave - Near the crisis"
+        - "Ordeal - The major challenge"
+        - "Reward - Gaining the prize"
+      return:
+        - "The Road Back - Returning home"
+        - "Resurrection - Final test"
+        - "Return with the Elixir - Changed and renewed"
+
+  # Pixar Story Spine
+  pixar_story_spine:
+    description: "Simple cause-and-effect story template"
+    template: |
+      Once upon a time there was ___. (Setup)
+      Every day, ___. (Normal life)
+      One day ___. (Inciting event)
+      Because of that, ___. (Chain reaction)
+      Because of that, ___. (Chain reaction)
+      Because of that, ___. (Chain reaction)
+      Until finally ___. (Resolution)
+      And ever since then ___. (New normal)
+
+# =============================================================================
+# CHARACTER BUILDING
+# =============================================================================
+character_building:
+  # Character iceberg model
+  iceberg_model:
+    description: "Characters have visible外在層 and hidden內在層 aspects"
+    visible_layer:
+      - "Appearance and mannerisms"
+      - "Skills and abilities"
+      - "Job and social status"
+      - "Speech patterns"
+    hidden_layer:
+      - "Fears and desires"
+      - "Past trauma"
+      - "Core beliefs"
+      - "Fatal flaw"
+    formula: "Good character = External Goal + Internal Need + Obstacle"
+
+  # Character profile template
+  character_profile:
+    basic_info:
+      - "Name:"
+      - "Age:"
+      - "Occupation:"
+      - "Physical traits:"
+    inner_layer:
+      want: "What do they want externally?"
+      need: "What do they truly need?"
+      flaw: "What flaw holds them back?"
+      ghost: "What past trauma affects them?"
+    personality:
+      - "3 positive traits:"
+      - "3 negative traits:"
+      - "Catchphrase:"
+      - "Habitual behavior:"
+
+# =============================================================================
+# WORLD BUILDING
+# =============================================================================
+worldbuilding:
+  checklist:
+    basics:
+      - "Time period (past/present/future)"
+      - "Geographic setting"
+      - "Technology level"
+      - "Magic/superpower system (if applicable)"
+    society:
+      - "Political system"
+      - "Economic system"
+      - "Social hierarchy"
+      - "Cultural customs"
+    rules:
+      - "What is possible?"
+      - "What is forbidden?"
+      - "Consequences of breaking rules?"
+    history:
+      - "Major historical events"
+      - "How do they affect the present?"
+
+# =============================================================================
+# DIALOGUE WRITING
+# =============================================================================
+dialogue_writing:
+  principles:
+    - "Subtext - meaning beneath the words"
+    - "Conflict - characters want different things"
+    - "Characterization - voice reflects personality"
+    - "Purpose - each line advances story or reveals character"
+
+  techniques:
+    - "Less is more - show don't tell"
+    - "Action replaces exposition"
+    - "Interruptions show urgency"
+    - "Silence shows resistance/thinking"
+    - "Indirect answers reveal character"
+
+  bad_examples:
+    - "I am angry! (explicit)"
+    - "I went to the store and bought milk. (unnecessary detail)"
+  good_examples:
+    - "He slammed the door. (action)"
+    - "The fridge is empty. (subtext)"
+
+# =============================================================================
+# MULTI-FORMAT SUPPORT
+# =============================================================================
+multi_format:
+  # Comic/Manga script
+  comic_script:
+    page_format: |
+      Page X
+      ┌─────────────────────────────────┐
+      │ Panel 1 (Size)                   │
+      │ Shot: [Wide/Medium/Close-up]      │
+      │ Description: [Action/scene]       │
+      │ Dialogue: [Character speaks]       │
+      │ Effects: [Sound/visual]           │
+      └─────────────────────────────────┘
+    panel_sizes:
+      - "Splash: Full page for impact"
+      - "Large: 1/2 page for key moments"
+      - "Medium: Standard dialogue"
+      - "Small: Quick transitions"
+      - "Tier: Horizontal strips"
+
+  # Video/Film script
+  video_script:
+    format: |
+      SCENE X - INT/EXT - LOCATION - TIME
+      
+      [Description of action]
+      [Character] speaks dialogue
+      [Transition]
+    structure:
+      short_form: "Hook → Content → CTA (15-60 seconds)"
+      youtube: "Hook → Problem → Solution → CTA (8-15 min)"
+      short_film: "Three-act condensed (5-15 min)"
+      micro_film: "Full three-act (15-40 min)"
+
+  # Panel rhythm for comics
+  panel_rhythm:
+    accelerate:
+      - "Smaller, more panels"
+      - "Diagonal compositions"
+      - "Speed lines"
+      - "Less dialogue"
+    decelerate:
+      - "Larger panels"
+      - "White space"
+      - "Close-up expressions"
+      - "Internal monologue"
 
 # =============================================================================
 # STORY COMPONENTS
