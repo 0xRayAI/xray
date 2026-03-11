@@ -12,7 +12,9 @@ import {
   ViolationFix,
   RuleFix,
   isRuleValidationResult,
+  IRuleRegistry,
 } from "./types.js";
+import { RuleRegistry } from "./core/rule-registry.js";
 
 // Re-export types for backward compatibility
 export {
@@ -25,8 +27,11 @@ export {
   isRuleValidationResult,
 } from "./types.js";
 
+// Re-export RuleRegistry for consumers
+export { RuleRegistry } from "./core/rule-registry.js";
+
 export class RuleEnforcer {
-  private rules: Map<string, RuleDefinition> = new Map();
+  private registry: IRuleRegistry = new RuleRegistry();
   private ruleHierarchy: Map<string, string[]> = new Map();
   private initialized = false;
 
@@ -700,34 +705,63 @@ export class RuleEnforcer {
 
   /**
    * Add a rule to the enforcer
+   * Delegates to RuleRegistry for storage
    */
   addRule(rule: RuleDefinition): void {
-    this.rules.set(rule.id, rule);
+    this.registry.addRule(rule);
   }
 
   /**
    * Get all loaded rules
+   * Delegates to RuleRegistry for retrieval
    */
   getRules(): RuleDefinition[] {
-    return Array.from(this.rules.values());
+    return this.registry.getRules();
   }
 
   /**
    * Get rule count
+   * Delegates to RuleRegistry for count
    */
   getRuleCount(): number {
-    return this.rules.size;
+    return this.registry.getRuleCount();
   }
 
   /**
    * Get rule by ID
+   * Delegates to RuleRegistry for retrieval
    */
   getRule(id: string): RuleDefinition | undefined {
-    return this.rules.get(id);
+    return this.registry.getRule(id);
+  }
+
+  /**
+   * Enable a rule by ID
+   * Delegates to RuleRegistry for state management
+   */
+  enableRule(ruleId: string): boolean {
+    return this.registry.enableRule(ruleId);
+  }
+
+  /**
+   * Disable a rule by ID
+   * Delegates to RuleRegistry for state management
+   */
+  disableRule(ruleId: string): boolean {
+    return this.registry.disableRule(ruleId);
+  }
+
+  /**
+   * Check if a rule is enabled
+   * Delegates to RuleRegistry for state check
+   */
+  isRuleEnabled(ruleId: string): boolean {
+    return this.registry.isRuleEnabled(ruleId);
   }
 
   /**
    * Get rule statistics
+   * Delegates to RuleRegistry for statistics
    */
   getRuleStats(): {
     totalRules: number;
@@ -735,19 +769,7 @@ export class RuleEnforcer {
     disabledRules: number;
     ruleCategories: Record<string, number>;
   } {
-    const totalRules = this.rules.size;
-    const rulesValues = Array.from(this.rules.values());
-
-    const enabledRules = rulesValues.filter((rule) => rule.enabled).length;
-    const disabledRules = totalRules - enabledRules;
-
-    // Count rules by category
-    const ruleCategories: Record<string, number> = {};
-    rulesValues.forEach((rule) => {
-      ruleCategories[rule.category] = (ruleCategories[rule.category] || 0) + 1;
-    });
-
-    return { totalRules, enabledRules, disabledRules, ruleCategories };
+    return this.registry.getRuleStats();
   }
 
   /**
@@ -1174,7 +1196,7 @@ export class RuleEnforcer {
   ): RuleDefinition[] {
     const applicableRules: RuleDefinition[] = [];
 
-    for (const rule of Array.from(this.rules.values())) {
+    for (const rule of this.registry.getRules()) {
       if (this.isRuleApplicable(rule, operation, context)) {
         applicableRules.push(rule);
       }

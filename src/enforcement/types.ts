@@ -206,10 +206,10 @@ export interface RuleFix {
 
 /**
  * Type guard to check if an object is a valid RuleValidationResult.
- * 
+ *
  * @param obj - The object to check
  * @returns True if the object is a valid RuleValidationResult
- * 
+ *
  * @example
  * ```typescript
  * if (isRuleValidationResult(value)) {
@@ -226,4 +226,55 @@ export function isRuleValidationResult(obj: unknown): obj is RuleValidationResul
     "message" in obj &&
     typeof (obj as RuleValidationResult).message === "string"
   );
+}
+
+/**
+ * Interface for rule registry implementations.
+ * Provides storage and management of validation rules separate from execution.
+ *
+ * @example
+ * ```typescript
+ * const registry: IRuleRegistry = new RuleRegistry();
+ * registry.addRule({ id: "no-console", name: "No Console", ... });
+ * const rules = registry.getRules();
+ * ```
+ */
+export interface IRuleRegistry {
+  /** Add a rule to the registry */
+  addRule(rule: RuleDefinition): void;
+
+  /** Get all loaded rules */
+  getRules(): RuleDefinition[];
+
+  /** Get a specific rule by ID */
+  getRule(ruleId: string): RuleDefinition | undefined;
+
+  /** Enable a rule by ID */
+  enableRule(ruleId: string): boolean;
+
+  /** Disable a rule by ID */
+  disableRule(ruleId: string): boolean;
+
+  /** Check if a rule is enabled */
+  isRuleEnabled(ruleId: string): boolean;
+
+  /** Get total rule count */
+  getRuleCount(): number;
+
+  /** Get rule statistics by category and status */
+  getRuleStats(): {
+    totalRules: number;
+    enabledRules: number;
+    disabledRules: number;
+    ruleCategories: Record<string, number>;
+  };
+
+  /** Check if a rule exists in the registry */
+  hasRule(ruleId: string): boolean;
+
+  /** Remove a rule from the registry */
+  removeRule(ruleId: string): boolean;
+
+  /** Clear all rules from the registry */
+  clearRules(): void;
 }
