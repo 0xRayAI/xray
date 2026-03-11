@@ -101,9 +101,10 @@
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run pre-publish-guard && npm run prepare-consumer && npm run build && npm publish",
     "publish": "npm run pre-publish-guard && npm run safe-publish",
-    "release:patch": "npm run version:bump -- patch --tag && npm run build && npm publish",
-    "release:minor": "npm run version:bump -- minor --tag && npm run build && npm publish",
-    "release:major": "npm run version:bump -- major --tag && npm run build && npm publish"
+    "release:patch": "npm run release -- patch",
+    "release:minor": "npm run release -- minor",
+    "release:major": "npm run release -- major",
+    "release": "node scripts/node/release.mjs"
   },
   "files": [
     "dist/",
