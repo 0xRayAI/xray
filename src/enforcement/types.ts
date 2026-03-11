@@ -229,6 +229,79 @@ export function isRuleValidationResult(obj: unknown): obj is RuleValidationResul
 }
 
 /**
+ * Interface for individual validators extracted from RuleEnforcer.
+ * Validators encapsulate specific validation logic and can be tested independently.
+ *
+ * @example
+ * ```typescript
+ * class MyValidator implements IValidator {
+ *   readonly id = 'my-validator';
+ *   readonly ruleId = 'my-rule';
+ *   readonly category = 'code-quality';
+ *   readonly severity = 'error';
+ *
+ *   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+ *     // validation logic
+ *   }
+ * }
+ * ```
+ */
+export interface IValidator {
+  /** Unique identifier for this validator instance */
+  readonly id: string;
+  /** The rule ID this validator validates */
+  readonly ruleId: string;
+  /** Category for organizing validators */
+  readonly category: RuleCategory;
+  /** Severity level of violations */
+  readonly severity: RuleSeverity;
+
+  /**
+   * Perform validation on the given context.
+   * @param context - The validation context containing code and operation info
+   * @returns Promise resolving to validation result
+   */
+  validate(context: RuleValidationContext): Promise<RuleValidationResult>;
+}
+
+/**
+ * Interface for validator registry implementations.
+ * Manages validator instances and provides lookup capabilities.
+ *
+ * @example
+ * ```typescript
+ * const registry = new ValidatorRegistry();
+ * registry.register(new NoDuplicateCodeValidator());
+ * const validator = registry.getValidator('no-duplicate-code');
+ * ```
+ */
+export interface IValidatorRegistry {
+  /** Register a validator instance */
+  register(validator: IValidator): void;
+
+  /** Get a validator by rule ID */
+  getValidator(ruleId: string): IValidator | undefined;
+
+  /** Get all validators for a specific category */
+  getValidatorsByCategory(category: RuleCategory): IValidator[];
+
+  /** Get all registered validators */
+  getAllValidators(): IValidator[];
+
+  /** Check if a validator exists for a rule ID */
+  hasValidator(ruleId: string): boolean;
+
+  /** Remove a validator from the registry */
+  unregister(ruleId: string): boolean;
+
+  /** Clear all validators from the registry */
+  clear(): void;
+
+  /** Get count of registered validators */
+  getCount(): number;
+}
+
+/**
  * Interface for rule registry implementations.
  * Provides storage and management of validation rules separate from execution.
  *

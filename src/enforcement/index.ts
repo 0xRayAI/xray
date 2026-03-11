@@ -34,8 +34,27 @@ export {
   RuleSeverity,
   RuleFixType,
   IRuleRegistry,
+  IValidator,
+  IValidatorRegistry,
   isRuleValidationResult,
 } from "./types.js";
+
+// Validators (Phase 3 refactoring)
+export {
+  // Base class
+  BaseValidator,
+  // Registry
+  ValidatorRegistry,
+  globalValidatorRegistry,
+  // Code quality validators
+  NoDuplicateCodeValidator,
+  ContextAnalysisIntegrationValidator,
+  MemoryOptimizationValidator,
+  DocumentationRequiredValidator,
+  NoOverEngineeringValidator,
+  CleanDebugLogsValidator,
+  ConsoleLogUsageValidator,
+} from "./validators/index.js";
 
 // Enforcer tools (if any exports exist)
 export * as enforcerTools from "./enforcer-tools.js";

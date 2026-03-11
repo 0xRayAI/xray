@@ -13,8 +13,19 @@ import {
   RuleFix,
   isRuleValidationResult,
   IRuleRegistry,
+  IValidatorRegistry,
 } from "./types.js";
 import { RuleRegistry } from "./core/rule-registry.js";
+import {
+  ValidatorRegistry,
+  NoDuplicateCodeValidator,
+  ContextAnalysisIntegrationValidator,
+  MemoryOptimizationValidator,
+  DocumentationRequiredValidator,
+  NoOverEngineeringValidator,
+  CleanDebugLogsValidator,
+  ConsoleLogUsageValidator,
+} from "./validators/index.js";
 
 // Re-export types for backward compatibility
 export {
@@ -34,13 +45,38 @@ export class RuleEnforcer {
   private registry: IRuleRegistry = new RuleRegistry();
   private ruleHierarchy: Map<string, string[]> = new Map();
   private initialized = false;
+  private validatorRegistry: IValidatorRegistry;
+  // Feature flag for gradual rollout of extracted validators
+  private useExtractedValidators = true;
 
   constructor() {
+    // Initialize validator registry with extracted validators (Phase 3)
+    this.validatorRegistry = this.initializeValidators();
+
     // Initialize synchronously first
     this.initializeRules();
     this.initializeRuleHierarchy();
     // Load async rules in background
     this.loadAsyncRules();
+  }
+
+  /**
+   * Initialize extracted validators (Phase 3 refactoring).
+   * Registers all validator instances with the registry.
+   */
+  private initializeValidators(): IValidatorRegistry {
+    const registry = new ValidatorRegistry();
+
+    // Register code quality validators
+    registry.register(new NoDuplicateCodeValidator());
+    registry.register(new ContextAnalysisIntegrationValidator());
+    registry.register(new MemoryOptimizationValidator());
+    registry.register(new DocumentationRequiredValidator());
+    registry.register(new NoOverEngineeringValidator());
+    registry.register(new CleanDebugLogsValidator());
+    registry.register(new ConsoleLogUsageValidator());
+
+    return registry;
   }
 
   /**
@@ -1251,10 +1287,19 @@ export class RuleEnforcer {
 
   /**
    * Validate no duplicate code creation
+   * DELEGATED to NoDuplicateCodeValidator (Phase 3 refactoring)
    */
   private async validateNoDuplicateCode(
     context: RuleValidationContext,
   ): Promise<RuleValidationResult> {
+    if (this.useExtractedValidators) {
+      const validator = this.validatorRegistry.getValidator("no-duplicate-code");
+      if (validator) {
+        return validator.validate(context);
+      }
+    }
+
+    // Fallback implementation (legacy)
     const { newCode } = context;
 
     if (!newCode) {
@@ -1352,10 +1397,21 @@ export class RuleEnforcer {
 
   /**
    * Validate context analysis integration
+   * DELEGATED to ContextAnalysisIntegrationValidator (Phase 3 refactoring)
    */
   private async validateContextAnalysisIntegration(
     context: RuleValidationContext,
   ): Promise<RuleValidationResult> {
+    if (this.useExtractedValidators) {
+      const validator = this.validatorRegistry.getValidator(
+        "context-analysis-integration",
+      );
+      if (validator) {
+        return validator.validate(context);
+      }
+    }
+
+    // Fallback implementation (legacy)
     const { newCode, operation } = context;
 
     if (!newCode || operation !== "write") {
@@ -1413,10 +1469,21 @@ export class RuleEnforcer {
 
   /**
    * Validate memory optimization
+   * DELEGATED to MemoryOptimizationValidator (Phase 3 refactoring)
    */
   private async validateMemoryOptimization(
     context: RuleValidationContext,
   ): Promise<RuleValidationResult> {
+    if (this.useExtractedValidators) {
+      const validator = this.validatorRegistry.getValidator(
+        "memory-optimization",
+      );
+      if (validator) {
+        return validator.validate(context);
+      }
+    }
+
+    // Fallback implementation (legacy)
     const { newCode, operation } = context;
 
     if (!newCode || operation !== "write") {
@@ -1728,10 +1795,21 @@ export class RuleEnforcer {
   /**
    * Validate comprehensive documentation requirements (Codex Term #46)
    * Enforces universal researcher consultation and comprehensive documentation
+   * DELEGATED to DocumentationRequiredValidator (Phase 3 refactoring)
    */
   private async validateDocumentationRequired(
     context: RuleValidationContext,
   ): Promise<RuleValidationResult> {
+    if (this.useExtractedValidators) {
+      const validator = this.validatorRegistry.getValidator(
+        "documentation-required",
+      );
+      if (validator) {
+        return validator.validate(context);
+      }
+    }
+
+    // Fallback implementation (legacy)
     const { newCode, operation } = context;
 
     if (!newCode || operation !== "write") {
@@ -1838,10 +1916,21 @@ export class RuleEnforcer {
   /**
    * Validate no over-engineering (Codex Term #3)
    * Prevents unnecessary complexity and abstractions
+   * DELEGATED to NoOverEngineeringValidator (Phase 3 refactoring)
    */
   private async validateNoOverEngineering(
     context: RuleValidationContext,
   ): Promise<RuleValidationResult> {
+    if (this.useExtractedValidators) {
+      const validator = this.validatorRegistry.getValidator(
+        "no-over-engineering",
+      );
+      if (validator) {
+        return validator.validate(context);
+      }
+    }
+
+    // Fallback implementation (legacy)
     const { newCode, operation } = context;
 
     if (!newCode || operation !== "write") {
@@ -2581,15 +2670,39 @@ export class RuleEnforcer {
     };
   }
 
+  /**
+   * Validate clean debug logs (Development Triage)
+   * DELEGATED to CleanDebugLogsValidator (Phase 3 refactoring)
+   */
   private async validateCleanDebugLogs(
     context: RuleValidationContext,
   ): Promise<RuleValidationResult> {
+    if (this.useExtractedValidators) {
+      const validator = this.validatorRegistry.getValidator("clean-debug-logs");
+      if (validator) {
+        return validator.validate(context);
+      }
+    }
+
+    // Fallback implementation (legacy)
     return { passed: true, message: "Clean debug logs validation placeholder" };
   }
 
+  /**
+   * Validate console log usage restrictions
+   * DELEGATED to ConsoleLogUsageValidator (Phase 3 refactoring)
+   */
   private async validateConsoleLogUsage(
     context: RuleValidationContext,
   ): Promise<RuleValidationResult> {
+    if (this.useExtractedValidators) {
+      const validator = this.validatorRegistry.getValidator("console-log-usage");
+      if (validator) {
+        return validator.validate(context);
+      }
+    }
+
+    // Fallback implementation (legacy)
     const { newCode } = context;
 
     // Skip validation if no code to check
