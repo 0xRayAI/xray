@@ -123,10 +123,10 @@ async function main() {
   runCommand('npm run build', 'Build failed after prepare');
   console.log('✅ All builds passed');
   
-  // Step 4: Bump version using version manager
+  // Step 4: Bump version using version manager (WITHOUT --tag)
   console.log('\n📦 Step 4: Bumping version...');
   runCommand(
-    `npm run version:bump -- ${releaseType} --tag`,
+    `npm run version:bump -- ${releaseType}`,
     'Version bump failed'
   );
   
@@ -144,8 +144,18 @@ async function main() {
     console.log('⚠️  Nothing to commit or commit failed');
   }
   
-  // Step 6: Push to origin
-  console.log('\n📦 Step 6: Pushing to origin...');
+  // Step 6: Create tag and push
+  console.log('\n📦 Step 6: Creating tag and pushing...');
+  try {
+    execSync(
+      `git tag -a v${newVersion} -m "Release v${newVersion}"`,
+      { cwd: rootDir, stdio: 'inherit' }
+    );
+    console.log(`✅ Created tag v${newVersion}`);
+  } catch (error) {
+    console.log('⚠️  Tag may already exist');
+  }
+  
   runCommand('git push origin master', 'Failed to push to origin');
   runCommand(`git push origin v${newVersion}`, 'Failed to push tag');
   
