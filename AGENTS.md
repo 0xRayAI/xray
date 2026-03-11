@@ -97,88 +97,6 @@ The `@storyteller` agent supports multiple story types:
 | `@storyteller` | Narrative deep reflections | `@storyteller write a journey` |
 | `@researcher` | Codebase exploration | `@researcher find implementation` |
 
-
-## Agent Responsibilities
-
-All StringRay agents have mandatory responsibilities for **integration** and **documentation**.
-
-### Integration Requirements
-
-When agents implement changes, they MUST:
-
-1. **Full Application Integration**
-   - Update ALL files affected by the change across the codebase
-   - Update imports, exports, and references consistently
-   - Verify no orphaned code or broken references remain
-   - Ensure changes work with existing patterns
-   - Check configuration files (routing, feature flags, etc.)
-
-2. **Cross-Reference Validation**
-   - Verify all internal links and references work
-   - Check that code examples match implementation
-   - Ensure consistent naming across files
-   - Validate agent references are correct
-
-### Documentation Requirements
-
-When agents make changes, they MUST update documentation:
-
-| File | When to Update | Updated By |
-|------|---------------|------------|
-| **README.md** | New features, behavioral changes, API changes | All agents |
-| **AGENTS.md** | Agent capabilities change | Architect, Backend, Frontend, Tech Writer |
-| **CHANGELOG.md** | User-facing changes, new features | Version Manager (auto) |
-| **API docs** | Endpoint changes, schema updates | Backend Engineer |
-| **docs/** | Architecture changes, guides | Architect, Tech Writer |
-
-### Agent-Specific Responsibilities
-
-#### `@architect`
-- Design changes must integrate with existing architecture
-- Update architecture docs in `docs/`
-- Ensure all affected components are updated
-- Cross-reference AGENTS.md for capability changes
-
-#### `@code-reviewer`
-- **REJECT** code that lacks required documentation updates
-- Verify README.md updated for new features
-- Verify AGENTS.md updated for agent changes
-- Check all integration points are covered
-
-#### `@backend-engineer`
-- Update API documentation for endpoint changes
-- Document request/response schemas
-- Update routing configurations
-- Ensure database migrations included
-
-#### `@frontend-engineer`
-- Update component documentation
-- Add/update usage examples
-- Document accessibility features
-- Update design system docs if needed
-
-#### `@refactorer`
-- Update all files referencing refactored code
-- Update tests to match new structure
-- Document breaking changes in CHANGELOG
-- Verify no functionality lost
-
-#### `@tech-writer` / `@document-writer`
-- Maintain consistency across all documentation
-- Cross-reference all related docs
-- Verify all links work
-- Ensure no placeholder text remains
-
-### Critical Rule
-
-> **NEVER leave work incomplete or undocumented.**
->
-> All changes must be:
-> - ✅ Fully integrated across the application
-> - ✅ Documented in relevant files
-> - ✅ Cross-referenced and validated
-> - ✅ Complete with no TODOs or placeholders
-
 ## Complexity Routing
 
 StringRay automatically routes tasks based on complexity:
@@ -693,4 +611,4 @@ npx strray-ai --version
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.7.8 | [GitHub](https://github.com/htafolla/stringray)
+****Version**: 1.9.0 | [GitHub](https://github.com/htafolla/stringray)
