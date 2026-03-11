@@ -323,8 +323,9 @@ quality_metrics:
     
     paragraph_structure:
       minimum_sentences: 3
-      maximum_sentences: 10
-      average_paragraph_length: "5-6 sentences"
+      maximum_sentences: 8
+      ideal_sentences: "4-6 sentences"
+      note: "Paragraphs should have enough substance to develop ideas, but not so long they lose focus. Avoid single-sentence paragraphs except for deliberate impact."
     
     sentence_variety:
       short_sentences: "under 12 words (for impact)"
