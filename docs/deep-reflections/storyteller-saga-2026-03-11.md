@@ -4,7 +4,7 @@
 
 ---
 
-## The Problem
+## The Call to Create Something New
 
 It began with a question that had been nagging at us for weeks: Why did all of our agent documentation read like parking tickets? Detailed, accurate, compliance-checked to death—but utterly forgettable. We had built an entire framework of sophisticated agents, each with unique capabilities and personalities, and we were documenting them with the same enthusiasm as a tax form.
 
@@ -14,7 +14,7 @@ What we didn't know was how far that simple statement would take us—or how man
 
 ---
 
-## What We Started With
+## Where Things Were Fine, Sort Of
 
 Before Storyteller existed, we had a content-creator agent. She was competent. Reliable. She could generate documentation, blog posts, and technical guides with impressive efficiency. She followed templates. She hit word counts. She never once made us laugh or cry.
 
@@ -28,7 +28,7 @@ A difference we would spend the next several weeks learning to articulate.
 
 ---
 
-## First Attempts
+## The First Attempts
 
 We assembled what we thought we needed: input from @architect on the structural requirements, @content-creator on the existing content patterns, @growth-strategist on voice and audience, and @strategist on the philosophical underpinnings of what makes a story actually work.
 
@@ -42,23 +42,33 @@ She was right. It sounded like a grandparent attempting youth slang. We were ask
 
 ---
 
-## Five Rounds of Iteration
+## Five Rounds of Failing Forward
 
 What followed was a process we'd later describe as "creative destruction"—five distinct iterations where we tore down what we'd built and rebuilt from different first principles.
 
+### The Voice Experiment
+
 We tried letting Storyteller choose its own voice based on the subject matter. The results were inconsistent—sometimes brilliant, often incoherent. One story about the bug-triage-specialist read like a noir detective novel. Another about the enforcer read like a corporate press release. The variance wasn't creative range; it was identity crisis.
 
+### The Template Trap
+
 We over-corrected. We built rigid story templates with specific sections, tone guides, and transition rules. The output became predictable. "First, we describe the problem. Then, the breakthrough. Then, the lesson." It read like a fill-in-the-blank worksheet. The story had structure but no soul.
+
+### The External Spark
 
 Then came the breakthrough we didn't expect. @content-creator had been researching external storytelling frameworks and stumbled upon a Chinese narrative technique—something about the relationship between tension and resolution that western story structures often miss. We integrated this approach, and suddenly our bug-triage-specialist story had a different rhythm. It breathed. The highs felt higher because the lows were allowed to sit longer.
 
 This was the moment we realized: Storyteller couldn't be just another content generator. It needed to understand narrative architecture at a fundamental level—not as rules to follow, but as instincts to embody.
+
+### The Fact-Check Reckoning
 
 With the new narrative technique integrated, we pushed Storyteller further. We wrote a story about the enforcer—a complex agent with strict compliance responsibilities. The output was compelling. Dramatic, even. It made the enforcer seem like a fascinating character.
 
 But when we fact-checked it against the actual agent capabilities, we found significant drift. The story had invented capabilities. It had attributed decisions to the enforcer that had actually been made by the orchestrator. It was a good story—a great story, even—but it wasn't true.
 
 This was the painful lesson: narrative power without factual grounding is just sophisticated misinformation.
+
+### The Peer Review Firewall
 
 We almost gave up. The tension seemed unresolvable—how do you make stories compelling while maintaining perfect accuracy?
 
@@ -72,7 +82,7 @@ But we published the bug-triage-specialist story instead, and it was accurate. I
 
 ---
 
-## What We Learned
+## What We Brought Back
 
 With the peer review workflow integrated, Storyteller finally worked. Not perfectly—never perfectly—but with an integrity we could trust.
 
@@ -86,7 +96,7 @@ That was the gift we hadn't expected: accuracy, wielded properly, creates trust.
 
 ---
 
-## The Lessons
+## The Lessons That Remain
 
 Six weeks after we first said "we need a storyteller," we have one. She's not what we imagined. She's better.
 
@@ -104,7 +114,7 @@ The team matters more than the tool. @architect, @content-creator, @growth-strat
 
 ---
 
-## What Next
+## What's Next
 
 This saga isn't over—it's just the beginning. Here's where we're going:
 
@@ -122,7 +132,9 @@ The best stories are the ones we tell together.
 
 For those wondering about implementation specifics:
 
-Storyteller operates as a narrative generation agent within the StringRay framework. External Chinese storytelling techniques were integrated through @content-creator's research pipeline. The peer review workflow includes automated factual validation against agent capability documentation. Failed stories are logged for pattern analysis (the enforcer incident taught us the value of understanding why stories drift).
+Storyteller operates as a narrative generation agent within the StringRay framework. The full configuration—story types, narrative frameworks, character building, worldbuilding, dialogue writing guides, and the peer review workflow—is defined in [.opencode/agents/storyteller.yml](../../.opencode/agents/storyteller.yml).
+
+External Chinese storytelling techniques were integrated through @content-creator's research pipeline. The peer review workflow includes automated factual validation against agent capability documentation. Failed stories are logged for pattern analysis (the enforcer incident taught us the value of understanding why stories drift).
 
 The bug-triage-specialist story remains our reference implementation—the proof that compelling narrative and technical accuracy can coexist.
 

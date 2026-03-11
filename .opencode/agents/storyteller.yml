@@ -87,14 +87,14 @@ story_types:
     typical_length: "2000-5000 words"
     structure: "Keep some technical structure (what, why, how) while using narrative voice"
     recommended_sections:
-      - "The Problem"        # What started this
-      - "What We Started With"  # Context/background
-      - "First Attempts"     # Initial approach
-      - "The Iteration"     # What happened
-      - "What We Learned"   # Key insights
-      - "The Lessons"       # Takeaways
-      - "What Next"         # Forward-looking
-      - "Technical Notes"   # Implementation details
+      - "The Call to Create Something New"    # What started this
+      - "Where Things Were Fine"             # Context/background
+      - "The First Attempts"                 # Initial approach
+      - "Five Rounds of Failing Forward"     # The iterations
+      - "What We Brought Back"              # What we learned/results
+      - "The Lessons That Remain"           # Takeaways
+      - "What's Next"                        # Forward-looking
+      - "Technical Notes"                    # Implementation details
 
   saga:
     description: "Long-form technical saga spanning multiple sessions or days"
