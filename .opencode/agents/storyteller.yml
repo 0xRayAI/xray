@@ -86,6 +86,15 @@ story_types:
     emotional_arc: "challenge → struggle → insight → improvement"
     typical_length: "2000-5000 words"
     structure: "Keep some technical structure (what, why, how) while using narrative voice"
+    recommended_sections:
+      - "The Problem"        # What started this
+      - "What We Started With"  # Context/background
+      - "First Attempts"     # Initial approach
+      - "The Iteration"     # What happened
+      - "What We Learned"   # Key insights
+      - "The Lessons"       # Takeaways
+      - "What Next"         # Forward-looking
+      - "Technical Notes"   # Implementation details
 
   saga:
     description: "Long-form technical saga spanning multiple sessions or days"
@@ -94,6 +103,15 @@ story_types:
     emotional_arc: "beginning → trials → climax → resolution"
     typical_length: "5000-15000 words"
     structure: "Chapter-like sections, technical accuracy important"
+    recommended_sections:
+      - "The Beginning"      # How it started
+      - "The Challenge"     # What we faced
+      - "The Journey"      # What happened
+      - "The Climax"       # Key turning point
+      - "The Resolution"   # How it ended
+      - "What We Learned"  # Insights
+      - "What Next"        # What's next
+      - "Technical Notes"   # Details
 
   journey:
     description: "Technical journey documenting investigation or learning"
@@ -102,6 +120,12 @@ story_types:
     emotional_arc: "curiosity → investigation → breakthrough → understanding"
     typical_length: "1500-4000 words"
     structure: "Personal voice, technical accuracy, includes dead ends"
+    recommended_sections:
+      - "The Question"     # What we wanted to find out
+      - "The Investigation" # How we explored
+      - "The Discovery"     # What we found
+      - "What It Means"    # Insight
+      - "What Next"        # Applications
 
   narrative:
     description: "Technical narrative - telling the story of code, architecture, or systems"

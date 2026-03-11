@@ -4,6 +4,8 @@
 
 ---
 
+## The Problem
+
 It began with a question that had been nagging at us for weeks: Why did all of our agent documentation read like parking tickets? Detailed, accurate, compliance-checked to death—but utterly forgettable. We had built an entire framework of sophisticated agents, each with unique capabilities and personalities, and we were documenting them with the same enthusiasm as a tax form.
 
 The strategists among us kept saying the same thing: "We need a storyteller."
@@ -11,6 +13,8 @@ The strategists among us kept saying the same thing: "We need a storyteller."
 What we didn't know was how far that simple statement would take us—or how many times we'd have to rebuild ourselves to get it right.
 
 ---
+
+## What We Started With
 
 Before Storyteller existed, we had a content-creator agent. She was competent. Reliable. She could generate documentation, blog posts, and technical guides with impressive efficiency. She followed templates. She hit word counts. She never once made us laugh or cry.
 
@@ -24,6 +28,8 @@ A difference we would spend the next several weeks learning to articulate.
 
 ---
 
+## First Attempts
+
 We assembled what we thought we needed: input from @architect on the structural requirements, @content-creator on the existing content patterns, @growth-strategist on voice and audience, and @strategist on the philosophical underpinnings of what makes a story actually work.
 
 The first version of Storyteller was, in hindsight, an elaborate wrapper around our existing content generation. We gave it a "warm and conversational" tone setting. We fed it examples of good technical writing. We pointed it at our agent descriptions and said, "Make this fun."
@@ -35,6 +41,8 @@ What we got back was content. Warmly worded content, sure. Content with exclamat
 She was right. It sounded like a grandparent attempting youth slang. We were asking for authenticity while simultaneously constraints-hammering it into a specific format.
 
 ---
+
+## Five Rounds of Iteration
 
 What followed was a process we'd later describe as "creative destruction"—five distinct iterations where we tore down what we'd built and rebuilt from different first principles.
 
@@ -64,6 +72,8 @@ But we published the bug-triage-specialist story instead, and it was accurate. I
 
 ---
 
+## What We Learned
+
 With the peer review workflow integrated, Storyteller finally worked. Not perfectly—never perfectly—but with an integrity we could trust.
 
 The final architecture looked like this: Storyteller creates the initial narrative, drawing on external storytelling techniques. A secondary pass validates factual accuracy against source documentation. Either the story is corrected for minor issues or flagged for major revision.
@@ -75,6 +85,8 @@ But it was true. And somehow, paradoxically, that truth made it more powerful. R
 That was the gift we hadn't expected: accuracy, wielded properly, creates trust. And trust creates connection.
 
 ---
+
+## The Lessons
 
 Six weeks after we first said "we need a storyteller," we have one. She's not what we imagined. She's better.
 
@@ -88,9 +100,11 @@ Sometimes you have to delete your favorite work. The enforcer story was beautifu
 
 External perspectives transform internal problems. The Chinese storytelling technique came from outside our echo chamber. It reminded us that the best solutions often come from unexpected directions—if we're willing to listen.
 
-The team matters more than the tool. @architect, @ @growth-strategcontent-creator,ist, @strategist—they all brought different pieces. None of them could have built Storyteller alone. Together, they created something none of them could have imagined individually.
+The team matters more than the tool. @architect, @content-creator, @growth-strategist, @strategist—they all brought different pieces. None of them could have built Storyteller alone. Together, they created something none of them could have imagined individually.
 
 ---
+
+## What Next
 
 This saga isn't over—it's just the beginning. Here's where we're going:
 
@@ -103,6 +117,8 @@ Your turn: Invoke @storyteller to document your own development journeys. Tell t
 The best stories are the ones we tell together.
 
 ---
+
+## Technical Notes
 
 For those wondering about implementation specifics:
 
