@@ -5,6 +5,71 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.9.0] - 2026-03-11
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [1.8.0] - 2026-03-11
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: Add Codex compliance to agents (73b27d68)
+- feat: Update bug-triage-specialist - primary job is to squash all bugs (04cae150)
+- feat: Update image prompts - storyteller is a female comic book superhero coder (7ca05581)
+- feat: Add text-to-image prompts for storyteller (1a7b9389)
+- feat: Add new story types + storyteller saga reflection (5af038b5)
+- feat: Add @explorer to fact-check process (50b7f29f)
+- feat: Add fact-checking to peer review workflow (70abffac)
+- feat: New enforcer story - peer review workflow test (92401939)
+- feat: Storyteller v3.1 - add peer review workflow (9c7af519)
+- feat: Major storyteller v3.0 - integrate external storytelling frameworks (b9d3fbb0)
+- feat: Final storyteller improvements - round 3 (7ac17d03)
+- feat: Add more anti-patterns to storyteller from round 2 feedback (283991d6)
+- feat: Update storyteller agent with correlated feedback improvements (309a3309)
+- feat: Complete storyteller agent v2.0 with full architecture (9561dbe8)
+- feat: Add storyteller agent for narrative deep reflections (137f06ba)
+
+### 🐛 Bug Fixes
+- fix: Add missing vitest imports to test files (79f5a092)
+- fix: Update remaining .strray/ references to .opencode/strray/ (89dcb3d0)
+- fix: Restore .opencode/strray/agents_template.md and update all references (c93729db)
+- fix: Make section titles unique and non-repetitive (200fe709)
+- fix: Use .opencode/agents/*.yml as source of truth for facts (ccecb5a0)
+- fix: Update paragraph_structure to 3-8 sentences (5bc0310f)
+- fix: Make storyteller.yml generic, fix broken link (5f972885)
+- fix: Value-focused tweet generator that captures actual user value (c37d28d3)
+- fix: Consumer-focused tweet generation and release workflow refinements (dafc800f)
+- fix: Add hard stop rule for release workflow (3ccc1c2c)
+
+### ♻️ Refactoring
+- refactor: Restore creative section titles + add yml link (a9e6c139)
+- refactor: Add simple section titles to saga and yml (c2467103)
+- refactor: Remove section titles from saga, use flowing prose (907e3843)
+- refactor: Storyteller v3.0 - Hero's Journey rewrite (f26e7eec)
+- refactor: Round 5 storyteller improvements (2008f9f7)
+- refactor: Third pass - triage feedback fixes (821a0d2c)
+- refactor: Improve storyteller story with correlated feedback (05f2145d)
+- refactor: Update deep reflection template to be less rigid, more narrative (371c5567)
+- refactor: Clean up and organize root directory (b9dcae46)
+
+### 📚 Documentation
+- docs: Update AGENTS-consumer.md with storyteller and .opencode/strray (90f5b0f9)
+- docs: Update ADDING_AGENTS.md with complete 24-file checklist (60c69fcd)
+- docs: Add storyteller agent example to ADDING_AGENTS.md (ab6e9b44)
+- docs: Recognize bug-triage-specialist as the unsung hero (b0b81ebb)
+- docs: Add file operation safety guidelines and misnamed directory cleanup (52864c38)
+
+### 🔧 Maintenance
+- chore: Update memory baselines (2ac5a29b)
+- chore: Remove incorrect Users/ directory structure (f1115ccb)
+
+---
+
 ## [1.7.10] - 2026-03-10
 
 ### 🔄 Changes
