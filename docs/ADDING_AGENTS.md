@@ -157,3 +157,105 @@ mode: subagent
 **Cause**: Agent missing `mode: subagent`
 
 **Fix**: Add `mode: subagent` to agent configuration
+
+---
+
+## Example: Adding the Storyteller Agent
+
+This section documents how the storyteller agent was added as a real example.
+
+### 1. Create Agent YAML Configuration
+
+Create `.opencode/agents/storyteller.yml`:
+
+```yaml
+name: storyteller
+description: "Deep reflection author - writes narrative, storytelling-style journey documents"
+version: "2.0.0"
+mode: subagent
+
+# Story types supported
+story_types:
+  bug_fix:
+    description: "Technical debugging narratives"
+    emotional_arc: "frustration → confusion → breakthrough → satisfaction"
+  feature_development:
+    description: "Stories about building new features"
+    emotional_arc: "excitement → challenge → perseverance → accomplishment"
+  # ... more types
+
+# Story components
+story_components:
+  scene_builder:
+    description: "Creates vivid scene-setting"
+  emotional_architect:
+    description: "Shapes emotional journey"
+  # ... more components
+
+# Integration with other agents
+integration:
+  complementary_agents:
+    - researcher  # Gather facts first
+    - tech-writer # Technical accuracy
+    - code-reviewer # Validate details
+```
+
+### 2. Add to opencode.json
+
+In `opencode.json`, add to the `agent` section:
+
+```json
+{
+  "agent": {
+    "storyteller": {
+      "temperature": 1.0,
+      "mode": "subagent"
+    }
+  }
+}
+```
+
+### 3. Supporting Documentation (Optional but Recommended)
+
+Create supporting documents for reference:
+- `.opencode/agents/storyteller-style-guide.md` - Voice and tone guidelines
+- `.opencode/agents/storyteller-growth-strategy.md` - Audience and use cases
+- `docs/storyteller-strategic-roadmap.md` - Development roadmap
+
+### 4. Force-Add to Git (If Needed)
+
+Agent files may be gitignored. Use `-f` to force add:
+
+```bash
+git add -f .opencode/agents/storyteller.yml
+```
+
+### 5. Reboot OpenCode
+
+After adding, you MUST restart OpenCode for the agent to be recognized.
+
+### Usage
+
+After reboot, invoke with:
+
+```
+@storyteller write a deep reflection about fixing the memory leak
+```
+
+---
+
+## Current Agents List
+
+| Agent | Mode | Description |
+|-------|------|-------------|
+| orchestrator | subagent | Multi-agent workflow coordination |
+| enforcer | primary | Codex compliance & error prevention |
+| architect | subagent | System design & technical decisions |
+| testing-lead | subagent | Testing strategy |
+| bug-triage-specialist | subagent | Debugging & error investigation |
+| code-reviewer | subagent | Code quality assessment |
+| security-auditor | subagent | Vulnerability detection |
+| refactorer | subagent | Technical debt elimination |
+| researcher | subagent | Codebase exploration |
+| strategist | subagent | Strategic planning |
+| storyteller | subagent | Narrative deep reflections |
