@@ -104,6 +104,22 @@ StringRay uses **two reflection folders** for different purposes:
 | Quick learning/insight | `docs/reflections/` |
 | Deep investigation with many discoveries | `docs/deep-reflections/` |
 
+### Storyteller Story Types
+
+The `@storyteller` agent supports multiple story types:
+
+| Type | Description | Invoke |
+|------|-------------|--------|
+| `reflection` | Technical deep reflections on development process | `@storyteller write a reflection about X` |
+| `saga` | Long-form technical saga spanning multiple sessions | `@storyteller write a saga about X` |
+| `journey` | Investigation/learning journey | `@storyteller write a journey about X` |
+| `narrative` | Technical narrative - telling the story of code | `@storyteller write a narrative about X` |
+
+**Example:**
+```
+@storyteller write a reflection about fixing the memory leak
+```
+
 ## Available Agents
 
 | Agent | Purpose | Invoke |
@@ -116,6 +132,7 @@ StringRay uses **two reflection folders** for different purposes:
 | `@refactorer` | Technical debt elimination | `@refactorer optimize code` |
 | `@testing-lead` | Testing strategy | `@testing-lead plan tests` |
 | `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
+| `@storyteller` | Narrative deep reflections | `@storyteller write a journey` |
 | `@researcher` | Codebase exploration | `@researcher find implementation` |
 
 ## Complexity Routing
@@ -167,6 +184,19 @@ cat .opencode/strray/features.json
 # Set feature via CLI
 npx strray-ai config set --feature token_optimization.enabled --value false
 ```
+
+### .opencode/strray Directory
+
+The `.opencode/strray/` directory contains core framework configuration:
+
+| File | Purpose |
+|------|---------|
+| `codex.json` | Universal Development Codex (60 error prevention terms) |
+| `features.json` | Feature flags and settings |
+| `config.json` | Framework configuration |
+| `agents_template.md` | Agent architecture templates |
+| `routing-mappings.json` | Agent routing configurations |
+| `workflow_state.json` | Runtime workflow state |
 
 ## Agent Discovery & Capabilities
 
