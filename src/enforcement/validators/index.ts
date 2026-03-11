@@ -41,3 +41,15 @@ export {
   ContinuousIntegrationValidator,
   TestFailureReportingValidator,
 } from "./testing-validators.js";
+
+// Architecture validators
+export {
+  DependencyManagementValidator,
+  SrcDistIntegrityValidator,
+  ImportConsistencyValidator,
+  ModuleSystemConsistencyValidator,
+  ErrorResolutionValidator,
+  LoopSafetyValidator,
+  StateManagementPatternsValidator,
+  SingleResponsibilityValidator,
+} from "./architecture-validators.js";
