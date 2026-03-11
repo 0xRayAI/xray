@@ -310,7 +310,7 @@ let cachedCodexContexts: CodexContextEntry[] | null = null;
 const CODEX_FILE_LOCATIONS = [
   ".opencode/strray/codex.json",
   ".opencode/codex.codex",
-  ".strray/agents_template.md",
+  ".opencode/strray/agents_template.md",
   "AGENTS.md",
 ];
 
