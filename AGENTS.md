@@ -1,42 +1,10 @@
-# StringRay Agents - Technical Documentation
+# StringRay Agents - Consumer Guide
 
 Quick reference for **using** the StringRay AI orchestration framework in your projects.
 
 ## What is StringRay?
 
 StringRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation. Agents operate via OpenCode plugin injection - no manual setup needed.
-
-## Architecture
-
-StringRay v1.9.0 features a modern, modular architecture built on the **Facade Pattern** for maintainability and performance.
-
-### Facade Pattern Implementation
-
-All core components are implemented as facades with modular internal structure:
-
-- **RuleEnforcer**: 2,714 → 416 lines (facade + 6 modules)
-- **TaskSkillRouter**: 1,933 → 490 lines (facade + 12 mapping modules + analytics + routing)
-- **MCP Client**: 1,413 → 312 lines (facade + 8 modules)
-
-**Total Code Reduction**: 87% (3,170 lines of dead code removed)
-
-### Modular Component System
-
-Each facade provides:
-- **Simplified API**: Clean, consistent interfaces
-- **Internal Modularity**: Logic separated into focused modules
-- **Improved Maintainability**: Easier to understand, test, and extend
-- **Better Performance**: Optimized internal routing and reduced overhead
-- **Enhanced Reliability**: Isolated concerns with robust error handling
-
-### What This Means for You
-
-**Public APIs remain unchanged.** The refactoring was purely internal - all `@agent-name` syntax, CLI commands, and configuration files work exactly as before. The improvements are behind the scenes:
-
-- Faster agent spawning and task routing
-- More robust error handling
-- Better handling of complex, multi-agent workflows
-- Easier future enhancements and maintenance
 
 ## Quick Start
 
@@ -347,52 +315,11 @@ npx strray-ai --version
 
 ---
 
-## System Statistics
-
-| Metric | Value |
-|--------|-------|
-| **Specialized Agents** | 27 |
-| **MCP Servers** | 28 |
-| **Tests** | 2,368 |
-| **Code Reduction** | 87% |
-| **Error Prevention** | 99.6% |
-
-### Architecture at a Glance
-
-```
-StringRay v1.9.0 Architecture
-├── 27 Specialized Agents
-│   ├── Primary: orchestrator
-│   └── Subagents: enforcer, architect, security-auditor,
-│                   code-reviewer, refactorer, testing-lead,
-│                   bug-triage-specialist, storyteller, researcher
-├── 28 MCP Servers
-│   └── Providing specialized capabilities
-├── 3 Main Facades
-│   ├── RuleEnforcer (6 modules)
-│   ├── TaskSkillRouter (12 mapping + analytics + routing)
-│   └── MCP Client (8 modules)
-└── Universal Development Codex
-    └── 60-term compliance validation (99.6% prevention)
-```
-
----
-
-## Migration Guide (v1.9.0)
+## Migration Guide (v1.7.8)
 
 **Good news: No migration needed!** ✨
 
-StringRay v1.9.0 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
-
-### Refactoring Highlights
-
-| Component | Before | After | Reduction |
-|-----------|--------|-------|-----------|
-| RuleEnforcer | 2,714 lines | 416 lines | 85% |
-| TaskSkillRouter | 1,933 lines | 490 lines | 75% |
-| MCP Client | 1,413 lines | 312 lines | 78% |
-| Dead Code | 3,170 lines | 0 lines | 100% |
-| **Total** | **8,230 lines** | **1,218 lines** | **87%** |
+StringRay v1.7.8 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
 
 ### What Stayed the Same
 
@@ -529,4 +456,4 @@ A: Yes, set `STRRAY_NO_TELEMETRY=1` environment variable.
 
 ---
 
-**Version**: 1.9.0 | Architecture: Facade Pattern (3 facades, 26 modules) | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.7.8 | [GitHub](https://github.com/htafolla/stringray)
