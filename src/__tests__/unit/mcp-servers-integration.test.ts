@@ -126,11 +126,11 @@ describe("Agent Configuration", () => {
 
 describe("MCP Client Configuration", () => {
   it("should have MCP client with new server configs", () => {
-    const mcpPath = path.join(process.cwd(), "src/mcps/mcp-client.ts");
-    expect(fs.existsSync(mcpPath)).toBe(true);
-    const content = fs.readFileSync(mcpPath, "utf-8");
+    const configPath = path.join(process.cwd(), "src/mcps/config/server-config-registry.ts");
+    expect(fs.existsSync(configPath)).toBe(true);
+    const content = fs.readFileSync(configPath, "utf-8");
 
-    // Check for new MCP configs
+    // Check for new MCP configs in registry (refactored location)
     expect(content).toContain("bug-triage-specialist");
     expect(content).toContain("log-monitor");
     expect(content).toContain("multimodal-looker");
