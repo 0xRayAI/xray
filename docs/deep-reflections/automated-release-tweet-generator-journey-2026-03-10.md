@@ -436,7 +436,7 @@ SyntaxError: Identifier 'generateTweetForVersion' has already been declared
 
 **Before**:
 ```
-📌 Version: v1.7.10 released!
+📌  released!
 
 🐛 Add hard stop rule for release workflow
 
@@ -453,7 +453,7 @@ SyntaxError: Identifier 'generateTweetForVersion' has already been declared
 
 **After**:
 ```
-📌 Version: v1.7.10 released!
+📌  released!
 
 🐛 Add hard stop rule for release workflow
 

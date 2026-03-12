@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework for OpenCode/Claude Code**
 
-[![Version](https://img.shields.io/badge/version-1.9.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.7.5-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-1608%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
@@ -51,7 +51,7 @@ npx strray-ai status
 
 - **🤖 27 Specialized Agents** - From code review to mobile development
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
-- **⚡ 46 Lazy-Loading Skills** - Plus Claude SEO & Antigravity integrations
+- **⚡ 29 Lazy-Loading Skills** - Plus Claude SEO & Antigravity integrations
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
 - **📊 Real-time Monitoring** - Performance tracking and health checks
 - **🔄 Complexity-Based Routing** - Intelligent task delegation

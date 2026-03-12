@@ -61,7 +61,7 @@ Create the agent YAML file:
 ```yaml
 name: my-agent
 description: "What this agent does"
-version: "1.0.0"
+version: "1.7.5"
 mode: subagent
 ```
 

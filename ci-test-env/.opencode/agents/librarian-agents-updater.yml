@@ -3,6 +3,17 @@ description: "Agent for updating and synchronizing agent definitions"
 version: "1.0.0"
 mode: subagent
 
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Agent management must follow these Codex rules:
+# - Term 10: Single Source of Truth - one authoritative agent definition
+# - Term 35: Version Control Best Practices - track agent changes
+# - Term 42: Code Review Standards - review all agent updates
+# - Term 34: Documentation Updates - document agent changes
+# - Term 20: Consistent Code Style - consistent agent definitions
+# - Term 9: Use Shared Global State - shared agent registry
+
 # Logging Configuration
 logging:
   level: warn

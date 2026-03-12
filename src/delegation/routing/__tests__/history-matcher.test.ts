@@ -235,7 +235,7 @@ describe('HistoryMatcher', () => {
       
       const topAgents = matcher.getTopAgents();
       
-      // All 3 agents have >= 3 attempts (tracking by different task IDs doesn't aggregate)
+      // All 27 agents have >= 3 attempts (tracking by different task IDs doesn't aggregate)
       expect(topAgents.length).toBeGreaterThanOrEqual(2);
       expect(topAgents[0].agent).toBe('agent-a'); // 100% success
     });

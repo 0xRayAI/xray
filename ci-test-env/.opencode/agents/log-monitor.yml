@@ -3,6 +3,17 @@ description: "Log monitoring agent for system observability"
 version: "1.0.0"
 mode: subagent
 
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Log monitoring must follow these Codex rules:
+# - Term 33: Logging and Monitoring - structured logging, important events
+# - Term 35: Version Control Best Practices - track log analysis versions
+# - Term 36: Continuous Integration - automated log analysis
+# - Term 7: Resolve All Errors - zero tolerance for monitoring failures
+# - Term 13: Error Boundaries - provide fallback when monitoring fails
+# - Term 51: Graceful Degradation - continue operating during log issues
+
 # Logging Configuration
 logging:
   level: warn

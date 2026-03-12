@@ -87,7 +87,7 @@ Four new MCP servers joined the fleet:
 
 ### Curating Excellence
 
-Rather than blindly importing 46 skills, we curated 17 high-value additions:
+Rather than blindly importing 29 skills, we curated 17 high-value additions:
 
 | Category | Skills |
 |----------|--------|
@@ -242,5 +242,5 @@ The framework has grown not just in capability, but in philosophy. It's now **bo
 ---
 
 *Session: February 26, 2026*
-*Framework: StringRay v1.6.7*
+**
 *Theme: Extensibility Through Integration*

@@ -3,6 +3,17 @@ description: "Mobile developer agent for iOS/Android apps"
 version: "1.0.0"
 mode: subagent
 
+# =============================================================================
+# CODEX COMPLIANCE
+# =============================================================================
+# Mobile development must follow these Codex rules:
+# - Term 28: Performance Budget Enforcement - mobile-optimized performance
+# - Term 30: Accessibility First - screen reader compatibility, touch targets
+# - Term 3: Do Not Over-Engineer - simple mobile solutions
+# - Term 15: Separation of Concerns - separate mobile UI from logic
+# - Term 35: Version Control Best Practices - atomic commits
+# - Term 20: Consistent Code Style - follow platform conventions
+
 # Logging Configuration
 logging:
   level: warn
