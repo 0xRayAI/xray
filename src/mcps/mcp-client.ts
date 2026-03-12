@@ -11,6 +11,7 @@ import {
   MCP_PROTOCOL_VERSION,
   JSONRPC_VERSION,
 } from "./protocol/protocol-constants.js";
+import { defaultServerRegistry } from "./config/index.js";
 
 /**
  * MCP Client Layer
@@ -1115,243 +1116,22 @@ export class MCPClientManager {
   /**
    * Create client configuration for a server
    *
+   * Uses ServerConfigRegistry for centralized configuration management.
+   * Falls back to dynamic config generation for unknown servers.
+   *
    * Path Strategy:
    * - Consumer projects: Use node_modules/strray-ai/dist/ (default)
    * - Dev mode: Set STRRAY_DEV_PATH=dist to use local build
    */
   public createClientConfig(serverName: string): MCPClientConfig {
-    // For consumer projects: default to node_modules/strray-ai/dist/
-    // For local dev: use STRRAY_DEV_PATH env var (e.g., "dist")
-    const basePath = process.env.STRRAY_DEV_PATH
-      ? process.env.STRRAY_DEV_PATH
-      : "node_modules/strray-ai/dist";
+    // Try to get config from registry
+    const config = defaultServerRegistry.get(serverName);
+    if (config) {
+      return config;
+    }
 
-    const serverConfigs: Record<string, MCPClientConfig> = {
-      "code-review": {
-        serverName: "code-review",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/code-review.server.js`],
-        timeout: 30000,
-      },
-      "security-audit": {
-        serverName: "security-audit",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/security-audit.server.js`],
-        timeout: 45000,
-      },
-      "performance-optimization": {
-        serverName: "performance-optimization",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/performance-optimization.server.js`,
-        ],
-        timeout: 30000,
-      },
-      "testing-strategy": {
-        serverName: "testing-strategy",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
-        timeout: 25000,
-      },
-      researcher: {
-        serverName: "researcher",
-        command: "node",
-        args: [`${basePath}/mcps/researcher.server.js`],
-        timeout: 60000,
-      },
-      "framework-help": {
-        serverName: "framework-help",
-        command: "node",
-        args: [`${basePath}/mcps/framework-help.server.js`],
-        timeout: 15000,
-      },
-      "skill-invocation": {
-        serverName: "skill-invocation",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/skill-invocation.server.js`],
-        timeout: 30000,
-      },
-      strategist: {
-        serverName: "strategist",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/strategist.server.js`],
-        timeout: 60000,
-      },
-      "session-management": {
-        serverName: "session-management",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/session-management.server.js`],
-        timeout: 30000,
-      },
-      "code-analyzer": {
-        serverName: "code-analyzer",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/code-analyzer.server.js`],
-        timeout: 45000,
-      },
-      "tech-writer": {
-        serverName: "tech-writer",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/documentation-generation.server.js`,
-        ],
-        timeout: 45000,
-      },
-      "frontend-ui-ux-engineer": {
-        serverName: "frontend-ui-ux-engineer",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/ui-ux-design.server.js`],
-        timeout: 35000,
-      },
-      enforcer: {
-        serverName: "enforcer",
-        command: "node",
-        args: [`${basePath}/mcps/enforcer-tools.server.js`],
-        timeout: 30000,
-      },
-      orchestrator: {
-        serverName: "orchestrator",
-        command: "node",
-        args: [`${basePath}/mcps/orchestrator.server.js`],
-        timeout: 60000,
-      },
-      architect: {
-        serverName: "architect",
-        command: "node",
-        args: [`${basePath}/mcps/architect-tools.server.js`],
-        timeout: 45000,
-      },
-      "backend-engineer": {
-        serverName: "backend-engineer",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/api-design.server.js`],
-        timeout: 40000,
-      },
-      "bug-triage-specialist": {
-        serverName: "bug-triage-specialist",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/bug-triage-specialist.server.js`,
-        ],
-        timeout: 30000,
-      },
-      "log-monitor": {
-        serverName: "log-monitor",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/log-monitor.server.js`],
-        timeout: 30000,
-      },
-      "multimodal-looker": {
-        serverName: "multimodal-looker",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/multimodal-looker.server.js`],
-        timeout: 40000,
-      },
-      "seo-consultant": {
-        serverName: "seo-consultant",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/seo-consultant.server.js`],
-        timeout: 30000,
-      },
-      "content-creator": {
-        serverName: "content-creator",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/content-creator.server.js`],
-        timeout: 30000,
-      },
-      "growth-strategist": {
-        serverName: "growth-strategist",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/growth-strategist.server.js`],
-        timeout: 45000,
-      },
-      // Aliases to match features.json agent names
-      "code-reviewer": {
-        serverName: "code-reviewer",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/code-review.server.js`],
-        timeout: 30000,
-      },
-      "security-auditor": {
-        serverName: "security-auditor",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/security-audit.server.js`],
-        timeout: 45000,
-      },
-      refactorer: {
-        serverName: "refactorer",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/refactoring-strategies.server.js`,
-        ],
-        timeout: 40000,
-      },
-      "testing-lead": {
-        serverName: "testing-lead",
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
-        timeout: 30000,
-      },
-      // ========== MISSING AGENT CONFIGS ==========
-      "performance-engineer": {
-        serverName: "performance-engineer",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/performance-optimization.server.js`,
-        ],
-        timeout: 30000,
-      },
-      "mobile-developer": {
-        serverName: "mobile-developer",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/mobile-development.server.js`,
-        ],
-        timeout: 40000,
-      },
-      "devops-engineer": {
-        serverName: "devops-engineer",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/devops-deployment.server.js`,
-        ],
-        timeout: 40000,
-      },
-      "database-engineer": {
-        serverName: "database-engineer",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/database-design.server.js`,
-        ],
-        timeout: 40000,
-      },
-      "frontend-engineer": {
-        serverName: "frontend-engineer",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/ui-ux-design.server.js`,
-        ],
-        timeout: 35000,
-      },
-      documentwriter: {
-        serverName: "documentwriter",
-        command: "node",
-        args: [
-          `${basePath}/mcps/knowledge-skills/documentation-generation.server.js`,
-        ],
-        timeout: 45000,
-      },
-      // ========== END MISSING CONFIGS ==========
-    };
-
-    return (
-      serverConfigs[serverName] || {
-        serverName,
-        command: "node",
-        args: [`${basePath}/mcps/knowledge-skills/${serverName}.server.js`],
-        timeout: 30000,
-      }
-    );
+    // Fall back to dynamic config for unknown servers
+    return defaultServerRegistry.createDynamicConfig(serverName);
   }
 
   /**
