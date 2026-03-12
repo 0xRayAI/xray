@@ -939,8 +939,14 @@ export class ProcessorManager {
 
       // If violations found, delegate to enforcer for centralized remediation
       if (!result.passed && result.errors.length > 0) {
+        // Convert error strings to Violation objects
+        const violations = result.errors.map(error => ({
+          rule: 'validation-error',
+          message: error,
+          severity: 'error' as const,
+        }));
         await ruleEnforcer.attemptRuleViolationFixes(
-          result.errors,
+          violations,
           validationContext,
         );
       }
@@ -1300,8 +1306,8 @@ export class ProcessorManager {
    * Attempt to fix rule violations by calling appropriate agents/skills
    */
   private async attemptRuleViolationFixes(
-    violations: any[],
-    context: any,
+    violations: { rule: string; message: string; severity?: string }[],
+    context: { files?: string[]; newCode?: string },
   ): Promise<void> {
     for (const violation of violations) {
       try {
