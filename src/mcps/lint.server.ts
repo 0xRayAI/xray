@@ -20,7 +20,7 @@ class StrRayLintServer {
   constructor() {
     this.server = new Server(
       {
-        name: "lint", version: "1.7.5",
+        name: "lint", version: "1.10.0",
       },
       {
         capabilities: {

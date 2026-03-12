@@ -1,4 +1,4 @@
-# StringRay Framework v1.9.0 - Complete Guide for Grok Users
+# StringRay AI v1.10.0 - Complete Guide for Grok Users
 
 ## 🚀 Welcome to StringRay v1.9.0
 
@@ -98,7 +98,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.9.0"
+    "version": "1.10.0"
   }
 }
 ```
@@ -403,4 +403,4 @@ _Eliminate dead ends. Ship production-ready code. Every time._
 
 ---
 
-*StringRay Framework v1.9.0 - Facade Pattern Architecture Guide*
+*StringRay AI v1.10.0 - Facade Pattern Architecture Guide*

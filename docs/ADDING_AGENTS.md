@@ -1,4 +1,4 @@
-# How to Add an Agent to StringRay Framework v1.9.0
+# How to Add an Agent to StringRay AI v1.10.0
 
 This guide documents how to add agents to StringRay v1.9.0 and lists **every single file** that needs to be updated.
 
@@ -108,7 +108,7 @@ Create the agent YAML file:
 ```yaml
 name: my-agent
 description: "What this agent does"
-version: "1.9.0"
+version: "1.10.0"
 mode: subagent
 ```
 

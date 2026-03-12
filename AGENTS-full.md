@@ -3,7 +3,7 @@
 **Version**: 1.9.0
 **Purpose**: Enterprise AI orchestration with systematic error prevention and modular architecture
 **Last Updated**: 2026-03-12
-**System Complexity**: 75+ modular files, 27 specialized agents, 28 MCP servers, 60 codex terms
+**System Complexity**: 75+ modular files, 27 specialized agents, 14 MCP servers, 60 codex terms
 
 ---
 
@@ -2215,7 +2215,7 @@ interface IMCPModule extends IModule {
 ```json
 {
   "framework": {
-    "version": "1.9.0",
+    "version": "1.10.0",
     "mode": "production",
     "logging": {
       "level": "info",
@@ -2284,7 +2284,7 @@ interface IMCPModule extends IModule {
     "researcher": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.9.0",
+    "version": "1.10.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -2941,7 +2941,7 @@ npx strray-ai profile --modules
 **Architecture**: Modular with Facade Pattern  
 **Components**: 
 - 27 specialized agents
-- 28 MCP servers  
+- 14 MCP servers  
 - 75+ modular files
 - 60 codex terms
 - 87% test coverage

@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document outlines a privacy-first, opt-in central analytics architecture for StringRay Framework v1.9.0 that enables collective learning while maintaining strict data privacy and consent control. The v1.9.0 release implements the **Facade Pattern** with improved modularity for analytics components.
+This document outlines a privacy-first, opt-in central analytics architecture for StringRay AI v1.10.0 that enables collective learning while maintaining strict data privacy and consent control. The v1.9.0 release implements the **Facade Pattern** with improved modularity for analytics components.
 
 ## Architecture Overview
 

@@ -180,7 +180,7 @@ STRRAY_MCP_CLIENT_MODULES=all
 ```json
 {
   "strray": {
-    "version": "1.9.0",
+    "version": "1.10.0",
     "architecture": "facade-pattern",
     "components": {
       "orchestrator": true,

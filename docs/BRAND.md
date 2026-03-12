@@ -132,7 +132,7 @@ This is why the copy works — it's not trying to entertain or dazzle. It's spea
 
 **For New Users:**
 - Modern facade pattern architecture from day one
-- 27 specialized agents, 28 MCP servers, 2,368 tests
+- 27 specialized agents, 14 MCP servers, 2,368 tests
 - 99.6% error prevention, 100% backward compatibility
 
 **Technical Credibility:**

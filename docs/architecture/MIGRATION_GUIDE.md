@@ -350,4 +350,4 @@ _This technical migration guide ensures smooth transitions to StrRay Framework v
 
 ---
 
-*StringRay Framework v1.9.0 - Facade Pattern Migration Guide*
+*StringRay AI v1.10.0 - Facade Pattern Migration Guide*

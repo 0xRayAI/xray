@@ -17,7 +17,7 @@ The Universal Version Manager (`scripts/universal-version-manager.js`) maintains
 ```javascript
 const OFFICIAL_VERSIONS = {
   framework: {
-    version: "1.7.5",
+    version: "1.10.0",
     displayName: "StringRay AI v1.3.4",
     lastUpdated: "2026-01-15",
   },

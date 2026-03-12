@@ -2,9 +2,9 @@
 
 **Enterprise AI Orchestration Framework for OpenCode/Claude Code**
 
-[![Version](https://img.shields.io/badge/version-1.7.5-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.10.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-1608%20passed-brightgreen?style=flat-square)](src/__tests__)
+[![Tests](https://img.shields.io/badge/tests-2368%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
 
 > **Intelligent Multi-Agent Coordination with 99.6% Systematic Error Prevention**
@@ -56,7 +56,7 @@ npx strray-ai status
 - **📊 Real-time Monitoring** - Performance tracking and health checks
 - **🔄 Complexity-Based Routing** - Intelligent task delegation
 - **🔌 Webhook Integration** - GitHub, GitLab, Bitbucket, Stripe
-- **✅ 1608 Tests** - Production-ready with comprehensive test coverage
+- **✅ 2368 Tests** - Production-ready with comprehensive test coverage
 
 ## 🤖 Available Agents
 

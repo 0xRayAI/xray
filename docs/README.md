@@ -1,6 +1,6 @@
 # ⚡ StringRay AI v1.9.0 – Enterprise AI Agent Coordination Platform
 
-[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](https://github.com/htafolla/strray)
+[![Version](https://img.shields.io/badge/version-1.10.0-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
@@ -126,7 +126,7 @@ StringRay Framework automatically configures itself based on your installation m
 - Loads the Universal Development Codex v1.1.1
 - Enables enterprise CI/CD automation with post-processor
 - Registers all 27 specialized agents
-- Sets up 28 MCP servers for agent communication
+- Sets up 14 MCP servers for agent communication
 - Configures automated deployment pipelines
 
 #### OpenCode Integration
@@ -202,7 +202,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.9.0"
+    "version": "1.10.0"
   }
 }
 ```
@@ -363,7 +363,7 @@ npm run init
 
 - **Concurrent Sessions**: Unlimited with automatic lifecycle management
 - **Agent Coordination**: 27 specialized agents with intelligent delegation
-- **MCP Servers**: 28 MCP servers providing specialized capabilities
+- **MCP Servers**: 14 MCP servers providing specialized capabilities
 - **CI/CD Automation**: Automated remediation loop with canary deployments
 - **Plugin Security**: Sandboxed execution with permission-based access
 - **Monitoring Coverage**: Real-time anomaly detection and predictive alerting
@@ -473,7 +473,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray",
-    "version": "1.9.0",
+    "version": "1.10.0",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

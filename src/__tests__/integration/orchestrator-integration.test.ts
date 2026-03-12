@@ -641,7 +641,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         mockFs.addFile(
           "/test/plugins/test-plugin/package.json",
           JSON.stringify({
-            name: "test-plugin", version: "1.7.5",
+            name: "test-plugin", version: "1.10.0",
             main: "index.js",
             id: "test-plugin",
             description: "Test plugin for integration testing",
@@ -673,7 +673,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         const mockPlugin = {
           metadata: {
             id: "test-plugin",
-            name: "Test Plugin", version: "1.7.5",
+            name: "Test Plugin", version: "1.10.0",
             description: "Test plugin",
             author: "Test Author",
             license: "MIT",
@@ -762,7 +762,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         mockFs.addFile(
           "/test/plugins/dangerous-plugin/package.json",
           JSON.stringify({
-            name: "dangerous-plugin", version: "1.7.5",
+            name: "dangerous-plugin", version: "1.10.0",
             main: "index.js",
             id: "dangerous-plugin",
             description: "Dangerous plugin for security testing",
@@ -819,7 +819,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
         mockFs.addFile(
           "/test/plugins/lifecycle-plugin/package.json",
           JSON.stringify({
-            name: "lifecycle-plugin", version: "1.7.5",
+            name: "lifecycle-plugin", version: "1.10.0",
             main: "index.js",
             id: "lifecycle-test",
             description: "Test plugin lifecycle",
@@ -1951,7 +1951,7 @@ describe("StringRay Framework - Comprehensive Orchestrator Integration Tests", (
       const securityPluginMock = {
         metadata: {
           id: "security-plugin",
-          name: "Security Plugin", version: "1.7.5",
+          name: "Security Plugin", version: "1.10.0",
           description: "Security-focused plugin",
           author: "Security Team",
           license: "MIT",
