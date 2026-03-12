@@ -19,8 +19,13 @@
 // Core enforcer
 export { RuleEnforcer } from "./rule-enforcer.js";
 
-// Rule Registry for managing rules separately from execution
-export { RuleRegistry } from "./core/rule-registry.js";
+// Core components (Phase 5 refactoring)
+export {
+  RuleRegistry,
+  RuleHierarchy,
+  RuleExecutor,
+  ViolationFixer,
+} from "./core/index.js";
 
 // All types
 export {
@@ -28,6 +33,7 @@ export {
   RuleValidationContext,
   RuleValidationResult,
   ValidationReport,
+  Violation,
   ViolationFix,
   RuleFix,
   RuleCategory,
@@ -36,6 +42,12 @@ export {
   IRuleRegistry,
   IValidator,
   IValidatorRegistry,
+  IRuleHierarchy,
+  IRuleExecutor,
+  IViolationFixer,
+  ExecutionOptions,
+  BatchExecutionOptions,
+  FixStrategy,
   isRuleValidationResult,
 } from "./types.js";
 
@@ -55,6 +67,21 @@ export {
   CleanDebugLogsValidator,
   ConsoleLogUsageValidator,
 } from "./validators/index.js";
+
+// Loaders (Phase 4 refactoring)
+export {
+  // Base loader
+  BaseLoader,
+  // Concrete loaders
+  CodexLoader,
+  AgentTriageLoader,
+  ProcessorLoader,
+  AgentsMdValidationLoader,
+  // Orchestrator
+  LoaderOrchestrator,
+  type LoaderOrchestratorOptions,
+  type LoaderOrchestratorResult,
+} from "./loaders/index.js";
 
 // Enforcer tools (if any exports exist)
 export * as enforcerTools from "./enforcer-tools.js";

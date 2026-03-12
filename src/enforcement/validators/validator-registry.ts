@@ -13,24 +13,109 @@ import {
   IValidatorRegistry,
   RuleCategory,
 } from "../types.js";
+import {
+  NoDuplicateCodeValidator,
+  ContextAnalysisIntegrationValidator,
+  MemoryOptimizationValidator,
+  DocumentationRequiredValidator,
+  NoOverEngineeringValidator,
+  CleanDebugLogsValidator,
+  ConsoleLogUsageValidator,
+} from "./code-quality-validators.js";
+import {
+  InputValidationValidator,
+  SecurityByDesignValidator,
+} from "./security-validators.js";
+import {
+  TestsRequiredValidator,
+  TestCoverageValidator,
+  ContinuousIntegrationValidator,
+  TestFailureReportingValidator,
+  PerformanceRegressionReportingValidator,
+  SecurityVulnerabilityReportingValidator,
+} from "./testing-validators.js";
+import {
+  DependencyManagementValidator,
+  SrcDistIntegrityValidator,
+  ImportConsistencyValidator,
+  ModuleSystemConsistencyValidator,
+  ErrorResolutionValidator,
+  LoopSafetyValidator,
+  StateManagementPatternsValidator,
+  SingleResponsibilityValidator,
+  DeploymentSafetyValidator,
+  MultiAgentEnsembleValidator,
+  SubstrateExternalizationValidator,
+  FrameworkSelfValidationValidator,
+  EmergentImprovementValidator,
+} from "./architecture-validators.js";
 
 /**
  * Implementation of the validator registry.
  * Manages validator instances in a Map for O(1) lookup by rule ID.
+ * Auto-registers all validators on construction for facade simplicity.
  *
  * @example
  * ```typescript
  * const registry = new ValidatorRegistry();
- * registry.register(new NoDuplicateCodeValidator());
- * const validator = registry.getValidator('no-duplicate-code');
- * if (validator) {
- *   const result = await validator.validate(context);
- * }
+ * const validator = registry.getValidator('no-duplicate-code')!;
+ * const result = await validator.validate(context);
  * ```
  */
 export class ValidatorRegistry implements IValidatorRegistry {
   /** Internal map storing validators by rule ID */
   private validators: Map<string, IValidator> = new Map();
+
+  /**
+   * Creates a new ValidatorRegistry and auto-registers all validators.
+   */
+  constructor() {
+    this.registerAllValidators();
+  }
+
+  /**
+   * Auto-register all validators.
+   * Called automatically on construction.
+   */
+  private registerAllValidators(): void {
+    // Code Quality Validators
+    this.register(new NoDuplicateCodeValidator());
+    this.register(new ContextAnalysisIntegrationValidator());
+    this.register(new MemoryOptimizationValidator());
+    this.register(new DocumentationRequiredValidator());
+    this.register(new NoOverEngineeringValidator());
+    this.register(new CleanDebugLogsValidator());
+    this.register(new ConsoleLogUsageValidator());
+
+    // Security Validators
+    this.register(new InputValidationValidator());
+    this.register(new SecurityByDesignValidator());
+
+    // Testing Validators
+    this.register(new TestsRequiredValidator());
+    this.register(new TestCoverageValidator());
+    this.register(new ContinuousIntegrationValidator());
+    this.register(new TestFailureReportingValidator());
+
+    // Architecture Validators
+    this.register(new DependencyManagementValidator());
+    this.register(new SrcDistIntegrityValidator());
+    this.register(new ImportConsistencyValidator());
+    this.register(new ModuleSystemConsistencyValidator());
+    this.register(new ErrorResolutionValidator());
+    this.register(new LoopSafetyValidator());
+    this.register(new StateManagementPatternsValidator());
+    this.register(new SingleResponsibilityValidator());
+    this.register(new DeploymentSafetyValidator());
+    this.register(new MultiAgentEnsembleValidator());
+    this.register(new SubstrateExternalizationValidator());
+    this.register(new FrameworkSelfValidationValidator());
+    this.register(new EmergentImprovementValidator());
+
+    // Reporting Validators
+    this.register(new PerformanceRegressionReportingValidator());
+    this.register(new SecurityVulnerabilityReportingValidator());
+  }
 
   /**
    * Register a validator instance.

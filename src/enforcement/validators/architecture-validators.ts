@@ -673,3 +673,83 @@ export class SingleResponsibilityValidator extends BaseValidator {
     return this.createSuccessResult("Single responsibility principle maintained");
   }
 }
+
+/**
+ * Validates deployment safety (Codex Term #43).
+ * Placeholder validator - full implementation pending.
+ */
+export class DeploymentSafetyValidator extends BaseValidator {
+  readonly id = "deployment-safety-validator";
+  readonly ruleId = "deployment-safety";
+  readonly category = "architecture" as const;
+  readonly severity = "blocking" as const;
+
+  async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+    // Placeholder - always passes for now
+    return this.createSuccessResult("Deployment safety validation passed (placeholder)");
+  }
+}
+
+/**
+ * Validates multi-agent ensemble patterns (Phase 3).
+ * Placeholder validator - full implementation pending.
+ */
+export class MultiAgentEnsembleValidator extends BaseValidator {
+  readonly id = "multi-agent-ensemble-validator";
+  readonly ruleId = "multi-agent-ensemble";
+  readonly category = "architecture" as const;
+  readonly severity = "warning" as const;
+
+  async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+    // Placeholder - always passes for now
+    return this.createSuccessResult("Multi-agent ensemble validation passed (placeholder)");
+  }
+}
+
+/**
+ * Validates substrate externalization patterns.
+ * Placeholder validator - full implementation pending.
+ */
+export class SubstrateExternalizationValidator extends BaseValidator {
+  readonly id = "substrate-externalization-validator";
+  readonly ruleId = "substrate-externalization";
+  readonly category = "architecture" as const;
+  readonly severity = "info" as const;
+
+  async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+    // Placeholder - always passes for now
+    return this.createSuccessResult("Substrate externalization validation passed (placeholder)");
+  }
+}
+
+/**
+ * Validates framework self-validation capability.
+ * Placeholder validator - full implementation pending.
+ */
+export class FrameworkSelfValidationValidator extends BaseValidator {
+  readonly id = "framework-self-validation-validator";
+  readonly ruleId = "framework-self-validation";
+  readonly category = "architecture" as const;
+  readonly severity = "info" as const;
+
+  async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+    // Placeholder - always passes for now
+    return this.createSuccessResult("Framework self-validation passed (placeholder)");
+  }
+}
+
+/**
+ * Validates emergent improvement patterns.
+ * Placeholder validator - full implementation pending.
+ */
+export class EmergentImprovementValidator extends BaseValidator {
+  readonly id = "emergent-improvement-validator";
+  readonly ruleId = "emergent-improvement";
+  readonly category = "architecture" as const;
+  readonly severity = "info" as const;
+
+  async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+    // Placeholder - always passes for now
+    return this.createSuccessResult("Emergent improvement validation passed (placeholder)");
+  }
+}

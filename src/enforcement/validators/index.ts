@@ -40,6 +40,8 @@ export {
   TestCoverageValidator,
   ContinuousIntegrationValidator,
   TestFailureReportingValidator,
+  PerformanceRegressionReportingValidator,
+  SecurityVulnerabilityReportingValidator,
 } from "./testing-validators.js";
 
 // Architecture validators
@@ -52,4 +54,9 @@ export {
   LoopSafetyValidator,
   StateManagementPatternsValidator,
   SingleResponsibilityValidator,
+  DeploymentSafetyValidator,
+  MultiAgentEnsembleValidator,
+  SubstrateExternalizationValidator,
+  FrameworkSelfValidationValidator,
+  EmergentImprovementValidator,
 } from "./architecture-validators.js";

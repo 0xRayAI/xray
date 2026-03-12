@@ -147,6 +147,29 @@ export interface ValidationReport {
 }
 
 /**
+ * Represents a detected rule violation.
+ * 
+ * @example
+ * ```typescript
+ * const violation: Violation = {
+ *   rule: "no-console",
+ *   message: "Console.log detected",
+ *   severity: "error"
+ * };
+ * ```
+ */
+export interface Violation {
+  /** ID of the violated rule */
+  rule: string;
+  /** Human-readable message describing the violation */
+  message: string;
+  /** Severity of the violation */
+  severity?: RuleSeverity;
+  /** Optional suggestions for fixing */
+  suggestions?: string[];
+}
+
+/**
  * Tracks an attempt to fix a rule violation.
  * 
  * @example
@@ -350,4 +373,186 @@ export interface IRuleRegistry {
 
   /** Clear all rules from the registry */
   clearRules(): void;
+}
+
+/**
+ * Interface for rule loader implementations.
+ * Loaders encapsulate the logic for loading rules from various sources
+ * such as files, APIs, or databases.
+ *
+ * Phase 4 refactoring: Extracted async rule loading logic from RuleEnforcer
+ * into separate loader classes for better separation of concerns.
+ *
+ * @example
+ * ```typescript
+ * class MyLoader extends BaseLoader {
+ *   readonly name = 'my-loader';
+ *   
+ *   async load(): Promise<RuleDefinition[]> {
+ *     // Load rules from custom source
+ *     return [...];
+ *   }
+ *   
+ *   async isAvailable(): Promise<boolean> {
+ *     return fs.existsSync('my-rules.json');
+ *   }
+ * }
+ * ```
+ */
+export interface IRuleLoader {
+  /** Unique name identifier for this loader */
+  readonly name: string;
+
+  /**
+   * Load rules from the source.
+   * @returns Promise resolving to array of rule definitions
+   */
+  load(): Promise<RuleDefinition[]>;
+
+  /**
+   * Check if this loader's source is available.
+   * @returns Promise resolving to true if source exists and is accessible
+   */
+  isAvailable(): Promise<boolean>;
+}
+
+/**
+ * Options for rule execution.
+ */
+export interface ExecutionOptions {
+  /** Whether to execute rules in parallel (default: false for predictable ordering) */
+  parallel?: boolean;
+  /** Maximum number of parallel executions if parallel is true */
+  concurrency?: number;
+  /** Timeout in milliseconds for each rule validation (default: 30000) */
+  timeoutMs?: number;
+  /** Whether to stop execution on first error (default: false) */
+  stopOnError?: boolean;
+}
+
+/**
+ * Options for batch rule execution.
+ */
+export interface BatchExecutionOptions extends ExecutionOptions {
+  /** Whether to sort by dependency order before execution (default: true) */
+  sortByDependencies?: boolean;
+}
+
+/**
+ * Strategy for fixing a specific rule violation.
+ */
+export interface FixStrategy {
+  /** Agent name to delegate the fix to */
+  agent: string;
+  /** Skill to invoke on the agent */
+  skill: string;
+  /** Tool to use for the skill */
+  tool: string;
+  /** Priority for fix execution (higher = earlier) */
+  priority: number;
+}
+
+/**
+ * Interface for rule hierarchy management.
+ * Manages rule dependencies and execution ordering.
+ *
+ * Phase 5 refactoring: Extracted dependency management from RuleEnforcer.
+ *
+ * @example
+ * ```typescript
+ * const hierarchy = new RuleHierarchy();
+ * hierarchy.addDependency('tests-required', ['no-duplicate-code']);
+ * const order = hierarchy.getExecutionOrder(['tests-required', 'no-duplicate-code']);
+ * ```
+ */
+export interface IRuleHierarchy {
+  /** Add a dependency relationship */
+  addDependency(ruleId: string, dependsOn: string[]): void;
+  /** Get dependencies for a rule */
+  getDependencies(ruleId: string): string[];
+  /** Get rules that depend on this rule */
+  getDependents(ruleId: string): string[];
+  /** Get execution order for rules based on dependencies */
+  getExecutionOrder(ruleIds: string[]): string[];
+  /** Check if circular dependencies exist */
+  hasCircularDependencies(): boolean;
+  /** Find all circular dependency cycles */
+  findCircularDependencies(): string[][];
+  /** Check if a rule's dependencies are satisfied */
+  isDependencySatisfied(ruleId: string, executedRules: Set<string>): boolean;
+}
+
+/**
+ * Interface for rule execution orchestration.
+ * Manages the execution of validation rules.
+ *
+ * Phase 5 refactoring: Extracted validation execution from RuleEnforcer.
+ *
+ * @example
+ * ```typescript
+ * const executor = new RuleExecutor(registry, hierarchy, validatorRegistry);
+ * const report = await executor.execute('write', context);
+ * ```
+ */
+export interface IRuleExecutor {
+  /** Execute validation for an operation */
+  execute(operation: string, context: RuleValidationContext, options?: ExecutionOptions): Promise<ValidationReport>;
+  /** Execute a single rule by ID */
+  executeSingle(ruleId: string, context: RuleValidationContext): Promise<RuleValidationResult>;
+  /** Execute multiple rules in batch */
+  executeBatch(ruleIds: string[], context: RuleValidationContext, options?: BatchExecutionOptions): Promise<RuleValidationResult[]>;
+}
+
+/**
+ * Interface for violation fix delegation.
+ * Maps violations to appropriate agents/skills and attempts fixes.
+ *
+ * Phase 5 refactoring: Extracted fix delegation from RuleEnforcer.
+ *
+ * @example
+ * ```typescript
+ * const fixer = new ViolationFixer();
+ * const fixes = await fixer.fixViolations(violations, context);
+ * ```
+ */
+export interface IViolationFixer {
+  /** Attempt to fix violations by delegating to agents/skills */
+  fixViolations(violations: Violation[], context: RuleValidationContext): Promise<ViolationFix[]>;
+  /** Register a custom fix strategy for a rule */
+  registerFixStrategy(ruleId: string, strategy: FixStrategy): void;
+  /** Get fix strategy for a rule */
+  getFixStrategy(ruleId: string): FixStrategy | undefined;
+}
+
+/**
+ * Codex term structure from codex.json
+ * Used by CodexLoader to convert terms to rules.
+ */
+export interface CodexTerm {
+  /** Term number */
+  number: number;
+  /** Term title */
+  title: string;
+  /** Term description */
+  description: string;
+  /** Term category */
+  category: string;
+  /** Whether this is a zero-tolerance term */
+  zeroTolerance: boolean;
+  /** Enforcement level (blocking, high, medium, low) */
+  enforcementLevel: string;
+}
+
+/**
+ * Codex data structure from codex.json
+ */
+export interface CodexData {
+  /** Version of the codex */
+  version: string;
+  /** Last updated date */
+  lastUpdated: string;
+  /** Error prevention target percentage */
+  errorPreventionTarget: number;
+  /** Map of term numbers to term definitions */
+  terms: Record<string, CodexTerm>;
 }

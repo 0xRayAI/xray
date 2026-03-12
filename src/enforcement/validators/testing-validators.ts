@@ -274,3 +274,35 @@ export class TestFailureReportingValidator extends BaseValidator {
     return result;
   }
 }
+
+/**
+ * Validates performance regression reporting requirements.
+ * Placeholder validator - full implementation pending.
+ */
+export class PerformanceRegressionReportingValidator extends BaseValidator {
+  readonly id = "performance-regression-reporting-validator";
+  readonly ruleId = "performance-regression-reporting";
+  readonly category = "reporting" as const;
+  readonly severity = "warning" as const;
+
+  async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+    // Placeholder - always passes for now
+    return this.createSuccessResult("Performance regression reporting validation passed (placeholder)");
+  }
+}
+
+/**
+ * Validates security vulnerability reporting requirements.
+ * Placeholder validator - full implementation pending.
+ */
+export class SecurityVulnerabilityReportingValidator extends BaseValidator {
+  readonly id = "security-vulnerability-reporting-validator";
+  readonly ruleId = "security-vulnerability-reporting";
+  readonly category = "reporting" as const;
+  readonly severity = "error" as const;
+
+  async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
+    // Placeholder - always passes for now
+    return this.createSuccessResult("Security vulnerability reporting validation passed (placeholder)");
+  }
+}
