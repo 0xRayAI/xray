@@ -14,9 +14,11 @@ vi.mock('../../../core/framework-logger.js', () => ({
 }));
 
 vi.mock('../../../mcps/connection/process-spawner.js', () => ({
-  ProcessSpawner: vi.fn().mockImplementation(() => ({
-    spawn: vi.fn(),
-  })),
+  ProcessSpawner: vi.fn().mockImplementation(function ProcessSpawner() {
+    return {
+      spawn: vi.fn(),
+    };
+  }),
 }));
 
 describe('McpConnection', () => {
@@ -36,7 +38,7 @@ describe('McpConnection', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
     // Create mock streams
     mockStdout = new EventEmitter();
@@ -61,9 +63,9 @@ describe('McpConnection', () => {
       stderr: mockStderr,
     });
 
-    (ProcessSpawner as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
-      spawn: mockSpawn,
-    }));
+    (ProcessSpawner as unknown as ReturnType<typeof vi.fn>).mockImplementation(function MockProcessSpawner() {
+      return { spawn: mockSpawn };
+    });
 
     connection = new McpConnection(mockConfig);
   });
@@ -146,6 +148,11 @@ describe('McpConnection', () => {
     });
 
     it('should handle process errors during connection', async () => {
+      // Add error listener to prevent unhandled error
+      connection.on('error', () => {
+        // Expected error during connection - ignore
+      });
+
       const connectPromise = connection.connect();
 
       setImmediate(() => {
@@ -398,16 +405,28 @@ describe('McpConnection', () => {
     });
 
     it('should reject pending requests on process error', async () => {
+      let rejectionError: Error | undefined;
+
+      // Add error listener to prevent unhandled error
+      connection.on('error', () => {
+        // Expected error - ignore
+      });
+
       const requestPromise = connection.sendRequest({
         jsonrpc: '2.0',
         id: 2,
         method: 'test',
         params: {},
+      }).catch((error: Error) => {
+        rejectionError = error;
       });
 
       mockProcess.emit('error', new Error('Fatal error'));
 
-      await expect(requestPromise).rejects.toThrow('Process error');
+      await requestPromise;
+
+      // Verify that the promise was rejected with the expected error
+      expect(rejectionError?.message).toBe('Process error: Fatal error');
     });
 
     it('should handle non-JSON data gracefully', () => {
