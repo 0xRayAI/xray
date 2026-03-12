@@ -2,26 +2,15 @@ import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-
-export interface MCPTool {
-  name: string;
-  description: string;
-  inputSchema: any;
-}
-
-export interface MCPToolResult {
-  content: Array<{
-    type: string;
-    text: string;
-  }>;
-}
-
-export interface MCPClientConfig {
-  serverName: string;
-  command: string;
-  args: string[];
-  timeout?: number;
-}
+import {
+  MCPClientConfig,
+  MCPTool,
+  MCPToolResult,
+} from "./types/index.js";
+import {
+  MCP_PROTOCOL_VERSION,
+  JSONRPC_VERSION,
+} from "./protocol/protocol-constants.js";
 
 /**
  * MCP Client Layer
@@ -932,21 +921,22 @@ I'm here to help with architectural decisions, technical strategy, and complex p
     return new Promise((resolve, reject) => {
       // Build MCP initialize request
       const initializeRequest = {
-        jsonrpc: "2.0",
+        jsonrpc: JSONRPC_VERSION,
         id: 1,
         method: "initialize",
         params: {
-          protocolVersion: "2024-11-05",
+          protocolVersion: MCP_PROTOCOL_VERSION,
           capabilities: {},
           clientInfo: {
-            name: "strray-mcp-client", version: "1.7.5",
+            name: "strray-mcp-client",
+            version: "1.7.5",
           },
         },
       };
 
       // Build MCP tool call request
       const mcpRequest = {
-        jsonrpc: "2.0",
+        jsonrpc: JSONRPC_VERSION,
         id: 2,
         method: "tools/call",
         params: {
