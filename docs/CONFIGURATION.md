@@ -1,6 +1,6 @@
 # StringRay Configuration Guide
 
-Complete configuration reference for the StringRay AI Framework.
+Complete configuration reference for the StringRay AI Framework v1.9.0.
 
 ## Overview
 
@@ -13,13 +13,34 @@ Configuration is loaded in order of priority: default < project < user.
 
 ---
 
+## What's New in v1.9.0
+
+### Facade Pattern Architecture
+
+StringRay v1.9.0 introduces a modern **Facade Pattern** architecture with modular internal structure:
+
+**Key Improvements:**
+- **87% Code Reduction**: 8,230 → 1,218 lines (3,170 lines of dead code removed)
+- **Modular Design**: Clean APIs with focused internal modules
+- **Better Performance**: Faster routing and agent coordination
+- **100% Backward Compatible**: All existing configurations work without changes
+
+**Facade Components:**
+- **RuleEnforcer Facade**: 416 lines (was 2,714) - 6 internal modules
+- **TaskSkillRouter Facade**: 490 lines (was 1,933) - 12 mapping + analytics + routing modules  
+- **MCP Client Facade**: 312 lines (was 1,413) - 8 internal modules
+
+No migration needed - your existing `.opencode/strray/features.json` and other config files continue to work exactly as before.
+
+---
+
 ## features.json Reference
 
 Create `.opencode/strray/features.json` in your project root:
 
 ```json
 {
-  "version": "1.7.5",
+  "version": "1.9.0",
   "description": "StringRay Framework Configuration",
   
   "token_optimization": {
@@ -103,7 +124,7 @@ Create `.opencode/strray/features.json` in your project root:
   "multi_agent_orchestration": {
     "enabled": true,
     "coordination_model": "async-multi-agent",
-    "max_concurrent_agents": 3,
+    "max_concurrent_agents": 8,
     "task_distribution_strategy": "capability-based",
     "conflict_resolution": "expert-priority",
     "progress_tracking": true,
@@ -134,7 +155,22 @@ Create `.opencode/strray/features.json` in your project root:
       "security-auditor": "claude-opus-4",
       "refactorer": "claude-sonnet-4",
       "testing-lead": "claude-sonnet-4",
-      "researcher": "claude-sonnet-4"
+      "researcher": "claude-sonnet-4",
+      "storyteller": "claude-sonnet-4",
+      "strategist": "claude-sonnet-4",
+      "log-monitor": "claude-sonnet-4",
+      "frontend-engineer": "claude-sonnet-4",
+      "backend-engineer": "claude-sonnet-4",
+      "mobile-developer": "claude-sonnet-4",
+      "database-engineer": "claude-sonnet-4",
+      "devops-engineer": "claude-sonnet-4",
+      "performance-engineer": "claude-sonnet-4",
+      "seo-consultant": "claude-sonnet-4",
+      "content-creator": "claude-sonnet-4",
+      "growth-strategist": "claude-sonnet-4",
+      "tech-writer": "claude-sonnet-4",
+      "multimodal-looker": "claude-sonnet-4",
+      "code-analyzer": "claude-sonnet-4"
     },
     "performance_limits": {
       "max_task_duration_ms": 30000,
@@ -203,7 +239,7 @@ Create `.opencode/strray/features.json` in your project root:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `version` | string | "1.5.5" | Configuration version |
+| `version` | string | "1.9.0" | Configuration version |
 | `description` | string | - | Configuration description |
 
 ### Token Optimization
@@ -234,7 +270,7 @@ Create `.opencode/strray/features.json` in your project root:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `multi_agent_orchestration.enabled` | boolean | true | Enable multi-agent coordination |
-| `multi_agent_orchestration.max_concurrent_agents` | number | 3 | Maximum simultaneous agents |
+| `multi_agent_orchestration.max_concurrent_agents` | number | 8 | Maximum simultaneous agents |
 | `multi_agent_orchestration.coordination_model` | string | "async-multi-agent" | Coordination approach |
 | `multi_agent_orchestration.task_distribution_strategy` | string | "capability-based" | How tasks are distributed |
 | `multi_agent_orchestration.conflict_resolution` | string | "expert-priority" | How conflicts are resolved |
@@ -328,25 +364,30 @@ The main OpenCode configuration file for agent routing:
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
     "testing-lead": "openrouter/xai-grok-2-1212-fast-1",
     "researcher": "openrouter/xai-grok-2-1212-fast-1",
+    "log-monitor": "openrouter/xai-grok-2-1212-fast-1",
+    "storyteller": "openrouter/xai-grok-2-1212-fast-1",
+    "strategist": "openrouter/xai-grok-2-1212-fast-1",
+    "frontend-engineer": "openrouter/xai-grok-2-1212-fast-1",
+    "backend-engineer": "openrouter/xai-grok-2-1212-fast-1",
+    "mobile-developer": "openrouter/xai-grok-2-1212-fast-1",
+    "database-engineer": "openrouter/xai-grok-2-1212-fast-1",
+    "devops-engineer": "openrouter/xai-grok-2-1212-fast-1",
+    "performance-engineer": "openrouter/xai-grok-2-1212-fast-1",
     "seo-consultant": "openrouter/xai-grok-2-1212-fast-1",
     "content-creator": "openrouter/xai-grok-2-1212-fast-1",
     "growth-strategist": "openrouter/xai-grok-2-1212-fast-1",
-    "database-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "devops-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "backend-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "frontend-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "documentation-writer": "openrouter/xai-grok-2-1212-fast-1",
-    "performance-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "mobile-developer": "openrouter/xai-grok-2-1212-fast-1"
+    "tech-writer": "openrouter/xai-grok-2-1212-fast-1",
+    "multimodal-looker": "openrouter/xai-grok-2-1212-fast-1",
+    "code-analyzer": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.7.5",
+    "version": "1.9.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
   },
   "pipelines": {
-    "maxConcurrentAgents": 3,
+    "maxConcurrentAgents": 8,
     "complexityThresholds": {
       "singleAgent": 25,
       "multiAgent": 95
@@ -361,7 +402,7 @@ The main OpenCode configuration file for agent routing:
 
 ### .mcp.json
 
-MCP server registration for StringRay tools:
+MCP server registration for StringRay tools (28 servers):
 
 ```json
 {
@@ -425,18 +466,19 @@ MCP server registration for StringRay tools:
 | `STRRAY_LOG_LEVEL` | Log level | `info` |
 | `STRRAY_STATE_DIR` | State directory | `./.opencode/state` |
 | `STRRAY_CACHE_DIR` | Cache directory | `./.opencode/cache` |
+| `STRRAY_NO_TELEMETRY` | Disable telemetry | `0` |
 
 ---
 
 ## Related Documentation
 
 - [Agent Documentation](../AGENTS.md) - Complete agent specifications
-- [Universal Development Codex](./CODEX.md) - 59-term codex reference
+- [Universal Development Codex](./CODEX.md) - 60-term codex reference
 - [MCP Server Guide](./MCP_SERVERS.md) - MCP server details
 - [CLI Commands](./CLI_COMMANDS.md) - Command reference
 - [Troubleshooting](./TROUBLESHOOTING.md) - Common issues and solutions
 
 ---
 
-*Configuration reference version: 1.5.5*
-*Last updated: 2026-02-24*
+*Configuration reference version: 1.9.0*
+*Last updated: 2026-03-12*

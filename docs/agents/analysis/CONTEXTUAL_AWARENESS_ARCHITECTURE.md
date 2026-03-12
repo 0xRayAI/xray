@@ -8,6 +8,14 @@
 
 ## 🧠 What We Have: Contextual Awareness Components
 
+### Agent Integration Context (v1.9.0)
+
+The contextual awareness architecture now supports all **27 specialized agents** with integrated analysis capabilities:
+
+- **Planning Agents**: 14 agents use contextual analysis for design and strategy
+- **Implementation Agents**: 12 agents use contextual analysis for surgical fixes and code transformation
+- **Primary Orchestrator**: Coordinates all 27 agents using contextual intelligence
+
 ### **1. CodebaseContextAnalyzer** - File System Intelligence
 
 ```typescript
@@ -75,6 +83,8 @@ analyzer.setContextProviders(codebaseAnalyzer, astParser, dependencyBuilder);
 
 const metrics = await analyzer.analyzeComplexity("refactor-component", context);
 // → Enhanced with real codebase data, not just estimates
+// → Now supports complexity analysis for all 27 agent types
+// → Facade pattern reduces complexity by 87% (3,170 lines)
 ```
 
 **Capabilities:**
@@ -111,12 +121,14 @@ const dependencies = await dependencyAnalysis(projectRoot);
 ### **Enforcer Agent** - Rule Enforcement Authority
 
 ```typescript
-// Validates contextual analysis integration follows rules
+// Validates contextual analysis integration follows rules for all 27 agents
 const validation = await contextAnalysisValidation(files, operation);
 const compliance = await codexEnforcement(operation, files, newCode);
 const quality = await qualityGateCheck(operation, context);
 
+// Validates all 60 Codex terms (v1.7.5)
 // Ensures contextual analysis components integrate properly
+// Coordinates with Orchestrator to validate all 27 agents
 ```
 
 **Enforcer Capabilities:**

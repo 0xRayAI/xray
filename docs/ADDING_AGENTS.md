@@ -1,6 +1,19 @@
-# How to Add an Agent to StringRay Framework
+# How to Add an Agent to StringRay Framework v1.9.0
 
-This guide documents how to add agents to StringRay and lists **every single file** that needs to be updated.
+This guide documents how to add agents to StringRay v1.9.0 and lists **every single file** that needs to be updated.
+
+---
+
+## Architecture Overview
+
+StringRay v1.9.0 uses a **Facade Pattern** architecture with modular internal structure:
+
+**Facade Components:**
+- **RuleEnforcer Facade**: 416 lines (was 2,714) - 6 internal modules for codex enforcement
+- **TaskSkillRouter Facade**: 490 lines (was 1,933) - 12 mapping + analytics + routing modules
+- **MCP Client Facade**: 312 lines (was 1,413) - 8 internal modules for server communication
+
+When adding agents, you'll primarily interact with the facades' clean APIs rather than monolithic files.
 
 ---
 
@@ -15,10 +28,10 @@ When adding a new agent, you MUST update these files:
 | 3 | `AGENTS.md` | Agent in the agents table |
 | 4 | `README.md` | Agent in the agents table |
 | 5 | `docs/README.md` | Agent in model routing config |
-| 6 | `src/mcps/mcp-client.ts` | Server config + availableSkills |
+| 6 | `src/mcps/mcp-client.ts` | Server config + availableSkills (via facade) |
 | 7 | `src/mcps/knowledge-skills/skill-invocation.server.ts` | Skill enum |
-| 8 | `src/delegation/task-skill-router.ts` | Task routing rules |
-| 9 | `src/enforcement/rule-enforcer.ts` | Rule enforcement mapping |
+| 8 | `src/delegation/task-skill-router.ts` | Task routing rules (via facade) |
+| 9 | `src/enforcement/rule-enforcer.ts` | Rule enforcement mapping (via facade) |
 | 10 | `src/orchestrator/orchestrator.ts` | Orchestration routing |
 | 11 | `src/orchestrator/multi-agent-orchestration-coordinator.ts` | Coordination |
 | 12 | `src/orchestrator/agent-spawn-governor.ts` | Spawn limits |
@@ -34,6 +47,40 @@ When adding a new agent, you MUST update these files:
 | 22 | `tests/validation/config-integration-tests.sh` | Integration tests |
 | 23 | `src/__tests__/test-governance-systems.ts` | Governance tests |
 | 24 | `docs/ADDING_AGENTS.md` | Update this guide |
+
+---
+
+## Current Agents List (27 Total)
+
+| Agent | Mode | Description |
+|-------|------|-------------|
+| enforcer | primary | Codex compliance & error prevention |
+| orchestrator | subagent | Multi-agent workflow coordination |
+| architect | subagent | System design & technical decisions |
+| testing-lead | subagent | Testing strategy |
+| bug-triage-specialist | subagent | Debugging & error investigation |
+| code-reviewer | subagent | Code quality assessment |
+| security-auditor | subagent | Vulnerability detection |
+| refactorer | subagent | Technical debt elimination |
+| researcher | subagent | Codebase exploration |
+| strategist | subagent | Strategic planning |
+| storyteller | subagent | Narrative deep reflections |
+| log-monitor | subagent | Performance monitoring |
+| frontend-engineer | subagent | React, Vue, Angular development |
+| backend-engineer | subagent | Node.js, Python, Go APIs |
+| mobile-developer | subagent | iOS, Android, React Native |
+| database-engineer | subagent | Schema design, migrations |
+| devops-engineer | subagent | CI/CD, containers, infrastructure |
+| performance-engineer | subagent | Optimization, profiling |
+| seo-consultant | subagent | SEO optimization |
+| content-creator | subagent | Content optimization |
+| growth-strategist | subagent | Marketing strategy |
+| tech-writer | subagent | Technical documentation |
+| multimodal-looker | subagent | Image/video analysis |
+| code-analyzer | subagent | Code analysis |
+| documentation-writer | subagent | Documentation creation |
+| testing-strategy | subagent | Test planning |
+| framework-compliance-audit | subagent | Compliance validation |
 
 ---
 
@@ -61,7 +108,7 @@ Create the agent YAML file:
 ```yaml
 name: my-agent
 description: "What this agent does"
-version: "1.7.5"
+version: "1.9.0"
 mode: subagent
 ```
 
@@ -93,7 +140,7 @@ Add to model routing config (around line 155):
 
 ### 6. src/mcps/mcp-client.ts
 
-**A)** Add to serverConfigs (around line 720):
+**Note:** In v1.9.0, this is now a facade. Add to the facade's serverConfigs:
 
 ```typescript
 "my-agent": {
@@ -106,7 +153,9 @@ Add to model routing config (around line 155):
 },
 ```
 
-**B)** Add to availableSkills array (around line 396):
+**A)** Add to serverConfigs (via facade's configuration method)
+
+**B)** Add to availableSkills array:
 
 ```typescript
 "my-agent": [
@@ -124,6 +173,8 @@ Add to the skills enum (around line 71):
 
 ### 8. src/delegation/task-skill-router.ts
 
+**Note:** In v1.9.0, this is now a facade with 12 mapping modules.
+
 Add routing rules (around line 401):
 
 ```typescript
@@ -133,6 +184,8 @@ agent: "my-agent",
 Search for other agents to see the pattern - there are multiple routing locations.
 
 ### 9. src/enforcement/rule-enforcer.ts
+
+**Note:** In v1.9.0, this is now a facade with 6 internal modules.
 
 Add enforcement mapping (around line 1008):
 
@@ -336,18 +389,31 @@ This preserves the configuration for future reference while preventing the agent
 
 ---
 
-## Current Agents List
+## Architecture Notes (v1.9.0 Facade Pattern)
 
-| Agent | Mode | Description |
-|-------|------|-------------|
-| orchestrator | subagent | Multi-agent workflow coordination |
-| enforcer | primary | Codex compliance & error prevention |
-| architect | subagent | System design & technical decisions |
-| testing-lead | subagent | Testing strategy |
-| bug-triage-specialist | subagent | Debugging & error investigation |
-| code-reviewer | subagent | Code quality assessment |
-| security-auditor | subagent | Vulnerability detection |
-| refactorer | subagent | Technical debt elimination |
-| researcher | subagent | Codebase exploration |
-| strategist | subagent | Strategic planning |
-| storyteller | subagent | Narrative deep reflections |
+### Facade Benefits
+
+- **Simpler Integration**: Clean APIs hide internal complexity
+- **Better Testing**: Each module can be tested independently
+- **Easier Maintenance**: Changes are localized to specific modules
+- **Performance**: Optimized internal routing without public API changes
+
+### Key Files in Facade Architecture
+
+**RuleEnforcer Facade:**
+- Facade: `src/enforcement/rule-enforcer.ts` (416 lines)
+- Internal Modules: 6 focused modules for specific enforcement tasks
+
+**TaskSkillRouter Facade:**
+- Facade: `src/delegation/task-skill-router.ts` (490 lines)
+- Internal Modules: 12 mapping modules + analytics + routing
+
+**MCP Client Facade:**
+- Facade: `src/mcps/mcp-client.ts` (312 lines)
+- Internal Modules: 8 specialized modules for MCP operations
+
+---
+
+**Version:** 1.9.0  
+**Architecture:** Facade Pattern (87% code reduction)  
+**Last Updated:** 2026-03-12
