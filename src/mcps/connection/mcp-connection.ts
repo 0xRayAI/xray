@@ -123,9 +123,9 @@ export class McpConnection extends EventEmitter implements IMcpConnection {
     );
 
     // Reject all pending requests
-    for (const [id, { reject }] of this.pendingRequests) {
+    Array.from(this.pendingRequests.entries()).forEach(([id, { reject }]) => {
       reject(new Error('Connection closed'));
-    }
+    });
     this.pendingRequests.clear();
 
     this.cleanup();
@@ -286,9 +286,9 @@ export class McpConnection extends EventEmitter implements IMcpConnection {
     );
 
     // Reject all pending requests
-    for (const [id, { reject }] of this.pendingRequests) {
+    Array.from(this.pendingRequests.entries()).forEach(([id, { reject }]) => {
       reject(new Error(`Process error: ${error.message}`));
-    }
+    });
     this.pendingRequests.clear();
 
     this.emit('error', error);
@@ -305,9 +305,9 @@ export class McpConnection extends EventEmitter implements IMcpConnection {
     );
 
     // Reject all pending requests
-    for (const [id, { reject }] of this.pendingRequests) {
+    Array.from(this.pendingRequests.entries()).forEach(([id, { reject }]) => {
       reject(new Error(`Process closed with code ${code}`));
-    }
+    });
     this.pendingRequests.clear();
 
     this._isConnected = false;
