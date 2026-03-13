@@ -32,6 +32,9 @@ let ProcessorManager: any;
 let StrRayStateManager: any;
 let featuresConfigLoader: any;
 let detectTaskType: any;
+// TODO: Enable TaskSkillRouter after v1.11.0
+// let TaskSkillRouter: any;
+// let taskSkillSkillRouterInstance: any;
 
 async function loadStrRayComponents() {
   if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
@@ -90,6 +93,38 @@ async function loadStrRayComponents() {
       continue;
     }
   }
+}
+
+/**
+ * Extract task description from tool input
+ */
+// TODO: Enable after v1.11.0
+/*
+function extractTaskDescription(input: { tool: string; args?: Record<string, unknown> }): string | null {
+  const { tool, args } = input;
+  
+  // Extract meaningful task description from various inputs
+  if (args?.content) {
+    const content = String(args.content);
+    // Get first 200 chars as description
+    return content.slice(0, 200);
+  }
+  
+  if (args?.filePath) {
+    return `${tool} ${args.filePath}`;
+  }
+  
+  if (args?.command) {
+    return String(args.command);
+  }
+  
+  return null;
+}
+*/
+
+async function loadTaskSkillRouter(): Promise<void> {
+  // Task routing will be available after framework is built and installed
+  // For now, tasks are routed based on explicit @agent syntax
 }
 
 function spawnPromise(
@@ -525,6 +560,49 @@ export default async function strrayCodexPlugin(input: {
       }
 
       const { tool, args } = input;
+
+      // ============================================================
+      // TASK ROUTING: Analyze task and route to best agent
+      // TODO: Enable after v1.11.0 - requires built framework
+      // ============================================================
+      /*
+      const taskDescription = extractTaskDescription(input);
+      
+      if (taskDescription && featuresConfigLoader) {
+        try {
+          await loadTaskSkillRouter();
+          
+          if (taskSkillRouterInstance) {
+            const config = featuresConfigLoader.loadConfig();
+            
+            // Check if task routing is enabled (model_routing.enabled flag)
+            if (config.model_routing?.enabled) {
+              const routingResult = taskSkillRouterInstance.routeTask(taskDescription, {
+                toolName: tool,
+              });
+              
+              if (routingResult && routingResult.agent) {
+                logger.log(
+                  `🎯 Task routed: "${taskDescription.slice(0, 50)}..." → ${routingResult.agent} (confidence: ${routingResult.confidence})`,
+                );
+                
+                // Store routing result for downstream processing
+                output._strrayRouting = routingResult;
+                
+                // If complexity is high, log a warning
+                if (routingResult.context?.complexity > 50) {
+                  logger.log(
+                    `⚠️ High complexity task detected (${routingResult.context.complexity}) - consider multi-agent orchestration`,
+                  );
+                }
+              }
+            }
+          }
+        } catch (e) {
+          logger.error("Task routing error:", e);
+        }
+      }
+      */
 
       // ENFORCER QUALITY GATE CHECK - Block on violations
       const qualityGateResult = await runEnforcerQualityGate(input, logger);
