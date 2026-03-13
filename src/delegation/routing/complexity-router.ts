@@ -3,40 +3,70 @@
  *
  * Extracted complexity-based routing logic from task-skill-router.ts
  * Phase 3 refactoring - Matching Logic Extraction
+ *
+ * REFACTORED: Now uses complexity-core.ts for shared logic
+ * @version 1.1.0
  */
 
 import { RoutingResult, RoutingOptions } from '../config/types.js';
 import { IRouter, ComplexityTier } from './interfaces.js';
+import {
+  ComplexityThresholds as CoreThresholds,
+  DEFAULT_THRESHOLDS as CORE_DEFAULTS,
+  getTierFromScore,
+  getConfidenceForTier,
+  getAgentForTier,
+  getSkillForTier,
+} from '../complexity-core.js';
 
 /**
- * Complexity thresholds for routing decisions
+ * Legacy threshold interface for backward compatibility
+ * Uses uppercase property names as expected by existing code
  */
-interface ComplexityThresholds {
+export interface ComplexityThresholds {
   LOW: number;
   MEDIUM: number;
   HIGH: number;
   ENTERPRISE: number;
 }
 
-const DEFAULT_THRESHOLDS: ComplexityThresholds = {
-  LOW: 25,
-  MEDIUM: 50,
-  HIGH: 75,
-  ENTERPRISE: 100,
-};
+/**
+ * Convert legacy thresholds to core format
+ */
+function toCoreThresholds(thresholds: Partial<ComplexityThresholds>): Partial<CoreThresholds> {
+  const result: Partial<CoreThresholds> = {};
+  if (thresholds.LOW !== undefined) result.simple = thresholds.LOW;
+  if (thresholds.MEDIUM !== undefined) result.moderate = thresholds.MEDIUM;
+  if (thresholds.HIGH !== undefined) result.complex = thresholds.HIGH;
+  if (thresholds.ENTERPRISE !== undefined) result.enterprise = thresholds.ENTERPRISE;
+  return result;
+}
+
+/**
+ * Convert core thresholds to legacy format
+ */
+function toLegacyThresholds(thresholds: CoreThresholds): ComplexityThresholds {
+  return {
+    LOW: thresholds.simple,
+    MEDIUM: thresholds.moderate,
+    HIGH: thresholds.complex,
+    ENTERPRISE: thresholds.enterprise,
+  };
+}
 
 /**
  * Router that makes decisions based on task complexity scores
  */
 export class ComplexityRouter implements IRouter {
-  private thresholds: ComplexityThresholds;
+  private thresholds: CoreThresholds;
 
   /**
    * Create a new ComplexityRouter
-   * @param customThresholds - Optional custom thresholds
+   * @param customThresholds - Optional custom thresholds (legacy format with uppercase names)
    */
   constructor(customThresholds?: Partial<ComplexityThresholds>) {
-    this.thresholds = { ...DEFAULT_THRESHOLDS, ...customThresholds };
+    const coreCustom = customThresholds ? toCoreThresholds(customThresholds) : {};
+    this.thresholds = { ...CORE_DEFAULTS, ...coreCustom };
   }
 
   /**
@@ -45,51 +75,18 @@ export class ComplexityRouter implements IRouter {
    * @param options - Optional routing options
    * @returns Routing result
    */
-  route(complexity: number, options?: RoutingOptions): RoutingResult {
+  route(complexity: number, _options?: RoutingOptions): RoutingResult {
     const tier = this.getTier(complexity);
-    
-    switch (tier) {
-      case 'low':
-        return {
-          skill: 'code-review',
-          agent: 'code-reviewer',
-          confidence: 0.6,
-          reason: 'Low complexity - direct agent',
-        };
-        
-      case 'medium':
-        return {
-          skill: 'architecture-patterns',
-          agent: 'architect',
-          confidence: 0.6,
-          reason: 'Medium complexity - architect review',
-        };
-        
-      case 'high':
-        return {
-          skill: 'orchestrator',
-          agent: 'orchestrator',
-          confidence: 0.7,
-          reason: 'High complexity - orchestrator needed',
-        };
-        
-      case 'enterprise':
-        return {
-          skill: 'enterprise-coordination',
-          agent: 'orchestrator',
-          confidence: 0.9,
-          reason: 'Enterprise complexity - full orchestration required',
-        };
-        
-      default:
-        // Fallback to medium tier
-        return {
-          skill: 'architecture-patterns',
-          agent: 'architect',
-          confidence: 0.5,
-          reason: 'Unknown complexity - default to architect review',
-        };
-    }
+    const confidence = getConfidenceForTier(tier);
+    const agent = getAgentForTier(tier);
+    const skill = getSkillForTier(tier);
+
+    return {
+      skill,
+      agent,
+      confidence,
+      reason: this.getReasonForTier(tier),
+    };
   }
 
   /**
@@ -98,15 +95,7 @@ export class ComplexityRouter implements IRouter {
    * @returns Complexity tier category
    */
   getTier(complexity: number): ComplexityTier {
-    if (complexity <= this.thresholds.LOW) {
-      return 'low';
-    } else if (complexity <= this.thresholds.MEDIUM) {
-      return 'medium';
-    } else if (complexity <= this.thresholds.HIGH) {
-      return 'high';
-    } else {
-      return 'enterprise';
-    }
+    return getTierFromScore(complexity, this.thresholds);
   }
 
   /**
@@ -116,19 +105,7 @@ export class ComplexityRouter implements IRouter {
    */
   getConfidence(complexity: number): number {
     const tier = this.getTier(complexity);
-    
-    switch (tier) {
-      case 'low':
-        return 0.6;
-      case 'medium':
-        return 0.6;
-      case 'high':
-        return 0.7;
-      case 'enterprise':
-        return 0.9;
-      default:
-        return 0.5;
-    }
+    return getConfidenceForTier(tier);
   }
 
   /**
@@ -137,17 +114,7 @@ export class ComplexityRouter implements IRouter {
    * @returns Agent name
    */
   getAgentForTier(tier: ComplexityTier): string {
-    switch (tier) {
-      case 'low':
-        return 'code-reviewer';
-      case 'medium':
-        return 'architect';
-      case 'high':
-      case 'enterprise':
-        return 'orchestrator';
-      default:
-        return 'orchestrator';
-    }
+    return getAgentForTier(tier);
   }
 
   /**
@@ -156,18 +123,22 @@ export class ComplexityRouter implements IRouter {
    * @returns Skill name
    */
   getSkillForTier(tier: ComplexityTier): string {
-    switch (tier) {
-      case 'low':
-        return 'code-review';
-      case 'medium':
-        return 'architecture-patterns';
-      case 'high':
-        return 'orchestrator';
-      case 'enterprise':
-        return 'enterprise-coordination';
-      default:
-        return 'orchestrator';
-    }
+    return getSkillForTier(tier);
+  }
+
+  /**
+   * Get routing reason for a tier
+   * @param tier - Complexity tier
+   * @returns Human-readable reason
+   */
+  private getReasonForTier(tier: ComplexityTier): string {
+    const reasons: Record<ComplexityTier, string> = {
+      low: 'Low complexity - direct agent',
+      medium: 'Medium complexity - architect review',
+      high: 'High complexity - orchestrator needed',
+      enterprise: 'Enterprise complexity - full orchestration required',
+    };
+    return reasons[tier];
   }
 
   /**
@@ -182,17 +153,18 @@ export class ComplexityRouter implements IRouter {
 
   /**
    * Update thresholds
-   * @param thresholds - New threshold values
+   * @param thresholds - New threshold values (legacy format with uppercase names)
    */
   setThresholds(thresholds: Partial<ComplexityThresholds>): void {
-    this.thresholds = { ...this.thresholds, ...thresholds };
+    const coreThresholds = toCoreThresholds(thresholds);
+    this.thresholds = { ...this.thresholds, ...coreThresholds };
   }
 
   /**
    * Get current thresholds
-   * @returns Current threshold values
+   * @returns Current threshold values (legacy format with uppercase names)
    */
   getThresholds(): ComplexityThresholds {
-    return { ...this.thresholds };
+    return toLegacyThresholds(this.thresholds);
   }
 }
