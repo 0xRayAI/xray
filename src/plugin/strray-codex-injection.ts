@@ -22,8 +22,7 @@ async function importSystemPromptGenerator() {
       const module = await import("../core/system-prompt-generator.js");
       SystemPromptGenerator = module.generateLeanSystemPrompt;
     } catch (e) {
-      // Fallback to original implementation if lean generator fails
-      console.warn("⚠️ Failed to load lean system prompt generator, using fallback");
+      // Fallback to original implementation - silent fail
     }
   }
 }
@@ -37,13 +36,21 @@ let detectTaskType: any;
 // let taskSkillSkillRouterInstance: any;
 
 async function loadStrRayComponents() {
-  if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
+  // FORCE LOG - use console.error to ensure visibility
+  console.error(`[StrRay-FORCE] loadStrRayComponents() CALLED`);
+  
+  if (ProcessorManager && StrRayStateManager && featuresConfigLoader) {
+    console.error(`[StrRay-FORCE] Early return - already loaded`);
+    return;
+  }
 
-  const logger = await getOrCreateLogger(process.cwd());
+  // Create a temporary logger for component loading
+  const tempLogger = await getOrCreateLogger(process.cwd());
+  tempLogger.log(`[StrRay] 🔄 loadStrRayComponents() called - attempting to load framework components`);
 
   // Try local dist first (for development)
   try {
-    logger.log(`🔄 Attempting to load from ../../dist/`);
+    tempLogger.log(`[StrRay] 🔄 Attempting to load from ../../dist/`);
     const procModule = await import(
       "../../dist/processors/processor-manager.js" as any
     );
@@ -57,10 +64,10 @@ async function loadStrRayComponents() {
     StrRayStateManager = stateModule.StrRayStateManager;
     featuresConfigLoader = featuresModule.featuresConfigLoader;
     detectTaskType = featuresModule.detectTaskType;
-    logger.log(`✅ Loaded from ../../dist/`);
+    tempLogger.log(`[StrRay] ✅ Loaded from ../../dist/`);
     return;
   } catch (e: any) {
-    logger.error(`❌ Failed to load from ../../dist/: ${e?.message || e}`);
+    tempLogger.error(`[StrRay] ❌ Failed to load from ../../dist/: ${e?.message || e}`);
   }
 
   // Try node_modules (for consumer installation)
@@ -68,8 +75,8 @@ async function loadStrRayComponents() {
 
   for (const pluginPath of pluginPaths) {
     try {
-      logger.log(
-        `🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`,
+      tempLogger.log(
+        `[StrRay] 🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`,
       );
       const pm = await import(
         `../../node_modules/${pluginPath}/dist/processors/processor-manager.js`
@@ -84,15 +91,17 @@ async function loadStrRayComponents() {
       StrRayStateManager = sm.StrRayStateManager;
       featuresConfigLoader = fm.featuresConfigLoader;
       detectTaskType = fm.detectTaskType;
-      logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
+      tempLogger.log(`[StrRay] ✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
       return;
     } catch (e: any) {
-      logger.error(
-        `❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`,
+      tempLogger.error(
+        `[StrRay] ❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`,
       );
       continue;
     }
   }
+  
+  tempLogger.error(`[StrRay] ❌ Could not load StrRay components from any path`);
 }
 
 /**
@@ -616,12 +625,8 @@ export default async function strrayCodexPlugin(input: {
       }
       logger.log(`✅ Quality gate passed for ${tool}`);
 
-      if (["write", "edit", "multiedit"].includes(tool)) {
-        if (!ProcessorManager || !StrRayStateManager) {
-          logger.error("ProcessorManager or StrRayStateManager not loaded");
-          return;
-        }
-
+      // Run processors for ALL tools (not just write/edit)
+      if (ProcessorManager || StrRayStateManager) {
         // PHASE 1: Connect to booted framework or boot if needed
         let stateManager: any;
         let processorManager: any;
@@ -797,10 +802,8 @@ export default async function strrayCodexPlugin(input: {
         `📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`,
       );
 
-      // Run post-processors for write/edit operations AFTER tool completes
-      if (["write", "edit", "multiedit"].includes(tool)) {
-        if (!ProcessorManager || !StrRayStateManager) return;
-
+      // Run post-processors for ALL tools AFTER tool completes
+      if (ProcessorManager || StrRayStateManager) {
         const stateManager = new StrRayStateManager(
           path.join(directory, ".opencode", "state"),
         );

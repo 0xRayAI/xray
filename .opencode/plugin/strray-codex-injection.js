@@ -11,17 +11,39 @@
 import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
+// Import lean system prompt generator
+let SystemPromptGenerator;
+async function importSystemPromptGenerator() {
+    if (!SystemPromptGenerator) {
+        try {
+            const module = await import("../core/system-prompt-generator.js");
+            SystemPromptGenerator = module.generateLeanSystemPrompt;
+        }
+        catch (e) {
+            // Fallback to original implementation - silent fail
+        }
+    }
+}
 let ProcessorManager;
 let StrRayStateManager;
 let featuresConfigLoader;
 let detectTaskType;
+// TODO: Enable TaskSkillRouter after v1.11.0
+// let TaskSkillRouter: any;
+// let taskSkillSkillRouterInstance: any;
 async function loadStrRayComponents() {
-    if (ProcessorManager && StrRayStateManager && featuresConfigLoader)
+    // FORCE LOG - use console.error to ensure visibility
+    console.error(`[StrRay-FORCE] loadStrRayComponents() CALLED`);
+    if (ProcessorManager && StrRayStateManager && featuresConfigLoader) {
+        console.error(`[StrRay-FORCE] Early return - already loaded`);
         return;
-    const logger = await getOrCreateLogger(process.cwd());
+    }
+    // Create a temporary logger for component loading
+    const tempLogger = await getOrCreateLogger(process.cwd());
+    tempLogger.log(`[StrRay] 🔄 loadStrRayComponents() called - attempting to load framework components`);
     // Try local dist first (for development)
     try {
-        logger.log(`🔄 Attempting to load from ../../dist/`);
+        tempLogger.log(`[StrRay] 🔄 Attempting to load from ../../dist/`);
         const procModule = await import("../../dist/processors/processor-manager.js");
         const stateModule = await import("../../dist/state/state-manager.js");
         const featuresModule = await import("../../dist/core/features-config.js");
@@ -29,17 +51,17 @@ async function loadStrRayComponents() {
         StrRayStateManager = stateModule.StrRayStateManager;
         featuresConfigLoader = featuresModule.featuresConfigLoader;
         detectTaskType = featuresModule.detectTaskType;
-        logger.log(`✅ Loaded from ../../dist/`);
+        tempLogger.log(`[StrRay] ✅ Loaded from ../../dist/`);
         return;
     }
     catch (e) {
-        logger.error(`❌ Failed to load from ../../dist/: ${e?.message || e}`);
+        tempLogger.error(`[StrRay] ❌ Failed to load from ../../dist/: ${e?.message || e}`);
     }
     // Try node_modules (for consumer installation)
     const pluginPaths = ["strray-ai", "strray-framework"];
     for (const pluginPath of pluginPaths) {
         try {
-            logger.log(`🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
+            tempLogger.log(`[StrRay] 🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
             const pm = await import(`../../node_modules/${pluginPath}/dist/processors/processor-manager.js`);
             const sm = await import(`../../node_modules/${pluginPath}/dist/state/state-manager.js`);
             const fm = await import(`../../node_modules/${pluginPath}/dist/core/features-config.js`);
@@ -47,14 +69,45 @@ async function loadStrRayComponents() {
             StrRayStateManager = sm.StrRayStateManager;
             featuresConfigLoader = fm.featuresConfigLoader;
             detectTaskType = fm.detectTaskType;
-            logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
+            tempLogger.log(`[StrRay] ✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
             return;
         }
         catch (e) {
-            logger.error(`❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`);
+            tempLogger.error(`[StrRay] ❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`);
             continue;
         }
     }
+    tempLogger.error(`[StrRay] ❌ Could not load StrRay components from any path`);
+}
+/**
+ * Extract task description from tool input
+ */
+// TODO: Enable after v1.11.0
+/*
+function extractTaskDescription(input: { tool: string; args?: Record<string, unknown> }): string | null {
+  const { tool, args } = input;
+  
+  // Extract meaningful task description from various inputs
+  if (args?.content) {
+    const content = String(args.content);
+    // Get first 200 chars as description
+    return content.slice(0, 200);
+  }
+  
+  if (args?.filePath) {
+    return `${tool} ${args.filePath}`;
+  }
+  
+  if (args?.command) {
+    return String(args.command);
+  }
+  
+  return null;
+}
+*/
+async function loadTaskSkillRouter() {
+    // Task routing will be available after framework is built and installed
+    // For now, tasks are routed based on explicit @agent syntax
 }
 function spawnPromise(command, args, cwd) {
     return new Promise((resolve, reject) => {
@@ -141,28 +194,18 @@ function getFrameworkVersion() {
     }
 }
 /**
- * Get framework identity message for injection
+ * Get lean framework identity message (token-efficient version)
  */
 function getFrameworkIdentity() {
     const version = getFrameworkVersion();
-    return `╔══════════════════════════════════════════════════════════════╗
-║         ⚡ StringRay Framework v${version} Successfully Loaded ⚡         ║
-╠══════════════════════════════════════════════════════════════╣
-║  You are running under StringRay AI Orchestration Framework  ║
-║                                                              ║
-║  🔹 27 Specialized Agents: enforcer, architect, orchestrator ║
-║     bug-triage-specialist, code-reviewer, security-auditor  ║
-║     refactorer, testing-lead, researcher                    ║
-║                                                              ║
-║  🔹 28 MCP Servers: Skill servers, framework tools          ║
-║                                                              ║
-║  🔹 59-Term Universal Development Codex (99.6% prevention)  ║
-║                                                              ║
-║  📖 Key Documentation:                                       ║
-║     • AGENTS.md - Complete agent capabilities & usage       ║
-║     • .opencode/strray/codex.json - Development rules       ║
-║     • .opencode/strray/config.json - Framework configuration ║
-╚══════════════════════════════════════════════════════════════╝`;
+    return `StringRay Framework v${version} - AI Orchestration
+
+🔧 Core: enforcer, architect, orchestrator, code-reviewer, refactorer, testing-lead
+📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
+🎯 Goal: Progressive, production-ready development workflow
+
+📖 Documentation: .opencode/strray/ (codex, config, agents docs)
+`;
 }
 /**
  * Run Enforcer quality gate check before operations
@@ -232,7 +275,7 @@ const CODEX_FILE_LOCATIONS = [
     ".opencode/strray/codex.json",
     ".opencode/codex.codex",
     ".opencode/strray/agents_template.md",
-    "AGENTS.md"
+    "AGENTS.md",
 ];
 /**
  * Read file content safely
@@ -252,7 +295,7 @@ function readFileContent(filePath) {
  */
 function extractCodexMetadata(content) {
     // Try JSON format first (codex.json)
-    if (content.trim().startsWith('{')) {
+    if (content.trim().startsWith("{")) {
         try {
             const parsed = JSON.parse(content);
             const version = parsed.version || "1.6.0";
@@ -264,7 +307,7 @@ function extractCodexMetadata(content) {
             // Not valid JSON, try markdown format
         }
     }
-    // Markdown format (AGENTS.md, .strray/agents_template.md)
+    // Markdown format (AGENTS.md, .opencode/strray/agents_template.md)
     const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
     const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.6.0";
     const termMatches = content.match(/####\s*\d+\.\s/g);
@@ -336,16 +379,35 @@ export default async function strrayCodexPlugin(input) {
     const directory = inputDirectory || process.cwd();
     return {
         "experimental.chat.system.transform": async (_input, output) => {
-            const codexContexts = loadCodexContext(directory);
-            if (codexContexts.length === 0) {
-                const logger = await getOrCreateLogger(directory);
-                logger.error(`No codex files found. Checked: ${CODEX_FILE_LOCATIONS.join(", ")}`);
-                return;
+            try {
+                // Use lean system prompt generator for token efficiency
+                await importSystemPromptGenerator();
+                let leanPrompt = getFrameworkIdentity();
+                // Use lean generator if available, otherwise fall back to minimal logic
+                if (SystemPromptGenerator) {
+                    leanPrompt = await SystemPromptGenerator({
+                        showWelcomeBanner: true,
+                        showCodexContext: false, // Disabled for token efficiency
+                        enableTokenOptimization: true,
+                        maxTokenBudget: 3000, // Conservative token budget
+                        showCriticalTermsOnly: true,
+                        showEssentialLinks: true
+                    });
+                }
+                if (output.system && Array.isArray(output.system)) {
+                    // Replace verbose system prompt with lean version
+                    output.system = [leanPrompt];
+                }
             }
-            const formattedCodex = formatCodexContext(codexContexts);
-            const welcomeMessage = getFrameworkIdentity();
-            if (output.system && Array.isArray(output.system)) {
-                output.system.unshift(welcomeMessage, formattedCodex);
+            catch (error) {
+                // Critical failure - log error but don't break the plugin
+                const logger = await getOrCreateLogger(directory);
+                logger.error("System prompt injection failed:", error);
+                // Fallback to minimal prompt
+                const fallback = getFrameworkIdentity();
+                if (output.system && Array.isArray(output.system)) {
+                    output.system = [fallback];
+                }
             }
         },
         "tool.execute.before": async (input, output) => {
@@ -370,6 +432,48 @@ export default async function strrayCodexPlugin(input) {
                 }
             }
             const { tool, args } = input;
+            // ============================================================
+            // TASK ROUTING: Analyze task and route to best agent
+            // TODO: Enable after v1.11.0 - requires built framework
+            // ============================================================
+            /*
+            const taskDescription = extractTaskDescription(input);
+            
+            if (taskDescription && featuresConfigLoader) {
+              try {
+                await loadTaskSkillRouter();
+                
+                if (taskSkillRouterInstance) {
+                  const config = featuresConfigLoader.loadConfig();
+                  
+                  // Check if task routing is enabled (model_routing.enabled flag)
+                  if (config.model_routing?.enabled) {
+                    const routingResult = taskSkillRouterInstance.routeTask(taskDescription, {
+                      toolName: tool,
+                    });
+                    
+                    if (routingResult && routingResult.agent) {
+                      logger.log(
+                        `🎯 Task routed: "${taskDescription.slice(0, 50)}..." → ${routingResult.agent} (confidence: ${routingResult.confidence})`,
+                      );
+                      
+                      // Store routing result for downstream processing
+                      output._strrayRouting = routingResult;
+                      
+                      // If complexity is high, log a warning
+                      if (routingResult.context?.complexity > 50) {
+                        logger.log(
+                          `⚠️ High complexity task detected (${routingResult.context.complexity}) - consider multi-agent orchestration`,
+                        );
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                logger.error("Task routing error:", e);
+              }
+            }
+            */
             // ENFORCER QUALITY GATE CHECK - Block on violations
             const qualityGateResult = await runEnforcerQualityGate(input, logger);
             if (!qualityGateResult.passed) {
@@ -377,11 +481,8 @@ export default async function strrayCodexPlugin(input) {
                 throw new Error(`ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`);
             }
             logger.log(`✅ Quality gate passed for ${tool}`);
-            if (["write", "edit", "multiedit"].includes(tool)) {
-                if (!ProcessorManager || !StrRayStateManager) {
-                    logger.error("ProcessorManager or StrRayStateManager not loaded");
-                    return;
-                }
+            // Run processors for ALL tools (not just write/edit)
+            if (ProcessorManager || StrRayStateManager) {
                 // PHASE 1: Connect to booted framework or boot if needed
                 let stateManager;
                 let processorManager;
@@ -424,8 +525,8 @@ export default async function strrayCodexPlugin(input) {
                     });
                     processorManager.registerProcessor({
                         name: "testAutoCreation",
-                        type: "post", // FIX #3: Tests should be created AFTER source files
-                        priority: 50,
+                        type: "post",
+                        priority: 5, // FIX: Run BEFORE testExecution so tests exist when we run them
                         enabled: true,
                     });
                     processorManager.registerProcessor({
@@ -449,6 +550,11 @@ export default async function strrayCodexPlugin(input) {
                 }
                 // PHASE 2: Execute pre-processors with detailed logging
                 try {
+                    // Check if processorManager and method exist
+                    if (!processorManager || typeof processorManager.executePreProcessors !== 'function') {
+                        logger.log(`⏭️ Pre-processors skipped: processor manager not available`);
+                        return;
+                    }
                     logger.log(`▶️ Executing pre-processors for ${tool}...`);
                     const result = await processorManager.executePreProcessors({
                         tool,
@@ -477,6 +583,11 @@ export default async function strrayCodexPlugin(input) {
                 }
                 // PHASE 3: Execute post-processors after tool completion
                 try {
+                    // Check if processorManager and method exist
+                    if (!processorManager || typeof processorManager.executePostProcessors !== 'function') {
+                        logger.log(`⏭️ Post-processors skipped: processor manager not available`);
+                        return;
+                    }
                     logger.log(`▶️ Executing post-processors for ${tool}...`);
                     logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
                     const postResults = await processorManager.executePostProcessors(tool, {
@@ -510,10 +621,8 @@ export default async function strrayCodexPlugin(input) {
             const { tool, args, result } = input;
             // Debug: log full input
             logger.log(`📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`);
-            // Run post-processors for write/edit operations AFTER tool completes
-            if (["write", "edit", "multiedit"].includes(tool)) {
-                if (!ProcessorManager || !StrRayStateManager)
-                    return;
+            // Run post-processors for ALL tools AFTER tool completes
+            if (ProcessorManager || StrRayStateManager) {
                 const stateManager = new StrRayStateManager(path.join(directory, ".opencode", "state"));
                 const processorManager = new ProcessorManager(stateManager);
                 // Register post-processors
@@ -536,6 +645,11 @@ export default async function strrayCodexPlugin(input) {
                     enabled: true,
                 });
                 try {
+                    // Check if processorManager and method exist
+                    if (!processorManager || typeof processorManager.executePostProcessors !== 'function') {
+                        logger.log(`⏭️ Post-processors skipped: processor manager not available`);
+                        return;
+                    }
                     // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
                     logger.log(`📝 Post-processor tool: ${tool}`);
                     logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
