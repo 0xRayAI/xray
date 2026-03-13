@@ -141,6 +141,14 @@ export class ServerConfigRegistry {
       timeout: 60000,
     });
 
+    // Estimation Validator Server
+    this.register({
+      serverName: 'estimation-validator',
+      command: 'node',
+      args: [`${basePath}/mcps/estimation.server.js`],
+      timeout: 30000,
+    });
+
     // Architect Server
     this.register({
       serverName: 'architect',
