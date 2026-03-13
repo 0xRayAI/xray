@@ -5,6 +5,35 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.10.1] - 2026-03-13
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: Add Estimation Validator with calibration learning (64106073)
+
+### ♻️ Refactoring
+- refactor: Consolidate complexity analyzers (Technical Debt #1) (dcfeadc6)
+- refactor: Split orchestrator.server.ts into modular structure (1fc54dcc)
+
+### 📚 Documentation
+- docs: Add comprehensive architecture analysis (16498738)
+- docs: Add Estimation Validator demo documentation (2bdc3e80)
+- docs: Add deep saga reflection 'The Refactorer's Odyssey' (7a834b7d)
+
+### 🔧 Maintenance
+- chore: Update scripts to use consolidated complexity analyzer API (de5bea4b)
+- chore: Remove dead code - secure-authentication-system (589cb8e9)
+- chore: Sync version to 1.10.0 across all files (26f5ec32)
+- chore: Update auto-generated state and performance baselines (75345d40)
+- chore: Bump version to 1.10.0 (4497035b)
+
+### 🔎 Other Changes
+- fix(plugin): Enable processors for all tools and improve debugging (ffb4b64f)
+- refactor(plugin): Add TaskSkillRouter integration scaffolding (d60c28cf)
+
+---
+
 ## [1.10.0] - 2026-03-13
 
 ### 🚀 Major Architecture Refactoring
