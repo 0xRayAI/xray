@@ -78,6 +78,36 @@ npx strray-ai status
 
 [View all 27 agents →](https://github.com/htafolla/stringray/blob/main/AGENTS.md)
 
+## 📦 OpenClaw Integration
+
+StringRay integrates with **OpenClaw** - a self-hosted AI gateway that connects messaging platforms (WhatsApp, Telegram, Discord, Slack) to AI coding agents.
+
+### What It Does
+
+- **WebSocket Connection**: Connect to OpenClaw Gateway at `ws://127.0.0.1:18789`
+- **Skill Invocation**: OpenClaw skills invoke StringRay agents via HTTP API (port 18431)
+- **Tool Events**: Forward tool.before/tool.after events to OpenClaw for real-time tracking
+- **Offline Buffering**: Events queued when disconnected, sent on reconnect
+
+### Quick Setup
+
+```bash
+# Configure in .opencode/openclaw/config.json
+{
+  "gatewayUrl": "ws://127.0.0.1:18789",
+  "authToken": "your-device-token",
+  "deviceId": "your-device-id",
+  "apiServer": { "enabled": true, "port": 18431 },
+  "hooks": { "enabled": true, "toolBefore": true, "toolAfter": true }
+}
+
+# Initialize in code
+import { initializeOpenClawIntegration } from 'strray-ai';
+const integration = await initializeOpenClawIntegration();
+```
+
+See [OpenClaw Integration Guide](src/integrations/openclaw/README.md) for details.
+
 ## 📖 Documentation
 
 | Guide | Description |
@@ -154,6 +184,46 @@ Edit `.opencode/strray/config.json` to adjust token limits:
 ```
 
 See [Configuration Reference](https://github.com/htafolla/stringray/blob/main/docs/CONFIGURATION.md) for full options.
+
+## 📁 Project Structure
+
+```
+stringray/
+├── src/
+│   ├── __tests__/              # Test suites (unit, integration, performance)
+│   ├── agents/                 # Agent implementations
+│   ├── analytics/              # Pattern analysis & learning
+│   ├── cli/                    # CLI commands
+│   ├── circuit-breaker/        # Resilience patterns
+│   ├── core/                   # Core framework
+│   ├── delegation/             # Task routing & delegation
+│   ├── enforcement/            # Codex enforcement
+│   ├── infrastructure/         # IaC validation
+│   ├── integrations/           # External integrations
+│   │   ├── base/              # BaseIntegration framework
+│   │   └── openclaw/          # OpenClaw integration
+│   ├── mcps/                  # MCP server implementations
+│   ├── monitoring/            # System monitoring
+│   ├── orchestrator/          # Multi-agent orchestration
+│   ├── performance/           # Performance optimization
+│   ├── plugins/              # Plugin system
+│   ├── postprocessor/         # Post-processing pipeline
+│   ├── reporting/             # Report generation
+│   ├── security/              # Security systems
+│   └── session/               # Session management
+├── .opencode/                 # OpenCode configuration
+│   ├── agents/               # Agent configs (27 agents)
+│   ├── strray/               # StringRay config
+│   │   ├── codex.json        # 60-term development codex
+│   │   ├── features.json     # Feature flags
+│   │   └── config.json       # Token management
+│   └── hooks/                # Git hooks
+├── skills/                    # StringRay skills
+├── docs/                      # Documentation
+│   ├── reflections/          # Deep technical reflections
+│   └── research/             # Research documents
+└── scripts/                   # Build & utility scripts
+```
 
 ## 💬 Usage
 
