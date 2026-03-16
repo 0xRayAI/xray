@@ -120,13 +120,13 @@ Tests should clean up after themselves. What seemed like a "feature" of having t
 - 25 .md files at root (10,974 lines total)
 - kernel-*.log files at root (13 files)
 - profiling-*.ts, profiling-*.sh scripts at root
-- Two reflection folders existed: docs/reflections/ and docs/deep-reflections/ but no template for deep
+- Two reflection folders existed: docs/reflections/ and docs/reflections/deep/ but no template for deep
 
 **What I Tried:**
-- Moved kernel docs to docs/deep-reflections/
+- Moved kernel docs to docs/reflections/deep/
 - Moved test docs to docs/testing/
 - Moved analytics docs to docs/analytics/
-- Created docs/deep-reflections/TEMPLATE.md (new)
+- Created docs/reflections/deep/TEMPLATE.md (new)
 - Updated AGENTS-consumer.md with file organization guidelines
 - Moved kernel-*.log to logs/ directory
 
@@ -368,9 +368,9 @@ When invoking agents for decisions:
 - src/postprocessor/triggers/GitHookTrigger.ts: excludePatterns fix
 - .opencode/strray/features.json: governance settings added
 - .opencode/AGENTS-consumer.md: file organization guidelines
-- docs/deep-reflections/TEMPLATE.md: new template created
+- docs/reflections/deep/TEMPLATE.md: new template created
 - docs/reflections/: files moved from root
-- docs/deep-reflections/: files moved from root
+- docs/reflections/deep/: files moved from root
 - docs/testing/: new folder created
 
 ### Commands Run
@@ -384,6 +384,6 @@ git push origin master
 ### References
 
 - AGENTS-consumer.md - File organization guidelines
-- docs/deep-reflections/TEMPLATE.md - Deep reflection template
+- docs/reflections/deep/TEMPLATE.md - Deep reflection template
 - docs/reflections/TEMPLATE.md - Standard reflection template  
 - .opencode/strray/features.json - Governance configuration

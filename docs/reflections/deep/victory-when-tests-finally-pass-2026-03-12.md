@@ -280,4 +280,4 @@ One test at a time. One module at a time. One day at a time.
 **Tests:** 242/242 passing  
 **Refactoring:** DONE
 
-**Location:** `docs/deep-reflections/victory-when-tests-finally-pass-2026-03-12.md`
+**Location:** `docs/reflections/deep/victory-when-tests-finally-pass-2026-03-12.md`

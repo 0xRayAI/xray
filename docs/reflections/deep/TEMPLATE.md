@@ -2,7 +2,7 @@
 
 ## Multi-Session Journey Documentation
 
-**Location:** `./docs/deep-reflections/[descriptive-name]-journey-YYYY-MM-DD.md`  
+**Location:** `./docs/reflections/deep/[descriptive-name]-journey-YYYY-MM-DD.md`  
 **Purpose:** Document complex multi-session journeys in a natural, narrative-driven way
 **When to Use:** Sessions spanning multiple days, major architectural changes, or system-wide investigations
 

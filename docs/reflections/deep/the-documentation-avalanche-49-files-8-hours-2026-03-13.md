@@ -374,6 +374,6 @@ The documentation avalanche is conquerable. We proved it.
 **Written:** March 13, 2026  
 **Status:** Documentation Avalanche Conquered  
 **Feeling:** Accomplished, exhausted, satisfied  
-**Location:** `docs/deep-reflections/the-documentation-avalanche-49-files-8-hours-2026-03-13.md`
+**Location:** `docs/reflections/deep/the-documentation-avalanche-49-files-8-hours-2026-03-13.md`
 
 **The documentation now matches the code. The code matches the architecture. Everything is consistent. The avalanche is over.**

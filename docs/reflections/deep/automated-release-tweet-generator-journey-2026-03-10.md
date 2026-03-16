@@ -633,4 +633,4 @@ try {
 ---
 
 **Status**: Deep reflection created at:
-`docs/deep-reflections/automated-release-tweet-generator-journey-2026-03-10.md`
+`docs/reflections/deep/automated-release-tweet-generator-journey-2026-03-10.md`

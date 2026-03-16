@@ -20,7 +20,7 @@ StringRay provides intelligent multi-agent orchestration with automatic delegati
 ### Where to Find Reflections
 
 Deep reflection documents capture development journeys and lessons learned:
-- **Location**: `docs/reflections/` (main) and `docs/deep-reflections/` (detailed)
+- **Location**: `docs/reflections/` (main) and `docs/reflections/deep/` (detailed)
 - **Examples**: `kernel-v2.0-skill-system-fix-journey.md`, `typescript-build-fix-journey-2026-03-09.md`, `stringray-framework-deep-reflection-v1.4.21.md`
 
 These documents capture:
@@ -35,7 +35,7 @@ These documents capture:
 
 | File Type | Save To | Example |
 |-----------|---------|---------|
-| **Reflections** | `docs/reflections/` or `docs/deep-reflections/` | `docs/reflections/my-fix-reflection.md` |
+| **Reflections** | `docs/reflections/` or `docs/reflections/deep/` | `docs/reflections/my-fix-reflection.md` |
 | **Logs** | `logs/` | `logs/framework/activity.log` |
 | **Scripts** | `scripts/` or `scripts/bash/` | `scripts/bash/my-script.sh` |
 | **Test Files** | `src/__tests__/` | `src/__tests__/unit/my-test.test.ts` |
@@ -82,27 +82,27 @@ StringRay uses **two reflection folders** for different purposes:
 - `docs/reflections/deployment-crisis-v12x-reflection.md`
 - `docs/reflections/kernel-confidence-fix.md`
 
-#### Option 2: Deep Reflections (`docs/deep-reflections/`)
+#### Option 2: Deep Reflections (`docs/reflections/deep/`)
 **When to use:** Multi-session journeys, complex investigations, architectural transformations
-- **Template:** `docs/deep-reflections/TEMPLATE.md` (NEW - 300 lines)
+- **Template:** `docs/reflections/deep/TEMPLATE.md` (NEW - 300 lines)
 - **Naming:** `{topic}-journey-YYYY-MM-DD.md` or `DEEP_REFLECTION_{topic}.md`
 - **Length:** 10,000+ lines
 - **Format:** Narrative journey with session chronology, investigation narrative, technical deep dives
 
 **Examples:**
-- `docs/deep-reflections/kernel-journey-2026-03-09.md`
-- `docs/deep-reflections/AGENTS-consumer-documentation-strategy-journey-2026-03-09.md`
+- `docs/reflections/deep/kernel-journey-2026-03-09.md`
+- `docs/reflections/deep/AGENTS-consumer-documentation-strategy-journey-2026-03-09.md`
 
 #### Quick Decision Guide
 
 | Scenario | Use |
 |----------|------|
 | Fixed a bug in one session | `docs/reflections/` |
-| Investigated something complex over multiple days | `docs/deep-reflections/` |
+| Investigated something complex over multiple days | `docs/reflections/deep/` |
 | Single architectural change | `docs/reflections/` |
-| System-wide transformation | `docs/deep-reflections/` |
+| System-wide transformation | `docs/reflections/deep/` |
 | Quick learning/insight | `docs/reflections/` |
-| Deep investigation with many discoveries | `docs/deep-reflections/` |
+| Deep investigation with many discoveries | `docs/reflections/deep/` |
 
 ### Storyteller Story Types
 

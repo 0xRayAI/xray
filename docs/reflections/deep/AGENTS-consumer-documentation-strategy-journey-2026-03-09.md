@@ -194,7 +194,7 @@ This reveals:
 
 1. **Comprehensive documentation ecosystem**:
    - Clear separation between core and consumer documentation
-   - Well-organized reflection documents in `docs/deep-reflections/`
+   - Well-organized reflection documents in `docs/reflections/deep/`
    - Complete script reference with examples
    - Troubleshooting guides for common issues
 

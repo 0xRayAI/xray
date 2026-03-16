@@ -412,4 +412,4 @@ The researcher infinite spawn incident wasn't just a bug - it was a systemic fai
 **The framework is missing the very components that would make it truly autonomous and safe.** Without agent governors, skill matrices, inter-agent communication, self-healing, and real-time governance, StringRay remains a powerful but dangerous tool - like a supercar with no brakes.
 
 **Key Takeaway**: Technical achievement without governance is not enterprise-ready. True enterprise AI systems require both intelligence and control - we've built one without the other.</content>
-<parameter name="filePath">docs/reflection/deep-journey-reflection.md
+<parameter name="filePath">docs/reflections/deep-journey-reflection.md

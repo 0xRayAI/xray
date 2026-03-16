@@ -247,4 +247,4 @@ src/mcps/
 **Mood:** Determined, accepting the grind  
 **Lesson:** Refactoring ends when tests pass, not when code is extracted
 
-**Location:** `docs/deep-reflections/completing-mcp-client-test-stabilization-2026-03-12.md`
+**Location:** `docs/reflections/deep/completing-mcp-client-test-stabilization-2026-03-12.md`

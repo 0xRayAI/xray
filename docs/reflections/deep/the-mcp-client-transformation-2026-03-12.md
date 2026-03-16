@@ -317,4 +317,4 @@ That's worth 7 days of work. That's worth the anxiety. That's worth it.
 **Written:** 2026-03-12  
 **Status:** Phases 1-3 Complete (43% reduction)  
 **Author:** Refactoring Team  
-**Location:** `docs/deep-reflections/the-mcp-client-transformation-2026-03-12.md`
+**Location:** `docs/reflections/deep/the-mcp-client-transformation-2026-03-12.md`

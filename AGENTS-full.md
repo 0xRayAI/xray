@@ -67,7 +67,7 @@ npx strray-ai capabilities
 
 | File Type | Save To | Example |
 |-----------|---------|---------|
-| **Reflections** | `docs/reflections/` or `docs/deep-reflections/` | `docs/reflections/my-fix-reflection.md` |
+| **Reflections** | `docs/reflections/` or `docs/reflections/deep/` | `docs/reflections/my-fix-reflection.md` |
 | **Logs** | `logs/` | `logs/framework/activity.log` |
 | **Scripts** | `scripts/` or `scripts/bash/` | `scripts/bash/my-script.sh` |
 | **Test Files** | `src/__tests__/` | `src/__tests__/unit/my-test.test.ts` |
