@@ -612,7 +612,7 @@ export class StringRayIntegration extends EventEmitter {
   /**
    * Event handlers
    */
-  private handleFrameworkInitialized(event: IntegrationEvent): void {
+  private async handleFrameworkInitialized(event: IntegrationEvent): Promise<void> {
     await frameworkLogger.log(
       "strray-integration",
       "-framework-integration-initialized-event-framework",
@@ -623,7 +623,7 @@ export class StringRayIntegration extends EventEmitter {
     );
   }
 
-  private handleFrameworkDestroyed(event: IntegrationEvent): void {
+  private async handleFrameworkDestroyed(event: IntegrationEvent): Promise<void> {
     await frameworkLogger.log(
       "strray-integration",
       "-framework-integration-destroyed-event-framework-",

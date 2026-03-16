@@ -12,6 +12,7 @@
  * - SimulationEngine: Provides fallback simulations
  */
 
+import { EventEmitter } from 'events';
 import { frameworkLogger } from '../core/framework-logger.js';
 import {
   MCPClientConfig,
@@ -31,11 +32,28 @@ import {
 } from './simulation/index.js';
 
 /**
+ * Tool event types for hooks
+ */
+export interface ToolBeforeEvent {
+  toolName: string;
+  serverName: string;
+  args: unknown;
+  timestamp: number;
+}
+
+export interface ToolAfterEvent extends ToolBeforeEvent {
+  result?: MCPToolResult;
+  error?: string;
+  duration: number;
+  success: boolean;
+}
+
+/**
  * MCP Client
  *
  * Facade that orchestrates tool discovery, caching, execution, and simulation.
  */
-export class MCPClient {
+export class MCPClient extends EventEmitter {
   private config: MCPClientConfig;
   private toolRegistry: ToolRegistry;
   private toolDiscovery: ToolDiscovery;
@@ -44,6 +62,7 @@ export class MCPClient {
   private simulationEngine: SimulationEngine;
 
   constructor(config: MCPClientConfig) {
+    super();
     this.config = config;
     this.toolRegistry = new ToolRegistry();
     this.toolDiscovery = new ToolDiscovery();
@@ -256,29 +275,76 @@ export class MCPClient {
    * Call a specific MCP server tool
    */
   async callTool(toolName: string, args: unknown = {}): Promise<MCPToolResult> {
-    // Try simulation first (fallback behavior)
-    if (this.simulationEngine.canSimulate(this.config.serverName, toolName)) {
-      try {
-        return await this.simulationEngine.simulate(this.config.serverName, toolName, args);
-      } catch (error) {
-        frameworkLogger.log(
-          'mcp-client',
-          `Simulation failed for ${toolName}: ${error instanceof Error ? error.message : String(error)}`,
-          'info',
-          { toolName }
-        );
-      }
-    }
-
-    // Return generic fallback result
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Tool ${toolName} executed on ${this.config.serverName} server`,
-        },
-      ],
+    const startTime = Date.now();
+    
+    // Emit tool.before event
+    const beforeEvent: ToolBeforeEvent = {
+      toolName,
+      serverName: this.config.serverName,
+      args,
+      timestamp: startTime,
     };
+    this.emit('tool.before', beforeEvent);
+
+    try {
+      // Try simulation first (fallback behavior)
+      if (this.simulationEngine.canSimulate(this.config.serverName, toolName)) {
+        try {
+          const result = await this.simulationEngine.simulate(this.config.serverName, toolName, args);
+          
+          // Emit tool.after event (success)
+          const afterEvent: ToolAfterEvent = {
+            ...beforeEvent,
+            result,
+            duration: Date.now() - startTime,
+            success: true,
+          };
+          this.emit('tool.after', afterEvent);
+          
+          return result;
+        } catch (error) {
+          frameworkLogger.log(
+            'mcp-client',
+            `Simulation failed for ${toolName}: ${error instanceof Error ? error.message : String(error)}`,
+            'info',
+            { toolName }
+          );
+        }
+      }
+
+      // Return generic fallback result
+      const fallbackResult = {
+        content: [
+          {
+            type: 'text',
+            text: `Tool ${toolName} executed on ${this.config.serverName} server`,
+          },
+        ],
+      };
+
+      // Emit tool.after event (fallback success)
+      const afterEvent: ToolAfterEvent = {
+        ...beforeEvent,
+        result: fallbackResult,
+        duration: Date.now() - startTime,
+        success: true,
+      };
+      this.emit('tool.after', afterEvent);
+
+      return fallbackResult;
+    } catch (error) {
+      // Emit tool.after event (error)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const afterEvent: ToolAfterEvent = {
+        ...beforeEvent,
+        error: errorMessage,
+        duration: Date.now() - startTime,
+        success: false,
+      };
+      this.emit('tool.after', afterEvent);
+      
+      throw error;
+    }
   }
 
   /**
@@ -300,6 +366,34 @@ export class MCPClient {
    */
   getTool(toolName: string): MCPTool | undefined {
     return this.toolRegistry.getTool(this.config.serverName, toolName);
+  }
+
+  /**
+   * Subscribe to tool.before events
+   */
+  onToolBefore(callback: (event: ToolBeforeEvent) => void): void {
+    this.on('tool.before', callback);
+  }
+
+  /**
+   * Subscribe to tool.after events
+   */
+  onToolAfter(callback: (event: ToolAfterEvent) => void): void {
+    this.on('tool.after', callback);
+  }
+
+  /**
+   * Unsubscribe from tool.before events
+   */
+  offToolBefore(callback: (event: ToolBeforeEvent) => void): void {
+    this.off('tool.before', callback);
+  }
+
+  /**
+   * Unsubscribe from tool.after events
+   */
+  offToolAfter(callback: (event: ToolAfterEvent) => void): void {
+    this.off('tool.after', callback);
   }
 }
 
@@ -334,6 +428,59 @@ export class MCPClientManager {
     }
 
     return this.clients.get(serverName)!;
+  }
+
+  /**
+   * Get the event emitter for a specific client
+   * Use this to subscribe to tool.before/tool.after events
+   */
+  getClientEventEmitter(serverName: string): MCPClient | null {
+    return this.clients.get(serverName) || null;
+  }
+
+  /**
+   * Subscribe to tool events across all clients
+   * Note: This creates a subscription for each client - manage subscriptions carefully
+   * @returns Unsubscribe function to call to remove all event listeners
+   */
+  async onToolEvent(
+    eventType: 'tool.before' | 'tool.after',
+    callback: (event: ToolBeforeEvent | ToolAfterEvent) => void
+  ): Promise<() => void> {
+    const serverNames = [
+      'code-review',
+      'security-audit',
+      'performance-optimization',
+      'testing-strategy',
+      'researcher',
+      'skill-invocation',
+    ];
+
+    // Store cleanup functions for each client
+    const cleanups: Array<() => void> = [];
+
+    for (const serverName of serverNames) {
+      try {
+        const client = await this.getClient(serverName);
+        if (eventType === 'tool.before') {
+          client.onToolBefore(callback as (event: ToolBeforeEvent) => void);
+          cleanups.push(() => client.offToolBefore(callback as (event: ToolBeforeEvent) => void));
+        } else {
+          client.onToolAfter(callback as (event: ToolAfterEvent) => void);
+          cleanups.push(() => client.offToolAfter(callback as (event: ToolAfterEvent) => void));
+        }
+      } catch (error) {
+        // Client may not be available, skip
+      }
+    }
+
+    // Return combined unsubscribe function
+    return () => {
+      for (const cleanup of cleanups) {
+        cleanup();
+      }
+      cleanups.length = 0;
+    };
   }
 
   /**
