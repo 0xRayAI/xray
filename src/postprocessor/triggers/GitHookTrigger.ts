@@ -487,7 +487,7 @@ fi
               'REFACTORING-',
               'release-',
               
-              // Subdirectories with important data
+              // Subdirectories with important data (but test-activity should be cleaned)
               'deployment/',
               'monitoring/',
               'reports/',
