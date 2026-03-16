@@ -20,8 +20,12 @@ describe("SimplePatternAnalyzer", () => {
   let tempLogPath: string;
 
   beforeEach(() => {
-    // Create a temporary log file for testing
-    tempLogPath = path.join(process.cwd(), `test-activity-${Date.now()}.log`);
+    // Create temp log file in logs/test-activity/ directory
+    const logsDir = path.join(process.cwd(), "logs", "test-activity");
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+    tempLogPath = path.join(logsDir, `test-activity-${Date.now()}.log`);
     analyzer = new SimplePatternAnalyzer(tempLogPath);
   });
 

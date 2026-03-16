@@ -20,11 +20,12 @@ describe("ComplexityCalibrator", () => {
   let tempLogPath: string;
 
   beforeEach(() => {
-    // Create a temporary log file for testing
-    tempLogPath = path.join(
-      process.cwd(),
-      `test-calibration-${Date.now()}.log`,
-    );
+    // Create temp log file in logs/test-calibration/ directory
+    const logsDir = path.join(process.cwd(), "logs", "test-calibration");
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+    tempLogPath = path.join(logsDir, `test-calibration-${Date.now()}.log`);
     calibrator = new ComplexityCalibrator(tempLogPath);
   });
 
