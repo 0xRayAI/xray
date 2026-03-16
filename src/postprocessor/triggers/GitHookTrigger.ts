@@ -472,10 +472,39 @@ fi
           const result = await cleanupLogFiles({
             maxAgeHours: 24,
             excludePatterns: [
-              'logs/agents/refactoring-log.md', 
+              // Core inference/logging - NEVER DELETE
+              'activity.log',           
+              'framework-activity-',
+              'strray-plugin-',
+              
+              // Analysis & reflections - Contains inference data
+              'kernel-',
+              'reflection-',
+              
+              // Documentation & plans - Important artifacts
+              '.md',
+              'AUTOMATED_',
+              'REFACTORING-',
+              'release-',
+              
+              // Subdirectories with important data
+              'deployment/',
+              'monitoring/',
+              'reports/',
+              'reflections/',
+              
+              // Init logs can be cleaned but keep recent
+              'strray-init-2026-01-2',   // Keep Jan 20s
+              'strray-init-2026-01-3',   // Keep Jan 30s
+              
+              // Other important files
               'current-session.log',
-              'activity.log',           // CRITICAL: Never delete activity.log - contains system inference
-              'framework-activity-'     // Archive files should be managed separately
+              'full-test-run.log',
+              'kernel-codex',
+              'kernel-methodology',
+              'kernel-status',
+              'kernel-update',
+              'kernel-v2',
             ],
             directories: ['logs/'],
             enabled: true
