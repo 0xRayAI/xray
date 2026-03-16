@@ -20,6 +20,7 @@ interface LogArchiveConfig {
 
 // Re-export for backwards compatibility and external usage
 export { cleanupLogFiles };
+export { archiveLogFiles };  // Export for use in hooks
 import { execSync } from "child_process";
 
 /**
@@ -468,6 +469,22 @@ fi
         try {
           // Use dynamic import that works in both dev and consumer
           const basePath = process.env.STRRAY_BASE_PATH || '.';
+          // First archive logs (compress and rotate) before cleanup
+          const { archiveLogFiles } = await import(basePath + '/dist/postprocessor/triggers/GitHookTrigger.js');
+          const archiveResult = await archiveLogFiles({
+            archiveDirectory: 'logs/framework',
+            maxFileSizeMB: 10,  // Archive if > 10MB
+            rotationIntervalHours: 24,  // Archive if > 24 hours old
+            compressionEnabled: true,
+            maxAgeHours: 168,  // Keep archives for 7 days
+            directories: ['logs/framework'],
+            excludePatterns: []
+          });
+          if (archiveResult.archived > 0) {
+            await frameworkLogger.log('-git-hook-trigger', '-archived-log-files-', 'info', { message: \`📦 Archived \${archiveResult.archived} log files\` });
+          }
+
+          // Then cleanup old files
           const { cleanupLogFiles } = await import(basePath + '/dist/postprocessor/triggers/GitHookTrigger.js');
           const result = await cleanupLogFiles({
             maxAgeHours: 24,
