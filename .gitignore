@@ -387,3 +387,4 @@ test-activity-*.log
 test-calibration-*.log
 logs/test-activity/
 logs/test-calibration/
+logs/reports/
