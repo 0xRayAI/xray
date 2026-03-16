@@ -5,15 +5,21 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { ConsentManager, ConsentConfiguration, ConsentCategory } from "../../../analytics/consent-manager.js";
 import * as fs from "fs/promises";
+import * as fsSync from "fs";
 import * as path from "path";
+import * as os from "os";
 
 describe("ConsentManager", () => {
   let consentManager: ConsentManager;
   let testConfigPath: string;
 
   beforeEach(() => {
-    // Use a test-specific config path
-    testConfigPath = path.join(process.cwd(), "test-consent.json");
+    // Use temp directory for test config instead of root
+    const testDir = path.join(os.tmpdir(), "strray-consent-tests");
+    if (!fsSync.existsSync(testDir)) {
+      fsSync.mkdirSync(testDir, { recursive: true });
+    }
+    testConfigPath = path.join(testDir, "test-consent.json");
     consentManager = new ConsentManager(testConfigPath);
   });
 
