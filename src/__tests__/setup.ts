@@ -82,6 +82,23 @@ afterAll(() => {
           }
         }
       });
+      
+      // Also clean up from logs/ folder
+      const logsDir = path.join(process.cwd(), "logs");
+      if (fs.existsSync(logsDir)) {
+        const logsSubdirs = ["test-activity", "test-calibration"];
+        for (const subdir of logsSubdirs) {
+          const subdirPath = path.join(logsDir, subdir);
+          if (fs.existsSync(subdirPath)) {
+            const logFiles = fs.readdirSync(subdirPath);
+            for (const file of logFiles) {
+              if (file.startsWith("test-activity-") || file.startsWith("test-calibration-")) {
+                fs.unlinkSync(path.join(subdirPath, file));
+              }
+            }
+          }
+        }
+      }
     } catch (error) {
       // Silently ignore cleanup errors
     }
