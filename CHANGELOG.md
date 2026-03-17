@@ -5,6 +5,43 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.10.2] - 2026-03-17
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: wire up archiveLogFiles to run before cleanup (ff44996f)
+
+### 🐛 Bug Fixes
+- fix: restore eslint config (2ee70851)
+- fix: use temp directory for test-consent.json instead of root (66f29431)
+- fix: write test log files to logs/ directory instead of root (20a089a6)
+- fix: cleanup test files from both root and logs/ folders (c2cc9679)
+- fix: update reflection path references to new consolidated location (0d0a8e28)
+- fix: protect critical logs from deletion + move test-activity to logs/ (a1cd89bc)
+- fix: protect all critical logs from cleanup deletion (467f377e)
+- fix: protect activity.log from deletion in cleanupLogFiles (317ddacd)
+
+### ♻️ Refactoring
+- refactor: flush dead plugin system, add routing for all 25 agents (a9efc7c8)
+- refactor: organize temp folders and configs (265565cf)
+- refactor: organize report and config files to proper locations (d82d23f1)
+- refactor: consolidate all reflection files into docs/reflections/ (e8ea22ac)
+
+### 📚 Documentation
+- docs: add OpenClaw integration section and project structure to README (0b5e3d8c)
+
+### 🔧 Maintenance
+- chore: add var/ to gitignore (a3583152)
+- chore: add test log files to .gitignore (effa3b45)
+
+### 🔎 Other Changes
+- Merge branch 'master' of https://github.com/htafolla/StringRay (c46b227d)
+- feat(integration): Add OpenClaw integration with tool event hooks (0ea5986f)
+- fix(plugin): Remove debug console.error statements (b38f784b)
+
+---
+
 ## [1.10.1] - 2026-03-13
 
 ### 🔄 Changes
