@@ -32,13 +32,9 @@ let detectTaskType;
 // let TaskSkillRouter: any;
 // let taskSkillSkillRouterInstance: any;
 async function loadStrRayComponents() {
-    // FORCE LOG - use console.error to ensure visibility
-    console.error(`[StrRay-FORCE] loadStrRayComponents() CALLED`);
     if (ProcessorManager && StrRayStateManager && featuresConfigLoader) {
-        console.error(`[StrRay-FORCE] Early return - already loaded`);
         return;
     }
-    // Create a temporary logger for component loading
     const tempLogger = await getOrCreateLogger(process.cwd());
     tempLogger.log(`[StrRay] 🔄 loadStrRayComponents() called - attempting to load framework components`);
     // Try local dist first (for development)

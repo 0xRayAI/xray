@@ -12,6 +12,7 @@ export default defineConfig({
       "dist",
       "coverage",
       "src/__tests__/plugins/marketplace-service.test.ts",
+      "src/__tests__/performance/enterprise-performance-tests.ts", // Tests deleted plugin infrastructure
     ],
     silent: true, // Reduce console output in CI
     reporters: process.env.CI ? ["verbose"] : ["default"],
