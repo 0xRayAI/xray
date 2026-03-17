@@ -38,7 +38,7 @@ function setupGracefulShutdown(): void {
   }
   (process as any)._strrayShutdownSetup = true;
 
-  let isShuttingDown = false;
+  const isShuttingDown = false;
 
   process.on("SIGINT", async () => {
     if (isShuttingDown) {

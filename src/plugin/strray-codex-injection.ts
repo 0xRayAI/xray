@@ -141,7 +141,7 @@ function spawnPromise(
       cwd,
       stdio: ["ignore", "inherit", "pipe"], // Original working stdio - stdout to terminal (ASCII visible)
     });
-    let stdout = "";
+    const stdout = "";
     let stderr = "";
 
     // Capture stderr only (stdout goes to inherit/terminal)

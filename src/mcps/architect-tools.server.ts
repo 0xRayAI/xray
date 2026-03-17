@@ -459,7 +459,7 @@ class StrRayArchitectToolsServer {
 
     // Simple dependency analysis
     const dependencies: Record<string, string[]> = {};
-    let circularDeps = 0;
+    const circularDeps = 0;
 
     for (const file of files.slice(0, 10)) {
       try {

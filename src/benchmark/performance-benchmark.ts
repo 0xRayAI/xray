@@ -145,7 +145,7 @@ export class StringRayPerformanceBenchmark {
     };
 
     const bootStartTime = performance.now();
-    let peakMemory = 0;
+    const peakMemory = 0;
 
     try {
       // Measure initial memory

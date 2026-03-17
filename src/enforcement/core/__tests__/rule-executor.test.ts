@@ -341,7 +341,7 @@ describe('RuleExecutor', () => {
       });
 
       // Mock getRule to return appropriate rule
-      let callCount = 0;
+      const callCount = 0;
       mockRegistry.getRule = vi.fn().mockImplementation((id) => {
         return rules.find(r => r.id === id);
       });

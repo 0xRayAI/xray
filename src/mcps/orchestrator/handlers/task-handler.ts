@@ -126,7 +126,7 @@ export class TaskHandler {
     // Simulated execution for MCP server
     const agentUtilization: Record<string, number> = {};
     let completedTasks = 0;
-    let failedTasks = 0;
+    const failedTasks = 0;
 
     for (const [agent, tasks] of plan.agentAssignments) {
       agentUtilization[agent] = tasks.length;
