@@ -111,7 +111,7 @@ function spawnPromise(command, args, cwd) {
             cwd,
             stdio: ["ignore", "inherit", "pipe"], // Original working stdio - stdout to terminal (ASCII visible)
         });
-        let stdout = "";
+        const stdout = "";
         let stderr = "";
         // Capture stderr only (stdout goes to inherit/terminal)
         if (child.stderr) {

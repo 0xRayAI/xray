@@ -45,6 +45,7 @@
     "version": "node scripts/node/version-manager.mjs",
     "build": "tsc",
     "build:all": "npm run build",
+    "build:copy-plugins": "node -e \"const fs=require('fs');['.opencode/plugin'].forEach(d=>{try{fs.mkdirSync(d,{recursive:true});fs.cpSync('dist/plugin/strray-codex-injection.js',d+'/strray-codex-injection.js');console.log('Copied to',d)}catch(e){console.error('Error:',e.message)}})\"",
     "ci-install": "npm ci",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run prepare-consumer && npm run build:all",

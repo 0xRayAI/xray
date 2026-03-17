@@ -22,10 +22,15 @@ import {
  * Tracks routing outcomes with circular buffer pattern for memory efficiency.
  * Provides methods for recording outcomes, calculating statistics, and
  * retrieving data for analytics.
+ * 
+ * Persists outcomes to logs/framework/routing-outcomes.json for analytics to read.
  */
 export class RoutingOutcomeTracker {
   private outcomes: RoutingOutcome[] = [];
   private readonly maxOutcomes: number;
+  private readonly persistencePath: string;
+  private saveTimeout: NodeJS.Timeout | null = null;
+  private readonly SAVE_DEBOUNCE_MS = 5000; // Save max once per 5 seconds
 
   /**
    * Create a new outcome tracker
@@ -33,6 +38,64 @@ export class RoutingOutcomeTracker {
    */
   constructor(maxOutcomes = 1000) {
     this.maxOutcomes = maxOutcomes;
+    // Persist to logs/framework/routing-outcomes.json
+    const cwd = process.cwd() || '.';
+    this.persistencePath = `${cwd}/logs/framework/routing-outcomes.json`;
+    this.loadFromDisk();
+  }
+
+  /**
+   * Load outcomes from disk on initialization
+   */
+  private async loadFromDisk(): Promise<void> {
+    try {
+      const fs = await import('fs');
+      if (fs.existsSync(this.persistencePath)) {
+        const data = fs.readFileSync(this.persistencePath, 'utf-8');
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+          // Load outcomes, keeping within max limit
+          this.outcomes = parsed.slice(-this.maxOutcomes);
+          console.log(`[OutcomeTracker] Loaded ${this.outcomes.length} historical outcomes from disk`);
+        }
+      }
+    } catch (error) {
+      // Silent fail - don't break tracking if persistence fails
+      console.log(`[OutcomeTracker] Could not load historical outcomes: ${error}`);
+    }
+  }
+
+  /**
+   * Save outcomes to disk (debounced)
+   */
+  private scheduleSave(): void {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+    this.saveTimeout = setTimeout(() => {
+      this.saveToDisk();
+    }, this.SAVE_DEBOUNCE_MS);
+  }
+
+  /**
+   * Immediately save to disk
+   */
+  private async saveToDisk(): Promise<void> {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Ensure directory exists
+      const dir = path.dirname(this.persistencePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      // Save outcomes as JSON
+      fs.writeFileSync(this.persistencePath, JSON.stringify(this.outcomes, null, 2));
+    } catch (error) {
+      // Silent fail - don't break tracking
+    }
   }
 
   /**
@@ -48,6 +111,16 @@ export class RoutingOutcomeTracker {
     if (this.outcomes.length > this.maxOutcomes) {
       this.outcomes = this.outcomes.slice(-this.maxOutcomes);
     }
+    
+    // Persist to disk
+    this.scheduleSave();
+  }
+
+  /**
+   * Force reload from disk - call this before analytics to get latest data
+   */
+  reloadFromDisk(): void {
+    this.loadFromDisk();
   }
 
   /**

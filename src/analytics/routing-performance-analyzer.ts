@@ -70,6 +70,9 @@ class RoutingPerformanceAnalyzer {
    * Generate comprehensive routing performance report
    */
   generatePerformanceReport(): RoutingPerformanceReport {
+    // Reload from disk to get latest outcomes from other processes
+    routingOutcomeTracker.reloadFromDisk();
+    
     const outcomes = routingOutcomeTracker.getOutcomes();
     const decisions = routingOutcomeTracker.getRoutingDecisions();
     const promptData = routingOutcomeTracker.getPromptData();
