@@ -6,6 +6,7 @@ import { PostProcessor } from "../PostProcessor.js";
 import { PostProcessorContext } from "../types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { pipeline } from "stream/promises";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface LogArchiveConfig {
@@ -70,8 +71,9 @@ async function archiveLogFiles(
           config.rotationIntervalHours * 60 * 60 * 1000; // Time-based
 
       if (shouldArchive) {
-        const timestamp = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-        const archiveName = `framework-activity-${timestamp}.log`; // Match existing naming convention
+        // Use full timestamp to prevent overwriting same-day archives
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // YYYY-MM-DDTHH-MM-SS-mmm
+        const archiveName = `framework-activity-${timestamp}.log`; // Unique per run
         const archivePath = path.join(
           process.cwd(),
           "logs",
@@ -79,33 +81,84 @@ async function archiveLogFiles(
           archiveName,
         ); // Archive in same directory
 
-        // Copy current log to archive
-        fs.copyFileSync(activityLogPath, archivePath);
+        let archiveSuccess = false;
+        let finalArchivePath = archivePath;
 
-        // Compress if enabled
-        if (config.compressionEnabled) {
-          const compressedPath = `${archivePath}.gz`;
-          const gzip = zlib.createGzip();
-          const input = fs.createReadStream(archivePath);
-          const output = fs.createWriteStream(compressedPath);
+        try {
+          // Copy current log to archive
+          fs.copyFileSync(activityLogPath, archivePath);
 
-          await new Promise((resolve, reject) => {
-            input
-              .pipe(gzip)
-              .pipe(output)
-              .on("finish", () => {
+          // Compress if enabled
+          if (config.compressionEnabled) {
+            const compressedPath = `${archivePath}.gz`;
+            const gzip = zlib.createGzip();
+            const input = fs.createReadStream(archivePath);
+            const output = fs.createWriteStream(compressedPath);
+
+            // Use pipeline for proper error handling
+            await pipeline(input, gzip, output);
+
+            // Verify compression succeeded
+            if (fs.existsSync(compressedPath)) {
+              const compressedStats = fs.statSync(compressedPath);
+              if (compressedStats.size > 0) {
                 fs.unlinkSync(archivePath); // Remove uncompressed
-                resolve(void 0);
-              })
-              .on("error", reject);
-          });
+                archiveSuccess = true;
+                finalArchivePath = compressedPath;
+              }
+            }
+          } else {
+            // Verify uncompressed archive
+            const archiveStats = fs.statSync(archivePath);
+            archiveSuccess = archiveStats.size > 0;
+          }
+
+          // ONLY reset if archive was created successfully
+          if (archiveSuccess) {
+            const header = `# Log rotated on ${new Date().toISOString()}\n`;
+            fs.writeFileSync(activityLogPath, header);
+            result.archived++;
+          } else {
+            // Archive failed - don't reset the log, leave it intact
+            result.errors.push(`Archive creation failed for ${archivePath} - log left intact`);
+            await frameworkLogger.log(
+              "log-archiver",
+              "archive-failed-log-intact",
+              "error",
+              {
+                jobId,
+                reason: "Archive creation failed, log not reset",
+                activityLogPath,
+              },
+            );
+            return result; // Exit early, log not modified
+          }
+        } catch (archiveError) {
+          // Archive failed - don't reset the log, leave it intact
+          const errorMsg = archiveError instanceof Error ? archiveError.message : String(archiveError);
+          result.errors.push(`Archive failed: ${errorMsg} - log left intact`);
+          
+          // Clean up partial archive if it exists
+          if (fs.existsSync(archivePath)) {
+            try { fs.unlinkSync(archivePath); } catch { /* ignore cleanup error */ }
+          }
+          const compressedPath = `${archivePath}.gz`;
+          if (fs.existsSync(compressedPath)) {
+            try { fs.unlinkSync(compressedPath); } catch { /* ignore cleanup error */ }
+          }
+          
+          await frameworkLogger.log(
+            "log-archiver",
+            "archive-error-log-intact",
+            "error",
+            {
+              jobId,
+              error: errorMsg,
+              activityLogPath,
+            },
+          );
+          return result; // Exit early, log not modified
         }
-
-        // Reset current log (keep a small header)
-        const header = `# Log rotated on ${new Date().toISOString()}\n`;
-        fs.writeFileSync(activityLogPath, header);
-
-        result.archived++;
 
         await frameworkLogger.log(
           "log-archiver",
