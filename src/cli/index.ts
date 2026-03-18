@@ -681,6 +681,46 @@ program
     }
   });
 
+// Archive logs command - standalone, no framework boot required
+program
+  .command("archive-logs")
+  .description("Archive log files without framework boot (for git hooks)")
+  .option("--dry-run", "Show what would be archived without making changes")
+  .option("-v, --verbose", "Verbose output")
+  .action(async (opts) => {
+    console.log("📦 StringRay Log Archive");
+    console.log("========================");
+    
+    if (opts.dryRun) {
+      console.log("(Dry run mode - no changes will be made)");
+    }
+    
+    try {
+      // Import and run standalone archiver
+      const archiveModule = await import("./commands/archive-logs.js");
+      const result = await archiveModule.archiveLogFiles(
+        {
+          maxFileSizeMB: 10,
+          rotationIntervalHours: 24,
+          compressionEnabled: true,
+          maxArchives: 10,
+        },
+        `cli-${Date.now()}`
+      );
+      
+      console.log(`\n📊 Results:`);
+      console.log(`  Archived: ${result.archived} files`);
+      if (result.errors.length > 0) {
+        console.log(`  Errors: ${result.errors.length}`);
+        result.errors.forEach((e: string) => console.log(`    - ${e}`));
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error("Archive failed:", error);
+      process.exit(1);
+    }
+  });
+
 // Add help text
 program.addHelpText(
   "after",
