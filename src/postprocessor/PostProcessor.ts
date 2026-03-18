@@ -1083,18 +1083,40 @@ All path violations will be automatically detected and blocked.
           monitoringResults,
         );
 
-        // ⚠️ AGENTS.md auto-update is DISABLED by default
-        // It overwrites ALL manual content - only enable for specific use cases
-        // To enable: set env var ENABLE_AGENTS_AUTO_UPDATE=true
-        if (process.env.ENABLE_AGENTS_AUTO_UPDATE === "true") {
+        // AGENTS.md auto-update with smart triggers
+        // Only updates when agent-related files have changed
+        const agentChangePatterns = [
+          /\.opencode\/agents\//,
+          /\/agents\//,
+          /AGENTS\.md$/,
+          /\.opencode\/strray\/routing-mappings\.json$/,
+        ];
+
+        const changedFiles = context.files || [];
+        const hasAgentChanges = changedFiles.some((file: string) =>
+          agentChangePatterns.some((pattern) => pattern.test(file))
+        );
+
+        if (hasAgentChanges || process.env.ENABLE_AGENTS_AUTO_UPDATE === "always") {
           try {
             const { researcherAgentsUpdater } =
               await import("../agents/librarian-agents-updater.js");
             await researcherAgentsUpdater.updateAgentsMd(process.cwd());
+            await frameworkLogger.log(
+              "postprocessor",
+              "agents-md-auto-updated",
+              "info",
+              { 
+                message: "AGENTS.md updated due to agent-related changes",
+                changedFiles: changedFiles.filter((f: string) =>
+                  agentChangePatterns.some((p) => p.test(f))
+                ).length
+              },
+            );
           } catch (error) {
             await frameworkLogger.log(
-              "-post-processor",
-              "-agents-md-update-failed",
+              "postprocessor",
+              "agents-md-update-failed",
               "info",
               { message: `AGENTS.md auto-update failed: ${error}` },
             );
