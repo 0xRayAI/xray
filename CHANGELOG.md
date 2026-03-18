@@ -5,6 +5,33 @@ All notable changes to the StringRay Framework will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v1.1.1.html).
 
+## [1.10.6] - 2026-03-18
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: complete processor migration to polymorphic classes (Part 2) (842b2383)
+- feat: extract processor switch to polymorphic classes (Part 1) (83529b60)
+- feat: add standalone archive-logs CLI command (605d7141)
+- feat: enable task routing and add comprehensive analytics logging (be393795)
+
+### 🐛 Bug Fixes
+- fix: persist routing outcomes to disk for analytics (b63f35fa)
+- fix: archive activity.log only after verification, leave intact on failure (9234bd63)
+- fix: pre-commit test check in ci-test-env (4d208ca3)
+- fix: pre-commit test check uses correct test command (8d034170)
+
+### ♻️ Refactoring
+- refactor: extract quality gates to dedicated module (aace35e0)
+
+### 📚 Documentation
+- docs: add deep reflection on processor architecture refactoring (9be3fac4)
+
+### 🧪 Tests
+- test: add processor architecture validation script (819450e2)
+
+---
+
 ## [1.10.5] - 2026-03-17
 
 ### 🔄 Changes
