@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.11.0] - 2026-03-18
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: add documentation sync system with smart triggers (c63fa186)
+
+### 🐛 Bug Fixes
+- fix: routing outcomes now saved immediately, orchestrator tracks outcomes (c9922b62)
+- fix: activity.log now includes task details, routing-outcomes.json initialized immediately (9e5fc142)
+- fix: init.sh priority - node_modules first, source as fallback (d7ca8f49)
+- fix: init.sh version detection to show actual version instead of fallback (779c979a)
+
+---
+
 ## [1.10.7] - 2026-03-18 (from v1.10.0)
 
 ### ✨ Features
