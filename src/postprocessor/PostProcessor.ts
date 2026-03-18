@@ -18,6 +18,7 @@ import { APITrigger } from "./triggers/APITrigger.js";
 import { PostProcessorMonitoringEngine } from "./monitoring/MonitoringEngine.js";
 import { FailureAnalysisEngine } from "./analysis/FailureAnalysisEngine.js";
 import { AutoFixEngine } from "./autofix/AutoFixEngine.js";
+import { activity } from "../core/activity-logger.js";
 import { FixValidator } from "./autofix/FixValidator.js";
 import { mcpClientManager } from "../mcps/mcp-client.js";
 import { RedeployCoordinator } from "./redeploy/RedeployCoordinator.js";
@@ -1101,7 +1102,18 @@ All path violations will be automatically detected and blocked.
           try {
             const { researcherAgentsUpdater } =
               await import("../agents/librarian-agents-updater.js");
+            
+            activity.script("docs-sync-started", "AGENTS.md auto-sync triggered", {
+              reason: hasAgentChanges ? "agent-files-changed" : "always-enabled",
+              changedFiles: changedFiles.filter((f: string) =>
+                agentChangePatterns.some((p) => p.test(f))
+              ).length
+            });
+            
             await researcherAgentsUpdater.updateAgentsMd(process.cwd());
+            
+            activity.success("development", "docs-sync-complete", "AGENTS.md auto-sync completed");
+            
             await frameworkLogger.log(
               "postprocessor",
               "agents-md-auto-updated",
