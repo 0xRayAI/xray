@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.12.0] - 2026-03-18
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: update performance baselines (b0299654)
+
+---
+
 ## [1.11.0] - 2026-03-18
 
 ### 🔄 Changes
