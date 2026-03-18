@@ -140,7 +140,13 @@ export class StringRayOrchestrator {
         "orchestrator",
         "complex-task-completed",
         "success",
-        { jobId, taskExecuted: true },
+        { 
+          jobId, 
+          taskExecuted: true,
+          taskId: task.id,
+          taskType: task.subagentType,
+          duration,
+        },
       );
 
       // Execute post-processors for agent task completion logging

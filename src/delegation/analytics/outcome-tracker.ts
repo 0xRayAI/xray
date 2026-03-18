@@ -41,7 +41,31 @@ export class RoutingOutcomeTracker {
     // Persist to logs/framework/routing-outcomes.json
     const cwd = process.cwd() || '.';
     this.persistencePath = `${cwd}/logs/framework/routing-outcomes.json`;
+    this.initializeFile();
     this.loadFromDisk();
+  }
+
+  /**
+   * Ensure the log directory and file exist on initialization
+   */
+  private async initializeFile(): Promise<void> {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Ensure directory exists
+      const dir = path.dirname(this.persistencePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      // Create empty file if it doesn't exist
+      if (!fs.existsSync(this.persistencePath)) {
+        fs.writeFileSync(this.persistencePath, '[]');
+      }
+    } catch (error) {
+      // Silent fail - don't break tracking
+    }
   }
 
   /**
