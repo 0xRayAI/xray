@@ -31,9 +31,8 @@ let ProcessorManager: any;
 let StrRayStateManager: any;
 let featuresConfigLoader: any;
 let detectTaskType: any;
-// TODO: Enable TaskSkillRouter after v1.11.0
-// let TaskSkillRouter: any;
-// let taskSkillSkillRouterInstance: any;
+let TaskSkillRouter: any;
+let taskSkillRouterInstance: any;
 
 async function loadStrRayComponents() {
   if (ProcessorManager && StrRayStateManager && featuresConfigLoader) {
@@ -102,8 +101,6 @@ async function loadStrRayComponents() {
 /**
  * Extract task description from tool input
  */
-// TODO: Enable after v1.11.0
-/*
 function extractTaskDescription(input: { tool: string; args?: Record<string, unknown> }): string | null {
   const { tool, args } = input;
   
@@ -124,11 +121,31 @@ function extractTaskDescription(input: { tool: string; args?: Record<string, unk
   
   return null;
 }
-*/
 
 async function loadTaskSkillRouter(): Promise<void> {
-  // Task routing will be available after framework is built and installed
-  // For now, tasks are routed based on explicit @agent syntax
+  if (taskSkillRouterInstance) {
+    return; // Already loaded
+  }
+
+  // Try local dist first (for development)
+  try {
+    const module = await import(
+      "../../dist/delegation/task-skill-router.js" as any
+    );
+    TaskSkillRouter = module.TaskSkillRouter;
+    taskSkillRouterInstance = new TaskSkillRouter();
+  } catch (distError) {
+    // Try node_modules (for consumer installs)
+    try {
+      const module = await import(
+        "strray-ai/dist/delegation/task-skill-router.js" as any
+      );
+      TaskSkillRouter = module.TaskSkillRouter;
+      taskSkillRouterInstance = new TaskSkillRouter();
+    } catch (nmError) {
+      // Task routing not available - continue without it
+    }
+  }
 }
 
 function spawnPromise(
@@ -567,9 +584,8 @@ export default async function strrayCodexPlugin(input: {
 
       // ============================================================
       // TASK ROUTING: Analyze task and route to best agent
-      // TODO: Enable after v1.11.0 - requires built framework
+      // Enabled in v1.10.5 - provides analytics data
       // ============================================================
-      /*
       const taskDescription = extractTaskDescription(input);
       
       if (taskDescription && featuresConfigLoader) {
@@ -577,28 +593,23 @@ export default async function strrayCodexPlugin(input: {
           await loadTaskSkillRouter();
           
           if (taskSkillRouterInstance) {
-            const config = featuresConfigLoader.loadConfig();
+            const routingResult = taskSkillRouterInstance.routeTask(taskDescription, {
+              toolName: tool,
+            });
             
-            // Check if task routing is enabled (model_routing.enabled flag)
-            if (config.model_routing?.enabled) {
-              const routingResult = taskSkillRouterInstance.routeTask(taskDescription, {
-                toolName: tool,
-              });
+            if (routingResult && routingResult.agent) {
+              logger.log(
+                `🎯 Task routed: "${taskDescription.slice(0, 50)}..." → ${routingResult.agent} (confidence: ${routingResult.confidence})`,
+              );
               
-              if (routingResult && routingResult.agent) {
+              // Store routing result for downstream processing
+              output._strrayRouting = routingResult;
+              
+              // If complexity is high, log a warning
+              if (routingResult.context?.complexity > 50) {
                 logger.log(
-                  `🎯 Task routed: "${taskDescription.slice(0, 50)}..." → ${routingResult.agent} (confidence: ${routingResult.confidence})`,
+                  `⚠️ High complexity task detected (${routingResult.context.complexity}) - consider multi-agent orchestration`,
                 );
-                
-                // Store routing result for downstream processing
-                output._strrayRouting = routingResult;
-                
-                // If complexity is high, log a warning
-                if (routingResult.context?.complexity > 50) {
-                  logger.log(
-                    `⚠️ High complexity task detected (${routingResult.context.complexity}) - consider multi-agent orchestration`,
-                  );
-                }
               }
             }
           }
@@ -606,7 +617,6 @@ export default async function strrayCodexPlugin(input: {
           logger.error("Task routing error:", e);
         }
       }
-      */
 
       // ENFORCER QUALITY GATE CHECK - Block on violations
       const qualityGateResult = await runEnforcerQualityGate(input, logger);

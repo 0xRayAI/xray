@@ -86,6 +86,11 @@ export class RouterCore {
 
     // Validate input
     if (!taskDescription || typeof taskDescription !== 'string') {
+      frameworkLogger.log('router-core', 'routing-fallback', 'info', {
+        reason: 'Invalid task description',
+        agent: DEFAULT_ROUTING.agent,
+        skill: DEFAULT_ROUTING.skill,
+      }, sessionId);
       return {
         ...DEFAULT_ROUTING,
         reason: 'Invalid task description',
@@ -95,6 +100,12 @@ export class RouterCore {
     // 0. SPECIAL CASE: Release/Publish detection
     const releaseDetection = this.keywordMatcher.detectReleaseWorkflow(taskDescription);
     if (releaseDetection.isRelease) {
+      frameworkLogger.log('router-core', 'release-workflow-detected', 'info', {
+        taskDescription: taskDescription.slice(0, 100),
+        agent: RELEASE_WORKFLOW_ROUTING.agent,
+        skill: RELEASE_WORKFLOW_ROUTING.skill,
+        confidence: RELEASE_WORKFLOW_ROUTING.confidence,
+      }, sessionId);
       return this.createReleaseRouting(taskDescription, releaseDetection, sessionId);
     }
 
@@ -103,6 +114,13 @@ export class RouterCore {
     // 1. Try keyword matching first (highest priority)
     const keywordResult = this.performKeywordMatching(descLower);
     if (keywordResult) {
+      frameworkLogger.log('router-core', 'keyword-match', 'info', {
+        taskDescription: taskDescription.slice(0, 100),
+        agent: keywordResult.agent,
+        skill: keywordResult.skill,
+        confidence: keywordResult.confidence,
+        matchedKeyword: keywordResult.matchedKeyword,
+      }, sessionId);
       return this.applyKernelInsights(keywordResult, taskDescription);
     }
 
@@ -111,6 +129,12 @@ export class RouterCore {
       const historyResult = this.historyMatcher.match(taskId);
       if (historyResult) {
         this.logHistoryMatch(taskId, historyResult, sessionId);
+        frameworkLogger.log('router-core', 'history-match', 'info', {
+          taskId,
+          agent: historyResult.agent,
+          skill: historyResult.skill,
+          confidence: historyResult.confidence,
+        }, sessionId);
         return historyResult;
       }
     }
@@ -119,11 +143,24 @@ export class RouterCore {
     if (complexity !== undefined) {
       const complexityResult = this.complexityRouter.route(complexity, options);
       if (complexityResult) {
+        frameworkLogger.log('router-core', 'complexity-match', 'info', {
+          taskDescription: taskDescription.slice(0, 100),
+          complexity,
+          agent: complexityResult.agent,
+          skill: complexityResult.skill,
+          confidence: complexityResult.confidence,
+        }, sessionId);
         return complexityResult;
       }
     }
 
     // 4. Default fallback
+    frameworkLogger.log('router-core', 'routing-fallback', 'info', {
+      taskDescription: taskDescription.slice(0, 100),
+      reason: 'No keyword match, no history, no complexity provided',
+      agent: DEFAULT_ROUTING.agent,
+      skill: DEFAULT_ROUTING.skill,
+    }, sessionId);
     return {
       ...DEFAULT_ROUTING,
       reason: 'No keyword match, no history, no complexity provided',

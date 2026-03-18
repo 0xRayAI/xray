@@ -636,9 +636,26 @@ export class AgentDelegator {
       });
     }
 
-    return agents.length > 0
+    const finalAgents = agents.length > 0
       ? agents
       : [{ name: "enforcer", confidence: 0.75, role: "validation" }];
+    
+    // Log complete agent selection for analytics
+    frameworkLogger.log(
+      "agent-delegator",
+      "agents-selected",
+      "info",
+      {
+        operation,
+        strategy: complexityScore.recommendedStrategy,
+        complexityLevel: complexityScore.level,
+        complexityScore: complexityScore.score,
+        agents: finalAgents.map(a => ({ name: a.name, role: a.role, confidence: a.confidence })),
+        agentCount: finalAgents.length,
+      }
+    );
+    
+    return finalAgents;
   }
 
   private mapOperationToType(
