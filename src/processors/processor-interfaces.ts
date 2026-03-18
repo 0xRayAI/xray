@@ -9,30 +9,7 @@
  * @version 1.0.0
  */
 
-import { ProcessorResult } from "./processor-manager.js";
-
-/**
- * Processor execution context
- */
-export interface ProcessorContext {
-  /** Tool input (for pre-processors) */
-  toolInput?: {
-    tool?: string;
-    args?: {
-      filePath?: string;
-      content?: string;
-      [key: string]: unknown;
-    };
-  };
-  /** File path being processed */
-  filePath?: string;
-  /** Operation being performed */
-  operation?: string;
-  /** Content being processed */
-  content?: string;
-  /** Additional context */
-  [key: string]: unknown;
-}
+import { ProcessorContext, ProcessorResult } from "./processor-types.js";
 
 /**
  * Processor interface - all processors must implement this
@@ -199,6 +176,9 @@ export class ProcessorRegistry {
     this.processors.clear();
   }
 }
+
+// Re-export ProcessorContext and ProcessorResult for convenience
+export type { ProcessorContext, ProcessorResult } from "./processor-types.js";
 
 // Singleton registry instance
 export const processorRegistry = new ProcessorRegistry();

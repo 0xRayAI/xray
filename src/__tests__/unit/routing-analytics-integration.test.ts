@@ -10,12 +10,15 @@ import type {
   RoutingOutcome,
   RoutingDecision,
 } from "../../delegation/task-skill-router.js";
+import { routingOutcomeTracker } from "../../delegation/task-skill-router.js";
 import { promptPatternAnalyzer } from "../../analytics/prompt-pattern-analyzer.js";
 import { routingPerformanceAnalyzer } from "../../analytics/routing-performance-analyzer.js";
 import { routingRefiner } from "../../analytics/routing-refiner.js";
 
 describe("Routing Analytics Integration", () => {
   beforeEach(() => {
+    // Clear the singleton state to ensure tests start with empty data
+    routingOutcomeTracker.clear();
   });
 
   test("prompt pattern analyzer should handle empty data", () => {

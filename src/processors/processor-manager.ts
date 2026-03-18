@@ -10,7 +10,7 @@
 
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { ProcessorRegistration, ProcessorHook } from "./processor-types.js";
+import { ProcessorRegistration, ProcessorHook, ProcessorResult } from "./processor-types.js";
 import {
   detectProjectLanguage,
   getTestFilePath,
@@ -43,14 +43,6 @@ export interface ProcessorConfig {
   timeout?: number;
   retryAttempts?: number;
   hook?: ProcessorHook;
-}
-
-export interface ProcessorResult {
-  success: boolean;
-  data?: unknown;
-  error?: string;
-  duration: number;
-  processorName: string;
 }
 
 export interface ProcessorHealth {
@@ -291,39 +283,16 @@ export class ProcessorManager {
     // NOTE: Test processors registered via registerProcessor() may not be in registry
     const hasRegistryProcessor = this.registry.has(name);
 
-    // Initialize processor-specific setup (legacy initialization methods)
-    // These are kept for processors that need special setup beyond construction
-    switch (name) {
-      case "preValidate":
-        await this.initializePreValidateProcessor();
-        break;
-      case "codexCompliance":
-        await this.initializeCodexComplianceProcessor();
-        break;
-      case "versionCompliance":
-        await this.initializeVersionComplianceProcessor();
-        break;
-      case "errorBoundary":
-        await this.initializeErrorBoundaryProcessor();
-        break;
-      case "testExecution":
-        await this.initializeTestExecutionProcessor();
-        break;
-      case "regressionTesting":
-        await this.initializeRegressionTestingProcessor();
-        break;
-      case "stateValidation":
-        await this.initializeStateValidationProcessor();
-        break;
-      case "agentsMdValidation":
-        await this.initializeAgentsMdValidationProcessor();
-        break;
-      case "testAutoCreation":
-        await this.initializeTestAutoCreationProcessor();
-        break;
-      default:
-        // Generic initialization - no special setup needed
-        break;
+    // Processor initialization is handled by the constructor in the registry pattern.
+    // Legacy initialization methods (deprecated) are kept only for processors
+    // that were registered via the old hook system.
+    if (!hasRegistryProcessor) {
+      frameworkLogger.log(
+        "processor-manager",
+        "legacy-processor-initialization",
+        "info",
+        { processor: name, message: "Using legacy initialization path" },
+      );
     }
 
     this.activeProcessors.add(name);
@@ -553,45 +522,14 @@ export class ProcessorManager {
         return resultObj;
       }
 
-      // Fall back to legacy switch-based execution for backward compatibility
-      // This allows test processors registered via registerProcessor() to work
-      switch (name) {
-        case "preValidate":
-          result = await this.executePreValidate(safeContext);
-          break;
-        case "codexCompliance":
-          result = await this.executeCodexCompliance(safeContext);
-          break;
-        case "versionCompliance":
-          result = await this.executeVersionCompliance(safeContext);
-          break;
-        case "errorBoundary":
-          result = await this.executeErrorBoundary(safeContext);
-          break;
-        case "testExecution":
-          result = await this.executeTestExecution(safeContext);
-          break;
-        case "regressionTesting":
-          result = await this.executeRegressionTesting(safeContext);
-          break;
-        case "stateValidation":
-          result = await this.executeStateValidation(safeContext);
-          break;
-        case "refactoringLogging":
-          result = await this.executeRefactoringLogging(safeContext);
-          break;
-        case "testAutoCreation":
-          result = await this.executeTestAutoCreation(safeContext);
-          break;
-        case "coverageAnalysis":
-          result = await this.executeCoverageAnalysis(safeContext);
-          break;
-        case "agentsMdValidation":
-          result = await this.executeAgentsMdValidation(safeContext);
-          break;
-        default:
-          throw new Error(`Unknown processor: ${name}`);
-      }
+      // No registry processor found - this shouldn't happen if all processors
+      // are properly registered. Throw an error to identify configuration issues.
+      // Legacy fallback was removed - all processors must use the registry pattern.
+      throw new Error(
+        `Processor '${name}' not found in registry. ` +
+        `All processors must be registered via ProcessorRegistry. ` +
+        `Legacy switch-based execution has been removed.`
+      );
 
       const duration = Date.now() - startTime;
       this.updateMetrics(name, true, duration);
@@ -773,29 +711,18 @@ export class ProcessorManager {
 
   /**
    * Cleanup a specific processor
+   * In the registry pattern, cleanup is handled by the processor itself
+   * if it implements a cleanup method. The manager just tracks active state.
    */
   private async cleanupProcessor(name: string): Promise<void> {
-    // Processor-specific cleanup logic
-    switch (name) {
-      case "preValidate":
-        // Cleanup pre-validate resources
-        break;
-      case "codexCompliance":
-        // Cleanup codex compliance resources
-        break;
-      case "errorBoundary":
-        // Cleanup error boundary resources
-        break;
-      case "testExecution":
-        // Cleanup test execution resources
-        break;
-      case "regressionTesting":
-        // Cleanup regression testing resources
-        break;
-      case "stateValidation":
-        // Cleanup state validation resources
-        break;
-    }
+    // No processor-specific cleanup needed in the registry pattern.
+    // Processors handle their own resources via the constructor/cleanup lifecycle.
+    frameworkLogger.log(
+      "processor-manager",
+      "processor-cleanup",
+      "info",
+      { processor: name },
+    );
   }
 
   // Processor implementations (kept for backward compatibility)
