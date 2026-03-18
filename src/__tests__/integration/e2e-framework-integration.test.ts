@@ -42,11 +42,16 @@ vi.mock("fs", () => ({
   rmdirSync: vi.fn(),
 }));
 
-vi.mock("path", () => ({
-  join: vi.fn(),
-  resolve: vi.fn(),
-  basename: vi.fn(),
-}));
+vi.mock("path", async () => {
+  const actual = await vi.importActual("path") as typeof import("path");
+  return {
+    ...actual,
+    join: vi.fn((...args: string[]) => actual.join.apply(actual, args)),
+    resolve: vi.fn((...args: string[]) => actual.resolve.apply(actual, args)),
+    basename: vi.fn((...args: string[]) => actual.basename.apply(actual, args)),
+    dirname: vi.fn((...args: string[]) => actual.dirname.apply(actual, args)),
+  };
+});
 
 vi.mock("crypto", () => ({
   createHash: vi.fn(() => ({

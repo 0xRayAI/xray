@@ -18,6 +18,20 @@ import {
 } from "../utils/language-detector.js";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { ProcessorRegistry, IProcessor, ProcessorContext } from "./processor-interfaces.js";
+import {
+  PreValidateProcessor,
+  CodexComplianceProcessor,
+  VersionComplianceProcessor,
+  ErrorBoundaryProcessor,
+  TestExecutionProcessor,
+  RegressionTestingProcessor,
+  StateValidationProcessor,
+  RefactoringLoggingProcessor,
+  TestAutoCreationProcessor,
+  CoverageAnalysisProcessor,
+  AgentsMdValidationProcessor,
+} from "./implementations/index.js";
 
 const execAsync = promisify(exec);
 
@@ -62,9 +76,39 @@ export class ProcessorManager {
   private metrics = new Map<string, ProcessorMetrics>();
   private stateManager: StringRayStateManager;
   private activeProcessors = new Set<string>();
+  private registry: ProcessorRegistry;
 
   constructor(stateManager: StringRayStateManager) {
     this.stateManager = stateManager;
+    this.registry = new ProcessorRegistry();
+    this.registerAllProcessors();
+  }
+
+  /**
+   * Register all processor implementations in the registry
+   */
+  private registerAllProcessors(): void {
+    // Pre-processors
+    this.registry.register(new PreValidateProcessor());
+    this.registry.register(new CodexComplianceProcessor());
+    this.registry.register(new VersionComplianceProcessor());
+    this.registry.register(new ErrorBoundaryProcessor());
+
+    // Post-processors
+    this.registry.register(new TestExecutionProcessor());
+    this.registry.register(new RegressionTestingProcessor());
+    this.registry.register(new StateValidationProcessor());
+    this.registry.register(new RefactoringLoggingProcessor());
+    this.registry.register(new TestAutoCreationProcessor());
+    this.registry.register(new CoverageAnalysisProcessor());
+    this.registry.register(new AgentsMdValidationProcessor());
+
+    frameworkLogger.log(
+      "processor-manager",
+      "processors-registered",
+      "success",
+      { count: this.registry.getAll().length },
+    );
   }
 
   /**
@@ -243,7 +287,12 @@ export class ProcessorManager {
       throw new Error(`Processor ${name} not found`);
     }
 
-    // Initialize processor-specific setup
+    // Check if processor exists in registry (new system)
+    // NOTE: Test processors registered via registerProcessor() may not be in registry
+    const hasRegistryProcessor = this.registry.has(name);
+
+    // Initialize processor-specific setup (legacy initialization methods)
+    // These are kept for processors that need special setup beyond construction
     switch (name) {
       case "preValidate":
         await this.initializePreValidateProcessor();
@@ -273,7 +322,7 @@ export class ProcessorManager {
         await this.initializeTestAutoCreationProcessor();
         break;
       default:
-        // Generic initialization
+        // Generic initialization - no special setup needed
         break;
     }
 
@@ -483,6 +532,29 @@ export class ProcessorManager {
     try {
       let result: unknown;
 
+      // Try new registry-based processors first
+      const processor = this.registry.get(name);
+      if (processor) {
+        const processorResult = await processor.execute(safeContext as ProcessorContext);
+        const duration = Date.now() - startTime;
+        this.updateMetrics(name, processorResult.success, duration);
+
+        const resultObj: ProcessorResult = {
+          success: processorResult.success,
+          data: processorResult.data,
+          duration,
+          processorName: name,
+        };
+        
+        if (processorResult.error) {
+          resultObj.error = processorResult.error;
+        }
+        
+        return resultObj;
+      }
+
+      // Fall back to legacy switch-based execution for backward compatibility
+      // This allows test processors registered via registerProcessor() to work
       switch (name) {
         case "preValidate":
           result = await this.executePreValidate(safeContext);
@@ -726,8 +798,11 @@ export class ProcessorManager {
     }
   }
 
-  // Processor implementations
+  // Processor implementations (kept for backward compatibility)
 
+  /**
+   * @deprecated Use PreValidateProcessor class instead. Kept for backward compatibility.
+   */
   private async initializePreValidateProcessor(): Promise<void> {
     // Setup syntax checking and validation hooks
     frameworkLogger.log(
@@ -737,6 +812,9 @@ export class ProcessorManager {
     );
   }
 
+  /**
+   * @deprecated Use CodexComplianceProcessor class instead. Kept for backward compatibility.
+   */
   private async initializeCodexComplianceProcessor(): Promise<void> {
     // Setup codex compliance validation
     frameworkLogger.log(
@@ -746,6 +824,9 @@ export class ProcessorManager {
     );
   }
 
+  /**
+   * @deprecated Use ErrorBoundaryProcessor class instead. Kept for backward compatibility.
+   */
   private async initializeErrorBoundaryProcessor(): Promise<void> {
     // Setup error boundary mechanisms
     frameworkLogger.log(
@@ -755,6 +836,9 @@ export class ProcessorManager {
     );
   }
 
+  /**
+   * @deprecated Use TestExecutionProcessor class instead. Kept for backward compatibility.
+   */
   private async initializeTestExecutionProcessor(): Promise<void> {
     // Setup automatic test execution
     frameworkLogger.log(
@@ -764,6 +848,9 @@ export class ProcessorManager {
     );
   }
 
+  /**
+   * @deprecated Use RegressionTestingProcessor class instead. Kept for backward compatibility.
+   */
   private async initializeRegressionTestingProcessor(): Promise<void> {
     // Setup regression testing mechanisms
     frameworkLogger.log(
@@ -773,6 +860,9 @@ export class ProcessorManager {
     );
   }
 
+  /**
+   * @deprecated Use StateValidationProcessor class instead. Kept for backward compatibility.
+   */
   private async initializeStateValidationProcessor(): Promise<void> {
     // Setup state validation post-operation
     frameworkLogger.log(
@@ -782,6 +872,9 @@ export class ProcessorManager {
     );
   }
 
+  /**
+   * @deprecated Use AgentsMdValidationProcessor class instead. Kept for backward compatibility.
+   */
   private async initializeAgentsMdValidationProcessor(): Promise<void> {
     // Setup AGENTS.md validation pre-processor
     frameworkLogger.log(
@@ -823,6 +916,9 @@ export class ProcessorManager {
     }
   }
 
+  /**
+   * @deprecated Use VersionComplianceProcessor class instead. Kept for backward compatibility.
+   */
   private async initializeVersionComplianceProcessor(): Promise<void> {
     // Setup version compliance pre-processor
     frameworkLogger.log(
@@ -862,6 +958,9 @@ export class ProcessorManager {
     }
   }
 
+  /**
+   * @deprecated Use PreValidateProcessor class instead. Kept for backward compatibility.
+   */
   private async executePreValidate(context: Record<string, unknown>): Promise<Record<string, unknown>> {
     // Implement comprehensive pre-validation with syntax checking
     const { data, filePath } = context;
@@ -892,6 +991,9 @@ export class ProcessorManager {
     return { validated: true, syntaxCheck: "passed" };
   }
 
+  /**
+   * @deprecated Use VersionComplianceProcessor class instead. Kept for backward compatibility.
+   */
   private async executeVersionCompliance(context: any): Promise<any> {
     try {
       const { VersionComplianceProcessor } =
@@ -916,6 +1018,9 @@ export class ProcessorManager {
     }
   }
 
+  /**
+   * @deprecated Use CodexComplianceProcessor class instead. Kept for backward compatibility.
+   */
   private async executeCodexCompliance(context: any): Promise<any> {
     const { operation } = context;
 
@@ -975,11 +1080,17 @@ export class ProcessorManager {
     }
   }
 
+  /**
+   * @deprecated Use ErrorBoundaryProcessor class instead. Kept for backward compatibility.
+   */
   private async executeErrorBoundary(context: any): Promise<any> {
     // Setup error boundaries
     return { boundaries: "established" };
   }
 
+  /**
+   * @deprecated Use AgentsMdValidationProcessor class instead. Kept for backward compatibility.
+   */
   private async executeAgentsMdValidation(context: any): Promise<any> {
     try {
       const { AgentsMdValidationProcessor } = await import("./agents-md-validation-processor.js");
@@ -1010,6 +1121,9 @@ export class ProcessorManager {
     }
   }
 
+  /**
+   * @deprecated Use TestExecutionProcessor class instead. Kept for backward compatibility.
+   */
   private async executeTestExecution(context: any): Promise<any> {
     // Execute tests automatically for newly created test files
     // Now with language-aware detection!
@@ -1079,6 +1193,7 @@ export class ProcessorManager {
 
   /**
    * Execute TypeScript/JavaScript tests using Vitest
+   * @deprecated Part of legacy TestExecutionProcessor. Kept for backward compatibility.
    */
   private async executeTypeScriptTests(
     context: any,
@@ -1116,6 +1231,7 @@ export class ProcessorManager {
 
   /**
    * Execute tests for any language using their native test framework
+   * @deprecated Part of legacy TestExecutionProcessor. Kept for backward compatibility.
    */
   private async executeGenericTests(
     context: any,
@@ -1157,6 +1273,7 @@ export class ProcessorManager {
 
   /**
    * Run a test command and parse results
+   * @deprecated Part of legacy TestExecutionProcessor. Kept for backward compatibility.
    */
   private async runTestCommand(command: string, cwd: string): Promise<any> {
     let stdout = "";
@@ -1204,6 +1321,7 @@ export class ProcessorManager {
 
   /**
    * Parse test output for pass/fail counts (language-agnostic)
+   * @deprecated Part of legacy TestExecutionProcessor. Kept for backward compatibility.
    */
   private parseTestOutput(output: string, type: "passed" | "failed"): number {
     // Try various output formats
@@ -1245,6 +1363,9 @@ export class ProcessorManager {
     return 0;
   }
 
+  /**
+   * @deprecated Use RegressionTestingProcessor class instead. Kept for backward compatibility.
+   */
   private async executeRegressionTesting(context: any): Promise<any> {
     // Run regression tests
     frameworkLogger.log(
@@ -1256,12 +1377,18 @@ export class ProcessorManager {
     return { regressions: "checked", issues: [] };
   }
 
+  /**
+   * @deprecated Use StateValidationProcessor class instead. Kept for backward compatibility.
+   */
   private async executeStateValidation(context: any): Promise<any> {
     // Validate state post-operation
     const currentState = this.stateManager.get("session:active");
     return { stateValid: !!currentState };
   }
 
+  /**
+   * @deprecated Use RefactoringLoggingProcessor class instead. Kept for backward compatibility.
+   */
   private async executeRefactoringLogging(context: any): Promise<any> {
     try {
       // Import the refactoring logging processor dynamically
@@ -1304,6 +1431,7 @@ export class ProcessorManager {
 
   /**
    * Attempt to fix rule violations by calling appropriate agents/skills
+   * @deprecated Part of legacy CodexComplianceProcessor. Kept for backward compatibility.
    */
   private async attemptRuleViolationFixes(
     violations: { rule: string; message: string; severity?: string }[],
@@ -1377,6 +1505,7 @@ export class ProcessorManager {
 
   /**
    * Get the appropriate agent/skill for a rule violation
+   * @deprecated Part of legacy CodexComplianceProcessor. Kept for backward compatibility.
    */
   private getAgentForRule(
     ruleId: string,
@@ -1422,6 +1551,7 @@ export class ProcessorManager {
 
   /**
    * Initialize test auto-creation processor
+   * @deprecated Use TestAutoCreationProcessor class instead. Kept for backward compatibility.
    */
   private async initializeTestAutoCreationProcessor(): Promise<void> {
     frameworkLogger.log(
@@ -1434,6 +1564,7 @@ export class ProcessorManager {
 
   /**
    * Execute test auto-creation processor
+   * @deprecated Use TestAutoCreationProcessor class instead. Kept for backward compatibility.
    */
   private async executeTestAutoCreation(context: any): Promise<any> {
     frameworkLogger.log(
@@ -1475,6 +1606,7 @@ export class ProcessorManager {
 
   /**
    * Execute coverage analysis processor
+   * @deprecated Use CoverageAnalysisProcessor class instead. Kept for backward compatibility.
    */
   private async executeCoverageAnalysis(context: any): Promise<any> {
     frameworkLogger.log(
