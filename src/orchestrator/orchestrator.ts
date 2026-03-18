@@ -14,6 +14,7 @@ import {
   universalLibrarianConsultation,
   SystemAction,
 } from "./universal-librarian-consultation.js";
+import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 
@@ -136,6 +137,18 @@ export class StringRayOrchestrator {
       const result = await this.delegateToSubagent(task);
 
       const duration = Date.now() - startTime;
+      
+      // Track routing outcome for analytics
+      const success = !result?.error;
+      routingOutcomeTracker.recordOutcome({
+        taskId: task.id,
+        taskDescription: task.description,
+        routedAgent: task.subagentType,
+        routedSkill: task.subagentType.replace("-", "_") + "_skill",
+        confidence: 0.8,
+        success,
+      });
+      
       await frameworkLogger.log(
         "orchestrator",
         "complex-task-completed",
@@ -146,6 +159,7 @@ export class StringRayOrchestrator {
           taskId: task.id,
           taskType: task.subagentType,
           duration,
+          success,
         },
       );
 

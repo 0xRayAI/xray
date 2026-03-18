@@ -102,12 +102,12 @@ export class RoutingOutcomeTracker {
   }
 
   /**
-   * Immediately save to disk
+   * Immediately save to disk (synchronous for reliability)
    */
-  private async saveToDisk(): Promise<void> {
+  private saveToDisk(): void {
     try {
-      const fs = await import('fs');
-      const path = await import('path');
+      const fs = require('fs');
+      const path = require('path');
       
       // Ensure directory exists
       const dir = path.dirname(this.persistencePath);
@@ -136,8 +136,8 @@ export class RoutingOutcomeTracker {
       this.outcomes = this.outcomes.slice(-this.maxOutcomes);
     }
     
-    // Persist to disk
-    this.scheduleSave();
+    // Persist to disk immediately (not debounced for better tracking during tests/CI)
+    this.saveToDisk();
   }
 
   /**
