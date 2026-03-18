@@ -20,21 +20,17 @@ else
 fi
 
 # StringRay Framework Version - read dynamically from package.json
-# Try multiple locations to find the correct version
+# Priority: node_modules (installed) > source (development)
 get_version() {
-    # 1. Try node_modules/strray-ai/package.json (installed consumer)
+    # 1. Try node_modules/strray-ai/package.json (installed consumer - THIS IS THE DEPLOYED VERSION)
     if [ -f "$PROJECT_ROOT/node_modules/strray-ai/package.json" ]; then
         node -e "console.log(require('$PROJECT_ROOT/node_modules/strray-ai/package.json').version)" 2>/dev/null && return
     fi
-    # 2. Try source package.json (development)
-    if [ -f "$PROJECT_ROOT/package.json" ]; then
-        node -e "console.log(require('$PROJECT_ROOT/package.json').version)" 2>/dev/null && return
-    fi
-    # 3. Try .opencode parent package.json
+    # 2. Try .opencode parent package.json (if running from source)
     if [ -f "$SCRIPT_DIR/../package.json" ]; then
         node -e "console.log(require('$SCRIPT_DIR/../package.json').version)" 2>/dev/null && return
     fi
-    # Fallback - should never reach here if installed correctly
+    # Fallback - should never reach here
     echo "unknown"
 }
 
