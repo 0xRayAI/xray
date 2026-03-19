@@ -40,13 +40,34 @@ const configFiles = [
   "AGENTS-consumer.md:AGENTS.md"  // Minimal version for consumers
 ];
 
-// Copy .opencode directory recursively
+// Files that should be MERGED (not overwritten) - user customizations
+const MERGE_FILES = [
+  'strray/features.json',
+  'strray/routing-mappings.json',
+  'enforcer-config.json'
+];
+
+// Directories to skip entirely
+const SKIP_DIRS = [
+  'node_modules',
+  'logs',
+  'openclaw'
+];
+
+// Files to skip
+const SKIP_FILES = [
+  '.strrayrc.json',
+  'package.json',
+  'package-lock.json'
+];
+
+// Copy .opencode directory recursively with smart merging
 const opencodeSource = path.join(packageRoot, '.opencode');
 const opencodeDest = path.join(targetDir, '.opencode');
 
 if (fs.existsSync(opencodeSource)) {
   try {
-    function copyDir(src, dest) {
+    function copyDirSmart(src, dest, baseRelPath = '') {
       if (!fs.existsSync(dest)) {
         fs.mkdirSync(dest, { recursive: true });
       }
@@ -54,18 +75,126 @@ if (fs.existsSync(opencodeSource)) {
       for (const entry of entries) {
         const srcPath = path.join(src, entry.name);
         const destPath = path.join(dest, entry.name);
+        const relPath = path.join(baseRelPath, entry.name);
+        
+        // Skip certain directories
+        if (entry.isDirectory() && SKIP_DIRS.includes(entry.name)) {
+          console.log(`⏭️ Skipping directory: ${relPath}`);
+          continue;
+        }
+        
+        // Skip certain files
+        if (!entry.isDirectory() && SKIP_FILES.includes(entry.name)) {
+          console.log(`⏭️ Skipping file: ${relPath}`);
+          continue;
+        }
+        
         if (entry.isDirectory()) {
-          copyDir(srcPath, destPath);
+          copyDirSmart(srcPath, destPath, relPath);
+        } else if (MERGE_FILES.includes(relPath)) {
+          // Merge JSON files instead of overwriting
+          mergeJsonFile(srcPath, destPath, relPath);
         } else {
+          // Regular copy
           fs.copyFileSync(srcPath, destPath);
+          console.log(`✅ Copied: ${relPath}`);
         }
       }
     }
-    copyDir(opencodeSource, opencodeDest);
-    console.log(`✅ Copied directory .opencode`);
+    
+    // Merge JSON files: preserve user settings, add new defaults
+    function mergeJsonFile(srcPath, destPath, relPath) {
+      try {
+        const srcContent = fs.readFileSync(srcPath, 'utf8');
+        const srcData = JSON.parse(srcContent);
+        
+        if (fs.existsSync(destPath)) {
+          // File exists - merge it
+          const destContent = fs.readFileSync(destPath, 'utf8');
+          const destData = JSON.parse(destContent);
+          
+          // Deep merge: preserve user values, add new defaults
+          const merged = deepMerge(srcData, destData);
+          fs.writeFileSync(destPath, JSON.stringify(merged, null, 2), 'utf8');
+          console.log(`🔄 Merged: ${relPath} (preserved user settings)`);
+        } else {
+          // File doesn't exist - copy it
+          fs.copyFileSync(srcPath, destPath);
+          console.log(`✅ Copied: ${relPath}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Could not merge ${relPath}:`, error.message);
+        // Fallback: try to copy anyway
+        try {
+          fs.copyFileSync(srcPath, destPath);
+          console.log(`✅ Copied (fallback): ${relPath}`);
+        } catch (copyError) {
+          console.warn(`⚠️ Could not copy ${relPath}:`, copyError.message);
+        }
+      }
+    }
+    
+    // Deep merge helper: src = new defaults, dest = user settings (dest wins)
+    function deepMerge(src, dest) {
+      if (typeof src !== 'object' || src === null) return dest !== undefined ? dest : src;
+      if (Array.isArray(src)) {
+        // For arrays, use destination if it exists, otherwise use source
+        return Array.isArray(dest) ? dest : src;
+      }
+      
+      const result = {};
+      // Start with all source keys
+      for (const key of Object.keys(src)) {
+        if (dest && typeof dest[key] !== 'undefined') {
+          // Key exists in both - merge recursively
+          result[key] = deepMerge(src[key], dest[key]);
+        } else {
+          // Key only in source - use source value
+          result[key] = src[key];
+        }
+      }
+      // Add any keys that only exist in destination
+      if (dest && typeof dest === 'object') {
+        for (const key of Object.keys(dest)) {
+          if (!(key in src)) {
+            result[key] = dest[key];
+          }
+        }
+      }
+      return result;
+    }
+    
+    copyDirSmart(opencodeSource, opencodeDest);
+    console.log(`✅ Copied/merged .opencode directory`);
   } catch (error) {
     console.warn(`⚠️ Could not copy directory .opencode:`, error.message);
   }
+}
+
+// Copy plugin from dist/plugin/ to .opencode/plugins/ (if not already there or if outdated)
+const pluginSource = path.join(packageRoot, 'dist', 'plugin', 'strray-codex-injection.js');
+const pluginDest = path.join(targetDir, '.opencode', 'plugins', 'strray-codex-injection.js');
+
+if (fs.existsSync(pluginSource)) {
+  try {
+    const destDir = path.dirname(pluginDest);
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    // Always copy if source is newer or dest doesn't exist
+    const shouldCopy = !fs.existsSync(pluginDest) ||
+      fs.statSync(pluginSource).mtime > fs.statSync(pluginDest).mtime;
+    if (shouldCopy) {
+      fs.copyFileSync(pluginSource, pluginDest);
+      console.log(`✅ Copied plugin: dist/plugin/strray-codex-injection.js → .opencode/plugins/`);
+    } else {
+      console.log(`ℹ️ Plugin file unchanged, skipping copy`);
+    }
+  } catch (error) {
+    console.warn(`⚠️ Could not copy plugin:`, error.message);
+  }
+} else {
+  console.warn(`⚠️ Plugin source not found: ${pluginSource}`);
 }
 
 console.log("🔧 StrRay Postinstall: Copying configuration files...");

@@ -178,6 +178,12 @@ function extractTaskDescription(input: { tool: string; args?: Record<string, unk
     return String(args.command);
   }
   
+  // Fallback: Use tool name as task description for routing
+  // This enables routing even when OpenCode doesn't pass args
+  if (tool) {
+    return `execute ${tool} tool`;
+  }
+  
   return null;
 }
 
@@ -524,6 +530,41 @@ export default async function strrayCodexPlugin(input: {
             });
           }
 
+          // ============================================================
+          // PROMPT-LEVEL ROUTING: Route user prompts to best agent
+          // ============================================================
+          const userPrompt = String(_input.prompt || _input.message || _input.content || "");
+          
+          if (userPrompt && userPrompt.length > 0) {
+            try {
+              await loadTaskSkillRouter();
+              
+              if (taskSkillRouterInstance) {
+                const routingResult = taskSkillRouterInstance.routeTask(userPrompt, {
+                  source: "prompt",
+                });
+                
+                if (routingResult && routingResult.agent) {
+                  const logger = await getOrCreateLogger(directory);
+                  logger.log(
+                    `🎯 Prompt routed: "${userPrompt.slice(0, 50)}${userPrompt.length > 50 ? "..." : ""}" → ${routingResult.agent} (confidence: ${routingResult.confidence})`,
+                  );
+                  
+                  // Add routing context to system prompt
+                  leanPrompt += `\n\n🎯 Recommended Agent: @${routingResult.agent}\n`;
+                  leanPrompt += `📊 Confidence: ${Math.round(routingResult.confidence * 100)}%\n`;
+                  
+                  if (routingResult.context?.complexity > 50) {
+                    leanPrompt += `⚠️ High complexity detected - consider using @orchestrator\n`;
+                  }
+                }
+              }
+            } catch (e) {
+              const logger = await getOrCreateLogger(directory);
+              logger.error("Prompt routing error:", e);
+            }
+          }
+
           if (output.system && Array.isArray(output.system)) {
             output.system = [leanPrompt];
           }
@@ -545,8 +586,6 @@ export default async function strrayCodexPlugin(input: {
       output: any,
     ) => {
       const logger = await getOrCreateLogger(directory);
-      logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
-      logger.log(`📥 Full input: ${JSON.stringify(input)}`);
       
       // Log tool start to activity logger (direct write - no module isolation issues)
       logToolActivity(directory, "start", input.tool, input.args || {});

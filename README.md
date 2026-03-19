@@ -30,17 +30,14 @@ StringRay is a **framework layer** for OpenCode that adds:
 ## 🚀 Quick Start
 
 ```bash
-# 1. Install StringRay
+# Install StringRay (auto-configures OpenCode on install)
 npm install strray-ai
 
-# 2. Run setup (required - configures OpenCode)
-npx strray-ai install
-
-# 3. Verify installation
-npx strray-ai status
+# That's it! StringRay is now active.
+# Restart OpenCode/Claude Code to load the plugin.
 ```
 
-**What does `strray-ai install` do?**
+**What happens during install?**
 - Copies OpenCode configuration files to your project
 - Configures 26 agents with proper capabilities
 - Sets up Codex enforcement rules
@@ -118,21 +115,25 @@ See [OpenClaw Integration Guide](src/integrations/openclaw/README.md) for detail
 | [Universal Codex](https://github.com/htafolla/stringray/blob/main/.opencode/strray/codex.json) | 60-term codex reference |
 | [Troubleshooting](https://github.com/htafolla/stringray/blob/main/docs/TROUBLESHOOTING.md) | Common issues & solutions |
 
-## 🔧 CLI Commands
+## 🔧 CLI Tools
+
+StringRay provides CLI utilities for managing and monitoring your installation:
 
 ```bash
-npx strray-ai install      # Install and configure
-npx strray-ai status       # Check configuration
-npx strray-ai validate     # Validate installation
-npx strray-ai capabilities # Show all features
-npx strray-ai health       # Health check
+npx strray-ai status       # Check configuration and plugin status
+npx strray-ai validate     # Validate installation and dependencies
+npx strray-ai capabilities # Show all available features
+npx strray-ai health       # Run health check on framework components
+npx strray-ai report       # Generate usage and performance reports
 ```
+
+**Note:** Installation is automatic via `npm install strray-ai`. The postinstall hook configures everything automatically.
 
 ## ⚙️ Configuration
 
 ### Default Configuration
 
-StringRay works out of the box with sensible defaults. The `strray-ai install` command sets up:
+StringRay works out of the box with sensible defaults. The npm postinstall hook automatically sets up:
 
 ```
 .opencode/
