@@ -1,337 +1,313 @@
 [
   {
     "keywords": [
-      "design system architecture"
+      "design",
+      "architect",
+      "structure",
+      "blueprint"
     ],
-    "skill": "ui-ux-design",
-    "agent": "frontend-ui-ux-engineer",
-    "confidence": 0.99
-  },
-  {
-    "keywords": [
-      "optimize application performance",
-      "improve application performance"
-    ],
-    "skill": "performance-optimization",
-    "agent": "mobile-developer",
-    "confidence": 0.99
-  },
-  {
-    "keywords": [
-      "setup docker containers",
-      "docker containers",
-      "docker container"
-    ],
-    "skill": "docker-expert",
-    "agent": "devops-engineer",
-    "confidence": 0.99
-  },
-  {
-    "keywords": [
-      "check code quality",
-      "code quality"
-    ],
-    "skill": "code-review",
-    "agent": "code-reviewer",
+    "skill": "architecture-patterns",
+    "agent": "architect",
     "confidence": 0.95
   },
   {
     "keywords": [
-      "@architect",
-      "system architect",
-      "solution architect"
+      "ux",
+      "ui",
+      "interface",
+      "mockup",
+      "prototype",
+      "figma"
     ],
-    "skill": "architecture-patterns",
-    "agent": "architect",
-    "confidence": 0.98
+    "skill": "ui-ux-design",
+    "agent": "frontend-ui-ux-engineer",
+    "confidence": 0.95
   },
   {
     "keywords": [
-      "@code-reviewer",
-      "Code review",
-      "review the new code",
-      "review code"
-    ],
-    "skill": "code-review",
-    "agent": "code-reviewer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@security-auditor",
-      "security audit",
-      "vulnerability scan",
-      "scan for security vulnerabilities",
-      "scan security"
-    ],
-    "skill": "security-audit",
-    "agent": "security-auditor",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@enforcer"
-    ],
-    "skill": "enforcer",
-    "agent": "enforcer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@orchestrator"
-    ],
-    "skill": "orchestrator",
-    "agent": "orchestrator",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@refactorer",
-      "refactor code",
-      "refactor the messy code"
-    ],
-    "skill": "refactoring-strategies",
-    "agent": "refactorer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@testing-lead",
-      "test strategy",
-      "write tests",
-      "tests for",
-      "write test",
-      "unit test",
-      "unit tests"
-    ],
-    "skill": "testing-best-practices",
-    "agent": "testing-lead",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@bug-triage-specialist",
-      "debug",
-      "triage bug",
-      "fix bug",
-      "fix the login bug"
-    ],
-    "skill": "code-review",
-    "agent": "bug-triage-specialist",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@strategist",
-      "planning",
-      "roadmap"
-    ],
-    "skill": "strategist",
-    "agent": "strategist",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@tech-writer",
-      "documentation",
-      "write docs",
-      "README file",
-      "update README"
-    ],
-    "skill": "documentation-generation",
-    "agent": "tech-writer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@researcher",
-      "find code"
-    ],
-    "skill": "git-workflow",
-    "agent": "researcher",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@performance-engineer",
-      "optimize performance",
-      "speed up"
-    ],
-    "skill": "performance-optimization",
-    "agent": "performance-engineer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@database-engineer",
-      "database schema",
-      "sql",
-      "migration"
-    ],
-    "skill": "database-design",
-    "agent": "database-engineer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@devops-engineer",
-      "deploy",
-      "ci/cd",
-      "docker pipeline"
-    ],
-    "skill": "devops-deployment",
-    "agent": "devops-engineer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@frontend-engineer",
       "frontend",
       "react",
-      "vue"
+      "vue",
+      "angular",
+      "component",
+      "css"
     ],
     "skill": "frontend-development",
     "agent": "frontend-engineer",
-    "confidence": 0.98
+    "confidence": 0.95
   },
   {
     "keywords": [
-      "@backend-engineer",
       "backend",
       "api",
       "server",
-      "create microservice"
+      "microservice",
+      "endpoint"
     ],
     "skill": "backend-development",
     "agent": "backend-engineer",
-    "confidence": 0.98
+    "confidence": 0.95
   },
   {
     "keywords": [
-      "resolve merge conflict",
-      "merge conflict"
+      "fix",
+      "debug",
+      "triage",
+      "broken",
+      "error",
+      "crash",
+      "bug"
     ],
-    "skill": "git-workflow",
-    "agent": "researcher",
-    "confidence": 0.99
+    "skill": "code-review",
+    "agent": "bug-triage-specialist",
+    "confidence": 0.92
   },
   {
     "keywords": [
-      "speed up application"
+      "review",
+      "audit",
+      "assess",
+      "evaluate",
+      "inspect"
+    ],
+    "skill": "code-review",
+    "agent": "code-reviewer",
+    "confidence": 0.9
+  },
+  {
+    "keywords": [
+      "security",
+      "vulnerability",
+      "pentest",
+      "auth",
+      "encrypt"
+    ],
+    "skill": "security-audit",
+    "agent": "security-auditor",
+    "confidence": 0.95
+  },
+  {
+    "keywords": [
+      "test",
+      "testing",
+      "jest",
+      "coverage",
+      "unit test",
+      "e2e"
+    ],
+    "skill": "testing-best-practices",
+    "agent": "testing-lead",
+    "confidence": 0.95
+  },
+  {
+    "keywords": [
+      "refactor",
+      "cleanup",
+      "optimize",
+      "improve",
+      "restructure"
+    ],
+    "skill": "refactoring-strategies",
+    "agent": "refactorer",
+    "confidence": 0.92
+  },
+  {
+    "keywords": [
+      "performance",
+      "speed",
+      "slow",
+      "fast",
+      "latency",
+      "benchmark"
     ],
     "skill": "performance-optimization",
-    "agent": "mobile-developer",
-    "confidence": 0.99
+    "agent": "performance-engineer",
+    "confidence": 0.93
   },
   {
     "keywords": [
-      "design database schema",
-      "query optimization"
+      "deploy",
+      "devops",
+      "pipeline",
+      "docker",
+      "kubernetes",
+      "aws"
+    ],
+    "skill": "devops-deployment",
+    "agent": "devops-engineer",
+    "confidence": 0.94
+  },
+  {
+    "keywords": [
+      "database",
+      "sql",
+      "schema",
+      "migration",
+      "query",
+      "postgres"
     ],
     "skill": "database-design",
     "agent": "database-engineer",
-    "confidence": 0.99
+    "confidence": 0.95
   },
   {
     "keywords": [
-      "@storyteller",
-      "write a story",
+      "docs",
+      "documentation",
+      "readme",
+      "wiki",
+      "guide",
+      "manual"
+    ],
+    "skill": "documentation-generation",
+    "agent": "tech-writer",
+    "confidence": 0.9
+  },
+  {
+    "keywords": [
+      "research",
+      "find",
+      "search",
+      "discover",
+      "investigate"
+    ],
+    "skill": "git-workflow",
+    "agent": "researcher",
+    "confidence": 0.88
+  },
+  {
+    "keywords": [
+      "story",
       "narrative",
       "journey",
       "saga",
-      "reflection",
-      "technical story"
+      "reflection"
     ],
     "skill": "storytelling",
     "agent": "storyteller",
-    "confidence": 0.98
+    "confidence": 0.95
   },
   {
     "keywords": [
-      "@log-monitor",
-      "analyze logs",
-      "log patterns",
-      "monitor logs",
-      "log monitoring",
-      "debug logs"
-    ],
-    "skill": "log-monitor",
-    "agent": "log-monitor",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@multimodal-looker",
-      "analyze image",
-      "analyze screenshot",
-      "analyze diagram",
-      "look at image",
-      "visual analysis"
-    ],
-    "skill": "multimodal-looker",
-    "agent": "multimodal-looker",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@code-analyzer",
-      "analyze code",
-      "code complexity",
-      "static analysis",
-      "code metrics"
-    ],
-    "skill": "code-analyzer",
-    "agent": "code-analyzer",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@seo-consultant",
-      "seo audit",
-      "search engine optimization",
-      "improve seo",
-      "seo analysis"
+      "seo",
+      "search",
+      "ranking",
+      "google",
+      "meta",
+      "sitemap"
     ],
     "skill": "seo-consultant",
     "agent": "seo-consultant",
-    "confidence": 0.98
+    "confidence": 0.96
   },
   {
     "keywords": [
-      "@content-creator",
-      "create content",
-      "write blog",
-      "marketing copy",
-      "content writing"
-    ],
-    "skill": "content-creator",
-    "agent": "content-creator",
-    "confidence": 0.98
-  },
-  {
-    "keywords": [
-      "@growth-strategist",
-      "growth strategy",
-      "marketing strategy",
-      "user growth",
-      "acquisition strategy"
+      "marketing",
+      "growth",
+      "content",
+      "blog",
+      "campaign"
     ],
     "skill": "growth-strategist",
     "agent": "growth-strategist",
-    "confidence": 0.98
+    "confidence": 0.92
   },
   {
     "keywords": [
-      "@mobile-developer",
-      "ios app",
-      "android app",
-      "mobile app",
-      "react native",
+      "mobile",
+      "ios",
+      "android",
+      "app",
       "swift",
       "kotlin"
     ],
     "skill": "mobile-development",
     "agent": "mobile-developer",
-    "confidence": 0.98
+    "confidence": 0.95
+  },
+  {
+    "keywords": [
+      "logs",
+      "monitor",
+      "trace",
+      "telemetry",
+      "observability"
+    ],
+    "skill": "log-monitor",
+    "agent": "log-monitor",
+    "confidence": 0.93
+  },
+  {
+    "keywords": [
+      "visual",
+      "image",
+      "screenshot",
+      "diagram",
+      "photo"
+    ],
+    "skill": "multimodal-looker",
+    "agent": "multimodal-looker",
+    "confidence": 0.94
+  },
+  {
+    "keywords": [
+      "complexity",
+      "metrics",
+      "static analysis",
+      "measure"
+    ],
+    "skill": "code-analyzer",
+    "agent": "code-analyzer",
+    "confidence": 0.9
+  },
+  {
+    "keywords": [
+      "git",
+      "commit",
+      "merge",
+      "branch",
+      "conflict",
+      "repository"
+    ],
+    "skill": "git-workflow",
+    "agent": "researcher",
+    "confidence": 0.88
+  },
+  {
+    "keywords": [
+      "enforce",
+      "compliance",
+      "rules",
+      "standards",
+      "codex"
+    ],
+    "skill": "enforcer",
+    "agent": "enforcer",
+    "confidence": 0.95
+  },
+  {
+    "keywords": [
+      "orchestrate",
+      "coordinate",
+      "manage",
+      "complex",
+      "workflow"
+    ],
+    "skill": "orchestrator",
+    "agent": "orchestrator",
+    "confidence": 0.94
+  },
+  {
+    "keywords": [
+      "plan",
+      "strategy",
+      "roadmap",
+      "vision",
+      "goal",
+      "prioritize"
+    ],
+    "skill": "strategist",
+    "agent": "strategist",
+    "confidence": 0.9
   }
 ]

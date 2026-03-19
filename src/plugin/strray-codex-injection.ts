@@ -947,10 +947,10 @@ export default async function strrayCodexPlugin(input: {
     },
 
     /**
-     * experimental.chat.user.before - Intercept user messages for routing
-     * This hook fires before the user's message is sent to the LLM
+     * chat.message - Intercept user messages for routing
+     * This hook fires when the user's message is received
      */
-    "experimental.chat.user.before": async (
+    "chat.message": async (
       input: { content?: string; message?: string; prompt?: string },
       output: { content?: string; message?: string },
     ) => {

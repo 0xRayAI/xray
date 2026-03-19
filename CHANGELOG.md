@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.13.4] - 2026-03-19
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: remove codex version from plugin comment (4fe126f1)
+- chore: remove hardcoded version from plugin file (18ec16b0)
+- chore: update version manager to 1.13.2 (f426a681)
+- chore: remove auto-generated files from git tracking (105742a7)
+- chore: add performance-baselines.json to gitignore (3ea19094)
+- chore: update auto-generated state files (86871023)
+- chore: update auto-generated files for v1.13.2 (1ac40d7f)
+- chore: bump version to 1.13.2 (24bb1343)
+
+### 🔎 Other Changes
+- feat(plugin): add experimental.chat.user.before hook for user message routing (fc69242f)
+- chore(release): v1.13.3 - Clean plugin versions and sync fixes (f881b44d)
+- chore(release): v1.13.2 - Fix plugin distribution and enhance postinstall (8ba831a7)
+
+---
+
 ## [1.13.3] - 2026-03-19
 
 ### 🔄 Changes

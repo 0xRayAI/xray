@@ -80,12 +80,11 @@ export class RoutingOutcomeTracker {
         if (Array.isArray(parsed)) {
           // Load outcomes, keeping within max limit
           this.outcomes = parsed.slice(-this.maxOutcomes);
-          console.log(`[OutcomeTracker] Loaded ${this.outcomes.length} historical outcomes from disk`);
+          // Silent load - no console output
         }
       }
     } catch (error) {
       // Silent fail - don't break tracking if persistence fails
-      console.log(`[OutcomeTracker] Could not load historical outcomes: ${error}`);
     }
   }
 
