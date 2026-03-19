@@ -11,22 +11,64 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 import { spawn } from "child_process";
-import { runQualityGateWithLogging } from "../../dist/plugin/quality-gate.js";
 
-// Import tool event emitter for activity logging
-let logToolStart: any;
-let logToolComplete: any;
+// Dynamic imports with absolute paths at runtime
+let runQualityGateWithLogging: any;
+let qualityGateDirectory: string = "";
 
-async function importToolEventEmitter() {
-  if (!logToolStart) {
+async function importQualityGate(directory: string) {
+  if (!runQualityGateWithLogging || qualityGateDirectory !== directory) {
     try {
-      const module = await import("../core/tool-event-emitter.js");
-      logToolStart = module.logToolStart;
-      logToolComplete = module.logToolComplete;
+      const qualityGatePath = path.join(directory, "dist", "plugin", "quality-gate.js");
+      const module = await import(qualityGatePath);
+      runQualityGateWithLogging = module.runQualityGateWithLogging;
+      qualityGateDirectory = directory;
     } catch (e) {
-      // Tool event emitter not available - continue without it
+      // Quality gate not available
     }
+  }
+}
+
+// Direct activity logging - writes to activity.log without module isolation issues
+let activityLogPath: string = "";
+let activityLogInitialized: boolean = false;
+
+function initializeActivityLog(directory: string): void {
+  if (activityLogInitialized && activityLogPath) return;
+  
+  const logDir = path.join(directory, "logs", "framework");
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+  // Use a separate file for plugin tool events to avoid framework overwrites
+  activityLogPath = path.join(logDir, "plugin-tool-events.log");
+  activityLogInitialized = true;
+}
+
+function logToolActivity(
+  directory: string,
+  eventType: "start" | "complete",
+  tool: string,
+  args: Record<string, unknown>,
+  result?: unknown,
+  error?: string,
+  duration?: number
+): void {
+  initializeActivityLog(directory);
+  
+  const timestamp = new Date().toISOString();
+  const jobId = `plugin-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+  
+  if (eventType === "start") {
+    const entry = `${timestamp} [${jobId}] [agent] tool-started - INFO | {"tool":"${tool}","args":${JSON.stringify(Object.keys(args || {}))}}\n`;
+    fs.appendFileSync(activityLogPath, entry);
+  } else {
+    const success = !error;
+    const level = success ? "SUCCESS" : "ERROR";
+    const entry = `${timestamp} [${jobId}] [agent] tool-${success ? "complete" : "failed"} - ${level} | {"tool":"${tool}","duration":${duration || 0}${error ? `,"error":"${error}"` : ""}}\n`;
+    fs.appendFileSync(activityLogPath, entry);
   }
 }
 
@@ -506,11 +548,8 @@ export default async function strrayCodexPlugin(input: {
       logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
       logger.log(`📥 Full input: ${JSON.stringify(input)}`);
       
-      // Log tool start to activity logger
-      await importToolEventEmitter();
-      if (logToolStart) {
-        logToolStart(input.tool, input.args || {});
-      }
+      // Log tool start to activity logger (direct write - no module isolation issues)
+      logToolActivity(directory, "start", input.tool, input.args || {});
       
       await loadStrRayComponents();
 
@@ -571,17 +610,22 @@ export default async function strrayCodexPlugin(input: {
       }
 
       // ENFORCER QUALITY GATE CHECK - Block on violations
-      const qualityGateResult = await runQualityGateWithLogging(
-        { tool, args },
-        logger,
-      );
-      if (!qualityGateResult.passed) {
-        logger.error(
-          `🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`,
+      await importQualityGate(directory);
+      if (!runQualityGateWithLogging) {
+        logger.log("Quality gate not available, skipping");
+      } else {
+        const qualityGateResult = await runQualityGateWithLogging(
+          { tool, args },
+          logger,
         );
-        throw new Error(
-          `ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`,
-        );
+        if (!qualityGateResult.passed) {
+          logger.error(
+            `🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`,
+          );
+          throw new Error(
+            `ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`,
+          );
+        }
       }
 
       // Run processors for ALL tools (not just write/edit)
@@ -755,11 +799,16 @@ export default async function strrayCodexPlugin(input: {
       
       const { tool, args, result } = input;
       
-      // Log tool completion to activity logger
-      await importToolEventEmitter();
-      if (logToolComplete) {
-        logToolComplete(tool, args || {}, result, result?.error, result?.duration);
-      }
+      // Log tool completion to activity logger (direct write - no module isolation issues)
+      logToolActivity(
+        directory, 
+        "complete", 
+        tool, 
+        args || {}, 
+        result, 
+        result?.error,
+        result?.duration
+      );
       
       await loadStrRayComponents();
 
