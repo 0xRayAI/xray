@@ -48,7 +48,7 @@ function initializeActivityLog(directory: string): void {
 
 function logToolActivity(
   directory: string,
-  eventType: "start" | "complete",
+  eventType: "start" | "complete" | "routing",
   tool: string,
   args: Record<string, unknown>,
   result?: unknown,
@@ -62,6 +62,9 @@ function logToolActivity(
   
   if (eventType === "start") {
     const entry = `${timestamp} [${jobId}] [agent] tool-started - INFO | {"tool":"${tool}","args":${JSON.stringify(Object.keys(args || {}))}}\n`;
+    fs.appendFileSync(activityLogPath, entry);
+  } else if (eventType === "routing") {
+    const entry = `${timestamp} [${jobId}] [agent] routing-detected - INFO | {"tool":"${tool}","routing":${JSON.stringify(args)}}\n`;
     fs.appendFileSync(activityLogPath, entry);
   } else {
     const success = !error;
@@ -940,6 +943,62 @@ export default async function strrayCodexPlugin(input: {
         } catch (error) {
           logger.error(`💥 Post-processor error`, error);
         }
+      }
+    },
+
+    /**
+     * experimental.chat.user.before - Intercept user messages for routing
+     * This hook fires before the user's message is sent to the LLM
+     */
+    "experimental.chat.user.before": async (
+      input: { content?: string; message?: string; prompt?: string },
+      output: { content?: string; message?: string },
+    ) => {
+      const logger = await getOrCreateLogger(directory);
+      
+      // Get user message
+      const userContent = String(input.content || input.message || input.prompt || "");
+      
+      if (!userContent || userContent.length === 0) {
+        return;
+      }
+      
+      logger.log(`👤 User message received: "${userContent.slice(0, 50)}${userContent.length > 50 ? "..." : ""}"`);
+      
+      try {
+        await loadTaskSkillRouter();
+        
+        if (taskSkillRouterInstance) {
+          // Route based on user content
+          const routingResult = taskSkillRouterInstance.routeTask(userContent, {
+            source: "user_message",
+          });
+          
+          if (routingResult && routingResult.agent) {
+            logger.log(
+              `🎯 User message routed to: @${routingResult.agent} (confidence: ${Math.round(routingResult.confidence * 100)}%)`,
+            );
+            
+            // Add routing hint to user's message
+            const routingHint = `[Suggested Agent: @${routingResult.agent}]\n`;
+            
+            // Modify output to include routing hint
+            if (output.content !== undefined) {
+              output.content = routingHint + output.content;
+            } else if (output.message !== undefined) {
+              output.message = routingHint + output.message;
+            }
+            
+            // Log routing outcome
+            logToolActivity(directory, "routing", "user_message", {
+              agent: routingResult.agent,
+              confidence: routingResult.confidence,
+              skill: routingResult.skill,
+            });
+          }
+        }
+      } catch (e) {
+        logger.error("User message routing error:", e);
       }
     },
 
