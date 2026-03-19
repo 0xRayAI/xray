@@ -5,7 +5,6 @@
  * into the system prompt for all AI agents, ensuring codex terms are
  * consistently enforced across the entire development session.
  *
- * @version 1.0.0
  * @author StrRay Framework
  */
 import * as fs from "fs";
