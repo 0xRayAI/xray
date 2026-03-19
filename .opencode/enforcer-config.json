@@ -45,16 +45,37 @@
     },
     "automation": {
       "hooks": {
-        "preCommit": ["pre-commit-introspection"],
-        "postCommit": ["auto-format"],
-        "daily": ["enforcer-daily-scan"],
-        "security": ["security-scan"],
-        "deployment": ["post-deployment-audit"]
+        "preCommit": [
+          "pre-commit-introspection"
+        ],
+        "postCommit": [
+          "auto-format"
+        ],
+        "daily": [
+          "enforcer-daily-scan"
+        ],
+        "security": [
+          "security-scan"
+        ],
+        "deployment": [
+          "post-deployment-audit"
+        ]
       },
       "workflows": {
-        "ci": ["lint", "typecheck", "test", "security-scan"],
-        "cd": ["build", "post-deployment-audit"],
-        "daily": ["enforcer-daily-scan", "security-scan"]
+        "ci": [
+          "lint",
+          "typecheck",
+          "test",
+          "security-scan"
+        ],
+        "cd": [
+          "build",
+          "post-deployment-audit"
+        ],
+        "daily": [
+          "enforcer-daily-scan",
+          "security-scan"
+        ]
       }
     },
     "agents": {
@@ -64,7 +85,11 @@
           "threshold-enforcement",
           "automation-orchestration"
         ],
-        "triggers": ["file-changes", "schedule", "deployment"]
+        "triggers": [
+          "file-changes",
+          "schedule",
+          "deployment"
+        ]
       },
       "architect": {
         "capabilities": [
@@ -72,7 +97,10 @@
           "architecture-validation",
           "dependency-analysis"
         ],
-        "triggers": ["code-reviews", "new-features"]
+        "triggers": [
+          "code-reviews",
+          "new-features"
+        ]
       },
       "orchestrator": {
         "capabilities": [
@@ -80,7 +108,10 @@
           "multi-agent-orchestration",
           "workflow-management"
         ],
-        "triggers": ["complex-tasks", "integration-events"]
+        "triggers": [
+          "complex-tasks",
+          "integration-events"
+        ]
       },
       "bug-triage-specialist": {
         "capabilities": [
@@ -88,7 +119,10 @@
           "root-cause-identification",
           "fix-suggestions"
         ],
-        "triggers": ["test-failures", "error-reports"]
+        "triggers": [
+          "test-failures",
+          "error-reports"
+        ]
       },
       "code-reviewer": {
         "capabilities": [
@@ -96,7 +130,10 @@
           "best-practice-validation",
           "security-review"
         ],
-        "triggers": ["pull-requests", "code-commits"]
+        "triggers": [
+          "pull-requests",
+          "code-commits"
+        ]
       },
       "refactorer": {
         "capabilities": [
@@ -104,7 +141,10 @@
           "debt-reduction",
           "consolidation"
         ],
-        "triggers": ["legacy-code-detection", "complexity-alerts"]
+        "triggers": [
+          "legacy-code-detection",
+          "complexity-alerts"
+        ]
       },
       "security-auditor": {
         "capabilities": [
@@ -112,7 +152,10 @@
           "threat-analysis",
           "security-validation"
         ],
-        "triggers": ["security-scans", "dependency-updates"]
+        "triggers": [
+          "security-scans",
+          "dependency-updates"
+        ]
       },
       "testing-lead": {
         "capabilities": [
@@ -120,7 +163,10 @@
           "coverage-optimization",
           "behavioral-testing"
         ],
-        "triggers": ["new-features", "code-changes"]
+        "triggers": [
+          "new-features",
+          "code-changes"
+        ]
       }
     },
     "mcps": {
@@ -175,7 +221,25 @@
     },
     "codex": {
       "version": "1.10.0",
-      "terms": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 24, 29, 32, 38, 42, 43],
+      "terms": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        15,
+        24,
+        29,
+        32,
+        38,
+        42,
+        43
+      ],
       "principles": [
         "progressive-prod-ready-code",
         "no-patches-boiler-stubs",

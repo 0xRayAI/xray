@@ -1,34 +1,34 @@
 {
   "bundle-size-analysis": {
     "testName": "bundle-size-analysis",
-    "averageDuration": 9.829046244466788,
-    "standardDeviation": 0.5682334770929147,
-    "sampleCount": 994,
-    "lastUpdated": 1773933723707,
+    "averageDuration": 9.814948040925255,
+    "standardDeviation": 0.5728909820218427,
+    "sampleCount": 1124,
+    "lastUpdated": 1773943064599,
     "tolerance": 10
   },
   "module-import-performance": {
     "testName": "module-import-performance",
-    "averageDuration": 27.34302906770832,
-    "standardDeviation": 3.1573436668625714,
-    "sampleCount": 1344,
-    "lastUpdated": 1773933791458,
+    "averageDuration": 27.314676085656018,
+    "standardDeviation": 3.14378432425951,
+    "sampleCount": 1471,
+    "lastUpdated": 1773943064599,
     "tolerance": 10
   },
   "memory-usage-check": {
     "testName": "memory-usage-check",
-    "averageDuration": 0.09799916337522524,
-    "standardDeviation": 0.005366731598841854,
-    "sampleCount": 557,
-    "lastUpdated": 1773932824446,
+    "averageDuration": 0.09809267530224638,
+    "standardDeviation": 0.00539190592918923,
+    "sampleCount": 579,
+    "lastUpdated": 1773943064599,
     "tolerance": 10
   },
   "test-execution-performance": {
     "testName": "test-execution-performance",
-    "averageDuration": 0.1051291971877047,
-    "standardDeviation": 0.015884620402785217,
-    "sampleCount": 3058,
-    "lastUpdated": 1773933791458,
+    "averageDuration": 0.10523467327025451,
+    "standardDeviation": 0.015410485444552395,
+    "sampleCount": 3382,
+    "lastUpdated": 1773943051441,
     "tolerance": 10
   }
 }

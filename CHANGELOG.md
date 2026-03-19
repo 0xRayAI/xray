@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.13.2] - 2026-03-19
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- chore(release): v1.13.2 - Fix plugin distribution and enhance postinstall (8ba831a7)
+
+---
+
 ## [1.13.1] - 2026-03-19
 
 ### 🔄 Changes

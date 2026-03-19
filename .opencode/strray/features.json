@@ -48,8 +48,7 @@
   },
   "agent_management": {
     "disabled_agents": [],
-    "agent_models": {
-    },
+    "agent_models": {},
     "performance_limits": {
       "max_task_duration_ms": 30000,
       "max_memory_usage_mb": 512,
@@ -108,7 +107,7 @@
     "rate_limit_per_minute": 20
   },
   "delegation": {
-    "confidence_threshold": 0.50,
+    "confidence_threshold": 0.5,
     "enable_intelligent_routing": true
   },
   "complexity_thresholds": {
