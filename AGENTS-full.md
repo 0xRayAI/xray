@@ -3,7 +3,7 @@
 **Version**: 1.9.0
 **Purpose**: Enterprise AI orchestration with systematic error prevention and modular architecture
 **Last Updated**: 2026-03-12
-**System Complexity**: 75+ modular files, 27 specialized agents, 14 MCP servers, 60 codex terms
+**System Complexity**: 75+ modular files, 27 specialized agents, 15 MCP servers, 60 codex terms
 
 ---
 
@@ -420,7 +420,7 @@ The orchestrator manages complex, multi-agent workflows for enterprise-level tas
 ```
 
 **Integration Points:**
-- **All 27 agents**: Coordinates multi-agent teams
+- **All 26 agents**: Coordinates multi-agent teams
 - **TaskSkillRouter**: Manages agent routing
 - **MCP Client**: Parallel tool execution
 - **Enforcer**: Validates coordination against governance rules
@@ -2941,7 +2941,7 @@ npx strray-ai profile --modules
 **Architecture**: Modular with Facade Pattern  
 **Components**: 
 - 27 specialized agents
-- 14 MCP servers  
+- 15 MCP servers  
 - 75+ modular files
 - 60 codex terms
 - 87% test coverage

@@ -49,7 +49,7 @@ Completed comprehensive update of 49+ documentation files across all categories 
 
 **Key Updates:**
 - Added "What's New in v1.9.0" sections
-- Updated to 27 agents, 2,368 tests
+- Updated to 26 agents, 2,368 tests
 - Documented facade architecture pattern
 - Added 87% code reduction statistics
 - Updated version references to 1.9.0
@@ -167,7 +167,7 @@ Completed comprehensive update of 49+ documentation files across all categories 
 - Test coverage: 87%
 - Modular testing strategy documented
 - Facade testing approach explained
-- All 27 agents documented (previously incomplete)
+- All 26 agents documented (previously incomplete)
 - Agent integration responsibilities added
 - Documentation requirements specified
 - Cross-reference validation rules documented
@@ -198,7 +198,7 @@ Completed comprehensive update of 49+ documentation files across all categories 
 ✅ **Version 1.9.0** throughout all documentation  
 ✅ **Facade Pattern** consistently described  
 ✅ **87% code reduction** statistic everywhere  
-✅ **27 agents, 2,368 tests** counts accurate  
+✅ **26 agents, 2,368 tests** counts accurate  
 ✅ **100% backward compatible** message clear  
 ✅ **Zero migration** requirement emphasized  
 ✅ **Architecture diagrams** consistent  

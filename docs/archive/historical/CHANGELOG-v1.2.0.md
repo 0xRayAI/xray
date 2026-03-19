@@ -160,7 +160,7 @@ StringRay v1.2.0 validates its positioning as the **first AI Operating System**:
 | Process Management | Agent spawning, lifecycle, cleanup |
 | Memory Management | Session state, persistence |
 | Resource Allocation | Complexity-based routing |
-| Hardware Abstraction | 14 MCP servers |
+| Hardware Abstraction | 15 MCP servers |
 | Security/Isolation | Enforcer, codex rules, sandbox |
 | Scheduling | Task queues, concurrent limits |
 | System Calls | Delegation API, orchestrator |
@@ -296,7 +296,7 @@ The missing piece that enables autonomous CI/CD recovery:
 
 After 1.2.0, major new features will be part of the paid commercial tier. This release represents:
 - Complete AI OS foundation
-- 14 MCP servers with deep domain expertise
+- 15 MCP servers with deep domain expertise
 - Multi-AI collaboration pattern (proven)
 - 99.6% error prevention system
 - 1000+ test suite

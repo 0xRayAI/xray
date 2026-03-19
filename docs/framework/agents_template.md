@@ -69,8 +69,8 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 14 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 27 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: 15 MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 26 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -206,8 +206,8 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 14 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 27 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: 15 MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 26 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -1355,7 +1355,7 @@ Framework initializes in strict dependency order:
 
 ### Implemented Features ✅
 
-- **27 Specialized Agents**: All configured with proper tools and permissions
+- **26 Specialized Agents**: All configured with proper tools and permissions
 - **Codex Compliance**: 60-term validation with zero-tolerance blocking
 - **Hybrid Architecture**: TypeScript/Python integration operational
 - **Boot Orchestration**: Dependency-ordered initialization working

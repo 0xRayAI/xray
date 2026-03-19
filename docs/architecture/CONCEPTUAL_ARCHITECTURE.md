@@ -368,7 +368,7 @@ MCP Client (312 lines)
 | **Facade Components** | 0 | 3 | New |
 | **Module Components** | 0 | 26 | New |
 | **Dead Code** | 3,170 | 0 | 100% removed |
-| **Agents** | 8 | 27 | +27 agents |
+| **Agents** | 8 | 27 | +26 agents |
 | **MCP Servers** | 14 | 28 | +14 servers |
 | **Tests** | ~1,200 | 2,368 | +1,168 tests |
 

@@ -4,7 +4,7 @@
 
 This document provides comprehensive operating procedures for all 27 StrRay Framework agents, including workflow execution, inter-agent communication, error handling, and integration patterns. These procedures ensure effective utilization of the multi-agent system for development workflow enhancement with proper documentation and cross-reference validation.
 
-### Agent Count: 27 Specialized Agents
+### Agent Count: 26 Specialized Agents
 
 | Category | Count | Agents |
 |----------|-------|--------|

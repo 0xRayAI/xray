@@ -360,7 +360,7 @@ Scripts to test:
 - **ESLint**: ✅ Working
 - **Plugin Deployment**: ✅ Working
 - **Memory Management**: ✅ Working
-- **Multi-Agent Orchestration**: ✅ Working (27 agents)
+- **Multi-Agent Orchestration**: ✅ Working (26 agents)
 - **Framework Validation**: ✅ Working
 - **Test Suite**: ✅ Working (2,368 tests, 87% coverage)
 - **Modular Testing**: ✅ Working (26 facade modules tested)
@@ -423,7 +423,7 @@ Scripts to test:
 - **Module System**: ✅ Working (26 facade modules tested)
 - **Script Testing**: ✅ Working (50+ scripts validated)
 - **Modular Testing**: ✅ Working (2,368 tests)
-- **Multi-Agent System**: ✅ Working (27 agents)
+- **Multi-Agent System**: ✅ Working (26 agents)
 - **Test Coverage**: ✅ Working (87% coverage)
 
 ---

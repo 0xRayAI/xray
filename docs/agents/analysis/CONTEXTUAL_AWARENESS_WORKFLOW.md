@@ -287,7 +287,7 @@ const validation = await enforcerTools.contextAnalysisValidation(files);
 // codex-enforcement tool - 60-term compliance (v1.7.5)
 const compliance = await enforcerTools.codexEnforcement(operation, files);
 // Validates: all 60 codex terms, provides actionable remediation
-// Coordinates with all 27 agents to ensure compliance
+// Coordinates with all 26 agents to ensure compliance
 
 // quality-gate-check tool - Final approval
 const approval = await enforcerTools.qualityGateCheck(operation, context);
@@ -394,7 +394,7 @@ Performance Tests          | 280   | 82%      | 85%
 
 **YES - The contextual awareness architecture is fully operational:**
 
-- ✅ **27 agents are mapped** to appropriate tools (14 planning, 12 implementation, 1 primary)
+- ✅ **26 agents are mapped** to appropriate tools (14 planning, 12 implementation, 1 primary)
 - ✅ **Agents run tools** in real workflows delivering contextual intelligence
 - ✅ **Intelligence becomes reality** through automated analysis and validation
 - ✅ **Quality assurance** happens automatically with 60-term codex enforcement

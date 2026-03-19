@@ -82,7 +82,7 @@ Agent Hierarchy (27 Total)
 - Block operations violating rules
 - Implement automated fixes and remediation
 - Quality gate control before commits
-- **Documentation Requirements**: Validates all 27 agents document their work
+- **Documentation Requirements**: Validates all 26 agents document their work
 - **Cross-Reference Validation**: Ensures agents reference correct Codex terms
 - **Integration Enforcement**: Enforces proper integration between all agents
 
@@ -192,7 +192,7 @@ ruleHierarchy.set("input-validation", ["tests-required"]);
 14. Enforcer → Commit (if all validations pass)
 15. Storyteller documents the journey (optional)
 
-Note: All 27 agents coordinate through the Orchestrator. Each agent must:
+Note: All 26 agents coordinate through the Orchestrator. Each agent must:
 - Document their work and decisions
 - Cross-reference relevant Codex terms
 - Validate integration with other agents

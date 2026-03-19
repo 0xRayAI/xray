@@ -2,7 +2,7 @@
 
 ## Prologue: The Gap
 
-Before this session, StringRay stood as a fortress of opinionated development - a comprehensive framework with 27 agents, 55-term Codex, 30+ enforcement rules, and pre/post processors. It was impressive, powerful, and... isolated.
+Before this session, StringRay stood as a fortress of opinionated development - a comprehensive framework with 26 agents, 55-term Codex, 30+ enforcement rules, and pre/post processors. It was impressive, powerful, and... isolated.
 
 The question emerged quietly: **What if we could extend beyond our walls?**
 
@@ -45,7 +45,7 @@ Before integration, we needed to understand what we had:
 | Skills | 27 | In .opencode/skills/ |
 | Task Router | ~50 keywords | In task-skill-router.ts |
 
-**Discovery #2: We had 27 agents but only 7 were actually mapped in AgentDelegator.**
+**Discovery #2: We had 26 agents but only 7 were actually mapped in AgentDelegator.**
 
 The agents existed in configuration but had no execution path. The framework had the bones but not the nervous system.
 
@@ -55,7 +55,7 @@ The agents existed in configuration but had no execution path. The framework had
 
 ### Agent Mapping Restoration
 
-The first task: reconnect all 27 agents to the delegation system.
+The first task: reconnect all 26 agents to the delegation system.
 
 ```typescript
 // Added 15 missing agents:
@@ -200,7 +200,7 @@ What emerged from this session?
 ### What We Built
 - A framework that combines opinionated tools (Codex, Rules, Processors) with community extensibility
 - Natural language routing that needs no special syntax
-- 27 agents connected to 14 MCP servers
+- 26 agents connected to 15 MCP servers
 - 44+ skills available through conversation
 - Comprehensive test coverage
 

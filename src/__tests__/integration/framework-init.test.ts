@@ -84,7 +84,7 @@ describe("StringRay Framework Initialization Integration", () => {
 
     test("should validate agent configurations", () => {
       const agentFiles = fs.readdirSync(".opencode/agents");
-      expect(agentFiles.length).toBeGreaterThanOrEqual(8); // At least 27 agents
+      expect(agentFiles.length).toBeGreaterThanOrEqual(8); // At least 26 agents
 
       // Check for required agents
       const requiredAgents = [

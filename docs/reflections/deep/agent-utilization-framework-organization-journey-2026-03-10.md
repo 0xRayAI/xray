@@ -238,7 +238,7 @@ The entire day was about **silent failures**:
 
 ### If We Hadn't Fixed Agent Triggering
 
-@architect and @testing-lead would continue to be rarely invoked. The framework would remain @enforcer-centric, missing the value of specialized agents. Would have "27 agents" but only use 2-3 regularly.
+@architect and @testing-lead would continue to be rarely invoked. The framework would remain @enforcer-centric, missing the value of specialized agents. Would have "26 agents" but only use 2-3 regularly.
 
 ### If We Hadn't Fixed Log Rotation
 

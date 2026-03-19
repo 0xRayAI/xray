@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [undefined] - 2026-03-19
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: integrate activity logger into post-processor and git hooks (595bbcca)
+- feat: add global activity logger with enable/disable switch (c6ee8392)
+
+### 🐛 Bug Fixes
+- fix: add direct activity logging to plugin hooks (58c0d679)
+- fix: migrate console.* to frameworkLogger + fix plugin hook export format (3edac59a)
+
+### 🧪 Tests
+- test: add activity logger tests (35 tests) (43df4662)
+
+### 🔎 Other Changes
+- reflections: evening reflection - it works (f55c2a0e)
+
+---
+
 ## [1.12.0] - 2026-03-18
 
 ### 🔄 Changes

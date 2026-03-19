@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework for OpenCode/Claude Code**
 
-[![Version](https://img.shields.io/badge/version-1.12.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-undefined-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2368%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
@@ -42,14 +42,14 @@ npx strray-ai status
 
 **What does `strray-ai install` do?**
 - Copies OpenCode configuration files to your project
-- Configures 27 agents with proper capabilities
+- Configures 26 agents with proper capabilities
 - Sets up Codex enforcement rules
 - Enables webhook triggers for CI/CD integration
 - Ready to use with Claude Code immediately
 
 ## ✨ Features
 
-- **🤖 27 Specialized Agents** - From code review to mobile development
+- **🤖 26 Specialized Agents** - From code review to mobile development
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
 - **⚡ 29 Lazy-Loading Skills** - Plus Claude SEO & Antigravity integrations
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
@@ -76,7 +76,7 @@ npx strray-ai status
 
 > **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/main/docs/AGENT_CONFIG.md).
 
-[View all 27 agents →](https://github.com/htafolla/stringray/blob/main/AGENTS.md)
+[View all 26 agents →](https://github.com/htafolla/stringray/blob/main/AGENTS.md)
 
 ## 📦 OpenClaw Integration
 
@@ -212,7 +212,7 @@ stringray/
 │   ├── security/              # Security systems
 │   └── session/               # Session management
 ├── .opencode/                 # OpenCode configuration
-│   ├── agents/               # Agent configs (27 agents)
+│   ├── agents/               # Agent configs (26 agents)
 │   ├── strray/               # StringRay config
 │   │   ├── codex.json        # 60-term development codex
 │   │   ├── features.json     # Feature flags

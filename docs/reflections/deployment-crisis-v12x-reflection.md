@@ -44,7 +44,7 @@ The v1.2.x release cycle revealed critical gaps in our deployment validation pro
 
 **Impact:**
 - All MCP server paths were broken in consumer installations
-- 14 MCP servers couldn't start
+- 15 MCP servers couldn't start
 - Framework appeared to install but core functionality failed
 
 ### 1.3 CLI Version Mismatch

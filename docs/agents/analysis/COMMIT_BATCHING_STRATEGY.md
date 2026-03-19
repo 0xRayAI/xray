@@ -14,7 +14,7 @@ The framework previously committed **every individual change**, creating:
 **Batch related changes together based on configurable metrics** rather than committing every individual change, with coordination across all 27 specialized agents.
 
 ### Agent Integration
-- **Orchestrator**: Coordinates commit batching across all 27 agents
+- **Orchestrator**: Coordinates commit batching across all 26 agents
 - **Enforcer**: Validates batched commits against all 60 Codex terms
 - **Code Reviewer**: Reviews batched changes for quality
 - **Documentation**: All agents document their contributions to batches

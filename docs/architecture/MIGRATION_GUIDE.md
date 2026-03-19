@@ -133,7 +133,7 @@ v1.9.0 Architecture:
 
 All agents remain compatible:
 
-- **27 Specialized Agents**: Same capabilities and interfaces
+- **26 Specialized Agents**: Same capabilities and interfaces
 - **Custom Agents**: Same creation process
 - **Agent Delegation**: Works identically
 - **Agent Communication**: Unchanged protocols

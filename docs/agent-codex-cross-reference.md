@@ -16,13 +16,13 @@
 | **Generic Terms** | 12 | testing-lead, refactorer, security-auditor, storyteller, devops-engineer, database-engineer, backend-engineer, frontend-engineer, performance-engineer |
 | **No Terms** | 11 | orchestrator, researcher, strategist, log-monitor, analyzer, frontend-ui-ux-engineer, seo-consultant, content-creator, growth-strategist, tech-writer, mobile-developer, multimodal-looker, document-writer, librarian-agents-updater |
 
-**Coverage Rate:** 59% (16/27 agents have some Codex terms defined)
+**Coverage Rate:** 59% (16/26 agents have some Codex terms defined)
 
 ---
 
 ## Detailed Cross-Reference Matrix
 
-### 1. AGENTS WITH DETAILED CODEX TERMS (27 agents)
+### 1. AGENTS WITH DETAILED CODEX TERMS (26 agents)
 
 #### architect
 **Version:** 1.0.0  
@@ -133,7 +133,7 @@
 
 ---
 
-### 2. AGENTS WITH GENERIC CODEX TERMS (27 agents)
+### 2. AGENTS WITH GENERIC CODEX TERMS (26 agents)
 
 These agents have placeholder Codex terms that don't map specifically to their capabilities:
 
@@ -151,7 +151,7 @@ These agents have placeholder Codex terms that don't map specifically to their c
 
 ---
 
-### 3. AGENTS MISSING CODEX TERMS (27 agents)
+### 3. AGENTS MISSING CODEX TERMS (26 agents)
 
 These agents have no Codex terms section at all:
 
@@ -256,8 +256,8 @@ Replace generic "Term 5, 7, 24" with role-specific terms:
 | **P1** | testing-lead | Add testing terms (26, 38, 45) | Low | High |
 | **P1** | refactorer | Add DRY/rot prevention (16, 25) | Low | High |
 | **P1** | orchestrator | Add governance terms (52-60) | Medium | High |
-| **P2** | 27 agents | Add basic Codex sections | Medium | Medium |
-| **P3** | 27 agents | Enhance generic terms | Medium | Low |
+| **P2** | 26 agents | Add basic Codex sections | Medium | Medium |
+| **P3** | 26 agents | Enhance generic terms | Medium | Low |
 
 ---
 
@@ -336,7 +336,7 @@ Replace generic "Term 5, 7, 24" with role-specific terms:
 
 **Next Steps:**
 1. Fix 3 critical gaps (security-auditor, performance-engineer, frontend-ui-ux-engineer)
-2. Add basic Codex sections to 27 agents that have none
-3. Enhance 27 agents with generic terms to have role-specific terms
+2. Add basic Codex sections to 26 agents that have none
+3. Enhance 26 agents with generic terms to have role-specific terms
 
 **Estimated Effort:** 2-3 hours of focused work

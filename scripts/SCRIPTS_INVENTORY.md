@@ -25,7 +25,7 @@ This document provides a complete inventory of all scripts in the `scripts/` dir
 | `validate-codex.mjs` | ✅ Working | Validates codex compliance | 60 terms validated |
 | `version-manager.mjs` | ✅ Working | Manages version bumping | Includes auto-changelog |
 | `release.mjs` | ✅ Working | Handles release process | Dry-run support |
-| `setup.cjs` | ✅ Working | Configures OpenCode plugin | Adds 27 agents |
+| `setup.cjs` | ✅ Working | Configures OpenCode plugin | Adds 26 agents |
 | `boot-check.mjs` | ✅ Working | Framework boot validation | 4/4 checks passing |
 | `kernel-e2e-test.mjs` | ✅ Working | Kernel integration tests | 10/10 tests passed |
 | `kernel-framework-test.mjs` | ⚠️ Partial | Tests kernel via framework | 7/9 tests pass (TaskSkillRouter missing kernel integration - expected) |
@@ -87,7 +87,7 @@ This document provides a complete inventory of all scripts in the `scripts/` dir
 | Script | Status | Description | Notes |
 |--------|--------|-------------|-------|
 | `test-rules.mjs` | ✅ Working | Rule enforcement tests | All rules validated |
-| `test-agents.mjs` | ✅ Working | Agent registration tests | 27 agents validated |
+| `test-agents.mjs` | ✅ Working | Agent registration tests | 26 agents validated |
 | `run-all-tests.mjs` | ✅ Working | Master test runner | 7/9 suites pass |
 | `verify-plugin-paths.mjs` | ✅ Working | Plugin path verification | 4/4 checks pass |
 | `verify-orchestration.mjs` | ⚠️ Partial | Orchestration health check | 13/15 checks pass (expected in dev) |

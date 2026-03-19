@@ -10,7 +10,7 @@ StringRay has evolved from a monolithic AI orchestration framework into a modula
 - **490 TypeScript source files**
 - **99 test files with 85%+ coverage**
 - **27 specialized agents**
-- **32 MCP servers**
+- **15 MCP servers**
 - **60-term Universal Development Codex**
 - **99.6% systematic error prevention**
 
@@ -20,7 +20,7 @@ StringRay has evolved from a monolithic AI orchestration framework into a modula
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           StringRay Framework v1.10.0+                      │
+│                           StringRay AI v1.10.0+                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Interface Layer                                                            │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
@@ -228,7 +228,7 @@ Key Differentiators:
 - ✅ 60-term codex with 99.6% error prevention
 - ✅ Comprehensive governance (spawn limits, rate limiting, memory monitoring)
 - ✅ 27 specialized agents with intelligent routing
-- ✅ 32 MCP servers for tool integration
+- ✅ 15 MCP servers for tool integration
 - ✅ Deep reflections and narrative documentation
 - ✅ Production-ready with 85%+ test coverage
 

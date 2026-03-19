@@ -92,7 +92,7 @@ GitHub Copilot is a great autocomplete tool—fast suggestions based on patterns
 **Key Differences:**
 
 - **Copilot**: Autocompletes based on training data; can suggest hallucinated or insecure code if the context is off. No oversight or iteration.
-- **StringRay**: Orchestrates 27 agents with 60 codex rules for proactive prevention. Agents cross-validate output, enforce modular structure (now with facade pattern architecture), and generate tests—eliminating the root causes Copilot leaves untouched.
+- **StringRay**: Orchestrates 26 agents with 60 codex rules for proactive prevention. Agents cross-validate output, enforce modular structure (now with facade pattern architecture), and generate tests—eliminating the root causes Copilot leaves untouched.
 
 **Architecture Advantage:**
 StringRay's v1.9.0 facade pattern isn't just cleaner code—it's a commitment to maintainability. While Copilot generates code that may become tomorrow's technical debt, StringRay's architecture ensures code stays clean, testable, and maintainable over time.
@@ -132,7 +132,7 @@ This is why the copy works — it's not trying to entertain or dazzle. It's spea
 
 **For New Users:**
 - Modern facade pattern architecture from day one
-- 27 specialized agents, 14 MCP servers, 2,368 tests
+- 27 specialized agents, 15 MCP servers, 2,368 tests
 - 99.6% error prevention, 100% backward compatibility
 
 **Technical Credibility:**

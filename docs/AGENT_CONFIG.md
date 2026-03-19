@@ -157,7 +157,7 @@ Add this section to your `opencode.json` to enable all 27 StringRay agents:
 
 ## Core Agents (All 27)
 
-These 27 agents form the complete StringRay framework v1.9.0:
+These 26 agents form the complete StringRay framework v1.9.0:
 
 ### Primary Agent
 | Agent | Purpose | Recommended Mode |

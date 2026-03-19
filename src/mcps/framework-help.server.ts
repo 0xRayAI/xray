@@ -386,7 +386,7 @@ ${Object.entries(capabilities.reporting)
       return `
 **StringRay Framework - Complete Capabilities Overview**
 
-**27 Specialized Agents:**
+**26 Specialized Agents:**
 ${Object.entries(capabilities.agents)
   .map(([name, desc]) => `- **${name}**: ${desc}`)
   .join("\n")}

@@ -324,7 +324,7 @@ export STRRAY_ENV=production
 Once installed and configured, StrRay provides:
 
 - **45 Codex Terms**: Systematic error prevention
-- **27 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
+- **26 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
 - **6 MCP Skills**: Project analysis, testing strategy, etc.
 - **4 Automation Hooks**: Pre-commit checks, formatting, etc.
 - **Real-time Compliance**: Bundle size, test coverage monitoring

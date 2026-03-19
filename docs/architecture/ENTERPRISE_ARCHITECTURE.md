@@ -636,7 +636,7 @@ The framework integrates seamlessly with OpenCode:
 
 ### MCP Server Integration
 
-The framework exposes 14 MCP servers for AI integration:
+The framework exposes 15 MCP servers for AI integration:
 
 1. **Agent Servers**: Individual agent capabilities
 2. **Knowledge Servers**: Project analysis and patterns
