@@ -147,8 +147,12 @@ export class PostProcessor {
 
       return reportConfig.outputPath;
     } catch (error) {
-      console.warn("⚠️ Framework report generation failed:", error);
-      // Don't fail the post-processor for report generation issues
+      await frameworkLogger.log(
+        "postprocessor",
+        "framework-report-generation-failed",
+        "warning",
+        { error: String(error) },
+      );
       return null;
     }
   }
@@ -168,26 +172,37 @@ export class PostProcessor {
         );
 
         if (!validation.valid) {
-          console.warn(`⚠️ Report validation failed for ${reportPath}:`);
-          validation.issues.forEach((issue) => console.warn(`   • ${issue}`));
+          await frameworkLogger.log(
+            "postprocessor",
+            "report-validation-failed",
+            "warning",
+            { reportPath, issues: validation.issues },
+          );
 
           if (validation.details.criticalErrors.length > 0) {
-            console.error(`🚨 Critical errors found in report:`);
-            validation.details.criticalErrors.forEach((err) =>
-              console.error(`   • ${err}`),
+            await frameworkLogger.log(
+              "postprocessor",
+              "critical-errors-in-report",
+              "error",
+              { reportPath, criticalErrors: validation.details.criticalErrors },
             );
           }
         } else {
           await frameworkLogger.log(
-            "-post-processor",
-            "-report-validation-passed-for-reportpath-",
+            "postprocessor",
+            "report-validation-passed",
             "success",
-            { message: `✅ Report validation passed for ${reportPath}` },
+            { reportPath },
           );
         }
       }
     } catch (error) {
-      console.warn(`⚠️ Report validation failed: ${error}`);
+      await frameworkLogger.log(
+        "postprocessor",
+        "report-validation-failed",
+        "warning",
+        { error: String(error) },
+      );
     }
   }
 
@@ -213,15 +228,20 @@ export class PostProcessor {
         if (stats.mtime.getTime() < cutoffTime) {
           fs.unlinkSync(filePath);
           await frameworkLogger.log(
-            "-post-processor",
-            "-cleaned-up-old-report-file-",
+            "postprocessor",
+            "cleaned-up-old-report",
             "info",
-            { message: `🗑️ Cleaned up old report: ${file}` },
+            { file },
           );
         }
       }
     } catch (error) {
-      console.warn("⚠️ Report cleanup failed:", error);
+      await frameworkLogger.log(
+        "postprocessor",
+        "report-cleanup-failed",
+        "warning",
+        { error: String(error) },
+      );
     }
   }
 
@@ -1008,7 +1028,12 @@ All path violations will be automatically detected and blocked.
       );
       return result;
     } catch (error) {
-      console.error("❌ Post-processor loop failed:", error);
+      await frameworkLogger.log(
+        "postprocessor",
+        "post-processor-loop-failed",
+        "error",
+        { error: String(error) },
+      );
 
       const failureResult: PostProcessorResult = {
         success: false,

@@ -79,7 +79,12 @@ class StrRayStateManagerServer {
         );
       }
     } catch (error) {
-      console.warn("Failed to load state file:", error);
+      frameworkLogger.log(
+        "state-manager",
+        "state-file-load-failed",
+        "warning",
+        { error: String(error) },
+      );
     }
   }
 
@@ -88,7 +93,12 @@ class StrRayStateManagerServer {
       const data = Object.fromEntries(this.state);
       fs.writeFileSync(this.stateFile, JSON.stringify(data, null, 2));
     } catch (error) {
-      console.error("Failed to save state:", error);
+      frameworkLogger.log(
+        "state-manager",
+        "state-save-failed",
+        "error",
+        { error: String(error) },
+      );
     }
   }
 

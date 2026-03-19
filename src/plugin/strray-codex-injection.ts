@@ -12,7 +12,23 @@
 import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
-import { runQualityGateWithLogging } from "./quality-gate.js";
+import { runQualityGateWithLogging } from "../../dist/plugin/quality-gate.js";
+
+// Import tool event emitter for activity logging
+let logToolStart: any;
+let logToolComplete: any;
+
+async function importToolEventEmitter() {
+  if (!logToolStart) {
+    try {
+      const module = await import("../core/tool-event-emitter.js");
+      logToolStart = module.logToolStart;
+      logToolComplete = module.logToolComplete;
+    } catch (e) {
+      // Tool event emitter not available - continue without it
+    }
+  }
+}
 
 // Import lean system prompt generator
 let SystemPromptGenerator: any;
@@ -157,12 +173,19 @@ function spawnPromise(
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      stdio: ["ignore", "inherit", "pipe"], // Original working stdio - stdout to terminal (ASCII visible)
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    const stdout = "";
+    let stdout = "";
     let stderr = "";
 
-    // Capture stderr only (stdout goes to inherit/terminal)
+    if (child.stdout) {
+      child.stdout.on("data", (data) => {
+        const text = data.toString();
+        stdout += text;
+        process.stdout.write(text);
+      });
+    }
+
     if (child.stderr) {
       child.stderr.on("data", (data) => {
         stderr += data.toString();
@@ -427,6 +450,8 @@ function formatCodexContext(contexts: CodexContextEntry[]): string {
  *
  * This plugin hooks into experimental.chat.system.transform event
  * to inject codex terms into system prompt before it's sent to LLM.
+ * 
+ * OpenCode expects hooks to be nested under a "hooks" key.
  */
 export default async function strrayCodexPlugin(input: {
   client?: string;
@@ -438,44 +463,39 @@ export default async function strrayCodexPlugin(input: {
 
   return {
     "experimental.chat.system.transform": async (
-      _input: Record<string, unknown>,
-      output: { system?: string[] },
-    ) => {
-      try {
-        // Use lean system prompt generator for token efficiency
-        await importSystemPromptGenerator();
-        
-        let leanPrompt = getFrameworkIdentity();
+        _input: Record<string, unknown>,
+        output: { system?: string[] },
+      ) => {
+        try {
+          await importSystemPromptGenerator();
+          
+          let leanPrompt = getFrameworkIdentity();
 
-        // Use lean generator if available, otherwise fall back to minimal logic
-        if (SystemPromptGenerator) {
-          leanPrompt = await SystemPromptGenerator({
-            showWelcomeBanner: true,
-            showCodexContext: false,  // Disabled for token efficiency
-            enableTokenOptimization: true,
-            maxTokenBudget: 3000,     // Conservative token budget
-            showCriticalTermsOnly: true,
-            showEssentialLinks: true
-          });
-        }
+          if (SystemPromptGenerator) {
+            leanPrompt = await SystemPromptGenerator({
+              showWelcomeBanner: true,
+              showCodexContext: false,
+              enableTokenOptimization: true,
+              maxTokenBudget: 3000,
+              showCriticalTermsOnly: true,
+              showEssentialLinks: true
+            });
+          }
 
-        if (output.system && Array.isArray(output.system)) {
-          // Replace verbose system prompt with lean version
-          output.system = [leanPrompt];
+          if (output.system && Array.isArray(output.system)) {
+            output.system = [leanPrompt];
+          }
+        } catch (error) {
+          const logger = await getOrCreateLogger(directory);
+          logger.error("System prompt injection failed:", error);
+          const fallback = getFrameworkIdentity();
+          if (output.system && Array.isArray(output.system)) {
+            output.system = [fallback];
+          }
         }
-      } catch (error) {
-        // Critical failure - log error but don't break the plugin
-        const logger = await getOrCreateLogger(directory);
-        logger.error("System prompt injection failed:", error);
-        // Fallback to minimal prompt
-        const fallback = getFrameworkIdentity();
-        if (output.system && Array.isArray(output.system)) {
-          output.system = [fallback];
-        }
-      }
-    },
+      },
 
-    "tool.execute.before": async (
+      "tool.execute.before": async (
       input: {
         tool: string;
         args?: { content?: string; filePath?: string };
@@ -485,6 +505,13 @@ export default async function strrayCodexPlugin(input: {
       const logger = await getOrCreateLogger(directory);
       logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
       logger.log(`📥 Full input: ${JSON.stringify(input)}`);
+      
+      // Log tool start to activity logger
+      await importToolEventEmitter();
+      if (logToolStart) {
+        logToolStart(input.tool, input.args || {});
+      }
+      
       await loadStrRayComponents();
 
       if (featuresConfigLoader && detectTaskType) {
@@ -725,9 +752,16 @@ export default async function strrayCodexPlugin(input: {
       _output: any,
     ) => {
       const logger = await getOrCreateLogger(directory);
-      await loadStrRayComponents();
-
+      
       const { tool, args, result } = input;
+      
+      // Log tool completion to activity logger
+      await importToolEventEmitter();
+      if (logToolComplete) {
+        logToolComplete(tool, args || {}, result, result?.error, result?.duration);
+      }
+      
+      await loadStrRayComponents();
 
       // Debug: log full input
       logger.log(

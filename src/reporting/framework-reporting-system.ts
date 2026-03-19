@@ -136,9 +136,11 @@ export class FrameworkReportingSystem {
             { reportType: type, outputPath: config.outputPath },
           );
         } catch (error) {
-          console.error(
-            `❌ Failed to generate automated ${type} report:`,
-            error,
+          await frameworkLogger.log(
+            "framework-reporting-system",
+            "automated-report-generation-failed",
+            "error",
+            { reportType: type, error: String(error) },
           );
         }
       }
@@ -265,7 +267,12 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
       const currentLogs = await this.readCurrentLogFile(config.timeRange);
       allLogs = [...allLogs, ...currentLogs];
     } catch (error) {
-      console.warn("Could not read current log file:", error);
+      await frameworkLogger.log(
+        "framework-reporting-system",
+        "current-log-read-failed",
+        "warning",
+        { error: String(error) },
+      );
     }
 
     // For historical reports, also try to read from rotated log files
@@ -281,7 +288,12 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
         const rotatedLogs = await this.readRotatedLogFiles(config.timeRange);
         allLogs = [...allLogs, ...rotatedLogs];
       } catch (error) {
-        console.warn("Could not read rotated log files:", error);
+        await frameworkLogger.log(
+          "framework-reporting-system",
+          "rotated-logs-read-failed",
+          "warning",
+          { error: String(error) },
+        );
       }
     }
 
@@ -341,11 +353,21 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
           // Stop if we have enough historical data
           if (logs.length > 5000) break;
         } catch (error) {
-          console.warn(`Could not parse rotated log file ${file}:`, error);
+          await frameworkLogger.log(
+            "framework-reporting-system",
+            "rotated-log-parse-failed",
+            "warning",
+            { file, error: String(error) },
+          );
         }
       }
     } catch (error) {
-      console.warn("Error reading rotated log files:", error);
+      await frameworkLogger.log(
+        "framework-reporting-system",
+        "rotated-logs-read-failed",
+        "warning",
+        { error: String(error) },
+      );
     }
 
     return logs;
@@ -456,7 +478,12 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
         }
       }
     } catch (error) {
-      console.warn("Error reading current log file:", error);
+      await frameworkLogger.log(
+        "framework-reporting-system",
+        "current-log-read-failed",
+        "warning",
+        { error: String(error) },
+      );
     }
 
     return logs;
@@ -1191,8 +1218,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         );
       }
     })
-    .catch((error) => {
-      console.error("❌ Report generation failed:", error);
+    .catch(async (error) => {
+      await frameworkLogger.log(
+        "framework-reporting-system",
+        "report-generation-failed",
+        "error",
+        { error: String(error) },
+      );
       process.exit(1);
     });
 }

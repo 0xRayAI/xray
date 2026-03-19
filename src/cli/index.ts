@@ -203,9 +203,9 @@ program
   .command("debug")
   .description("Debug command")
   .action(async () => {
-    console.log("DEBUG: CLI is working");
-    console.log("DEBUG: packageRoot =", packageRoot);
-    console.log("DEBUG: cwd =", process.cwd());
+    console.log("📍 StringRay CLI Debug Info");
+    console.log("   packageRoot:", packageRoot);
+    console.log("   cwd:", process.cwd());
   });
 
 program

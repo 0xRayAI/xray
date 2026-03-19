@@ -114,7 +114,12 @@ export class StringRayOrchestrator {
         // Mark tasks as completed
         batchTasks.forEach((task) => completedTasks.add(task.id));
       } catch (error) {
-        console.error("❌ Orchestrator: Batch execution failed:", error);
+        await frameworkLogger.log(
+          "orchestrator",
+          "batch-execution-failed",
+          "error",
+          { error: String(error) },
+        );
         throw error;
       }
     }
@@ -209,9 +214,11 @@ export class StringRayOrchestrator {
           );
         }
       } catch (processorError) {
-        console.warn(
-          `⚠️ Post-processor execution failed for task ${task.id}:`,
-          processorError,
+        await frameworkLogger.log(
+          "orchestrator",
+          "post-processor-execution-failed",
+          "warning",
+          { taskId: task.id, error: String(processorError) },
         );
       }
 
@@ -222,9 +229,11 @@ export class StringRayOrchestrator {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(
-        `❌ Orchestrator: Task ${task.id} failed after ${duration}ms:`,
-        error,
+      await frameworkLogger.log(
+        "orchestrator",
+        "task-execution-failed",
+        "error",
+        { taskId: task.id, duration, error: String(error) },
       );
 
       // Execute post-processors even on failure for error logging
@@ -251,9 +260,11 @@ export class StringRayOrchestrator {
           );
         }
       } catch (processorError) {
-        console.warn(
-          `⚠️ Post-processor execution failed for failed task ${task.id}:`,
-          processorError,
+        await frameworkLogger.log(
+          "orchestrator",
+          "post-processor-execution-failed-on-error",
+          "warning",
+          { taskId: task.id, error: String(processorError) },
         );
       }
 
@@ -313,9 +324,11 @@ export class StringRayOrchestrator {
         performanceImprovement: consolidationResult.performanceImprovement,
       };
     } catch (error) {
-      console.error(
-        `❌ Orchestrator: Auto-healing orchestration failed:`,
-        error,
+      await frameworkLogger.log(
+        "orchestrator",
+        "auto-healing-orchestration-failed",
+        "error",
+        { error: String(error) },
       );
       return {
         success: false,

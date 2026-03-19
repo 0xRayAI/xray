@@ -110,7 +110,12 @@ export class EnhancedMultiAgentOrchestrator {
           `Only the main orchestrator may spawn agents. ` +
           `Subagent spawning is strictly prohibited to prevent infinite loops and resource exhaustion.`,
       );
-      console.error(`🚨 ${error.message}`);
+      await frameworkLogger.log(
+        "enhanced-multi-agent-orchestrator",
+        "subagent-spawn-violation",
+        "error",
+        { message: error.message },
+      );
       throw error;
     }
 

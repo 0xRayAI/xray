@@ -369,8 +369,11 @@ export class GitHookTrigger {
 
     // Ensure .git/hooks directory exists (should exist in git repo)
     if (!fs.existsSync(gitHooksDir)) {
-      console.warn(
-        "⚠️ .git/hooks directory not found - not a git repository or hooks disabled",
+      await frameworkLogger.log(
+        "git-hook-trigger",
+        "git-hooks-directory-not-found",
+        "warning",
+        { gitHooksDir },
       );
       return;
     }
@@ -504,7 +507,7 @@ fi
 
           await frameworkLogger.log('-git-hook-trigger', '-post-commit-validation-passed-in-result-duration-', 'success', { message: '✅ Post-commit: Validation passed in ' + result.duration + 'ms' });
         } catch (error) {
-          console.error('❌ Post-commit validation failed:', error instanceof Error ? error.message : String(error));
+          await frameworkLogger.log('git-hook-trigger', 'post-commit-validation-failed', 'error', { error: error instanceof Error ? error.message : String(error) });
           process.exit(1);
         }
       })();
@@ -580,8 +583,14 @@ fi
             enabled: true
           });
           if (result.cleaned > 0) {
-            await frameworkLogger.log('-git-hook-trigger', '-cleaned-result-cleaned-old-log-files-', 'info', { message: \`🧹 Cleaned \${result.cleaned} old log files\` });
+            await frameworkLogger.log('-git-hook-trigger', '-cleaned-result-cleaned-old-log-files-', 'info', { message: '🧹 Cleaned ' + result.cleaned + ' old log files' });
           }
+          if (result.errors.length > 0) {
+            await frameworkLogger.log('git-hook-trigger', 'log-cleanup-errors', 'error', { errors: result.errors });
+          }
+        } catch (error) {
+          await frameworkLogger.log('git-hook-trigger', 'log-cleanup-failed', 'error', { error: error instanceof Error ? error.message : String(error) });
+        }
           if (result.errors.length > 0) {
             console.error('Log cleanup errors:', result.errors);
           }
@@ -652,24 +661,29 @@ exit 0
       fs.symlinkSync(relativePostCommit, gitPostCommitHook);
       fs.symlinkSync(relativePostPush, gitPostPushHook);
     } catch (error) {
-      console.error("❌ Failed to activate git hooks:", error);
       await frameworkLogger.log(
-        "-git-hook-trigger",
-        "-to-activate-manually-run-",
+        "git-hook-trigger",
+        "git-hooks-activation-failed",
+        "error",
+        { error: String(error) },
+      );
+      await frameworkLogger.log(
+        "git-hook-trigger",
+        "manual-activation-hint",
         "info",
         { message: "💡 To activate manually, run:" },
       );
       await frameworkLogger.log(
-        "-git-hook-trigger",
-        "-ln-s-opencode-hooks-post-commit-git-hooks-post-co",
+        "git-hook-trigger",
+        "manual-activation-command-1",
         "info",
         {
           message: `   ln -s "../../.opencode/hooks/post-commit" ".git/hooks/post-commit"`,
         },
       );
       await frameworkLogger.log(
-        "-git-hook-trigger",
-        "-ln-s-opencode-hooks-post-push-git-hooks-post-push",
+        "git-hook-trigger",
+        "manual-activation-command-2",
         "info",
         {
           message: `   ln -s "../../.opencode/hooks/post-push" ".git/hooks/post-push"`,

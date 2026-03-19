@@ -11,6 +11,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { logToolStart, logToolComplete } from "./tool-event-emitter.js";
 // Dynamic imports for cross-environment compatibility
 let extractCodexMetadata: any;
 let StringRayContextLoader: any;
@@ -226,6 +227,9 @@ export function createStringRayCodexInjectorHook() {
         const jobId = `tool-before-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
         try {
+          // ALWAYS log tool start to activity logger (regardless of test mode or tool type)
+          logToolStart(input.tool, input.args || {});
+
           await frameworkLogger.log(
             "codex-injector",
             "tool.execute.before hook triggered",
@@ -426,6 +430,9 @@ export function createStringRayCodexInjectorHook() {
         const jobId = `tool-after-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
         try {
+          // ALWAYS log tool completion to activity logger (regardless of test mode or tool type)
+          logToolComplete(input.tool, input.args || {}, output);
+
           frameworkLogger.log(
             "codex-injector",
             "tool.execute.after hook triggered",
