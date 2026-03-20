@@ -154,7 +154,11 @@ class RoutingPerformanceAnalyzer {
       const metrics = agentMap.get(agent)!;
       metrics.total++;
       metrics.confidenceSum += confidence;
-      metrics.timestamps.push(outcome.timestamp);
+      // Ensure timestamp is a Date object
+      const ts = outcome.timestamp instanceof Date 
+        ? outcome.timestamp 
+        : new Date(outcome.timestamp);
+      metrics.timestamps.push(ts);
 
       if (confidence >= this.mediumConfidenceThreshold) {
         metrics.highConfidence++;
