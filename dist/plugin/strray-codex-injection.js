@@ -146,6 +146,44 @@ function extractTaskDescription(input) {
     }
     return null;
 }
+/**
+ * Estimate complexity score based on message content
+ * Higher complexity = orchestrator routing
+ * Lower complexity = code-reviewer routing
+ */
+function estimateComplexity(message) {
+    const text = message.toLowerCase();
+    // High complexity indicators
+    const highComplexityKeywords = [
+        "architecture", "system", "design", "complex", "multiple",
+        "integrate", "database", "migration", "refactor",
+        "performance", "optimize", "security", "audit",
+        "orchestrate", "coordinate", "workflow"
+    ];
+    // Low complexity indicators  
+    const lowComplexityKeywords = [
+        "review", "check", "simple", "quick", "fix",
+        "small", "typo", "format", "lint", "test"
+    ];
+    let score = 50; // default medium
+    // Check message length
+    if (message.length > 200)
+        score += 10;
+    if (message.length > 500)
+        score += 15;
+    // Check for high complexity keywords
+    for (const keyword of highComplexityKeywords) {
+        if (text.includes(keyword))
+            score += 8;
+    }
+    // Check for low complexity keywords
+    for (const keyword of lowComplexityKeywords) {
+        if (text.includes(keyword))
+            score -= 5;
+    }
+    // Clamp to 0-100
+    return Math.max(0, Math.min(100, score));
+}
 async function loadTaskSkillRouter() {
     if (taskSkillRouterInstance) {
         return; // Already loaded
@@ -402,34 +440,7 @@ export default async function strrayCodexPlugin(input) {
                         showEssentialLinks: true
                     });
                 }
-                // ============================================================
-                // PROMPT-LEVEL ROUTING: Route user prompts to best agent
-                // ============================================================
-                const userPrompt = String(_input.prompt || _input.message || _input.content || "");
-                if (userPrompt && userPrompt.length > 0) {
-                    try {
-                        await loadTaskSkillRouter();
-                        if (taskSkillRouterInstance) {
-                            const routingResult = taskSkillRouterInstance.routeTask(userPrompt, {
-                                source: "prompt",
-                            });
-                            if (routingResult && routingResult.agent) {
-                                const logger = await getOrCreateLogger(directory);
-                                logger.log(`🎯 Prompt routed: "${userPrompt.slice(0, 50)}${userPrompt.length > 50 ? "..." : ""}" → ${routingResult.agent} (confidence: ${routingResult.confidence})`);
-                                // Add routing context to system prompt
-                                leanPrompt += `\n\n🎯 Recommended Agent: @${routingResult.agent}\n`;
-                                leanPrompt += `📊 Confidence: ${Math.round(routingResult.confidence * 100)}%\n`;
-                                if (routingResult.context?.complexity > 50) {
-                                    leanPrompt += `⚠️ High complexity detected - consider using @orchestrator\n`;
-                                }
-                            }
-                        }
-                    }
-                    catch (e) {
-                        const logger = await getOrCreateLogger(directory);
-                        logger.error("Prompt routing error:", e);
-                    }
-                }
+                // Routing is handled in chat.message hook - this hook only does system prompt injection
                 if (output.system && Array.isArray(output.system)) {
                     output.system = [leanPrompt];
                 }
@@ -465,33 +476,7 @@ export default async function strrayCodexPlugin(input) {
                 }
             }
             const { tool, args } = input;
-            // ============================================================
-            // TASK ROUTING: Analyze task and route to best agent
-            // Enabled in v1.10.5 - provides analytics data
-            // ============================================================
-            const taskDescription = extractTaskDescription(input);
-            if (taskDescription && featuresConfigLoader) {
-                try {
-                    await loadTaskSkillRouter();
-                    if (taskSkillRouterInstance) {
-                        const routingResult = taskSkillRouterInstance.routeTask(taskDescription, {
-                            toolName: tool,
-                        });
-                        if (routingResult && routingResult.agent) {
-                            logger.log(`🎯 Task routed: "${taskDescription.slice(0, 50)}..." → ${routingResult.agent} (confidence: ${routingResult.confidence})`);
-                            // Store routing result for downstream processing
-                            output._strrayRouting = routingResult;
-                            // If complexity is high, log a warning
-                            if (routingResult.context?.complexity > 50) {
-                                logger.log(`⚠️ High complexity task detected (${routingResult.context.complexity}) - consider multi-agent orchestration`);
-                            }
-                        }
-                    }
-                }
-                catch (e) {
-                    logger.error("Task routing error:", e);
-                }
-            }
+            // Routing is handled in chat.message hook - this hook only does tool execution logging
             // ENFORCER QUALITY GATE CHECK - Block on violations
             await importQualityGate(directory);
             if (!runQualityGateWithLogging) {
@@ -715,46 +700,100 @@ export default async function strrayCodexPlugin(input) {
         },
         /**
          * chat.message - Intercept user messages for routing
-         * This hook fires when the user's message is received
+         * Output contains message and parts with user content
          */
         "chat.message": async (input, output) => {
             const logger = await getOrCreateLogger(directory);
-            // Get user message
-            const userContent = String(input.content || input.message || input.prompt || "");
-            if (!userContent || userContent.length === 0) {
+            // DEBUG: Log ALL output
+            const debugLogPath = path.join(process.cwd(), "logs", "framework", "routing-debug.log");
+            fs.appendFileSync(debugLogPath, `\n[${new Date().toISOString()}] === chat.message HOOK FIRED ===\n`);
+            fs.appendFileSync(debugLogPath, `OUTPUT KEYS: ${JSON.stringify(Object.keys(output || {}))}\n`);
+            fs.appendFileSync(debugLogPath, `MESSAGE: ${JSON.stringify(output?.message)}\n`);
+            fs.appendFileSync(debugLogPath, `PARTS: ${JSON.stringify(output?.parts)}\n`);
+            // Extract user message from parts (TextPart has type="text" and text field)
+            let userMessage = "";
+            if (output?.parts && Array.isArray(output.parts)) {
+                for (const part of output.parts) {
+                    if (part?.type === "text" && part?.text) {
+                        userMessage = part.text;
+                        break;
+                    }
+                }
+            }
+            fs.appendFileSync(debugLogPath, `userMessage: "${userMessage.slice(0, 100)}"\n`);
+            if (!userMessage || userMessage.length === 0) {
+                fs.appendFileSync(debugLogPath, `SKIP: No user text found\n`);
                 return;
             }
-            logger.log(`👤 User message received: "${userContent.slice(0, 50)}${userContent.length > 50 ? "..." : ""}"`);
+            logger.log(`👤 User message: "${userMessage.slice(0, 50)}..."`);
             try {
                 await loadTaskSkillRouter();
                 if (taskSkillRouterInstance) {
-                    // Route based on user content
-                    const routingResult = taskSkillRouterInstance.routeTask(userContent, {
-                        source: "user_message",
+                    // Get complexity score for tiebreaking
+                    let complexityScore = 50; // default medium
+                    try {
+                        if (featuresConfigLoader) {
+                            const config = featuresConfigLoader.loadConfig();
+                            if (config.model_routing?.complexity?.enabled) {
+                                // Estimate complexity based on message length and keywords
+                                complexityScore = estimateComplexity(userMessage);
+                            }
+                        }
+                    }
+                    catch (e) {
+                        // Silent fail for complexity estimation
+                    }
+                    fs.appendFileSync(debugLogPath, `Complexity estimated: ${complexityScore}\n`);
+                    // Route with complexity context
+                    const routingResult = taskSkillRouterInstance.routeTask(userMessage, {
+                        source: "chat_message",
+                        complexity: complexityScore,
                     });
+                    fs.appendFileSync(debugLogPath, `Routing result: ${JSON.stringify(routingResult)}\n`);
                     if (routingResult && routingResult.agent) {
-                        logger.log(`🎯 User message routed to: @${routingResult.agent} (confidence: ${Math.round(routingResult.confidence * 100)}%)`);
-                        // Add routing hint to user's message
-                        const routingHint = `[Suggested Agent: @${routingResult.agent}]\n`;
-                        // Modify output to include routing hint
-                        if (output.content !== undefined) {
-                            output.content = routingHint + output.content;
+                        // Apply weighted confidence scoring
+                        let finalConfidence = routingResult.confidence;
+                        let routingMethod = "keyword";
+                        // If keyword confidence is low, use complexity-based routing
+                        if (routingResult.confidence < 0.7 && complexityScore > 50) {
+                            // High complexity tasks get orchestrator boost
+                            if (complexityScore > 70) {
+                                routingResult.agent = "orchestrator";
+                                finalConfidence = Math.min(0.85, routingResult.confidence + 0.15);
+                                routingMethod = "complexity";
+                            }
                         }
-                        else if (output.message !== undefined) {
-                            output.message = routingHint + output.message;
+                        // If low complexity and low confidence, boost code-reviewer
+                        if (routingResult.confidence < 0.6 && complexityScore < 30) {
+                            routingResult.agent = "code-reviewer";
+                            finalConfidence = Math.min(0.75, routingResult.confidence + 0.15);
+                            routingMethod = "complexity";
                         }
-                        // Log routing outcome
-                        logToolActivity(directory, "routing", "user_message", {
-                            agent: routingResult.agent,
-                            confidence: routingResult.confidence,
-                            skill: routingResult.skill,
-                        });
+                        logger.log(`🎯 Routed to: @${routingResult.agent} (${Math.round(finalConfidence * 100)}%) via ${routingMethod}`);
+                        fs.appendFileSync(debugLogPath, `Final agent: ${routingResult.agent}, confidence: ${finalConfidence}, method: ${routingMethod}\n`);
+                        // Store routing in session for later use
+                        const sessionRoutingPath = path.join(process.cwd(), "logs", "framework", "session-routing.json");
+                        try {
+                            fs.appendFileSync(sessionRoutingPath, JSON.stringify({
+                                timestamp: new Date().toISOString(),
+                                message: userMessage.slice(0, 100),
+                                agent: routingResult.agent,
+                                confidence: finalConfidence,
+                                method: routingMethod,
+                                complexity: complexityScore,
+                            }) + "\n");
+                        }
+                        catch (e) {
+                            // Silent fail for session routing logging
+                        }
                     }
                 }
             }
             catch (e) {
-                logger.error("User message routing error:", e);
+                logger.error("Chat message routing error:", e);
+                fs.appendFileSync(debugLogPath, `ERROR: ${e}\n`);
             }
+            fs.appendFileSync(debugLogPath, `=== END chat.message ===\n`);
         },
         config: async (_config) => {
             const logger = await getOrCreateLogger(directory);

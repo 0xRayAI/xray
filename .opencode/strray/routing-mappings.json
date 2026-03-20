@@ -3,8 +3,19 @@
     "keywords": [
       "design",
       "architect",
+      "plan",
+      "system",
+      "model",
+      "pattern",
+      "scalability",
+      "dependency",
       "structure",
-      "blueprint"
+      "architecture",
+      "system-integration",
+      "delegation",
+      "complexity-analysis",
+      "solid",
+      "clean-architecture"
     ],
     "skill": "architecture-patterns",
     "agent": "architect",
@@ -17,7 +28,11 @@
       "interface",
       "mockup",
       "prototype",
-      "figma"
+      "figma",
+      "wireframe",
+      "css",
+      "html",
+      "component"
     ],
     "skill": "ui-ux-design",
     "agent": "frontend-ui-ux-engineer",
@@ -28,9 +43,7 @@
       "frontend",
       "react",
       "vue",
-      "angular",
-      "component",
-      "css"
+      "angular"
     ],
     "skill": "frontend-development",
     "agent": "frontend-engineer",
@@ -56,7 +69,23 @@
       "broken",
       "error",
       "crash",
-      "bug"
+      "bug",
+      "issue",
+      "resolve",
+      "root cause",
+      "debugging",
+      "error-analysis",
+      "fix-validation",
+      "surgical-fix",
+      "stack-trace",
+      "error-investigation",
+      "triage",
+      "surgical-fix",
+      "root-cause",
+      "debugging",
+      "crash",
+      "exception",
+      "fix-validation"
     ],
     "skill": "code-review",
     "agent": "bug-triage-specialist",
@@ -68,7 +97,20 @@
       "audit",
       "assess",
       "evaluate",
-      "inspect"
+      "check",
+      "inspect",
+      "quality",
+      "validate",
+      "code-review",
+      "quality-assurance",
+      "monitoring",
+      "analytics",
+      "compliance-validation",
+      "pull-request",
+      "pr-review",
+      "linting",
+      "quality-metrics",
+      "improvement"
     ],
     "skill": "code-review",
     "agent": "code-reviewer",
@@ -78,9 +120,32 @@
     "keywords": [
       "security",
       "vulnerability",
+      "threat",
+      "scan",
+      "risk",
+      "exploit",
+      "secure",
       "pentest",
       "auth",
-      "encrypt"
+      "encrypt",
+      "vulnerability-detection",
+      "compliance-monitoring",
+      "threat-analysis",
+      "security-validation",
+      "audit-trail",
+      "owasp",
+      "vulnerability",
+      "threat",
+      "secrets",
+      "hardcoded",
+      "outdated",
+      "permissions",
+      "env-exposure",
+      "ssl",
+      "tls",
+      "https",
+      "dependency-audit",
+      "owasp"
     ],
     "skill": "security-audit",
     "agent": "security-auditor",
@@ -92,8 +157,26 @@
       "testing",
       "jest",
       "coverage",
-      "unit test",
-      "e2e"
+      "unit",
+      "e2e",
+      "cypress",
+      "qa",
+      "spec",
+      "verify",
+      "validate",
+      "test-auto-creation",
+      "test-strategy-design",
+      "coverage-optimization",
+      "behavioral-testing",
+      "performance-validation",
+      "qa",
+      "quality-assurance",
+      "test-automation",
+      "unit-test",
+      "integration-test",
+      "e2e-test",
+      "test-coverage",
+      "coverage-analysis"
     ],
     "skill": "testing-best-practices",
     "agent": "testing-lead",
@@ -103,9 +186,21 @@
     "keywords": [
       "refactor",
       "cleanup",
-      "optimize",
       "improve",
-      "restructure"
+      "restructure",
+      "modernize",
+      "debt",
+      "dry",
+      "consolidate",
+      "technical-debt-elimination",
+      "code-consolidation",
+      "surgical-refactoring",
+      "maintainability-enhancement",
+      "code-quality",
+      "maintainability",
+      "restructure",
+      "consolidation",
+      "debt"
     ],
     "skill": "refactoring-strategies",
     "agent": "refactorer",
@@ -114,11 +209,31 @@
   {
     "keywords": [
       "performance",
+      "optimize",
+      "bottleneck",
+      "benchmark",
+      "profile",
       "speed",
-      "slow",
-      "fast",
       "latency",
-      "benchmark"
+      "performance-profiling",
+      "resource-optimization",
+      "load-testing",
+      "bottleneck-analysis",
+      "caching-optimization",
+      "memory-optimization",
+      "core-web-vitals",
+      "lcp",
+      "inp",
+      "cls",
+      "metrics",
+      "build-time",
+      "memory-usage",
+      "load-time",
+      "bundle-size",
+      "optimization",
+      "bottleneck",
+      "profiling",
+      "monitoring"
     ],
     "skill": "performance-optimization",
     "agent": "performance-engineer",
@@ -127,11 +242,13 @@
   {
     "keywords": [
       "deploy",
-      "devops",
+      "ci/cd",
       "pipeline",
       "docker",
       "kubernetes",
-      "aws"
+      "infrastructure",
+      "aws",
+      "cloud"
     ],
     "skill": "devops-deployment",
     "agent": "devops-engineer",
@@ -140,11 +257,14 @@
   {
     "keywords": [
       "database",
+      "db",
       "sql",
       "schema",
       "migration",
       "query",
-      "postgres"
+      "postgres",
+      "mysql",
+      "mongodb"
     ],
     "skill": "database-design",
     "agent": "database-engineer",
@@ -157,7 +277,9 @@
       "readme",
       "wiki",
       "guide",
-      "manual"
+      "manual",
+      "document",
+      "write"
     ],
     "skill": "documentation-generation",
     "agent": "tech-writer",
@@ -165,11 +287,24 @@
   },
   {
     "keywords": [
-      "research",
-      "find",
       "search",
+      "find",
+      "explore",
+      "research",
+      "locate",
+      "lookup",
+      "where",
+      "implementation",
+      "codebase-exploration",
+      "documentation-retrieval",
+      "pattern-recognition",
+      "search-optimization",
+      "context-building",
+      "explore",
       "discover",
-      "investigate"
+      "pattern",
+      "context",
+      "codebase"
     ],
     "skill": "git-workflow",
     "agent": "researcher",
@@ -181,7 +316,10 @@
       "narrative",
       "journey",
       "saga",
-      "reflection"
+      "reflection",
+      "write a",
+      "deep-reflection",
+      "technical-story"
     ],
     "skill": "storytelling",
     "agent": "storyteller",
@@ -194,7 +332,8 @@
       "ranking",
       "google",
       "meta",
-      "sitemap"
+      "sitemap",
+      "optimize"
     ],
     "skill": "seo-consultant",
     "agent": "seo-consultant",
@@ -206,7 +345,9 @@
       "growth",
       "content",
       "blog",
-      "campaign"
+      "campaign",
+      "metric",
+      "acquisition"
     ],
     "skill": "growth-strategist",
     "agent": "growth-strategist",
@@ -217,7 +358,8 @@
       "mobile",
       "ios",
       "android",
-      "app",
+      "react-native",
+      "flutter",
       "swift",
       "kotlin"
     ],
@@ -227,11 +369,13 @@
   },
   {
     "keywords": [
-      "logs",
+      "log",
       "monitor",
-      "trace",
-      "telemetry",
-      "observability"
+      "anomaly",
+      "alert",
+      "observability",
+      "watch",
+      "trace"
     ],
     "skill": "log-monitor",
     "agent": "log-monitor",
@@ -239,11 +383,13 @@
   },
   {
     "keywords": [
-      "visual",
       "image",
-      "screenshot",
       "diagram",
-      "photo"
+      "visual",
+      "screenshot",
+      "photo",
+      "look at",
+      "analyze"
     ],
     "skill": "multimodal-looker",
     "agent": "multimodal-looker",
@@ -254,7 +400,27 @@
       "complexity",
       "metrics",
       "static analysis",
-      "measure"
+      "measure",
+      "assess",
+      "code-analysis",
+      "system-analysis",
+      "dependency-analysis",
+      "performance-analysis",
+      "security-analysis",
+      "architecture-analysis",
+      "technical-debt-assessment",
+      "integration-analysis",
+      "comprehensive-reporting",
+      "examine",
+      "static-analysis",
+      "complexity",
+      "metrics",
+      "code-quality",
+      "anti-pattern",
+      "lint",
+      "eslint",
+      "prettier",
+      "format"
     ],
     "skill": "code-analyzer",
     "agent": "code-analyzer",
@@ -267,7 +433,13 @@
       "merge",
       "branch",
       "conflict",
-      "repository"
+      "repository",
+      "version",
+      "explore",
+      "discover",
+      "pattern",
+      "context",
+      "codebase"
     ],
     "skill": "git-workflow",
     "agent": "researcher",
@@ -277,9 +449,29 @@
     "keywords": [
       "enforce",
       "compliance",
-      "rules",
-      "standards",
-      "codex"
+      "rule",
+      "standard",
+      "codex",
+      "block",
+      "prevent",
+      "error-prevention",
+      "systematic-validation",
+      "codex-enforcement",
+      "security-policy",
+      "compliance",
+      "threshold",
+      "audit",
+      "lint",
+      "pre-commit",
+      "introspection",
+      "bundle-size",
+      "test-coverage",
+      "duplication",
+      "jscpd",
+      "syntax-error",
+      "error-handling",
+      "convention",
+      "framework-compliance"
     ],
     "skill": "enforcer",
     "agent": "enforcer",
@@ -289,9 +481,15 @@
     "keywords": [
       "orchestrate",
       "coordinate",
+      "delegate",
+      "workflow",
       "manage",
-      "complex",
-      "workflow"
+      "multi-step",
+      "multi-agent-orchestration",
+      "workflow-management",
+      "task-delegation",
+      "conflict-resolution",
+      "session-management"
     ],
     "skill": "orchestrator",
     "agent": "orchestrator",
@@ -304,10 +502,51 @@
       "roadmap",
       "vision",
       "goal",
-      "prioritize"
+      "objective",
+      "prioritize",
+      "decide"
     ],
     "skill": "strategist",
     "agent": "strategist",
     "confidence": 0.9
+  },
+  {
+    "keywords": [
+      "format",
+      "formatting",
+      "prettier",
+      "lint:fix",
+      "auto-format",
+      "code-style"
+    ],
+    "skill": "auto-format",
+    "agent": "enforcer",
+    "confidence": 0.9
+  },
+  {
+    "keywords": [
+      "session",
+      "state",
+      "persistence",
+      "recovery",
+      "backup"
+    ],
+    "skill": "session-management",
+    "agent": "orchestrator",
+    "confidence": 0.85
+  },
+  {
+    "keywords": [
+      "api",
+      "endpoint",
+      "rest",
+      "graphql",
+      "request",
+      "response",
+      "openapi"
+    ],
+    "skill": "api-design",
+    "agent": "backend-engineer",
+    "confidence": 0.92
   }
 ]
