@@ -337,10 +337,10 @@ class RoutingPerformanceAnalyzer {
     const successRate =
       outcomes.length > 0 ? successful / outcomes.length : 0;
 
-    const promptData = routingOutcomeTracker.getPromptData();
-    const totalConfidence = promptData.reduce((sum, p) => sum + (p.confidence || 0), 0);
+    // Confidence is in outcomes, not promptData
+    const totalConfidence = outcomes.reduce((sum, o) => sum + (o.confidence || 0), 0);
     const avgConfidence =
-      promptData.length > 0 ? totalConfidence / promptData.length : 0;
+      outcomes.length > 0 ? totalConfidence / outcomes.length : 0;
 
     return { successRate, avgConfidence };
   }
@@ -357,13 +357,25 @@ class RoutingPerformanceAnalyzer {
       return { start: now, end: now };
     }
 
+    const getTime = (ts: Date | string) => {
+      const d = ts instanceof Date ? ts : new Date(ts as string);
+      return d.getTime();
+    };
+
     const sorted = [...outcomes].sort(
-      (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+      (a, b) => getTime(a.timestamp) - getTime(b.timestamp),
     );
 
+    const now = new Date();
+    const firstOutcome = sorted[0];
+    const lastOutcome = sorted[sorted.length - 1];
+    
+    const firstTs = firstOutcome?.timestamp;
+    const lastTs = lastOutcome?.timestamp;
+    
     return {
-      start: sorted[0]?.timestamp ?? new Date(),
-      end: sorted[sorted.length - 1]?.timestamp ?? new Date(),
+      start: firstTs instanceof Date ? firstTs : (firstTs ? new Date(firstTs as string) : now),
+      end: lastTs instanceof Date ? lastTs : (lastTs ? new Date(lastTs as string) : now),
     };
   }
 

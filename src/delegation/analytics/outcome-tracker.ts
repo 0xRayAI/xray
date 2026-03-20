@@ -42,7 +42,7 @@ export class RoutingOutcomeTracker {
     const cwd = process.cwd() || '.';
     this.persistencePath = `${cwd}/logs/framework/routing-outcomes.json`;
     this.initializeFile();
-    this.loadFromDisk();
+    // Note: Don't auto-load here - use reloadFromDisk() to load existing data
   }
 
   /**
@@ -71,16 +71,15 @@ export class RoutingOutcomeTracker {
   /**
    * Load outcomes from disk on initialization
    */
-  private async loadFromDisk(): Promise<void> {
+  private loadFromDisk(): void {
     try {
-      const fs = await import('fs');
+      const fs = require('fs');
       if (fs.existsSync(this.persistencePath)) {
         const data = fs.readFileSync(this.persistencePath, 'utf-8');
         const parsed = JSON.parse(data);
         if (Array.isArray(parsed)) {
           // Load outcomes, keeping within max limit
           this.outcomes = parsed.slice(-this.maxOutcomes);
-          // Silent load - no console output
         }
       }
     } catch (error) {
@@ -157,8 +156,8 @@ export class RoutingOutcomeTracker {
   /**
    * Force reload from disk - call this before analytics to get latest data
    */
-  reloadFromDisk(): void {
-    this.loadFromDisk();
+  async reloadFromDisk(): Promise<void> {
+    await this.loadFromDisk();
   }
 
   /**
@@ -218,6 +217,13 @@ export class RoutingOutcomeTracker {
    */
   clear(): void {
     this.outcomes = [];
+    // Also clear the file to ensure clean state
+    try {
+      const fs = require('fs');
+      fs.writeFileSync(this.persistencePath, '[]');
+    } catch (error) {
+      // Silent fail
+    }
   }
 
   /**

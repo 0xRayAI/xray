@@ -1,9 +1,9 @@
 {
   "memory:baseline": {
-    "heapUsed": 13.74,
-    "heapTotal": 20.11,
+    "heapUsed": 13.39,
+    "heapTotal": 20.36,
     "external": 1.88,
-    "rss": 57.95,
-    "timestamp": 1774046221039
+    "rss": 58.53,
+    "timestamp": 1774049917157
   }
 }
