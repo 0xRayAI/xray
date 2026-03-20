@@ -23,6 +23,7 @@ import {
   RoutingOutcomeTracker,
   RoutingAnalytics,
   LearningEngine,
+  routingOutcomeTracker,
 } from './analytics/index.js';
 import {
   RouterCore,
@@ -117,8 +118,8 @@ export class TaskSkillRouter {
   private learningEngine: LearningEngine;
 
   constructor(stateManager?: StringRayStateManager) {
-    // Initialize analytics
-    this.outcomeTracker = new RoutingOutcomeTracker();
+    // Initialize analytics - use singleton for shared state with CLI
+    this.outcomeTracker = routingOutcomeTracker;
     this.analytics = new RoutingAnalytics(this.outcomeTracker);
     this.learningEngine = new LearningEngine(false);
 
@@ -146,7 +147,8 @@ export class TaskSkillRouter {
         minConfidenceThreshold: ROUTING_CONFIG.MIN_CONFIDENCE_THRESHOLD,
         minHistorySuccessRate: ROUTING_CONFIG.MIN_HISTORY_SUCCESS_RATE,
         escalateOnLowConfidence: ROUTING_CONFIG.ESCALATE_ON_LOW_CONFIDENCE,
-      }
+      },
+      this.outcomeTracker
     );
     
     if (stateManager) {
@@ -325,19 +327,16 @@ export class TaskSkillRouter {
 
   /**
    * Track routing result for learning
+   * Uses RouterCore.recordExecutionOutcome to update existing pending outcome
    */
   trackResult(taskId: string, agent: string, success: boolean, skill?: string): void {
     const skillName = skill || this.getSkillForAgent(agent);
     
     this.historyMatcher.track(taskId, agent, skillName, success);
-    this.outcomeTracker.recordOutcome({
-      taskId,
-      taskDescription: `Task ${taskId}`,
-      routedAgent: agent,
-      routedSkill: skillName,
-      confidence: 0.8,
-      success,
-    });
+    
+    // Update existing pending outcome in RouterCore
+    this.routerCore.recordExecutionOutcome(taskId, agent, skillName, success);
+    
     this.saveHistory();
 
     frameworkLogger.log(

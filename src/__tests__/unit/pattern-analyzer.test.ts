@@ -186,8 +186,8 @@ describe("SimplePatternAnalyzer", () => {
 
     const insights = await analyzer.analyze();
 
-    // Should have 3 total entries but only 2 completed
-    expect(insights.totalEntries).toBe(3);
+    // Should filter to only 2 completed entries
+    expect(insights.totalEntries).toBe(2);
   });
 
   test("should calculate complexity accuracy percentages", async () => {

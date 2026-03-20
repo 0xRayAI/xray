@@ -140,6 +140,21 @@ export class RoutingOutcomeTracker {
   }
 
   /**
+   * Update an existing outcome by taskId
+   * @param taskId The task ID to update
+   * @param updates The fields to update
+   * @returns true if updated, false if not found
+   */
+  updateOutcome(taskId: string, updates: Partial<RoutingOutcome>): boolean {
+    const index = this.outcomes.findIndex(o => o.taskId === taskId);
+    if (index === -1) return false;
+    
+    this.outcomes[index] = { ...this.outcomes[index], ...updates } as RoutingOutcome;
+    this.saveToDisk();
+    return true;
+  }
+
+  /**
    * Force reload from disk - call this before analytics to get latest data
    */
   reloadFromDisk(): void {

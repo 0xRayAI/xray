@@ -27,6 +27,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { memoryMonitor } from "../monitoring/memory-monitor.js";
 import { strRayConfigLoader } from "./config-loader.js";
 import { activity } from "./activity-logger.js";
+import { inferenceTuner } from "../services/inference-tuner.js";
 
 /**
  * Set up graceful interruption handling to prevent JSON parsing errors
@@ -114,6 +115,7 @@ export interface BootSequenceConfig {
   sessionManagement: boolean;
   processorActivation: boolean;
   agentLoading: boolean;
+  autoStartInferenceTuner: boolean;
 }
 
 export interface BootResult {
@@ -124,6 +126,7 @@ export interface BootResult {
   enforcementEnabled: boolean;
   codexComplianceActive: boolean;
   agentsLoaded: string[];
+  inferenceTunerActive: boolean;
   errors: string[];
 }
 
@@ -155,6 +158,7 @@ export class BootOrchestrator {
       sessionManagement: true,
       processorActivation: true,
       agentLoading: true,
+      autoStartInferenceTuner: false,
       ...config,
     };
   }
@@ -622,6 +626,41 @@ export class BootOrchestrator {
     }
   }
 
+  private async initializeInferenceTuner(): Promise<boolean> {
+    if (!this.config.autoStartInferenceTuner) {
+      await frameworkLogger.log(
+        "boot-orchestrator",
+        "inference-tuner-disabled",
+        "info",
+        {},
+      );
+      return false;
+    }
+
+    try {
+      inferenceTuner.start();
+      this.stateManager.set("inference:tuner_active", true);
+      this.stateManager.set("inference:tuner_status", inferenceTuner.getStatus());
+      
+      await frameworkLogger.log(
+        "boot-orchestrator",
+        "inference-tuner-started",
+        "info",
+        { status: inferenceTuner.getStatus() },
+      );
+      
+      return true;
+    } catch (error) {
+      await frameworkLogger.log(
+        "boot-orchestrator",
+        "inference-tuner-initialization-failed",
+        "error",
+        { error: String(error) },
+      );
+      return false;
+    }
+  }
+
   private async runInitialSecurityAudit(): Promise<any> {
     try {
       const securityAuditorPath = pathResolver.resolveModulePath(
@@ -718,6 +757,7 @@ export class BootOrchestrator {
       enforcementEnabled: this.stateManager.get("enforcement:active") || false,
       codexComplianceActive:
         this.stateManager.get("compliance:active") || false,
+      inferenceTunerActive: this.stateManager.get("inference:tuner_active") || false,
       agentsLoaded: Array.isArray(agentsLoaded) ? agentsLoaded : [],
       errors,
     };
@@ -867,6 +907,7 @@ export class BootOrchestrator {
       agentsLoaded: [],
       enforcementEnabled: false,
       codexComplianceActive: false,
+      inferenceTunerActive: false,
       errors: [],
     };
 
@@ -1059,6 +1100,9 @@ export class BootOrchestrator {
 
       // Finalize security integration
       await this.finalizeSecurityIntegration();
+
+      // Initialize inference tuner (autonomous learning)
+      result.inferenceTunerActive = await this.initializeInferenceTuner();
 
       result.success = true;
     } catch (error) {

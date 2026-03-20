@@ -1,7 +1,7 @@
 /**
  * Learning Engine
  *
- * P9 learning system stubs and future learning capabilities.
+ * P9 learning system - analyzes patterns, detects drift, and improves routing.
  * Extracted from task-skill-router.ts as part of Phase 2 refactoring.
  *
  * @version 1.0.0
@@ -18,13 +18,7 @@ import {
 /**
  * LearningEngine class
  *
- * Placeholder implementation for P9 learning capabilities.
- * This class provides the interface for future learning features
- * including pattern analysis, adaptive thresholds, and automatic
- * routing optimization.
- *
- * Note: Currently returns placeholder data for test script compatibility.
- * Future implementation will include:
+ * Active implementation for P9 learning capabilities:
  * - Pattern drift detection
  * - Automatic routing refinement
  * - Success rate learning
@@ -39,17 +33,12 @@ export class LearningEngine {
     successRate: number;
   }> = [];
 
-  /**
-   * Create a new learning engine
-   * @param enabled Whether learning is enabled (default: false)
-   */
-  constructor(enabled = false) {
+  constructor(enabled = true) {
     this.enabled = enabled;
   }
 
   /**
    * Get P9 learning statistics
-   * @returns Current learning statistics
    */
   getP9LearningStats(): P9LearningStats {
     const totalLearnings = this.learningHistory.length;
@@ -63,7 +52,7 @@ export class LearningEngine {
 
     return {
       totalLearnings,
-      successRate: 1.0, // Placeholder
+      successRate: this.calculateOverallSuccessRate(),
       lastLearning: lastHistory?.timestamp ?? null,
       averageLearningTime: avgLearningTime,
       enabled: this.enabled,
@@ -71,39 +60,84 @@ export class LearningEngine {
   }
 
   /**
-   * Get pattern drift analysis
-   * @returns Drift analysis result
+   * Calculate overall success rate from outcome tracker
+   */
+  private calculateOverallSuccessRate(): number {
+    try {
+      const { routingOutcomeTracker } = require('./outcome-tracker.js');
+      const outcomes = routingOutcomeTracker.getOutcomes();
+      if (outcomes.length === 0) return 1.0;
+      
+      const successes = outcomes.filter((o: any) => o.success).length;
+      return successes / outcomes.length;
+    } catch {
+      return 1.0;
+    }
+  }
+
+  /**
+   * Get pattern drift analysis from performance tracker
    */
   getPatternDriftAnalysis(): PatternDriftAnalysis {
-    // Placeholder implementation
-    // Future: Analyze patterns over time to detect drift
-    return {
-      driftDetected: false,
-      affectedPatterns: [],
-      severity: 'low',
-    };
+    if (!this.enabled) {
+      return {
+        driftDetected: false,
+        affectedPatterns: [],
+        severity: 'low',
+      };
+    }
+
+    try {
+      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
+      const driftAnalyses = patternPerformanceTracker.getAllDriftAnalyses();
+      const significantDrift = driftAnalyses.filter((a: any) => a.drifted);
+
+      return {
+        driftDetected: significantDrift.length > 0,
+        affectedPatterns: significantDrift.map((a: any) => a.patternId),
+        severity: significantDrift.length > 5 ? 'high' : significantDrift.length > 0 ? 'medium' : 'low',
+      };
+    } catch {
+      return {
+        driftDetected: false,
+        affectedPatterns: [],
+        severity: 'low',
+      };
+    }
   }
 
   /**
    * Get adaptive thresholds based on learned data
-   * @returns Adaptive threshold configuration
    */
   getAdaptiveThresholds(): AdaptiveThresholds {
-    // Placeholder implementation
-    // Future: Calculate thresholds based on historical performance
-    return {
-      overall: {
-        confidenceMin: 0.7,
-        confidenceMax: 0.95,
-        frequencyMin: 5,
-        frequencyMax: 100,
-      },
-    };
+    if (!this.enabled) {
+      return {
+        overall: {
+          confidenceMin: 0.7,
+          confidenceMax: 0.95,
+          frequencyMin: 5,
+          frequencyMax: 100,
+        },
+      };
+    }
+
+    try {
+      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
+      return patternPerformanceTracker.calculateAdaptiveThresholds();
+    } catch {
+      return {
+        overall: {
+          confidenceMin: 0.7,
+          confidenceMax: 0.95,
+          frequencyMin: 5,
+          frequencyMax: 100,
+        },
+      };
+    }
   }
 
   /**
    * Trigger P9 learning process
-   * @returns Learning result with progress information
    */
   async triggerLearning(): Promise<LearningResult> {
     if (!this.enabled) {
@@ -114,27 +148,76 @@ export class LearningEngine {
       };
     }
 
-    // Placeholder implementation
-    // Future: Analyze patterns, detect drift, and adapt routing
-    const result: LearningResult = {
-      learningStarted: true,
-      patternsAnalyzed: 0,
-      adaptations: 0,
-    };
+    try {
+      // Import dependencies
+      const { routingOutcomeTracker } = await import('./outcome-tracker.js');
+      const { patternPerformanceTracker } = await import('../../analytics/pattern-performance-tracker.js');
+      const { emergingPatternDetector } = await import('../../analytics/emerging-pattern-detector.js');
+      const { patternLearningEngine } = await import('../../analytics/pattern-learning-engine.js');
 
-    this.learningHistory.push({
-      timestamp: new Date(),
-      patternsAnalyzed: result.patternsAnalyzed,
-      adaptations: result.adaptations,
-      successRate: 1.0,
-    });
+      // Reload fresh data from disk
+      routingOutcomeTracker.reloadFromDisk();
+      
+      const outcomes = routingOutcomeTracker.getOutcomes();
+      const patternMetrics = patternPerformanceTracker.getAllPatternMetrics();
+      
+      // Detect emerging patterns
+      const emergentResult = emergingPatternDetector.detectEmergingPatterns(
+        outcomes.map((o: any) => ({
+          taskId: o.taskId,
+          taskDescription: o.taskDescription || o.taskId,
+          routedAgent: o.routedAgent,
+          routedSkill: o.routedSkill,
+          confidence: o.confidence,
+          timestamp: new Date(o.timestamp),
+          success: o.success ?? false
+        }))
+      );
+      
+      // Learn from data - filter outcomes with success defined and cast type
+      const existingMappings: any[] = [];
+      const validOutcomes = outcomes
+        .filter((o) => o.success !== undefined)
+        .map((o) => ({
+          taskId: o.taskId,
+          taskDescription: o.taskDescription || o.taskId,
+          routedAgent: o.routedAgent,
+          routedSkill: o.routedSkill,
+          confidence: o.confidence,
+          success: o.success as boolean
+        }));
+      const learningResult = patternLearningEngine.learnFromData(validOutcomes, existingMappings);
+      
+      const patternsAnalyzed = patternMetrics.length + emergentResult.emergentPatterns.length;
+      const adaptations = learningResult.newPatterns.length + 
+                           learningResult.modifiedPatterns.length + 
+                           learningResult.removedPatterns.length;
 
-    return result;
+      // Record in history
+      this.learningHistory.push({
+        timestamp: new Date(),
+        patternsAnalyzed,
+        adaptations,
+        successRate: this.calculateOverallSuccessRate(),
+      });
+
+      return {
+        learningStarted: true,
+        patternsAnalyzed,
+        adaptations,
+      };
+    } catch (error) {
+      console.error('Learning engine error:', error);
+      return {
+        learningStarted: false,
+        patternsAnalyzed: 0,
+        adaptations: 0,
+      };
+    }
   }
 
   /**
    * Enable or disable learning
-   * @param enabled Whether learning should be enabled
    */
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -142,7 +225,6 @@ export class LearningEngine {
 
   /**
    * Check if learning is enabled
-   * @returns Whether learning is enabled
    */
   isEnabled(): boolean {
     return this.enabled;
@@ -150,7 +232,6 @@ export class LearningEngine {
 
   /**
    * Get learning history
-   * @returns Array of learning history entries
    */
   getLearningHistory(): Array<{
     timestamp: Date;
@@ -170,39 +251,88 @@ export class LearningEngine {
 
   /**
    * Analyze a specific pattern for optimization opportunities
-   * @param pattern The pattern to analyze
-   * @returns Analysis result with recommendations
    */
-  analyzePattern(pattern: string): {
+  analyzePattern(patternId: string): {
     optimized: boolean;
     recommendations: string[];
     confidence: number;
   } {
-    // Placeholder implementation
-    // Future: Analyze pattern and provide optimization recommendations
-    return {
-      optimized: false,
-      recommendations: [],
-      confidence: 0.5,
-    };
+    try {
+      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
+      const metrics = patternPerformanceTracker.getPatternMetrics(patternId);
+      
+      if (!metrics) {
+        return { optimized: false, recommendations: ['Pattern not found'], confidence: 0 };
+      }
+
+      const recommendations: string[] = [];
+      
+      if (metrics.successRate < 0.7) {
+        recommendations.push('Low success rate - consider adjusting confidence threshold');
+      }
+      if (metrics.totalUsages > 20 && metrics.successRate < 0.5) {
+        recommendations.push('Pattern consistently underperforming - consider removal');
+      }
+      if (metrics.avgConfidence < 0.6) {
+        recommendations.push('Low average confidence - verify keyword mapping');
+      }
+
+      return {
+        optimized: recommendations.length === 0,
+        recommendations,
+        confidence: Math.min(1, metrics.totalUsages / 30),
+      };
+    } catch {
+      return { optimized: false, recommendations: [], confidence: 0.5 };
+    }
   }
 
   /**
    * Suggest routing improvements based on learning
-   * @returns Array of suggested improvements
    */
   suggestImprovements(): Array<{
     type: 'mapping' | 'threshold' | 'confidence';
     description: string;
     impact: 'low' | 'medium' | 'high';
   }> {
-    // Placeholder implementation
-    // Future: Analyze data and suggest concrete improvements
-    return [];
+    const suggestions: Array<{
+      type: 'mapping' | 'threshold' | 'confidence';
+      description: string;
+      impact: 'low' | 'medium' | 'high';
+    }> = [];
+
+    try {
+      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
+      const metrics = patternPerformanceTracker.getAllPatternMetrics();
+
+      for (const metric of metrics) {
+        if (metric.totalUsages < 5) continue;
+
+        if (metric.successRate < 0.6 && metric.totalUsages >= 10) {
+          suggestions.push({
+            type: 'mapping',
+            description: `Pattern ${metric.patternId} has low success rate (${(metric.successRate * 100).toFixed(0)}%)`,
+            impact: metric.totalUsages > 20 ? 'high' : 'medium',
+          });
+        }
+
+        if (metric.avgConfidence < 0.5) {
+          suggestions.push({
+            type: 'confidence',
+            description: `Pattern ${metric.patternId} has low confidence (${(metric.avgConfidence * 100).toFixed(0)}%)`,
+            impact: 'medium',
+          });
+        }
+      }
+    } catch {
+      // Silent fail
+    }
+
+    return suggestions;
   }
 }
 
 /**
- * Global learning engine instance (disabled by default)
+ * Global learning engine instance (enabled by default)
  */
-export const learningEngine = new LearningEngine(false);
+export const learningEngine = new LearningEngine(true);

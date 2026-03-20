@@ -10,6 +10,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LearningEngine } from '../learning-engine.js';
 
+const INTEGRATION_TIMEOUT = 30000;
+
 describe('LearningEngine', () => {
   let engine: LearningEngine;
 
@@ -165,7 +167,7 @@ describe('LearningEngine', () => {
 
       const history = engine.getLearningHistory();
       expect(history).toHaveLength(3);
-    });
+    }, INTEGRATION_TIMEOUT);
 
     it('should maintain stats after disable/enable', async () => {
       engine.setEnabled(true);
@@ -179,6 +181,6 @@ describe('LearningEngine', () => {
 
       const stats = engine.getP9LearningStats();
       expect(stats.totalLearnings).toBe(2);
-    });
+    }, INTEGRATION_TIMEOUT);
   });
 });

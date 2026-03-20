@@ -13,6 +13,9 @@ import { ComplexityRouter } from './complexity-router.js';
 import { RoutingComponentConfig } from './interfaces.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { getKernel } from '../../core/kernel-patterns.js';
+import { routingOutcomeTracker, RoutingOutcomeTracker } from '../analytics/outcome-tracker.js';
+import { patternPerformanceTracker } from '../../analytics/pattern-performance-tracker.js';
+import { getAdaptiveKernel } from '../../core/adaptive-kernel.js';
 
 /**
  * Default configuration for routing components
@@ -54,6 +57,20 @@ export class RouterCore {
   private complexityRouter: ComplexityRouter;
   private config: RoutingComponentConfig;
   private kernel: ReturnType<typeof getKernel>;
+  private adaptiveKernel: ReturnType<typeof getAdaptiveKernel>;
+  private outcomeTracker: RoutingOutcomeTracker;
+  private routingCount: number = 0;
+  private readonly LEARN_EVERY_N_ROUTINGS: number = 10;
+  
+  // Track pending outcomes for post-execution recording
+  private pendingOutcomes: Map<string, { 
+    agent: string; 
+    skill: string; 
+    confidence: number;
+    timestamp: number;
+    complexity?: number;
+    routingMethod?: 'keyword' | 'history' | 'complexity' | 'default';
+  }> = new Map();
 
   /**
    * Create a new RouterCore
@@ -61,18 +78,22 @@ export class RouterCore {
    * @param historyMatcher - History matcher instance
    * @param complexityRouter - Complexity router instance
    * @param config - Routing configuration
+   * @param outcomeTracker - Optional outcome tracker (injected for shared state)
    */
   constructor(
     keywordMatcher: KeywordMatcher,
     historyMatcher: HistoryMatcher,
     complexityRouter: ComplexityRouter,
-    config: Partial<RoutingComponentConfig> = {}
+    config: Partial<RoutingComponentConfig> = {},
+    outcomeTracker?: RoutingOutcomeTracker
   ) {
     this.keywordMatcher = keywordMatcher;
     this.historyMatcher = historyMatcher;
     this.complexityRouter = complexityRouter;
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.kernel = getKernel();
+    this.adaptiveKernel = getAdaptiveKernel();
+    this.outcomeTracker = outcomeTracker || routingOutcomeTracker;
   }
 
   /**
@@ -106,7 +127,13 @@ export class RouterCore {
         skill: RELEASE_WORKFLOW_ROUTING.skill,
         confidence: RELEASE_WORKFLOW_ROUTING.confidence,
       }, sessionId);
-      return this.createReleaseRouting(taskDescription, releaseDetection, sessionId);
+      const result = this.createReleaseRouting(taskDescription, releaseDetection, sessionId);
+      
+      // Track outcome for release workflow
+      if (taskId) {
+        this.recordRoutingOutcome(taskId, result.agent, result.skill, result.confidence, true, complexity, 'keyword');
+      }
+      return result;
     }
 
     const descLower = taskDescription.toLowerCase();
@@ -121,6 +148,12 @@ export class RouterCore {
         confidence: keywordResult.confidence,
         matchedKeyword: keywordResult.matchedKeyword,
       }, sessionId);
+      
+      // Track keyword match outcome
+      if (taskId) {
+        this.recordRoutingOutcome(taskId, keywordResult.agent, keywordResult.skill, keywordResult.confidence, true, complexity, 'keyword');
+      }
+      
       return this.applyKernelInsights(keywordResult, taskDescription);
     }
 
@@ -135,6 +168,10 @@ export class RouterCore {
           skill: historyResult.skill,
           confidence: historyResult.confidence,
         }, sessionId);
+        
+        // Track history match outcome
+        this.recordRoutingOutcome(taskId, historyResult.agent, historyResult.skill, historyResult.confidence, true, complexity, 'history');
+        
         return historyResult;
       }
     }
@@ -150,6 +187,12 @@ export class RouterCore {
           skill: complexityResult.skill,
           confidence: complexityResult.confidence,
         }, sessionId);
+        
+        // Track complexity match outcome
+        if (taskId) {
+          this.recordRoutingOutcome(taskId, complexityResult.agent, complexityResult.skill, complexityResult.confidence, true, complexity, 'complexity');
+        }
+        
         return complexityResult;
       }
     }
@@ -161,10 +204,176 @@ export class RouterCore {
       agent: DEFAULT_ROUTING.agent,
       skill: DEFAULT_ROUTING.skill,
     }, sessionId);
+    
+    // Track default fallback outcome
+    if (taskId) {
+      this.recordRoutingOutcome(taskId, DEFAULT_ROUTING.agent, DEFAULT_ROUTING.skill, DEFAULT_ROUTING.confidence, true, complexity, 'default');
+    }
+    
+    // Trigger periodic learning
+    this.routingCount++;
+    if (this.routingCount % this.LEARN_EVERY_N_ROUTINGS === 0) {
+      this.triggerPeriodicLearning();
+    }
+    
     return {
       ...DEFAULT_ROUTING,
       reason: 'No keyword match, no history, no complexity provided',
     };
+  }
+
+  /**
+   * Trigger periodic learning cycle
+   */
+  private triggerPeriodicLearning(): void {
+    try {
+      // Reload fresh data from disk
+      this.outcomeTracker.reloadFromDisk();
+      
+      // Load pattern metrics from disk
+      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
+      patternPerformanceTracker.loadFromDisk();
+      
+      const outcomes = this.outcomeTracker.getOutcomes();
+      const patterns = patternPerformanceTracker.getAllPatternMetrics();
+      
+      if (outcomes.length >= 5 || patterns.length >= 3) {
+        // Trigger learning via AdaptiveKernel with outcomes
+        const mappedOutcomes = outcomes.map(o => ({
+          taskId: o.taskId,
+          taskDescription: o.taskDescription,
+          routedAgent: o.routedAgent,
+          routedSkill: o.routedSkill,
+          confidence: o.confidence,
+          success: o.success ?? true,
+        }));
+        
+        this.adaptiveKernel.triggerLearning(mappedOutcomes, []);
+        
+        const stats = this.adaptiveKernel.getLearningStats();
+        
+        frameworkLogger.log(
+          'router-core',
+          'periodic-learning',
+          'info',
+          { 
+            routingCount: this.routingCount,
+            outcomesLoaded: outcomes.length,
+            patternsTracked: patterns.length,
+            driftDetected: stats.driftDetected,
+            lastLearningRun: stats.lastLearningRun 
+          }
+        );
+      }
+    } catch (error) {
+      // Silent fail - don't break routing
+      frameworkLogger.log(
+        'router-core',
+        'periodic-learning-error',
+        'debug',
+        { error: String(error) }
+      );
+    }
+  }
+
+  /**
+   * Record routing outcome for analytics
+   */
+  private recordRoutingOutcome(
+    taskId: string,
+    agent: string,
+    skill: string,
+    confidence: number,
+    success: boolean = true,
+    complexity?: number,
+    routingMethod?: 'keyword' | 'history' | 'complexity' | 'default'
+  ): void {
+    const outcomeData: Record<string, unknown> = {
+      taskId,
+      routedAgent: agent,
+      routedSkill: skill,
+      confidence,
+      success,
+      feedback: success ? 'success' : 'failed',
+      taskDescription: taskId,
+    };
+    
+    if (complexity !== undefined) {
+      outcomeData.complexity = complexity;
+    }
+    if (routingMethod) {
+      outcomeData.routingMethod = routingMethod;
+    }
+
+    // Record to outcome tracker with full data
+    this.outcomeTracker.recordOutcome(outcomeData as Parameters<typeof this.outcomeTracker.recordOutcome>[0]);
+
+    // Track in pattern performance tracker
+    const perfData: { success: boolean; confidence: number; complexity?: number } = { success, confidence };
+    if (complexity !== undefined) {
+      perfData.complexity = complexity;
+    }
+    patternPerformanceTracker.trackPatternPerformance(
+      `${agent}:${skill}`,
+      perfData
+    );
+
+    // Store pending outcome for later update
+    const pendingData: {
+      agent: string;
+      skill: string;
+      confidence: number;
+      timestamp: number;
+      complexity?: number;
+      routingMethod?: 'keyword' | 'history' | 'complexity' | 'default';
+    } = {
+      agent,
+      skill,
+      confidence,
+      timestamp: Date.now(),
+    };
+    if (complexity !== undefined) {
+      pendingData.complexity = complexity;
+    }
+    if (routingMethod) {
+      pendingData.routingMethod = routingMethod;
+    }
+    this.pendingOutcomes.set(taskId, pendingData);
+  }
+
+  /**
+   * Record outcome after agent execution completes
+   * Updates the existing pending outcome with success/failure
+   */
+  recordExecutionOutcome(
+    taskId: string,
+    agent: string,
+    skill: string,
+    success: boolean
+  ): void {
+    const pending = this.pendingOutcomes.get(taskId);
+    if (pending) {
+      // Update existing pending outcome with execution result
+      const updated = this.outcomeTracker.updateOutcome(taskId, {
+        success,
+        feedback: success ? 'success' : 'failed',
+      });
+
+      // Track in pattern performance tracker
+      const perfData: { success: boolean; confidence: number; complexity?: number } = {
+        success,
+        confidence: pending.confidence
+      };
+      if (pending.complexity !== undefined) {
+        perfData.complexity = pending.complexity;
+      }
+      patternPerformanceTracker.trackPatternPerformance(
+        `${agent}:${skill}`,
+        perfData
+      );
+
+      this.pendingOutcomes.delete(taskId);
+    }
   }
 
   /**

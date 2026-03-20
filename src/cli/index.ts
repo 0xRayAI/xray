@@ -475,7 +475,7 @@ program
                "  In v1.7.2+: Includes consent management with granular control\n" +
                "  Use 'npx strray-ai analytics enable' to opt-in to data sharing\n" +
                "  Core classes: ConsentManager, AnonymizationEngine available programmatically")
-  .option("-l, --limit <number>", "Limit analysis to last N entries", "1000")
+  .option("-l, --limit <number>", "Limit analysis to last N task completions")
   .option("-o, --output <file>", "Save report to file")
   .action(async (opts) => {
     console.log("📊 StringRay Pattern Analytics");
@@ -487,10 +487,22 @@ program
       const { SimplePatternAnalyzer } =
         await import("../analytics/simple-pattern-analyzer.js");
 
-      const analyzer = new SimplePatternAnalyzer();
-      const limit = parseInt(opts.limit) || 1000;
+      // Get default limit from features.json
+      const fs = await import("fs");
+      const path = await import("path");
+      let defaultLimit = 500;
+      try {
+        const featuresPath = path.join(process.cwd(), ".opencode", "strray", "features.json");
+        if (fs.existsSync(featuresPath)) {
+          const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
+          defaultLimit = features.analytics?.default_limit || 500;
+        }
+      } catch { /* use default */ }
 
-      console.log(`Analyzing last ${limit} log entries...`);
+      const analyzer = new SimplePatternAnalyzer();
+      const limit = parseInt(opts.limit) || defaultLimit;
+
+      console.log(`Analyzing last ${limit} task completions...`);
       console.log("");
 
       const insights = await analyzer.analyze(limit);
@@ -527,7 +539,7 @@ program
 program
   .command("calibrate")
   .description("Calibrate complexity predictions based on historical accuracy")
-  .option("-m, --min-samples <number>", "Minimum samples needed", "10")
+  .option("-m, --min-samples <number>", "Minimum samples needed")
   .option("-a, --apply", "Apply calibration to complexity analyzer")
   .action(async (opts) => {
     console.log("🎯 StringRay Complexity Calibration");
@@ -538,8 +550,20 @@ program
       const { ComplexityCalibrator } =
         await import("../delegation/complexity-calibrator.js");
 
+      // Get default min samples from features.json
+      const fs = await import("fs");
+      const path = await import("path");
+      let defaultMinSamples = 3;
+      try {
+        const featuresPath = path.join(process.cwd(), ".opencode", "strray", "features.json");
+        if (fs.existsSync(featuresPath)) {
+          const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
+          defaultMinSamples = features.analytics?.min_samples_for_calibration || 3;
+        }
+      } catch { /* use default */ }
+
       const calibrator = new ComplexityCalibrator();
-      const minSamples = parseInt(opts.minSamples) || 10;
+      const minSamples = parseInt(opts.minSamples) || defaultMinSamples;
 
       console.log(
         `Analyzing historical accuracy (need ${minSamples}+ samples)...`,
@@ -550,7 +574,8 @@ program
 
       if (!result) {
         console.log("⚠️ Not enough data for calibration.");
-        console.log("   Run more tasks and try again later.");
+        console.log("   Run more tasks and try again.");
+        console.log("   (Or use -m 1 to work with fewer samples)");
         return;
       }
 
@@ -721,23 +746,153 @@ program
     }
   });
 
+// Inference improvement command
+program
+  .command('inference:improve')
+  .description('Run autonomous inference improvement cycle')
+  .option('--dry-run', 'Show what would change without applying')
+  .option('-v, --verbose', 'Verbose output')
+  .action(async (options) => {
+    console.log('🚀 StringRay Inference Improvement');
+    console.log('=================================');
+    console.log('');
+
+    try {
+      const { LearningEngine } = await import('../delegation/analytics/learning-engine.js');
+      const { routingOutcomeTracker } = await import('../delegation/analytics/outcome-tracker.js');
+      const { patternPerformanceTracker } = await import('../analytics/pattern-performance-tracker.js');
+      const { getAdaptiveKernel } = await import('../core/adaptive-kernel.js');
+
+      // Reload fresh data
+      routingOutcomeTracker.reloadFromDisk();
+      patternPerformanceTracker.loadFromDisk();
+      
+      const outcomes = routingOutcomeTracker.getOutcomes();
+      console.log(`📊 Loaded ${outcomes.length} routing outcomes`);
+      
+      // Generate performance report
+      const perfMetrics = patternPerformanceTracker.getAllPatternMetrics();
+      console.log(`   Patterns tracked: ${perfMetrics.length}`);
+      
+      const successOutcomes = outcomes.filter(o => o.success);
+      const successRate = outcomes.length > 0 ? (successOutcomes.length / outcomes.length * 100).toFixed(1) : '100.0';
+      console.log(`   Overall success rate: ${successRate}%`);
+      console.log('');
+      
+      // Trigger learning
+      const engine = new LearningEngine(true);
+      const learningResult = await engine.triggerLearning();
+      console.log(`🧠 Learning Results:`);
+      console.log(`   Patterns analyzed: ${learningResult.patternsAnalyzed}`);
+      console.log(`   Adaptations: ${learningResult.adaptations}`);
+      
+      // Get drift analysis
+      const driftAnalysis = engine.getPatternDriftAnalysis();
+      console.log(`\n📈 Pattern Drift:`);
+      console.log(`   Drift detected: ${driftAnalysis.driftDetected}`);
+      console.log(`   Severity: ${driftAnalysis.severity}`);
+      if (driftAnalysis.affectedPatterns.length > 0) {
+        console.log(`   Affected: ${driftAnalysis.affectedPatterns.slice(0, 5).join(', ')}`);
+      }
+      
+      // Get adaptive kernel stats
+      const kernel = getAdaptiveKernel();
+      const kernelStats = kernel.getLearningStats();
+      console.log(`\n⚙️ Kernel Stats:`);
+      console.log(`   Patterns tracked: ${kernelStats.patternsTracked}`);
+      console.log(`   Thresholds calibrated: ${kernelStats.thresholdsCalibrated}`);
+      
+      // Get suggestions
+      if (!options.dryRun) {
+        const suggestions = engine.suggestImprovements();
+        if (suggestions.length > 0) {
+          console.log(`\n💡 Suggestions:`);
+          suggestions.slice(0, 5).forEach((s, i) => {
+            console.log(`   ${i + 1}. [${s.type}] ${s.description} (${s.impact} impact)`);
+          });
+        }
+        
+        console.log(`\n✅ Inference improvement cycle complete`);
+      } else {
+        console.log(`\n💡 Dry run - no changes applied`);
+      }
+
+      console.log('');
+    } catch (error) {
+      console.error('❌ Inference improvement failed:', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+// Inference tuner command
+program
+  .command('inference:tuner')
+  .description('Start/stop the autonomous inference tuner service')
+  .option('-s, --start', 'Start the tuner service')
+  .option('-t, --stop', 'Stop the tuner service')
+  .option('-r, --run-once', 'Run a single tuning cycle')
+  .option('-S, --status', 'Show tuner status')
+  .action(async (options) => {
+    const { inferenceTuner } = await import('../services/inference-tuner.js');
+    
+    if (options.status) {
+      const status = inferenceTuner.getStatus();
+      console.log('🎛️  Inference Tuner Status');
+      console.log('=========================');
+      console.log(`   Running: ${status.running ? '✅ Yes' : '❌ No'}`);
+      console.log(`   Last tuning: ${status.lastTuningTime ? new Date(status.lastTuningTime).toISOString() : 'Never'}`);
+      console.log(`   Auto-update mappings: ${status.config.autoUpdateMappings}`);
+      console.log(`   Auto-update thresholds: ${status.config.autoUpdateThresholds}`);
+      console.log(`   Learning interval: ${status.config.learningIntervalMs}ms`);
+      return;
+    }
+    
+    if (options.start) {
+      inferenceTuner.start();
+      console.log('✅ Inference tuner started');
+      console.log(`   Interval: ${inferenceTuner.getStatus().config.learningIntervalMs}ms`);
+      console.log('   Press Ctrl+C to stop');
+      return;
+    }
+    
+    if (options.stop) {
+      inferenceTuner.stop();
+      console.log('✅ Inference tuner stopped');
+      return;
+    }
+    
+    if (options.runOnce) {
+      console.log('🎛️  Running single tuning cycle...');
+      await inferenceTuner.runTuningCycle();
+      console.log('✅ Tuning cycle complete');
+      return;
+    }
+    
+    console.log('Usage: npx strray-ai inference:tuner [options]');
+    console.log('  --start     Start the tuner service');
+    console.log('  --stop      Stop the tuner service');
+    console.log('  --run-once  Run a single tuning cycle');
+    console.log('  --status    Show tuner status');
+  });
+
 // Add help text
 program.addHelpText(
   "after",
   `
 
 Examples:
-   $ npx strray-ai install       # Install StringRay in current project
-   $ npx strray-ai init          # Initialize configuration
-   $ npx strray-ai status        # Check installation status
-   $ npx strray-ai validate      # Validate framework setup
-   $ npx strray-ai capabilities  # Show all available capabilities
-   $ npx strray-ai health        # Check framework health and status
-   $ npx strray-ai report        # Generate activity and health reports
-   $ npx strray-ai fix           # Automatically restore missing config files
-   $ npx strray-ai doctor        # Diagnose issues (does not fix them)
-   $ npx strray-ai analytics     # Pattern analytics and insights
-   $ npx strray-ai calibrate     # Calibrate complexity predictions
+    $ npx strray-ai install       # Install StringRay in current project
+    $ npx strray-ai init          # Initialize configuration
+    $ npx strray-ai status        # Check installation status
+    $ npx strray-ai validate      # Validate framework setup
+    $ npx strray-ai capabilities  # Show all available capabilities
+    $ npx strray-ai health        # Check framework health and status
+    $ npx strray-ai report        # Generate activity and health reports
+    $ npx strray-ai fix           # Automatically restore missing config files
+    $ npx strray-ai doctor        # Diagnose issues (does not fix them)
+    $ npx strray-ai analytics     # Pattern analytics and insights
+    $ npx strray-ai calibrate     # Calibrate complexity predictions
+    $ npx strray-ai inference:improve  # Run autonomous inference improvement
 
 Quick Start:
    1. Install: npx strray-ai install

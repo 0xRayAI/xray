@@ -104,13 +104,15 @@ describe("ComplexityCalibrator", () => {
     expect(entry?.success).toBe(false);
   });
 
-  test("should return null for entries without accuracy data", () => {
+  test("should estimate accuracy for entries without explicit accuracy data", () => {
     const line =
       "2026-02-25T10:00:00.000Z [job-001] [enforcer] job-completed - SUCCESS";
 
     const entry = (calibrator as any).parseLogEntry(line);
 
-    expect(entry).toBeNull();
+    // Now estimates accuracy even without explicit data
+    expect(entry).not.toBeNull();
+    expect(entry?.accuracy).toBe("accurate");
   });
 
   test("should calibrate with sufficient samples", async () => {

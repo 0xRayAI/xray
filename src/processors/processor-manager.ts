@@ -31,6 +31,7 @@ import {
   TestAutoCreationProcessor,
   CoverageAnalysisProcessor,
   AgentsMdValidationProcessor,
+  InferenceImprovementProcessor,
 } from "./implementations/index.js";
 
 const execAsync = promisify(exec);
@@ -94,6 +95,7 @@ export class ProcessorManager {
     this.registry.register(new TestAutoCreationProcessor());
     this.registry.register(new CoverageAnalysisProcessor());
     this.registry.register(new AgentsMdValidationProcessor());
+    this.registry.register(new InferenceImprovementProcessor());
 
     frameworkLogger.log(
       "processor-manager",

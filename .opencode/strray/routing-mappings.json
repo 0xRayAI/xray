@@ -87,7 +87,7 @@
       "exception",
       "fix-validation"
     ],
-    "skill": "code-review",
+    "skill": "bug-triage",
     "agent": "bug-triage-specialist",
     "confidence": 0.92
   },
@@ -287,24 +287,17 @@
   },
   {
     "keywords": [
-      "search",
-      "find",
-      "explore",
-      "research",
-      "locate",
-      "lookup",
-      "where",
-      "implementation",
+      "codebase",
       "codebase-exploration",
-      "documentation-retrieval",
-      "pattern-recognition",
-      "search-optimization",
       "context-building",
-      "explore",
       "discover",
-      "pattern",
-      "context",
-      "codebase"
+      "documentation-retrieval",
+      "explore",
+      "implementation",
+      "lookup",
+      "pattern-recognition",
+      "research",
+      "search"
     ],
     "skill": "git-workflow",
     "agent": "researcher",
@@ -388,8 +381,7 @@
       "visual",
       "screenshot",
       "photo",
-      "look at",
-      "analyze"
+      "look at"
     ],
     "skill": "multimodal-looker",
     "agent": "multimodal-looker",
@@ -420,7 +412,9 @@
       "lint",
       "eslint",
       "prettier",
-      "format"
+      "format",
+      "analyze",
+      "performance"
     ],
     "skill": "code-analyzer",
     "agent": "code-analyzer",
@@ -428,18 +422,16 @@
   },
   {
     "keywords": [
-      "git",
-      "commit",
-      "merge",
       "branch",
+      "codebase",
+      "commit",
       "conflict",
-      "repository",
-      "version",
-      "explore",
       "discover",
-      "pattern",
-      "context",
-      "codebase"
+      "explore",
+      "git",
+      "merge",
+      "repository",
+      "version"
     ],
     "skill": "git-workflow",
     "agent": "researcher",

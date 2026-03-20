@@ -115,5 +115,18 @@
     "moderate": 25,
     "complex": 50,
     "enterprise": 100
+  },
+  "analytics": {
+    "enabled": true,
+    "default_limit": 500,
+    "min_samples_for_calibration": 3,
+    "track_complexity_accuracy": true,
+    "track_agent_performance": true
+  },
+  "pattern_learning": {
+    "enabled": true,
+    "learning_interval_ms": 300000,
+    "auto_apply_threshold": 0.9,
+    "min_success_rate": 0.7
   }
 }

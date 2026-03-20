@@ -76,6 +76,10 @@ export interface RoutingOutcome {
   timestamp: Date;
   success?: boolean;
   feedback?: string;
+  complexity?: number;
+  predictedComplexity?: number;
+  executionTimeMs?: number;
+  routingMethod?: 'keyword' | 'history' | 'complexity' | 'default';
 }
 
 /**

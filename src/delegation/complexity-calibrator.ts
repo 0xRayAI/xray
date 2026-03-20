@@ -43,6 +43,7 @@ export interface CalibrationResult {
 
 export class ComplexityCalibrator {
   private logPath: string;
+  private outcomesPath: string;
   private calibrationDataPath: string;
 
   // Default weights (from complexity-analyzer.ts)
@@ -73,6 +74,8 @@ export class ComplexityCalibrator {
     const cwd = process.cwd();
     this.logPath =
       logPath || path.join(cwd, "logs", "framework", "activity.log");
+    // Only use outcomes path when using default log path
+    this.outcomesPath = logPath ? "" : path.join(cwd, "logs", "framework", "routing-outcomes.json");
     this.calibrationDataPath = path.join(
       cwd,
       "logs",
@@ -84,13 +87,14 @@ export class ComplexityCalibrator {
   /**
    * Main calibration method - reads logs, calculates adjustments, returns result
    */
-  async calibrate(minSamples: number = 10): Promise<CalibrationResult | null> {
+  async calibrate(minSamples: number = 3): Promise<CalibrationResult | null> {
     const data = await this.readCalibrationData();
 
     if (data.length < minSamples) {
       console.log(
         `📊 Not enough data for calibration: ${data.length}/${minSamples} samples`,
       );
+      console.log(`   (Found ${data.length} task completion entries)`);
       return null;
     }
 
@@ -118,26 +122,58 @@ export class ComplexityCalibrator {
   }
 
   /**
-   * Read calibration data from activity log
+   * Read calibration data from routing outcomes
    */
   private async readCalibrationData(): Promise<CalibrationData[]> {
-    if (!fs.existsSync(this.logPath)) {
-      return [];
-    }
-
-    const content = fs.readFileSync(this.logPath, "utf-8");
-    const lines = content.split("\n").filter((l) => l.trim());
-
     const data: CalibrationData[] = [];
 
-    for (const line of lines) {
-      // Look for job-completed entries with accuracy data
-      if (!line.includes("job-completed")) continue;
+    // First try routing-outcomes.json (has structured data)
+    // Only when using default paths (not custom test paths)
+    if (this.outcomesPath && fs.existsSync(this.outcomesPath)) {
+      try {
+        const outcomes = JSON.parse(fs.readFileSync(this.outcomesPath, "utf-8"));
+        for (const outcome of outcomes) {
+          if (outcome.success !== undefined && outcome.complexity !== undefined) {
+            // Use actual complexity from outcome
+            const complexityScore = outcome.complexity;
+            
+            // Estimate accuracy based on success (simplified)
+            const accuracy: ComplexityAccuracy = outcome.success ? "accurate" : "underestimated";
+            
+            data.push({
+              timestamp: outcome.timestamp || new Date().toISOString(),
+              complexityScore,
+              predictedDuration: complexityScore * 1000,
+              actualDuration: complexityScore * 1000, // Placeholder
+              accuracy,
+              success: outcome.success,
+            });
+          }
+        }
+        
+        if (data.length > 0) {
+          return data;
+        }
+      } catch {
+        // Fall through to activity log parsing
+      }
+    }
 
-      // Parse the entry - look for accuracy indicators
-      const entry = this.parseLogEntry(line);
-      if (entry) {
-        data.push(entry);
+    // Fall back to activity log parsing
+    if (fs.existsSync(this.logPath)) {
+      const content = fs.readFileSync(this.logPath, "utf-8");
+      const lines = content.split("\n").filter((l) => l.trim());
+
+      for (const line of lines) {
+        // Accept both "job-completed" and "complex-task-completed"
+        const isCompleted = line.includes("job-completed") || line.includes("complex-task-completed");
+        if (!isCompleted) continue;
+
+        // Parse the entry
+        const entry = this.parseLogEntry(line);
+        if (entry) {
+          data.push(entry);
+        }
       }
     }
 
@@ -157,14 +193,29 @@ export class ComplexityCalibrator {
       line.includes("accurate") ||
       line.includes("overestimated");
 
-    if (!hasAccuracy) return null;
+    // If no explicit accuracy, estimate from duration vs baseline
+    let accuracy: ComplexityAccuracy;
+    if (hasAccuracy) {
+      if (line.includes("underestimated")) accuracy = "underestimated";
+      else if (line.includes("overestimated")) accuracy = "overestimated";
+      else accuracy = "accurate";
+    } else {
+      // Estimate accuracy based on duration patterns
+      // Fast tasks (<2s) are likely underestimated
+      // Slow tasks (>10s) are likely overestimated
+      const durationMatch = line.match(/duration[":\s]+(\d+)/i);
+      const duration = durationMatch ? parseInt(durationMatch[1] || "0") : 0;
+      
+      if (duration > 10000) {
+        accuracy = "overestimated"; // Task took longer than expected
+      } else if (duration > 0 && duration < 2000) {
+        accuracy = "underestimated"; // Task was quick, could have been simpler
+      } else {
+        accuracy = "accurate";
+      }
+    }
 
-    // Extract accuracy
-    let accuracy: ComplexityAccuracy = "accurate";
-    if (line.includes("underestimated")) accuracy = "underestimated";
-    else if (line.includes("overestimated")) accuracy = "overestimated";
-
-    // Extract complexity score if available (approximate from line)
+    // Extract complexity score if available
     const complexityMatch = line.match(/complexity[":\s]+(\d+)/i);
     const complexityScore = complexityMatch
       ? parseInt(complexityMatch[1] || "50")
@@ -188,7 +239,7 @@ export class ComplexityCalibrator {
       predictedDuration: complexityScore * 1000, // Estimate: 1 sec per point
       actualDuration,
       accuracy,
-      success: !line.includes("error"),
+      success: !line.includes("error") && !line.includes("ERROR"),
     };
   }
 

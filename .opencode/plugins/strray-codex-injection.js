@@ -147,6 +147,50 @@ function extractTaskDescription(input) {
     return null;
 }
 /**
+ * Extract action words from command for better routing
+ * Maps verbs/intents to skill categories
+ */
+function extractActionWords(command) {
+    if (!command || command.length < 3)
+        return null;
+    // Strip quotes and escape sequences for cleaner matching
+    const cleanCommand = command.replace(/["']/g, ' ').replace(/\\./g, ' ');
+    // Action word -> skill mapping (ordered by priority)
+    const actionMap = [
+        // Review patterns - check first since user likely wants to review content
+        { pattern: /\b(review|check|audit|examine|inspect|assess|evaluate)\b/i, skill: "code-review" },
+        // Analyze patterns  
+        { pattern: /\b(analyze|investigate|study)\b/i, skill: "code-analyzer" },
+        // Fix patterns
+        { pattern: /\b(fix|debug|resolve|troubleshoot|repair)\b/i, skill: "bug-triage" },
+        // Create patterns
+        { pattern: /\b(create|write|generate|build|make|add)\b/i, skill: "content-creator" },
+        // Test patterns
+        { pattern: /\b(test|validate|verify)\b/i, skill: "testing" },
+        // Design patterns
+        { pattern: /\b(design|plan|architect)\b/i, skill: "architecture" },
+        // Optimize patterns
+        { pattern: /\b(optimize|improve|enhance|speed)\b/i, skill: "performance" },
+        // Security patterns
+        { pattern: /\b(scan|secure|vulnerability)\b/i, skill: "security" },
+        // Refactor patterns
+        { pattern: /\b(refactor|clean|restructure)\b/i, skill: "refactoring" },
+    ];
+    // Search for action words anywhere in the command
+    for (const { pattern } of actionMap) {
+        const match = cleanCommand.match(pattern);
+        if (match) {
+            // Return the matched word plus context after it
+            const word = match[0];
+            const idx = cleanCommand.toLowerCase().indexOf(word.toLowerCase());
+            const after = cleanCommand.slice(idx + word.length, Math.min(idx + word.length + 25, cleanCommand.length)).trim();
+            return `${word} ${after}`.trim().slice(0, 40);
+        }
+    }
+    // If no action word found, return null to use default routing
+    return null;
+}
+/**
  * Estimate complexity score based on message content
  * Higher complexity = orchestrator routing
  * Lower complexity = code-reviewer routing
@@ -476,7 +520,45 @@ export default async function strrayCodexPlugin(input) {
                 }
             }
             const { tool, args } = input;
-            // Routing is handled in chat.message hook - this hook only does tool execution logging
+            // Extract action words from command for better tool routing
+            const command = args?.command ? String(args.command) : "";
+            let taskDescription = null;
+            if (command) {
+                const actionWords = extractActionWords(command);
+                if (actionWords) {
+                    taskDescription = actionWords;
+                    logger.log(`📝 Action words extracted: "${actionWords}"`);
+                }
+            }
+            // Also try to extract from content if no command
+            if (!taskDescription) {
+                taskDescription = extractTaskDescription(input);
+            }
+            // Route tool commands based on extracted action words
+            if (taskDescription) {
+                try {
+                    await loadTaskSkillRouter();
+                    if (taskSkillRouterInstance) {
+                        const routingResult = taskSkillRouterInstance.routeTask(taskDescription, {
+                            source: "tool_command",
+                            complexity: estimateComplexity(taskDescription),
+                        });
+                        if (routingResult && routingResult.agent) {
+                            logger.log(`🎯 Tool routed: ${tool} → @${routingResult.agent} (${Math.round(routingResult.confidence * 100)}%)`);
+                            // Log routing for analytics
+                            logToolActivity(directory, "routing", tool, {
+                                taskDescription,
+                                agent: routingResult.agent,
+                                confidence: routingResult.confidence
+                            });
+                        }
+                    }
+                }
+                catch (e) {
+                    // Silent fail - routing should not break tool execution
+                    logger.log(`📝 Tool routing skipped: ${e}`);
+                }
+            }
             // ENFORCER QUALITY GATE CHECK - Block on violations
             await importQualityGate(directory);
             if (!runQualityGateWithLogging) {
