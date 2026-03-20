@@ -740,7 +740,9 @@ export default async function strrayCodexPlugin(input) {
                             }
                         }
                     }
-                    catch (e) { }
+                    catch (e) {
+                        // Silent fail for complexity estimation
+                    }
                     fs.appendFileSync(debugLogPath, `Complexity estimated: ${complexityScore}\n`);
                     // Route with complexity context
                     const routingResult = taskSkillRouterInstance.routeTask(userMessage, {
@@ -781,7 +783,9 @@ export default async function strrayCodexPlugin(input) {
                                 complexity: complexityScore,
                             }) + "\n");
                         }
-                        catch (e) { }
+                        catch (e) {
+                            // Silent fail for session routing logging
+                        }
                     }
                 }
             }
