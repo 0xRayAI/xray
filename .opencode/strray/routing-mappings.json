@@ -237,7 +237,8 @@
       "optimization",
       "bottleneck",
       "profiling",
-      "monitoring"
+      "monitoring",
+      "perf"
     ],
     "skill": "performance-optimization",
     "agent": "performance-engineer",
@@ -566,7 +567,8 @@
   },
   {
     "keywords": [
-      "stress-test-2"
+      "stress-test-2",
+      "perf"
     ],
     "agent": "performance-engineer",
     "skill": "performance-optimization",
@@ -606,7 +608,8 @@
   },
   {
     "keywords": [
-      "e2e-2"
+      "e2e-2",
+      "perf"
     ],
     "agent": "performance-engineer",
     "skill": "performance-optimization",
@@ -666,7 +669,8 @@
   },
   {
     "keywords": [
-      "test-0.48963983958092205"
+      "test-0.48963983958092205",
+      "perf"
     ],
     "agent": "performance-engineer",
     "skill": "performance-optimization",
@@ -716,7 +720,8 @@
   },
   {
     "keywords": [
-      "pipeline-2"
+      "pipeline-2",
+      "perf"
     ],
     "agent": "performance-engineer",
     "skill": "performance-optimization",
