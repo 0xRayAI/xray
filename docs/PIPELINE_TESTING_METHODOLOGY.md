@@ -317,27 +317,32 @@ console.log('\n✅ Pipeline complete');
 
 ---
 
-## Governance Pipeline (To Create)
+## Governance Pipeline (TESTED)
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ GOVERNANCE PIPELINE                             │
+│ GOVERNANCE PIPELINE (TESTED v1.14.1)            │
 │                                                  │
-│ Input: Violation, TestFailure, RuleViolation     │
+│ Input: Operation + Context                      │
 │   ↓                                             │
-│ AgentSpawnGovernor (limits)                     │
+│ Layer 1: Rule Registry (28+ rules)             │
 │   ↓                                             │
-│ RuleEnforcer (validate)                         │
+│ Layer 2: Rule Hierarchy (dependencies)          │
 │   ↓                                             │
-│ ViolationFixer (auto-fix)                       │
+│ Layer 3: Validator Registry                     │
 │   ↓                                             │
-│ TestAutoHealing (repair)                        │
+│ Layer 4: Rule Executor (validation)             │
 │   ↓                                             │
-│ Output: Fixed code, Updated rules, Reports       │
+│ Layer 5: Violation Fixer (auto-fix)            │
+│   ↓                                             │
+│ Output: ValidationReport, ViolationFix[]        │
 └─────────────────────────────────────────────────┘
 
-Components: AgentSpawnGovernor, RuleEnforcer, ViolationFixer, TestAutoHealing
-Artifacts: logs/framework/violations.json, logs/framework/fixes.json
+Components: RuleEnforcer, RuleRegistry, RuleHierarchy, ValidatorRegistry, RuleExecutor, ViolationFixer
+Artifacts: 93 rules (28 sync + async loaded), logs via frameworkLogger
+
+Status: ✅ TESTED - 3 consecutive passes
+Test: src/__tests__/pipeline/test-governance-pipeline.mjs
 ```
 
 ---

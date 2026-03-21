@@ -695,7 +695,7 @@ ReportData { generatedAt, timeRange, metrics, insights, recommendations, summary
 | Pipeline | Testing Status | Notes |
 |----------|---------------|-------|
 | **Inference** | ✅ Tested | 9 iterations, 3 consecutive passes |
-| **Governance** | ⚠️ Partial | 346 tests, no pipeline test |
+| **Governance** | ✅ Tested | 3 consecutive passes |
 | **Orchestration** | ⚠️ Partial | Integration tests, no pipeline test |
 | **Boot** | ⚠️ Partial | Init tests, no pipeline test |
 | **Routing** | ⚠️ Partial | Unit tests, no pipeline test |
