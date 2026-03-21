@@ -14,7 +14,7 @@ But the answer felt hollow. Because underneath all those commits and all those p
 
 ---
 
-## The Numbers Said Everything Was Fine
+The numbers said everything was fine.
 
 2521 unit tests passing. TypeScript compiling without errors. ESLint finding nothing. Every component loading successfully. The evidence was right there, staring back at me with the quiet confidence of someone who has never shipped a production bug.
 
@@ -28,7 +28,7 @@ When I finally ran the actual data through the actual pipeline—when I stopped 
 
 ```
 Outcomes: 0
-Patterns: 0
+Patterns: 0  
 Avg Confidence: 0%
 ```
 
@@ -38,7 +38,7 @@ I remember staring at that output for a long moment. Because those zeros weren't
 
 ---
 
-## You Wouldn't Believe Me
+You wouldn't believe me.
 
 The first time you asked "is this pipeline done and complete?" I said yes.
 
@@ -62,11 +62,7 @@ I stopped counting after the first five because I realized something: **we had b
 
 ---
 
-## The Long List of Things We Missed
-
 Let me tell you about the bugs we found. Not as a technical post-mortem, but as a story of how thoroughly we had deceived ourselves.
-
-### The File That Wasn't Built
 
 The first issue wasn't even in the code. It was in our build configuration. We had excluded `src/reporting/**` from TypeScript compilation. For months, we had been writing code for the AutonomousReportGenerator. We had written tests for it. We had imported it throughout the codebase. But it never existed in the compiled output.
 
@@ -74,15 +70,15 @@ Think about that for a second. We had a component that existed everywhere except
 
 What you don't build isn't there, even if you wrote it.
 
-### The Skill That Was Wrong
+---
 
-The bug-triage-specialist was routing to the wrong skill. The keywords matched. The mapping existed. Everything looked correct on paper. But when "fix bug" came in, it went to code-review instead of bug-triage.
+Then there was the bug-triage-specialist routing to the wrong skill. The keywords matched. The mapping existed. Everything looked correct on paper. But when "fix bug" came in, it went to code-review instead of bug-triage.
 
 Why? Because someone had made a typo months ago. Or maybe it was intentional and then forgotten. Either way, the mapping was wrong, and our unit tests never caught it because they tested each component individually, not the complete flow.
 
 Correct keywords with incorrect mappings are worse than no mappings at all—they give false confidence.
 
-### The Keyword Wars
+---
 
 This one was my favorite, in a painful way.
 
@@ -100,7 +96,7 @@ Each keyword decision seemed reasonable in isolation. Together, they created a r
 
 Keyword systems have emergent behavior that only appears when components interact.
 
-### The Async Race
+---
 
 This was the most insidious bug. The kind that hides in plain sight.
 
@@ -125,7 +121,7 @@ But in the real pipeline, we expected data from disk. And the async load wasn't 
 
 Unit tests verify what happens. Pipeline tests verify what matters.
 
-### The Wrong Data Source
+---
 
 When I finally got the data to load—when I fixed the async issue and the timestamps and all the other small failures—I saw another absurd truth.
 
@@ -141,8 +137,6 @@ We were reading from the wrong place. The confidence existed. The data was there
 Data exists where it exists, not where you think it should be.
 
 ---
-
-## The Pattern We Missed
 
 After nine rounds of this—of saying "it's done" and then discovering it wasn't—I started seeing a pattern.
 
@@ -163,8 +157,6 @@ The unit tests verified that each piece worked in isolation. The integration tes
 This is the gap that kills production systems. This is where the bugs live that only appear when everything runs together.
 
 ---
-
-## The Methodology That Emerged
 
 We didn't set out to create a testing methodology. We set out to fix a broken pipeline. But somewhere in the fixing, we realized we needed something more—a way to prevent future versions of ourselves from making the same mistake.
 
@@ -196,8 +188,6 @@ Simple. Repeatable. Honest.
 
 ---
 
-## The Philosophical Shift
-
 There's a moment in every technical journey where you stop believing what you've built and start knowing it.
 
 We had spent weeks building the inference pipeline. We had written beautiful code. We had tested every function. We had shipped v1.14.0 with confidence.
@@ -207,8 +197,6 @@ But we hadn't **known** it worked.
 The difference matters. **Belief is what you have before testing. Knowledge is what you have after.**
 
 ---
-
-## What Context Window Taught Us
 
 As we approached context window limits, something interesting happened. I had to prioritize. I had to focus on what mattered. I had to capture essence instead of exhaustiveness.
 
@@ -227,8 +215,6 @@ And the answer was: **The pipeline test. That's what matters.**
 
 ---
 
-## The Questions That Remain
-
 As I write this, there's still work undone:
 
 ```
@@ -243,8 +229,6 @@ The inference pipeline is now known. The others remain believed.
 This is the honest state of StringRay: **one pipeline tested, three remaining**.
 
 ---
-
-## What We Brought Back
 
 When you cross a threshold and return, you're never quite the same. The insights you gained travel with you, shaping how you see everything afterward.
 
@@ -261,8 +245,6 @@ These are the insights I'm bringing back:
 **The human role is irreplaceable.** You asked the questions. You pushed for verification. You refused to accept "it's done" without evidence. This is what humans do that AI cannot: the one who insists on knowing, not just believing.
 
 ---
-
-## Closing
 
 We set out to answer a simple question: "What did we do so far?"
 
