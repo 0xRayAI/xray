@@ -148,7 +148,7 @@ describe("ML Inference Performance Benchmarks", () => {
     // Setup mock ML model
     mockModel = {
       id: "test-inference-model",
-      name: "Test Inference Model", version: "1.10.0",
+      name: "Test Inference Model", version: "1.13.2",
       type: "classification",
       status: "deployed",
       createdAt: new Date(),

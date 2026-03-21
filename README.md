@@ -48,7 +48,7 @@ npm install strray-ai
 
 - **🤖 26 Specialized Agents** - From code review to mobile development
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
-- **⚡ 29 Lazy-Loading Skills** - Plus Claude SEO & Antigravity integrations
+- **⚡ 30 Lazy-Loading Skills** - Plus Claude SEO & Antigravity integrations
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
 - **📊 Real-time Monitoring** - Performance tracking and health checks
 - **🔄 Complexity-Based Routing** - Intelligent task delegation

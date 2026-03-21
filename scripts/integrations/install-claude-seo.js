@@ -130,7 +130,7 @@ Usage:
   node scripts/integrations/install-claude-seo.js [options]
 
 Options:
-  --core       Install core SEO skills only (29 skills)
+  --core       Install core SEO skills only (30 skills)
   --full       Install all skills, subagents, and MCP extensions
   --dry-run    Show what would be installed without installing
   --help       Show this help message
@@ -451,7 +451,7 @@ async function main() {
   console.log('╠══════════════════════════════════════════════════════════════════════╣');
   console.log(`║  Source: ${CLAUDE_SEO_REPO}║`);
   console.log('║  License: MIT                                                      ║');
-  console.log(`║  Mode: ${installFull ? 'FULL (all skills + subagents)' : 'CORE (29 skills)'}             ║`);
+  console.log(`║  Mode: ${installFull ? 'FULL (all skills + subagents)' : 'CORE (30 skills)'}             ║`);
   console.log('╚══════════════════════════════════════════════════════════════════════╝');
   console.log();
   

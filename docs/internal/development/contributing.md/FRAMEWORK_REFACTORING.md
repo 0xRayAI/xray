@@ -13,7 +13,7 @@ This document describes the comprehensive migration and consolidation efforts im
 ```json
 {
   "strray_framework": {
-    "version": "1.10.0",
+    "version": "1.13.2",
     "enabled_agents": ["enforcer", "architect"],
     "agent_capabilities": {
       "enforcer": ["compliance-monitoring"]
@@ -26,7 +26,7 @@ This document describes the comprehensive migration and consolidation efforts im
 
 ```json
 {
-  "version": "1.10.0",
+  "version": "1.13.2",
   "enabled_agents": ["enforcer", "architect"],
   "agent_capabilities_enforcer": ["compliance-monitoring"]
 }

@@ -202,7 +202,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.10.0"
+    "version": "1.13.2"
   }
 }
 ```
@@ -473,7 +473,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray",
-    "version": "1.10.0",
+    "version": "1.13.2",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

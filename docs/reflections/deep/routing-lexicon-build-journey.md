@@ -548,7 +548,7 @@ But wait—there's no actual routing happening here. The hook extracts the messa
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
 | **Total Keywords** | ~250 | 431 | +72% |
-| **Routing Entries** | 25 | 28 | +3 agents |
+| **Routing Entries** | 25 | 28 | +26 agents |
 | **Avg Keywords/Agent** | 10 | 15 | +50% |
 | **Total Lines** | 366 | 551 | +50% |
 | **Empty Entries** | 3 | 0 | -100% |

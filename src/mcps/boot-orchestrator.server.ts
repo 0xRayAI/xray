@@ -44,7 +44,7 @@ class StrRayBootOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "boot-orchestrator", version: "1.10.0",
+        name: "boot-orchestrator", version: "1.13.2",
       },
       {
         capabilities: {
