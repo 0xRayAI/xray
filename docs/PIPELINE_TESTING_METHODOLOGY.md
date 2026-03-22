@@ -1,7 +1,7 @@
 # Pipeline Testing Methodology
 
-**Version**: 1.0.0  
-**Date**: 2026-03-21  
+**Version**: 2.0.0  
+**Date**: 2026-03-22  
 **Purpose**: Formalize pipeline testing as a core StringRay practice
 
 ---
@@ -27,7 +27,77 @@ A **pipeline test** exercises the complete flow from input to output, verifying 
 
 ## The Methodology
 
-### Step 1: Identify All Pipelines
+### Step 1: Create the Pipeline Tree (REQUIRED)
+
+**BEFORE creating any pipeline test, you MUST create a pipeline tree document.**
+
+Every pipeline test must reference its pipeline tree. The tree is your map - without it, you lose track of the gravity.
+
+```
+docs/pipeline-trees/
+├── ROUTING_PIPELINE_TREE.md      ← Reference this
+├── GOVERNANCE_PIPELINE_TREE.md   ← Reference this
+├── BOOT_PIPELINE_TREE.md         ← Reference this
+├── ORCHESTRATION_PIPELINE_TREE.md ← Reference this
+├── PROCESSOR_PIPELINE_TREE.md    ← Reference this
+└── REPORTING_PIPELINE_TREE.md   ← Reference this
+```
+
+**Pipeline Tree Template**:
+
+```markdown
+# [Pipeline Name] Pipeline
+
+**Purpose**: [One sentence]
+
+**Data Flow**:
+```
+Entry
+    │
+    ▼
+Layer1
+    │
+    ├─► Component A
+    │
+    └─► Component B
+    │
+    ▼
+Layer2
+    │
+    ▼
+Exit
+```
+
+**Layers**:
+- Layer 1: [Name] ([Component])
+- Layer 2: [Name] ([Component])
+- ...
+
+**Components**:
+- `src/path/component.ts` ([ClassName])
+
+**Entry Points**:
+| Entry | File:Line | Description |
+|-------|-----------|-------------|
+| method() | file.ts:123 | Main entry |
+
+**Exit Points**:
+| Exit | Data |
+|------|------|
+| Success | [Output type] |
+| Failure | [Error type] |
+
+**Artifacts**:
+- [file.json] - [description]
+- [state entries] - [description]
+
+**Testing Requirements**:
+1. [Verify X through layer Y]
+2. [Verify Z in output]
+3. [Full end-to-end flow]
+```
+
+### Step 2: Identify All Pipelines
 
 Every major feature has a pipeline. Map yours:
 
@@ -41,110 +111,117 @@ Every major feature has a pipeline. Map yours:
 └─────────────────────────────────────────────────┘
 ```
 
-#### Example: Inference Pipeline
-
-```
-Input Layer
-  ↓
-Routing Engines (TaskSkillRouter → RouterCore → KeywordMatcher)
-  ↓
-Analytics Engines (OutcomeTracker → PerformanceAnalyzer)
-  ↓
-Learning Engines (PatternTracker → LearningEngine)
-  ↓
-Autonomous Engines (InferenceTuner)
-  ↓
-Output Layer
-
-Components: 17 engines
-Artifacts: logs/framework/routing-outcomes.json, pattern-metrics.json
-```
+**Reference the tree at every turn.** When you write a test, copy the data flow from the tree. When you verify, check the artifacts from the tree.
 
 #### Your Pipeline Structure
 
-| Pipeline | Layers | Components | Status |
-|----------|--------|------------|--------|
-| Inference | 6 | 17 | ✅ Tested |
-| Governance | ? | ? | ❌ Not tested |
-| Orchestration | ? | ? | ❌ Not tested |
-| Framework Boot | ? | ? | ❌ Not tested |
+| Pipeline | Layers | Components | Tree | Status |
+|----------|--------|------------|------|--------|
+| Inference | 6 | 17 | INFERENCE_PIPELINE_TREE.md | ✅ Tested |
+| Routing | 5 | 7 | ROUTING_PIPELINE_TREE.md | ✅ Tested |
+| Governance | 5 | 6 | GOVERNANCE_PIPELINE_TREE.md | ✅ Tested |
+| Boot | 7 | 10 | BOOT_PIPELINE_TREE.md | ✅ Tested |
+| Orchestration | 5 | 4 | ORCHESTRATION_PIPELINE_TREE.md | ✅ Tested |
+| Processor | 5 | 12+ | PROCESSOR_PIPELINE_TREE.md | ✅ Tested |
+| Reporting | 6 | 4 | REPORTING_PIPELINE_TREE.md | ✅ Tested |
 
 ### Step 2: Create the Pipeline Test
+
+**Reference the tree at every step.** Copy the data flow, verify the artifacts.
 
 Use this template:
 
 ```typescript
-// src/__tests__/pipeline/[pipeline-name]-pipeline.test.ts
+// src/__tests__/pipeline/[pipeline-name]-pipeline.mjs
 
-import { describe, it, expect, beforeEach } from 'vitest';
+/**
+ * [Pipeline Name] Pipeline Test
+ * 
+ * Pipeline Tree: docs/pipeline-trees/[PIPELINE]_PIPELINE_TREE.md
+ * 
+ * Data Flow (from tree):
+ * Entry → Layer1 → Layer2 → ... → Exit
+ */
 
-describe('[Pipeline Name] Pipeline', () => {
-  beforeEach(() => {
-    // Reset all pipeline state
-    // Clear artifacts (JSON files)
-    // Reset singletons
-  });
+import { component1 } from './dist/path/component1.js';
+import { component2 } from './dist/path/component2.js';
 
-  // ============================================
-  // LAYER 1: INPUT
-  // ============================================
-  describe('Layer 1: Input', () => {
-    it('should accept valid input', () => {
-      // Test data ingestion
-    });
+// Track results
+let passed = 0;
+let failed = 0;
 
-    it('should reject invalid input', () => {
-      // Test validation
-    });
-  });
+function test(name, fn) {
+  try {
+    const result = fn();
+    if (result instanceof Promise) {
+      result.then(() => {
+        console.log(`✅ ${name}`);
+        passed++;
+      }).catch((e) => {
+        console.log(`❌ ${name}: ${e.message}`);
+        failed++;
+      });
+    } else {
+      console.log(`✅ ${name}`);
+      passed++;
+    }
+  } catch (e) {
+    console.log(`❌ ${name}: ${e instanceof Error ? e.message : String(e)}`);
+    failed++;
+  }
+}
 
-  // ============================================
-  // LAYER 2: PROCESSING
-  // ============================================
-  describe('Layer 2: Processing', () => {
-    it('should process input through component A', () => {
-      // Test first transformation
-    });
+// ============================================
+// LAYER 1: [Name from tree]
+// Reference: PIPELINE_PIPELINE_TREE.md#layer-1
+// ============================================
+console.log('📍 Layer 1: [Name]');
 
-    it('should pass data to component B', () => {
-      // Test component connection
-    });
-
-    it('should handle component failures gracefully', () => {
-      // Test error handling
-    });
-  });
-
-  // ============================================
-  // LAYER N: [Add each layer]
-  // ============================================
-
-  // ============================================
-  // LAYER X: OUTPUT
-  // ============================================
-  describe('Layer X: Output', () => {
-    it('should produce expected output', () => {
-      // Test final result
-    });
-
-    it('should persist artifacts', () => {
-      // Verify JSON files created
-    });
-  });
-
-  // ============================================
-  // END-TO-END
-  // ============================================
-  describe('End-to-End', () => {
-    it('should complete full pipeline', () => {
-      // Test complete flow
-    });
-
-    it('should handle edge cases', () => {
-      // Test boundary conditions
-    });
-  });
+test('should [behavior from tree entry]', () => {
+  // Use components from tree
 });
+
+// ============================================
+// LAYER 2: [Name from tree]
+// Reference: PIPELINE_PIPELINE_TREE.md#layer-2
+// ============================================
+console.log('\n📍 Layer 2: [Name]');
+
+test('should [behavior from tree]', () => {
+  // Test data flow between components
+});
+
+// ============================================
+// VERIFY ARTIFACTS (from tree)
+// Reference: PIPELINE_PIPELINE_TREE.md#artifacts
+// ============================================
+
+// ============================================
+// END-TO-END (from tree)
+// Reference: PIPELINE_PIPELINE_TREE.md#testing-requirements
+// ============================================
+console.log('\n📍 End-to-End');
+
+test('should complete full pipeline', () => {
+  // Full flow: Entry → Exit
+});
+
+// ============================================
+// RESULTS
+// ============================================
+setTimeout(() => {
+  console.log('\n========================================');
+  console.log(`Results: ${passed} passed, ${failed} failed`);
+  console.log('========================================');
+  
+  if (failed === 0) {
+    console.log('✅ Pipeline test PASSED');
+    process.exit(0);
+  } else {
+    console.log('❌ Pipeline test FAILED');
+    process.exit(1);
+  }
+}, 500);
 ```
 
 ### Step 3: The Test Pattern
@@ -396,11 +473,14 @@ jobs:
 
 | Step | Action |
 |------|--------|
-| 1 | Identify all pipelines in the system |
-| 2 | Map components, layers, and artifacts |
-| 3 | Create pipeline test (template provided) |
-| 4 | Run test, find issue, fix, repeat |
-| 5 | Say "complete" only after 3 consecutive passes |
+| 1 | **Create Pipeline Tree** (REQUIRED) |
+| 2 | Map components, layers, and artifacts in tree |
+| 3 | Reference tree at every test step |
+| 4 | Create pipeline test (template provided) |
+| 5 | Run test, find issue, fix, repeat |
+| 6 | Say "complete" only after 3 consecutive passes |
+
+**The Rule**: Without the pipeline tree, you lose track of the gravity. The tree must be passed with every pipeline creation and test.
 
 **Remember**: Unit tests ✅ ≠ Pipeline works ❌
 
