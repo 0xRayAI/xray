@@ -696,11 +696,11 @@ ReportData { generatedAt, timeRange, metrics, insights, recommendations, summary
 |----------|---------------|-------|
 | **Inference** | ✅ Tested | 9 iterations, 3 consecutive passes |
 | **Governance** | ✅ Tested | 3 consecutive passes |
-| **Orchestration** | ⚠️ Partial | Integration tests, no pipeline test |
-| **Boot** | ⚠️ Partial | Init tests, no pipeline test |
-| **Routing** | ⚠️ Partial | Unit tests, no pipeline test |
-| **Processor** | ⚠️ Partial | Unit tests, no pipeline test |
-| **Reporting** | ⚠️ Partial | Unit tests, no pipeline test |
+| **Orchestration** | ✅ Tested | 3 consecutive passes |
+| **Boot** | ✅ Tested | 3 consecutive passes |
+| **Routing** | ✅ Tested | 3 consecutive passes |
+| **Processor** | ✅ Tested | 3 consecutive passes |
+| **Reporting** | ✅ Tested | 3 consecutive passes |
 
 ---
 

@@ -5,7 +5,7 @@
  * Input → Rule Registry → Validator Registry → Rule Executor → Violation Fixer → Output
  */
 
-import { RuleEnforcer } from './dist/enforcement/rule-enforcer.js';
+import { RuleEnforcer } from '../../../dist/enforcement/rule-enforcer.js';
 
 console.log('=== GOVERNANCE PIPELINE TEST ===\n');
 
