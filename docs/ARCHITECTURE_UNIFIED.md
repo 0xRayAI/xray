@@ -153,9 +153,9 @@ These engines are used by the 6 pipelines:
 
 | Pipeline | Primary Engines Used |
 |----------|---------------------|
-| Routing Pipeline | TaskSkillRouter, RouterCore, KeywordMatcher, HistoryMatcher, ComplexityRouter |
-| Governance Pipeline | RuleEnforcer, ValidatorRegistry, ViolationFixer |
-| Boot Pipeline | ContextLoader, StateManager, SecurityHardener, InferenceTuner |
-| Orchestration Pipeline | StringRayOrchestrator, AgentDelegator, OutcomeTracker |
-| Processor Pipeline | ProcessorManager, 10+ processors |
-| Reporting Pipeline | FrameworkReportingSystem, AutonomousReportGenerator |
+| Routing Pipeline | TaskSkillRouter, RouterCore, KeywordMatcher, HistoryMatcher, ComplexityRouter, OutcomeTracker, PatternTracker |
+| Governance Pipeline | RuleEnforcer, RuleRegistry, RuleHierarchy, ValidatorRegistry, RuleExecutor, ViolationFixer |
+| Boot Sequence | BootOrchestrator, ContextLoader, StateManager, AgentDelegator, SessionCoordinator, SessionMonitor, SessionStateManager, ProcessorManager, SecurityHardener, InferenceTuner |
+| Orchestration Pipeline | StringRayOrchestrator, EnhancedMultiAgentOrchestrator, AgentDelegator, AgentSpawnGovernor, OutcomeTracker |
+| Processor Pipeline | ProcessorManager, ProcessorRegistry, 5 pre-processors, 8 post-processors |
+| Reporting Pipeline | FrameworkReportingSystem, FrameworkLogger |

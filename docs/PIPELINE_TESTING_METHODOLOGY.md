@@ -35,12 +35,12 @@ Every pipeline test must reference its pipeline tree. The tree is your map - wit
 
 ```
 docs/pipeline-trees/
-├── ROUTING_PIPELINE_TREE.md      ← Reference this
-├── GOVERNANCE_PIPELINE_TREE.md   ← Reference this
-├── BOOT_PIPELINE_TREE.md         ← Reference this
+├── ROUTING_PIPELINE_TREE.md       ← Reference this
+├── GOVERNANCE_PIPELINE_TREE.md    ← Reference this
+├── BOOT_PIPELINE_TREE.md          ← Reference this
 ├── ORCHESTRATION_PIPELINE_TREE.md ← Reference this
-├── PROCESSOR_PIPELINE_TREE.md    ← Reference this
-└── REPORTING_PIPELINE_TREE.md   ← Reference this
+├── PROCESSOR_PIPELINE_TREE.md     ← Reference this
+└── REPORTING_PIPELINE_TREE.md     ← Reference this
 ```
 
 **Pipeline Tree Template**:
@@ -117,12 +117,11 @@ Every major feature has a pipeline. Map yours:
 
 | Pipeline | Layers | Components | Tree | Status |
 |----------|--------|------------|------|--------|
-| Inference | 6 | 17 | INFERENCE_PIPELINE_TREE.md | ✅ Tested |
 | Routing | 5 | 7 | ROUTING_PIPELINE_TREE.md | ✅ Tested |
 | Governance | 5 | 6 | GOVERNANCE_PIPELINE_TREE.md | ✅ Tested |
-| Boot | 7 | 10 | BOOT_PIPELINE_TREE.md | ✅ Tested |
+| Boot Sequence | 7 | 10 | BOOT_PIPELINE_TREE.md | ✅ Tested |
 | Orchestration | 5 | 4 | ORCHESTRATION_PIPELINE_TREE.md | ✅ Tested |
-| Processor | 5 | 12+ | PROCESSOR_PIPELINE_TREE.md | ✅ Tested |
+| Processor | 5 | 13 | PROCESSOR_PIPELINE_TREE.md | ✅ Tested |
 | Reporting | 6 | 4 | REPORTING_PIPELINE_TREE.md | ✅ Tested |
 
 ### Step 2: Create the Pipeline Test
@@ -488,4 +487,140 @@ Only pipeline tests prove the pipeline works.
 
 ---
 
-**Tags**: #pipeline-testing #methodology #best-practices
+## Agent Review Findings (CRITICAL)
+
+After peer review by researcher, architect, and code-analyzer agents, the following issues were identified:
+
+### Researcher Findings
+| Pipeline | Status | Issues |
+|----------|--------|--------|
+| Routing | ✅ Accurate | - |
+| Governance | ✅ Accurate | - |
+| Boot | ⚠️ Minor | Line number off by 7 |
+| Orchestration | ✅ Accurate | - |
+| Processor | ❌ Incomplete | Missing 10 processors (only 2 documented) |
+| Reporting | ✅ Accurate | - |
+
+### Architect Findings
+| Issue | Impact | Fix Required |
+|-------|--------|-------------|
+| "Engines" vs "Layers" terminology mismatch | Documentation confusion | Standardize terminology |
+| Cross-pipeline component duplication | Understanding complexity | Document shared components |
+| Boot misclassified as pipeline | Architectural clarity | Rename to "Boot Sequence" |
+| Unified view table mismatches trees | Documentation accuracy | Reconcile tables |
+
+### Code Analyzer Findings
+| Issue | Severity | Impact |
+|-------|----------|--------|
+| Tests create mock data, don't call real methods | HIGH | Integration gaps |
+| Tests only check method existence | HIGH | No real validation |
+| No actual pipeline execution verified | HIGH | False positives |
+
+### Key Takeaway
+**Pipeline trees created from assumptions will be incomplete. Always verify against actual codebase.**
+
+---
+
+## Pipeline Creation Rules (MANDATORY)
+
+These rules MUST be followed when creating or updating pipeline documentation:
+
+### Rule 1: Research Before Documentation
+```
+BEFORE creating a pipeline tree:
+1. Run: glob src/**/processors/*.ts to find ALL processors
+2. Run: grep "priority:" src/**/implementations/*.ts to verify priorities
+3. Run: grep "extends.*Processor" to verify types
+4. NEVER assume component counts - always VERIFY with code search
+```
+
+### Rule 2: Execute Real Code, Not Stubs
+```
+PIPELINE TESTS MUST:
+1. Import actual components from dist/
+2. Call real methods (new Component(), .method())
+3. Verify real outputs, not mock data
+4. Execute actual pipeline entry points
+
+NEVER:
+- Use stateManager.set() to simulate results
+- Create mock arrays instead of real data
+- Check only method existence
+```
+
+### Rule 3: Verify Layer Counts
+```
+BEFORE finalizing a pipeline tree:
+1. Count ACTUAL components in each layer
+2. Run tests against tree to verify completeness
+3. Have another agent review the tree
+4. Fix discrepancies before publishing
+```
+
+### Rule 4: Test Real Integration
+```
+PIPELINE TESTS MUST EXERCISE:
+1. Entry point → real method call
+2. Component → component interaction  
+3. Full end-to-end flow
+4. Actual artifacts created
+
+SHALLOW TESTS ARE NOT ACCEPTABLE:
+- ❌ "should have methodX" (existence check)
+- ❌ "should return { ... }" (mock data)
+- ✅ "should route to security-auditor for security task" (real behavior)
+```
+
+### Rule 5: Name Things Correctly
+```
+BOOT is NOT a pipeline - it's an INITIALIZATION SEQUENCE
+- Pipelines: Routing, Governance, Orchestration, Processor, Reporting
+- Sequences: Boot (framework startup)
+- Different semantics require different documentation
+```
+
+---
+
+## Pre-Publication Checklist
+
+Before committing pipeline documentation:
+
+```bash
+# 1. Verify all components exist
+glob src/**/processors/implementations/*.ts | wc -l
+grep "priority:" src/**/implementations/*.ts
+
+# 2. Run pipeline test
+node src/__tests__/pipeline/test-*-pipeline.mjs
+
+# 3. Verify test output matches tree
+#    - Layer count matches
+#    - Component count matches
+#    - All processors documented
+
+# 4. Have agent review
+@researcher verify pipeline tree accuracy
+@code-analyzer verify test coverage
+```
+
+---
+
+## Summary
+
+| Step | Action | Verification |
+|------|--------|---------------|
+| 1 | **Research** | Code search to find ALL components |
+| 2 | **Document** | Create tree with verified components |
+| 3 | **Test** | Real code execution, not stubs |
+| 4 | **Review** | Agent review for completeness |
+| 5 | **Iterate** | Fix issues until 3 consecutive passes |
+
+**The Rule**: Without the pipeline tree, you lose track of the gravity. The tree must be passed with every pipeline creation and test.
+
+**Remember**: Unit tests ✅ ≠ Pipeline works ❌
+
+Only pipeline tests prove the pipeline works.
+
+---
+
+**Tags**: #pipeline-testing #methodology #best-practices #rules

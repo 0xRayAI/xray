@@ -1,6 +1,8 @@
-# Boot Pipeline
+# Boot Sequence
 
 **Purpose**: Framework initialization and component startup orchestration
+
+**Note**: This is an INITIALIZATION SEQUENCE, not a processing pipeline. Boot runs once at startup to initialize all framework components.
 
 ## Architecture Diagram
 
