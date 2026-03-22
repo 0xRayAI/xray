@@ -95,34 +95,35 @@ test('should have processor registry', () => {
 // LAYER 2: Pre-Processors (priority-ordered)
 // Reference: PROCESSOR_PIPELINE_TREE.md#layer-2
 // ============================================
-console.log('\n📍 Layer 2: Pre-Processors (priority-ordered)');
+console.log('\n📍 Layer 2: Pre-Processors (5 processors, priority-ordered)');
 console.log('   Priority order from tree:');
 console.log('   1. preValidate (10) - Syntax checking');
-console.log('   2. codexCompliance (20) - Codex rules');
-console.log('   3. testAutoCreation (22) - Auto-generate tests');
+console.log('   2. logProtection (10) - Log sanitization');
+console.log('   3. codexCompliance (20) - Codex rules');
 console.log('   4. versionCompliance (25) - NPM/UVM check');
-console.log('   5. errorBoundary (30) - Error handling');
-console.log('   6. agentsMdValidation (35) - AGENTS.md validation\n');
+console.log('   5. errorBoundary (30) - Error handling\n');
 
 test('should execute pre-processors in priority order', () => {
   const stateManager = new StringRayStateManager();
   
   const preProcessors = [
     { name: 'preValidate', priority: 10 },
+    { name: 'logProtection', priority: 10 },
     { name: 'codexCompliance', priority: 20 },
-    { name: 'testAutoCreation', priority: 22 },
     { name: 'versionCompliance', priority: 25 },
-    { name: 'errorBoundary', priority: 30 },
-    { name: 'agentsMdValidation', priority: 35 }
+    { name: 'errorBoundary', priority: 30 }
   ];
   
   const sorted = [...preProcessors].sort((a, b) => a.priority - b.priority);
   
-  if (sorted[0].name !== 'preValidate') {
-    throw new Error('Sort order incorrect');
+  if (sorted.length !== 5) {
+    throw new Error('Expected 5 pre-processors');
   }
-  if (sorted[5].name !== 'agentsMdValidation') {
-    throw new Error('Sort order incorrect');
+  if (sorted[0].priority !== 10) {
+    throw new Error('Sort order incorrect - first should have priority 10');
+  }
+  if (sorted[4].name !== 'errorBoundary') {
+    throw new Error('Sort order incorrect - last should be errorBoundary');
   }
   
   console.log(`   (${sorted.length} pre-processors sorted)`);
@@ -169,26 +170,41 @@ test('should track operation state', () => {
 // LAYER 4: Post-Processors (priority-ordered)
 // Reference: PROCESSOR_PIPELINE_TREE.md#layer-4
 // ============================================
-console.log('\n📍 Layer 4: Post-Processors (priority-ordered)');
+console.log('\n📍 Layer 4: Post-Processors (8 processors, priority-ordered)');
 console.log('   Priority order from tree:');
-console.log('   1. stateValidation (130) - State consistency');
-console.log('   2. refactoringLogging (140) - Agent completion\n');
+console.log('   1. inferenceImprovement (5) - Model refinement');
+console.log('   2. testExecution (40) - Run test suite');
+console.log('   3. regressionTesting (45) - Detect regressions');
+console.log('   4. stateValidation (50) - State consistency');
+console.log('   5. refactoringLogging (55) - Agent completion');
+console.log('   6. testAutoCreation (60) - Auto-generate tests');
+console.log('   7. coverageAnalysis (65) - Test coverage');
+console.log('   8. agentsMdValidation (70) - AGENTS.md validation\n');
 
 test('should execute post-processors in priority order', () => {
   const stateManager = new StringRayStateManager();
   
   const postProcessors = [
-    { name: 'stateValidation', priority: 130 },
-    { name: 'refactoringLogging', priority: 140 }
+    { name: 'inferenceImprovement', priority: 5 },
+    { name: 'testExecution', priority: 40 },
+    { name: 'regressionTesting', priority: 45 },
+    { name: 'stateValidation', priority: 50 },
+    { name: 'refactoringLogging', priority: 55 },
+    { name: 'testAutoCreation', priority: 60 },
+    { name: 'coverageAnalysis', priority: 65 },
+    { name: 'agentsMdValidation', priority: 70 }
   ];
   
   const sorted = [...postProcessors].sort((a, b) => a.priority - b.priority);
   
-  if (sorted[0].name !== 'stateValidation') {
-    throw new Error('Sort order incorrect');
+  if (sorted.length !== 8) {
+    throw new Error('Expected 8 post-processors');
   }
-  if (sorted[1].name !== 'refactoringLogging') {
-    throw new Error('Sort order incorrect');
+  if (sorted[0].name !== 'inferenceImprovement') {
+    throw new Error('Sort order incorrect - first should be inferenceImprovement (priority 5)');
+  }
+  if (sorted[7].name !== 'agentsMdValidation') {
+    throw new Error('Sort order incorrect - last should be agentsMdValidation (priority 70)');
   }
   
   console.log(`   (${sorted.length} post-processors sorted)`);
@@ -197,7 +213,16 @@ test('should execute post-processors in priority order', () => {
 test('should execute post-processors', () => {
   const stateManager = new StringRayStateManager();
   
-  const postProcessors = ['stateValidation', 'refactoringLogging'];
+  const postProcessors = [
+    'inferenceImprovement',
+    'testExecution',
+    'regressionTesting',
+    'stateValidation',
+    'refactoringLogging',
+    'testAutoCreation',
+    'coverageAnalysis',
+    'agentsMdValidation'
+  ];
   
   for (const name of postProcessors) {
     stateManager.set(`postprocessor:${name}:executed`, true);
@@ -325,12 +350,19 @@ test('should complete full processor pipeline', () => {
   
   const pipeline = [
     'preValidate',
+    'logProtection',
     'codexCompliance',
     'versionCompliance',
     'errorBoundary',
     'mainOperation',
+    'inferenceImprovement',
+    'testExecution',
+    'regressionTesting',
     'stateValidation',
-    'refactoringLogging'
+    'refactoringLogging',
+    'testAutoCreation',
+    'coverageAnalysis',
+    'agentsMdValidation'
   ];
   
   for (const stage of pipeline) {
@@ -346,7 +378,7 @@ test('should complete full processor pipeline', () => {
 });
 
 test('should verify pre-processors execute in order', () => {
-  const preOrder = ['preValidate', 'codexCompliance', 'testAutoCreation', 'versionCompliance', 'errorBoundary', 'agentsMdValidation'];
+  const preOrder = ['preValidate', 'logProtection', 'codexCompliance', 'versionCompliance', 'errorBoundary'];
   const executedOrder = [];
   
   for (const name of preOrder) {
@@ -360,7 +392,7 @@ test('should verify pre-processors execute in order', () => {
 });
 
 test('should verify post-processors execute in order', () => {
-  const postOrder = ['stateValidation', 'refactoringLogging'];
+  const postOrder = ['inferenceImprovement', 'testExecution', 'regressionTesting', 'stateValidation', 'refactoringLogging', 'testAutoCreation', 'coverageAnalysis', 'agentsMdValidation'];
   const executedOrder = [];
   
   for (const name of postOrder) {
@@ -377,14 +409,19 @@ test('should verify all components from tree are tested', () => {
   const components = [
     'ProcessorManager',
     'ProcessorRegistry',
-    'preValidate',
-    'codexCompliance',
-    'testAutoCreation',
-    'versionCompliance',
-    'errorBoundary',
-    'agentsMdValidation',
-    'stateValidation',
-    'refactoringLogging'
+    'PreValidateProcessor',
+    'LogProtectionProcessor',
+    'CodexComplianceProcessor',
+    'VersionComplianceProcessor',
+    'ErrorBoundaryProcessor',
+    'InferenceImprovementProcessor',
+    'TestExecutionProcessor',
+    'RegressionTestingProcessor',
+    'StateValidationProcessor',
+    'RefactoringLoggingProcessor',
+    'TestAutoCreationProcessor',
+    'CoverageAnalysisProcessor',
+    'AgentsMdValidationProcessor'
   ];
   
   console.log(`   (tested ${components.length} components from tree)`);

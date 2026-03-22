@@ -27,35 +27,33 @@
 │  │  │                LAYER 1: Processor Registry                   │   │  │
 │  │  │                                                             │   │  │
 │  │  │  ┌─────────────────────────────────────────────────────────┐ │   │  │
-│  │  │  │                ProcessorRegistry                        │ │   │  │
+│  │  │  │                ProcessorRegistry                         │ │   │  │
 │  │  │  │             processor-registry.ts                       │ │   │  │
 │  │  │  │                                                         │ │   │  │
-│  │  │  │  get(name) → ProcessorInstance                          │ │   │  │
+│  │  │  │  13 processors registered (5 pre + 8 post)              │ │   │  │
 │  │  │  └─────────────────────────────────────────────────────────┘ │   │  │
 │  │  └──────────────────────────┬──────────────────────────────────┘   │  │
 │  │                             │                                        │  │
 │  │                             v                                        │  │
 │  │  ┌─────────────────────────────────────────────────────────────┐   │  │
-│  │  │              LAYER 2: Pre-Processors (6)                   │   │  │
+│  │  │              LAYER 2: Pre-Processors (5)                   │   │  │
 │  │  │                                                             │   │  │
-│  │  │  Get pre-processors (type="pre", enabled)                   │   │  │
-│  │  │  Sort by priority (ascending)                               │   │  │
+│  │  │  Sorted by priority (ascending):                            │   │  │
 │  │  │                                                             │   │  │
-│  │  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │   │  │
-│  │  │  │preValid │→ │codexCom │→ │testAuto │→ │versionC │        │   │  │
-│  │  │  │  (10)  │  │  (20)   │  │  (22)   │  │  (25)   │        │   │  │
-│  │  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘        │   │  │
-│  │  │  ┌─────────┐  ┌─────────┐                                 │   │  │
-│  │  │  │errorBnd │→ │agentsMd │                                 │   │  │
-│  │  │  │  (30)   │  │  (35)   │                                 │   │  │
-│  │  │  └─────────┘  └─────────┘                                 │   │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │   │  │
+│  │  │  │preValidate │→ │logProtect  │→ │codexCom   │→          │   │  │
+│  │  │  │   (10)    │  │   (10)    │  │   (20)    │          │   │  │
+│  │  │  └─────────────┘  └─────────────┘  └─────────────┘          │   │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐                          │   │  │
+│  │  │  │versionComp │→ │errorBound  │→                          │   │  │
+│  │  │  │   (25)    │  │   (30)    │                          │   │  │
+│  │  │  └─────────────┘  └─────────────┘                          │   │  │
 │  │  │                                                             │   │  │
-│  │  │  preValidate         → Syntax checking                      │   │  │
-│  │  │  codexCompliance    → Codex rules validation                │   │  │
-│  │  │  testAutoCreation   → Auto-generate tests                  │   │  │
-│  │  │  versionCompliance  → NPM/UVM version check                │   │  │
-│  │  │  errorBoundary      → Error handling setup                 │   │  │
-│  │  │  agentsMdValidation → AGENTS.md validation                  │   │  │
+│  │  │  1. preValidate (10) - Syntax checking                      │   │  │
+│  │  │  2. logProtection (10) - Log sanitization                  │   │  │
+│  │  │  3. codexCompliance (20) - Codex rules validation           │   │  │
+│  │  │  4. versionCompliance (25) - NPM/UVM version check        │   │  │
+│  │  │  5. errorBoundary (30) - Error handling setup              │   │  │
 │  │  │                                                             │   │  │
 │  │  └──────────────────────────┬──────────────────────────────────┘   │  │
 │  │                             │                                        │  │
@@ -73,18 +71,31 @@
 │  │                             │                                        │  │
 │  │                             v                                        │  │
 │  │  ┌─────────────────────────────────────────────────────────────┐   │  │
-│  │  │             LAYER 4: Post-Processors (2)                    │   │  │
+│  │  │             LAYER 4: Post-Processors (8)                     │   │  │
 │  │  │                                                             │   │  │
-│  │  │  Get post-processors (type="post", enabled)                  │   │  │
-│  │  │  Sort by priority (ascending)                               │   │  │
+│  │  │  Sorted by priority (ascending):                            │   │  │
 │  │  │                                                             │   │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐                          │   │  │
-│  │  │  │stateValid  │→ │refactorLog  │                          │   │  │
-│  │  │  │   (130)    │  │   (140)     │                          │   │  │
-│  │  │  └─────────────┘  └─────────────┘                          │   │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │   │  │
+│  │  │  │inferenceImp │→ │testExecute │→ │regression   │→       │   │  │
+│  │  │  │   (5)     │  │   (40)    │  │   (45)     │        │   │  │
+│  │  │  └─────────────┘  └─────────────┘  └─────────────┘        │   │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │   │  │
+│  │  │  │stateValid  │→ │refactorLog │→ │testAutoCrt │→        │   │  │
+│  │  │  │   (50)    │  │   (55)    │  │   (60)     │        │   │  │
+│  │  │  └─────────────┘  └─────────────┘  └─────────────┘        │   │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐                        │   │  │
+│  │  │  │coverageAnl │→ │agentsMdVal │                        │   │  │
+│  │  │  │   (65)    │  │   (70)    │                        │   │  │
+│  │  │  └─────────────┘  └─────────────┘                        │   │  │
 │  │  │                                                             │   │  │
-│  │  │  stateValidation     → State consistency check              │   │  │
-│  │  │  refactoringLogging → Agent completion logging             │   │  │
+│  │  │  1. inferenceImprovement (5) - Model refinement            │   │  │
+│  │  │  2. testExecution (40) - Run test suite                   │   │  │
+│  │  │  3. regressionTesting (45) - Detect regressions            │   │  │
+│  │  │  4. stateValidation (50) - State consistency check         │   │  │
+│  │  │  5. refactoringLogging (55) - Agent completion logging    │   │  │
+│  │  │  6. testAutoCreation (60) - Auto-generate tests           │   │  │
+│  │  │  7. coverageAnalysis (65) - Test coverage analysis         │   │  │
+│  │  │  8. agentsMdValidation (70) - AGENTS.md validation          │   │  │
 │  │  │                                                             │   │  │
 │  │  └──────────────────────────┬──────────────────────────────────┘   │  │
 │  │                             │                                        │  │
@@ -93,16 +104,16 @@
 │  │  │              LAYER 5: Health Monitoring                    │   │  │
 │  │  │                                                             │   │  │
 │  │  │  ┌─────────────────────────────────────────────────────────┐ │   │  │
-│  │  │  │                  ProcessorHealth                       │ │   │  │
+│  │  │  │                  ProcessorHealth                          │ │   │  │
 │  │  │  │                                                         │ │   │  │
-│  │  │  │  Status: healthy | degraded | failed                   │ │   │  │
-│  │  │  │  lastExecution: timestamp                             │ │   │  │
-│  │  │  │  successRate: percentage                              │ │   │  │
+│  │  │  │  Status: healthy | degraded | failed                    │ │   │  │
+│  │  │  │  lastExecution: timestamp                              │ │   │  │
+│  │  │  │  successRate: percentage                                │ │   │  │
 │  │  │  │                                                         │ │   │  │
-│  │  │  │  ProcessorMetrics:                                    │ │   │  │
-│  │  │  │  • totalExecutions                                    │ │   │  │
-│  │  │  │  • successRate                                        │ │   │  │
-│  │  │  │  • avgDuration                                        │ │   │  │
+│  │  │  │  ProcessorMetrics:                                      │ │   │  │
+│  │  │  │  • totalExecutions                                     │ │   │  │
+│  │  │  │  • successRate                                         │ │   │  │
+│  │  │  │  • avgDuration                                         │ │   │  │
 │  │  │  └─────────────────────────────────────────────────────────┘ │   │  │
 │  │  └─────────────────────────────────────────────────────────────┘   │  │
 │  │                                                                     │  │
@@ -113,13 +124,13 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          OUTPUT LAYER                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐  │
-│  │                   PostProcessorResult[]                              │  │
+│  │                   PostProcessorResult[]                               │  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                │  │
-│  │  │    name     │  │   success   │  │   error     │                │  │
-│  │  │  (string)   │  │  (boolean)  │  │  (string)   │                │  │
+│  │  │    name     │  │   success  │  │   error    │                │  │
+│  │  │  (string)   │  │  (boolean) │  │  (string)  │                │  │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘                │  │
 │  │                                                                     │  │
-│  │  Additional: data, duration, timestamp                              │  │
+│  │  Additional: data, duration, timestamp                                │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -165,9 +176,9 @@ Return PostProcessorResult[]
 ## Layers
 
 - **Layer 1**: Processor Registry (ProcessorRegistry)
-- **Layer 2**: Pre-Processors (priority-ordered)
+- **Layer 2**: Pre-Processors (5, priority-ordered)
 - **Layer 3**: Main Operation
-- **Layer 4**: Post-Processors (priority-ordered)
+- **Layer 4**: Post-Processors (8, priority-ordered)
 - **Layer 5**: Health Monitoring (ProcessorHealth)
 
 ## Pre-Processors (Priority Order)
@@ -175,18 +186,23 @@ Return PostProcessorResult[]
 | Priority | Processor | Purpose |
 |----------|-----------|---------|
 | 10 | preValidate | Syntax checking |
-| 20 | codexCompliance | Codex rules |
-| 22 | testAutoCreation | Auto-generate tests |
-| 25 | versionCompliance | NPM/UVM check |
-| 30 | errorBoundary | Error handling |
-| 35 | agentsMdValidation | AGENTS.md validation |
+| 10 | logProtection | Log sanitization |
+| 20 | codexCompliance | Codex rules validation |
+| 25 | versionCompliance | NPM/UVM version check |
+| 30 | errorBoundary | Error handling setup |
 
 ## Post-Processors (Priority Order)
 
 | Priority | Processor | Purpose |
 |----------|-----------|---------|
-| 130 | stateValidation | State consistency |
-| 140 | refactoringLogging | Agent completion |
+| 5 | inferenceImprovement | Model refinement |
+| 40 | testExecution | Run test suite |
+| 45 | regressionTesting | Detect regressions |
+| 50 | stateValidation | State consistency |
+| 55 | refactoringLogging | Agent completion logging |
+| 60 | testAutoCreation | Auto-generate tests |
+| 65 | coverageAnalysis | Test coverage analysis |
+| 70 | agentsMdValidation | AGENTS.md validation |
 
 ## Components
 
@@ -194,19 +210,24 @@ Return PostProcessorResult[]
 |-----------|------|
 | ProcessorManager | `src/processors/processor-manager.ts` |
 | ProcessorRegistry | `src/processors/processor-registry.ts` |
-| preValidate | `src/processors/implementations/pre-validate-processor.ts` |
-| codexCompliance | `src/processors/implementations/codex-compliance-processor.ts` |
-| testAutoCreation | `src/processors/implementations/test-auto-creation-processor.ts` |
-| versionCompliance | `src/processors/implementations/version-compliance-processor.ts` |
-| errorBoundary | `src/processors/implementations/error-boundary-processor.ts` |
-| agentsMdValidation | `src/processors/implementations/agents-md-validation-processor.ts` |
-| stateValidation | `src/processors/implementations/state-validation-processor.ts` |
-| refactoringLogging | `src/processors/implementations/refactoring-logging-processor.ts` |
+| PreValidateProcessor | `src/processors/implementations/pre-validate-processor.ts` |
+| LogProtectionProcessor | `src/processors/implementations/log-protection-processor.ts` |
+| CodexComplianceProcessor | `src/processors/implementations/codex-compliance-processor.ts` |
+| VersionComplianceProcessor | `src/processors/implementations/version-compliance-processor.ts` |
+| ErrorBoundaryProcessor | `src/processors/implementations/error-boundary-processor.ts` |
+| InferenceImprovementProcessor | `src/processors/implementations/inference-improvement-processor.ts` |
+| TestExecutionProcessor | `src/processors/implementations/test-execution-processor.ts` |
+| RegressionTestingProcessor | `src/processors/implementations/regression-testing-processor.ts` |
+| StateValidationProcessor | `src/processors/implementations/state-validation-processor.ts` |
+| RefactoringLoggingProcessor | `src/processors/implementations/refactoring-logging-processor.ts` |
+| TestAutoCreationProcessor | `src/processors/implementations/test-auto-creation-processor.ts` |
+| CoverageAnalysisProcessor | `src/processors/implementations/coverage-analysis-processor.ts` |
+| AgentsMdValidationProcessor | `src/processors/implementations/agents-md-validation-processor.ts` |
 
 ## Entry Points
 
-| Entry | File | Description |
-|-------|------|-------------|
+| Entry | File:Line | Description |
+|-------|-----------|-------------|
 | executePreProcessors() | processor-manager.ts | Pre-processing |
 | executePostProcessors() | processor-manager.ts | Post-processing |
 
@@ -224,7 +245,7 @@ Return PostProcessorResult[]
 
 ## Testing Requirements
 
-1. Pre-processors execute in order
-2. Post-processors execute in order
+1. Pre-processors execute in priority order
+2. Post-processors execute in priority order
 3. Metrics recorded
 4. Health status updated
