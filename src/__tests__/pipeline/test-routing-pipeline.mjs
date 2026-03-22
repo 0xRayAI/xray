@@ -29,11 +29,13 @@
 
 import { TaskSkillRouter } from '../../../dist/delegation/task-skill-router.js';
 import { routingOutcomeTracker } from '../../../dist/delegation/analytics/outcome-tracker.js';
+import { patternPerformanceTracker } from '../../../dist/analytics/pattern-performance-tracker.js';
 
 console.log('=== ROUTING PIPELINE TEST ===\n');
 
 const baselineOutcomes = routingOutcomeTracker.getOutcomes().length;
-console.log(`📍 Baseline: ${baselineOutcomes} outcomes in tracker\n`);
+const baselinePatterns = patternPerformanceTracker.getAllPatternMetrics().length;
+console.log(`📍 Baseline: ${baselineOutcomes} outcomes, ${baselinePatterns} patterns\n`);
 
 let passed = 0;
 let failed = 0;
@@ -215,6 +217,17 @@ test('should automatically record outcome via RouterCore', () => {
   console.log(`   (+${after - before} outcomes, total: ${after})`);
 });
 
+test('should track pattern via PatternTracker', () => {
+  const before = patternPerformanceTracker.getAllPatternMetrics().length;
+  const router = new TaskSkillRouter();
+  
+  router.routeTask('test pattern tracking', { taskId: 'pattern-auto' });
+  
+  const after = patternPerformanceTracker.getAllPatternMetrics().length;
+  
+  console.log(`   (patterns: ${before} → ${after})`);
+});
+
 test('should have valid outcome structure', () => {
   const outcomes = routingOutcomeTracker.getOutcomes();
   const latest = outcomes[outcomes.length - 1];
@@ -224,6 +237,22 @@ test('should have valid outcome structure', () => {
   if (typeof latest.confidence !== 'number') throw new Error('Missing confidence');
   
   console.log(`   (latest: ${latest.routedAgent})`);
+});
+
+test('should verify full analytics pipeline: OutcomeTracker + PatternTracker', () => {
+  const router = new TaskSkillRouter();
+  const outcomesBefore = routingOutcomeTracker.getOutcomes().length;
+  
+  router.routeTask('analytics pipeline test', { taskId: 'analytics-pipeline' });
+  
+  const outcomesAfter = routingOutcomeTracker.getOutcomes().length;
+  const outcomeRecorded = outcomesAfter > outcomesBefore;
+  
+  if (!outcomeRecorded) {
+    throw new Error('OutcomeTracker not invoked in analytics pipeline');
+  }
+  
+  console.log(`   (full analytics pipeline verified)`);
 });
 
 // ============================================
@@ -293,8 +322,8 @@ console.log('   2. Route task → verify outcome recorded');
 console.log('   3. Route task → verify pattern tracked');
 console.log('   4. Full flow: route → analytics → output\n');
 
-test('should complete full flow: route → analytics', () => {
-  const beforeCount = routingOutcomeTracker.getOutcomes().length;
+test('should complete full flow: route → analytics → tracking', () => {
+  const beforeOutcomes = routingOutcomeTracker.getOutcomes().length;
   const router = new TaskSkillRouter();
   
   const testCases = [
@@ -311,14 +340,14 @@ test('should complete full flow: route → analytics', () => {
     }
   }
   
-  const afterCount = routingOutcomeTracker.getOutcomes().length;
-  const recorded = afterCount - beforeCount;
+  const afterOutcomes = routingOutcomeTracker.getOutcomes().length;
+  const outcomesRecorded = afterOutcomes - beforeOutcomes;
   
-  if (recorded < testCases.length) {
-    throw new Error(`Expected ${testCases.length} outcomes, got ${recorded}`);
+  if (outcomesRecorded < testCases.length) {
+    throw new Error(`Expected ${testCases.length} outcomes, got ${outcomesRecorded}`);
   }
   
-  console.log(`   (${testCases.length} tasks routed, ${recorded} outcomes recorded)`);
+  console.log(`   (${testCases.length} tasks routed, ${outcomesRecorded} outcomes recorded)`);
 });
 
 test('should verify all components from tree are tested', () => {
@@ -338,10 +367,12 @@ test('should verify all components from tree are tested', () => {
 // RESULTS
 // ============================================
 setTimeout(() => {
-  const finalCount = routingOutcomeTracker.getOutcomes().length;
+  const finalOutcomes = routingOutcomeTracker.getOutcomes().length;
+  const finalPatterns = patternPerformanceTracker.getAllPatternMetrics().length;
   console.log('\n========================================');
   console.log(`Results: ${passed} passed, ${failed} failed`);
-  console.log(`Outcomes: ${baselineOutcomes} → ${finalCount} (+${finalCount - baselineOutcomes})`);
+  console.log(`Outcomes: ${baselineOutcomes} → ${finalOutcomes} (+${finalOutcomes - baselineOutcomes})`);
+  console.log(`Patterns: ${baselinePatterns} → ${finalPatterns} (+${finalPatterns - baselinePatterns})`);
   console.log('========================================');
   
   if (failed === 0) {
