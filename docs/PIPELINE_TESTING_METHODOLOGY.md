@@ -555,13 +555,12 @@ Every pipeline test MUST pass ALL of these checks:
 - [ ] TaskResult[] has real success/error data
 
 #### Processor Pipeline
-- [ ] ProcessorRegistry.getAll() returns 12 processors (4 pre + 8 post)
+- [ ] ProcessorRegistry.getAll() returns 13 processors (5 pre + 8 post)
 - [ ] executePreProcessors() called
-- [ ] All 4 pre-processors execute in order
+- [ ] All 5 pre-processors execute in order
 - [ ] executePostProcessors() called
 - [ ] All 8 post-processors execute in order
 - [ ] PostProcessorResult[] returned with real data
-- [ ] NOTE: LogProtectionProcessor exists but is NOT registered
 
 #### Reporting Pipeline
 - [ ] FrameworkLogger.getRecentLogs() returns real logs
@@ -619,14 +618,15 @@ Every pipeline test MUST pass ALL of these checks:
 | Task ID | Description | Status |
 |---------|-------------|--------|
 | processor-1 | Remove all stateManager.set() calls | ✅ Done |
-| processor-2 | Add ProcessorRegistry.getAll() returns 12 processors | ✅ Done |
-| processor-3 | Add executePreProcessors() and verify 4 run | ✅ Done |
+| processor-2 | Add ProcessorRegistry.getAll() returns 13 processors | ✅ Done |
+| processor-3 | Add executePreProcessors() and verify 5 run | ✅ Done |
 | processor-4 | Add executePostProcessors() and verify 8 run | ✅ Done |
 | processor-5 | Verify PreValidateProcessor result has validated: true | ✅ Done |
 | processor-6 | Verify CodexComplianceProcessor result has violations or clean | ✅ Done |
 | processor-7 | Verify InferenceImprovementProcessor result | ✅ Done |
 | processor-8 | Verify PostProcessorResult[] has real name/success/error | ✅ Done |
 | processor-9 | Verify ProcessorMetrics state entries | ✅ Done |
+| processor-10 | Register LogProtectionProcessor in processor-manager.ts | ✅ Done |
 
 ### Reporting Pipeline ✅ COMPLETE (16 tests)
 | Task ID | Description | Status |

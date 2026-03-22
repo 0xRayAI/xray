@@ -21,6 +21,7 @@ import { promisify } from "util";
 import { ProcessorRegistry, IProcessor, ProcessorContext } from "./processor-interfaces.js";
 import {
   PreValidateProcessor,
+  LogProtectionProcessor,
   CodexComplianceProcessor,
   VersionComplianceProcessor,
   ErrorBoundaryProcessor,
@@ -83,6 +84,7 @@ export class ProcessorManager {
   private registerAllProcessors(): void {
     // Pre-processors
     this.registry.register(new PreValidateProcessor());
+    this.registry.register(new LogProtectionProcessor());
     this.registry.register(new CodexComplianceProcessor());
     this.registry.register(new VersionComplianceProcessor());
     this.registry.register(new ErrorBoundaryProcessor());
