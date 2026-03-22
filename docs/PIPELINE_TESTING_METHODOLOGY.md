@@ -487,6 +487,161 @@ Only pipeline tests prove the pipeline works.
 
 ---
 
+## Pipeline Test Verification Checklist (NO STUBS)
+
+Every pipeline test MUST pass ALL of these checks:
+
+### Component Verification
+```
+□ Import real components from dist/ (not mocked)
+□ Call real methods: new Component() or component.method()
+□ Verify real return values, not hardcoded expectations
+□ No stateManager.set() unless testing state management
+```
+
+### Integration Verification
+```
+□ Entry point is called with real input
+□ Component A → Component B interaction verified
+□ Output matches expected data structure
+□ Side effects verified (files, state, etc.)
+```
+
+### Anti-Patterns (NEVER DO)
+```
+❌ stateManager.set('key', value)          # Stubbing state
+❌ const mock = { data: 'test' }           # Mocking data
+❌ if (methodExists)                        # Existence checks
+❌ return { success: true }                # Fake returns
+❌ router.routeTask('test')                # No verification
+```
+
+### Per-Pipeline Checklist
+
+#### Routing Pipeline
+- [ ] TaskSkillRouter.routeTask() called with real task
+- [ ] KeywordMatcher matched via result.matchedKeyword
+- [ ] HistoryMatcher used via taskId
+- [ ] ComplexityRouter used via complexity option
+- [ ] OutcomeTracker.getOutcomes() length increased
+- [ ] PatternTracker.getAllPatternMetrics() called
+- [ ] routing-outcomes.json file exists
+
+#### Governance Pipeline
+- [ ] RuleEnforcer.validateOperation() called with real code
+- [ ] RuleRegistry.getRules() returns ≥28 rules
+- [ ] ValidationReport.errors/warnings is real array
+- [ ] ViolationFixer.fixViolations() called with violations
+- [ ] Actual violations detected (console.log, duplicate code, etc.)
+
+#### Boot Sequence
+- [ ] BootOrchestrator instantiated (not stateManager.set)
+- [ ] ContextLoader.getInstance() returns config
+- [ ] StateManager entries verified via get()
+- [ ] ProcessorManager initializes processors
+- [ ] No stateManager.set() stubs
+
+#### Orchestration Pipeline
+- [ ] executeComplexTask() called with real tasks
+- [ ] Task graph built with dependencies
+- [ ] AgentDelegator.delegateToSubagent() called
+- [ ] OutcomeTracker.recordOutcome() invoked
+- [ ] TaskResult[] has real success/error data
+
+#### Processor Pipeline
+- [ ] ProcessorRegistry.getAll() returns 13 processors
+- [ ] executePreProcessors() called
+- [ ] All 5 pre-processors execute in order
+- [ ] executePostProcessors() called
+- [ ] All 8 post-processors execute in order
+- [ ] PostProcessorResult[] returned with real data
+
+#### Reporting Pipeline
+- [ ] FrameworkLogger.getRecentLogs() returns real logs
+- [ ] logs/framework/activity.log file exists
+- [ ] calculateMetrics() with real log data
+- [ ] generateInsights() returns real insights
+- [ ] formatReport() generates valid Markdown/JSON/HTML
+- [ ] ReportData has generatedAt timestamp
+
+---
+
+## Detailed Implementation Tasks
+
+### Routing Pipeline (20 tests → 26 tests needed)
+| Task ID | Description | Status |
+|---------|-------------|--------|
+| routing-1 | Add RoutingAnalytics import and verify routeAnalytics.getMetrics() | TODO |
+| routing-2 | Add RoutingPerformanceAnalyzer and verify getPerformanceReport() | TODO |
+| routing-3 | Add PromptPatternAnalyzer and verify analyzePatterns() | TODO |
+| routing-4 | Add RoutingRefiner and verify refineRouting() | TODO |
+| routing-5 | Verify logs/framework/routing-outcomes.json exists | TODO |
+
+### Governance Pipeline (18 tests → 24 tests needed)
+| Task ID | Description | Status |
+|---------|-------------|--------|
+| governance-1 | Remove all stateManager.set() calls | TODO |
+| governance-2 | Add RuleRegistry.getRules() verification | TODO |
+| governance-3 | Add RuleExecutor.execute() with real code that triggers violations | TODO |
+| governance-4 | Verify ViolationFixer.fixViolations() with real violations | TODO |
+| governance-5 | Verify ValidationReport has real errors (not mock arrays) | TODO |
+| governance-6 | Add test that triggers console.log violation | TODO |
+
+### Boot Sequence (18 tests → 25 tests needed)
+| Task ID | Description | Status |
+|---------|-------------|--------|
+| boot-1 | Remove all stateManager.set() calls | TODO |
+| boot-2 | Add BootOrchestrator instantiation test | TODO |
+| boot-3 | Add ContextLoader.getInstance() verification | TODO |
+| boot-4 | Verify ProcessorManager initializes 13 processors | TODO |
+| boot-5 | Verify SecurityHardener.initialize() runs | TODO |
+| boot-6 | Verify InferenceTuner.initialize() runs | TODO |
+| boot-7 | Verify StateManager entries via get() not set() | TODO |
+
+### Orchestration Pipeline (21 tests → 27 tests needed)
+| Task ID | Description | Status |
+|---------|-------------|--------|
+| orchestration-1 | Remove mock task arrays | TODO |
+| orchestration-2 | Add executeComplexTask() with real task definitions | TODO |
+| orchestration-3 | Verify Task graph built with dependencies | TODO |
+| orchestration-4 | Verify AgentDelegator.delegateToSubagent() called | TODO |
+| orchestration-5 | Verify TaskResult[] has real success/error data | TODO |
+| orchestration-6 | Add OutcomeTracker verification for orchestration | TODO |
+
+### Processor Pipeline (18 tests → 27 tests needed)
+| Task ID | Description | Status |
+|---------|-------------|--------|
+| processor-1 | Remove all stateManager.set() calls | TODO |
+| processor-2 | Add ProcessorRegistry.getAll() returns 13 processors | TODO |
+| processor-3 | Add executePreProcessors() and verify 5 run | TODO |
+| processor-4 | Add executePostProcessors() and verify 8 run | TODO |
+| processor-5 | Verify PreValidateProcessor result has validated: true | TODO |
+| processor-6 | Verify CodexComplianceProcessor result has violations or clean | TODO |
+| processor-7 | Verify InferenceImprovementProcessor result | TODO |
+| processor-8 | Verify PostProcessorResult[] has real name/success/error | TODO |
+| processor-9 | Verify ProcessorMetrics state entries | TODO |
+
+### Reporting Pipeline (24 tests → 31 tests needed)
+| Task ID | Description | Status |
+|---------|-------------|--------|
+| reporting-1 | Remove mock log/insight/recommendation arrays | TODO |
+| reporting-2 | Add FrameworkLogger.getRecentLogs() verification | TODO |
+| reporting-3 | Verify logs/framework/activity.log exists | TODO |
+| reporting-4 | Add calculateMetrics() with real log data | TODO |
+| reporting-5 | Add generateInsights() returns real insights | TODO |
+| reporting-6 | Verify formatReport() generates valid Markdown | TODO |
+| reporting-7 | Verify ReportData has generatedAt timestamp | TODO |
+
+### Automation Tasks
+| Task ID | Description | Status |
+|---------|-------------|--------|
+| automation-1 | Create npm run test:pipelines script | TODO |
+| automation-2 | Add pre-commit hook to run pipeline tests | TODO |
+| automation-3 | Add lint check for stub patterns | TODO |
+| automation-4 | Run all pipeline tests 3x after each pipeline update | TODO |
+
+---
+
 ## Agent Review Findings (CRITICAL)
 
 After peer review by researcher, architect, and code-analyzer agents, the following issues were identified:
