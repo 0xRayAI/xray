@@ -30,7 +30,7 @@
 │  │  │  │                ProcessorRegistry                         │ │   │  │
 │  │  │  │             processor-registry.ts                       │ │   │  │
 │  │  │  │                                                         │ │   │  │
-│  │  │  │  13 processors registered (5 pre + 8 post)              │ │   │  │
+│  │  │  │  12 processors registered (4 pre + 8 post)              │ │   │  │
 │  │  │  └─────────────────────────────────────────────────────────┘ │   │  │
 │  │  └──────────────────────────┬──────────────────────────────────┘   │  │
 │  │                             │                                        │  │
@@ -40,20 +40,20 @@
 │  │  │                                                             │   │  │
 │  │  │  Sorted by priority (ascending):                            │   │  │
 │  │  │                                                             │   │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │   │  │
-│  │  │  │preValidate │→ │logProtect  │→ │codexCom   │→          │   │  │
-│  │  │  │   (10)    │  │   (10)    │  │   (20)    │          │   │  │
-│  │  │  └─────────────┘  └─────────────┘  └─────────────┘          │   │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐                          │   │  │
-│  │  │  │versionComp │→ │errorBound  │→                          │   │  │
-│  │  │  │   (25)    │  │   (30)    │                          │   │  │
-│  │  │  └─────────────┘  └─────────────┘                          │   │  │
+│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │   │  │
+│  │  │  │preValidate │→ │codexCom   │→ │versionComp │→        │   │  │
+│  │  │  │   (10)    │  │   (20)    │  │   (25)    │        │   │  │
+│  │  │  └─────────────┘  └─────────────┘  └─────────────┘        │   │  │
+│  │  │  ┌─────────────┐                                          │   │  │
+│  │  │  │errorBound  │→                                          │   │  │
+│  │  │  │   (30)    │                                          │   │  │
+│  │  │  └─────────────┘                                          │   │  │
 │  │  │                                                             │   │  │
 │  │  │  1. preValidate (10) - Syntax checking                      │   │  │
-│  │  │  2. logProtection (10) - Log sanitization                  │   │  │
-│  │  │  3. codexCompliance (20) - Codex rules validation           │   │  │
-│  │  │  4. versionCompliance (25) - NPM/UVM version check        │   │  │
-│  │  │  5. errorBoundary (30) - Error handling setup              │   │  │
+│  │  │  2. codexCompliance (20) - Codex rules validation           │   │  │
+│  │  │  3. versionCompliance (25) - NPM/UVM version check          │   │  │
+│  │  │  4. errorBoundary (30) - Error handling setup             │   │  │
+│  │  │  NOTE: LogProtectionProcessor exists but NOT registered      │   │  │
 │  │  │                                                             │   │  │
 │  │  └──────────────────────────┬──────────────────────────────────┘   │  │
 │  │                             │                                        │  │
@@ -176,7 +176,7 @@ Return PostProcessorResult[]
 ## Layers
 
 - **Layer 1**: Processor Registry (ProcessorRegistry)
-- **Layer 2**: Pre-Processors (5, priority-ordered)
+- **Layer 2**: Pre-Processors (4, priority-ordered)
 - **Layer 3**: Main Operation
 - **Layer 4**: Post-Processors (8, priority-ordered)
 - **Layer 5**: Health Monitoring (ProcessorHealth)
@@ -186,10 +186,11 @@ Return PostProcessorResult[]
 | Priority | Processor | Purpose |
 |----------|-----------|---------|
 | 10 | preValidate | Syntax checking |
-| 10 | logProtection | Log sanitization |
 | 20 | codexCompliance | Codex rules validation |
 | 25 | versionCompliance | NPM/UVM version check |
 | 30 | errorBoundary | Error handling setup |
+
+**Note**: LogProtectionProcessor exists in implementations but is NOT registered in ProcessorManager.
 
 ## Post-Processors (Priority Order)
 
