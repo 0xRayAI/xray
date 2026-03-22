@@ -1,13 +1,23 @@
 /**
  * Routing Pipeline Test
  * 
- * Tests the complete routing flow:
- * Task Input → Keyword Matching → History Matching → Complexity Routing → Router Core → Result
+ * Tests the complete routing flow following the actual pipeline:
+ * 
+ * Input → RouterCore → KeywordMatcher → HistoryMatcher → ComplexityRouter
+ *         → [AUTO] OutcomeTracker records outcome → Analytics → Output
+ * 
+ * KEY INSIGHT: The RouterCore automatically records outcomes for every routeTask call.
+ * This is the correct behavior - the pipeline IS working, just automatically.
  */
 
 import { TaskSkillRouter } from '../../../dist/delegation/task-skill-router.js';
+import { routingOutcomeTracker } from '../../../dist/delegation/analytics/outcome-tracker.js';
 
 console.log('=== ROUTING PIPELINE TEST ===\n');
+
+// Get baseline count (singleton persists between runs)
+const baselineCount = routingOutcomeTracker.getOutcomes().length;
+console.log(`📍 Baseline: ${baselineCount} outcomes in tracker\n`);
 
 let passed = 0;
 let failed = 0;
@@ -34,20 +44,15 @@ function test(name, fn) {
 }
 
 // ============================================
-// LAYER 1: Task Input
+// LAYER 1: Input
 // ============================================
-console.log('📍 Layer 1: Task Input');
+console.log('📍 Layer 1: Input');
 
-test('should create router instance', () => {
+test('should accept task input', () => {
   const router = new TaskSkillRouter();
-  if (!router) throw new Error('Failed to create router');
-});
-
-test('should accept task description', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('fix bug in authentication', { taskId: 'test-1' });
-  if (!result) throw new Error('Failed to route task');
-  console.log(`   (agent: ${result.agent})`);
+  const result = router.routeTask('test input', { taskId: 'layer1-test' });
+  if (!result) throw new Error('No result from router');
+  console.log(`   (auto-recorded outcome)`);
 });
 
 // ============================================
@@ -57,163 +62,219 @@ console.log('\n📍 Layer 2: Keyword Matching');
 
 test('should match security keywords', () => {
   const router = new TaskSkillRouter();
-  const result = router.routeTask('scan for security vulnerabilities', { taskId: 'test-1' });
-  if (result.agent !== 'security-auditor') {
-    console.log(`   (matched: ${result.agent})`);
+  const result = router.routeTask('scan for security vulnerabilities', { taskId: 'keyword-security' });
+  if (result.matchedKeyword !== 'security') {
+    throw new Error(`Expected matchedKeyword 'security', got '${result.matchedKeyword}'`);
+  }
+  console.log(`   (auto-recorded: ${result.matchedKeyword})`);
+});
+
+test('should match bug keywords', () => {
+  const router = new TaskSkillRouter();
+  const result = router.routeTask('fix bug in login', { taskId: 'keyword-bug' });
+  if (result.matchedKeyword !== 'fix') {
+    throw new Error(`Expected matchedKeyword 'fix', got '${result.matchedKeyword}'`);
   }
 });
 
-test('should match performance keywords', () => {
+test('should match refactor keywords', () => {
   const router = new TaskSkillRouter();
-  const result = router.routeTask('optimize performance of API', { taskId: 'test-1' });
-  console.log(`   (matched: ${result.agent})`);
-});
-
-test('should match refactoring keywords', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('refactor the authentication module', { taskId: 'test-1' });
-  console.log(`   (matched: ${result.agent})`);
-});
-
-test('should match testing keywords', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('add tests for user service', { taskId: 'test-1' });
-  console.log(`   (matched: ${result.agent})`);
+  const result = router.routeTask('refactor the module', { taskId: 'keyword-refactor' });
+  if (result.matchedKeyword !== 'refactor') {
+    throw new Error(`Expected matchedKeyword 'refactor', got '${result.matchedKeyword}'`);
+  }
 });
 
 // ============================================
-// LAYER 3: History Matching
+// LAYER 3: Agent Selection
 // ============================================
-console.log('\n📍 Layer 3: History Matching');
+console.log('\n📍 Layer 3: Agent Selection');
 
-test('should return routing result with confidence', () => {
+test('should route security tasks to security-auditor', () => {
   const router = new TaskSkillRouter();
-  const result = router.routeTask('implement new feature', { taskId: 'test-1' });
-  if (typeof result.confidence !== 'number') throw new Error('Missing confidence');
+  const result = router.routeTask('scan security', { taskId: 'agent-security' });
+  if (result.agent !== 'security-auditor') {
+    throw new Error(`Expected agent 'security-auditor', got '${result.agent}'`);
+  }
+});
+
+test('should route bug tasks to bug-triage-specialist', () => {
+  const router = new TaskSkillRouter();
+  const result = router.routeTask('fix bug', { taskId: 'agent-bug' });
+  if (result.agent !== 'bug-triage-specialist') {
+    throw new Error(`Expected agent 'bug-triage-specialist', got '${result.agent}'`);
+  }
+});
+
+test('should route code review to code-reviewer', () => {
+  const router = new TaskSkillRouter();
+  const result = router.routeTask('review code', { taskId: 'agent-review' });
+  if (result.agent !== 'code-reviewer') {
+    throw new Error(`Expected agent 'code-reviewer', got '${result.agent}'`);
+  }
+});
+
+test('should route refactoring to refactorer', () => {
+  const router = new TaskSkillRouter();
+  const result = router.routeTask('refactor module', { taskId: 'agent-refactor' });
+  if (result.agent !== 'refactorer') {
+    throw new Error(`Expected agent 'refactorer', got '${result.agent}'`);
+  }
+});
+
+// ============================================
+// LAYER 4: Confidence Scoring
+// ============================================
+console.log('\n📍 Layer 4: Confidence Scoring');
+
+test('should return confidence score', () => {
+  const router = new TaskSkillRouter();
+  const result = router.routeTask('test confidence', { taskId: 'confidence-test' });
+  if (typeof result.confidence !== 'number') {
+    throw new Error('Confidence should be a number');
+  }
+  if (result.confidence < 0 || result.confidence > 1) {
+    throw new Error('Confidence should be between 0 and 1');
+  }
   console.log(`   (confidence: ${(result.confidence * 100).toFixed(0)}%)`);
 });
 
-test('should return routing result with skill', () => {
+test('should return skill assignment', () => {
   const router = new TaskSkillRouter();
-  const result = router.routeTask('analyze codebase', { taskId: 'test-1' });
-  if (!result.skill) console.log('   (skill: default)');
-  else console.log(`   (skill: ${result.skill})`);
+  const result = router.routeTask('fix bug', { taskId: 'skill-test' });
+  if (!result.skill) {
+    throw new Error('Skill should be assigned');
+  }
+  console.log(`   (skill: ${result.skill})`);
 });
 
 // ============================================
-// LAYER 4: Complexity Routing
+// LAYER 5: Outcome Tracking (Automatic)
 // ============================================
-console.log('\n📍 Layer 4: Complexity Routing');
+console.log('\n📍 Layer 5: Outcome Tracking (Automatic)');
 
-test('should handle complex tasks', () => {
-  const router = new TaskSkillRouter();
-  const complexTask = 'design and implement a complete microservices architecture with API gateway, service mesh, and distributed tracing';
-  const result = router.routeTask(complexTask, { taskId: 'test-1' });
-  if (!result.agent) throw new Error('Failed to route complex task');
-  console.log(`   (complex task routed to: ${result.agent})`);
-});
-
-test('should handle simple tasks', () => {
-  const router = new TaskSkillRouter();
-  const simpleTask = 'fix typo';
-  const result = router.routeTask(simpleTask, { taskId: 'test-1' });
-  if (!result.agent) throw new Error('Failed to route simple task');
-  console.log(`   (simple task routed to: ${result.agent})`);
-});
-
-// ============================================
-// LAYER 5: Router Core
-// ============================================
-console.log('\n📍 Layer 5: Router Core');
-
-test('should route code review tasks', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('review this pull request', { taskId: 'test-1' });
-  console.log(`   (code review: ${result.agent})`);
-});
-
-test('should route architecture tasks', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('design the system architecture', { taskId: 'test-1' });
-  console.log(`   (architecture: ${result.agent})`);
-});
-
-test('should route bug triage tasks', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('debug the memory leak', { taskId: 'test-1' });
-  console.log(`   (bug triage: ${result.agent})`);
-});
-
-// ============================================
-// LAYER 6: Output
-// ============================================
-console.log('\n📍 Layer 6: Output');
-
-test('should return matched keyword', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('security audit', { taskId: 'test-1' });
-  if (!result.matchedKeyword) console.log('   (keyword: default routing)');
-  else console.log(`   (keyword: ${result.matchedKeyword})`);
-});
-
-test('should return routing metadata', () => {
-  const router = new TaskSkillRouter();
-  const result = router.routeTask('implement feature', { taskId: 'test-1' });
-  if (!result.agent) throw new Error('Missing agent');
-  console.log(`   (agent: ${result.agent})`);
-});
-
-// ============================================
-// END-TO-END
-// ============================================
-console.log('\n📍 End-to-End');
-
-test('should complete full routing flow', () => {
+test('should automatically record outcomes via RouterCore', () => {
+  const before = routingOutcomeTracker.getOutcomes().length;
   const router = new TaskSkillRouter();
   
-  const testCases = [
-    'fix bug',
-    'review code',
-    'optimize performance',
-    'scan security',
-    'refactor module',
-    'add tests'
-  ];
+  // Route a task - RouterCore automatically records outcome
+  router.routeTask('scan security', { taskId: 'auto-outcome-test' });
   
-  for (const task of testCases) {
-    const result = router.routeTask(task, { taskId: 'test-1' });
-    if (!result.agent) throw new Error(`Failed to route: ${task}`);
+  const after = routingOutcomeTracker.getOutcomes().length;
+  const added = after - before;
+  
+  // RouterCore may record 1 or more outcomes per route
+  // The key is that outcomes ARE being recorded automatically
+  if (added < 1) {
+    throw new Error(`Expected at least 1 outcome recorded, got ${added}`);
+  }
+  console.log(`   (+${added} outcomes auto-recorded, total: ${after})`);
+});
+
+test('should track outcomes for multiple routing methods', () => {
+  const before = routingOutcomeTracker.getOutcomes().length;
+  const router = new TaskSkillRouter();
+  
+  // Different tasks may trigger different routing methods
+  const tasks = ['fix bug', 'review code', 'refactor module'];
+  
+  for (const task of tasks) {
+    router.routeTask(task, { taskId: `multi-${task}` });
   }
   
-  console.log(`   (${testCases.length} tasks routed)`);
+  const after = routingOutcomeTracker.getOutcomes().length;
+  const added = after - before;
+  
+  // Each routeTask may record 1+ outcomes automatically
+  if (added < tasks.length) {
+    throw new Error(`Expected at least ${tasks.length} outcomes, got ${added}`);
+  }
+  console.log(`   (+${added} outcomes, total: ${after})`);
+});
+
+test('should have valid outcome structure', () => {
+  // Get the latest outcome
+  const outcomes = routingOutcomeTracker.getOutcomes();
+  if (outcomes.length === 0) {
+    throw new Error('No outcomes recorded');
+  }
+  
+  const latest = outcomes[outcomes.length - 1];
+  
+  // Verify outcome has required fields
+  if (!latest.taskId) throw new Error('Outcome missing taskId');
+  if (!latest.routedAgent) throw new Error('Outcome missing routedAgent');
+  if (typeof latest.confidence !== 'number') throw new Error('Outcome missing confidence');
+  
+  console.log(`   (latest: ${latest.routedAgent}, confidence: ${(latest.confidence * 100).toFixed(0)}%)`);
+});
+
+// ============================================
+// END-TO-END PIPELINE FLOW
+// ============================================
+console.log('\n📍 End-to-End Pipeline Flow');
+
+test('should complete full routing pipeline', async () => {
+  const before = routingOutcomeTracker.getOutcomes().length;
+  
+  const router = new TaskSkillRouter();
+  const tasks = [
+    { task: 'fix authentication bug', expectedAgent: 'bug-triage-specialist', expectedSkill: 'bug-triage' },
+    { task: 'security audit', expectedAgent: 'security-auditor', expectedSkill: 'security-audit' },
+    { task: 'optimize performance', expectedAgent: 'performance-engineer', expectedSkill: 'performance-optimization' },
+  ];
+  
+  for (const { task, expectedAgent, expectedSkill } of tasks) {
+    const result = router.routeTask(task, { taskId: `e2e-${task}` });
+    
+    if (result.agent !== expectedAgent) {
+      throw new Error(`Expected ${expectedAgent}, got ${result.agent} for task: ${task}`);
+    }
+    if (result.skill !== expectedSkill) {
+      throw new Error(`Expected skill ${expectedSkill}, got ${result.skill} for task: ${task}`);
+    }
+    
+    // Pipeline automatically records outcome via RouterCore
+  }
+  
+  const after = routingOutcomeTracker.getOutcomes().length;
+  const added = after - before;
+  
+  if (added < tasks.length) {
+    throw new Error(`Expected at least ${tasks.length} outcomes, got ${added}`);
+  }
+  
+  console.log(`   (${tasks.length} tasks routed, +${added} outcomes)`);
 });
 
 test('should handle varied input patterns', () => {
   const router = new TaskSkillRouter();
   
   const patterns = [
-    'fix the authentication bug',
-    '@architect design API',
-    'what about refactoring?',
-    'I need tests for this',
-    'analyze performance',
-    'check for security issues'
+    { input: '@architect design API', shouldRoute: true },
+    { input: 'I need to fix this bug', shouldRoute: true },
+    { input: 'check for security issues', shouldRoute: true },
+    { input: 'refactor the auth module', shouldRoute: true },
+    { input: 'add tests for this', shouldRoute: true },
   ];
   
-  for (const pattern of patterns) {
-    const result = router.routeTask(pattern, { taskId: 'test-1' });
-    if (!result) throw new Error(`Failed on pattern: ${pattern}`);
+  for (const { input, shouldRoute } of patterns) {
+    const result = router.routeTask(input, { taskId: `pattern-${input}` });
+    if (shouldRoute && !result.agent) {
+      throw new Error(`Failed to route: ${input}`);
+    }
   }
-  
-  console.log(`   (${patterns.length} patterns handled)`);
+  console.log(`   (${patterns.length} patterns routed)`);
 });
 
 // ============================================
 // RESULTS
 // ============================================
 setTimeout(() => {
+  const finalCount = routingOutcomeTracker.getOutcomes().length;
   console.log('\n========================================');
   console.log(`Results: ${passed} passed, ${failed} failed`);
+  console.log(`Outcomes: ${baselineCount} → ${finalCount} (+${finalCount - baselineCount})`);
   console.log('========================================');
   
   if (failed === 0) {

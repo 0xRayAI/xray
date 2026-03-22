@@ -692,15 +692,15 @@ ReportData { generatedAt, timeRange, metrics, insights, recommendations, summary
 > **Important Discovery (v1.14.0)**: Unit tests passing ≠ Pipeline working.
 > See [Pipeline Testing Methodology](../PIPELINE_TESTING_METHODOLOGY.md) for details.
 
-| Pipeline | Testing Status | Notes |
-|----------|---------------|-------|
-| **Inference** | ✅ Tested | 9 iterations, 3 consecutive passes |
-| **Governance** | ✅ Tested | 3 consecutive passes |
-| **Orchestration** | ✅ Tested | 3 consecutive passes |
-| **Boot** | ✅ Tested | 3 consecutive passes |
-| **Routing** | ✅ Tested | 3 consecutive passes |
-| **Processor** | ✅ Tested | 3 consecutive passes |
-| **Reporting** | ✅ Tested | 3 consecutive passes |
+| Pipeline | Testing Status | Tests | Notes |
+|----------|---------------|-------|-------|
+| **Inference** | ✅ Tested | ? | 9 iterations, 3 consecutive passes |
+| **Governance** | ✅ Tested | 12 | 3 consecutive passes |
+| **Boot** | ✅ Tested | 14 | 3 consecutive passes |
+| **Orchestration** | ✅ Tested | 12 | 3 consecutive passes |
+| **Routing** | ✅ Tested | 15 | 3 consecutive passes |
+| **Processor** | ✅ Tested | 11 | 3 consecutive passes |
+| **Reporting** | ✅ Tested | 15 | 3 consecutive passes |
 
 ---
 
