@@ -32,8 +32,16 @@ console.log('🔍 Validating Postinstall Configuration...\n');
 // Check opencode.json (main config)
 check('opencode.json', 'OpenCode configuration');
 
-// Check plugin
-check('.opencode/plugin/strray-codex-injection.js', 'Plugin file');
+// Check plugin (can be in .opencode/plugins/ or .opencode/plugin/)
+const pluginLocations = ['.opencode/plugins/strray-codex-injection.js', '.opencode/plugin/strray-codex-injection.js'];
+const pluginFound = pluginLocations.some(loc => fs.existsSync(path.join(process.cwd(), loc)));
+if (pluginFound) {
+  const foundLoc = pluginLocations.find(loc => fs.existsSync(path.join(process.cwd(), loc)));
+  console.log(`✅ Plugin file: ${foundLoc}`);
+} else {
+  console.log(`❌ Plugin file: strray-codex-injection.js NOT FOUND`);
+  errors.push('Plugin file not found');
+}
 
 // Check agents
 if (fs.existsSync(path.join(process.cwd(), '.opencode/agents'))) {
