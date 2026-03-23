@@ -48,7 +48,7 @@ class StrRayCodeReviewServer {
   constructor() {
     this.server = new Server(
       {
-        name: "code-review", version: "1.13.2",
+        name: "code-review", version: "1.14.0",
       },
       {
         capabilities: {

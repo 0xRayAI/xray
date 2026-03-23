@@ -72,7 +72,7 @@ describe("StringRay Framework End-to-End Integration Tests", () => {
   let mockPath: any;
 
   const mockCodexContent = JSON.stringify({
-    version: "1.13.2",
+    version: "1.14.0",
     lastUpdated: "2026-01-06",
     errorPreventionTarget: 0.996,
     terms: {

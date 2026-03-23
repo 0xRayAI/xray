@@ -1,12 +1,12 @@
-# StrRay Framework v1.9.0 - Technical Migration Guide
+# StrRay Framework v1.14.0 - Technical Migration Guide
 
 ## 📋 Migration Overview
 
-This guide covers the technical migration procedures for upgrading from StrRay Framework v1.8.x to v1.9.0. The v1.9.0 release introduces a major architectural refactoring implementing the **Facade Pattern** while maintaining 100% backward compatibility.
+This guide covers the technical migration procedures for upgrading from StrRay Framework v1.8.x to v1.14.0. The v1.14.0 release introduces a major architectural refactoring implementing the **Facade Pattern** while maintaining 100% backward compatibility.
 
 ## 🎉 Good News: No Migration Required!
 
-**v1.9.0 maintains 100% backward compatibility.** All existing code, configurations, and workflows continue to work exactly as before.
+**v1.14.0 maintains 100% backward compatibility.** All existing code, configurations, and workflows continue to work exactly as before.
 
 ### What Changed (Internal Only)
 
@@ -50,7 +50,7 @@ npx strray-ai health
 
 ### Phase 2: Configuration Flattening (Historical Reference)
 
-**Note**: This section documents historical configuration changes. v1.9.0 doesn't require these changes.
+**Note**: This section documents historical configuration changes. v1.14.0 doesn't require these changes.
 
 #### Before (Nested Structure) - Historical
 
@@ -87,12 +87,12 @@ npx strray-ai health
 
 ## 🛠️ Component Migration
 
-### Facade Pattern Architecture (v1.9.0)
+### Facade Pattern Architecture (v1.14.0)
 
-The major architectural change in v1.9.0 is the implementation of the **Facade Pattern**:
+The major architectural change in v1.14.0 is the implementation of the **Facade Pattern**:
 
 ```
-v1.9.0 Architecture:
+v1.14.0 Architecture:
 ┌──────────────────────────────────────────────────────────────┐
 │                    PUBLIC API LAYER                           │
 ├──────────────────────────────────────────────────────────────┤
@@ -119,7 +119,7 @@ v1.9.0 Architecture:
 
 ### Code Metrics Comparison
 
-| Component | v1.8.x | v1.9.0 | Reduction |
+| Component | v1.8.x | v1.14.0 | Reduction |
 |-----------|--------|--------|-----------|
 | RuleEnforcer | 2,714 lines | 416 lines | 85% |
 | TaskSkillRouter | 1,933 lines | 490 lines | 75% |
@@ -138,9 +138,9 @@ All agents remain compatible:
 - **Agent Delegation**: Works identically
 - **Agent Communication**: Unchanged protocols
 
-#### New Agents in v1.9.0
+#### New Agents in v1.14.0
 
-v1.9.0 adds 19 new specialized agents:
+v1.14.0 adds 19 new specialized agents:
 
 - storyteller, researcher, and 17 more
 - All use the same invocation syntax: `@agent-name`
@@ -203,7 +203,7 @@ All hooks continue to work:
 ### Pre-Migration Validation
 
 ```bash
-# Run before upgrading to v1.9.0
+# Run before upgrading to v1.14.0
 
 # 1. Backup current configuration
 cp -r .opencode .opencode.backup
@@ -221,7 +221,7 @@ npx strray-ai validate
 ### Post-Migration Validation
 
 ```bash
-# Run after upgrading to v1.9.0
+# Run after upgrading to v1.14.0
 
 # 1. Verify new version
 npx strray-ai --version
@@ -282,9 +282,9 @@ npx strray-ai --version
 - **Memory Usage**: < 100MB additional
 - **Error Rate**: < 1% during migration
 
-### v1.9.0 Improvements
+### v1.14.0 Improvements
 
-| Metric | v1.8.x | v1.9.0 | Improvement |
+| Metric | v1.8.x | v1.14.0 | Improvement |
 |--------|--------|--------|-------------|
 | **Bundle Size** | Larger | 87% smaller | Faster loading |
 | **Agent Spawning** | Slower | Faster | Better performance |
@@ -322,7 +322,7 @@ tail -f .opencode/logs/strray-plugin-$(date +%Y-%m-%d).log
 ## 🎯 Quick Migration Checklist
 
 - [ ] Backup current configuration: `cp -r .opencode .opencode.backup`
-- [ ] Update to v1.9.0: `npm install strray-ai@latest`
+- [ ] Update to v1.14.0: `npm install strray-ai@latest`
 - [ ] Verify version: `npx strray-ai --version` (should show 1.9.0)
 - [ ] Run health check: `npx strray-ai health`
 - [ ] Validate configuration: `npx strray-ai validate`
@@ -333,7 +333,7 @@ tail -f .opencode/logs/strray-plugin-$(date +%Y-%m-%d).log
 
 ## ✨ Summary
 
-**v1.9.0 is the easiest upgrade ever!**
+**v1.14.0 is the easiest upgrade ever!**
 
 - ✅ No breaking changes
 - ✅ No configuration updates needed
@@ -346,8 +346,8 @@ Simply run `npm install strray-ai@latest` and enjoy the benefits!
 
 ---
 
-_This technical migration guide ensures smooth transitions to StrRay Framework v1.9.0 while maintaining system stability and functionality._
+_This technical migration guide ensures smooth transitions to StrRay Framework v1.14.0 while maintaining system stability and functionality._
 
 ---
 
-*StringRay AI v1.10.0 - Facade Pattern Migration Guide*
+*StringRay AI v1.14.0 - Facade Pattern Migration Guide*

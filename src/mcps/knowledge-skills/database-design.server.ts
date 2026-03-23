@@ -80,7 +80,7 @@ class StrRayDatabaseDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "database-design", version: "1.13.2",
+        name: "database-design", version: "1.14.0",
       },
       {
         capabilities: {

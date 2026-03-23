@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework for OpenCode/Claude Code**
 
-[![Version](https://img.shields.io/badge/version-undefined-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.14.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2368%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
@@ -211,7 +211,10 @@ stringray/
 │   ├── postprocessor/         # Post-processing pipeline
 │   ├── reporting/             # Report generation
 │   ├── security/              # Security systems
-│   └── session/               # Session management
+│   ├── session/               # Session management
+│   ├── test-utils/            # Test utilities and helpers
+│   ├── validation/            # Agent config & estimation validators
+│   └── jobs/                  # Background job management
 ├── .opencode/                 # OpenCode configuration
 │   ├── agents/               # Agent configs (26 agents)
 │   ├── strray/               # StringRay config

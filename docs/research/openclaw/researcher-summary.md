@@ -239,7 +239,7 @@ export OPENCLAW_DEVICE_TOKEN=oc_dev_xxxxxxxxxxxxxxxxxxxxx
   "maxProtocol": 3,
   "client": {
     "id": "strray-integration",
-    "version": "1.13.2",
+    "version": "1.14.0",
     "platform": "node",
     "mode": "operator"
   },

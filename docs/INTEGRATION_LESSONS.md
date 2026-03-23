@@ -4,7 +4,7 @@
 
 ## Overview
 
-StringRay 1.9.0 represents a breakthrough in AI-assisted software development, achieving 90% runtime error prevention while maintaining zero-tolerance for code rot. The v1.9.0 release introduces a **Facade Pattern Architecture** that delivers:
+StringRay 1.9.0 represents a breakthrough in AI-assisted software development, achieving 90% runtime error prevention while maintaining zero-tolerance for code rot. The v1.14.0 release introduces a **Facade Pattern Architecture** that delivers:
 
 - **87% Code Reduction**: From 8,230 lines to 1,218 lines
 - **Simplified Integration**: Clean facade interfaces hide internal complexity
@@ -33,7 +33,7 @@ npx strray-ai install
 npx strray-ai status  # Verify all facades are healthy
 ```
 
-**Configuration Changes in v1.9.0:**
+**Configuration Changes in v1.14.0:**
 
 ```json
 // New facade configuration (optional - defaults work well)
@@ -79,7 +79,7 @@ console.log(route.confidence); // 0.92
 ```
 
 **Performance Impact:**
-- **Before v1.9.0**: Agent coordination time ~1.0s
+- **Before v1.14.0**: Agent coordination time ~1.0s
 - **With Facades**: Agent coordination time ~0.3s (70% improvement)
 - **Routing Accuracy**: 95% correct agent selection
 
@@ -154,7 +154,7 @@ status.facades.forEach(facade => {
 
 **Facade Performance Metrics:**
 
-| Metric | Before v1.9.0 | With Facades | Improvement |
+| Metric | Before v1.14.0 | With Facades | Improvement |
 |--------|---------------|--------------|-------------|
 | Framework Load Time | <1s | <0.3s | 70% faster |
 | Bundle Size | 2.5MB | 1.1MB | 56% smaller |
@@ -168,7 +168,7 @@ status.facades.forEach(facade => {
 
 ### The Three Facades
 
-StringRay v1.9.0 exposes three primary facades:
+StringRay v1.14.0 exposes three primary facades:
 
 #### 1. RuleEnforcer Facade
 
@@ -183,7 +183,7 @@ await enforcer.checkCodex({ ... });
 await enforcer.getValidationReport({ ... });
 ```
 
-**After (v1.9.0) - Facade Pattern:**
+**After (v1.14.0) - Facade Pattern:**
 ```typescript
 // Clean facade - 416 lines
 const enforcer = new RuleEnforcer(orchestrator);
@@ -221,7 +221,7 @@ await router.matchSkills({ ... });
 await router.selectAgent({ ... });
 ```
 
-**After (v1.9.0) - Facade Pattern:**
+**After (v1.14.0) - Facade Pattern:**
 ```typescript
 // Clean facade - 490 lines
 const router = new TaskSkillRouter(orchestrator);
@@ -258,7 +258,7 @@ await mcp.connectToServer({ ... });
 await mcp.callTool({ ... });
 ```
 
-**After (v1.9.0) - Facade Pattern:**
+**After (v1.14.0) - Facade Pattern:**
 ```typescript
 // Clean facade - 312 lines
 const mcpClient = new MCPClient(orchestrator);
@@ -369,7 +369,7 @@ class CustomEnforcer extends RuleEnforcer {
 
 ## Migration Guide
 
-### From v1.8.x to v1.9.0
+### From v1.8.x to v1.14.0
 
 **Good news: No breaking changes!** ✨
 

@@ -13,6 +13,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Import actual enforcer-tools functions
 import { ruleValidation, getTaskRoutingRecommendation } from "../enforcement/enforcer-tools.js";
@@ -24,7 +25,7 @@ class StrRayEnforcerToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "enforcer", version: "1.13.2",
+        name: "enforcer", version: "1.14.0",
       },
       {
         capabilities: {
@@ -260,7 +261,7 @@ class StrRayEnforcerToolsServer {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
-        console.error(`Error in enforcer tool ${name}:`, error);
+        frameworkLogger.log("mcps/enforcer", "tool", "error", { tool: name, error: String(error) });
         throw error;
       }
     });
@@ -831,14 +832,12 @@ class StrRayEnforcerToolsServer {
               fix.applied = true;
               fix.result = result;
             } else {
-              console.error(
-                `Auto-fix failed: ${result.error || "Unknown error"}`,
-              );
+              frameworkLogger.log("mcps/enforcer", "auto-fix", "error", { error: result.error || "Unknown error" });
               fix.applied = false;
               fix.error = result.error;
             }
           } catch (error) {
-            console.error(`Auto-fix execution failed:`, error);
+            frameworkLogger.log("mcps/enforcer", "auto-fix", "error", { error: String(error) });
             fix.applied = false;
             fix.error = error instanceof Error ? error.message : String(error);
           }
@@ -869,7 +868,7 @@ class StrRayEnforcerToolsServer {
     const cleanup = async (signal: string) => {
       // Set a timeout to force exit if graceful shutdown fails
       const timeout = setTimeout(() => {
-        console.error("Graceful shutdown timeout, forcing exit...");
+        frameworkLogger.log("mcps/enforcer", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
         process.exit(1);
       }, 5000); // 5 second timeout
 
@@ -881,7 +880,7 @@ class StrRayEnforcerToolsServer {
         process.exit(0);
       } catch (error) {
         clearTimeout(timeout);
-        console.error("Error during server shutdown:", error);
+        frameworkLogger.log("mcps/enforcer", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
         process.exit(1);
       }
     };
@@ -907,12 +906,12 @@ class StrRayEnforcerToolsServer {
 
     // Handle uncaught exceptions and unhandled rejections
     process.on("uncaughtException", (error) => {
-      console.error("Uncaught Exception:", error);
+      frameworkLogger.log("mcps/enforcer", "uncaughtException", "error", { error: String(error) });
       cleanup("uncaughtException");
     });
 
     process.on("unhandledRejection", (reason, promise) => {
-      console.error("Unhandled Rejection at:", promise, "reason:", reason);
+      frameworkLogger.log("mcps/enforcer", "unhandledRejection", "error", { error: String(reason) });
       cleanup("unhandledRejection");
     });
 
@@ -923,7 +922,7 @@ class StrRayEnforcerToolsServer {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayEnforcerToolsServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/enforcer", "run", "error", { error: String(error) }));
 }
 
 export default StrRayEnforcerToolsServer;

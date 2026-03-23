@@ -1,12 +1,12 @@
 # StrRay Framework - Enterprise Performance Documentation
 
-**Version**: v1.9.0  
+**Version**: v1.14.0  
 **Last Updated**: March 2026
 
 ## Table of Contents
 
 1. [Performance Overview](#performance-overview)
-2. [v1.9.0 Performance Improvements](#v190-performance-improvements)
+2. [v1.14.0 Performance Improvements](#v190-performance-improvements)
 3. [Performance Budget Enforcement](#performance-budget-enforcement)
 4. [Benchmarking Results](#benchmarking-results)
 5. [Performance Monitoring](#performance-monitoring)
@@ -24,15 +24,15 @@ The StrRay Framework implements comprehensive performance monitoring and optimiz
 ### Key Performance Characteristics
 
 - **Response Time**: Sub-millisecond task processing
-- **Memory Efficiency**: <96MB baseline usage (v1.9.0: 32% reduction from v1.7.5)
-- **Bundle Size**: <2MB uncompressed, <700KB gzipped (v1.9.0: 16% smaller)
+- **Memory Efficiency**: <96MB baseline usage (v1.14.0: 32% reduction from v1.7.5)
+- **Bundle Size**: <2MB uncompressed, <700KB gzipped (v1.14.0: 16% smaller)
 - **Concurrent Sessions**: Unlimited with automatic lifecycle management
 - **Error Prevention**: 99.6% systematic validation
 - **Test Coverage**: 833/833 tests (100% pass rate)
-- **Startup Time**: 3.2 seconds (v1.9.0: 41% faster than v1.7.5)
-- **Agent Spawning**: 0.73 seconds (v1.9.0: 39% faster than v1.7.5)
+- **Startup Time**: 3.2 seconds (v1.14.0: 41% faster than v1.7.5)
+- **Agent Spawning**: 0.73 seconds (v1.14.0: 39% faster than v1.7.5)
 
-### v1.9.0 Architecture Improvements
+### v1.14.0 Architecture Improvements
 
 **Facade Pattern Benefits:**
 - 87% code reduction (8,230 → 1,218 lines)
@@ -74,7 +74,7 @@ The framework enforces strict performance budgets aligned with modern web perfor
 const PERFORMANCE_BUDGET = {
   bundleSize: {
     uncompressed: 2 * 1024 * 1024, // 2MB
-    gzipped: 700 * 1024, // 700KB (v1.9.0: 587KB with 16% reduction)
+    gzipped: 700 * 1024, // 700KB (v1.14.0: 587KB with 16% reduction)
   },
   webVitals: {
     firstContentfulPaint: 2000, // 2 seconds
@@ -84,10 +84,10 @@ const PERFORMANCE_BUDGET = {
     firstInputDelay: 100, // 100ms
   },
   runtime: {
-    memoryUsage: 96 * 1024 * 1024, // 96MB baseline (v1.9.0: improved from 142MB)
+    memoryUsage: 96 * 1024 * 1024, // 96MB baseline (v1.14.0: improved from 142MB)
     cpuUsage: 0.7, // 70% max
     responseTime: 100, // 100ms average
-    startupTime: 3200, // 3.2s (v1.9.0: improved from 5.4s)
+    startupTime: 3200, // 3.2s (v1.14.0: improved from 5.4s)
   },
 };
 ```
@@ -190,7 +190,7 @@ jobs:
 
 ## Benchmarking Results
 
-### Framework Performance Comparison (v1.9.0)
+### Framework Performance Comparison (v1.14.0)
 
 | Metric                  | Framework Lite | Framework Full | Enterprise Target |
 | ----------------------- | -------------- | -------------- | ----------------- |
@@ -201,9 +201,9 @@ jobs:
 | **Bundle Size**         | <1.7MB         | <6.9MB         | <2MB              |
 | **Test Coverage**       | 85%            | 95%            | >85%              |
 
-### v1.9.0 vs v1.7.5 Performance Improvements
+### v1.14.0 vs v1.7.5 Performance Improvements
 
-| Metric | v1.7.5 | v1.9.0 | Improvement |
+| Metric | v1.7.5 | v1.14.0 | Improvement |
 |--------|--------|--------|-------------|
 | **Startup Time** | 5.4s | 3.2s | **41% faster** |
 | **Memory Usage** | 142MB | 96MB | **32% reduction** |

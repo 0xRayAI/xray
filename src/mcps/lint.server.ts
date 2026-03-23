@@ -20,7 +20,7 @@ class StrRayLintServer {
   constructor() {
     this.server = new Server(
       {
-        name: "lint", version: "1.13.2",
+        name: "lint", version: "1.14.0",
       },
       {
         capabilities: {
@@ -143,7 +143,7 @@ class StrRayLintServer {
       // Generate summary
       lintResults.summary = this.generateLintSummary(lintResults);
     } catch (error) {
-      console.error("Lint error:", error);
+      frameworkLogger.log("mcps/lint", "lint", "error", { error: String(error) });
       lintResults.success = false;
       lintResults.details.push(
         `Lint failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -411,7 +411,7 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayLintServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/lint", "run", "error", { error: String(error) }));
 }
 
 export { StrRayLintServer };

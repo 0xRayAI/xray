@@ -1,24 +1,27 @@
-# StringRay Agents - Consumer Guide
+# StringRay Agents
 
-Quick reference for **using** the StringRay AI orchestration framework in your projects.
+Quick reference for StringRay AI orchestration framework.
+
+## Document Versions
+
+| File | Purpose | Location |
+|------|---------|----------|
+| `AGENTS.md` | This file - Development environment full documentation | Project root |
+| `.opencode/AGENTS-consumer.md` | Source for consumer installations | `.opencode/` directory |
+| `AGENTS-full.md` | Complete reference with all details | Project root |
+| `.opencode/strray/agents_template.md` | Master agent template (auto-installed) | `.opencode/strray/` |
+| `docs/reference/templates/` | Agent and story templates | `docs/` |
+| `AGENTS-consumer.md` (installed) | Limited version for consumers | `.opencode/AGENTS.md` after install |
+
+> **Note**: During `npm install`, `.opencode/AGENTS-consumer.md` is copied and installed as `.opencode/AGENTS.md` in consumer projects. The consumer version is intentionally limited for framework operation.
 
 ## What is StringRay?
 
 StringRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation. Agents operate via OpenCode plugin injection - no manual setup needed.
 
-## Quick Start
-
-```bash
-# Install StringRay in your project
-npx strray-ai install
-
-# Start using agents with @agent-name syntax
-@architect design a REST API for user management
-```
-
-That's it! StringRay handles the rest automatically.
-
 ## How StringRay Works
+
+StringRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation. Agents operate via OpenCode plugin injection - no manual setup needed.
 
 ### Basic Operation
 
@@ -27,20 +30,114 @@ That's it! StringRay handles the rest automatically.
 3. **Automatic Routing**: StringRay automatically routes tasks to the appropriate agent based on complexity
 4. **Agent Modes**: Agents can be `primary` (main coordinator) or `subagent` (specialized helper)
 
-### What Happens Behind the Scenes
+### Where to Find Reflections
 
-When you invoke an agent:
-- StringRay analyzes your request complexity
-- Routes to the most appropriate agent
-- The agent completes the task
-- Results are delivered back to you
+Deep reflection documents capture development journeys and lessons learned:
+- **Location**: `docs/reflections/` (main) and `docs/reflections/deep/` (detailed)
+- **Examples**: `kernel-v2.0-skill-system-fix-journey.md`, `typescript-build-fix-journey-2026-03-09.md`, `stringray-framework-deep-reflection-v1.4.21.md`
 
-You don't need to manage agents manually - just use the `@agent-name` syntax and StringRay handles everything.
+These documents capture:
+- Technical challenges encountered and solved
+- Architectural decisions made
+- Lessons learned for future development
+- Best practices established
+
+### File Organization Guidelines
+
+**IMPORTANT**: Save all generated files to their proper directories. Do NOT save to root.
+
+| File Type | Save To | Example |
+|-----------|---------|---------|
+| **Reflections** | `docs/reflections/` or `docs/reflections/deep/` | `docs/reflections/my-fix-reflection.md` |
+| **Logs** | `logs/` | `logs/framework/activity.log` |
+| **Scripts** | `scripts/` or `scripts/bash/` | `scripts/bash/my-script.sh` |
+| **Test Files** | `src/__tests__/` | `src/__tests__/unit/my-test.test.ts` |
+| **Source Code** | `src/` | `src/my-module.ts` |
+| **Config** | `config/` or `.opencode/strray/` | `.opencode/strray/config.json` |
+
+**Never save to root** - Root directory is for essential files only:
+- `README.md`, `CHANGELOG.md`, `package.json`, `tsconfig.json`
+
+### Logging Guidelines
+
+**IMPORTANT**: Never use `console.log`, `console.warn`, or `console.error`. Use the framework logger instead.
+
+| Use This | Not This |
+|----------|-----------|
+| `frameworkLogger.log(module, event, 'info', { data })` | `console.log()` |
+| `frameworkLogger.log(module, event, 'error', { error })` | `console.error()` |
+| `frameworkLogger.log(module, event, 'warning', { warning })` | `console.warn()` |
+
+**Why**: Console statements bleed through to OpenCode console and create noise. Framework logger is structured and filtered.
+
+**Example**:
+```typescript
+// WRONG ❌
+console.log("Starting process");
+
+// CORRECT ✅
+import { frameworkLogger } from "../core/framework-logger.js";
+frameworkLogger.log("my-module", "process-start", "info", { message: "Starting process" });
+```
+
+Reflection Template Paths
+
+StringRay uses **two reflection folders** for different purposes:
+
+#### Option 1: Standard Reflections (`docs/reflections/`)
+**When to use:** Single-session work, specific bug fixes, targeted implementations
+- **Template:** `docs/reflections/TEMPLATE.md` (442 lines)
+- **Naming:** `{topic}-reflection.md` or `{topic}-YYYY-MM-DD.md`
+- **Length:** 1,000-5,000 lines
+- **Format:** 11 structured sections (Executive Summary, Dichotomy, Counterfactual, etc.)
+
+**Examples:**
+- `docs/reflections/deployment-crisis-v12x-reflection.md`
+- `docs/reflections/kernel-confidence-fix.md`
+
+#### Option 2: Deep Reflections (`docs/reflections/deep/`)
+**When to use:** Multi-session journeys, complex investigations, architectural transformations
+- **Template:** `docs/reflections/deep/TEMPLATE.md` (NEW - 300 lines)
+- **Naming:** `{topic}-journey-YYYY-MM-DD.md` or `DEEP_REFLECTION_{topic}.md`
+- **Length:** 10,000+ lines
+- **Format:** Narrative journey with session chronology, investigation narrative, technical deep dives
+
+**Examples:**
+- `docs/reflections/deep/kernel-journey-2026-03-09.md`
+- `docs/reflections/deep/AGENTS-consumer-documentation-strategy-journey-2026-03-09.md`
+
+#### Quick Decision Guide
+
+| Scenario | Use |
+|----------|------|
+| Fixed a bug in one session | `docs/reflections/` |
+| Investigated something complex over multiple days | `docs/reflections/deep/` |
+| Single architectural change | `docs/reflections/` |
+| System-wide transformation | `docs/reflections/deep/` |
+| Quick learning/insight | `docs/reflections/` |
+| Deep investigation with many discoveries | `docs/reflections/deep/` |
+
+### Storyteller Story Types
+
+The `@storyteller` agent supports multiple story types:
+
+| Type | Description | Template Path | Invoke |
+|------|-------------|---------------|--------|
+| `reflection` | Technical deep reflections on development process | `docs/reflections/TEMPLATE.md` | `@storyteller write a reflection about X` |
+| `saga` | Long-form technical saga spanning multiple sessions | `docs/reflections/deep/SAGA_TEMPLATE.md` | `@storyteller write a saga about X` |
+| `journey` | Investigation/learning journey | `docs/reflections/JOURNEY_TEMPLATE.md` | `@storyteller write a journey about X` |
+| `narrative` | Technical narrative - telling the story of code | `docs/reflections/NARRATIVE_TEMPLATE.md` | `@storyteller write a narrative about X` |
+| `deep reflection` | Extended narrative with emotional journey | `docs/reflections/deep/TEMPLATE.md` | `@storyteller write a deep reflection about X` |
+
+**Example:**
+```
+@storyteller write a reflection about fixing the memory leak
+```
 
 ## Available Agents
 
-| Agent | Purpose | Example Invocation |
-|-------|---------|-------------------|
+| Agent | Purpose | Invoke |
+|-------|---------|--------|
 | `@enforcer` | Codex compliance & error prevention | `@enforcer analyze this code` |
 | `@orchestrator` | Complex multi-step task coordination | `@orchestrator implement feature` |
 | `@architect` | System design & technical decisions | `@architect design API` |
@@ -52,150 +149,221 @@ You don't need to manage agents manually - just use the `@agent-name` syntax and
 | `@storyteller` | Narrative deep reflections | `@storyteller write a journey` |
 | `@researcher` | Codebase exploration | `@researcher find implementation` |
 
-### Storyteller Agent
-
-The `@storyteller` agent supports multiple story types:
-
-| Type | Description | Invoke |
-|------|-------------|--------|
-| `reflection` | Technical deep reflections on development process | `@storyteller write a reflection about X` |
-| `saga` | Long-form technical saga spanning multiple sessions | `@storyteller write a saga about X` |
-| `journey` | Investigation/learning journey | `@storyteller write a journey about X` |
-| `narrative` | Technical narrative - telling the story of code | `@storyteller write a narrative about X` |
-
-**Example:**
-```
-@storyteller write a reflection about fixing the memory leak
-```
-
 ## Complexity Routing
 
 StringRay automatically routes tasks based on complexity:
 
-- **Simple (≤20)**: Single agent handles it directly
-- **Moderate (21-35)**: Single agent with additional tools
-- **Complex (36-75)**: Multi-agent coordination
-- **Enterprise (>75)**: Orchestrator-led team
-
-You don't need to think about this - StringRay decides automatically based on your request.
+- **Simple (≤15)**: Single agent
+- **Moderate (≤25)**: Single agent with tools
+- **Complex (≤50)**: Multi-agent coordination  
+- **Enterprise (>50)**: Orchestrator-led team
 
 ## CLI Commands
 
 ```bash
-# Installation & Setup
-npx strray-ai install         # Install and configure
-npx strray-ai status         # Check configuration
-npx strray-ai health          # Run health check
-npx strray-ai validate        # Validate installation
-
-# Feature Discovery
-npx strray-ai capabilities   # Show all available features
-npx strray-ai calibrate      # Calibrate complexity scoring
-
-# Reporting & Analytics
-npx strray-ai report          # Generate reports
-npx strray-ai analytics      # View pattern analytics
+npx strray-ai install       # Install and configure
+npx strray-ai status       # Check configuration
+npx strray-ai health        # Health check
+npx strray-ai validate      # Validate installation
+npx strray-ai capabilities # Show all features
+npx strray-ai report        # Generate reports
+npx strray-ai analytics    # Pattern analytics
+npx strray-ai calibrate    # Calibrate complexity
+npm run test:pipelines     # Pipeline integration tests
 ```
 
-## Configuration
+## Features.json Configuration
 
-### Basic Configuration
+StringRay uses `.opencode/strray/features.json` for feature flags and settings:
 
-StringRay works out of the box, but you can customize it via `.opencode/strray/features.json`:
+### Location
+- **Path**: `.opencode/strray/features.json`
+- **Consumer Path**: When installed as npm package, loaded from `node_modules/strray-ai/.opencode/strray/features.json`
 
-```json
-{
-  "token_optimization": {
-    "enabled": true,
-    "max_context_tokens": 8000
-  },
-  "agent_spawn": {
-    "max_concurrent": 8,
-    "max_per_type": 3
-  }
-}
-```
-
-### Key Configuration Files
-
-| File | Purpose | What You Can Change |
-|------|---------|---------------------|
-| `.opencode/opencode.json` | Main framework config | mode, plugins, paths |
-| `.opencode/strray/features.json` | Feature flags | Enable/disable features |
-| `.opencode/agents/` | Custom agent configs | Add your own agents |
-
-### Environment Variables
-
-```bash
-# Optional overrides
-STRRAY_MODE=development        # or 'consumer'
-STRRAY_LOG_LEVEL=info          # debug, info, warn, error
-STRRAY_NO_TELEMETRY=1          # Disable analytics
-```
+### Key Features
+- `token_optimization` - Context token management
+- `model_routing` - AI model routing
+- `batch_operations` - File batch processing
+- `multi_agent_orchestration` - Agent coordination
+- `autonomous_reporting` - Automatic reporting
+- `activity_logging` - Activity logging configuration
+- `security` - Security settings
+- `performance_monitoring` - Performance tracking
 
 ### Modifying Features
-
+To modify features in consumer installations:
 ```bash
 # View current features
 cat .opencode/strray/features.json
 
 # Set feature via CLI
 npx strray-ai config set --feature token_optimization.enabled --value false
-
-# Get a specific config value
-npx strray-ai config get --feature activity_logging.enabled
-
-# Export current config
-npx strray-ai config export > strray-config.json
 ```
 
-## Adding Custom Agents
+### .opencode/strray Directory
 
-You can create your own agents for specialized tasks:
+The `.opencode/strray/` directory contains core framework configuration:
 
-### Step 1: Create Agent File
+| File | Purpose |
+|------|---------|
+| `codex.json` | Universal Development Codex (60 error prevention terms) |
+| `features.json` | Feature flags and settings |
+| `config.json` | Framework configuration |
+| `agents_template.md` | Agent architecture templates |
+| `routing-mappings.json` | Agent routing configurations |
+| `workflow_state.json` | Runtime workflow state |
+| `inference/` | Model inference workflow data (reflection/log locations, phase tracking) |
+| `integrations.json` | External service integrations (openclaw, python-bridge, react) |
+| `profiles/` | Profile configurations (reserved for future use) |
 
-Create a file in `.opencode/agents/`:
+## Agent Discovery & Capabilities
 
+### First-Time Agent Context
+
+When agents are first spawned:
+- **Zero Context**: Agents start with minimal initial context
+- **Discovery Happens**: Agents discover available tools through MCP servers
+- **State Builds**: Over time, agents build comprehensive knowledge graph
+
+### Static vs Dynamic Discovery
+
+**Static Discovery** (Immediate):
+- Source: `.opencode/agents/` directory
+- Speed: Fast - scans local directory
+- Scope: Only locally configured agents
+
+**Dynamic Discovery** (After Startup):
+- Source: MCP Protocol via `mcp-client.ts`
+- Process: Loads config → Connects to servers → Lists tools → Makes available
+- Scope: Full agent capabilities with MCP server tools
+
+### Access & Permissions Pipeline
+
+**Load Priority**:
+1. Development: `node_modules/strray-ai/dist/` (most current)
+2. Consumer: Falls back to `dist/` directory
+3. Configuration: `.opencode/strray/features.json`
+
+**Spawn Authorization**:
+- Only main orchestrator can spawn agents
+- Subagents cannot spawn other agents
+- Workers cannot spawn agents directly
+
+## Activity Log & Reporting
+
+### Activity Logging
+
+**Location**: `.opencode/logs/` directory
+- **File Format**: `strray-plugin-YYYY-MM-DD.log`
+- **Enabled by**: `activity_logging` feature in features.json
+
+### Report Generation
+
+**CLI Command**:
+```bash
+# Generate daily report
+npx strray-ai report --daily
+
+# Generate performance report
+npx strray-ai report --performance
+
+# Generate compliance report
+npx strray-ai report --compliance
+```
+
+**Report Types**:
+- Daily reports: Agent invocations, task completions
+- Performance reports: Response times, resource usage
+- Compliance reports: Codex violations, agent performance
+
+## Skill Scripts & Agent Registry
+
+### Agent Registry
+
+**Location**: `scripts/node/agent-registry.js`
+- **Purpose**: Register new custom agents
+- **Usage**: Add to `.opencode/agents/` and auto-discovered
+
+### Custom Skills
+
+**Adding Custom Agents**:
+1. Create skill file in `.opencode/agents/`
+2. Export handler function
+3. Auto-available to agents
+
+**Example**:
 ```javascript
-// .opencode/agents/my-custom-agent.js
-module.exports = {
-  name: 'my-custom-agent',
-  description: 'My custom agent description',
-  handler: async (context, args) => {
-    // Your agent logic here
-    return { result: "Task completed", data: {} };
-  }
+// .opencode/agents/my-custom-skill.js
+module.exports = async (context, tool) => {
+  return { result: "Skill executed", data: {} };
 };
 ```
 
-### Step 2: Use Your Agent
+## Codex
 
-Once created, use it immediately:
+StringRay enforces Universal Development Codex (60 terms) for systematic error prevention. See [.opencode/strray/codex.json](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) for full reference.
+
+## Configuration Files Reference
+
+StringRay uses multiple configuration files to control behavior:
+
+### Main Configuration Files
+
+| File | Purpose | Key Settings |
+|------|---------|--------------|
+| `.opencode/opencode.json` | Main framework config | mode, plugins, paths |
+| `.opencode/strray/features.json` | Feature flags | enabled/disabled features |
+| `.opencode/agents/` | Custom agent configs | agent-specific settings |
+| `.opencode/strray/codex.json` | Codex terms | 60 error prevention rules |
+
+### Configuration Hierarchy
 
 ```
-@my-custom-agent do something useful
+1. .opencode/opencode.json           # Highest priority - project overrides
+2. .opencode/strray/features.json    # Feature flags
+3. node_modules/strray-ai/.opencode/ # Package defaults (lowest)
 ```
 
-The agent is auto-discovered - no registration needed!
+### Environment Variables
+
+```bash
+# Optional overrides
+STRRAY_MODE=development              # or 'consumer'
+STRRAY_LOG_LEVEL=info              # debug, info, warn, error
+STRRAY_CONFIG_PATH=.opencode/      # Custom config directory
+STRRAY_NO_TELEMETRY=1              # Disable analytics
+```
 
 ## Integration Points
 
 ### Git Hooks Integration
 
+StringRay integrates with Git hooks for automated validation:
+
 ```bash
 # Install Git hooks
 npx strray-ai install --hooks
 
-# Available hooks:
+# Hooks available:
 # - pre-commit: TypeScript check, linting, Codex validation
 # - post-commit: Activity logging, analytics
 # - pre-push: Full validation suite
 ```
 
+**Manual Hook Setup** (if not using --hooks):
+```bash
+# .git/hooks/pre-commit
+#!/bin/bash
+npx strray-ai validate --pre-commit
+
+# .git/hooks/post-commit  
+#!/bin/bash
+npx strray-ai report --auto
+```
+
 ### CI/CD Pipeline Integration
 
-**GitHub Actions:**
+**GitHub Actions Example**:
 ```yaml
 - name: StringRay Validation
   run: |
@@ -203,7 +371,7 @@ npx strray-ai install --hooks
     npx strray-ai report --ci
 ```
 
-**GitLab CI:**
+**GitLab CI Example**:
 ```yaml
 strray-validate:
   script:
@@ -211,11 +379,146 @@ strray-validate:
     - npx strray-ai report --ci
 ```
 
-## Common Workflows
+### MCP Server Configuration
+
+MCP (Model Context Protocol) servers extend agent capabilities:
+
+```bash
+# List available MCP servers
+npx strray-ai capabilities --mcp
+
+# MCP server types:
+# - knowledge-skills/     # Domain-specific skills
+# - framework-help.server.ts # Framework utilities
+# - orchestrator.server.ts  # Task orchestration
+```
+
+### Marketplace Plugin Installation
+
+```bash
+# Search for plugins
+npx strray-ai marketplace search <keyword>
+
+# Install plugin
+npx strray-ai marketplace install <plugin-name>
+
+# List installed plugins
+npx strray-ai marketplace list
+```
+
+## Tuning & Optimization
+
+### Complexity Calibration
+
+StringRay uses complexity scoring to route tasks to appropriate agents:
+
+```bash
+# Calibrate complexity scoring
+npx strray-ai calibrate
+
+# View current complexity settings
+cat .opencode/strray/features.json | jq '.complexity'
+```
+
+**Complexity Factors**:
+- File count and size
+- Import dependencies
+- Test coverage percentage
+- Code duplication
+- Architectural patterns
+
+### Performance Tuning
+
+**Memory Management**:
+```bash
+# View memory settings
+cat .opencode/strray/features.json | jq '.memory'
+
+# Key settings:
+# - memory_threshold_mb: Emergency cleanup trigger (default: 80MB)
+# - gc_interval_ms: Garbage collection frequency
+# - cache_size: Agent state cache limit
+```
+
+**Token Optimization**:
+```bash
+# Configure token limits
+npx strray-ai config set --feature token_optimization.max_context_tokens --value 8000
+npx strray-ai config set --feature token_optimization.compression_enabled --value true
+```
+
+### Agent Spawn Limits
+
+Control how agents are spawned and coordinated:
+
+```json
+// In features.json
+{
+  "agent_spawn": {
+    "max_concurrent": 8,
+    "max_per_type": 3,
+    "spawn_cooldown_ms": 500,
+    "rate_limit_per_minute": 20
+  }
+}
+```
+
+## CLI Command Details
+
+### Core Commands
+
+| Command | Description | Common Use |
+|---------|-------------|------------|
+| `npx strray-ai install` | Install and configure framework | Initial setup |
+| `npx strray-ai status` | Show current configuration status | Debug setup issues |
+| `npx strray-ai health` | Run health check | Verify installation |
+| `npx strray-ai validate` | Run full validation suite | Pre-commit validation |
+| `npx strray-ai capabilities` | List all available features | Discover capabilities |
+| `npx strray-ai calibrate` | Recalibrate complexity scoring | After major refactors |
+| `npx strray-ai report` | Generate analytics reports | Review performance |
+| `npx strray-ai analytics` | View pattern analytics | Understand agent behavior |
+| `npx strray-ai config` | Manage configuration | Tune settings |
+
+### Configuration Commands
+
+```bash
+# Get a specific config value
+npx strray-ai config get --feature activity_logging.enabled
+
+# Set a config value
+npx strray-ai config set --feature token_optimization.enabled --value false
+
+# Reset to defaults
+npx strray-ai config reset
+
+# Export current config
+npx strray-ai config export > strray-config.json
+```
+
+### Report Commands
+
+```bash
+# Daily summary report
+npx strray-ai report --daily
+
+# Performance analysis
+npx strray-ai report --performance
+
+# Compliance report (Codex violations)
+npx strray-ai report --compliance
+
+# Session report
+npx strray-ai report --session
+
+# Generate CI-friendly report
+npx strray-ai report --ci --output json
+```
+
+## Common Agent Workflows
 
 ### Invoking Agents
 
-**Basic Usage:**
+**Basic Invocation**:
 ```bash
 # In code comment or prompt
 @architect design a REST API for user management
@@ -225,10 +528,10 @@ strray-validate:
 @testing-lead create tests for authentication module
 ```
 
-**Complex Tasks:**
+**Chaining Agents**:
 ```
 @orchestrator implement feature:user-authentication
-  → Automatically spawns @architect → @testing-lead → @code-reviewer
+  → Spawns @architect → @testing-lead → @code-reviewer
 ```
 
 ### Agent Selection Guide
@@ -242,38 +545,59 @@ strray-validate:
 | Code review | @code-reviewer | @enforcer |
 | Research | @researcher | @architect |
 
-## Activity Logging & Reporting
+### Session Management
 
-### Activity Logging
-
-Logs are stored in `.opencode/logs/strray-plugin-YYYY-MM-DD.log`
-
-Enable/disable via `features.json`:
-```json
-{
-  "activity_logging": {
-    "enabled": true
-  }
-}
-```
-
-### Report Generation
-
+**Start a Session**:
 ```bash
-# Daily summary report
-npx strray-ai report --daily
-
-# Performance analysis
-npx strray-ai report --performance
-
-# Compliance report (Codex violations)
-npx strray-ai report --compliance
-
-# CI-friendly report
-npx strray-ai report --ci --output json
+# Sessions are automatic - invoke agent to start
+@orchestrator implement login feature
 ```
 
-## Troubleshooting
+**View Active Sessions**:
+```bash
+# Active sessions shown in status
+npx strray-ai status
+```
+
+**End a Session**:
+```bash
+# Sessions auto-end after inactivity timeout
+# Or manually via:
+npx strray-ai session end <session-id>
+```
+
+### Error Recovery
+
+**Common Error Patterns**:
+
+1. **Agent Spawn Failure**
+   ```bash
+   # Check spawn limits
+   npx strray-ai status | grep -A5 "spawn"
+   
+   # Solution: Wait for cooldown or increase limit
+   npx strray-ai config set --feature agent_spawn.max_concurrent --value 10
+   ```
+
+2. **Memory Exhaustion**
+   ```bash
+   # Check memory settings
+   npx strray-ai health
+   
+   # Solution: Clear cache
+   npx strray-ai session clear-cache
+   ```
+
+3. **Validation Failures**
+   ```bash
+   # Run detailed validation
+   npx strray-ai validate --detailed
+   
+   # View specific failures
+   npx strray-ai report --compliance --detailed
+   ```
+
+## Troubleshooting Guide
 
 ### Quick Diagnostics
 
@@ -284,11 +608,12 @@ npx strray-ai health
 # Validate installation
 npx strray-ai validate
 
+# View recent activity
+ls -la .opencode/logs/
+cat .opencode/logs/strray-plugin-$(date +%Y-%m-%d).log | tail -50
+
 # Check configuration
 npx strray-ai status
-
-# View recent activity
-cat .opencode/logs/strray-plugin-$(date +%Y-%m-%d).log | tail -50
 ```
 
 ### Common Issues
@@ -299,6 +624,7 @@ cat .opencode/logs/strray-plugin-$(date +%Y-%m-%d).log | tail -50
 | Validation failures | Pre-commit blocks | Run `npx strray-ai validate --fix` |
 | Memory issues | Slow performance | `npx strray-ai session clear-cache` |
 | Config not loading | Settings ignored | Check `.opencode/opencode.json` syntax |
+| MCP servers unavailable | Tools missing | `npx strray-ai capabilities --mcp` |
 
 ### Getting Help
 
@@ -313,147 +639,32 @@ npx strray-ai capabilities
 npx strray-ai --version
 ```
 
----
+## Framework Configuration Limits
 
-## Migration Guide (v1.7.8)
+### Consumer Environment Limitations
 
-**Good news: No migration needed!** ✨
+- **Features.json**: Automatically loaded from package, not project root
+- **Codex Version**: Frozen at v1.7.5 in consumer mode (stable)
+- **Plugin Behavior**: Reduced functionality in consumer mode:
+  - No dynamic codex term enrichment
+  - Fixed codex version
+  - No MCP server discovery
+  - No real-time tool discovery
 
-StringRay v1.7.8 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
+### Development vs Consumer
 
-### What Stayed the Same
+| Aspect | Development | Consumer |
+|--------|-----------|----------|
+| Features | Full (latest) | Optimized (stable) |
+| Codex | Latest terms | v1.7.5 fallback |
+| Discovery | Dynamic (MCP) | Static only |
+| Hot Reload | Yes | No |
 
-- ✅ `@agent-name` syntax - unchanged
-- ✅ All CLI commands - work exactly as before
-- ✅ Configuration files - same format and location
-- ✅ All agents - same names and capabilities
-- ✅ Custom agents - same creation process
-- ✅ Public APIs - unchanged
-
-### What Improved (Behind the Scenes)
-
-The refactoring improved internal architecture without affecting the public interface:
-
-- **Performance**: Faster agent spawning and task routing
-- **Maintainability**: Better code organization for future improvements
-- **Reliability**: More robust error handling
-- **Scalability**: Better handling of complex, multi-agent workflows
-
-### Do I Need to Change Anything?
-
-| If You're Using... | Action Needed |
-|-------------------|---------------|
-| `@agent-name` syntax | ✅ No changes needed |
-| CLI commands (`npx strray-ai ...`) | ✅ No changes needed |
-| Configuration files | ✅ No changes needed |
-| Custom agents | ✅ No changes needed |
-| Framework as-is | ✅ No changes needed |
-
-### Internal vs Public APIs
-
-**Public APIs** (you use these - unchanged):
-- `@agent-name` invocation syntax
-- CLI commands
-- Configuration file formats
-- Agent registration
-
-**Internal APIs** (changed, but you don't use them directly):
-- Internal agent coordination
-- Framework boot process
-- MCP server management
-
-### Upgrading
-
-```bash
-# Simply update to latest version
-npm update strray-ai
-
-# Or reinstall
-npm install strray-ai@latest
-
-# Verify installation
-npx strray-ai health
-```
-
----
-
-## Consumer FAQ
-
-### General Questions
-
-**Q: Do I need to change my code after the refactoring?**
-A: **No!** All public APIs remain unchanged. Your existing `@agent-name` invocations, CLI commands, and configuration files work exactly as before.
-
-**Q: What actually changed in the refactoring?**
-A: Only internal implementation details. The public interface you use (@agent syntax, CLI commands, config files) is 100% backward compatible.
-
-**Q: What improvements will I see?**
-A: Faster agent spawning, better error handling, and more reliable multi-agent coordination - all behind the scenes.
-
-**Q: Are there any breaking changes?**
-A: **No.** This is a zero-breaking-change release.
-
-### Using Agents
-
-**Q: How do I invoke an agent?**
-A: Use `@agent-name` syntax in your prompts or code comments:
-```
-@architect design an API for user authentication
-```
-
-**Q: Can I create my own agents?**
-A: Yes! Create a file in `.opencode/agents/` and it will be auto-discovered. See [Adding Custom Agents](#adding-custom-agents) section.
-
-**Q: What if an agent doesn't exist?**
-A: StringRay will tell you and suggest available agents. Run `npx strray-ai capabilities` to see all available agents.
-
-**Q: Can agents call other agents?**
-A: The orchestrator agent can spawn other agents for complex tasks. You don't need to manage this - just use `@orchestrator` for complex workflows.
-
-### Configuration
-
-**Q: Where do I configure StringRay?**
-A: Main configuration is in `.opencode/strray/features.json` and `.opencode/opencode.json`.
-
-**Q: How do I enable/disable features?**
-A: Use the CLI: `npx strray-ai config set --feature FEATURE_NAME.enabled --value true/false`
-
-**Q: Can I use environment variables?**
-A: Yes! See [Environment Variables](#environment-variables) section for available options.
-
-### Troubleshooting
-
-**Q: Agents aren't responding. What should I do?**
-A: Run `npx strray-ai health` to check the framework status. Common fixes:
-- Check if StringRay is installed: `npx strray-ai --version`
-- Validate configuration: `npx strray-ai validate`
-- Check logs: `cat .opencode/logs/strray-plugin-$(date +%Y-%m-%d).log`
-
-**Q: How do I update StringRay?**
-A: `npm update strray-ai` or `npm install strray-ai@latest`
-
-**Q: Where can I get help?**
-A: Run `npx strray-ai help` or check the [troubleshooting section](#troubleshooting).
-
-### Advanced Usage
-
-**Q: Can I use StringRay in CI/CD pipelines?**
-A: Yes! See [CI/CD Pipeline Integration](#cicd-pipeline-integration) section.
-
-**Q: How do I add custom validation rules?**
-A: You can extend the Codex or create custom agents. See [Adding Custom Agents](#adding-custom-agents).
-
-**Q: Can I disable telemetry?**
-A: Yes, set `STRRAY_NO_TELEMETRY=1` environment variable.
-
----
-
-## Additional Resources
+## Documentation
 
 - [Full Documentation](https://github.com/htafolla/stringray)
 - [Configuration Guide](https://github.com/htafolla/stringray/blob/master/docs/CONFIGURATION.md)
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-
-**Version**: 1.7.8 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.14.0 | [GitHub](https://github.com/htafolla/stringray)

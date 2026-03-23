@@ -28,6 +28,27 @@ import { memoryMonitor } from "../monitoring/memory-monitor.js";
 import { strRayConfigLoader } from "./config-loader.js";
 import { activity } from "./activity-logger.js";
 import { inferenceTuner } from "../services/inference-tuner.js";
+import { setupMemoryMonitoring, getMemoryHealthSummary } from "./memory-monitor-setup.js";
+
+async function dynamicImport<T = any>(
+  primaryPath: string,
+  fallbackPath?: string,
+): Promise<T> {
+  try {
+    return await import(primaryPath) as T;
+  } catch (primaryError) {
+    if (fallbackPath) {
+      try {
+        return await import(fallbackPath) as T;
+      } catch (fallbackError) {
+        throw new Error(
+          `Failed to import ${primaryPath} and fallback ${fallbackPath}: ${String(primaryError)} / ${String(fallbackError)}`,
+        );
+      }
+    }
+    throw primaryError;
+  }
+}
 
 /**
  * Set up graceful interruption handling to prevent JSON parsing errors
@@ -118,6 +139,13 @@ export interface BootSequenceConfig {
   autoStartInferenceTuner: boolean;
 }
 
+interface ProcessorDefinition {
+  name: string;
+  type: "pre" | "post";
+  priority: number;
+  enabled: boolean;
+}
+
 export interface BootResult {
   success: boolean;
   orchestratorLoaded: boolean;
@@ -150,7 +178,7 @@ export class BootOrchestrator {
     this.processorManager = new ProcessorManager(this.stateManager);
 
     // Initialize memory monitoring with alerts
-    this.setupMemoryMonitoring();
+    this.initializeMemoryMonitoring();
 
     this.config = {
       enableEnforcement: true,
@@ -200,24 +228,10 @@ export class BootOrchestrator {
    */
   private async loadOrchestrator(): Promise<boolean> {
     try {
-      // Import orchestrator dynamically to ensure it's loaded first
-      let orchestratorModule;
-      try {
-        orchestratorModule = await import("../core/orchestrator");
-      } catch (jsError) {
-        // Fallback to TypeScript import for testing/development
-        try {
-          orchestratorModule = await import("../core/orchestrator");
-        } catch (tsError) {
-          await frameworkLogger.log(
-            "boot-orchestrator",
-            "orchestrator-load-failed",
-            "error",
-            { jsError: String(jsError), tsError: String(tsError) },
-          );
-          return false;
-        }
-      }
+      const orchestratorModule = await dynamicImport<{ strRayOrchestrator: any }>(
+        "../core/orchestrator.js",
+        "../core/orchestrator",
+      );
 
       const orchestratorInstance = orchestratorModule.strRayOrchestrator;
 
@@ -308,6 +322,26 @@ export class BootOrchestrator {
   }
 
   /**
+   * Register processors in batch with consistent logging
+   */
+  private registerProcessorsBatch(processors: ProcessorDefinition[], jobId: string): void {
+    for (const processor of processors) {
+      this.processorManager.registerProcessor({
+        name: processor.name,
+        type: processor.type,
+        priority: processor.priority,
+        enabled: processor.enabled,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        `registered ${processor.name} processor`,
+        "success",
+        { jobId },
+      );
+    }
+  }
+
+  /**
    * Activate pre/post processors
    */
   private async activateProcessors(jobId: string): Promise<boolean> {
@@ -319,98 +353,18 @@ export class BootOrchestrator {
         { jobId },
       );
 
-      this.processorManager.registerProcessor({
-        name: "preValidate",
-        type: "pre",
-        priority: 10,
-        enabled: true,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "registered preValidate processor",
-        "success",
-        { jobId },
-      );
+      const processorsToRegister: ProcessorDefinition[] = [
+        { name: "preValidate", type: "pre", priority: 10, enabled: true },
+        { name: "codexCompliance", type: "pre", priority: 20, enabled: true },
+        { name: "testAutoCreation", type: "pre", priority: 22, enabled: true },
+        { name: "versionCompliance", type: "pre", priority: 25, enabled: true },
+        { name: "errorBoundary", type: "pre", priority: 30, enabled: true },
+        { name: "agentsMdValidation", type: "pre", priority: 35, enabled: true },
+        { name: "stateValidation", type: "post", priority: 130, enabled: true },
+      ];
 
-      this.processorManager.registerProcessor({
-        name: "codexCompliance",
-        type: "pre",
-        priority: 20,
-        enabled: true,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "registered codexCompliance processor",
-        "success",
-        { jobId },
-      );
+      this.registerProcessorsBatch(processorsToRegister, jobId);
 
-      this.processorManager.registerProcessor({
-        name: "testAutoCreation",
-        type: "pre",
-        priority: 22,
-        enabled: true,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "registered testAutoCreation processor",
-        "success",
-        { jobId },
-      );
-
-      this.processorManager.registerProcessor({
-        name: "versionCompliance",
-        type: "pre",
-        priority: 25,
-        enabled: true,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "registered versionCompliance processor",
-        "success",
-        { jobId },
-      );
-
-      this.processorManager.registerProcessor({
-        name: "errorBoundary",
-        type: "pre",
-        priority: 30,
-        enabled: true,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "registered errorBoundary processor",
-        "success",
-        { jobId },
-      );
-
-      this.processorManager.registerProcessor({
-        name: "agentsMdValidation",
-        type: "pre",
-        priority: 35,
-        enabled: true,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "registered agentsMdValidation processor",
-        "success",
-        { jobId },
-      );
-
-      this.processorManager.registerProcessor({
-        name: "stateValidation",
-        type: "post",
-        priority: 130,
-        enabled: true,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "registered stateValidation processor",
-        "success",
-        { jobId },
-      );
-
-      // Skip refactoring logging processor - not available in this build
       frameworkLogger.log(
         "boot-orchestrator",
         "skipping refactoringLogging processor - not available",
@@ -555,23 +509,16 @@ export class BootOrchestrator {
    */
   private async activateCodexCompliance(): Promise<boolean> {
     try {
-      // Initialize codex injector if not already done
       let codexInjector = this.stateManager.get("processor:codex_injector");
       if (!codexInjector) {
-        // Import and initialize codex injector
-        // Try import with .js extension first (for Node.js/test environment)
-        let CodexInjector;
-        try {
-          ({ CodexInjector } = await import("./codex-injector"));
-        } catch (error) {
-          // Fallback to import without .js extension (for OpenCode plugin environment)
-          ({ CodexInjector } = await import("./codex-injector"));
-        }
+        const { CodexInjector } = await dynamicImport<{ CodexInjector: new () => any }>(
+          "./codex-injector.js",
+          "./codex-injector",
+        );
         codexInjector = new CodexInjector();
         this.stateManager.set("processor:codex_injector", codexInjector);
       }
 
-      // Enable compliance validation
       this.stateManager.set("compliance:active", true);
       this.stateManager.set("compliance:validator", codexInjector);
       this.stateManager.set("compliance:activated_at", Date.now());
@@ -764,84 +711,13 @@ export class BootOrchestrator {
   }
 
   /**
-   * Set up comprehensive memory monitoring and alerting
+   * Initialize memory monitoring using the shared setup module
    */
-  private setupMemoryMonitoring(): void {
-    // Start memory monitor
-    memoryMonitor.start();
-
-    // CRITICAL FIX: Only add alert listener once to prevent memory leak
-    // Each BootOrchestrator instantiation was adding duplicate listeners
-    let currentListenerCount = 0;
-    try {
-      if (typeof memoryMonitor.listenerCount === "function") {
-        currentListenerCount = memoryMonitor.listenerCount("alert");
-      } else if (
-        memoryMonitor.listeners &&
-        typeof memoryMonitor.listeners === "function"
-      ) {
-        currentListenerCount = memoryMonitor.listeners("alert").length;
-      }
-    } catch (e) {
-      // Fallback: assume no listeners if we can't determine count
-      currentListenerCount = 0;
-    }
-
-    if (currentListenerCount === 0) {
-      // First time setup - add the memory alert handler
-      memoryMonitor.on("alert", (alert: any) => {
-        const level =
-          alert.severity === "critical"
-            ? "error"
-            : alert.severity === "high"
-              ? "warn"
-              : "info";
-
-        frameworkLogger.log(
-          "boot-orchestrator",
-          `🚨 MEMORY ALERT: ${alert.message}`,
-          "error",
-        );
-
-        // Store alert in state for dashboard access
-        const alerts = (this.stateManager.get("memory:alerts") as any[]) || [];
-        alerts.push({
-          ...alert,
-          timestamp: Date.now(),
-        });
-
-        // Keep only last 100 alerts
-        if (alerts.length > 100) {
-          alerts.shift();
-        }
-
-        this.stateManager.set("memory:alerts", alerts);
-
-        // Log recommendations
-        alert.details.recommendations.forEach((rec: string) => {
-          frameworkLogger.log("boot-orchestrator", `💡 ${rec}`, "info");
-        });
-      });
-    }
-
-    // Attach the listener to the memory monitor only if none exist
-    if (
-      this.memoryMonitorListener &&
-      memoryMonitor.listenerCount("alert") === 0
-    ) {
-      memoryMonitor.on("alert", this.memoryMonitorListener);
-    }
-
-    // Log initial memory status
-    const initialStats = memoryMonitor.getCurrentStats();
-    frameworkLogger.log(
-      "boot-orchestrator",
-      `🧠 Initial memory: ${initialStats.heapUsed.toFixed(1)}MB heap, ${initialStats.heapTotal.toFixed(1)}MB total`,
-      "info",
-    );
-
-    // Store initial memory baseline
-    this.stateManager.set("memory:baseline", initialStats);
+  private initializeMemoryMonitoring(): void {
+    setupMemoryMonitoring({
+      stateManager: this.stateManager,
+      memoryMonitorListener: this.memoryMonitorListener,
+    });
   }
 
   /**
@@ -857,33 +733,7 @@ export class BootOrchestrator {
       trend: string;
     };
   } {
-    const summary = memoryMonitor.getSummary();
-    const issues: string[] = [];
-
-    // Check for memory issues
-    if (summary.current.heapUsed > 400) {
-      issues.push(
-        `Critical heap usage: ${summary.current.heapUsed.toFixed(1)}MB`,
-      );
-    } else if (summary.current.heapUsed > 200) {
-      issues.push(`High heap usage: ${summary.current.heapUsed.toFixed(1)}MB`);
-    }
-
-    if (summary.trend === "increasing") {
-      issues.push("Memory usage trending upward - potential leak detected");
-    }
-
-    if (summary.peak.heapUsed > 500) {
-      issues.push(
-        `Peak usage exceeded safe limits: ${summary.peak.heapUsed.toFixed(1)}MB`,
-      );
-    }
-
-    return {
-      healthy: issues.length === 0,
-      issues,
-      metrics: summary,
-    };
+    return getMemoryHealthSummary();
   }
 
   /**
@@ -1123,9 +973,9 @@ export class BootOrchestrator {
     try {
       // Load StringRay configuration directly (no Python dependency)
       const stringRayConfig = {
-        version: "1.13.2",
+        version: "1.14.0",
         codex_enabled: true,
-        codex_version: "v1.3.0",
+        codex_version: "v1.7.5",
         codex_terms: [
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
           21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,

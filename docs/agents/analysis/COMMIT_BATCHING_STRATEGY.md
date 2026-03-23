@@ -1,4 +1,4 @@
-# StrRay Framework - Intelligent Commit Batching Strategy (v1.9.0)
+# StrRay Framework - Intelligent Commit Batching Strategy (v1.14.0)
 
 ## 🎯 **Problem: Too Many Micro-Commits**
 

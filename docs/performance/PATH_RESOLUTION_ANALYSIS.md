@@ -1,16 +1,16 @@
 # StrRay Path Resolution Issues & Solutions
 
-**Version**: v1.9.0  
+**Version**: v1.14.0  
 **Status**: Partially Resolved  
 **Last Updated**: March 2026
 
 ## Executive Summary
 
-**v1.9.0 Update**: The facade pattern architecture refactoring (v1.9.0) has significantly improved code organization and reduced the codebase by 87% (8,230 → 1,218 lines). While path resolution remains an ongoing concern, the reduced codebase surface area makes comprehensive fixes more achievable.
+**v1.14.0 Update**: The facade pattern architecture refactoring (v1.14.0) has significantly improved code organization and reduced the codebase by 87% (8,230 → 1,218 lines). While path resolution remains an ongoing concern, the reduced codebase surface area makes comprehensive fixes more achievable.
 
 **Current Status**: Path resolution issues affecting **258+ files** across the codebase. These issues impact the framework's portability between development, testing, and production environments.
 
-**v1.9.0 Impact**:
+**v1.14.0 Impact**:
 - Reduced codebase complexity (87% reduction)
 - Cleaner module organization
 - Better separation of concerns

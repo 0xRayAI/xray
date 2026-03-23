@@ -1,6 +1,6 @@
 # StringRay Configuration Guide
 
-Complete configuration reference for the StringRay AI Framework v1.9.0.
+Complete configuration reference for the StringRay AI Framework v1.14.0.
 
 ## Overview
 
@@ -13,11 +13,11 @@ Configuration is loaded in order of priority: default < project < user.
 
 ---
 
-## What's New in v1.9.0
+## What's New in v1.14.0
 
 ### Facade Pattern Architecture
 
-StringRay v1.9.0 introduces a modern **Facade Pattern** architecture with modular internal structure:
+StringRay v1.14.0 introduces a modern **Facade Pattern** architecture with modular internal structure:
 
 **Key Improvements:**
 - **87% Code Reduction**: 8,230 → 1,218 lines (3,170 lines of dead code removed)
@@ -40,7 +40,7 @@ Create `.opencode/strray/features.json` in your project root:
 
 ```json
 {
-  "version": "1.13.2",
+  "version": "1.14.0",
   "description": "StringRay Framework Configuration",
   
   "token_optimization": {
@@ -381,7 +381,7 @@ The main OpenCode configuration file for agent routing:
     "code-analyzer": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.13.2",
+    "version": "1.14.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true

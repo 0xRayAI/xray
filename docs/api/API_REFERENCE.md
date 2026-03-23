@@ -8,7 +8,7 @@ StringRay provides a comprehensive enterprise-grade API for AI agent coordinatio
 
 ### Architecture Overview
 
-StringRay v1.9.0 features a modern, modular architecture:
+StringRay v1.14.0 features a modern, modular architecture:
 
 | Component | Before | After | Reduction |
 |-----------|--------|-------|-----------|
@@ -500,7 +500,7 @@ await orchestrator.registerAgent(CustomAnalyticsAgent);
   },
   "framework": {
     "name": "strray",
-    "version": "1.13.2",
+    "version": "1.14.0",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict",
@@ -575,13 +575,13 @@ await orchestrator.registerAgent(CustomAnalyticsAgent);
 
 ---
 
-## Migration Guide (v1.9.0)
+## Migration Guide (v1.14.0)
 
 ### No Breaking Changes
 
 **Good news: No migration needed!** ✨
 
-StringRay v1.9.0 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
+StringRay v1.14.0 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
 
 ### What Changed
 

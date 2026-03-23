@@ -700,7 +700,7 @@ MANDATORY COMPLIANCE REQUIRED - VIOLATIONS WILL BLOCK COMMITS
 ❌ NEVER use hardcoded 'dist/' paths in source code:
 \`\`\`typescript
 // WRONG - Breaks across environments (actual violations found)
-import { RuleEnforcer } from "../dist/enforcement/rule-enforcer.js";
+import { RuleEnforcer } from "../enforcement/rule-enforcer.js";
 import { ProcessorManager } from "./dist/processors/processor-manager.js";
 \`\`\`
 

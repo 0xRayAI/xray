@@ -4,7 +4,7 @@
 
 ## Overview
 
-This document outlines the expansion plan for knowledge skills in StringRay v1.9.0. With the introduction of the **Facade Pattern Architecture**, knowledge skills are now implemented as first-class MCP servers accessible through the **TaskSkillRouter** and **MCP Client** facades.
+This document outlines the expansion plan for knowledge skills in StringRay v1.14.0. With the introduction of the **Facade Pattern Architecture**, knowledge skills are now implemented as first-class MCP servers accessible through the **TaskSkillRouter** and **MCP Client** facades.
 
 ---
 
@@ -12,7 +12,7 @@ This document outlines the expansion plan for knowledge skills in StringRay v1.9
 
 All core knowledge skills are now properly implemented as MCP servers and accessible via facades:
 
-### ✅ Core Knowledge Skills (v1.9.0)
+### ✅ Core Knowledge Skills (v1.14.0)
 
 1. **project-analysis.server.ts**
    - **Access**: `TaskSkillRouter` / `MCPClient`
@@ -57,7 +57,7 @@ All core knowledge skills are now properly implemented as MCP servers and access
 
 ## Facade-Based Skill Architecture
 
-### How Skills Work in v1.9.0
+### How Skills Work in v1.14.0
 
 ```
 User Request
@@ -510,7 +510,7 @@ const audit = await mcpClient.callSkill("security-audit", {
 
 ## Conclusion
 
-StringRay v1.9.0's **Facade Pattern Architecture** enables a powerful knowledge skills ecosystem:
+StringRay v1.14.0's **Facade Pattern Architecture** enables a powerful knowledge skills ecosystem:
 
 ✅ **6 Core Skills**: Fully implemented via MCP servers
 ✅ **9+ Planned Skills**: Clear roadmap for expansion

@@ -44,7 +44,7 @@ class StrRayTestingStrategyServer {
   constructor() {
     this.server = new Server(
       {
-        name: "testing-strategy", version: "1.13.2",
+        name: "testing-strategy", version: "1.14.0",
       },
       {
         capabilities: {
@@ -187,7 +187,7 @@ class StrRayTestingStrategyServer {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
-        console.error(`Error in testing strategy tool ${name}:`, error);
+        frameworkLogger.log("mcps/testing-strategy", "tool", "error", { tool: name, error: String(error) });
         throw error;
       }
     });

@@ -15,6 +15,7 @@ import {
   detectProjectLanguage,
   getTestFilePath,
   buildTestCommand,
+  ProjectLanguage,
 } from "../utils/language-detector.js";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -54,6 +55,62 @@ export interface ProcessorHealth {
   successRate: number;
   averageDuration: number;
   errorCount: number;
+}
+
+export interface ProcessorContextValidation {
+  valid: boolean;
+  errors: string[];
+}
+
+export interface PostProcessorData {
+  operation: string;
+  data?: unknown;
+  preResults?: ProcessorResult[];
+  tool?: string;
+  directory?: string;
+  filePath?: string;
+}
+
+export interface LegacyContext {
+  [key: string]: unknown;
+}
+
+export interface TestExecutionResult {
+  testsExecuted: number;
+  passed: number;
+  failed: number;
+  exitCode?: number;
+  output?: string;
+  success: boolean;
+  error?: string;
+  duration?: number;
+}
+
+export interface GenericTestResult {
+  testsExecuted?: number;
+  passed?: number;
+  failed?: number;
+  exitCode?: number;
+  output?: string;
+  success: boolean;
+  regressions?: string[];
+  issues?: string[];
+  stateValid?: boolean;
+  logged?: boolean;
+  message?: string;
+  coverage?: unknown;
+  data?: unknown;
+  error?: string | boolean;
+  timestamp?: string;
+  checkedAt?: string;
+  blocked?: boolean;
+  errors?: string[];
+  warnings?: string[];
+  compliant?: boolean;
+  violations?: string[];
+  termsChecked?: number;
+  boundaries?: string;
+  operation?: string;
 }
 
 export interface ProcessorMetrics {
@@ -397,7 +454,7 @@ export class ProcessorManager {
    */
   async executePostProcessors(
     operation: string,
-    data: any,
+    data: PostProcessorData,
     preResults: ProcessorResult[],
   ): Promise<ProcessorResult[]> {
     const jobId = `execute-post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -491,7 +548,7 @@ export class ProcessorManager {
 
     // ADD: Validate context before execution (skip if not an object)
     if (safeContext && typeof safeContext === 'object' && !Array.isArray(safeContext)) {
-      const validationResult = this.validateProcessorContext(name, context);
+      const validationResult = this.validateProcessorContext(name, safeContext);
       if (!validationResult.valid) {
         await frameworkLogger.log(
           "processor-manager",
@@ -623,8 +680,8 @@ export class ProcessorManager {
    */
   private validateProcessorContext(
     processorName: string,
-    context: any,
-  ): { valid: boolean; errors: string[] } {
+    context: LegacyContext,
+  ): ProcessorContextValidation {
     const errors: string[] = [];
 
     // Skip validation if context is not an object (e.g., string test data)
@@ -644,6 +701,7 @@ export class ProcessorManager {
       return { valid: true, errors: [] };
     }
 
+    const dataObj = contextData as Record<string, unknown> | undefined;
     const requiredFields: Record<string, string[]> = {
       preValidate: ["operation"],
       codexCompliance: ["operation", "files"],
@@ -659,7 +717,9 @@ export class ProcessorManager {
     const required = requiredFields[processorName] || [];
 
     for (const field of required) {
-      if (!(field in context) && !(field in (context.data || {}))) {
+      const fieldExistsInContext = field in context;
+      const fieldExistsInData = dataObj && field in dataObj;
+      if (!fieldExistsInContext && !fieldExistsInData) {
         errors.push(`Missing required field: ${field}`);
       }
     }
@@ -779,7 +839,7 @@ export class ProcessorManager {
   /**
    * @deprecated Use VersionComplianceProcessor class instead. Kept for backward compatibility.
    */
-  private async executeVersionCompliance(context: any): Promise<any> {
+  private async executeVersionCompliance(context: LegacyContext): Promise<GenericTestResult> {
     try {
       const { VersionComplianceProcessor } =
         await import("./version-compliance-processor.js");
@@ -806,20 +866,20 @@ export class ProcessorManager {
   /**
    * @deprecated Use CodexComplianceProcessor class instead. Kept for backward compatibility.
    */
-  private async executeCodexCompliance(context: any): Promise<any> {
-    const { operation } = context;
+  private async executeCodexCompliance(context: LegacyContext): Promise<GenericTestResult> {
+    const operation = (context.operation as string) || "unknown";
 
     try {
       const { RuleEnforcer } = await import("../enforcement/rule-enforcer.js");
       const ruleEnforcer = new RuleEnforcer();
 
       const validationContext = {
-        files: context.files || [],
-        newCode: context.newCode || "",
-        existingCode: context.existingCode || new Map(),
-        tests: context.tests || [],
-        dependencies: context.dependencies || [],
-        operation: context.operation || "unknown",
+        files: (context.files as string[]) || [],
+        newCode: (context.newCode as string) || "",
+        existingCode: (context.existingCode as Map<string, string>) || new Map(),
+        tests: (context.tests as string[]) || [],
+        dependencies: (context.dependencies as string[]) || [],
+        operation,
       };
 
       const result = await ruleEnforcer.validateOperation(
@@ -842,11 +902,12 @@ export class ProcessorManager {
       }
 
       return {
+        success: result.passed,
         compliant: result.passed,
         violations: result.errors,
         warnings: result.warnings,
         termsChecked: result.results.length,
-        operation: operation,
+        operation,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
@@ -857,13 +918,14 @@ export class ProcessorManager {
         { error: String(error) },
       );
       return {
-        compliant: true, // Allow processing to continue
+        success: true, // Allow processing to continue
+        compliant: true,
         violations: [
           `Compliance check error: ${error instanceof Error ? error.message : String(error)}`,
         ],
         warnings: [],
         termsChecked: 0,
-        operation: operation,
+        operation,
         error: true,
         timestamp: new Date().toISOString(),
       };
@@ -873,22 +935,22 @@ export class ProcessorManager {
   /**
    * @deprecated Use ErrorBoundaryProcessor class instead. Kept for backward compatibility.
    */
-  private async executeErrorBoundary(context: any): Promise<any> {
+  private async executeErrorBoundary(context: LegacyContext): Promise<GenericTestResult> {
     // Setup error boundaries
-    return { boundaries: "established" };
+    return { success: true, boundaries: "established" };
   }
 
   /**
    * @deprecated Use AgentsMdValidationProcessor class instead. Kept for backward compatibility.
    */
-  private async executeAgentsMdValidation(context: any): Promise<any> {
+  private async executeAgentsMdValidation(context: LegacyContext): Promise<GenericTestResult> {
     try {
       const { AgentsMdValidationProcessor } = await import("./agents-md-validation-processor.js");
       const processor = new AgentsMdValidationProcessor(process.cwd());
       
       const result = await processor.execute({
-        tool: context.tool || "validate",
-        operation: context.operation || "pre-commit",
+        tool: (context.tool as string) || "validate",
+        operation: (context.operation as string) || "pre-commit",
       });
       
       return {
@@ -914,7 +976,7 @@ export class ProcessorManager {
   /**
    * @deprecated Use TestExecutionProcessor class instead. Kept for backward compatibility.
    */
-  private async executeTestExecution(context: any): Promise<any> {
+  private async executeTestExecution(context: LegacyContext): Promise<GenericTestResult> {
     // Execute tests automatically for newly created test files
     // Now with language-aware detection!
     frameworkLogger.log(
@@ -925,7 +987,7 @@ export class ProcessorManager {
     );
 
     try {
-      const cwd = context.directory || process.cwd();
+      const cwd = (context.directory as string) || process.cwd();
 
       // Detect project language and test framework
       const projectLanguage = detectProjectLanguage(cwd);
@@ -986,14 +1048,14 @@ export class ProcessorManager {
    * @deprecated Part of legacy TestExecutionProcessor. Kept for backward compatibility.
    */
   private async executeTypeScriptTests(
-    context: any,
+    context: LegacyContext,
     cwd: string,
-  ): Promise<any> {
+  ): Promise<TestExecutionResult> {
     let testPattern = "";
 
     if (context.filePath) {
       // Convert source file to test file
-      const testFilePath = context.filePath
+      const testFilePath = (context.filePath as string)
         .replace(/\/src\//, "/src/__tests__/")
         .replace(/\.ts$/, ".test.ts");
 
@@ -1024,14 +1086,14 @@ export class ProcessorManager {
    * @deprecated Part of legacy TestExecutionProcessor. Kept for backward compatibility.
    */
   private async executeGenericTests(
-    context: any,
+    context: LegacyContext,
     cwd: string,
-    projectLanguage: any,
-  ): Promise<any> {
+    projectLanguage: ProjectLanguage,
+  ): Promise<TestExecutionResult> {
     let testFilePath: string | undefined;
 
     if (context.filePath) {
-      testFilePath = getTestFilePath(context.filePath, projectLanguage);
+      testFilePath = getTestFilePath(context.filePath as string, projectLanguage);
 
       const fs = await import("fs");
       if (!fs.existsSync(testFilePath)) {
@@ -1065,7 +1127,7 @@ export class ProcessorManager {
    * Run a test command and parse results
    * @deprecated Part of legacy TestExecutionProcessor. Kept for backward compatibility.
    */
-  private async runTestCommand(command: string, cwd: string): Promise<any> {
+  private async runTestCommand(command: string, cwd: string): Promise<TestExecutionResult> {
     let stdout = "";
     let stderr = "";
     let exitCode = 0;
@@ -1077,10 +1139,11 @@ export class ProcessorManager {
       });
       stdout = result.stdout;
       stderr = result.stderr;
-    } catch (execError: any) {
-      exitCode = execError.code || 1;
-      stdout = execError.stdout || "";
-      stderr = execError.stderr || "";
+    } catch (execError: unknown) {
+      const err = execError as { code?: number; stdout?: string; stderr?: string };
+      exitCode = err.code || 1;
+      stdout = err.stdout || "";
+      stderr = err.stderr || "";
     }
 
     // Parse results from output (language-agnostic patterns)
@@ -1156,7 +1219,7 @@ export class ProcessorManager {
   /**
    * @deprecated Use RegressionTestingProcessor class instead. Kept for backward compatibility.
    */
-  private async executeRegressionTesting(context: any): Promise<any> {
+  private async executeRegressionTesting(context: LegacyContext): Promise<GenericTestResult> {
     // Run regression tests
     frameworkLogger.log(
       "processor-manager",
@@ -1164,22 +1227,22 @@ export class ProcessorManager {
       "info",
     );
     // Placeholder - would integrate with regression test suite
-    return { regressions: "checked", issues: [] };
+    return { regressions: ["checked"], issues: [], success: true };
   }
 
   /**
    * @deprecated Use StateValidationProcessor class instead. Kept for backward compatibility.
    */
-  private async executeStateValidation(context: any): Promise<any> {
+  private async executeStateValidation(context: LegacyContext): Promise<GenericTestResult> {
     // Validate state post-operation
     const currentState = this.stateManager.get("session:active");
-    return { stateValid: !!currentState };
+    return { stateValid: !!currentState, success: true };
   }
 
   /**
    * @deprecated Use RefactoringLoggingProcessor class instead. Kept for backward compatibility.
    */
-  private async executeRefactoringLogging(context: any): Promise<any> {
+  private async executeRefactoringLogging(context: LegacyContext): Promise<GenericTestResult> {
     try {
       // Import the refactoring logging processor dynamically
       const { RefactoringLoggingProcessor } =
@@ -1229,8 +1292,8 @@ export class ProcessorManager {
    * @deprecated Part of legacy CodexComplianceProcessor. Kept for backward compatibility.
    */
   private async attemptRuleViolationFixes(
-    violations: { rule: string; message: string; severity?: string }[],
-    context: { files?: string[]; newCode?: string },
+    violations: Array<{ rule: string; message: string; severity?: string }>,
+    context: LegacyContext,
   ): Promise<void> {
     for (const violation of violations) {
       try {
@@ -1348,7 +1411,7 @@ export class ProcessorManager {
    * Execute test auto-creation processor
    * @deprecated Use TestAutoCreationProcessor class instead. Kept for backward compatibility.
    */
-  private async executeTestAutoCreation(context: any): Promise<any> {
+  private async executeTestAutoCreation(context: LegacyContext): Promise<GenericTestResult> {
     frameworkLogger.log(
       "processor-manager",
       "test-auto-creation-start",
@@ -1390,7 +1453,7 @@ export class ProcessorManager {
    * Execute coverage analysis processor
    * @deprecated Use CoverageAnalysisProcessor class instead. Kept for backward compatibility.
    */
-  private async executeCoverageAnalysis(context: any): Promise<any> {
+  private async executeCoverageAnalysis(context: LegacyContext): Promise<GenericTestResult> {
     frameworkLogger.log(
       "processor-manager",
       "coverage-analysis-start",

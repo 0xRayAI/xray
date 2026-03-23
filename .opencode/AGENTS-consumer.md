@@ -108,12 +108,13 @@ StringRay uses **two reflection folders** for different purposes:
 
 The `@storyteller` agent supports multiple story types:
 
-| Type | Description | Invoke |
-|------|-------------|--------|
-| `reflection` | Technical deep reflections on development process | `@storyteller write a reflection about X` |
-| `saga` | Long-form technical saga spanning multiple sessions | `@storyteller write a saga about X` |
-| `journey` | Investigation/learning journey | `@storyteller write a journey about X` |
-| `narrative` | Technical narrative - telling the story of code | `@storyteller write a narrative about X` |
+| Type | Description | Template Path | Invoke |
+|------|-------------|---------------|--------|
+| `reflection` | Technical deep reflections on development process | `docs/reflections/TEMPLATE.md` | `@storyteller write a reflection about X` |
+| `saga` | Long-form technical saga spanning multiple sessions | `docs/reflections/deep/SAGA_TEMPLATE.md` | `@storyteller write a saga about X` |
+| `journey` | Investigation/learning journey | `docs/reflections/JOURNEY_TEMPLATE.md` | `@storyteller write a journey about X` |
+| `narrative` | Technical narrative - telling the story of code | `docs/reflections/NARRATIVE_TEMPLATE.md` | `@storyteller write a narrative about X` |
+| `deep reflection` | Extended narrative with emotional journey | `docs/reflections/deep/TEMPLATE.md` | `@storyteller write a deep reflection about X` |
 
 **Example:**
 ```
@@ -139,10 +140,10 @@ The `@storyteller` agent supports multiple story types:
 
 StringRay automatically routes tasks based on complexity:
 
-- **Simple (≤20)**: Single agent
-- **Moderate (21-35)**: Single agent with tools
-- **Complex (36-75)**: Multi-agent coordination  
-- **Enterprise (>75)**: Orchestrator-led team
+- **Simple (≤15)**: Single agent
+- **Moderate (≤25)**: Single agent with tools
+- **Complex (≤50)**: Multi-agent coordination  
+- **Enterprise (>50)**: Orchestrator-led team
 
 ## CLI Commands
 
@@ -155,6 +156,7 @@ npx strray-ai capabilities # Show all features
 npx strray-ai report        # Generate reports
 npx strray-ai analytics    # Pattern analytics
 npx strray-ai calibrate    # Calibrate complexity
+npm run test:pipelines     # Pipeline integration tests
 ```
 
 ## Features.json Configuration
@@ -649,4 +651,4 @@ npx strray-ai --version
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.7.8 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.14.0 | [GitHub](https://github.com/htafolla/stringray)

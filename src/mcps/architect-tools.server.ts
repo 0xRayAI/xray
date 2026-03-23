@@ -22,7 +22,7 @@ class StrRayArchitectToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "architect-tools", version: "1.13.2",
+        name: "architect-tools", version: "1.14.0",
       },
       {
         capabilities: {
@@ -173,7 +173,7 @@ class StrRayArchitectToolsServer {
               throw new Error(`Unknown tool: ${name}`);
           }
         } catch (error) {
-          console.error(`Error in architect tool ${name}:`, error);
+          frameworkLogger.log("mcps/architect-tools", "tool", "error", { tool: name, error: String(error) });
           throw error;
         }
       },
@@ -185,9 +185,7 @@ class StrRayArchitectToolsServer {
   private async contextAnalysis(args: any): Promise<any> {
     const { projectRoot, depth = "detailed", includeFiles } = args;
 
-    console.log(
-      `🏗️ Architect Tool: Performing context analysis on ${projectRoot}`,
-    );
+    frameworkLogger.log("mcps/architect-tools", "context-analysis", "info", { projectRoot });
 
     // This would integrate with the actual architect-tools.ts functions
     // For now, providing a simplified implementation
@@ -217,9 +215,7 @@ class StrRayArchitectToolsServer {
   private async codebaseStructure(args: any): Promise<any> {
     const { projectRoot, includeMetrics = true, maxDepth = 10 } = args;
 
-    console.log(
-      `🏗️ Architect Tool: Analyzing codebase structure for ${projectRoot}`,
-    );
+    frameworkLogger.log("mcps/architect-tools", "codebase-structure", "info", { projectRoot });
 
     const structure = {
       projectRoot,
@@ -243,9 +239,7 @@ class StrRayArchitectToolsServer {
   private async dependencyAnalysis(args: any): Promise<any> {
     const { projectRoot, focusAreas, includeGraphs = true } = args;
 
-    console.log(
-      `🏗️ Architect Tool: Performing dependency analysis on ${projectRoot}`,
-    );
+    frameworkLogger.log("mcps/architect-tools", "dependency-analysis", "info", { projectRoot });
 
     const analysis = {
       projectRoot,
@@ -277,9 +271,7 @@ class StrRayArchitectToolsServer {
       focusMetrics,
     } = args;
 
-    console.log(
-      `🏗️ Architect Tool: Performing architecture assessment on ${projectRoot}`,
-    );
+    frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
 
     const assessment = {
       projectRoot,
@@ -680,14 +672,14 @@ class StrRayArchitectToolsServer {
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Architect Tools MCP Server started");
+    frameworkLogger.log("mcps/architect-tools", "start", "info");
 
     const cleanup = async (signal: string) => {
-      console.log(`Received ${signal}, shutting down gracefully...`);
+      frameworkLogger.log("mcps/architect-tools", "shutdown", "info", { signal });
 
       // Set a timeout to force exit if graceful shutdown fails
       const timeout = setTimeout(() => {
-        console.error("Graceful shutdown timeout, forcing exit...");
+        frameworkLogger.log("mcps/architect-tools", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
         process.exit(1);
       }, 5000); // 5 second timeout
 
@@ -696,11 +688,11 @@ class StrRayArchitectToolsServer {
           await this.server.close();
         }
         clearTimeout(timeout);
-        console.log("StrRay MCP Server shut down gracefully");
+        frameworkLogger.log("mcps/architect-tools", "shutdown", "success");
         process.exit(0);
       } catch (error) {
         clearTimeout(timeout);
-        console.error("Error during server shutdown:", error);
+        frameworkLogger.log("mcps/architect-tools", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
         process.exit(1);
       }
     };
@@ -717,9 +709,7 @@ class StrRayArchitectToolsServer {
         setTimeout(checkParent, 1000); // Check again in 1 second
       } catch (error) {
         // Parent process died, shut down gracefully
-        console.log(
-          "Parent process (opencode) died, shutting down MCP server...",
-        );
+        frameworkLogger.log("mcps/architect-tools", "parent-death", "info");
         cleanup("parent-process-death");
       }
     };
@@ -729,12 +719,12 @@ class StrRayArchitectToolsServer {
 
     // Handle uncaught exceptions and unhandled rejections
     process.on("uncaughtException", (error) => {
-      console.error("Uncaught Exception:", error);
+      frameworkLogger.log("mcps/architect-tools", "uncaughtException", "error", { error: String(error) });
       cleanup("uncaughtException");
     });
 
     process.on("unhandledRejection", (reason, promise) => {
-      console.error("Unhandled Rejection at:", promise, "reason:", reason);
+      frameworkLogger.log("mcps/architect-tools", "unhandledRejection", "error", { error: String(reason) });
       cleanup("unhandledRejection");
     });
 
@@ -745,7 +735,7 @@ class StrRayArchitectToolsServer {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayArchitectToolsServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/architect-tools", "run", "error", { error: String(error) }));
 }
 
 export default StrRayArchitectToolsServer;

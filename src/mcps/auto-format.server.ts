@@ -14,6 +14,7 @@ import {
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 class StrRayAutoFormatServer {
   private server: Server;
@@ -21,7 +22,7 @@ class StrRayAutoFormatServer {
   constructor() {
     this.server = new Server(
       {
-        name: "auto-format", version: "1.13.2",
+        name: "auto-format", version: "1.14.0",
       },
       {
         capabilities: {
@@ -31,7 +32,7 @@ class StrRayAutoFormatServer {
     );
 
     this.setupToolHandlers();
-    console.log("StrRay Auto Format MCP Server initialized");
+    frameworkLogger.log("mcps/auto-format", "initialize", "info");
   }
 
   private setupToolHandlers() {
@@ -111,7 +112,7 @@ class StrRayAutoFormatServer {
     const formatters = args.formatters || ["all"];
     const checkOnly = args.checkOnly || false;
 
-    console.log("🎨 MCP: Running auto-format:", {
+    frameworkLogger.log("mcps/auto-format", "format", "info", {
       files: files.length,
       formatters,
       checkOnly,
@@ -172,7 +173,7 @@ class StrRayAutoFormatServer {
       // Generate summary
       formatResults.summary = this.generateFormatSummary(formatResults);
     } catch (error) {
-      console.error("Auto-format error:", error);
+      frameworkLogger.log("mcps/auto-format", "format", "error", { error: String(error) });
       formatResults.success = false;
       formatResults.errors.push(
         `Auto-format failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -207,7 +208,7 @@ ${Object.entries(formatResults.changes)
   private async handleFormatCheck(args: any) {
     const files = args.files || [];
 
-    console.log("🔍 MCP: Checking format for files:", files.length);
+    frameworkLogger.log("mcps/auto-format", "check", "info", { files: files.length });
 
     try {
       const checkResults = await this.checkFormatting(files);
@@ -474,14 +475,14 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Auto Format MCP Server started");
+    frameworkLogger.log("mcps/auto-format", "start", "info");
   }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayAutoFormatServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/auto-format", "run", "error", { error: String(error) }));
 }
 
 export { StrRayAutoFormatServer };

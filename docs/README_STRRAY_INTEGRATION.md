@@ -4,14 +4,14 @@
 
 ## Overview
 
-StrRay Framework is now **directly integrated** into OpenCode's core rather than using a separate plugin approach. The v1.9.0 release introduces a **Facade Pattern Architecture** that provides:
+StrRay Framework is now **directly integrated** into OpenCode's core rather than using a separate plugin approach. The v1.14.0 release introduces a **Facade Pattern Architecture** that provides:
 
 - ✅ **Full Framework Functionality**: All advanced orchestration, processors, MCP servers, and enterprise features
 - ✅ **Automatic Activation**: StrRay components activate automatically when OpenCode starts
 - ✅ **Seamless Experience**: No separate plugin installation or configuration needed
 - ✅ **Core Integration**: StrRay is now part of OpenCode's fundamental architecture
-- ✅ **Facade APIs**: Simplified interfaces for common operations (v1.9.0)
-- ✅ **Module Access**: Direct access to 26 internal modules for advanced users (v1.9.0)
+- ✅ **Facade APIs**: Simplified interfaces for common operations (v1.14.0)
+- ✅ **Module Access**: Direct access to 26 internal modules for advanced users (v1.14.0)
 
 ---
 
@@ -23,9 +23,9 @@ StrRay Framework is now **directly integrated** into OpenCode's core rather than
 2. **.opencode/init.sh**: Auto-initializes StrRay during OpenCode startup
 3. **src/index.ts**: Exports StrRay components and auto-activates framework
 4. **Boot Orchestrator**: Initializes all components in dependency order
-5. **Facade Layer**: New simplified APIs for RuleEnforcer, TaskSkillRouter, and MCP Client (v1.9.0)
+5. **Facade Layer**: New simplified APIs for RuleEnforcer, TaskSkillRouter, and MCP Client (v1.14.0)
 
-### Facade Pattern Architecture (v1.9.0)
+### Facade Pattern Architecture (v1.14.0)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -33,7 +33,7 @@ StrRay Framework is now **directly integrated** into OpenCode's core rather than
 └──────────────────────┬──────────────────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────────────────┐
-│               StrRay Framework v1.9.0                       │
+│               StrRay Framework v1.14.0                       │
 │                                                             │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │                  Facade Layer                        │  │
@@ -75,7 +75,7 @@ Phase 1: Codex Injection + Hooks
 Phase 2: Boot Orchestrator
 Phase 3: State Management + Main Orchestrator
 Phase 4: Processor Pipeline
-Phase 5: Facade Layer Initialization (v1.9.0)
+Phase 5: Facade Layer Initialization (v1.14.0)
     ↓
 StrRay Framework Fully Active
 ```
@@ -92,7 +92,7 @@ StrRay Framework Fully Active
 - **State Management**: Persistent session and configuration state
 - **Processor Pipeline**: Systematic pre/post processing for all operations
 - **Framework Hooks**: Integration points for extensions
-- **Facade Layer** (v1.9.0): Simplified APIs for common operations
+- **Facade Layer** (v1.14.0): Simplified APIs for common operations
   - RuleEnforcer Facade (6 modules)
   - TaskSkillRouter Facade (14 modules)
   - MCP Client Facade (8 modules)
@@ -117,7 +117,7 @@ If upgrading from the old plugin approach:
 npm run build
 
 # StrRay now activates automatically with OpenCode
-# Facade APIs available in v1.9.0
+# Facade APIs available in v1.14.0
 ```
 
 ### Migration to Facade APIs (Optional)
@@ -139,7 +139,7 @@ await enforcer.validate({ ... });
 
 ## Benefits Over Plugin Approach
 
-| Aspect | Old Plugin | New Direct Integration v1.9.0 |
+| Aspect | Old Plugin | New Direct Integration v1.14.0 |
 |--------|-----------|------------------------------|
 | **Activation** | Manual plugin loading | ✅ Automatic on startup |
 | **Pre/Post Processors** | Not available | ✅ Full automatic pipeline |
@@ -147,15 +147,15 @@ await enforcer.validate({ ... });
 | **State Management** | Plugin-scoped | ✅ Framework-global state |
 | **Boot Sequence** | Basic initialization | ✅ Sophisticated dependency ordering |
 | **Enterprise Features** | Partial | ✅ Full enterprise capabilities |
-| **Facade APIs** | Not available | ✅ Simplified interfaces (v1.9.0) |
-| **Module Access** | Not available | ✅ 26 internal modules (v1.9.0) |
-| **Code Reduction** | N/A | ✅ 87% reduction (v1.9.0) |
+| **Facade APIs** | Not available | ✅ Simplified interfaces (v1.14.0) |
+| **Module Access** | Not available | ✅ 26 internal modules (v1.14.0) |
+| **Code Reduction** | N/A | ✅ 87% reduction (v1.14.0) |
 
 ---
 
 ## Configuration
 
-### Facade Configuration (v1.9.0)
+### Facade Configuration (v1.14.0)
 
 StrRay activation and facades can be configured via environment variables and config files:
 
@@ -168,7 +168,7 @@ STRRAY_ENABLE_HOOKS=true
 STRRAY_ENABLE_CODEX_INJECTION=true
 STRRAY_ENABLE_PROCESSORS=true
 
-# Facade configuration (v1.9.0)
+# Facade configuration (v1.14.0)
 STRRAY_ENABLE_FACADES=true
 STRRAY_RULE_ENFACER_MODULES=all
 STRRAY_TASK_ROUTER_MODULES=all
@@ -180,7 +180,7 @@ STRRAY_MCP_CLIENT_MODULES=all
 ```json
 {
   "strray": {
-    "version": "1.13.2",
+    "version": "1.14.0",
     "architecture": "facade-pattern",
     "components": {
       "orchestrator": true,
@@ -216,7 +216,7 @@ STRRAY_MCP_CLIENT_MODULES=all
 
 ## Development
 
-### Using Facades in Development (v1.9.0)
+### Using Facades in Development (v1.14.0)
 
 When developing with StrRay features:
 
@@ -252,7 +252,7 @@ stringray/
 │   ├── core/
 │   │   ├── strray-activation.ts
 │   │   └── boot-orchestrator.ts
-│   ├── facades/           # NEW in v1.9.0
+│   ├── facades/           # NEW in v1.14.0
 │   │   ├── rule-enforcer/
 │   │   │   ├── facade.ts (416 lines)
 │   │   │   └── modules/ (6 modules)
@@ -359,7 +359,7 @@ const discovery = mcpClient.getModule("server-discovery");
 
 ## Result
 
-StrRay Framework v1.9.0 is now a **native part of OpenCode** with a modern **Facade Pattern Architecture** that provides:
+StrRay Framework v1.14.0 is now a **native part of OpenCode** with a modern **Facade Pattern Architecture** that provides:
 
 1. **Complete sophisticated orchestration system** with automatic pre/post processors
 2. **Simplified facade APIs** for common operations (87% code reduction)

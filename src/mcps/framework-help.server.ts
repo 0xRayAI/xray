@@ -6,6 +6,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 class FrameworkHelpServer {
   private server: Server;
@@ -13,7 +14,7 @@ class FrameworkHelpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray/framework-help", version: "1.13.2",
+        name: "strray/framework-help", version: "1.14.0",
       },
       {
         capabilities: {
@@ -459,14 +460,14 @@ ${items.map(([name, desc]) => `- **${name}**: ${desc}`).join("\n")}
   async start() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error("StringRay Framework Help Server started");
+    frameworkLogger.log("mcps/framework-help", "start", "info", { message: "StringRay Framework Help Server started" });
   }
 }
 
 // Auto-start if this file is run directly - conditional server initialization for development/testing
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new FrameworkHelpServer();
-  server.start().catch(console.error);
+  server.start().catch((error) => frameworkLogger.log("mcps/framework-help", "run", "error", { error: String(error) }));
 }
 
 export { FrameworkHelpServer };

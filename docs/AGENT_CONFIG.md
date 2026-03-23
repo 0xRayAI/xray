@@ -1,12 +1,12 @@
 # Agent Configuration Guide
 
-This guide explains how to configure agents in your `opencode.json` for StringRay v1.9.0.
+This guide explains how to configure agents in your `opencode.json` for StringRay v1.14.0.
 
 ---
 
-## What's New in v1.9.0
+## What's New in v1.14.0
 
-StringRay v1.9.0 introduces a **Facade Pattern** architecture for improved maintainability and performance:
+StringRay v1.14.0 introduces a **Facade Pattern** architecture for improved maintainability and performance:
 
 **Architecture Changes:**
 - **87% Code Reduction**: 8,230 → 1,218 lines (3,170 lines dead code removed)
@@ -157,7 +157,7 @@ Add this section to your `opencode.json` to enable all 27 StringRay agents:
 
 ## Core Agents (All 27)
 
-These 26 agents form the complete StringRay framework v1.9.0:
+These 26 agents form the complete StringRay framework v1.14.0:
 
 ### Primary Agent
 | Agent | Purpose | Recommended Mode |
@@ -289,9 +289,9 @@ To disable an agent, set `disable: true`:
 }
 ```
 
-## Architecture Notes (v1.9.0 Facade Pattern)
+## Architecture Notes (v1.14.0 Facade Pattern)
 
-StringRay v1.9.0 uses a **Facade Pattern** architecture:
+StringRay v1.14.0 uses a **Facade Pattern** architecture:
 
 ### Facade Benefits
 - **Simplified Configuration**: Clean APIs hide internal complexity

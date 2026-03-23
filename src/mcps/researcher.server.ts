@@ -13,6 +13,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 interface SearchResult {
   file: string;
@@ -26,7 +27,7 @@ class StrRayLibrarianServer {
   constructor() {
     this.server = new Server(
       {
-        name: "researcher", version: "1.13.2",
+        name: "researcher", version: "1.14.0",
       },
       {
         capabilities: {
@@ -394,7 +395,7 @@ class StrRayLibrarianServer {
     await this.server.connect(transport);
     const cleanup = async (signal: string) => {
       const timeout = setTimeout(() => {
-        console.error("Graceful shutdown timeout, forcing exit...");
+        frameworkLogger.log("mcps/researcher", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
         process.exit(1);
       }, 5000);
 
@@ -406,7 +407,7 @@ class StrRayLibrarianServer {
         process.exit(0);
       } catch (error) {
         clearTimeout(timeout);
-        console.error("Error during server shutdown:", error);
+        frameworkLogger.log("mcps/researcher", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
         process.exit(1);
       }
     };
@@ -427,12 +428,12 @@ class StrRayLibrarianServer {
     setTimeout(checkParent, 2000);
 
     process.on("uncaughtException", (error) => {
-      console.error("Uncaught Exception:", error);
+      frameworkLogger.log("mcps/researcher", "uncaughtException", "error", { message: `Uncaught Exception: ${String(error)}` });
       cleanup("uncaughtException");
     });
 
     process.on("unhandledRejection", (reason, promise) => {
-      console.error("Unhandled Rejection at:", promise, "reason:", reason);
+      frameworkLogger.log("mcps/researcher", "unhandledRejection", "error", { message: `Unhandled Rejection: ${String(reason)}` });
       cleanup("unhandledRejection");
     });
 
@@ -444,7 +445,7 @@ class StrRayLibrarianServer {
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayLibrarianServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/researcher", "run", "error", { error: String(error) }));
 }
 
 export { StrRayLibrarianServer };

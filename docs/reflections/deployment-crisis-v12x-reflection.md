@@ -168,7 +168,7 @@ config.disabled_agents.some(agent => agent.toLowerCase() === "sisyphus")
 
 ```typescript
 // src/cli/index.ts
-.version("1.13.2");
+.version("1.14.0");
 
 // scripts/node/universal-version-manager.js
 const UPDATE_PATTERNS = [

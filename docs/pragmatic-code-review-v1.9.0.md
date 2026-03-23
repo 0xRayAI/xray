@@ -1,4 +1,4 @@
-# StringRay Framework - Pragmatic Code Review v1.9.0
+# StringRay Framework - Pragmatic Code Review v1.14.0
 
 **Date:** 2026-03-11  
 **Framework Version:** 1.9.0  
@@ -10,7 +10,7 @@
 
 **Overall Grade: B+**
 
-StringRay v1.9.0 is a **production-ready, functioning framework** with 1,610 passing tests. Yes, there are large files, but the architecture is fundamentally sound. The code works, is well-tested, and has comprehensive documentation.
+StringRay v1.14.0 is a **production-ready, functioning framework** with 1,610 passing tests. Yes, there are large files, but the architecture is fundamentally sound. The code works, is well-tested, and has comprehensive documentation.
 
 **The Reality:** All successful frameworks accumulate complexity. The key is *managed* refactoring, not panic.
 
@@ -171,7 +171,7 @@ In 139,228 lines, 164 `any` types is 0.1%. That's actually pretty good for a com
 - 🟡 Some large files (but stable)
 - 🟡 Minor tech debt (manageable)
 
-**This is normal for a framework at v1.9.0.**
+**This is normal for a framework at v1.14.0.**
 
 Compare to:
 - **React v1.0:** Had huge files, still successful
@@ -185,7 +185,7 @@ Compare to:
 ## The Plan
 
 ### Immediate (This Week)
-Nothing urgent. Ship v1.9.0 as-is.
+Nothing urgent. Ship v1.14.0 as-is.
 
 ### Short Term (Next Month)
 - Fix event listener cleanup (1 hour)
@@ -206,7 +206,7 @@ Nothing urgent. Ship v1.9.0 as-is.
 
 ## Conclusion
 
-**StringRay v1.9.0 is ready for production.**
+**StringRay v1.14.0 is ready for production.**
 
 The framework is:
 - ✅ Well-architected

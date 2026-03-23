@@ -17,6 +17,7 @@ import {
   detectProjectLanguage,
   LANGUAGE_CONFIGS,
 } from "../utils/language-detector.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 class StrRaySecurityScanServer {
   private server: Server;
@@ -24,7 +25,7 @@ class StrRaySecurityScanServer {
   constructor() {
     this.server = new Server(
       {
-        name: "security-scan", version: "1.13.2",
+        name: "security-scan", version: "1.14.0",
       },
       {
         capabilities: {
@@ -34,7 +35,7 @@ class StrRaySecurityScanServer {
     );
 
     this.setupToolHandlers();
-    console.log("StrRay Security Scan MCP Server initialized");
+    frameworkLogger.log("mcps/security-scan", "initialize", "info");
   }
 
   private setupToolHandlers() {
@@ -146,7 +147,7 @@ class StrRaySecurityScanServer {
       // Generate summary
       results.summary = this.generateSecuritySummary(results);
     } catch (error) {
-      console.error("Security scan error:", error);
+      frameworkLogger.log("mcps/security-scan", "scan", "error", { error: String(error) });
       results.secure = false;
       results.vulnerabilities.push(
         `Scan error: ${error instanceof Error ? error.message : String(error)}`,
@@ -477,14 +478,14 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log("StrRay Security Scan MCP Server started");
+    frameworkLogger.log("mcps/security-scan", "start", "info");
   }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRaySecurityScanServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/security-scan", "run", "error", { error: String(error) }));
 }
 
 export { StrRaySecurityScanServer };

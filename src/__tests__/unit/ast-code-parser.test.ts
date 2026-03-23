@@ -343,4 +343,83 @@ describe("ASTCodeParser", () => {
       expect(duration).toBeLessThan(1000); // Should complete within 1 second
     });
   });
+
+  describe("ast-grep implementation", () => {
+    it("should have getAstGrepLanguageFlag method", () => {
+      expect(typeof parser["getAstGrepLanguageFlag"]).toBe("function");
+    });
+
+    it("should map TypeScript to ts", () => {
+      expect(parser["getAstGrepLanguageFlag"]("typescript")).toBe("ts");
+    });
+
+    it("should map JavaScript to js", () => {
+      expect(parser["getAstGrepLanguageFlag"]("javascript")).toBe("js");
+    });
+
+    it("should map Python to py", () => {
+      expect(parser["getAstGrepLanguageFlag"]("python")).toBe("py");
+    });
+
+    it("should map Java to java", () => {
+      expect(parser["getAstGrepLanguageFlag"]("java")).toBe("java");
+    });
+
+    it("should map Go to go", () => {
+      expect(parser["getAstGrepLanguageFlag"]("go")).toBe("go");
+    });
+
+    it("should map Rust to rs", () => {
+      expect(parser["getAstGrepLanguageFlag"]("rust")).toBe("rs");
+    });
+
+    it("should handle unknown languages", () => {
+      expect(parser["getAstGrepLanguageFlag"]("unknown")).toBe("unknown");
+    });
+  });
+
+  describe("detectPatternsWithAstGrep implementation", () => {
+    it("should have detectPatternsWithAstGrep method", () => {
+      expect(typeof parser["detectPatternsWithAstGrep"]).toBe("function");
+    });
+
+    it("should fall back to regex when ast-grep not available", async () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        console.log("test");
+        console.log("test2");
+      `);
+
+      const patterns = await parser["detectPatternsWithAstGrep"](
+        "/test/test.ts",
+        "typescript",
+        "test-job"
+      );
+
+      expect(Array.isArray(patterns)).toBe(true);
+    });
+  });
+
+  describe("parseCodeStructureWithAstGrep implementation", () => {
+    it("should have parseCodeStructureWithAstGrep method", () => {
+      expect(typeof parser["parseCodeStructureWithAstGrep"]).toBe("function");
+    });
+
+    it("should fall back to regex parsing when ast-grep fails", async () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(`
+        function test() {
+          return 42;
+        }
+      `);
+
+      const structure = await parser["parseCodeStructureWithAstGrep"](
+        "function test() { return 42; }",
+        "typescript",
+        "/test/test.ts",
+        "test-job"
+      );
+
+      expect(structure).toBeDefined();
+      expect(structure.functions).toBeDefined();
+    });
+  });
 });

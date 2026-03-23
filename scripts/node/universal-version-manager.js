@@ -8,7 +8,7 @@
  * Ensures single source of truth for all version information.
  *
  * WHAT IT UPDATES:
- * - Framework version (1.13.2)
+ * - Framework version (1.14.0)
  * - Codex version and terms count
  * - Framework counts (agents, skills, MCP servers)
  * - Test counts in README
@@ -76,20 +76,20 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.13.2",
-    displayName: "StringRay AI v1.13.2",
-    lastUpdated: "2026-03-19",
+    version: "1.14.0",
+    displayName: "StringRay AI v1.14.0",
+    lastUpdated: "2026-03-23",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },
 
   // Codex version
   codex: {
-    version: "v1.3.0",
+    version: "v1.7.5",
     termsCount: 60,        // Total terms defined (including new governance terms 46-60)
     termsDefined: 60,       // All terms in codex.json
     termsTarget: 60,       // Future goal (now achieved)
-    lastUpdated: "2026-03-09",
+    lastUpdated: "2026-03-23",
   },
 
   // External dependencies
@@ -603,13 +603,16 @@ const UPDATE_PATTERNS = [
     console.log(`✅ Updated ${configFilesUpdated} critical config files`);
   }
 
-  // Phase 2: Update documentation files (AGENTS.md, AGENTS-consumer.md, etc.)
+  // Phase 2: Update documentation files (AGENTS.md, etc.)
   console.log("\n📁 Phase 2: Updating documentation files...");
   const documentationFiles = [
     "AGENTS.md",
-    "AGENTS-consumer.md",
-    "docs/framework/agents_template.md",
-    "docs/internal/architecture/ENTERPRISE_ARCHITECTURE.md",
+    ".opencode/AGENTS-consumer.md",
+    ".opencode/strray/agents_template.md",
+    "docs/reference/templates/agents_template.md",
+    "docs/reference/templates/master-agent-template.md",
+    "docs/reference/templates/agent-template-dev.md",
+    "docs/README.md",
   ];
 
   let docsUpdated = 0;

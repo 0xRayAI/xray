@@ -20,7 +20,7 @@ class StrRayPerformanceOptimizationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "performance-optimization", version: "1.13.2",
+        name: "performance-optimization", version: "1.14.0",
       },
       {
         capabilities: {

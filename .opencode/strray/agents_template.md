@@ -1,8 +1,8 @@
-# StringRay AI v1.3.4 – Agent Context & Universal Development Codex
+# StringRay AI v1.14.0 – Agent Context & Universal Development Codex
 
-**Framework Version**: 1.3.4  
-**Codex Version**: 1.1.1 (condensed)  
-**Last Updated**: 2026-01-24  
+**Framework Version**: 1.14.0  
+**Codex Version**: 1.7.5 (condensed)  
+**Last Updated**: 2026-03-23  
 **Purpose**: Systematic error prevention and production-ready AI-assisted development
 
 ## 🎯 CRITICAL RULES – ZERO TOLERANCE (MANDATORY)
@@ -75,13 +75,15 @@
 | Agent                     | Role                              | Complexity | Key Tools                              | Strategy          |
 |---------------------------|-----------------------------------|------------|----------------------------------------|-------------------|
 | enforcer                  | Codex & error prevention          | All        | read, grep, lsp_*, bash                | Block violations  |
-| architect                 | Design & decisions                | High       | read, grep, lsp_*, background_task     | Expert priority   |
 | orchestrator              | Workflow coordination             | Enterprise | read, grep, call_omo_agent, session_*  | Consensus         |
+| architect                 | Design & decisions                | High       | read, grep, lsp_*, background_task     | Expert priority   |
 | bug-triage-specialist     | Error investigation & fixes       | Debug      | read, grep, ast_grep_*                 | Majority vote     |
 | code-reviewer             | Quality & standards               | Changes    | read, grep, lsp_diagnostics            | Expert priority   |
 | security-auditor          | Vulnerabilities & compliance      | Security   | read, grep, grep_app_searchGitHub      | Block critical    |
 | refactorer                | Debt & consolidation              | Refactor   | read, grep, lsp_rename, ast_grep_*     | Majority vote     |
-| test-architect            | Testing strategy & coverage       | Tests      | read, grep, lsp_*                      | Expert priority   |
+| testing-lead              | Testing strategy & coverage       | Tests      | read, grep, lsp_*                      | Expert priority   |
+| storyteller               | Narrative deep reflections       | Narrative  | read, grep, write                      | Expert priority   |
+| researcher                | Codebase exploration              | Research   | read, grep, codesearch, websearch       | Expert priority   |
 
 ## Complexity Routing Summary
 
@@ -89,9 +91,9 @@ Score = (files×2 + change/10 + deps×3 + duration/10) × operation_weight × ri
 - Operation weights: debug 2.0, refactor 1.8, analyze 1.5, modify 1.2, others 1.0  
 - Risk multipliers: critical 1.6, high 1.3, medium 1.0, low 0.8  
 Thresholds:  
-- ≤25 → single agent  
-- 26–95 → multi-agent possible  
-- 96+ → orchestrator-led
+- ≤15 → single agent  
+- 16–50 → multi-agent possible  
+- 51+ → orchestrator-led
 
 ## Operational Guidelines
 
@@ -103,3 +105,5 @@ Thresholds:
 
 **Codex Enforcement**: All actions validated against these rules. Violations block progress until resolved.  
 **Target**: 99.6% systematic error prevention through verification-first behavior.
+
+(End of file - total 105 lines)

@@ -1,4 +1,4 @@
-# StringRay Central Analytics Store Architecture v1.9.0
+# StringRay Central Analytics Store Architecture v1.14.0
 
 **Version:** 1.9.0  
 **Date:** 2026-03-12  
@@ -6,13 +6,13 @@
 
 ## Executive Summary
 
-This document outlines a privacy-first, opt-in central analytics architecture for StringRay AI v1.10.0 that enables collective learning while maintaining strict data privacy and consent control. The v1.9.0 release implements the **Facade Pattern** with improved modularity for analytics components.
+This document outlines a privacy-first, opt-in central analytics architecture for StringRay AI v1.14.0 that enables collective learning while maintaining strict data privacy and consent control. The v1.14.0 release implements the **Facade Pattern** with improved modularity for analytics components.
 
 ## Architecture Overview
 
 ### Facade Pattern Integration
 
-The analytics architecture in v1.9.0 leverages the Facade Pattern for improved modularity:
+The analytics architecture in v1.14.0 leverages the Facade Pattern for improved modularity:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -36,7 +36,7 @@ The analytics architecture in v1.9.0 leverages the Facade Pattern for improved m
 
 ### Analytics Facade Layer
 
-The v1.9.0 analytics system uses a facade-based architecture:
+The v1.14.0 analytics system uses a facade-based architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -44,7 +44,7 @@ The v1.9.0 analytics system uses a facade-based architecture:
 │  ┌──────────────┐         ┌─────────────────────────┐     │
 │  │ StringRay    │────────▶│ AnalyticsManager        │     │
 │  │ Framework    │         │ (Analytics Facade)      │     │
-│  │  v1.9.0      │         │ (416 lines)             │     │
+│  │  v1.14.0      │         │ (416 lines)             │     │
 │  └──────────────┘         └─────────────────────────┘     │
 │         │                         │                        │
 │         │                         ▼                        │
@@ -522,7 +522,7 @@ class AnalyticsManager {
 - [x] Implement Facade Pattern architecture
 - [x] Build basic CLI commands for consent management
 
-### Phase 2: Client-Side (v1.9.0) ✅ COMPLETED
+### Phase 2: Client-Side (v1.14.0) ✅ COMPLETED
 
 - [x] Implement anonymization pipeline (Anonymization Module)
 - [x] Create submission client with retry logic (Submission Module)
@@ -619,7 +619,7 @@ class AnalyticsManager {
 - User satisfaction surveys
 - Compliance audit results
 
-## v1.9.0 Architecture Statistics
+## v1.14.0 Architecture Statistics
 
 | Metric | Value |
 |--------|-------|
@@ -639,4 +639,4 @@ class AnalyticsManager {
 
 ---
 
-*StringRay Central Analytics Store v1.9.0 - Facade Pattern Architecture*
+*StringRay Central Analytics Store v1.14.0 - Facade Pattern Architecture*

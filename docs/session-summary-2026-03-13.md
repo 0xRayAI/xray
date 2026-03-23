@@ -65,7 +65,7 @@
 3. Estimation Validator demo documentation
 4. 49 documentation files updated (previous)
 5. AGENTS files updated
-6. CHANGELOG updated for v1.10.0
+6. CHANGELOG updated for v1.14.0
 7. Script inventory and testing reports
 
 ---
@@ -84,7 +84,7 @@
 - **Success Rate:** 100%
 
 ### Commits Today: 7
-1. Release v1.9.0
+1. Release v1.14.0
 2. Version bump to 1.10.0
 3. Remove dead code (secure-authentication-system)
 4. Refactor orchestrator.server.ts

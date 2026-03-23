@@ -1,4 +1,4 @@
-# StrRay Framework - Agent Operating Procedures (v1.9.0)
+# StrRay Framework - Agent Operating Procedures (v1.14.0)
 
 ## Overview
 
@@ -139,7 +139,7 @@ This document provides comprehensive operating procedures for all 27 StrRay Fram
 
 ## Inter-Agent Communication
 
-### Agent Coordination Architecture (v1.9.0)
+### Agent Coordination Architecture (v1.14.0)
 
 The 27 specialized agents communicate through the orchestrator using the following patterns:
 

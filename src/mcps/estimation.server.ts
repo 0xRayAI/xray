@@ -24,7 +24,7 @@ class EstimationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "estimation-validator", version: "1.13.2",
+        name: "estimation-validator", version: "1.14.0",
       },
       {
         capabilities: { tools: {} },
@@ -210,7 +210,7 @@ class EstimationServer {
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new EstimationServer();
-  server.start().catch(console.error);
+  server.start().catch((error) => frameworkLogger.log("mcps/estimation", "run", "error", { error: String(error) }));
 }
 
 export { EstimationServer };

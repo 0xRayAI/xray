@@ -4,7 +4,7 @@
 
 ## Overview
 
-This guide provides comprehensive instructions for deploying the StringRay AI framework plugin in your development environment. With StringRay v1.9.0, deployment is simplified through the **Facade Pattern Architecture**, which delivers 87% code reduction while maintaining full functionality.
+This guide provides comprehensive instructions for deploying the StringRay AI framework plugin in your development environment. With StringRay v1.14.0, deployment is simplified through the **Facade Pattern Architecture**, which delivers 87% code reduction while maintaining full functionality.
 
 ---
 
@@ -34,7 +34,7 @@ This will:
 - Configure OpenCode integration
 - Set up framework directories
 - Initialize plugin components
-- **Set up facade layer** (v1.9.0) with 26 internal modules
+- **Set up facade layer** (v1.14.0) with 26 internal modules
 
 ### 3. Verify Installation
 
@@ -44,7 +44,7 @@ npx strray-ai status
 
 **Expected output:**
 ```
-StringRay AI Framework v1.9.0
+StringRay AI Framework v1.14.0
 Status: ✅ Healthy
 Architecture: Facade Pattern
 Facades:
@@ -70,7 +70,7 @@ The plugin automatically configures the following agents:
 - **@testing-lead**: Testing strategy and coverage
 - **@researcher**: Codebase exploration and documentation
 
-### Facade Configuration (v1.9.0)
+### Facade Configuration (v1.14.0)
 
 Create `.opencode/strray/config.json` for advanced settings:
 
@@ -123,7 +123,7 @@ Create `.opencode/strray/config.json` for advanced settings:
 @security-auditor scan for vulnerabilities
 ```
 
-### Facade-Based Operations (v1.9.0)
+### Facade-Based Operations (v1.14.0)
 
 ```typescript
 import { 
@@ -196,13 +196,13 @@ async function activateStrRayFramework() {
   await initializeBootOrchestrator();
   await initializeStateManagement();
   
-  // Phase 2: Facade layer (v1.9.0)
+  // Phase 2: Facade layer (v1.14.0)
   await initializeFacades();
   
   // Phase 3: Module loading
   await loadFacadeModules();
   
-  console.log("✅ StringRay AI v1.10.0 activated");
+  console.log("✅ StringRay AI v1.14.0 activated");
   console.log("   Facades: RuleEnforcer, TaskSkillRouter, MCPClient");
 }
 ```
@@ -389,7 +389,7 @@ status.facades.forEach(facade => {
 
 - [ ] Node.js 18+ installed
 - [ ] OpenCode running
-- [ ] StringRay AI installed (v1.9.0)
+- [ ] StringRay AI installed (v1.14.0)
 - [ ] Postinstall script executed
 - [ ] Plugin status verified
 - [ ] Facades healthy (RuleEnforcer, TaskSkillRouter, MCPClient)

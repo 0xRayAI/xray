@@ -4,13 +4,13 @@
 
 ## Overview
 
-This document analyzes the MCP (Model Context Protocol) integration architecture in StringRay v1.9.0. With the introduction of the **Facade Pattern**, MCP integration has been significantly improved, providing cleaner interfaces and better separation of concerns.
+This document analyzes the MCP (Model Context Protocol) integration architecture in StringRay v1.14.0. With the introduction of the **Facade Pattern**, MCP integration has been significantly improved, providing cleaner interfaces and better separation of concerns.
 
 ---
 
 ## Architecture Evolution
 
-### Before v1.9.0: Agent-Side Only
+### Before v1.14.0: Agent-Side Only
 
 **❌ Previous Reality:**
 - Contextual awareness was **purely agent-side**
@@ -29,7 +29,7 @@ export const architectTools = {
 };
 ```
 
-### After v1.9.0: Facade-Based MCP Integration
+### After v1.14.0: Facade-Based MCP Integration
 
 **✅ New Architecture:**
 - Full MCP integration through **MCP Client Facade**
@@ -55,7 +55,7 @@ const result = await mcpClient.callSkill("project-analysis", {
 
 ---
 
-## Current MCP Architecture (v1.9.0)
+## Current MCP Architecture (v1.14.0)
 
 ### Facade Layer
 
@@ -109,7 +109,7 @@ const result = await mcpClient.callSkill("project-analysis", {
 
 #### Knowledge Skills MCP Servers (6+)
 
-✅ **Implemented via Facade (v1.9.0):**
+✅ **Implemented via Facade (v1.14.0):**
 
 **Core Knowledge Skills (6):**
 1. `project-analysis.server.ts` - Project structure analysis
@@ -257,7 +257,7 @@ export class CustomAnalysisServer implements MCPServer {
 
 ### Standard MCP Protocol
 
-StringRay v1.9.0 follows the standard MCP protocol:
+StringRay v1.14.0 follows the standard MCP protocol:
 
 ```typescript
 // MCP Request
@@ -513,7 +513,7 @@ console.log(`
 
 ## Summary
 
-StringRay v1.9.0's MCP integration represents a complete transformation from agent-side-only tools to a full **Facade-based MCP architecture**:
+StringRay v1.14.0's MCP integration represents a complete transformation from agent-side-only tools to a full **Facade-based MCP architecture**:
 
 ✅ **Full MCP Protocol**: Standardized communication
 ✅ **Facade APIs**: Simplified interfaces (312 lines vs 1,413)

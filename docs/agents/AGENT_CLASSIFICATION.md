@@ -160,7 +160,7 @@ These agents focus on analysis, design, coordination, and strategic planning. Th
 **Primary Role**: Coordinates testing efforts, validates test coverage, and ensures quality gates are met before deployment.
 
 **Documentation Requirements**:
-- Validates 87% test coverage (v1.9.0)
+- Validates 87% test coverage (v1.14.0)
 - Documents testing strategies and results
 - Cross-references with Test Architect for strategy alignment
 

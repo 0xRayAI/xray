@@ -12,7 +12,7 @@ This system categorizes tests to improve test suite management and enable strate
 - **Coverage**: 95% - Core functionality testing
 - **Examples**: Agent initialization, basic delegation, state management, facade module units
 
-### Facade Module Tests (New in v1.9.0)
+### Facade Module Tests (New in v1.14.0)
 - **Scope**: Individual facade modules in isolation
 - **Status**: ✅ Fully Enabled (668 tests)
 - **Coverage**: 92% - All 26 internal facade modules tested
@@ -72,7 +72,7 @@ This system categorizes tests to improve test suite management and enable strate
 
 ### Modular Testing Strategy
 
-StringRay v1.9.0 implements a comprehensive modular testing approach for its facade pattern architecture:
+StringRay v1.14.0 implements a comprehensive modular testing approach for its facade pattern architecture:
 
 ```
 Facade Testing Structure:

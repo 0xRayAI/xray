@@ -220,7 +220,7 @@ describe('Facade Integration: RuleEnforcer + TaskSkillRouter', () => {
 - **🟡 Important**: Mock-based integration tests (must pass for commits)
 - **🟢 Supporting**: Unit tests with mocks (should pass for development)
 
-## Framework Test Status Summary (v1.9.0)
+## Framework Test Status Summary (v1.14.0)
 
 - **Total Tests**: 2,368 tests
 - **Test Files**: 145+ test files
@@ -236,7 +236,7 @@ describe('Facade Integration: RuleEnforcer + TaskSkillRouter', () => {
 
 ### Modular Testing Architecture
 
-StringRay v1.9.0's testing strategy is built around the facade pattern, enabling comprehensive testing of 26 internal modules across 3 main facades:
+StringRay v1.14.0's testing strategy is built around the facade pattern, enabling comprehensive testing of 26 internal modules across 3 main facades:
 
 ```
 Test Architecture:

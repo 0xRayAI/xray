@@ -219,7 +219,7 @@ const initializeRequest = {
   params: {
     protocolVersion: "2024-11-05",
     capabilities: {},
-    clientInfo: { name: "strray-mcp-client", version: "1.13.2" },
+    clientInfo: { name: "strray-mcp-client", version: "1.14.0" },
   },
 };
 

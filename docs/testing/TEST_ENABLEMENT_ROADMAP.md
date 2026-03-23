@@ -28,7 +28,7 @@ This roadmap outlines the strategic plan for progressively enabling skipped test
 - [x] Complete modular testing for all facade components
 
 #### Modular Testing Strategy
-The v1.9.0 framework uses a facade pattern with 26 internal modules. Each module is independently testable:
+The v1.14.0 framework uses a facade pattern with 26 internal modules. Each module is independently testable:
 
 | Facade Component | Modules | Test Files | Status |
 |-----------------|---------|------------|--------|
@@ -397,7 +397,7 @@ The key principles:
 3. **Transparent progress** - Clear metrics and documentation
 4. **Continuous improvement** - Regular reviews and adjustments
 
-**This roadmap has been successfully completed as of v1.9.0.** The StringRay test suite now maintains 2,368 tests with 87% coverage, providing comprehensive validation of all facade components and their interactions.
+**This roadmap has been successfully completed as of v1.14.0.** The StringRay test suite now maintains 2,368 tests with 87% coverage, providing comprehensive validation of all facade components and their interactions.
 
 ### Modular Testing Success Metrics
 

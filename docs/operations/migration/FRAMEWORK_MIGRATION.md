@@ -2,17 +2,17 @@
 
 ## Overview
 
-This document describes migration between StringRay Framework versions, with a focus on the v1.9.0 architecture refactoring which introduced the **Facade Pattern** and delivered significant performance improvements.
+This document describes migration between StringRay Framework versions, with a focus on the v1.14.0 architecture refactoring which introduced the **Facade Pattern** and delivered significant performance improvements.
 
-**Current Version**: v1.9.0  
+**Current Version**: v1.14.0  
 **Previous Version**: v1.7.5  
 **Migration Type**: Zero Breaking Changes - 100% Backward Compatible
 
-## v1.9.0 Migration Summary
+## v1.14.0 Migration Summary
 
 ### 🎉 No Breaking Changes!
 
-StringRay v1.9.0 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
+StringRay v1.14.0 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
 
 ### What Improved Behind the Scenes
 
@@ -51,11 +51,11 @@ StringRay v1.9.0 maintains **100% backward compatibility**. All existing code co
 
 ## Legacy: Phases 2 & 3 Migration
 
-## v1.9.0 Architecture Benefits
+## v1.14.0 Architecture Benefits
 
 ### Facade Pattern Implementation
 
-The v1.9.0 refactoring introduced the **Facade Pattern** for improved maintainability and performance:
+The v1.14.0 refactoring introduced the **Facade Pattern** for improved maintainability and performance:
 
 **Component Structure:**
 ```
@@ -88,7 +88,7 @@ MCP Client (312 lines)
 
 ### Performance Improvements
 
-| Metric | v1.7.5 | v1.9.0 | Improvement |
+| Metric | v1.7.5 | v1.14.0 | Improvement |
 |--------|--------|--------|-------------|
 | Startup Time | 5.4s | 3.2s | **41% faster** |
 | Memory Usage | 142MB | 96MB | **32% reduction** |
@@ -107,7 +107,7 @@ MCP Client (312 lines)
 ```json
 {
   "strray_framework": {
-    "version": "1.13.2",
+    "version": "1.14.0",
     "enabled_agents": ["enforcer", "architect"],
     "agent_capabilities": {
       "enforcer": ["compliance-monitoring"]
@@ -120,7 +120,7 @@ MCP Client (312 lines)
 
 ```json
 {
-  "framework": "StringRay AI v1.9.0",
+  "framework": "StringRay AI v1.14.0",
   "agents": {
     "enforcer": {
       "enabled": true,
@@ -264,9 +264,9 @@ strray rollback --component hooks
 
 ## Compatibility Matrix
 
-### v1.9.0 Compatibility
+### v1.14.0 Compatibility
 
-| Component           | v1.7.5 Compatibility | v1.9.0 Status   | Breaking Changes |
+| Component           | v1.7.5 Compatibility | v1.14.0 Status   | Breaking Changes |
 | ------------------- | -------------------- | --------------- | ---------------- |
 | Configuration       | Fully compatible     | ✅ Enhanced     | None             |
 | CLI Commands        | Fully compatible     | ✅ Enhanced     | None             |
@@ -288,7 +288,7 @@ strray rollback --component hooks
 
 ## Performance Improvements
 
-### v1.9.0 Performance Gains
+### v1.14.0 Performance Gains
 
 - **Startup Time**: 41% faster (facade pattern initialization)
 - **Memory Usage**: 32% reduction (modular loading)
@@ -300,8 +300,8 @@ strray rollback --component hooks
 
 - **Configuration Loading**: 40% faster due to flattened structure
 - **Hook Execution**: 60% faster due to consolidation
-- **Memory Usage**: 25% reduction in framework footprint (pre-v1.9.0)
-- **Startup Time**: 30% improvement in initialization (pre-v1.9.0)
+- **Memory Usage**: 25% reduction in framework footprint (pre-v1.14.0)
+- **Startup Time**: 30% improvement in initialization (pre-v1.14.0)
 
 ## Best Practices Post-Migration
 
@@ -339,7 +339,7 @@ strray rollback --component hooks
 
 ---
 
-## Upgrading to v1.9.0
+## Upgrading to v1.14.0
 
 ```bash
 # Simply update to latest version
@@ -356,5 +356,5 @@ npx strray-ai health
 
 ---
 
-_This migration guide covers the transition from StrRay v1.0 to v1.9.0. For current version information, check the main documentation._</content>
+_This migration guide covers the transition from StrRay v1.0 to v1.14.0. For current version information, check the main documentation._</content>
 <parameter name="filePath">docs/framework/migration/FRAMEWORK_MIGRATION.md

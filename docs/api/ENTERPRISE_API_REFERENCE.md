@@ -21,7 +21,7 @@
 
 ## API Overview
 
-The StrRay Framework v1.9.0 provides comprehensive enterprise APIs built on the **Facade Pattern** architecture, delivering:
+The StrRay Framework v1.14.0 provides comprehensive enterprise APIs built on the **Facade Pattern** architecture, delivering:
 
 - **87% Code Reduction**: Simplified facade interfaces over complex internal modules
 - **Stable Public APIs**: 100% backward compatible with existing integrations
@@ -618,7 +618,7 @@ Get all available facades and their status.
   "facades": [
     {
       "name": "rule-enforcer",
-      "version": "1.13.2",
+      "version": "1.14.0",
       "status": "healthy",
       "modules": 6,
       "metrics": {
@@ -628,7 +628,7 @@ Get all available facades and their status.
     },
     {
       "name": "task-skill-router",
-      "version": "1.13.2",
+      "version": "1.14.0",
       "status": "healthy",
       "modules": 14,
       "metrics": {
@@ -725,8 +725,8 @@ await engine.validate({ ... });
 
 **Facade Pattern Architecture:**
 - **Public APIs**: 100% backward compatible
-- **Facade APIs**: New in v1.9.0
-- **Module APIs**: New in v1.9.0 (advanced users)
+- **Facade APIs**: New in v1.14.0
+- **Module APIs**: New in v1.14.0 (advanced users)
 
 ### Migration Path
 

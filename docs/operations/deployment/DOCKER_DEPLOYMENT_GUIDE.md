@@ -1,13 +1,13 @@
 # StrRay Framework - Docker & Kubernetes Deployment Guide
 
-**Version**: v1.9.0  
+**Version**: v1.14.0  
 **Last Updated**: March 2026
 
 ## Overview
 
-This guide provides comprehensive instructions for deploying the StrRay Framework v1.9.0 using Docker and Kubernetes in production environments.
+This guide provides comprehensive instructions for deploying the StrRay Framework v1.14.0 using Docker and Kubernetes in production environments.
 
-## What's New in v1.9.0
+## What's New in v1.14.0
 
 ### Performance Improvements
 - **41% faster startup** - Facade pattern initialization
@@ -25,10 +25,10 @@ This guide provides comprehensive instructions for deploying the StrRay Framewor
 - Docker 20.10+
 - Kubernetes 1.24+
 - Helm 3.8+
-- 3GB RAM minimum, 6GB recommended (v1.9.0: reduced from 4GB/8GB)
+- 3GB RAM minimum, 6GB recommended (v1.14.0: reduced from 4GB/8GB)
 - 10GB disk space
 
-**v1.9.0 Resource Optimization:**
+**v1.14.0 Resource Optimization:**
 Due to 32% memory usage reduction, lower resource requirements:
 - Minimum: 3GB RAM (down from 4GB)
 - Recommended: 6GB RAM (down from 8GB)
@@ -393,10 +393,10 @@ ingress:
 resources:
   limits:
     cpu: 1000m
-    memory: 1.5Gi    # v1.9.0: reduced from 2Gi (32% memory optimization)
+    memory: 1.5Gi    # v1.14.0: reduced from 2Gi (32% memory optimization)
   requests:
     cpu: 500m
-    memory: 700Mi    # v1.9.0: reduced from 1Gi (32% memory optimization)
+    memory: 700Mi    # v1.14.0: reduced from 1Gi (32% memory optimization)
 
 autoscaling:
   enabled: true
@@ -451,7 +451,7 @@ strray:
   maxConcurrency: 10
   cacheEnabled: true
 
-  # Resource limits per agent (v1.9.0: reduced by ~32%)
+  # Resource limits per agent (v1.14.0: reduced by ~32%)
   agentLimits:
     enforcer:
       memory: "175Mi"    # reduced from 256Mi

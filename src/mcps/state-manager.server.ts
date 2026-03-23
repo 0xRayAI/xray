@@ -23,7 +23,7 @@ class StrRayStateManagerServer {
   constructor() {
     this.server = new Server(
       {
-        name: "state-manager", version: "1.13.2",
+        name: "state-manager", version: "1.14.0",
       },
       {
         capabilities: {
@@ -717,7 +717,7 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayStateManagerServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/state-manager", "run", "error", { error: String(error) }));
 }
 
 export { StrRayStateManagerServer };

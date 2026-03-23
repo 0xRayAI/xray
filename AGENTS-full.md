@@ -2215,7 +2215,7 @@ interface IMCPModule extends IModule {
 ```json
 {
   "framework": {
-    "version": "1.13.2",
+    "version": "1.14.0",
     "mode": "production",
     "logging": {
       "level": "info",
@@ -2284,7 +2284,7 @@ interface IMCPModule extends IModule {
     "researcher": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.13.2",
+    "version": "1.14.0",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true

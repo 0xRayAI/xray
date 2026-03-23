@@ -51,6 +51,7 @@
     "prepublishOnly": "npm run prepare-consumer && npm run build:all",
     "test": "vitest run",
     "test:batch": "npm test",
+    "test:pipelines": "node src/__tests__/pipeline/test-governance-pipeline.mjs && node src/__tests__/pipeline/test-boot-pipeline.mjs && node src/__tests__/pipeline/test-routing-pipeline.mjs && node src/__tests__/pipeline/test-orchestration-pipeline.mjs && node src/__tests__/pipeline/test-processor-pipeline.mjs && node src/__tests__/pipeline/test-reporting-pipeline.mjs",
     "test:unit": "npm test -- src/__tests__/unit/boot-orchestrator.test.ts src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts src/__tests__/unit/state-manager-persistence.test.ts src/__tests__/unit/context-loader.test.ts src/__tests__/unit/pattern-analyzer.test.ts src/__tests__/unit/complexity-calibrator.test.ts",
     "test:core-framework": "npm test -- src/__tests__/unit/agent-delegator.test.ts src/__tests__/unit/self-direction-activation.test.ts src/__tests__/unit/ast-code-parser.test.ts src/__tests__/unit/orchestrator.test.ts",
     "test:security": "npm test -- src/__tests__/unit/security/security-hardener.test.ts src/__tests__/unit/security/security-headers.test.ts src/__tests__/unit/security/security-auditor.test.ts",

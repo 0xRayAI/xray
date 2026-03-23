@@ -117,13 +117,124 @@ export class ComplexityAnalyzer {
   }
 
   /**
-   * Update thresholds based on historical performance data
-   * TODO: Implement calibration based on actual task completion times
+   * Performance data structure for calibration
    */
-  updateThresholds(_performanceData: unknown): void {
-    // Placeholder for future calibration implementation
-    // Would analyze: task score vs completion time vs success rate
-    // to automatically adjust thresholds
+  private calibrationHistory: Array<{
+    complexityScore: number;
+    actualDuration: number;
+    estimatedDuration: number;
+    success: boolean;
+    timestamp: number;
+  }> = [];
+
+  /**
+   * Update thresholds based on historical performance data
+   * Analyzes: task score vs completion time vs success rate
+   * to automatically adjust thresholds for better accuracy
+   */
+  updateThresholds(performanceData: unknown): void {
+    if (!performanceData || typeof performanceData !== "object") {
+      return;
+    }
+
+    const data = performanceData as {
+      complexityScore?: number;
+      actualDuration?: number;
+      estimatedDuration?: number;
+      success?: boolean;
+      timestamp?: number;
+    };
+
+    if (data.complexityScore === undefined) {
+      return;
+    }
+
+    this.calibrationHistory.push({
+      complexityScore: data.complexityScore,
+      actualDuration: data.actualDuration || 0,
+      estimatedDuration: data.estimatedDuration || 30,
+      success: data.success !== false,
+      timestamp: data.timestamp || Date.now(),
+    });
+
+    if (this.calibrationHistory.length < 10) {
+      return;
+    }
+
+    const analysis = this.analyzeCalibrationData();
+    this.applyCalibrationAnalysis(analysis);
+  }
+
+  /**
+   * Analyze calibration data to find patterns
+   */
+  private analyzeCalibrationData(): {
+    underestimated: boolean;
+    overestimated: boolean;
+    adjustmentFactor: number;
+  } {
+    let underestimated = 0;
+    let overestimated = 0;
+    let totalAdjustmentFactor = 0;
+
+    for (const entry of this.calibrationHistory) {
+      if (entry.actualDuration > entry.estimatedDuration * 1.5) {
+        underestimated++;
+        totalAdjustmentFactor += 0.05;
+      } else if (entry.actualDuration < entry.estimatedDuration * 0.5) {
+        overestimated++;
+        totalAdjustmentFactor -= 0.05;
+      }
+    }
+
+    return {
+      underestimated: underestimated > this.calibrationHistory.length * 0.3,
+      overestimated: overestimated > this.calibrationHistory.length * 0.3,
+      adjustmentFactor: totalAdjustmentFactor / this.calibrationHistory.length,
+    };
+  }
+
+  /**
+   * Apply calibration analysis to adjust thresholds
+   */
+  private applyCalibrationAnalysis(analysis: {
+    underestimated: boolean;
+    overestimated: boolean;
+    adjustmentFactor: number;
+  }): void {
+    const maxAdjustment = 10;
+
+    if (analysis.underestimated) {
+      const adjustment = Math.min(maxAdjustment, Math.abs(analysis.adjustmentFactor) * 100);
+      this.thresholds.simple = Math.max(10, this.thresholds.simple - adjustment);
+      this.thresholds.moderate = Math.max(20, this.thresholds.moderate - adjustment);
+      this.thresholds.complex = Math.max(40, this.thresholds.complex - adjustment);
+    } else if (analysis.overestimated) {
+      const adjustment = Math.min(maxAdjustment, Math.abs(analysis.adjustmentFactor) * 100);
+      this.thresholds.simple = Math.min(40, this.thresholds.simple + adjustment);
+      this.thresholds.moderate = Math.min(60, this.thresholds.moderate + adjustment);
+      this.thresholds.complex = Math.min(90, this.thresholds.complex + adjustment);
+    }
+  }
+
+  /**
+   * Get calibration history for diagnostics
+   */
+  getCalibrationHistory(): ReadonlyArray<{
+    complexityScore: number;
+    actualDuration: number;
+    estimatedDuration: number;
+    success: boolean;
+    timestamp: number;
+  }> {
+    return [...this.calibrationHistory];
+  }
+
+  /**
+   * Reset calibration history
+   */
+  resetCalibration(): void {
+    this.calibrationHistory = [];
   }
 
   /**
