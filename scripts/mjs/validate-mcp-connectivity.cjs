@@ -39,8 +39,16 @@ if (fs.existsSync(mcpsDir)) {
   warnings.push('Knowledge servers directory not found (may be optional)');
 }
 
-// Check plugin
-check('.opencode/plugin/strray-codex-injection.js', 'Plugin');
+// Check plugin (can be in .opencode/plugins/ or .opencode/plugin/)
+const pluginLocations = ['.opencode/plugins/strray-codex-injection.js', '.opencode/plugin/strray-codex-injection.js'];
+const pluginFound = pluginLocations.some(loc => fs.existsSync(path.join(process.cwd(), loc)));
+if (pluginFound) {
+  const foundLoc = pluginLocations.find(loc => fs.existsSync(path.join(process.cwd(), loc)));
+  console.log(`✅ Plugin: ${foundLoc}`);
+} else {
+  console.log(`❌ Plugin: strray-codex-injection.js NOT FOUND`);
+  errors.push('Plugin not found');
+}
 
 // Try to load MCP client
 try {
