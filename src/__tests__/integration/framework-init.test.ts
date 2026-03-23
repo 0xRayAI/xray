@@ -70,8 +70,8 @@ describe("StringRay Framework Initialization Integration", () => {
 
   describe("Core Framework Structure Validation", () => {
     test("should validate core directory structure", () => {
-      // Skip in CI - .opencode populated by postinstall
-      if (!checkDir(".opencode/agents")) {
+      // Skip in CI - .opencode/strray populated by postinstall
+      if (!checkDir(".opencode/strray")) {
         return;
       }
       expect(checkDir(".opencode")).toBe(true);
@@ -88,7 +88,7 @@ describe("StringRay Framework Initialization Integration", () => {
 
     test("should validate agent configurations", () => {
       // Skip in CI - agents installed by postinstall
-      if (!checkDir(".opencode/agents")) {
+      if (!checkDir(".opencode/strray")) {
         return;
       }
       const agentFiles = fs.readdirSync(".opencode/agents");

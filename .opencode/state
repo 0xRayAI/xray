@@ -3,8 +3,8 @@
     "healthy-session": {
       "sessionId": "healthy-session",
       "status": "healthy",
-      "lastCheck": 1774298388663,
-      "responseTime": 1,
+      "lastCheck": 1774298723362,
+      "responseTime": 0,
       "errorCount": 0,
       "activeAgents": 3,
       "memoryUsage": 1048576,
@@ -14,7 +14,7 @@
   "monitor:metrics": {
     "healthy-session": [
       {
-        "timestamp": 1774291255948,
+        "timestamp": 1774291885651,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -26,7 +26,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774291701825,
+        "timestamp": 1774291945652,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -38,7 +38,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774291761818,
+        "timestamp": 1774292005653,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -50,7 +50,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774291821819,
+        "timestamp": 1774292065653,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -62,7 +62,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774291881819,
+        "timestamp": 1774292125660,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -74,7 +74,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774291941825,
+        "timestamp": 1774292185660,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -86,7 +86,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292001826,
+        "timestamp": 1774292245661,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -98,7 +98,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292061828,
+        "timestamp": 1774292305661,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -110,7 +110,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292121829,
+        "timestamp": 1774292365662,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -122,7 +122,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292181830,
+        "timestamp": 1774292425663,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -134,7 +134,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292241831,
+        "timestamp": 1774292485663,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -146,7 +146,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292301831,
+        "timestamp": 1774292545664,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -158,7 +158,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292361832,
+        "timestamp": 1774292605669,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -170,7 +170,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292421836,
+        "timestamp": 1774292665671,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -182,7 +182,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292481837,
+        "timestamp": 1774292725671,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -194,7 +194,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292541838,
+        "timestamp": 1774292785672,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -206,7 +206,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292601839,
+        "timestamp": 1774292845673,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -218,7 +218,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292661840,
+        "timestamp": 1774292905670,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -230,7 +230,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292721840,
+        "timestamp": 1774292965671,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -242,7 +242,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292781841,
+        "timestamp": 1774293025674,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -254,7 +254,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292841842,
+        "timestamp": 1774293085675,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -266,7 +266,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292901836,
+        "timestamp": 1774293145676,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -278,7 +278,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774292961837,
+        "timestamp": 1774293205677,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -290,7 +290,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293021837,
+        "timestamp": 1774293265677,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -302,7 +302,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293081837,
+        "timestamp": 1774293325677,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -314,7 +314,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293141846,
+        "timestamp": 1774293385676,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -326,7 +326,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293201846,
+        "timestamp": 1774293445678,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -338,7 +338,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293261847,
+        "timestamp": 1774293505678,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -350,7 +350,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293321848,
+        "timestamp": 1774293565681,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -362,7 +362,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293381849,
+        "timestamp": 1774293625681,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -374,7 +374,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293441849,
+        "timestamp": 1774293685682,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -386,7 +386,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293501851,
+        "timestamp": 1774293745682,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -398,7 +398,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293561851,
+        "timestamp": 1774293805684,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -410,7 +410,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293621850,
+        "timestamp": 1774293865685,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -422,7 +422,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293681851,
+        "timestamp": 1774293925690,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -434,7 +434,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293741851,
+        "timestamp": 1774293985690,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -446,7 +446,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293801851,
+        "timestamp": 1774294045691,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -458,7 +458,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293861852,
+        "timestamp": 1774294105717,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -470,7 +470,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293921853,
+        "timestamp": 1774294165718,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -482,7 +482,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774293981853,
+        "timestamp": 1774294362813,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -494,7 +494,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294041854,
+        "timestamp": 1774294422815,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -506,7 +506,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294101880,
+        "timestamp": 1774294804521,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -518,7 +518,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294161883,
+        "timestamp": 1774294864522,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -530,7 +530,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294358980,
+        "timestamp": 1774294924524,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -542,7 +542,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294418983,
+        "timestamp": 1774295266835,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -554,7 +554,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294478984,
+        "timestamp": 1774295326838,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -566,7 +566,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294830444,
+        "timestamp": 1774295386840,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -578,7 +578,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294890446,
+        "timestamp": 1774295446841,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -590,7 +590,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774294950451,
+        "timestamp": 1774295506841,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -602,7 +602,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295262945,
+        "timestamp": 1774295566847,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -614,7 +614,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295322948,
+        "timestamp": 1774295626848,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -626,7 +626,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295382948,
+        "timestamp": 1774295686849,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -638,7 +638,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295442952,
+        "timestamp": 1774295746850,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -650,7 +650,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295502952,
+        "timestamp": 1774295806851,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -662,7 +662,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295562954,
+        "timestamp": 1774295866851,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -674,7 +674,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295622960,
+        "timestamp": 1774295926853,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -686,7 +686,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295682961,
+        "timestamp": 1774296027999,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -698,7 +698,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295742962,
+        "timestamp": 1774296088002,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -710,7 +710,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295802963,
+        "timestamp": 1774296148002,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -722,7 +722,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295862966,
+        "timestamp": 1774296208003,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -734,7 +734,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774295922967,
+        "timestamp": 1774296268009,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -746,7 +746,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296024113,
+        "timestamp": 1774296328011,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -758,7 +758,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296084119,
+        "timestamp": 1774296388019,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -770,7 +770,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296144120,
+        "timestamp": 1774296448020,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -782,7 +782,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296204128,
+        "timestamp": 1774296592294,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -794,7 +794,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296264140,
+        "timestamp": 1774296652292,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -806,7 +806,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296324142,
+        "timestamp": 1774296712304,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -818,7 +818,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296384144,
+        "timestamp": 1774296772304,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -830,7 +830,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296444351,
+        "timestamp": 1774296832305,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -842,7 +842,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296588589,
+        "timestamp": 1774296892305,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -854,7 +854,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296648593,
+        "timestamp": 1774296952305,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -866,7 +866,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296708594,
+        "timestamp": 1774297012307,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -878,7 +878,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296768595,
+        "timestamp": 1774297072307,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -890,7 +890,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296828596,
+        "timestamp": 1774297132308,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -902,7 +902,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296888597,
+        "timestamp": 1774297192308,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -914,7 +914,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774296948598,
+        "timestamp": 1774297252309,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -926,7 +926,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297008598,
+        "timestamp": 1774297312309,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -938,7 +938,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297068598,
+        "timestamp": 1774297372309,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -950,7 +950,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297128598,
+        "timestamp": 1774297432310,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -962,7 +962,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297188598,
+        "timestamp": 1774297492315,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -974,7 +974,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297248600,
+        "timestamp": 1774297552315,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -986,7 +986,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297308600,
+        "timestamp": 1774297612317,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -998,7 +998,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297368602,
+        "timestamp": 1774297672317,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1010,7 +1010,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297428605,
+        "timestamp": 1774297732317,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1022,7 +1022,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297488606,
+        "timestamp": 1774297792314,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1034,7 +1034,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297548607,
+        "timestamp": 1774297852315,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1046,7 +1046,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297608613,
+        "timestamp": 1774297912316,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1058,7 +1058,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297668614,
+        "timestamp": 1774297972316,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1070,7 +1070,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297728614,
+        "timestamp": 1774298032316,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1082,7 +1082,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297788609,
+        "timestamp": 1774298092317,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1094,7 +1094,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297848608,
+        "timestamp": 1774298152320,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1106,7 +1106,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297908609,
+        "timestamp": 1774298212323,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1118,7 +1118,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774297968608,
+        "timestamp": 1774298272323,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1130,7 +1130,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774298028610,
+        "timestamp": 1774298332325,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1142,7 +1142,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774298088611,
+        "timestamp": 1774298392327,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1154,7 +1154,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774298148611,
+        "timestamp": 1774298452329,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1166,7 +1166,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774298208616,
+        "timestamp": 1774298512330,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1178,7 +1178,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774298268617,
+        "timestamp": 1774298572330,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1190,7 +1190,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774298328618,
+        "timestamp": 1774298632332,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
@@ -1202,7 +1202,7 @@
         "agentCount": 3
       },
       {
-        "timestamp": 1774298388619,
+        "timestamp": 1774298692333,
         "sessionId": "healthy-session",
         "totalInteractions": 0,
         "successfulInteractions": 0,
