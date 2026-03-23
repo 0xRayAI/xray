@@ -72,7 +72,7 @@ describe("StringRay Framework Initialization Integration", () => {
     test("should validate core directory structure", () => {
       expect(checkDir(".opencode")).toBe(true);
       expect(checkDir(".opencode/agents")).toBe(true);
-      expect(checkDir("dist/plugin/mcps")).toBe(true);
+      expect(checkDir("dist/mcps")).toBe(true);
       expect(checkDir(".opencode/logs")).toBe(true);
       expect(checkDir("src")).toBe(true);
       expect(checkDir(".opencode/strray")).toBe(true);
@@ -301,7 +301,7 @@ describe("StringRay Framework Initialization Integration", () => {
       const requiredDirs = [
         ".opencode",
         ".opencode/agents",
-        "dist/plugin/mcps",
+        "dist/mcps",
         ".opencode/logs",
         ".opencode/strray",
         "src",
