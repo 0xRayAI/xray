@@ -143,8 +143,8 @@ jobs:
     - name: Validate framework deployment
       run: |
         cd test-install
-        node node_modules/strray-ai/scripts/node/validate-postinstall-config.mjs
-        node node_modules/strray-ai/scripts/node/validate-mcp-connectivity.js
+        node node_modules/strray-ai/scripts/mjs/validate-postinstall-config.mjs
+        node node_modules/strray-ai/scripts/mjs/validate-mcp-connectivity.cjs
 
   # Manual deployment and publish jobs removed - uncomment when needed
   # deploy-validation:
