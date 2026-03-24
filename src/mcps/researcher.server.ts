@@ -27,7 +27,7 @@ class StrRayLibrarianServer {
   constructor() {
     this.server = new Server(
       {
-        name: "researcher", version: "1.14.0",
+        name: "researcher", version: "1.14.1",
       },
       {
         capabilities: {

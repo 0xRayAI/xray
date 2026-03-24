@@ -1,6 +1,6 @@
-# StringRay AI v1.14.0 – Agent Context & Universal Development Codex
+# StringRay AI v1.14.1 – Agent Context & Universal Development Codex
 
-**Framework Version**: 1.14.0  
+**Framework Version**: 1.14.1  
 **Codex Version**: 1.7.5 (condensed)  
 **Last Updated**: 2026-03-23  
 **Purpose**: Systematic error prevention and production-ready AI-assisted development

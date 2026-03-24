@@ -220,7 +220,7 @@ Health check endpoint.
 ```json
 {
   "status": "healthy",
-  "version": "1.14.0",
+  "version": "1.14.1",
   "uptime": 3600000,
   "openclaw": {
     "connected": true,

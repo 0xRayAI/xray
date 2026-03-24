@@ -1,6 +1,6 @@
 # StringRay Framework - Complete System Architecture & Technical Reference
 
-**Version**: 1.9.0
+**Version**: 1.14.1
 **Purpose**: Enterprise AI orchestration with systematic error prevention and modular architecture
 **Last Updated**: 2026-03-12
 **System Complexity**: 75+ modular files, 27 specialized agents, 15 MCP servers, 60 codex terms
@@ -81,11 +81,11 @@ npx strray-ai capabilities
 
 ### 2.1 Modular Architecture Transformation
 
-StringRay v1.9.0 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
+StringRay v1.14.1 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
 
 #### Before vs After Comparison
 
-| Aspect | Before (v1.7.x) | After (v1.9.0) | Improvement |
+| Aspect | Before (v1.7.x) | After (v1.14.1) | Improvement |
 |--------|-----------------|----------------|-------------|
 | **RuleEnforcer** | 2,714 lines, 58 methods | 416-line facade + 6 modules | **87% size reduction** |
 | **TaskSkillRouter** | 1,933 lines, monolithic | 490-line facade + 12 modules | **75% size reduction** |
@@ -250,7 +250,7 @@ These are the primary agents that form the foundation of the StringRay framework
 ---
 
 #### @enforcer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Codex compliance & error prevention  
 **Complexity Threshold**: All operations  
 **Primary Pipeline**: Rule Enforcement
@@ -312,7 +312,7 @@ The enforcer serves as the **central coordinator** for all codex compliance and 
 ---
 
 #### @architect
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: System design & technical decisions  
 **Complexity Threshold**: High complexity (>25)  
 **Primary Pipeline**: Agent Delegation
@@ -376,7 +376,7 @@ The architect agent specializes in system design, API architecture, and technica
 ---
 
 #### @orchestrator
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Multi-agent workflow coordination  
 **Complexity Threshold**: Enterprise (>95)  
 **Primary Pipeline**: Agent Delegation
@@ -440,7 +440,7 @@ The orchestrator manages complex, multi-agent workflows for enterprise-level tas
 ---
 
 #### @bug-triage-specialist
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Error investigation & fixes  
 **Complexity Threshold**: Debug operations  
 **Primary Pipeline**: Agent Delegation
@@ -500,7 +500,7 @@ Specializes in debugging, error analysis, and root cause investigation. Triages 
 ---
 
 #### @code-reviewer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Quality assessment & standards  
 **Complexity Threshold**: All code changes  
 **Primary Pipeline**: Rule Enforcement
@@ -563,7 +563,7 @@ Provides comprehensive code review services, assessing code quality, maintainabi
 ---
 
 #### @security-auditor
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Vulnerability detection  
 **Complexity Threshold**: Security operations  
 **Primary Pipeline**: Security & Monitoring
@@ -623,7 +623,7 @@ Performs comprehensive security audits, vulnerability scanning, and compliance v
 ---
 
 #### @refactorer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Technical debt elimination  
 **Complexity Threshold**: Refactor operations  
 **Primary Pipeline**: Agent Delegation
@@ -683,7 +683,7 @@ Specializes in code refactoring, technical debt elimination, and code modernizat
 ---
 
 #### @testing-lead
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Testing strategy & coverage  
 **Complexity Threshold**: Test operations  
 **Primary Pipeline**: Rule Enforcement
@@ -743,7 +743,7 @@ Designs comprehensive testing strategies, ensures test coverage targets are met,
 ---
 
 #### @researcher
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Codebase exploration & documentation  
 **Complexity Threshold**: Analysis operations  
 **Primary Pipeline**: Agent Delegation
@@ -807,7 +807,7 @@ These agents specialize in specific engineering domains and technical areas.
 ---
 
 #### @tech-writer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Technical documentation specialist  
 **Complexity Threshold**: Documentation operations  
 **Primary Pipeline**: Agent Delegation
@@ -864,7 +864,7 @@ Creates comprehensive technical documentation including API docs, user guides, R
 ---
 
 #### @frontend-ui-ux-engineer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Frontend development and UI/UX implementation  
 **Complexity Threshold**: Frontend operations  
 **Primary Pipeline**: Agent Delegation
@@ -922,7 +922,7 @@ Specializes in frontend development, UI implementation, and user experience desi
 ---
 
 #### @backend-engineer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Backend development specialist  
 **Complexity Threshold**: Backend operations  
 **Primary Pipeline**: Agent Delegation
@@ -980,7 +980,7 @@ Specializes in backend development, API implementation, server-side logic, and s
 ---
 
 #### @database-engineer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Database design and optimization  
 **Complexity Threshold**: Database operations  
 **Primary Pipeline**: Agent Delegation
@@ -1037,7 +1037,7 @@ Specializes in database design, query optimization, and data architecture. Exper
 ---
 
 #### @devops-engineer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: DevOps and infrastructure  
 **Complexity Threshold**: Infrastructure operations  
 **Primary Pipeline**: Agent Delegation
@@ -1094,7 +1094,7 @@ Specializes in DevOps practices, CI/CD pipelines, infrastructure as code, and de
 ---
 
 #### @performance-engineer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Performance optimization  
 **Complexity Threshold**: Performance operations  
 **Primary Pipeline**: Agent Delegation
@@ -1151,7 +1151,7 @@ Specializes in performance optimization, bottleneck identification, and scalabil
 ---
 
 #### @security-specialist
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Advanced security operations  
 **Complexity Threshold**: Security operations  
 **Primary Pipeline**: Security & Monitoring
@@ -1208,7 +1208,7 @@ Advanced security specialist focusing on threat modeling, secure architecture de
 ---
 
 #### @api-designer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: RESTful API design and validation  
 **Complexity Threshold**: API operations  
 **Primary Pipeline**: Agent Delegation
@@ -1265,7 +1265,7 @@ Specializes in API design, RESTful principles, GraphQL schema design, and API do
 ---
 
 #### @mobile-developer
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Mobile application development  
 **Complexity Threshold**: Mobile operations  
 **Primary Pipeline**: Agent Delegation
@@ -1327,7 +1327,7 @@ These agents focus on strategic planning, content creation, and specialized anal
 ---
 
 #### @storyteller
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Narrative deep reflections  
 **Complexity Threshold**: Documentation operations  
 **Primary Pipeline**: Agent Delegation
@@ -1382,7 +1382,7 @@ Creates narrative-style deep reflections, technical sagas, and journey documents
 ---
 
 #### @strategist
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Strategic planning and decision making  
 **Complexity Threshold**: Strategy operations  
 **Primary Pipeline**: Agent Delegation
@@ -1435,7 +1435,7 @@ Provides strategic guidance, roadmap planning, and decision-making support for t
 ---
 
 #### @growth-strategist
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Growth and expansion planning  
 **Complexity Threshold**: Growth operations  
 **Primary Pipeline**: Agent Delegation
@@ -1485,7 +1485,7 @@ Focuses on growth strategies, scaling systems, and expansion planning. Helps tea
 ---
 
 #### @seo-consultant
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: SEO optimization and strategy  
 **Complexity Threshold**: SEO operations  
 **Primary Pipeline**: Agent Delegation
@@ -1534,7 +1534,7 @@ Specializes in search engine optimization, content strategy for SEO, and technic
 ---
 
 #### @content-creator
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Content creation and management  
 **Complexity Threshold**: Content operations  
 **Primary Pipeline**: Agent Delegation
@@ -1583,7 +1583,7 @@ Creates various types of content including blog posts, documentation, tutorials,
 ---
 
 #### @multimodal-looker
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Visual content analysis  
 **Complexity Threshold**: Visual analysis operations  
 **Primary Pipeline**: Agent Delegation
@@ -1632,7 +1632,7 @@ Analyzes visual content including diagrams, screenshots, UI mockups, and other m
 ---
 
 #### @log-monitor
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Log analysis and monitoring  
 **Complexity Threshold**: Monitoring operations  
 **Primary Pipeline**: Security & Monitoring
@@ -1685,7 +1685,7 @@ Specializes in log analysis, pattern detection, and monitoring system setup. Ide
 ---
 
 #### @test-architect
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Test architecture and strategy  
 **Complexity Threshold**: Test architecture operations  
 **Primary Pipeline**: Agent Delegation
@@ -1738,7 +1738,7 @@ Focuses on high-level test architecture, testing frameworks, and comprehensive t
 ---
 
 #### @git-specialist
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Role**: Git workflow and version control  
 **Complexity Threshold**: Version control operations  
 **Primary Pipeline**: Agent Delegation
@@ -2215,7 +2215,7 @@ interface IMCPModule extends IModule {
 ```json
 {
   "framework": {
-    "version": "1.14.0",
+    "version": "1.14.1",
     "mode": "production",
     "logging": {
       "level": "info",
@@ -2284,7 +2284,7 @@ interface IMCPModule extends IModule {
     "researcher": "openrouter/xai-grok-2-1212-fast-1"
   },
   "framework": {
-    "version": "1.14.0",
+    "version": "1.14.1",
     "codexEnforcement": true,
     "jobIdLogging": true,
     "consoleLogRule": true
@@ -2642,7 +2642,7 @@ src/enforcement/
     └── ... 53 more methods
 ```
 
-**After (v1.9.0):**
+**After (v1.14.1):**
 ```
 src/enforcement/
 ├── rule-enforcer.ts (416 lines) - Facade
@@ -2665,7 +2665,7 @@ src/routing/
 └── task-skill-router.ts (1,933 lines)
 ```
 
-**After (v1.9.0):**
+**After (v1.14.1):**
 ```
 src/routing/
 ├── task-skill-router.ts (490 lines) - Facade
@@ -2686,7 +2686,7 @@ src/mcp/
 └── mcp-client.ts (1,413 lines)
 ```
 
-**After (v1.9.0):**
+**After (v1.14.1):**
 ```
 src/mcp/
 ├── mcp-client.ts (312 lines) - Facade
@@ -2936,7 +2936,7 @@ npx strray-ai profile --modules
 
 ## Framework Status
 
-**Version**: 1.9.0  
+**Version**: 1.14.1  
 **Status**: Production Ready ✅  
 **Architecture**: Modular with Facade Pattern  
 **Components**: 
