@@ -645,10 +645,16 @@ export default async function strrayCodexPlugin(input: {
       output: any,
     ) => {
       const logger = await getOrCreateLogger(directory);
-      
+
+      // Retrieve original user message for context preservation
+      const originalMessage = (globalThis as any).__strRayOriginalMessage;
+      if (originalMessage) {
+        logger.log(`📌 Original intent: "${originalMessage.slice(0, 80)}..."`);
+      }
+
       // Log tool start to activity logger (direct write - no module isolation issues)
       logToolActivity(directory, "start", input.tool, input.args || {});
-      
+
       await loadStrRayComponents();
 
       if (featuresConfigLoader && detectTaskType) {
@@ -1066,7 +1072,10 @@ export default async function strrayCodexPlugin(input: {
           }
         }
       }
-      
+
+      // Store original user message for tool hooks (context preservation)
+      (globalThis as any).__strRayOriginalMessage = userMessage;
+
       fs.appendFileSync(debugLogPath, `userMessage: "${userMessage.slice(0, 100)}"\n`);
       
       if (!userMessage || userMessage.length === 0) {
