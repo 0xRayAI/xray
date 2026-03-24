@@ -57,17 +57,17 @@ Modify `npx strray-ai install` to:
 - Add `--minimal`, `--full`, and `--with-skills` flags
 
 **Deliverables:**
-- [ ] Detect OpenCode presence in install script
-- [ ] Auto-install OpenCode if missing
-- [ ] Add flag support (--minimal, --full, --with-skills)
+- [x] Detect OpenCode presence in install script
+- [x] Auto-install OpenCode if missing
+- [x] Add flag support (--minimal, --full, --with-skills)
 
 ### Phase 1 – Skill Integration (2–4 days)
 
 Add new skills as native integrations:
-- [ ] Impeccable (Apache 2.0) → `.opencode/skills/impeccable/`
-- [ ] OpenViking (Apache 2.0) → `.opencode/skills/openviking/`
-- [ ] Keep Antigravity loose (existing `install-antigravity-skills.js`)
-- [ ] Create `@antigravity-bridge` skill for better UX
+- [x] Impeccable (Apache 2.0) → `.opencode/skills/impeccable/`
+- [x] OpenViking (Apache 2.0) → `.opencode/skills/openviking/`
+- [x] Keep Antigravity loose (existing `install-antigravity-skills.js`)
+- [x] Create `@antigravity-bridge` skill for better UX
 
 **Integration Rules:**
 - Skills are dropped into `.opencode/skills/` as MCP modules
@@ -77,17 +77,17 @@ Add new skills as native integrations:
 ### Phase 2 – New CLI Commands (2–3 days)
 
 Implement new commands:
-- [ ] `npx strray-ai publish-agent` (for AgentStore integration)
-- [ ] `npx strray-ai status` (shows loaded skills + health)
-- [ ] `npx strray-ai antigravity status`
-- [ ] `npx strray-ai credible init` (future Pod setup)
+- [x] `npx strray-ai publish-agent` (for AgentStore integration)
+- [x] `npx strray-ai status` (shows loaded skills + health)
+- [x] `npx strray-ai antigravity status`
+- [x] `npx strray-ai credible init` (future Pod setup)
 
 ### Phase 3 – Polish & Release (3–5 days)
 
-- [ ] Update README with new "one-command level-up" story
-- [ ] Add version pinning for OpenCode + skills
-- [ ] Test on fresh machines (no OpenCode installed)
-- [ ] Release as **v1.15.0**
+- [x] Update README with new "one-command level-up" story
+- [x] Add version pinning for OpenCode + skills
+- [x] Test on fresh machines (no OpenCode installed)
+- [x] Release as **v1.15.0**
 
 ---
 
@@ -144,9 +144,9 @@ async function install(options = {}) {
 | Version | Focus | Target |
 |---------|-------|--------|
 | v1.14.0 | **Complete stack** (maintenance mode entered) | March 23, 2026 ✅ |
-| v1.15.0 | One-command installer + Phase 0-1 | TBD |
-| v1.16.0 | New CLI commands + Phase 2 | TBD |
-| v1.17.0 | Polish + release + Phase 3 | TBD |
+| v1.15.0 | One-command installer + Phases 0-3 | March 24, 2026 ✅ |
+| v1.16.0 | Fresh machine testing + refinements | TBD |
+| v1.17.0 | Pod infrastructure + credible init full | TBD |
 
 ---
 

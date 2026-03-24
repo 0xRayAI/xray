@@ -8,7 +8,7 @@
  * Ensures single source of truth for all version information.
  *
  * WHAT IT UPDATES:
- * - Framework version (1.14.0)
+ * - Framework version (1.14.1)
  * - Codex version and terms count
  * - Framework counts (agents, skills, MCP servers)
  * - Test counts in README
@@ -76,9 +76,9 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.14.0",
-    displayName: "StringRay AI v1.14.0",
-    lastUpdated: "2026-03-23",
+    version: "1.14.1",
+    displayName: "StringRay AI v1.14.1",
+    lastUpdated: "2026-03-24",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },

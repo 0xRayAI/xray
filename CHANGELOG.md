@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.0] - 2026-03-24
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: Phase 0-1 - one-command installer with OpenCode detection, auto-install, kernel layering
+- feat: Phase 1 - Impeccable + OpenViking skill integration with proper Apache 2.0 licensing
+- feat: Phase 2 - New CLI commands: publish-agent, antigravity-status, credible-init
+- feat: Phase 3 - README polish, version bump to v1.15.0
+
+### 🧪 Tests
+- test: CLI install command tests (8 tests)
+- test: CLI status command tests (14 tests)
+- test: CLI publish-agent command tests (20 tests)
+- test: CLI antigravity-status command tests (24 tests)
+- test: CLI credible-init command tests (18 tests)
+- test: CLI pipeline integration tests (37 tests)
+
+---
+
 ## [undefined] - 2026-03-23
 
 ### 🔄 Changes
