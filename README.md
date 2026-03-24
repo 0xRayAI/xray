@@ -13,13 +13,20 @@ StringRay extends OpenCode/Claude Code with intelligent multi-agent orchestratio
 
 ## What is StringRay?
 
-StringRay is a **framework layer** for OpenCode that adds:
+StringRay is a **one-command level-up** for OpenCode. Instead of installing OpenCode first, then adding StringRay, just run:
 
-- **Multi-Agent Orchestration** - Automatically coordinates 27 specialized agents
-- **Codex Compliance** - 60-term Universal Development Codex prevents errors
-- **Complexity-Based Routing** - Simple tasks get quick responses, complex ones get full team coordination
-- **Enterprise Security** - Webhooks, validation, and audit trails
-- **Skills Integration** - SEO, DevOps, Security, and more
+```bash
+npx strray-ai install
+```
+
+This single command:
+1. Detects if OpenCode is installed
+2. Auto-installs OpenCode if missing
+3. Layers on the full StringRay kernel (Codex, orchestrator, enforcer, processors, MCP, reflections)
+4. Installs skills (Antigravity + Impeccable + OpenViking + Claude SEO)
+5. Adds CLI commands for agent publishing and status
+
+**Goal:** Any developer can run one command and instantly get a production-grade, governed agent runtime.
 
 ### Who is it for?
 
@@ -120,11 +127,18 @@ See [OpenClaw Integration Guide](src/integrations/openclaw/README.md) for detail
 StringRay provides CLI utilities for managing and monitoring your installation:
 
 ```bash
-npx strray-ai status       # Check configuration and plugin status
-npx strray-ai validate     # Validate installation and dependencies
-npx strray-ai capabilities # Show all available features
-npx strray-ai health       # Run health check on framework components
-npx strray-ai report       # Generate usage and performance reports
+# Core commands
+npx strray-ai status              # Check configuration and plugin status
+npx strray-ai validate            # Validate installation and dependencies
+npx strray-ai capabilities       # Show all available features
+npx strray-ai health             # Run health check on framework components
+npx strray-ai report             # Generate usage and performance reports
+
+# Agent management
+npx strray-ai publish-agent --agent orchestrator  # Package agent for AgentStore
+
+# Skills management
+npx strray-ai antigravity status  # Show all skills with licenses
 ```
 
 **Note:** Installation is automatic via `npm install strray-ai`. The postinstall hook configures everything automatically.
@@ -185,6 +199,27 @@ Edit `.opencode/strray/config.json` to adjust token limits:
 ```
 
 See [Configuration Reference](https://github.com/htafolla/stringray/blob/main/docs/CONFIGURATION.md) for full options.
+
+### Version Pinning
+
+StringRay supports pinning versions for reproducible installations:
+
+```json
+{
+  "version_pinning": {
+    "strray_ai": "^1.15.0",
+    "opencode": "^2.14.0",
+    "skills": {
+      "antigravity": "latest",
+      "impeccable": "latest",
+      "openviking": "latest",
+      "claude_seo": "latest"
+    }
+  }
+}
+```
+
+Add to `.opencode/strray/features.json` to pin specific versions.
 
 ## 📁 Project Structure
 
@@ -278,7 +313,34 @@ fastify.register(integration.getAPIRouter(), { prefix: '/api/post-process' });
 
 ## 🎯 Skills Integration
 
-### Claude SEO (30 Skills)
+StringRay comes with **30+ curated skills** out of the box:
+
+| Skill Pack | Count | License | Description |
+|------------|-------|---------|-------------|
+| Antigravity | 17 | MIT | Language experts, DevOps, Security, Business |
+| Claude SEO | 12 | MIT | SEO optimization and analysis |
+| Impeccable | 1 | Apache 2.0 | AI frontend design language |
+| OpenViking | 1 | Apache 2.0 | Context database for agents |
+
+### Impeccable - AI Frontend Design
+
+[Impeccable](https://github.com/pbakaus/impeccable) is a design language skill that teaches AI coding assistants professional frontend design:
+
+```bash
+/audit           # Find issues
+/critique       # UX design review  
+/polish          # Pre-ship refinement
+/typeset         # Fix typography
+/arrange         # Fix layout & spacing
+```
+
+**Anti-patterns it teaches AI to avoid:**
+- Overused fonts (Inter, Arial)
+- Purple gradients
+- Cards on colored backgrounds
+- Gray text on colored backgrounds
+
+### Claude SEO (12 Skills)
 
 Comprehensive SEO optimization via [claude-seo](https://github.com/AgriciDaniel/claude-seo):
 
@@ -296,7 +358,7 @@ Comprehensive SEO optimization via [claude-seo](https://github.com/AgriciDaniel/
 
 ### Antigravity Skills (17 Curated)
 
-Enterprise-grade skills from [antigravity-awesome-skills](https://github.com/sickn33/antigravity-awesome-skills):
+Enterprise-grade skills from [antigravity-awesome-skills](https://github.com/sickn33/antigravity-awesome-skills) (MIT License):
 
 | Category | Skills |
 |----------|--------|
@@ -313,6 +375,35 @@ node scripts/integrations/install-antigravity-skills.js --curated
 
 # Install Claude SEO skills  
 node scripts/integrations/install-claude-seo.js --full
+```
+
+### OpenViking - Context Database for AI Agents
+
+[OpenViking](https://github.com/volcengine/OpenViking) provides hierarchical context management using a filesystem paradigm:
+
+```bash
+ov init              # Initialize workspace
+ov status            # Check status
+ov add-memory        # Add new memory
+ov ls viking://      # List all context
+```
+
+**Key features:**
+- Filesystem paradigm for memory organization
+- Tiered context loading (L0/L1/L2) to save tokens
+- Directory-aware search and retrieval
+- Session memory persistence
+
+## License Information
+
+All bundled skills are properly licensed:
+
+| Skill | License | File |
+|-------|---------|------|
+| Antigravity | MIT | LICENSE.antigravity |
+| Claude SEO | MIT | LICENSE.claude-seo |
+| Impeccable | Apache 2.0 | LICENSE.impeccable |
+| OpenViking | Apache 2.0 | LICENSE.openviking |
 ```
 
 ## 🙏 Support & Star
