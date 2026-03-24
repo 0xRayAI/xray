@@ -875,6 +875,38 @@ program
     console.log('  --status    Show tuner status');
   });
 
+// Publish agent command
+program
+  .command('publish-agent')
+  .description('Package and publish agents to AgentStore')
+  .option('-a, --agent <name>', 'Agent name to publish')
+  .option('-v, --version <version>', 'Version to publish (default: 1.0.0)')
+  .option('-d, --dry-run', 'Show what would be published without publishing')
+  .action(async () => {
+    const { publishAgentCommand } = await import('./commands/publish-agent.js');
+    await publishAgentCommand();
+  });
+
+// Antigravity status command
+program
+  .command('antigravity status')
+  .description('Show status of all installed skills')
+  .action(async () => {
+    const { antigravityStatusCommand } = await import('./commands/antigravity-status.js');
+    await antigravityStatusCommand();
+  });
+
+// Credible init command
+program
+  .command('credible init')
+  .description('Initialize Credible Pod infrastructure')
+  .option('-n, --name <name>', 'Pod name')
+  .option('-t, --template <template>', 'Pod template to use')
+  .action(async () => {
+    const { credibleInitCommand } = await import('./commands/credible-init.js');
+    await credibleInitCommand();
+  });
+
 // Add help text
 program.addHelpText(
   "after",
