@@ -1,5 +1,6 @@
 import { getSkillRegistry, initializeSkillRegistry } from "./index.js";
 import type { SkillManifest } from "./types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface SkillResolverOptions {
   autoLoad?: boolean;
@@ -20,6 +21,7 @@ export class SkillResolver {
   }
 
   resolveForAgent(agentName: string): SkillManifest[] {
+    frameworkLogger.log("skill-resolver", "resolve-agent", "info", { agentName });
     const skills = this.registry.list();
     const agentSkills: SkillManifest[] = [];
 

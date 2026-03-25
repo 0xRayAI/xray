@@ -292,6 +292,7 @@ dynamodb/
 !.opencode/mcps/.gitkeep
 .opencode/state
 !.opencode/state
+.opencode/skills/
 
 # Include postinstall script for npm package
 !scripts/node/postinstall.cjs

@@ -2,10 +2,10 @@ import * as fs from "fs";
 import * as path from "path";
 import { parseSkillManifest } from "./parser.js";
 import type { SkillManifest, SkillDiscoveryResult } from "./types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export const SKILL_SEARCH_PATHS = [
   ".opencode/skills/",
-  ".opencode/integrations/",
 ];
 
 export class SkillDiscoveryService {
@@ -18,6 +18,10 @@ export class SkillDiscoveryService {
   async discover(): Promise<SkillDiscoveryResult[]> {
     const skills: SkillDiscoveryResult[] = [];
     
+    frameworkLogger.log("skill-discovery", "discover", "info", {
+      paths: SKILL_SEARCH_PATHS,
+    });
+
     for (const pattern of SKILL_SEARCH_PATHS) {
       const skillResults = await this.discoverFromPath(pattern);
       skills.push(...skillResults);
@@ -53,43 +57,39 @@ export class SkillDiscoveryService {
         continue;
       }
       
-      const source: SkillDiscoveryResult['source'] = relativePath.includes("integrations")
-        ? "integrations"
-        : "local";
-      
       results.push({
         skill: manifest,
         path: skillMdPath,
-        source,
+        source: "local" as SkillDiscoveryResult['source'],
       });
     }
-    
+
+    frameworkLogger.log("skill-discovery", "discover-path", "info", {
+      path: relativePath,
+      found: results.length,
+    });
+
     return results;
   }
   
   async discoverSkill(name: string): Promise<SkillDiscoveryResult | null> {
-    for (const pattern of SKILL_SEARCH_PATHS) {
-      const skillPath = path.join(this.directory, pattern, name, "SKILL.md");
-      
-      if (fs.existsSync(skillPath)) {
-        const manifest = parseSkillManifest(skillPath);
-        if (manifest) {
-          return {
-            skill: manifest,
-            path: skillPath,
-            source: pattern.includes("integrations") ? "integrations" : "local",
-          };
-        }
+    const skillPath = path.join(this.directory, ".opencode", "skills", name, "SKILL.md");
+    
+    if (fs.existsSync(skillPath)) {
+      const manifest = parseSkillManifest(skillPath);
+      if (manifest) {
+        return {
+          skill: manifest,
+          path: skillPath,
+          source: "local",
+        };
       }
     }
     
     return null;
   }
   
-  getSkillPath(name: string, source: 'local' | 'integrations' = 'local'): string {
-    const basePath = source === 'integrations'
-      ? ".opencode/integrations/"
-      : ".opencode/skills/";
-    return path.join(this.directory, basePath, name, "SKILL.md");
+  getSkillPath(name: string): string {
+    return path.join(this.directory, ".opencode", "skills", name, "SKILL.md");
   }
 }

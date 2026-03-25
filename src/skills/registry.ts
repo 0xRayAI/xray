@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { SkillDiscoveryService } from "./discovery.js";
 import type { SkillManifest, RegistryStats, SkillDiscoveryResult } from "./types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export class SkillRegistry {
   private skills: Map<string, SkillManifest> = new Map();
@@ -44,11 +45,16 @@ export class SkillRegistry {
     
     await this.rebuild();
     this.initialized = true;
+    frameworkLogger.log("skill-registry", "initialize", "info", {
+      count: this.skills.size,
+    });
   }
   
   async rebuild(): Promise<void> {
     this.skills.clear();
     this.paths.clear();
+    
+    frameworkLogger.log("skill-registry", "rebuild", "info", { phase: "start" });
     
     const discovered = await this.discoveryService.discover();
     
@@ -56,6 +62,11 @@ export class SkillRegistry {
       this.skills.set(result.skill.name, result.skill);
       this.paths.set(result.skill.name, result.path);
     }
+    
+    frameworkLogger.log("skill-registry", "rebuild", "info", {
+      phase: "complete",
+      count: this.skills.size,
+    });
     
     await this.persist();
   }

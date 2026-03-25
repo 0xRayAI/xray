@@ -1,4 +1,5 @@
 import type { SkillManifest, PipelineConfig } from "./types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface PipelineContext {
   input: Record<string, unknown>;
@@ -130,6 +131,9 @@ export class SkillPipeline {
   }
 
   async execute(): Promise<SkillStageResult[]> {
+    frameworkLogger.log("skill-pipeline", "execute", "info", {
+      stages: this.stages.length,
+    });
     const results: SkillStageResult[] = [];
 
     for (const stage of this.stages) {

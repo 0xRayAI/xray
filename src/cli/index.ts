@@ -907,6 +907,35 @@ program
     await credibleInitCommand();
   });
 
+// Skill list command
+program
+  .command('skill:list')
+  .description('List all discovered skills with details')
+  .action(async () => {
+    const { skillListCommand } = await import('./commands/skill-list.js');
+    await skillListCommand();
+  });
+
+// Agent skills command
+program
+  .command('agent:skills')
+  .description('Show agent-skill bindings')
+  .action(async () => {
+    const { agentSkillsCommand } = await import('./commands/agent-skills.js');
+    await agentSkillsCommand();
+  });
+
+// Skill install command
+program
+  .command('skill:install [source]')
+  .description('Install third-party skills from any git repo or suggested source')
+  .option('--path <dir>', 'Subdirectory in repo containing SKILL.md folders')
+  .option('--force', 'Reinstall even if already installed')
+  .action(async (sourceArg, options) => {
+    const { skillInstallCommand } = await import('./commands/skill-install.js');
+    await skillInstallCommand(sourceArg, options);
+  });
+
 // Add help text
 program.addHelpText(
   "after",
@@ -925,6 +954,9 @@ Examples:
     $ npx strray-ai analytics     # Pattern analytics and insights
     $ npx strray-ai calibrate     # Calibrate complexity predictions
     $ npx strray-ai inference:improve  # Run autonomous inference improvement
+    $ npx strray-ai skill:install antigravity  # Install community skills
+    $ npx strray-ai skill:list      # List all discovered skills
+    $ npx strray-ai agent:skills    # Show agent-skill bindings
 
 Quick Start:
    1. Install: npx strray-ai install

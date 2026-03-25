@@ -61,6 +61,43 @@ const SKIP_FILES = [
   'package-lock.json'
 ];
 
+// Copy core skills from src/skills/ to .opencode/skills/ (if not already there or outdated)
+const skillsSource = path.join(packageRoot, 'src', 'skills');
+const skillsDest = path.join(targetDir, '.opencode', 'skills');
+
+if (fs.existsSync(skillsSource)) {
+  try {
+    if (!fs.existsSync(skillsDest)) {
+      fs.mkdirSync(skillsDest, { recursive: true });
+    }
+    const skillDirs = fs.readdirSync(skillsSource, { withFileTypes: true });
+    let copied = 0;
+    for (const entry of skillDirs) {
+      if (!entry.isDirectory()) continue;
+      const skillMd = path.join(skillsSource, entry.name, 'SKILL.md');
+      if (!fs.existsSync(skillMd)) continue;
+      const destMd = path.join(skillsDest, entry.name, 'SKILL.md');
+      const destDir = path.dirname(destMd);
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+      const shouldCopy = !fs.existsSync(destMd) ||
+        fs.statSync(skillMd).mtime > fs.statSync(destMd).mtime;
+      if (shouldCopy) {
+        fs.copyFileSync(skillMd, destMd);
+        copied++;
+      }
+    }
+    if (copied > 0) {
+      console.log(`✅ Copied ${copied} core skills → .opencode/skills/`);
+    } else {
+      console.log(`ℹ️ Core skills unchanged, skipping copy`);
+    }
+  } catch (error) {
+    console.warn(`⚠️ Could not copy skills:`, error.message);
+  }
+}
+
 // Copy .opencode directory recursively with smart merging
 const opencodeSource = path.join(packageRoot, '.opencode');
 const opencodeDest = path.join(targetDir, '.opencode');

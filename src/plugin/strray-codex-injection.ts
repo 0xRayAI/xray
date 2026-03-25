@@ -1162,22 +1162,35 @@ export default async function strrayCodexPlugin(input: {
             
             // Skill matching and auto-invoke check
             try {
-              const { matchTaskToSkill, getSkillTools } = await import("../skills/matcher.js");
-              const skillMatch = await matchTaskToSkill(routingResult.skill);
-              if (skillMatch) {
-                logger.log(`📚 Skill matched: ${skillMatch.skill.name} (${Math.round(skillMatch.confidence * 100)}% confidence)`);
-                const tools = await getSkillTools(skillMatch.skill.name);
-                if (tools.length > 0) {
-                  logger.log(`🔧 Skill tools: ${tools.join(", ")}`);
-                  if (skillMatch.shouldInvoke) {
-                    logger.log(`⚡ Auto-invoke: YES - ${skillMatch.invokeReason}`);
-                  } else {
-                    logger.log(`⚡ Auto-invoke: NO - ${skillMatch.invokeReason}`);
+              let skillsModule: any = null;
+              try {
+                skillsModule = await import("../../dist/skills/matcher.js" as any);
+              } catch {
+                for (const p of ["strray-ai", "strray-framework"]) {
+                  try {
+                    skillsModule = await import(`../../node_modules/${p}/dist/skills/matcher.js`);
+                    break;
+                  } catch { continue; }
+                }
+              }
+              if (skillsModule) {
+                const { matchTaskToSkill, getSkillTools } = skillsModule;
+                const skillMatch = await matchTaskToSkill(routingResult.skill);
+                if (skillMatch) {
+                  logger.log(`📚 Skill matched: ${skillMatch.skill.name} (${Math.round(skillMatch.confidence * 100)}% confidence)`);
+                  const tools = await getSkillTools(skillMatch.skill.name);
+                  if (tools.length > 0) {
+                    logger.log(`🔧 Skill tools: ${tools.join(", ")}`);
+                    if (skillMatch.shouldInvoke) {
+                      logger.log(`⚡ Auto-invoke: YES - ${skillMatch.invokeReason}`);
+                    } else {
+                      logger.log(`⚡ Auto-invoke: NO - ${skillMatch.invokeReason}`);
+                    }
                   }
                 }
               }
             } catch (e) {
-              // Skill matching optional
+              logger.error("Skill matching failed", e);
             }
             
 

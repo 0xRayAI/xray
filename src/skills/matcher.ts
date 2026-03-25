@@ -1,5 +1,6 @@
 import { getSkillRegistry, initializeSkillRegistry } from "./index.js";
 import type { SkillManifest } from "./types.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface SkillMatchResult {
   skill: SkillManifest;
@@ -51,8 +52,9 @@ export class SkillMatcher {
     
     return bestMatch;
   }
-  
+
   matchByName(skillName: string): SkillManifest | null {
+    frameworkLogger.log("skill-matcher", "match-by-name", "info", { skillName });
     return this.registry.get(skillName) || null;
   }
   

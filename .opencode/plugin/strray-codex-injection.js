@@ -500,7 +500,27 @@ export default async function strrayCodexPlugin(input) {
         },
         "tool.execute.before": async (input, output) => {
             const logger = await getOrCreateLogger(directory);
-            // Log tool start to activity logger (direct write - no module isolation issues)
+            // Retrieve original user message for context preservation (file-based)
+            let originalMessage = null;
+            try {
+                const contextFiles = fs.readdirSync(directory)
+                    .filter(f => f.startsWith("context-") && f.endsWith(".json"))
+                    .map(f => ({
+                    name: f,
+                    time: fs.statSync(path.join(directory, f)).mtime.getTime()
+                }))
+                    .sort((a, b) => b.time - a.time);
+                if (contextFiles.length > 0 && contextFiles[0]) {
+                    const latestContext = JSON.parse(fs.readFileSync(path.join(directory, contextFiles[0].name), "utf-8"));
+                    originalMessage = latestContext.userMessage;
+                }
+            }
+            catch (e) {
+                // Silent fail - context is optional
+            }
+            if (originalMessage) {
+                logger.log(`📌 Original intent: "${originalMessage.slice(0, 80)}..."`);
+            }
             logToolActivity(directory, "start", input.tool, input.args || {});
             await loadStrRayComponents();
             if (featuresConfigLoader && detectTaskType) {
@@ -786,13 +806,6 @@ export default async function strrayCodexPlugin(input) {
          */
         "chat.message": async (input, output) => {
             const logger = await getOrCreateLogger(directory);
-            // DEBUG: Log ALL output
-            const debugLogPath = path.join(process.cwd(), "logs", "framework", "routing-debug.log");
-            fs.appendFileSync(debugLogPath, `\n[${new Date().toISOString()}] === chat.message HOOK FIRED ===\n`);
-            fs.appendFileSync(debugLogPath, `OUTPUT KEYS: ${JSON.stringify(Object.keys(output || {}))}\n`);
-            fs.appendFileSync(debugLogPath, `MESSAGE: ${JSON.stringify(output?.message)}\n`);
-            fs.appendFileSync(debugLogPath, `PARTS: ${JSON.stringify(output?.parts)}\n`);
-            // Extract user message from parts (TextPart has type="text" and text field)
             let userMessage = "";
             if (output?.parts && Array.isArray(output.parts)) {
                 for (const part of output.parts) {
@@ -802,9 +815,23 @@ export default async function strrayCodexPlugin(input) {
                     }
                 }
             }
-            fs.appendFileSync(debugLogPath, `userMessage: "${userMessage.slice(0, 100)}"\n`);
+            // Store original user message for tool hooks (context preservation)
+            const sessionId = output?.message?.sessionID || "default";
+            try {
+                const contextData = JSON.stringify({
+                    sessionId,
+                    userMessage,
+                    timestamp: new Date().toISOString()
+                });
+                const contextPath = path.join(directory, `context-${sessionId}.json`);
+                fs.writeFileSync(contextPath, contextData, "utf-8");
+            }
+            catch (e) {
+                // Silent fail - context is optional
+            }
+            globalThis.__strRayOriginalMessage = userMessage;
+            logger.log(`userMessage: "${userMessage.slice(0, 100)}"`);
             if (!userMessage || userMessage.length === 0) {
-                fs.appendFileSync(debugLogPath, `SKIP: No user text found\n`);
                 return;
             }
             logger.log(`👤 User message: "${userMessage.slice(0, 50)}..."`);
@@ -825,13 +852,11 @@ export default async function strrayCodexPlugin(input) {
                     catch (e) {
                         // Silent fail for complexity estimation
                     }
-                    fs.appendFileSync(debugLogPath, `Complexity estimated: ${complexityScore}\n`);
                     // Route with complexity context
                     const routingResult = taskSkillRouterInstance.routeTask(userMessage, {
                         source: "chat_message",
                         complexity: complexityScore,
                     });
-                    fs.appendFileSync(debugLogPath, `Routing result: ${JSON.stringify(routingResult)}\n`);
                     if (routingResult && routingResult.agent) {
                         // Apply weighted confidence scoring
                         let finalConfidence = routingResult.confidence;
@@ -852,7 +877,44 @@ export default async function strrayCodexPlugin(input) {
                             routingMethod = "complexity";
                         }
                         logger.log(`🎯 Routed to: @${routingResult.agent} (${Math.round(finalConfidence * 100)}%) via ${routingMethod}`);
-                        fs.appendFileSync(debugLogPath, `Final agent: ${routingResult.agent}, confidence: ${finalConfidence}, method: ${routingMethod}\n`);
+                        // Skill matching and auto-invoke check
+                        try {
+                            let skillsModule = null;
+                            try {
+                                skillsModule = await import("../../dist/skills/matcher.js");
+                            }
+                            catch {
+                                for (const p of ["strray-ai", "strray-framework"]) {
+                                    try {
+                                        skillsModule = await import(`../../node_modules/${p}/dist/skills/matcher.js`);
+                                        break;
+                                    }
+                                    catch {
+                                        continue;
+                                    }
+                                }
+                            }
+                            if (skillsModule) {
+                                const { matchTaskToSkill, getSkillTools } = skillsModule;
+                                const skillMatch = await matchTaskToSkill(routingResult.skill);
+                                if (skillMatch) {
+                                    logger.log(`📚 Skill matched: ${skillMatch.skill.name} (${Math.round(skillMatch.confidence * 100)}% confidence)`);
+                                    const tools = await getSkillTools(skillMatch.skill.name);
+                                    if (tools.length > 0) {
+                                        logger.log(`🔧 Skill tools: ${tools.join(", ")}`);
+                                        if (skillMatch.shouldInvoke) {
+                                            logger.log(`⚡ Auto-invoke: YES - ${skillMatch.invokeReason}`);
+                                        }
+                                        else {
+                                            logger.log(`⚡ Auto-invoke: NO - ${skillMatch.invokeReason}`);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (e) {
+                            logger.error("Skill matching failed", e);
+                        }
                         // Store routing in session for later use
                         const sessionRoutingPath = path.join(process.cwd(), "logs", "framework", "session-routing.json");
                         try {
@@ -873,9 +935,7 @@ export default async function strrayCodexPlugin(input) {
             }
             catch (e) {
                 logger.error("Chat message routing error:", e);
-                fs.appendFileSync(debugLogPath, `ERROR: ${e}\n`);
             }
-            fs.appendFileSync(debugLogPath, `=== END chat.message ===\n`);
         },
         config: async (_config) => {
             const logger = await getOrCreateLogger(directory);
