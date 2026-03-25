@@ -3,12 +3,29 @@ name: code-review
 description: Perform comprehensive code quality assessment and provide improvement suggestions
 author: StrRay Framework
 version: 1.0.0
+schema_version: "1.0"
 tags: [review, quality, assessment, improvement]
+capabilities:
+  - assess_quality
+  - review_code
+  - suggest_improvements
+dependencies: []
 
 mcp:
   code-review:
     command: node
     args: [node_modules/strray-ai/dist/mcps/knowledge-skills/code-review.server.js]
+  tools:
+    - analyze_code_quality
+    - review_pull_request
+    - check_best_practices
+
+agent_binding:
+  primary: code-reviewer
+  auto_invoke: true
+  invoke_on:
+    - pre_commit
+    - pr_review
 ---
 
 # Code Review Skill

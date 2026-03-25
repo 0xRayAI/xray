@@ -29,6 +29,7 @@ import { strRayConfigLoader } from "./config-loader.js";
 import { activity } from "./activity-logger.js";
 import { inferenceTuner } from "../services/inference-tuner.js";
 import { setupMemoryMonitoring, getMemoryHealthSummary } from "./memory-monitor-setup.js";
+import { initializeSkillRegistry, getSkillRegistry, SkillRegistry } from "../skills/index.js";
 
 async function dynamicImport<T = any>(
   primaryPath: string,
@@ -155,6 +156,8 @@ export interface BootResult {
   codexComplianceActive: boolean;
   agentsLoaded: string[];
   inferenceTunerActive: boolean;
+  skillRegistryActive: boolean;
+  skillsDiscovered: number;
   errors: string[];
 }
 
@@ -216,6 +219,37 @@ export class BootOrchestrator {
       await frameworkLogger.log(
         "boot-orchestrator",
         "delegation-system-initialization-failed",
+        "error",
+        { error: String(error) },
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Initialize skill discovery and registry
+   */
+  private async initializeSkillDiscovery(): Promise<boolean> {
+    try {
+      const directory = process.cwd();
+      const registry = await initializeSkillRegistry(directory);
+      
+      this.stateManager.set("skill:registry", registry);
+      this.stateManager.set("skill:registry_active", true);
+      this.stateManager.set("skill:count", registry.count());
+      
+      await frameworkLogger.log(
+        "boot-orchestrator",
+        "skill-discovery-completed",
+        "info",
+        { skillCount: registry.count() },
+      );
+      
+      return true;
+    } catch (error) {
+      await frameworkLogger.log(
+        "boot-orchestrator",
+        "skill-discovery-failed",
         "error",
         { error: String(error) },
       );
@@ -705,6 +739,8 @@ export class BootOrchestrator {
       codexComplianceActive:
         this.stateManager.get("compliance:active") || false,
       inferenceTunerActive: this.stateManager.get("inference:tuner_active") || false,
+      skillRegistryActive: this.stateManager.get("skill:registry_active") || false,
+      skillsDiscovered: this.stateManager.get("skill:count") || 0,
       agentsLoaded: Array.isArray(agentsLoaded) ? agentsLoaded : [],
       errors,
     };
@@ -758,6 +794,8 @@ export class BootOrchestrator {
       enforcementEnabled: false,
       codexComplianceActive: false,
       inferenceTunerActive: false,
+      skillRegistryActive: false,
+      skillsDiscovered: 0,
       errors: [],
     };
 
@@ -817,6 +855,27 @@ export class BootOrchestrator {
         "delegation system initialized",
         "success",
         { jobId },
+      );
+
+      // Phase 1.5: Skill Discovery
+      const skillDiscoveryInitialized = await this.initializeSkillDiscovery();
+      if (!skillDiscoveryInitialized) {
+        frameworkLogger.log(
+          "boot-orchestrator",
+          "skill discovery initialization failed",
+          "error",
+          { jobId },
+        );
+        result.errors.push("Failed to initialize skill discovery");
+        return result;
+      }
+      result.skillRegistryActive = true;
+      result.skillsDiscovered = this.stateManager.get("skill:count") || 0;
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "skill discovery initialized",
+        "success",
+        { jobId, skillCount: result.skillsDiscovered },
       );
 
       // Phase 2: Session management

@@ -649,32 +649,28 @@ export default async function strrayCodexPlugin(input: {
       // Retrieve original user message for context preservation (file-based)
       let originalMessage: string | null = null;
       try {
-        const contextDir = path.join(directory, ".opencode", "logs");
-        if (fs.existsSync(contextDir)) {
-          const contextFiles = fs.readdirSync(contextDir)
-            .filter(f => f.startsWith("context-") && f.endsWith(".json"))
-            .map(f => ({
-              name: f,
-              time: fs.statSync(path.join(contextDir, f)).mtime.getTime()
-            }))
-            .sort((a, b) => b.time - a.time);
-          
-          if (contextFiles.length > 0 && contextFiles[0]) {
-            const latestContext = JSON.parse(
-              fs.readFileSync(path.join(contextDir, contextFiles[0].name), "utf-8")
-            );
-            originalMessage = latestContext.userMessage;
-          }
+        const contextFiles = fs.readdirSync(directory)
+          .filter(f => f.startsWith("context-") && f.endsWith(".json"))
+          .map(f => ({
+            name: f,
+            time: fs.statSync(path.join(directory, f)).mtime.getTime()
+          }))
+          .sort((a, b) => b.time - a.time);
+        
+        if (contextFiles.length > 0 && contextFiles[0]) {
+          const latestContext = JSON.parse(
+            fs.readFileSync(path.join(directory, contextFiles[0].name), "utf-8")
+          );
+          originalMessage = latestContext.userMessage;
         }
       } catch (e) {
-        // Silent fail
+        // Silent fail - context is optional
       }
 
       if (originalMessage) {
         logger.log(`📌 Original intent: "${originalMessage.slice(0, 80)}..."`);
       }
 
-      // Log tool start to activity logger (direct write - no module isolation issues)
       logToolActivity(directory, "start", input.tool, input.args || {});
 
       await loadStrRayComponents();
@@ -1076,14 +1072,6 @@ export default async function strrayCodexPlugin(input: {
     ) => {
       const logger = await getOrCreateLogger(directory);
       
-      // DEBUG: Log ALL output
-      const debugLogPath = path.join(process.cwd(), "logs", "framework", "routing-debug.log");
-      fs.appendFileSync(debugLogPath, `\n[${new Date().toISOString()}] === chat.message HOOK FIRED ===\n`);
-      fs.appendFileSync(debugLogPath, `OUTPUT KEYS: ${JSON.stringify(Object.keys(output || {}))}\n`);
-      fs.appendFileSync(debugLogPath, `MESSAGE: ${JSON.stringify(output?.message)}\n`);
-      fs.appendFileSync(debugLogPath, `PARTS: ${JSON.stringify(output?.parts)}\n`);
-      
-      // Extract user message from parts (TextPart has type="text" and text field)
       let userMessage = "";
       
       if (output?.parts && Array.isArray(output.parts)) {
@@ -1095,25 +1083,24 @@ export default async function strrayCodexPlugin(input: {
         }
       }
 
-      // Store original user message for tool hooks (context preservation via file)
+      // Store original user message for tool hooks (context preservation)
       const sessionId = output?.message?.sessionID || "default";
-      const contextPath = path.join(directory, ".opencode", "logs", `context-${sessionId}.json`);
       try {
-        fs.writeFileSync(contextPath, JSON.stringify({
+        const contextData = JSON.stringify({
           sessionId,
           userMessage,
           timestamp: new Date().toISOString()
-        }), "utf-8");
-        logger.log(`💾 Context saved: ${sessionId}`);
+        });
+        const contextPath = path.join(directory, `context-${sessionId}.json`);
+        fs.writeFileSync(contextPath, contextData, "utf-8");
       } catch (e) {
-        logger.error(`Context save failed: ${e}`);
+        // Silent fail - context is optional
       }
       (globalThis as any).__strRayOriginalMessage = userMessage;
 
       logger.log(`userMessage: "${userMessage.slice(0, 100)}"`);
       
       if (!userMessage || userMessage.length === 0) {
-        fs.appendFileSync(debugLogPath, `SKIP: No user text found\n`);
         return;
       }
       
@@ -1137,7 +1124,7 @@ export default async function strrayCodexPlugin(input: {
             // Silent fail for complexity estimation
           }
           
-          fs.appendFileSync(debugLogPath, `Complexity estimated: ${complexityScore}\n`);
+
           
           // Route with complexity context
           const routingResult = taskSkillRouterInstance.routeTask(userMessage, {
@@ -1145,7 +1132,7 @@ export default async function strrayCodexPlugin(input: {
             complexity: complexityScore,
           });
           
-          fs.appendFileSync(debugLogPath, `Routing result: ${JSON.stringify(routingResult)}\n`);
+
           
           if (routingResult && routingResult.agent) {
             // Apply weighted confidence scoring
@@ -1173,7 +1160,27 @@ export default async function strrayCodexPlugin(input: {
               `🎯 Routed to: @${routingResult.agent} (${Math.round(finalConfidence * 100)}%) via ${routingMethod}`,
             );
             
-            fs.appendFileSync(debugLogPath, `Final agent: ${routingResult.agent}, confidence: ${finalConfidence}, method: ${routingMethod}\n`);
+            // Skill matching and auto-invoke check
+            try {
+              const { matchTaskToSkill, getSkillTools } = await import("../skills/matcher.js");
+              const skillMatch = await matchTaskToSkill(routingResult.skill);
+              if (skillMatch) {
+                logger.log(`📚 Skill matched: ${skillMatch.skill.name} (${Math.round(skillMatch.confidence * 100)}% confidence)`);
+                const tools = await getSkillTools(skillMatch.skill.name);
+                if (tools.length > 0) {
+                  logger.log(`🔧 Skill tools: ${tools.join(", ")}`);
+                  if (skillMatch.shouldInvoke) {
+                    logger.log(`⚡ Auto-invoke: YES - ${skillMatch.invokeReason}`);
+                  } else {
+                    logger.log(`⚡ Auto-invoke: NO - ${skillMatch.invokeReason}`);
+                  }
+                }
+              }
+            } catch (e) {
+              // Skill matching optional
+            }
+            
+
             
             // Store routing in session for later use
             const sessionRoutingPath = path.join(process.cwd(), "logs", "framework", "session-routing.json");
@@ -1193,10 +1200,7 @@ export default async function strrayCodexPlugin(input: {
         }
       } catch (e) {
         logger.error("Chat message routing error:", e);
-        fs.appendFileSync(debugLogPath, `ERROR: ${e}\n`);
       }
-      
-      fs.appendFileSync(debugLogPath, `=== END chat.message ===\n`);
     },
 
     config: async (_config: Record<string, unknown>) => {
