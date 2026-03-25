@@ -646,8 +646,30 @@ export default async function strrayCodexPlugin(input: {
     ) => {
       const logger = await getOrCreateLogger(directory);
 
-      // Retrieve original user message for context preservation
-      const originalMessage = (globalThis as any).__strRayOriginalMessage;
+      // Retrieve original user message for context preservation (file-based)
+      let originalMessage: string | null = null;
+      try {
+        const contextDir = path.join(directory, ".opencode", "logs");
+        if (fs.existsSync(contextDir)) {
+          const contextFiles = fs.readdirSync(contextDir)
+            .filter(f => f.startsWith("context-") && f.endsWith(".json"))
+            .map(f => ({
+              name: f,
+              time: fs.statSync(path.join(contextDir, f)).mtime.getTime()
+            }))
+            .sort((a, b) => b.time - a.time);
+          
+          if (contextFiles.length > 0 && contextFiles[0]) {
+            const latestContext = JSON.parse(
+              fs.readFileSync(path.join(contextDir, contextFiles[0].name), "utf-8")
+            );
+            originalMessage = latestContext.userMessage;
+          }
+        }
+      } catch (e) {
+        // Silent fail
+      }
+
       if (originalMessage) {
         logger.log(`📌 Original intent: "${originalMessage.slice(0, 80)}..."`);
       }
@@ -1073,10 +1095,22 @@ export default async function strrayCodexPlugin(input: {
         }
       }
 
-      // Store original user message for tool hooks (context preservation)
+      // Store original user message for tool hooks (context preservation via file)
+      const sessionId = output?.message?.sessionID || "default";
+      const contextPath = path.join(directory, ".opencode", "logs", `context-${sessionId}.json`);
+      try {
+        fs.writeFileSync(contextPath, JSON.stringify({
+          sessionId,
+          userMessage,
+          timestamp: new Date().toISOString()
+        }), "utf-8");
+        logger.log(`💾 Context saved: ${sessionId}`);
+      } catch (e) {
+        logger.error(`Context save failed: ${e}`);
+      }
       (globalThis as any).__strRayOriginalMessage = userMessage;
 
-      fs.appendFileSync(debugLogPath, `userMessage: "${userMessage.slice(0, 100)}"\n`);
+      logger.log(`userMessage: "${userMessage.slice(0, 100)}"`);
       
       if (!userMessage || userMessage.length === 0) {
         fs.appendFileSync(debugLogPath, `SKIP: No user text found\n`);
