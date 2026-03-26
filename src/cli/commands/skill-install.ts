@@ -1,0 +1,364 @@
+import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync } from "fs";
+import { join, basename, dirname } from "path";
+import { execSync } from "child_process";
+
+interface RegistrySource {
+  name: string;
+  url: string;
+  description?: string | undefined;
+  license?: string | undefined;
+}
+
+interface LocalRegistry {
+  sources: RegistrySource[];
+}
+
+function getLocalRegistryPath(): string {
+  return join(process.cwd(), ".opencode", "strray", "skill-registry.json");
+}
+
+function getBundledRegistry(): LocalRegistry | null {
+  const paths = [
+    join(process.cwd(), "src", "skills", "registry.json"),
+    join(process.cwd(), "node_modules", "strray-ai", "src", "skills", "registry.json"),
+  ];
+  for (const p of paths) {
+    if (existsSync(p)) {
+      return JSON.parse(readFileSync(p, "utf-8"));
+    }
+  }
+  return null;
+}
+
+function getRegistry(): LocalRegistry {
+  const bundled = getBundledRegistry();
+  const localPath = getLocalRegistryPath();
+
+  if (existsSync(localPath)) {
+    const local = JSON.parse(readFileSync(localPath, "utf-8")) as LocalRegistry;
+    if (bundled) {
+      const names = new Set(bundled.sources.map((s) => s.name));
+      for (const s of local.sources) {
+        if (!names.has(s.name)) bundled.sources.push(s);
+      }
+      return bundled;
+    }
+    return local;
+  }
+
+  return bundled ?? { sources: [] };
+}
+
+function findSource(name: string): RegistrySource | undefined {
+  return getRegistry().sources.find((s) => s.name === name || s.url === name);
+}
+
+function cloneRepo(url: string, targetDir: string): void {
+  if (!existsSync(targetDir)) {
+    execSync(`git clone --depth 1 ${url} "${targetDir}"`, { stdio: "pipe" });
+  }
+}
+
+type RepoFormat = "skill-folders" | "flat-md" | "unknown";
+
+function detectFormat(repoDir: string): { format: RepoFormat; root: string } {
+  if (existsSync(join(repoDir, "skills"))) {
+    const entries = readdirSync(join(repoDir, "skills"), { withFileTypes: true })
+      .filter((d) => d.isDirectory());
+    if (entries.some((d) => existsSync(join(repoDir, "skills", d.name, "SKILL.md")))) {
+      return { format: "skill-folders", root: join(repoDir, "skills") };
+    }
+  }
+
+  const subdirs = readdirSync(repoDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "integrations" && d.name !== "examples" && d.name !== "scripts" && d.name !== "node_modules");
+
+  for (const dir of subdirs) {
+    const mdFiles = readdirSync(join(repoDir, dir.name))
+      .filter((f) => f.endsWith(".md") && f !== "README.md" && f !== "CONTRIBUTING.md" && f !== "LICENSE");
+    if (mdFiles.length > 0) {
+      const sample = readFileSync(join(repoDir, dir.name, mdFiles[0]!), "utf-8");
+      if (/^---\s*\n\s*name:/m.test(sample)) {
+        return { format: "flat-md", root: repoDir };
+      }
+    }
+  }
+
+  const rootMds = readdirSync(repoDir)
+    .filter((f) => f.endsWith(".md") && f !== "README.md" && f !== "CONTRIBUTING.md" && f !== "LICENSE");
+  if (rootMds.length > 0) {
+    const sample = readFileSync(join(repoDir, rootMds[0]!), "utf-8");
+    if (/^---\s*\n\s*name:/m.test(sample)) {
+      return { format: "flat-md", root: repoDir };
+    }
+  }
+
+  return { format: "unknown", root: repoDir };
+}
+
+function extractFrontmatter(content: string): { name: string; description: string; body: string } {
+  const nameMatch = content.match(/^name:\s*(.+)$/m);
+  const descMatch = content.match(/^description:\s*(.+)$/m);
+  const body = content.replace(/^---[\s\S]*?---\n?/, "").trim();
+  return {
+    name: nameMatch ? nameMatch[1]!.trim() : "",
+    description: descMatch ? descMatch[1]!.trim() : "",
+    body,
+  };
+}
+
+function installSkillFolders(sourceRoot: string, skillsDir: string, sourceUrl: string, license: string): number {
+  let count = 0;
+  const dirs = readdirSync(sourceRoot, { withFileTypes: true }).filter((d) => d.isDirectory());
+
+  for (const d of dirs) {
+    const skillMd = join(sourceRoot, d.name, "SKILL.md");
+    if (!existsSync(skillMd)) continue;
+
+    const destDir = join(skillsDir, d.name);
+    if (existsSync(destDir)) continue;
+
+    const { name, description, body } = extractFrontmatter(readFileSync(skillMd, "utf-8"));
+    const finalName = name || d.name;
+    const finalDesc = description;
+
+    mkdirSync(destDir, { recursive: true });
+
+    if (finalName && finalDesc) {
+      writeFileSync(
+        join(destDir, "SKILL.md"),
+        `---\nname: ${finalName}\ndescription: ${finalDesc}\nsource: community\nattribution: |\n  Originally from ${sourceUrl}\n  License: ${license || "unknown"}\n---\n\n${body}\n`,
+      );
+    } else {
+      cpSync(skillMd, join(destDir, "SKILL.md"));
+    }
+
+    for (const f of readdirSync(join(sourceRoot, d.name))) {
+      if (f !== "SKILL.md") {
+        const src = join(sourceRoot, d.name, f);
+        const dest = join(destDir, f);
+        try { cpSync(src, dest, { recursive: true }); } catch { /* skip */ }
+      }
+    }
+    count++;
+  }
+  return count;
+}
+
+function installFlatMd(repoDir: string, skillsDir: string, sourceUrl: string, license: string): number {
+  let count = 0;
+  const subdirs = readdirSync(repoDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "integrations" && d.name !== "examples" && d.name !== "scripts" && d.name !== "node_modules");
+
+  for (const cat of subdirs) {
+    const catDir = join(repoDir, cat.name);
+    const mdFiles = readdirSync(catDir).filter(
+      (f) => f.endsWith(".md") && f !== "README.md" && f !== "CONTRIBUTING.md" && f !== "LICENSE",
+    );
+
+    for (const mdFile of mdFiles) {
+      const content = readFileSync(join(catDir, mdFile), "utf-8");
+      const { name, description, body } = extractFrontmatter(content);
+      if (!name) continue;
+
+      let slug = basename(mdFile, ".md");
+      const prefixMatch = slug.match(new RegExp(`^${cat.name}-`));
+      if (prefixMatch) slug = slug.slice(prefixMatch[0]!.length);
+      if (!slug) continue;
+
+      const destDir = join(skillsDir, slug);
+      if (existsSync(destDir)) continue;
+
+      mkdirSync(destDir, { recursive: true });
+      writeFileSync(
+        join(destDir, "SKILL.md"),
+        `---\nname: ${name}\ndescription: ${description}\nsource: community\nattribution: |\n  Originally from ${sourceUrl}\n  License: ${license || "unknown"}\n---\n\n${body}\n`,
+      );
+      count++;
+    }
+  }
+  return count;
+}
+
+export async function skillInstallCommand(
+  sourceArg?: string,
+  options?: { force?: boolean; path?: string },
+): Promise<void> {
+  const registry = getRegistry();
+  const skillsDir = join(process.cwd(), ".opencode", "skills");
+
+  if (!sourceArg) {
+    console.log("\n  Recommended Starter Packs");
+    console.log("  ────────────────────────\n");
+    console.log("  Minimal Viable Power (3 skills):");
+    console.log("    npx strray-ai skill:install superpowers");
+    console.log("    npx strray-ai skill:install anthropic-skills");
+    console.log("    npx strray-ai skill:install ui-ux-pro-max");
+    console.log("    → 80% of daily gains for most devs\n");
+    console.log("  Full Pro Setup (5 skills):");
+    console.log("    npx strray-ai skill:install superpowers");
+    console.log("    npx strray-ai skill:install anthropic-skills");
+    console.log("    npx strray-ai skill:install antigravity");
+    console.log("    npx strray-ai skill:install ui-ux-pro-max");
+    console.log("    npx strray-ai skill:install impeccable");
+    console.log("    → The current meta for power users\n");
+    console.log("  Agency / Team Mode (4 skills):");
+    console.log("    npx strray-ai skill:install agency-agents");
+    console.log("    npx strray-ai skill:install superpowers");
+    console.log("    npx strray-ai skill:install antigravity");
+    console.log("    npx strray-ai skill:install ui-ux-pro-max");
+    console.log();
+    console.log("  Add specialized skills as needed:");
+    console.log("    SEO   → npx strray-ai skill:install claude-seo");
+    console.log("    Web3  → npx strray-ai skill:install ai-web3-security");
+    console.log("    Vue   → npx strray-ai skill:install vuejs-nuxt");
+    console.log("    Gemini → npx strray-ai skill:install gemini-skills");
+    console.log("    Gemini → npx strray-ai skill:install minimax");
+    console.log();
+    console.log("  Available sources:\n");
+    for (const s of registry.sources) {
+      console.log(`    ${s.name.padEnd(20)} ${s.description || s.url}`);
+      console.log(`    ${"".padEnd(20)} ${s.url}`);
+      if (s.license) console.log(`    ${"".padEnd(20)} License: ${s.license}`);
+      console.log();
+    }
+    console.log("  Usage:");
+    console.log("    npx strray-ai skill:install <source-name>");
+    console.log("    npx strray-ai skill:install <github-url>");
+    console.log("    npx strray-ai skill:install <url> --path <subdir>");
+    console.log();
+    console.log("  Formats auto-detected: SKILL.md folders, flat .md with frontmatter");
+    return;
+  }
+
+  const source = findSource(sourceArg);
+  const url = source?.url || sourceArg;
+  const license = source?.license || "unknown";
+
+  mkdirSync(skillsDir, { recursive: true });
+
+  const tmpDir = join(process.cwd(), ".opencode", "_tmp", "install");
+  console.log(`  Cloning ${url}...`);
+  cloneRepo(url, tmpDir);
+
+  const searchDir = options?.path ? join(tmpDir, options.path) : tmpDir;
+  const { format, root } = detectFormat(searchDir);
+
+  let count = 0;
+  if (format === "skill-folders") {
+    count = installSkillFolders(root, skillsDir, url, license);
+  } else if (format === "flat-md") {
+    count = installFlatMd(root, skillsDir, url, license);
+  } else {
+    console.log("  Could not detect skill format. Looking for SKILL.md folders at root...");
+    count = installSkillFolders(searchDir, skillsDir, url, license);
+    if (count === 0) {
+      count = installFlatMd(searchDir, skillsDir, url, license);
+    }
+  }
+
+  execSync(`rm -rf "${tmpDir}"`, { stdio: "pipe" });
+  console.log(`  Installed ${count} skills (${format}) → .opencode/skills/`);
+
+  const total = readdirSync(skillsDir).filter((d) =>
+    existsSync(join(skillsDir, d, "SKILL.md")),
+  ).length;
+  console.log(`  Total skills available: ${total}`);
+}
+
+export async function skillRegistryCommand(
+  action?: string,
+  args?: Record<string, string>,
+): Promise<void> {
+  if (!action || action === "list") {
+    const registry = getRegistry();
+    const localPath = getLocalRegistryPath();
+    const localNames = existsSync(localPath)
+      ? new Set(JSON.parse(readFileSync(localPath, "utf-8")).sources.map((s: RegistrySource) => s.name))
+      : new Set<string>();
+
+    console.log("\n  Skills Registry\n  ===============\n");
+    if (registry.sources.length === 0) {
+      console.log("  No sources.\n");
+      return;
+    }
+    for (const s of registry.sources) {
+      const origin = localNames.has(s.name) ? "local" : "bundled";
+      console.log(`    ${s.name.padEnd(22)} [${origin}] ${s.license ? `(${s.license})` : ""}`);
+      console.log(`    ${"".padEnd(22)} ${s.url}`);
+      if (s.description) console.log(`    ${"".padEnd(22)} ${s.description}`);
+      console.log();
+    }
+    return;
+  }
+
+  if (action === "add") {
+    const name = args?.name;
+    const url = args?.url;
+    if (!name || !url) {
+      console.log("\n  Usage: npx strray-ai skill:registry add --name <name> --url <url>\n");
+      console.log("  Options:");
+      console.log("    --name <name>          Unique source name");
+      console.log("    --url <github-url>     Repository URL");
+      console.log("    --desc <description>   Short description");
+      console.log("    --license <license>    License (e.g. MIT, Apache-2.0)");
+      return;
+    }
+
+    const localPath = getLocalRegistryPath();
+    let existing = { sources: [] } as LocalRegistry;
+    if (existsSync(localPath)) {
+      existing = JSON.parse(readFileSync(localPath, "utf-8"));
+    }
+
+    const source: RegistrySource = {
+      name,
+      url,
+      description: args?.desc || args?.description,
+      license: args?.license,
+    };
+
+    const idx = existing.sources.findIndex((s) => s.name === name);
+    if (idx >= 0) {
+      existing.sources[idx] = source;
+      console.log(`  Updated: ${name}`);
+    } else {
+      existing.sources.push(source);
+      console.log(`  Added: ${name}`);
+    }
+
+    mkdirSync(dirname(localPath), { recursive: true });
+    writeFileSync(localPath, JSON.stringify(existing, null, 2) + "\n");
+    console.log(`  Saved to ${localPath}`);
+    return;
+  }
+
+  if (action === "remove") {
+    const name = args?.name || args?.["_"]?.[0];
+    if (!name) {
+      console.log("  Usage: npx strray-ai skill:registry remove --name <name>");
+      return;
+    }
+
+    const localPath = getLocalRegistryPath();
+    if (!existsSync(localPath)) {
+      console.log(`  "${name}" not found in local registry.`);
+      return;
+    }
+
+    const existing = JSON.parse(readFileSync(localPath, "utf-8")) as LocalRegistry;
+    const idx = existing.sources.findIndex((s) => s.name === name);
+    if (idx < 0) {
+      console.log(`  "${name}" not found in local registry.`);
+      return;
+    }
+
+    existing.sources.splice(idx, 1);
+    writeFileSync(localPath, JSON.stringify(existing, null, 2) + "\n");
+    console.log(`  Removed: ${name}`);
+    return;
+  }
+
+  console.log(`  Unknown action: ${action}`);
+  console.log("  Usage: npx strray-ai skill:registry [list|add|remove]");
+}

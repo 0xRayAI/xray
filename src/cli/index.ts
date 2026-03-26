@@ -823,6 +823,30 @@ program
     await credibleInitCommand();
   });
 
+// Skill registry command
+program
+  .command('skill:registry [action]')
+  .description('List, add, or remove skills registry sources')
+  .option('--name <name>', 'Source name')
+  .option('--url <url>', 'Repository URL')
+  .option('--desc <desc>', 'Description')
+  .option('--license <license>', 'License type')
+  .action(async (action, options) => {
+    const { skillRegistryCommand } = await import('./commands/skill-install.js');
+    await skillRegistryCommand(action, options);
+  });
+
+// Skill install command
+program
+  .command('skill:install [source]')
+  .description('Install skills from the registry or any git repo')
+  .option('--path <dir>', 'Subdirectory in repo containing skills')
+  .option('--force', 'Reinstall even if already installed')
+  .action(async (sourceArg, options) => {
+    const { skillInstallCommand } = await import('./commands/skill-install.js');
+    await skillInstallCommand(sourceArg, options);
+  });
+
 // Add help text
 program.addHelpText(
   "after",
@@ -840,6 +864,9 @@ Examples:
     $ npx strray-ai doctor        # Diagnose issues (does not fix them)
     $ npx strray-ai analytics     # Pattern analytics and insights
     $ npx strray-ai inference:improve  # Run autonomous inference improvement
+    $ npx strray-ai skill:install agency-agents  # Install 170+ agency agent skills
+    $ npx strray-ai skill:install superpowers      # Install 14 agentic workflow skills
+    $ npx strray-ai skill:install <github-url>     # Install from any repo
 
 Quick Start:
    1. Install: npx strray-ai install
@@ -848,6 +875,7 @@ Quick Start:
    4. Generate reports: npx strray-ai report
    5. Fix issues: npx strray-ai fix
    6. View analytics: npx strray-ai analytics
+   7. Add skills: npx strray-ai skill:install agency-agents
 
 For more information, visit: https://github.com/htafolla/stringray
 `,
