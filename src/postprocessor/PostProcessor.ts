@@ -1115,7 +1115,6 @@ All path violations will be automatically detected and blocked.
           /\.opencode\/agents\//,
           /\/agents\//,
           /AGENTS\.md$/,
-          /\.opencode\/strray\/routing-mappings\.json$/,
         ];
 
         const changedFiles = context.files || [];

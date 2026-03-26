@@ -12,8 +12,8 @@ import type {
   RoutingOutcome,
   RoutingDecision,
   PromptDataPoint,
-} from "../delegation/task-skill-router.js";
-import { routingOutcomeTracker } from "../delegation/task-skill-router.js";
+} from "../delegation/config/types.js";
+import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 
 export interface AgentPerformanceMetrics {
   agent: string;

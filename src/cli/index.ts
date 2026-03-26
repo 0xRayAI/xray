@@ -535,90 +535,6 @@ program
     }
   });
 
-// Calibrate command - adjust complexity based on historical accuracy
-program
-  .command("calibrate")
-  .description("Calibrate complexity predictions based on historical accuracy")
-  .option("-m, --min-samples <number>", "Minimum samples needed")
-  .option("-a, --apply", "Apply calibration to complexity analyzer")
-  .action(async (opts) => {
-    console.log("🎯 StringRay Complexity Calibration");
-    console.log("======================================");
-    console.log("");
-
-    try {
-      const { ComplexityCalibrator } =
-        await import("../delegation/complexity-calibrator.js");
-
-      // Get default min samples from features.json
-      const fs = await import("fs");
-      const path = await import("path");
-      let defaultMinSamples = 3;
-      try {
-        const featuresPath = path.join(process.cwd(), ".opencode", "strray", "features.json");
-        if (fs.existsSync(featuresPath)) {
-          const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
-          defaultMinSamples = features.analytics?.min_samples_for_calibration || 3;
-        }
-      } catch { /* use default */ }
-
-      const calibrator = new ComplexityCalibrator();
-      const minSamples = parseInt(opts.minSamples) || defaultMinSamples;
-
-      console.log(
-        `Analyzing historical accuracy (need ${minSamples}+ samples)...`,
-      );
-      console.log("");
-
-      const result = await calibrator.calibrate(minSamples);
-
-      if (!result) {
-        console.log("⚠️ Not enough data for calibration.");
-        console.log("   Run more tasks and try again.");
-        console.log("   (Or use -m 1 to work with fewer samples)");
-        return;
-      }
-
-      // Display results
-      console.log("📊 Calibration Results:");
-      console.log(`   Sample size: ${result.sampleSize}`);
-      console.log("");
-      console.log("   Accuracy breakdown:");
-      console.log(
-        `   - Underestimated: ${result.accuracyHistory.underestimated} (${((result.accuracyHistory.underestimated / result.sampleSize) * 100).toFixed(1)}%)`,
-      );
-      console.log(
-        `   - Accurate: ${result.accuracyHistory.accurate} (${((result.accuracyHistory.accurate / result.sampleSize) * 100).toFixed(1)}%)`,
-      );
-      console.log(
-        `   - Overestimated: ${result.accuracyHistory.overestimated} (${((result.accuracyHistory.overestimated / result.sampleSize) * 100).toFixed(1)}%)`,
-      );
-      console.log("");
-      console.log("   Adjusted thresholds:");
-      console.log(`   - Simple: ${result.adjustedThresholds.simple}`);
-      console.log(`   - Moderate: ${result.adjustedThresholds.moderate}`);
-      console.log(`   - Complex: ${result.adjustedThresholds.complex}`);
-      console.log(`   - Enterprise: ${result.adjustedThresholds.enterprise}`);
-
-      if (opts.apply) {
-        // Would apply to analyzer - for now just show what would happen
-        console.log("");
-        console.log("✅ Calibration would be applied (integration pending)");
-      }
-
-      console.log("");
-      console.log(
-        "💡 Run 'npx strray-ai analytics' to see detailed pattern insights",
-      );
-    } catch (error) {
-      console.error(
-        "❌ Calibration failed:",
-        error instanceof Error ? error.message : String(error),
-      );
-      process.exit(1);
-    }
-  });
-
 program
   .command("doctor")
   .description("Diagnose framework issues (does not fix them)")
@@ -907,35 +823,6 @@ program
     await credibleInitCommand();
   });
 
-// Skill list command
-program
-  .command('skill:list')
-  .description('List all discovered skills with details')
-  .action(async () => {
-    const { skillListCommand } = await import('./commands/skill-list.js');
-    await skillListCommand();
-  });
-
-// Agent skills command
-program
-  .command('agent:skills')
-  .description('Show agent-skill bindings')
-  .action(async () => {
-    const { agentSkillsCommand } = await import('./commands/agent-skills.js');
-    await agentSkillsCommand();
-  });
-
-// Skill install command
-program
-  .command('skill:install [source]')
-  .description('Install third-party skills from any git repo or suggested source')
-  .option('--path <dir>', 'Subdirectory in repo containing SKILL.md folders')
-  .option('--force', 'Reinstall even if already installed')
-  .action(async (sourceArg, options) => {
-    const { skillInstallCommand } = await import('./commands/skill-install.js');
-    await skillInstallCommand(sourceArg, options);
-  });
-
 // Add help text
 program.addHelpText(
   "after",
@@ -952,11 +839,7 @@ Examples:
     $ npx strray-ai fix           # Automatically restore missing config files
     $ npx strray-ai doctor        # Diagnose issues (does not fix them)
     $ npx strray-ai analytics     # Pattern analytics and insights
-    $ npx strray-ai calibrate     # Calibrate complexity predictions
     $ npx strray-ai inference:improve  # Run autonomous inference improvement
-    $ npx strray-ai skill:install antigravity  # Install community skills
-    $ npx strray-ai skill:list      # List all discovered skills
-    $ npx strray-ai agent:skills    # Show agent-skill bindings
 
 Quick Start:
    1. Install: npx strray-ai install
@@ -965,7 +848,6 @@ Quick Start:
    4. Generate reports: npx strray-ai report
    5. Fix issues: npx strray-ai fix
    6. View analytics: npx strray-ai analytics
-   7. Calibrate: npx strray-ai calibrate
 
 For more information, visit: https://github.com/htafolla/stringray
 `,

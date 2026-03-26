@@ -8,7 +8,6 @@
  * @since 2026-03-12
  */
 
-import { ROUTING_CONFIG } from '../config/routing-config.js';
 import {
   RoutingOutcome,
   AgentStats,
@@ -125,7 +124,7 @@ export class RoutingOutcomeTracker {
    * @param outcome The outcome to record (timestamp will be added)
    */
   recordOutcome(outcome: Omit<RoutingOutcome, 'timestamp'>): void {
-    if (!ROUTING_CONFIG.ENABLE_OUTCOME_TRACKING) return;
+    if (!this.maxOutcomes) return;
 
     this.outcomes.push({ ...outcome, timestamp: new Date() });
 

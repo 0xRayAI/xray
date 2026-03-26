@@ -12,8 +12,8 @@ import type {
   RoutingOutcome,
   PromptDataPoint,
   RoutingDecision,
-} from "../delegation/task-skill-router.js";
-import { routingOutcomeTracker } from "../delegation/task-skill-router.js";
+} from "../delegation/config/types.js";
+import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 import {
   type PromptComparisonResult,
   promptPatternAnalyzer,

@@ -18,7 +18,6 @@ import {
 import { StringRayStateManager } from "../state/state-manager.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { TaskSkillRouter, createTaskSkillRouter } from "./task-skill-router.js";
 import { getKernel, KernelInferenceResult } from "../core/kernel-patterns.js";
 import { DEFAULT_AGENTS } from "../config/default-agents.js";
 
@@ -93,7 +92,6 @@ export class AgentDelegator {
   private complexityAnalyzer: ComplexityAnalyzer;
   private stateManager: StringRayStateManager;
   private configLoader: typeof strRayConfigLoader;
-  private taskSkillRouter: TaskSkillRouter;
   private kernel: ReturnType<typeof getKernel>;
 
   constructor(
@@ -103,7 +101,6 @@ export class AgentDelegator {
     this.stateManager = stateManager;
     this.configLoader = configLoader;
     this.complexityAnalyzer = new ComplexityAnalyzer();
-    this.taskSkillRouter = createTaskSkillRouter(stateManager);
     this.kernel = getKernel();
   }
 
@@ -144,17 +141,12 @@ export class AgentDelegator {
       stateManager: this.stateManager,
     };
 
-    const preprocessResult = this.taskSkillRouter.preprocess(
-      description,
-      routingOptions,
-    );
-
     return {
-      operation: preprocessResult.operation,
-      context: preprocessResult.context,
-      suggestedAgent: preprocessResult.routing.agent,
-      suggestedSkill: preprocessResult.routing.skill,
-      confidence: preprocessResult.routing.confidence,
+      operation: description,
+      context: {},
+      suggestedAgent: DEFAULT_AGENTS[0]?.name || "enforcer",
+      suggestedSkill: "",
+      confidence: 0.5,
     };
   }
 

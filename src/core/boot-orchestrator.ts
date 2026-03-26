@@ -16,7 +16,6 @@ import { pathResolver } from "../utils/path-resolver.js";
 const AGENTS_BASE_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
 import {
   createAgentDelegator,
-  createSessionCoordinator,
 } from "../delegation/index.js";
 import { createSessionCleanupManager } from "../session/session-cleanup-manager.js";
 import { createSessionMonitor } from "../session/session-monitor.js";
@@ -29,7 +28,6 @@ import { strRayConfigLoader } from "./config-loader.js";
 import { activity } from "./activity-logger.js";
 import { inferenceTuner } from "../services/inference-tuner.js";
 import { setupMemoryMonitoring, getMemoryHealthSummary } from "./memory-monitor-setup.js";
-import { initializeSkillRegistry, getSkillRegistry, SkillRegistry } from "../skills/index.js";
 
 async function dynamicImport<T = any>(
   primaryPath: string,
@@ -205,51 +203,11 @@ export class BootOrchestrator {
       );
       this.stateManager.set("delegation:agent_delegator", agentDelegator);
 
-      const sessionCoordinator = createSessionCoordinator(this.stateManager);
-      this.stateManager.set(
-        "delegation:session_coordinator",
-        sessionCoordinator,
-      );
-
-      const defaultSession = sessionCoordinator.initializeSession("default");
-      this.stateManager.set("delegation:default_session", defaultSession);
-
       return true;
     } catch (error) {
       await frameworkLogger.log(
         "boot-orchestrator",
         "delegation-system-initialization-failed",
-        "error",
-        { error: String(error) },
-      );
-      return false;
-    }
-  }
-
-  /**
-   * Initialize skill discovery and registry
-   */
-  private async initializeSkillDiscovery(): Promise<boolean> {
-    try {
-      const directory = process.cwd();
-      const registry = await initializeSkillRegistry(directory);
-      
-      this.stateManager.set("skill:registry", registry);
-      this.stateManager.set("skill:registry_active", true);
-      this.stateManager.set("skill:count", registry.count());
-      
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "skill-discovery-completed",
-        "info",
-        { skillCount: registry.count() },
-      );
-      
-      return true;
-    } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "skill-discovery-failed",
         "error",
         { error: String(error) },
       );
@@ -857,18 +815,7 @@ export class BootOrchestrator {
         { jobId },
       );
 
-      // Phase 1.5: Skill Discovery
-      const skillDiscoveryInitialized = await this.initializeSkillDiscovery();
-      if (!skillDiscoveryInitialized) {
-        frameworkLogger.log(
-          "boot-orchestrator",
-          "skill discovery initialization failed",
-          "error",
-          { jobId },
-        );
-        result.errors.push("Failed to initialize skill discovery");
-        return result;
-      }
+      // Phase 1.5: Skill Discovery (removed - OpenCode handles skill routing natively)
       result.skillRegistryActive = true;
       result.skillsDiscovered = this.stateManager.get("skill:count") || 0;
       frameworkLogger.log(

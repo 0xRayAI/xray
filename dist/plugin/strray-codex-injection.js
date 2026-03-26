@@ -76,8 +76,6 @@ let ProcessorManager;
 let StrRayStateManager;
 let featuresConfigLoader;
 let detectTaskType;
-let TaskSkillRouter;
-let taskSkillRouterInstance;
 async function loadStrRayComponents() {
     if (ProcessorManager && StrRayStateManager && featuresConfigLoader) {
         return;
@@ -227,28 +225,6 @@ function estimateComplexity(message) {
     }
     // Clamp to 0-100
     return Math.max(0, Math.min(100, score));
-}
-async function loadTaskSkillRouter() {
-    if (taskSkillRouterInstance) {
-        return; // Already loaded
-    }
-    // Try local dist first (for development)
-    try {
-        const module = await import("../../dist/delegation/task-skill-router.js");
-        TaskSkillRouter = module.TaskSkillRouter;
-        taskSkillRouterInstance = new TaskSkillRouter();
-    }
-    catch (distError) {
-        // Try node_modules (for consumer installs)
-        try {
-            const module = await import("strray-ai/dist/delegation/task-skill-router.js");
-            TaskSkillRouter = module.TaskSkillRouter;
-            taskSkillRouterInstance = new TaskSkillRouter();
-        }
-        catch (nmError) {
-            // Task routing not available - continue without it
-        }
-    }
 }
 function spawnPromise(command, args, cwd) {
     return new Promise((resolve, reject) => {
@@ -554,31 +530,6 @@ export default async function strrayCodexPlugin(input) {
             if (!taskDescription) {
                 taskDescription = extractTaskDescription(input);
             }
-            // Route tool commands based on extracted action words
-            if (taskDescription) {
-                try {
-                    await loadTaskSkillRouter();
-                    if (taskSkillRouterInstance) {
-                        const routingResult = taskSkillRouterInstance.routeTask(taskDescription, {
-                            source: "tool_command",
-                            complexity: estimateComplexity(taskDescription),
-                        });
-                        if (routingResult && routingResult.agent) {
-                            logger.log(`🎯 Tool routed: ${tool} → @${routingResult.agent} (${Math.round(routingResult.confidence * 100)}%)`);
-                            // Log routing for analytics
-                            logToolActivity(directory, "routing", tool, {
-                                taskDescription,
-                                agent: routingResult.agent,
-                                confidence: routingResult.confidence
-                            });
-                        }
-                    }
-                }
-                catch (e) {
-                    // Silent fail - routing should not break tool execution
-                    logger.log(`📝 Tool routing skipped: ${e}`);
-                }
-            }
             // ENFORCER QUALITY GATE CHECK - Block on violations
             await importQualityGate(directory);
             if (!runQualityGateWithLogging) {
@@ -835,107 +786,6 @@ export default async function strrayCodexPlugin(input) {
                 return;
             }
             logger.log(`👤 User message: "${userMessage.slice(0, 50)}..."`);
-            try {
-                await loadTaskSkillRouter();
-                if (taskSkillRouterInstance) {
-                    // Get complexity score for tiebreaking
-                    let complexityScore = 50; // default medium
-                    try {
-                        if (featuresConfigLoader) {
-                            const config = featuresConfigLoader.loadConfig();
-                            if (config.model_routing?.complexity?.enabled) {
-                                // Estimate complexity based on message length and keywords
-                                complexityScore = estimateComplexity(userMessage);
-                            }
-                        }
-                    }
-                    catch (e) {
-                        // Silent fail for complexity estimation
-                    }
-                    // Route with complexity context
-                    const routingResult = taskSkillRouterInstance.routeTask(userMessage, {
-                        source: "chat_message",
-                        complexity: complexityScore,
-                    });
-                    if (routingResult && routingResult.agent) {
-                        // Apply weighted confidence scoring
-                        let finalConfidence = routingResult.confidence;
-                        let routingMethod = "keyword";
-                        // If keyword confidence is low, use complexity-based routing
-                        if (routingResult.confidence < 0.7 && complexityScore > 50) {
-                            // High complexity tasks get orchestrator boost
-                            if (complexityScore > 70) {
-                                routingResult.agent = "orchestrator";
-                                finalConfidence = Math.min(0.85, routingResult.confidence + 0.15);
-                                routingMethod = "complexity";
-                            }
-                        }
-                        // If low complexity and low confidence, boost code-reviewer
-                        if (routingResult.confidence < 0.6 && complexityScore < 30) {
-                            routingResult.agent = "code-reviewer";
-                            finalConfidence = Math.min(0.75, routingResult.confidence + 0.15);
-                            routingMethod = "complexity";
-                        }
-                        logger.log(`🎯 Routed to: @${routingResult.agent} (${Math.round(finalConfidence * 100)}%) via ${routingMethod}`);
-                        // Skill matching and auto-invoke check
-                        try {
-                            let skillsModule = null;
-                            try {
-                                skillsModule = await import("../../dist/skills/matcher.js");
-                            }
-                            catch {
-                                for (const p of ["strray-ai", "strray-framework"]) {
-                                    try {
-                                        skillsModule = await import(`../../node_modules/${p}/dist/skills/matcher.js`);
-                                        break;
-                                    }
-                                    catch {
-                                        continue;
-                                    }
-                                }
-                            }
-                            if (skillsModule) {
-                                const { matchTaskToSkill, getSkillTools } = skillsModule;
-                                const skillMatch = await matchTaskToSkill(routingResult.skill);
-                                if (skillMatch) {
-                                    logger.log(`📚 Skill matched: ${skillMatch.skill.name} (${Math.round(skillMatch.confidence * 100)}% confidence)`);
-                                    const tools = await getSkillTools(skillMatch.skill.name);
-                                    if (tools.length > 0) {
-                                        logger.log(`🔧 Skill tools: ${tools.join(", ")}`);
-                                        if (skillMatch.shouldInvoke) {
-                                            logger.log(`⚡ Auto-invoke: YES - ${skillMatch.invokeReason}`);
-                                        }
-                                        else {
-                                            logger.log(`⚡ Auto-invoke: NO - ${skillMatch.invokeReason}`);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        catch (e) {
-                            logger.error("Skill matching failed", e);
-                        }
-                        // Store routing in session for later use
-                        const sessionRoutingPath = path.join(process.cwd(), "logs", "framework", "session-routing.json");
-                        try {
-                            fs.appendFileSync(sessionRoutingPath, JSON.stringify({
-                                timestamp: new Date().toISOString(),
-                                message: userMessage.slice(0, 100),
-                                agent: routingResult.agent,
-                                confidence: finalConfidence,
-                                method: routingMethod,
-                                complexity: complexityScore,
-                            }) + "\n");
-                        }
-                        catch (e) {
-                            // Silent fail for session routing logging
-                        }
-                    }
-                }
-            }
-            catch (e) {
-                logger.error("Chat message routing error:", e);
-            }
         },
         config: async (_config) => {
             const logger = await getOrCreateLogger(directory);

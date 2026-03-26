@@ -8,7 +8,6 @@
  * @since 2026-03-12
  */
 
-import { ROUTING_CONFIG } from '../config/routing-config.js';
 import {
   DailyAnalyticsSummary,
   RoutingAnalyticsData,
@@ -49,7 +48,7 @@ export class RoutingAnalytics {
       totalRoutings > 0 ? totalSuccesses / totalRoutings : 0;
 
     const insights: string[] = [];
-    if (totalRoutings > 0 && averageSuccessRate < ROUTING_CONFIG.MIN_HISTORY_SUCCESS_RATE) {
+    if (totalRoutings > 0 && averageSuccessRate < 0.5) {
       insights.push(
         `Low overall success rate: ${(averageSuccessRate * 100).toFixed(1)}%`
       );

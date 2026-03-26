@@ -10,18 +10,13 @@ import {
 } from "./rule-enforcer.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
-import { createTaskSkillRouter } from "../delegation/task-skill-router.js";
 import { AgentDelegator } from "../delegation/agent-delegator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
 import * as fs from "fs";
 import * as path from "path";
 
-// Create TaskSkillRouter instance for intelligent routing
-const taskSkillRouter = createTaskSkillRouter();
-
 // Minimum confidence to auto-delegate to another agent
-// Lowered from 0.75 to 0.50 per Option D vote for better agent utilization
 const DELEGATION_CONFIDENCE_THRESHOLD = 0.50;
 
 // Agents that enforcer should NOT delegate to (enforcer handles these itself)
@@ -34,22 +29,14 @@ export interface RoutingRecommendation {
   matchedKeyword?: string;
 }
 
-/**
- * Pre-process task description to get intelligent routing recommendation
- * Uses TaskSkillRouter to determine the best agent/skill for the task
- */
 export function getTaskRoutingRecommendation(
   taskDescription: string,
 ): RoutingRecommendation {
-  const result = taskSkillRouter.routeTask(taskDescription, {
-    useHistoricalData: false, // Skip history for fresh decisions
-  });
-
   return {
-    suggestedAgent: result.agent,
-    suggestedSkill: result.skill,
-    confidence: result.confidence,
-    matchedKeyword: result.matchedKeyword || "none",
+    suggestedAgent: "enforcer",
+    suggestedSkill: "",
+    confidence: 0.5,
+    matchedKeyword: "none",
   };
 }
 
