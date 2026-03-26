@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync } from "fs";
+import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync } from "fs";
 import { join, basename, dirname } from "path";
 import { execSync } from "child_process";
 
@@ -53,10 +53,30 @@ function findSource(name: string): RegistrySource | undefined {
   return getRegistry().sources.find((s) => s.name === name || s.url === name);
 }
 
-function cloneRepo(url: string, targetDir: string): void {
-  if (!existsSync(targetDir)) {
-    execSync(`git clone --depth 1 ${url} "${targetDir}"`, { stdio: "pipe" });
+function resolveSourcePrefix(sourceArg: string, source?: RegistrySource): string {
+  if (source?.name) return source.name;
+  const match = sourceArg.match(/\/([^/]+?)(?:\.git)?$/);
+  return match?.[1] ?? sourceArg.replace(/[^a-zA-Z0-9-]/g, "-");
+}
+
+function cleanSourceSkills(skillsDir: string, sourcePrefix: string): number {
+  let removed = 0;
+  const prefix = `${sourcePrefix}--`;
+  if (!existsSync(skillsDir)) return 0;
+  for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name.startsWith(prefix)) {
+      rmSync(join(skillsDir, entry.name), { recursive: true });
+      removed++;
+    }
   }
+  return removed;
+}
+
+function cloneRepo(url: string, targetDir: string): void {
+  if (existsSync(targetDir)) {
+    rmSync(targetDir, { recursive: true });
+  }
+  execSync(`git clone --depth 1 ${url} "${targetDir}"`, { stdio: "pipe" });
 }
 
 type RepoFormat = "skill-folders" | "flat-md" | "unknown";
@@ -107,7 +127,7 @@ function extractFrontmatter(content: string): { name: string; description: strin
   };
 }
 
-function installSkillFolders(sourceRoot: string, skillsDir: string, sourceUrl: string, license: string): number {
+function installSkillFolders(sourceRoot: string, skillsDir: string, sourcePrefix: string, sourceUrl: string, license: string): number {
   let count = 0;
   const dirs = readdirSync(sourceRoot, { withFileTypes: true }).filter((d) => d.isDirectory());
 
@@ -115,19 +135,17 @@ function installSkillFolders(sourceRoot: string, skillsDir: string, sourceUrl: s
     const skillMd = join(sourceRoot, d.name, "SKILL.md");
     if (!existsSync(skillMd)) continue;
 
-    const destDir = join(skillsDir, d.name);
-    if (existsSync(destDir)) continue;
-
     const { name, description, body } = extractFrontmatter(readFileSync(skillMd, "utf-8"));
     const finalName = name || d.name;
     const finalDesc = description;
 
+    const destDir = join(skillsDir, `${sourcePrefix}--${d.name}`);
     mkdirSync(destDir, { recursive: true });
 
     if (finalName && finalDesc) {
       writeFileSync(
         join(destDir, "SKILL.md"),
-        `---\nname: ${finalName}\ndescription: ${finalDesc}\nsource: community\nattribution: |\n  Originally from ${sourceUrl}\n  License: ${license || "unknown"}\n---\n\n${body}\n`,
+        `---\nname: ${finalName}\ndescription: ${finalDesc}\nsource: community\nsource_name: ${sourcePrefix}\nattribution: |\n  Originally from ${sourceUrl}\n  License: ${license || "unknown"}\n---\n\n${body}\n`,
       );
     } else {
       cpSync(skillMd, join(destDir, "SKILL.md"));
@@ -145,7 +163,7 @@ function installSkillFolders(sourceRoot: string, skillsDir: string, sourceUrl: s
   return count;
 }
 
-function installFlatMd(repoDir: string, skillsDir: string, sourceUrl: string, license: string): number {
+function installFlatMd(repoDir: string, skillsDir: string, sourcePrefix: string, sourceUrl: string, license: string): number {
   let count = 0;
   const subdirs = readdirSync(repoDir, { withFileTypes: true })
     .filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "integrations" && d.name !== "examples" && d.name !== "scripts" && d.name !== "node_modules");
@@ -166,13 +184,11 @@ function installFlatMd(repoDir: string, skillsDir: string, sourceUrl: string, li
       if (prefixMatch) slug = slug.slice(prefixMatch[0]!.length);
       if (!slug) continue;
 
-      const destDir = join(skillsDir, slug);
-      if (existsSync(destDir)) continue;
-
+      const destDir = join(skillsDir, `${sourcePrefix}--${slug}`);
       mkdirSync(destDir, { recursive: true });
       writeFileSync(
         join(destDir, "SKILL.md"),
-        `---\nname: ${name}\ndescription: ${description}\nsource: community\nattribution: |\n  Originally from ${sourceUrl}\n  License: ${license || "unknown"}\n---\n\n${body}\n`,
+        `---\nname: ${name}\ndescription: ${description}\nsource: community\nsource_name: ${sourcePrefix}\nattribution: |\n  Originally from ${sourceUrl}\n  License: ${license || "unknown"}\n---\n\n${body}\n`,
       );
       count++;
     }
@@ -190,36 +206,39 @@ export async function skillInstallCommand(
   if (!sourceArg) {
     console.log("\n  Recommended Starter Packs");
     console.log("  ────────────────────────\n");
-    console.log("  Minimal Viable Power (3 skills):");
+    console.log("  Minimal Viable Power (3 sources):");
     console.log("    npx strray-ai skill:install superpowers");
     console.log("    npx strray-ai skill:install anthropic-skills");
     console.log("    npx strray-ai skill:install ui-ux-pro-max");
     console.log("    → 80% of daily gains for most devs\n");
-    console.log("  Full Pro Setup (5 skills):");
+    console.log("  Full Pro Setup (5 sources):");
     console.log("    npx strray-ai skill:install superpowers");
     console.log("    npx strray-ai skill:install anthropic-skills");
     console.log("    npx strray-ai skill:install antigravity");
-    console.log("    npx strray-ai skill:install ui-ux-pro-max");
     console.log("    npx strray-ai skill:install impeccable");
+    console.log("    npx strray-ai skill:install ui-ux-pro-max");
     console.log("    → The current meta for power users\n");
-    console.log("  Agency / Team Mode (4 skills):");
+    console.log("  Agency / Team Mode (4 sources):");
     console.log("    npx strray-ai skill:install agency-agents");
     console.log("    npx strray-ai skill:install superpowers");
     console.log("    npx strray-ai skill:install antigravity");
     console.log("    npx strray-ai skill:install ui-ux-pro-max");
     console.log();
-    console.log("  Add specialized skills as needed:");
-    console.log("    SEO   → npx strray-ai skill:install claude-seo");
-    console.log("    Web3  → npx strray-ai skill:install ai-web3-security");
-    console.log("    Vue   → npx strray-ai skill:install vuejs-nuxt");
-    console.log("    Gemini → npx strray-ai skill:install gemini-skills");
-    console.log("    Gemini → npx strray-ai skill:install minimax");
+    console.log("  Add specialized sources as needed:");
+    console.log("    Web3    → npx strray-ai skill:install ai-web3-security");
+    console.log("    Vue     → npx strray-ai skill:install vuejs-nuxt");
+    console.log("    Gemini  → npx strray-ai skill:install gemini-skills");
+    console.log("    MiniMax → npx strray-ai skill:install minimax");
+    console.log();
+    console.log("  Re-install to update community skills:");
+    console.log("    npx strray-ai skill:install <source-name>   # removes old, installs fresh");
     console.log();
     console.log("  Available sources:\n");
     for (const s of registry.sources) {
-      console.log(`    ${s.name.padEnd(20)} ${s.description || s.url}`);
-      console.log(`    ${"".padEnd(20)} ${s.url}`);
-      if (s.license) console.log(`    ${"".padEnd(20)} License: ${s.license}`);
+      const installed = existsSync(join(skillsDir, `${s.name}--`));
+      console.log(`    ${s.name.padEnd(22)} [${installed ? "installed" : "available"}] ${s.license ? `(${s.license})` : ""}`);
+      console.log(`    ${"".padEnd(22)} ${s.url}`);
+      if (s.description) console.log(`    ${"".padEnd(22)} ${s.description}`);
       console.log();
     }
     console.log("  Usage:");
@@ -227,15 +246,23 @@ export async function skillInstallCommand(
     console.log("    npx strray-ai skill:install <github-url>");
     console.log("    npx strray-ai skill:install <url> --path <subdir>");
     console.log();
-    console.log("  Formats auto-detected: SKILL.md folders, flat .md with frontmatter");
+    console.log("  Community skills are namespaced (e.g., agency-agents--code-review)");
+    console.log("  Framework skills are never overwritten.");
+    console.log("  Re-installing a source refreshes all its skills.");
     return;
   }
 
   const source = findSource(sourceArg);
   const url = source?.url || sourceArg;
   const license = source?.license || "unknown";
+  const sourcePrefix = resolveSourcePrefix(sourceArg, source);
 
   mkdirSync(skillsDir, { recursive: true });
+
+  const removed = cleanSourceSkills(skillsDir, sourcePrefix);
+  if (removed > 0) {
+    console.log(`  Removed ${removed} existing skills from ${sourcePrefix} (re-install)`);
+  }
 
   const tmpDir = join(process.cwd(), ".opencode", "_tmp", "install");
   console.log(`  Cloning ${url}...`);
@@ -246,19 +273,22 @@ export async function skillInstallCommand(
 
   let count = 0;
   if (format === "skill-folders") {
-    count = installSkillFolders(root, skillsDir, url, license);
+    count = installSkillFolders(root, skillsDir, sourcePrefix, url, license);
   } else if (format === "flat-md") {
-    count = installFlatMd(root, skillsDir, url, license);
+    count = installFlatMd(root, skillsDir, sourcePrefix, url, license);
   } else {
     console.log("  Could not detect skill format. Looking for SKILL.md folders at root...");
-    count = installSkillFolders(searchDir, skillsDir, url, license);
+    count = installSkillFolders(searchDir, skillsDir, sourcePrefix, url, license);
     if (count === 0) {
-      count = installFlatMd(searchDir, skillsDir, url, license);
+      count = installFlatMd(searchDir, skillsDir, sourcePrefix, url, license);
     }
   }
 
   execSync(`rm -rf "${tmpDir}"`, { stdio: "pipe" });
-  console.log(`  Installed ${count} skills (${format}) → .opencode/skills/`);
+  console.log(`  Installed ${count} skills (${format}) → .opencode/skills/${sourcePrefix}--*/`);
+  if (removed > 0) {
+    console.log(`  (refreshed: ${removed} removed, ${count} installed)`);
+  }
 
   const total = readdirSync(skillsDir).filter((d) =>
     existsSync(join(skillsDir, d, "SKILL.md")),
@@ -311,7 +341,7 @@ export async function skillRegistryCommand(
       existing = JSON.parse(readFileSync(localPath, "utf-8"));
     }
 
-    const source: RegistrySource = {
+    const src: RegistrySource = {
       name,
       url,
       description: args?.desc || args?.description,
@@ -320,10 +350,10 @@ export async function skillRegistryCommand(
 
     const idx = existing.sources.findIndex((s) => s.name === name);
     if (idx >= 0) {
-      existing.sources[idx] = source;
+      existing.sources[idx] = src;
       console.log(`  Updated: ${name}`);
     } else {
-      existing.sources.push(source);
+      existing.sources.push(src);
       console.log(`  Added: ${name}`);
     }
 

@@ -104,22 +104,19 @@ StringRay uses **two reflection folders** for different purposes:
 | Quick learning/insight | `docs/reflections/` |
 | Deep investigation with many discoveries | `docs/reflections/deep/` |
 
-### Storyteller Story Types
+### Storyteller Skill (formerly @storyteller agent)
 
-The `@storyteller` agent supports multiple story types:
+The storyteller is now a **skill** (not an agent) so it runs with full session context. Invoke it by asking for a reflection/narrative in your current session:
 
-| Type | Description | Template Path | Invoke |
-|------|-------------|---------------|--------|
-| `reflection` | Technical deep reflections on development process | `docs/reflections/TEMPLATE.md` | `@storyteller write a reflection about X` |
-| `saga` | Long-form technical saga spanning multiple sessions | `docs/reflections/deep/SAGA_TEMPLATE.md` | `@storyteller write a saga about X` |
-| `journey` | Investigation/learning journey | `docs/reflections/JOURNEY_TEMPLATE.md` | `@storyteller write a journey about X` |
-| `narrative` | Technical narrative - telling the story of code | `docs/reflections/NARRATIVE_TEMPLATE.md` | `@storyteller write a narrative about X` |
-| `deep reflection` | Extended narrative with emotional journey | `docs/reflections/deep/TEMPLATE.md` | `@storyteller write a deep reflection about X` |
+| Type | Description | Template Path | How to Invoke |
+|------|-------------|---------------|---------------|
+| `reflection` | Technical deep reflections on development process | `docs/reflections/TEMPLATE.md` | "write a reflection about X" |
+| `saga` | Long-form technical saga spanning multiple sessions | `docs/reflections/deep/SAGA_TEMPLATE.md` | "write a saga about X" |
+| `journey` | Investigation/learning journey | `docs/reflections/JOURNEY_TEMPLATE.md` | "write a journey about X" |
+| `narrative` | Technical narrative - telling the story of code | `docs/reflections/NARRATIVE_TEMPLATE.md` | "write a narrative about X" |
+| `deep reflection` | Extended narrative with emotional journey | `docs/reflections/deep/TEMPLATE.md` | "write a deep reflection about X" |
 
-**Example:**
-```
-@storyteller write a reflection about fixing the memory leak
-```
+**Why a skill?** As an agent, @storyteller spawned fresh with zero context and wasted tokens reconstructing what just happened. As a skill, it uses the conversation you are already in -- the LLM knows exactly what occurred.
 
 ## Available Agents
 
@@ -133,7 +130,6 @@ The `@storyteller` agent supports multiple story types:
 | `@refactorer` | Technical debt elimination | `@refactorer optimize code` |
 | `@testing-lead` | Testing strategy | `@testing-lead plan tests` |
 | `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
-| `@storyteller` | Narrative deep reflections | `@storyteller write a journey` |
 | `@researcher` | Codebase exploration | `@researcher find implementation` |
 
 

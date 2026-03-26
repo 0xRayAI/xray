@@ -73,7 +73,6 @@ function getAgentsList(cwd: string): { count: number; names: string[] } {
     "refactorer",
     "testing-lead",
     "bug-triage-specialist",
-    "storyteller",
     "researcher",
   ];
   const configuredAgents: string[] = [];

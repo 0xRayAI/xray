@@ -67,78 +67,8 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
-    "strategist": {
-      "description": "Strategist for planning",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "storyteller": {
-      "description": "Storyteller for narratives",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
     "code-analyzer": {
       "description": "Code analyzer for metrics",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "tech-writer": {
-      "description": "Technical writer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "multimodal-looker": {
-      "description": "Multimodal visual analyzer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "frontend-ui-ux-engineer": {
-      "description": "Frontend UI/UX engineer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "seo-consultant": {
-      "description": "SEO consultant",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "content-creator": {
-      "description": "Content creator",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "growth-strategist": {
-      "description": "Growth strategist",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "database-engineer": {
-      "description": "Database engineer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "devops-engineer": {
-      "description": "DevOps engineer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "backend-engineer": {
-      "description": "Backend engineer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "frontend-engineer": {
-      "description": "Frontend engineer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "performance-engineer": {
-      "description": "Performance engineer",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "mobile-developer": {
-      "description": "Mobile developer",
       "temperature": 1.0,
       "mode": "subagent"
     },

@@ -1,4 +1,5 @@
 ---
+source: framework
 name: boot-orchestrator
 description: Framework initialization and boot orchestration
 author: StrRay Framework

@@ -1,4 +1,5 @@
 ---
+source: framework
 name: model-health-check
 description: AI model health monitoring and diagnostics
 author: StrRay Framework

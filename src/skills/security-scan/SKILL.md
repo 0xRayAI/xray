@@ -1,4 +1,5 @@
 ---
+source: framework
 name: security-scan
 description: Security vulnerability scanning and assessment
 author: StrRay Framework

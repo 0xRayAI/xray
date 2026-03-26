@@ -12,6 +12,7 @@ import { join } from "path";
 interface SkillInfo {
   name: string;
   source: string;
+  communitySource: string | null;
   license: string;
   category: string;
   path: string;
@@ -34,13 +35,18 @@ function getSkillsFromSkills(cwd: string): SkillInfo[] {
     const skillPath = join(skillsPath, dir, "SKILL.md");
     const content = readFileSync(skillPath, "utf-8");
 
-    const sourceMatch = content.match(/source:\s*(.+)/i);
-    const licenseMatch = content.match(/(?:license|attribution):\s*\[([^\]]+)\]|\b(MIT|Apache|GPL|BSD)\b/i);
+    const sourceMatch = content.match(/^source:\s*(.+)/m);
+    const sourceNameMatch = content.match(/^source_name:\s*(.+)/m);
+    const licenseMatch = content.match(/License:\s*(.+)/m);
+
+    const rawName = dir.includes("--") ? dir.split("--").slice(1).join("--") : dir;
+    const communitySource = sourceNameMatch ? sourceNameMatch[1]!.trim() : null;
 
     skills.push({
-      name: dir,
-      source: sourceMatch && sourceMatch[1] ? sourceMatch[1].trim() : "custom",
-      license: licenseMatch ? (licenseMatch[1] || licenseMatch[2] || "unknown") : "unknown",
+      name: rawName,
+      source: sourceMatch && sourceMatch[1] ? sourceMatch[1]!.trim() : "custom",
+      communitySource,
+      license: licenseMatch ? licenseMatch[1]!.trim() : "unknown",
       category: extractCategory(content),
       path: skillPath,
     });
@@ -75,20 +81,15 @@ export async function antigravityStatusCommand(): Promise<void> {
   const cwd = process.cwd();
 
   const skills = getSkillsFromSkills(cwd);
+  const frameworkSkills = skills.filter((s) => s.source === "framework");
+  const communitySkills = skills.filter((s) => s.source === "community");
 
-  const skillsByCategory = skills.reduce((acc, skill) => {
-    if (!acc[skill.category]) {
-      acc[skill.category] = [];
-    }
-    acc[skill.category]!.push(skill);
+  const communityBySource = communitySkills.reduce((acc, skill) => {
+    const key = skill.communitySource || "unknown";
+    if (!acc[key]) acc[key] = [];
+    acc[key]!.push(skill);
     return acc;
   }, {} as Record<string, SkillInfo[]>);
-
-  const licenseCounts: Record<string, number> = {};
-  skills.forEach((skill) => {
-    const license = skill.license.toUpperCase();
-    licenseCounts[license] = (licenseCounts[license] || 0) + 1;
-  });
 
   console.log("");
   console.log("╔══════════════════════════════════════════════════╗");
@@ -96,36 +97,36 @@ export async function antigravityStatusCommand(): Promise<void> {
   console.log("╚══════════════════════════════════════════════════╝");
   console.log("");
 
-  console.log(`Total Skills: ${skills.length}`);
-  console.log(`Categories: ${Object.keys(skillsByCategory).length}`);
+  console.log(`Framework Skills: ${frameworkSkills.length}`);
+  console.log(`Community Skills: ${communitySkills.length} (from ${Object.keys(communityBySource).length} sources)`);
+  console.log(`Total: ${skills.length}`);
   console.log("");
 
-  if (Object.keys(licenseCounts).length > 0) {
-    console.log("Licenses:");
-    Object.entries(licenseCounts).forEach(([license, count]) => {
-      console.log(`  - ${license}: ${count} skill${count > 1 ? "s" : ""}`);
+  console.log("── Framework Skills ──");
+  console.log("");
+  frameworkSkills
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach((skill) => {
+      console.log(`  ${skill.name}`);
     });
+  console.log("");
+
+  if (Object.keys(communityBySource).length > 0) {
+    console.log("── Community Skills (by source) ──");
     console.log("");
+    Object.entries(communityBySource)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([source, sourceSkills]) => {
+        console.log(`  ${source} (${sourceSkills.length})`);
+        sourceSkills
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .forEach((skill) => {
+            const licenseBadge = skill.license.toUpperCase().substring(0, 3);
+            console.log(`    - ${skill.name} [${licenseBadge}]`);
+          });
+        console.log("");
+      });
   }
-
-  console.log("Skills by Category:");
-  console.log("");
-
-  Object.entries(skillsByCategory)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([category, categorySkills]) => {
-      console.log(`  ${category.toUpperCase()} (${categorySkills.length})`);
-
-      categorySkills
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .forEach((skill) => {
-          const licenseBadge = skill.license.toUpperCase().substring(0, 3);
-          const source = skill.source !== "unknown" ? skill.source : "custom";
-          console.log(`    - ${skill.name} [${licenseBadge}] (${source})`);
-        });
-
-      console.log("");
-    });
 
   console.log("-".repeat(50));
 }

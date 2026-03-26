@@ -104,21 +104,9 @@ StringRay uses **two reflection folders** for different purposes:
 | Quick learning/insight | `docs/reflections/` |
 | Deep investigation with many discoveries | `docs/reflections/deep/` |
 
-### Storyteller Story Types
+### Storyteller Skill (formerly @storyteller agent)
 
-The `@storyteller` agent supports multiple story types:
-
-| Type | Description | Invoke |
-|------|-------------|--------|
-| `reflection` | Technical deep reflections on development process | `@storyteller write a reflection about X` |
-| `saga` | Long-form technical saga spanning multiple sessions | `@storyteller write a saga about X` |
-| `journey` | Investigation/learning journey | `@storyteller write a journey about X` |
-| `narrative` | Technical narrative - telling the story of code | `@storyteller write a narrative about X` |
-
-**Example:**
-```
-@storyteller write a reflection about fixing the memory leak
-```
+The storyteller is now a **skill** that runs in the caller's session context. See AGENTS.md for details.
 
 ## Available Agents
 
@@ -132,7 +120,6 @@ The `@storyteller` agent supports multiple story types:
 | `@refactorer` | Technical debt elimination | `@refactorer optimize code` |
 | `@testing-lead` | Testing strategy | `@testing-lead plan tests` |
 | `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
-| `@storyteller` | Narrative deep reflections | `@storyteller write a journey` |
 | `@researcher` | Codebase exploration | `@researcher find implementation` |
 
 ## Complexity Routing

@@ -43,7 +43,6 @@ const configFiles = [
 // Files that should be MERGED (not overwritten) - user customizations
 const MERGE_FILES = [
   'strray/features.json',
-  'strray/routing-mappings.json',
   'enforcer-config.json'
 ];
 
@@ -72,6 +71,7 @@ if (fs.existsSync(skillsSource)) {
     }
     const skillDirs = fs.readdirSync(skillsSource, { withFileTypes: true });
     let copied = 0;
+    let skipped = 0;
     for (const entry of skillDirs) {
       if (!entry.isDirectory()) continue;
       const skillMd = path.join(skillsSource, entry.name, 'SKILL.md');
@@ -81,15 +81,25 @@ if (fs.existsSync(skillsSource)) {
       if (!fs.existsSync(destDir)) {
         fs.mkdirSync(destDir, { recursive: true });
       }
-      const shouldCopy = !fs.existsSync(destMd) ||
-        fs.statSync(skillMd).mtime > fs.statSync(destMd).mtime;
-      if (shouldCopy) {
-        fs.copyFileSync(skillMd, destMd);
-        copied++;
+
+      if (fs.existsSync(destMd)) {
+        const destContent = fs.readFileSync(destMd, 'utf8');
+        if (destContent.includes('source: community')) {
+          skipped++;
+          continue;
+        }
+        const shouldCopy = fs.statSync(skillMd).mtime > fs.statSync(destMd).mtime;
+        if (!shouldCopy) continue;
       }
+
+      fs.copyFileSync(skillMd, destMd);
+      copied++;
     }
     if (copied > 0) {
       console.log(`✅ Copied ${copied} core skills → .opencode/skills/`);
+    }
+    if (skipped > 0) {
+      console.log(`⏭️  Skipped ${skipped} community skills (not overwritten by framework)`);
     } else {
       console.log(`ℹ️ Core skills unchanged, skipping copy`);
     }

@@ -1,4 +1,5 @@
 ---
+source: framework
 name: architecture-patterns
 description: Software architecture patterns and best practices
 author: StrRay Framework

@@ -1,4 +1,5 @@
 ---
+source: framework
 name: git-workflow
 description: Git workflow management and collaboration tools
 author: StrRay Framework

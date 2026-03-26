@@ -43,37 +43,25 @@ class SkillInvocationServer {
                   enum: [
                     // Core skills
                     "code-review",
-                    "code-reviewer", // alias for code-review
+                    "code-reviewer",
                     "security-audit",
-                    "security-auditor", // alias for security-audit
+                    "security-auditor",
                     "security-scan",
                     "performance-optimization",
-                    "performance-engineer", // alias for performance-optimization
                     "testing-strategy",
-                    "testing-lead", // maps to testing-strategy skill
+                    "testing-lead",
                     "testing-best-practices",
                     "project-analysis",
                     "database-design",
-                    "database-engineer", // alias for database-design
                     "devops-deployment",
-                    "devops-engineer", // alias for devops-deployment
                     "api-design",
-                    "backend-engineer", // alias for api-design
                     "ui-ux-design",
-                    "frontend-ui-ux-engineer", // alias for ui-ux-design
-                    "frontend-engineer", // alias for ui-ux-design
                     "documentation-generation",
-                    "tech-writer", // alias for documentation-generation
                     "refactoring-strategies",
                     "architecture-patterns",
                     // Additional skills
-                    "strategist",
                     "bug-triage-specialist",
                     "log-monitor",
-                    "multimodal-looker",
-                    "seo-consultant",
-                    "content-creator",
-                    "growth-strategist",
                     "mobile-development",
                     "git-workflow",
                     "state-manager",

@@ -1,4 +1,5 @@
 ---
+source: framework
 name: state-manager
 description: Application state management and persistence
 author: StrRay Framework

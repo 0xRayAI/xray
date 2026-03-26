@@ -125,11 +125,6 @@ async function loadAgentConfigFile(
     "code-reviewer": "codeReviewer",
     "testing-lead": "testArchitect",
     "security-auditor": "securityAuditor",
-    "multimodal-looker": "multimodalLooker",
-    "seo-consultant": "seoSpecialist",
-    "content-creator": "seoCopywriter",
-    "growth-strategist": "marketingExpert",
-    "tech-writer": "documentationWriter",
   };
 
   const fileName = agentFileMap[agentName] || agentName;

@@ -228,67 +228,6 @@ export const skillInvocationSimulations: Record<string, SimulatorFunction> = {
   }),
 };
 
-/**
- * Strategist server simulations
- */
-export const strategistSimulations: Record<string, SimulatorFunction> = {
-  strategic_guidance: (args): MCPToolResult => {
-    const guidanceArgs = args as { question?: string };
-    const isStringRay = guidanceArgs.question?.toLowerCase().includes('stringray');
-
-    if (isStringRay) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `**StringRay Framework Analysis**
-
-**Overview:**
-StringRay is an AI-powered development orchestration framework designed to provide intelligent multi-agent coordination, error prevention, and code quality enforcement.
-
-**Key Capabilities:**
-- **Multi-Agent Orchestration**: 24+ specialized agents working together
-- **99.6% Error Prevention**: Universal Development Codex enforcement
-- **MCP Integration**: Model Context Protocol for tool execution
-- **Token & Memory Optimization**: Built-in resource management
-
-**Architecture:**
-- Agent-based delegation with complexity-based routing
-- Skill invocation system for specialized tasks
-- Framework compliance validation
-- Real-time monitoring and logging
-
-**Version:** 1.7.5
-
-**Use Cases:**
-- Code review and quality assurance
-- Security vulnerability scanning
-- Performance optimization
-- Architectural design decisions
-- Automated testing strategies`,
-          },
-        ],
-      };
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `**Strategic Guidance**
-
-Question: ${guidanceArgs.question || 'No question provided'}
-
-I'm here to help with architectural decisions, technical strategy, and complex problem-solving.`,
-        },
-      ],
-    };
-  },
-};
-
-/**
- * Get all server simulations
- */
 export function getAllServerSimulations(): ServerSimulations {
   return {
     'code-review': codeReviewSimulations,
@@ -298,6 +237,5 @@ export function getAllServerSimulations(): ServerSimulations {
     'researcher': researcherSimulations,
     'framework-help': frameworkHelpSimulations,
     'skill-invocation': skillInvocationSimulations,
-    'strategist': strategistSimulations,
   };
 }

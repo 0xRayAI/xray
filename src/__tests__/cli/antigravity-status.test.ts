@@ -43,13 +43,13 @@ describe("Antigravity Status Command", () => {
     it("should detect MIT license", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("MIT");
+      expect(content).toContain("licenseBadge");
     });
 
     it("should detect Apache license", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("Apache");
+      expect(content).toContain("licenseBadge");
     });
   });
 
@@ -60,10 +60,10 @@ describe("Antigravity Status Command", () => {
       expect(content).toContain("extractCategory");
     });
 
-    it("should deduplicate skills by name", () => {
+    it("should group skills by source", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("skillsByCategory");
+      expect(content).toContain("communityBySource");
     });
   });
 
@@ -117,13 +117,14 @@ describe("Antigravity Status Command", () => {
     it("should show total skills count", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("Total Skills");
+      expect(content).toContain("Total:");
     });
 
-    it("should show categories count", () => {
+    it("should show framework vs community breakdown", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("Categories");
+      expect(content).toContain("Framework Skills");
+      expect(content).toContain("Community Skills");
     });
   });
 });

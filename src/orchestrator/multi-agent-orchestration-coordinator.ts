@@ -601,34 +601,15 @@ export class MultiAgentOrchestrationCoordinator {
       "security-auditor",
       "refactorer",
       "testing-lead",
-      "researcher", // formerly librarian
-      "strategist", // formerly oracle
-      "seo-consultant", // formerly seo-specialist
-      "content-creator", // formerly seo-copywriter
-      "growth-strategist", // formerly marketing-expert
-      "tech-writer", // formerly documentation-writer
+      "researcher",
       "log-monitor",
-      "multimodal-looker",
       "analyzer",
-      "code-analyzer", // alias for analyzer
-      "database-engineer",
-      "devops-engineer",
-      "backend-engineer",
-      "frontend-engineer",
-      "frontend-ui-ux-engineer",
-      "performance-engineer",
-      "mobile-developer",
+      "code-analyzer",
     ];
 
-    // Legacy agent name aliases (map old names to new)
     const agentAliasMap: Record<string, string> = {
       researcher: "researcher",
-      oracle: "strategist",
       "test-architect": "testing-lead",
-      "seo-specialist": "seo-consultant",
-      "seo-copywriter": "content-creator",
-      "marketing-expert": "growth-strategist",
-      "documentation-writer": "tech-writer",
       "testing-lead": "testing-lead",
       analyzer: "code-analyzer",
     };

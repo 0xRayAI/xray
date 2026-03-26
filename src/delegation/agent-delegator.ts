@@ -463,20 +463,7 @@ export class AgentDelegator {
     'testing-lead',
     'log-monitor',
     'researcher',
-    'multimodal-looker',
     'analyzer',
-    'seo-consultant',
-    'content-creator',
-    'growth-strategist',
-    'database-engineer',
-    'devops-engineer',
-    'backend-engineer',
-    'frontend-engineer',
-    'frontend-ui-ux-engineer',
-    'tech-writer',
-    'performance-engineer',
-    'mobile-developer',
-    'strategist',
   ]);
 
   /**

@@ -1,4 +1,5 @@
 ---
+source: framework
 name: inference-improve
 description: Autonomous inference improvement through collaborative agent analysis
 author: StrRay Framework

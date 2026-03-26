@@ -1,4 +1,5 @@
 ---
+source: framework
 name: project-analysis
 description: Analyze project structure, complexity, and health metrics
 author: StrRay Framework

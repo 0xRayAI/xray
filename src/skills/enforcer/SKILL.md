@@ -1,4 +1,5 @@
 ---
+source: framework
 name: enforcer
 description: Codex compliance validation and error prevention
 author: StrRay Framework

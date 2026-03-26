@@ -1,4 +1,5 @@
 ---
+source: framework
 name: auto-format
 description: Automated code formatting and style consistency
 author: StrRay Framework

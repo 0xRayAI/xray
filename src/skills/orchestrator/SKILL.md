@@ -1,4 +1,5 @@
 ---
+source: framework
 name: orchestrator
 description: Multi-agent workflow coordination and task delegation
 author: StrRay Framework

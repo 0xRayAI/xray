@@ -44,7 +44,7 @@ This directory contains scripts for managing releases of the StringRay framework
 - **Usage**: `node scripts/node/release-tweet-single.mjs`
 
 **`release-tweet.mjs`** - Multi-release tweet context generator
-- **Purpose**: Prepares context for @growth-strategist
+- **Purpose**: Prepares context for release tweets
 - **Features**: Groups commits by type, extracts highlights
 - **Usage**: `node scripts/node/release-tweet.mjs [--preview]`
 

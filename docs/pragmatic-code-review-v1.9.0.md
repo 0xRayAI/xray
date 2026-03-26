@@ -129,7 +129,7 @@ In 139,228 lines, 164 `any` types is 0.1%. That's actually pretty good for a com
 ### 3. Who Should Own Refactoring?
 
 **RuleEnforcer:** @enforcer or @refactorer agent  
-**Monitoring:** @log-monitor or @performance-engineer  
+**Monitoring:** @log-monitor  
 **Routing:** @architect (owns delegation patterns)  
 **General cleanup:** Whoever touches the file next
 

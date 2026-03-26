@@ -57,11 +57,6 @@ const DEFAULT_AGENT_CAPABILITIES: Record<string, AgentCapability> = {
     complexityThreshold: 30,
     concurrentTasks: 3,
   },
-  storyteller: {
-    capabilities: ['narrative', 'documentation', 'storytelling'],
-    complexityThreshold: 25,
-    concurrentTasks: 2,
-  },
   techwriter: {
     capabilities: ['documentation', 'writing', 'technical'],
     complexityThreshold: 28,

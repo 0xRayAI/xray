@@ -1,4 +1,5 @@
 ---
+source: framework
 name: bug-triage
 description: Bug triage, debugging analysis, and issue prioritization
 author: StrRay Framework

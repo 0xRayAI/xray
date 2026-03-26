@@ -86,10 +86,6 @@ describe("default-agents", () => {
       expect(agent?.expertise).toBe("system architecture");
     });
 
-    it("should find strategist agent", () => {
-      const agent = getDefaultAgentByName("strategist");
-      expect(agent).toBeDefined();
-      expect(agent?.specialties).toContain("architecture decisions");
-    });
+
   });
 });

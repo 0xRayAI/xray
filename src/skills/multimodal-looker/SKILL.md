@@ -1,4 +1,5 @@
 ---
+source: framework
 name: multimodal-looker
 description: Visual content analysis for diagrams, screenshots, and UI mockups
 author: StrRay Framework

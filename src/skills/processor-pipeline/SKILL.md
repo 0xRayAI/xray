@@ -1,4 +1,5 @@
 ---
+source: framework
 name: processor-pipeline
 description: Data processing pipeline management
 author: StrRay Framework

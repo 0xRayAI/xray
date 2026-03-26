@@ -1,4 +1,5 @@
 ---
+source: framework
 name: researcher
 description: Multi-repo analysis, documentation lookup, and implementation examples
 author: StrRay Framework

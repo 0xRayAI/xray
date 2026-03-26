@@ -85,15 +85,7 @@ export class ServerConfigRegistry {
       timeout: 30000,
     });
 
-    // Strategist Server
-    this.register({
-      serverName: 'strategist',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/strategist.server.js`],
-      timeout: 60000,
-    });
-
-    // Session Management Server
+    // Code Analyzer Server
     this.register({
       serverName: 'session-management',
       command: 'node',
@@ -107,22 +99,6 @@ export class ServerConfigRegistry {
       command: 'node',
       args: [`${basePath}/mcps/knowledge-skills/code-analyzer.server.js`],
       timeout: 45000,
-    });
-
-    // Tech Writer Server
-    this.register({
-      serverName: 'tech-writer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/documentation-generation.server.js`],
-      timeout: 45000,
-    });
-
-    // Frontend UI/UX Engineer Server
-    this.register({
-      serverName: 'frontend-ui-ux-engineer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/ui-ux-design.server.js`],
-      timeout: 35000,
     });
 
     // Enforcer Server
@@ -157,14 +133,6 @@ export class ServerConfigRegistry {
       timeout: 45000,
     });
 
-    // Backend Engineer Server
-    this.register({
-      serverName: 'backend-engineer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/api-design.server.js`],
-      timeout: 40000,
-    });
-
     // Bug Triage Specialist Server
     this.register({
       serverName: 'bug-triage-specialist',
@@ -179,38 +147,6 @@ export class ServerConfigRegistry {
       command: 'node',
       args: [`${basePath}/mcps/knowledge-skills/log-monitor.server.js`],
       timeout: 30000,
-    });
-
-    // Multimodal Looker Server
-    this.register({
-      serverName: 'multimodal-looker',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/multimodal-looker.server.js`],
-      timeout: 40000,
-    });
-
-    // SEO Consultant Server
-    this.register({
-      serverName: 'seo-consultant',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/seo-consultant.server.js`],
-      timeout: 30000,
-    });
-
-    // Content Creator Server
-    this.register({
-      serverName: 'content-creator',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/content-creator.server.js`],
-      timeout: 30000,
-    });
-
-    // Growth Strategist Server
-    this.register({
-      serverName: 'growth-strategist',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/growth-strategist.server.js`],
-      timeout: 45000,
     });
 
     // Aliases to match features.json agent names
@@ -244,55 +180,6 @@ export class ServerConfigRegistry {
       command: 'node',
       args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
       timeout: 30000,
-    });
-
-    // Missing Agent Configs
-    // Performance Engineer (alias for performance-optimization)
-    this.register({
-      serverName: 'performance-engineer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/performance-optimization.server.js`],
-      timeout: 30000,
-    });
-
-    // Mobile Developer Server
-    this.register({
-      serverName: 'mobile-developer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/mobile-development.server.js`],
-      timeout: 40000,
-    });
-
-    // DevOps Engineer Server
-    this.register({
-      serverName: 'devops-engineer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/devops-deployment.server.js`],
-      timeout: 40000,
-    });
-
-    // Database Engineer Server
-    this.register({
-      serverName: 'database-engineer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/database-design.server.js`],
-      timeout: 40000,
-    });
-
-    // Frontend Engineer (alias for frontend-ui-ux-engineer)
-    this.register({
-      serverName: 'frontend-engineer',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/ui-ux-design.server.js`],
-      timeout: 35000,
-    });
-
-    // Document Writer (alias for tech-writer)
-    this.register({
-      serverName: 'documentwriter',
-      command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/documentation-generation.server.js`],
-      timeout: 45000,
     });
   }
 

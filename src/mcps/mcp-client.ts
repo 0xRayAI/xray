@@ -251,21 +251,6 @@ export class MCPClient extends EventEmitter {
           },
         },
       ],
-      'strategist': [
-        {
-          name: 'strategic_guidance',
-          description: 'Strategic guidance and complex problem-solving',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              question: { type: 'string' },
-              context: { type: 'object' },
-              scope: { type: 'string', enum: ['technical', 'business', 'strategic'] },
-            },
-            required: ['question'],
-          },
-        },
-      ],
     };
 
     return staticTools[serverName] || [];

@@ -602,6 +602,12 @@ export default async function strrayCodexPlugin(input) {
                         priority: 20,
                         enabled: true,
                     });
+                    processorManager.registerProcessor({
+                        name: "agentsMdValidation",
+                        type: "post",
+                        priority: 30,
+                        enabled: true,
+                    });
                     // Store for future use
                     stateManager.set("processor:manager", processorManager);
                     logger.log("✅ Processors registered successfully");

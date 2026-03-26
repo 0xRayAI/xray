@@ -119,17 +119,14 @@ describe('ServerConfigRegistry', () => {
       expect(config?.timeout).toBe(30000);
     });
 
-    it('should have all 32+ default servers registered', () => {
+    it('should have all default servers registered', () => {
       const names = registry.getServerNames();
-      expect(names.length).toBeGreaterThanOrEqual(32);
+      expect(names.length).toBeGreaterThanOrEqual(15);
     });
 
     it('should include aliases in default registrations', () => {
       expect(registry.has('code-reviewer')).toBe(true);
       expect(registry.has('testing-lead')).toBe(true);
-      expect(registry.has('performance-engineer')).toBe(true);
-      expect(registry.has('frontend-engineer')).toBe(true);
-      expect(registry.has('documentwriter')).toBe(true);
     });
   });
 

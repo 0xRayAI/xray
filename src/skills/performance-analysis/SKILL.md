@@ -1,4 +1,5 @@
 ---
+source: framework
 name: performance-analysis
 description: System performance analysis and optimization
 author: StrRay Framework

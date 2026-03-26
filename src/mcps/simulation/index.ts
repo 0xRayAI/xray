@@ -19,6 +19,5 @@ export {
   researcherSimulations,
   frameworkHelpSimulations,
   skillInvocationSimulations,
-  strategistSimulations,
   type ServerSimulations,
 } from './server-simulations.js';
