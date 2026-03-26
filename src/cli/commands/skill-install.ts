@@ -72,25 +72,63 @@ function cleanSourceSkills(skillsDir: string, sourcePrefix: string): number {
   return removed;
 }
 
-function cloneRepo(url: string, targetDir: string): void {
+function extractRepoSlug(url: string): { owner: string; repo: string } | null {
+  const https = url.match(/github\.com\/([^/]+)\/([^/.]+)/);
+  if (https) return { owner: https[1]!, repo: https[2]! };
+  return null;
+}
+
+function cloneRepo(url: string, targetDir: string): string {
   if (existsSync(targetDir)) {
     rmSync(targetDir, { recursive: true });
   }
-  try {
-    execSync(`git clone --depth 1 ${url} "${targetDir}"`, { stdio: "pipe" });
-  } catch (httpsError: unknown) {
-    const stderr = (httpsError as { stderr?: Buffer })?.stderr?.toString("utf-8") || "";
-    if (stderr.includes("Authentication failed") || stderr.includes("Invalid username")) {
-      console.log(`  HTTPS auth failed, trying git:// protocol...`);
-      try {
-        const gitUrl = url.replace(/^https:\/\//, "git://");
-        execSync(`git clone --depth 1 ${gitUrl} "${targetDir}"`, { stdio: "pipe" });
-        return;
-      } catch {
-        console.log(`  Git protocol also failed.`);
+  mkdirSync(targetDir, { recursive: true });
+
+  const tarPath = join(targetDir, "_repo.tar.gz");
+  const extracted = join(targetDir, "_repo");
+
+  const slug = extractRepoSlug(url);
+  if (!slug) {
+    execSync(`git clone --depth 1 ${url} "${extracted}"`, { stdio: "pipe" });
+    return extracted;
+  }
+
+  const branches = ["main", "master"];
+  for (const branch of branches) {
+    const archiveUrl = `https://codeload.github.com/${slug.owner}/${slug.repo}/tar.gz/${branch}`;
+    try {
+      execSync(`curl -fsSL "${archiveUrl}" -o "${tarPath}"`, { stdio: "pipe", timeout: 30000 });
+      if (!existsSync(tarPath) || require("fs").statSync(tarPath).size < 100) {
+        require("fs").unlinkSync(tarPath);
+        continue;
       }
+      execSync(`tar -xzf "${tarPath}" -C "${targetDir}"`, { stdio: "pipe" });
+      require("fs").unlinkSync(tarPath);
+      const dirName = `${slug.repo}-${branch}`;
+      const repoDir = join(targetDir, dirName);
+      if (existsSync(repoDir)) return repoDir;
+      const dirs = readdirSync(targetDir).filter((f: string) =>
+        f.startsWith(slug.repo + "-") && f !== "_repo.tar.gz"
+      );
+      if (dirs.length > 0) return join(targetDir, dirs[0]!);
+      continue;
+    } catch {
+      if (existsSync(tarPath)) {
+        try { require("fs").unlinkSync(tarPath); } catch { /* ignore */ }
+      }
+      continue;
     }
-    throw httpsError;
+  }
+
+  try {
+    execSync(`git clone --depth 1 ${url} "${extracted}"`, { stdio: "pipe" });
+    return extracted;
+  } catch (gitError: unknown) {
+    throw new Error(
+      `Failed to download ${url}. Tried tarball (main/master) and git clone.\n` +
+      `Check your internet connection or git credentials.\n` +
+      `Original error: ${(gitError as Error).message}`
+    );
   }
 }
 
@@ -280,10 +318,10 @@ export async function skillInstallCommand(
   }
 
   const tmpDir = join(process.cwd(), ".opencode", "_tmp", "install");
-  console.log(`  Cloning ${url}...`);
-  cloneRepo(url, tmpDir);
+  console.log(`  Downloading ${url}...`);
+  const repoDir = cloneRepo(url, tmpDir);
 
-  const searchDir = options?.path ? join(tmpDir, options.path) : tmpDir;
+  const searchDir = options?.path ? join(repoDir, options.path) : repoDir;
   const { format, root } = detectFormat(searchDir);
 
   let count = 0;
