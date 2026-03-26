@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.14.5] - 2026-03-26
+
+### 🔄 Changes
+
+fix: add git:// protocol fallback for skill:install auth failures
+
+---
+
 ## [1.14.4] - 2026-03-26
 
 ### 🔄 Changes

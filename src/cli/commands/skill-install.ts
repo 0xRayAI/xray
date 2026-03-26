@@ -76,7 +76,22 @@ function cloneRepo(url: string, targetDir: string): void {
   if (existsSync(targetDir)) {
     rmSync(targetDir, { recursive: true });
   }
-  execSync(`git clone --depth 1 ${url} "${targetDir}"`, { stdio: "pipe" });
+  try {
+    execSync(`git clone --depth 1 ${url} "${targetDir}"`, { stdio: "pipe" });
+  } catch (httpsError: unknown) {
+    const stderr = (httpsError as { stderr?: Buffer })?.stderr?.toString("utf-8") || "";
+    if (stderr.includes("Authentication failed") || stderr.includes("Invalid username")) {
+      console.log(`  HTTPS auth failed, trying git:// protocol...`);
+      try {
+        const gitUrl = url.replace(/^https:\/\//, "git://");
+        execSync(`git clone --depth 1 ${gitUrl} "${targetDir}"`, { stdio: "pipe" });
+        return;
+      } catch {
+        console.log(`  Git protocol also failed.`);
+      }
+    }
+    throw httpsError;
+  }
 }
 
 type RepoFormat = "skill-folders" | "flat-md" | "unknown";
