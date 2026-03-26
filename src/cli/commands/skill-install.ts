@@ -173,7 +173,9 @@ function cloneRepo(url: string, targetDir: string): string {
   throw new Error(`Failed to download ${url}. See errors above.`);
 }
 
-type RepoFormat = "skill-folders" | "flat-md" | "unknown";
+type RepoFormat = "skill-folders" | "flat-md" | "single-md" | "unknown";
+
+const SKILL_PLATFORMS = [".opencode", ".claude", ".codex", ".cursor", ".gemini", ".kiro", ".pi", ".trae", ".trae-cn", ".agents", ".continue", ".factory", ".windsurf"];
 
 function detectFormat(repoDir: string): { format: RepoFormat; root: string } {
   if (existsSync(join(repoDir, "skills"))) {
@@ -181,6 +183,29 @@ function detectFormat(repoDir: string): { format: RepoFormat; root: string } {
       .filter((d) => d.isDirectory());
     if (entries.some((d) => existsSync(join(repoDir, "skills", d.name, "SKILL.md")))) {
       return { format: "skill-folders", root: join(repoDir, "skills") };
+    }
+  }
+
+  for (const platform of SKILL_PLATFORMS) {
+    const platformSkillsDir = join(repoDir, platform, "skills");
+    if (existsSync(platformSkillsDir)) {
+      const entries = readdirSync(platformSkillsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory());
+      if (entries.some((d) => existsSync(join(platformSkillsDir, d.name, "SKILL.md")))) {
+        return { format: "skill-folders", root: platformSkillsDir };
+      }
+    }
+  }
+
+  const entries = readdirSync(repoDir, { withFileTypes: true }).filter((d) => d.isDirectory());
+  for (const entry of entries) {
+    const nestedSkillsDir = join(repoDir, entry.name, "skills");
+    if (existsSync(nestedSkillsDir)) {
+      const nestedEntries = readdirSync(nestedSkillsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory());
+      if (nestedEntries.some((d) => existsSync(join(nestedSkillsDir, d.name, "SKILL.md")))) {
+        return { format: "skill-folders", root: nestedSkillsDir };
+      }
     }
   }
 
@@ -205,6 +230,10 @@ function detectFormat(repoDir: string): { format: RepoFormat; root: string } {
     if (/^---\s*\n\s*name:/m.test(sample)) {
       return { format: "flat-md", root: repoDir };
     }
+  }
+
+  if (existsSync(join(repoDir, "CLAUDE.md"))) {
+    return { format: "single-md", root: repoDir };
   }
 
   return { format: "unknown", root: repoDir };
@@ -370,6 +399,10 @@ export async function skillInstallCommand(
     count = installSkillFolders(root, skillsDir, sourcePrefix, url, license);
   } else if (format === "flat-md") {
     count = installFlatMd(root, skillsDir, sourcePrefix, url, license);
+  } else if (format === "single-md") {
+    console.log("  Note: This repo uses CLAUDE.md format (tool/package), not SKILL.md format.");
+    console.log("  Skipping installation - consider installing via the project's native CLI.");
+    count = 0;
   } else {
     console.log("  Could not detect skill format. Looking for SKILL.md folders at root...");
     count = installSkillFolders(searchDir, skillsDir, sourcePrefix, url, license);
