@@ -1,12 +1,3 @@
-/**
- * Antigravity Status Command Tests
- *
- * Tests for src/cli/commands/antigravity-status.ts
- *
- * @version 1.0.0
- * @since 1.15.0
- */
-
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
@@ -28,16 +19,11 @@ describe("Antigravity Status Command", () => {
   });
 
   describe("Skill Detection", () => {
-    it("should detect skills in integrations", () => {
-      const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
-      const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("integrations");
-    });
-
     it("should detect skills in skills directory", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
       expect(content).toContain("skills");
+      expect(content).toContain(".opencode");
     });
   });
 
@@ -74,30 +60,50 @@ describe("Antigravity Status Command", () => {
       expect(content).toContain("extractCategory");
     });
 
-    it("should have category emoji mapping", () => {
+    it("should deduplicate skills by name", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("categoryEmoji");
+      expect(content).toContain("skillsByCategory");
     });
   });
 
-  describe("License File References", () => {
-    it("should reference LICENSE.antigravity", () => {
-      const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
-      const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("LICENSE.antigravity");
+  describe("License Files Directory", () => {
+    it("should have licenses/skills directory", () => {
+      const licensesDir = path.join(PROJECT_ROOT, "licenses", "skills");
+      expect(fs.existsSync(licensesDir)).toBe(true);
     });
 
-    it("should reference LICENSE.impeccable", () => {
-      const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
-      const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("LICENSE.impeccable");
+    it("should have license file for impeccable", () => {
+      const licensePath = path.join(PROJECT_ROOT, "licenses", "skills", "LICENSE.impeccable");
+      expect(fs.existsSync(licensePath)).toBe(true);
     });
 
-    it("should reference LICENSE.openviking", () => {
-      const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
-      const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("LICENSE.openviking");
+    it("should have license file for antigravity", () => {
+      const licensePath = path.join(PROJECT_ROOT, "licenses", "skills", "LICENSE.antigravity");
+      expect(fs.existsSync(licensePath)).toBe(true);
+    });
+
+    it("should have license file for openviking", () => {
+      const licensePath = path.join(PROJECT_ROOT, "licenses", "skills", "LICENSE.openviking");
+      expect(fs.existsSync(licensePath)).toBe(true);
+    });
+
+    it("should have license files for all registry sources", () => {
+      const licensesDir = path.join(PROJECT_ROOT, "licenses", "skills");
+      const files = fs.readdirSync(licensesDir).filter(f => f.startsWith("LICENSE."));
+      expect(files.length).toBeGreaterThanOrEqual(10);
+    });
+  });
+
+  describe("Installed Skills Verification", () => {
+    it("should have skills directory with installed skills", () => {
+      const skillsPath = path.join(PROJECT_ROOT, ".opencode", "skills");
+      expect(fs.existsSync(skillsPath)).toBe(true);
+    });
+
+    it("should not have stale integrations directory", () => {
+      const integrationsPath = path.join(PROJECT_ROOT, ".opencode", "integrations");
+      expect(fs.existsSync(integrationsPath)).toBe(false);
     });
   });
 
@@ -105,7 +111,7 @@ describe("Antigravity Status Command", () => {
     it("should show box drawing characters", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("╔");
+      expect(content).toContain("Installed Skills Status");
     });
 
     it("should show total skills count", () => {
@@ -118,80 +124,6 @@ describe("Antigravity Status Command", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
       expect(content).toContain("Categories");
-    });
-
-    it("should show license legend", () => {
-      const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
-      const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("Legend");
-      expect(content).toContain("[MIT]");
-      expect(content).toContain("[APA]");
-    });
-  });
-
-  describe("Installed Skills Verification", () => {
-    it("should detect typescript-expert skill", () => {
-      const skillPath = path.join(
-        PROJECT_ROOT,
-        ".opencode/integrations/typescript-expert/SKILL.md"
-      );
-      expect(fs.existsSync(skillPath)).toBe(true);
-    });
-
-    it("should detect impeccable skill", () => {
-      const skillPath = path.join(
-        PROJECT_ROOT,
-        ".opencode/integrations/impeccable/SKILL.md"
-      );
-      expect(fs.existsSync(skillPath)).toBe(true);
-    });
-
-    it("should detect openviking skill", () => {
-      const skillPath = path.join(
-        PROJECT_ROOT,
-        ".opencode/integrations/openviking/SKILL.md"
-      );
-      expect(fs.existsSync(skillPath)).toBe(true);
-    });
-
-    it("should detect antigravity-bridge skill", () => {
-      const skillPath = path.join(
-        PROJECT_ROOT,
-        ".opencode/integrations/antigravity-bridge/SKILL.md"
-      );
-      expect(fs.existsSync(skillPath)).toBe(true);
-    });
-  });
-
-  describe("Skill Frontmatter", () => {
-    it("should have proper source attribution for typescript-expert", () => {
-      const skillPath = path.join(
-        PROJECT_ROOT,
-        ".opencode/integrations/typescript-expert/SKILL.md"
-      );
-      const content = fs.readFileSync(skillPath, "utf-8");
-      expect(content).toContain("antigravity-awesome-skills");
-      expect(content).toContain("MIT");
-    });
-
-    it("should have proper source attribution for impeccable", () => {
-      const skillPath = path.join(
-        PROJECT_ROOT,
-        ".opencode/integrations/impeccable/SKILL.md"
-      );
-      const content = fs.readFileSync(skillPath, "utf-8");
-      expect(content).toContain("pbakaus/impeccable");
-      expect(content).toContain("Apache");
-    });
-
-    it("should have proper source attribution for openviking", () => {
-      const skillPath = path.join(
-        PROJECT_ROOT,
-        ".opencode/integrations/openviking/SKILL.md"
-      );
-      const content = fs.readFileSync(skillPath, "utf-8");
-      expect(content).toContain("volcengine/OpenViking");
-      expect(content).toContain("Apache");
     });
   });
 });

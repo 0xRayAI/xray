@@ -89,7 +89,7 @@ describe("Antigravity Skills Integration", () => {
   });
 
   it("should have Antigravity license file", () => {
-    const licensePath = path.join(process.cwd(), "LICENSE.antigravity");
+    const licensePath = path.join(process.cwd(), "licenses/skills/LICENSE.antigravity");
     expect(fs.existsSync(licensePath)).toBe(true);
   });
 

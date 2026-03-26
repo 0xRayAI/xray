@@ -271,7 +271,7 @@ Final validation and application of approved changes:
 
 1. Codex compliance check
 2. Safety validation
-3. Apply to routing-mappings.json
+3. Apply approved changes to configuration
 4. Log all changes
 
 ## Output Required

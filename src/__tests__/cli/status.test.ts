@@ -34,16 +34,10 @@ describe("Status Command", () => {
   });
 
   describe("Function Implementation", () => {
-    it("should detect skills in .opencode/integrations", () => {
-      const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/status.ts");
-      const content = fs.readFileSync(statusPath, "utf-8");
-      expect(content).toContain("getSkillsList");
-      expect(content).toContain("integrationsPath");
-    });
-
     it("should detect skills in .opencode/skills", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
+      expect(content).toContain("getSkillsList");
       expect(content).toContain("skillsPath");
     });
 
@@ -66,32 +60,15 @@ describe("Status Command", () => {
     });
   });
 
-  describe("Skills Listing", () => {
-    it("should list typescript-expert skill", () => {
-      const integrationsPath = path.join(PROJECT_ROOT, ".opencode/integrations");
-      if (fs.existsSync(integrationsPath)) {
-        expect(
-          fs.existsSync(path.join(integrationsPath, "typescript-expert/SKILL.md"))
-        ).toBe(true);
-      }
+  describe("Skills Directory", () => {
+    it("should have .opencode/skills directory", () => {
+      const skillsPath = path.join(PROJECT_ROOT, ".opencode/skills");
+      expect(fs.existsSync(skillsPath)).toBe(true);
     });
 
-    it("should list impeccable skill", () => {
+    it("should not have stale .opencode/integrations directory", () => {
       const integrationsPath = path.join(PROJECT_ROOT, ".opencode/integrations");
-      if (fs.existsSync(integrationsPath)) {
-        expect(
-          fs.existsSync(path.join(integrationsPath, "impeccable/SKILL.md"))
-        ).toBe(true);
-      }
-    });
-
-    it("should list openviking skill", () => {
-      const integrationsPath = path.join(PROJECT_ROOT, ".opencode/integrations");
-      if (fs.existsSync(integrationsPath)) {
-        expect(
-          fs.existsSync(path.join(integrationsPath, "openviking/SKILL.md"))
-        ).toBe(true);
-      }
+      expect(fs.existsSync(integrationsPath)).toBe(false);
     });
   });
 

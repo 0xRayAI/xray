@@ -15,12 +15,6 @@
       "license": "MIT"
     },
     {
-      "name": "claude-seo",
-      "url": "https://github.com/AgriciDaniel/claude-seo",
-      "description": "SEO skills for audits, technical SEO, schema, and content analysis",
-      "license": "MIT"
-    },
-    {
       "name": "antigravity",
       "url": "https://github.com/sickn33/antigravity-awesome-skills",
       "description": "1300+ curated community skills across TypeScript, Python, Docker, Security, and more",
