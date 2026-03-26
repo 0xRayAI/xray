@@ -93,13 +93,15 @@ function cloneRepo(url: string, targetDir: string): string {
     return extracted;
   }
 
-  const branches = ["main", "master"];
-  for (const branch of branches) {
+  const errors: string[] = [];
+
+  for (const branch of ["main", "master"]) {
     const archiveUrl = `https://codeload.github.com/${slug.owner}/${slug.repo}/tar.gz/${branch}`;
     try {
       execSync(`curl -fsSL "${archiveUrl}" -o "${tarPath}"`, { stdio: "pipe", timeout: 30000 });
       if (!existsSync(tarPath) || require("fs").statSync(tarPath).size < 100) {
-        require("fs").unlinkSync(tarPath);
+        if (existsSync(tarPath)) require("fs").unlinkSync(tarPath);
+        errors.push(`  ${branch}: downloaded empty file (repo may not exist)`);
         continue;
       }
       execSync(`tar -xzf "${tarPath}" -C "${targetDir}"`, { stdio: "pipe" });
@@ -111,25 +113,64 @@ function cloneRepo(url: string, targetDir: string): string {
         f.startsWith(slug.repo + "-") && f !== "_repo.tar.gz"
       );
       if (dirs.length > 0) return join(targetDir, dirs[0]!);
-      continue;
-    } catch {
+      errors.push(`  ${branch}: archive extracted but repo directory not found`);
+    } catch (tarErr: unknown) {
       if (existsSync(tarPath)) {
         try { require("fs").unlinkSync(tarPath); } catch { /* ignore */ }
       }
-      continue;
+      errors.push(`  tarball (${branch}): ${(tarErr as Error).message.split("\n")[0]}`);
     }
   }
 
+  const httpsUrl = url;
+  const sshUrl = url.replace(/^https:\/\/github\.com\//, "git@github.com:");
+
+  let hasGh = false;
   try {
-    execSync(`git clone --depth 1 ${url} "${extracted}"`, { stdio: "pipe" });
-    return extracted;
-  } catch (gitError: unknown) {
-    throw new Error(
-      `Failed to download ${url}. Tried tarball (main/master) and git clone.\n` +
-      `Check your internet connection or git credentials.\n` +
-      `Original error: ${(gitError as Error).message}`
-    );
+    execSync("gh auth status --hostname github.com", { stdio: "pipe", timeout: 5000 });
+    hasGh = true;
+  } catch { /* gh not installed or not authenticated */ }
+
+  if (hasGh && slug) {
+    try {
+      console.log(`  Trying gh repo clone...`);
+      execSync(`gh repo clone ${slug.owner}/${slug.repo} "${extracted}" -- --depth 1`, { stdio: "pipe", timeout: 60000 });
+      return extracted;
+    } catch (ghErr: unknown) {
+      const stderr = (ghErr as { stderr?: Buffer })?.stderr?.toString("utf-8") || "";
+      errors.push(`  gh repo clone: ${stderr.split("\n").filter((l: string) => l.includes("Error:"))[0]?.trim() || (ghErr as Error).message.split("\n")[0]}`);
+    }
   }
+
+  for (const [proto, gitUrl] of [["HTTPS", httpsUrl], ["SSH", sshUrl]] as const) {
+    try {
+      execSync(`git clone --depth 1 ${gitUrl} "${extracted}"`, { stdio: "pipe", timeout: 30000 });
+      return extracted;
+    } catch (gitErr: unknown) {
+      const stderr = (gitErr as { stderr?: Buffer })?.stderr?.toString("utf-8") || "";
+      if (stderr.includes("Authentication failed") || stderr.includes("Invalid username")) {
+        errors.push(`  git ${proto}: authentication failed — your GitHub token/credentials are expired or misconfigured`);
+      } else if (stderr.includes("Permission denied")) {
+        errors.push(`  git ${proto}: permission denied — repo may be private`);
+      } else if (stderr.includes("not found")) {
+        errors.push(`  git ${proto}: repository not found`);
+      } else {
+        errors.push(`  git ${proto}: ${stderr.split("\n").filter((l: string) => l.includes("fatal:"))[0]?.trim() || (gitErr as Error).message.split("\n")[0]}`);
+      }
+    }
+  }
+
+  console.log("");
+  console.log("  Download failed after 4 attempts:");
+  for (const e of errors) console.log(e);
+  console.log("");
+  console.log("  To fix git authentication:");
+  console.log("    1. Run: gh auth login");
+  console.log("    2. Or update your GitHub token: git credential-osxkeychain erase");
+  console.log("    3. Or use SSH: ssh-keygen -t ed25519 && gh ssh-key add");
+  console.log("");
+
+  throw new Error(`Failed to download ${url}. See errors above.`);
 }
 
 type RepoFormat = "skill-folders" | "flat-md" | "unknown";

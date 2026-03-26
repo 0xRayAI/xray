@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.14.7] - 2026-03-26
+
+### 🔄 Changes
+
+add gh repo clone fallback for authenticated users on skill:install
+
+---
+
 ## [1.14.6] - 2026-03-26
 
 ### 🔄 Changes
