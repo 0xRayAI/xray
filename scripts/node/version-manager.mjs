@@ -194,11 +194,12 @@ function getFrameworkCounts() {
     }
   }
   
-  // Count skills (directories in .opencode/skills/)
-  const skillsDir = path.join(rootDir, '.opencode/skills');
+  // Count skills (directories in src/skills/ with SKILL.md)
+  const skillsDir = path.join(rootDir, 'src/skills');
   if (fs.existsSync(skillsDir)) {
     counts.skills = fs.readdirSync(skillsDir)
       .filter(f => fs.statSync(path.join(skillsDir, f)).isDirectory())
+      .filter(f => fs.existsSync(path.join(skillsDir, f, 'SKILL.md')))
       .length;
   }
   
