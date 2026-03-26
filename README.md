@@ -340,7 +340,7 @@ StringRay comes with **30+ curated skills** out of the box:
 - Cards on colored backgrounds
 - Gray text on colored backgrounds
 
-### Claude SEO (12 Skills)
+### Claude SEO (216 Skills)
 
 Comprehensive SEO optimization via [claude-seo](https://github.com/AgriciDaniel/claude-seo):
 

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.14.2] - 2026-03-26
+
+### 🔄 Changes
+
+consolidate licenses, remove stale artifacts, remove claude-seo from registry
+
+---
+
 ## [1.15.0] - 2026-03-24
 
 ### 🔄 Changes
