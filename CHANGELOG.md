@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.14.3] - 2026-03-26
+
+### 🔄 Changes
+
+update docs for skills registry, remove stale references
+
+---
+
 ## [1.14.2] - 2026-03-26
 
 ### 🔄 Changes

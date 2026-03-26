@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework for OpenCode/Claude Code**
 
-[![Version](https://img.shields.io/badge/version-1.14.2-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.14.3-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2368%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
@@ -23,8 +23,9 @@ This single command:
 1. Detects if OpenCode is installed
 2. Auto-installs OpenCode if missing
 3. Layers on the full StringRay kernel (Codex, orchestrator, enforcer, processors, MCP, reflections)
-4. Installs skills (Antigravity + Impeccable + OpenViking + Claude SEO)
-5. Adds CLI commands for agent publishing and status
+4. Installs 30 framework skills
+5. Sets up the skills registry with 10 curated community sources
+6. Adds CLI commands for agent publishing, skills management, and status
 
 **Goal:** Any developer can run one command and instantly get a production-grade, governed agent runtime.
 
@@ -55,9 +56,9 @@ npm install strray-ai
 
 - **🤖 26 Specialized Agents** - From code review to mobile development
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
-- **⚡ 30 Lazy-Loading Skills** - Plus Claude SEO & Antigravity integrations
+- **⚡ 30 Framework Skills** + 10 curated community sources (170+ additional skills available)
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
-- **📊 Real-time Monitoring** - Performance tracking and health checks
+- **📦 Skills Registry** - Browse and install community skills from GitHub repos
 - **🔄 Complexity-Based Routing** - Intelligent task delegation
 - **🔌 Webhook Integration** - GitHub, GitLab, Bitbucket, Stripe
 - **✅ 2368 Tests** - Production-ready with comprehensive test coverage
@@ -138,7 +139,11 @@ npx strray-ai report             # Generate usage and performance reports
 npx strray-ai publish-agent --agent orchestrator  # Package agent for AgentStore
 
 # Skills management
-npx strray-ai antigravity status  # Show all skills with licenses
+npx strray-ai skill:install              # Show starter packs + available sources
+npx strray-ai skill:install agency-agents  # Install from registry (auto-detects format)
+npx strray-ai skill:install <github-url>  # Install from any repo
+npx strray-ai skill:registry list      # Show all registry sources
+npx strray-ai antigravity status       # Show installed skills with licenses
 ```
 
 **Note:** Installation is automatic via `npm install strray-ai`. The postinstall hook configures everything automatically.
@@ -311,16 +316,55 @@ fastify.register(integration.getAPIRouter(), { prefix: '/api/post-process' });
 - Bitbucket (push, pull requests)
 - Stripe (subscriptions, payments)
 
-## 🎯 Skills Integration
+## 🎯 Skills
 
-StringRay comes with **30+ curated skills** out of the box:
+StringRay ships with **30 framework skills** and provides a registry of **10 curated community sources** with 170+ additional skills.
 
-| Skill Pack | Count | License | Description |
-|------------|-------|---------|-------------|
-| Antigravity | 17 | MIT | Language experts, DevOps, Security, Business |
-| Claude SEO | 12 | MIT | SEO optimization and analysis |
-| Impeccable | 1 | Apache 2.0 | AI frontend design language |
-| OpenViking | 1 | Apache 2.0 | Context database for agents |
+### Skills Registry
+
+Browse and install skills from verified GitHub repositories:
+
+```bash
+# Show starter packs and available sources
+npx strray-ai skill:install
+
+# Install a specific source
+npx strray-ai skill:install agency-agents
+npx strray-ai skill:install superpowers
+npx strray-ai skill:install anthropic-skills
+
+# Install from any GitHub repo (auto-detects format)
+npx strray-ai skill:install https://github.com/user/skills-repo
+
+# Manage the registry
+npx strray-ai skill:registry list              # Show all sources
+npx strray-ai skill:registry add --name X --url Y --desc "..." --license MIT
+npx strray-ai skill:registry remove --name X
+```
+
+#### Starter Packs
+
+| Pack | Sources | Skills | Best For |
+|------|---------|--------|----------|
+| **Minimal Viable Power** | superpowers, anthropic-skills | 20+ | Solo devs, quick setup |
+| **Full Pro Setup** | + agency-agents, impeccable, minimax | 200+ | Professional development |
+| **Agency/Team Mode** | + gemini-skills, ai-web3-security | 220+ | Teams, security audits |
+| **Specialized** | + vuejs-nuxt, ui-ux-pro-max | 230+ | Nuxt/Vue, UI/UX work |
+
+#### Registry Sources
+
+| Source | Skills | License | Description |
+|--------|--------|---------|-------------|
+| [agency-agents](https://github.com/msitarzewski/agency-agents) | 170+ | MIT | AI agency agent definitions |
+| [superpowers](https://github.com/obra/superpowers) | 14 | MIT | TDD, debugging, code review workflows |
+| [anthropic-skills](https://github.com/anthropics/skills) | 10+ | MIT | Official Anthropic Claude Code skills |
+| [antigravity](https://github.com/sickn33/antigravity-awesome-skills) | 1300+ | MIT | Curated community skills |
+| [impeccable](https://github.com/pbakaus/impeccable) | 1 | Apache 2.0 | AI frontend design language |
+| [minimax](https://github.com/MiniMax-AI/skills) | 20+ | MIT | Frontend, mobile, shader skills |
+| [gemini-skills](https://github.com/google-gemini/gemini-skills) | 10+ | Apache 2.0 | Official Google Gemini skills |
+| [ai-web3-security](https://github.com/pashov/ai-web3-security) | 10+ | MIT | Web3 security auditing |
+| [vuejs-nuxt](https://github.com/robert-zaremba/ai-agent-skills) | 5+ | MIT | Vue.js 3, Nuxt 4+ skills |
+| [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | 1 | MIT | Professional UI/UX design |
 
 ### Impeccable - AI Frontend Design
 
@@ -328,83 +372,32 @@ StringRay comes with **30+ curated skills** out of the box:
 
 ```bash
 /audit           # Find issues
-/critique       # UX design review  
+/critique       # UX design review
 /polish          # Pre-ship refinement
 /typeset         # Fix typography
 /arrange         # Fix layout & spacing
 ```
 
-**Anti-patterns it teaches AI to avoid:**
-- Overused fonts (Inter, Arial)
-- Purple gradients
-- Cards on colored backgrounds
-- Gray text on colored backgrounds
+### Framework Skills (30 Built-in)
 
-### Claude SEO (216 Skills)
-
-Comprehensive SEO optimization via [claude-seo](https://github.com/AgriciDaniel/claude-seo):
-
-```bash
-/seo audit <url>         # Full website audit
-/seo technical <url>     # Technical SEO (8 categories)
-/seo content <url>       # E-E-A-T analysis
-/seo geo <url>           # AI search optimization
-/seo schema <url>        # Schema markup
-/seo sitemap <url>      # Sitemap analysis
-/seo programmatic <url> # Programmatic SEO
-/seo competitor-pages   # Comparison pages
-/seo hreflang <url>     # Multi-language SEO
-```
-
-### Antigravity Skills (17 Curated)
-
-Enterprise-grade skills from [antigravity-awesome-skills](https://github.com/sickn33/antigravity-awesome-skills) (MIT License):
-
-| Category | Skills |
-|----------|--------|
-| Languages | typescript-expert, python-patterns, react-patterns, go-patterns, rust-patterns |
-| DevOps | docker-expert, aws-serverless, vercel-deployment |
-| Security | vulnerability-scanner, api-security-best-practices |
-| Business | copywriting, pricing-strategy, seo-fundamentals |
-| AI/Data | rag-engineer, prompt-engineering |
-| General | brainstorming, planning |
-
-```bash
-# Install Antigravity skills
-node scripts/integrations/install-antigravity-skills.js --curated
-
-# Install Claude SEO skills  
-node scripts/integrations/install-claude-seo.js --full
-```
-
-### OpenViking - Context Database for AI Agents
-
-[OpenViking](https://github.com/volcengine/OpenViking) provides hierarchical context management using a filesystem paradigm:
-
-```bash
-ov init              # Initialize workspace
-ov status            # Check status
-ov add-memory        # Add new memory
-ov ls viking://      # List all context
-```
-
-**Key features:**
-- Filesystem paradigm for memory organization
-- Tiered context loading (L0/L1/L2) to save tokens
-- Directory-aware search and retrieval
-- Session memory persistence
+StringRay includes 30 core skills for orchestration, compliance, architecture, and more — installed to `.opencode/skills/` automatically.
 
 ## License Information
 
-All bundled skills are properly licensed:
+All community skill sources are properly licensed. License files are in `licenses/skills/`:
 
-| Skill | License | File |
-|-------|---------|------|
-| Antigravity | MIT | LICENSE.antigravity |
-| Claude SEO | MIT | LICENSE.claude-seo |
-| Impeccable | Apache 2.0 | LICENSE.impeccable |
-| OpenViking | Apache 2.0 | LICENSE.openviking |
-```
+| Source | License | File |
+|--------|---------|------|
+| agency-agents | MIT | `licenses/skills/LICENSE.agency-agents` |
+| superpowers | MIT | `licenses/skills/LICENSE.superpowers` |
+| anthropic-skills | MIT | `licenses/skills/LICENSE.anthropic-skills` |
+| antigravity | MIT | `licenses/skills/LICENSE.antigravity` |
+| impeccable | Apache 2.0 | `licenses/skills/LICENSE.impeccable` |
+| minimax | MIT | `licenses/skills/LICENSE.minimax` |
+| gemini-skills | Apache 2.0 | `licenses/skills/LICENSE.gemini-skills` |
+| ai-web3-security | MIT | `licenses/skills/LICENSE.ai-web3-security` |
+| vuejs-nuxt | MIT | `licenses/skills/LICENSE.vuejs-nuxt` |
+| ui-ux-pro-max | MIT | `licenses/skills/LICENSE.ui-ux-pro-max` |
 
 ## 🙏 Support & Star
 

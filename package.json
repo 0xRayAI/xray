@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "1.14.2",
+  "version": "1.14.3",
   "description": "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.",
   "license": "MIT",
   "repository": {
@@ -132,8 +132,7 @@
     "AGENTS.md",
     "AGENTS-consumer.md",
     "LICENSE",
-    "LICENSE.claude-seo",
-    "LICENSE.antigravity"
+    "licenses/skills/"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",

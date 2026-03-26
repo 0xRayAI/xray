@@ -139,18 +139,18 @@ The `@storyteller` agent supports multiple story types:
 
 ## Available Skills
 
-StringRay includes integrated skills for specialized tasks:
+StringRay ships with 30 framework skills and provides a registry of 10 curated community sources.
 
-| Skill | License | Purpose | Location |
-|-------|---------|---------|----------|
-| **Impeccable** | Apache 2.0 | AI frontend design + UI/UX generation | `.opencode/integrations/impeccable/SKILL.md` |
-| **OpenViking** | Apache 2.0 | Context database + RAG integration | `.opencode/integrations/openviking/SKILL.md` |
-| **Antigravity** | Custom | Multi-skill bridge (Impeccable, OpenViking, Claude/SEO) | `.opencode/integrations/antigravity-bridge/SKILL.md` |
-
-**Check skills status:**
+**Manage skills:**
 ```bash
-npx strray-ai antigravity status
+npx strray-ai skill:install              # Show starter packs + available sources
+npx strray-ai skill:install <name>       # Install from registry
+npx strray-ai skill:registry list        # Show all registry sources
+npx strray-ai antigravity status         # Show installed skills
 ```
+
+**License files:** `licenses/skills/LICENSE.<source-name>`
+
 ## Complexity Routing
 
 StringRay automatically routes tasks based on complexity:
