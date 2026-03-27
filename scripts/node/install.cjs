@@ -4,10 +4,11 @@
  * StringRay One-Command Installer
  * 
  * Usage:
- *   npx strray-ai install           # Default: kernel + skills
+ *   npx strray-ai install           # Default: kernel + skills + OpenCode check
  *   npx strray-ai install --minimal # Only kernel, no skills
  *   npx strray-ai install --full    # Everything including all skills
  *   npx strray-ai install --with-skills # Kernel + skills (same as default)
+ *   npx strray-ai install --standalone # Standalone MCP servers (no OpenCode required)
  */
 
 const fs = require("fs");
@@ -31,7 +32,8 @@ function parseArgs() {
   return {
     minimal: args.includes("--minimal"),
     full: args.includes("--full"),
-    withSkills: args.includes("--with-skills") || (!args.includes("--minimal") && !args.includes("--full")),
+    withSkills: args.includes("--with-skills") || (!args.includes("--minimal") && !args.includes("--full") && !args.includes("--standalone")),
+    standalone: args.includes("--standalone"),
     yes: args.includes("--yes") || args.includes("-y"),
     help: args.includes("--help") || args.includes("-h"),
   };
@@ -56,14 +58,20 @@ Options:
   --minimal      Install only the kernel (no skills)
   --with-skills  Install kernel + curated skills (default)
   --full         Install everything including all skills
+  --standalone   Install standalone MCP servers (no OpenCode required)
   --yes, -y      Skip confirmation prompts
   --help, -h     Show this help message
 
+Modes:
+  Default:       Full installation with OpenCode integration
+  --standalone:  MCP servers only (for Hermes Agent, no OpenCode dependency)
+
 Examples:
-  npx strray-ai install           # Install with skills (default)
-  npx strray-ai install --minimal  # Kernel only
-  npx strray-ai install --full     # Full installation
-  npx strray-ai install --yes      # Install without prompts
+  npx strray-ai install              # Install with skills (default)
+  npx strray-ai install --minimal     # Kernel only
+  npx strray-ai install --full        # Full installation
+  npx strray-ai install --standalone  # Standalone MCP servers
+  npx strray-ai install --yes         # Install without prompts
 `);
 }
 
@@ -510,8 +518,14 @@ async function confirmInstallation(options) {
     new Promise((resolve) => rl.question(q, resolve));
 
   console.log("\n📋 Installation Summary:");
-  console.log("  - OpenCode detection + auto-install");
-  console.log("  - StringRay kernel layering");
+
+  if (options.standalone) {
+    console.log("  - Standalone mode (no OpenCode)");
+    console.log("  - MCP servers only (for Hermes Agent)");
+  } else {
+    console.log("  - OpenCode detection + auto-install");
+    console.log("  - StringRay kernel layering");
+  }
 
   if (options.withSkills || options.full) {
     console.log("  - Antigravity skills");
@@ -546,14 +560,21 @@ async function main() {
   const targetDir = process.cwd();
   console.log(`\n📍 Target directory: ${targetDir}`);
 
-  const hasOpenCode = await checkOpenCodeInstallation();
-  if (!hasOpenCode) {
-    const installed = await installOpenCode();
-    if (!installed) {
-      console.error("\n❌ Failed to install OpenCode. Please install manually:");
-      console.error("   npx opencode install --yes");
-      process.exit(1);
+  // Skip OpenCode check in standalone mode
+  if (!options.standalone) {
+    const hasOpenCode = await checkOpenCodeInstallation();
+    if (!hasOpenCode) {
+      const installed = await installOpenCode();
+      if (!installed) {
+        console.error("\n❌ Failed to install OpenCode. Please install manually:");
+        console.error("   npx opencode install --yes");
+        console.error("\nOr use --standalone mode to install MCP servers without OpenCode:");
+        console.error("   npx strray-ai install --standalone");
+        process.exit(1);
+      }
     }
+  } else {
+    console.log("\n🔓 Standalone mode: Skipping OpenCode check");
   }
 
   await layerKernel(targetDir);
@@ -575,7 +596,22 @@ async function main() {
 
   await runPostinstall(targetDir);
 
-  console.log(`
+  if (options.standalone) {
+    console.log(`
+╔══════════════════════════════════════════════════════════════════╗
+║              ✅ Standalone Installation Complete!               ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📋 Next Steps:
+  1. Configure MCP servers in Hermes: ~/.hermes/config.yaml
+  2. Run 'npx strray-ai status' to verify installation
+  3. Try 'hermes' to start using MCP servers
+
+📚 Hermes Setup: https://github.com/nilslice/hermes
+📚 Documentation: https://github.com/htafolla/stringray#hermes-agent-integration
+`);
+  } else {
+    console.log(`
 ╔══════════════════════════════════════════════════════════════════╗
 ║                    ✅ Installation Complete!                     ║
 ╚══════════════════════════════════════════════════════════════════╝
@@ -587,6 +623,7 @@ async function main() {
 
 📚 Documentation: https://github.com/htafolla/stringray
 `);
+  }
 }
 
 main().catch((error) => {

@@ -2,9 +2,9 @@
 
 **Enterprise AI Orchestration Framework for OpenCode/Claude Code**
 
-[![Version](https://img.shields.io/badge/version-1.14.7-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.15.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-2368%20passed-brightgreen?style=flat-square)](src/__tests__)
+[![Tests](https://img.shields.io/badge/tests-2311%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
 
 > **Intelligent Multi-Agent Coordination with 99.6% Systematic Error Prevention**
@@ -52,6 +52,16 @@ npm install strray-ai
 - Enables webhook triggers for CI/CD integration
 - Ready to use with Claude Code immediately
 
+### Standalone Mode (No OpenCode Required)
+
+For use with **Hermes Agent** without OpenCode:
+
+```bash
+npx strray-ai install --standalone
+```
+
+This installs only the MCP servers - no OpenCode dependency.
+
 ## ✨ Features
 
 - **🤖 13 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
@@ -61,7 +71,8 @@ npm install strray-ai
 - **📦 Skills Registry** - Browse and install community skills from GitHub repos
 - **🔄 Complexity-Based Routing** - Intelligent task delegation
 - **🔌 Webhook Integration** - GitHub, GitLab, Bitbucket, Stripe
-- **✅ 2368 Tests** - Production-ready with comprehensive test coverage
+- **✅ 2311 Tests** - Production-ready with comprehensive test coverage
+- **🧩 Standalone MCP Servers** - Works with Hermes Agent without OpenCode
 
 ## 🤖 Available Agents
 
@@ -110,6 +121,121 @@ const integration = await initializeOpenClawIntegration();
 ```
 
 See [OpenClaw Integration Guide](src/integrations/openclaw/README.md) for details.
+
+## 🔮 Hermes Agent Integration
+
+StringRay's MCP servers work as native tools in [Hermes Agent](https://github.com/nilslice/hermes) — a standalone AI coding agent with its own runtime, not dependent on OpenCode or Claude Code. This gives you the full StringRay toolset (code analysis, linting, security scanning, orchestration, state management) inside any Hermes session.
+
+### What You Get
+
+Hermes discovers 10 StringRay MCP servers automatically. Each server exposes tools that Hermes can call directly — no prompts, no proxies, no agent delegation overhead.
+
+| MCP Server | Tools Exposed | What It Does |
+|-----------|--------------|--------------|
+| `strray-architect-tools` | codebase_structure, dependency_analysis, context_analysis, architecture_assessment | Analyze project structure, dependencies, patterns, and architectural health |
+| `strray-auto-format` | auto_format, format_check | Prettier + ESLint + TypeScript formatting and validation |
+| `strray-enforcer` | rule_validation, codex_enforcement, quality_gate_check, run_pre_commit_validation | Codex compliance, quality gates, pre-commit validation |
+| `strray-estimation` | validate_estimate, start_tracking, complete_tracking, get_accuracy_report | Task estimation with calibration and accuracy tracking |
+| `strray-framework-help` | strray_get_capabilities, strray_get_commands, strray_explain_capability | Framework reference, agent docs, capability lookups |
+| `strray-lint` | lint, lint_check | ESLint validation with auto-fix and rule-specific checks |
+| `strray-orchestrator` | orchestrate_task, analyze_complexity, get_orchestration_status, optimize_orchestration, cancel_orchestration | Multi-agent task planning, complexity scoring, parallel optimization |
+| `strray-researcher` | search_codebase, find_implementation, get_documentation | Codebase search, pattern finding, documentation lookup |
+| `strray-security-scan` | security_scan, dependency_audit | Vulnerability scanning and dependency audit |
+| `strray-state-manager` | get_state, set_state, delete_state, list_state, backup_state, restore_state, validate_state | Persistent key-value state with backup/restore |
+
+### Setup
+
+1. Install StringRay in your project:
+
+```bash
+npm install strray-ai
+```
+
+2. Add the MCP server entries to your Hermes config (`~/.hermes/config.yaml`):
+
+```yaml
+mcp_servers:
+  strray-architect-tools:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/architect-tools.server.js
+    timeout: 30
+  strray-auto-format:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/auto-format.server.js
+    timeout: 30
+  strray-enforcer:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/enforcer-tools.server.js
+    timeout: 30
+  strray-estimation:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/estimation.server.js
+    timeout: 30
+  strray-framework-help:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/framework-help.server.js
+    timeout: 30
+  strray-lint:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/lint.server.js
+    timeout: 30
+  strray-orchestrator:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/orchestrator/server.js
+    timeout: 60
+  strray-researcher:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/researcher.server.js
+    timeout: 60
+  strray-security-scan:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/security-scan.server.js
+    timeout: 30
+  strray-state-manager:
+    command: node
+    args:
+      - ./node_modules/strray-ai/dist/mcps/state-manager.server.js
+    timeout: 30
+```
+
+3. Restart Hermes. The tools will appear with the `mcp_strray_` prefix.
+
+### Usage Examples
+
+Once connected, Hermes can use the tools directly in conversation:
+
+- "Analyze this project's architecture and give me a health score"
+- "Run a security scan on the codebase"
+- "Lint all TypeScript files and auto-fix what you can"
+- "Plan a refactoring of the auth module — break it into steps"
+- "Track my time: I estimate this feature will take 2 hours"
+- "Search the codebase for all database query patterns"
+
+### How It Differs from OpenCode
+
+| | OpenCode Plugin | Hermes MCP |
+|--|----------------|------------|
+| **Runtime** | OpenCode or Claude Code | Any Hermes session (CLI, Telegram, Discord) |
+| **Discovery** | Plugin injection via `opencode.json` | MCP protocol via `config.yaml` |
+| **Tool Access** | Agent-to-agent delegation | Direct tool calls from Hermes |
+| **Context** | Shared OpenCode session | Full Hermes session with memory |
+| **Platforms** | Terminal only | CLI, Telegram, Discord, WhatsApp, Slack |
+
+### Tips
+
+- Use absolute paths in `args` if Hermes runs from a different working directory than your project
+- Increase `timeout` for orchestrator and researcher (60s) — they do heavier analysis
+- The state-manager persists to `.opencode/state/mcp-state.json` — survives Hermes restarts
+- Auto-format and lint need Prettier/ESLint installed in your project to do real work (otherwise they report what's missing)
 
 ## 📖 Documentation
 
