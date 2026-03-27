@@ -19,8 +19,8 @@ This is the story of what we found, how we fixed it, and the profound lessons ab
 The first sign of trouble was subtle. Activity reports showed activity, but the detailed tool logs were empty. Users would see:
 
 ```
-✅ 26 agents configured
-✅ 30 skills available  
+✅ 25 agents configured
+✅ 44 skills available  
 ✅ Codex enforcement active
 ```
 

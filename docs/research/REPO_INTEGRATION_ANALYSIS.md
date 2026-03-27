@@ -111,7 +111,7 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 **What it is:** Complete AI agency with 144+ specialized agents across 12 divisions (frontend wizards, Reddit ninjas, reality checkers).
 
 **Key Features:**
-- 144 specialized agents with unique personalities
+- 25 specialized agents with unique personalities
 - 12 divisions: Engineering, Design, Marketing, etc.
 - Tool integrations: Claude Code, Copilot, Gemini CLI
 - Partial OpenCode support (marked as TODO in install script)

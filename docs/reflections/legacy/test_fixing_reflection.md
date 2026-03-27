@@ -75,7 +75,7 @@ Tests were written with expectations that no longer matched the actual implement
 expect(complexityAgents).toBe(1);
 
 // But implementation returned:
-expect(complexityAgents).toBe(2); // Complex operations need 26 agents
+expect(complexityAgents).toBe(2); // Complex operations need 25 agents
 ```
 
 ## Systematic Debugging Process

@@ -10,7 +10,7 @@ It started with a simple question: "Why does our analytics show zero routing act
 
 That question unraveled everything.
 
-I had been operating under the assumption that StringRay's architecture was sound—that the sophisticated systems we'd built were actually running. The routing system with its 26 agents. The complexity scoring. The post-processors with their triggers and validation engines. It was all there in the code, beautifully organized, comprehensively tested.
+I had been operating under the assumption that StringRay's architecture was sound—that the sophisticated systems we'd built were actually running. The routing system with its 25 agents. The complexity scoring. The post-processors with their triggers and validation engines. It was all there in the code, beautifully organized, comprehensively tested.
 
 But it wasn't running.
 
@@ -454,7 +454,7 @@ The refactoring forced us to confront the gap between what we designed and what 
 
 2. **Enable Full Routing**
    - Remove remaining commented code
-   - Wire up all 26 agents to routing keywords
+   - Wire up all 25 agents to routing keywords
    - Test multi-agent orchestration paths
 
 3. **Fix Remaining Todos**

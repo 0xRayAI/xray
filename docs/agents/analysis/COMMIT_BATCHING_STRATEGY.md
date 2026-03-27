@@ -11,10 +11,10 @@ The framework previously committed **every individual change**, creating:
 
 ## ✅ **Solution: Intelligent Commit Batching with 27-Agent Coordination**
 
-**Batch related changes together based on configurable metrics** rather than committing every individual change, with coordination across all 27 specialized agents.
+**Batch related changes together based on configurable metrics** rather than committing every individual change, with coordination across all 25 specialized agents.
 
 ### Agent Integration
-- **Orchestrator**: Coordinates commit batching across all 26 agents
+- **Orchestrator**: Coordinates commit batching across all 25 agents
 - **Enforcer**: Validates batched commits against all 60 Codex terms
 - **Code Reviewer**: Reviews batched changes for quality
 - **Documentation**: All agents document their contributions to batches

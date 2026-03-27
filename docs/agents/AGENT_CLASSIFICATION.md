@@ -2,7 +2,7 @@
 
 ## Overview
 
-StrRay Framework implements a sophisticated multi-agent architecture with 27 specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
+StrRay Framework implements a sophisticated multi-agent architecture with 25 specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
 
 ## Agent Classification Framework
 

@@ -39,18 +39,20 @@ function calculateCounts() {
   };
 
   try {
-    // Count agents
-    const agentsDir = ".opencode/agents";
-    if (fs.existsSync(agentsDir)) {
-      counts.agents = fs.readdirSync(agentsDir).filter(f => f.endsWith(".yml")).length;
+    // Count agents from src/agents (source of truth for all agents)
+    const srcAgentsDir = "src/agents";
+    if (fs.existsSync(srcAgentsDir)) {
+      counts.agents = fs.readdirSync(srcAgentsDir).filter(f => 
+        f.endsWith(".ts") && !f.includes(".test.") && f !== "index.ts" && f !== "types.ts"
+      ).length;
     }
 
-    // Count skills
-    const skillsDir = ".opencode/skills";
-    if (fs.existsSync(skillsDir)) {
-      counts.skills = fs.readdirSync(skillsDir).filter(f => {
-        const stat = fs.statSync(path.join(skillsDir, f));
-        return stat.isDirectory();
+    // Count skills from src/skills (source of truth for framework skills)
+    const srcSkillsDir = "src/skills";
+    if (fs.existsSync(srcSkillsDir)) {
+      counts.skills = fs.readdirSync(srcSkillsDir).filter(f => {
+        const fullPath = path.join(srcSkillsDir, f);
+        return fs.statSync(fullPath).isDirectory();
       }).length;
     }
 
@@ -275,8 +277,22 @@ const UPDATE_PATTERNS = [
       replacement: `${OFFICIAL_VERSIONS.framework.agents} Specialized Agents`,
     },
     {
+      pattern: /(\d+) specialized agents/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.agents} specialized agents`,
+    },
+    {
       pattern: /(\d+) agents/g,
       replacement: `${OFFICIAL_VERSIONS.framework.agents} agents`,
+    },
+    // MCP Servers count (standalone)
+    {
+      pattern: /\d+ MCP Servers/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP Servers`,
+    },
+    // Codex terms in codex terms
+    {
+      pattern: /\d+ codex terms/g,
+      replacement: `${OFFICIAL_VERSIONS.codex.termsCount} codex terms`,
     },
     // Skills count
     {
@@ -291,6 +307,30 @@ const UPDATE_PATTERNS = [
     {
       pattern: /(\d+) MCP servers/g,
       replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP servers`,
+    },
+    {
+      pattern: /(\d+) MCP Skills/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP Skills`,
+    },
+    // Agents configured
+    {
+      pattern: /Agents: \d+ configured/g,
+      replacement: `Agents: ${OFFICIAL_VERSIONS.framework.agents} configured`,
+    },
+    // MCP Skills loaded
+    {
+      pattern: /MCP Skills: \d+ loaded/g,
+      replacement: `MCP Skills: ${OFFICIAL_VERSIONS.framework.mcpServers} loaded`,
+    },
+    // Codex terms in feature lists
+    {
+      pattern: /\*\*\d+ Codex Terms\*\*/g,
+      replacement: `**${OFFICIAL_VERSIONS.codex.termsCount} Codex Terms**`,
+    },
+    // Terms count in parentheses
+    {
+      pattern: /\d+-\d+ Codex Terms/g,
+      replacement: `${OFFICIAL_VERSIONS.codex.termsCount} Codex Terms`,
     },
     // Tests count (look for patterns like "XXXX tests passed")
     {
@@ -484,7 +524,24 @@ const UPDATE_PATTERNS = [
       }
     }
 
-    // 5. Check that no files reference old versions
+    // 5. Check agent counts in MCP servers match actual count (from CALCULATED_COUNTS)
+    const mcpServerFiles = ["src/mcps/framework-help.server.ts"];
+    for (const mcpFile of mcpServerFiles) {
+      if (fs.existsSync(mcpFile)) {
+        const content = fs.readFileSync(mcpFile, "utf8");
+        const match = content.match(/\*\*(\d+)\s+Agents?:\*\*/);
+        if (match) {
+          const reportedCount = parseInt(match[1]);
+          if (reportedCount !== CALCULATED_COUNTS.agents) {
+            validationErrors.push(
+              `${mcpFile} reports ${reportedCount} agents but src/agents/ has ${CALCULATED_COUNTS.agents}`
+            );
+          }
+        }
+      }
+    }
+
+    // 7. Check that no files reference old versions
     const extensions = [".ts", ".js", ".md", ".json", ".txt", ".sh"];
     const files = findFiles(".", extensions);
     let oldVersionCount = 0;

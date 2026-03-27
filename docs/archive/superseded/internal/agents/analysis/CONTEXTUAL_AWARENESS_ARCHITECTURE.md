@@ -124,7 +124,7 @@ const quality = await qualityGateCheck(operation, context);
 - ✅ **Integration Validation**: Ensures proper context provider usage
 - ✅ **Memory Optimization**: Validates memory-efficient patterns
 - ✅ **Performance Budgets**: Monitors contextual analysis performance
-- ✅ **Rule Compliance**: Validates against 43 codex terms
+- ✅ **Rule Compliance**: Validates against 60 codex terms
 - ✅ **Quality Gates**: Blocks operations failing contextual integration
 
 ---

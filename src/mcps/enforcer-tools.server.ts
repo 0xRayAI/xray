@@ -25,7 +25,7 @@ class StrRayEnforcerToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "enforcer", version: "1.14.1",
+        name: "enforcer", version: "1.15.1",
       },
       {
         capabilities: {
@@ -83,7 +83,7 @@ class StrRayEnforcerToolsServer {
           {
             name: "codex-enforcement",
             description:
-              "Enforce all 55 Universal Development Codex terms with comprehensive compliance validation and actionable remediation",
+              "Enforce all Universal Development Codex terms with comprehensive compliance validation and actionable remediation",
             inputSchema: {
               type: "object",
               properties: {
@@ -335,7 +335,7 @@ class StrRayEnforcerToolsServer {
             {
               operation,
               codexCheck,
-              termsValidated: 55, // All Universal Development Codex terms
+              termsValidated: this.getCodexTermCount(), // All Universal Development Codex terms
               complianceScore: codexCheck.score,
               violations: codexCheck.violations.length,
               timestamp: new Date().toISOString(),
@@ -503,6 +503,21 @@ class StrRayEnforcerToolsServer {
     };
   }
 
+  private getCodexTermCount(): number {
+    try {
+      const codexPath = path.join(process.cwd(), ".opencode", "strray", "codex.json");
+      if (fs.existsSync(codexPath)) {
+        const codex = JSON.parse(fs.readFileSync(codexPath, "utf8"));
+        if (codex.terms && Array.isArray(codex.terms)) {
+          return codex.terms.length;
+        }
+      }
+    } catch {
+      // Fall back to default if unable to read
+    }
+    return 60; // Default fallback
+  }
+
   // Simulation methods (would integrate with actual enforcer-tools logic)
 
   private async simulateRuleValidation(context: any): Promise<any> {
@@ -610,7 +625,7 @@ class StrRayEnforcerToolsServer {
     }
 
     // Simulate codex term checking
-    const totalTerms = 55;
+    const totalTerms = this.getCodexTermCount();
     const violationsCount = violations.length;
     const warningsCount = warnings.length;
 

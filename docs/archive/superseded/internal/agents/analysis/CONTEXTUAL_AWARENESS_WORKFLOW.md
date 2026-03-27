@@ -119,7 +119,7 @@ const validation = await enforcerTools.contextAnalysisValidation(
 const codexCheck = await enforcerTools.codexEnforcement("create", [
   "src/delegation/*.ts",
 ]);
-// → Checks 43 codex terms compliance
+// → Checks 60 codex terms compliance
 
 const qualityGate = await enforcerTools.qualityGateCheck("create", {
   files: ["src/delegation/*.ts"],

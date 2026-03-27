@@ -19,7 +19,7 @@ StringRay v1.14.0 is a **production-ready, functioning framework** with 1,610 pa
 ## What's Actually Working Well ✅
 
 ### 1. Core Architecture
-- **Agent system is solid** - 26 agents working with clear delegation
+- **Agent system is solid** - 25 agents working with clear delegation
 - **Codex compliance works** - 100% coverage, all agents enforcing rules
 - **MCP integration functional** - 14 servers operational
 - **Test coverage good** - 1,610 tests passing

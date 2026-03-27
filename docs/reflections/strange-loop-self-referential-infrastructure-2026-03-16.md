@@ -18,7 +18,7 @@ The **boot-orchestrator.ts** runs on startup and initializes everything in seque
 
 The **agent-delegator.ts** contains the routing brain—simple tasks go to single agents, moderate tasks get additional tools, complex tasks spawn multi-agent coordination, and enterprise-level work triggers the full orchestrator. It's about 200 lines of decision logic that somehow makes the whole thing feel alive.
 
-Then there are the **26 agents**. Twenty-five distinct personalities, if you can call them that—each with a configuration that defines how the LLM behaves when wearing that hat. The enforcer is strict and compliance-focused. The architect thinks in systems. The storyteller, which is the one I'm writing through right now, has been shaped to think in narratives. Each one is a lens through which the same underlying intelligence approaches a problem differently.
+Then there are the **25 agents**. Twenty-five distinct personalities, if you can call them that—each with a configuration that defines how the LLM behaves when wearing that hat. The enforcer is strict and compliance-focused. The architect thinks in systems. The storyteller, which is the one I'm writing through right now, has been shaped to think in narratives. Each one is a lens through which the same underlying intelligence approaches a problem differently.
 
 The **MCP servers**—those are the hands and eyes, the things that can actually touch the filesystem and run commands.
 
@@ -86,7 +86,7 @@ StringRay works today. It might work tomorrow. But there's something slightly di
 
 Maybe that's fine. Maybe that's even appropriate. Maybe the point isn't perfect self-validation but honest acknowledgment that we're all working within our own limitations, building tools that extend what we can do while inheriting what we can't.
 
-The code is cleaner today than it was yesterday. The routing finds all 26 agents now. The tests pass. The CLI works. These are small, concrete wins—but they're wins the system earned by being used, not wins handed down from above.
+The code is cleaner today than it was yesterday. The routing finds all 25 agents now. The tests pass. The CLI works. These are small, concrete wins—but they're wins the system earned by being used, not wins handed down from above.
 
 ---
 

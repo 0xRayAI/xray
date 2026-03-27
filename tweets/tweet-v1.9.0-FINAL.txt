@@ -1,6 +1,6 @@
 🚀 StringRay v1.9.0 MAJOR RELEASE!
 
-✨ 100% Codex alignment - all 26 agents now enforce role-specific rules
+✨ 100% Codex alignment - all 25 agents now enforce role-specific rules
 🎭 New @storyteller agent with Hero's Journey & narrative frameworks
 🔄 Improved skill routing with outcome tracking & analytics
 ⚡ Enhanced enforcer routing with automated workflows

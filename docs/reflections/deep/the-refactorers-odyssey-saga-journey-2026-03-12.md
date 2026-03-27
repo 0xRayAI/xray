@@ -2,7 +2,7 @@
 
 ## Chapter I: The Call to Adventure
 
-*In the realm of StringRay, where 27 specialized agents labored tirelessly, there existed a darkness that had grown for generations. Three ancient monoliths—massive, interconnected codebases that no single developer fully understood—had become the foundation upon which the entire framework rested. But with age came entropy, and with entropy came chaos.*
+*In the realm of StringRay, where 25 specialized agents labored tirelessly, there existed a darkness that had grown for generations. Three ancient monoliths—massive, interconnected codebases that no single developer fully understood—had become the foundation upon which the entire framework rested. But with age came entropy, and with entropy came chaos.*
 
 The first monolith, known as **RuleEnforcer**, stood 2,714 lines tall. It was a towering structure of enforcement logic, a monolithic guardian that had protected the codebase from violations for years. But as the codebase evolved, RuleEnforcer grew restless. Its methods multiplied to 58, each one tangled with the others like ancient vines. New developers would stare at its incomprehensible structure and wonder: *How does anyone maintain this?*
 

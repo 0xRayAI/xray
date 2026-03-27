@@ -199,7 +199,7 @@ The following capabilities represent direct interaction points with StringRay ag
 
 ### Unavailable When Plugin Inactive
 
-- **Static Agent List**: Agents are limited to core 26 agents defined in AGENTS.md
+- **Static Agent List**: Agents are limited to core 25 agents defined in AGENTS.md
 - **No Dynamic Updates**: MCP server capabilities not reflected in available agents
 - **Fixed Codex Version**: Uses framework version 1.7.5 fallback codex instead of latest terms
 - **No Plugin Configuration**: No ability to customize plugin behavior or enable/disable features
@@ -229,7 +229,7 @@ The following capabilities represent direct interaction points with StringRay ag
 **What to Expect**:
 In consumer installations, StringRay agents function identically but may have:
 - Static agent list instead of dynamic discovery
-- Framework version 1.7.5 codex terms instead of latest
+- Framework version 1.7.60 codex terms instead of latest
 - No hot-reload capability
 - No plugin-specific error handling
 - Different development experience vs development environment

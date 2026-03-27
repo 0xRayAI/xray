@@ -10,7 +10,7 @@
 
 ## Overview
 
-Antigravity is a curated collection of 946+ AI agent skills under MIT license. StringRay integrates a curated subset of these skills to extend its agent capabilities beyond the built-in 26 agents.
+Antigravity is a curated collection of 946+ AI agent skills under MIT license. StringRay integrates a curated subset of these skills to extend its agent capabilities beyond the built-in 25 agents.
 
 This is **not a runtime integration** - it's a skills library that adds specialized capabilities to the agent pool through the skill router.
 

@@ -23,7 +23,7 @@ The StrRay Framework v1.14.0 implements an enterprise-grade AI agent coordinatio
 
 ### Key Architectural Characteristics
 
-- **Multi-Agent Coordination**: 27 specialized agents working in concert
+- **Multi-Agent Coordination**: N specialized agents working in concert
 - **Facade Pattern**: Simplified public APIs with modular internal implementation
 - **Codex-Driven Development**: 60 mandatory terms enforcing quality standards
 - **Plugin Ecosystem**: Secure, sandboxed third-party extensions
@@ -629,7 +629,7 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.14.1"
+    "version": "1.15.1"
   }
 }
 ```
@@ -741,7 +741,7 @@ query GetSystemStatus {
 
 #### Automated Compliance
 
-- **Codex Enforcement**: Runtime validation of 60 codex terms
+- **Codex Enforcement**: Runtime validation of N codex terms
 - **Architecture Reviews**: Automated architectural compliance checks
 - **Dependency Scanning**: Continuous vulnerability assessment
 

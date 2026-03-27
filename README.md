@@ -2,7 +2,7 @@
 
 **Enterprise AI Orchestration Framework for OpenCode/Claude Code**
 
-[![Version](https://img.shields.io/badge/version-1.15.0-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
+[![Version](https://img.shields.io/badge/version-1.15.1-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2311%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
@@ -47,7 +47,7 @@ npm install strray-ai
 
 **What happens during install?**
 - Copies OpenCode configuration files to your project
-- Configures 13 agents with proper capabilities
+- Configures 25 agents with proper capabilities
 - Sets up Codex enforcement rules
 - Enables webhook triggers for CI/CD integration
 - Ready to use with Claude Code immediately
@@ -64,7 +64,7 @@ This installs only the MCP servers - no OpenCode dependency.
 
 ## ✨ Features
 
-- **🤖 13 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
+- **🤖 25 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
 - **⚡ 43 Framework Skills** + 10 curated community sources (170+ additional skills available)
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
@@ -90,7 +90,7 @@ This installs only the MCP servers - no OpenCode dependency.
 
 > **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/main/docs/AGENT_CONFIG.md).
 
-[View all 13 agents →](https://github.com/htafolla/stringray/blob/main/AGENTS.md)
+[View all 25 agents →](https://github.com/htafolla/stringray/blob/main/AGENTS.md)
 
 ## 📦 OpenClaw Integration
 
@@ -380,7 +380,7 @@ stringray/
 │   ├── validation/            # Agent config & estimation validators
 │   └── jobs/                  # Background job management
 ├── .opencode/                 # OpenCode configuration
-│   ├── agents/               # Agent configs (13 agents)
+│   ├── agents/               # Agent configs (25 agents)
 │   ├── strray/               # StringRay config
 │   │   ├── codex.json        # 60-term development codex
 │   │   ├── features.json     # Feature flags

@@ -2,7 +2,7 @@
 
 ## Overview
 
-StrRay Framework v1.14.0 implements a comprehensive multi-agent AI system with a modern **Facade Pattern architecture**. The framework provides 27 specialized AI agents for systematic error prevention and enhanced development capabilities.
+StrRay Framework v1.14.0 implements a comprehensive multi-agent AI system with a modern **Facade Pattern architecture**. The framework provides 25 specialized AI agents for systematic error prevention and enhanced development capabilities.
 
 ## What's New in v1.14.0
 

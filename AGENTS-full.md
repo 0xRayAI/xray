@@ -3,7 +3,7 @@
 **Version**: 1.14.1
 **Purpose**: Enterprise AI orchestration with systematic error prevention and modular architecture
 **Last Updated**: 2026-03-12
-**System Complexity**: 75+ modular files, 13 specialized agents, 11 active MCP servers, 60 codex terms
+**System Complexity**: 75+ modular files, 25 specialized agents, 11 active MCP servers, 60 codex terms
 
 ---
 

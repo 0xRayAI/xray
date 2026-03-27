@@ -18,7 +18,7 @@ What began as a modest version bump became proof of a new paradigm—human orche
 
 ### 1. Multi-AI Collaboration Support (Validated)
 - **Proven in production**: 4 AIs (Grok, Claude, BigPickle, Kimi) collaborated successfully
-- **StringRay contained the chaos**: 59 codex terms prevented spaghetti code
+- **StringRay contained the chaos**: 60 codex terms prevented spaghetti code
 - **Result**: Bulletproof code, no regressions, 100% test success
 
 **The Pattern**:
@@ -87,7 +87,7 @@ Production-Ready Code
 - Updated `.github/workflows/ci.yml` - Automated CI job
 
 ### 4. Complete MCP Infrastructure
-**29 MCP Servers** now fully mapped and operational:
+**15 MCP Servers** now fully mapped and operational:
 
 **Core Orchestration (14)**:
 - architect-tools, boot-orchestrator, enforcer-tools
@@ -279,7 +279,7 @@ The missing piece that enables autonomous CI/CD recovery:
 **No breaking changes.** This is a validation and bugfix release.
 
 **Recommended steps**:
-1. Update version in package.json: `"version": "1.14.1"`
+1. Update version in package.json: `"version": "1.15.1"`
 2. Run `npm install` to refresh dependencies
 3. Run `npm run test:core-framework` to verify
 4. Deploy with confidence

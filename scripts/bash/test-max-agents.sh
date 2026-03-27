@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Test Max Concurrent Agents Limit (26 agents)
+# Test Max Concurrent Agents Limit (25 agents)
 
-echo "🧪 Testing Max Concurrent Agents Limit (26 agents)"
+echo "🧪 Testing Max Concurrent Agents Limit (25 agents)"
 echo "================================================="
 
 # Test 1: Verify configuration

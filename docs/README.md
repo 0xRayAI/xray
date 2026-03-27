@@ -126,7 +126,7 @@ StringRay Framework automatically configures itself based on your installation m
 - Loads the Universal Development Codex v1.1.1
 - Enables enterprise CI/CD automation with post-processor
 - Registers all 13 autonomous agents
-- Sets up 11 MCP servers for agent communication
+- Sets up 15 MCP servers for agent communication
 - Configures automated deployment pipelines
 
 #### OpenCode Integration
@@ -202,7 +202,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.14.1"
+    "version": "1.15.1"
   }
 }
 ```
@@ -353,7 +353,7 @@ npm run init
 ### Core Performance Metrics
 
 - **Error Prevention Rate**: 99.6% systematic validation
-- **Test Pass Rate**: 2,368/2,368 tests (100% success) + comprehensive CI/CD testing
+- **Test Pass Rate**: 2,311/2,311 tests (100% success) + comprehensive CI/CD testing
 - **CI/CD Automation**: Automated remediation with canary deployments
 - **Response Time**: Sub-millisecond task processing
 - **Cache Hit Rate**: 85%+ with LRU/LFU optimization
@@ -392,7 +392,7 @@ npm run init
 ````bash
 # Core Development
 npm run build          # TypeScript compilation with strict checks
-npm test              # Run complete test suite (2,368 tests)
+npm test              # Run complete test suite (2,311 tests)
 npm run dev           # Watch mode with hot reloading
 npm run lint          # Code quality and style checking
 npm run type-check    # TypeScript type validation
@@ -473,7 +473,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   },
   "framework": {
     "name": "strray",
-    "version": "1.14.1",
+    "version": "1.15.1",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"

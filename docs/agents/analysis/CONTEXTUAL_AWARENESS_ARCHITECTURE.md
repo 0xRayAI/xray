@@ -10,11 +10,11 @@
 
 ### Agent Integration Context (v1.14.0)
 
-The contextual awareness architecture now supports all **27 specialized agents** with integrated analysis capabilities:
+The contextual awareness architecture now supports all **25 specialized agents** with integrated analysis capabilities:
 
-- **Planning Agents**: 26 agents use contextual analysis for design and strategy
-- **Implementation Agents**: 26 agents use contextual analysis for surgical fixes and code transformation
-- **Primary Orchestrator**: Coordinates all 26 agents using contextual intelligence
+- **Planning Agents**: 25 agents use contextual analysis for design and strategy
+- **Implementation Agents**: 25 agents use contextual analysis for surgical fixes and code transformation
+- **Primary Orchestrator**: Coordinates all 25 agents using contextual intelligence
 
 ### **1. CodebaseContextAnalyzer** - File System Intelligence
 
@@ -121,14 +121,14 @@ const dependencies = await dependencyAnalysis(projectRoot);
 ### **Enforcer Agent** - Rule Enforcement Authority
 
 ```typescript
-// Validates contextual analysis integration follows rules for all 26 agents
+// Validates contextual analysis integration follows rules for all 25 agents
 const validation = await contextAnalysisValidation(files, operation);
 const compliance = await codexEnforcement(operation, files, newCode);
 const quality = await qualityGateCheck(operation, context);
 
 // Validates all 60 Codex terms (v1.7.5)
 // Ensures contextual analysis components integrate properly
-// Coordinates with Orchestrator to validate all 26 agents
+// Coordinates with Orchestrator to validate all 25 agents
 ```
 
 **Enforcer Capabilities:**
@@ -136,7 +136,7 @@ const quality = await qualityGateCheck(operation, context);
 - ✅ **Integration Validation**: Ensures proper context provider usage
 - ✅ **Memory Optimization**: Validates memory-efficient patterns
 - ✅ **Performance Budgets**: Monitors contextual analysis performance
-- ✅ **Rule Compliance**: Validates against 43 codex terms
+- ✅ **Rule Compliance**: Validates against 60 codex terms
 - ✅ **Quality Gates**: Blocks operations failing contextual integration
 
 ---

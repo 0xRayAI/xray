@@ -2,7 +2,7 @@
 
 ## 🚀 Welcome to StringRay v1.14.0
 
-**StringRay (StrRay) v1.14.0** is the AI agent orchestration framework that eliminates dead ends in AI-assisted development. Designed specifically for modern AI workflows, StringRay coordinates 27 specialized agents to deliver production-ready code while preventing common AI development pitfalls.
+**StringRay (StrRay) v1.14.0** is the AI agent orchestration framework that eliminates dead ends in AI-assisted development. Designed specifically for modern AI workflows, StringRay coordinates N specialized agents to deliver production-ready code while preventing common AI development pitfalls.
 
 ## What's New in v1.14.0
 
@@ -44,7 +44,7 @@ v1.14.0 introduces a major architectural refactoring implementing the **Facade P
 
 ## 🎯 Why StringRay for Grok?
 
-StringRay is **optimized for Grok** and other advanced AI models. It leverages Grok's reasoning capabilities through 27 specialized agents that work together to:
+StringRay is **optimized for Grok** and other advanced AI models. It leverages Grok's reasoning capabilities through N specialized agents that work together to:
 
 - **Eliminate spaghetti code** through coordinated architecture
 - **Prevent AI hallucinations** with cross-agent validation
@@ -98,7 +98,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.14.1"
+    "version": "1.15.1"
   }
 }
 ```
@@ -214,7 +214,7 @@ npm run dev
 ## 📊 Performance & Reliability
 
 - **99.6% Error Prevention**: Systematic validation blocks issues before they occur
-- **85%+ Test Coverage**: Automated testing ensures quality (2,368 tests)
+- **85%+ Test Coverage**: Automated testing ensures quality (N tests)
 - **Production-Ready Output**: Every deliverable meets production standards
 - **Grok-Optimized**: Designed for Grok's advanced reasoning capabilities
 - **87% Code Reduction**: v1.14.0 is leaner and faster
@@ -355,7 +355,7 @@ const result = await enforcer.validate({
 
 **StringRay v1.14.0 Strengths:**
 
-- **27 specialized agents** for comprehensive coverage
+- **N specialized agents** for comprehensive coverage
 - **Facade Pattern** for clean, maintainable architecture
 - **87% code reduction** for better performance
 - **Multi-agent coordination** and validation

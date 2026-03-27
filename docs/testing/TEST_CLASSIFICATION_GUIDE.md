@@ -222,12 +222,12 @@ describe('Facade Integration: RuleEnforcer + TaskSkillRouter', () => {
 
 ## Framework Test Status Summary (v1.14.0)
 
-- **Total Tests**: 2,368 tests
+- **Total Tests**: N tests
 - **Test Files**: 145+ test files
 - **Facade Module Tests**: 112 files (26 modules, component isolation)
 - **Integration Tests**: 420 tests (cross-facade validation)
 - **E2E Tests**: 280 tests (Real framework workflows)
-- **Agent Tests**: 420 tests (27 specialized agents)
+- **Agent Tests**: 420 tests (N specialized agents)
 - **Unit Tests**: 580 tests (Individual components)
 - **Performance Tests**: 280 tests (Facade performance, regression detection)
 - **Test Coverage**: 87% behavioral coverage

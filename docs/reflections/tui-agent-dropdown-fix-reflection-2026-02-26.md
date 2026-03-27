@@ -36,7 +36,7 @@ OpenCode reads agents from **two merged sources**:
 | general | ✅ | ❌ MISSING |
 | tech-writer | ✅ | ❌ MISSING |
 
-The framework had 26 agents defined in JSON config but only 26 yml files - two were missing.
+The framework had 25 agents defined in JSON config but only 26 yml files - two were missing.
 
 ---
 
@@ -45,7 +45,7 @@ The framework had 26 agents defined in JSON config but only 26 yml files - two w
 ### Step 1: Configuration Audit
 ```bash
 # Count agents in opencode.json
-grep -c '"mode":' opencode.json  # ~26 agents
+grep -c '"mode":' opencode.json  # ~25 agents
 
 # Count yml files
 ls .opencode/agents/*.yml | wc -l  # 26 files
@@ -84,7 +84,7 @@ Studied existing yml files (orchestrator.yml, researcher.yml) to understand the 
 ```bash
 opencode agent list | grep -oE "^[a-zA-Z]* \(" | wc -l
 # Before: Incomplete
-# After: 26 agents (20 StringRay + 2 built-in)
+# After: 25 agents (20 StringRay + 2 built-in)
 ```
 
 ---
@@ -105,7 +105,7 @@ This wasn't a single fix - it was the culmination of multiple improvements:
 
 ### v1.6.10: Agent Configuration Sync
 - Disabled enhanced-orchestrator (stability)
-- Updated setup.cjs with all 26 agents
+- Updated setup.cjs with all 25 agents
 - Fixed plugin path checks
 
 ### v1.6.11: TUI Dropdown Fix

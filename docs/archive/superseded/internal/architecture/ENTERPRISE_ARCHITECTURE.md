@@ -21,7 +21,7 @@ The StrRay Framework implements an enterprise-grade AI agent coordination platfo
 
 ### Key Architectural Characteristics
 
-- **Multi-Agent Coordination**: 8 specialized agents working in concert
+- **Multi-Agent Coordination**: 25 specialized agents working in concert
 - **Codex-Driven Development**: 45 mandatory terms enforcing quality standards
 - **Plugin Ecosystem**: Secure, sandboxed third-party extensions
 - **Enterprise Monitoring**: Comprehensive observability and alerting
@@ -464,7 +464,7 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.14.1"
+    "version": "1.15.1"
   }
 }
 ```

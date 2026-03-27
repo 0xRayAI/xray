@@ -69,8 +69,8 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 15 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 26 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: N MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 25 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -135,7 +135,7 @@ StrRay uses a **hybrid TypeScript/Python architecture** with two key directories
 
 **Key Files:**
 
-- `codex.json` - 60 detailed codex terms with enforcement levels
+- `codex.json` - Codex terms with enforcement levels
 - `agents_template.md` - Master agent architecture template
 - `context-loader.ts` - Context loading utilities
 
@@ -206,8 +206,8 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 #### OpenCode Integration Points
 
 - **Hook Integration**: `agent.start`, `tool.execute.before`, `tool.execute.after` hooks
-- **MCP Servers**: 15 MCP servers (7 agent-specific + 2 knowledge skills)
-- **Model Routing**: All 26 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
+- **MCP Servers**: N MCP servers (7 agent-specific + 2 knowledge skills)
+- **Model Routing**: All 25 agents configured to use `openrouter/xai-grok-2-1212-fast-1` model
 - **Session Management**: Cross-plugin session persistence and state sharing
 
 #### Python Backend Integration
@@ -930,7 +930,7 @@ Evaluate performance characteristics:
 
 #### MCP Server Integration
 
-- **9 MCP Servers**: 7 agent-specific servers + 2 knowledge skill servers
+- **N MCP Servers**: 7 agent-specific servers + 2 knowledge skill servers
 - **Knowledge Skills**: project-analysis, testing-strategy, architecture-patterns, performance-optimization, git-workflow, api-design
 - **Protocol**: Model Context Protocol for standardized AI integration
 
@@ -1046,7 +1046,7 @@ score = Math.min(Math.max(score, 0), 100); // Normalize 0-100
 
 ### MCP Protocol Implementation
 
-- **9 MCP Servers**: 7 agent-specific + 2 knowledge skill servers
+- **N MCP Servers**: 7 agent-specific + 2 knowledge skill servers
 - **Tool Registration**: Dynamic tool discovery and permission systems
 - **Resource Access**: Controlled access to framework resources
 - **Protocol Versions**: Automatic compatibility negotiation
@@ -1071,7 +1071,7 @@ score = Math.min(Math.max(score, 0), 100); // Normalize 0-100
 
 ### MCP Protocol Implementation
 
-- **9 MCP Servers**: 7 agent-specific + 2 knowledge skill servers
+- **N MCP Servers**: 7 agent-specific + 2 knowledge skill servers
 - **Tool Registration**: Dynamic tool discovery and permission systems
 - **Resource Access**: Controlled access to framework resources
 - **Protocol Versions**: Automatic compatibility negotiation
@@ -1355,7 +1355,7 @@ Framework initializes in strict dependency order:
 
 ### Implemented Features ✅
 
-- **26 Specialized Agents**: All configured with proper tools and permissions
+- **25 Specialized Agents**: All configured with proper tools and permissions
 - **Codex Compliance**: 60-term validation with zero-tolerance blocking
 - **Hybrid Architecture**: TypeScript/Python integration operational
 - **Boot Orchestration**: Dependency-ordered initialization working

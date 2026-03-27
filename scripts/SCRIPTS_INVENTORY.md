@@ -25,7 +25,7 @@ This document provides a complete inventory of all scripts in the `scripts/` dir
 | `validate-codex.mjs` | ✅ Working | Validates codex compliance | 60 terms validated |
 | `version-manager.mjs` | ✅ Working | Manages version bumping | Includes auto-changelog |
 | `release.mjs` | ✅ Working | Handles release process | Dry-run support |
-| `setup.cjs` | ✅ Working | Configures OpenCode plugin | Adds 26 agents |
+| `setup.cjs` | ✅ Working | Configures OpenCode plugin | Adds 25 agents |
 | `boot-check.mjs` | ✅ Working | Framework boot validation | 4/4 checks passing |
 | `kernel-e2e-test.mjs` | ✅ Working | Kernel integration tests | 10/10 tests passed |
 | `kernel-framework-test.mjs` | ⚠️ Partial | Tests kernel via framework | 7/9 tests pass (TaskSkillRouter missing kernel integration - expected) |
@@ -87,7 +87,7 @@ This document provides a complete inventory of all scripts in the `scripts/` dir
 | Script | Status | Description | Notes |
 |--------|--------|-------------|-------|
 | `test-rules.mjs` | ✅ Working | Rule enforcement tests | All rules validated |
-| `test-agents.mjs` | ✅ Working | Agent registration tests | 26 agents validated |
+| `test-agents.mjs` | ✅ Working | Agent registration tests | 25 agents validated |
 | `run-all-tests.mjs` | ✅ Working | Master test runner | 7/9 suites pass |
 | `verify-plugin-paths.mjs` | ✅ Working | Plugin path verification | 4/4 checks pass |
 | `verify-orchestration.mjs` | ⚠️ Partial | Orchestration health check | 13/15 checks pass (expected in dev) |
@@ -98,7 +98,7 @@ This document provides a complete inventory of all scripts in the `scripts/` dir
 | `test-mcp-registration.mjs` | ⚠️ Partial | MCP registration tests | 4/6 tests pass (timeout property issue) |
 | `test-skill-routing.mjs` | ⚠️ Partial | Skill routing tests | 8/26 tests pass (routing mismatch - design decision) |
 | `test-skills-coverage.mjs` | ✅ Working | Skills coverage tests | 85/85 tests passed |
-| `test-skills-comprehensive.mjs` | ✅ Working | Comprehensive skills tests | 5/30 skills validated |
+| `test-skills-comprehensive.mjs` | ✅ Working | Comprehensive skills tests | 5/44 skills validated |
 | `test-skills-mcp-integration.mjs` | ✅ Working | Skills-MCP integration | Plugin loading confirmed |
 | `test-consumer-readiness.mjs` | ✅ Working | Consumer readiness | 4/4 checks passed |
 | `test-consumer-validation.mjs` | ⚠️ Partial | Consumer validation | 10/23 tests pass (expected - dev environment) |

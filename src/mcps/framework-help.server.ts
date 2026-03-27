@@ -14,7 +14,7 @@ class FrameworkHelpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray/framework-help", version: "1.14.1",
+        name: "strray/framework-help", version: "1.15.1",
       },
       {
         capabilities: {
@@ -398,7 +398,7 @@ ${Object.entries(capabilities.reporting)
       return `
 **StringRay Framework - Complete Capabilities Overview**
 
-**26 Specialized Agents:**
+**25 Specialized Agents:**
 ${Object.entries(capabilities.agents)
   .map(([name, desc]) => `- **${name}**: ${desc}`)
   .join("\n")}
@@ -435,7 +435,7 @@ ${Object.entries(capabilities.reporting)
       return `
 **StringRay Framework Capabilities:**
 
-**26 Agents:** enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, researcher, strategist, seo-consultant, content-creator, growth-strategist, multimodal-looker, frontend-ui-ux-engineer, tech-writer, log-monitor, explore, analyzer, backend-engineer, performance-engineer, database-engineer, devops-engineer, mobile-developer
+**25 Agents:** enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, researcher, strategist, seo-consultant, content-creator, growth-strategist, multimodal-looker, frontend-ui-ux-engineer, frontend-engineer, tech-writer, log-monitor, analyzer, backend-engineer, performance-engineer, database-engineer, devops-engineer, mobile-developer, librarian-agents-updater
 
 **23 Skills:** project-analysis, testing-strategy, code-review, security-audit, performance-optimization, refactoring-strategies, ui-ux-design, documentation-generation, and more
 

@@ -52,7 +52,7 @@ You can't build a system that understands itself. Gödel proved that. But you ca
 
 The enforcer doesn't know it's enforcing rules it was built under. The orchestrator doesn't know it coordinates itself. The routing doesn't know it routes itself. They're just code executing.
 
-But when you step back and look at the whole thing—the boot sequence, the 26 agents, the complexity scoring, the CLI that actually works—you see something that organizes intelligence. Imperfectly. Incompletely. But consistently.
+But when you step back and look at the whole thing—the boot sequence, the 25 agents, the complexity scoring, the CLI that actually works—you see something that organizes intelligence. Imperfectly. Incompletely. But consistently.
 
 ## The Point
 

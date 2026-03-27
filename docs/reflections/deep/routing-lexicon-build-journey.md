@@ -548,7 +548,7 @@ But wait—there's no actual routing happening here. The hook extracts the messa
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
 | **Total Keywords** | ~250 | 431 | +72% |
-| **Routing Entries** | 25 | 28 | +26 agents |
+| **Routing Entries** | 25 | 28 | +25 agents |
 | **Avg Keywords/Agent** | 10 | 15 | +50% |
 | **Total Lines** | 366 | 551 | +50% |
 | **Empty Entries** | 3 | 0 | -100% |
@@ -1029,7 +1029,7 @@ No map can capture the territory completely. Every map simplifies, abstracts, ex
 
 The best we can do is build maps that are useful for the journeys our users want to take.
 
-The routing lexicon is a map for navigating 26 agents. It's not perfect. But it's better than wandering aimlessly.
+The routing lexicon is a map for navigating 25 agents. It's not perfect. But it's better than wandering aimlessly.
 
 And the process of building it—reading the YAML files, mining the TypeScript, exploring the hook system, assessing the architecture—that process taught me more about the system than any documentation could.
 

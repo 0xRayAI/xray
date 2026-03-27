@@ -92,7 +92,7 @@ export const frameworkHelpSimulations: Record<string, SimulatorFunction> = {
         type: 'text',
         text: `**StringRay Framework Capabilities:**
 
-**26 Specialized Agents:**
+**25 Specialized Agents:**
 - enforcer: Codex compliance & error prevention
 - architect: System design & technical decisions
 - orchestrator: Multi-agent workflow coordination
