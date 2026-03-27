@@ -49,7 +49,7 @@ OpenCode status
 # Should show:
 # ✅  loaded
 # ✅ Agents: 25 configured
-# ✅ MCP Skills: 15 loaded
+# ✅ MCP Servers: 15 loaded
 # ✅ Automation Hooks: 4 active
 ```
 
@@ -325,7 +325,7 @@ Once installed and configured, StrRay provides:
 
 - **60 Codex Terms**: Systematic error prevention
 - **25 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
-- **15 MCP Skills**: Project analysis, testing strategy, etc.
+- **15 MCP Servers**: Project analysis, testing strategy, etc.
 - **4 Automation Hooks**: Pre-commit checks, formatting, etc.
 - **Real-time Compliance**: Bundle size, test coverage monitoring
 
