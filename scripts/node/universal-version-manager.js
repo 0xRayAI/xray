@@ -226,6 +226,15 @@ const UPDATE_PATTERNS = [
       pattern: /StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: OFFICIAL_VERSIONS.framework.displayName,
     },
+    // Standalone version in docs (v1.15.1, v1.15.1 patterns)
+    {
+      pattern: /v1\.14\.[0-9]+/g,
+      replacement: `v${OFFICIAL_VERSIONS.framework.version}`,
+    },
+    {
+      pattern: /v1\.9\.[0-9]+/g,
+      replacement: `v${OFFICIAL_VERSIONS.framework.version}`,
+    },
 
     // Pre-commit introspection patterns
     {
@@ -261,124 +270,9 @@ const UPDATE_PATTERNS = [
       replacement: `"strray:version": "${OFFICIAL_VERSIONS.framework.version}"`,
     },
 
-    // === FRAMEWORK COUNTS (auto-update in README, docs) ===
-    // Codex terms count
-    {
-      pattern: /Codex \((\d+|\d+-\d+|\d+\+?)\) terms/g,
-      replacement: `Codex (${OFFICIAL_VERSIONS.codex.termsCount}) terms`,
-    },
-    {
-      pattern: /\((\d+|\d+-\d+|\d+\+?)\) terms/g,
-      replacement: `(${OFFICIAL_VERSIONS.codex.termsCount}) terms`,
-    },
-    // Agents count
-    {
-      pattern: /(\d+)\+? Specialized Agents/g,
-      replacement: `${OFFICIAL_VERSIONS.framework.agents} Specialized Agents`,
-    },
-    {
-      pattern: /(\d+) specialized agents/g,
-      replacement: `${OFFICIAL_VERSIONS.framework.agents} specialized agents`,
-    },
-    {
-      pattern: /(\d+) agents/g,
-      replacement: `${OFFICIAL_VERSIONS.framework.agents} agents`,
-    },
-    // MCP Servers count (standalone)
-    {
-      pattern: /\d+ MCP Servers/g,
-      replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP Servers`,
-    },
-    // Codex terms in codex terms
-    {
-      pattern: /\d+ codex terms/g,
-      replacement: `${OFFICIAL_VERSIONS.codex.termsCount} codex terms`,
-    },
-    // Skills count
-    {
-      pattern: /(\d+)\+? Lazy-Loading Skills/g,
-      replacement: `${OFFICIAL_VERSIONS.framework.skills} Lazy-Loading Skills`,
-    },
-    {
-      pattern: /(\d+)\+? framework skills/gi,
-      replacement: `${OFFICIAL_VERSIONS.framework.skills} framework skills`,
-    },
-    {
-      pattern: /(\d+)\+? Framework Skills/gi,
-      replacement: `${OFFICIAL_VERSIONS.framework.skills} Framework Skills`,
-    },
-    {
-      pattern: /(\d+) skills/gi,
-      replacement: `${OFFICIAL_VERSIONS.framework.skills} skills`,
-    },
-    // MCP servers count
-    {
-      pattern: /(\d+) MCP servers/g,
-      replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP servers`,
-    },
-    {
-      pattern: /(\d+) MCP Skills/g,
-      replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP Skills`,
-    },
-    // Agents configured
-    {
-      pattern: /Agents: \d+ configured/g,
-      replacement: `Agents: ${OFFICIAL_VERSIONS.framework.agents} configured`,
-    },
-    // MCP Skills loaded
-    {
-      pattern: /MCP Skills: \d+ loaded/g,
-      replacement: `MCP Skills: ${OFFICIAL_VERSIONS.framework.mcpServers} loaded`,
-    },
-    // Codex terms in feature lists
-    {
-      pattern: /\*\*\d+ Codex Terms\*\*/g,
-      replacement: `**${OFFICIAL_VERSIONS.codex.termsCount} Codex Terms**`,
-    },
-    // Terms count in parentheses
-    {
-      pattern: /\d+-\d+ Codex Terms/g,
-      replacement: `${OFFICIAL_VERSIONS.codex.termsCount} Codex Terms`,
-    },
-    // Tests count (look for patterns like "XXXX tests passed")
-    {
-      pattern: /tests-(\d+%?)\s+passed/g,
-      replacement: `tests-${OFFICIAL_VERSIONS.framework.tests || 1608} passed`,
-    },
-
-    // === AGENT NAME RENAMES (v1.6.17+) ===
-    {
-      pattern: /testing-lead/g,
-      replacement: "testing-lead",
-    },
-    {
-      pattern: /researcher/g,
-      replacement: "researcher",
-    },
-    {
-      pattern: /strategist(?![-:])/g,
-      replacement: "strategist",
-    },
-    {
-      pattern: /seo-consultant/g,
-      replacement: "seo-consultant",
-    },
-    {
-      pattern: /content-creator/g,
-      replacement: "content-creator",
-    },
-    {
-      pattern: /growth-strategist/g,
-      replacement: "growth-strategist",
-    },
-    {
-      pattern: /tech-writer/g,
-      replacement: "tech-writer",
-    },
-
   ];
 
-// Additional patterns for bash scripts (STRRAY_VERSION)
+  // Additional patterns for bash scripts (STRRAY_VERSION)
   const BASH_VERSION_PATTERNS = [
     {
       pattern: /STRRAY_VERSION="[0-9]+\.[0-9]+\.[0-9]+"/g,
