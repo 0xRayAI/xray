@@ -23,7 +23,7 @@ export interface OrchestratorConfig {
   conflictResolutionStrategy?: "majority_vote" | "expert_priority";
 }
 
-export class StringRayOrchestrator {
+export class KernelOrchestrator {
   private taskQueue: Map<string, TaskDefinition> = new Map();
   private activeTasks: Set<string> = new Set();
   private config: {
@@ -527,4 +527,4 @@ export class StringRayOrchestrator {
   }
 }
 
-export const strRayOrchestrator = new StringRayOrchestrator();
+export const strRayOrchestrator = new KernelOrchestrator();

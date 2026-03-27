@@ -8,7 +8,7 @@
  * @since 2026-01-23
  */
 
-import { StringRayOrchestrator } from "../core/orchestrator.js";
+import { KernelOrchestrator } from "../core/orchestrator.js";
 import { TaskDefinition } from "../agents/types.js";
 import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
 import { createAgentDelegator } from "../delegation/agent-delegator.js";
@@ -54,7 +54,7 @@ export interface CoordinationMetrics {
 }
 
 export class MultiAgentOrchestrationCoordinator {
-  private strRayOrchestrator: StringRayOrchestrator;
+  private strRayOrchestrator: KernelOrchestrator;
   private enhancedOrchestrator: EnhancedMultiAgentOrchestrator;
   private agentDelegator: any;
   private stateManager: StringRayStateManager;
@@ -63,7 +63,7 @@ export class MultiAgentOrchestrationCoordinator {
 
   constructor(stateManager?: StringRayStateManager) {
     this.stateManager = stateManager || new StringRayStateManager();
-    this.strRayOrchestrator = new StringRayOrchestrator();
+    this.strRayOrchestrator = new KernelOrchestrator();
     this.enhancedOrchestrator = new EnhancedMultiAgentOrchestrator();
     this.agentDelegator = createAgentDelegator(
       this.stateManager,

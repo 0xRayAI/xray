@@ -9,17 +9,17 @@
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import {
-  StringRayOrchestrator,
+  KernelOrchestrator,
   OrchestrationResult,
   OrchestratorConfig,
 } from "../../core/orchestrator.js";
 import { TaskDefinition } from "../../agents/types.js";
 
-describe("StringRayOrchestrator", () => {
-  let orchestrator: StringRayOrchestrator;
+describe("KernelOrchestrator", () => {
+  let orchestrator: KernelOrchestrator;
 
   beforeEach(() => {
-    orchestrator = new StringRayOrchestrator({
+    orchestrator = new KernelOrchestrator({
       maxConcurrentTasks: 3,
       taskTimeout: 60000,
       conflictResolutionStrategy: "majority_vote",
@@ -27,7 +27,7 @@ describe("StringRayOrchestrator", () => {
   });
 
   test("should initialize with default configuration", () => {
-    const defaultOrchestrator = new StringRayOrchestrator();
+    const defaultOrchestrator = new KernelOrchestrator();
     expect(defaultOrchestrator).toBeDefined();
   });
 
@@ -36,7 +36,7 @@ describe("StringRayOrchestrator", () => {
       maxConcurrentTasks: 5,
       conflictResolutionStrategy: "expert_priority",
     };
-    const customOrchestrator = new StringRayOrchestrator(config);
+    const customOrchestrator = new KernelOrchestrator(config);
     expect(customOrchestrator).toBeDefined();
   });
 

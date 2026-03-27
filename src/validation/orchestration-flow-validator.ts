@@ -3,7 +3,7 @@
  * Validates the complete end-to-end orchestration pipeline
  */
 
-import { StringRayOrchestrator } from "../orchestrator.js";
+import { StringRayOrchestrator } from "../orchestrator/orchestrator.js";
 import { enhancedMultiAgentOrchestrator } from "../orchestrator/enhanced-multi-agent-orchestrator.js";
 import { createAgentDelegator } from "../delegation/agent-delegator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
