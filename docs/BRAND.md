@@ -1,20 +1,20 @@
-# StringRay Brand Document v1.14.0
+# StringRay Brand Document v1.15.0
 
 ## Brand Overview
 
 **Brand Name**: StringRay (StrRay) – The AI Agent  
-**Version**: 1.9.0  
+**Version**: 1.15.0  
 **Architecture**: Facade Pattern with Modular Internal Structure  
 **Positioning**: Production-Ready Code. No Dead Ends.  
 **Core Value**: Delivers clean architecture, single sources of truth, modular components, and auto-generated tests — production-grade, every time.
 
 ---
 
-## What's New in v1.14.0
+## What's New in v1.15.0
 
 ### Architecture Evolution: Facade Pattern
 
-StringRay v1.14.0 represents a major architectural evolution from monolithic components to a modern **Facade Pattern** design:
+StringRay v1.15.0 represents a major architectural evolution from monolithic components to a modern **Facade Pattern** design:
 
 **The Transformation:**
 - **87% Code Reduction**: Eliminated 3,170 lines of dead code (8,230 → 1,218 lines)
@@ -81,7 +81,7 @@ Code rot (software entropy/technical debt creep) is how code quality degrades ov
 - **Performance Creep**: Small inefficiencies compound (e.g., unnecessary re-renders in React that slow the app down over iterations).
 - **Monolithic Bloat**: Single files grow to thousands of lines, becoming impossible to understand, test, or modify safely.
 
-**StringRay's Solution**: The v1.14.0 facade architecture actively prevents code rot by enforcing modular design, clear boundaries, and single responsibilities from day one.
+**StringRay's Solution**: The v1.15.0 facade architecture actively prevents code rot by enforcing modular design, clear boundaries, and single responsibilities from day one.
 
 ---
 
@@ -95,7 +95,7 @@ GitHub Copilot is a great autocomplete tool—fast suggestions based on patterns
 - **StringRay**: Orchestrates 25 agents with 60 codex rules for proactive prevention. Agents cross-validate output, enforce modular structure (now with facade pattern architecture), and generate tests—eliminating the root causes Copilot leaves untouched.
 
 **Architecture Advantage:**
-StringRay's v1.14.0 facade pattern isn't just cleaner code—it's a commitment to maintainability. While Copilot generates code that may become tomorrow's technical debt, StringRay's architecture ensures code stays clean, testable, and maintainable over time.
+StringRay's v1.15.0 facade pattern isn't just cleaner code—it's a commitment to maintainability. While Copilot generates code that may become tomorrow's technical debt, StringRay's architecture ensures code stays clean, testable, and maintainable over time.
 
 In short, Copilot is a coding assistant for speed; StringRay is a quality guardian that ensures what you build with Copilot (or any AI) is production-ready and maintainable.
 
@@ -117,13 +117,13 @@ In short, Copilot is a coding assistant for speed; StringRay is a quality guardi
 - Professional without being corporate — still feels like a real engineer talking to another engineer
 - **Architecture-conscious**: Understands that good code structure (like our facade pattern) prevents problems before they start
 
-**Why It Works**: It's the voice of the person on the team everyone trusts when things are on fire: doesn't panic, doesn't overpromise, just methodically eliminates the problems and ships solid code. The v1.14.0 facade architecture embodies this voice—clean, purposeful, no unnecessary complexity.
+**Why It Works**: It's the voice of the person on the team everyone trusts when things are on fire: doesn't panic, doesn't overpromise, just methodically eliminates the problems and ships solid code. The v1.15.0 facade architecture embodies this voice—clean, purposeful, no unnecessary complexity.
 
 This is why the copy works — it's not trying to entertain or dazzle. It's speaking directly to frustrated developers with the calm confidence of someone who's already solved the problems they're currently fighting.
 
 ---
 
-## Key Messaging for v1.14.0
+## Key Messaging for v1.15.0
 
 **For Existing Users:**
 - No migration needed - everything works exactly as before
@@ -143,6 +143,6 @@ This is why the copy works — it's not trying to entertain or dazzle. It's spea
 
 ---
 
-**Brand Version:** 1.9.0  
+**Brand Version:** 1.15.0  
 **Architecture:** Facade Pattern  
 **Last Updated:** 2026-03-12

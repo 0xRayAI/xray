@@ -23,7 +23,7 @@ This single command:
 1. Detects if OpenCode is installed
 2. Auto-installs OpenCode if missing
 3. Layers on the full StringRay kernel (Codex, orchestrator, enforcer, processors, MCP, reflections)
-4. Installs 30 framework skills
+4. Installs 44 framework skills
 5. Sets up the skills registry with 10 curated community sources
 6. Adds CLI commands for agent publishing, skills management, and status
 
@@ -66,7 +66,7 @@ This installs only the MCP servers - no OpenCode dependency.
 
 - **🤖 25 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
-- **⚡ 43 Framework Skills** + 10 curated community sources (170+ additional skills available)
+- **⚡ 44 Framework Skills** + 10 curated community sources (170+ additional skills available)
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
 - **📦 Skills Registry** - Browse and install community skills from GitHub repos
 - **🔄 Complexity-Based Routing** - Intelligent task delegation
@@ -442,7 +442,7 @@ fastify.register(integration.getAPIRouter(), { prefix: '/api/post-process' });
 
 ## 🎯 Skills
 
-StringRay ships with **30 framework skills** and provides a registry of **10 curated community sources** with 170+ additional skills.
+StringRay ships with **44 framework skills** and provides a registry of **10 curated community sources** with 170+ additional skills.
 
 ### Skills Registry
 
