@@ -282,12 +282,12 @@ const mockProcess = {
 
 | Priority | Issue | File | Complexity | Status |
 |----------|-------|------|------------|--------|
-| Immediate #1 | Add timeout to polling | `orchestrator.ts` | Low | TODO |
-| Immediate #2 | Memory leak | `complexity-analyzer.ts` | Low | TODO |
-| Immediate #3 | Race condition | `boot-orchestrator.ts` | Low | TODO |
-| Immediate #4 | Missing auth | `server.ts` | Medium | TODO |
+| Immediate #1 | Add timeout to polling | `orchestrator.ts` | Low | ✅ DONE |
+| Immediate #2 | Memory leak | `complexity-analyzer.ts` | Low | ✅ DONE |
+| Immediate #3 | Race condition | `boot-orchestrator.ts` | Low | ✅ DONE |
+| Immediate #4 | Missing auth | `server.ts` | Medium | ✅ DONE |
 | Short-term #5 | God class | `processor-manager.ts` | High | TODO |
-| Short-term #6 | Unsafe casts | Multiple | Medium | TODO |
+| Short-term #6 | Unsafe casts | Multiple | Medium | ✅ DONE |
 
 ---
 

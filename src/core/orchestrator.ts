@@ -499,14 +499,36 @@ export class KernelOrchestrator {
   }
 
   /**
-   * Delegate a task to a specific agent (for testing purposes)
+   * Delegate a task to a specific agent with timeout protection
    */
   async delegateToSubagent(agentName: string, task: any): Promise<any> {
+    const timeoutMs = this.config.taskTimeout;
+
     frameworkLogger.log("orchestrator", "delegate-to-subagent", "info", {
       agentName,
       taskType: task.type,
+      timeoutMs,
     });
 
+    try {
+      const result = await Promise.race([
+        this.performDelegation(agentName, task),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Delegation to ${agentName} timed out after ${timeoutMs}ms`)), timeoutMs)
+        ),
+      ]);
+
+      return result;
+    } catch (error) {
+      frameworkLogger.log("orchestrator", "delegate-to-subagent-failed", "error", {
+        agentName,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  private async performDelegation(agentName: string, task: any): Promise<any> {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     return {

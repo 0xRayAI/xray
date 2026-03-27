@@ -321,7 +321,7 @@ export class McpConnection extends EventEmitter implements IMcpConnection {
     if (this.process && !this.process.killed) {
       this.process.kill();
     }
-    this.process = undefined as unknown as ChildProcess | undefined;
+    this.process = undefined;
     this.stdoutBuffer = '';
   }
 }

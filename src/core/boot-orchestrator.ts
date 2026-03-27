@@ -60,27 +60,30 @@ function setupGracefulShutdown(): void {
   }
   (process as any)._strrayShutdownSetup = true;
 
-  const isShuttingDown = false;
+  let isShuttingDown = false;
 
-  process.on("SIGINT", async () => {
+  const shutdown = async (signal: string) => {
     if (isShuttingDown) {
-      // Graceful shutdown messages kept as console.log for user visibility
       await frameworkLogger.log(
         "boot-orchestrator",
-        "-received-sigint-shutting-down-gracefully-",
+        "received-signal-already-shutting-down",
         "info",
-        { message: "Received SIGINT, shutting down gracefully..." },
+        { signal, message: "Already shutting down..." },
       );
-      process.exit(0);
+      return;
     }
+
+    isShuttingDown = true;
+
     try {
       await frameworkLogger.log(
         "boot-orchestrator",
-        "-received-sigint-shutting-down-gracefully-",
+        "received-signal-shutting-down",
         "info",
-        { message: "Received SIGINT, shutting down gracefully..." },
+        { signal, message: "Shutting down gracefully..." },
       );
-      // Basic cleanup - orchestrator shutdown handled by process termination
+      memoryMonitor.stop();
+      await new Promise((resolve) => setTimeout(resolve, 500));
       process.exit(0);
     } catch (error) {
       await frameworkLogger.log(
@@ -91,19 +94,10 @@ function setupGracefulShutdown(): void {
       );
       process.exit(1);
     }
-  });
+  };
 
-  process.on("SIGTERM", async () => {
-    // Termination signal message kept as console.log
-
-    try {
-      memoryMonitor.stop();
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      process.exit(0);
-    } catch (error) {
-      process.exit(1);
-    }
-  });
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
 
   // Handle uncaught exceptions that might cause JSON parsing errors
   process.on("uncaughtException", (error) => {

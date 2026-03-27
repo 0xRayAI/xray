@@ -38,6 +38,8 @@ export type {
  * Analyzes operations and calculates complexity scores
  */
 export class ComplexityAnalyzer {
+  private static readonly MAX_CALIBRATION_HISTORY = 1000;
+
   /**
    * CALIBRATED: Adjusted thresholds for balanced orchestration utilization
    * - simple: 15 - most tasks trigger single-agent
@@ -156,6 +158,11 @@ export class ComplexityAnalyzer {
       success: data.success !== false,
       timestamp: data.timestamp || Date.now(),
     });
+
+    if (this.calibrationHistory.length > ComplexityAnalyzer.MAX_CALIBRATION_HISTORY) {
+      const removeCount = this.calibrationHistory.length - ComplexityAnalyzer.MAX_CALIBRATION_HISTORY + 100;
+      this.calibrationHistory = this.calibrationHistory.slice(removeCount);
+    }
 
     if (this.calibrationHistory.length < 10) {
       return;
