@@ -6,7 +6,7 @@ codex_terms: [5, 7, 32, 42, 58]
 
 # The StringRay Paradox: Building an AI Orchestration Framework That Builds Itself
 
-**Deep Saga | March 2026 | StringRay v1.14.0**
+**Deep Saga | March 2026 | StringRay v1.15.1**
 
 ---
 
@@ -22,7 +22,7 @@ The distinction seemed subtle at the time. It wasn't.
 
 ## Chapter 1: The Ordinary World
 
-Before StringRay v1.14.0, we had a collection of scripts. Loose integrations. A CLI that sort of worked. Agents that could be invoked, but only in the most basic sense. There was no real coordination between them, no shared state, no way for one agent to know what another had accomplished.
+Before StringRay v1.15.1, we had a collection of scripts. Loose integrations. A CLI that sort of worked. Agents that could be invoked, but only in the most basic sense. There was no real coordination between them, no shared state, no way for one agent to know what another had accomplished.
 
 The codebase was a graveyard of good intentions. We had:
 
@@ -164,7 +164,7 @@ By the time we hit iteration 40, the pipeline was mostly green. Not because we'd
 
 ## Chapter 9: Approaching the Cave
 
-By late v1.14.0, we had real tests, real documentation, and a self-improving inference pipeline. But approaching the final release, we faced the Cave: integration.
+By late v1.15.1, we had real tests, real documentation, and a self-improving inference pipeline. But approaching the final release, we faced the Cave: integration.
 
 We had researched six different GitHub repositories to understand how other frameworks handled multi-agent orchestration. Some had elegant solutions. Others had cautionary tales. A few had both.
 
@@ -204,7 +204,7 @@ We had proof. The system worked.
 
 The climax wasn't a single moment. It was a realization that crept up on us over several sessions.
 
-We were in a session late in the v1.14.0 cycle. The features were implemented, the tests were passing, the documentation was consistent. By every metric, we were done.
+We were in a session late in the v1.15.1 cycle. The features were implemented, the tests were passing, the documentation was consistent. By every metric, we were done.
 
 But we weren't ready to move on. Something felt incomplete.
 
@@ -224,7 +224,7 @@ The answer, we realized, was both. Neither. The distinction had stopped matterin
 
 ## Resolution
 
-StringRay v1.14.0 was released on a Tuesday. There was no fanfare, no announcement. Just a quiet push to the repo, a passing CI pipeline, and the knowledge that something had been completed.
+StringRay v1.15.1 was released on a Tuesday. There was no fanfare, no announcement. Just a quiet push to the repo, a passing CI pipeline, and the knowledge that something had been completed.
 
 But "complete" is a strange word. The framework works, yes. The tests are real. The documentation is consistent. The inference pipeline learns from its own work.
 
@@ -240,7 +240,7 @@ We have entered maintenance mode—not because the work is done, but because the
 
 ## Epilogue
 
-Three months after v1.14.0, we found ourselves in a familiar situation: another feature request, another implementation, another push to CI.
+Three months after v1.15.1, we found ourselves in a familiar situation: another feature request, another implementation, another push to CI.
 
 But something was different. The pipeline was faster. The failures were fewer. The agents were anticipating problems before we made them.
 
@@ -270,4 +270,4 @@ That, we decided, was the point.
 - Review the [version history](../../CHANGELOG.md) for a complete changelog
 
 ---
-*This saga documents the completion of StringRay v1.14.0. May the next version teach us as much as this one did.*
+*This saga documents the completion of StringRay v1.15.1. May the next version teach us as much as this one did.*

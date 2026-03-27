@@ -1,4 +1,4 @@
-# StrRay Framework - Agent Performance and Monitoring (v1.14.0)
+# StrRay Framework - Agent Performance and Monitoring (v1.15.1)
 
 ## Overview
 

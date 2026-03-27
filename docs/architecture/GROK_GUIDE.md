@@ -1,14 +1,14 @@
-# StringRay AI v1.14.0 - Complete Guide for Grok Users
+# StringRay AI v1.15.1 - Complete Guide for Grok Users
 
-## 🚀 Welcome to StringRay v1.14.0
+## 🚀 Welcome to StringRay v1.15.1
 
-**StringRay (StrRay) v1.14.0** is the AI agent orchestration framework that eliminates dead ends in AI-assisted development. Designed specifically for modern AI workflows, StringRay coordinates N specialized agents to deliver production-ready code while preventing common AI development pitfalls.
+**StringRay (StrRay) v1.15.1** is the AI agent orchestration framework that eliminates dead ends in AI-assisted development. Designed specifically for modern AI workflows, StringRay coordinates N specialized agents to deliver production-ready code while preventing common AI development pitfalls.
 
-## What's New in v1.14.0
+## What's New in v1.15.1
 
 ### Facade Pattern Architecture
 
-v1.14.0 introduces a major architectural refactoring implementing the **Facade Pattern**:
+v1.15.1 introduces a major architectural refactoring implementing the **Facade Pattern**:
 
 - **87% Code Reduction**: 8,230 → 1,218 lines
 - **26 Focused Modules**: Organized under 3 main facades
@@ -60,7 +60,7 @@ StringRay is **optimized for Grok** and other advanced AI models. It leverages G
 - **npm or bun** (package manager)
 - **Grok API access** (via xAI or compatible provider)
 
-### 1. Install StringRay v1.14.0
+### 1. Install StringRay v1.15.1
 
 ```bash
 # Install OpenCode (required dependency)
@@ -174,7 +174,7 @@ npm run dev
 - **Grok Integration**: Grok's testing expertise for comprehensive validation
 - **Output**: 85%+ coverage, behavioral testing, integration suites
 
-### New Agents in v1.14.0 (19 Additional)
+### New Agents in v1.15.1 (19 Additional)
 
 #### 9. **Storyteller** - The Narrator
 
@@ -217,11 +217,11 @@ npm run dev
 - **85%+ Test Coverage**: Automated testing ensures quality (N tests)
 - **Production-Ready Output**: Every deliverable meets production standards
 - **Grok-Optimized**: Designed for Grok's advanced reasoning capabilities
-- **87% Code Reduction**: v1.14.0 is leaner and faster
+- **87% Code Reduction**: v1.15.1 is leaner and faster
 
-### v1.14.0 Performance Improvements
+### v1.15.1 Performance Improvements
 
-| Metric | v1.8.x | v1.14.0 | Improvement |
+| Metric | v1.8.x | v1.15.1 | Improvement |
 |--------|--------|--------|-------------|
 | **Bundle Size** | 8,230 lines | 1,218 lines | 87% smaller |
 | **Agent Spawning** | Slower | Faster | Better performance |
@@ -345,7 +345,7 @@ const result = await enforcer.validate({
 });
 ```
 
-## 🎉 Why Grok + StringRay v1.14.0 = Perfect Match
+## 🎉 Why Grok + StringRay v1.15.1 = Perfect Match
 
 **Grok's Strengths:**
 
@@ -353,7 +353,7 @@ const result = await enforcer.validate({
 - Helpful and truthful responses
 - Real-time learning capabilities
 
-**StringRay v1.14.0 Strengths:**
+**StringRay v1.15.1 Strengths:**
 
 - **N specialized agents** for comprehensive coverage
 - **Facade Pattern** for clean, maintainable architecture
@@ -377,16 +377,16 @@ const result = await enforcer.validate({
 - Check the troubleshooting guide: `docs/troubleshooting/`
 - Visit the dashboard at http://localhost:3000 for status
 - Run `npx strray-ai health` for framework diagnostics
-- Run `npx strray-ai --version` to verify v1.14.0 installation
+- Run `npx strray-ai --version` to verify v1.15.1 installation
 
 ## Migration from v1.8.x
 
 **Good news: No migration needed!**
 
-v1.14.0 is 100% backward compatible:
+v1.15.1 is 100% backward compatible:
 
 ```bash
-# Simply update to v1.14.0
+# Simply update to v1.15.1
 npm install strray-ai@latest
 
 # Verify installation
@@ -397,10 +397,10 @@ npx strray-ai health
 
 ---
 
-**StringRay v1.14.0 + Grok = The Future of AI-Assisted Development** ⚡🤖
+**StringRay v1.15.1 + Grok = The Future of AI-Assisted Development** ⚡🤖
 
 _Eliminate dead ends. Ship production-ready code. Every time._
 
 ---
 
-*StringRay AI v1.14.0 - Facade Pattern Architecture Guide*
+*StringRay AI v1.15.1 - Facade Pattern Architecture Guide*

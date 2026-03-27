@@ -4,7 +4,7 @@
 
 The StrRay Framework employs **25 specialized AI agents** with **clear separation of responsibilities** and a **hierarchical rule enforcement system**.
 
-## Agent Architecture (v1.14.0)
+## Agent Architecture (v1.15.1)
 
 ```
 Agent Hierarchy (27 Total)
@@ -173,7 +173,7 @@ ruleHierarchy.set("input-validation", ["tests-required"]);
 
 ## 🔄 Agent Interaction Workflow
 
-### **Code Creation Workflow (v1.14.0 - All 27 Agents)**
+### **Code Creation Workflow (v1.15.1 - All 27 Agents)**
 
 ```
 1. Developer Request → Orchestrator (task analysis & routing)

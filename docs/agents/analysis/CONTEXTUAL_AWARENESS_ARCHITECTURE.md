@@ -8,7 +8,7 @@
 
 ## 🧠 What We Have: Contextual Awareness Components
 
-### Agent Integration Context (v1.14.0)
+### Agent Integration Context (v1.15.1)
 
 The contextual awareness architecture now supports all **25 specialized agents** with integrated analysis capabilities:
 

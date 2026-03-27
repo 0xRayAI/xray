@@ -1,6 +1,6 @@
 # The Pipeline Paradox: A Saga of Knowing What We Built
 
-**Deep Saga Journey | March 21, 2026 | StringRay v1.14.0**
+**Deep Saga Journey | March 21, 2026 | StringRay v1.15.1**
 
 ---
 
@@ -190,7 +190,7 @@ Simple. Repeatable. Honest.
 
 There's a moment in every technical journey where you stop believing what you've built and start knowing it.
 
-We had spent weeks building the inference pipeline. We had written beautiful code. We had tested every function. We had shipped v1.14.0 with confidence.
+We had spent weeks building the inference pipeline. We had written beautiful code. We had tested every function. We had shipped v1.15.1 with confidence.
 
 But we hadn't **known** it worked.
 

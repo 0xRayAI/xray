@@ -6,7 +6,7 @@ codex_terms: [5, 7, 14, 32, 45]
 
 # The Saga of StringRay: From Plugin Injection to Living Framework
 
-**Deep Saga | March 25, 2026 | StringRay v1.14.0 → v1.15.0**
+**Deep Saga | March 25, 2026 | StringRay v1.15.1 → v1.15.0**
 
 ---
 

@@ -1,13 +1,13 @@
 # 🚀 StrRay Framework Deployment Pipeline
 
-**Version**: v1.14.0  
+**Version**: v1.15.1  
 **Last Updated**: March 2026
 
 ## Overview
 
 The StrRay Framework uses a comprehensive deployment pipeline that integrates version management, automated testing, and staged releases. The pipeline ensures production-ready deployments with zero-downtime and full rollback capabilities.
 
-## What's New in v1.14.0
+## What's New in v1.15.1
 
 ### Performance Improvements
 - **41% faster startup** - Facade pattern initialization

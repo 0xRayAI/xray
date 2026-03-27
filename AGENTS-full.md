@@ -81,11 +81,11 @@ npx strray-ai capabilities
 
 ### 2.1 Modular Architecture Transformation
 
-StringRay v1.14.1 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
+StringRay v1.15.1 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
 
 #### Before vs After Comparison
 
-| Aspect | Before (v1.7.x) | After (v1.14.1) | Improvement |
+| Aspect | Before (v1.7.x) | After (v1.15.1) | Improvement |
 |--------|-----------------|----------------|-------------|
 | **RuleEnforcer** | 2,714 lines, 58 methods | 416-line facade + 6 modules | **87% size reduction** |
 | **TaskSkillRouter** | 1,933 lines, monolithic | 490-line facade + 12 modules | **75% size reduction** |

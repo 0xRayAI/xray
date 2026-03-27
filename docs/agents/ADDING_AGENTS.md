@@ -1,12 +1,12 @@
-# How to Add an Agent to StringRay AI v1.14.0
+# How to Add an Agent to StringRay AI v1.15.1
 
-This guide documents how to add agents to StringRay v1.14.0 and lists **every single file** that needs to be updated.
+This guide documents how to add agents to StringRay v1.15.1 and lists **every single file** that needs to be updated.
 
 ---
 
 ## Architecture Overview
 
-StringRay v1.14.0 uses a **Facade Pattern** architecture with modular internal structure:
+StringRay v1.15.1 uses a **Facade Pattern** architecture with modular internal structure:
 
 **Facade Components:**
 - **RuleEnforcer Facade**: 416 lines (was 2,714) - 6 internal modules for codex enforcement
@@ -140,7 +140,7 @@ Add to model routing config (around line 155):
 
 ### 6. src/mcps/mcp-client.ts
 
-**Note:** In v1.14.0, this is now a facade. Add to the facade's serverConfigs:
+**Note:** In v1.15.1, this is now a facade. Add to the facade's serverConfigs:
 
 ```typescript
 "my-agent": {
@@ -173,7 +173,7 @@ Add to the skills enum (around line 71):
 
 ### 8. src/delegation/task-skill-router.ts
 
-**Note:** In v1.14.0, this is now a facade with 12 mapping modules.
+**Note:** In v1.15.1, this is now a facade with 12 mapping modules.
 
 Add routing rules (around line 401):
 
@@ -185,7 +185,7 @@ Search for other agents to see the pattern - there are multiple routing location
 
 ### 9. src/enforcement/rule-enforcer.ts
 
-**Note:** In v1.14.0, this is now a facade with 6 internal modules.
+**Note:** In v1.15.1, this is now a facade with 6 internal modules.
 
 Add enforcement mapping (around line 1008):
 
@@ -389,7 +389,7 @@ This preserves the configuration for future reference while preventing the agent
 
 ---
 
-## Architecture Notes (v1.14.0 Facade Pattern)
+## Architecture Notes (v1.15.1 Facade Pattern)
 
 ### Facade Benefits
 

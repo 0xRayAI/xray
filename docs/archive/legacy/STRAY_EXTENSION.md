@@ -4,14 +4,14 @@
 
 ## Overview
 
-The StringRay Extension Ecosystem provides a comprehensive framework for building, distributing, and managing AI-powered development tools. The v1.14.0 release introduces the **Facade Pattern Architecture**, which simplifies extension development while providing powerful module-level access for advanced customization.
+The StringRay Extension Ecosystem provides a comprehensive framework for building, distributing, and managing AI-powered development tools. The v1.15.1 release introduces the **Facade Pattern Architecture**, which simplifies extension development while providing powerful module-level access for advanced customization.
 
 ## Extension Architecture
 
 ### Core Components
 
 ```
-StringRay Extension System v1.14.0
+StringRay Extension System v1.15.1
 ├── Facade Layer (NEW)
 │   ├── RuleEnforcer Facade (6 modules)
 │   ├── TaskSkillRouter Facade (14 modules)
@@ -25,7 +25,7 @@ StringRay Extension System v1.14.0
 
 ### Facade Pattern Benefits for Extensions
 
-| Aspect | Before v1.14.0 | With Facades v1.14.0 |
+| Aspect | Before v1.15.1 | With Facades v1.15.1 |
 |--------|---------------|---------------------|
 | **Extension API** | Complex, 8,230 lines | Simple, 1,218 lines |
 | **Learning Curve** | Steep | Gentle |
@@ -126,7 +126,7 @@ export class CustomMCPServer implements MCPServer {
 }
 ```
 
-### 4. Facade Extensions (NEW in v1.14.0)
+### 4. Facade Extensions (NEW in v1.15.1)
 
 Create custom facades by composing modules:
 
@@ -176,7 +176,7 @@ my-extension/
 ├── tsconfig.json
 ├── src/
 │   ├── index.ts              # Main extension entry
-│   ├── facades/              # Custom facades (v1.14.0)
+│   ├── facades/              # Custom facades (v1.15.1)
 │   │   └── custom-facade.ts
 │   ├── agents/               # Agent definitions
 │   ├── skills/               # Skill definitions
@@ -271,8 +271,8 @@ Extensions run in isolated environments with restricted permissions:
 - **network**: External API calls
 - **system**: OS command execution
 - **admin**: Full system access (rare)
-- **facade**: Access to specific facades (v1.14.0)
-- **modules**: Access to specific modules (v1.14.0)
+- **facade**: Access to specific facades (v1.15.1)
+- **modules**: Access to specific modules (v1.15.1)
 
 #### Sandbox Configuration
 ```json
@@ -313,7 +313,7 @@ npm pack
 npx strray-ai validate-extension your-extension-1.0.0.tgz
 
 # Validates:
-# - Facade compatibility (v1.14.0)
+# - Facade compatibility (v1.15.1)
 # - Module dependencies
 # - Security permissions
 # - API compliance
@@ -373,7 +373,7 @@ npx strray-ai update-extensions
 ### 1. Initialize Extension
 
 ```bash
-# Create facade-based extension (v1.14.0)
+# Create facade-based extension (v1.15.1)
 npx strray-ai create-extension my-extension --type facade --facade-version 1.9.0
 
 cd my-extension
@@ -570,7 +570,7 @@ export class AdvancedExtension extends StringRayExtension {
 ### Review Phase
 
 1. **Code Review**: Peer review and feedback
-2. **Facade Compatibility**: Verify v1.14.0 compatibility
+2. **Facade Compatibility**: Verify v1.15.1 compatibility
 3. **Security Audit**: Security and permission review
 4. **Performance Testing**: Load and stress testing
 5. **Compatibility Testing**: Cross-environment validation
@@ -640,7 +640,7 @@ Solution:
 - Use descriptive, unique names
 - Follow `strray-extension-*` naming convention
 - Include version in package name
-- Indicate facade compatibility: `strray-extension-db-v1.14.0`
+- Indicate facade compatibility: `strray-extension-db-v1.15.1`
 
 ### Documentation Requirements
 

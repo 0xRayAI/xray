@@ -1,4 +1,4 @@
-🚀 StringRay v1.14.0 - Inference Pipeline is LIVE! 🎉
+🚀 StringRay v1.15.1 - Inference Pipeline is LIVE! 🎉
 
 Self-improving AI orchestration that learns from every task.
 

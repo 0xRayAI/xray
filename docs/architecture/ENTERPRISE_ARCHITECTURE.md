@@ -1,4 +1,4 @@
-# StrRay Framework v1.14.0 - Enterprise Architecture Documentation
+# StrRay Framework v1.15.1 - Enterprise Architecture Documentation
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@
 
 ## System Overview
 
-The StrRay Framework v1.14.0 implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles and the **Facade Pattern architecture**. It provides systematic error prevention and production-ready code generation through a multi-layered, modular architecture.
+The StrRay Framework v1.15.1 implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles and the **Facade Pattern architecture**. It provides systematic error prevention and production-ready code generation through a multi-layered, modular architecture.
 
 ### Key Architectural Characteristics
 
@@ -220,7 +220,7 @@ StateManager (Central coordinator - Facade)
 
 ### Facade Layer Design
 
-The v1.14.0 architecture implements the Facade Pattern to provide simplified interfaces to complex subsystems:
+The v1.15.1 architecture implements the Facade Pattern to provide simplified interfaces to complex subsystems:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -260,7 +260,7 @@ The v1.14.0 architecture implements the Facade Pattern to provide simplified int
 
 ### Code Metrics Comparison
 
-| Component | v1.8.x | v1.14.0 | Reduction |
+| Component | v1.8.x | v1.15.1 | Reduction |
 |-----------|--------|--------|-----------|
 | RuleEnforcer | 2,714 lines | 416 lines | 85% |
 | TaskSkillRouter | 1,933 lines | 490 lines | 75% |
@@ -544,7 +544,7 @@ spec:
     spec:
       containers:
         - name: strray
-          image: strray/strray:v1.14.0
+          image: strray/strray:v1.15.1
           ports:
             - containerPort: 3000
           env:
@@ -747,11 +747,11 @@ query GetSystemStatus {
 
 ---
 
-## Migration from v1.8.x to v1.14.0
+## Migration from v1.8.x to v1.15.1
 
 ### Breaking Changes
 
-**NONE** - v1.14.0 maintains 100% backward compatibility.
+**NONE** - v1.15.1 maintains 100% backward compatibility.
 
 ### What Changed
 
@@ -771,7 +771,7 @@ query GetSystemStatus {
 ### Migration Steps
 
 ```bash
-# Update to v1.14.0
+# Update to v1.15.1
 npm install strray-ai@latest
 
 # Verify installation
@@ -800,4 +800,4 @@ This architecture provides a solid foundation for enterprise-grade AI agent coor
 
 ---
 
-*StringRay AI v1.14.0 - Enterprise Facade Pattern Architecture*
+*StringRay AI v1.15.1 - Enterprise Facade Pattern Architecture*

@@ -8,7 +8,7 @@
 
 ## The Discovery
 
-Through the v1.14.0 inference pipeline work, a fundamental truth emerged:
+Through the v1.15.1 inference pipeline work, a fundamental truth emerged:
 
 > **Without comprehensive pipeline tests, you can never fully know if the pipeline actually works.**
 
@@ -200,7 +200,7 @@ Create `src/__tests__/pipeline/` with:
 
 ```
 src/__tests__/pipeline/
-├── inference-pipeline.test.ts    ✅ Created during v1.14.0
+├── inference-pipeline.test.ts    ✅ Created during v1.15.1
 ├── governance-pipeline.test.ts   ⬜ Needs creation
 ├── orchestration-pipeline.test.ts ⬜ Needs creation
 └── framework-pipeline.test.ts    ⬜ Needs creation
@@ -244,7 +244,7 @@ describe('Pipeline Integration Test', () => {
 
 ## The Learning
 
-### Before v1.14.0
+### Before v1.15.1
 
 ```
 Build: ✅
@@ -253,7 +253,7 @@ Integration: ⚠️ Assumed working
 Pipeline: ❌ Never tested
 ```
 
-### After v1.14.0
+### After v1.15.1
 
 ```
 Build: ✅

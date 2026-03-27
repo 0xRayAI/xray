@@ -1,4 +1,4 @@
-🚀 StringRay v1.9.0 MAJOR RELEASE!
+🚀 StringRay v1.15.1 MAJOR RELEASE!
 
 ✨ 100% Codex alignment - all 25 agents now enforce role-specific rules
 🎭 New @storyteller agent with Hero's Journey & narrative frameworks

@@ -143,7 +143,7 @@ async function install(options = {}) {
 
 | Version | Focus | Target |
 |---------|-------|--------|
-| v1.14.0 | **Complete stack** (maintenance mode entered) | March 23, 2026 ✅ |
+| v1.15.1 | **Complete stack** (maintenance mode entered) | March 23, 2026 ✅ |
 | v1.15.0 | One-command installer + Phases 0-3 | March 24, 2026 ✅ |
 | v1.16.0 | Fresh machine testing + refinements | TBD |
 | v1.17.0 | Pod infrastructure + credible init full | TBD |

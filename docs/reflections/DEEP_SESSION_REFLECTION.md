@@ -342,7 +342,7 @@ This is the fundamental insight of integration testing, elevated to pipeline tes
 
 ### What We Did
 1. Fixed 15+ inference pipeline issues
-2. Released v1.14.0
+2. Released v1.15.1
 3. Created pipeline testing methodology
 4. Documented the discovery
 

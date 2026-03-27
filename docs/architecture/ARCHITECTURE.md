@@ -1,14 +1,14 @@
-# StrRay Framework v1.14.0 - Technical Architecture and Data Flows
+# StrRay Framework v1.15.1 - Technical Architecture and Data Flows
 
 ## Overview
 
-StrRay Framework v1.14.0 implements a comprehensive multi-agent AI system with a modern **Facade Pattern architecture**. The framework provides 25 specialized AI agents for systematic error prevention and enhanced development capabilities.
+StrRay Framework v1.15.1 implements a comprehensive multi-agent AI system with a modern **Facade Pattern architecture**. The framework provides 25 specialized AI agents for systematic error prevention and enhanced development capabilities.
 
-## What's New in v1.14.0
+## What's New in v1.15.1
 
 ### Major Architecture Refactoring: Facade Pattern Implementation
 
-StringRay v1.14.0 underwent a significant architectural refactoring implementing the **Facade Pattern** for improved maintainability, performance, and reliability.
+StringRay v1.15.1 underwent a significant architectural refactoring implementing the **Facade Pattern** for improved maintainability, performance, and reliability.
 
 **Code Reduction:** 87% (8,230 → 1,218 lines)
 - RuleEnforcer: 2,714 → 416 lines (85% reduction)
@@ -81,7 +81,7 @@ StrRay Framework implements a **hybrid TypeScript/Python architecture** optimize
 #### Hybrid Architecture Diagram
 
 ```
-StrRay Framework v1.14.0 - Enterprise AI Orchestration Architecture
+StrRay Framework v1.15.1 - Enterprise AI Orchestration Architecture
 ════════════════════════════════════════════════════════════════
 
 ┌──────────────────────────────────────────────────────────────┐
@@ -584,7 +584,7 @@ interface StateUpdate {
 - **Parallel Execution**: Concurrent tool operations
 - **Resource Pooling**: Efficient resource management
 
-### Performance Metrics (v1.14.0)
+### Performance Metrics (v1.15.1)
 
 ```
 Framework Performance Budget:
@@ -655,7 +655,7 @@ Custom Plugins
 ### Containerized Deployment
 
 ```dockerfile
-FROM strray/base:v1.14.0
+FROM strray/base:v1.15.1
 
 COPY . /app
 RUN strray build
@@ -694,11 +694,11 @@ Alerting System
 Dashboard Visualization
 ```
 
-## Migration from v1.8.x to v1.14.0
+## Migration from v1.8.x to v1.15.1
 
 ### Breaking Changes
 
-**NONE** - v1.14.0 maintains 100% backward compatibility.
+**NONE** - v1.15.1 maintains 100% backward compatibility.
 
 ### What Changed (Internal Only)
 
@@ -718,7 +718,7 @@ Dashboard Visualization
 ### Migration Steps
 
 ```bash
-# Simply update to v1.14.0
+# Simply update to v1.15.1
 npm update strray-ai
 
 # Or install fresh
@@ -760,7 +760,7 @@ npx strray-ai health
 | **Total Modules** | 26 |
 | **Error Prevention** | 99.6% |
 
-### Code Metrics (v1.14.0)
+### Code Metrics (v1.15.1)
 
 | Component | Before | After | Reduction |
 |-----------|--------|-------|-----------|
@@ -772,4 +772,4 @@ npx strray-ai health
 
 ---
 
-*StringRay AI v1.14.0 - Facade Pattern Architecture*
+*StringRay AI v1.15.1 - Facade Pattern Architecture*

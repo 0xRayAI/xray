@@ -2,7 +2,7 @@
 
 **When:** March 13, 2026  
 **What:** Complete documentation update after major framework refactoring  
-**The Challenge:** 49 files across 5 categories, all needing updates for v1.14.0  
+**The Challenge:** 49 files across 5 categories, all needing updates for v1.15.1  
 **The Approach:** 5 tech writer agents working in parallel  
 **The Result:** 7,544 lines added, 2,528 removed, complete documentation consistency
 
@@ -78,7 +78,7 @@ I assigned the work:
 **Agent 4:** Operations & Deployment (11 files)  
 **Agent 5:** Testing & Agents (12 files)
 
-Each agent got a mission: update your files for v1.14.0. Reflect the refactoring. Update the architecture descriptions. Fix the code examples. Update the statistics. Maintain consistency.
+Each agent got a mission: update your files for v1.15.1. Reflect the refactoring. Update the architecture descriptions. Fix the code examples. Update the statistics. Maintain consistency.
 
 I watched as they started working. Commits began flowing in.
 
@@ -136,7 +136,7 @@ The numbers tell the story:
 
 That's not just "updating a few docs." That's rewriting significant portions of the documentation corpus.
 
-Agent 1 updated the README—arguably the most important file. Added new "What's New in v1.14.0" section. Updated the architecture description. Fixed all the examples. Tested the quick start.
+Agent 1 updated the README—arguably the most important file. Added new "What's New in v1.15.1" section. Updated the architecture description. Fixed all the examples. Tested the quick start.
 
 Agent 2 tackled architecture docs. Drew ASCII diagrams showing the facade pattern. Documented how RuleEnforcer's 416-line facade coordinated 6 modules. Explained TaskSkillRouter's 14 modules. Described MCP Client's 8 modules.
 
@@ -203,7 +203,7 @@ Done.
 The commits came together:
 
 ```
-cdb3fdb0 docs: comprehensive documentation update for v1.14.0 refactoring
+cdb3fdb0 docs: comprehensive documentation update for v1.15.1 refactoring
 49 files changed, 7544 insertions(+), 2528 deletions(-)
 ```
 

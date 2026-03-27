@@ -345,7 +345,7 @@ Use this checklist:
 
 ## The Inference Pipeline Test (Reference)
 
-This is what we created during v1.14.0:
+This is what we created during v1.15.1:
 
 ```javascript
 // test-inference-pipeline.mjs
@@ -399,7 +399,7 @@ console.log('\n✅ Pipeline complete');
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ GOVERNANCE PIPELINE (TESTED v1.14.1)            │
+│ GOVERNANCE PIPELINE (TESTED v1.15.1)            │
 │                                                  │
 │ Input: Operation + Context                      │
 │   ↓                                             │

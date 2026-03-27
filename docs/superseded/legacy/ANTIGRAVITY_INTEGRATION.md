@@ -6,7 +6,7 @@
 
 StringRay integrates with [Antigravity Awesome Skills](https://github.com/sickn33/antigravity-awesome-skills) - the largest collection of AI agent skills with **946+ skills** for Claude Code, Gemini CLI, Cursor, and more.
 
-With StringRay v1.14.0's **Facade Pattern Architecture**, skill integration is now more efficient and easier to manage through the **TaskSkillRouter facade**.
+With StringRay v1.15.1's **Facade Pattern Architecture**, skill integration is now more efficient and easier to manage through the **TaskSkillRouter facade**.
 
 ## License
 
@@ -47,7 +47,7 @@ node scripts/integrations/install-antigravity-skills.js --full
 
 ## Usage with TaskSkillRouter Facade
 
-StringRay v1.14.0's **TaskSkillRouter facade** automatically routes tasks to the appropriate Antigravity skill based on keywords in your prompts.
+StringRay v1.15.1's **TaskSkillRouter facade** automatically routes tasks to the appropriate Antigravity skill based on keywords in your prompts.
 
 ### How It Works
 
@@ -166,7 +166,7 @@ const result = await mcpClient.callSkill(route.skill, {
 
 ## Integration Architecture
 
-### StringRay v1.14.0 Facade Pattern
+### StringRay v1.15.1 Facade Pattern
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -238,7 +238,7 @@ await router.registerSkills([
 | Codex | 60-term Universal Development Codex | N/A |
 | Rules Engine | 30+ enforcement rules | N/A |
 | Pre/Post Processors | Auto-creation, test-generation | N/A |
-| Facade Pattern | ✅ Yes (v1.14.0) | N/A |
+| Facade Pattern | ✅ Yes (v1.15.1) | N/A |
 | License | MIT | MIT |
 
 ### When to Use What

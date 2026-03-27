@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [undefined] - 2026-03-27
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: Hermes Agent integration with MCP servers and standalone mode (b8f39fe25)
+
+### 🐛 Bug Fixes
+- fix: update ANTIGRAVITY_INTEGRATION.md path reference to archive (84d417a46)
+- fix: update counts (30→44 skills, 2,368→2311 tests) and MCP terminology (7ccafa80a)
+- fix: update skill counts from 30 to 44 in README and AGENTS (231fe9c34)
+- fix: skip removed routing pipeline test (f1b6240bc)
+- fix: implement critical code fixes (aecd2f89c)
+
+### ♻️ Refactoring
+- refactor: organize docs, sync agent counts, add Hermes MCP integration (72ba69bcb)
+- refactor: Remove deprecated methods from processor-manager.ts (eba1892ff)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.1 (891685014)
+- chore: v1.15.0 published, bump UVM to 1.15.1 (5aabfef3e)
+- chore: Rename StringRayOrchestrator to KernelOrchestrator (089c988ed)
+- chore: v1.14.9 published, bump UVM to 1.14.10 (aa0304c98)
+
+### 🔎 Other Changes
+- fix(UVM): remove all count patterns - UVM only maintains versions now (17269a331)
+- fix(UVM): add pattern for 'X framework skills' count maintenance (61d79768b)
+
+---
+
 ## [1.14.7] - 2026-03-26
 
 ### 🔄 Changes

@@ -1,4 +1,4 @@
-# StrRay Framework - Contextual Awareness Workflow (v1.14.0)
+# StrRay Framework - Contextual Awareness Workflow (v1.15.1)
 
 ## 🎯 **YES - Tools Are Mapped and All 27 Agents Run Them**
 
@@ -40,7 +40,7 @@ tools: {
 ### **Enforcer Agent - Validation & Enforcement Tools**
 
 ```typescript
-// src/agents/enforcer.ts - Mapped Tools (v1.14.0)
+// src/agents/enforcer.ts - Mapped Tools (v1.15.1)
 tools: {
   include: [
     "read",
@@ -374,7 +374,7 @@ describe('RuleValidator Module', () => {
 });
 ```
 
-### Test Metrics (v1.14.0)
+### Test Metrics (v1.15.1)
 
 ```
 Test Category              | Tests | Coverage | Context Integration

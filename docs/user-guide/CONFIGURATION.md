@@ -1,6 +1,6 @@
 # StringRay Configuration Guide
 
-Complete configuration reference for the StringRay AI Framework v1.14.0.
+Complete configuration reference for the StringRay AI Framework v1.15.1.
 
 ## Overview
 
@@ -13,11 +13,11 @@ Configuration is loaded in order of priority: default < project < user.
 
 ---
 
-## What's New in v1.14.0
+## What's New in v1.15.1
 
 ### Facade Pattern Architecture
 
-StringRay v1.14.0 introduces a modern **Facade Pattern** architecture with modular internal structure:
+StringRay v1.15.1 introduces a modern **Facade Pattern** architecture with modular internal structure:
 
 **Key Improvements:**
 - **87% Code Reduction**: 8,230 → 1,218 lines (3,170 lines of dead code removed)

@@ -1,10 +1,10 @@
-# StringRay Orchestrator Integration Architecture v1.14.0
+# StringRay Orchestrator Integration Architecture v1.15.1
 
 ## Overview
 
-The StringRay Orchestrator v1.14.0 provides intelligent multi-agent coordination and task delegation based on operation complexity analysis. This document describes the architectural design, integration patterns, and the new Facade Pattern implementation.
+The StringRay Orchestrator v1.15.1 provides intelligent multi-agent coordination and task delegation based on operation complexity analysis. This document describes the architectural design, integration patterns, and the new Facade Pattern implementation.
 
-## What's New in v1.14.0
+## What's New in v1.15.1
 
 ### Facade Pattern Integration
 
@@ -66,7 +66,7 @@ The orchestrator now utilizes the Facade Pattern for improved modularity and mai
 ### Orchestrator Components
 
 ```
-StringRay Orchestrator v1.14.0
+StringRay Orchestrator v1.15.1
 ├── TaskSkillRouter Facade (490 lines)
 │   ├── ComplexityAnalyzer (via Routing Module)
 │   ├── AgentDelegator (via Routing Module)
@@ -277,7 +277,7 @@ class TaskSkillRouter {
 ### Facade Pattern Performance Benefits
 
 ```
-Performance Improvements in v1.14.0:
+Performance Improvements in v1.15.1:
 ├── 87% code reduction (8,230 → 1,218 lines)
 ├── Faster agent spawning (modular initialization)
 ├── Reduced memory footprint
@@ -410,11 +410,11 @@ describe('RoutingModule', () => {
 - **Storage**: SSD for fast state persistence
 - **Network**: Low-latency for inter-agent communication
 
-## Migration from v1.8.x to v1.14.0
+## Migration from v1.8.x to v1.15.1
 
 ### Breaking Changes
 
-**NONE** - v1.14.0 maintains 100% backward compatibility.
+**NONE** - v1.15.1 maintains 100% backward compatibility.
 
 ### Internal Changes
 
@@ -432,7 +432,7 @@ describe('RoutingModule', () => {
 ### Migration Steps
 
 ```bash
-# Update to v1.14.0
+# Update to v1.15.1
 npm install strray-ai@latest
 
 # Verify installation
@@ -546,4 +546,4 @@ For architectural questions and integration support:
 
 ---
 
-*StringRay Orchestrator v1.14.0 - Facade Pattern Integration Architecture*
+*StringRay Orchestrator v1.15.1 - Facade Pattern Integration Architecture*

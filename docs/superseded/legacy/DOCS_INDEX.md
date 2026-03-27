@@ -15,7 +15,7 @@
 ### For Developers
 | Document | Purpose |
 |----------|---------|
-| [`README.md`](README.md) | Enterprise guide (v1.14.0) |
+| [`README.md`](README.md) | Enterprise guide (v1.15.1) |
 | [`ARCHITECTURE_UNIFIED.md`](ARCHITECTURE_UNIFIED.md) | System architecture |
 | [`PIPELINE_TESTING_METHODOLOGY.md`](PIPELINE_TESTING_METHODOLOGY.md) | Testing methodology |
 | [`pipeline-trees/`](pipeline-trees/) | Visual pipeline diagrams |
@@ -71,7 +71,7 @@
 
 ```
 docs/
-├── README.md                   ← Enterprise guide (v1.14.0)
+├── README.md                   ← Enterprise guide (v1.15.1)
 ├── DOCS_INDEX.md               ← This index
 ├── AGENTS.md                  ← Consumer guide (root)
 ├── ARCHITECTURE_UNIFIED.md     ← Architecture overview
@@ -97,7 +97,7 @@ docs/
 
 ---
 
-## Current Version: v1.14.0
+## Current Version: v1.15.1
 
 | Component | Count |
 |-----------|-------|

@@ -2,13 +2,13 @@
 
 **Purpose:** Get your project contributing anonymized data to the central analytics store for community learning benefits.
 
-**Framework Version:** StringRay AI v1.14.0+
+**Framework Version:** StringRay AI v1.15.1+
 
 ---
 
-## What's New in v1.14.0
+## What's New in v1.15.1
 
-StringRay v1.14.0 features a modern **Facade Pattern** architecture that improves performance and reliability:
+StringRay v1.15.1 features a modern **Facade Pattern** architecture that improves performance and reliability:
 
 - **87% Code Reduction**: 8,230 → 1,218 lines of code
 - **Facade Architecture**: Modular design with clean APIs
@@ -25,7 +25,7 @@ This guide walks through setting up your project to contribute anonymized reflec
 
 ## Prerequisites
 
-- StringRay AI v1.14.0+ installed
+- StringRay AI v1.15.1+ installed
 - Project initialized with `npx strray-ai init`
 - Basic understanding of privacy and data protection
 
@@ -397,8 +397,8 @@ A: No. StringRay works perfectly without central analytics. Participation is ent
 **Q: What's the benefit of participating?**  
 A: Better routing, community benchmarks, early warnings, and contributing to framework improvement.
 
-**Q: Do I need to migrate for v1.14.0?**  
-A: No. The v1.14.0 architecture refactoring is purely internal. Your existing analytics configuration continues to work exactly as before.
+**Q: Do I need to migrate for v1.15.1?**  
+A: No. The v1.15.1 architecture refactoring is purely internal. Your existing analytics configuration continues to work exactly as before.
 
 ## Next Steps
 
@@ -410,6 +410,6 @@ A: No. The v1.14.0 architecture refactoring is purely internal. Your existing an
 ---
 
 **Version:** 1.9.0  
-**Framework Version:** StringRay AI v1.14.0  
+**Framework Version:** StringRay AI v1.15.1  
 **Architecture:** Facade Pattern (87% code reduction)  
 **Last Updated:** 2026-03-12

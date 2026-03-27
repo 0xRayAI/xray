@@ -3,7 +3,7 @@
 **Date:** 2026-03-24  
 **Session:** ses_2def9e6eeffeJaXXTinpaiPHnc  
 **Topic:** OpenCode Skill Routing and Agent-Skill Relationships  
-**Version:** StringRay v1.14.0
+**Version:** StringRay v1.15.1
 
 ---
 

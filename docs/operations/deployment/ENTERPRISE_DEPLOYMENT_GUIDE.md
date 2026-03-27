@@ -1,10 +1,10 @@
 # StrRay Framework - Enterprise Deployment Guide
 
-**Version**: v1.14.0  
+**Version**: v1.15.1  
 **Last Updated**: March 2026  
 **Status**: Production Ready
 
-## What's New in v1.14.0
+## What's New in v1.15.1
 
 ### Performance Improvements
 - **41% faster startup** - Facade pattern initialization
@@ -86,7 +86,7 @@ The StrRay Framework supports multiple deployment strategies for enterprise envi
 - **Storage**: 5GB available disk space
 - **Network**: Stable internet connection
 
-#### Recommended for Production (v1.14.0)
+#### Recommended for Production (v1.15.1)
 
 - **Node.js**: 18.17.0+ LTS
 - **Memory**: 3GB RAM per instance (reduced from 4GB due to 32% memory optimization)
@@ -94,7 +94,7 @@ The StrRay Framework supports multiple deployment strategies for enterprise envi
 - **CPU**: 2+ cores per instance
 - **Network**: 1Gbps connection
 
-**v1.14.0 Resource Optimization:**
+**v1.15.1 Resource Optimization:**
 - Lower memory requirements due to facade pattern efficiency
 - Faster startup reduces initialization time
 - Smaller bundle size improves deployment speed
@@ -501,10 +501,10 @@ spec:
             periodSeconds: 5
           resources:
             requests:
-              memory: "350Mi"    # v1.14.0: reduced from 512Mi (32% memory optimization)
+              memory: "350Mi"    # v1.15.1: reduced from 512Mi (32% memory optimization)
               cpu: "250m"
             limits:
-              memory: "700Mi"    # v1.14.0: reduced from 1Gi (32% memory optimization)
+              memory: "700Mi"    # v1.15.1: reduced from 1Gi (32% memory optimization)
               cpu: "500m"
       volumes:
         - name: config

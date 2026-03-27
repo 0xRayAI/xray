@@ -2,7 +2,7 @@
 
 ## Overview
 
-StringRay v1.14.0 implements a comprehensive modular testing architecture with **N tests** across 26 facade modules, achieving **87% test coverage**. The testing strategy focuses on component isolation, facade integration, and comprehensive validation of all framework capabilities.
+StringRay v1.15.1 implements a comprehensive modular testing architecture with **N tests** across 26 facade modules, achieving **87% test coverage**. The testing strategy focuses on component isolation, facade integration, and comprehensive validation of all framework capabilities.
 
 ### Test Metrics Summary
 
