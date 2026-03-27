@@ -300,7 +300,15 @@ const UPDATE_PATTERNS = [
       replacement: `${OFFICIAL_VERSIONS.framework.skills} Lazy-Loading Skills`,
     },
     {
-      pattern: /(\d+) skills/g,
+      pattern: /(\d+)\+? framework skills/gi,
+      replacement: `${OFFICIAL_VERSIONS.framework.skills} framework skills`,
+    },
+    {
+      pattern: /(\d+)\+? Framework Skills/gi,
+      replacement: `${OFFICIAL_VERSIONS.framework.skills} Framework Skills`,
+    },
+    {
+      pattern: /(\d+) skills/gi,
       replacement: `${OFFICIAL_VERSIONS.framework.skills} skills`,
     },
     // MCP servers count
