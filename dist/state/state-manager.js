@@ -51,12 +51,13 @@ export class StringRayStateManager {
             this.initialized = true;
             // Process any early operations that were queued
             if (this.persistenceEnabled && this.earlyOperationsQueue.length > 0) {
+                const pendingOps = this.earlyOperationsQueue.length;
                 for (const key of this.earlyOperationsQueue) {
                     this.schedulePersistence(key);
                 }
                 this.earlyOperationsQueue = [];
                 frameworkLogger.log("state-manager", "processed queued early operations", "info", {
-                    operationsProcessed: this.earlyOperationsQueue.length,
+                    operationsProcessed: pendingOps,
                 });
             }
         }
