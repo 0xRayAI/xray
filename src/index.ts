@@ -6,14 +6,16 @@
  */
 
 export { StringRayOrchestrator } from "./orchestrator/orchestrator.js";
-export { defaultStringRayConfig } from "./core/index.js";
 export { StringRayStateManager } from "./state/index.js";
 export { AgentDelegator } from "./delegation/index.js";
 export { frameworkLogger } from "./core/framework-logger.js";
+export { BUILTIN_CODEX } from "./core/codex-formatter.js";
+
+import { defaultStringRayConfig } from "./core/index.js";
+export { defaultStringRayConfig };
 
 // Main initialization function
 export function initializeStrRay(config = {}) {
-  const { defaultStringRayConfig } = require("./core");
   const mergedConfig = { ...defaultStringRayConfig, ...config };
 
   // Return a standardized initialization result

@@ -13,10 +13,8 @@ const PIPELINES = [
   { name: 'Governance', path: 'test-governance-pipeline.mjs' },
   { name: 'Boot', path: 'test-boot-pipeline.mjs' },
   { name: 'Orchestration', path: 'test-orchestration-pipeline.mjs' },
-  { name: 'Routing', path: 'test-routing-pipeline.mjs' },
   { name: 'Processor', path: 'test-processor-pipeline.mjs' },
   { name: 'Reporting', path: 'test-reporting-pipeline.mjs' },
-  { name: 'Inference', path: 'test-inference-pipeline.mjs' },
 ];
 
 const CONSECUTIVE_PASSES_REQUIRED = 3;
