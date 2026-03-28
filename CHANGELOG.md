@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.16] - 2026-03-28
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+
+### 🐛 Bug Fixes
+- fix: UVM version corruption, delete 42 stub test files (509b5ac39)
+- fix: add express dep, version sync, bridge codex dedup, repo cleanup (f9c3dd96d)
+- fix: post-merge cleanup — deps, index.ts, pipelines, root artifacts (bcbc31b01)
+- fix: merge PR #11 fixes — bugs, security, dead code, version (ef32821f2)
+- fix: README version regex to exclude IP addresses (127.0.0) (80967acaa)
+
+### 🔧 Maintenance
+- chore: sync performance baselines (3c1e6f647)
+- chore: UVM 1.15.13 (1 ahead of npm) (e3220847c)
+- chore: fix package.json version to 1.15.12 (35b158283)
+- chore: UVM 1.15.12 (1 ahead of npm) (33ed3793c)
+- chore: update test performance baselines (a2ae8e93c)
+- chore: version sync to 1.15.11 (92fb03d92)
+
+### 🔎 Other Changes
+- release: v1.15.15 (ed0e26699)
+- release: v1.15.14 (98df6004c)
+- release: v1.15.13 (c055785f3)
+
+---
+
 ## [undefined] - 2026-03-28
 
 ### 🔄 Changes

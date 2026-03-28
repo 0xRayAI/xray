@@ -11,19 +11,58 @@
 import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
-import { resolveCodexPath, resolveStateDir } from "../core/config-paths.js";
+// Dynamic imports for config-paths (works from both dist/plugin/ and .opencode/plugins/)
+let _resolveCodexPath;
+let _resolveStateDir;
+async function loadConfigPaths() {
+    if (_resolveCodexPath && _resolveStateDir)
+        return;
+    // Try dist-relative path first (for .opencode/plugins/), then src-relative (for dist/plugin/)
+    const candidates = [
+        "../../dist/core/config-paths.js",
+        "../core/config-paths.js",
+    ];
+    for (const p of candidates) {
+        try {
+            const mod = await import(p);
+            _resolveCodexPath = mod.resolveCodexPath;
+            _resolveStateDir = mod.resolveStateDir;
+            return;
+        }
+        catch (_) {
+            // try next candidate
+        }
+    }
+    console.warn("⚠️ Failed to load config-paths module from any location");
+}
+/** Convenience wrapper — must be awaited before use */
+async function resolveCodexPath(...args) {
+    await loadConfigPaths();
+    return _resolveCodexPath(...args);
+}
+async function resolveStateDir(...args) {
+    await loadConfigPaths();
+    return _resolveStateDir(...args);
+}
 // Import lean system prompt generator
 let SystemPromptGenerator;
 async function importSystemPromptGenerator() {
     if (!SystemPromptGenerator) {
-        try {
-            const module = await import("../core/system-prompt-generator.js");
-            SystemPromptGenerator = module.generateLeanSystemPrompt;
+        const candidates = [
+            "../../dist/core/system-prompt-generator.js",
+            "../core/system-prompt-generator.js",
+        ];
+        for (const p of candidates) {
+            try {
+                const module = await import(p);
+                SystemPromptGenerator = module.generateLeanSystemPrompt;
+                return;
+            }
+            catch (_) {
+                // try next candidate
+            }
         }
-        catch (e) {
-            // Fallback to original implementation if lean generator fails
-            console.warn("⚠️ Failed to load lean system prompt generator, using fallback");
-        }
+        console.warn("⚠️ Failed to load lean system prompt generator, using fallback");
     }
 }
 let ProcessorManager;
@@ -234,9 +273,9 @@ let cachedCodexContexts = null;
  * Codex file locations resolved through the standard priority chain.
  * Falls back to additional OpenCode-specific files not covered by the resolver.
  */
-function getCodexFileLocations(directory) {
+async function getCodexFileLocations(directory) {
     const root = directory || process.cwd();
-    const resolved = resolveCodexPath(root);
+    const resolved = await resolveCodexPath(root);
     // Add OpenCode-specific fallbacks not in the standard chain
     resolved.push(path.join(root, ".opencode", "codex.codex"), path.join(root, ".strray", "agents_template.md"), path.join(root, "AGENTS.md"));
     return resolved;
@@ -298,12 +337,12 @@ function createCodexContextEntry(filePath, content) {
 /**
  * Load codex context (cached globally, loaded once)
  */
-function loadCodexContext(directory) {
+async function loadCodexContext(directory) {
     if (cachedCodexContexts) {
         return cachedCodexContexts;
     }
     const codexContexts = [];
-    const locations = getCodexFileLocations(directory);
+    const locations = await getCodexFileLocations(directory);
     for (const fileLocation of locations) {
         const fullPath = path.isAbsolute(fileLocation) ? fileLocation : path.join(directory, fileLocation);
         const content = readFileContent(fullPath);
@@ -421,7 +460,7 @@ export default async function strrayCodexPlugin(input) {
                 else {
                     logger.log("🚀 StrRay framework not booted, initializing...");
                     // Create new state manager (framework not booted yet)
-                    stateManager = new StrRayStateManager(resolveStateDir(directory));
+                    stateManager = new StrRayStateManager(await resolveStateDir(directory));
                     // Store globally for future use
                     globalThis.strRayStateManager = stateManager;
                 }
@@ -541,7 +580,7 @@ export default async function strrayCodexPlugin(input) {
             if (["write", "edit", "multiedit"].includes(tool)) {
                 if (!ProcessorManager || !StrRayStateManager)
                     return;
-                const stateManager = new StrRayStateManager(resolveStateDir(directory));
+                const stateManager = new StrRayStateManager(await resolveStateDir(directory));
                 const processorManager = new ProcessorManager(stateManager);
                 // Register post-processors
                 processorManager.registerProcessor({
