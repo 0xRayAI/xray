@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.9] - 2026-03-28
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
 ## [1.15.8] - 2026-03-28
 
 ### 🔄 Changes
