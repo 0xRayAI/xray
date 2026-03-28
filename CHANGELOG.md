@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.6] - 2026-03-28
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: Hermes Agent plugin v2 with full test coverage and zero TS errors (#8) (562e7d404)
+- feat: Hermes plugin v2 — bridge pipeline, file logging, 2359 tests (0 skipped) (#7) (52185dd1a)
+
+### 🐛 Bug Fixes
+- fix: add eslint-plugin-vitest dependency for processor test linting (5c16c1eb0)
+- fix: eliminate flaky timing assertions in tests (3bf04c3ec)
+
+---
+
 ## [undefined] - 2026-03-27
 
 ### 🔄 Changes
