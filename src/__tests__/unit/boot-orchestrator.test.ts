@@ -25,7 +25,7 @@ describe("BootOrchestrator", () => {
     // Mock dependencies
     mockContextLoader = {
       loadCodexContext: vi.fn().mockResolvedValue({
-        version: "1.15.11",
+        version: "1.15.12",
         terms: [],
         validationCriteria: {},
       }),

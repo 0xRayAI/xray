@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [undefined] - 2026-03-28
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+
+### 🔧 Maintenance
+- chore: UVM 1.15.12 (1 ahead of npm) (33ed3793c)
+- chore: update test performance baselines (a2ae8e93c)
+- chore: version sync to 1.15.11 (92fb03d92)
+
+---
+
 ## [--silent] - 2026-03-28
 
 ### 🔄 Changes

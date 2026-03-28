@@ -22,7 +22,7 @@ class StrRayArchitecturePatternsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "architecture-patterns", version: "1.15.11",
+        name: "architecture-patterns", version: "1.15.12",
       },
       {
         capabilities: {
