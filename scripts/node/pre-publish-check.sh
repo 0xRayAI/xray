@@ -62,7 +62,7 @@ if [ "$SOURCE_VERSION" != "$PACKAGE_VERSION" ] && [ "$SOURCE_VERSION" != "NOT_FO
 fi
 
 # Check README
-README_VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' README.md | head -1 | sed 's/v//')
+README_VERSION=$(grep -oE 'v?1\.[0-9]+\.[0-9]+' README.md | head -1 | sed 's/v//')
 if [ "$README_VERSION" != "$PACKAGE_VERSION" ]; then
     echo -e "${YELLOW}⚠️  WARNING: README.md version mismatch${NC}"
     echo "   README shows: v$README_VERSION"

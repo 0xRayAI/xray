@@ -340,8 +340,9 @@ export class VersionComplianceProcessor {
 
       const content = fs.readFileSync(readmePath, "utf-8");
 
-      // Match vX.Y.Z or X.Y.Z patterns
-      const match = content.match(/v?(\d+\.\d+\.\d+)/);
+      // Match vX.Y.Z or X.Y.Z patterns - but exclude IP addresses (127.x.x)
+      // Look for version in badges, headers, or specific patterns
+      const match = content.match(/v?(1\.\d+\.\d+)/);
       return match && match[1] ? match[1] : null;
     } catch {
       return null;
