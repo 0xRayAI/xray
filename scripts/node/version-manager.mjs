@@ -454,12 +454,27 @@ function main() {
     console.log(`  node scripts/node/version-manager.mjs patch --tag  # changelog + git tag`);
     process.exit(0);
   }
-  
-  // Parse arguments
+
+  // When called with no arguments (npm version lifecycle hook), npm has already
+  // bumped package.json. Just propagate the current version to other files.
+  const current = getCurrentVersion();
   let type = args[0];
   let changeDescription = '';
   let createTag = false;
-  
+
+  if (!type) {
+    // No bump type — this is a lifecycle hook call. Don't re-bump.
+    // Just update CHANGELOG, README, AGENTS.md with the current version.
+    console.log(`\n📌 Lifecycle mode — propagating current version: ${current}\n`);
+    const counts = getFrameworkCounts();
+    console.log(`📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
+    updateChangelog(current, '');
+    updateReadme(counts, current);
+    updateAgentsMd(counts);
+    console.log(`\n🎉 Version propagated: ${current}\n`);
+    return;
+  }
+
   for (let i = 1; i < args.length; i++) {
     if (args[i] === '--tag' || args[i] === '-t') {
       createTag = true;
@@ -467,10 +482,9 @@ function main() {
       changeDescription = args[i];
     }
   }
-  
-  const current = getCurrentVersion();
+
   const newVersion = bumpVersion(current, type);
-  
+
   console.log(`\n📌 Current version: ${current}`);
   console.log(`📌 Bumping: ${type}`);
   if (changeDescription) {
