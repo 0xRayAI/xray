@@ -1,7 +1,7 @@
 {
   "session:test-session-share-1:coordinator": {
     "sessionId": "test-session-share-1",
-    "startTime": 1774734418505,
+    "startTime": 1774735098474,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -22,7 +22,7 @@
   },
   "session:test-session-share-2:coordinator": {
     "sessionId": "test-session-share-2",
-    "startTime": 1774734418505,
+    "startTime": 1774735098474,
     "activeDelegations": {},
     "agentInteractions": {},
     "conflictHistory": [],
@@ -56,7 +56,7 @@
       },
       "duration": 0,
       "success": true,
-      "timestamp": 1774734418506
+      "timestamp": 1774735098474
     }
   ],
   "session:test-session-share-2:shared:received:test-session-share-1:test-key": {
@@ -74,7 +74,7 @@
       },
       "duration": 0,
       "success": true,
-      "timestamp": 1774734418506
+      "timestamp": 1774735098474
     }
   ]
 }
