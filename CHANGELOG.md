@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.7] - 2026-03-28
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: Hermes plugin v2.1 — git hooks, lifecycle hooks, and strray_hooks tool (#9) (f081d1e40)
+
+---
+
 ## [1.15.6] - 2026-03-28
 
 ### 🔄 Changes
