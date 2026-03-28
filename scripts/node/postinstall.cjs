@@ -440,8 +440,77 @@ if (fs.existsSync(hermesSkillSource)) {
   }
 }
 
+// ── Install Hermes Agent plugin to ~/.hermes/plugins/strray-hermes/ ──────────
+// Hermes Agent (https://github.com/htafolla/hermes-agent) uses a local plugin
+// system at ~/.hermes/plugins/<name>/. Each plugin needs plugin.yaml + __init__.py.
+// The Python plugin calls our Node.js bridge.mjs via subprocess for quality gates
+// and processors. This section copies the plugin files if Hermes is installed.
+
+const hermesPluginSource = path.join(packageRoot, 'src', 'integrations', 'hermes-agent');
+const HERMES_PLUGIN_FILES = [
+  'plugin.yaml',
+  '__init__.py',
+  'tools.py',
+  'schemas.py',
+  'bridge.mjs',
+  'conftest.py',
+  'test_plugin.py',
+  'after-install.md',
+];
+
+if (fs.existsSync(path.join(hermesPluginSource, 'plugin.yaml'))) {
+  try {
+    const homeDir = process.env.HOME || process.env.USERPROFILE || require('os').homedir();
+    const hermesPluginsDir = path.join(homeDir, '.hermes', 'plugins', 'strray-hermes');
+
+    // Only proceed if Hermes is installed (has ~/.hermes/ directory)
+    if (fs.existsSync(path.join(homeDir, '.hermes'))) {
+      if (!fs.existsSync(hermesPluginsDir)) {
+        fs.mkdirSync(hermesPluginsDir, { recursive: true });
+      }
+
+      let copied = 0;
+      let skipped = 0;
+
+      for (const file of HERMES_PLUGIN_FILES) {
+        const srcPath = path.join(hermesPluginSource, file);
+        const destPath = path.join(hermesPluginsDir, file);
+
+        if (!fs.existsSync(srcPath)) {
+          continue; // Optional files like test_plugin.py may not always exist
+        }
+
+        if (fs.existsSync(destPath)) {
+          // Only overwrite if source is newer — preserves user customizations
+          const srcMtime = fs.statSync(srcPath).mtime;
+          const destMtime = fs.statSync(destPath).mtime;
+          if (srcMtime <= destMtime) {
+            skipped++;
+            continue;
+          }
+        }
+
+        fs.copyFileSync(srcPath, destPath);
+        copied++;
+      }
+
+      if (copied > 0) {
+        console.log(`✅ Installed Hermes Agent plugin → ~/.hermes/plugins/strray-hermes/ (${copied} files updated)`);
+      }
+      if (skipped > 0) {
+        console.log(`ℹ️ Hermes plugin files up to date (${skipped} unchanged)`);
+      }
+      if (copied === 0 && skipped === 0) {
+        console.log(`ℹ️ Hermes Agent plugin installed (no files to copy — may already be up to date)`);
+      }
+    }
+  } catch (error) {
+    console.warn("⚠️ Could not install Hermes Agent plugin:", error.message);
+  }
+}
+
 console.log("📋 Next steps:");
 console.log("1. Restart OpenCode to load the plugin");
 console.log("2. Run 'opencode agent list' to see StrRay agents");
 console.log("3. Try '@enforcer analyze this code' to test the plugin");
-console.log("4. Hermes Agent users: restart Hermes to load MCP tools and hermes-agent skill");
+console.log("4. Hermes Agent users: restart Hermes to load the plugin, MCP tools, and skills");

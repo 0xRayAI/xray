@@ -126,6 +126,7 @@
     ".opencode/package.json",
     ".opencode/plugins/",
     ".strray/",
+    "src/integrations/hermes-agent/",
     "opencode.json",
     "README.md",
     "AGENTS.md",
