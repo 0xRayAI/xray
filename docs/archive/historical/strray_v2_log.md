@@ -1536,7 +1536,7 @@ Implementation Steps
             Structured dict with complete codex context
         """
         codex_context = {
-            "version": "1.15.13",
+            "version": "1.15.15",
             "terms": {},
             "interweaves": [],
             "lenses": [],

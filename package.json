@@ -1,7 +1,7 @@
 {
   "name": "strray-ai",
   "version": "1.15.15",
-  "description": "\u26a1 StringRay \u26a1: Bulletproof AI orchestration with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code \u2014 every time.",
+  "description": "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -133,6 +133,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "commander": "^11.1.0",
+    "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "ws": "^8.16.0"
   },

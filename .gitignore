@@ -393,3 +393,6 @@ var/
 
 # Auto-generated performance baselines
 performance-baselines.json
+
+# Version manager backups
+backups/

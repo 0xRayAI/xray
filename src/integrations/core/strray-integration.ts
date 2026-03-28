@@ -697,7 +697,7 @@ export const createStringRayIntegration = (
 // Export default integration for auto-detection
 export const strRayIntegration = new StringRayIntegration({
   framework: StringRayIntegration.detectFramework(),
-  version: "1.15.13",
+  version: "1.15.15",
   features: {
     agents: true,
     codex: true,

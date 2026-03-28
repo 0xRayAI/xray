@@ -212,14 +212,19 @@ async function handleHealth(input) {
  * Load codex.json from the standard priority chain.
  * Same logic as codex-formatter.ts but inlined so bridge works standalone.
  */
-function loadCodexFromFs(projectRoot) {
+/** Codex candidate paths — single source of truth for both loadCodexFromFs and handleGetConfig */
+function getCodexCandidates(projectRoot) {
   const envDir = process.env.STRRAY_CONFIG_DIR;
   const candidates = [];
-
-  if (envDir) candidates.push(resolve(projectRoot, envDir, "codex.json"));
+  if (envDir) candidates.push(join(projectRoot, envDir, "codex.json"));
   candidates.push(join(projectRoot, ".strray", "codex.json"));
   candidates.push(join(projectRoot, ".opencode", "strray", "codex.json"));
   candidates.push(join(projectRoot, "codex.json"));
+  return candidates;
+}
+
+function loadCodexFromFs(projectRoot) {
+  const candidates = getCodexCandidates(projectRoot);
 
   for (const candidate of candidates) {
     try {
@@ -312,11 +317,7 @@ async function handleGetConfig(input, projectRoot, logDir) {
   };
 
   // Load codex.json
-  const codexPaths = [];
-  const envDir = process.env.STRRAY_CONFIG_DIR;
-  if (envDir) codexPaths.push(join(projectRoot, envDir, "codex.json"));
-  codexPaths.push(join(projectRoot, ".strray", "codex.json"));
-  codexPaths.push(join(projectRoot, ".opencode", "strray", "codex.json"));
+  const codexPaths = getCodexCandidates(projectRoot);
 
   let codexPath = null;
   for (const p of codexPaths) {

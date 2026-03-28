@@ -107,7 +107,7 @@ MCP Client (312 lines)
 ```json
 {
   "strray_framework": {
-    "version": "1.15.13",
+    "version": "1.15.15",
     "enabled_agents": ["enforcer", "architect"],
     "agent_capabilities": {
       "enforcer": ["compliance-monitoring"]
