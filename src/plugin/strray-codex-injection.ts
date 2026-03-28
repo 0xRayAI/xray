@@ -1,78 +1,18 @@
 /**
  * StrRay Codex Injection Plugin for OpenCode
  *
- * This plugin automatically injects the Universal Development Codex
+ * This plugin automatically injects the Universal Development Codex v1.2.0
  * into the system prompt for all AI agents, ensuring codex terms are
  * consistently enforced across the entire development session.
  *
+ * @version 1.0.0
  * @author StrRay Framework
  */
 
 import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "url";
 import { spawn } from "child_process";
-
-// Dynamic imports with absolute paths at runtime
-let runQualityGateWithLogging: any;
-let qualityGateDirectory: string = "";
-
-async function importQualityGate(directory: string) {
-  if (!runQualityGateWithLogging || qualityGateDirectory !== directory) {
-    try {
-      const qualityGatePath = path.join(directory, "dist", "plugin", "quality-gate.js");
-      const module = await import(qualityGatePath);
-      runQualityGateWithLogging = module.runQualityGateWithLogging;
-      qualityGateDirectory = directory;
-    } catch (e) {
-      // Quality gate not available
-    }
-  }
-}
-
-// Direct activity logging - writes to activity.log without module isolation issues
-let activityLogPath: string = "";
-let activityLogInitialized: boolean = false;
-
-function initializeActivityLog(directory: string): void {
-  if (activityLogInitialized && activityLogPath) return;
-  
-  const logDir = path.join(directory, "logs", "framework");
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
-  }
-  // Use a separate file for plugin tool events to avoid framework overwrites
-  activityLogPath = path.join(logDir, "plugin-tool-events.log");
-  activityLogInitialized = true;
-}
-
-function logToolActivity(
-  directory: string,
-  eventType: "start" | "complete" | "routing",
-  tool: string,
-  args: Record<string, unknown>,
-  result?: unknown,
-  error?: string,
-  duration?: number
-): void {
-  initializeActivityLog(directory);
-  
-  const timestamp = new Date().toISOString();
-  const jobId = `plugin-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-  
-  if (eventType === "start") {
-    const entry = `${timestamp} [${jobId}] [agent] tool-started - INFO | {"tool":"${tool}","args":${JSON.stringify(Object.keys(args || {}))}}\n`;
-    fs.appendFileSync(activityLogPath, entry);
-  } else if (eventType === "routing") {
-    const entry = `${timestamp} [${jobId}] [agent] routing-detected - INFO | {"tool":"${tool}","routing":${JSON.stringify(args)}}\n`;
-    fs.appendFileSync(activityLogPath, entry);
-  } else {
-    const success = !error;
-    const level = success ? "SUCCESS" : "ERROR";
-    const entry = `${timestamp} [${jobId}] [agent] tool-${success ? "complete" : "failed"} - ${level} | {"tool":"${tool}","duration":${duration || 0}${error ? `,"error":"${error}"` : ""}}\n`;
-    fs.appendFileSync(activityLogPath, entry);
-  }
-}
+import { resolveCodexPath, resolveStateDir } from "../core/config-paths.js";
 
 // Import lean system prompt generator
 let SystemPromptGenerator: any;
@@ -83,7 +23,8 @@ async function importSystemPromptGenerator() {
       const module = await import("../core/system-prompt-generator.js");
       SystemPromptGenerator = module.generateLeanSystemPrompt;
     } catch (e) {
-      // Fallback to original implementation - silent fail
+      // Fallback to original implementation if lean generator fails
+      console.warn("⚠️ Failed to load lean system prompt generator, using fallback");
     }
   }
 }
@@ -94,16 +35,13 @@ let featuresConfigLoader: any;
 let detectTaskType: any;
 
 async function loadStrRayComponents() {
-  if (ProcessorManager && StrRayStateManager && featuresConfigLoader) {
-    return;
-  }
+  if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
 
-  const tempLogger = await getOrCreateLogger(process.cwd());
-  tempLogger.log(`[StrRay] 🔄 loadStrRayComponents() called - attempting to load framework components`);
+  const logger = await getOrCreateLogger(process.cwd());
 
   // Try local dist first (for development)
   try {
-    tempLogger.log(`[StrRay] 🔄 Attempting to load from ../../dist/`);
+    logger.log(`🔄 Attempting to load from ../../dist/`);
     const procModule = await import(
       "../../dist/processors/processor-manager.js" as any
     );
@@ -117,10 +55,10 @@ async function loadStrRayComponents() {
     StrRayStateManager = stateModule.StrRayStateManager;
     featuresConfigLoader = featuresModule.featuresConfigLoader;
     detectTaskType = featuresModule.detectTaskType;
-    tempLogger.log(`[StrRay] ✅ Loaded from ../../dist/`);
+    logger.log(`✅ Loaded from ../../dist/`);
     return;
   } catch (e: any) {
-    tempLogger.error(`[StrRay] ❌ Failed to load from ../../dist/: ${e?.message || e}`);
+    logger.error(`❌ Failed to load from ../../dist/: ${e?.message || e}`);
   }
 
   // Try node_modules (for consumer installation)
@@ -128,8 +66,8 @@ async function loadStrRayComponents() {
 
   for (const pluginPath of pluginPaths) {
     try {
-      tempLogger.log(
-        `[StrRay] 🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`,
+      logger.log(
+        `🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`,
       );
       const pm = await import(
         `../../node_modules/${pluginPath}/dist/processors/processor-manager.js`
@@ -144,137 +82,15 @@ async function loadStrRayComponents() {
       StrRayStateManager = sm.StrRayStateManager;
       featuresConfigLoader = fm.featuresConfigLoader;
       detectTaskType = fm.detectTaskType;
-      tempLogger.log(`[StrRay] ✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
+      logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
       return;
     } catch (e: any) {
-      tempLogger.error(
-        `[StrRay] ❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`,
+      logger.error(
+        `❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`,
       );
       continue;
     }
   }
-  
-  tempLogger.error(`[StrRay] ❌ Could not load StrRay components from any path`);
-}
-
-/**
- * Extract task description from tool input
- */
-function extractTaskDescription(input: { tool: string; args?: Record<string, unknown> }): string | null {
-  const { tool, args } = input;
-  
-  // Extract meaningful task description from various inputs
-  if (args?.content) {
-    const content = String(args.content);
-    // Get first 200 chars as description
-    return content.slice(0, 200);
-  }
-  
-  if (args?.filePath) {
-    return `${tool} ${args.filePath}`;
-  }
-  
-  if (args?.command) {
-    return String(args.command);
-  }
-  
-  // Fallback: Use tool name as task description for routing
-  // This enables routing even when OpenCode doesn't pass args
-  if (tool) {
-    return `execute ${tool} tool`;
-  }
-  
-  return null;
-}
-
-/**
- * Extract action words from command for better routing
- * Maps verbs/intents to skill categories
- */
-function extractActionWords(command: string): string | null {
-  if (!command || command.length < 3) return null;
-  
-  // Strip quotes and escape sequences for cleaner matching
-  const cleanCommand = command.replace(/["']/g, ' ').replace(/\\./g, ' ');
-  
-  // Action word -> skill mapping (ordered by priority)
-  const actionMap = [
-    // Review patterns - check first since user likely wants to review content
-    { pattern: /\b(review|check|audit|examine|inspect|assess|evaluate)\b/i, skill: "code-review" },
-    // Analyze patterns  
-    { pattern: /\b(analyze|investigate|study)\b/i, skill: "code-analyzer" },
-    // Fix patterns
-    { pattern: /\b(fix|debug|resolve|troubleshoot|repair)\b/i, skill: "bug-triage" },
-    // Create patterns
-    { pattern: /\b(create|write|generate|build|make|add)\b/i, skill: "content-creator" },
-    // Test patterns
-    { pattern: /\b(test|validate|verify)\b/i, skill: "testing" },
-    // Design patterns
-    { pattern: /\b(design|plan|architect)\b/i, skill: "architecture" },
-    // Optimize patterns
-    { pattern: /\b(optimize|improve|enhance|speed)\b/i, skill: "performance" },
-    // Security patterns
-    { pattern: /\b(scan|secure|vulnerability)\b/i, skill: "security" },
-    // Refactor patterns
-    { pattern: /\b(refactor|clean|restructure)\b/i, skill: "refactoring" },
-  ];
-  
-  // Search for action words anywhere in the command
-  for (const { pattern } of actionMap) {
-    const match = cleanCommand.match(pattern);
-    if (match) {
-      // Return the matched word plus context after it
-      const word = match[0];
-      const idx = cleanCommand.toLowerCase().indexOf(word.toLowerCase());
-      const after = cleanCommand.slice(idx + word.length, Math.min(idx + word.length + 25, cleanCommand.length)).trim();
-      return `${word} ${after}`.trim().slice(0, 40);
-    }
-  }
-  
-  // If no action word found, return null to use default routing
-  return null;
-}
-
-/**
- * Estimate complexity score based on message content
- * Higher complexity = orchestrator routing
- * Lower complexity = code-reviewer routing
- */
-function estimateComplexity(message: string): number {
-  const text = message.toLowerCase();
-  
-  // High complexity indicators
-  const highComplexityKeywords = [
-    "architecture", "system", "design", "complex", "multiple",
-    "integrate", "database", "migration", "refactor",
-    "performance", "optimize", "security", "audit",
-    "orchestrate", "coordinate", "workflow"
-  ];
-  
-  // Low complexity indicators  
-  const lowComplexityKeywords = [
-    "review", "check", "simple", "quick", "fix",
-    "small", "typo", "format", "lint", "test"
-  ];
-  
-  let score = 50; // default medium
-  
-  // Check message length
-  if (message.length > 200) score += 10;
-  if (message.length > 500) score += 15;
-  
-  // Check for high complexity keywords
-  for (const keyword of highComplexityKeywords) {
-    if (text.includes(keyword)) score += 8;
-  }
-  
-  // Check for low complexity keywords
-  for (const keyword of lowComplexityKeywords) {
-    if (text.includes(keyword)) score -= 5;
-  }
-  
-  // Clamp to 0-100
-  return Math.max(0, Math.min(100, score));
 }
 
 function spawnPromise(
@@ -285,19 +101,12 @@ function spawnPromise(
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "inherit", "pipe"], // Original working stdio - stdout to terminal (ASCII visible)
     });
     let stdout = "";
     let stderr = "";
 
-    if (child.stdout) {
-      child.stdout.on("data", (data) => {
-        const text = data.toString();
-        stdout += text;
-        process.stdout.write(text);
-      });
-    }
-
+    // Capture stderr only (stdout goes to inherit/terminal)
     if (child.stderr) {
       child.stderr.on("data", (data) => {
         stderr += data.toString();
@@ -403,6 +212,82 @@ function getFrameworkIdentity(): string {
 /**
  * Run Enforcer quality gate check before operations
  */
+async function runEnforcerQualityGate(
+  input: { tool: string; args?: { content?: string; filePath?: string } },
+  logger: PluginLogger,
+): Promise<{ passed: boolean; violations: string[] }> {
+  const violations: string[] = [];
+  const { tool, args } = input;
+
+  // Rule 1: tests-required for new files
+  if (tool === "write" && args?.filePath) {
+    const filePath = args.filePath;
+    // Check if this is a source file (not test, not config)
+    if (
+      filePath.endsWith(".ts") &&
+      !filePath.includes(".test.") &&
+      !filePath.includes(".spec.")
+    ) {
+      // Check if test file exists
+      const testPath = filePath.replace(".ts", ".test.ts");
+      const specPath = filePath.replace(".ts", ".spec.ts");
+
+      if (!fs.existsSync(testPath) && !fs.existsSync(specPath)) {
+        violations.push(
+          `tests-required: No test file found for ${filePath} (expected ${testPath} or ${specPath})`,
+        );
+        logger.log(
+          `⚠️ ENFORCER: tests-required violation detected for ${filePath}`,
+        );
+      }
+    }
+  }
+
+  // Rule 2: documentation-required for new features
+  if (tool === "write" && args?.filePath?.includes("src/")) {
+    const docsDir = path.join(process.cwd(), "docs");
+    const readmePath = path.join(process.cwd(), "README.md");
+
+    // Check if docs directory exists
+    if (!fs.existsSync(docsDir) && !fs.existsSync(readmePath)) {
+      violations.push(
+        `documentation-required: No documentation found for new feature`,
+      );
+      logger.log(`⚠️ ENFORCER: documentation-required violation detected`);
+    }
+  }
+
+  // Rule 3: resolve-all-errors - check if we're creating code with error patterns
+  if (args?.content) {
+    const errorPatterns = [
+      /console\.log\s*\(/g,
+      /TODO\s*:/gi,
+      /FIXME\s*:/gi,
+      /throw\s+new\s+Error\s*\(\s*['"]test['"]\s*\)/gi,
+    ];
+
+    for (const pattern of errorPatterns) {
+      if (pattern.test(args.content)) {
+        violations.push(
+          `resolve-all-errors: Found debug/error pattern (${pattern.source}) in code`,
+        );
+        logger.log(`⚠️ ENFORCER: resolve-all-errors violation detected`);
+        break;
+      }
+    }
+  }
+
+  const passed = violations.length === 0;
+
+  if (!passed) {
+    logger.error(`🚫 Quality Gate FAILED with ${violations.length} violations`);
+  } else {
+    logger.log(`✅ Quality Gate PASSED`);
+  }
+
+  return { passed, violations };
+}
+
 interface CodexContextEntry {
   id: string;
   source: string;
@@ -421,14 +306,20 @@ interface CodexContextEntry {
 let cachedCodexContexts: CodexContextEntry[] | null = null;
 
 /**
- * Codex file locations to search
+ * Codex file locations resolved through the standard priority chain.
+ * Falls back to additional OpenCode-specific files not covered by the resolver.
  */
-const CODEX_FILE_LOCATIONS = [
-  ".opencode/strray/codex.json",
-  ".opencode/codex.codex",
-  ".opencode/strray/agents_template.md",
-  "AGENTS.md",
-];
+function getCodexFileLocations(directory?: string): string[] {
+  const root = directory || process.cwd();
+  const resolved = resolveCodexPath(root);
+  // Add OpenCode-specific fallbacks not in the standard chain
+  resolved.push(
+    path.join(root, ".opencode", "codex.codex"),
+    path.join(root, ".strray", "agents_template.md"),
+    path.join(root, "AGENTS.md"),
+  );
+  return resolved;
+}
 
 /**
  * Read file content safely
@@ -463,7 +354,7 @@ function extractCodexMetadata(content: string): {
     }
   }
 
-  // Markdown format (AGENTS.md, .opencode/strray/agents_template.md)
+  // Markdown format (AGENTS.md, .strray/agents_template.md)
   const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
   const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.6.0";
 
@@ -505,8 +396,9 @@ function loadCodexContext(directory: string): CodexContextEntry[] {
 
   const codexContexts: CodexContextEntry[] = [];
 
-  for (const relativePath of CODEX_FILE_LOCATIONS) {
-    const fullPath = path.join(directory, relativePath);
+  const locations = getCodexFileLocations(directory);
+  for (const fileLocation of locations) {
+    const fullPath = path.isAbsolute(fileLocation) ? fileLocation : path.join(directory, fileLocation);
     const content = readFileContent(fullPath);
 
     if (content && content.trim().length > 0) {
@@ -522,7 +414,7 @@ function loadCodexContext(directory: string): CodexContextEntry[] {
   if (codexContexts.length === 0) {
     void getOrCreateLogger(directory).then((l) =>
       l.error(
-        `No valid codex files found. Checked: ${CODEX_FILE_LOCATIONS.join(", ")}`,
+        `No valid codex files found. Checked: ${locations.join(", ")}`,
       ),
     );
   }
@@ -562,8 +454,6 @@ function formatCodexContext(contexts: CodexContextEntry[]): string {
  *
  * This plugin hooks into experimental.chat.system.transform event
  * to inject codex terms into system prompt before it's sent to LLM.
- * 
- * OpenCode expects hooks to be nested under a "hooks" key.
  */
 export default async function strrayCodexPlugin(input: {
   client?: string;
@@ -575,41 +465,44 @@ export default async function strrayCodexPlugin(input: {
 
   return {
     "experimental.chat.system.transform": async (
-        _input: Record<string, unknown>,
-        output: { system?: string[] },
-      ) => {
-        try {
-          await importSystemPromptGenerator();
-          
-          let leanPrompt = getFrameworkIdentity();
+      _input: Record<string, unknown>,
+      output: { system?: string[] },
+    ) => {
+      try {
+        // Use lean system prompt generator for token efficiency
+        await importSystemPromptGenerator();
+        
+        let leanPrompt = getFrameworkIdentity();
 
-          if (SystemPromptGenerator) {
-            leanPrompt = await SystemPromptGenerator({
-              showWelcomeBanner: true,
-              showCodexContext: false,
-              enableTokenOptimization: true,
-              maxTokenBudget: 3000,
-              showCriticalTermsOnly: true,
-              showEssentialLinks: true
-            });
-          }
-
-          // Routing is handled in chat.message hook - this hook only does system prompt injection
-
-          if (output.system && Array.isArray(output.system)) {
-            output.system = [leanPrompt];
-          }
-        } catch (error) {
-          const logger = await getOrCreateLogger(directory);
-          logger.error("System prompt injection failed:", error);
-          const fallback = getFrameworkIdentity();
-          if (output.system && Array.isArray(output.system)) {
-            output.system = [fallback];
-          }
+        // Use lean generator if available, otherwise fall back to minimal logic
+        if (SystemPromptGenerator) {
+          leanPrompt = await SystemPromptGenerator({
+            showWelcomeBanner: true,
+            showCodexContext: false,  // Disabled for token efficiency
+            enableTokenOptimization: true,
+            maxTokenBudget: 3000,     // Conservative token budget
+            showCriticalTermsOnly: true,
+            showEssentialLinks: true
+          });
         }
-      },
 
-      "tool.execute.before": async (
+        if (output.system && Array.isArray(output.system)) {
+          // Replace verbose system prompt with lean version
+          output.system = [leanPrompt];
+        }
+      } catch (error) {
+        // Critical failure - log error but don't break the plugin
+        const logger = await getOrCreateLogger(directory);
+        logger.error("System prompt injection failed:", error);
+        // Fallback to minimal prompt
+        const fallback = getFrameworkIdentity();
+        if (output.system && Array.isArray(output.system)) {
+          output.system = [fallback];
+        }
+      }
+    },
+
+    "tool.execute.before": async (
       input: {
         tool: string;
         args?: { content?: string; filePath?: string };
@@ -617,34 +510,8 @@ export default async function strrayCodexPlugin(input: {
       output: any,
     ) => {
       const logger = await getOrCreateLogger(directory);
-
-      // Retrieve original user message for context preservation (file-based)
-      let originalMessage: string | null = null;
-      try {
-        const contextFiles = fs.readdirSync(directory)
-          .filter(f => f.startsWith("context-") && f.endsWith(".json"))
-          .map(f => ({
-            name: f,
-            time: fs.statSync(path.join(directory, f)).mtime.getTime()
-          }))
-          .sort((a, b) => b.time - a.time);
-        
-        if (contextFiles.length > 0 && contextFiles[0]) {
-          const latestContext = JSON.parse(
-            fs.readFileSync(path.join(directory, contextFiles[0].name), "utf-8")
-          );
-          originalMessage = latestContext.userMessage;
-        }
-      } catch (e) {
-        // Silent fail - context is optional
-      }
-
-      if (originalMessage) {
-        logger.log(`📌 Original intent: "${originalMessage.slice(0, 80)}..."`);
-      }
-
-      logToolActivity(directory, "start", input.tool, input.args || {});
-
+      logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
+      logger.log(`📥 Full input: ${JSON.stringify(input)}`);
       await loadStrRayComponents();
 
       if (featuresConfigLoader && detectTaskType) {
@@ -667,44 +534,24 @@ export default async function strrayCodexPlugin(input: {
 
       const { tool, args } = input;
 
-      // Extract action words from command for better tool routing
-      const command = (args as any)?.command ? String((args as any).command) : "";
-      let taskDescription: string | null = null;
-      
-      if (command) {
-        const actionWords = extractActionWords(command);
-        if (actionWords) {
-          taskDescription = actionWords;
-          logger.log(`📝 Action words extracted: "${actionWords}"`);
-        }
-      }
-      
-      // Also try to extract from content if no command
-      if (!taskDescription) {
-        taskDescription = extractTaskDescription(input);
-      }
-
       // ENFORCER QUALITY GATE CHECK - Block on violations
-      await importQualityGate(directory);
-      if (!runQualityGateWithLogging) {
-        logger.log("Quality gate not available, skipping");
-      } else {
-        const qualityGateResult = await runQualityGateWithLogging(
-          { tool, args },
-          logger,
+      const qualityGateResult = await runEnforcerQualityGate(input, logger);
+      if (!qualityGateResult.passed) {
+        logger.error(
+          `🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`,
         );
-        if (!qualityGateResult.passed) {
-          logger.error(
-            `🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`,
-          );
-          throw new Error(
-            `ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`,
-          );
-        }
+        throw new Error(
+          `ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`,
+        );
       }
+      logger.log(`✅ Quality gate passed for ${tool}`);
 
-      // Run processors for ALL tools (not just write/edit)
-      if (ProcessorManager || StrRayStateManager) {
+      if (["write", "edit", "multiedit"].includes(tool)) {
+        if (!ProcessorManager || !StrRayStateManager) {
+          logger.error("ProcessorManager or StrRayStateManager not loaded");
+          return;
+        }
+
         // PHASE 1: Connect to booted framework or boot if needed
         let stateManager: any;
         let processorManager: any;
@@ -718,7 +565,7 @@ export default async function strrayCodexPlugin(input: {
           logger.log("🚀 StrRay framework not booted, initializing...");
           // Create new state manager (framework not booted yet)
           stateManager = new StrRayStateManager(
-            path.join(directory, ".opencode", "state"),
+            resolveStateDir(directory),
           );
           // Store globally for future use
           (globalThis as any).strRayStateManager = stateManager;
@@ -768,12 +615,6 @@ export default async function strrayCodexPlugin(input: {
             priority: 20,
             enabled: true,
           });
-          processorManager.registerProcessor({
-            name: "agentsMdValidation",
-            type: "post",
-            priority: 30,
-            enabled: true,
-          });
 
           // Store for future use
           stateManager.set("processor:manager", processorManager);
@@ -784,12 +625,6 @@ export default async function strrayCodexPlugin(input: {
 
         // PHASE 2: Execute pre-processors with detailed logging
         try {
-          // Check if processorManager and method exist
-          if (!processorManager || typeof processorManager.executePreProcessors !== 'function') {
-            logger.log(`⏭️ Pre-processors skipped: processor manager not available`);
-            return;
-          }
-          
           logger.log(`▶️ Executing pre-processors for ${tool}...`);
           const result = await processorManager.executePreProcessors({
             tool,
@@ -826,12 +661,6 @@ export default async function strrayCodexPlugin(input: {
 
         // PHASE 3: Execute post-processors after tool completion
         try {
-          // Check if processorManager and method exist
-          if (!processorManager || typeof processorManager.executePostProcessors !== 'function') {
-            logger.log(`⏭️ Post-processors skipped: processor manager not available`);
-            return;
-          }
-          
           logger.log(`▶️ Executing post-processors for ${tool}...`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
           const postResults = await processorManager.executePostProcessors(
@@ -877,31 +706,21 @@ export default async function strrayCodexPlugin(input: {
       _output: any,
     ) => {
       const logger = await getOrCreateLogger(directory);
-      
-      const { tool, args, result } = input;
-      
-      // Log tool completion to activity logger (direct write - no module isolation issues)
-      logToolActivity(
-        directory, 
-        "complete", 
-        tool, 
-        args || {}, 
-        result, 
-        result?.error,
-        result?.duration
-      );
-      
       await loadStrRayComponents();
+
+      const { tool, args, result } = input;
 
       // Debug: log full input
       logger.log(
         `📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`,
       );
 
-      // Run post-processors for ALL tools AFTER tool completes
-      if (ProcessorManager || StrRayStateManager) {
+      // Run post-processors for write/edit operations AFTER tool completes
+      if (["write", "edit", "multiedit"].includes(tool)) {
+        if (!ProcessorManager || !StrRayStateManager) return;
+
         const stateManager = new StrRayStateManager(
-          path.join(directory, ".opencode", "state"),
+          resolveStateDir(directory),
         );
         const processorManager = new ProcessorManager(stateManager);
 
@@ -926,12 +745,6 @@ export default async function strrayCodexPlugin(input: {
         });
 
         try {
-          // Check if processorManager and method exist
-          if (!processorManager || typeof processorManager.executePostProcessors !== 'function') {
-            logger.log(`⏭️ Post-processors skipped: processor manager not available`);
-            return;
-          }
-          
           // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
           logger.log(`📝 Post-processor tool: ${tool}`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
@@ -984,70 +797,6 @@ export default async function strrayCodexPlugin(input: {
           logger.error(`💥 Post-processor error`, error);
         }
       }
-    },
-
-    /**
-     * chat.message - Intercept user messages for routing
-     * Output contains message and parts with user content
-     */
-    "chat.message": async (
-      input: {
-        sessionID: string;
-        agent?: string;
-        model?: { providerID: string; modelID: string };
-        messageID?: string;
-        variant?: string;
-      },
-      output: {
-        message: {
-          id: string;
-          sessionID: string;
-          role: string;
-          [key: string]: any;
-        };
-        parts: Array<{
-          id: string;
-          type: string;
-          text?: string;
-          [key: string]: any;
-        }>;
-      }
-    ) => {
-      const logger = await getOrCreateLogger(directory);
-      
-      let userMessage = "";
-      
-      if (output?.parts && Array.isArray(output.parts)) {
-        for (const part of output.parts) {
-          if (part?.type === "text" && part?.text) {
-            userMessage = part.text;
-            break;
-          }
-        }
-      }
-
-      // Store original user message for tool hooks (context preservation)
-      const sessionId = output?.message?.sessionID || "default";
-      try {
-        const contextData = JSON.stringify({
-          sessionId,
-          userMessage,
-          timestamp: new Date().toISOString()
-        });
-        const contextPath = path.join(directory, `context-${sessionId}.json`);
-        fs.writeFileSync(contextPath, contextData, "utf-8");
-      } catch (e) {
-        // Silent fail - context is optional
-      }
-      (globalThis as any).__strRayOriginalMessage = userMessage;
-
-      logger.log(`userMessage: "${userMessage.slice(0, 100)}"`);
-      
-      if (!userMessage || userMessage.length === 0) {
-        return;
-      }
-      
-      logger.log(`👤 User message: "${userMessage.slice(0, 50)}..."`);
     },
 
     config: async (_config: Record<string, unknown>) => {

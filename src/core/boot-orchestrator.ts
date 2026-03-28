@@ -16,6 +16,7 @@ import { pathResolver } from "../utils/path-resolver.js";
 const AGENTS_BASE_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
 import {
   createAgentDelegator,
+  createSessionCoordinator,
 } from "../delegation/index.js";
 import { createSessionCleanupManager } from "../session/session-cleanup-manager.js";
 import { createSessionMonitor } from "../session/session-monitor.js";
@@ -25,29 +26,6 @@ import { securityHeadersMiddleware } from "../security/security-headers.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { memoryMonitor } from "../monitoring/memory-monitor.js";
 import { strRayConfigLoader } from "./config-loader.js";
-import { activity } from "./activity-logger.js";
-import { inferenceTuner } from "../services/inference-tuner.js";
-import { setupMemoryMonitoring, getMemoryHealthSummary } from "./memory-monitor-setup.js";
-
-async function dynamicImport<T = any>(
-  primaryPath: string,
-  fallbackPath?: string,
-): Promise<T> {
-  try {
-    return await import(primaryPath) as T;
-  } catch (primaryError) {
-    if (fallbackPath) {
-      try {
-        return await import(fallbackPath) as T;
-      } catch (fallbackError) {
-        throw new Error(
-          `Failed to import ${primaryPath} and fallback ${fallbackPath}: ${String(primaryError)} / ${String(fallbackError)}`,
-        );
-      }
-    }
-    throw primaryError;
-  }
-}
 
 /**
  * Set up graceful interruption handling to prevent JSON parsing errors
@@ -62,62 +40,71 @@ function setupGracefulShutdown(): void {
 
   let isShuttingDown = false;
 
-  const shutdown = async (signal: string) => {
+  process.on("SIGINT", async () => {
     if (isShuttingDown) {
+      // Graceful shutdown messages kept as console.log for user visibility
       await frameworkLogger.log(
         "boot-orchestrator",
-        "received-signal-already-shutting-down",
+        "-received-sigint-shutting-down-gracefully-",
         "info",
-        { signal, message: "Already shutting down..." },
+        { message: "Received SIGINT, shutting down gracefully..." },
       );
-      return;
+      process.exit(0);
     }
-
-    isShuttingDown = true;
-
     try {
       await frameworkLogger.log(
         "boot-orchestrator",
-        "received-signal-shutting-down",
+        "-received-sigint-shutting-down-gracefully-",
         "info",
-        { signal, message: "Shutting down gracefully..." },
+        { message: "Received SIGINT, shutting down gracefully..." },
       );
+      // Basic cleanup - orchestrator shutdown handled by process termination
+      process.exit(0);
+    } catch (error) {
+      // Suppress error output in CLI mode to avoid breaking interface
+      if (
+        process.env.STRRAY_CLI_MODE !== "true" &&
+        process.env.OPENCODE_CLI !== "true"
+      ) {
+        console.error("❌ Error during graceful shutdown:", error);
+      }
+      process.exit(1);
+    }
+  });
+
+  process.on("SIGTERM", async () => {
+    // Termination signal message kept as console.log
+
+    try {
       memoryMonitor.stop();
       await new Promise((resolve) => setTimeout(resolve, 500));
       process.exit(0);
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "graceful-shutdown-failed",
-        "error",
-        { error: String(error) },
-      );
       process.exit(1);
     }
-  };
-
-  process.on("SIGINT", () => shutdown("SIGINT"));
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  });
 
   // Handle uncaught exceptions that might cause JSON parsing errors
   process.on("uncaughtException", (error) => {
-    frameworkLogger.log(
-      "boot-orchestrator",
-      "uncaught-exception",
-      "error",
-      { error: String(error), stack: error.stack },
-    ).catch(() => {}); // Ignore logging errors during shutdown
+    // Suppress error output in CLI mode to avoid breaking interface
+    if (
+      process.env.STRRAY_CLI_MODE !== "true" &&
+      process.env.OPENCODE_CLI !== "true"
+    ) {
+      console.error("❌ Uncaught Exception:", error);
+    }
     memoryMonitor.stop();
     process.exit(1);
   });
 
   process.on("unhandledRejection", (reason, promise) => {
-    frameworkLogger.log(
-      "boot-orchestrator",
-      "unhandled-rejection",
-      "error",
-      { reason: String(reason), promise: String(promise) },
-    ).catch(() => {}); // Ignore logging errors during shutdown
+    // Suppress error output in CLI mode to avoid breaking interface
+    if (
+      process.env.STRRAY_CLI_MODE !== "true" &&
+      process.env.OPENCODE_CLI !== "true"
+    ) {
+      console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+    }
     memoryMonitor.stop();
     process.exit(1);
   });
@@ -129,14 +116,6 @@ export interface BootSequenceConfig {
   sessionManagement: boolean;
   processorActivation: boolean;
   agentLoading: boolean;
-  autoStartInferenceTuner: boolean;
-}
-
-interface ProcessorDefinition {
-  name: string;
-  type: "pre" | "post";
-  priority: number;
-  enabled: boolean;
 }
 
 export interface BootResult {
@@ -147,9 +126,6 @@ export interface BootResult {
   enforcementEnabled: boolean;
   codexComplianceActive: boolean;
   agentsLoaded: string[];
-  inferenceTunerActive: boolean;
-  skillRegistryActive: boolean;
-  skillsDiscovered: number;
   errors: string[];
 }
 
@@ -173,7 +149,7 @@ export class BootOrchestrator {
     this.processorManager = new ProcessorManager(this.stateManager);
 
     // Initialize memory monitoring with alerts
-    this.initializeMemoryMonitoring();
+    this.setupMemoryMonitoring();
 
     this.config = {
       enableEnforcement: true,
@@ -181,7 +157,6 @@ export class BootOrchestrator {
       sessionManagement: true,
       processorActivation: true,
       agentLoading: true,
-      autoStartInferenceTuner: false,
       ...config,
     };
   }
@@ -197,14 +172,18 @@ export class BootOrchestrator {
       );
       this.stateManager.set("delegation:agent_delegator", agentDelegator);
 
+      const sessionCoordinator = createSessionCoordinator(this.stateManager);
+      this.stateManager.set(
+        "delegation:session_coordinator",
+        sessionCoordinator,
+      );
+
+      const defaultSession = sessionCoordinator.initializeSession("default");
+      this.stateManager.set("delegation:default_session", defaultSession);
+
       return true;
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "delegation-system-initialization-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Failed to initialize delegation system:", error);
       return false;
     }
   }
@@ -214,20 +193,27 @@ export class BootOrchestrator {
    */
   private async loadOrchestrator(): Promise<boolean> {
     try {
-      const orchestratorModule = await dynamicImport<{ strRayOrchestrator: any }>(
-        "../core/orchestrator.js",
-        "../core/orchestrator",
-      );
+      // Import orchestrator dynamically to ensure it's loaded first
+      let orchestratorModule;
+      try {
+        orchestratorModule = await import("../core/orchestrator");
+      } catch (jsError) {
+        // Fallback to TypeScript import for testing/development
+        try {
+          orchestratorModule = await import("../core/orchestrator");
+        } catch (tsError) {
+          console.error(
+            "❌ Failed to load orchestrator from both .js and .ts:",
+            { jsError, tsError },
+          );
+          return false;
+        }
+      }
 
       const orchestratorInstance = orchestratorModule.strRayOrchestrator;
 
       if (!orchestratorInstance) {
-        await frameworkLogger.log(
-          "boot-orchestrator",
-          "orchestrator-instance-not-found",
-          "error",
-          { module: "strRayOrchestrator" },
-        );
+        console.error("❌ Orchestrator instance not found in module");
         return false;
       }
 
@@ -236,12 +222,7 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "orchestrator-load-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Failed to load orchestrator:", error);
       return false;
     }
   }
@@ -297,33 +278,8 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "session-management-initialization-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Failed to initialize session management:", error);
       return false;
-    }
-  }
-
-  /**
-   * Register processors in batch with consistent logging
-   */
-  private registerProcessorsBatch(processors: ProcessorDefinition[], jobId: string): void {
-    for (const processor of processors) {
-      this.processorManager.registerProcessor({
-        name: processor.name,
-        type: processor.type,
-        priority: processor.priority,
-        enabled: processor.enabled,
-      });
-      frameworkLogger.log(
-        "boot-orchestrator",
-        `registered ${processor.name} processor`,
-        "success",
-        { jobId },
-      );
     }
   }
 
@@ -339,18 +295,177 @@ export class BootOrchestrator {
         { jobId },
       );
 
-      const processorsToRegister: ProcessorDefinition[] = [
-        { name: "preValidate", type: "pre", priority: 10, enabled: true },
-        { name: "codexCompliance", type: "pre", priority: 20, enabled: true },
-        { name: "testAutoCreation", type: "pre", priority: 22, enabled: true },
-        { name: "versionCompliance", type: "pre", priority: 25, enabled: true },
-        { name: "errorBoundary", type: "pre", priority: 30, enabled: true },
-        { name: "agentsMdValidation", type: "pre", priority: 35, enabled: true },
-        { name: "stateValidation", type: "post", priority: 130, enabled: true },
-      ];
+      this.processorManager.registerProcessor({
+        name: "preValidate",
+        type: "pre",
+        priority: 10,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered preValidate processor",
+        "success",
+        { jobId },
+      );
 
-      this.registerProcessorsBatch(processorsToRegister, jobId);
+      this.processorManager.registerProcessor({
+        name: "typescriptCompilation",
+        type: "pre",
+        priority: 15,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered typescriptCompilation processor",
+        "success",
+        { jobId },
+      );
 
+      this.processorManager.registerProcessor({
+        name: "codexCompliance",
+        type: "pre",
+        priority: 20,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered codexCompliance processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "testAutoCreation",
+        type: "pre",
+        priority: 22,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered testAutoCreation processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "versionCompliance",
+        type: "pre",
+        priority: 25,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered versionCompliance processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "errorBoundary",
+        type: "pre",
+        priority: 30,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered errorBoundary processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "agentsMdValidation",
+        type: "pre",
+        priority: 35,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered agentsMdValidation processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "stateValidation",
+        type: "post",
+        priority: 130,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered stateValidation processor",
+        "success",
+        { jobId },
+      );
+
+      // Codex gap processors (Tier 1)
+      this.processorManager.registerProcessor({
+        name: "spawnGovernance",
+        type: "pre",
+        priority: 40,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered spawnGovernance processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "performanceBudget",
+        type: "pre",
+        priority: 45,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered performanceBudget processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "asyncPattern",
+        type: "pre",
+        priority: 50,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered asyncPattern processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "consoleLogGuard",
+        type: "pre",
+        priority: 55,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered consoleLogGuard processor",
+        "success",
+        { jobId },
+      );
+
+      this.processorManager.registerProcessor({
+        name: "postProcessorChain",
+        type: "post",
+        priority: 140,
+        enabled: true,
+      });
+      frameworkLogger.log(
+        "boot-orchestrator",
+        "registered postProcessorChain processor",
+        "success",
+        { jobId },
+      );
+
+      // Skip refactoring logging processor - not available in this build
       frameworkLogger.log(
         "boot-orchestrator",
         "skipping refactoringLogging processor - not available",
@@ -388,12 +503,13 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      await frameworkLogger.log(
+      frameworkLogger.log(
         "boot-orchestrator",
-        "processor-activation-failed",
+        "activateProcessors failed",
         "error",
-        { jobId, error: String(error) },
+        { jobId, error },
       );
+      console.error("❌ Failed to activate processors:", error);
       return false;
     }
   }
@@ -434,19 +550,12 @@ export class BootOrchestrator {
           this.stateManager.set(`agent:${agentName}`, agentInstance);
           loadedAgents.push(agentName);
         } else {
-          await frameworkLogger.log(
-            "boot-orchestrator",
-            "agent-class-not-found",
-            "warning",
-            { agentName },
-          );
+          console.warn(`⚠️ Agent class not found in module: ${agentName}`);
         }
       } catch (error) {
-        await frameworkLogger.log(
-          "boot-orchestrator",
-          "agent-load-failed",
-          "warning",
-          { agentName, error: String(error) },
+        console.warn(
+          `⚠️ Failed to load agent ${agentName}:`,
+          error instanceof Error ? error.message : String(error),
         );
       }
     }
@@ -480,12 +589,7 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "enforcement-enable-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Failed to enable enforcement:", error);
       return false;
     }
   }
@@ -495,28 +599,30 @@ export class BootOrchestrator {
    */
   private async activateCodexCompliance(): Promise<boolean> {
     try {
+      // Initialize codex injector if not already done
       let codexInjector = this.stateManager.get("processor:codex_injector");
       if (!codexInjector) {
-        const { CodexInjector } = await dynamicImport<{ CodexInjector: new () => any }>(
-          "./codex-injector.js",
-          "./codex-injector",
-        );
+        // Import and initialize codex injector
+        // Try import with .js extension first (for Node.js/test environment)
+        let CodexInjector;
+        try {
+          ({ CodexInjector } = await import("./codex-injector"));
+        } catch (error) {
+          // Fallback to import without .js extension (for OpenCode plugin environment)
+          ({ CodexInjector } = await import("./codex-injector"));
+        }
         codexInjector = new CodexInjector();
         this.stateManager.set("processor:codex_injector", codexInjector);
       }
 
+      // Enable compliance validation
       this.stateManager.set("compliance:active", true);
       this.stateManager.set("compliance:validator", codexInjector);
       this.stateManager.set("compliance:activated_at", Date.now());
 
       return true;
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "codex-compliance-activation-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Failed to activate codex compliance:", error);
       return false;
     }
   }
@@ -530,12 +636,7 @@ export class BootOrchestrator {
       );
       this.stateManager.set("security:initialized", true);
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "security-components-initialization-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Failed to initialize security components:", error);
       throw error;
     }
   }
@@ -550,47 +651,7 @@ export class BootOrchestrator {
         this.stateManager.set("security:headers_active", true);
       }
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "security-integration-finalization-failed",
-        "error",
-        { error: String(error) },
-      );
-    }
-  }
-
-  private async initializeInferenceTuner(): Promise<boolean> {
-    if (!this.config.autoStartInferenceTuner) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "inference-tuner-disabled",
-        "info",
-        {},
-      );
-      return false;
-    }
-
-    try {
-      inferenceTuner.start();
-      this.stateManager.set("inference:tuner_active", true);
-      this.stateManager.set("inference:tuner_status", inferenceTuner.getStatus());
-      
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "inference-tuner-started",
-        "info",
-        { status: inferenceTuner.getStatus() },
-      );
-      
-      return true;
-    } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "inference-tuner-initialization-failed",
-        "error",
-        { error: String(error) },
-      );
-      return false;
+      console.error("❌ Failed to finalize security integration:", error);
     }
   }
 
@@ -605,22 +666,14 @@ export class BootOrchestrator {
       const result = await auditor.auditProject(process.cwd());
 
       if (result.score < 80) {
-        await frameworkLogger.log(
-          "boot-orchestrator",
-          "initial-security-score-low",
-          "warning",
-          { score: result.score, target: 80 },
+        console.warn(
+          `⚠️ Initial security score: ${result.score}/100 (target: 80+)`,
         );
       }
 
       return result;
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "initial-security-audit-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Failed to run initial security audit:", error);
       return { score: 0, issues: [] };
     }
   }
@@ -636,11 +689,9 @@ export class BootOrchestrator {
       );
 
       if (failedProcessors.length > 0) {
-        await frameworkLogger.log(
-          "boot-orchestrator",
-          "processor-health-check-failed",
-          "error",
-          { failedProcessors: failedProcessors.map((p) => p.name) },
+        console.error(
+          `❌ ${failedProcessors.length} processors failed health check:`,
+          failedProcessors.map((p) => p.name),
         );
         return false;
       }
@@ -649,22 +700,15 @@ export class BootOrchestrator {
         (h) => h.status === "degraded",
       );
       if (degradedProcessors.length > 0) {
-        await frameworkLogger.log(
-          "boot-orchestrator",
-          "processors-degraded",
-          "warning",
-          { degradedProcessors: degradedProcessors.map((p) => p.name) },
+        console.warn(
+          `⚠️ ${degradedProcessors.length} processors are degraded:`,
+          degradedProcessors.map((p) => p.name),
         );
       }
 
       return true;
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "processor-health-validation-failed",
-        "error",
-        { error: String(error) },
-      );
+      console.error("❌ Processor health validation failed:", error);
       return false;
     }
   }
@@ -690,22 +734,90 @@ export class BootOrchestrator {
       enforcementEnabled: this.stateManager.get("enforcement:active") || false,
       codexComplianceActive:
         this.stateManager.get("compliance:active") || false,
-      inferenceTunerActive: this.stateManager.get("inference:tuner_active") || false,
-      skillRegistryActive: this.stateManager.get("skill:registry_active") || false,
-      skillsDiscovered: this.stateManager.get("skill:count") || 0,
       agentsLoaded: Array.isArray(agentsLoaded) ? agentsLoaded : [],
       errors,
     };
   }
 
   /**
-   * Initialize memory monitoring using the shared setup module
+   * Set up comprehensive memory monitoring and alerting
    */
-  private initializeMemoryMonitoring(): void {
-    setupMemoryMonitoring({
-      stateManager: this.stateManager,
-      memoryMonitorListener: this.memoryMonitorListener,
-    });
+  private setupMemoryMonitoring(): void {
+    // Start memory monitor
+    memoryMonitor.start();
+
+    // CRITICAL FIX: Only add alert listener once to prevent memory leak
+    // Each BootOrchestrator instantiation was adding duplicate listeners
+    let currentListenerCount = 0;
+    try {
+      if (typeof memoryMonitor.listenerCount === "function") {
+        currentListenerCount = memoryMonitor.listenerCount("alert");
+      } else if (
+        memoryMonitor.listeners &&
+        typeof memoryMonitor.listeners === "function"
+      ) {
+        currentListenerCount = memoryMonitor.listeners("alert").length;
+      }
+    } catch (e) {
+      // Fallback: assume no listeners if we can't determine count
+      currentListenerCount = 0;
+    }
+
+    if (currentListenerCount === 0) {
+      // First time setup - add the memory alert handler
+      memoryMonitor.on("alert", (alert: any) => {
+        const level =
+          alert.severity === "critical"
+            ? "error"
+            : alert.severity === "high"
+              ? "warn"
+              : "info";
+
+        frameworkLogger.log(
+          "boot-orchestrator",
+          `🚨 MEMORY ALERT: ${alert.message}`,
+          "error",
+        );
+
+        // Store alert in state for dashboard access
+        const alerts = (this.stateManager.get("memory:alerts") as any[]) || [];
+        alerts.push({
+          ...alert,
+          timestamp: Date.now(),
+        });
+
+        // Keep only last 100 alerts
+        if (alerts.length > 100) {
+          alerts.shift();
+        }
+
+        this.stateManager.set("memory:alerts", alerts);
+
+        // Log recommendations
+        alert.details.recommendations.forEach((rec: string) => {
+          frameworkLogger.log("boot-orchestrator", `💡 ${rec}`, "info");
+        });
+      });
+    }
+
+    // Attach the listener to the memory monitor only if none exist
+    if (
+      this.memoryMonitorListener &&
+      memoryMonitor.listenerCount("alert") === 0
+    ) {
+      memoryMonitor.on("alert", this.memoryMonitorListener);
+    }
+
+    // Log initial memory status
+    const initialStats = memoryMonitor.getCurrentStats();
+    frameworkLogger.log(
+      "boot-orchestrator",
+      `🧠 Initial memory: ${initialStats.heapUsed.toFixed(1)}MB heap, ${initialStats.heapTotal.toFixed(1)}MB total`,
+      "info",
+    );
+
+    // Store initial memory baseline
+    this.stateManager.set("memory:baseline", initialStats);
   }
 
   /**
@@ -721,7 +833,33 @@ export class BootOrchestrator {
       trend: string;
     };
   } {
-    return getMemoryHealthSummary();
+    const summary = memoryMonitor.getSummary();
+    const issues: string[] = [];
+
+    // Check for memory issues
+    if (summary.current.heapUsed > 400) {
+      issues.push(
+        `Critical heap usage: ${summary.current.heapUsed.toFixed(1)}MB`,
+      );
+    } else if (summary.current.heapUsed > 200) {
+      issues.push(`High heap usage: ${summary.current.heapUsed.toFixed(1)}MB`);
+    }
+
+    if (summary.trend === "increasing") {
+      issues.push("Memory usage trending upward - potential leak detected");
+    }
+
+    if (summary.peak.heapUsed > 500) {
+      issues.push(
+        `Peak usage exceeded safe limits: ${summary.peak.heapUsed.toFixed(1)}MB`,
+      );
+    }
+
+    return {
+      healthy: issues.length === 0,
+      issues,
+      metrics: summary,
+    };
   }
 
   /**
@@ -745,9 +883,6 @@ export class BootOrchestrator {
       agentsLoaded: [],
       enforcementEnabled: false,
       codexComplianceActive: false,
-      inferenceTunerActive: false,
-      skillRegistryActive: false,
-      skillsDiscovered: 0,
       errors: [],
     };
 
@@ -807,16 +942,6 @@ export class BootOrchestrator {
         "delegation system initialized",
         "success",
         { jobId },
-      );
-
-      // Phase 1.5: Skill Discovery (removed - OpenCode handles skill routing natively)
-      result.skillRegistryActive = true;
-      result.skillsDiscovered = this.stateManager.get("skill:count") || 0;
-      frameworkLogger.log(
-        "boot-orchestrator",
-        "skill discovery initialized",
-        "success",
-        { jobId, skillCount: result.skillsDiscovered },
       );
 
       // Phase 2: Session management
@@ -951,9 +1076,6 @@ export class BootOrchestrator {
       // Finalize security integration
       await this.finalizeSecurityIntegration();
 
-      // Initialize inference tuner (autonomous learning)
-      result.inferenceTunerActive = await this.initializeInferenceTuner();
-
       result.success = true;
     } catch (error) {
       result.errors.push(`Boot sequence error: ${error}`);
@@ -973,7 +1095,7 @@ export class BootOrchestrator {
     try {
       // Load StringRay configuration directly (no Python dependency)
       const stringRayConfig = {
-        version: "1.15.6",
+        version: "1.15.11",
         codex_enabled: true,
         codex_version: "v1.7.5",
         codex_terms: [
@@ -1062,12 +1184,8 @@ export class BootOrchestrator {
         { jobId },
       );
     } catch (error) {
-      await frameworkLogger.log(
-        "boot-orchestrator",
-        "configuration-load-failed",
-        "warning",
-        { error: String(error) },
-      );
+      console.warn("⚠️ Failed to load StringRay configuration:", error);
+      // Continue with defaults if loading fails
     }
   }
 }

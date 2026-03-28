@@ -2,7 +2,7 @@
  * End-to-End Orchestration Test
  *
  * Tests the complete orchestration flow including:
- * 1. Framework boot setup
+ * 1. Framework boot
  * 2. Plugin connection to booted framework
  * 3. Pre-processor execution on write operations
  * 4. Test auto-creation for new files
@@ -15,10 +15,11 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import { StringRayStateManager } from "../../state/state-manager.js";
+import { BootOrchestrator } from "../../core/boot-orchestrator.js";
 
 // Mock ProcessorManager for E2E tests
 vi.mock("../../processors/processor-manager", () => {
-  const MockClass = function (this: any, _stateManager?: any) {
+  const MockClass = function (this: any) {
     this.registerProcessor = vi.fn();
     this.initializeProcessors = vi.fn().mockResolvedValue(true);
     this.getProcessorHealth = vi.fn(() => [
@@ -35,25 +36,75 @@ vi.mock("../../processors/processor-manager", () => {
     this.executePreProcessors = vi.fn().mockResolvedValue({
       success: true,
       results: [
-        { processorName: "testAutoCreation", status: "executed" },
-        { processorName: "preValidate", status: "executed" },
+        { processorName: "preValidate", status: "passed" },
+        { processorName: "testAutoCreation", status: "passed" },
       ],
     });
     this.executePostProcessors = vi.fn().mockResolvedValue({
       success: true,
-      results: [],
     });
   };
   return { ProcessorManager: MockClass };
 });
 
-import { ProcessorManager } from "../../processors/processor-manager.js";
+// Mock delegation system components
+vi.mock("../../delegation/index.js", () => ({
+  createAgentDelegator: vi.fn().mockReturnValue({
+    delegate: vi.fn(),
+  }),
+  createSessionCoordinator: vi.fn().mockReturnValue({
+    initializeSession: vi.fn().mockReturnValue({ sessionId: "test-session" }),
+  }),
+}));
 
-// E2E test suite - tests full orchestration flow with mocked ProcessorManager
+// Mock session components
+vi.mock("../../session/session-cleanup-manager.js", () => ({
+  createSessionCleanupManager: vi.fn().mockReturnValue({
+    registerSession: vi.fn(),
+  }),
+}));
+
+vi.mock("../../session/session-monitor.js", () => ({
+  createSessionMonitor: vi.fn().mockReturnValue({
+    registerSession: vi.fn(),
+  }),
+}));
+
+vi.mock("../../session/session-state-manager.js", () => ({
+  createSessionStateManager: vi.fn().mockReturnValue({
+    initialize: vi.fn().mockResolvedValue(true),
+  }),
+}));
+
+// Mock security components
+vi.mock("../../security/security-hardener.js", () => ({
+  securityHardener: {
+    initialize: vi.fn().mockResolvedValue(true),
+  },
+}));
+
+vi.mock("../../security/security-headers.js", () => ({
+  securityHeadersMiddleware: {
+    initialize: vi.fn().mockResolvedValue(true),
+  },
+}));
+
+// Mock security auditor (used by finalizeSecurityIntegration)
+vi.mock("../../security/security-auditor.js", () => ({
+  SecurityAuditor: vi.fn().mockImplementation(() => ({
+    auditProject: vi.fn().mockResolvedValue({ score: 95, issues: [] }),
+  })),
+}));
+
+// Mock codex injector (used by activateCodexCompliance)
+vi.mock("../../core/codex-injector.js", () => ({
+  CodexInjector: vi.fn().mockImplementation(() => ({})),
+}));
+
 describe("E2E Orchestration Flow", () => {
   const testDir = "/tmp/strray-e2e-test";
   let stateManager: StringRayStateManager;
-  let processorManager: any;
+  let bootOrchestrator: BootOrchestrator;
 
   beforeAll(async () => {
     // Clean up any previous test runs
@@ -62,24 +113,6 @@ describe("E2E Orchestration Flow", () => {
     }
     fs.mkdirSync(testDir, { recursive: true });
     fs.mkdirSync(path.join(testDir, ".opencode", "state"), { recursive: true });
-
-    // Simulate framework boot by setting up state manager and processor manager directly
-    stateManager = new StringRayStateManager();
-    processorManager = new ProcessorManager(stateManager);
-
-    // Register processors as the boot sequence would
-    processorManager.registerProcessor({ name: "testAutoCreation" });
-    processorManager.registerProcessor({ name: "codexCompliance" });
-    processorManager.registerProcessor({ name: "preValidate" });
-    await processorManager.initializeProcessors();
-
-    // Store in state manager (as boot sequence would)
-    stateManager.set("processor:manager", processorManager);
-    stateManager.set("processor:active", true);
-    stateManager.set("boot:success", true);
-
-    // Store globally (as plugin would find it)
-    (globalThis as any).strRayStateManager = stateManager;
   });
 
   afterAll(() => {
@@ -92,41 +125,72 @@ describe("E2E Orchestration Flow", () => {
   });
 
   it("should boot framework and register all processors", async () => {
-    // Verify boot state
-    expect(stateManager.get("boot:success")).toBe(true);
-    expect(stateManager.get("processor:active")).toBe(true);
+    // Create with proper config object (not a string)
+    bootOrchestrator = new BootOrchestrator(
+      {
+        enableEnforcement: false,
+        codexValidation: false,
+        sessionManagement: true,
+        processorActivation: true,
+        agentLoading: false,
+      },
+      new StringRayStateManager(path.join(testDir, ".opencode", "state")),
+    );
 
-    // Get processor manager from state
-    const pm = stateManager.get("processor:manager") as any;
-    expect(pm).toBeDefined();
-    expect(pm).toBe(processorManager);
+    // Execute boot sequence (no .boot() method exists; use executeBootSequence)
+    const result = await bootOrchestrator.executeBootSequence();
 
-    // Verify processors are registered
-    const processors = pm.processors;
+    expect(result.success).toBe(true);
+    expect(result.processorsActivated).toBe(true);
+    expect(result.sessionManagementActive).toBe(true);
+
+    // Access private stateManager via (as any)
+    stateManager = (bootOrchestrator as any).stateManager;
+    expect(stateManager).toBeDefined();
+
+    // Access private processorManager via (as any)
+    const processorManager = (bootOrchestrator as any).processorManager;
+    expect(processorManager).toBeDefined();
+
+    // Verify testAutoCreation processor is registered
+    const processors = processorManager.processors;
     expect(processors.has("testAutoCreation")).toBe(true);
     expect(processors.has("codexCompliance")).toBe(true);
     expect(processors.has("preValidate")).toBe(true);
 
-    // Verify processor health
-    const health = pm.getProcessorHealth();
-    expect(health.length).toBeGreaterThan(0);
-    health.forEach((h: any) => expect(h.status).toBe("healthy"));
+    // Verify processor:manager is stored in state (like plugin would find it)
+    const storedProcessorManager = stateManager.get("processor:manager");
+    expect(storedProcessorManager).toBe(processorManager);
+
+    // Store state manager globally (like plugin would find it)
+    (globalThis as any).strRayStateManager = stateManager;
   });
 
-  it("should reuse booted framework from plugin context", async () => {
+  it("should reuse booted framework from plugin context", () => {
     // Simulate plugin finding booted framework
     const globalState = (globalThis as any).strRayStateManager;
     expect(globalState).toBeDefined();
 
     // Simulate plugin getting processor manager
-    const pm = globalState.get("processor:manager");
-    expect(pm).toBeDefined();
+    const processorManager = globalState.get("processor:manager");
+    expect(processorManager).toBeDefined();
 
     // Should be same instance as boot
-    expect(pm).toBe(processorManager);
+    expect(processorManager).toBe((bootOrchestrator as any).processorManager);
+
+    // Verify boot status via public API
+    const status = bootOrchestrator.getBootStatus();
+    expect(status.processorsActivated).toBe(true);
+    expect(status.success).toBe(true);
+    expect(status.agentsLoaded).toEqual([]);
+    expect(status.errors).toEqual([]);
   });
 
   it("should execute pre-processors on write operation", async () => {
+    const processorManager = (globalThis as any).strRayStateManager.get(
+      "processor:manager",
+    );
+
     // Create a test file
     const testFile = path.join(testDir, "src", "test-module.ts");
     fs.mkdirSync(path.dirname(testFile), { recursive: true });
@@ -145,14 +209,20 @@ describe("E2E Orchestration Flow", () => {
     expect(result.success).toBe(true);
     expect(result.results.length).toBeGreaterThan(0);
 
-    // Verify testAutoCreation processor ran
-    const testAutoResult = result.results.find(
-      (r: any) => r.processorName === "testAutoCreation",
+    // Verify pre-processors were called
+    expect(processorManager.executePreProcessors).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool: "write",
+        args: expect.objectContaining({ filePath: "src/test-module.ts" }),
+      }),
     );
-    expect(testAutoResult).toBeDefined();
   });
 
   it("should auto-create test file for new source file", async () => {
+    const processorManager = (globalThis as any).strRayStateManager.get(
+      "processor:manager",
+    );
+
     // Create a source file with exports
     const sourceFile = path.join(testDir, "src", "calculator.ts");
     fs.mkdirSync(path.dirname(sourceFile), { recursive: true });
@@ -177,7 +247,7 @@ export class Calculator {
       "utf8",
     );
 
-    // Execute pre-processors
+    // Execute pre-processors (simulating plugin behavior on file write)
     const result = await processorManager.executePreProcessors({
       tool: "write",
       args: { filePath: "src/calculator.ts" },
@@ -190,11 +260,10 @@ export class Calculator {
 
     expect(result.success).toBe(true);
 
-    // The test auto-creation processor should have attempted to create it
+    // Verify the testAutoCreation processor was invoked as part of pre-processors
     const testAutoResult = result.results.find(
       (r: any) => r.processorName === "testAutoCreation",
     );
-
     expect(testAutoResult).toBeDefined();
   });
 
@@ -228,6 +297,10 @@ export function newFeature() {
   });
 
   it("should execute post-processors after operation", async () => {
+    const processorManager = (globalThis as any).strRayStateManager.get(
+      "processor:manager",
+    );
+
     const result = await processorManager.executePostProcessors(
       "write",
       {
@@ -240,19 +313,31 @@ export function newFeature() {
     );
 
     expect(result.success).toBe(true);
+
+    // Verify post-processors were called
+    expect(processorManager.executePostProcessors).toHaveBeenCalledWith(
+      "write",
+      expect.objectContaining({ filePath: "src/test.ts", success: true }),
+      [],
+    );
   });
 
-  it("should maintain processor state across multiple operations", async () => {
+  it("should maintain processor state across multiple operations", () => {
     const globalState = (globalThis as any).strRayStateManager;
     const processorManager1 = globalState.get("processor:manager");
 
-    // Simulate another operation - get processor manager again
+    // Simulate another operation
     const processorManager2 = globalState.get("processor:manager");
 
     // Should be same instance
     expect(processorManager1).toBe(processorManager2);
 
-    // Processors should still be registered
+    // Processor state should persist
     expect(processorManager1.processors.size).toBeGreaterThan(0);
+
+    // getBootStatus should reflect consistent state
+    const status = bootOrchestrator.getBootStatus();
+    expect(status.processorsActivated).toBe(true);
+    expect(status.sessionManagementActive).toBe(true);
   });
 });

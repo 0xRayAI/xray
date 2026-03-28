@@ -11,7 +11,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { logToolStart, logToolComplete } from "./tool-event-emitter.js";
+import { resolveCodexPath } from "./config-paths.js";
 // Dynamic imports for cross-environment compatibility
 let extractCodexMetadata: any;
 let StringRayContextLoader: any;
@@ -52,14 +52,13 @@ interface CodexContextEntry {
 const codexCache = new Map<string, CodexContextEntry[]>();
 
 /**
- * Codex file locations to search
+ * Codex file locations resolved through the standard priority chain.
+ * Uses config-paths.ts resolver so STRRAY_CONFIG_DIR and .strray/ work.
  */
-const CODEX_FILE_LOCATIONS = [
-  ".opencode/strray/codex.json",
-  "codex.json",
-  "src/codex.json",
-  "docs/agents/codex.json",
-];
+function getCodexFileLocations(projectRoot?: string): string[] {
+  const root = projectRoot || process.cwd();
+  return resolveCodexPath(root);
+}
 
 /**
  * Read file content safely
@@ -110,9 +109,10 @@ async function loadCodexContext(
 
   const codexContexts: CodexContextEntry[] = [];
 
-  for (const relativePath of CODEX_FILE_LOCATIONS) {
+  const locations = getCodexFileLocations();
+  for (const relativePath of locations) {
     try {
-      const fullPath = path.join(process.cwd(), relativePath);
+      const fullPath = path.isAbsolute(relativePath) ? relativePath : path.join(process.cwd(), relativePath);
       const content = readFileContent(fullPath);
 
       if (content) {
@@ -199,7 +199,7 @@ export function createStringRayCodexInjectorHook() {
               "info",
               {
                 message:
-                  "⚠️  No codex files found. Checked: .opencode/strray/codex.json, codex.json, src/codex.json, docs/agents/codex.json",
+                  `⚠️  No codex files found. Checked: ${getCodexFileLocations().join(", ")}`,
               },
             );
             await frameworkLogger.log(
@@ -227,9 +227,6 @@ export function createStringRayCodexInjectorHook() {
         const jobId = `tool-before-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
         try {
-          // ALWAYS log tool start to activity logger (regardless of test mode or tool type)
-          logToolStart(input.tool, input.args || {});
-
           await frameworkLogger.log(
             "codex-injector",
             "tool.execute.before hook triggered",
@@ -430,9 +427,6 @@ export function createStringRayCodexInjectorHook() {
         const jobId = `tool-after-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
         try {
-          // ALWAYS log tool completion to activity logger (regardless of test mode or tool type)
-          logToolComplete(input.tool, input.args || {}, output);
-
           frameworkLogger.log(
             "codex-injector",
             "tool.execute.after hook triggered",
