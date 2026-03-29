@@ -355,19 +355,68 @@ export class KernelAnalyzer {
   learn(outcome: { success: boolean; patternUsed: string; feedback?: string }): void {
     if (!this.config.enableLearning) return;
 
-    // Reinforce successful patterns
-    if (outcome.success) {
-      const pattern = this.patterns.get(outcome.patternUsed);
-      if (pattern) {
-        pattern.confidence = Math.min(pattern.confidence + 0.05, 1.0);
+    const input = outcome.patternUsed.toLowerCase();
+
+    // Update assumptions: if the input matches an assumption, reinforce it
+    for (const [id, assumption] of this.assumptions.entries()) {
+      let matched = false;
+      for (const trigger of assumption.trigger) {
+        if (input.includes(trigger.toLowerCase())) {
+          matched = true;
+          break;
+        }
+      }
+      if (matched) {
+        // Assumption was flagged in this input - boost confidence
+        // (We track effective confidence via an internal _confidence field)
+        const key = `__conf_${id}`;
+        const current = (this as any)[key] ?? 0.5;
+        (this as any)[key] = Math.min(current + 0.05, 1.0);
       }
     }
 
-    // Decrease confidence for failed patterns
-    if (!outcome.success) {
-      const pattern = this.patterns.get(outcome.patternUsed);
-      if (pattern) {
-        pattern.confidence = Math.max(pattern.confidence - 0.1, 0.1);
+    // Update cascades: if the input references a cascade pattern, reinforce it
+    for (const [id, cascade] of this.cascades.entries()) {
+      if (input.includes(cascade.pattern.toLowerCase()) ||
+          input.includes(cascade.detection.toLowerCase()) ||
+          input.includes(id.toLowerCase())) {
+        const key = `__conf_${id}`;
+        const current = (this as any)[key] ?? 0.5;
+        (this as any)[key] = Math.min(current + 0.05, 1.0);
+      }
+    }
+
+    // Decay confidence for assumptions that were NOT seen in recent inputs
+    for (const [id] of this.assumptions.entries()) {
+      const key = `__conf_${id}`;
+      const assumption = this.assumptions.get(id)!;
+      let matched = false;
+      for (const trigger of assumption.trigger) {
+        if (input.includes(trigger.toLowerCase())) {
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        const current = (this as any)[key] ?? 0.5;
+        (this as any)[key] = Math.max(current - 0.02, 0.1);
+      }
+    }
+
+    // Apply success/failure adjustments to matched patterns
+    if (outcome.success) {
+      // Boost confidence for the pattern if it matches an assumption
+      const key = `__conf_${outcome.patternUsed}`;
+      const current = (this as any)[key];
+      if (current !== undefined) {
+        (this as any)[key] = Math.min(current + 0.05, 1.0);
+      }
+    } else {
+      // Reduce confidence for failed patterns
+      const key = `__conf_${outcome.patternUsed}`;
+      const current = (this as any)[key];
+      if (current !== undefined) {
+        (this as any)[key] = Math.max(current - 0.1, 0.1);
       }
     }
   }

@@ -250,8 +250,12 @@ export class RoutingOutcomeTracker {
       taskId: outcome.taskId,
       prompt: outcome.taskDescription,
       timestamp: outcome.timestamp,
-      complexity: 0, // Would need to be calculated from prompt
-      keywords: [], // Would need to be extracted from prompt
+      complexity: Math.min(100, Math.floor(outcome.taskDescription.length / 5)),
+      keywords: [...new Set(
+        outcome.taskDescription.toLowerCase().split(/\s+/)
+          .filter(w => w.length > 3)
+          .slice(0, 10)
+      )],
       context: {},
       routingDecision: {
         taskId: outcome.taskId,

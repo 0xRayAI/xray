@@ -70,6 +70,7 @@ export interface ValidationResult {
 export interface RoutingOutcome {
   taskId: string;
   taskDescription: string;
+  taskType?: string;
   routedAgent: string;
   routedSkill: string;
   confidence: number;

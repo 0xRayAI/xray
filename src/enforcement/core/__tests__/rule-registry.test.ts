@@ -55,26 +55,26 @@ describe("RuleRegistry", () => {
       expect(registry.getRuleCount()).toBe(3);
     });
 
-    it("should throw error when adding duplicate rule", () => {
+    it("should update existing rule when adding duplicate rule (idempotent)", () => {
       const rule = createTestRule("duplicate");
       registry.addRule(rule);
 
-      expect(() => registry.addRule(createTestRule("duplicate"))).toThrow(
-        'Rule with ID "duplicate" already exists in registry'
-      );
+      // Adding again should not throw — it should silently update
+      expect(() => registry.addRule(createTestRule("duplicate"))).not.toThrow();
+      expect(registry.getRuleCount()).toBe(1);
     });
 
-    it("should throw error with correct message for duplicate", () => {
+    it("should update rule data on re-registration", () => {
       const rule = createTestRule("my-rule");
       registry.addRule(rule);
 
-      try {
-        registry.addRule(createTestRule("my-rule"));
-        expect.fail("Should have thrown");
-      } catch (error) {
-        expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain("my-rule");
-      }
+      // Re-register with a different rule having the same ID
+      const updatedRule = createTestRule("my-rule");
+      updatedRule.name = "Updated Rule";
+      registry.addRule(updatedRule);
+
+      const stored = registry.getRule("my-rule");
+      expect(stored?.name).toBe("Updated Rule");
     });
   });
 

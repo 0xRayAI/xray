@@ -497,6 +497,55 @@ function formatCodexContext(contexts: CodexContextEntry[]): string {
  * This plugin hooks into experimental.chat.system.transform event
  * to inject codex terms into system prompt before it's sent to LLM.
  */
+
+/** Inference tuning: run every N tool calls */
+const INFERENCE_TUNE_INTERVAL = 100;
+let _openCodeToolCallCount = 0;
+let _lastTuneToolCallCount = 0;
+
+/**
+ * Map tool names to agent/skill identifiers for outcome tracking.
+ * This lets the analytics pipeline correlate tool usage patterns
+ * with agent routing effectiveness.
+ */
+const TOOL_AGENT_MAP: Record<string, { agent: string; skill: string }> = {
+  write:     { agent: "code-reviewer", skill: "write" },
+  edit:      { agent: "code-reviewer", skill: "edit" },
+  multiedit: { agent: "code-reviewer", skill: "multiedit" },
+  bash:      { agent: "testing-lead", skill: "execution" },
+  search:    { agent: "researcher",    skill: "search" },
+  read:      { agent: "researcher",    skill: "read" },
+  glob:      { agent: "researcher",    skill: "glob" },
+  grep:      { agent: "researcher",    skill: "search" },
+  ls:        { agent: "researcher",    skill: "list" },
+};
+
+/**
+ * Classify a tool call into a meaningful task type for analytics.
+ * Mirrors _classify_task_type in the Hermes plugin so both plugins
+ * produce comparable outcome data for the inference tuner.
+ */
+function classifyTaskType(tool: string, args?: Record<string, unknown>): string {
+  const cmd = String(args?.command ?? "").toLowerCase().trim();
+
+  if (tool === "bash" && cmd) {
+    if (/(npm|yarn|pnpm)\s+test|jest|vitest|mocha|pytest/.test(cmd)) return "testing";
+    if (/(npm|yarn|pnpm)\s+run|npx|cargo|go run|make\s/.test(cmd)) return "build";
+    if (/audit|security|snyk|owasp|bandit/.test(cmd)) return "security";
+    if (/eslint|prettier|black|ruff|lint|format/.test(cmd)) return "lint";
+    if (/git\s/.test(cmd)) return "git";
+    if (/(npm|yarn|pnpm)\s+install|pip install|cargo add/.test(cmd)) return "install";
+    if (/grep|rg |find |ls |cat |head |tail /.test(cmd)) return "search";
+  }
+
+  if (tool === "write") return "write";
+  if (tool === "edit" || tool === "multiedit") return "edit";
+  if (tool === "read") return "read";
+  if (tool === "search" || tool === "grep" || tool === "glob") return "search";
+
+  return "unknown";
+}
+
 export default async function strrayCodexPlugin(input: {
   client?: string;
   directory?: string;
@@ -752,6 +801,40 @@ export default async function strrayCodexPlugin(input: {
 
       const { tool, args, result } = input;
 
+      // Record routing outcome for analytics pipeline.
+      // This feeds the inference tuner with real tool usage data so it
+      // can refine keyword mappings and improve predictive analytics.
+      try {
+        const { routingOutcomeTracker } = await import(
+          "../delegation/analytics/outcome-tracker.js"
+        );
+        const mapping = TOOL_AGENT_MAP[tool];
+        const taskType = classifyTaskType(tool, args as Record<string, unknown> | undefined);
+        const rawDesc = args?.content
+          ? String(args.content).slice(0, 150)
+          : args?.filePath
+            ? String(args.filePath)
+            : (args as Record<string, unknown>)?.command
+              ? String((args as Record<string, unknown>).command).slice(0, 150)
+              : tool;
+        const description = `[${taskType}] ${rawDesc}`;
+        const outcomeFields: Record<string, unknown> = {
+          taskId: `opencode-${_openCodeToolCallCount}`,
+          taskDescription: description,
+          routedAgent: mapping?.agent ?? "direct",
+          routedSkill: mapping?.skill ?? tool,
+          confidence: mapping ? 0.8 : 0.5,
+          success: result?.error == null,
+          routingMethod: mapping ? "keyword" : "default",
+        };
+        if (taskType !== "unknown") outcomeFields.taskType = taskType;
+        routingOutcomeTracker.recordOutcome(
+          outcomeFields as Parameters<typeof routingOutcomeTracker.recordOutcome>[0]
+        );
+      } catch {
+        // Outcome tracker not available — skip silently
+      }
+
       // Debug: log full input
       logger.log(
         `📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`,
@@ -837,6 +920,34 @@ export default async function strrayCodexPlugin(input: {
           }
         } catch (error) {
           logger.error(`💥 Post-processor error`, error);
+        }
+      }
+
+      // Auto inference tuning: every INFERENCE_TUNE_INTERVAL tool calls,
+      // run a single tuning cycle to close the feedback loop.
+      _openCodeToolCallCount++;
+      if (
+        _openCodeToolCallCount - _lastTuneToolCallCount >= INFERENCE_TUNE_INTERVAL
+      ) {
+        _lastTuneToolCallCount = _openCodeToolCallCount;
+        try {
+          const { inferenceTuner } = await import(
+            "../services/inference-tuner.js"
+          );
+          inferenceTuner
+            .runTuningCycle()
+            .then(() => {
+              logger.log(
+                `🔄 Inference tuning cycle completed (call #${_openCodeToolCallCount})`,
+              );
+            })
+            .catch((err: unknown) => {
+              logger.log(
+                `⚠️ Inference tuning cycle skipped: ${err instanceof Error ? err.message : String(err)}`,
+              );
+            });
+        } catch {
+          // Tuner not available in this environment — skip silently
         }
       }
     },
