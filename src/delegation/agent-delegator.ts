@@ -20,6 +20,8 @@ import { strRayConfigLoader } from "../core/config-loader.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getKernel, KernelInferenceResult } from "../core/kernel-patterns.js";
 import { DEFAULT_AGENTS } from "../config/default-agents.js";
+import { routingOutcomeTracker } from "./analytics/outcome-tracker.js";
+import { predictiveAnalytics } from "../analytics/predictive-analytics.js";
 
 export interface AgentCapability {
   name: string;
@@ -368,6 +370,42 @@ export class AgentDelegator {
         agentCount: finalAgents.length,
       }
     );
+
+    // Feedback loop: if top agent confidence is low, consult historical outcomes
+    // and predictive analytics for a better routing suggestion.
+    const topAgent = finalAgents.reduce(
+      (best, a) => a.confidence > best.confidence ? a : best,
+      finalAgents[0]!
+    );
+    if (topAgent && topAgent.confidence < 0.85) {
+      try {
+        const prediction = predictiveAnalytics.predictSync(operation || "");
+        if (prediction && prediction.confidence > topAgent.confidence) {
+          frameworkLogger.log(
+            "agent-delegator",
+            "routing-refined-by-prediction",
+            "info",
+            {
+              originalAgent: topAgent.name,
+              originalConfidence: topAgent.confidence,
+              predictedAgent: prediction.agent,
+              predictedConfidence: prediction.confidence,
+              sampleSize: prediction.sampleSize,
+            }
+          );
+          // Promote predicted agent if not already in the list
+          if (!finalAgents.some(a => a.name === prediction.agent)) {
+            finalAgents.unshift({
+              name: prediction.agent,
+              confidence: prediction.confidence,
+              role: "predicted",
+            });
+          }
+        }
+      } catch {
+        // Prediction unavailable — continue with original agents
+      }
+    }
     
     return finalAgents;
   }

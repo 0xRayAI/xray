@@ -12,10 +12,13 @@
  */
 
 
+import * as fs from "fs";
+import * as path from "path";
 import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
 import { routingPerformanceAnalyzer } from "../analytics/routing-performance-analyzer.js";
 import { promptPatternAnalyzer } from "../analytics/prompt-pattern-analyzer.js";
+import { routingRefiner } from "../analytics/routing-refiner.js";
 import { getAdaptiveKernel } from "../core/adaptive-kernel.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
@@ -187,7 +190,7 @@ export class InferenceTuner {
       if (this.config.autoUpdateMappings) {
         const newMappings = this.suggestMappingsFromPatterns(patterns, outcomes);
         for (const mapping of newMappings.slice(0, this.config.maxMappingsToAdd)) {
-          const added = await this.addKeywordMapping(
+          const added = this.addKeywordMapping(
             mapping.keyword,
             mapping.agent,
             mapping.skill,
@@ -198,6 +201,33 @@ export class InferenceTuner {
           }
         }
         result.mappingsUpdated = result.mappingsAdded > 0;
+      }
+
+      // Apply routing refiner suggestions
+      try {
+        const refinerReport = routingRefiner.generateRefinementReport();
+        const configUpdate = refinerReport.configurationUpdate;
+        if (configUpdate.newMappings.length > 0) {
+          for (const suggestion of configUpdate.newMappings.slice(0, this.config.maxMappingsToAdd)) {
+            const added = this.addKeywordMapping(
+              suggestion.keyword,
+              suggestion.targetAgent,
+              suggestion.targetSkill,
+              suggestion.suggestedConfidence
+            );
+            if (added) {
+              result.mappingsAdded++;
+            }
+          }
+          result.mappingsUpdated = result.mappingsUpdated || result.mappingsAdded > 0;
+        }
+      } catch (refinerError) {
+        frameworkLogger.log(
+          "inference-tuner",
+          "refiner-error",
+          "warning",
+          { error: String(refinerError) }
+        );
       }
     } catch (error) {
       frameworkLogger.log(
@@ -252,13 +282,157 @@ export class InferenceTuner {
     return suggestions;
   }
 
-  private async addKeywordMapping(
-    _keyword: string,
-    _agent: string,
-    _skill: string,
-    _confidence: number
-  ): Promise<boolean> {
-    return false;
+  /**
+   * Resolve the path to the routing-mappings.json file.
+   * Checks multiple known locations and returns the first one found.
+   */
+  private resolveMappingsPath(): string | null {
+    const candidates = [
+      path.resolve(process.cwd(), "strray/routing-mappings.json"),
+      path.resolve(process.cwd(), ".opencode/strray/routing-mappings.json"),
+      path.resolve(process.cwd(), "routing-mappings.json"),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) return p;
+    }
+    return candidates[0] ?? null; // Default to primary location even if it doesn't exist yet
+  }
+
+  /**
+   * Load current routing mappings from disk.
+   */
+  private loadMappings(): Array<{
+    keywords: string[];
+    skill: string;
+    agent: string;
+    confidence: number;
+  }> {
+    const mappingsPath = this.resolveMappingsPath();
+    try {
+      if (mappingsPath && fs.existsSync(mappingsPath)) {
+        const data = fs.readFileSync(mappingsPath, "utf-8");
+        return JSON.parse(data);
+      }
+    } catch {
+      // Fall through to empty array
+    }
+    return [];
+  }
+
+  /**
+   * Save routing mappings to disk.
+   */
+  private saveMappings(mappings: Array<{
+    keywords: string[];
+    skill: string;
+    agent: string;
+    confidence: number;
+  }>): boolean {
+    const mappingsPath = this.resolveMappingsPath();
+    if (!mappingsPath) return false;
+
+    try {
+      const dir = path.dirname(mappingsPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(mappingsPath, JSON.stringify(mappings, null, 2));
+      return true;
+    } catch (error) {
+      frameworkLogger.log(
+        "inference-tuner",
+        "mappings-save-error",
+        "error",
+        { error: String(error), path: mappingsPath }
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Add a keyword mapping to the routing-mappings.json file.
+   *
+   * Checks for conflicts (keyword already mapped to a different agent)
+   * before adding. If the keyword already exists for the same agent,
+   * updates the confidence if the new value is higher.
+   */
+  private addKeywordMapping(
+    keyword: string,
+    agent: string,
+    skill: string,
+    confidence: number
+  ): boolean {
+    if (!keyword || keyword.length < 3) return false;
+    if (!agent || !skill) return false;
+    if (confidence < this.config.minConfidenceThreshold) return false;
+
+    const mappings = this.loadMappings();
+    const normalizedKeyword = keyword.toLowerCase();
+
+    // Check if this keyword is already mapped to a DIFFERENT agent (conflict)
+    for (const mapping of mappings) {
+      if (mapping.keywords.some(k => k === normalizedKeyword)) {
+        if (mapping.agent !== agent) {
+          // Conflict: keyword already belongs to another agent. Skip.
+          frameworkLogger.log(
+            "inference-tuner",
+            "mapping-conflict",
+            "debug",
+            { keyword: normalizedKeyword, existingAgent: mapping.agent, newAgent: agent }
+          );
+          return false;
+        }
+        // Same agent — boost confidence if higher
+        if (confidence > mapping.confidence) {
+          mapping.confidence = confidence;
+          const saved = this.saveMappings(mappings);
+          frameworkLogger.log(
+            "inference-tuner",
+            "mapping-confidence-updated",
+            "info",
+            { keyword: normalizedKeyword, agent, oldConfidence: mapping.confidence, newConfidence: confidence }
+          );
+          return saved;
+        }
+        return false; // Already exists with >= confidence
+      }
+    }
+
+    // Find existing mapping for this agent/skill combo to add keyword to
+    const existingMapping = mappings.find(m => m.agent === agent && m.skill === skill);
+    if (existingMapping) {
+      if (!existingMapping.keywords.includes(normalizedKeyword)) {
+        existingMapping.keywords.push(normalizedKeyword);
+        const saved = this.saveMappings(mappings);
+        frameworkLogger.log(
+          "inference-tuner",
+          "keyword-added-to-mapping",
+          "info",
+          { keyword: normalizedKeyword, agent, skill }
+        );
+        return saved;
+      }
+      return false;
+    }
+
+    // Create a new mapping entry
+    mappings.push({
+      keywords: [normalizedKeyword],
+      skill,
+      agent,
+      confidence,
+    });
+
+    const saved = this.saveMappings(mappings);
+    if (saved) {
+      frameworkLogger.log(
+        "inference-tuner",
+        "new-mapping-created",
+        "info",
+        { keyword: normalizedKeyword, agent, skill, confidence }
+      );
+    }
+    return saved;
   }
 
   /**

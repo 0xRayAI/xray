@@ -33,8 +33,7 @@
   "types": "./dist/plugin/strray-codex-injection.d.ts",
   "bin": {
     "strray-ai": "dist/cli/index.js",
-    "strray-integration": "dist/scripts/integration.js",
-    "strray-analytics": "dist/scripts/analytics/daily-routing-analysis.js"
+    "strray-integration": "dist/scripts/integration.js"
   },
   "opencode": {
     "plugin": "./dist/plugin/strray-codex-injection.js",
@@ -66,9 +65,6 @@
     "test:infrastructure": "npm test -- src/__tests__/infrastructure/",
     "test:root": "npm test -- src/__tests__/integration/server.test.ts src/__tests__/framework-enforcement-integration.test.ts",
     "test:pipelines": "node src/__tests__/pipeline/run-all-pipelines.mjs",
-    "analytics:daily": "node dist/scripts/analytics/daily-routing-analysis.js",
-    "analytics:daily:preview": "node dist/scripts/analytics/daily-routing-analysis.js --preview",
-    "analytics:daily:apply": "node dist/scripts/analytics/daily-routing-analysis.js --apply",
     "test:full-suite": "npm run typecheck && npm run test:integration-all && npm run test:performance-all && npm run test:agents-all && npm run test:infrastructure && npm run test:root",
     "postinstall": "node scripts/node/postinstall.cjs",
     "setup-dev": "node scripts/node/setup-dev.cjs",
