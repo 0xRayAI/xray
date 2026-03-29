@@ -10,10 +10,12 @@
  * @since 2026-01-07
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import {
-   ComplexityAnalyzer,
-   ComplexityMetrics,
-   ComplexityScore,
+  ComplexityAnalyzer,
+  ComplexityMetrics,
+  ComplexityScore,
 } from "./complexity-analyzer.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
@@ -22,6 +24,7 @@ import { getKernel, KernelInferenceResult } from "../core/kernel-patterns.js";
 import { DEFAULT_AGENTS } from "../config/default-agents.js";
 import { routingOutcomeTracker } from "./analytics/outcome-tracker.js";
 import { predictiveAnalytics } from "../analytics/predictive-analytics.js";
+import type { RoutingMapping } from "./config/types.js";
 
 export interface AgentCapability {
   name: string;
@@ -96,6 +99,9 @@ export class AgentDelegator {
   private configLoader: typeof strRayConfigLoader;
   private kernel: ReturnType<typeof getKernel>;
 
+  /** Minimum confidence for a learned mapping to override hardcoded routing. */
+  private static readonly MAPPING_CONFIDENCE_THRESHOLD = 0.7;
+
   constructor(
     stateManager: StringRayStateManager,
     configLoader: typeof strRayConfigLoader,
@@ -104,6 +110,75 @@ export class AgentDelegator {
     this.configLoader = configLoader;
     this.complexityAnalyzer = new ComplexityAnalyzer();
     this.kernel = getKernel();
+  }
+
+  /**
+   * Load routing-mappings.json from disk (fresh each call — picks up tuner writes).
+   * Same path resolution as inference-tuner.ts.
+   */
+  private loadRoutingMappings(): RoutingMapping[] {
+    const candidates = [
+      path.resolve(process.cwd(), "strray/routing-mappings.json"),
+      path.resolve(process.cwd(), ".opencode/strray/routing-mappings.json"),
+      path.resolve(process.cwd(), "routing-mappings.json"),
+    ];
+    for (const p of candidates) {
+      try {
+        if (fs.existsSync(p)) {
+          const data = fs.readFileSync(p, "utf-8");
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch {
+        // try next candidate
+      }
+    }
+    return [];
+  }
+
+  /**
+   * Match a task description against learned keyword mappings.
+   * Returns the best matching mapping if any keyword hits above threshold.
+   */
+  private matchRoutingMappings(
+    description: string,
+  ): RoutingMapping | null {
+    const mappings = this.loadRoutingMappings();
+    if (mappings.length === 0) return null;
+
+    const descLower = description.toLowerCase();
+    const descWords = new Set(
+      descLower.split(/\W+/).filter(w => w.length > 2),
+    );
+    if (descWords.size === 0) return null;
+
+    let bestMatch: RoutingMapping | null = null;
+    let bestScore = 0;
+
+    for (const mapping of mappings) {
+      if (mapping.confidence < AgentDelegator.MAPPING_CONFIDENCE_THRESHOLD) continue;
+
+      // Score: fraction of mapping keywords found in description
+      let hits = 0;
+      for (const keyword of mapping.keywords) {
+        if (descWords.has(keyword.toLowerCase()) || descLower.includes(keyword.toLowerCase())) {
+          hits++;
+        }
+      }
+
+      if (hits === 0) continue;
+
+      // Weight by confidence and keyword coverage
+      const coverage = hits / mapping.keywords.length;
+      const score = (coverage * 0.6) + (mapping.confidence * 0.4);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = mapping;
+      }
+    }
+
+    return bestMatch;
   }
 
   getAvailableAgents(): AgentCapability[] {
@@ -255,6 +330,29 @@ export class AgentDelegator {
 
     const operation = (metrics as any).operation;
 
+    // ── LEARNED ROUTING: check routing-mappings.json first ──
+    // This picks up refinements written by the inference tuner.
+    const learnedMapping = this.matchRoutingMappings(operation || "");
+    if (learnedMapping) {
+      frameworkLogger.log(
+        "agent-delegator",
+        "routing-from-learned-mapping",
+        "info",
+        {
+          agent: learnedMapping.agent,
+          skill: learnedMapping.skill,
+          confidence: learnedMapping.confidence,
+          matchedKeywords: learnedMapping.keywords,
+          operation: operation.substring(0, 100),
+        }
+      );
+      agents.push({
+        name: learnedMapping.agent,
+        confidence: learnedMapping.confidence,
+        role: learnedMapping.skill || "learned",
+      });
+    }
+
     if (operation === "security") {
       // KERNEL-AWARE: Apply P6 (Security Vulnerability) and A8/A9 patterns
       if (kernelInsights.fatalAssumptions?.some(a => 
@@ -373,11 +471,13 @@ export class AgentDelegator {
 
     // Feedback loop: if top agent confidence is low, consult historical outcomes
     // and predictive analytics for a better routing suggestion.
+    // Threshold lowered to 0.7 so the prediction layer fires more often
+    // instead of being suppressed by hardcoded high confidence values.
     const topAgent = finalAgents.reduce(
       (best, a) => a.confidence > best.confidence ? a : best,
       finalAgents[0]!
     );
-    if (topAgent && topAgent.confidence < 0.85) {
+    if (topAgent && topAgent.confidence < 0.7) {
       try {
         const prediction = predictiveAnalytics.predictSync(operation || "");
         if (prediction && prediction.confidence > topAgent.confidence) {

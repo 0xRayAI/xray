@@ -520,6 +520,32 @@ const TOOL_AGENT_MAP: Record<string, { agent: string; skill: string }> = {
   ls:        { agent: "researcher",    skill: "list" },
 };
 
+/**
+ * Classify a tool call into a meaningful task type for analytics.
+ * Mirrors _classify_task_type in the Hermes plugin so both plugins
+ * produce comparable outcome data for the inference tuner.
+ */
+function classifyTaskType(tool: string, args?: Record<string, unknown>): string {
+  const cmd = String(args?.command ?? "").toLowerCase().trim();
+
+  if (tool === "bash" && cmd) {
+    if (/(npm|yarn|pnpm)\s+test|jest|vitest|mocha|pytest/.test(cmd)) return "testing";
+    if (/(npm|yarn|pnpm)\s+run|npx|cargo|go run|make\s/.test(cmd)) return "build";
+    if (/audit|security|snyk|owasp|bandit/.test(cmd)) return "security";
+    if (/eslint|prettier|black|ruff|lint|format/.test(cmd)) return "lint";
+    if (/git\s/.test(cmd)) return "git";
+    if (/(npm|yarn|pnpm)\s+install|pip install|cargo add/.test(cmd)) return "install";
+    if (/grep|rg |find |ls |cat |head |tail /.test(cmd)) return "search";
+  }
+
+  if (tool === "write") return "write";
+  if (tool === "edit" || tool === "multiedit") return "edit";
+  if (tool === "read") return "read";
+  if (tool === "search" || tool === "grep" || tool === "glob") return "search";
+
+  return "unknown";
+}
+
 export default async function strrayCodexPlugin(input: {
   client?: string;
   directory?: string;
@@ -783,12 +809,16 @@ export default async function strrayCodexPlugin(input: {
           "../delegation/analytics/outcome-tracker.js"
         );
         const mapping = TOOL_AGENT_MAP[tool];
-        const description = args?.content
-          ? String(args.content).slice(0, 200)
+        const taskType = classifyTaskType(tool, args as Record<string, unknown> | undefined);
+        const rawDesc = args?.content
+          ? String(args.content).slice(0, 150)
           : args?.filePath
-            ? `file operation: ${String(args.filePath)}`
-            : `tool call: ${tool}`;
-        routingOutcomeTracker.recordOutcome({
+            ? String(args.filePath)
+            : (args as Record<string, unknown>)?.command
+              ? String((args as Record<string, unknown>).command).slice(0, 150)
+              : tool;
+        const description = `[${taskType}] ${rawDesc}`;
+        const outcomeFields: Record<string, unknown> = {
           taskId: `opencode-${_openCodeToolCallCount}`,
           taskDescription: description,
           routedAgent: mapping?.agent ?? "direct",
@@ -796,7 +826,11 @@ export default async function strrayCodexPlugin(input: {
           confidence: mapping ? 0.8 : 0.5,
           success: result?.error == null,
           routingMethod: mapping ? "keyword" : "default",
-        });
+        };
+        if (taskType !== "unknown") outcomeFields.taskType = taskType;
+        routingOutcomeTracker.recordOutcome(
+          outcomeFields as Parameters<typeof routingOutcomeTracker.recordOutcome>[0]
+        );
       } catch {
         // Outcome tracker not available — skip silently
       }
