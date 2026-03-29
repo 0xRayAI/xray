@@ -100,6 +100,9 @@ _TERMINAL_NUDGE_PATTERNS = {
 
 # ── Session stats ─────────────────────────────────────────────
 
+_INFERENCE_TUNE_INTERVAL = 100
+_last_tune_tool_call_count = 0
+
 _session_stats = {
     "started_at": None,
     "session_id": None,
@@ -365,6 +368,22 @@ def _on_post_tool_call(tool_name: str, args: dict, result, task_id: str, **kwarg
             _log_to_file("activity.log",
                 f"[bridge] ERROR in post-process: {bridge_result.get('error', 'unknown')}")
 
+    # Auto inference tuning: every _INFERENCE_TUNE_INTERVAL tool calls,
+    # shell out to the inference tuner to close the feedback loop.
+    global _last_tune_tool_call_count
+    calls = _session_stats["total_tool_calls"]
+    if calls - _last_tune_tool_call_count >= _INFERENCE_TUNE_INTERVAL:
+        _last_tune_tool_call_count = calls
+        logger.info(
+            "[strray] Triggering inference tuning cycle (tool call #%d)", calls
+        )
+        _log_to_file("activity.log",
+            f"[inference-tune] auto-cycle at tool call #{calls}")
+        try:
+            _run_inference_tune()
+        except Exception as e:
+            logger.warning("[strray] Inference tuning failed: %s", e)
+
 
 # ── Hook: session_start ───────────────────────────────────────
 
@@ -378,6 +397,8 @@ def _on_session_start(session_id: str, platform: str, **kwargs):
                 "bridge_calls", "bridge_errors",
                 "subagent_dispatches", "subagent_validations", "subagent_blocks"):
         _session_stats[key] = 0
+    global _last_tune_tool_call_count
+    _last_tune_tool_call_count = 0
 
     _ensure_log_dir()
     _log_to_file("activity.log",
@@ -433,6 +454,42 @@ def _strray_command(args: str) -> str:
         f"  Project: {bridge_result.get('projectRoot', 'unknown')}\n"
         f"  Bridge calls: {_session_stats['bridge_calls']} (errors: {_session_stats['bridge_errors']})"
     )
+
+
+# ── Inference tuning (auto-calibration) ────────────────────────
+
+def _run_inference_tune():
+    """Shell out to strray-ai inference:tuner --run-once.
+
+    Runs in a background thread so it doesn't block the tool call pipeline.
+    The tuner reads routing outcomes, runs the analytics pipeline, and
+    writes back refined keyword mappings to routing-mappings.json.
+    """
+    import threading
+
+    def _tune():
+        try:
+            result = subprocess.run(
+                ["npx", "strray-ai", "inference:tuner", "--run-once"],
+                capture_output=True, text=True, timeout=30,
+                cwd=os.getcwd(),
+            )
+            if result.returncode == 0:
+                logger.info("[strray] Inference tuning cycle completed")
+                _log_to_file("activity.log",
+                    "[inference-tune] cycle completed successfully")
+            else:
+                _log_to_file("activity.log",
+                    f"[inference-tune] cycle failed (rc={result.returncode}): "
+                    f"{result.stderr.strip()[:200]}")
+        except subprocess.TimeoutExpired:
+            _log_to_file("activity.log",
+                "[inference-tune] cycle timed out after 30s")
+        except Exception as e:
+            _log_to_file("activity.log",
+                f"[inference-tune] cycle error: {e}")
+
+    threading.Thread(target=_tune, daemon=True).start()
 
 
 # ── Registration ──────────────────────────────────────────────

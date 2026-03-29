@@ -497,6 +497,12 @@ function formatCodexContext(contexts: CodexContextEntry[]): string {
  * This plugin hooks into experimental.chat.system.transform event
  * to inject codex terms into system prompt before it's sent to LLM.
  */
+
+/** Inference tuning: run every N tool calls */
+const INFERENCE_TUNE_INTERVAL = 100;
+let _openCodeToolCallCount = 0;
+let _lastTuneToolCallCount = 0;
+
 export default async function strrayCodexPlugin(input: {
   client?: string;
   directory?: string;
@@ -837,6 +843,34 @@ export default async function strrayCodexPlugin(input: {
           }
         } catch (error) {
           logger.error(`💥 Post-processor error`, error);
+        }
+      }
+
+      // Auto inference tuning: every INFERENCE_TUNE_INTERVAL tool calls,
+      // run a single tuning cycle to close the feedback loop.
+      _openCodeToolCallCount++;
+      if (
+        _openCodeToolCallCount - _lastTuneToolCallCount >= INFERENCE_TUNE_INTERVAL
+      ) {
+        _lastTuneToolCallCount = _openCodeToolCallCount;
+        try {
+          const { inferenceTuner } = await import(
+            "../services/inference-tuner.js"
+          );
+          inferenceTuner
+            .runTuningCycle()
+            .then(() => {
+              logger.log(
+                `🔄 Inference tuning cycle completed (call #${_openCodeToolCallCount})`,
+              );
+            })
+            .catch((err: unknown) => {
+              logger.log(
+                `⚠️ Inference tuning cycle skipped: ${err instanceof Error ? err.message : String(err)}`,
+              );
+            });
+        } catch {
+          // Tuner not available in this environment — skip silently
         }
       }
     },
