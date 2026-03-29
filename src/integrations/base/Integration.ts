@@ -317,7 +317,7 @@ export abstract class BaseIntegration
   protected recordError(error?: Error): void {
     this.stats.errors++;
     if (this.config.debug && error) {
-      this.log("error", error.message).catch(console.error);
+      this.log("error", error.message).catch((e) => frameworkLogger.log("integration", "log-error-fallback", "error", { error: e }));
     }
   }
 

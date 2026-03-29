@@ -117,12 +117,12 @@ export class SuccessHandler {
     context: PostProcessorContext,
     result: PostProcessorResult,
   ): Promise<void> {
-    console.log("🔍 Confirming deployment success...");
+    frameworkLogger.log("SuccessHandler", "confirm-success", "info", { message: "🔍 Confirming deployment success..." });
 
     // Simulate confirmation checks
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    console.log("✅ Deployment success confirmed");
+    frameworkLogger.log("SuccessHandler", "confirm-success", "info", { message: "✅ Deployment success confirmed" });
   }
 
   /**
@@ -133,19 +133,19 @@ export class SuccessHandler {
     result: PostProcessorResult,
   ): Promise<void> {
     const notification = `Deployment successful: ${context.commitSha} by ${context.author} in ${context.repository}`;
-    console.log("📢 Success Notification:", notification);
+    frameworkLogger.log("SuccessHandler", "send-notifications", "info", { message: "📢 Success Notification:", notification });
   }
 
   /**
    * Perform post-success cleanup
    */
   private async performCleanup(context: PostProcessorContext): Promise<void> {
-    console.log("🧹 Performing post-success cleanup...");
+    frameworkLogger.log("SuccessHandler", "perform-cleanup", "info", { message: "🧹 Performing post-success cleanup..." });
 
     // Simulate cleanup operations
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    console.log("✅ Cleanup completed");
+    frameworkLogger.log("SuccessHandler", "perform-cleanup", "info", { message: "✅ Cleanup completed" });
   }
 
   /**
@@ -176,12 +176,12 @@ export class SuccessHandler {
    * Log success metrics
    */
   private async logMetrics(metrics: SuccessMetrics): Promise<void> {
-    console.log("📊 Success Metrics:");
-    console.log(`   Total Duration: ${metrics.totalDuration}ms`);
-    console.log(`   Attempts: ${metrics.attempts}`);
-    console.log(`   Fixes Applied: ${metrics.fixesApplied}`);
-    console.log(`   Monitoring Checks: ${metrics.monitoringChecks}`);
-    console.log(`   Redeployments: ${metrics.redeployments}`);
+    frameworkLogger.log("SuccessHandler", "log-metrics", "info", { message: "📊 Success Metrics:" });
+    frameworkLogger.log("SuccessHandler", "log-metrics", "info", { message: `   Total Duration: ${metrics.totalDuration}ms` });
+    frameworkLogger.log("SuccessHandler", "log-metrics", "info", { message: `   Attempts: ${metrics.attempts}` });
+    frameworkLogger.log("SuccessHandler", "log-metrics", "info", { message: `   Fixes Applied: ${metrics.fixesApplied}` });
+    frameworkLogger.log("SuccessHandler", "log-metrics", "info", { message: `   Monitoring Checks: ${metrics.monitoringChecks}` });
+    frameworkLogger.log("SuccessHandler", "log-metrics", "info", { message: `   Redeployments: ${metrics.redeployments}` });
   }
 
   /**

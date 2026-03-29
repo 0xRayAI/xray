@@ -238,10 +238,7 @@ export class StringRayIntegration extends EventEmitter {
         },
       );
     } catch (error) {
-      console.error(
-        "❌ Failed to initialize StringRay Framework integration:",
-        error,
-      );
+      frameworkLogger.log("StrRayIntegration", "initialize", "error", { error, message: "❌ Failed to initialize StringRay Framework integration:" });
       throw error;
     }
   }
@@ -288,10 +285,7 @@ export class StringRayIntegration extends EventEmitter {
         },
       );
     } catch (error) {
-      console.error(
-        "❌ Failed to destroy StringRay Framework integration:",
-        error,
-      );
+      frameworkLogger.log("StrRayIntegration", "destroy", "error", { error, message: "❌ Failed to destroy StringRay Framework integration:" });
       throw error;
     }
   }
@@ -633,7 +627,7 @@ export class StringRayIntegration extends EventEmitter {
   }
 
   private handleErrorCaught(event: IntegrationEvent): void {
-    console.error(`❌ Framework error caught:`, event.data);
+    frameworkLogger.log("StrRayIntegration", "error-caught", "error", { error: event.data, message: "❌ Framework error caught:" });
   }
 
   private async handlePerformanceMeasured(
@@ -697,7 +691,7 @@ export const createStringRayIntegration = (
 // Export default integration for auto-detection
 export const strRayIntegration = new StringRayIntegration({
   framework: StringRayIntegration.detectFramework(),
-  version: "1.15.15",
+  version: "1.15.16",
   features: {
     agents: true,
     codex: true,

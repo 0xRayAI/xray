@@ -8,6 +8,8 @@
  * @since 2026-01-07
  */
 
+import { frameworkLogger } from "../core/framework-logger.js";
+
 export interface SecurityHeadersConfig {
   enableCSP: boolean;
   enableHSTS: boolean;
@@ -46,7 +48,7 @@ export class SecurityHeadersMiddleware {
    */
   applySecurityHeaders(response: any): void {
     if (!response || typeof response.setHeader !== "function") {
-      console.warn("SecurityHeadersMiddleware: Invalid response object");
+      frameworkLogger.log("security-headers", "invalid-response-object", "warning", { warning: "SecurityHeadersMiddleware: Invalid response object" });
       return;
     }
 

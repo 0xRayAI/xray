@@ -41,10 +41,10 @@ class HookMetricsCollector {
         this.metrics = JSON.parse(data);
       }
     } catch (error) {
-      console.warn(
-        "Could not load hook metrics:",
-        error instanceof Error ? error.message : String(error),
-      );
+      frameworkLogger.log("hook-metrics-collector", "load-metrics-failed", "warning", {
+        message: "Could not load hook metrics",
+        error: error instanceof Error ? error.message : String(error),
+      });
       this.metrics = [];
     }
   }
@@ -61,10 +61,10 @@ class HookMetricsCollector {
 
       fs.writeFileSync(this.metricsFile, JSON.stringify(this.metrics, null, 2));
     } catch (error) {
-      console.warn(
-        "Could not save hook metrics:",
-        error instanceof Error ? error.message : String(error),
-      );
+      frameworkLogger.log("hook-metrics-collector", "save-metrics-failed", "warning", {
+        message: "Could not save hook metrics",
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

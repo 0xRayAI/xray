@@ -301,7 +301,7 @@ export class SessionCoordinator {
         success: true,
       });
     } catch (error) {
-      console.warn(`⚠️ Failed to record context sharing interaction:`, error);
+      frameworkLogger.log("SessionCoordinator", "record-interaction", "warning", { error, message: "⚠️ Failed to record context sharing interaction:" });
       // Continue operation despite recording failure
     }
   }

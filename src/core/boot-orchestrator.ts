@@ -60,7 +60,7 @@ function setupGracefulShutdown(): void {
         process.env.STRRAY_CLI_MODE !== "true" &&
         process.env.OPENCODE_CLI !== "true"
       ) {
-        console.error("❌ Error during graceful shutdown:", error);
+        frameworkLogger.log("boot-orchestrator", "shutdown-error", "error", { error, message: "Error during graceful shutdown" });
       }
       process.exit(1);
     }
@@ -85,7 +85,7 @@ function setupGracefulShutdown(): void {
       process.env.STRRAY_CLI_MODE !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
-      console.error("❌ Uncaught Exception:", error);
+      frameworkLogger.log("boot-orchestrator", "uncaught-exception", "error", { error, message: "Uncaught Exception" });
     }
     memoryMonitor.stop();
     process.exit(1);
@@ -97,7 +97,7 @@ function setupGracefulShutdown(): void {
       process.env.STRRAY_CLI_MODE !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
-      console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+      frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
     }
     memoryMonitor.stop();
     process.exit(1);
@@ -176,7 +176,7 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      console.error("❌ Failed to initialize delegation system:", error);
+      frameworkLogger.log("boot-orchestrator", "delegation-init-failed", "error", { error, message: "Failed to initialize delegation system" });
       return false;
     }
   }
@@ -191,17 +191,17 @@ export class BootOrchestrator {
       try {
         orchestratorModule = await import("../core/orchestrator");
       } catch (importError) {
-        console.error(
-          "❌ Failed to load orchestrator:",
-          importError,
-        );
+        frameworkLogger.log("boot-orchestrator", "orchestrator-load-failed", "error", {
+          error: importError,
+          message: "Failed to load orchestrator",
+        });
         return false;
       }
 
       const orchestratorInstance = orchestratorModule.strRayOrchestrator;
 
       if (!orchestratorInstance) {
-        console.error("❌ Orchestrator instance not found in module");
+        frameworkLogger.log("boot-orchestrator", "orchestrator-not-found", "error", { message: "Orchestrator instance not found in module" });
         return false;
       }
 
@@ -210,7 +210,7 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      console.error("❌ Failed to load orchestrator:", error);
+      frameworkLogger.log("boot-orchestrator", "orchestrator-load-failed-outer", "error", { error, message: "Failed to load orchestrator" });
       return false;
     }
   }
@@ -266,7 +266,7 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      console.error("❌ Failed to initialize session management:", error);
+      frameworkLogger.log("boot-orchestrator", "session-init-failed", "error", { error, message: "Failed to initialize session management" });
       return false;
     }
   }
@@ -359,7 +359,7 @@ export class BootOrchestrator {
         "error",
         { jobId, error },
       );
-      console.error("❌ Failed to activate processors:", error);
+      frameworkLogger.log("boot-orchestrator", "activate-processors-failed", "error", { error, message: "Failed to activate processors" });
       return false;
     }
   }
@@ -400,13 +400,14 @@ export class BootOrchestrator {
           this.stateManager.set(`agent:${agentName}`, agentInstance);
           loadedAgents.push(agentName);
         } else {
-          console.warn(`⚠️ Agent class not found in module: ${agentName}`);
+          frameworkLogger.log("boot-orchestrator", "agent-class-not-found", "warning", { agentName, message: `Agent class not found in module: ${agentName}` });
         }
       } catch (error) {
-        console.warn(
-          `⚠️ Failed to load agent ${agentName}:`,
-          error instanceof Error ? error.message : String(error),
-        );
+        frameworkLogger.log("boot-orchestrator", "agent-load-failed", "warning", {
+          agentName,
+          error: error instanceof Error ? error.message : String(error),
+          message: `Failed to load agent ${agentName}`,
+        });
       }
     }
 
@@ -439,7 +440,7 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      console.error("❌ Failed to enable enforcement:", error);
+      frameworkLogger.log("boot-orchestrator", "enforcement-failed", "error", { error, message: "Failed to enable enforcement" });
       return false;
     }
   }
@@ -458,7 +459,7 @@ export class BootOrchestrator {
         try {
           ({ CodexInjector } = await import("./codex-injector"));
         } catch (importError) {
-          console.error("❌ Failed to load codex injector:", importError);
+          frameworkLogger.log("boot-orchestrator", "codex-injector-load-failed", "error", { error: importError, message: "Failed to load codex injector" });
           return false;
         }
         codexInjector = new CodexInjector();
@@ -472,7 +473,7 @@ export class BootOrchestrator {
 
       return true;
     } catch (error) {
-      console.error("❌ Failed to activate codex compliance:", error);
+      frameworkLogger.log("boot-orchestrator", "codex-compliance-failed", "error", { error, message: "Failed to activate codex compliance" });
       return false;
     }
   }
@@ -486,7 +487,7 @@ export class BootOrchestrator {
       );
       this.stateManager.set("security:initialized", true);
     } catch (error) {
-      console.error("❌ Failed to initialize security components:", error);
+      frameworkLogger.log("boot-orchestrator", "security-init-failed", "error", { error, message: "Failed to initialize security components" });
       throw error;
     }
   }
@@ -501,7 +502,7 @@ export class BootOrchestrator {
         this.stateManager.set("security:headers_active", true);
       }
     } catch (error) {
-      console.error("❌ Failed to finalize security integration:", error);
+      frameworkLogger.log("boot-orchestrator", "security-finalize-failed", "error", { error, message: "Failed to finalize security integration" });
     }
   }
 
@@ -516,14 +517,15 @@ export class BootOrchestrator {
       const result = await auditor.auditProject(process.cwd());
 
       if (result.score < 80) {
-        console.warn(
-          `⚠️ Initial security score: ${result.score}/100 (target: 80+)`,
-        );
+        frameworkLogger.log("boot-orchestrator", "low-security-score", "warning", {
+          score: result.score,
+          message: `Initial security score: ${result.score}/100 (target: 80+)`,
+        });
       }
 
       return result;
     } catch (error) {
-      console.error("❌ Failed to run initial security audit:", error);
+      frameworkLogger.log("boot-orchestrator", "security-audit-failed", "error", { error, message: "Failed to run initial security audit" });
       return { score: 0, issues: [] };
     }
   }
@@ -539,10 +541,10 @@ export class BootOrchestrator {
       );
 
       if (failedProcessors.length > 0) {
-        console.error(
-          `❌ ${failedProcessors.length} processors failed health check:`,
-          failedProcessors.map((p) => p.name),
-        );
+        frameworkLogger.log("boot-orchestrator", "processor-health-failed", "error", {
+          failedProcessors: failedProcessors.map((p) => p.name),
+          message: `${failedProcessors.length} processors failed health check`,
+        });
         return false;
       }
 
@@ -550,15 +552,15 @@ export class BootOrchestrator {
         (h) => h.status === "degraded",
       );
       if (degradedProcessors.length > 0) {
-        console.warn(
-          `⚠️ ${degradedProcessors.length} processors are degraded:`,
-          degradedProcessors.map((p) => p.name),
-        );
+        frameworkLogger.log("boot-orchestrator", "processors-degraded", "warning", {
+          degradedProcessors: degradedProcessors.map((p) => p.name),
+          message: `${degradedProcessors.length} processors are degraded`,
+        });
       }
 
       return true;
     } catch (error) {
-      console.error("❌ Processor health validation failed:", error);
+      frameworkLogger.log("boot-orchestrator", "processor-health-validation-failed", "error", { error, message: "Processor health validation failed" });
       return false;
     }
   }
@@ -937,7 +939,7 @@ export class BootOrchestrator {
     try {
       // Load StringRay configuration directly (no Python dependency)
       const stringRayConfig = {
-        version: "1.15.15",
+        version: "1.15.16",
         codex_enabled: true,
         codex_version: "v1.7.5",
         codex_terms: [
@@ -1026,7 +1028,7 @@ export class BootOrchestrator {
         { jobId },
       );
     } catch (error) {
-      console.warn("⚠️ Failed to load StringRay configuration:", error);
+      frameworkLogger.log("boot-orchestrator", "config-load-warning", "warning", { error, message: "Failed to load StringRay configuration" });
       // Continue with defaults if loading fails
     }
   }

@@ -20,6 +20,7 @@ import { performance } from "perf_hooks";
 import * as fs from "fs";
 import * as path from "path";
 import { EventEmitter } from "events";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Import existing regression testing components
 import {
@@ -720,7 +721,7 @@ export class AdvancedRegressionTestingSystem extends EventEmitter {
         this.historicalData = new Map(Object.entries(data.historical || {}));
       }
     } catch (error) {
-      console.warn("⚠️ Could not load advanced baselines:", error);
+      frameworkLogger.log("advanced-regression-testing", "load-baselines-failed", "warning", { error, message: "⚠️ Could not load advanced baselines" });
     }
   }
 
@@ -736,7 +737,7 @@ export class AdvancedRegressionTestingSystem extends EventEmitter {
       };
       fs.writeFileSync(this.baselineFile, JSON.stringify(data, null, 2));
     } catch (error) {
-      console.error("Failed to save advanced baselines:", error);
+      frameworkLogger.log("advanced-regression-testing", "save-baselines-failed", "error", { error, message: "Failed to save advanced baselines" });
     }
   }
 

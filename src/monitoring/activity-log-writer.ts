@@ -2,7 +2,7 @@
 // This module writes to the activity log with job ID correlation
 
 import { promises as fs } from "fs";
-import { getCurrentJobId } from "../core/framework-logger.js";
+import { getCurrentJobId, frameworkLogger } from "../core/framework-logger.js";
 
 export interface ActivityLogEntry {
   timestamp: string;
@@ -40,8 +40,8 @@ export async function writeActivityLog(entry: ActivityLogEntry): Promise<void> {
     // Append log entry
     await fs.appendFile(logFile, logLine + "\n", "utf8");
   } catch (error) {
-    console.error("Failed to write activity log:", error);
-    // Fallback to console if file write fails
-    console.log(`[ACTIVITY-LOG-ERROR] Failed to write: ${error}`);
+    frameworkLogger.log("activity-log-writer", "write-failed", "error", { error, message: "Failed to write activity log" });
+    // Fallback: also log via frameworkLogger since file write failed
+    frameworkLogger.log("activity-log-writer", "write-failed-fallback", "error", { message: `[ACTIVITY-LOG-ERROR] Failed to write: ${error}` });
   }
 }

@@ -22,7 +22,7 @@ class StrRayArchitectToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "architect-tools", version: "1.15.15",
+        name: "architect-tools", version: "1.15.16",
       },
       {
         capabilities: {

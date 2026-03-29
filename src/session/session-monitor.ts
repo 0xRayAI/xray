@@ -402,10 +402,10 @@ export class SessionMonitor {
         try {
           await this.performHealthCheck(sessionId);
         } catch (error) {
-          console.error(
-            `❌ Session Monitor: Health check failed for ${sessionId}:`,
+          frameworkLogger.log("session-monitor", "health-check-failed", "error", {
             error,
-          );
+            message: `Health check failed for ${sessionId}`,
+          });
         }
       }
     }, this.config.healthCheckIntervalMs);
@@ -421,10 +421,10 @@ export class SessionMonitor {
         try {
           this.collectMetrics(sessionId);
         } catch (error) {
-          console.error(
-            `❌ Session Monitor: Metrics collection failed for ${sessionId}:`,
+          frameworkLogger.log("session-monitor", "metrics-collection-failed", "error", {
             error,
-          );
+            message: `Metrics collection failed for ${sessionId}`,
+          });
         }
       }
     }, this.config.metricsCollectionIntervalMs);

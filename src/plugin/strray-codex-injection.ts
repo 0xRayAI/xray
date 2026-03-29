@@ -12,6 +12,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Dynamic imports for config-paths (works from both dist/plugin/ and .opencode/plugins/)
 let _resolveCodexPath: any;
@@ -34,7 +35,7 @@ async function loadConfigPaths() {
       // try next candidate
     }
   }
-  console.warn("⚠️ Failed to load config-paths module from any location");
+  frameworkLogger.log("strray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
 }
 
 /** Convenience wrapper — must be awaited before use */
@@ -66,7 +67,7 @@ async function importSystemPromptGenerator() {
         // try next candidate
       }
     }
-    console.warn("⚠️ Failed to load lean system prompt generator, using fallback");
+    frameworkLogger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
   }
 }
 

@@ -7,6 +7,7 @@
 
 import { performanceSystem } from "../performance/index.js";
 import { strRayOrchestrator } from "../core/orchestrator.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export class MetricsEndpoint {
   private metrics: Map<string, number> = new Map();
@@ -88,7 +89,7 @@ export class MetricsEndpoint {
       const uptime = process.uptime();
       this.metrics.set("stringray_uptime_seconds", uptime);
     } catch (error) {
-      console.error("Metrics collection error:", error);
+      frameworkLogger.log("metrics-endpoint", "collection-error", "error", { error, message: "Metrics collection error" });
       this.metrics.set("stringray_up", 0);
     }
   }

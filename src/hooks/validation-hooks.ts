@@ -194,9 +194,9 @@ export const useProcessorValidation = (): ProcessorValidationHooks => {
           await versionValidation.validateVersionConsistency(versionContext);
         if (!versionValid) {
           // Version inconsistencies found - log but don't block (warning only during development)
-          console.warn(
-            "⚠️ Version inconsistencies detected - consider running version manager",
-          );
+          frameworkLogger.log("validation-hooks", "version-inconsistency", "warning", {
+            message: "Version inconsistencies detected - consider running version manager",
+          });
         }
       }
 
@@ -222,7 +222,10 @@ export const useProcessorValidation = (): ProcessorValidationHooks => {
           try {
             await processor.execute(context);
           } catch (error) {
-            console.error(`Pre-processor ${name} failed:`, error);
+            frameworkLogger.log("validation-hooks", "pre-processor-failed", "error", {
+              error,
+              message: `Pre-processor ${name} failed`,
+            });
             return false;
           }
         }
@@ -236,7 +239,10 @@ export const useProcessorValidation = (): ProcessorValidationHooks => {
           try {
             await processor.execute(context);
           } catch (error) {
-            console.warn(`Post-processor ${name} failed:`, error);
+            frameworkLogger.log("validation-hooks", "post-processor-failed", "warning", {
+              error,
+              message: `Post-processor ${name} failed`,
+            });
           }
         }
       }

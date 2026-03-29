@@ -69,7 +69,7 @@ function readFileContent(filePath: string): string | null {
       return fs.readFileSync(filePath, "utf-8");
     }
   } catch (error) {
-    console.error(`StringRay Codex Hook Error:`, error);
+    frameworkLogger.log("codex-injector", "read-file-error", "error", { error, message: "StringRay Codex Hook Error" });
   }
   return null;
 }
@@ -120,7 +120,7 @@ async function loadCodexContext(
         codexContexts.push(entry);
       }
     } catch (error) {
-      console.error(`StringRay Codex Hook Error:`, error);
+      frameworkLogger.log("codex-injector", "load-codex-context-error", "error", { error, message: "StringRay Codex Hook Error" });
     }
   }
 
@@ -216,7 +216,7 @@ export function createStringRayCodexInjectorHook() {
             "error",
             { jobId, error },
           );
-          console.error(`❌ StringRay: Error in agent.start hook:`, error);
+          frameworkLogger.log("codex-injector", "agent-start-hook-error", "error", { error, jobId, message: "Error in agent.start hook" });
           throw error;
         }
       },
@@ -337,7 +337,7 @@ export function createStringRayCodexInjectorHook() {
 
             if (blockingViolations.length > 0) {
               const errorMsg = `🚫 BLOCKED: Codex violation detected\n${blockingViolations.map((v: any) => `• ${v.reason}`).join("\n")}`;
-              console.error(errorMsg);
+              frameworkLogger.log("codex-injector", "blocking-violation", "error", { message: errorMsg, jobId });
               frameworkLogger.log(
                 "codex-injector",
                 "blocking codex violation detected",
@@ -405,10 +405,12 @@ export function createStringRayCodexInjectorHook() {
               tool: input.tool,
             },
           );
-          console.error(
-            `❌ StringRay: Error in tool.execute.before hook:`,
+          frameworkLogger.log("codex-injector", "tool-execute-before-hook-error", "error", {
             error,
-          );
+            message: "Error in tool.execute.before hook",
+            jobId,
+            tool: input.tool,
+          });
           // For blocking violations, re-throw to prevent action
           if (
             error instanceof Error &&
@@ -524,10 +526,12 @@ export function createStringRayCodexInjectorHook() {
               tool: input.tool,
             },
           );
-          console.error(
-            `❌ StringRay: Error in tool.execute.after hook:`,
+          frameworkLogger.log("codex-injector", "tool-execute-after-hook-error", "error", {
             error,
-          );
+            message: "Error in tool.execute.after hook",
+            jobId,
+            tool: input.tool,
+          });
           // Return original output on error to not break the session
           return output;
         }

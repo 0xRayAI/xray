@@ -144,7 +144,7 @@ export class RedeployCoordinator {
         }
       }
     } catch (error) {
-      console.error(`❌ Redeployment ${deploymentId} failed:`, error);
+      frameworkLogger.log("RedeployCoordinator", "redeploy", "error", { error, message: `❌ Redeployment ${deploymentId} failed:` });
       return {
         success: false,
         deploymentId,
@@ -569,7 +569,7 @@ export class RedeployCoordinator {
         { message: "✅ Deployment rolled back successfully" },
       );
     } catch (error) {
-      console.error("❌ Rollback failed:", error);
+      frameworkLogger.log("RedeployCoordinator", "rollback", "error", { error, message: "❌ Rollback failed:" });
       throw new Error(`Rollback failed: ${error}`);
     }
   }

@@ -9,6 +9,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface TestGenerationMetrics {
   totalFilesProcessed: number;
@@ -192,5 +193,7 @@ if (
   process.argv[1] &&
   process.argv[1].includes("test-auto-generation-monitor")
 ) {
-  console.log(testAutoGenerationMonitor.generateReport());
+  frameworkLogger.log("test-auto-generation-monitor", "cli-report", "info", {
+    message: testAutoGenerationMonitor.generateReport(),
+  });
 }

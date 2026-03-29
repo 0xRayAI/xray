@@ -8,6 +8,7 @@
 
 import { fileURLToPath } from "url";
 import { dirname, join, resolve } from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export class ImportResolver {
   private static instance: ImportResolver;
@@ -148,9 +149,7 @@ export class ImportResolver {
     try {
       return await import(primaryPath);
     } catch (error) {
-      console.warn(
-        `⚠️ Failed to import ${moduleName} from primary path: ${primaryPath}`,
-      );
+      frameworkLogger.log("ImportResolver", "resolve-import", "warning", { message: `⚠️ Failed to import ${moduleName} from primary path: ${primaryPath}` });
 
       // Try alternative paths based on environment
       const altPaths = this.generateAlternativePaths(moduleName, subPath);

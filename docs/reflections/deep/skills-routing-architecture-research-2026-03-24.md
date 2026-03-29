@@ -235,7 +235,7 @@ class StrRay<SkillName>Server {
 
   constructor() {
     this.server = new Server(
-      { name: "<skill-name>", version: "1.15.15" },
+      { name: "<skill-name>", version: "1.15.16" },
       { capabilities: { tools: {} } }
     );
     this.setupToolHandlers();

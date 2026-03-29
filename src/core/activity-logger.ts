@@ -18,6 +18,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "./framework-logger.js";
 
 // Activity types
 export type ActivityCategory = 
@@ -187,7 +188,7 @@ export function logActivity(
 
   // Console output for debug mode
   if (process.env.STRRAY_ACTIVITY_CONSOLE === "true") {
-    console.log(`[${record.timestamp}] [${record.category}] ${level.toUpperCase()}: ${message}`, details || "");
+    frameworkLogger.log("activity-logger", "console-output", "info", { message: `[${record.timestamp}] [${record.category}] ${level.toUpperCase()}: ${message}`, details: details || "" });
   }
 }
 
@@ -204,7 +205,7 @@ function writeToLogFile(record: ActivityRecord): void {
     
     fs.appendFileSync(activityLogPath, logLine);
   } catch (error) {
-    console.error("Failed to write to activity log:", error);
+    frameworkLogger.log("activity-logger", "write-log-failed", "error", { error, message: "Failed to write to activity log" });
   }
 }
 
@@ -241,7 +242,7 @@ function writeToReportFile(record: ActivityRecord): void {
     
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
   } catch (error) {
-    console.error("Failed to write to activity report:", error);
+    frameworkLogger.log("activity-logger", "write-report-failed", "error", { error, message: "Failed to write to activity report" });
   }
 }
 

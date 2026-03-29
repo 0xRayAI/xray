@@ -29,10 +29,10 @@ export async function initializeStringRay(): Promise<void> {
       { jobId, error },
     );
     // Don't throw - allow OpenCode to continue without StringRay
-    console.warn(
-      "⚠️ StringRay framework failed to initialize:",
-      error instanceof Error ? error.message : String(error),
-    );
+    frameworkLogger.log("stringray-init", "init-failed-warning", "warning", {
+      message: "⚠️ StringRay framework failed to initialize",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 

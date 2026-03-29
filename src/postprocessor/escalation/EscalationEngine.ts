@@ -9,6 +9,7 @@ import {
   IncidentReport,
   EventTimeline,
 } from "../types.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 export interface EscalationConfig {
   manualInterventionThreshold: number;
@@ -193,7 +194,7 @@ export class EscalationEngine {
     const endpoints = this.config.reportingEndpoints || [];
 
     if (endpoints.length === 0) {
-      console.log(`[EscalationEngine] Incident ${incident.id} created (no external endpoints configured)`);
+      frameworkLogger.log("EscalationEngine", "report-incident", "info", { message: `Incident ${incident.id} created (no external endpoints configured)` });
       return;
     }
 
@@ -217,7 +218,7 @@ export class EscalationEngine {
         });
 
         if (success) {
-          console.log(`[EscalationEngine] Incident ${incident.id} reported to ${endpoint.name}`);
+          frameworkLogger.log("EscalationEngine", "report-incident", "info", { message: `Incident ${incident.id} reported to ${endpoint.name}` });
         }
       } catch (error) {
         this.reportingHistory.push({
@@ -227,7 +228,7 @@ export class EscalationEngine {
           timestamp: Date.now(),
           response: String(error),
         });
-        console.error(`[EscalationEngine] Failed to report incident to ${endpoint.name}:`, error);
+        frameworkLogger.log("EscalationEngine", "report-incident", "error", { error, message: `Failed to report incident to ${endpoint.name}:` });
       }
     }
   }
@@ -386,7 +387,7 @@ export class EscalationEngine {
 
       return response.ok;
     } catch (error) {
-      console.error(`Webhook failed: ${error}`);
+      frameworkLogger.log("EscalationEngine", "webhook", "error", { message: `Webhook failed: ${error}` });
       return false;
     }
   }
@@ -395,9 +396,9 @@ export class EscalationEngine {
    * Send email notification (placeholder - would need SMTP configuration)
    */
   private async sendEmail(endpoint: ReportingEndpoint, payload: IncidentReportPayload): Promise<boolean> {
-    console.log(`[EscalationEngine] Email notification would be sent to ${endpoint.url}`);
-    console.log(`Subject: [${payload.incident.severity.toUpperCase()}] Incident ${payload.incident.id}`);
-    console.log(`Body: ${payload.formattedMessage}`);
+    frameworkLogger.log("EscalationEngine", "email-notification", "info", { message: `Email notification would be sent to ${endpoint.url}` });
+    frameworkLogger.log("EscalationEngine", "email-notification", "info", { message: `Subject: [${payload.incident.severity.toUpperCase()}] Incident ${payload.incident.id}` });
+    frameworkLogger.log("EscalationEngine", "email-notification", "info", { message: `Body: ${payload.formattedMessage}` });
 
     return true;
   }
@@ -506,7 +507,7 @@ export class EscalationEngine {
     switch (channel) {
       case "console":
         if (alert.metadata?.reason) {
-          console.log(`${emoji} ${alert.message} - ${alert.metadata.reason}`);
+          frameworkLogger.log("EscalationEngine", "display-alert", "info", { message: `${emoji} ${alert.message} - ${alert.metadata.reason}` });
         }
         break;
 
@@ -515,7 +516,7 @@ export class EscalationEngine {
         break;
 
       default:
-        console.warn(`Unknown alert channel: ${channel}`);
+        frameworkLogger.log("EscalationEngine", "display-alert", "warning", { message: `Unknown alert channel: ${channel}` });
     }
   }
 

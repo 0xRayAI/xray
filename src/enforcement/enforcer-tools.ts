@@ -142,8 +142,13 @@ async function executeReleaseWorkflow(
     steps.push("✅ Build verified");
   } catch (e) {
     const errorMsg = `🛑 RELEASE STOPPED: Build failed before publishing. Fix build errors first.`;
-    console.error(errorMsg);
-    console.error(`Error: ${e}`);
+    frameworkLogger.log("enforcer-tools", "release-blocked", "error", {
+      message: errorMsg,
+    });
+    frameworkLogger.log("enforcer-tools", "release-build-error", "error", {
+      message: `Error: ${e}`,
+      error: e,
+    });
     return {
       operation: "release",
       passed: false,

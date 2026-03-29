@@ -246,10 +246,10 @@ export class SessionCleanupManager {
       });
       return true;
     } catch (error) {
-      console.error(
-        `❌ Session Cleanup Manager: Manual cleanup failed for session ${sessionId}:`,
+      frameworkLogger.log("session-cleanup", "manual-cleanup-failed", "error", {
+        sessionId,
         error,
-      );
+      });
       return false;
     }
   }
@@ -340,10 +340,9 @@ export class SessionCleanupManager {
       try {
         await this.performCleanup();
       } catch (error) {
-        console.error(
-          "❌ Session Cleanup Manager: Auto-cleanup failed:",
+        frameworkLogger.log("session-cleanup", "auto-cleanup-failed", "error", {
           error,
-        );
+        });
       }
     }, this.config.cleanupIntervalMs);
 
@@ -387,15 +386,12 @@ export class SessionCleanupManager {
           sessionsLoaded: this._sessionMetadata.size,
         });
       } else if (storedMetadata) {
-        console.warn(
-          "⚠️ Session Cleanup Manager: Corrupted session metadata detected, skipping load",
-        );
+        frameworkLogger.log("session-cleanup", "corrupted-metadata-detected", "warning", { warning: "Corrupted session metadata detected, skipping load" });
       }
     } catch (error) {
-      console.error(
-        "❌ Session Cleanup Manager: Failed to load session metadata:",
+      frameworkLogger.log("session-cleanup", "metadata-load-failed", "error", {
         error,
-      );
+      });
     }
   }
 

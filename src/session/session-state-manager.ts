@@ -99,7 +99,10 @@ export class SessionStateManager {
       });
       return true;
     } catch (error) {
-      console.error(`❌ Session State Manager: Failed to share state:`, error);
+      frameworkLogger.log("session-state-manager", "state-share-failed", "error", {
+        error,
+        message: "Failed to share state",
+      });
       return false;
     }
   }
@@ -613,10 +616,10 @@ export class SessionStateManager {
       );
       return true;
     } catch (error) {
-      console.error(
-        `❌ Session State Manager: Migration failed for ${plan.sessionId}:`,
+      frameworkLogger.log("session-state-manager", "migration-failed", "error", {
         error,
-      );
+        message: `Migration failed for ${plan.sessionId}`,
+      });
       await this.rollbackMigration(plan, rollbackData);
       return false;
     }
@@ -671,16 +674,16 @@ export class SessionStateManager {
           return true;
         }
       } catch (error) {
-        console.error(
-          `❌ Session State Manager: Failover attempt failed for ${backupCoordinator}:`,
+        frameworkLogger.log("session-state-manager", "failover-failed", "error", {
           error,
-        );
+          message: `Failover attempt failed for ${backupCoordinator}`,
+        });
       }
     }
 
-    console.error(
-      `❌ Session State Manager: All failover attempts failed for ${sessionId}`,
-    );
+    frameworkLogger.log("session-state-manager", "all-failovers-failed", "error", {
+      message: `All failover attempts failed for ${sessionId}`,
+    });
     return false;
   }
 
@@ -779,7 +782,10 @@ export class SessionStateManager {
           { message: `  ← Restored ${backup.step}` },
         );
       } catch (error) {
-        console.warn(`  ⚠️ Failed to restore ${backup.step}:`, error);
+        frameworkLogger.log("session-state-manager", "restore-backup-failed", "warning", {
+          error,
+          message: `Failed to restore ${backup.step}`,
+        });
       }
     }
 

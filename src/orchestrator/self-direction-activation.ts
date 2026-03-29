@@ -87,19 +87,18 @@ export class SelfDirectionSystem {
    * Phase 1: Activate Self-Monitoring Foundation
    */
   async activateSelfMonitoring(): Promise<void> {
-    console.log("🤖 ACTIVATING SELF-MONITORING FOUNDATION");
-    console.log("========================================");
+    frameworkLogger.log("self-direction-system", "activating-monitoring", "info", { message: "🤖 ACTIVATING SELF-MONITORING FOUNDATION" });
 
     try {
       // Setup autonomous critical issue reporting
       this.setupAutonomousReporting();
-      console.log("✅ Autonomous critical issue reporting activated");
+      frameworkLogger.log("self-direction-system", "reporting-activated", "info", { message: "✅ Autonomous critical issue reporting activated" });
 
       // Start continuous self-assessment
       this.startContinuousSelfAssessment();
 
       this.activeMonitoring = true;
-      console.log("🎉 Self-monitoring foundation activated");
+      frameworkLogger.log("self-direction-system", "monitoring-activated", "info", { message: "🎉 Self-monitoring foundation activated" });
 
       await frameworkLogger.log(
         "self-direction-system",
@@ -110,7 +109,7 @@ export class SelfDirectionSystem {
         generateJobId("self-monitoring"),
       );
     } catch (error) {
-      console.error("❌ Self-monitoring activation failed:", error);
+      frameworkLogger.log("self-direction-system", "monitoring-activation-failed", "error", { error, message: "❌ Self-monitoring activation failed" });
       await frameworkLogger.log(
         "self-direction-system",
         "monitoring-activation-failed",
@@ -128,7 +127,7 @@ export class SelfDirectionSystem {
    */
   private setupAutonomousReporting(): void {
     // Setup basic event listeners for critical issues
-    console.log("📊 Autonomous reporting configured");
+    frameworkLogger.log("self-direction-system", "reporting-configured", "info", { message: "📊 Autonomous reporting configured" });
   }
 
   /**
@@ -146,7 +145,7 @@ export class SelfDirectionSystem {
         const assessment = await this.performSelfAssessment();
         await this.processSelfAssessmentResults(assessment);
       } catch (error) {
-        console.error("Self-assessment cycle failed:", error);
+        frameworkLogger.log("self-direction-system", "assessment-cycle-failed", "error", { error, message: "Self-assessment cycle failed" });
       }
     }, this.config.monitoringInterval);
   }
@@ -155,16 +154,15 @@ export class SelfDirectionSystem {
    * Phase 2: Activate Self-Evolution Learning
    */
   async activateSelfEvolution(): Promise<void> {
-    console.log("🧠 ACTIVATING SELF-EVOLUTION LEARNING");
-    console.log("====================================");
+    frameworkLogger.log("self-direction-system", "activating-evolution", "info", { message: "🧠 ACTIVATING SELF-EVOLUTION LEARNING" });
 
     try {
       // Start learning cycles
       this.startLearningCycles();
-      console.log("✅ Learning cycles activated");
+      frameworkLogger.log("self-direction-system", "learning-cycles-activated", "info", { message: "✅ Learning cycles activated" });
 
       this.activeLearning = true;
-      console.log("🎉 Self-evolution learning activated");
+      frameworkLogger.log("self-direction-system", "evolution-activated", "info", { message: "🎉 Self-evolution learning activated" });
 
       await frameworkLogger.log(
         "self-direction-system",
@@ -175,7 +173,7 @@ export class SelfDirectionSystem {
         generateJobId("self-evolution"),
       );
     } catch (error) {
-      console.error("❌ Self-evolution activation failed:", error);
+      frameworkLogger.log("self-direction-system", "evolution-activation-failed", "error", { error, message: "❌ Self-evolution activation failed" });
       await frameworkLogger.log(
         "self-direction-system",
         "evolution-activation-failed",
@@ -199,7 +197,7 @@ export class SelfDirectionSystem {
 
     this.learningIntervalId = setInterval(async () => {
       if (!this.activeLearning) return; // Don't run if stopped
-      console.log("🔄 Learning cycle executed");
+      frameworkLogger.log("self-direction-system", "learning-cycle-executed", "info", { message: "🔄 Learning cycle executed" });
       // Basic learning cycle - would be enhanced with advanced features
     }, this.config.learningCycleInterval);
   }
@@ -280,18 +278,16 @@ export class SelfDirectionSystem {
     assessment: SelfAssessmentReport,
   ): Promise<void> {
     if (assessment.criticalIssues.length > 0) {
-      console.log(
-        `🚨 ${assessment.criticalIssues.length} critical issues detected`,
-      );
-      for (const issue of assessment.criticalIssues) {
-        console.log(`   ${issue.severity.toUpperCase()}: ${issue.description}`);
-      }
+      frameworkLogger.log("self-direction-system", "critical-issues-detected", "warning", {
+        message: `🚨 ${assessment.criticalIssues.length} critical issues detected`,
+        issues: assessment.criticalIssues.map(i => `${i.severity.toUpperCase()}: ${i.description}`),
+      });
     }
 
     if (assessment.recommendations.length > 0) {
-      console.log(
-        `💡 ${assessment.recommendations.length} recommendations generated`,
-      );
+      frameworkLogger.log("self-direction-system", "recommendations-generated", "info", {
+        message: `💡 ${assessment.recommendations.length} recommendations generated`,
+      });
     }
   }
 
@@ -331,7 +327,7 @@ export class SelfDirectionSystem {
    * Shutdown self-direction system
    */
   async shutdown(): Promise<void> {
-    console.log("🛑 Shutting down self-direction system...");
+    frameworkLogger.log("self-direction-system", "shutting-down", "info", { message: "🛑 Shutting down self-direction system..." });
 
     // Clear all intervals to prevent memory leaks
     if (this.monitoringIntervalId) {
@@ -346,7 +342,7 @@ export class SelfDirectionSystem {
     this.activeMonitoring = false;
     this.activeLearning = false;
 
-    console.log("✅ Self-direction system shutdown complete");
+    frameworkLogger.log("self-direction-system", "shutdown-complete", "info", { message: "✅ Self-direction system shutdown complete" });
   }
 }
 

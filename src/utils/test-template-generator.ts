@@ -5,6 +5,8 @@
  * to ensure consistent test coverage and structure.
  */
 
+import { frameworkLogger } from "../core/framework-logger.js";
+
 export interface TestTemplateOptions {
   filePath: string;
   componentName?: string;
@@ -221,7 +223,7 @@ export function analyzeSourceFile(filePath: string): {
 
     return { exports, isReact, isTypeScript };
   } catch (error) {
-    console.error(`Error analyzing ${filePath}:`, error);
+    frameworkLogger.log("test-template-generator", "analyze-file", "error", { error, message: `Error analyzing ${filePath}:` });
     return { exports: [], isReact: false, isTypeScript: false };
   }
 }

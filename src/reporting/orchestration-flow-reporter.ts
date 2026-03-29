@@ -214,8 +214,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     .generateOrchestrationReport()
     .then((report) => {
       orchestrationFlowReporter.exportReportAsText(report).then((text) => {
-        console.log(text);
+        frameworkLogger.log("orchestration-flow-reporter", "report-output", "info", { message: text });
       });
     })
-    .catch((err) => console.error("Report generation failed:", err));
+    .catch((err) => frameworkLogger.log("orchestration-flow-reporter", "report-generation-failed", "error", { error: err }));
 }

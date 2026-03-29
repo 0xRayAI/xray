@@ -500,7 +500,7 @@ await orchestrator.registerAgent(CustomAnalyticsAgent);
   },
   "framework": {
     "name": "strray",
-    "version": "1.15.15",
+    "version": "1.15.16",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict",

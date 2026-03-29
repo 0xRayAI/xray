@@ -174,7 +174,7 @@ export class PerformanceSystemOrchestrator extends EventEmitter {
 
       this.initialized = true;
     } catch (error) {
-      console.error("❌ Failed to initialize performance system:", error);
+      frameworkLogger.log("performance-system-orchestrator", "initialization-failed", "error", { error, message: "❌ Failed to initialize performance system" });
       throw error;
     }
   }
@@ -251,7 +251,7 @@ export class PerformanceSystemOrchestrator extends EventEmitter {
     const result = await this.components.ciGates.runPerformanceGates();
 
     if (!result.success && this.config.ciGates.failPipeline) {
-      console.error("❌ Performance gates failed");
+      frameworkLogger.log("performance-system-orchestrator", "gates-failed", "error", { message: "❌ Performance gates failed" });
     }
 
     return result;

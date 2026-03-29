@@ -1,288 +1,221 @@
 ---
 name: hermes-agent
-description: Manage StringRay framework from Hermes Agent — install, configure, health-check, report, and publish. Covers CLI commands and MCP server integration for Hermes.
-version: 1.0.0
+description: Manage StringRay framework from Hermes Agent via the native strray-hermes plugin. Covers the 4 plugin tools (validate, codex_check, health, hooks), lifecycle hooks, slash commands, bridge architecture, and CLI fallback.
+version: 2.1.0
 author: StringRay AI
-license: MIT
 metadata:
   hermes:
-    tags: [StringRay, CLI, MCP, Framework, Orchestration]
+    tags: [StringRay, Plugin, Validation, Codex, GitHooks, Bridge]
     related_skills: []
-prerequisites:
-  commands: [npx]
 ---
 
-# StringRay Agent for Hermes
+# StringRay Hermes Plugin (strray-hermes)
 
-Manage the StringRay AI framework from within Hermes Agent. Covers CLI commands (install, health, report, skills) and MCP server integration.
+Native Hermes plugin providing StringRay framework integration — quality gates, codex enforcement, git hooks, and full pre/post processing pipeline. Runs via a Node.js bridge to compiled framework components.
 
 ## When to Use
 
-Use this skill when:
-- User asks about StringRay status, health, or configuration
-- User wants to install, validate, or fix StringRay
-- User asks for reports, analytics, or capability info
-- User wants to manage skills (install, list, status)
-- User wants to publish agents to AgentStore
-- User asks how to connect StringRay MCP servers to Hermes
-- User asks about StringRay capabilities or available agents
+- User asks about StringRay health, validation, or codex checks
+- User wants to install/manage git hooks for automated enforcement
+- User asks about the plugin's tools, hooks, or slash commands
+- User asks about bridge errors or framework not loading
+- User wants to validate files before committing or pushing
 
-## CLI Commands
+## Plugin Architecture
 
-### Setup and Diagnostics
-
-```bash
-# Install StringRay in current project (detects/installs OpenCode, configures agents, sets up Codex)
-npx strray-ai install
-
-# Initialize StringRay configuration only (lighter than install)
-npx strray-ai init
-
-# Check framework configuration and plugin status
-npx strray-ai status
-
-# Validate installation and dependencies
-npx strray-ai validate
-
-# Full health check on framework components
-npx strray-ai health
-
-# Diagnose issues without fixing them
-npx strray-ai doctor
-
-# Auto-fix common framework issues (restores missing config files)
-npx strray-ai fix
-
-# Debug command for troubleshooting
-npx strray-ai debug
+```
+~/.hermes/plugins/strray-hermes/
+├── __init__.py         # Plugin registration, hooks, slash commands
+├── tools.py            # 4 tool handlers (validate, codex_check, health, hooks)
+├── schemas.py          # JSON schemas the LLM sees
+├── bridge.mjs          # Node.js bridge to compiled StringRay framework
+├── plugin.yaml         # Plugin metadata (name, version, tools, hooks)
+├── types.py            # TypeScript-equivalent type definitions
+├── after-install.md    # Post-install instructions
+└── test_plugin.py      # Tests
 ```
 
-### Reporting and Analytics
+**Bridge protocol:** JSON over stdin/stdout to `bridge.mjs` (Node.js). The bridge lazy-loads compiled framework modules from `dist/`:
+- `dist/plugin/quality-gate.js` — codex violation detection
+- `dist/processors/processor-manager.js` — pre/post processor pipeline
+- `dist/state/state-manager.js` — persistent state
+- `dist/core/features-config.js` — feature flags
 
-```bash
-# Generate full analysis report
-npx strray-ai report
+**Fallback:** When bridge is unavailable, tools fall back to `npx strray-ai` CLI commands.
 
-# Performance-focused report
-npx strray-ai report --type performance
+**Config path resolution:** `STRRAY_CONFIG_DIR/` > `.strray/` > `.opencode/strray/` > built-in defaults.
 
-# Agent invocation report
-npx strray-ai report --type agent-usage
+## 4 Tools
 
-# Save report to file
-npx strray-ai report -o report.json
+### strray_validate
 
-# Pattern analysis and insights
-npx strray-ai analytics
+Run pre-commit validation on files. Uses bridge quality gate + processor pipeline, falls back to CLI.
 
-# Analyze last N task completions
-npx strray-ai analytics --limit 50
+```
+strray_validate(files=["src/my-module.ts"], operation="commit")
+strray_validate(files=["src/auth.ts", "src/auth.test.ts"], operation="modify")
 ```
 
-### Capabilities
+Parameters:
+- `files` (required, array of strings) — file paths to validate
+- `operation` (string) — commit, create, modify, refactor (default: commit)
 
-```bash
-# Show all available StringRay capabilities, agents, and features
-npx strray-ai capabilities
+Returns: pass/fail with per-file results and violations.
+
+### strray_codex_check
+
+Validate code against the 60-term Universal Development Codex. Checks error-handling, type-safety, performance, security, architecture.
+
+```
+strray_codex_check(code="const x: any = foo()", operation="create")
+strray_codex_check(code=snippet, operation="modify", focus_areas=["security", "error-handling"])
 ```
 
-### Skills Management
+Parameters:
+- `code` (string) — code snippet to check. If omitted, returns framework health instead.
+- `operation` (required, string) — create, modify, refactor
+- `focus_areas` (array) — error-handling, type-safety, performance, security, architecture
 
-```bash
-# Show starter packs and available registry sources
-npx strray-ai skill:install
+Returns: violations list with actionable remediation.
 
-# Install from registry
-npx strray-ai skill:install agency-agents    # 170+ agency agent definitions
-npx strray-ai skill:install superpowers       # 14 agentic workflow skills (TDD, debugging, etc.)
-npx strray-ai skill:install minimax           # Frontend, fullstack, Android, iOS skills
-npx strray-ai skill:install gemini-skills     # Official Google Gemini skills
-npx strray-ai skill:install anthropic-skills  # Official Anthropic/Claude skills
+### strray_health
 
-# Install from any git repo
-npx strray-ai skill:install <github-url>
+Framework health check. Returns version, loaded components, project root.
 
-# Install from specific subdirectory in a repo
-npx strray-ai skill:install <github-url> --path skills/typescript
-
-# List all 10 bundled registry sources
-npx strray-ai skill:registry list
-
-# Show all installed skills with license info
-npx strray-ai antigravity status
+```
+strray_health()
 ```
 
-### Agent Publishing
+Returns: framework status, version, component availability, node version.
 
-```bash
-# Package agent for AgentStore
-npx strray-ai publish-agent --agent <name>
+### strray_hooks
 
-# Preview without publishing
-npx strray-ai publish-agent --agent <name> --dry-run
+Manage StringRay git hooks (install, uninstall, list, status).
 
-# Publish specific version
-npx strray-ai publish-agent --agent <name> --version 2.0.0
+```
+strray_hooks(action="install")
+strray_hooks(action="status")
+strray_hooks(action="list")
+strray_hooks(action="uninstall", hooks=["pre-commit"])
 ```
 
-### Inference
+Parameters:
+- `action` (required, string) — install, uninstall, list, status
+- `hooks` (array) — which hooks to manage (default: all four)
 
-```bash
-# Run autonomous inference improvement cycle
-npx strray-ai inference:improve
+Hooks available: pre-commit, post-commit, pre-push, post-push.
 
-# Start/stop autonomous inference tuner service
-npx strray-ai inference:tuner
+| Hook | Type | What it does |
+|------|------|-------------|
+| `pre-commit` | Blocking | TypeScript check + Codex validation before commit |
+| `post-commit` | Non-blocking | Log archival + cleanup after commit |
+| `pre-push` | Blocking | Full validation suite before push |
+| `post-push` | Non-blocking | Comprehensive monitoring after push |
+
+## 5 Lifecycle Hooks
+
+These fire automatically — no action needed from the user or agent.
+
+### pre_tool_call
+
+Fires before ANY tool executes:
+1. Tracks session stats
+2. Logs tool-start event to `logs/framework/plugin-tool-events.log`
+3. For code-producing tools (write_file, patch, execute_code, write, edit): runs quality gate + pre-processors via bridge
+4. For other tools: nudges when a StringRay MCP alternative exists (e.g., grep → search_codebase, eslint → strray_lint)
+
+### post_tool_call
+
+Fires after ANY tool returns:
+1. Logs tool-complete event
+2. For code-producing tools: runs post-processors via bridge
+3. Tracks file modifications for session context
+
+### on_file_write
+
+Fires when a code-producing tool writes a file. Validates and logs the event.
+
+### on_validation_result
+
+Fires when a validation/check completes. Tracks outcomes for session context.
+
+### on_error
+
+Fires when a tool call fails. Logs the error and tracks it.
+
+## Slash Command
+
+```
+/strray status    — Plugin and framework health (calls bridge)
+/strray stats     — Session pipeline statistics
+/strray help      — Show available commands
+/sr status        — Alias
 ```
 
-## MCP Server Integration with Hermes
+## Session Stats (tracked automatically)
 
-StringRay ships 15 MCP servers that Hermes can connect to. Each exposes tools Hermes calls directly — no prompts, no proxies.
+The plugin tracks per-session counters visible via `/strray stats`:
+- total_tool_calls, code_operations, strray_mcp_calls, native_tool_calls
+- quality_gate_runs, quality_gate_blocks
+- pre_processor_runs, post_processor_runs
+- bridge_calls, bridge_errors
 
-### Server Overview
+## Logging
 
-| MCP Server | Key Tools | Purpose |
-|-----------|----------|---------|
-| `strray-architect-tools` | codebase_structure, dependency_analysis, context_analysis, architecture_assessment | Project analysis and architectural health |
-| `strray-auto-format` | auto_format, format_check | Prettier + ESLint + TypeScript formatting |
-| `strray-enforcer` | rule_validation, codex_enforcement, quality_gate_check, run_pre_commit_validation | Codex compliance and quality gates |
-| `strray-estimation` | validate_estimate, start_tracking, complete_tracking, get_accuracy_report | Task estimation and time tracking |
-| `strray-framework-help` | strray_get_capabilities, strray_get_commands, strray_explain_capability | Framework reference and docs |
-| `strray-lint` | lint, lint_check | ESLint validation with auto-fix |
-| `strray-orchestrator` | orchestrate_task, analyze_complexity, get_orchestration_status, optimize_orchestration | Multi-agent task planning |
-| `strray-researcher` | search_codebase, find_implementation, get_documentation | Codebase search and pattern finding |
-| `strray-security-scan` | security_scan, dependency_audit | Vulnerability scanning |
-| `strray-state-manager` | get_state, set_state, delete_state, list_state, backup_state, restore_state | Persistent key-value state |
+All logs go to `logs/framework/` in the project root:
 
-### Setup
-
-Add to `~/.hermes/config.yaml`:
-
-```yaml
-mcp_servers:
-  strray-architect-tools:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/architect-tools.server.js"]
-    timeout: 30
-  strray-auto-format:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/auto-format.server.js"]
-    timeout: 30
-  strray-enforcer:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/enforcer-tools.server.js"]
-    timeout: 30
-  strray-estimation:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/estimation.server.js"]
-    timeout: 30
-  strray-framework-help:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/framework-help.server.js"]
-    timeout: 30
-  strray-lint:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/lint.server.js"]
-    timeout: 30
-  strray-orchestrator:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/orchestrator/server.js"]
-    timeout: 60
-  strray-researcher:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/researcher.server.js"]
-    timeout: 60
-  strray-security-scan:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/security-scan.server.js"]
-    timeout: 30
-  strray-state-manager:
-    command: node
-    args: ["./node_modules/strray-ai/dist/mcps/state-manager.server.js"]
-    timeout: 30
-```
-
-### Tool Naming Convention
-
-Hermes prefixes MCP tools as `mcp_strray_<server>_<tool>`. For example:
-- `mcp_strray_architect_tools_codebase_structure`
-- `mcp_strray_enforcer_rule_validation`
-- `mcp_strray_lint_lint`
-
-This is automatic and not configurable.
-
-### How MCP and CLI Complement Each Other
-
-| Capability | MCP Server | CLI Command |
-|-----------|-----------|-------------|
-| Analyze code | architect-tools | — |
-| Lint/format | lint, auto-format | — |
-| Security scan | security-scan | — |
-| Orchestrate tasks | orchestrator | — |
-| Manage state | state-manager | — |
-| **Install framework** | — | `install`, `init` |
-| **Health check** | — | `health`, `validate`, `doctor` |
-| **Generate reports** | — | `report`, `analytics` |
-| **Install skills** | — | `skill:install` |
-| **Publish agents** | — | `publish-agent` |
-| **View capabilities** | framework-help | `capabilities` |
-
-MCP servers = runtime tools (analyze, lint, scan, orchestrate while coding)
-CLI commands = framework management (install, configure, report, publish)
+| File | Content |
+|------|---------|
+| `activity.log` | All pipeline events (quality gates, processors, nudges, errors) |
+| `plugin-tool-events.log` | Tool start/complete events with durations |
 
 ## Quick Decision Guide
 
-| User Says | Run |
-|----------|-----|
-| "Is StringRay set up?" | `npx strray-ai health` |
-| "Fix StringRay" | `npx strray-ai fix` |
-| "What can StringRay do?" | `npx strray-ai capabilities` |
-| "How are agents performing?" | `npx strray-ai report --type agent-usage` |
-| "Install the X skill pack" | `npx strray-ai skill:install <name>` |
-| "What skills are installed?" | `npx strray-ai antigravity status` |
-| "Publish agent X" | `npx strray-ai publish-agent --agent X` |
-| "Set up MCP in Hermes" | Add config to `~/.hermes/config.yaml` (see above) |
+| User Says | Tool / Command |
+|----------|---------------|
+| "Is StringRay working?" | `strray_health()` or `/strray status` |
+| "Check these files before I commit" | `strray_validate(files=[...], operation="commit")` |
+| "Is this code codex compliant?" | `strray_codex_check(code=..., operation="create")` |
+| "Set up git hooks" | `strray_hooks(action="install")` |
+| "What hooks are installed?" | `strray_hooks(action="status")` |
+| "Show session stats" | `/strray stats` |
+| "Why is the bridge failing?" | Check `strray_health()` → if `framework: "not_loaded"`, verify `dist/` symlink |
 
-## Native Hermes Plugin
+## Bridge Commands (internal)
 
-StringRay ships a native Hermes Agent plugin (`src/integrations/hermes-agent/`) that provides:
+These are called by the Python tools via `bridge.mjs`, not directly by the LLM:
 
-**3 Tools:**
-| Tool | Purpose |
-|------|---------|
-| `strray_validate` | Pre-commit validation on files — codex, rules, quality gates |
-| `strray_codex_check` | Validate code against the 60-term Universal Development Codex |
-| `strray_health` | Framework health check — version, agents, MCP status |
+| Command | What it does |
+|---------|-------------|
+| `health` | Framework health check |
+| `validate` | Run quality gate on files |
+| `codex-check` | Check code against codex rules |
+| `pre-process` | Quality gate + pre-processors before tool |
+| `post-process` | Post-processors after tool |
+| `hooks` | Git hook management |
+| `stats` | Bridge/framework statistics |
 
-**2 Hooks:**
-| Hook | Purpose |
-|------|---------|
-| `pre_tool_call` | Tracks stats, nudges when native tools used instead of StringRay MCP equivalents |
-| `post_tool_call` | Logs tool usage, tracks file operations for enforcement context |
-
-**Slash Command:**
-- `/strray status` — Plugin and MCP health
-- `/strray stats` — Session tool usage statistics
-- `/strray help` — Show available commands
-
-**Install:**
+Bridge can be invoked directly for debugging:
 ```bash
-# Copy plugin to Hermes plugins directory
-cp -r src/integrations/hermes-agent ~/.hermes/plugins/strray-hermes/
-# Restart Hermes — plugin auto-loads
+echo '{"command":"health"}' | node ~/.hermes/plugins/strray-hermes/bridge.mjs
+node ~/.hermes/plugins/strray-hermes/bridge.mjs health --cwd /path/to/project
 ```
 
-The plugin works alongside the MCP servers. The MCP servers provide deep analysis tools (linting, security scanning, architecture assessment, orchestration), while the native plugin provides quick CLI-based health/validate/codex tools and enforcement hooks.
+## Relationship to MCP Servers
+
+The plugin and MCP servers are complementary:
+- **Plugin tools** = offline-first, always available, lightweight (validate, codex check, health, hooks)
+- **MCP servers** = deeper analysis requiring running Node.js (lint, security scan, architecture assessment, orchestration, codebase search)
+
+The plugin's pre_tool_call hook nudges when an MCP alternative exists (e.g., "use mcp_strray_lint_lint instead of raw eslint"). This is advisory, not blocking.
 
 ## Pitfalls
 
-- `install` is heavyweight — detects and may install OpenCode. Use `init` for config-only.
-- `report` goes to stdout. Use `-o <file>` to save to disk.
-- `skill:install` with a GitHub URL clones the repo. Requires network.
-- Some commands look for `.opencode/` in CWD. Run from project root.
-- `publish-agent` requires AgentStore auth. Fails silently without it.
-- Orchestrator MCP server path is nested: `dist/mcps/orchestrator/server.js` (not `orchestrator.server.js`).
-- Use absolute paths in MCP args if Hermes CWD differs from project root.
-- Increase timeout to 60s for orchestrator and researcher — they do heavier analysis.
-- Plugin hooks use `logger.info` for nudges — these show as `[strray] Tip: ...` in Hermes logs.
-- `strray_codex_check` with `code` parameter does lightweight local check. For full validation, use MCP server `mcp_strray_enforcer_codex_enforcement`.
+- Plugin requires restart after install/edit: Hermes loads plugins once at session start.
+- Bridge needs `dist/` symlink: The bridge loads compiled `.js` from `dist/` → `node_modules/strray-ai/dist/`. If the symlink breaks, bridge returns `framework: "not_loaded"`.
+- `strray_codex_check` without `code` param returns health, not a codex check. Pass `code` for actual validation.
+- CLI fallback requires `npx strray-ai` in PATH. If bridge fails and CLI isn't available, tools return errors.
+- Quality gate blocks are logged but NOT enforced (advisory). The tool returns violations; the agent decides what to do.
+- Git hooks use symlinks from `.git/hooks/` → `hooks/`. If the `hooks/` directory doesn't exist in the project, `strray_hooks(action="install")` skips those hooks.
+- Project root detection walks up from CWD looking for `node_modules/strray-ai`, `.opencode/strray/features.json`, or `package.json`. Override with `STRRAY_PROJECT_ROOT` env var.
+- `logs/framework/` is created automatically. Never breaks the agent if permissions fail.

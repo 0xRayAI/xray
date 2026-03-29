@@ -73,7 +73,7 @@ export class InferenceTuner {
       });
     }, this.config.learningIntervalMs);
 
-    this.runTuningCycle().catch(console.error);
+    this.runTuningCycle().catch((e) => frameworkLogger.log("inference-tuner", "initial-tuning-error", "error", { error: e }));
   }
 
   /**

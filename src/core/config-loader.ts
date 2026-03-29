@@ -9,6 +9,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "./framework-logger.js";
 
 export interface MultiAgentOrchestrationConfig {
   enabled: boolean;
@@ -78,7 +79,7 @@ export class StringRayConfigLoader {
 
       return config;
     } catch (error) {
-      console.error(`❌ Failed to load StringRay config:`, error);
+      frameworkLogger.log("config-loader", "load-failed", "error", { error, message: "Failed to load StringRay config" });
       return this.getDefaultConfig();
     }
   }

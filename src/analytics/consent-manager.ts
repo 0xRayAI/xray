@@ -10,6 +10,7 @@
 
 import * as fs from "fs/promises";
 import * as path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface ConsentConfiguration {
   analyticsEnabled: boolean;
@@ -311,7 +312,7 @@ export class ConsentManager {
       await fs.mkdir(queueDir, { recursive: true });
       await fs.writeFile(queuePath, JSON.stringify(this.submissionQueue, null, 2), "utf-8");
     } catch (error) {
-      console.error("Failed to save submission queue:", error);
+      frameworkLogger.log("consent-manager", "save-queue-failed", "error", { error, message: "Failed to save submission queue" });
     }
   }
 }

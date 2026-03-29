@@ -373,7 +373,7 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
         application: appMetrics,
       });
     } catch (error) {
-      console.error("❌ Failed to collect metrics:", error);
+      frameworkLogger.log("enterprise-monitoring", "metrics-collection-failed", "error", { error, message: "Failed to collect metrics" });
       this.emit("error", error);
     }
   }
@@ -877,7 +877,7 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
     this.cleanupTimer = setInterval(
       () => {
         this.cleanupOldData().catch((error) => {
-          console.error("Error during data cleanup:", error);
+          frameworkLogger.log("enterprise-monitoring", "data-cleanup-error", "error", { error, message: "Error during data cleanup" });
         });
       },
       60 * 60 * 1000,
@@ -930,9 +930,9 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
   }
 
   private handleHealthCheckFailed(result: HealthCheckResult): void {
-    console.warn(
-      `⚠️ Health check failed: ${result.service} - ${result.error || "Unknown error"}`,
-    );
+    frameworkLogger.log("enterprise-monitoring", "health-check-failed", "warning", {
+      message: `Health check failed: ${result.service} - ${result.error || "Unknown error"}`,
+    });
   }
 
   private async handleMetricsCollected(data: {
@@ -1208,7 +1208,8 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
    * Record an error for monitoring
    */
   recordError(operation: string, error: any): void {
-    console.error(`❌ Error recorded: ${operation}`, {
+    frameworkLogger.log("enterprise-monitoring", "error-recorded", "error", {
+      message: `Error recorded: ${operation}`,
       error: error.message || error,
       timestamp: new Date().toISOString(),
       stack: error.stack,

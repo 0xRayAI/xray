@@ -1,7 +1,7 @@
 // Framework job ID correlation fix
 // Integrate JobContext into all framework loggers
 
-import { JobContext, generateJobId } from "../core/framework-logger.js";
+import { JobContext, generateJobId, frameworkLogger } from "../core/framework-logger.js";
 
 // Global job context for correlation - frameworks should populate this
 let currentJobContext: JobContext | null = null;
@@ -58,9 +58,9 @@ export function frameworkLog(
   };
 
   // Log with job correlation
-  console.log(
-    `[${logEntry.timestamp}] [${logEntry.jobId || "no-job"}] [${logEntry.component}] ${logEntry.event} - ${logEntry.level}`,
-  );
+  frameworkLogger.log("job-correlation", "log-entry", "info", {
+    message: `[${logEntry.timestamp}] [${logEntry.jobId || "no-job"}] [${logEntry.component}] ${logEntry.event} - ${logEntry.level}`,
+  });
 
   // Write to activity log with job correlation
   // This would integrate with the activity logger

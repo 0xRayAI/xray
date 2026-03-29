@@ -490,7 +490,7 @@ export class PreCommitValidator {
       const hasErrors = results.some((r) => !r.valid);
       return { success: !hasErrors, results };
     } catch (error) {
-      console.error("Failed to validate staged files:", error);
+      frameworkLogger.log("IaCValidator", "validate-staged-files", "error", { error, message: "Failed to validate staged files:" });
       return { success: false, results: [] };
     }
   }
@@ -518,9 +518,7 @@ export async function validateCommand(args: string[]): Promise<void> {
     printResults(results);
 
     if (!success) {
-      console.error(
-        "\n❌ IaC validation failed. Please fix errors before committing.",
-      );
+      frameworkLogger.log("IaCValidator", "validate-staged", "error", { message: "\n❌ IaC validation failed. Please fix errors before committing." });
       process.exit(1);
     } else {
       await frameworkLogger.log(
@@ -535,7 +533,7 @@ export async function validateCommand(args: string[]): Promise<void> {
     printResults(results);
 
     if (!success) {
-      console.error("\n❌ IaC validation failed.");
+      frameworkLogger.log("IaCValidator", "validate-all", "error", { message: "\n❌ IaC validation failed." });
       process.exit(1);
     } else {
       await frameworkLogger.log(

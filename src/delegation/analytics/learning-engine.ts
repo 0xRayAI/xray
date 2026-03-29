@@ -14,6 +14,7 @@ import {
   LearningResult,
   AdaptiveThresholds,
 } from '../config/types.js';
+import { frameworkLogger } from '../../core/framework-logger.js';
 
 /**
  * LearningEngine class
@@ -207,7 +208,7 @@ export class LearningEngine {
         adaptations,
       };
     } catch (error) {
-      console.error('Learning engine error:', error);
+      frameworkLogger.log("LearningEngine", "start-learning", "error", { error, message: 'Learning engine error:' });
       return {
         learningStarted: false,
         patternsAnalyzed: 0,

@@ -16,6 +16,7 @@ import {
   AgentStats,
 } from '../config/types.js';
 import { RoutingOutcomeTracker } from './outcome-tracker.js';
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 /**
  * RoutingAnalytics class
@@ -130,7 +131,7 @@ export class RoutingAnalytics {
     if (apply) {
       // Apply the changes here
       // This would modify the mappings in production
-      console.log(`Applied ${changes.length} routing refinements`);
+      frameworkLogger.log("routing-analytics", "routing-refinements-applied", "info", { message: `Applied ${changes.length} routing refinements` });
     }
 
     return {

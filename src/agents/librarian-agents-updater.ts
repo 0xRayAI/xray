@@ -7,6 +7,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 interface ProjectAnalysis {
   files: string[];
@@ -49,7 +50,9 @@ export class LibrarianAgentsUpdater {
 
     // Write to file
     fs.writeFileSync(agentsPath, mergedContent, "utf-8");
-    console.log(`[Librarian] Updated AGENTS.md at ${agentsPath}`);
+    frameworkLogger.log("librarian-agents-updater", "agents-md-updated", "info", {
+      message: `Updated AGENTS.md at ${agentsPath}`,
+    });
   }
 
   /**

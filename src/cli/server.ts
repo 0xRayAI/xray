@@ -3,6 +3,7 @@ import { exec } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import * as fs from "fs";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -45,9 +46,9 @@ const getSecurityMiddleware = async () => {
         await import("../security/security-headers");
       securityMiddleware = securityHeadersMiddleware.getExpressMiddleware();
     } catch (error) {
-      console.warn(
-        "Security middleware not available, continuing without security headers",
-      );
+      frameworkLogger.log("cli-server", "security-middleware-unavailable", "warning", {
+        message: "Security middleware not available, continuing without security headers",
+      });
       securityMiddleware = (req: Request, res: Response, next: NextFunction) =>
         next(); // No-op middleware
     }
@@ -61,10 +62,10 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     const middleware = await getSecurityMiddleware();
     return middleware(req, res, next);
   } catch (error) {
-    console.warn(
-      "Security middleware failed to load, continuing without it:",
+    frameworkLogger.log("cli-server", "security-middleware-load-failed", "warning", {
       error,
-    );
+      message: "Security middleware failed to load, continuing without it",
+    });
     next();
   }
 });

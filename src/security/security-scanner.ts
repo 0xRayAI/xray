@@ -159,7 +159,7 @@ export class SecurityScanner {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.warn("⚠️ npm audit failed:", errorMessage);
+      frameworkLogger.log("security-scanner", "npm-audit-failed", "warning", { message: "⚠️ npm audit failed", error: errorMessage });
       return [];
     }
   }
@@ -200,7 +200,7 @@ export class SecurityScanner {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.warn("⚠️ Trivy scan failed:", errorMessage);
+      frameworkLogger.log("security-scanner", "trivy-scan-failed", "warning", { message: "⚠️ Trivy scan failed", error: errorMessage });
       return [];
     }
   }
@@ -239,7 +239,7 @@ export class SecurityScanner {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.warn("⚠️ ESLint security scan failed:", errorMessage);
+      frameworkLogger.log("security-scanner", "eslint-scan-failed", "warning", { message: "⚠️ ESLint security scan failed", error: errorMessage });
       return [];
     }
   }
@@ -279,7 +279,7 @@ export class SecurityScanner {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.warn("⚠️ Dependency check failed:", errorMessage);
+      frameworkLogger.log("security-scanner", "dependency-check-failed", "warning", { message: "⚠️ Dependency check failed", error: errorMessage });
       return [];
     }
   }
@@ -395,7 +395,7 @@ export class SecurityScanner {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.warn("⚠️ Failed to save security report:", errorMessage);
+      frameworkLogger.log("security-scanner", "save-report-failed", "warning", { message: "⚠️ Failed to save security report", error: errorMessage });
     }
   }
 
@@ -529,10 +529,10 @@ export class SecurityScanner {
     const result = promptSecurityValidator.validatePrompt(prompt);
 
     if (!result.isSafe) {
-      console.warn(
-        `🚨 Prompt security violation detected (risk: ${result.riskLevel}):`,
-        result.violations,
-      );
+      frameworkLogger.log("security-scanner", "prompt-violation", "warning", {
+        message: `🚨 Prompt security violation detected (risk: ${result.riskLevel})`,
+        violations: result.violations,
+      });
     }
 
     return {
@@ -553,10 +553,10 @@ export class SecurityScanner {
     const result = promptSecurityValidator.validateResponse(response);
 
     if (!result.isSafe) {
-      console.warn(
-        `🚨 Response security violation detected (risk: ${result.riskLevel}):`,
-        result.violations,
-      );
+      frameworkLogger.log("security-scanner", "response-violation", "warning", {
+        message: `🚨 Response security violation detected (risk: ${result.riskLevel})`,
+        violations: result.violations,
+      });
     }
 
     return {

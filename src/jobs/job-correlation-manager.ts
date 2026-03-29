@@ -5,6 +5,7 @@ import {
   setCurrentJobContext,
   withJobContext,
   getCurrentJobId,
+  frameworkLogger,
 } from "../core/framework-logger.js";
 
 /**
@@ -29,7 +30,10 @@ export class JobCorrelationManager {
     const jobContext = setCurrentJobContext(jobId);
     const actualJobId = jobContext.jobId;
     this.activeJobs.set(actualJobId, true);
-    console.log(`🎯 [JOB-CORRELATION] Started job: ${actualJobId}`);
+    frameworkLogger.log("job-correlation-manager", "job-started", "info", {
+      message: `[JOB-CORRELATION] Started job: ${actualJobId}`,
+      jobId: actualJobId,
+    });
     return actualJobId;
   }
 
