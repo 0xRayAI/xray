@@ -503,6 +503,23 @@ const INFERENCE_TUNE_INTERVAL = 100;
 let _openCodeToolCallCount = 0;
 let _lastTuneToolCallCount = 0;
 
+/**
+ * Map tool names to agent/skill identifiers for outcome tracking.
+ * This lets the analytics pipeline correlate tool usage patterns
+ * with agent routing effectiveness.
+ */
+const TOOL_AGENT_MAP: Record<string, { agent: string; skill: string }> = {
+  write:     { agent: "code-reviewer", skill: "write" },
+  edit:      { agent: "code-reviewer", skill: "edit" },
+  multiedit: { agent: "code-reviewer", skill: "multiedit" },
+  bash:      { agent: "testing-lead", skill: "execution" },
+  search:    { agent: "researcher",    skill: "search" },
+  read:      { agent: "researcher",    skill: "read" },
+  glob:      { agent: "researcher",    skill: "glob" },
+  grep:      { agent: "researcher",    skill: "search" },
+  ls:        { agent: "researcher",    skill: "list" },
+};
+
 export default async function strrayCodexPlugin(input: {
   client?: string;
   directory?: string;
@@ -757,6 +774,32 @@ export default async function strrayCodexPlugin(input: {
       await loadStrRayComponents();
 
       const { tool, args, result } = input;
+
+      // Record routing outcome for analytics pipeline.
+      // This feeds the inference tuner with real tool usage data so it
+      // can refine keyword mappings and improve predictive analytics.
+      try {
+        const { routingOutcomeTracker } = await import(
+          "../delegation/analytics/outcome-tracker.js"
+        );
+        const mapping = TOOL_AGENT_MAP[tool];
+        const description = args?.content
+          ? String(args.content).slice(0, 200)
+          : args?.filePath
+            ? `file operation: ${String(args.filePath)}`
+            : `tool call: ${tool}`;
+        routingOutcomeTracker.recordOutcome({
+          taskId: `opencode-${_openCodeToolCallCount}`,
+          taskDescription: description,
+          routedAgent: mapping?.agent ?? "direct",
+          routedSkill: mapping?.skill ?? tool,
+          confidence: mapping ? 0.8 : 0.5,
+          success: result?.error == null,
+          routingMethod: mapping ? "keyword" : "default",
+        });
+      } catch {
+        // Outcome tracker not available — skip silently
+      }
 
       // Debug: log full input
       logger.log(

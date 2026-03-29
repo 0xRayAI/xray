@@ -79,6 +79,20 @@ LOG_DIR = PROJECT_ROOT / "logs" / "framework"
 # Tools that produce/modify code — these get the full pipeline
 _CODE_TOOLS = {"write_file", "patch", "execute_code", "write", "edit"}
 
+# Map tool names to agent/skill for outcome tracking
+_TOOL_AGENT_MAP = {
+    "write_file":    ("code-reviewer", "write"),
+    "patch":         ("code-reviewer", "patch"),
+    "execute_code":  ("testing-lead",  "execution"),
+    "write":         ("code-reviewer", "write"),
+    "edit":          ("code-reviewer", "edit"),
+    "terminal":      ("testing-lead",  "execution"),
+    "search_files":  ("researcher",    "search"),
+    "read_file":     ("researcher",    "read"),
+    "browser_*":     ("researcher",    "browser"),
+    "delegate_task": ("orchestrator",  "delegation"),
+}
+
 # Tools where StringRay has a better alternative
 # terminal: only nudge when the command looks lint/security/search related
 _BETTER_WITH_STRRAY = {
@@ -327,6 +341,9 @@ def _on_post_tool_call(tool_name: str, args: dict, result, task_id: str, **kwarg
         error = result["error"]
     _log_tool_event("complete", tool_name, args, duration, error)
 
+    # Record outcome for the inference feedback loop
+    _record_tool_outcome(tool_name, args or {}, error is None)
+
     # delegate_task: validate all files the subagent changed
     if tool_name == "delegate_task":
         tid = kwargs.get("task_id", "") or args.get("task_id", "") or task_id
@@ -454,6 +471,68 @@ def _strray_command(args: str) -> str:
         f"  Project: {bridge_result.get('projectRoot', 'unknown')}\n"
         f"  Bridge calls: {_session_stats['bridge_calls']} (errors: {_session_stats['bridge_errors']})"
     )
+
+
+# ── Outcome tracking (feeds inference tuner) ──────────────────
+
+_OUTCOMES_PATH = PROJECT_ROOT / "logs" / "framework" / "routing-outcomes.json"
+_MAX_OUTCOMES = 1000
+
+
+def _record_tool_outcome(tool_name: str, args: dict, success: bool):
+    """Append a routing outcome to routing-outcomes.json.
+
+    Writes directly to the JSON file (same format the TS outcome tracker uses)
+    so both OpenCode and Hermes plugin outcomes are visible to the tuner.
+    """
+    call_num = _session_stats.get("total_tool_calls", 0)
+
+    # Look up agent/skill mapping
+    agent, skill = "direct", tool_name
+    for pattern, mapped in _TOOL_AGENT_MAP.items():
+        if pattern.endswith("*"):
+            if tool_name.startswith(pattern[:-1]):
+                agent, skill = mapped
+                break
+        elif tool_name == pattern:
+            agent, skill = mapped
+            break
+
+    # Build description from args
+    if isinstance(args, dict):
+        content = args.get("content") or args.get("path") or args.get("filePath") or ""
+        description = str(content)[:200] if content else f"tool call: {tool_name}"
+    else:
+        description = f"tool call: {tool_name}"
+
+    outcome = {
+        "taskId": f"hermes-{call_num}",
+        "taskDescription": description,
+        "routedAgent": agent,
+        "routedSkill": skill,
+        "confidence": 0.8 if agent != "direct" else 0.5,
+        "success": success,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "routingMethod": "keyword" if agent != "direct" else "default",
+    }
+
+    try:
+        _OUTCOMES_PATH.parent.mkdir(parents=True, exist_ok=True)
+        if _OUTCOMES_PATH.exists():
+            with open(_OUTCOMES_PATH, "r") as f:
+                outcomes = json.load(f)
+        else:
+            outcomes = []
+
+        outcomes.append(outcome)
+        # Circular buffer — keep last N outcomes
+        if len(outcomes) > _MAX_OUTCOMES:
+            outcomes = outcomes[-_MAX_OUTCOMES:]
+
+        with open(_OUTCOMES_PATH, "w") as f:
+            json.dump(outcomes, f, indent=2)
+    except Exception as e:
+        logger.debug("[strray] outcome recording failed: %s", e)
 
 
 # ── Inference tuning (auto-calibration) ────────────────────────
