@@ -63,7 +63,7 @@ class StrRayMobileDevelopmentServer {
   constructor() {
     this.server = new Server(
       {
-        name: "mobile-development", version: "1.15.16",
+        name: "mobile-development", version: "1.15.17",
       },
       {
         capabilities: {
