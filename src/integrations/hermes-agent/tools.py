@@ -11,45 +11,43 @@ import subprocess
 import sys
 from pathlib import Path
 
-# ── Bridge path ───────────────────────────────────────────────
+# ── Lazy imports from __init__ (avoids circular dependency) ──
 
-PLUGIN_DIR = Path(__file__).resolve().parent
-BRIDGE_PATH = PLUGIN_DIR / "bridge.mjs"
+def _get_parent():
+    """Return the parent package's _call_bridge and PROJECT_ROOT.
 
-
-def _find_project_root():
-    d = PLUGIN_DIR
-    for _ in range(6):
-        if (d / "package.json").exists():
-            return d
-        d = d.parent
-    return Path.cwd()
-
-PROJECT_ROOT = _find_project_root()
-
-
-# ── Bridge helper ─────────────────────────────────────────────
-
-def _call_bridge(command: dict, timeout: int = 30) -> dict:
-    """Call bridge.mjs via Node.js, return parsed JSON response."""
+    Tries relative import first, then falls back to scanning sys.modules
+    for a package that holds the tools module.
+    """
+    # Fast path: normal package import
     try:
-        result = subprocess.run(
-            ["node", str(BRIDGE_PATH), "--cwd", str(PROJECT_ROOT)],
-            input=json.dumps(command),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        if result.returncode != 0:
-            stderr = result.stderr[:300] if result.stderr else "unknown"
-            return {"error": stderr}
-        return json.loads(result.stdout)
-    except FileNotFoundError:
-        return {"error": "node not found"}
-    except subprocess.TimeoutExpired:
-        return {"error": f"timed out after {timeout}s"}
-    except (json.JSONDecodeError, OSError) as e:
-        return {"error": str(e)}
+        from . import _call_bridge, PROJECT_ROOT
+        return _call_bridge, PROJECT_ROOT
+    except (ImportError, ValueError):
+        pass
+
+    # Fallback: find any module in sys.modules that has _call_bridge
+    import importlib
+    import sys
+    for mod_name, mod in sys.modules.items():
+        if mod is not None and hasattr(mod, '_call_bridge') and mod is not sys.modules.get(__name__):
+            return mod._call_bridge, mod.PROJECT_ROOT
+
+    raise ImportError(
+        "Cannot locate parent package with _call_bridge. "
+        "Ensure the hermes-agent plugin is loaded as a package."
+    )
+
+
+def _bridge_call(command, timeout=30):
+    """Call bridge.mjs via the plugin's shared helper (with stats tracking)."""
+    _call_bridge, _ = _get_parent()
+    return _call_bridge(command, timeout)
+
+
+def _get_project_root():
+    _, PROJECT_ROOT = _get_parent()
+    return PROJECT_ROOT
 
 
 def _run_strray(args: list, timeout: int = 30) -> str:
@@ -91,7 +89,7 @@ def strray_validate(args: dict, **kwargs) -> str:
         return json.dumps({"error": "No files specified for validation"})
 
     # Try bridge first (real framework integration)
-    bridge_result = _call_bridge({
+    bridge_result = _bridge_call({
         "command": "validate",
         "files": files,
         "operation": operation,
@@ -135,7 +133,7 @@ def strray_codex_check(args: dict, **kwargs) -> str:
     # Use 'is not None' to correctly handle empty string
     if code is not None:
         # Try bridge for real codex checking
-        bridge_result = _call_bridge({
+        bridge_result = _bridge_call({
             "command": "codex-check",
             "code": code,
             "focusAreas": focus_areas,
@@ -164,7 +162,7 @@ def strray_codex_check(args: dict, **kwargs) -> str:
         })
 
     # No code provided — check framework health
-    bridge_result = _call_bridge({"command": "health"}, timeout=10)
+    bridge_result = _bridge_call({"command": "health"}, timeout=10)
     if "error" not in bridge_result:
         return json.dumps({
             "status": "ok",
@@ -194,7 +192,7 @@ def strray_health(args: dict, **kwargs) -> str:
 
     Returns framework status, loaded components, version.
     """
-    bridge_result = _call_bridge({"command": "health"}, timeout=10)
+    bridge_result = _bridge_call({"command": "health"}, timeout=10)
     if "error" not in bridge_result:
         return json.dumps({
             "status": "ok",
@@ -223,7 +221,7 @@ def strray_hooks(args: dict, **kwargs) -> str:
     hooks = args.get("hooks", ["pre-commit", "post-commit", "pre-push", "post-push"])
 
     # Try bridge first
-    bridge_result = _call_bridge({
+    bridge_result = _bridge_call({
         "command": "hooks",
         "action": action,
         "hooks": hooks,
@@ -239,8 +237,8 @@ def strray_hooks(args: dict, **kwargs) -> str:
         })
 
     # Fallback: direct file-based hook management
-    git_hooks_dir = Path(PROJECT_ROOT) / ".git" / "hooks"
-    strray_hooks_dir = Path(PROJECT_ROOT) / "hooks"
+    git_hooks_dir = Path(_get_project_root()) / ".git" / "hooks"
+    strray_hooks_dir = Path(_get_project_root()) / "hooks"
 
     if not git_hooks_dir.exists():
         return json.dumps({"error": "Not a git repository", "via": "fallback"})

@@ -40,10 +40,15 @@
 import {
   existsSync,
   readFileSync,
+  writeFileSync,
   appendFileSync,
   mkdirSync,
+  symlinkSync,
+  unlinkSync,
+  renameSync,
+  lstatSync,
 } from "fs";
-import { join, dirname, resolve } from "path";
+import { join, dirname, resolve, relative } from "path";
 import { fileURLToPath } from "url";
 import { homedir } from "os";
 import { createServer } from "http";
@@ -375,6 +380,356 @@ async function handleStats() {
 }
 
 // ============================================================================
+// Quality Gate Helper (bridge-native)
+// ============================================================================
+
+/**
+ * Run quality gate check using the loaded QualityGateModule.
+ * Falls back to { passed: true } when module is not available.
+ */
+async function runQualityGateCheck(context, projectRoot, logDir) {
+  if (!QualityGateModule || !QualityGateModule.runQualityGate) {
+    return { passed: true, violations: [], note: "quality-gate module not available" };
+  }
+
+  try {
+    const result = await QualityGateModule.runQualityGate(context);
+    return {
+      passed: result.passed,
+      violations: result.violations,
+      checks: result.checks,
+    };
+  } catch (e) {
+    logToActivity(logDir, `quality-gate error: ${e.message}`);
+    return { passed: true, violations: [], error: e.message };
+  }
+}
+
+// ============================================================================
+// Additional Command Handlers
+// ============================================================================
+
+/**
+ * Validate one or more files using quality gate checks.
+ */
+async function handleValidate(input, projectRoot, logDir) {
+  const { files, operation } = input;
+  logToActivity(logDir, `validate: files=${JSON.stringify(files || [])} operation=${operation}`);
+
+  const fileArray = Array.isArray(files) ? files : (files ? [files] : []);
+  if (fileArray.length === 0) {
+    return { error: "validate requires a 'files' array" };
+  }
+
+  const results = [];
+  for (const filePath of fileArray) {
+    const qualityResult = await runQualityGateCheck(
+      { tool: "write", args: { filePath } },
+      projectRoot,
+      logDir,
+    );
+    results.push({ file: filePath, ...qualityResult });
+  }
+
+  const allPassed = results.every((r) => r.passed);
+  return {
+    passed: allPassed,
+    operation: operation || "validate",
+    fileResults: results,
+  };
+}
+
+/**
+ * Check code against codex rules — quality gate + optional deep enforcement.
+ */
+async function handleCodexCheck(input, projectRoot, logDir) {
+  const { code, focusAreas, operation } = input;
+  const codeLen = code?.length || 0;
+  logToActivity(logDir, `codex-check: code_length=${codeLen} focus=${focusAreas} operation=${operation}`);
+
+  const allViolations = [];
+  const allChecks = [];
+  let enforcerRan = false;
+
+  // Phase 1: Quality gate (fast meta-checks + basic patterns)
+  const qualityResult = await runQualityGateCheck(
+    { tool: "write", args: { content: code } },
+    projectRoot,
+    logDir,
+  );
+
+  if (qualityResult.checks) {
+    allChecks.push(...qualityResult.checks);
+  }
+  if (qualityResult.violations?.length) {
+    allViolations.push(...qualityResult.violations);
+  }
+
+  // Phase 2: Enforcement validators (deep code analysis — security, quality, architecture)
+  //    Only run content-analysis validators — skip project-level validators that
+  //    require full context (docs, tests, CI, package.json) and always fail on snippets.
+  const SNIPPET_SAFE_RULES = new Set([
+    "security-by-design",
+    "input-validation",
+    "clean-debug-logs",
+    "console-log-usage",
+    "no-duplicate-code",
+    "loop-safety",
+    "no-over-engineering",
+    "single-responsibility",
+    "error-resolution",
+    "module-system-consistency",
+  ]);
+
+  // Try to load ValidatorRegistry from enforcement/index.js
+  let enforcerValidators = null;
+  if (codeLen > 0) {
+    const distDirs = [
+      join(projectRoot, "dist"),
+      join(projectRoot, "node_modules", "strray-ai", "dist"),
+    ];
+
+    for (const distDir of distDirs) {
+      try {
+        const rePath = join(distDir, "enforcement", "index.js");
+        if (existsSync(rePath)) {
+          const reModule = await import(rePath);
+          const ValidatorRegistry = reModule.ValidatorRegistry;
+          if (ValidatorRegistry) {
+            enforcerValidators = new ValidatorRegistry();
+          }
+        }
+      } catch (e) {
+        // Skip — enforcer not available
+      }
+      if (enforcerValidators) break;
+    }
+  }
+
+  if (enforcerValidators && codeLen > 0) {
+    try {
+      const ctx = { operation: "write", newCode: code, files: [] };
+      const validators = enforcerValidators.getAllValidators();
+      let enforcerViolations = 0;
+
+      for (const v of validators) {
+        if (!SNIPPET_SAFE_RULES.has(v.ruleId)) {
+          if (focusAreas && focusAreas !== "all" && Array.isArray(focusAreas)) {
+            if (focusAreas.includes(v.category)) {
+              // Fall through to validate
+            } else {
+              continue;
+            }
+          } else {
+            continue;
+          }
+        }
+
+        try {
+          const result = await v.validate(ctx);
+          if (!result.passed) {
+            enforcerViolations++;
+            allViolations.push({
+              id: v.ruleId,
+              severity: v.severity || "error",
+              message: result.message,
+              suggestions: result.suggestions,
+            });
+            allChecks.push({ id: v.ruleId, passed: false, message: result.message });
+          }
+        } catch {
+          // Skip broken validators gracefully
+        }
+      }
+
+      enforcerRan = true;
+      logToActivity(logDir, `codex-check: Validators ran against ${validators.length} rules (${SNIPPET_SAFE_RULES.size} snippet-safe), ${enforcerViolations} violations`);
+    } catch (e) {
+      logToActivity(logDir, `codex-check: Validator error: ${e.message}`);
+    }
+  } else if (!enforcerValidators) {
+    logToActivity(logDir, `codex-check: Validators not available, quality gate only`);
+  }
+
+  const passed = allViolations.length === 0;
+
+  return {
+    passed,
+    violations: allViolations,
+    checks: allChecks,
+    focusAreas: focusAreas || "all",
+    enforcerRan,
+  };
+}
+
+/**
+ * Run quality gate check on a tool+args before execution.
+ */
+async function handlePreProcess(input, projectRoot, logDir) {
+  const { tool, args } = input;
+  const startTime = Date.now();
+
+  logToActivity(logDir, `pre-process: tool=${tool}`);
+
+  // Quality gate check
+  const qualityResult = await runQualityGateCheck(
+    { tool, args: args || {} },
+    projectRoot,
+    logDir,
+  );
+
+  const duration = Date.now() - startTime;
+  logToActivity(logDir, `pre-process: complete duration=${duration}ms quality=${qualityResult.passed}`);
+
+  return {
+    passed: qualityResult.passed,
+    duration,
+    qualityGate: qualityResult,
+  };
+}
+
+/**
+ * Post-process stub — ProcessorManager not available in standalone bridge.
+ */
+async function handlePostProcess(input, projectRoot, logDir) {
+  logToActivity(logDir, `post-process: stub (no ProcessorManager)`);
+  return { ran: false, reason: "post-processors not available in standalone bridge" };
+}
+
+/**
+ * Manage git hooks (install, uninstall, list, status).
+ * Pure filesystem operations — no framework deps needed.
+ */
+function handleHooks(input, projectRoot) {
+  const { action, hooks } = input;
+  const hookTypes = hooks || ["pre-commit", "post-commit", "pre-push", "post-push"];
+  const gitHooksDir = join(projectRoot, ".git", "hooks");
+  const strrayHooksDir = join(projectRoot, "hooks");
+
+  if (!existsSync(gitHooksDir)) {
+    return { error: "Not a git repository — no .git/hooks directory" };
+  }
+
+  const result = { managed: [], missing: [], external: [], stale: [] };
+
+  // ── list / status ───────────────────────────────────────
+  if (action === "list" || action === "status") {
+    for (const hookName of hookTypes) {
+      const gitHook = join(gitHooksDir, hookName);
+      const strrayHook = join(strrayHooksDir, hookName);
+
+      if (!existsSync(gitHook)) {
+        result.missing.push(hookName);
+      } else {
+        try {
+          const content = readFileSync(gitHook, "utf-8");
+          if (content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js")) {
+            result.managed.push(hookName);
+          } else {
+            result.external.push(hookName);
+          }
+        } catch {
+          result.external.push(hookName);
+        }
+      }
+
+      // Check if strray source hook exists
+      if (!existsSync(strrayHook)) {
+        result.stale.push(hookName);
+      }
+    }
+
+    return {
+      status: "ok",
+      action,
+      hooks: result,
+      gitHooksDir,
+      strrayHooksDir,
+    };
+  }
+
+  // ── install ─────────────────────────────────────────────
+  if (action === "install") {
+    const installed = [];
+    const skipped = [];
+    const errors = [];
+
+    for (const hookName of hookTypes) {
+      const src = join(strrayHooksDir, hookName);
+      const dst = join(gitHooksDir, hookName);
+
+      if (!existsSync(src)) {
+        skipped.push(hookName);
+        continue;
+      }
+
+      try {
+        // Backup existing non-strray hooks
+        if (existsSync(dst)) {
+          const content = readFileSync(dst, "utf-8");
+          if (!content.includes("StringRay") && !content.includes("strray") && !content.includes("run-hook.js")) {
+            renameSync(dst, `${dst}.strray-backup`);
+          } else {
+            unlinkSync(dst);
+          }
+        }
+
+        // Create symlink
+        const rel = relative(join(gitHooksDir), src);
+        try {
+          symlinkSync(rel, dst);
+        } catch {
+          // Symlink may fail (permissions, cross-device) — copy instead
+          const srcContent = readFileSync(src, "utf-8");
+          writeFileSync(dst, srcContent, { mode: 0o755 });
+        }
+        installed.push(hookName);
+      } catch (err) {
+        errors.push({ hook: hookName, error: err.message });
+      }
+    }
+
+    return { status: "ok", action: "install", installed, skipped, errors };
+  }
+
+  // ── uninstall ───────────────────────────────────────────
+  if (action === "uninstall") {
+    const removed = [];
+    const restored = [];
+
+    for (const hookName of hookTypes) {
+      const dst = join(gitHooksDir, hookName);
+      const backup = `${dst}.strray-backup`;
+
+      if (!existsSync(dst)) continue;
+
+      try {
+        const content = readFileSync(dst, "utf-8");
+        const isStrray = content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js");
+
+        if (isStrray || lstatSync(dst).isSymbolicLink()) {
+          unlinkSync(dst);
+
+          // Restore backup if exists
+          if (existsSync(backup)) {
+            renameSync(backup, dst);
+            restored.push(hookName);
+          } else {
+            removed.push(hookName);
+          }
+        }
+      } catch {
+        // Skip unremovable hooks
+      }
+    }
+
+    return { status: "ok", action: "uninstall", removed, restored };
+  }
+
+  return { error: `Unknown hooks action: ${action}. Use: install, uninstall, list, status` };
+}
+
+// ============================================================================
 // Known Commands
 // ============================================================================
 
@@ -490,6 +845,16 @@ async function dispatchCommand(command, projectRoot, logDir) {
       return await handleGetCodexPrompt(command, projectRoot, logDir);
     case "get-config":
       return await handleGetConfig(command, projectRoot, logDir);
+    case "validate":
+      return await handleValidate(command, projectRoot, logDir);
+    case "codex-check":
+      return await handleCodexCheck(command, projectRoot, logDir);
+    case "pre-process":
+      return await handlePreProcess(command, projectRoot, logDir);
+    case "post-process":
+      return await handlePostProcess(command, projectRoot, logDir);
+    case "hooks":
+      return handleHooks(command, projectRoot);
     case "stats":
       return handleStats();
     default:

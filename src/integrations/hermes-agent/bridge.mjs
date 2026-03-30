@@ -222,7 +222,7 @@ async function runQualityGateCheck(context, projectRoot, logDir) {
       checks: result.checks,
     };
   } catch (e) {
-    return { passed: true, violations: [], error: e.message };
+    return { passed: false, violations: [{ id: "quality-gate-error", severity: "error", message: `Quality gate failed: ${e.message}` }], error: e.message };
   }
 }
 
