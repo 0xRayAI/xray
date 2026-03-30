@@ -11,6 +11,8 @@
  */
 
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { resolveCodexPath } from "../../core/config-paths.js";
+import { existsSync } from "fs";
 import {
   BaseLoader,
 } from "./base-loader.js";
@@ -40,9 +42,13 @@ export class CodexLoader extends BaseLoader {
 
   /**
    * Path to the codex.json file.
+   * Uses the standard config-paths resolver which checks .strray/, .opencode/strray/, etc.
    */
   private get codexPath(): string {
-    return this.resolvePath(".opencode/strray/codex.json");
+    const candidates = resolveCodexPath();
+    const found = candidates.find((p) => existsSync(p));
+    // Fallback to primary path even if not found yet
+    return found ?? candidates[0] ?? this.resolvePath(".opencode/strray/codex.json");
   }
 
   /**

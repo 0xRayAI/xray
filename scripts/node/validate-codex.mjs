@@ -129,6 +129,18 @@ if (isDevelopment) {
   } else {
     console.warn(".strray directory not found");
   }
+
+  // Check .opencode/strray directory
+  if (fs.existsSync(".opencode/strray")) {
+    console.log(".opencode/strray directory exists");
+    if (fs.existsSync(".opencode/strray/codex.json")) {
+      console.log("codex.json exists");
+    } else {
+      console.warn("codex.json not found in .opencode/strray");
+    }
+  } else {
+    console.warn(".opencode/strray directory not found");
+  }
 }
 
 console.log("All validation checks passed");
