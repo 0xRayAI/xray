@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.22] - 2026-03-30
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: decouple framework from OpenCode — fully headless mode (305d4df52)
+
+### 🐛 Bug Fixes
+- fix: init.sh dedup guard, plugin framework-logger dynamic import, delegation barrel exports (fdfe643f7)
+
+### 📦 Builds
+- build: consumer artifacts for v1.15.19 (c72b53279)
+
+### 🔧 Maintenance
+- chore: fix .strray from broken symlink to real dir (d382e7740)
+- chore: UVM bump to 1.15.21, fix .strray symlink to real dir (e3f363a1a)
+
+### 🔎 Other Changes
+- Merge pull request #17 from htafolla/fix/init-dedup-plugin-logger-delegation-exports (fe6b902d2)
+- Merge pull request #16 from htafolla/fix/opencode-decouple-headless (f7ba93b36)
+- merge: resolve version conflict — keep 1.15.20 (5de7c68c9)
+
+---
+
 ## [1.15.19] - 2026-03-29
 
 ### 🔄 Changes

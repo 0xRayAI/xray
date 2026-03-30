@@ -488,7 +488,7 @@ export class FeaturesConfigLoader {
    */
   private getDefaultConfig(): FeaturesConfig {
     return {
-      version: "1.15.18",
+      version: "1.15.21",
       description: "StringRay Framework - Unified Feature Configuration",
 
       token_optimization: {
