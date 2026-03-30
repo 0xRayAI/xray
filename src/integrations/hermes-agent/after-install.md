@@ -11,10 +11,7 @@
 | `strray_health` | Framework health check |
 | `strray_hooks` | Git hooks management (install, uninstall, list, status) |
 | `pre_tool_call` hook | Quality gates + nudges before every tool call |
-| `post_tool_call` hook | Post-processors + file tracking after every tool call |
-| `on_file_write` hook | File write tracking and logging |
-| `on_validation_result` hook | Validation outcome tracking |
-| `on_error` hook | Error logging and session tracking |
+| `post_tool_call` hook | Post-processors after every tool call |
 
 ## Git Hooks
 

@@ -1048,97 +1048,8 @@ class TestStrrayHooksSchema(unittest.TestCase):
         self.assertIn("git hooks", s["description"])
 
 
-class TestLifecycleHooks(unittest.TestCase):
-    """Tests for the new lifecycle hooks: on_file_write, on_validation_result, on_error."""
-
-    def setUp(self):
-        # Reset tracking lists
-        pi._modified_files = []
-        pi._validation_results = []
-        pi._errors = []
-
-    def test_on_file_write_logs(self):
-        with tempfile.TemporaryDirectory() as td:
-            log_dir = Path(td)
-            original = pi.LOG_DIR
-            pi.LOG_DIR = log_dir
-
-            pi._on_file_write("src/index.ts", "hello world", "write_file")
-
-            self.assertEqual(len(pi._modified_files), 1)
-            self.assertEqual(pi._modified_files[0]["path"], "src/index.ts")
-            self.assertEqual(pi._modified_files[0]["tool"], "write_file")
-
-            content = (log_dir / "activity.log").read_text()
-            self.assertIn("[file-write]", content)
-
-            pi.LOG_DIR = original
-
-    def test_on_file_write_empty_content(self):
-        pi._on_file_write("a.ts", "", "write_file")
-        self.assertEqual(len(pi._modified_files), 1)
-
-    def test_on_validation_result_passed(self):
-        with tempfile.TemporaryDirectory() as td:
-            log_dir = Path(td)
-            original = pi.LOG_DIR
-            pi.LOG_DIR = log_dir
-
-            pi._on_validation_result("strray_validate", True, [])
-
-            self.assertEqual(len(pi._validation_results), 1)
-            self.assertTrue(pi._validation_results[0]["passed"])
-
-            content = (log_dir / "activity.log").read_text()
-            self.assertIn("[validation]", content)
-
-            pi.LOG_DIR = original
-
-    def test_on_validation_result_failed(self):
-        pi._on_validation_result("strray_codex_check", False, ["console.log found"])
-        self.assertFalse(pi._validation_results[0]["passed"])
-        self.assertEqual(pi._validation_results[0]["violation_count"], 1)
-        self.assertEqual(len(pi._validation_results[0]["violations"]), 1)
-
-    def test_on_validation_result_truncates_violations(self):
-        many = [f"violation-{i}" for i in range(20)]
-        pi._on_validation_result("test", False, many)
-        # Should keep only first 5
-        self.assertEqual(len(pi._validation_results[0]["violations"]), 5)
-
-    def test_on_error_logs(self):
-        with tempfile.TemporaryDirectory() as td:
-            log_dir = Path(td)
-            original = pi.LOG_DIR
-            pi.LOG_DIR = log_dir
-
-            pi._on_error("write_file", "disk full", {"path": "a.ts"})
-
-            self.assertEqual(len(pi._errors), 1)
-            self.assertEqual(pi._errors[0]["tool"], "write_file")
-
-            content = (log_dir / "activity.log").read_text()
-            self.assertIn("[error]", content)
-
-            pi.LOG_DIR = original
-
-    def test_on_error_increments_stats(self):
-        initial = pi._session_stats["bridge_errors"]
-        pi._on_error("terminal", "timeout", None)
-        self.assertEqual(pi._session_stats["bridge_errors"], initial + 1)
-
-    def test_on_error_truncates_long_error(self):
-        long_error = "x" * 500
-        pi._on_error("tool", long_error, {})
-        self.assertLessEqual(len(pi._errors[0]["error"]), 200)
-
-    def test_on_error_no_args(self):
-        pi._on_error("tool", "crash", None)
-        self.assertEqual(pi._errors[0]["args_keys"], [])
-
-
 class TestRegisterIntegrationV2_1(unittest.TestCase):
-    """Test that register() wires all 4 tools and 5 hooks in v2.1."""
+    """Test that register() wires all 4 tools and 2 hooks in v2.2."""
 
     def test_wires_four_tools(self):
         ctx = MagicMock()
@@ -1161,33 +1072,27 @@ class TestRegisterIntegrationV2_1(unittest.TestCase):
         hm = {c[1]["name"]: c[1]["handler"] for c in ctx.register_tool.call_args_list}
         self.assertIs(hm["strray_hooks"], tools_mod.strray_hooks)
 
-    def test_registers_five_hooks(self):
+    def test_registers_two_hooks(self):
         ctx = MagicMock()
         pi.register(ctx)
         hook_names = [c[0][0] for c in ctx.register_hook.call_args_list]
         self.assertIn("pre_tool_call", hook_names)
         self.assertIn("post_tool_call", hook_names)
-        self.assertIn("on_file_write", hook_names)
-        self.assertIn("on_validation_result", hook_names)
-        self.assertIn("on_error", hook_names)
 
-    def test_survives_missing_lifecycle_hooks(self):
-        """New hooks should fail gracefully if not supported."""
+    def test_survives_missing_session_hook(self):
+        """Session hook should fail gracefully if not supported."""
         ctx = MagicMock()
-        # All 5 hook registrations: pre_tool_call, post_tool_call, on_session_start, on_file_write, on_validation_result, on_error
-        # Let the 3 new ones raise
         def side_effect(*args):
             raise AttributeError("not available")
-        ctx.register_hook.side_effect = [None, None, None, side_effect, side_effect, side_effect]
+        ctx.register_hook.side_effect = [None, None, side_effect]
         pi.register(ctx)  # should not raise
 
-    def test_v2_1_log_message(self):
+    def test_v2_2_log_message(self):
         ctx = MagicMock()
         with self.assertLogs("strray-hermes", level="INFO") as cm:
             pi.register(ctx)
         self.assertTrue(any("v2.2" in m for m in cm.output))
         self.assertTrue(any("4 tools" in m for m in cm.output))
-        self.assertTrue(any("5 hooks" in m for m in cm.output))
 
 
 if __name__ == "__main__":
