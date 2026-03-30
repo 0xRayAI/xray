@@ -235,7 +235,7 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
   const logger = new BridgeLogger(logDir);
 
   try {
-    const stateDir = join(projectRoot, ".opencode", "state");
+    const stateDir = join(projectRoot, ".strray", "state");
     const stateManager = new StrRayStateManager(stateDir);
     const processorManager = new ProcessorManager(stateManager);
 
