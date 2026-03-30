@@ -16,6 +16,30 @@ import {
 import { StringRayContextLoader } from "../../core/context-loader.js";
 import { StringRayStateManager } from "../../state/state-manager.js";
 
+// Mock the orchestrator module so dynamic import() in boot-orchestrator succeeds
+vi.mock("../../core/orchestrator.js", () => ({
+  strRayOrchestrator: { initialized: true },
+}));
+
+// Mock the context loader to provide codex for enforcement
+vi.mock("../../core/context-loader.js", async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    StringRayContextLoader: {
+      ...actual.StringRayContextLoader,
+      getInstance: () => ({
+        loadCodexContext: vi.fn().mockResolvedValue({
+          success: true,
+          context: { terms: new Map(), version: "1.0.0" },
+          warnings: [],
+        }),
+        clearCache: vi.fn(),
+      }),
+    },
+  };
+});
+
 describe("BootOrchestrator", () => {
   let orchestrator: BootOrchestrator;
   let mockContextLoader: StringRayContextLoader;

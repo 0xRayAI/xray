@@ -11,6 +11,7 @@ import { execSync } from "child_process";
 import { join, resolve } from "path";
 
 import { readFileSync, existsSync } from "fs";
+import { getConfigDir } from "../core/config-paths.js";
 
 // Get package root relative to this script location
 const packageRoot = resolve(join(new URL(".", import.meta.url).pathname, "..", ".."));
@@ -572,14 +573,18 @@ program
         console.log("✅ StringRay package installed");
       }
 
-      // Check configuration - check for opencode.json (OpenCode standard)
-      const opencodeConfigPath = path.join(process.cwd(), "opencode.json");
-      const configExists = fs.existsSync(opencodeConfigPath);
-      if (!configExists) {
-        issues.push("opencode configuration missing");
-        fixes.push("Run: npx strray-ai fix");
-      } else {
+      // Check configuration - check for opencode.json or .strray/ (headless mode)
+      const cwd = process.cwd();
+      const opencodeConfigPath = path.join(cwd, "opencode.json");
+      const strrayDir = getConfigDir(cwd);
+      const opencodeExists = fs.existsSync(opencodeConfigPath);
+      const strrayDirExists = fs.existsSync(strrayDir);
+      if (opencodeExists) {
         console.log("✅ opencode configuration found");
+      } else if (strrayDirExists) {
+        console.log("✅ .strray/ configuration directory found");
+      } else {
+        console.log("ℹ️  No opencode.json or .strray/ directory found (run: npx strray-ai fix to create)");
       }
 
       // Check for common issues

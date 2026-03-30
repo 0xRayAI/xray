@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { modelRouter } from "../core/model-router.js";
+import { resolveConfigPath } from "../core/config-paths.js";
 
 export interface TokenLimits {
   maxPromptTokens: number;
@@ -18,9 +19,9 @@ export class TokenManager {
   private config: TokenLimits & { contextPruning: ContextPruningConfig };
 
   constructor(
-    configPath: string = path.join(
+    configPath: string = resolveConfigPath("config.json") || path.join(
       process.cwd(),
-      ".opencode/strray",
+      ".strray",
       "config.json",
     ),
   ) {

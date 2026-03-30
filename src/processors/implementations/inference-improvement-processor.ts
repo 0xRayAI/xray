@@ -12,6 +12,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { getConfigDir } from "../../core/config-paths.js";
 
 interface InferenceWorkflowContext {
   timestamp: string;
@@ -42,8 +43,14 @@ export class InferenceImprovementProcessor extends PostProcessor {
 
   private readonly reflectionsDir = "docs/reflections";
   private readonly logsDir = "logs/framework";
-  private readonly reportsDir = ".opencode/strray/reports";
-  private readonly workflowDir = ".opencode/strray/inference";
+  private readonly reportsDir: string;
+  private readonly workflowDir: string;
+
+  constructor() {
+    super();
+    this.reportsDir = path.join(getConfigDir(), "reports");
+    this.workflowDir = path.join(getConfigDir(), "inference");
+  }
 
   protected async run(context: unknown): Promise<unknown> {
     const ctx = context as Record<string, unknown>;

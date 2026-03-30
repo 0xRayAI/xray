@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import { performance } from "perf_hooks";
 import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
+import { resolveProfilesDir } from "../core/config-paths.js";
 
 interface ProfileData {
   agentName: string;
@@ -34,9 +35,9 @@ export class AdvancedProfiler extends EventEmitter {
   private profilingEnabled: boolean = true;
   private profileStoragePath: string;
 
-  constructor(storagePath: string = "./.opencode/strray/profiles") {
+  constructor(storagePath: string | undefined = undefined) {
     super();
-    this.profileStoragePath = storagePath;
+    this.profileStoragePath = storagePath || resolveProfilesDir();
     this.ensureStorageDirectory();
     this.setupPeriodicReporting();
   }

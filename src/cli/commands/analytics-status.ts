@@ -8,6 +8,7 @@
 
 import { program } from "commander";
 import { ConsentManager } from "../../analytics/consent-manager.js";
+import { getConfigDir } from "../../core/config-paths.js";
 
 export const analyticsStatusCommand = program
   .command("analytics status")
@@ -44,10 +45,10 @@ export const analyticsStatusCommand = program
 
       if (options.verbose) {
         // Show configuration file location
-        const path = await import('path');
+        const configDir = getConfigDir();
         console.log(`\n📁 Configuration Files:`);
-        console.log(`  Consent Config: .opencode/consent.json`);
-        console.log(`  Submission Queue: .opencode/analytics/submission-queue.json`);
+        console.log(`  Consent Config: ${configDir}/consent.json`);
+        console.log(`  Submission Queue: ${configDir}/analytics/submission-queue.json`);
 
         // Show detailed information
         console.log(`\n📊 Detailed Information:`);

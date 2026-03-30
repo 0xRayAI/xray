@@ -4,6 +4,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import * as fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { resolveConfigPath } from "../core/config-paths.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -119,7 +120,7 @@ app.get("/", (req: any, res: any) => {
 
 // Add route for refactoring logs
 app.get("/logs", requireAuth, async (req: Request, res: Response) => {
-  const logPath = join(__dirname, "..", ".opencode", "REFACTORING_LOG.md");
+  const logPath = resolveConfigPath("REFACTORING_LOG.md") || join(__dirname, "..", ".strray", "REFACTORING_LOG.md");
   // Server debug logging - remove for production
 
   try {

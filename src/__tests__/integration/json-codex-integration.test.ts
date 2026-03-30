@@ -79,6 +79,8 @@ describe("JSON Codex Integration", () => {
   beforeEach(() => {
     contextLoader = StringRayContextLoader.getInstance();
     contextLoader.clearCache(); // Clear cached context
+    // Override codexFilePaths to use simple relative paths for mocking
+    (contextLoader as any).codexFilePaths = [".strray/codex.json"];
     vi.clearAllMocks();
   });
 
@@ -139,21 +141,22 @@ describe("JSON Codex Integration", () => {
 
   describe("Context Loader Integration", () => {
     test("should load JSON codex through context loader", async () => {
-      // Mock fs to return our test codex
-      const mockFs = {
-        existsSync: vi.fn(() => true),
-        readFileSync: vi.fn(() => validJsonCodex),
-      };
+      // Mock fs at the module level by replacing codexFilePaths with a known path
+      // and stubbing the context loader's file reading via a temp file
+      const os = await import("os");
+      const fsModule = await import("fs");
+      const pathModule = await import("path");
 
-      // Temporarily replace fs methods
-      const originalExistsSync = require("fs").existsSync;
-      const originalReadFileSync = require("fs").readFileSync;
-
-      require("fs").existsSync = mockFs.existsSync;
-      require("fs").readFileSync = mockFs.readFileSync;
+      // Create a temp codex file
+      const tmpDir = os.tmpdir();
+      const tmpFile = pathModule.join(tmpDir, `test-codex-${Date.now()}.json`);
+      fsModule.writeFileSync(tmpFile, validJsonCodex);
 
       try {
-        const result = await contextLoader.loadCodexContext(testProjectRoot);
+        // Point codexFilePaths to the temp file
+        (contextLoader as any).codexFilePaths = [tmpFile];
+
+        const result = await contextLoader.loadCodexContext("/");
 
         expect(result.success).toBe(true);
         expect(result.context).toBeDefined();
@@ -165,9 +168,8 @@ describe("JSON Codex Integration", () => {
         // Verify version is present and is a valid semver string
         expect(result.context!.version).toMatch(/^\d+\.\d+\.\d+$/);
       } finally {
-        // Restore original fs methods
-        require("fs").existsSync = originalExistsSync;
-        require("fs").readFileSync = originalReadFileSync;
+        // Clean up
+        fsModule.unlinkSync(tmpFile);
       }
     });
 

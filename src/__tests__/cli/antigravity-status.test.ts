@@ -23,7 +23,7 @@ describe("Antigravity Status Command", () => {
       const statusPath = path.join(PROJECT_ROOT, "src/cli/commands/antigravity-status.ts");
       const content = fs.readFileSync(statusPath, "utf-8");
       expect(content).toContain("skills");
-      expect(content).toContain(".opencode");
+      expect(content).toContain("config-paths");
     });
   });
 

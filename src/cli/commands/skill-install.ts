@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync } from "fs";
 import { join, basename, dirname } from "path";
 import { execSync } from "child_process";
+import { getConfigDir } from "../../core/config-paths.js";
 
 interface RegistrySource {
   name: string;
@@ -324,7 +325,7 @@ export async function skillInstallCommand(
   options?: { force?: boolean; path?: string },
 ): Promise<void> {
   const registry = getRegistry();
-  const skillsDir = join(process.cwd(), ".opencode", "skills");
+  const skillsDir = join(getConfigDir(), "skills");
 
   if (!sourceArg) {
     console.log("\n  Recommended Starter Packs");

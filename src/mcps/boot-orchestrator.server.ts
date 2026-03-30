@@ -15,6 +15,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { resolveLogDir, resolveStateDir } from "../core/config-paths.js";
 
 class StrRayBootOrchestratorServer {
   private server: Server;
@@ -611,7 +612,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
 
   private async initLogging(): Promise<any> {
     // Initialize logging system
-    const logDir = ".opencode/logs";
+    const logDir = resolveLogDir();
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
@@ -625,7 +626,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
 
   private async initStateManagement(): Promise<any> {
     // Validate state management setup
-    const stateDir = ".opencode/state";
+    const stateDir = resolveStateDir();
     if (!fs.existsSync(stateDir)) {
       fs.mkdirSync(stateDir, { recursive: true });
     }

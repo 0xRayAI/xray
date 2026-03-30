@@ -417,6 +417,20 @@ export class AgentConfigValidator {
   }> {
     const results: Array<{ file: string; result: ValidationResult }> = [];
 
+    // Gracefully handle missing agent config directory (headless/no .opencode/ mode)
+    if (!fs.existsSync(agentConfigDir)) {
+      frameworkLogger.log(
+        "agent-config-validator",
+        `Agent config directory not found, skipping validation: ${agentConfigDir}`,
+        "warning",
+        {},
+      );
+      return {
+        results: [],
+        summary: { total: 0, valid: 0, invalid: 0 },
+      };
+    }
+
     try {
       const files = fs.readdirSync(agentConfigDir);
       const configFiles = files.filter(

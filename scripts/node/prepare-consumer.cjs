@@ -127,6 +127,42 @@ const filesToUpdate = [
   "opencode.json"
 ];
 
+// Sync .strray/ from .opencode/strray/ so headless consumers get framework defaults
+function syncStrrayDir() {
+  console.log("🔧 Syncing .strray/ from .opencode/strray/...");
+  const strrayDir = path.join(packageRoot, ".strray");
+  const sourceDir = path.join(packageRoot, ".opencode", "strray");
+
+  if (!fs.existsSync(sourceDir)) {
+    console.warn("⚠️ .opencode/strray/ not found — skipping .strray/ sync");
+    return;
+  }
+
+  fs.mkdirSync(strrayDir, { recursive: true });
+
+  const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+  let synced = 0;
+  for (const entry of entries) {
+    if (entry.isFile()) {
+      const src = path.join(sourceDir, entry.name);
+      const dst = path.join(strrayDir, entry.name);
+      fs.copyFileSync(src, dst);
+      synced++;
+    }
+  }
+
+  // Also copy routing-mappings.json if it exists in strray/
+  const routingMappings = path.join(packageRoot, "strray", "routing-mappings.json");
+  if (fs.existsSync(routingMappings)) {
+    fs.copyFileSync(routingMappings, path.join(strrayDir, "routing-mappings.json"));
+    synced++;
+  }
+
+  console.log(`✅ Synced ${synced} files → .strray/`);
+}
+
+syncStrrayDir();
+
 console.log("🔧 StrRay Consumer Preparation: Processing configuration files...");
 filesToUpdate.forEach(filePath => {
   const fullPath = path.join(packageRoot, filePath);

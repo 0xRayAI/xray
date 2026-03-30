@@ -1,0 +1,74 @@
+[
+  {
+    "keywords": ["security", "vulnerability", "exploit", "xss", "sqli", "injection", "auth", "authentication", "authorization", "hardening", "csrf", "encryption"],
+    "skill": "security",
+    "agent": "security-auditor",
+    "confidence": 0.95
+  },
+  {
+    "keywords": ["review", "code-review", "pr-review", "pull-request", "cr", "feedback", "critique"],
+    "skill": "review",
+    "agent": "code-reviewer",
+    "confidence": 0.85
+  },
+  {
+    "keywords": ["design", "architect", "architecture", "system-design", "api-design", "schema", "structure", "pattern"],
+    "skill": "design",
+    "agent": "architect",
+    "confidence": 0.9
+  },
+  {
+    "keywords": ["debug", "bug", "error", "fix", "issue", "crash", "broken", "regression", "traceback", "stacktrace", "segfault"],
+    "skill": "debugging",
+    "agent": "bug-triage-specialist",
+    "confidence": 0.85
+  },
+  {
+    "keywords": ["test", "testing", "spec", "unit-test", "integration-test", "e2e", "coverage", "jest", "vitest", "mocha", "tdd", "assertion"],
+    "skill": "testing",
+    "agent": "testing-lead",
+    "confidence": 0.85
+  },
+  {
+    "keywords": ["refactor", "refactoring", "cleanup", "simplify", "restructure", "optimize", "tech-debt", "reorganize"],
+    "skill": "refactoring",
+    "agent": "refactorer",
+    "confidence": 0.85
+  },
+  {
+    "keywords": ["enforce", "validate", "codex", "compliance", "lint", "standard", "policy", "rule"],
+    "skill": "validation",
+    "agent": "enforcer",
+    "confidence": 0.8
+  },
+  {
+    "keywords": ["orchestrate", "coordinate", "multi-agent", "workflow", "pipeline", "sequence", "plan", "orchestrator"],
+    "skill": "coordination",
+    "agent": "orchestrator",
+    "confidence": 0.9
+  },
+  {
+    "keywords": ["database", "db", "schema", "migration", "sql", "query", "index", "postgres", "mysql", "sqlite", "prisma", "typeorm", "knex", "seed"],
+    "skill": "database",
+    "agent": "architect",
+    "confidence": 0.8
+  },
+  {
+    "keywords": ["deploy", "deployment", "release", "ship", "ci-cd", "docker", "kubernetes", "k8s", "terraform", "infra", "infrastructure", "pipeline"],
+    "skill": "devops",
+    "agent": "architect",
+    "confidence": 0.8
+  },
+  {
+    "keywords": ["performance", "latency", "throughput", "memory", "profiling", "benchmark", "slow", "bottleneck", "optimize"],
+    "skill": "performance",
+    "agent": "architect",
+    "confidence": 0.8
+  },
+  {
+    "keywords": ["docs", "documentation", "readme", "comment", "guide", "reference", "apidoc", "jsdoc"],
+    "skill": "documentation",
+    "agent": "architect",
+    "confidence": 0.75
+  }
+]

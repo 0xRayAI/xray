@@ -166,19 +166,29 @@ function spawnOpenCode(agentName: string, prompt: string): Promise<unknown> {
 
   return new Promise((resolve, reject) => {
     // Spawn opencode with stdin for prompt - more reliable
-    const opencode = spawn(
-      "opencode",
-      ["run", "-", "--agent", agentName, "-m", "opencode/big-pickle"],
-      {
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          NODE_ENV: "production",
-          OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json",
+    let opencode: ReturnType<typeof spawn>;
+    try {
+      opencode = spawn(
+        "opencode",
+        ["run", "-", "--agent", agentName, "-m", "opencode/big-pickle"],
+        {
+          cwd: process.cwd(),
+          env: {
+            ...process.env,
+            NODE_ENV: "production",
+            OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json",
+          },
+          stdio: ["pipe", "pipe", "pipe"],
         },
-        stdio: ["pipe", "pipe", "pipe"],
-      },
-    );
+      );
+    } catch (error) {
+      const msg =
+        error instanceof Error && "code" in error && (error as any).code === "ENOENT"
+          ? "OpenCode CLI not found. Please install opencode to use this command."
+          : `Failed to spawn opencode: ${error instanceof Error ? error.message : String(error)}`;
+      reject(new Error(msg));
+      return;
+    }
 
     // Write prompt to stdin
     opencode.stdin?.write(prompt);
@@ -187,13 +197,17 @@ function spawnOpenCode(agentName: string, prompt: string): Promise<unknown> {
     let stdout = "";
     let stderr = "";
 
-    opencode.stdout.on("data", (data) => {
-      stdout += data.toString();
-    });
+    if (opencode.stdout) {
+      opencode.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+    }
 
-    opencode.stderr.on("data", (data) => {
-      stderr += data.toString();
-    });
+    if (opencode.stderr) {
+      opencode.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+    }
 
     // Graceful cleanup function
     const cleanup = (force = false) => {
