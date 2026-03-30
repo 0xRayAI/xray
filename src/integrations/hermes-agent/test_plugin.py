@@ -120,7 +120,7 @@ class TestBridgeHelper(unittest.TestCase):
     def test_successful_bridge_call(self):
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=0, stdout='{"status":"ok"}', stderr="")
-            r = tools_mod._call_bridge({"command": "health"})
+            r = tools_mod._bridge_call({"command": "health"})
             self.assertEqual(r["status"], "ok")
             # Should call node with bridge path
             self.assertIn("node", m.call_args[0][0])
@@ -129,24 +129,24 @@ class TestBridgeHelper(unittest.TestCase):
     def test_bridge_returns_error(self):
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=1, stdout="", stderr="module not found")
-            r = tools_mod._call_bridge({"command": "health"})
+            r = tools_mod._bridge_call({"command": "health"})
             self.assertIn("error", r)
 
     def test_bridge_node_not_found(self):
         with patch("subprocess.run", side_effect=FileNotFoundError):
-            r = tools_mod._call_bridge({"command": "health"})
+            r = tools_mod._bridge_call({"command": "health"})
             self.assertEqual(r["error"], "node not found")
 
     def test_bridge_timeout(self):
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("c", 10)):
-            r = tools_mod._call_bridge({"command": "health"}, timeout=10)
+            r = tools_mod._bridge_call({"command": "health"}, timeout=10)
             self.assertIn("timed out", r["error"])
 
 
 class TestStrrayHealth(unittest.TestCase):
     def test_health_via_bridge(self):
         """v2: health uses bridge first."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"status": "ok", "framework": "loaded", "version": "1.15.0", "components": {}}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"status": "ok", "framework": "loaded", "version": "1.15.0", "components": {}}) as m:
             r = json.loads(tools_mod.strray_health({}))
             self.assertEqual(r["status"], "ok")
             self.assertEqual(r["via"], "bridge")
@@ -154,13 +154,13 @@ class TestStrrayHealth(unittest.TestCase):
 
     def test_health_fallback_to_cli(self):
         """v2: falls back to CLI when bridge fails."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"error": "node not found"}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
             with patch.object(tools_mod, "_run_strray", return_value='{"status":"ok","output":"healthy"}') as cli:
                 r = json.loads(tools_mod.strray_health({}))
                 cli.assert_called_once()
 
     def test_health_ignores_extra_args(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"status": "ok", "framework": "loaded", "version": "1.0", "components": {}}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"status": "ok", "framework": "loaded", "version": "1.0", "components": {}}):
             r = json.loads(tools_mod.strray_health({"x": 1}))
             self.assertEqual(r["status"], "ok")
 
@@ -168,7 +168,7 @@ class TestStrrayHealth(unittest.TestCase):
 class TestStrrayValidate(unittest.TestCase):
     def test_with_files_via_bridge(self):
         """v2: validate uses bridge first."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "fileResults": []}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "fileResults": []}) as m:
             r = json.loads(tools_mod.strray_validate({"files": ["a.ts", "b.ts"], "operation": "commit"}))
             self.assertEqual(r["status"], "passed")
             self.assertEqual(r["files_checked"], 2)
@@ -176,13 +176,13 @@ class TestStrrayValidate(unittest.TestCase):
             m.assert_called_once()
 
     def test_bridge_violations(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": False, "fileResults": [{"file": "a.ts", "passed": False, "violations": ["tests-required"]}]}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": False, "fileResults": [{"file": "a.ts", "passed": False, "violations": ["tests-required"]}]}) as m:
             r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
             self.assertEqual(r["status"], "violations")
             self.assertEqual(r["file_results"][0]["violations"], ["tests-required"])
 
     def test_bridge_error_fallback_to_cli(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"error": "node not found"}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
             with patch.object(tools_mod, "_run_strray", return_value='{"status":"ok","output":"valid"}') as cli:
                 r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
                 self.assertEqual(r["via"], "cli")
@@ -197,12 +197,12 @@ class TestStrrayValidate(unittest.TestCase):
         self.assertIn("error", r)
 
     def test_default_operation(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "fileResults": []}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "fileResults": []}):
             r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
             self.assertEqual(r["operation"], "commit")
 
     def test_100_files(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "fileResults": []}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "fileResults": []}) as m:
             fs = [f"f{i}.ts" for i in range(100)]
             r = json.loads(tools_mod.strray_validate({"files": fs}))
             self.assertEqual(r["files_checked"], 100)
@@ -211,51 +211,51 @@ class TestStrrayValidate(unittest.TestCase):
 class TestStrrayCodexCheck(unittest.TestCase):
     def test_with_code_via_bridge(self):
         """v2: codex check uses bridge for real quality gate analysis."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "violations": [], "checks": []}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}) as m:
             r = json.loads(tools_mod.strray_codex_check({"code": "const x = null;", "operation": "create"}))
             self.assertEqual(r["status"], "passed")
             self.assertEqual(r["via"], "bridge")
             m.assert_called_once()
 
     def test_with_code_bridge_violations(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": False, "violations": ["console.log found"], "checks": []}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": False, "violations": ["console.log found"], "checks": []}):
             r = json.loads(tools_mod.strray_codex_check({"code": "console.log(x)", "operation": "create"}))
             self.assertEqual(r["status"], "violations")
             self.assertEqual(r["violations"], ["console.log found"])
 
     def test_with_focus_areas(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "violations": [], "checks": []}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}) as m:
             tools_mod.strray_codex_check({"code": "eval()", "operation": "modify", "focus_areas": ["security"]})
             self.assertEqual(m.call_args[0][0]["focusAreas"], ["security"])
 
     def test_empty_string_code_treated_as_code(self):
         """BUG FIX: empty string '' should still be treated as code (is not None)."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "violations": [], "checks": []}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}) as m:
             r = json.loads(tools_mod.strray_codex_check({"code": "", "operation": "create"}))
             self.assertEqual(r["status"], "passed")
             self.assertEqual(r["code_length"], 0)
 
     def test_no_code_bridge_health(self):
         """No code provided — bridge health check."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"framework": "loaded", "version": "1.15.0", "components": {}}) as m:
+        with patch.object(tools_mod, "_bridge_call", return_value={"framework": "loaded", "version": "1.15.0", "components": {}}) as m:
             r = json.loads(tools_mod.strray_codex_check({"operation": "refactor"}))
             self.assertEqual(r["status"], "ok")
             self.assertIn("Pass", r["note"])
 
     def test_no_code_bridge_error_fallback(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"error": "node not found"}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
             with patch.object(tools_mod, "_run_strray", return_value='{"status":"ok","output":"healthy"}') as cli:
                 r = json.loads(tools_mod.strray_codex_check({"operation": "create"}))
                 cli.assert_called_once()
 
     def test_default_operation(self):
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "violations": [], "checks": []}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}):
             r = json.loads(tools_mod.strray_codex_check({"code": "x"}))
             self.assertEqual(r["operation"], "create")
 
     def test_multiline_code(self):
         code = "function foo() {\n  return null;\n}\n"
-        with patch.object(tools_mod, "_call_bridge", return_value={"passed": True, "violations": [], "checks": []}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}):
             r = json.loads(tools_mod.strray_codex_check({"code": code, "operation": "create"}))
             self.assertEqual(r["code_length"], len(code))
 
@@ -610,7 +610,7 @@ class TestLiveBridge(unittest.TestCase):
         if not bridge_path.exists():
             self.skipTest("bridge.mjs not built yet")
 
-        r = tools_mod._call_bridge({"command": "health"}, timeout=10)
+        r = tools_mod._bridge_call({"command": "health"}, timeout=10)
         self.assertNotIn("error", r)
         self.assertIn("status", r)
 
@@ -619,7 +619,7 @@ class TestLiveBridge(unittest.TestCase):
         if not bridge_path.exists():
             self.skipTest("bridge.mjs not built yet")
 
-        r = tools_mod._call_bridge({"command": "stats"}, timeout=5)
+        r = tools_mod._bridge_call({"command": "stats"}, timeout=5)
         self.assertIn("frameworkReady", r)
 
     def test_bridge_quality_gate(self):
@@ -628,7 +628,7 @@ class TestLiveBridge(unittest.TestCase):
             self.skipTest("bridge.mjs not built yet")
 
         # Clean code should pass
-        r = tools_mod._call_bridge({
+        r = tools_mod._bridge_call({
             "command": "codex-check",
             "code": "const x: number = 42;",
         }, timeout=10)
@@ -641,7 +641,7 @@ class TestLiveBridge(unittest.TestCase):
             self.skipTest("bridge.mjs not built yet")
 
         # Code with console.log should fail
-        r = tools_mod._call_bridge({
+        r = tools_mod._bridge_call({
             "command": "codex-check",
             "code": "console.log('hello');",
         }, timeout=10)
@@ -727,16 +727,16 @@ class TestBridgeErrorPaths(unittest.TestCase):
     """Cover remaining bridge error branches in tools.py."""
 
     def test_bridge_json_decode_error(self):
-        """_call_bridge with non-JSON stdout returns error."""
+        """_bridge_call with non-JSON stdout returns error."""
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=0, stdout="not json", stderr="")
-            r = tools_mod._call_bridge({"command": "health"})
+            r = tools_mod._bridge_call({"command": "health"})
             self.assertIn("error", r)
 
     def test_bridge_os_error(self):
-        """_call_bridge with OSError during subprocess returns error."""
+        """_bridge_call with OSError during subprocess returns error."""
         with patch("subprocess.run", side_effect=OSError("broken pipe")):
-            r = tools_mod._call_bridge({"command": "health"})
+            r = tools_mod._bridge_call({"command": "health"})
             self.assertIn("error", r)
 
     def test_bridge_generic_exception_in_run_strray(self):
@@ -747,7 +747,7 @@ class TestBridgeErrorPaths(unittest.TestCase):
 
     def test_validate_cli_fallback_error(self):
         """strray_validate CLI fallback when CLI returns an error JSON."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"error": "bridge down"}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"error": "bridge down"}):
             with patch.object(tools_mod, "_run_strray", return_value='{"error": "validation failed"}'):
                 r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
                 # CLI error path returns raw result without "via" key
@@ -755,29 +755,30 @@ class TestBridgeErrorPaths(unittest.TestCase):
 
     def test_codex_check_static_fallback(self):
         """strray_codex_check with code but bridge down falls back to static analysis."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"error": "bridge down"}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"error": "bridge down"}):
             r = json.loads(tools_mod.strray_codex_check({"code": "console.log(1)", "operation": "create"}))
             self.assertEqual(r["via"], "static")
             self.assertIn("basic analysis", r["note"])
 
     def test_codex_check_cli_health_error(self):
         """strray_codex_check no-code path: bridge error + CLI also errors."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"error": "no node"}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"error": "no node"}):
             with patch.object(tools_mod, "_run_strray", return_value='{"error": "strray-ai not found"}'):
                 r = json.loads(tools_mod.strray_codex_check({"operation": "create"}))
                 self.assertIn("error", r)
 
 
-class TestFindProjectRoot(unittest.TestCase):
-    """Test the _find_project_root function in tools.py."""
+class TestGetProjectRoot(unittest.TestCase):
+    """Test the _get_project_root helper in tools.py."""
 
     def test_returns_cwd_when_no_package_json(self):
         """With no package.json in any ancestor, falls back to cwd."""
-        with patch.object(tools_mod.Path, "exists", return_value=False):
-            # _find_project_root is called at module level, so we call it directly
-            result = tools_mod._find_project_root.__wrapped__(tools_mod.PLUGIN_DIR) if hasattr(tools_mod._find_project_root, "__wrapped__") else None
-            # We can't easily override the module-level call, but we verify the function exists
-            self.assertTrue(callable(tools_mod._find_project_root))
+        # _get_project_root delegates to __init__.py's PROJECT_ROOT.
+        # We verify the function exists and is callable.
+        self.assertTrue(callable(tools_mod._get_project_root))
+        # Verify it returns a Path-like value
+        result = tools_mod._get_project_root()
+        self.assertIsNotNone(result)
 
 
 class TestPreToolCallBridgeErrors(unittest.TestCase):
@@ -793,7 +794,7 @@ class TestPreToolCallBridgeErrors(unittest.TestCase):
         """Bridge error during pre-process should not crash the hook."""
         pi._on_pre_tool_call("write_file", {"path": "a.ts"}, "t1")
         self.assertEqual(pi._session_stats["code_operations"], 1)
-        # Note: bridge_calls stat is inside the real _call_bridge,
+        # Note: bridge_calls stat is inside the real _bridge_call,
         # so mocking it doesn't increment the counter. Verify hook doesn't crash.
         mock_bridge.assert_called_once()
 
@@ -930,17 +931,17 @@ class TestBridgeHelperTimeoutDefault(unittest.TestCase):
     """Verify bridge timeout defaults."""
 
     def test_default_timeout(self):
-        """_call_bridge defaults to 30s timeout."""
+        """_bridge_call defaults to 30s timeout."""
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=0, stdout='{"ok":true}', stderr="")
-            tools_mod._call_bridge({"command": "health"})
+            tools_mod._bridge_call({"command": "health"})
             self.assertEqual(m.call_args[1]["timeout"], 30)
 
     def test_custom_timeout(self):
-        """_call_bridge respects custom timeout."""
+        """_bridge_call respects custom timeout."""
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=0, stdout='{\"ok\":true}', stderr="")
-            tools_mod._call_bridge({"command": "health"}, timeout=5)
+            tools_mod._bridge_call({"command": "health"}, timeout=5)
             self.assertEqual(m.call_args[1]["timeout"], 5)
 
 
@@ -949,7 +950,7 @@ class TestStrrayHooksTool(unittest.TestCase):
 
     def test_list_via_bridge(self):
         """list action uses bridge when available."""
-        with patch.object(tools_mod, "_call_bridge", return_value={
+        with patch.object(tools_mod, "_bridge_call", return_value={
             "status": "ok", "action": "list",
             "hooks": {"managed": ["pre-commit"], "missing": [], "external": [], "stale": []},
         }) as m:
@@ -963,7 +964,7 @@ class TestStrrayHooksTool(unittest.TestCase):
 
     def test_install_via_bridge(self):
         """install action uses bridge."""
-        with patch.object(tools_mod, "_call_bridge", return_value={
+        with patch.object(tools_mod, "_bridge_call", return_value={
             "status": "ok", "action": "install", "installed": ["pre-commit", "post-commit"],
             "skipped": [], "errors": [],
         }) as m:
@@ -973,7 +974,7 @@ class TestStrrayHooksTool(unittest.TestCase):
 
     def test_uninstall_via_bridge(self):
         """uninstall action uses bridge."""
-        with patch.object(tools_mod, "_call_bridge", return_value={
+        with patch.object(tools_mod, "_bridge_call", return_value={
             "status": "ok", "action": "uninstall", "removed": ["pre-commit"], "restored": [],
         }) as m:
             r = json.loads(tools_mod.strray_hooks({"action": "uninstall"}))
@@ -981,14 +982,14 @@ class TestStrrayHooksTool(unittest.TestCase):
 
     def test_bridge_error_fallback(self):
         """Falls back to file-based when bridge errors."""
-        with patch.object(tools_mod, "_call_bridge", return_value={"error": "node not found"}):
+        with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
             # Without a real git repo, should return error
             r = json.loads(tools_mod.strray_hooks({"action": "list"}))
             self.assertIn("via", r)
 
     def test_specific_hooks(self):
         """Can request specific hooks."""
-        with patch.object(tools_mod, "_call_bridge", return_value={
+        with patch.object(tools_mod, "_bridge_call", return_value={
             "status": "ok", "action": "list",
             "hooks": {"managed": [], "missing": ["pre-commit"], "external": [], "stale": []},
         }) as m:
@@ -998,7 +999,7 @@ class TestStrrayHooksTool(unittest.TestCase):
 
     def test_status_defaults_to_list(self):
         """status action works like list."""
-        with patch.object(tools_mod, "_call_bridge", return_value={
+        with patch.object(tools_mod, "_bridge_call", return_value={
             "status": "ok", "action": "status",
             "hooks": {"managed": [], "missing": [], "external": [], "stale": []},
         }) as m:
@@ -1008,7 +1009,7 @@ class TestStrrayHooksTool(unittest.TestCase):
 
     def test_default_action_is_list(self):
         """Missing action defaults to list."""
-        with patch.object(tools_mod, "_call_bridge", return_value={
+        with patch.object(tools_mod, "_bridge_call", return_value={
             "status": "ok", "action": "list",
             "hooks": {"managed": [], "missing": [], "external": [], "stale": []},
         }) as m:
