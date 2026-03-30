@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.37] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: plugin dynamic import path resolution breaks in Docker/container environments (#26) (518a67a0d)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.37 (7ca44e193)
+- chore: version sync artifacts for v1.15.36 (7c61f5232)
+
+---
+
 ## [1.15.36] - 2026-03-30
 
 ### 🔄 Changes
