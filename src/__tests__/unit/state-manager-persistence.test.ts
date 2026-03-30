@@ -1,28 +1,22 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { StringRayStateManager } from "../../state/state-manager.js";
+import * as fs from "fs";
+import * as path from "path";
 
 // Mock fs and path modules for testing
-const mockFs = {
+vi.mock("fs", () => ({
   existsSync: vi.fn(),
   mkdirSync: vi.fn(),
   readFileSync: vi.fn(),
   writeFileSync: vi.fn(),
   statSync: vi.fn(),
   unlinkSync: vi.fn(),
-};
+}));
 
-const mockPath = {
+vi.mock("path", () => ({
   dirname: vi.fn(),
   join: vi.fn(),
-};
-
-// Try a different approach - mock the imports directly in the test
-vi.mock("fs", () => mockFs);
-vi.mock("path", () => mockPath);
-
-// Override the dynamic imports to use our mocks
-vi.doMock("fs", () => mockFs);
-vi.doMock("path", () => mockPath);
+}));
 
 vi.mock("../framework-logger", () => ({
   frameworkLogger: {
@@ -40,10 +34,16 @@ async function waitForInit(manager: StringRayStateManager, timeout = 100): Promi
 
 describe("StringRayStateManager - Persistence Features", () => {
   let stateManager: StringRayStateManager;
+  let mockFs: any;
+  let mockPath: any;
 
   beforeEach(async () => {
     // Reset all mocks
     vi.clearAllMocks();
+
+    // Get references to mocked modules
+    mockFs = vi.mocked(fs);
+    mockPath = vi.mocked(path);
 
     // Default mock implementations
     mockFs.existsSync.mockReturnValue(false);

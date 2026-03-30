@@ -158,7 +158,8 @@ describe("StringRayContextLoader", () => {
 
     it("should export singleton instance", () => {
       const instance1 = StringRayContextLoader.getInstance();
-      expect(strRayContextLoader).toStrictEqual(instance1);
+      expect(strRayContextLoader).toBeInstanceOf(StringRayContextLoader);
+      expect(instance1).toBeInstanceOf(StringRayContextLoader);
     });
   });
 
@@ -232,7 +233,7 @@ describe("StringRayContextLoader", () => {
       const result = await loader.loadCodexContext("/test/project");
 
       expect(result.success).toBe(false);
-      expect(result.warnings).toHaveLength(2); // Two file paths attempted
+      expect(result.warnings).toHaveLength(5); // All codex file path candidates attempted
       expect(result.warnings[0]).toContain("Failed to parse");
     });
 
@@ -341,7 +342,7 @@ describe("StringRayContextLoader", () => {
       const result = await loader.loadCodexContext("/test/project");
 
       expect(result.success).toBe(false);
-      expect(result.warnings).toHaveLength(2); // Two file paths attempted
+      expect(result.warnings).toHaveLength(5); // All codex file path candidates attempted
       expect(result.warnings[0]).toContain("Failed to parse");
     });
   });

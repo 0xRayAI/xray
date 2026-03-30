@@ -5,6 +5,7 @@ export interface StateManager {
 }
 
 import { frameworkLogger } from "../core/framework-logger.js";
+import { resolveStateFilePath } from "../core/config-paths.js";
 
 export class StringRayStateManager implements StateManager {
   private store = new Map<string, unknown>();
@@ -16,7 +17,10 @@ export class StringRayStateManager implements StateManager {
 
   static readonly VERSION = "1.5.2";
 
-  constructor(persistencePath = ".opencode/state/state.json", persistenceEnabled = true) {
+  constructor(persistencePath: string | undefined = undefined, persistenceEnabled = true) {
+    if (!persistencePath) {
+      persistencePath = resolveStateFilePath();
+    }
     this.persistencePath = persistencePath;
     this.persistenceEnabled = persistenceEnabled;
     this.initializePersistence();

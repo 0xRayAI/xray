@@ -17,6 +17,7 @@ vi.mock("fs", () => ({
 // Mock path module
 vi.mock("path", () => ({
   resolve: vi.fn(),
+  join: vi.fn(),
 }));
 
 describe("StringRayConfigLoader", () => {
@@ -50,6 +51,7 @@ describe("StringRayConfigLoader", () => {
 
     // Default path.resolve behavior
     mockPath.resolve.mockImplementation((...args: string[]) => args.join("/"));
+    mockPath.join.mockImplementation((...args: string[]) => args.join("/"));
   });
 
   afterEach(() => {
@@ -59,7 +61,7 @@ describe("StringRayConfigLoader", () => {
   describe("constructor", () => {
     it("should use default path when no configPath provided", () => {
       const loader = new StringRayConfigLoader();
-      expect((loader as any).configPath).toBe(".opencode/strray/config.json");
+      expect((loader as any).configPath).toContain(".strray/config.json");
     });
 
     it("should use provided configPath", () => {

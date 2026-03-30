@@ -15,6 +15,7 @@ import {
   parseCodexContent,
   detectContentFormat,
 } from "../utils/codex-parser.js";
+import { resolveCodexPath } from "./config-paths.js";
 
 /**
  * Codex term structure
@@ -78,7 +79,7 @@ export class StringRayContextLoader {
   private codexFilePaths: string[] = [];
 
   private constructor() {
-    this.codexFilePaths = [".opencode/strray/codex.json", "codex.json"];
+    this.codexFilePaths = resolveCodexPath();
   }
 
   /**

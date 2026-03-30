@@ -8,6 +8,7 @@
 
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
+import { getConfigDir } from "../../core/config-paths.js";
 
 interface SkillInfo {
   name: string;
@@ -20,7 +21,7 @@ interface SkillInfo {
 
 function getSkillsFromSkills(cwd: string): SkillInfo[] {
   const skills: SkillInfo[] = [];
-  const skillsPath = join(cwd, ".opencode", "skills");
+  const skillsPath = join(getConfigDir(cwd), "skills");
 
   if (!existsSync(skillsPath)) {
     return skills;
