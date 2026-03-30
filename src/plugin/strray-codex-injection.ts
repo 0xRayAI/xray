@@ -382,6 +382,7 @@ async function getCodexFileLocations(directory?: string): Promise<string[]> {
   resolved.push(
     path.join(root, ".opencode", "codex.codex"),
     path.join(root, ".strray", "agents_template.md"),
+    path.join(root, ".opencode", "strray", "agents_template.md"),
     path.join(root, "AGENTS.md"),
   );
   return resolved;
