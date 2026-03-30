@@ -377,56 +377,25 @@ if (!isHermes && isConsumerEnvironment) {
 
 console.log("🔧 StrRay Postinstall: Consumer installation complete - all paths are correctly configured.");
 
-// Create symlink to .strray directory for persistent state
+// Copy .strray directory for persistent config (never symlink — user may modify local config)
 const strraySource = path.join(packageRoot, '.strray');
 const strrayDest = path.join(targetDir, '.strray');
 
 if (fs.existsSync(strraySource)) {
   try {
-    // Skip if source === dest (e.g. running postinstall in the dev repo itself)
     const resolvedSource = path.resolve(strraySource);
     const resolvedDest = path.resolve(strrayDest);
+
+    // Skip if source === dest (running postinstall in the dev repo itself)
     if (resolvedSource === resolvedDest) {
-      console.log(`ℹ️ Skipping .strray symlink — source and destination are the same (${resolvedSource})`);
+      console.log(`ℹ️ Skipping .strray copy — source and destination are the same`);
+    } else if (fs.existsSync(strrayDest)) {
+      // .strray already exists — don't overwrite, the user may have local config
+      console.log(`ℹ️ .strray directory already exists — keeping existing (user config preserved)`);
     } else {
-    // Check if .strray already exists
-    if (fs.existsSync(strrayDest)) {
-      const stats = fs.lstatSync(strrayDest);
-      
-      if (stats.isSymbolicLink()) {
-        // It's a symlink - check if it points to the right location
-        const existingTarget = fs.readlinkSync(strrayDest);
-        if (existingTarget === strraySource) {
-          console.log(`✅ .strray symlink already exists and is correct`);
-        } else {
-          // Symlink exists but points to wrong location - remove and recreate
-          console.log(`📝 Updating .strray symlink to point to new location...`);
-          fs.unlinkSync(strrayDest);
-          fs.symlinkSync(strraySource, strrayDest, 'dir');
-          console.log(`✅ .strray directory symlinked (updated)`);
-        }
-      } else if (stats.isDirectory()) {
-        // It's a regular directory - backup and create symlink
-        const backupName = `.strray.backup.${Date.now()}`;
-        console.log(`📝 Backing up existing .strray directory to ${backupName}...`);
-        fs.renameSync(strrayDest, path.join(targetDir, backupName));
-        fs.symlinkSync(strraySource, strrayDest, 'dir');
-        console.log(`✅ .strray directory symlinked (backed up existing)`);
-      }
-    } else {
-      // .strray doesn't exist - create symlink
-      fs.symlinkSync(strraySource, strrayDest, 'dir');
-      console.log(`✅ .strray directory symlinked`);
-    }
-    }
-  } catch (error) {
-    console.error(`❌ Failed to symlink .strray:`, error.message);
-    // Fallback: copy the directory
-    try {
+      // Copy the directory recursively
       function copyDir(src, dest) {
-        if (!fs.existsSync(dest)) {
-          fs.mkdirSync(dest, { recursive: true });
-        }
+        fs.mkdirSync(dest, { recursive: true });
         const entries = fs.readdirSync(src, { withFileTypes: true });
         for (const entry of entries) {
           const srcPath = path.join(src, entry.name);
@@ -439,10 +408,10 @@ if (fs.existsSync(strraySource)) {
         }
       }
       copyDir(strraySource, strrayDest);
-      console.log(`✅ .strray directory copied (fallback)`);
-    } catch (copyError) {
-      console.error(`❌ Failed to copy .strray:`, copyError.message);
+      console.log(`✅ .strray directory copied`);
     }
+  } catch (error) {
+    console.error(`❌ Failed to copy .strray:`, error.message);
   }
 }
 

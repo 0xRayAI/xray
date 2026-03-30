@@ -166,7 +166,7 @@ npx strray-ai validate      # Validate installation
 npx strray-ai capabilities # Show all features
 npx strray-ai report        # Generate reports
 npx strray-ai analytics    # Pattern analytics
-npx strray-ai calibrate    # Calibrate complexity
+
 npm run test:pipelines     # Pipeline integration tests
 ```
 
@@ -409,7 +409,6 @@ StringRay uses complexity scoring to route tasks to appropriate agents:
 
 ```bash
 # Calibrate complexity scoring
-npx strray-ai calibrate
 
 # View current complexity settings
 cat .opencode/strray/features.json | jq '.complexity'
@@ -469,7 +468,6 @@ Control how agents are spawned and coordinated:
 | `npx strray-ai health` | Run health check | Verify installation |
 | `npx strray-ai validate` | Run full validation suite | Pre-commit validation |
 | `npx strray-ai capabilities` | List all available features | Discover capabilities |
-| `npx strray-ai calibrate` | Recalibrate complexity scoring | After major refactors |
 | `npx strray-ai report` | Generate analytics reports | Review performance |
 | `npx strray-ai analytics` | View pattern analytics | Understand agent behavior |
 | `npx strray-ai config` | Manage configuration | Tune settings |
