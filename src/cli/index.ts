@@ -183,6 +183,15 @@ program
     try {
       // Run the init.sh script to validate
       const initScript = join(packageRoot, ".opencode", "init.sh");
+      const fs = await import("fs");
+
+      if (!fs.existsSync(initScript)) {
+        console.error(
+          "❌ Validation failed: init script not found:",
+          initScript,
+        );
+        process.exit(1);
+      }
 
       // SECURITY: Validate script path before execution
       validateScriptPath(initScript, "init script");

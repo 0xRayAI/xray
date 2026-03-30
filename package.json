@@ -107,6 +107,7 @@
     ".opencode/hooks/",
     ".opencode/skills/",
     ".opencode/integrations/",
+    ".opencode/init.sh",
     ".opencode/strray/",
     ".opencode/workflows/",
     ".opencode/plugin/",
