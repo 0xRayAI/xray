@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.29] - 2026-03-30
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: archive 217 stale scripts, fix postinstall .strray symlink, remove dead pkg refs (2f35dab56)
+- chore: v1.15.28 version sync artifacts, bump UVM to 1.15.29 (2404907f1)
+
+---
+
 ## [1.15.28] - 2026-03-30
 
 ### 🔄 Changes
