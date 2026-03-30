@@ -44,10 +44,10 @@ async function loadFrameworkLogger() {
 
 async function loadConfigPaths() {
   if (_resolveCodexPath && _resolveStateDir) return;
-  // Try dist-relative path first (for .opencode/plugins/), then src-relative (for dist/plugin/)
   const candidates = [
-    "../../dist/core/config-paths.js",
     "../core/config-paths.js",
+    "../../dist/core/config-paths.js",
+    "../../../node_modules/strray-ai/dist/core/config-paths.js",
   ];
   for (const p of candidates) {
     try {
@@ -80,8 +80,9 @@ let SystemPromptGenerator: any;
 async function importSystemPromptGenerator() {
   if (!SystemPromptGenerator) {
     const candidates = [
-      "../../dist/core/system-prompt-generator.js",
       "../core/system-prompt-generator.js",
+      "../../dist/core/system-prompt-generator.js",
+      "../../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
     ];
     for (const p of candidates) {
       try {

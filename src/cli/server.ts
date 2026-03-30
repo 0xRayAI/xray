@@ -8,9 +8,11 @@ import { resolveConfigPath } from "../core/config-paths.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const ROOT_DIR = join(__dirname, "..", "..");
+const PUBLIC_DIR = join(ROOT_DIR, "public");
 
 // Read version dynamically from package.json
-const packageJsonPath = join(__dirname, "..", "package.json");
+const packageJsonPath = join(ROOT_DIR, "package.json");
 const { version } = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 
 const app = express();
@@ -72,7 +74,7 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // Serve static files
-app.use(express.static(join(__dirname, "public")));
+app.use(express.static(PUBLIC_DIR));
 
 // API endpoints
 app.get("/api/status", requireAuth, (req: Request, res: Response) => {
@@ -115,7 +117,7 @@ app.use((req: any, res: any, next: any) => {
 
 // Add route for root path
 app.get("/", (req: any, res: any) => {
-  res.sendFile(join(__dirname, "..", "public", "index.html"));
+  res.sendFile(join(PUBLIC_DIR, "index.html"));
 });
 
 // Add route for refactoring logs
@@ -139,6 +141,12 @@ app.get("/logs", requireAuth, async (req: Request, res: Response) => {
     // File read error - remove debug logging
     res.status(500).send("Server error reading log file.");
   }
+});
+
+// Global error handler (4-param middleware must be registered before listen)
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  frameworkLogger.log("cli-server", "unhandled-error", "error", { error: err, path: req.path });
+  res.status(500).send("Internal Server Error");
 });
 
 app.listen(PORT, () => {
