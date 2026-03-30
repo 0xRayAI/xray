@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.28] - 2026-03-30
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: postinstaller installs all 4 git hooks (pre-commit, post-commit, pre-push, post-push) (7ec26177d)
+
+### 🐛 Bug Fixes
+- fix: Hermes consumer cleanup — skip .opencode/, fix bridge state dir (8c1751bcf)
+- fix: add 14 missing agents to opencode.json (c88bce973)
+- fix: eliminate all hardcoded config paths — centralize on config-paths resolver (715541d80)
+- fix: eliminate hardcoded config paths — use config-paths resolver throughout (40121d2d7)
+- fix: agents_template.md not found in consumer installs + add missing routing-mappings.json (dda25b90e)
+- fix: resolve stale version display and add missing report CLI flags (6bf18b53a)
+
+### 📚 Documentation
+- docs: fix stale .opencode/state path in README — .strray/state/ (a2519e889)
+- docs: deep reflection — the invisible .mjs build gap (v1.15.27) (b8c5f3680)
+
+### 🔧 Maintenance
+- chore: remove all references to deleted .opencode/OpenCode.json (16111ec54)
+- chore: bump UVM to 1.15.28 + sync .strray artifacts (dcf60eb73)
+
+### 🔎 Other Changes
+- Merge pull request #20 from htafolla/fix/minor-issues-v1.15.27 (6ec4d8b7d)
+
+---
+
 ## [1.15.27] - 2026-03-30
 
 ### 🔄 Changes
