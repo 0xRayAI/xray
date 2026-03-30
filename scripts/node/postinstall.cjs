@@ -368,6 +368,12 @@ const strrayDest = path.join(targetDir, '.strray');
 
 if (fs.existsSync(strraySource)) {
   try {
+    // Skip if source === dest (e.g. running postinstall in the dev repo itself)
+    const resolvedSource = path.resolve(strraySource);
+    const resolvedDest = path.resolve(strrayDest);
+    if (resolvedSource === resolvedDest) {
+      console.log(`ℹ️ Skipping .strray symlink — source and destination are the same (${resolvedSource})`);
+    } else {
     // Check if .strray already exists
     if (fs.existsSync(strrayDest)) {
       const stats = fs.lstatSync(strrayDest);
@@ -396,6 +402,7 @@ if (fs.existsSync(strraySource)) {
       // .strray doesn't exist - create symlink
       fs.symlinkSync(strraySource, strrayDest, 'dir');
       console.log(`✅ .strray directory symlinked`);
+    }
     }
   } catch (error) {
     console.error(`❌ Failed to symlink .strray:`, error.message);
