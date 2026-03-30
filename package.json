@@ -96,7 +96,7 @@
     "version:sync": "node scripts/node/universal-version-manager.js",
     "preversion": "npm run version:sync",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
-    "safe-publish": "npm run pre-publish-guard && npm run prepare-consumer && npm run build && npm publish",
+    "safe-publish": "npm run prepare-consumer && npm run build",
     "publish": "npm run pre-publish-guard && npm run safe-publish"
   },
   "files": [

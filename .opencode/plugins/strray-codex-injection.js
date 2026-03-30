@@ -773,6 +773,12 @@ export default async function strrayCodexPlugin(input) {
             }
         },
         config: async (_config) => {
+            // Guard: only run init.sh once per plugin lifetime
+            // OpenCode may fire the config hook multiple times during startup
+            if (globalThis._strrayConfigHookRan) {
+                return;
+            }
+            globalThis._strrayConfigHookRan = true;
             const logger = await getOrCreateLogger(directory);
             logger.log("🔧 Plugin config hook triggered - initializing StrRay integration");
             // Initialize StrRay framework
