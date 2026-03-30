@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.19] - 2026-03-29
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: record routing outcomes on every tool call in both plugins (9bace72fd)
+- feat: auto inference tuning every 100 tool calls in both plugins (c5fdfc1f5)
+- feat: activate inference feedback loop — analytics pipeline now writes back (f2a3f34ef)
+- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+
+### 🐛 Bug Fixes
+- fix: security hardening, path traversal, code injection, auth bypass, repo hygiene, test cleanup (#13) (#13) (0af058e66)
+- fix: state persistence path, enforcer blocked logic, console bleed, test fixes, subagent enforcement (#12) (044a0e393)
+- fix: resolve config-paths.js import failure from .opencode/plugins/ (a365843e9)
+- fix: UVM version corruption, delete 42 stub test files (509b5ac39)
+- fix: add express dep, version sync, bridge codex dedup, repo cleanup (f9c3dd96d)
+- fix: post-merge cleanup — deps, index.ts, pipelines, root artifacts (bcbc31b01)
+- fix: merge PR #11 fixes — bugs, security, dead code, version (ef32821f2)
+- fix: README version regex to exclude IP addresses (127.0.0) (80967acaa)
+
+### ♻️ Refactoring
+- refactor: replace console.* with frameworkLogger across 36 production files (293b51827)
+
+### 📚 Documentation
+- docs: deep reflection — inference feedback loop activation (581bf11e8)
+
+### 🔧 Maintenance
+- chore: rebuild dist after console.* cleanup (07e4a6872)
+- chore: update performance-baselines.json (8f791388f)
+- chore: sync performance baselines (3c1e6f647)
+- chore: UVM 1.15.13 (1 ahead of npm) (e3220847c)
+- chore: fix package.json version to 1.15.12 (35b158283)
+- chore: UVM 1.15.12 (1 ahead of npm) (33ed3793c)
+- chore: update test performance baselines (a2ae8e93c)
+- chore: version sync to 1.15.11 (92fb03d92)
+
+---
+
 ## [1.15.18] - 2026-03-29
 
 ### 🔄 Changes
