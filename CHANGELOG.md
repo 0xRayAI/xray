@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.25] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: server.ts regression, plugin imports, stale plugin copy, config hook guard (6f6194063)
+
+---
+
 ## [1.15.24] - 2026-03-30
 
 ### 🔄 Changes
