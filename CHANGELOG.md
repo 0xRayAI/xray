@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.26] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: wire enforcement validators into codex-check bridge command (#18) (9ef222d9a)
+- fix: prevent self-referencing .strray symlink in dev repo (e3d2a7c09)
+
+### 📦 Builds
+- build: consumer artifacts for v1.15.25 (c7dfe5eb3)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.26 (3804272a9)
+
+---
+
 ## [1.15.25] - 2026-03-30
 
 ### 🔄 Changes
