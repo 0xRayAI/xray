@@ -67,6 +67,76 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
+    "strategist": {
+      "description": "Expert in system design, architecture decisions, and technical roadmaps",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "backend-engineer": {
+      "description": "Expert in REST/GraphQL APIs, microservices, authentication, server architecture, and backend performance",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "frontend-engineer": {
+      "description": "Expert in React, Vue, Angular, responsive design, and frontend performance",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "frontend-ui-ux-engineer": {
+      "description": "Expert in visual design, CSS systems, accessibility, and user experience",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "database-engineer": {
+      "description": "Expert in SQL/NoSQL databases, query optimization, data modeling, and database performance",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "devops-engineer": {
+      "description": "Expert in CI/CD pipelines, infrastructure as code, containerization, and deployment automation",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "mobile-developer": {
+      "description": "Expert in iOS, Android, React Native, and Flutter development",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "performance-engineer": {
+      "description": "Expert in profiling, benchmarking, load testing, and optimization",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "content-creator": {
+      "description": "Expert in creating marketing copy, technical documentation, blog posts, and social media content",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "growth-strategist": {
+      "description": "Expert in growth hacking, user acquisition, conversion optimization, and analytics",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "seo-consultant": {
+      "description": "Expert in search engine optimization, keyword research, and organic traffic growth",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "tech-writer": {
+      "description": "Expert in API documentation, README files, guides, and developer experience",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "librarian-agents-updater": {
+      "description": "Agent for updating and synchronizing agent definitions",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "multimodal-looker": {
+      "description": "Media file analysis and interpretation specialist for images, diagrams, PDFs, and visual content",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
     "code-analyzer": {
       "description": "Code analyzer for metrics",
       "temperature": 1.0,
