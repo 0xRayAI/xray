@@ -535,6 +535,92 @@ if (fs.existsSync(hermesPluginSource)) {
   }
 }
 
+// Install git hooks (pre-commit, post-commit, pre-push, post-push)
+const hookNames = ['pre-commit', 'post-commit', 'pre-push', 'post-push'];
+const hooksSourceDir = path.join(packageRoot, 'hooks');
+const scriptsHooksDir = path.join(packageRoot, 'scripts', 'hooks');
+
+function installGitHooks() {
+  // Determine git hooks directory
+  const gitDir = path.join(targetDir, '.git');
+  if (!fs.existsSync(gitDir) || !fs.statSync(gitDir).isDirectory()) {
+    console.log('ℹ️  No .git directory found, skipping git hooks installation');
+    return;
+  }
+
+  const gitHooksDir = path.join(gitDir, 'hooks');
+  if (!fs.existsSync(gitHooksDir)) {
+    fs.mkdirSync(gitHooksDir, { recursive: true });
+  }
+
+  // Check if the hook runner exists
+  const hookRunner = path.join(scriptsHooksDir, 'run-hook.js');
+  const hookRunnerDist = path.join(packageRoot, 'dist', 'scripts', 'hooks', 'run-hook.js');
+  const hasHookRunner = fs.existsSync(hookRunner) || fs.existsSync(hookRunnerDist);
+
+  if (!hasHookRunner) {
+    console.warn('⚠️ Hook runner not found (scripts/hooks/run-hook.js), skipping git hooks');
+    return;
+  }
+
+  let installed = 0;
+  let skipped = 0;
+
+  for (const hookName of hookNames) {
+    const hookSource = path.join(hooksSourceDir, hookName);
+    const hookDest = path.join(gitHooksDir, hookName);
+
+    if (!fs.existsSync(hookSource)) {
+      console.warn(`⚠️ Hook script not found: ${hookName}`);
+      continue;
+    }
+
+    if (fs.existsSync(hookDest)) {
+      // Check if it's already a StringRay hook or a symlink to one
+      try {
+        const destContent = fs.readFileSync(hookDest, 'utf8');
+        if (destContent.includes('StringRay') || destContent.includes('strray')) {
+          // Already a StringRay hook — update if source is newer
+          if (fs.statSync(hookSource).mtime > fs.statSync(hookDest).mtime) {
+            fs.copyFileSync(hookSource, hookDest);
+            fs.chmodSync(hookDest, 0o755);
+            installed++;
+          } else {
+            skipped++;
+          }
+          continue;
+        }
+      } catch (e) {
+        // Can't read — overwrite
+      }
+
+      // Non-StringRay hook exists — back it up
+      const backupDest = hookDest + '.strray-backup';
+      if (!fs.existsSync(backupDest)) {
+        fs.copyFileSync(hookDest, backupDest);
+        console.log(`📝 Backed up existing ${hookName} → ${hookName}.strray-backup`);
+      }
+    }
+
+    fs.copyFileSync(hookSource, hookDest);
+    fs.chmodSync(hookDest, 0o755);
+    installed++;
+  }
+
+  if (installed > 0) {
+    console.log(`✅ Installed ${installed} git hook(s) (${hookNames.join(', ')})`);
+  }
+  if (skipped > 0) {
+    console.log(`ℹ️  ${skipped} git hook(s) already up to date`);
+  }
+}
+
+try {
+  installGitHooks();
+} catch (error) {
+  console.warn('⚠️ Could not install git hooks:', error.message);
+}
+
 console.log("📋 Next steps:");
 console.log("1. Restart OpenCode to load the plugin");
 console.log("2. Run 'opencode agent list' to see StrRay agents");
