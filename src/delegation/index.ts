@@ -17,6 +17,12 @@ export {
   SessionCoordinator,
   createSessionCoordinator,
 } from "./session-coordinator.js";
+export {
+  RoutingOutcomeTracker,
+  routingOutcomeTracker,
+} from "./analytics/index.js";
+export { RoutingAnalytics } from "./analytics/index.js";
+export { LearningEngine, learningEngine } from "./analytics/index.js";
 
 export type {
   ComplexityMetrics,
