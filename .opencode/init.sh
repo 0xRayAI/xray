@@ -36,6 +36,19 @@ get_version() {
 
 STRRAY_VERSION=$(get_version)
 
+# Dedup guard — prevent duplicate runs during startup
+# Uses a TTL lockfile (10s window) since OpenCode may trigger config hook
+# from multiple plugin copies in quick succession
+LOCK_FILE="/tmp/strray-init-${PPID}.lock"
+LOCK_TTL=10
+if [ -f "$LOCK_FILE" ]; then
+    LOCK_AGE=$(( $(date +%s) - $(stat -f %m "$LOCK_FILE" 2>/dev/null || stat -c %Y "$LOCK_FILE" 2>/dev/null || echo 0) ))
+    if [ "$LOCK_AGE" -lt "$LOCK_TTL" ]; then
+        exit 0
+    fi
+fi
+echo $$ > "$LOCK_FILE"
+
 START_TIME=$(date +%s)
 
 LOG_FILE="$PROJECT_ROOT/.opencode/logs/strray-init-$(date +%Y%m%d-%H%M%S).log"

@@ -11,10 +11,35 @@
 import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
-import { frameworkLogger } from "../core/framework-logger.js";
-// Dynamic imports for config-paths (works from both dist/plugin/ and .opencode/plugins/)
+// Dynamic imports for config-paths and framework-logger
+// Uses candidate-based resolution to work from both dist/plugin/ and .opencode/plugins/
 let _resolveCodexPath;
 let _resolveStateDir;
+let _frameworkLogger;
+async function loadFrameworkLogger() {
+    if (_frameworkLogger)
+        return _frameworkLogger;
+    const candidates = [
+        "../core/framework-logger.js",
+        "../../dist/core/framework-logger.js",
+        "../../../node_modules/strray-ai/dist/core/framework-logger.js",
+    ];
+    for (const p of candidates) {
+        try {
+            const mod = await import(p);
+            _frameworkLogger = mod.frameworkLogger;
+            return _frameworkLogger;
+        }
+        catch (_) {
+            // try next candidate
+        }
+    }
+    // Fallback: no-op logger so plugin doesn't crash
+    _frameworkLogger = {
+        log: (_module, _event, _status, _data) => { },
+    };
+    return _frameworkLogger;
+}
 async function loadConfigPaths() {
     if (_resolveCodexPath && _resolveStateDir)
         return;
@@ -34,7 +59,8 @@ async function loadConfigPaths() {
             // try next candidate
         }
     }
-    frameworkLogger.log("strray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
+    const logger = await loadFrameworkLogger();
+    logger.log("strray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
 }
 /** Convenience wrapper — must be awaited before use */
 async function resolveCodexPath(...args) {
@@ -63,7 +89,8 @@ async function importSystemPromptGenerator() {
                 // try next candidate
             }
         }
-        frameworkLogger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
+        const logger = await loadFrameworkLogger();
+        logger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
     }
 }
 let ProcessorManager;
