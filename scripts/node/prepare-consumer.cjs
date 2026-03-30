@@ -102,10 +102,10 @@ function updatePathsInFile(filePath) {
     }
 
     // Transform plugin paths back to consumer format (only the relative dev paths)
-    if (content.includes('../../../dist/plugin/plugins/')) {
+    if (content.includes('../../../dist/plugin/')) {
       content = content.replace(
-        /\.\.\/\.\.\/\.\.\/dist\/plugin\/plugins\//g,
-        'node_modules/strray-ai/dist/plugin/plugins/'
+        /\\.\\.\\/\\.\\.\\/\\.\\.\\/dist\\/plugin\//g,
+        'node_modules/strray-ai/dist/plugin/'
       );
       updated = true;
     }

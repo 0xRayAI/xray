@@ -155,8 +155,7 @@ export class SrcDistIntegrityValidator extends BaseValidator {
       if (
         (normalizedFile.startsWith(".opencode/") ||
           normalizedFile.includes("/.opencode/")) &&
-        (normalizedFile.includes("/plugin/") ||
-          normalizedFile.includes("/plugins/"))
+        (normalizedFile.includes("/plugin/"))
       ) {
         violations.push(
           "Direct edit to .opencode/plugin/: " +

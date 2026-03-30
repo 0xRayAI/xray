@@ -229,10 +229,10 @@ if (fs.existsSync(opencodeSource)) {
 } // end existsSync(opencodeSource)
 } // end isHermes guard for .opencode dir
 
-// Copy plugin from dist/plugin/ to .opencode/plugins/ (OpenCode consumers only)
+// Copy plugin from dist/plugin/ to .opencode/plugin/ (OpenCode consumers only)
 if (!isHermes) {
 const pluginSource = path.join(packageRoot, 'dist', 'plugin', 'strray-codex-injection.js');
-const pluginDest = path.join(targetDir, '.opencode', 'plugins', 'strray-codex-injection.js');
+const pluginDest = path.join(targetDir, '.opencode', 'plugin', 'strray-codex-injection.js');
 
 if (fs.existsSync(pluginSource)) {
   try {
@@ -245,7 +245,7 @@ if (fs.existsSync(pluginSource)) {
       fs.statSync(pluginSource).mtime > fs.statSync(pluginDest).mtime;
     if (shouldCopy) {
       fs.copyFileSync(pluginSource, pluginDest);
-      console.log(`✅ Copied plugin: dist/plugin/strray-codex-injection.js → .opencode/plugins/`);
+      console.log(`✅ Copied plugin: dist/plugin/strray-codex-injection.js → .opencode/plugin/`);
     } else {
       console.log(`ℹ️ Plugin file unchanged, skipping copy`);
     }

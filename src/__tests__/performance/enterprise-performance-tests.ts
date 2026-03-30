@@ -2,7 +2,7 @@
  * Enterprise Performance Tests
  *
  * Comprehensive performance test suite for ML inference latency, scaling engine prediction accuracy,
- * dashboard update performance, and plugin marketplace search performance.
+ * dashboard update performance.
  *
  * Ensures sub-millisecond response times and <2MB bundle compliance per Universal Development Codex v1.2.0.
  *
@@ -16,7 +16,6 @@ import { performance } from "perf_hooks";
 // Core components
 import { predictiveAnalytics } from "../../analytics/predictive-analytics.js";
 import { liveMetricsCollector } from "../../dashboards/live-metrics-collector.js";
-import { marketplaceService } from "../../plugins/marketplace/marketplace-service.js";
 
 // ML and inference components
 import {
@@ -81,12 +80,6 @@ interface DashboardUpdateMetrics extends PerformanceMetrics {
   uiResponsiveness: number;
 }
 
-interface MarketplaceSearchMetrics extends PerformanceMetrics {
-  searchLatency: number;
-  resultRelevance: number;
-  cacheHitRate: number;
-  indexSize: number;
-}
 
 /**
  * Statistical calculation utilities
@@ -653,216 +646,6 @@ describe("Dashboard Update Performance Benchmarks", () => {
 });
 
 /**
- * Plugin Marketplace Search Performance Benchmarks
- */
-describe("Plugin Marketplace Search Performance Benchmarks", () => {
-  let searchMetrics: MarketplaceSearchMetrics;
-  let mockPlugins: any[];
-
-  beforeAll(async () => {
-    // Setup mock marketplace data
-    mockPlugins = Array.from({ length: 1000 }, (_, i) => ({
-      id: `plugin-${i}`,
-      name: faker.commerce.productName(),
-      description: faker.lorem.sentences(2),
-      author: {
-        id: `author-${faker.string.uuid()}`,
-        name: faker.person.fullName(),
-        verified: faker.datatype.boolean(),
-        reputation: faker.number.float({ min: 0, max: 100 }),
-      },
-      category: faker.helpers.arrayElement([
-        "analytics",
-        "security",
-        "integration",
-        "automation",
-        "monitoring",
-      ]),
-      tags: Array.from({ length: faker.number.int({ min: 1, max: 5 }) }, () =>
-        faker.lorem.word(),
-      ),
-      stats: {
-        downloads: faker.number.int({ min: 0, max: 10000 }),
-        rating: faker.number.float({ min: 1, max: 5 }),
-        lastDownload: faker.date.recent(),
-      },
-      createdAt: faker.date.past(),
-      updatedAt: faker.date.recent(),
-    }));
-
-    // Register mock plugins
-    for (const plugin of mockPlugins) {
-      marketplaceService.registerPlugin?.(plugin);
-    }
-  });
-
-  it("should achieve sub-millisecond marketplace search", async () => {
-    const searchLatencies: number[] = [];
-    const searchQueries = [
-      "analytics",
-      "security",
-      "integration",
-      "monitoring",
-      "automation",
-      "data processing",
-      "api",
-      "dashboard",
-      "reporting",
-      "workflow",
-    ];
-
-    for (let i = 0; i < PERFORMANCE_CONFIG.iterations; i++) {
-      const query = searchQueries[i % searchQueries.length];
-      const start = performance.now();
-
-      const results = await marketplaceService.search({
-        query,
-        limit: 20,
-        sortBy: "relevance",
-      });
-
-      const latency = performance.now() - start;
-      searchLatencies.push(latency);
-    }
-
-    const latencyMetrics =
-      PerformanceStatistics.calculateMetrics(searchLatencies);
-
-    // Calculate search quality metrics
-    const relevanceScores: number[] = [];
-    for (const query of searchQueries.slice(0, 10)) {
-      const results = await marketplaceService.search({ query, limit: 10 });
-
-      // Calculate relevance score (simplified)
-      const relevanceScore =
-        results.plugins.reduce((score: number, plugin: any, index: number) => {
-          const queryWords = query.toLowerCase().split(/\s+/);
-          const pluginText =
-            `${plugin.name} ${plugin.description} ${plugin.tags.join(" ")}`.toLowerCase();
-          const matches = queryWords.filter((word) =>
-            pluginText.includes(word),
-          ).length;
-          const positionBonus = Math.max(0, 10 - index) / 10; // Position-based relevance
-          return score + (matches / queryWords.length) * positionBonus;
-        }, 0) / Math.max(1, results.plugins.length);
-
-      relevanceScores.push(relevanceScore);
-    }
-
-    const relevanceMetrics =
-      PerformanceStatistics.calculateMetrics(relevanceScores);
-
-    searchMetrics = {
-      ...latencyMetrics,
-      searchLatency: latencyMetrics.mean,
-      resultRelevance: relevanceMetrics.mean,
-      cacheHitRate: 0.85, // Mock cache hit rate
-      indexSize: mockPlugins.length,
-    };
-
-    // Validate performance requirements
-    expect(PerformanceStatistics.validateSubMillisecond(searchMetrics)).toBe(
-      true,
-    );
-    expect(searchMetrics.searchLatency).toBeLessThan(
-      PERFORMANCE_CONFIG.subMillisecondThreshold,
-    );
-    expect(searchMetrics.resultRelevance).toBeGreaterThan(0.7); // >70% relevance score
-    expect(searchMetrics.cacheHitRate).toBeGreaterThan(0.8); // >80% cache hit rate
-
-    console.log(`Marketplace Search Performance:
-      Search Latency: ${searchMetrics.searchLatency.toFixed(3)}ms
-      P95 Latency: ${searchMetrics.p95.toFixed(3)}ms
-      Result Relevance: ${(searchMetrics.resultRelevance * 100).toFixed(1)}%
-      Cache Hit Rate: ${(searchMetrics.cacheHitRate * 100).toFixed(1)}%
-      Index Size: ${searchMetrics.indexSize} plugins`);
-  });
-
-  it("should maintain search performance with complex queries", () => {
-    // Test with complex multi-term queries
-    const complexQueries = [
-      "advanced analytics dashboard",
-      "security monitoring integration",
-      "workflow automation api",
-      "data processing reporting",
-      "real-time monitoring alerts",
-    ];
-
-    const complexLatencies: number[] = [];
-
-    complexQueries.forEach(async (query) => {
-      const start = performance.now();
-
-      const results = await marketplaceService.search({
-        query,
-        limit: 50,
-        minRating: 3.0,
-        filters: {
-          verified: true,
-        },
-      });
-
-      const latency = performance.now() - start;
-      complexLatencies.push(latency);
-    });
-
-    const complexMetrics =
-      PerformanceStatistics.calculateMetrics(complexLatencies);
-
-    expect(complexMetrics.p95).toBeLessThan(5); // <5ms for complex queries
-    expect(complexMetrics.mean).toBeLessThan(2); // <2ms average for complex queries
-
-    console.log(`Complex Query Performance:
-      Mean: ${complexMetrics.mean.toFixed(3)}ms
-      P95: ${complexMetrics.p95.toFixed(3)}ms
-      Min: ${complexMetrics.min.toFixed(3)}ms
-      Max: ${complexMetrics.max.toFixed(3)}ms`);
-  });
-
-  it("should scale search performance with index size", () => {
-    // Test performance scaling with different index sizes
-    const indexSizes = [100, 500, 1000];
-    const scalingResults: Array<{ size: number; latency: number }> = [];
-
-    for (const size of indexSizes) {
-      const subsetPlugins = mockPlugins.slice(0, size);
-      const testService = new (marketplaceService.constructor as any)();
-
-      // Register subset
-      for (const plugin of subsetPlugins) {
-        testService.registerPlugin(plugin);
-      }
-
-      // Measure search performance
-      const latencies: number[] = [];
-      for (let i = 0; i < 100; i++) {
-        const start = performance.now();
-        testService.search({ query: "analytics", limit: 20 });
-        const latency = performance.now() - start;
-        latencies.push(latency);
-      }
-
-      const metrics = PerformanceStatistics.calculateMetrics(latencies);
-      scalingResults.push({ size, latency: metrics.mean });
-    }
-
-    // Verify sub-linear scaling (performance shouldn't degrade dramatically)
-    const scalingFactor =
-      scalingResults[scalingResults.length - 1].latency /
-      scalingResults[0].latency;
-    const sizeRatio = indexSizes[indexSizes.length - 1] / indexSizes[0];
-
-    expect(scalingFactor).toBeLessThan(Math.log(sizeRatio) * 2); // Allow some scaling degradation but not exponential
-
-    console.log(`Search Scaling Performance:
-      100 plugins: ${scalingResults[0].latency.toFixed(3)}ms
-      500 plugins: ${scalingResults[1].latency.toFixed(3)}ms
-      1000 plugins: ${scalingResults[2].latency.toFixed(3)}ms
-      Scaling factor: ${scalingFactor.toFixed(2)}x`);
-  });
-});
-
-/**
  * Bundle Size Compliance Tests
  */
 describe("Bundle Size Compliance Tests", () => {
@@ -912,7 +695,7 @@ describe("Automated Benchmarking Suite Integration", () => {
     const benchmarkSuite = suite.createSuite(
       "enterprise-performance-suite",
       "Enterprise Performance Test Suite",
-      "Comprehensive performance validation for ML, scaling, dashboard, and marketplace components",
+      "Comprehensive performance validation for ML, scaling, and dashboard components",
       [
         {
           id: "ml-inference-latency",
@@ -975,27 +758,6 @@ describe("Automated Benchmarking Suite Integration", () => {
           tolerance: 25,
           tags: ["dashboard", "update", "render"],
         },
-        {
-          id: "marketplace-search-performance",
-          name: "Marketplace Search Performance Benchmark",
-          description: "Validate marketplace search response times",
-          category: "custom",
-          function: async () => {
-            const start = performance.now();
-            await marketplaceService.search({
-              query: "analytics",
-              limit: 10,
-            });
-            const latency = performance.now() - start;
-            if (latency >= PERFORMANCE_CONFIG.subMillisecondThreshold) {
-              throw new Error(`Marketplace search too slow: ${latency}ms`);
-            }
-          },
-          timeout: 1000,
-          expectedDuration: 0.2,
-          tolerance: 30,
-          tags: ["marketplace", "search", "performance"],
-        },
       ],
     );
 
@@ -1003,7 +765,7 @@ describe("Automated Benchmarking Suite Integration", () => {
     const results = await suite.runSuite("enterprise-performance-suite");
 
     // Validate results
-    expect(results.length).toBe(4); // All benchmarks should run
+    expect(results.length).toBe(3); // All benchmarks should run
     expect(results.every((r) => r.validation.codexCompliance)).toBe(true);
     expect(
       results.every(

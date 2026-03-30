@@ -14,7 +14,7 @@ import * as path from "path";
 import { spawn } from "child_process";
 
 // Dynamic imports for config-paths and framework-logger
-// Uses candidate-based resolution to work from both dist/plugin/ and .opencode/plugins/
+// Uses candidate-based resolution to work from both dist/plugin/ and .opencode/plugin/
 let _resolveCodexPath: any;
 let _resolveStateDir: any;
 let _frameworkLogger: any;

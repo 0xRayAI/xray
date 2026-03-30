@@ -109,7 +109,7 @@
     ".opencode/integrations/",
     ".opencode/strray/",
     ".opencode/workflows/",
-    ".opencode/plugins/",
+    ".opencode/plugin/",
     ".opencode/codex.codex",
     ".opencode/enforcer-config.json",
     "opencode.json",

@@ -136,7 +136,7 @@ describe("Architecture Validators", () => {
 
     it("should detect direct edits to .opencode/plugin/", async () => {
       const context = createContext({
-        files: [".opencode/plugins/my-plugin.js"],
+        files: [".opencode/plugin/my-plugin.js"],
       });
       const result = await validator.validate(context);
 
