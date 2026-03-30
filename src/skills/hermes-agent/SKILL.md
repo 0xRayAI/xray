@@ -112,7 +112,7 @@ Hooks available: pre-commit, post-commit, pre-push, post-push.
 | `pre-push` | Blocking | Full validation suite before push |
 | `post-push` | Non-blocking | Comprehensive monitoring after push |
 
-## 5 Lifecycle Hooks
+## 2 Lifecycle Hooks
 
 These fire automatically — no action needed from the user or agent.
 
@@ -129,19 +129,10 @@ Fires before ANY tool executes:
 Fires after ANY tool returns:
 1. Logs tool-complete event
 2. For code-producing tools: runs post-processors via bridge
-3. Tracks file modifications for session context
 
-### on_file_write
+### on_session_start (graceful fallback)
 
-Fires when a code-producing tool writes a file. Validates and logs the event.
-
-### on_validation_result
-
-Fires when a validation/check completes. Tracks outcomes for session context.
-
-### on_error
-
-Fires when a tool call fails. Logs the error and tracks it.
+Fires when a new session starts. Resets stats and logs to disk. Registration is wrapped in try/except for hosts that don't support it yet.
 
 ## Slash Command
 
