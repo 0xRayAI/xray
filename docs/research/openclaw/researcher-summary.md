@@ -80,7 +80,7 @@ The client connects to OpenClaw Gateway using Protocol v3:
   "maxProtocol": 3,
   "client": {
     "id": "strray-integration",
-    "version": "1.15.21",
+    "version": "1.15.23",
     "platform": "node",
     "mode": "operator"
   },

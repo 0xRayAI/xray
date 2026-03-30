@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.23] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: plugin config hook fires 4x during startup + publish lifecycle fixes (a863cdf77)
+
+### 📦 Builds
+- build: consumer artifacts for v1.15.22 (82884591c)
+
+---
+
 ## [1.15.22] - 2026-03-30
 
 ### 🔄 Changes

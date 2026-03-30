@@ -146,7 +146,7 @@ Response:
   "prompt": "## StringRay Universal Development Codex v1.7.8\n...",
   "termCount": 12,
   "totalTerms": 60,
-  "version": "1.15.21",
+  "version": "1.15.23",
   "charCount": 2048
 }
 ```
@@ -167,7 +167,7 @@ Response:
 {
   "status": "ok",
   "projectRoot": "/path/to/project",
-  "codex": { "path": ".strray/codex.json", "version": "1.15.21", "termCount": 60 },
+  "codex": { "path": ".strray/codex.json", "version": "1.15.23", "termCount": 60 },
   "features": { "token_optimization": { "enabled": true } }
 }
 ```
