@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.30] - 2026-03-30
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.30, version sync artifacts for v1.15.29 (876f79ea6)
+
+### 🔎 Other Changes
+- remove marketplace stub, rename plugins→plugin, archive dead quality-gate (04ef266d0)
+
+---
+
 ## [1.15.29] - 2026-03-30
 
 ### 🔄 Changes
