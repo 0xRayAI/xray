@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.27] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: copy .mjs files to dist in build script (28efc9fbb)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.27 (45a210e42)
+
+### 🔎 Other Changes
+- Merge pull request #19 from htafolla/fix/mjs-copy-build (400bf6daa)
+- v1.15.26 (730e61701)
+
+---
+
 ## [1.15.26] - 2026-03-30
 
 ### 🔄 Changes
