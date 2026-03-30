@@ -210,7 +210,7 @@ class ConsumerReadinessTest {
     const integrationPoints = [
       { name: 'OpenCode Configuration', check: () => {
         const fs = require('fs');
-        // Plugin config is in opencode.json (root), not .opencode/OpenCode.json
+        // Plugin config is in opencode.json at project root
         return fs.existsSync(path.join(__dirname, '..', '..', 'opencode.json'));
       }},
       { name: 'Postinstall Script', check: () => {

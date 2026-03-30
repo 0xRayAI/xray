@@ -12,7 +12,6 @@ REQUIRED_FILES=(
     "package.json"
     "tsconfig.json"
     "opencode.json"
-    ".opencode/OpenCode.json"
     "dist/plugin/strray-codex-injection.js"
 )
 

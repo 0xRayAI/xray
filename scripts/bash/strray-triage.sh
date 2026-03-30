@@ -233,7 +233,7 @@ check_configuration() {
         log_warning "Global OpenCode config missing: ~/.config/opencode/opencode.json"
     fi
 
-    # Check project config - .opencode/OpenCode.json is NOT required (causes boot issues)
+    # Check project config in opencode.json
     # The framework uses .opencode/strray/config.json instead
     if [[ -f "$PROJECT_ROOT/.opencode/strray/config.json" ]]; then
         log_success "Project StrRay config exists: .opencode/strray/config.json"

@@ -122,7 +122,7 @@ function updatePathsInFile(filePath) {
 }
 
 // Files to update for consumer preparation
-// Note: .opencode/OpenCode.json was removed - plugin loads from opencode.json in root
+// Config loaded from opencode.json in project root
 const filesToUpdate = [
   "opencode.json"
 ];

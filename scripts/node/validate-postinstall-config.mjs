@@ -49,7 +49,6 @@ class PostinstallConfigValidator {
     // Optional files (not required for CI/test environments)
     const optionalFiles = [
       {
-        path: ".opencode/OpenCode.json",
         description: "OpenCode main config (optional - can cause boot issues)",
       },
       { path: ".mcp.json", description: "MCP server configuration (lazy loaded)" },
@@ -99,9 +98,9 @@ class PostinstallConfigValidator {
   async validateOpencodeConfig() {
     console.log("\n🛠️  Testing OpenCode Configuration...");
 
-    // .opencode/OpenCode.json is NOT required - skip this check entirely
+    // OpenCode.json was removed - config is in opencode.json at project root
     // Framework uses opencode.json (root) instead
-    console.log("  ℹ️  Skipping .opencode/OpenCode.json check (not required - uses opencode.json at root)");
+    console.log("  ℹ️  OpenCode.json removed — config is in opencode.json at project root");
     this.results.passed.push({
       test: "OpenCode Configuration",
       details: "Skipped - uses opencode.json at root"

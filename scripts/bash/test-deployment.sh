@@ -161,7 +161,7 @@ PACK_FILE=$(ls *.tgz | head -1)
  cd test-config
 npm install "../$PACK_FILE" > /dev/null 2>&1
 
-# Check if config was created - use opencode.json at root (.opencode/OpenCode.json deprecated)
+# Check if config was created - use opencode.json at root
 if [ -f "opencode.json" ]; then
     echo "✅ opencode.json created"
     echo "Configuration content (first 10 lines):"
@@ -195,7 +195,7 @@ PACK_FILE=$(ls *.tgz | head -1)
 cd test-registration
 npm install "../$PACK_FILE" > /dev/null 2>&1
 
-# Use opencode.json at root (.opencode/OpenCode.json deprecated)
+# Use opencode.json at root
 if grep -q "strray" opencode.json; then
     echo "✅ Plugin registered in configuration"
 else
@@ -245,7 +245,7 @@ try {
 
 echo ""
 echo "3.2 Agent Configuration Validation"
-echo "Testing agent configuration in OpenCode.json"
+echo "Testing agent configuration in opencode.json"
 mkdir -p test-agents
 cd test-agents
 
@@ -267,10 +267,10 @@ npm install "../$PACK_FILE" > /dev/null 2>&1
 AGENTS=("orchestrator" "enforcer" "architect" "testing-lead" "bug-triage-specialist" "code-reviewer" "security-auditor" "refactorer" "researcher" "strategist")
 MISSING_AGENTS=()
 
-# Check agents in the main project opencode.json at root (.opencode/OpenCode.json deprecated)
+# Check agents in the main project opencode.json at root
 OPENCODE_PATH="opencode.json"
 
-# Agents that are actually configured in OpenCode.json
+# Agents configured in opencode.json
 CONFIGURED_AGENTS=("orchestrator" "enforcer" "architect")
 
 for agent in "${AGENTS[@]}"; do

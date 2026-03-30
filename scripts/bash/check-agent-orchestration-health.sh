@@ -57,7 +57,7 @@ echo ""
 echo "2️⃣ Testing Multi-Agent Orchestration Configuration..."
 echo ""
 
-# Use opencode.json at root (.opencode/OpenCode.json deprecated)
+# Use opencode.json at root
 if [ ! -f "opencode.json" ]; then
     echo "❌ OpenCode configuration not found"
     exit 1

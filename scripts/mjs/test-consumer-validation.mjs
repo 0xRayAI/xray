@@ -303,7 +303,7 @@ class ConsumerValidator {
     // Refactored architecture: MCP config is in opencode.json under 'mcp' key
     const requiredFiles = [
       { path: "opencode.json", description: "OpenCode base configuration" },
-      // .opencode/OpenCode.json is deprecated - removed
+      // OpenCode.json removed
       {
         path: "node_modules/strray-ai/dist/plugin/strray-codex-injection.js",
         description: "Main plugin file",
@@ -419,7 +419,7 @@ class ConsumerValidator {
     const checks = [
       // File existence checks
       () => fs.existsSync("opencode.json"),
-      // .opencode/OpenCode.json is deprecated - removed
+      // OpenCode.json removed
       () =>
         fs.existsSync(
           "node_modules/strray-ai/dist/plugin/strray-codex-injection.js",
@@ -435,7 +435,7 @@ class ConsumerValidator {
           return false;
         }
       },
-      // .opencode/OpenCode.json deprecated - removed check
+      // Config is in opencode.json at project root
 
       // MCP server count check (in opencode.json under 'mcp' key)
       // Only external/global MCPs should be listed here - StringRay internal MCPs are NOT in opencode.json
