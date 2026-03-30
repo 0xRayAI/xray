@@ -378,27 +378,71 @@ program
   .description("Generate framework activity and health reports")
   .option(
     "-t, --type <type>",
-    "Report type (full-analysis, agent-usage, performance)",
+    "Report type (full-analysis, agent-usage, performance, orchestration, context-awareness)",
     "full-analysis",
   )
   .option("-o, --output <file>", "Output file path")
+  .option("--daily", "Daily report (full-analysis for last 24 hours)")
+  .option("--performance", "Performance report")
+  .option("--compliance", "Compliance report (codex violations)")
+  .option("--session", "Current session report")
+  .option("--ci", "CI-friendly JSON output for pipelines")
   .action(async (options) => {
-    console.log(`📊 StringRay Framework Report: ${options.type}`);
+    // Resolve convenience flags to report type
+    const typeMap: Record<string, string> = {
+      daily: "full-analysis",
+      performance: "performance",
+      compliance: "full-analysis",
+      session: "full-analysis",
+      ci: "full-analysis",
+    };
+
+    let reportType = options.type;
+    let outputFormat: "json" | "markdown" = "json";
+
+    // Convenience flags override --type
+    for (const [flag, mappedType] of Object.entries(typeMap)) {
+      if (options[flag]) {
+        reportType = mappedType;
+        break;
+      }
+    }
+
+    // CI mode always outputs JSON
+    if (options.ci) {
+      outputFormat = "json";
+    }
+
+    const label = options.ci
+      ? "ci"
+      : options.daily
+        ? "daily"
+        : options.performance
+          ? "performance"
+          : options.compliance
+            ? "compliance"
+            : options.session
+              ? "session"
+              : reportType;
+
+    console.log(`📊 StringRay Framework Report: ${label}`);
     console.log("==========================================");
     console.log("");
 
     try {
       // Import and run the reporting system directly
       const { FrameworkReportingSystem } = await import("../reporting/framework-reporting-system.js");
-      
+
       const reportingSystem = new FrameworkReportingSystem();
-      
+
       const report = await reportingSystem.generateReport({
-        type: options.type as any,
-        outputFormat: "json"
+        type: reportType as any,
+        outputFormat,
       });
-      
+
       if (options.output) {
+        const fs = await import("fs");
+        fs.writeFileSync(options.output, report);
         console.log(`✅ Report saved to: ${options.output}`);
       } else {
         console.log(report);
