@@ -159,7 +159,8 @@ function checkVersionManagerRan() {
   const vmContent = fs.readFileSync(vmPath, 'utf-8');
   
   // Check that files have been updated (look for recent timestamps or version)
-  const featuresPath = path.join(rootDir, '.opencode/strray/features.json');
+  const { resolveConfigPath } = require('../helpers/resolve-config-path.cjs');
+  const featuresPath = resolveConfigPath('features.json', rootDir);
   const features = JSON.parse(fs.readFileSync(featuresPath, 'utf-8'));
   
   // Version manager should have updated strray_version

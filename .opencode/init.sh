@@ -19,22 +19,9 @@ else
     FRAMEWORK_ROOT="$PROJECT_ROOT"
 fi
 
-# StringRay Framework Version - read dynamically from package.json
-# Priority: node_modules (installed) > source (development)
-get_version() {
-    # 1. Try node_modules/strray-ai/package.json (installed consumer - THIS IS THE DEPLOYED VERSION)
-    if [ -f "$PROJECT_ROOT/node_modules/strray-ai/package.json" ]; then
-        node -e "console.log(require('$PROJECT_ROOT/node_modules/strray-ai/package.json').version)" 2>/dev/null && return
-    fi
-    # 2. Try .opencode parent package.json (if running from source)
-    if [ -f "$SCRIPT_DIR/../package.json" ]; then
-        node -e "console.log(require('$SCRIPT_DIR/../package.json').version)" 2>/dev/null && return
-    fi
-    # Fallback - should never reach here
-    echo "unknown"
-}
-
-STRRAY_VERSION=$(get_version)
+# StringRay Framework Version - read from FRAMEWORK_ROOT (already resolved above)
+# FRAMEWORK_ROOT correctly picks source in dev mode, node_modules in consumer mode
+STRRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)" 2>/dev/null || echo "unknown")
 
 # Dedup guard — prevent duplicate runs during startup
 # Uses a TTL lockfile (10s window) since OpenCode may trigger config hook

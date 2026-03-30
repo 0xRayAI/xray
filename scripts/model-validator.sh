@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-CONFIG_FILE="${PROJECT_ROOT}/.opencode/OpenCode.json"
+CONFIG_FILE="${PROJECT_ROOT}/opencode.json"
 
 echo "🤖 StrRay Model Validator"
 echo "========================"
@@ -158,7 +158,7 @@ sys.path.append('${PROJECT_ROOT}/.opencode/src')
 from strray.model_router import ModelRouter
 
 try:
-    router = ModelRouter('${PROJECT_ROOT}/.opencode/OpenCode.json')
+    router = ModelRouter('${PROJECT_ROOT}/opencode.json')
     test_model = router.get_validated_model('architect')
     print(f'✓ ModelRouter functional - returned: {test_model}')
 except Exception as e:

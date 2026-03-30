@@ -205,7 +205,7 @@ fi
 # Additional manual checks
 log_info "Checking configuration files..."
 
-# Check opencode.json at root (.opencode/OpenCode.json deprecated)
+# Check opencode.json at root
 if [[ -f "opencode.json" ]]; then
     if grep -q "node_modules/strray-ai" opencode.json; then
         log_success "opencode.json has correct paths"

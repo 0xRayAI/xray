@@ -135,7 +135,7 @@ function formatEssentialTerms(): string {
     parts.push(`\n**${termNum}. ${term.title}** ${zeroTolBadge}\n${term.description}`);
   }
   
-  parts.push("\n🔗 Key: .opencode/strray/ (codex, config, agents docs)");
+  parts.push("\n🔗 Key: config dir (codex, config, agents docs) — resolved via config-paths");
   
   return parts.join("");
 }
@@ -211,7 +211,7 @@ export async function generateLeanSystemPrompt(
 
   // 5. Essential links if space permits
   if (showEssentialLinks && safePrompt.length < 1500) {
-    safePrompt += "\n📖 Documentation: .opencode/strray/ | AGENTS.md\n";
+    safePrompt += "\n📖 Documentation: config dir | AGENTS.md\n";
   }
 
   // Final validation and fallback
@@ -247,7 +247,7 @@ function generateCodexSummary(context: any, maxTokens: number): string {
 function generateMinimalFallbackPrompt(): string {
   return `StringRay Framework v${getFrameworkVersion()}
 Essential: Production-ready code, zero-tolerance errors, type safety
-📖: .opencode/strray/ | AGENTS.md
+📖: config dir (resolved via config-paths) | AGENTS.md
 `;
 }
 

@@ -50,7 +50,7 @@ class PathVerifier {
     const cwd = process.cwd();
     console.log(`Working directory: ${cwd}\n`);
 
-    // Check 1: Verify OpenCode.json exists and has correct paths
+    // Check 1: Verify opencode.json exists and has correct paths
     await this.verifyOhMyOpencodeConfig();
 
     // Check 2: Verify opencode.json has correct paths
@@ -79,12 +79,12 @@ class PathVerifier {
   }
 
   async verifyOhMyOpencodeConfig() {
-    this.check('OpenCode.json paths');
+    this.check('opencode.json paths');
 
     // Detect development mode
     const isDevMode = fs.existsSync('src/plugin/strray-codex-injection.ts');
     
-    // Use opencode.json at root (.opencode/OpenCode.json is deprecated)
+    // Use opencode.json at root
     const configPath = 'opencode.json';
     if (!fs.existsSync(configPath)) {
       this.error(`${configPath} not found`);
@@ -238,7 +238,7 @@ class PathVerifier {
   async verifyNoOldPaths() {
     this.check('No old development paths remaining');
 
-    // Only check opencode.json at root (.opencode/OpenCode.json deprecated)
+    // Only check opencode.json at root
     const filesToCheck = [
       'opencode.json',
     ];

@@ -234,7 +234,7 @@ Once connected, Hermes can use the tools directly in conversation:
 
 - Use absolute paths in `args` if Hermes runs from a different working directory than your project
 - Increase `timeout` for orchestrator and researcher (60s) — they do heavier analysis
-- The state-manager persists to `.opencode/state/mcp-state.json` — survives Hermes restarts
+- The state-manager persists to `.strray/state/mcp-state.json` — survives Hermes restarts
 - Auto-format and lint need Prettier/ESLint installed in your project to do real work (otherwise they report what's missing)
 
 ## 📖 Documentation

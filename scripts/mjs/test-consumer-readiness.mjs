@@ -109,12 +109,12 @@ class ConsumerReadinessCheck {
 
   checkPluginRegistration() {
     try {
-      // Use opencode.json at project root (.opencode/OpenCode.json is deprecated)
+      // Use opencode.json at project root
       let config = null;
       if (fs.existsSync("opencode.json")) {
         config = JSON.parse(fs.readFileSync("opencode.json", "utf8"));
       }
-      // NOTE: .opencode/OpenCode.json is deprecated - removed fallback
+      // Config is in opencode.json at project root
 
       if (!config) {
         const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS;

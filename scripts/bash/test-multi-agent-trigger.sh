@@ -28,7 +28,7 @@ test_config() {
     echo ""
     log "Testing multi-agent orchestration configuration..."
 
-    # Use opencode.json at root (.opencode/OpenCode.json deprecated)
+    # Use opencode.json at root
     if grep -q '"enabled": true' opencode.json && grep -q '"multi_agent_orchestration"' opencode.json; then
         success "Multi-agent orchestration is enabled in configuration"
     else

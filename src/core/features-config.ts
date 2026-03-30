@@ -10,7 +10,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { resolveConfigPath } from "./config-paths.js";
+import { getConfigDir, resolveConfigPath } from "./config-paths.js";
 
 // ============================================================================
 // Type Definitions
@@ -285,7 +285,7 @@ export class FeaturesConfigLoader {
   private lastLoadTime: number = 0;
 
   constructor(featuresPath?: string) {
-    this.featuresPath = featuresPath || resolveConfigPath("features.json") || ".strray/features.json";
+this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.join(getConfigDir(), "features.json");
   }
 
   /**

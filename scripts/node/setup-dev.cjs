@@ -63,7 +63,7 @@ function updatePathsInFile(filePath) {
 }
 
 // Files to update for development
-// Note: .opencode/OpenCode.json was removed - plugin loads from opencode.json in root
+// Config loaded from opencode.json in project root
 const filesToUpdate = [
   ".mcp.json",
   "opencode.json"

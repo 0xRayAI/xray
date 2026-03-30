@@ -136,7 +136,9 @@ class BootChecker {
 
   async checkLogging() {
     const projectRoot = path.join(__dirname, "..", "..");
-    const logDir = path.join(projectRoot, ".strray/logs");
+    const { getConfigDir } = await import("../helpers/resolve-config-path.mjs");
+    const configDir = getConfigDir(projectRoot);
+    const logDir = path.join(configDir, "logs");
     if (!fs.existsSync(logDir)) {
       return { logFiles: 0, loggingDisabled: true };
     }

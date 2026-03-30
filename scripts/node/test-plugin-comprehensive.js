@@ -95,7 +95,7 @@ async function runComprehensiveTests() {
 
     // 2. Test configuration files
     console.log('\n⚙️ 2. Testing configuration files...');
-    // Use opencode.json at root (.opencode/OpenCode.json is deprecated)
+    // Use opencode.json at root
     const configPaths = [
       './opencode.json'
     ];

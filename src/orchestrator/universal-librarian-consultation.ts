@@ -5,6 +5,7 @@
 
 import { frameworkLogger } from "../core/framework-logger.js";
 import { RuleEnforcer } from "../enforcement/rule-enforcer.js";
+import { resolveConfigPath } from "../core/config-paths.js";
 
 export interface SystemAction {
   type:
@@ -196,8 +197,9 @@ export class UniversalLibrarianConsultation {
     const updates: VersionUpdate[] = [];
 
     if (action.type === "rule-modification" || action.scope === "framework") {
+      const codexPath = resolveConfigPath("codex.json") || "codex.json";
       updates.push({
-        file: ".opencode/strray/codex.json",
+        file: codexPath,
         field: "version",
         oldVersion: "1.1.1",
         newVersion: "1.1.2",

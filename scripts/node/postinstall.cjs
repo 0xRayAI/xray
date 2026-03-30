@@ -33,10 +33,9 @@ console.log("🔧 StrRay Postinstall: Package root:", packageRoot);
 console.log("🔧 StrRay Postinstall: Consumer directory:", targetDir);
 console.log("🔧 StrRay Postinstall: Current working dir:", process.cwd());
 
-// Configuration files to copy during installation
+// Configuration files to copy during installation (OpenCode consumers only)
 const configFiles = [
-  // ".mcp.json", // Refactored out - MCP config now in opencode.json
-  "opencode.json",
+  // opencode.json NOT included — Hermes consumers don't need it
   "AGENTS-consumer.md:AGENTS.md"  // Minimal version for consumers
 ];
 
@@ -45,6 +44,14 @@ const MERGE_FILES = [
   'strray/features.json',
   'enforcer-config.json'
 ];
+
+// Detect Hermes Agent installation (skip .opencode/ for Hermes consumers)
+const homeDir = process.env.HOME || process.env.USERPROFILE || require('os').homedir();
+const isHermes = fs.existsSync(path.join(homeDir, '.hermes'));
+
+if (isHermes) {
+  console.log('🔍 Hermes Agent detected — skipping .opencode/ setup (uses .strray/ directly)');
+}
 
 // Directories to skip entirely
 const SKIP_DIRS = [
@@ -60,7 +67,8 @@ const SKIP_FILES = [
   'package-lock.json'
 ];
 
-// Copy core skills from src/skills/ to .opencode/skills/ (if not already there or outdated)
+// Copy core skills from src/skills/ to .opencode/skills/ (OpenCode consumers only)
+if (!isHermes) {
 const skillsSource = path.join(packageRoot, 'src', 'skills');
 const skillsDest = path.join(targetDir, '.opencode', 'skills');
 
@@ -106,9 +114,11 @@ if (fs.existsSync(skillsSource)) {
   } catch (error) {
     console.warn(`⚠️ Could not copy skills:`, error.message);
   }
-}
+} // end existsSync(skillsSource)
+} // end isHermes guard for skills
 
-// Copy .opencode directory recursively with smart merging
+// Copy .opencode directory recursively with smart merging (OpenCode consumers only)
+if (!isHermes) {
 const opencodeSource = path.join(packageRoot, '.opencode');
 const opencodeDest = path.join(targetDir, '.opencode');
 
@@ -216,9 +226,11 @@ if (fs.existsSync(opencodeSource)) {
   } catch (error) {
     console.warn(`⚠️ Could not copy directory .opencode:`, error.message);
   }
-}
+} // end existsSync(opencodeSource)
+} // end isHermes guard for .opencode dir
 
-// Copy plugin from dist/plugin/ to .opencode/plugins/ (if not already there or if outdated)
+// Copy plugin from dist/plugin/ to .opencode/plugins/ (OpenCode consumers only)
+if (!isHermes) {
 const pluginSource = path.join(packageRoot, 'dist', 'plugin', 'strray-codex-injection.js');
 const pluginDest = path.join(targetDir, '.opencode', 'plugins', 'strray-codex-injection.js');
 
@@ -243,12 +255,14 @@ if (fs.existsSync(pluginSource)) {
 } else {
   console.warn(`⚠️ Plugin source not found: ${pluginSource}`);
 }
+} // end isHermes guard for plugin
 
+// Copy individual files (OpenCode consumers only — Hermes uses .strray/ directly)
+if (!isHermes) {
 console.log("🔧 StrRay Postinstall: Copying configuration files...");
 console.log("📍 Package root:", packageRoot);
 console.log("📍 Target directory:", targetDir);
 
-// Copy individual files
 configFiles.forEach(fileMapping => {
   // Handle "source:destination" format for renames
   const [sourceFile, destFile] = fileMapping.split(':');
@@ -273,6 +287,7 @@ configFiles.forEach(fileMapping => {
     console.warn(`⚠️ Could not copy ${fileMapping}:`, error.message);
   }
 });
+} // end isHermes guard for config files
 
 // Create symlink to scripts directory for post-processor monitoring
 const scriptsSource = path.join(packageRoot, 'scripts');
@@ -305,8 +320,8 @@ const isConsumerEnvironment = fs.existsSync(
   path.join(cwd, 'node_modules', 'strray-ai', 'package.json')
 );
 
-// Convert paths for consumer environment
-if (isConsumerEnvironment) {
+// Convert paths for consumer environment (OpenCode consumers only)
+if (!isHermes && isConsumerEnvironment) {
   console.log("🔧 StrRay Postinstall: Converting paths for consumer environment...");
 
   // Note: .mcp.json was refactored out - no longer need to update MCP paths
@@ -460,7 +475,6 @@ const hermesSkillSource = path.join(packageRoot, 'src', 'skills', 'hermes-agent'
 
 if (fs.existsSync(hermesSkillSource)) {
   try {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || require('os').homedir();
     const targetHermesSkills = path.join(homeDir, '.hermes', 'skills', 'hermes-agent');
 
     if (fs.existsSync(path.join(homeDir, '.hermes'))) {
@@ -487,7 +501,6 @@ const hermesPluginSource = path.join(packageRoot, 'src', 'integrations', 'hermes
 
 if (fs.existsSync(hermesPluginSource)) {
   try {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || require('os').homedir();
     const hermesDir = path.join(homeDir, '.hermes');
 
     if (fs.existsSync(hermesDir)) {
@@ -533,6 +546,92 @@ if (fs.existsSync(hermesPluginSource)) {
   } catch (error) {
     console.warn("⚠️ Could not install Hermes plugin:", error.message);
   }
+}
+
+// Install git hooks (pre-commit, post-commit, pre-push, post-push)
+const hookNames = ['pre-commit', 'post-commit', 'pre-push', 'post-push'];
+const hooksSourceDir = path.join(packageRoot, 'hooks');
+const scriptsHooksDir = path.join(packageRoot, 'scripts', 'hooks');
+
+function installGitHooks() {
+  // Determine git hooks directory
+  const gitDir = path.join(targetDir, '.git');
+  if (!fs.existsSync(gitDir) || !fs.statSync(gitDir).isDirectory()) {
+    console.log('ℹ️  No .git directory found, skipping git hooks installation');
+    return;
+  }
+
+  const gitHooksDir = path.join(gitDir, 'hooks');
+  if (!fs.existsSync(gitHooksDir)) {
+    fs.mkdirSync(gitHooksDir, { recursive: true });
+  }
+
+  // Check if the hook runner exists
+  const hookRunner = path.join(scriptsHooksDir, 'run-hook.js');
+  const hookRunnerDist = path.join(packageRoot, 'dist', 'scripts', 'hooks', 'run-hook.js');
+  const hasHookRunner = fs.existsSync(hookRunner) || fs.existsSync(hookRunnerDist);
+
+  if (!hasHookRunner) {
+    console.warn('⚠️ Hook runner not found (scripts/hooks/run-hook.js), skipping git hooks');
+    return;
+  }
+
+  let installed = 0;
+  let skipped = 0;
+
+  for (const hookName of hookNames) {
+    const hookSource = path.join(hooksSourceDir, hookName);
+    const hookDest = path.join(gitHooksDir, hookName);
+
+    if (!fs.existsSync(hookSource)) {
+      console.warn(`⚠️ Hook script not found: ${hookName}`);
+      continue;
+    }
+
+    if (fs.existsSync(hookDest)) {
+      // Check if it's already a StringRay hook or a symlink to one
+      try {
+        const destContent = fs.readFileSync(hookDest, 'utf8');
+        if (destContent.includes('StringRay') || destContent.includes('strray')) {
+          // Already a StringRay hook — update if source is newer
+          if (fs.statSync(hookSource).mtime > fs.statSync(hookDest).mtime) {
+            fs.copyFileSync(hookSource, hookDest);
+            fs.chmodSync(hookDest, 0o755);
+            installed++;
+          } else {
+            skipped++;
+          }
+          continue;
+        }
+      } catch (e) {
+        // Can't read — overwrite
+      }
+
+      // Non-StringRay hook exists — back it up
+      const backupDest = hookDest + '.strray-backup';
+      if (!fs.existsSync(backupDest)) {
+        fs.copyFileSync(hookDest, backupDest);
+        console.log(`📝 Backed up existing ${hookName} → ${hookName}.strray-backup`);
+      }
+    }
+
+    fs.copyFileSync(hookSource, hookDest);
+    fs.chmodSync(hookDest, 0o755);
+    installed++;
+  }
+
+  if (installed > 0) {
+    console.log(`✅ Installed ${installed} git hook(s) (${hookNames.join(', ')})`);
+  }
+  if (skipped > 0) {
+    console.log(`ℹ️  ${skipped} git hook(s) already up to date`);
+  }
+}
+
+try {
+  installGitHooks();
+} catch (error) {
+  console.warn('⚠️ Could not install git hooks:', error.message);
 }
 
 console.log("📋 Next steps:");

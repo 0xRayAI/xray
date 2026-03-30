@@ -271,7 +271,7 @@ function getFrameworkIdentity(): string {
 📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
 🎯 Goal: Progressive, production-ready development workflow
 
-📖 Documentation: .opencode/strray/ (codex, config, agents docs)
+📖 Documentation: config dir (codex, config, agents docs) — resolved via config-paths
 `;
 }
 
@@ -382,6 +382,7 @@ async function getCodexFileLocations(directory?: string): Promise<string[]> {
   resolved.push(
     path.join(root, ".opencode", "codex.codex"),
     path.join(root, ".strray", "agents_template.md"),
+    path.join(root, ".opencode", "strray", "agents_template.md"),
     path.join(root, "AGENTS.md"),
   );
   return resolved;
@@ -420,7 +421,7 @@ function extractCodexMetadata(content: string): {
     }
   }
 
-  // Markdown format (AGENTS.md, .strray/agents_template.md)
+  // Markdown format (AGENTS.md, agents_template.md via config-paths resolver)
   const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
   const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.6.0";
 

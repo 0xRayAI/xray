@@ -73,7 +73,7 @@ if ! run_with_timeout 120 npx $PACKAGE_NAME install; then
     exit 1
 fi
 
-# Verify files were created - .opencode/OpenCode.json is deprecated
+# Verify files were created
 expected_files=(".mcp.json" "opencode.json")
 for file in "${expected_files[@]}"; do
     if [ ! -f "$file" ]; then

@@ -157,20 +157,18 @@ class PostinstallFileValidator {
     console.log("\n🔌 Validating OpenCode Configuration...");
 
     try {
-      // NOTE: .opencode/OpenCode.json is NOT required and can cause OpenCode boot issues
-      // The framework uses .opencode/strray/config.json for configuration instead
+      // NOTE: .opencode/OpenCode.json was removed
+      // The framework uses the config-paths resolver (checks .strray/, .opencode/strray/, STRRAY_CONFIG_DIR) for configuration instead
       const ohMyOpencodePath = path.join(
         process.cwd(),
         ".opencode",
-        "OpenCode.json",
       );
 
       if (!fs.existsSync(ohMyOpencodePath)) {
-        // OpenCode.json is optional - don't fail the test
-        console.log("  ℹ️ .opencode/OpenCode.json not found (optional - using strray/config.json instead)");
+        console.log("  ℹ️ OpenCode.json removed — using opencode.json at project root");
         this.results.passed.push({
           test: "OpenCode Config File",
-          details: "Optional - using .opencode/strray/config.json instead"
+          details: "Optional - using config-paths resolver for config.json"
         });
         return;
       }
@@ -209,14 +207,14 @@ class PostinstallFileValidator {
       const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS || !this.isConsumerEnvironment;
       
       if (hasStringRayPlugin) {
-        console.log(`  ✅ StringRay plugin registered in OpenCode.json (${this.environment})`);
+        console.log(`  ✅ StringRay plugin registered in opencode.json (${this.environment})`);
         this.results.passed.push("OpenCode Plugin Registration");
       } else if (isCIEnvironment) {
         // Don't fail CI for missing plugin registration
-        console.log(`  ℹ️ StringRay plugin not found in OpenCode.json (${this.environment}) - Optional in CI`);
+        console.log(`  ℹ️ StringRay plugin not found in opencode.json (${this.environment}) - Optional in CI`);
         this.results.passed.push("OpenCode Plugin Registration (Optional in CI)");
       } else {
-        console.log(`  ❌ StringRay plugin not found in OpenCode.json (${this.environment})`);
+        console.log(`  ❌ StringRay plugin not found in opencode.json (${this.environment})`);
         this.results.failed.push({
           test: "OpenCode Plugin Registration",
           error: "Plugin not registered",

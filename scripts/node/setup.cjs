@@ -12,16 +12,6 @@ const path = require("path");
 const os = require("os");
 
 function getOhMyOpenCodeConfigPath() {
-  // Try to find OpenCode config in current project
-  const projectConfig = path.join(
-    process.cwd(),
-    ".opencode",
-    "OpenCode.json",
-  );
-  if (fs.existsSync(projectConfig)) {
-    return projectConfig;
-  }
-
   // Try to find global OpenCode config
   const homeDir = os.homedir();
   const globalConfig = path.join(

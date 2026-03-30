@@ -63,9 +63,10 @@ if (isDeployed) {
 // Development environment checks
 if (isDevelopment) {
   // Check if codex files exist
+  const { resolveConfigPath: _rcp } = await import("../helpers/resolve-config-path.mjs");
   const codexFiles = [
     "docs/framework/agents_template.md",
-    ".opencode/strray/agents_template.md",
+    _rcp("agents_template.md") || ".opencode/strray/agents_template.md",
   ];
 
   let codexFound = false;
@@ -128,6 +129,18 @@ if (isDevelopment) {
     }
   } else {
     console.warn(".strray directory not found");
+  }
+
+  // Check .opencode/strray directory
+  if (fs.existsSync(".opencode/strray")) {
+    console.log(".opencode/strray directory exists");
+    if (fs.existsSync(".opencode/strray/codex.json")) {
+      console.log("codex.json exists");
+    } else {
+      console.warn("codex.json not found in .opencode/strray");
+    }
+  } else {
+    console.warn(".opencode/strray directory not found");
   }
 }
 

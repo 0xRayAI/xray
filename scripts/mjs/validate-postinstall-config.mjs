@@ -56,8 +56,10 @@ check('.opencode/hooks/post-commit', 'Post-commit hook');
 check('.opencode/hooks/post-push', 'Post-push hook');
 
 // Check strray config
-check('.opencode/strray/config.json', 'StrRay config');
-check('.opencode/strray/features.json', 'StrRay features');
+const { getConfigDir } = await import('../helpers/resolve-config-path.mjs');
+const _cd = getConfigDir();
+check(_cd + '/config.json', 'StrRay config');
+check(_cd + '/features.json', 'StrRay features');
 
 console.log('\n══════════════════════════════════════════════════');
 
