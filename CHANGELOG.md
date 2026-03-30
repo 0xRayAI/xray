@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.32] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: remove 3 phantom lifecycle hooks that don't exist in the host (932270ac6)
+
+### 🔧 Maintenance
+- chore: version sync artifacts (0bf9c7c44)
+- chore: bump UVM to 1.15.32 (54596d9ca)
+
+### 🔎 Other Changes
+- Merge pull request #21 from htafolla/fix/remove-phantom-hooks (cdf4d2059)
+
+---
+
 ## [1.15.31] - 2026-03-30
 
 ### 🔄 Changes
