@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.35] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: ship .opencode/init.sh in npm package (da1cc665b)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.35 (f349dce07)
+- chore: version sync artifacts for v1.15.34 (eddc46f64)
+
+### 🔎 Other Changes
+- Merge pull request #24 from htafolla/fix/init-sh-missing-from-npm (f93111d15)
+
+---
+
 ## [1.15.34] - 2026-03-30
 
 ### 🔄 Changes
