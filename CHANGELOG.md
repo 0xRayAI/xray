@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.33] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: add node_modules candidate paths for consumer env imports (fd289e4f6)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.33 (5a773d42b)
+- chore: version sync artifacts (6df9eb63b)
+
+### 🔎 Other Changes
+- Merge pull request #22 from htafolla/fix/consumer-node-modules-candidates (c32e97cbe)
+
+---
+
 ## [1.15.32] - 2026-03-30
 
 ### 🔄 Changes
