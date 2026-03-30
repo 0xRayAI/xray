@@ -79,7 +79,7 @@ const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
     version: "1.15.26",
-    displayName: "StringRay AI v1.15.23",
+    displayName: "StringRay AI v1.15.26",
     lastUpdated: "2026-03-30",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
