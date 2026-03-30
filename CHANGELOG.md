@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.34] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: bridge enforcement wiring, dedup helpers, version alignment (6481e09ef)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.34 + version sync artifacts (0dab64a2b)
+
+### 🔎 Other Changes
+- Merge pull request #23 from htafolla/fix/hermes-bridge-enforcement-and-cleanup (048e66fa3)
+
+---
+
 ## [1.15.33] - 2026-03-30
 
 ### 🔄 Changes
