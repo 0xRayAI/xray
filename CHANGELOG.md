@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.31] - 2026-03-30
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- fix prepare-consumer regex, clean dist artifacts (63165ba65)
+- fix double-escaped regex in prepare-consumer (7b658fbdb)
+
+---
+
 ## [1.15.30] - 2026-03-30
 
 ### 🔄 Changes
