@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.36] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: init.sh fallback for Hermes consumers + prioritize gh in skill:install (#25) (6e2121bd1)
+
+### 🔧 Maintenance
+- chore: version sync artifacts for v1.15.35, bump UVM to 1.15.36 (d70f3db42)
+
+---
+
 ## [1.15.35] - 2026-03-30
 
 ### 🔄 Changes
