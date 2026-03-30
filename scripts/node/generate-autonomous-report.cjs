@@ -17,7 +17,9 @@ class MinimalAutonomousReportGenerator {
      try {
        const path = require('path');
        const fs = require('fs');
-       const configPath = path.join(__dirname, '..', '.strray', 'config.json');
+       const { getConfigDir } = require('../helpers/resolve-config-path.cjs');
+       const configDir = getConfigDir();
+       const configPath = path.join(configDir, 'config.json');
        if (fs.existsSync(configPath)) {
          const configContent = fs.readFileSync(configPath, 'utf8');
          const config = JSON.parse(configContent);
@@ -61,7 +63,8 @@ class MinimalAutonomousReportGenerator {
   checkIfEnabled() {
     if (!this.config.enabled) {
       console.log('❌ Autonomous reporting is disabled in configuration.');
-      console.log('   To enable, set autonomous_reporting.enabled: true in .strray/config.json');
+      const { getConfigDir: _gcd } = require('../helpers/resolve-config-path.cjs');
+      console.log(`   To enable, set autonomous_reporting.enabled: true in ${_gcd()}/config.json`);
       console.log('');
       console.log('Example configuration:');
       console.log(JSON.stringify({
@@ -308,11 +311,13 @@ Session Summary: ${report.summary.recommendation}
 
       if (this.config._setup_instructions) {
         console.log('1. Create the configuration directory:');
-        console.log('   mkdir -p .strray');
+        console.log('   mkdir -p ' + _cd2);
         console.log('');
-        console.log('2. Create .strray/config.json with:');
+        const { getConfigDir: _gcd2 } = require('../helpers/resolve-config-path.cjs');
+        const _cd2 = _gcd2();
+        console.log('2. Create ' + _cd2 + '/config.json with:');
       } else {
-        console.log('1. Update .strray/config.json to include:');
+        console.log('1. Update ' + _cd2 + '/config.json to include:');
       }
 
       console.log('   {');
@@ -358,9 +363,11 @@ async function main() {
     const config = generator.getConfig();
     if (config._setup_instructions) {
       console.log('📋 Configuration Status: Not configured');
-      console.log('   No .strray/config.json file found.');
+      const { getConfigDir: _gcd3 } = require('../helpers/resolve-config-path.cjs');
+      const _cd3 = _gcd3();
+      console.log('   No ' + _cd3 + '/config.json file found.');
       console.log('');
-      console.log('📋 To enable autonomous reporting, create .strray/config.json with:');
+      console.log('📋 To enable autonomous reporting, create ' + _cd3 + '/config.json with:');
       console.log('   {');
       console.log('     "autonomous_reporting": {');
       console.log('       "enabled": true,');

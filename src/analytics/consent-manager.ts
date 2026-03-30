@@ -11,7 +11,7 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { resolveConfigPath } from "../core/config-paths.js";
+import { getConfigDir, resolveConfigPath } from "../core/config-paths.js";
 
 export interface ConsentConfiguration {
   analyticsEnabled: boolean;
@@ -39,7 +39,7 @@ export class ConsentManager {
   private submissionQueue: any[] = [];
   
   constructor(configPath: string | undefined = undefined) {
-    this.configPath = configPath || resolveConfigPath("consent.json") || ".strray/consent.json";
+this.configPath = configPath || resolveConfigPath("consent.json") || path.join(getConfigDir(), "consent.json");
   }
 
   /**

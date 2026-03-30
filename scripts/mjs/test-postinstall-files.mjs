@@ -158,7 +158,7 @@ class PostinstallFileValidator {
 
     try {
       // NOTE: .opencode/OpenCode.json is NOT required and can cause OpenCode boot issues
-      // The framework uses .opencode/strray/config.json for configuration instead
+      // The framework uses the config-paths resolver (checks .strray/, .opencode/strray/, STRRAY_CONFIG_DIR) for configuration instead
       const ohMyOpencodePath = path.join(
         process.cwd(),
         ".opencode",
@@ -170,7 +170,7 @@ class PostinstallFileValidator {
         console.log("  ℹ️ .opencode/OpenCode.json not found (optional - using strray/config.json instead)");
         this.results.passed.push({
           test: "OpenCode Config File",
-          details: "Optional - using .opencode/strray/config.json instead"
+          details: "Optional - using config-paths resolver for config.json"
         });
         return;
       }

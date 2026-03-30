@@ -63,9 +63,10 @@ if (isDeployed) {
 // Development environment checks
 if (isDevelopment) {
   // Check if codex files exist
+  const { resolveConfigPath: _rcp } = await import("../helpers/resolve-config-path.mjs");
   const codexFiles = [
     "docs/framework/agents_template.md",
-    ".opencode/strray/agents_template.md",
+    _rcp("agents_template.md") || ".opencode/strray/agents_template.md",
   ];
 
   let codexFound = false;

@@ -1,7 +1,7 @@
 /**
  * Codex Rule Loader
  * 
- * Loads codex terms from .opencode/strray/codex.json and converts them
+ * Loads codex terms from the resolved codex path and converts them
  * to RuleDefinition objects for the rule enforcement system.
  * 
  * Phase 4 refactoring: Extracted from RuleEnforcer.loadCodexRules()

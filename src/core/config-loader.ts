@@ -10,7 +10,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "./framework-logger.js";
-import { resolveConfigPath } from "./config-paths.js";
+import { getConfigDir, resolveConfigPath } from "./config-paths.js";
 
 export interface MultiAgentOrchestrationConfig {
   enabled: boolean;
@@ -51,11 +51,11 @@ export class StringRayConfigLoader {
   private lastLoadTime: number = 0;
 
   constructor(configPath?: string) {
-    this.configPath = configPath || resolveConfigPath("config.json") || ".strray/config.json";
+    this.configPath = configPath || resolveConfigPath("config.json") || path.join(getConfigDir(), "config.json");
   }
 
   /**
-   * Load StringRay configuration from .opencode/strray/config.json
+   * Load StringRay configuration from the resolved config directory
    */
   public loadConfig(): StringRayConfig {
     const now = Date.now();

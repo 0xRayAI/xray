@@ -626,9 +626,9 @@ program
       if (opencodeExists) {
         console.log("✅ opencode configuration found");
       } else if (strrayDirExists) {
-        console.log("✅ .strray/ configuration directory found");
+        console.log(`✅ Configuration directory found: ${strrayDir}`);
       } else {
-        console.log("ℹ️  No opencode.json or .strray/ directory found (run: npx strray-ai fix to create)");
+        console.log("ℹ️  No opencode.json or config directory found (run: npx strray-ai fix to create)");
       }
 
       // Check for common issues

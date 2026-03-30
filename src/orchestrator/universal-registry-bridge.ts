@@ -13,6 +13,7 @@ import { existsSync } from "fs";
 import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { getConfigDir } from "../core/config-paths.js";
 import type { AgentConfig } from "../agents/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,7 +49,7 @@ export class UniversalRegistryBridge {
   constructor(options: BridgeOptions) {
     this.registries = options.registries || [];
     this.cacheDir =
-      options.cacheDir || join(__dirname, "../../.opencode/strray/registry-cache");
+      options.cacheDir || join(getConfigDir(), "registry-cache");
     this.autoRefresh = options.autoRefresh ?? true;
   }
 

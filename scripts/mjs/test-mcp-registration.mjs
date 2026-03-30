@@ -62,7 +62,8 @@ function test(name, fn) {
 
 // Load features.json
 function loadFeatures() {
-  const featuresPath = path.join(rootDir, '.opencode/strray/features.json');
+  const { resolveConfigPath } = await import('../helpers/resolve-config-path.mjs');
+  const featuresPath = resolveConfigPath('features.json', rootDir);
   if (!fs.existsSync(featuresPath)) {
     throw new Error('features.json not found');
   }
