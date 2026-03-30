@@ -67,7 +67,7 @@ npm install
   },
   "framework": {
     "name": "strray",
-    "version": "1.15.23"
+    "version": "1.15.24"
   }
 }
 ```
@@ -1259,7 +1259,7 @@ export class CustomPlugin implements Plugin {
 ```typescript
 // Plugin manifest with security declarations
 export const manifest = {
-  name: "custom-plugin", version: "1.15.23",
+  name: "custom-plugin", version: "1.15.24",
   permissions: ["read:filesystem", "network:http", "storage:local"],
   sandbox: {
     memoryLimit: "50MB",

@@ -22,7 +22,6 @@ async function loadFrameworkLogger() {
     const candidates = [
         "../core/framework-logger.js",
         "../../dist/core/framework-logger.js",
-        "../../../node_modules/strray-ai/dist/core/framework-logger.js",
     ];
     for (const p of candidates) {
         try {
@@ -46,7 +45,6 @@ async function loadConfigPaths() {
     const candidates = [
         "../core/config-paths.js",
         "../../dist/core/config-paths.js",
-        "../../../node_modules/strray-ai/dist/core/config-paths.js",
     ];
     for (const p of candidates) {
         try {
@@ -78,7 +76,6 @@ async function importSystemPromptGenerator() {
         const candidates = [
             "../core/system-prompt-generator.js",
             "../../dist/core/system-prompt-generator.js",
-            "../../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
         ];
         for (const p of candidates) {
             try {
@@ -774,12 +771,23 @@ export default async function strrayCodexPlugin(input) {
             }
         },
         config: async (_config) => {
-            // Guard: only run init.sh once per plugin lifetime
-            // OpenCode may fire the config hook multiple times during startup
-            if (globalThis._strrayConfigHookRan) {
-                return;
+            // Guard: only run init.sh once per startup session
+            // OpenCode may fire the config hook multiple times in fresh contexts
+            // where globalThis is reset, so we use a TTL lockfile
+            const lockFile = path.join(directory, ".opencode", "logs", ".strray-init.lock");
+            const now = Date.now();
+            try {
+                if (fs.existsSync(lockFile)) {
+                    const stat = fs.statSync(lockFile);
+                    if (now - stat.mtimeMs < 15000) {
+                        return; // already ran within 15s window
+                    }
+                }
+                fs.writeFileSync(lockFile, String(now));
             }
-            globalThis._strrayConfigHookRan = true;
+            catch {
+                // lock check failed — proceed anyway
+            }
             const logger = await getOrCreateLogger(directory);
             logger.log("🔧 Plugin config hook triggered - initializing StrRay integration");
             // Initialize StrRay framework

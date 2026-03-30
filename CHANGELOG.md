@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.24] - 2026-03-30
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: stale plugin copy caused 3-4x init.sh + server.ts regression + import consistency (e955df3a6)
+
+### 📦 Builds
+- build: consumer artifacts for v1.15.23 (001bf5616)
+
+---
+
 ## [1.15.23] - 2026-03-30
 
 ### 🔄 Changes
