@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.41] - 2026-03-31
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: add Node.js type declarations to tsconfig (40cdf34bb)
+- fix: implement keyword-based routing in getTaskRoutingRecommendation (0ca8a9ea1)
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.41 (21cfabc8e)
+- chore: version sync artifacts for v1.15.40 (505ac3140)
+- chore: bump UVM to 1.15.40 (3b07094f7)
+- chore: version sync artifacts for v1.15.39 (2a5b4d7cd)
+- chore: bump UVM to 1.15.39 (3a51e70ac)
+
+---
+
 ## [1.15.40] - 2026-03-31
 
 ### 🔄 Changes
