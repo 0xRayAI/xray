@@ -1,0 +1,49 @@
+---
+name: shopify-apps
+description: "Modern Shopify app template with React Router"
+source: community
+source_name: antigravity
+attribution: |
+  Originally from https://github.com/sickn33/antigravity-awesome-skills
+  License: MIT
+---
+
+# Shopify Apps
+
+## Patterns
+
+### React Router App Setup
+
+Modern Shopify app template with React Router
+
+### Embedded App with App Bridge
+
+Render app embedded in Shopify Admin
+
+### Webhook Handling
+
+Secure webhook processing with HMAC verification
+
+## Anti-Patterns
+
+### ❌ REST API for New Apps
+
+### ❌ Webhook Processing Before Response
+
+### ❌ Polling Instead of Webhooks
+
+## ⚠️ Sharp Edges
+
+| Issue | Severity | Solution |
+|-------|----------|----------|
+| Issue | high | ## Respond immediately, process asynchronously |
+| Issue | high | ## Check rate limit headers |
+| Issue | high | ## Request protected customer data access |
+| Issue | medium | ## Use TOML only (recommended) |
+| Issue | medium | ## Handle both URL formats |
+| Issue | high | ## Use GraphQL for all new code |
+| Issue | high | ## Use latest App Bridge via script tag |
+| Issue | high | ## Implement all GDPR handlers |
+
+## When to Use
+This skill is applicable to execute the workflow or actions described in the overview.

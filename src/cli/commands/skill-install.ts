@@ -73,9 +73,15 @@ function cleanSourceSkills(skillsDir: string, sourcePrefix: string): number {
   return removed;
 }
 
-function extractRepoSlug(url: string): { owner: string; repo: string } | null {
-  const https = url.match(/github\.com\/([^/]+)\/([^/.]+)/);
+function extractRepoSlug(input: string): { owner: string; repo: string } | null {
+  // Handle URLs
+  const https = input.match(/github\.com\/([^/]+)\/([^/.]+)/);
   if (https) return { owner: https[1]!, repo: https[2]! };
+  // Handle bare repo names: "owner/repo" or just "repo" (assumes htafolla)
+  const bare = input.match(/^([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)$/);
+  if (bare) return { owner: bare[1]!, repo: bare[2]! };
+  // Single word — assume it's a repo under the htafolla org
+  if (/^[a-zA-Z0-9_-]+$/.test(input)) return { owner: "htafolla", repo: input };
   return null;
 }
 
@@ -88,15 +94,10 @@ function cloneRepo(url: string, targetDir: string): string {
   const tarPath = join(targetDir, "_repo.tar.gz");
   const extracted = join(targetDir, "_repo");
 
+  // Always try gh first when authenticated (faster, handles auth seamlessly)
   const slug = extractRepoSlug(url);
-  if (!slug) {
-    execSync(`git clone --depth 1 ${url} "${extracted}"`, { stdio: "pipe" });
-    return extracted;
-  }
+  const ghTarget = slug ? `${slug.owner}/${slug.repo}` : url;
 
-  const errors: string[] = [];
-
-  // Prefer gh repo clone when authenticated (faster, handles auth seamlessly)
   let hasGh = false;
   try {
     execSync("gh auth status --hostname github.com", { stdio: "pipe", timeout: 5000 });
@@ -106,13 +107,21 @@ function cloneRepo(url: string, targetDir: string): string {
   if (hasGh) {
     try {
       console.log(`  Cloning via gh...`);
-      execSync(`gh repo clone ${slug.owner}/${slug.repo} "${extracted}" -- --depth 1`, { stdio: "pipe", timeout: 60000 });
+      execSync(`gh repo clone ${ghTarget} "${extracted}" -- --depth 1`, { stdio: "pipe", timeout: 60000 });
       return extracted;
     } catch (ghErr: unknown) {
       const stderr = (ghErr as { stderr?: Buffer })?.stderr?.toString("utf-8") || "";
-      errors.push(`  gh repo clone: ${stderr.split("\n").filter((l: string) => l.includes("Error:"))[0]?.trim() || (ghErr as Error).message.split("\n")[0]}`);
+      console.log(`  gh failed: ${stderr.split("\n")[0]}`);
     }
   }
+
+  // Fallback: try as URL if no slug
+  if (!slug) {
+    execSync(`git clone --depth 1 ${url} "${extracted}"`, { stdio: "pipe" });
+    return extracted;
+  }
+
+  const errors: string[] = [];
 
   // Fallback: tarball download (public repos)
   for (const branch of ["main", "master"]) {
@@ -143,8 +152,8 @@ function cloneRepo(url: string, targetDir: string): string {
   }
 
   // Last resort: git clone (HTTPS then SSH)
-  const httpsUrl = url;
-  const sshUrl = url.replace(/^https:\/\/github\.com\//, "git@github.com:");
+  const httpsUrl = `https://github.com/${slug.owner}/${slug.repo}.git`;
+  const sshUrl = `git@github.com:${slug.owner}/${slug.repo}.git`;
 
   for (const [proto, gitUrl] of [["HTTPS", httpsUrl], ["SSH", sshUrl]] as const) {
     try {
