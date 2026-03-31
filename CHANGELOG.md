@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.38] - 2026-03-31
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: skill-install always tries gh first, supports bare repo names, symlink .opencode/skills -> .strray/skills (40abe23cd)
+- fix: properly detect console.log in comments - line-by-line check (1046b8bd4)
+- fix: pre-publish-guard.js uses createRequire for ESM compat (94d57ceba)
+
+### 🔧 Maintenance
+- chore: remove main branch references, point all docs to master (683e58799)
+- chore: bump UVM to 1.15.38 (658fac590)
+- chore: version sync artifacts for v1.15.37 (a11e459d5)
+
+---
+
 ## [1.15.37] - 2026-03-30
 
 ### 🔄 Changes
