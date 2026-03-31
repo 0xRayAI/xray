@@ -38,15 +38,16 @@ interface AgentRegistry {
 }
 
 /**
- * Default fallback configuration for agents
+ * Default fallback configuration — a proper general-purpose agent
+ * that handles any task that doesn't match a specialist.
  */
 const DEFAULT_AGENT_CONFIG: AgentConfig = {
-  name: "unknown",
-  description: "Default agent configuration",
-  capabilities: ["general-purpose"],
-  system: "You are a helpful AI assistant.",
+  name: "general",
+  description: "General-purpose agent for tasks that don't match a specialist — code editing, file operations, research, and ad-hoc problem solving",
+  capabilities: ["general-purpose", "code-editing", "file-operations", "research", "problem-solving"],
+  system: "You are a general-purpose developer agent. Handle any task that doesn't require a specialist — write code, edit files, research the codebase, debug issues, and solve problems pragmatically. When a task clearly belongs to a specialist (security, testing, architecture, etc.), note that but still complete the work.",
   tools: {
-    include: ["read", "grep", "edit", "bash"],
+    include: ["read", "grep", "glob", "edit", "bash", "write", "webfetch"],
   },
   mode: "subagent",
   temperature: 0.7,

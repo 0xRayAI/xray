@@ -39,6 +39,7 @@ const ROUTING_MAPPINGS = [
   { keywords: ["enforce", "compliance", "rule", "standard", "codex", "block", "prevent"], skill: "enforcer", agent: "enforcer", confidence: 0.95 },
   { keywords: ["design", "architect", "plan", "system", "model", "pattern", "architecture"], skill: "architecture-patterns", agent: "architect", confidence: 0.95 },
   { keywords: ["codebase", "explore", "research", "discover", "implementation"], skill: "git-workflow", agent: "researcher", confidence: 0.88 },
+  { keywords: ["implement", "build", "develop", "code", "function", "class", "method", "script", "feature", "add", "update", "modify", "change"], skill: "general-development", agent: "general", confidence: 0.85 },
 ];
 
 export interface RoutingRecommendation {
