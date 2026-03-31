@@ -88,9 +88,9 @@ This installs only the MCP servers - no OpenCode dependency.
 | `@bug-triage-specialist` | Error investigation |
 | `@researcher` | Codebase exploration |
 
-> **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/main/docs/AGENT_CONFIG.md).
+> **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/master/docs/AGENT_CONFIG.md).
 
-[View all 25 agents →](https://github.com/htafolla/stringray/blob/main/AGENTS.md)
+[View all 25 agents →](https://github.com/htafolla/stringray/blob/master/AGENTS.md)
 
 ## 📦 OpenClaw Integration
 
@@ -241,11 +241,11 @@ Once connected, Hermes can use the tools directly in conversation:
 
 | Guide | Description |
 |-------|-------------|
-| [Agent Configuration](https://github.com/htafolla/stringray/blob/main/docs/AGENT_CONFIG.md) | Copy-paste opencode.json agent setup |
-| [Configuration Reference](https://github.com/htafolla/stringray/blob/main/docs/CONFIGURATION.md) | Complete features.json settings |
-| [Agent Documentation](https://github.com/htafolla/stringray/blob/main/AGENTS.md) | Detailed agent specifications |
-| [Universal Codex](https://github.com/htafolla/stringray/blob/main/.opencode/strray/codex.json) | 60-term codex reference |
-| [Troubleshooting](https://github.com/htafolla/stringray/blob/main/docs/TROUBLESHOOTING.md) | Common issues & solutions |
+| [Agent Configuration](https://github.com/htafolla/stringray/blob/master/docs/AGENT_CONFIG.md) | Copy-paste opencode.json agent setup |
+| [Configuration Reference](https://github.com/htafolla/stringray/blob/master/docs/CONFIGURATION.md) | Complete features.json settings |
+| [Agent Documentation](https://github.com/htafolla/stringray/blob/master/AGENTS.md) | Detailed agent specifications |
+| [Universal Codex](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) | 60-term codex reference |
+| [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md) | Common issues & solutions |
 
 ## 🔧 CLI Tools
 
@@ -327,7 +327,7 @@ Edit `.opencode/strray/config.json` to adjust token limits:
 }
 ```
 
-See [Configuration Reference](https://github.com/htafolla/stringray/blob/main/docs/CONFIGURATION.md) for full options.
+See [Configuration Reference](https://github.com/htafolla/stringray/blob/master/docs/CONFIGURATION.md) for full options.
 
 ### Version Pinning
 

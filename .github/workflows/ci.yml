@@ -2,9 +2,9 @@ name: StringRay CI/CD
 
 on:
   push:
-    branches: [master, main]
+    branches: [master]
   pull_request:
-    branches: [master, main]
+    branches: [master]
   workflow_dispatch:
   schedule:
     - cron: "0 8 * * *"  # Daily at 8 AM UTC

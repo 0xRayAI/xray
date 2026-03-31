@@ -401,7 +401,7 @@ strray/
 
 ```bash
 # Pull latest changes
-git pull origin main
+git pull origin master
 
 # Install any new dependencies
 npm install
