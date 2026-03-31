@@ -22,6 +22,25 @@ const DELEGATION_CONFIDENCE_THRESHOLD = 0.50;
 // Agents that enforcer should NOT delegate to (enforcer handles these itself)
 const ENFORCER_HANDLES = new Set(["enforcer", "code-reviewer"]);
 
+const ROUTING_MAPPINGS = [
+  { keywords: ["write", "file", "create"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
+  { keywords: ["review", "audit", "assess", "evaluate", "check", "inspect", "quality", "validate", "code-review"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
+  { keywords: ["test", "testing", "jest", "coverage", "unit", "e2e", "cypress", "spec", "verify"], skill: "testing-best-practices", agent: "testing-lead", confidence: 0.95 },
+  { keywords: ["fix", "debug", "triage", "broken", "error", "crash", "bug", "issue", "resolve"], skill: "bug-triage", agent: "bug-triage-specialist", confidence: 0.92 },
+  { keywords: ["security", "vulnerability", "threat", "scan", "risk", "exploit", "secure", "pentest"], skill: "security-audit", agent: "security-auditor", confidence: 0.95 },
+  { keywords: ["refactor", "cleanup", "improve", "restructure", "modernize", "debt"], skill: "refactoring-strategies", agent: "refactorer", confidence: 0.92 },
+  { keywords: ["performance", "optimize", "bottleneck", "benchmark", "profile", "speed"], skill: "performance-optimization", agent: "performance-engineer", confidence: 0.93 },
+  { keywords: ["frontend", "react", "vue", "angular", "ui", "ux", "interface", "component"], skill: "frontend-development", agent: "frontend-engineer", confidence: 0.95 },
+  { keywords: ["backend", "api", "server", "microservice", "endpoint"], skill: "backend-development", agent: "backend-engineer", confidence: 0.95 },
+  { keywords: ["docs", "documentation", "readme", "wiki", "guide", "manual"], skill: "documentation-generation", agent: "tech-writer", confidence: 0.9 },
+  { keywords: ["database", "db", "sql", "schema", "migration", "query"], skill: "database-design", agent: "database-engineer", confidence: 0.95 },
+  { keywords: ["deploy", "ci/cd", "pipeline", "docker", "kubernetes", "infrastructure"], skill: "devops-deployment", agent: "devops-engineer", confidence: 0.94 },
+  { keywords: ["mobile", "ios", "android", "react-native", "flutter"], skill: "mobile-development", agent: "mobile-developer", confidence: 0.95 },
+  { keywords: ["enforce", "compliance", "rule", "standard", "codex", "block", "prevent"], skill: "enforcer", agent: "enforcer", confidence: 0.95 },
+  { keywords: ["design", "architect", "plan", "system", "model", "pattern", "architecture"], skill: "architecture-patterns", agent: "architect", confidence: 0.95 },
+  { keywords: ["codebase", "explore", "research", "discover", "implementation"], skill: "git-workflow", agent: "researcher", confidence: 0.88 },
+];
+
 export interface RoutingRecommendation {
   suggestedAgent: string;
   suggestedSkill: string;
@@ -32,9 +51,24 @@ export interface RoutingRecommendation {
 export function getTaskRoutingRecommendation(
   taskDescription: string,
 ): RoutingRecommendation {
+  const desc = taskDescription.toLowerCase();
+  
+  for (const mapping of ROUTING_MAPPINGS) {
+    for (const keyword of mapping.keywords) {
+      if (desc.includes(keyword.toLowerCase())) {
+        return {
+          suggestedAgent: mapping.agent,
+          suggestedSkill: mapping.skill,
+          confidence: mapping.confidence,
+          matchedKeyword: keyword,
+        };
+      }
+    }
+  }
+  
   return {
     suggestedAgent: "enforcer",
-    suggestedSkill: "",
+    suggestedSkill: "enforcer",
     confidence: 0.5,
     matchedKeyword: "none",
   };
