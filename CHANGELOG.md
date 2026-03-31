@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.15.39] - 2026-03-31
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: bump UVM to 1.15.39 (3a51e70ac)
+
+---
+
 ## [1.15.38] - 2026-03-31
 
 ### 🔄 Changes
