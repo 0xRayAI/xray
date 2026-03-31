@@ -858,19 +858,27 @@ async function generateCodexComplianceReport(
       );
     }
 
-    // Check for actual console.log() calls (more precise than just string containment)
+    // Check for actual console.log() calls - only flag if NOT in a comment
     const consoleLogCallMatches = newCode.match(/console\.log\(/g);
     if (consoleLogCallMatches && consoleLogCallMatches.length > 0) {
-      // Only flag console.log if it's not in comments
-      const isNotInComment = !newCode.includes("//") && !newCode.includes("/*");
-      if (isNotInComment) {
+      const lines = newCode.split('\n');
+      let hasConsoleLogInCode = false;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.includes('console.log(')) {
+          const beforeConsole = trimmed.substring(0, trimmed.indexOf('console.log('));
+          if (!beforeConsole.includes('//') && !beforeConsole.includes('/*')) {
+            hasConsoleLogInCode = true;
+            break;
+          }
+        }
+      }
+      if (hasConsoleLogInCode) {
         violations.push(
           'Codex violation: console.log() statements detected in production code - use frameworkLogger instead',
-          );
+        );
       }
-    } else {
-        // console.log found in comments - this is okay
-      }
+    }
 
     if (
       !newCode.includes("try") &&
