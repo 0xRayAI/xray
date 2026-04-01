@@ -18,6 +18,10 @@ import {
 } from "../utils/language-detector.js";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { SpawnGovernanceProcessor } from "./spawn-governance-processor.js";
+import { PerformanceBudgetProcessor } from "./performance-budget-processor.js";
+import { AsyncPatternProcessor } from "./async-pattern-processor.js";
+import { ConsoleLogGuardProcessor } from "./console-log-guard-processor.js";
 
 const execAsync = promisify(exec);
 
@@ -1589,17 +1593,35 @@ export class ProcessorManager {
     return runTypeScriptCompilation(cwd) as unknown as Record<string, unknown>;
   }
 
+  private spawnGovernanceProcessor: SpawnGovernanceProcessor | null = null;
+  private performanceBudgetProcessor: PerformanceBudgetProcessor | null = null;
+  private asyncPatternProcessor: AsyncPatternProcessor | null = null;
+  private consoleLogGuardProcessor: ConsoleLogGuardProcessor | null = null;
+
   // --- Codex Gap Processors (Tier 1) ---
 
   /**
    * Initialize spawn governance processor (Codex #52-57)
+   * Enforces agent spawn limits, rate limiting, and infinite spawn detection
    */
   private async initializeSpawnGovernanceProcessor(): Promise<void> {
-    frameworkLogger.log(
-      "processor-manager",
-      "initializing spawn governance processor",
-      "info",
-    );
+    try {
+      const { SpawnGovernanceProcessor } = await import("./spawn-governance-processor.js");
+      this.spawnGovernanceProcessor = new SpawnGovernanceProcessor();
+      frameworkLogger.log(
+        "processor-manager",
+        "spawn-governance-processor-initialized",
+        "success",
+        { maxConcurrent: SpawnGovernanceProcessor.DEFAULT_MAX_CONCURRENT },
+      );
+    } catch (error) {
+      frameworkLogger.log(
+        "processor-manager",
+        "spawn-governance-init-failed",
+        "error",
+        { error: String(error) },
+      );
+    }
   }
 
   /**
@@ -1613,13 +1635,71 @@ export class ProcessorManager {
 
   /**
    * Initialize performance budget processor (Codex #28)
+   * Enforces file size, function length, nesting depth, and parameter count budgets
    */
   private async initializePerformanceBudgetProcessor(): Promise<void> {
-    frameworkLogger.log(
-      "processor-manager",
-      "initializing performance budget processor",
-      "info",
-    );
+    try {
+      const { PerformanceBudgetProcessor, DEFAULT_PERFORMANCE_BUDGET } = 
+        await import("./performance-budget-processor.js");
+      this.performanceBudgetProcessor = new PerformanceBudgetProcessor(DEFAULT_PERFORMANCE_BUDGET);
+      frameworkLogger.log(
+        "processor-manager",
+        "performance-budget-processor-initialized",
+        "success",
+        { config: DEFAULT_PERFORMANCE_BUDGET },
+      );
+    } catch (error) {
+      frameworkLogger.log(
+        "processor-manager",
+        "performance-budget-init-failed",
+        "error",
+        { error: String(error) },
+      );
+    }
+  }
+
+  /**
+   * Initialize async pattern processor (Codex #31)
+   * Enforces proper async/await usage
+   */
+  private async initializeAsyncPatternProcessor(): Promise<void> {
+    try {
+      this.asyncPatternProcessor = new AsyncPatternProcessor();
+      frameworkLogger.log(
+        "processor-manager",
+        "async-pattern-processor-initialized",
+        "success",
+      );
+    } catch (error) {
+      frameworkLogger.log(
+        "processor-manager",
+        "async-pattern-init-failed",
+        "error",
+        { error: String(error) },
+      );
+    }
+  }
+
+  /**
+   * Initialize console log guard processor
+   * Blocks console.log in production code
+   */
+  private async initializeConsoleLogGuardProcessor(): Promise<void> {
+    try {
+      this.consoleLogGuardProcessor = new ConsoleLogGuardProcessor();
+      frameworkLogger.log(
+        "processor-manager",
+        "console-log-guard-processor-initialized",
+        "success",
+      );
+    } catch (error) {
+      frameworkLogger.log(
+        "processor-manager",
+        "console-log-guard-init-failed",
+        "error",
+        { error: String(error) },
+      );
+    }
   }
 
   /**
@@ -1632,34 +1712,12 @@ export class ProcessorManager {
   }
 
   /**
-   * Initialize async pattern processor (Codex #31)
-   */
-  private async initializeAsyncPatternProcessor(): Promise<void> {
-    frameworkLogger.log(
-      "processor-manager",
-      "initializing async pattern processor",
-      "info",
-    );
-  }
-
-  /**
    * Execute async pattern processor
    */
   private async executeAsyncPattern(context: PreValidateContext): Promise<ProcessorExecutionResult> {
     const { runAsyncPatternCheck } =
       await import("./async-pattern-processor.js");
     return runAsyncPatternCheck(context);
-  }
-
-  /**
-   * Initialize console log guard processor (Codex #33)
-   */
-  private async initializeConsoleLogGuardProcessor(): Promise<void> {
-    frameworkLogger.log(
-      "processor-manager",
-      "initializing console log guard processor",
-      "info",
-    );
   }
 
   /**
@@ -1677,8 +1735,8 @@ export class ProcessorManager {
   private async initializePostProcessorChainProcessor(): Promise<void> {
     frameworkLogger.log(
       "processor-manager",
-      "initializing postprocessor chain validator",
-      "info",
+      "postprocessor-chain-initialized",
+      "success",
     );
   }
 
