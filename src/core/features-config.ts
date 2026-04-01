@@ -146,6 +146,53 @@ export interface CachingConfig {
   max_cache_size_mb: number;
 }
 
+export interface PublishConfig {
+  enabled: boolean;
+  require_documentation: {
+    enabled: boolean;
+    required_files: string[];
+    readme_version_sync: boolean;
+  };
+  require_reflection: {
+    enabled: boolean;
+    max_age_days: number;
+    auto_create_on_publish: boolean;
+  };
+  require_pipeline_tests: {
+    enabled: boolean;
+    min_pipeline_tests: number;
+  };
+}
+
+export interface CommitCycleConfig {
+  enabled: boolean;
+  auto_commit: {
+    enabled: boolean;
+    force_commit_after_minutes: number;
+    min_changes_to_commit: number;
+    max_files_per_commit: number;
+  };
+  require_reflection: {
+    enabled: boolean;
+    reflection_frequency: string;
+    max_gap_hours: number;
+    auto_remind: boolean;
+  };
+  validation: {
+    block_on_lint_errors: boolean;
+    block_on_test_failures: boolean;
+    auto_fix_on_commit: boolean;
+  };
+}
+
+export interface ReflectionConfig {
+  enabled: boolean;
+  auto_generate: boolean;
+  include_patterns: string[];
+  min_quality_score: number;
+  store_inference_data: boolean;
+}
+
 export interface FeaturesConfig {
   version: string;
   description: string;
@@ -160,6 +207,9 @@ export interface FeaturesConfig {
   security: SecurityConfig;
   performance_monitoring: PerformanceMonitoringConfig;
   caching: CachingConfig;
+  publish?: PublishConfig;
+  commit_cycle?: CommitCycleConfig;
+  reflection?: ReflectionConfig;
 }
 
 // ============================================================================

@@ -1,8 +1,12 @@
 /**
  * Intelligent Commit Batcher - Batches related changes for optimal commit history
  * Implements configurable thresholds for file count, time windows, and risk levels
+ *
+ * Configuration is read from .strray/features.json -> commit_cycle
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { runCommandSafe } from "../utils/command-runner.js";
 
@@ -63,23 +67,50 @@ export class IntelligentCommitBatcher {
   private config: CommitBatchingConfig;
 
   constructor(config?: Partial<CommitBatchingConfig>) {
-    this.config = {
-      maxFilesPerCommit: 5,
-      minFilesPerCommit: 1,
+    const featuresConfig = this.loadFeaturesConfig();
+    const commitCycleConfig = featuresConfig?.commit_cycle;
+
+    const defaults: CommitBatchingConfig = {
+      maxFilesPerCommit: commitCycleConfig?.auto_commit?.max_files_per_commit ?? 5,
+      minFilesPerCommit: commitCycleConfig?.auto_commit?.min_changes_to_commit ?? 1,
       maxTimeBetweenCommits: 5 * 60 * 1000, // 5 minutes
       minTimeBetweenCommits: 30 * 1000, // 30 seconds
-      forceCommitAfter: 10 * 60 * 1000, // 10 minutes
+      forceCommitAfter: (commitCycleConfig?.auto_commit?.force_commit_after_minutes ?? 10) * 60 * 1000,
       batchRelatedOperations: true,
       maxOperationsPerBatch: 3,
       batchLowRiskChanges: true,
       separateHighRiskChanges: true,
       batchByComponent: true,
       maxComponentsPerCommit: 2,
-      autoCommit: true,
+      autoCommit: commitCycleConfig?.auto_commit?.enabled ?? true,
       generateCommitMessages: true,
       amendLastCommit: false,
-      ...config,
     };
+
+    this.config = { ...defaults, ...config };
+  }
+
+  private loadFeaturesConfig(): { commit_cycle?: { auto_commit?: { max_files_per_commit?: number; min_changes_to_commit?: number; force_commit_after_minutes?: number; enabled?: boolean } } } | null {
+    try {
+      const configPaths = [
+        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".opencode", "strray", "features.json"),
+      ];
+
+      for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+          return JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        }
+      }
+    } catch (e) {
+      frameworkLogger.log(
+        "intelligent-commit-batcher",
+        "config-load-failed",
+        "warning",
+        { error: e instanceof Error ? e.message : String(e) },
+      );
+    }
+    return null;
   }
 
   /**

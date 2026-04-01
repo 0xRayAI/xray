@@ -5,6 +5,8 @@
  * Ensures README.md, AGENTS.md, and reflection documents are up-to-date
  * before allowing npm publish.
  *
+ * Configuration is read from .strray/features.json
+ *
  * @processor_type post
  * @priority 10 (runs early after post-processing starts)
  * @blocking true (blocks publish on violations)
@@ -18,6 +20,7 @@ import * as path from "path";
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { ProcessorContext, ProcessorResult } from "../processor-types.js";
+import { FeaturesConfig } from "../../core/features-config.js";
 
 export interface PreflightResult {
   compliant: boolean;
@@ -36,16 +39,54 @@ export class PublishPreflightProcessor extends PostProcessor {
   readonly name = "publishPreflight";
   readonly priority = 10;
 
-  private readonly requiredDocs = [
-    { name: "README.md", path: "README.md" },
-    { name: "AGENTS.md", path: "AGENTS.md" },
-    { name: "CHANGELOG.md", path: "CHANGELOG.md" },
-  ];
+  private config: FeaturesConfig["publish"] = {
+    enabled: true,
+    require_documentation: {
+      enabled: true,
+      required_files: ["README.md", "AGENTS.md", "CHANGELOG.md"],
+      readme_version_sync: true,
+    },
+    require_reflection: {
+      enabled: true,
+      max_age_days: 7,
+      auto_create_on_publish: true,
+    },
+    require_pipeline_tests: {
+      enabled: true,
+      min_pipeline_tests: 3,
+    },
+  };
 
-  private readonly requiredDirs = [
-    { name: "docs/reflections", path: "docs/reflections" },
-    { name: "Pipeline tests", path: "src/__tests__/pipeline" },
-  ];
+  constructor() {
+    super();
+    this.loadConfig();
+  }
+
+  private loadConfig(): void {
+    try {
+      const configPaths = [
+        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".opencode", "strray", "features.json"),
+      ];
+
+      for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+          const configData = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+          if (configData.publish) {
+            this.config = { ...this.config, ...configData.publish };
+          }
+          break;
+        }
+      }
+    } catch (e) {
+      frameworkLogger.log(
+        "publish-preflight-processor",
+        "config-load-failed",
+        "warning",
+        { error: e instanceof Error ? e.message : String(e) },
+      );
+    }
+  }
 
   protected async run(context: ProcessorContext): Promise<unknown> {
     const projectRoot = process.cwd();
@@ -58,66 +99,94 @@ export class PublishPreflightProcessor extends PostProcessor {
     );
 
     const checks: PreflightCheck[] = [];
+    const pubConfig = this.config;
+    const docConfig = pubConfig?.require_documentation ?? {
+      enabled: true,
+      required_files: ["README.md", "AGENTS.md", "CHANGELOG.md"],
+      readme_version_sync: true,
+    };
+    const reflectionConfig = pubConfig?.require_reflection ?? {
+      enabled: true,
+      max_age_days: 7,
+      auto_create_on_publish: true,
+    };
+    const pipelineConfig = pubConfig?.require_pipeline_tests ?? {
+      enabled: true,
+      min_pipeline_tests: 3,
+    };
 
     // Check 1: Required documentation files exist
-    for (const doc of this.requiredDocs) {
-      const docPath = path.join(projectRoot, doc.path);
-      const exists = fs.existsSync(docPath);
-      checks.push({
-        name: `${doc.name} exists`,
-        passed: exists,
-        message: exists
-          ? `${doc.name} found`
-          : `${doc.name} is missing - required for publish`,
-        required: true,
-      });
-    }
-
-    // Check 2: Required directories exist
-    for (const dir of this.requiredDirs) {
-      const dirPath = path.join(projectRoot, dir.path);
-      const exists = fs.existsSync(dirPath);
-      checks.push({
-        name: `${dir.name} exists`,
-        passed: exists,
-        message: exists
-          ? `${dir.name} directory found`
-          : `${dir.name} directory is missing - required for publish`,
-        required: true,
-      });
-    }
-
-    // Check 3: README version matches package.json
-    const pkgPath = path.join(projectRoot, "package.json");
-    const readmePath = path.join(projectRoot, "README.md");
-    if (fs.existsSync(pkgPath) && fs.existsSync(readmePath)) {
-      try {
-        const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-        const readme = fs.readFileSync(readmePath, "utf-8");
-        const pkgVersion = pkg.version;
-
-        const readmeHasVersion = readme.includes(pkgVersion);
+    if (docConfig.enabled) {
+      for (const docFile of docConfig.required_files) {
+        const docPath = path.join(projectRoot, docFile);
+        const exists = fs.existsSync(docPath);
         checks.push({
-          name: "README version sync",
-          passed: readmeHasVersion,
-          message: readmeHasVersion
-            ? `README references version ${pkgVersion}`
-            : `README does not reference current version ${pkgVersion}`,
-          required: false,
-        });
-      } catch (e) {
-        checks.push({
-          name: "README version sync",
-          passed: false,
-          message: "Could not verify README version sync",
-          required: false,
+          name: `${docFile} exists`,
+          passed: exists,
+          message: exists
+            ? `${docFile} found`
+            : `${docFile} is missing - required for publish`,
+          required: true,
         });
       }
     }
 
-    // Check 4: Latest reflection exists (within last 7 days)
+    // Check 2: Required directories exist
     const reflectionsDir = path.join(projectRoot, "docs/reflections");
-    if (fs.existsSync(reflectionsDir)) {
+    const pipelineTestDir = path.join(projectRoot, "src/__tests__/pipeline");
+    const reflectionsExists = fs.existsSync(reflectionsDir);
+    const pipelineTestsExist = fs.existsSync(pipelineTestDir);
+
+    checks.push({
+      name: "docs/reflections exists",
+      passed: reflectionsExists,
+      message: reflectionsExists
+        ? "docs/reflections directory found"
+        : "docs/reflections directory is missing",
+      required: reflectionConfig.enabled,
+    });
+
+    checks.push({
+      name: "Pipeline tests directory exists",
+      passed: pipelineTestsExist,
+      message: pipelineTestsExist
+        ? "src/__tests__/pipeline directory found"
+        : "src/__tests__/pipeline directory is missing",
+      required: pipelineConfig.enabled,
+    });
+
+    // Check 3: README version matches package.json
+    if (docConfig.readme_version_sync) {
+      const pkgPath = path.join(projectRoot, "package.json");
+      const readmePath = path.join(projectRoot, "README.md");
+      if (fs.existsSync(pkgPath) && fs.existsSync(readmePath)) {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+          const readme = fs.readFileSync(readmePath, "utf-8");
+          const pkgVersion = pkg.version;
+
+          const readmeHasVersion = readme.includes(pkgVersion);
+          checks.push({
+            name: "README version sync",
+            passed: readmeHasVersion,
+            message: readmeHasVersion
+              ? `README references version ${pkgVersion}`
+              : `README does not reference current version ${pkgVersion}`,
+            required: false,
+          });
+        } catch (e) {
+          checks.push({
+            name: "README version sync",
+            passed: false,
+            message: "Could not verify README version sync",
+            required: false,
+          });
+        }
+      }
+    }
+
+    // Check 4: Latest reflection exists (within configured days)
+    if (reflectionConfig.enabled && reflectionsExists) {
       const reflectionFiles = fs.readdirSync(reflectionsDir)
         .filter(f => f.endsWith(".md"))
         .map(f => ({
@@ -127,48 +196,33 @@ export class PublishPreflightProcessor extends PostProcessor {
         }))
         .sort((a, b) => b.mtime - a.mtime);
 
-      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const maxAgeMs = reflectionConfig.max_age_days * 24 * 60 * 60 * 1000;
       const latestReflection = reflectionFiles[0];
       const hasRecentReflection = latestReflection !== undefined &&
-        latestReflection.mtime > sevenDaysAgo;
+        latestReflection.mtime > (Date.now() - maxAgeMs);
 
       checks.push({
         name: "Recent reflection",
         passed: hasRecentReflection,
         message: hasRecentReflection
           ? `Latest reflection: ${latestReflection.name}`
-          : "No reflection documents from last 7 days - reflection required before publish",
-        required: true,
-      });
-    } else {
-      checks.push({
-        name: "Recent reflection",
-        passed: false,
-        message: "docs/reflections directory missing",
+          : `No reflection documents from last ${reflectionConfig.max_age_days} days - reflection required before publish`,
         required: true,
       });
     }
 
     // Check 5: Pipeline tests exist
-    const pipelineTestDir = path.join(projectRoot, "src/__tests__/pipeline");
-    if (fs.existsSync(pipelineTestDir)) {
+    if (pipelineConfig.enabled && pipelineTestsExist) {
       const testFiles = fs.readdirSync(pipelineTestDir)
         .filter(f => f.endsWith(".mjs") || f.endsWith(".test.mjs"));
 
-      const hasPipelineTests = testFiles.length >= 3;
+      const hasEnoughTests = testFiles.length >= pipelineConfig.min_pipeline_tests;
       checks.push({
         name: "Pipeline tests",
-        passed: hasPipelineTests,
-        message: hasPipelineTests
+        passed: hasEnoughTests,
+        message: hasEnoughTests
           ? `Found ${testFiles.length} pipeline test files`
-          : `Only ${testFiles.length} pipeline test files - at least 3 required`,
-        required: true,
-      });
-    } else {
-      checks.push({
-        name: "Pipeline tests",
-        passed: false,
-        message: "Pipeline test directory missing",
+          : `Only ${testFiles.length} pipeline test files - at least ${pipelineConfig.min_pipeline_tests} required`,
         required: true,
       });
     }

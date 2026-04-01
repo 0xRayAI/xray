@@ -1,7 +1,51 @@
 {
   "$schema": "./features.schema.json",
-  "version": "1.15.27",
+  "version": "1.15.41",
   "description": "StringRay Framework - Unified Feature Configuration",
+  "publish": {
+    "enabled": true,
+    "require_documentation": {
+      "enabled": true,
+      "required_files": ["README.md", "AGENTS.md", "CHANGELOG.md"],
+      "readme_version_sync": true
+    },
+    "require_reflection": {
+      "enabled": true,
+      "max_age_days": 7,
+      "auto_create_on_publish": true
+    },
+    "require_pipeline_tests": {
+      "enabled": true,
+      "min_pipeline_tests": 3
+    }
+  },
+  "commit_cycle": {
+    "enabled": true,
+    "auto_commit": {
+      "enabled": true,
+      "force_commit_after_minutes": 10,
+      "min_changes_to_commit": 1,
+      "max_files_per_commit": 5
+    },
+    "require_reflection": {
+      "enabled": true,
+      "reflection_frequency": "daily",
+      "max_gap_hours": 24,
+      "auto_remind": true
+    },
+    "validation": {
+      "block_on_lint_errors": true,
+      "block_on_test_failures": true,
+      "auto_fix_on_commit": true
+    }
+  },
+  "reflection": {
+    "enabled": true,
+    "auto_generate": true,
+    "include_patterns": ["bug-fix", "feature", "refactor", "architecture"],
+    "min_quality_score": 0.5,
+    "store_inference_data": true
+  },
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,
