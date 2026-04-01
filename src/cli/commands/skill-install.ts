@@ -21,6 +21,7 @@ function getLocalRegistryPath(): string {
 function getBundledRegistry(): LocalRegistry | null {
   const paths = [
     join(process.cwd(), "src", "skills", "registry.json"),
+    join(process.cwd(), "node_modules", "strray-ai", "dist", "skills", "registry.json"),
     join(process.cwd(), "node_modules", "strray-ai", "src", "skills", "registry.json"),
   ];
   for (const p of paths) {
