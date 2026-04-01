@@ -14,6 +14,8 @@ const PIPELINES = [
   { name: 'Boot', path: 'test-boot-pipeline.mjs' },
   { name: 'Orchestration', path: 'test-orchestration-pipeline.mjs' },
   { name: 'Processor', path: 'test-processor-pipeline.mjs' },
+  { name: 'Processor-MCP-Server', path: 'test-processor-mcp-server.mjs' },
+  { name: 'CLI', path: 'test-cli-pipeline.mjs' },
   { name: 'Reporting', path: 'test-reporting-pipeline.mjs' },
 ];
 
