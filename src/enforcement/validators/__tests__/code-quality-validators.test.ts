@@ -389,16 +389,27 @@ describe("Code Quality Validators", () => {
       expect(validator.severity).toBe("error");
     });
 
-    it("should return placeholder result", async () => {
+    it("should pass clean code without debug statements", async () => {
       const context: RuleValidationContext = {
         operation: "write",
-        newCode: "some code",
+        newCode: "function hello() { return 'world'; }",
       };
 
       const result = await validator.validate(context);
 
       expect(result.passed).toBe(true);
-      expect(result.message).toBe("Clean debug logs validation placeholder");
+      expect(result.message).toBe("Clean debug logs validation passed");
+    });
+
+    it("should fail code with debug statements", async () => {
+      const context: RuleValidationContext = {
+        operation: "write",
+        newCode: "console.debug('test'); function hello() { debugger; }",
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.passed).toBe(false);
     });
   });
 

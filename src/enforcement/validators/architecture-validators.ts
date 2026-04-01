@@ -675,7 +675,7 @@ export class SingleResponsibilityValidator extends BaseValidator {
 
 /**
  * Validates deployment safety (Codex Term #43).
- * Placeholder validator - full implementation pending.
+ * Ensures deployments have proper safety checks.
  */
 export class DeploymentSafetyValidator extends BaseValidator {
   readonly id = "deployment-safety-validator";
@@ -684,14 +684,42 @@ export class DeploymentSafetyValidator extends BaseValidator {
   readonly severity = "blocking" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
-    // Placeholder - always passes for now
-    return this.createSuccessResult("Deployment safety validation passed (placeholder)");
+    const { newCode, operation } = context;
+
+    if (!newCode || operation !== "write") {
+      return this.createSuccessResult("No code change to validate");
+    }
+
+    const hasDeployCode =
+      newCode.includes("deploy") ||
+      newCode.includes("docker") ||
+      newCode.includes("kubernetes") ||
+      newCode.includes("ci/cd") ||
+      newCode.includes("pipeline");
+
+    if (hasDeployCode) {
+      const hasSafetyChecks =
+        newCode.includes("rollback") ||
+        newCode.includes("health") ||
+        newCode.includes("verify") ||
+        newCode.includes("canary") ||
+        newCode.includes("graceful");
+
+      if (!hasSafetyChecks) {
+        return this.createFailureResult(
+          "Deployment code lacks safety checks",
+          ["Add rollback capability", "Add health verification", "Consider canary deployments"],
+        );
+      }
+    }
+
+    return this.createSuccessResult("Deployment safety requirements met");
   }
 }
 
 /**
- * Validates multi-agent ensemble patterns (Phase 3).
- * Placeholder validator - full implementation pending.
+ * Validates multi-agent ensemble patterns.
+ * Ensures multi-agent configurations follow best practices.
  */
 export class MultiAgentEnsembleValidator extends BaseValidator {
   readonly id = "multi-agent-ensemble-validator";
@@ -700,14 +728,40 @@ export class MultiAgentEnsembleValidator extends BaseValidator {
   readonly severity = "warning" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
-    // Placeholder - always passes for now
-    return this.createSuccessResult("Multi-agent ensemble validation passed (placeholder)");
+    const { newCode, operation } = context;
+
+    if (!newCode || operation !== "write") {
+      return this.createSuccessResult("No code change to validate");
+    }
+
+    const hasMultiAgentCode =
+      newCode.includes("subagent") ||
+      newCode.includes("delegate") ||
+      newCode.includes("spawn") ||
+      newCode.includes("orchestrat");
+
+    if (hasMultiAgentCode) {
+      const hasCoordination =
+        newCode.includes("timeout") ||
+        newCode.includes("retry") ||
+        newCode.includes("fallback") ||
+        newCode.includes("error");
+
+      if (!hasCoordination) {
+        return this.createFailureResult(
+          "Multi-agent code lacks coordination patterns",
+          ["Add timeout handling", "Add retry/fallback logic"],
+        );
+      }
+    }
+
+    return this.createSuccessResult("Multi-agent ensemble requirements met");
   }
 }
 
 /**
  * Validates substrate externalization patterns.
- * Placeholder validator - full implementation pending.
+ * Ensures proper abstraction boundaries.
  */
 export class SubstrateExternalizationValidator extends BaseValidator {
   readonly id = "substrate-externalization-validator";
@@ -716,14 +770,39 @@ export class SubstrateExternalizationValidator extends BaseValidator {
   readonly severity = "info" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
-    // Placeholder - always passes for now
-    return this.createSuccessResult("Substrate externalization validation passed (placeholder)");
+    const { newCode, operation } = context;
+
+    if (!newCode || operation !== "write") {
+      return this.createSuccessResult("No code change to validate");
+    }
+
+    const hasExternalAPICode =
+      newCode.includes("export") &&
+      (newCode.includes("interface") ||
+        newCode.includes("type") ||
+        newCode.includes("class"));
+
+    if (hasExternalAPICode) {
+      const hasAbstraction =
+        newCode.includes("abstract") ||
+        newCode.includes("interface") ||
+        newCode.includes("implements");
+
+      if (!hasAbstraction) {
+        return this.createFailureResult(
+          "External API lacks proper abstraction",
+          ["Use interfaces for external APIs", "Consider abstract classes for implementations"],
+        );
+      }
+    }
+
+    return this.createSuccessResult("Substrate externalization requirements met");
   }
 }
 
 /**
  * Validates framework self-validation capability.
- * Placeholder validator - full implementation pending.
+ * Ensures framework can validate itself.
  */
 export class FrameworkSelfValidationValidator extends BaseValidator {
   readonly id = "framework-self-validation-validator";
@@ -732,14 +811,37 @@ export class FrameworkSelfValidationValidator extends BaseValidator {
   readonly severity = "info" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
-    // Placeholder - always passes for now
-    return this.createSuccessResult("Framework self-validation passed (placeholder)");
+    const { files, operation } = context;
+
+    if (operation !== "write") {
+      return this.createSuccessResult("No code change to validate");
+    }
+
+    const isFrameworkCode = files?.some(
+      (f) => f.includes("src/core") || f.includes("src/enforcement"),
+    );
+
+    if (isFrameworkCode) {
+      const hasSelfTests =
+        context.newCode?.includes("self") ||
+        context.newCode?.includes("validate") ||
+        context.newCode?.includes("test");
+
+      if (!hasSelfTests) {
+        return this.createFailureResult(
+          "Framework code lacks self-validation",
+          ["Add self-validation tests", "Include framework health checks"],
+        );
+      }
+    }
+
+    return this.createSuccessResult("Framework self-validation requirements met");
   }
 }
 
 /**
  * Validates emergent improvement patterns.
- * Placeholder validator - full implementation pending.
+ * Ensures continuous improvement mechanisms exist.
  */
 export class EmergentImprovementValidator extends BaseValidator {
   readonly id = "emergent-improvement-validator";
@@ -748,7 +850,33 @@ export class EmergentImprovementValidator extends BaseValidator {
   readonly severity = "info" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
-    // Placeholder - always passes for now
-    return this.createSuccessResult("Emergent improvement validation passed (placeholder)");
+    const { newCode, operation } = context;
+
+    if (!newCode || operation !== "write") {
+      return this.createSuccessResult("No code change to validate");
+    }
+
+    const hasImprovementCode =
+      newCode.includes("improve") ||
+      newCode.includes("optimize") ||
+      newCode.includes("refactor") ||
+      newCode.includes("enhance");
+
+    if (hasImprovementCode) {
+      const hasFeedbackLoop =
+        newCode.includes("metrics") ||
+        newCode.includes("telemetry") ||
+        newCode.includes("analytics") ||
+        newCode.includes("log");
+
+      if (!hasFeedbackLoop) {
+        return this.createFailureResult(
+          "Improvement code lacks feedback mechanism",
+          ["Add metrics/telemetry for improvement tracking", "Include analytics for continuous improvement"],
+        );
+      }
+    }
+
+    return this.createSuccessResult("Emergent improvement requirements met");
   }
 }

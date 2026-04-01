@@ -402,8 +402,37 @@ export class CleanDebugLogsValidator extends BaseValidator {
   readonly severity = "error" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
-    // Placeholder implementation - can be enhanced with actual debug log detection
-    return this.createSuccessResult("Clean debug logs validation placeholder");
+    const { newCode, operation } = context;
+
+    if (!newCode || operation !== "write") {
+      return this.createSuccessResult("No code change to validate");
+    }
+
+    const debugPatterns = [
+      "console.debug",
+      "console.trace", 
+      "console.info",
+      "// DEBUG",
+      "// FIXME",
+      "// TODO",
+      "debugger;",
+    ];
+
+    const foundDebug = debugPatterns.filter((p) => newCode.includes(p));
+
+    if (foundDebug.length > 0) {
+      return this.createFailureResult(
+        `Debug code detected: ${foundDebug.join(", ")}`,
+        [
+          "Remove console.debug/console.trace/console.info from production code",
+          "Use frameworkLogger instead of console methods",
+          "Remove debugger statements",
+          "Keep DEBUG/FIXME/TODO comments if intentional",
+        ],
+      );
+    }
+
+    return this.createSuccessResult("Clean debug logs validation passed");
   }
 }
 
