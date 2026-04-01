@@ -42,7 +42,7 @@
   "scripts": {
     "version:bump": "node scripts/node/version-manager.mjs",
     "version": "node scripts/node/version-manager.mjs",
-    "build": "tsc && mkdir -p dist/public && cp -r public/* dist/public/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done",
+    "build": "tsc && mkdir -p dist/public && cp -r public/* dist/public/ && cp README.md AGENTS.md CHANGELOG.md LICENSE dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done",
     "build:all": "npm run build",
     "ci-install": "npm ci",
     "clean": "rm -rf dist",
