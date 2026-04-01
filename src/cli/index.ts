@@ -905,6 +905,19 @@ program
     await skillInstallCommand(sourceArg, options);
   });
 
+// Storyteller command
+program
+  .command('storyteller [type]')
+  .description('Write reflections, sagas, journeys, or narratives')
+  .option('-t, --title <title>', 'Title for the story')
+  .option('-f, --framework <framework>', 'Storytelling framework (three_act_structure, hero_journey, spiral)')
+  .option('-o, --output <file>', 'Output file path')
+  .option('--dry-run', 'Show prompt without creating file')
+  .action(async (type, options) => {
+    const { storytellerCommand } = await import('./commands/storyteller.js');
+    await storytellerCommand(type, options);
+  });
+
 // Add help text
 program.addHelpText(
   "after",
@@ -925,6 +938,8 @@ Examples:
     $ npx strray-ai skill:install agency-agents  # Install 170+ agency agent skills
     $ npx strray-ai skill:install superpowers      # Install 14 agentic workflow skills
     $ npx strray-ai skill:install <github-url>     # Install from any repo
+    $ npx strray-ai storyteller saga "v1.18.0 Journey"  # Write a saga
+    $ npx strray-ai storyteller reflection "API Fix"     # Write a reflection
 
 Quick Start:
    1. Install: npx strray-ai install
@@ -934,6 +949,7 @@ Quick Start:
    5. Fix issues: npx strray-ai fix
    6. View analytics: npx strray-ai analytics
    7. Add skills: npx strray-ai skill:install agency-agents
+   8. Write stories: npx strray-ai storyteller saga "Release Journey"
 
 For more information, visit: https://github.com/htafolla/stringray
 `,

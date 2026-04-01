@@ -299,6 +299,7 @@ export class BootOrchestrator {
         { name: "consoleLogGuard", type: "pre", priority: 55, enabled: true },
         { name: "postProcessorChain", type: "post", priority: 140, enabled: true },
         { name: "publishPreflight", type: "post", priority: 125, enabled: true },
+        { name: "storytellingTrigger", type: "post", priority: 5, enabled: true },
       ];
 
       for (const def of PROCESSOR_DEFS) {
