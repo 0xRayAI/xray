@@ -6,7 +6,55 @@ on:
   workflow_dispatch:
 
 jobs:
+  preflight-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Check required documentation exists
+        run: |
+          echo "Checking documentation files..."
+          ls -la README.md AGENTS.md CHANGELOG.md || exit 1
+
+      - name: Check pipeline tests exist
+        run: |
+          echo "Checking pipeline tests..."
+          ls -la src/__tests__/pipeline/ || exit 1
+          count=$(ls src/__tests__/pipeline/*.mjs 2>/dev/null | wc -l)
+          echo "Found $count pipeline tests"
+          if [ "$count" -lt 3 ]; then
+            echo "ERROR: At least 3 pipeline tests required"
+            exit 1
+          fi
+
+      - name: Check for recent reflections
+        run: |
+          echo "Checking reflections..."
+          if [ ! -d "docs/reflections" ]; then
+            echo "ERROR: docs/reflections directory missing"
+            exit 1
+          fi
+          # Check if there's a reflection from last 7 days
+          find docs/reflections -name "*.md" -mtime -7 | head -1 || {
+            echo "ERROR: No reflections from last 7 days"
+            exit 1
+          }
+
   publish:
+    needs: preflight-checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

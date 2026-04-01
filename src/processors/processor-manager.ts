@@ -10,7 +10,7 @@
 
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { ProcessorRegistration, ProcessorHook, PreValidateContext, PostValidateContext, ProcessorExecutionResult } from "./processor-types.js";
+import { ProcessorRegistration, ProcessorHook, PreValidateContext, PostValidateContext, ProcessorExecutionResult, ProcessorContext } from "./processor-types.js";
 import {
   detectProjectLanguage,
   getTestFilePath,
@@ -301,6 +301,9 @@ export class ProcessorManager {
       case "postProcessorChain":
         await this.initializePostProcessorChainProcessor();
         break;
+      case "publishPreflight":
+        await this.initializePublishPreflightProcessor();
+        break;
       default:
         // Generic initialization
         break;
@@ -566,6 +569,9 @@ export class ProcessorManager {
           break;
         case "postProcessorChain":
           result = await this.executePostProcessorChain(safeContext as PostValidateContext);
+          break;
+        case "publishPreflight":
+          result = await this.executePublishPreflight(safeContext as PostValidateContext);
           break;
         default:
           throw new Error(`Unknown processor: ${name}`);
@@ -1747,5 +1753,27 @@ export class ProcessorManager {
     const { runPostProcessorChainValidation } =
       await import("./postprocessor-chain-validator.js");
     return runPostProcessorChainValidation(context);
+  }
+
+  /**
+   * Initialize publish preflight processor
+   * Validates documentation completeness before publishing
+   */
+  private async initializePublishPreflightProcessor(): Promise<void> {
+    frameworkLogger.log(
+      "processor-manager",
+      "publish-preflight-initialized",
+      "success",
+    );
+  }
+
+  /**
+   * Execute publish preflight processor
+   */
+  private async executePublishPreflight(context: PostValidateContext): Promise<ProcessorExecutionResult> {
+    const { PublishPreflightProcessor } =
+      await import("./implementations/publish-preflight-processor.js");
+    const processor = new PublishPreflightProcessor();
+    return processor.execute(context as ProcessorContext);
   }
 }
