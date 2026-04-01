@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.18.5] - 2026-04-01
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: add storyteller enforcement for reflections/sagas (6198b74ab)
+- feat: add CI report generator script (732a94d83)
+- feat: add publish and commit_cycle config to features.json, update processors (f7948df70)
+- feat: add publish preflight processor - validates docs, reflections, pipelines before publish (f9402f624)
+
+### 🐛 Bug Fixes
+- fix: add storytelling config to .opencode/strray/features.json (2c38937b9)
+- fix: copy all src/skills and src/integrations non-TS files to dist for consumer mode (4259ea141)
+- fix: copy skills/registry.json and integrations configs to dist for consumer mode (19f583fc8)
+- fix: add readme field to package.json for npm (034891c18)
+- fix: copy README/docs to dist for npm publish (faa9e3af3)
+- fix: convert all pipeline tests to ESM imports - use readFileSync/existsSync instead of require('fs') (ffee9746b)
+- fix: JSON syntax error in features.json - duplicate require_reflection key (f70ebde01)
+- fix: commit_cycle config - remove max_files_per_commit, change reflection to count by commits (aacf0b924)
+- fix: pipeline test requirement now reads exact count from PIPELINE_INVENTORY.md (f900f7aa0)
+- fix: pipeline test count reads from PIPELINE_INVENTORY.md - counts all discoverable pipelines (45a282498)
+- fix: implement 8 placeholder validators - deployment safety, multi-agent, substrate, framework self-validation, emergent improvement, debug logs, performance regression, security vulnerability reporting (446f12d2b)
+- fix: activate dormant processors - spawnGovernance, performanceBudget, asyncPattern, consoleLogGuard; add CI enforcement gate (b08068b9a)
+- fix: add Node.js type declarations to tsconfig (40cdf34bb)
+- fix: implement keyword-based routing in getTaskRoutingRecommendation (0ca8a9ea1)
+
+### 📚 Documentation
+- docs: add plan for enforcing storyteller skill for reflections/sagas (47859dccd)
+- docs: add saga documenting journey from v1.15.40 to v1.18.2 (45b39e037)
+- docs: add versioned deep system reflection (4eb98cb41)
+- docs: add deep system reflection - the journey from plugin to agent OS (9a88868d4)
+
+### 🧪 Tests
+- test: add 11 new pipeline tests - complete coverage of all discoverable pipelines (61dd11695)
+- test: add 3 new sub-pipeline tests - enforcement, MCP-server, inference; docs: update pipeline inventory, add sub-pipeline discovery guide (1b004586c)
+- test: add CLI and MCP-Server pipelines to test suite, fix removed install.cjs tests (71c2ba153)
+
+### 🔧 Maintenance
+- chore: version sync v1.15.41 (cc549e2d0)
+- chore: version sync artifacts for v1.15.41 (1c6a3c5dc)
+- chore: bump UVM to 1.15.41 (21cfabc8e)
+- chore: version sync artifacts for v1.15.40 (505ac3140)
+- chore: bump UVM to 1.15.40 (3b07094f7)
+- chore: version sync artifacts for v1.15.39 (2a5b4d7cd)
+- chore: bump UVM to 1.15.39 (3a51e70ac)
+
+### 🔎 Other Changes
+- release: v1.18.2 - fix consumer file copying, add readme field (c28617bad)
+- release: v1.18.0 - publish pipeline, CI report generator, ESM fixes (cb4ac2e1b)
+- release: bump to v1.17.0 (9ae9d7725)
+- Revert "chore: version sync artifacts for v1.15.41" (dd01f27f0)
+
+---
+
 ## [1.18.4] - 2026-04-01
 
 ### 🔄 Changes
