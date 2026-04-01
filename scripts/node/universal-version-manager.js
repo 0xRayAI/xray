@@ -78,8 +78,8 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.18.3",
-    displayName: "StringRay AI v1.18.3",
+    version: "1.18.4",
+    displayName: "StringRay AI v1.18.4",
     lastUpdated: "2026-04-01",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
