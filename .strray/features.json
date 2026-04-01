@@ -16,7 +16,8 @@
     },
     "require_pipeline_tests": {
       "enabled": true,
-      "min_pipeline_tests": 3
+      "min_pipeline_tests": 22,
+      "read_from_inventory": true
     }
   },
   "commit_cycle": {

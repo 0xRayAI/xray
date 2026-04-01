@@ -219,12 +219,17 @@ export class PublishPreflightProcessor extends PostProcessor {
       try {
         const inventory = fs.readFileSync(pipelineInventoryPath, "utf-8");
         const mainPipelineMatches = inventory.match(/### Main Pipelines \((\d+)\)/);
-        const subPipelineMatches = inventory.match(/### Sub-Pipelines \(Discovered[^)]+\)/g);
         
-        if (mainPipelineMatches || subPipelineMatches) {
+        const subPipelineSectionMatch = inventory.match(/### Sub-Pipelines[\s\S]*?(?=### |\n## |\n$)/);
+        let subCount = 0;
+        if (subPipelineSectionMatch) {
+          const subLines = subPipelineSectionMatch[0].split('\n').filter(l => l.match(/^\|.*\*\*.*\|/));
+          subCount = subLines.length;
+        }
+        
+        if (mainPipelineMatches || subCount > 0) {
           const mainPipelineCount = mainPipelineMatches?.[1] ?? "0";
           const mainCount = parseInt(mainPipelineCount, 10);
-          const subCount = subPipelineMatches ? subPipelineMatches.length : 0;
           requiredPipelineTests = mainCount + subCount;
         }
       } catch (e) {
