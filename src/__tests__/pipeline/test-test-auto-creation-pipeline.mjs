@@ -3,6 +3,8 @@
  * Tests auto test generation
  */
 
+import { readFileSync, existsSync } from 'fs';
+
 console.log('=== TEST AUTO-CREATION PIPELINE TEST ===\n');
 
 let passed = 0;
@@ -32,18 +34,16 @@ function test(name, fn) {
 console.log('Testing Test Auto-Creation Pipeline\n');
 
 test('should verify TestAutoCreationProcessor exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/test-auto-creation-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('TestAutoCreationProcessor not found');
   }
   console.log('   (TestAutoCreationProcessor exists)');
 });
 
 test('should verify testAutoCreation in BootOrchestrator', () => {
-  const fs = require('fs');
   const bootPath = process.cwd() + '/src/core/boot-orchestrator.ts';
-  const content = fs.readFileSync(bootPath, 'utf-8');
+  const content = readFileSync(bootPath, 'utf-8');
   if (!content.includes('testAutoCreation')) {
     throw new Error('testAutoCreation not found in BootOrchestrator');
   }
@@ -51,9 +51,8 @@ test('should verify testAutoCreation in BootOrchestrator', () => {
 });
 
 test('should verify test-auto-creation-processor extends PostProcessor', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/test-auto-creation-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('PostProcessor')) {
     throw new Error('PostProcessor inheritance not found');
   }

@@ -3,6 +3,8 @@
  * Tests version sync enforcement
  */
 
+import { readFileSync, existsSync } from 'fs';
+
 console.log('=== VERSION COMPLIANCE PIPELINE TEST ===\n');
 
 let passed = 0;
@@ -32,18 +34,16 @@ function test(name, fn) {
 console.log('Testing Version Compliance Pipeline\n');
 
 test('should verify VersionComplianceProcessor exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/version-compliance-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('VersionComplianceProcessor not found');
   }
   console.log('   (VersionComplianceProcessor exists)');
 });
 
 test('should verify versionCompliance in BootOrchestrator', () => {
-  const fs = require('fs');
   const bootPath = process.cwd() + '/src/core/boot-orchestrator.ts';
-  const content = fs.readFileSync(bootPath, 'utf-8');
+  const content = readFileSync(bootPath, 'utf-8');
   if (!content.includes('versionCompliance')) {
     throw new Error('versionCompliance not found in BootOrchestrator');
   }
@@ -51,9 +51,9 @@ test('should verify versionCompliance in BootOrchestrator', () => {
 });
 
 test('should verify publish config has require_documentation', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.publish?.require_documentation?.readme_version_sync) {
     throw new Error('readme_version_sync not configured');
   }
@@ -61,9 +61,9 @@ test('should verify publish config has require_documentation', () => {
 });
 
 test('should verify package.json version is valid', () => {
-  const fs = require('fs');
   const pkgPath = process.cwd() + '/package.json';
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+  const pkgData = readFileSync(pkgPath, 'utf-8');
+  const pkg = JSON.parse(pkgData);
   if (!pkg.version || !pkg.version.match(/^\d+\.\d+\.\d+$/)) {
     throw new Error('Invalid package.json version');
   }

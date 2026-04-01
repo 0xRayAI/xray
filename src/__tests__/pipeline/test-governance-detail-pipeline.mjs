@@ -3,6 +3,7 @@
  * Tests SpawnGovernanceProcessor, rate limiting
  */
 
+import { readFileSync, existsSync } from 'fs';
 import { StringRayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== GOVERNANCE DETAIL PIPELINE TEST ===\n');
@@ -40,12 +41,12 @@ test('should verify SpawnGovernanceProcessor is registered in processor-manager'
 });
 
 test('should verify agent_spawn config exists in features.json', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  if (!fs.existsSync(configPath)) {
+  if (!existsSync(configPath)) {
     throw new Error('features.json not found');
   }
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.agent_spawn) {
     throw new Error('agent_spawn config missing');
   }
@@ -53,9 +54,8 @@ test('should verify agent_spawn config exists in features.json', () => {
 });
 
 test('should verify spawnGovernance pre-processor in BootOrchestrator', () => {
-  const fs = require('fs');
   const bootPath = process.cwd() + '/src/core/boot-orchestrator.ts';
-  const content = fs.readFileSync(bootPath, 'utf-8');
+  const content = readFileSync(bootPath, 'utf-8');
   if (!content.includes('spawnGovernance')) {
     throw new Error('spawnGovernance not found in BootOrchestrator');
   }
@@ -63,9 +63,9 @@ test('should verify spawnGovernance pre-processor in BootOrchestrator', () => {
 });
 
 test('should verify agent spawn limits from features.json', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.agent_spawn?.max_concurrent) {
     throw new Error('max_concurrent not configured');
   }
@@ -73,9 +73,9 @@ test('should verify agent spawn limits from features.json', () => {
 });
 
 test('should verify rate limiting config from features.json', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.agent_spawn?.rate_limit_per_minute) {
     throw new Error('rate_limit_per_minute not configured');
   }

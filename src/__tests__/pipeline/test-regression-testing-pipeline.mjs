@@ -3,6 +3,8 @@
  * Tests regression test execution post-write
  */
 
+import { readFileSync, existsSync } from 'fs';
+
 console.log('=== REGRESSION TESTING PIPELINE TEST ===\n');
 
 let passed = 0;
@@ -32,18 +34,16 @@ function test(name, fn) {
 console.log('Testing Regression Testing Pipeline\n');
 
 test('should verify RegressionTestingProcessor exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/regression-testing-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('RegressionTestingProcessor not found');
   }
   console.log('   (RegressionTestingProcessor exists)');
 });
 
 test('should verify regression-testing-processor extends PostProcessor', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/regression-testing-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('PostProcessor')) {
     throw new Error('PostProcessor inheritance not found');
   }
@@ -51,9 +51,8 @@ test('should verify regression-testing-processor extends PostProcessor', () => {
 });
 
 test('should verify regression testing logic exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/regression-testing-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('regression') && !content.includes('test')) {
     throw new Error('Regression testing logic not found');
   }

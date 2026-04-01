@@ -3,6 +3,8 @@
  * Tests console.log blocking in production
  */
 
+import { readFileSync, existsSync } from 'fs';
+
 console.log('=== CONSOLE LOG GUARD PIPELINE TEST ===\n');
 
 let passed = 0;
@@ -32,18 +34,16 @@ function test(name, fn) {
 console.log('Testing Console Log Guard Pipeline\n');
 
 test('should verify consoleLogGuard processor exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/console-log-guard-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('ConsoleLogGuardProcessor not found');
   }
   console.log('   (ConsoleLogGuardProcessor exists)');
 });
 
 test('should verify consoleLogGuard in BootOrchestrator', () => {
-  const fs = require('fs');
   const bootPath = process.cwd() + '/src/core/boot-orchestrator.ts';
-  const content = fs.readFileSync(bootPath, 'utf-8');
+  const content = readFileSync(bootPath, 'utf-8');
   if (!content.includes('consoleLogGuard')) {
     throw new Error('consoleLogGuard not found in BootOrchestrator');
   }
@@ -51,9 +51,9 @@ test('should verify consoleLogGuard in BootOrchestrator', () => {
 });
 
 test('should verify log protection config exists', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.activity_logging) {
     throw new Error('activity_logging config missing');
   }

@@ -3,6 +3,8 @@
  * Tests sensitive data protection in logs
  */
 
+import { readFileSync, existsSync } from 'fs';
+
 console.log('=== LOG PROTECTION PIPELINE TEST ===\n');
 
 let passed = 0;
@@ -32,18 +34,16 @@ function test(name, fn) {
 console.log('Testing Log Protection Pipeline\n');
 
 test('should verify LogProtectionProcessor exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/log-protection-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('LogProtectionProcessor not found');
   }
   console.log('   (LogProtectionProcessor exists)');
 });
 
 test('should verify log-protection-processor extends PreProcessor', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/log-protection-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('PreProcessor')) {
     throw new Error('PreProcessor inheritance not found');
   }
@@ -51,9 +51,8 @@ test('should verify log-protection-processor extends PreProcessor', () => {
 });
 
 test('should verify log protection logic exists (sensitive data detection)', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/log-protection-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('sensitive') && !content.includes('protect')) {
     throw new Error('Log protection logic not found');
   }
@@ -61,9 +60,9 @@ test('should verify log protection logic exists (sensitive data detection)', () 
 });
 
 test('should verify security config in features.json', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.security) {
     throw new Error('security config missing');
   }

@@ -3,6 +3,8 @@
  * Tests test coverage analysis
  */
 
+import { readFileSync, existsSync } from 'fs';
+
 console.log('=== COVERAGE ANALYSIS PIPELINE TEST ===\n');
 
 let passed = 0;
@@ -32,18 +34,16 @@ function test(name, fn) {
 console.log('Testing Coverage Analysis Pipeline\n');
 
 test('should verify CoverageAnalysisProcessor exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/coverage-analysis-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('CoverageAnalysisProcessor not found');
   }
   console.log('   (CoverageAnalysisProcessor exists)');
 });
 
 test('should verify coverage-analysis-processor extends PostProcessor', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/coverage-analysis-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('PostProcessor')) {
     throw new Error('PostProcessor inheritance not found');
   }
@@ -51,9 +51,8 @@ test('should verify coverage-analysis-processor extends PostProcessor', () => {
 });
 
 test('should verify coverage analysis logic exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/implementations/coverage-analysis-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('coverage')) {
     throw new Error('Coverage analysis logic not found');
   }

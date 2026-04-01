@@ -3,6 +3,8 @@
  * Tests async/await usage validation
  */
 
+import { readFileSync, existsSync } from 'fs';
+
 console.log('=== ASYNC PATTERN PIPELINE TEST ===\n');
 
 let passed = 0;
@@ -32,18 +34,16 @@ function test(name, fn) {
 console.log('Testing Async Pattern Pipeline\n');
 
 test('should verify AsyncPatternProcessor exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/async-pattern-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('AsyncPatternProcessor not found');
   }
   console.log('   (AsyncPatternProcessor exists)');
 });
 
 test('should verify asyncPattern in BootOrchestrator', () => {
-  const fs = require('fs');
   const bootPath = process.cwd() + '/src/core/boot-orchestrator.ts';
-  const content = fs.readFileSync(bootPath, 'utf-8');
+  const content = readFileSync(bootPath, 'utf-8');
   if (!content.includes('asyncPattern')) {
     throw new Error('asyncPattern not found in BootOrchestrator');
   }
@@ -51,9 +51,8 @@ test('should verify asyncPattern in BootOrchestrator', () => {
 });
 
 test('should verify async pattern validation logic exists', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/async-pattern-processor.ts';
-  const content = fs.readFileSync(procPath, 'utf-8');
+  const content = readFileSync(procPath, 'utf-8');
   if (!content.includes('async') && !content.includes('await')) {
     throw new Error('Async pattern validation not found');
   }

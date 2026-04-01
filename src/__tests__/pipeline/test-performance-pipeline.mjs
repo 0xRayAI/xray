@@ -3,6 +3,7 @@
  * Tests PerformanceBudgetProcessor
  */
 
+import { readFileSync, existsSync } from 'fs';
 import { StringRayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== PERFORMANCE PIPELINE TEST ===\n');
@@ -34,18 +35,17 @@ function test(name, fn) {
 console.log('Testing Performance Pipeline\n');
 
 test('should verify PerformanceBudgetProcessor is defined', () => {
-  const fs = require('fs');
   const procPath = process.cwd() + '/src/processors/performance-budget-processor.ts';
-  if (!fs.existsSync(procPath)) {
+  if (!existsSync(procPath)) {
     throw new Error('PerformanceBudgetProcessor not found');
   }
   console.log('   (PerformanceBudgetProcessor exists)');
 });
 
 test('should verify performance_monitoring config in features.json', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.performance_monitoring) {
     throw new Error('performance_monitoring config missing');
   }
@@ -53,9 +53,8 @@ test('should verify performance_monitoring config in features.json', () => {
 });
 
 test('should verify performanceBudget pre-processor in BootOrchestrator', () => {
-  const fs = require('fs');
   const bootPath = process.cwd() + '/src/core/boot-orchestrator.ts';
-  const content = fs.readFileSync(bootPath, 'utf-8');
+  const content = readFileSync(bootPath, 'utf-8');
   if (!content.includes('performanceBudget')) {
     throw new Error('performanceBudget not found in BootOrchestrator');
   }
@@ -63,9 +62,9 @@ test('should verify performanceBudget pre-processor in BootOrchestrator', () => 
 });
 
 test('should verify alerting config exists', () => {
-  const fs = require('fs');
   const configPath = process.cwd() + '/.strray/features.json';
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const configData = readFileSync(configPath, 'utf-8');
+  const config = JSON.parse(configData);
   if (!config.performance_monitoring?.alerting) {
     throw new Error('alerting config missing');
   }
