@@ -211,18 +211,44 @@ export class PublishPreflightProcessor extends PostProcessor {
       });
     }
 
-    // Check 5: Pipeline tests exist
+    // Check 5: Pipeline tests exist - must match all discoverable pipelines
+    const pipelineInventoryPath = path.join(projectRoot, "docs/architecture/PIPELINE_INVENTORY.md");
+    let requiredPipelineTests: number = pipelineConfig.min_pipeline_tests;
+    
+    if (fs.existsSync(pipelineInventoryPath)) {
+      try {
+        const inventory = fs.readFileSync(pipelineInventoryPath, "utf-8");
+        const mainPipelineMatches = inventory.match(/### Main Pipelines \((\d+)\)/);
+        const subPipelineMatches = inventory.match(/### Sub-Pipelines \(Discovered[^)]+\)/g);
+        
+        if (mainPipelineMatches || subPipelineMatches) {
+          const mainPipelineCount = mainPipelineMatches?.[1] ?? "0";
+          const mainCount = parseInt(mainPipelineCount, 10);
+          const subCount = subPipelineMatches ? subPipelineMatches.length : 0;
+          requiredPipelineTests = mainCount + subCount;
+        }
+      } catch (e) {
+        frameworkLogger.log(
+          "publish-preflight-processor",
+          "inventory-parse-failed",
+          "warning",
+          { error: e instanceof Error ? e.message : String(e) },
+        );
+      }
+    }
+
     if (pipelineConfig.enabled && pipelineTestsExist) {
       const testFiles = fs.readdirSync(pipelineTestDir)
         .filter(f => f.endsWith(".mjs") || f.endsWith(".test.mjs"));
 
-      const hasEnoughTests = testFiles.length >= pipelineConfig.min_pipeline_tests;
+      const hasEnoughTests = testFiles.length >= requiredPipelineTests;
+      const requiredStr = requiredPipelineTests.toString();
       checks.push({
         name: "Pipeline tests",
         passed: hasEnoughTests,
         message: hasEnoughTests
-          ? `Found ${testFiles.length} pipeline test files`
-          : `Only ${testFiles.length} pipeline test files - at least ${pipelineConfig.min_pipeline_tests} required`,
+          ? `Found ${testFiles.length} pipeline test files (required: ${requiredStr})`
+          : `Only ${testFiles.length} pipeline test files - ${requiredStr} required (from PIPELINE_INVENTORY.md)`,
         required: true,
       });
     }
