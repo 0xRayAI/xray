@@ -692,15 +692,56 @@ ReportData { generatedAt, timeRange, metrics, insights, recommendations, summary
 > **Important Discovery (v1.15.1)**: Unit tests passing ≠ Pipeline working.
 > See [Pipeline Testing Methodology](../PIPELINE_TESTING_METHODOLOGY.md) for details.
 
-| Pipeline | Testing Status | Tests | Notes |
-|----------|---------------|-------|-------|
-| **Inference** | ✅ Tested | ? | 9 iterations, 3 consecutive passes |
-| **Governance** | ✅ Tested | 12 | 3 consecutive passes |
-| **Boot** | ✅ Tested | 14 | 3 consecutive passes |
-| **Orchestration** | ✅ Tested | 12 | 3 consecutive passes |
-| **Routing** | ✅ Tested | 15 | 3 consecutive passes |
-| **Processor** | ✅ Tested | 11 | 3 consecutive passes |
-| **Reporting** | ✅ Tested | 15 | 3 consecutive passes |
+## Complete Sub-Pipeline Inventory (v1.15.41)
+
+### Main Pipelines (7)
+| Pipeline | Description | Test File |
+|----------|-------------|-----------|
+| **Boot** | Framework initialization | test-boot-pipeline.mjs |
+| **Orchestration** | Multi-agent coordination | test-orchestration-pipeline.mjs |
+| **Governance** | Agent spawn limits, rate limiting | test-governance-pipeline.mjs |
+| **Processor** | Pre/post processor execution | test-processor-pipeline.mjs |
+| **MCP-Server** | MCP server implementations | test-processor-mcp-server.mjs |
+| **CLI** | CLI command validation | test-cli-pipeline.mjs |
+| **Reporting** | Analytics & insights | test-reporting-pipeline.mjs |
+
+### Sub-Pipelines (Discovered v1.15.41)
+
+| Sub-Pipeline | Components | Status |
+|-------------|------------|--------|
+| **Enforcement** | RuleEnforcer, 29 Validators, 5 Loaders, 4 Core classes | ✅ Active via CodexComplianceProcessor |
+| **MCP-Server-Full** | 16 server implementations | ✅ Built |
+| **Inference** | InferenceTuner, InferenceImprovementProcessor | ✅ Active |
+| **Pre-Processors** | 15 processors (preValidate, codexCompliance, etc.) | ✅ Active |
+| **Post-Processors** | 5+ processors (stateValidation, testAutoHealing, etc.) | ✅ Active |
+| **Governance-Detail** | SpawnGovernanceProcessor, rate limiting | ✅ Active |
+| **Performance** | PerformanceBudgetProcessor | ✅ Active |
+| **ConsoleLogGuard** | Blocks console.log in prod | ✅ Active |
+| **AsyncPattern** | Validates async/await usage | ✅ Active |
+| **VersionCompliance** | Enforces version sync | ✅ Active |
+| **TestAutoCreation** | Auto-generates tests | ✅ Active |
+| **RegressionTesting** | Runs regression tests post-write | ✅ Active |
+| **CoverageAnalysis** | Analyzes test coverage | ✅ Active |
+| **LogProtection** | Protects sensitive log data | ✅ Active |
+| **CodexCompliance** | Full rule validation via RuleEnforcer | ✅ Active |
+
+### Systems Not Used as Originally Designed
+
+| System | Original Vision | Actual Usage |
+|--------|----------------|--------------|
+| **RuleEnforcer** | Central enforcement engine | Runs via CodexComplianceProcessor pre-processor |
+| **Enforcer Agent** | Does all enforcement | Routes to specialists; CodexComplianceProcessor does validation |
+| **SpawnGovernance** | Spawns governance agent on commits | Validates but doesn't spawn |
+| **PerformanceBudget** | Enforces perf budgets | Validates but doesn't block |
+| **ViolationFixer** | Maps violations to agents | Not actively used |
+
+### Pipeline Test Coverage
+
+| Pipeline | Tests | Status |
+|----------|-------|--------|
+| **Enforcement** | 21 | ✅ test-enforcement-pipeline.mjs |
+| **MCP-Server** | 33 | ✅ test-mcp-server-pipeline.mjs |
+| **Inference** | 7 | ✅ test-inference-pipeline.mjs |
 
 ---
 

@@ -17,6 +17,9 @@ const PIPELINES = [
   { name: 'Processor-MCP-Server', path: 'test-processor-mcp-server.mjs' },
   { name: 'CLI', path: 'test-cli-pipeline.mjs' },
   { name: 'Reporting', path: 'test-reporting-pipeline.mjs' },
+  { name: 'Enforcement', path: 'test-enforcement-pipeline.mjs' },
+  { name: 'MCP-Server', path: 'test-mcp-server-pipeline.mjs' },
+  { name: 'Inference', path: 'test-inference-pipeline.mjs' },
 ];
 
 const CONSECUTIVE_PASSES_REQUIRED = 3;
