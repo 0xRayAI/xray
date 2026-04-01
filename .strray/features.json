@@ -25,9 +25,14 @@
     "auto_commit": {
       "enabled": true,
       "force_commit_after_minutes": 10,
-      "min_changes_to_commit": 1,
-      "max_files_per_commit": 5
+      "min_changes_to_commit": 1
     },
+    "require_reflection": {
+      "enabled": true,
+      "max_commits_since_reflection": 5,
+      "auto_remind": true
+    }
+  },
     "require_reflection": {
       "enabled": true,
       "reflection_frequency": "daily",

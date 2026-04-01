@@ -170,12 +170,10 @@ export interface CommitCycleConfig {
     enabled: boolean;
     force_commit_after_minutes: number;
     min_changes_to_commit: number;
-    max_files_per_commit: number;
   };
   require_reflection: {
     enabled: boolean;
-    reflection_frequency: string;
-    max_gap_hours: number;
+    max_commits_since_reflection: number;
     auto_remind: boolean;
   };
   validation: {

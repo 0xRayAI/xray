@@ -71,7 +71,7 @@ export class IntelligentCommitBatcher {
     const commitCycleConfig = featuresConfig?.commit_cycle;
 
     const defaults: CommitBatchingConfig = {
-      maxFilesPerCommit: commitCycleConfig?.auto_commit?.max_files_per_commit ?? 5,
+      maxFilesPerCommit: 10,
       minFilesPerCommit: commitCycleConfig?.auto_commit?.min_changes_to_commit ?? 1,
       maxTimeBetweenCommits: 5 * 60 * 1000, // 5 minutes
       minTimeBetweenCommits: 30 * 1000, // 30 seconds
@@ -90,7 +90,7 @@ export class IntelligentCommitBatcher {
     this.config = { ...defaults, ...config };
   }
 
-  private loadFeaturesConfig(): { commit_cycle?: { auto_commit?: { max_files_per_commit?: number; min_changes_to_commit?: number; force_commit_after_minutes?: number; enabled?: boolean } } } | null {
+  private loadFeaturesConfig(): { commit_cycle?: { auto_commit?: { min_changes_to_commit?: number; force_commit_after_minutes?: number; enabled?: boolean }; require_reflection?: { max_commits_since_reflection?: number; enabled?: boolean } } } | null {
     try {
       const configPaths = [
         path.join(process.cwd(), ".strray", "features.json"),
