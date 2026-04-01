@@ -59,6 +59,8 @@ class SkillInvocationServer {
                     "documentation-generation",
                     "refactoring-strategies",
                     "architecture-patterns",
+                    // Story skills
+                    "storyteller",
                     // Additional skills
                     "bug-triage-specialist",
                     "log-monitor",
@@ -281,6 +283,32 @@ class SkillInvocationServer {
               required: ["type"],
             },
           },
+          {
+            name: "skill-storyteller",
+            description:
+              "Invoke storyteller skill for writing reflections, sagas, and journeys",
+            inputSchema: {
+              type: "object",
+              properties: {
+                storyType: {
+                  type: "string",
+                  enum: ["reflection", "saga", "journey", "narrative"],
+                  description: "Type of story to write",
+                },
+                title: { type: "string", description: "Title for the story" },
+                context: {
+                  type: "object",
+                  description: "Context including commits, changes, metadata",
+                },
+                framework: {
+                  type: "string",
+                  enum: ["three_act_structure", "hero_journey", "spiral"],
+                  description: "Storytelling framework to use",
+                },
+              },
+              required: ["storyType"],
+            },
+          },
         ],
       };
     });
@@ -313,6 +341,8 @@ class SkillInvocationServer {
             return await this.handleSkillUiUxDesign(args);
           case "skill-documentation-generation":
             return await this.handleSkillDocumentationGeneration(args);
+          case "skill-storyteller":
+            return await this.handleSkillStoryteller(args);
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -552,6 +582,28 @@ class SkillInvocationServer {
         {
           type: "text",
           text: "Documentation generation completed:",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async handleSkillStoryteller(args: any) {
+    const { storyType, title, context, framework } = args;
+    const result = await mcpClientManager.callServerTool(
+      "storyteller",
+      `write_${storyType}`,
+      { title, context, framework },
+    );
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Storyteller ${storyType} completed:`,
         },
         {
           type: "text",

@@ -191,6 +191,85 @@ export interface ReflectionConfig {
   store_inference_data: boolean;
 }
 
+export interface AgentSpawnConfig {
+  enabled: boolean;
+  max_concurrent: number;
+  max_per_type: number;
+  spawn_cooldown_ms: number;
+  rate_limit_per_minute: number;
+}
+
+export interface DelegationConfig {
+  enabled: boolean;
+  confidence_threshold: number;
+  enable_intelligent_routing: boolean;
+}
+
+export interface ComplexityThresholds {
+  simple: number;
+  moderate: number;
+  complex: number;
+  enterprise: number;
+}
+
+export interface AnalyticsConfig {
+  enabled: boolean;
+  default_limit: number;
+  min_samples_for_calibration: number;
+  track_complexity_accuracy: boolean;
+  track_agent_performance: boolean;
+}
+
+export interface PatternLearningConfig {
+  enabled: boolean;
+  learning_interval_ms: number;
+  auto_apply_threshold: number;
+  min_success_rate: number;
+}
+
+export interface StoryTypeConfig {
+  location: string;
+  min_words: number;
+  ideal_words: number;
+  framework: string;
+}
+
+export interface StorytellingTriggerConfig {
+  enabled: boolean;
+  threshold?: number;
+  story_type: string;
+  remind_user?: boolean;
+  file_count_threshold?: number;
+  duration_minutes_threshold?: number;
+  require_saga?: boolean;
+  block_without_story?: boolean;
+}
+
+export interface StorytellingQualityRequirements {
+  require_frontmatter: boolean;
+  require_key_takeaways: boolean;
+  require_what_next: boolean;
+  fact_check_before_publish: boolean;
+  peer_review_agent: string;
+}
+
+export interface StorytellingConfig {
+  enabled: boolean;
+  reflection_triggers: {
+    commit_count: StorytellingTriggerConfig;
+    publish: StorytellingTriggerConfig;
+    complex_changes: StorytellingTriggerConfig;
+    session_duration: StorytellingTriggerConfig;
+  };
+  story_types: {
+    reflection: StoryTypeConfig;
+    saga: StoryTypeConfig;
+    journey: StoryTypeConfig;
+    narrative: StoryTypeConfig;
+  };
+  quality_requirements: StorytellingQualityRequirements;
+}
+
 export interface FeaturesConfig {
   version: string;
   description: string;
@@ -205,9 +284,15 @@ export interface FeaturesConfig {
   security: SecurityConfig;
   performance_monitoring: PerformanceMonitoringConfig;
   caching: CachingConfig;
+  agent_spawn?: AgentSpawnConfig;
+  delegation?: DelegationConfig;
+  complexity_thresholds?: ComplexityThresholds;
+  analytics?: AnalyticsConfig;
+  pattern_learning?: PatternLearningConfig;
   publish?: PublishConfig;
   commit_cycle?: CommitCycleConfig;
   reflection?: ReflectionConfig;
+  storytelling?: StorytellingConfig;
 }
 
 // ============================================================================

@@ -1,5 +1,25 @@
 # Plan: Enforce Storyteller Skill for Reflections, Sagas, and Journeys
 
+## Status: PARTIALLY IMPLEMENTED (2026-04-01)
+
+### Completed:
+- [x] Phase 1: storyteller added to skill-invocation.enum
+- [x] Phase 2: skill-storyteller tool with handler added
+- [x] Phase 3: StorytellingTriggerProcessor created
+- [x] Step 1: storyteller in skill-invocation enum
+- [x] Step 3: storytelling config in features.json
+- [x] Step 4: storytelling-trigger-processor.ts
+
+### Remaining:
+- [ ] Phase 4: Update AGENTS.md with storyteller usage
+- [ ] Phase 5: Create story-type-router.ts
+- [ ] Phase 6: CLI commands (npx strray-ai reflection)
+- [ ] Step 2: AGENTS.md storyteller section
+- [ ] Step 6: storyteller MCP server
+- [ ] Step 7: CLI commands
+
+---
+
 ## Problem Statement
 
 When asked to "write a saga" or "document this journey," the system did NOT:
