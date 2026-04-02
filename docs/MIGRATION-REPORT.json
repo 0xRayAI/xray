@@ -1,0 +1,2436 @@
+{
+  "date": "2026-04-01T22:37:57.726Z",
+  "totalScanned": 275,
+  "migrated": 272,
+  "skipped": 3,
+  "errors": 0,
+  "migratedFiles": [
+    {
+      "source": "BRAND.md",
+      "output": "BRAND",
+      "title": "BRAND",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "HOOK_PROTOCOL.md",
+      "output": "HOOK_PROTOCOL",
+      "title": "HOOK PROTOCOL",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "PLAN-storyteller-enforcement.md",
+      "output": "PLAN-storyteller-enforcement",
+      "title": "PLAN Storyteller Enforcement",
+      "tags": [],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "README.md",
+      "output": "README",
+      "title": "README",
+      "tags": [],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "SAGA-v1.15.40-to-v1.18.2.md",
+      "output": "SAGA-v1.15.40-to-v1.18.2",
+      "title": "SAGA V1.15.40 To V1.18",
+      "tags": [],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "advanced/plugin-loading-mechanism.md",
+      "output": "architecture/advanced/plugin-loading-mechanism",
+      "title": "Plugin Loading Mechanism",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "agents/ADDING_AGENTS.md",
+      "output": "agents/ADDING_AGENTS",
+      "title": "ADDING AGENTS",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "agents/AGENT_CLASSIFICATION.md",
+      "output": "agents/AGENT_CLASSIFICATION",
+      "title": "AGENT CLASSIFICATION",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "agents/AGENT_CONFIG.md",
+      "output": "agents/AGENT_CONFIG",
+      "title": "AGENT CONFIG",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "agents/AGENT_REVIEW_ACTION_ITEMS.md",
+      "output": "agents/AGENT_REVIEW_ACTION_ITEMS",
+      "title": "AGENT REVIEW ACTION ITEMS",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "agents/OPERATING_PROCEDURES.md",
+      "output": "agents/OPERATING_PROCEDURES",
+      "title": "OPERATING PROCEDURES",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "agents/PERFORMANCE_MONITORING.md",
+      "output": "agents/PERFORMANCE_MONITORING",
+      "title": "PERFORMANCE MONITORING",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 6
+    },
+    {
+      "source": "agents/agent-codex-cross-reference.md",
+      "output": "agents/agent-codex-cross-reference",
+      "title": "Agent Codex Cross Reference",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 7
+    },
+    {
+      "source": "agents/analysis/AGENT_ROLES_AND_ENFORCEMENT.md",
+      "output": "agents/analysis/AGENT_ROLES_AND_ENFORCEMENT",
+      "title": "AGENT ROLES AND ENFORCEMENT",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "agents/analysis/COMMIT_BATCHING_STRATEGY.md",
+      "output": "agents/analysis/COMMIT_BATCHING_STRATEGY",
+      "title": "COMMIT BATCHING STRATEGY",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "agents/analysis/CONTEXTUAL_AWARENESS_ARCHITECTURE.md",
+      "output": "agents/analysis/CONTEXTUAL_AWARENESS_ARCHITECTURE",
+      "title": "CONTEXTUAL AWARENESS ARCHITECTURE",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "agents/analysis/CONTEXTUAL_AWARENESS_WORKFLOW.md",
+      "output": "agents/analysis/CONTEXTUAL_AWARENESS_WORKFLOW",
+      "title": "CONTEXTUAL AWARENESS WORKFLOW",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "agents/architect.md",
+      "output": "agents/architect",
+      "title": "Architect",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 8
+    },
+    {
+      "source": "agents/bug-triage-specialist.md",
+      "output": "agents/bug-triage-specialist",
+      "title": "Bug Triage Specialist",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 9
+    },
+    {
+      "source": "agents/code-reviewer.md",
+      "output": "agents/code-reviewer",
+      "title": "Code Reviewer",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 10
+    },
+    {
+      "source": "agents/document-writer.md",
+      "output": "agents/document-writer",
+      "title": "Document Writer",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 11
+    },
+    {
+      "source": "agents/enforcer.md",
+      "output": "agents/enforcer",
+      "title": "Enforcer",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 12
+    },
+    {
+      "source": "agents/frontend-ui-ux-engineer.md",
+      "output": "agents/frontend-ui-ux-engineer",
+      "title": "Frontend Ui Ux Engineer",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 13
+    },
+    {
+      "source": "agents/librarian.md",
+      "output": "agents/librarian",
+      "title": "Librarian",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 14
+    },
+    {
+      "source": "agents/multimodal-looker.md",
+      "output": "agents/multimodal-looker",
+      "title": "Multimodal Looker",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 15
+    },
+    {
+      "source": "agents/orchestrator.md",
+      "output": "agents/orchestrator",
+      "title": "Orchestrator",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 16
+    },
+    {
+      "source": "agents/refactorer.md",
+      "output": "agents/refactorer",
+      "title": "Refactorer",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 17
+    },
+    {
+      "source": "agents/security-auditor.md",
+      "output": "agents/security-auditor",
+      "title": "Security Auditor",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 18
+    },
+    {
+      "source": "agents/storyteller-growth-strategy.md",
+      "output": "agents/storyteller-growth-strategy",
+      "title": "Storyteller Growth Strategy",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 19
+    },
+    {
+      "source": "agents/storyteller-style-guide.md",
+      "output": "agents/storyteller-style-guide",
+      "title": "Storyteller Style Guide",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 20
+    },
+    {
+      "source": "agents/test-architect.md",
+      "output": "agents/test-architect",
+      "title": "Test Architect",
+      "tags": [
+        "agents"
+      ],
+      "sidebarPosition": 21
+    },
+    {
+      "source": "analytics/ENHANCED_ROUTING_ANALYTICS.md",
+      "output": "analytics/ENHANCED_ROUTING_ANALYTICS",
+      "title": "ENHANCED ROUTING ANALYTICS",
+      "tags": [
+        "analytics"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "analytics/ORACLE_ENABLEMENT_REPORT.md",
+      "output": "analytics/ORACLE_ENABLEMENT_REPORT",
+      "title": "ORACLE ENABLEMENT REPORT",
+      "tags": [
+        "analytics"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "analytics/ROUTING-ANALYTICS-SYSTEM.md",
+      "output": "analytics/ROUTING-ANALYTICS-SYSTEM",
+      "title": "ROUTING ANALYTICS SYSTEM",
+      "tags": [
+        "analytics"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "analytics/ROUTING_ANALYTICS.md",
+      "output": "analytics/ROUTING_ANALYTICS",
+      "title": "ROUTING ANALYTICS",
+      "tags": [
+        "analytics"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "analytics/USAGE_ANALYTICS_GUIDE.md",
+      "output": "analytics/USAGE_ANALYTICS_GUIDE",
+      "title": "USAGE ANALYTICS GUIDE",
+      "tags": [
+        "analytics"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "api/API_REFERENCE.md",
+      "output": "api/API_REFERENCE",
+      "title": "API REFERENCE",
+      "tags": [
+        "api"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "api/ENTERPRISE_API_REFERENCE.md",
+      "output": "api/ENTERPRISE_API_REFERENCE",
+      "title": "ENTERPRISE API REFERENCE",
+      "tags": [
+        "api"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "architecture/ARCHITECTURE.md",
+      "output": "architecture/ARCHITECTURE",
+      "title": "ARCHITECTURE",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "architecture/ARCHITECTURE_UNIFIED.md",
+      "output": "architecture/ARCHITECTURE_UNIFIED",
+      "title": "ARCHITECTURE UNIFIED",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "architecture/CONCEPTUAL_ARCHITECTURE.md",
+      "output": "architecture/CONCEPTUAL_ARCHITECTURE",
+      "title": "CONCEPTUAL ARCHITECTURE",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "architecture/ENTERPRISE_ARCHITECTURE.md",
+      "output": "architecture/ENTERPRISE_ARCHITECTURE",
+      "title": "ENTERPRISE ARCHITECTURE",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "architecture/GROK_GUIDE.md",
+      "output": "architecture/GROK_GUIDE",
+      "title": "GROK GUIDE",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "architecture/MIGRATION_GUIDE.md",
+      "output": "architecture/MIGRATION_GUIDE",
+      "title": "MIGRATION GUIDE",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 6
+    },
+    {
+      "source": "architecture/ORCHESTRATION_ROADMAP.md",
+      "output": "architecture/ORCHESTRATION_ROADMAP",
+      "title": "ORCHESTRATION ROADMAP",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 7
+    },
+    {
+      "source": "architecture/ORCHESTRATOR_INTEGRATION_ARCHITECTURE.md",
+      "output": "architecture/ORCHESTRATOR_INTEGRATION_ARCHITECTURE",
+      "title": "ORCHESTRATOR INTEGRATION ARCHITECTURE",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 8
+    },
+    {
+      "source": "architecture/PIPELINE_INVENTORY.md",
+      "output": "architecture/PIPELINE_INVENTORY",
+      "title": "PIPELINE INVENTORY",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 9
+    },
+    {
+      "source": "architecture/SUB_PIPELINE_DISCOVERY.md",
+      "output": "architecture/SUB_PIPELINE_DISCOVERY",
+      "title": "SUB PIPELINE DISCOVERY",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 10
+    },
+    {
+      "source": "architecture/architecture-deep-dive-2026-03-12.md",
+      "output": "architecture/architecture-deep-dive-2026-03-12",
+      "title": "Architecture Deep Dive 2026 03 12",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 11
+    },
+    {
+      "source": "architecture/central-analytics-store.md",
+      "output": "architecture/central-analytics-store",
+      "title": "Central Analytics Store",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 12
+    },
+    {
+      "source": "architecture/phase2-analysis-decision.md",
+      "output": "architecture/phase2-analysis-decision",
+      "title": "Phase2 Analysis Decision",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 13
+    },
+    {
+      "source": "architecture/phase2-unnecessary-analysis.md",
+      "output": "architecture/phase2-unnecessary-analysis",
+      "title": "Phase2 Unnecessary Analysis",
+      "tags": [
+        "architecture"
+      ],
+      "sidebarPosition": 14
+    },
+    {
+      "source": "commands/COMMANDS.md",
+      "output": "reference/commands/COMMANDS",
+      "title": "COMMANDS",
+      "tags": [
+        "reference",
+        "commands"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "deployment/DEPLOYMENT_PIPELINE.md",
+      "output": "deployment/DEPLOYMENT_PIPELINE",
+      "title": "DEPLOYMENT PIPELINE",
+      "tags": [
+        "deployment"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "development/ENTERPRISE_DEVELOPER_GUIDE.md",
+      "output": "development/ENTERPRISE_DEVELOPER_GUIDE",
+      "title": "ENTERPRISE DEVELOPER GUIDE",
+      "tags": [
+        "development"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "development/plugin-loading-mechanism.md",
+      "output": "development/plugin-loading-mechanism",
+      "title": "Plugin Loading Mechanism",
+      "tags": [
+        "development"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "enhancements/StringRay-Enhancement-Recommendations.md",
+      "output": "enhancements/StringRay-Enhancement-Recommendations",
+      "title": "StringRay Enhancement Recommendations",
+      "tags": [
+        "enhancement"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "governance/governance-systems-test-report.md",
+      "output": "governance/governance-systems-test-report",
+      "title": "Governance Systems Test Report",
+      "tags": [
+        "governance"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "guides/file-monitoring.md",
+      "output": "guides/file-monitoring",
+      "title": "File Monitoring",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "implementation-status/central-analytics-implementation-status.md",
+      "output": "implementation-status/central-analytics-implementation-status",
+      "title": "Central Analytics Implementation Status",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "implementation-status/quick-reference.md",
+      "output": "implementation-status/quick-reference",
+      "title": "Quick Reference",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "implementation-summary/central-analytics-solution.md",
+      "output": "implementation-summary/central-analytics-solution",
+      "title": "Central Analytics Solution",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "implementation-summary/git-tree-completion.md",
+      "output": "implementation-summary/git-tree-completion",
+      "title": "Git Tree Completion",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "implementation-summary/session-complete.md",
+      "output": "implementation-summary/session-complete",
+      "title": "Session Complete",
+      "tags": [],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "integration/ACTIVITY_REPORT_PIPELINE_INTEGRATION.md",
+      "output": "integration/ACTIVITY_REPORT_PIPELINE_INTEGRATION",
+      "title": "ACTIVITY REPORT PIPELINE INTEGRATION",
+      "tags": [
+        "integration"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "migrations/openclaw-removal.md",
+      "output": "migrations/openclaw-removal",
+      "title": "Openclaw Removal",
+      "tags": [
+        "migration"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "operations/KNOWLEDGE_SKILLS_EXPANSION_PLAN.md",
+      "output": "operations/KNOWLEDGE_SKILLS_EXPANSION_PLAN",
+      "title": "KNOWLEDGE SKILLS EXPANSION PLAN",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "operations/MCP_INTEGRATION_ANALYSIS.md",
+      "output": "operations/MCP_INTEGRATION_ANALYSIS",
+      "title": "MCP INTEGRATION ANALYSIS",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "operations/MEMORY_REMEDIATION_PLAN.md",
+      "output": "operations/MEMORY_REMEDIATION_PLAN",
+      "title": "MEMORY REMEDIATION PLAN",
+      "tags": [],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "operations/deployment/DOCKER_DEPLOYMENT_GUIDE.md",
+      "output": "deployment/DOCKER_DEPLOYMENT_GUIDE",
+      "title": "DOCKER DEPLOYMENT GUIDE",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "operations/deployment/ENTERPRISE_DEPLOYMENT_GUIDE.md",
+      "output": "deployment/ENTERPRISE_DEPLOYMENT_GUIDE",
+      "title": "ENTERPRISE DEPLOYMENT GUIDE",
+      "tags": [],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "operations/migration/FRAMEWORK_MIGRATION.md",
+      "output": "migrations/FRAMEWORK_MIGRATION",
+      "title": "FRAMEWORK MIGRATION",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "performance/ENTERPRISE_PERFORMANCE.md",
+      "output": "performance/ENTERPRISE_PERFORMANCE",
+      "title": "ENTERPRISE PERFORMANCE",
+      "tags": [
+        "performance"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "performance/FRAMEWORK_PERFORMANCE.md",
+      "output": "performance/FRAMEWORK_PERFORMANCE",
+      "title": "FRAMEWORK PERFORMANCE",
+      "tags": [
+        "performance"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "performance/PATH_RESOLUTION_ANALYSIS.md",
+      "output": "performance/PATH_RESOLUTION_ANALYSIS",
+      "title": "PATH RESOLUTION ANALYSIS",
+      "tags": [
+        "performance"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "performance/performance-optimization-summary.md",
+      "output": "performance/performance-optimization-summary",
+      "title": "Performance Optimization Summary",
+      "tags": [
+        "performance"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "pipeline-trees/BOOT_PIPELINE_TREE.md",
+      "output": "architecture/pipelines/BOOT_PIPELINE_TREE",
+      "title": "BOOT PIPELINE TREE",
+      "tags": [
+        "architecture",
+        "pipelines"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "pipeline-trees/GOVERNANCE_PIPELINE_TREE.md",
+      "output": "architecture/pipelines/GOVERNANCE_PIPELINE_TREE",
+      "title": "GOVERNANCE PIPELINE TREE",
+      "tags": [
+        "architecture",
+        "pipelines"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "pipeline-trees/ORCHESTRATION_PIPELINE_TREE.md",
+      "output": "architecture/pipelines/ORCHESTRATION_PIPELINE_TREE",
+      "title": "ORCHESTRATION PIPELINE TREE",
+      "tags": [
+        "architecture",
+        "pipelines"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "pipeline-trees/PROCESSOR_PIPELINE_TREE.md",
+      "output": "architecture/pipelines/PROCESSOR_PIPELINE_TREE",
+      "title": "PROCESSOR PIPELINE TREE",
+      "tags": [
+        "architecture",
+        "pipelines"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "pipeline-trees/REPORTING_PIPELINE_TREE.md",
+      "output": "architecture/pipelines/REPORTING_PIPELINE_TREE",
+      "title": "REPORTING PIPELINE TREE",
+      "tags": [
+        "architecture",
+        "pipelines"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "pipeline-trees/ROUTING_PIPELINE_TREE.md",
+      "output": "architecture/pipelines/ROUTING_PIPELINE_TREE",
+      "title": "ROUTING PIPELINE TREE",
+      "tags": [
+        "architecture",
+        "pipelines"
+      ],
+      "sidebarPosition": 6
+    },
+    {
+      "source": "quickstart/central-analytics-quickstart.md",
+      "output": "guides/quickstart/central-analytics-quickstart",
+      "title": "Central Analytics Quickstart",
+      "tags": [
+        "guide",
+        "quickstart"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "reference/pattern-data-collection-tools.md",
+      "output": "reference/pattern-data-collection-tools",
+      "title": "Pattern Data Collection Tools",
+      "tags": [
+        "reference"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "reflections/100-PERCENT-TEST-SUCCESS-2026-03-13.md",
+      "output": "reflections/100-PERCENT-TEST-SUCCESS-2026-03-13",
+      "title": "100 PERCENT TEST SUCCESS 2026 03 13",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "reflections/2026-03-05-kernel-confidence-fix.md",
+      "output": "reflections/2026-03-05-kernel-confidence-fix",
+      "title": "2026 03 05 Kernel Confidence Fix",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "reflections/AUTONOMOUS_MODULE_TODO.md",
+      "output": "reflections/AUTONOMOUS_MODULE_TODO",
+      "title": "AUTONOMOUS MODULE TODO",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "reflections/DEEP_SESSION_REFLECTION.md",
+      "output": "reflections/DEEP_SESSION_REFLECTION",
+      "title": "DEEP SESSION REFLECTION",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "reflections/DEEP_SYSTEM_REFLECTION.md",
+      "output": "reflections/DEEP_SYSTEM_REFLECTION",
+      "title": "DEEP SYSTEM REFLECTION",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "reflections/DEEP_SYSTEM_REFLECTION_v1.15.41.md",
+      "output": "reflections/DEEP_SYSTEM_REFLECTION_v1.15.41",
+      "title": "DEEP SYSTEM REFLECTION V1.15",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 6
+    },
+    {
+      "source": "reflections/DEPLOYMENT_PIPELINE_TRANSFORMATION_REFLECTION.md",
+      "output": "reflections/DEPLOYMENT_PIPELINE_TRANSFORMATION_REFLECTION",
+      "title": "DEPLOYMENT PIPELINE TRANSFORMATION REFLECTION",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 7
+    },
+    {
+      "source": "reflections/DOCUMENTATION-UPDATE-COMPLETE-2026-03-13.md",
+      "output": "reflections/DOCUMENTATION-UPDATE-COMPLETE-2026-03-13",
+      "title": "DOCUMENTATION UPDATE COMPLETE 2026 03 13",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 8
+    },
+    {
+      "source": "reflections/GAP_ANALYSIS_KIMI_REFLECTION.md",
+      "output": "reflections/GAP_ANALYSIS_KIMI_REFLECTION",
+      "title": "GAP ANALYSIS KIMI REFLECTION",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 9
+    },
+    {
+      "source": "reflections/MODEL_PROPAGATION_FIX_ARCHITECTURE_ANALYSIS.md",
+      "output": "reflections/MODEL_PROPAGATION_FIX_ARCHITECTURE_ANALYSIS",
+      "title": "MODEL PROPAGATION FIX ARCHITECTURE ANALYSIS",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 10
+    },
+    {
+      "source": "reflections/MODEL_UPDATE_SUMMARY.md",
+      "output": "reflections/MODEL_UPDATE_SUMMARY",
+      "title": "MODEL UPDATE SUMMARY",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 11
+    },
+    {
+      "source": "reflections/PIPELINE_TESTING_DISCOVERY.md",
+      "output": "reflections/PIPELINE_TESTING_DISCOVERY",
+      "title": "PIPELINE TESTING DISCOVERY",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 12
+    },
+    {
+      "source": "reflections/PIPELINE_TESTING_JOURNEY.md",
+      "output": "reflections/PIPELINE_TESTING_JOURNEY",
+      "title": "PIPELINE TESTING JOURNEY",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 13
+    },
+    {
+      "source": "reflections/REFLECTION_SYSTEM_IMPLEMENTATION.md",
+      "output": "reflections/REFLECTION_SYSTEM_IMPLEMENTATION",
+      "title": "REFLECTION SYSTEM IMPLEMENTATION",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 14
+    },
+    {
+      "source": "reflections/SCRIPTS-TESTING-FIXING-COMPLETE-2026-03-13.md",
+      "output": "reflections/SCRIPTS-TESTING-FIXING-COMPLETE-2026-03-13",
+      "title": "SCRIPTS TESTING FIXING COMPLETE 2026 03 13",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 15
+    },
+    {
+      "source": "reflections/SIMULATION_TEST_RESULTS.md",
+      "output": "reflections/SIMULATION_TEST_RESULTS",
+      "title": "SIMULATION TEST RESULTS",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 16
+    },
+    {
+      "source": "reflections/STRINGRAY_PARADOX.md",
+      "output": "reflections/STRINGRAY_PARADOX",
+      "title": "STRINGRAY PARADOX",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 17
+    },
+    {
+      "source": "reflections/SYSTEM_BUG_INVESTIGATION.md",
+      "output": "reflections/SYSTEM_BUG_INVESTIGATION",
+      "title": "SYSTEM BUG INVESTIGATION",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 18
+    },
+    {
+      "source": "reflections/TEST_DOCUMENTATION.md",
+      "output": "reflections/TEST_DOCUMENTATION",
+      "title": "TEST DOCUMENTATION",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 19
+    },
+    {
+      "source": "reflections/agent-configuration-tests-failure-reflection.md",
+      "output": "reflections/agent-configuration-tests-failure-reflection",
+      "title": "Agent Configuration Tests Failure Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 20
+    },
+    {
+      "source": "reflections/agent-reflection-v114.md",
+      "output": "reflections/agent-reflection-v114",
+      "title": "Agent Reflection V114",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 21
+    },
+    {
+      "source": "reflections/antigravity-integration-journey-reflection-2026-02-26.md",
+      "output": "reflections/antigravity-integration-journey-reflection-2026-02-26",
+      "title": "Antigravity Integration Journey Reflection 2026 02 26",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 22
+    },
+    {
+      "source": "reflections/architectural-threshold-75-efficiency-reflection.md",
+      "output": "reflections/architectural-threshold-75-efficiency-reflection",
+      "title": "Architectural Threshold 75 Efficiency Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 23
+    },
+    {
+      "source": "reflections/automated-version-compliance-system.md",
+      "output": "reflections/automated-version-compliance-system",
+      "title": "Automated Version Compliance System",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 24
+    },
+    {
+      "source": "reflections/bug-triage-specialist-unsung-hero-2026-03-10.md",
+      "output": "reflections/bug-triage-specialist-unsung-hero-2026-03-10",
+      "title": "Bug Triage Specialist Unsung Hero 2026 03 10",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 25
+    },
+    {
+      "source": "reflections/ci-cd-autonomous-recovery-implementation-reflection.md",
+      "output": "reflections/ci-cd-autonomous-recovery-implementation-reflection",
+      "title": "Ci Cd Autonomous Recovery Implementation Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 26
+    },
+    {
+      "source": "reflections/ci-cd-pipeline-incident-deep-reflection.md",
+      "output": "reflections/ci-cd-pipeline-incident-deep-reflection",
+      "title": "Ci Cd Pipeline Incident Deep Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 27
+    },
+    {
+      "source": "reflections/ci-cd-pipeline-session-fixes-reflection-2026-02-24.md",
+      "output": "reflections/ci-cd-pipeline-session-fixes-reflection-2026-02-24",
+      "title": "Ci Cd Pipeline Session Fixes Reflection 2026 02 24",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 28
+    },
+    {
+      "source": "reflections/clean-version-victory-minimalism-reflection.md",
+      "output": "reflections/clean-version-victory-minimalism-reflection",
+      "title": "Clean Version Victory Minimalism Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 29
+    },
+    {
+      "source": "reflections/deconstruction-module-monolith-reflection.md",
+      "output": "reflections/deconstruction-module-monolith-reflection",
+      "title": "Deconstruction Module Monolith Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 30
+    },
+    {
+      "source": "reflections/deep/AGENTS-consumer-documentation-strategy-journey-2026-03-09.md",
+      "output": "reflections/deep/AGENTS-consumer-documentation-strategy-journey-2026-03-09",
+      "title": "AGENTS Consumer Documentation Strategy Journey 2026 03 09",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "reflections/deep/AGENTS-consumer-strategy-journey-2026-03-09.md",
+      "output": "reflections/deep/AGENTS-consumer-strategy-journey-2026-03-09",
+      "title": "AGENTS Consumer Strategy Journey 2026 03 09",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "reflections/deep/IMPLEMENTATION_JOURNEY_2026_03_25.md",
+      "output": "reflections/deep/IMPLEMENTATION_JOURNEY_2026_03_25",
+      "title": "IMPLEMENTATION JOURNEY 2026 03 25",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "reflections/deep/STRINGRAY_V114_COMPLETION_SAGA.md",
+      "output": "reflections/deep/STRINGRAY_V114_COMPLETION_SAGA",
+      "title": "STRINGRAY V114 COMPLETION SAGA",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "reflections/deep/agent-utilization-framework-organization-journey-2026-03-10.md",
+      "output": "reflections/deep/agent-utilization-framework-organization-journey-2026-03-10",
+      "title": "Agent Utilization Framework Organization Journey 2026 03 10",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "reflections/deep/automated-release-tweet-generator-journey-2026-03-10.md",
+      "output": "reflections/deep/automated-release-tweet-generator-journey-2026-03-10",
+      "title": "Automated Release Tweet Generator Journey 2026 03 10",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 6
+    },
+    {
+      "source": "reflections/deep/bug-triage-specialist-journey-2026-03-10.md",
+      "output": "reflections/deep/bug-triage-specialist-journey-2026-03-10",
+      "title": "Bug Triage Specialist Journey 2026 03 10",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 7
+    },
+    {
+      "source": "reflections/deep/build-mjs-copy-publish-journey-2026-03-30.md",
+      "output": "reflections/deep/build-mjs-copy-publish-journey-2026-03-30",
+      "title": "Build Mjs Copy Publish Journey 2026 03 30",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 8
+    },
+    {
+      "source": "reflections/deep/completing-mcp-client-test-stabilization-2026-03-12.md",
+      "output": "reflections/deep/completing-mcp-client-test-stabilization-2026-03-12",
+      "title": "Completing MCP CLIent Test Stabilization 2026 03 12",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 9
+    },
+    {
+      "source": "reflections/deep/framework-hygiene-journey-2026-03-29.md",
+      "output": "reflections/deep/framework-hygiene-journey-2026-03-29",
+      "title": "Framework Hygiene Journey 2026 03 29",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 10
+    },
+    {
+      "source": "reflections/deep/green-means-go-completion-triumph-2026-03-13.md",
+      "output": "reflections/deep/green-means-go-completion-triumph-2026-03-13",
+      "title": "Green Means Go Completion Triumph 2026 03 13",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 11
+    },
+    {
+      "source": "reflections/deep/inference-feedback-loop-activation-journey-2026-03-29.md",
+      "output": "reflections/deep/inference-feedback-loop-activation-journey-2026-03-29",
+      "title": "Inference Feedback Loop Activation Journey 2026 03 29",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 12
+    },
+    {
+      "source": "reflections/deep/kernel-integration-workflow.md",
+      "output": "reflections/deep/kernel-integration-workflow",
+      "title": "Kernel Integration Workflow",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 13
+    },
+    {
+      "source": "reflections/deep/kernel-v2.0-skill-system-fix-journey.md",
+      "output": "reflections/deep/kernel-v2.0-skill-system-fix-journey",
+      "title": "Kernel V2",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 14
+    },
+    {
+      "source": "reflections/deep/last-mile-plugin-to-agent-os-journey-2026-04-01.md",
+      "output": "reflections/deep/last-mile-plugin-to-agent-os-journey-2026-04-01",
+      "title": "Last Mile Plugin To Agent Os Journey 2026 04 01",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 15
+    },
+    {
+      "source": "reflections/deep/routing-lexicon-build-journey.md",
+      "output": "reflections/deep/routing-lexicon-build-journey",
+      "title": "Routing Lexicon Build Journey",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 16
+    },
+    {
+      "source": "reflections/deep/routing-system-removal-journey-2026-03-26.md",
+      "output": "reflections/deep/routing-system-removal-journey-2026-03-26",
+      "title": "Routing System Removal Journey 2026 03 26",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 17
+    },
+    {
+      "source": "reflections/deep/security-hardening-sweep-2026-03-29.md",
+      "output": "reflections/deep/security-hardening-sweep-2026-03-29",
+      "title": "Security Hardening Sweep 2026 03 29",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 18
+    },
+    {
+      "source": "reflections/deep/skills-integration-paradox-2026-03-24.md",
+      "output": "reflections/deep/skills-integration-paradox-2026-03-24",
+      "title": "Skills Integration Paradox 2026 03 24",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 19
+    },
+    {
+      "source": "reflections/deep/skills-routing-architecture-implementation-journey-2026-03-25.md",
+      "output": "reflections/deep/skills-routing-architecture-implementation-journey-2026-03-25",
+      "title": "Skills Routing Architecture Implementation Journey 2026 03 25",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 20
+    },
+    {
+      "source": "reflections/deep/skills-routing-architecture-research-2026-03-24.md",
+      "output": "reflections/deep/skills-routing-architecture-research-2026-03-24",
+      "title": "Skills Routing Architecture Research 2026 03 24",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 21
+    },
+    {
+      "source": "reflections/deep/skills-routing-architecture-strategy-2026-03-24.md",
+      "output": "reflections/deep/skills-routing-architecture-strategy-2026-03-24",
+      "title": "Skills Routing Architecture Strategy 2026 03 24",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 22
+    },
+    {
+      "source": "reflections/deep/storyteller-bug-triage-story.md",
+      "output": "reflections/deep/storyteller-bug-triage-story",
+      "title": "Storyteller Bug Triage Story",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 23
+    },
+    {
+      "source": "reflections/deep/storyteller-saga-2026-03-11.md",
+      "output": "reflections/deep/storyteller-saga-2026-03-11",
+      "title": "Storyteller Saga 2026 03 11",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 24
+    },
+    {
+      "source": "reflections/deep/stringray-evolution-saga-2026-03-25.md",
+      "output": "reflections/deep/stringray-evolution-saga-2026-03-25",
+      "title": "Stringray Evolution Saga 2026 03 25",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 25
+    },
+    {
+      "source": "reflections/deep/the-blank-screen-saga-pr15-dynamic-imports-2026-03-30.md",
+      "output": "reflections/deep/the-blank-screen-saga-pr15-dynamic-imports-2026-03-30",
+      "title": "The Blank Screen Saga Pr15 Dynamic Imports 2026 03 30",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 26
+    },
+    {
+      "source": "reflections/deep/the-documentation-avalanche-49-files-8-hours-2026-03-13.md",
+      "output": "reflections/deep/the-documentation-avalanche-49-files-8-hours-2026-03-13",
+      "title": "The Documentation Avalanche 49 Files 8 Hours 2026 03 13",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 27
+    },
+    {
+      "source": "reflections/deep/the-hook-that-wouldnt-fire-v1.13.2.md",
+      "output": "reflections/deep/the-hook-that-wouldnt-fire-v1.13.2",
+      "title": "The Hook That Wouldnt Fire V1.13",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 28
+    },
+    {
+      "source": "reflections/deep/the-hook-that-wouldnt-fire.md",
+      "output": "reflections/deep/the-hook-that-wouldnt-fire",
+      "title": "The Hook That Wouldnt Fire",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 29
+    },
+    {
+      "source": "reflections/deep/the-mcp-client-transformation-2026-03-12.md",
+      "output": "reflections/deep/the-mcp-client-transformation-2026-03-12",
+      "title": "The MCP CLIent Transformation 2026 03 12",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 30
+    },
+    {
+      "source": "reflections/deep/the-monoliths-demise-refactoring-journey-2026-03-12.md",
+      "output": "reflections/deep/the-monoliths-demise-refactoring-journey-2026-03-12",
+      "title": "The Monoliths Demise Refactoring Journey 2026 03 12",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 31
+    },
+    {
+      "source": "reflections/deep/the-pipeline-paradox-saga-2026-03-21.md",
+      "output": "reflections/deep/the-pipeline-paradox-saga-2026-03-21",
+      "title": "The Pipeline Paradox Saga 2026 03 21",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 32
+    },
+    {
+      "source": "reflections/deep/the-pr-that-wouldnt-merge-2026-03-27.md",
+      "output": "reflections/deep/the-pr-that-wouldnt-merge-2026-03-27",
+      "title": "The Pr That Wouldnt Merge 2026 03 27",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 33
+    },
+    {
+      "source": "reflections/deep/the-refactorers-odyssey-saga-journey-2026-03-12.md",
+      "output": "reflections/deep/the-refactorers-odyssey-saga-journey-2026-03-12",
+      "title": "The Refactorers Odyssey Saga Journey 2026 03 12",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 34
+    },
+    {
+      "source": "reflections/deep/typescript-build-fix-journey-2026-03-09.md",
+      "output": "reflections/deep/typescript-build-fix-journey-2026-03-09",
+      "title": "Typescript Build Fix Journey 2026 03 09",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 35
+    },
+    {
+      "source": "reflections/deep/victory-when-tests-finally-pass-2026-03-12.md",
+      "output": "reflections/deep/victory-when-tests-finally-pass-2026-03-12",
+      "title": "Victory When Tests Finally Pass 2026 03 12",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 36
+    },
+    {
+      "source": "reflections/deep-code-review-v1.9.0.md",
+      "output": "reflections/deep-code-review-v1.9.0",
+      "title": "Deep Code Review V1.9",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 31
+    },
+    {
+      "source": "reflections/deep-mcp-architecture-analysis.md",
+      "output": "reflections/deep-mcp-architecture-analysis",
+      "title": "Deep MCP Architecture Analysis",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 32
+    },
+    {
+      "source": "reflections/deep-reflection-orchestrator-test-suite-rehabilitation.md",
+      "output": "reflections/deep-reflection-orchestrator-test-suite-rehabilitation",
+      "title": "Deep Reflection Orchestrator Test Suite Rehabilitation",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 33
+    },
+    {
+      "source": "reflections/deep-reflection.md",
+      "output": "reflections/deep-reflection",
+      "title": "Deep Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 34
+    },
+    {
+      "source": "reflections/deployment-crisis-journey-deep-reflection.md",
+      "output": "reflections/deployment-crisis-journey-deep-reflection",
+      "title": "Deployment Crisis Journey Deep Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 35
+    },
+    {
+      "source": "reflections/deployment-crisis-v12x-reflection.md",
+      "output": "reflections/deployment-crisis-v12x-reflection",
+      "title": "Deployment Crisis V12x Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 36
+    },
+    {
+      "source": "reflections/emotional-bridge-emojis-reflection.md",
+      "output": "reflections/emotional-bridge-emojis-reflection",
+      "title": "Emotional Bridge Emojis Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 37
+    },
+    {
+      "source": "reflections/enabling-self-direction-framework-evolution.md",
+      "output": "reflections/enabling-self-direction-framework-evolution",
+      "title": "Enabling Self Direction Framework Evolution",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 38
+    },
+    {
+      "source": "reflections/enforcer-architecture-paradox-2026-03-18.md",
+      "output": "reflections/enforcer-architecture-paradox-2026-03-18",
+      "title": "Enforcer Architecture Paradox 2026 03 18",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 39
+    },
+    {
+      "source": "reflections/enhanced-template-author-aware.md",
+      "output": "reflections/enhanced-template-author-aware",
+      "title": "Enhanced Template Author Aware",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 40
+    },
+    {
+      "source": "reflections/esm-cjs-consumer-verification-2026-02-27.md",
+      "output": "reflections/esm-cjs-consumer-verification-2026-02-27",
+      "title": "ESM Cjs Consumer Verification 2026 02 27",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 41
+    },
+    {
+      "source": "reflections/evening-reflection-2026-03-18.md",
+      "output": "reflections/evening-reflection-2026-03-18",
+      "title": "Evening Reflection 2026 03 18",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 42
+    },
+    {
+      "source": "reflections/framework-expression-manifestation-reflection.md",
+      "output": "reflections/framework-expression-manifestation-reflection",
+      "title": "Framework Expression Manifestation Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 43
+    },
+    {
+      "source": "reflections/great-processor-refactoring-2026-03-18.md",
+      "output": "reflections/great-processor-refactoring-2026-03-18",
+      "title": "Great Processor Refactoring 2026 03 18",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 44
+    },
+    {
+      "source": "reflections/inference-pipeline-design.md",
+      "output": "reflections/inference-pipeline-design",
+      "title": "Inference Pipeline Design",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 45
+    },
+    {
+      "source": "reflections/inference-system-design.md",
+      "output": "reflections/inference-system-design",
+      "title": "Inference System Design",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 46
+    },
+    {
+      "source": "reflections/init.sh-duplicate-cleanup-plan-2026-03-10.md",
+      "output": "reflections/init.sh-duplicate-cleanup-plan-2026-03-10",
+      "title": "Init",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 47
+    },
+    {
+      "source": "reflections/json-codex-test-recovery-reflection.md",
+      "output": "reflections/json-codex-test-recovery-reflection",
+      "title": "JavaScripton Codex Test Recovery Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 48
+    },
+    {
+      "source": "reflections/just-good-enough-production-ready-reflection.md",
+      "output": "reflections/just-good-enough-production-ready-reflection",
+      "title": "Just Good Enough Production Ready Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 49
+    },
+    {
+      "source": "reflections/kimi-deployment-crisis-reflection.md",
+      "output": "reflections/kimi-deployment-crisis-reflection",
+      "title": "Kimi Deployment Crisis Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 50
+    },
+    {
+      "source": "reflections/legacy/deep-journey-reflection.md",
+      "output": "reflections/archive/deep-journey-reflection",
+      "title": "Deep Journey Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "reflections/legacy/deep-reflection-orchestration-realignment.md",
+      "output": "reflections/archive/deep-reflection-orchestration-realignment",
+      "title": "Deep Reflection Orchestration Realignment",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "reflections/legacy/task-skill-router-test-rehabilitation-2026-02-22.md",
+      "output": "reflections/archive/task-skill-router-test-rehabilitation-2026-02-22",
+      "title": "Task Skill Router Test Rehabilitation 2026 02 22",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "reflections/legacy/test-auto-generation-failure-diagnosis-2026-02-22.md",
+      "output": "reflections/archive/test-auto-generation-failure-diagnosis-2026-02-22",
+      "title": "Test Auto Generation Failure Diagnosis 2026 02 22",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "reflections/legacy/test_fixing_reflection.md",
+      "output": "reflections/archive/test_fixing_reflection",
+      "title": "Test Fixing Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "reflections/librarian-bug-fix-and-framework-analysis-reflection.md",
+      "output": "reflections/librarian-bug-fix-and-framework-analysis-reflection",
+      "title": "Librarian Bug Fix And Framework Analysis Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 51
+    },
+    {
+      "source": "reflections/madman-architect-collaboration-reflection.md",
+      "output": "reflections/madman-architect-collaboration-reflection",
+      "title": "Madman Architect Collaboration Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 52
+    },
+    {
+      "source": "reflections/mcp-consumer-path-debugging-reflection.md",
+      "output": "reflections/mcp-consumer-path-debugging-reflection",
+      "title": "MCP Consumer Path Debugging Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 53
+    },
+    {
+      "source": "reflections/mcp-initialize-protocol-deep-dive.md",
+      "output": "reflections/mcp-initialize-protocol-deep-dive",
+      "title": "MCP Initialize Protocol Deep Dive",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 54
+    },
+    {
+      "source": "reflections/mcp-initialize-protocol-fix.md",
+      "output": "reflections/mcp-initialize-protocol-fix",
+      "title": "MCP Initialize Protocol Fix",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 55
+    },
+    {
+      "source": "reflections/meta-reflection-automation-premise.md",
+      "output": "reflections/meta-reflection-automation-premise",
+      "title": "Meta Reflection Automation Premise",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 56
+    },
+    {
+      "source": "reflections/misnamed-users-directory-cleanup-2026-03-10.md",
+      "output": "reflections/misnamed-users-directory-cleanup-2026-03-10",
+      "title": "Misnamed Users Directory Cleanup 2026 03 10",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 57
+    },
+    {
+      "source": "reflections/multi-ai-collaboration-test-rehabilitation-reflection.md",
+      "output": "reflections/multi-ai-collaboration-test-rehabilitation-reflection",
+      "title": "Multi Ai Collaboration Test Rehabilitation Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 58
+    },
+    {
+      "source": "reflections/my-reflection-the-mirror-builds-itself-2026-03-16.md",
+      "output": "reflections/my-reflection-the-mirror-builds-itself-2026-03-16",
+      "title": "My Reflection The Mirror Builds Itself 2026 03 16",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 59
+    },
+    {
+      "source": "reflections/near-miss-spiral-2026-02-27.md",
+      "output": "reflections/near-miss-spiral-2026-02-27",
+      "title": "Near Miss Spiral 2026 02 27",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 60
+    },
+    {
+      "source": "reflections/openclaw-integration-reflection.md",
+      "output": "reflections/openclaw-integration-reflection",
+      "title": "Openclaw Integration Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 61
+    },
+    {
+      "source": "reflections/personal-codex-test-recovery-reflection.md",
+      "output": "reflections/personal-codex-test-recovery-reflection",
+      "title": "Personal Codex Test Recovery Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 62
+    },
+    {
+      "source": "reflections/personal-reflection-tui-fix-2026-02-26.md",
+      "output": "reflections/personal-reflection-tui-fix-2026-02-26",
+      "title": "Personal Reflection Tui Fix 2026 02 26",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 63
+    },
+    {
+      "source": "reflections/phase3-part1-validator-extraction-summary.md",
+      "output": "reflections/phase3-part1-validator-extraction-summary",
+      "title": "Phase3 Part1 Validator Extraction Summary",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 64
+    },
+    {
+      "source": "reflections/pragmatic-code-review-v1.9.0.md",
+      "output": "reflections/pragmatic-code-review-v1.9.0",
+      "title": "Pragmatic Code Review V1.9",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 65
+    },
+    {
+      "source": "reflections/processor-rules-engine-architecture-analysis-2026-03-18.md",
+      "output": "reflections/processor-rules-engine-architecture-analysis-2026-03-18",
+      "title": "Processor Rules Engine Architecture Analysis 2026 03 18",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 66
+    },
+    {
+      "source": "reflections/processor-testing-journey-2026-03-18.md",
+      "output": "reflections/processor-testing-journey-2026-03-18",
+      "title": "Processor Testing Journey 2026 03 18",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 67
+    },
+    {
+      "source": "reflections/refactoring-summary-2026-03-12.md",
+      "output": "reflections/refactoring-summary-2026-03-12",
+      "title": "Refactoring Summary 2026 03 12",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 68
+    },
+    {
+      "source": "reflections/reflection.md",
+      "output": "reflections/reflection",
+      "title": "Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 69
+    },
+    {
+      "source": "reflections/release-workflow-multi-tweet-generator-reflection-2026-03-10.md",
+      "output": "reflections/release-workflow-multi-tweet-generator-reflection-2026-03-10",
+      "title": "Release Workflow Multi Tweet Generator Reflection 2026 03 10",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 70
+    },
+    {
+      "source": "reflections/routing-architecture-deep-analysis.md",
+      "output": "reflections/routing-architecture-deep-analysis",
+      "title": "Routing Architecture Deep Analysis",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 71
+    },
+    {
+      "source": "reflections/ruleenforcer-phase1-completion.md",
+      "output": "reflections/ruleenforcer-phase1-completion",
+      "title": "Ruleenforcer Phase1 Completion",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 72
+    },
+    {
+      "source": "reflections/ruleenforcer-refactoring-summary.md",
+      "output": "reflections/ruleenforcer-refactoring-summary",
+      "title": "Ruleenforcer Refactoring Summary",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 73
+    },
+    {
+      "source": "reflections/script-testing-fixing-session-2026-02-27.md",
+      "output": "reflections/script-testing-fixing-session-2026-02-27",
+      "title": "Script Testing Fixing Session 2026 02 27",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 74
+    },
+    {
+      "source": "reflections/scripts-commands-inventory.md",
+      "output": "reflections/scripts-commands-inventory",
+      "title": "Scripts Commands Inventory",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 75
+    },
+    {
+      "source": "reflections/session-reflection-test-suite-resurrection.md",
+      "output": "reflections/session-reflection-test-suite-resurrection",
+      "title": "Session Reflection Test Suite Resurrection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 76
+    },
+    {
+      "source": "reflections/sessions/session-summary-2026-03-13.md",
+      "output": "reflections/sessions/session-summary-2026-03-13",
+      "title": "Session Summary 2026 03 13",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "reflections/storyteller-strategic-roadmap.md",
+      "output": "reflections/storyteller-strategic-roadmap",
+      "title": "Storyteller Strategic Roadmap",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 77
+    },
+    {
+      "source": "reflections/strange-loop-self-referential-infrastructure-2026-03-16.md",
+      "output": "reflections/strange-loop-self-referential-infrastructure-2026-03-16",
+      "title": "Strange Loop Self Referential Infrastructure 2026 03 16",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 78
+    },
+    {
+      "source": "reflections/stringray-1.6.31-gleaning-reflection.md",
+      "output": "reflections/stringray-1.6.31-gleaning-reflection",
+      "title": "Stringray 1.6",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 79
+    },
+    {
+      "source": "reflections/stringray-complete-journey-reflection.md",
+      "output": "reflections/stringray-complete-journey-reflection",
+      "title": "Stringray Complete Journey Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 80
+    },
+    {
+      "source": "reflections/stringray-deployment-reflection.md",
+      "output": "reflections/stringray-deployment-reflection",
+      "title": "Stringray Deployment Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 81
+    },
+    {
+      "source": "reflections/stringray-framework-deep-reflection-v1.4.21.md",
+      "output": "reflections/stringray-framework-deep-reflection-v1.4.21",
+      "title": "Stringray Framework Deep Reflection V1.4",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 82
+    },
+    {
+      "source": "reflections/stringray-monster-reflection-2026-02-24.md",
+      "output": "reflections/stringray-monster-reflection-2026-02-24",
+      "title": "Stringray Monster Reflection 2026 02 24",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 83
+    },
+    {
+      "source": "reflections/stringray-script-infrastructure-recovery-reflection.md",
+      "output": "reflections/stringray-script-infrastructure-recovery-reflection",
+      "title": "Stringray Script Infrastructure Recovery Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 84
+    },
+    {
+      "source": "reflections/stringray-self-evolution-journey-reflection.md",
+      "output": "reflections/stringray-self-evolution-journey-reflection",
+      "title": "Stringray Self Evolution Journey Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 85
+    },
+    {
+      "source": "reflections/stringray-self-evolution-reflection.md",
+      "output": "reflections/stringray-self-evolution-reflection",
+      "title": "Stringray Self Evolution Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 86
+    },
+    {
+      "source": "reflections/stringray-v1.5.0-emergence-of-ai-os.md",
+      "output": "reflections/stringray-v1.5.0-emergence-of-ai-os",
+      "title": "Stringray V1.5",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 87
+    },
+    {
+      "source": "reflections/task-skill-router-test-rehabilitation-2026-02-22.md",
+      "output": "reflections/task-skill-router-test-rehabilitation-2026-02-22",
+      "title": "Task Skill Router Test Rehabilitation 2026 02 22",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 88
+    },
+    {
+      "source": "reflections/template-gleaning-demonstration.md",
+      "output": "reflections/template-gleaning-demonstration",
+      "title": "Template Gleaning Demonstration",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 89
+    },
+    {
+      "source": "reflections/test-auto-generation-bug-diagnosis-2026-02-22.md",
+      "output": "reflections/test-auto-generation-bug-diagnosis-2026-02-22",
+      "title": "Test Auto Generation Bug Diagnosis 2026 02 22",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 90
+    },
+    {
+      "source": "reflections/test-auto-generation-failure-diagnosis-2026-02-22.md",
+      "output": "reflections/test-auto-generation-failure-diagnosis-2026-02-22",
+      "title": "Test Auto Generation Failure Diagnosis 2026 02 22",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 91
+    },
+    {
+      "source": "reflections/test-fixing-system-reflection.md",
+      "output": "reflections/test-fixing-system-reflection",
+      "title": "Test Fixing System Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 92
+    },
+    {
+      "source": "reflections/test-suite-stability-version-mgmt-reflection.md",
+      "output": "reflections/test-suite-stability-version-mgmt-reflection",
+      "title": "Test Suite Stability Version Mgmt Reflection",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 93
+    },
+    {
+      "source": "reflections/the-wisdom-of-constraints-2026-02-27.md",
+      "output": "reflections/the-wisdom-of-constraints-2026-02-27",
+      "title": "The Wisdom Of Constraints 2026 02 27",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 94
+    },
+    {
+      "source": "reflections/tui-agent-dropdown-fix-reflection-2026-02-26.md",
+      "output": "reflections/tui-agent-dropdown-fix-reflection-2026-02-26",
+      "title": "Tui Agent Dropdown Fix Reflection 2026 02 26",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 95
+    },
+    {
+      "source": "reflections/tuning-engines-deep-review.md",
+      "output": "reflections/tuning-engines-deep-review",
+      "title": "Tuning Engines Deep Review",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 96
+    },
+    {
+      "source": "reflections/tuning-engines-implementation-plan.md",
+      "output": "reflections/tuning-engines-implementation-plan",
+      "title": "Tuning Engines Implementation Plan",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 97
+    },
+    {
+      "source": "reflections/tuning-engines-inventory.md",
+      "output": "reflections/tuning-engines-inventory",
+      "title": "Tuning Engines Inventory",
+      "tags": [
+        "reflection"
+      ],
+      "sidebarPosition": 98
+    },
+    {
+      "source": "releases/v1.12-v1.13.md",
+      "output": "releases/v1.12-v1.13",
+      "title": "V1.12 V1",
+      "tags": [
+        "release"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "releases/v1.7.2.md",
+      "output": "releases/v1.7.2",
+      "title": "V1.7",
+      "tags": [
+        "release"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "releases/v1.7.8.md",
+      "output": "releases/v1.7.8",
+      "title": "V1.7",
+      "tags": [
+        "release"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "reports/REPORTING_SYSTEM_GUIDE.md",
+      "output": "reports/REPORTING_SYSTEM_GUIDE",
+      "title": "REPORTING SYSTEM GUIDE",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "reports/RULE_VALIDATION_TOOL_BREAKDOWN.md",
+      "output": "reports/RULE_VALIDATION_TOOL_BREAKDOWN",
+      "title": "RULE VALIDATION TOOL BREAKDOWN",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "research/INTEGRATION_STRATEGY.md",
+      "output": "research/INTEGRATION_STRATEGY",
+      "title": "INTEGRATION STRATEGY",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/REPO_INTEGRATION_ANALYSIS.md",
+      "output": "research/REPO_INTEGRATION_ANALYSIS",
+      "title": "REPO INTEGRATION ANALYSIS",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "research/agency-agents/README.md",
+      "output": "research/agency-agents/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/antigravity/README.md",
+      "output": "research/antigravity/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/impeccable/README.md",
+      "output": "research/impeccable/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/lightpanda/README.md",
+      "output": "research/lightpanda/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/mirofish/README.md",
+      "output": "research/mirofish/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/openclaw/README.md",
+      "output": "research/openclaw/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/openclaw/researcher-summary.md",
+      "output": "research/openclaw/researcher-summary",
+      "title": "Researcher Summary",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "research/openviking/README.md",
+      "output": "research/openviking/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "research/superpowers/README.md",
+      "output": "research/superpowers/README",
+      "title": "README",
+      "tags": [
+        "research"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "roadmap/STRINGRAY_EVOLUTION_SPEC.md",
+      "output": "roadmap/STRINGRAY_EVOLUTION_SPEC",
+      "title": "STRINGRAY EVOLUTION SPEC",
+      "tags": [
+        "roadmap"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "security/DEVELOPER_SECURITY_ONBOARDING.md",
+      "output": "security/DEVELOPER_SECURITY_ONBOARDING",
+      "title": "DEVELOPER SECURITY ONBOARDING",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "security/INCIDENT_RESPONSE_PROCEDURES.md",
+      "output": "security/INCIDENT_RESPONSE_PROCEDURES",
+      "title": "INCIDENT RESPONSE PROCEDURES",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "security/SECURITY_ARCHITECTURE.md",
+      "output": "security/SECURITY_ARCHITECTURE",
+      "title": "SECURITY ARCHITECTURE",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "security/SECURITY_AUDIT_REPORT.md",
+      "output": "security/SECURITY_AUDIT_REPORT",
+      "title": "SECURITY AUDIT REPORT",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "security/SECURITY_BEST_PRACTICES.md",
+      "output": "security/SECURITY_BEST_PRACTICES",
+      "title": "SECURITY BEST PRACTICES",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "security/SECURITY_CODE_REVIEW_CHECKLIST.md",
+      "output": "security/SECURITY_CODE_REVIEW_CHECKLIST",
+      "title": "SECURITY CODE REVIEW CHECKLIST",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 6
+    },
+    {
+      "source": "security/SECURITY_TRAINING_GUIDE.md",
+      "output": "security/SECURITY_TRAINING_GUIDE",
+      "title": "SECURITY TRAINING GUIDE",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 7
+    },
+    {
+      "source": "security/compliance.md/COMPLIANCE.md",
+      "output": "security/compliance.md/COMPLIANCE",
+      "title": "COMPLIANCE",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "security/security-report.md",
+      "output": "security/security-report",
+      "title": "Security Report",
+      "tags": [
+        "security"
+      ],
+      "sidebarPosition": 8
+    },
+    {
+      "source": "selection/FRAMEWORK_SELECTION.md",
+      "output": "selection/FRAMEWORK_SELECTION",
+      "title": "FRAMEWORK SELECTION",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "session-summary/central-analytics-session.md",
+      "output": "sessions/central-analytics-session",
+      "title": "Central Analytics Session",
+      "tags": [],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "session-summary/final-session-summary.md",
+      "output": "sessions/final-session-summary",
+      "title": "Final Session Summary",
+      "tags": [],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "testing/PIPELINE_TESTING_METHODOLOGY.md",
+      "output": "testing/PIPELINE_TESTING_METHODOLOGY",
+      "title": "PIPELINE TESTING METHODOLOGY",
+      "tags": [
+        "testing"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "testing/SCRIPTS_TESTING_STATUS.md",
+      "output": "testing/SCRIPTS_TESTING_STATUS",
+      "title": "SCRIPTS TESTING STATUS",
+      "tags": [
+        "testing"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "testing/TEST_CATEGORIZATION.md",
+      "output": "testing/TEST_CATEGORIZATION",
+      "title": "TEST CATEGORIZATION",
+      "tags": [
+        "testing"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "testing/TEST_CLASSIFICATION_GUIDE.md",
+      "output": "testing/TEST_CLASSIFICATION_GUIDE",
+      "title": "TEST CLASSIFICATION GUIDE",
+      "tags": [
+        "testing"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "testing/TEST_ENABLEMENT_ROADMAP.md",
+      "output": "testing/TEST_ENABLEMENT_ROADMAP",
+      "title": "TEST ENABLEMENT ROADMAP",
+      "tags": [
+        "testing"
+      ],
+      "sidebarPosition": 5
+    },
+    {
+      "source": "testing/TEST_INVENTORY.md",
+      "output": "testing/TEST_INVENTORY",
+      "title": "TEST INVENTORY",
+      "tags": [
+        "testing"
+      ],
+      "sidebarPosition": 6
+    },
+    {
+      "source": "tools/README-universal-version-manager.md",
+      "output": "tools/README-universal-version-manager",
+      "title": "README Universal Version Manager",
+      "tags": [
+        "tools"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "user-guide/CONFIGURATION.md",
+      "output": "guides/CONFIGURATION",
+      "title": "CONFIGURATION",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "user-guide/README_STRRAY_INTEGRATION.md",
+      "output": "guides/README_STRRAY_INTEGRATION",
+      "title": "README STRRAY INTEGRATION",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "user-guide/STRAY_EXTENSION.md",
+      "output": "guides/STRAY_EXTENSION",
+      "title": "STRAY EXTENSION",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "user-guide/configuration/MODEL_CONFIGURATION.md",
+      "output": "guides/configuration/MODEL_CONFIGURATION",
+      "title": "MODEL CONFIGURATION",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "user-guide/configuration/model-configuration.md",
+      "output": "guides/configuration/model-configuration",
+      "title": "Model Configuration",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "user-guide/getting-started/GETTING_STARTED_GUIDE.md",
+      "output": "guides/getting-started/GETTING_STARTED_GUIDE",
+      "title": "GETTING STARTED GUIDE",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "user-guide/getting-started/full-setup.md",
+      "output": "guides/getting-started/full-setup",
+      "title": "Full Setup",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "user-guide/installation/INSTALLATION.md",
+      "output": "guides/installation/INSTALLATION",
+      "title": "INSTALLATION",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 1
+    },
+    {
+      "source": "user-guide/installation/PLUGIN_DEPLOYMENT_GUIDE.md",
+      "output": "guides/installation/PLUGIN_DEPLOYMENT_GUIDE",
+      "title": "PLUGIN DEPLOYMENT GUIDE",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 2
+    },
+    {
+      "source": "user-guide/installation/full-setup.md",
+      "output": "guides/installation/full-setup",
+      "title": "Full Setup",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 3
+    },
+    {
+      "source": "user-guide/installation/model-configuration.md",
+      "output": "guides/installation/model-configuration",
+      "title": "Model Configuration",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 4
+    },
+    {
+      "source": "user-guide/troubleshooting.md",
+      "output": "guides/troubleshooting",
+      "title": "Troubleshooting",
+      "tags": [
+        "guide"
+      ],
+      "sidebarPosition": 5
+    }
+  ],
+  "skippedFiles": [
+    {
+      "file": "architecture/PIPELINE_ARCHITECTURES.md",
+      "reason": "too large (>50KB)"
+    },
+    {
+      "file": "reflections/processor-test-review-2026-03-18.md",
+      "reason": "too large (>50KB)"
+    },
+    {
+      "file": "research/openclaw/architect-summary.md",
+      "reason": "too large (>50KB)"
+    }
+  ],
+  "errorFiles": []
+}
