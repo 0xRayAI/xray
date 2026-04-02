@@ -573,6 +573,12 @@ export class ProcessorManager {
         case "publishPreflight":
           result = await this.executePublishPreflight(safeContext as PostValidateContext);
           break;
+        case "storytellingTrigger":
+          result = await this.executeStorytellingTrigger(safeContext as PostValidateContext);
+          break;
+        case "inferenceImprovement":
+          result = await this.executeInferenceImprovement(safeContext as PostValidateContext);
+          break;
         default:
           throw new Error(`Unknown processor: ${name}`);
       }
@@ -1774,6 +1780,26 @@ export class ProcessorManager {
     const { PublishPreflightProcessor } =
       await import("./implementations/publish-preflight-processor.js");
     const processor = new PublishPreflightProcessor();
+    return processor.execute(context as ProcessorContext);
+  }
+
+  /**
+   * Execute storytelling trigger processor
+   */
+  private async executeStorytellingTrigger(context: PostValidateContext): Promise<ProcessorExecutionResult> {
+    const { StorytellingTriggerProcessor } =
+      await import("./implementations/storytelling-trigger-processor.js");
+    const processor = new StorytellingTriggerProcessor();
+    return processor.execute(context as ProcessorContext);
+  }
+
+  /**
+   * Execute inference improvement processor
+   */
+  private async executeInferenceImprovement(context: PostValidateContext): Promise<ProcessorExecutionResult> {
+    const { InferenceImprovementProcessor } =
+      await import("./implementations/inference-improvement-processor.js");
+    const processor = new InferenceImprovementProcessor();
     return processor.execute(context as ProcessorContext);
   }
 }
