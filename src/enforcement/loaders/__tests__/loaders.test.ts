@@ -221,6 +221,145 @@ describe("Rule Loaders", () => {
     });
   });
 
+  describe("CodexLoader Validators", () => {
+    let loader: CodexLoader;
+    let rules: RuleDefinition[];
+
+    beforeEach(async () => {
+      loader = new CodexLoader();
+      const available = await loader.isAvailable();
+      if (!available) {
+        console.log("Codex not available in test environment - skipping validator tests");
+        return;
+      }
+      rules = await loader.load();
+    });
+
+    it.skip("should load 60 codex rules (requires real codex.json)", () => {
+      if (!rules) return;
+      expect(rules.length).toBe(60);
+    });
+
+    describe.skip("Term 12: Early Returns and Guard Clauses (requires real codex.json)", () => {
+      it("should detect excessive nesting depth (>5 levels)", async () => {
+        const rule = rules.find(r => r.id === "codex-12");
+        const result = await rule!.validator({
+          newCode: "function f(){\nif(a){\nif(b){\nif(c){\nif(d){\nif(e){\nif(f){\nreturn 1;}}}}}}}",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(false);
+      });
+
+      it("should pass for code with guard clauses", async () => {
+        const rule = rules.find(r => r.id === "codex-12");
+        const result = await rule!.validator({
+          newCode: "function f() { if (!x) return error; return work(); }",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(true);
+      });
+    });
+
+    describe.skip("Term 19: Small, Focused Functions (requires real codex.json)", () => {
+      it("should detect functions exceeding 30 lines", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-19");
+        const longCode = "function f() {\n" + "  const x = 1;\n".repeat(35) + "}";
+        const result = await rule!.validator({
+          newCode: longCode,
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(false);
+      });
+
+      it("should pass for small functions", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-19");
+        const result = await rule!.validator({
+          newCode: "function f() { return 1; }",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(true);
+      });
+    });
+
+    describe.skip("Term 16: DRY - Don't Repeat Yourself (requires real codex.json)", () => {
+      it("should detect repeated code patterns", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-16");
+        const result = await rule!.validator({
+          newCode: "const a = 1;\nconst b = 2;\nconst a = 1;\nconst b = 2;",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(false);
+      });
+
+      it("should pass for unique code", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-16");
+        const result = await rule!.validator({
+          newCode: "const a = 1; const b = 2;",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(true);
+      });
+    });
+
+    describe.skip("Term 3: Do Not Over-Engineer (requires real codex.json)", () => {
+      it("should detect over-abstraction (too many interfaces vs exports)", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-3");
+        const result = await rule!.validator({
+          newCode: "interface A{}\ninterface B{}\ninterface C{}\ninterface D{}\ninterface E{}\ninterface F{}\nexport function f() {}",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(false);
+      });
+
+      it("should pass for simple code", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-3");
+        const result = await rule!.validator({
+          newCode: "function f() {}",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(true);
+      });
+    });
+
+    describe.skip("Term 13: Error Boundaries and Graceful Degradation (requires real codex.json)", () => {
+      it("should detect async without try-catch", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-13");
+        const result = await rule!.validator({
+          newCode: "async function f() { return fetch('/').then(r => r.json()); }",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(false);
+      });
+
+      it("should pass for async with error handling", async () => {
+        if (!rules) return;
+        const rule = rules.find(r => r.id === "codex-13");
+        const result = await rule!.validator({
+          newCode: "async function f() { try { return await x(); } catch(e) {} }",
+          operation: "write",
+          files: []
+        });
+        expect(result.passed).toBe(true);
+      });
+    });
+  });
+
   describe("AgentTriageLoader", () => {
     let loader: AgentTriageLoader;
 

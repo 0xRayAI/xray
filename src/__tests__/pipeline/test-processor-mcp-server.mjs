@@ -279,6 +279,25 @@ test('should validate against codex in pre-processor', () => {
   if (!content.includes('validateAgainstCodex')) {
     throw new Error('validateAgainstCodex not implemented');
   }
+  if (!content.includes('codexLoader')) {
+    throw new Error('codexLoader not wired - MCP not using CodexLoader');
+  }
+});
+
+test('should load codex rules on MCP server init', () => {
+  const serverPath = path.join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
+  const content = fs.readFileSync(serverPath, 'utf-8');
+  if (!content.includes('loadCodexRules')) {
+    throw new Error('loadCodexRules method missing');
+  }
+});
+
+test('should use real codex validators when available', () => {
+  const serverPath = path.join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
+  const content = fs.readFileSync(serverPath, 'utf-8');
+  if (!content.includes('codexRules.length')) {
+    throw new Error('codexRules array not used in validation');
+  }
 });
 
 test('should enrich with context in pre-processor', () => {
