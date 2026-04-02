@@ -352,17 +352,13 @@ export class ErrorResolutionValidator extends BaseValidator {
     const suggestions: string[] = [];
 
     // Check for console.log debugging (improper error handling)
-    const consoleLogMatches = newCode.match(/console\.log\(/g);
+    const consoleLogMatches = newCode.match(/console\.(log|debug|info)\s*\(/g);
     if (consoleLogMatches && consoleLogMatches.length > 0) {
       violations.push(
-        `Found ${consoleLogMatches.length} console.log statements - use proper logging`,
+        `Found ${consoleLogMatches.length} console.log/debug/info statements - use proper logging`,
       );
       suggestions.push(
-        "Replace console.log with proper logging framework (frameworkLogger)",
-      );
-      // Force failure for testing
-      violations.push(
-        "TEST: Console.log detected - blocking for codex compliance",
+        "Replace console.log/debug/info with frameworkLogger",
       );
     }
 

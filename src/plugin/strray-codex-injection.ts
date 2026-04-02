@@ -13,6 +13,9 @@ import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
 
+// Import types needed for RuleEnforcer context
+import type { RuleValidationContext, ValidationReport, RuleValidationResult, RuleSeverity } from "../enforcement/types.js";
+
 // Dynamic imports for config-paths and framework-logger
 // Uses candidate-based resolution to work from both dist/plugin/ and .opencode/plugin/
 let _resolveCodexPath: any;
@@ -280,6 +283,7 @@ function getFrameworkIdentity(): string {
 
 /**
  * Run Enforcer quality gate check before operations
+ * Now delegates to RuleEnforcer for proper rule enforcement
  */
 async function runEnforcerQualityGate(
   input: { tool: string; args?: { content?: string; filePath?: string } },
@@ -288,73 +292,109 @@ async function runEnforcerQualityGate(
   const violations: string[] = [];
   const { tool, args } = input;
 
-  // Rule 1: tests-required for new files
-  if (tool === "write" && args?.filePath) {
-    const filePath = args.filePath;
-    // Check if this is a source file (not test, not config)
-    if (
-      filePath.endsWith(".ts") &&
-      !filePath.includes(".test.") &&
-      !filePath.includes(".spec.")
-    ) {
-      // Check if test file exists
-      const testPath = filePath.replace(".ts", ".test.ts");
-      const specPath = filePath.replace(".ts", ".spec.ts");
+  try {
+    // Lazy load RuleEnforcer to avoid circular dependencies
+    const { RuleEnforcer } = await import("../enforcement/rule-enforcer.js");
+    const ruleEnforcer = new RuleEnforcer();
 
-      if (!fs.existsSync(testPath) && !fs.existsSync(specPath)) {
-        violations.push(
-          `tests-required: No test file found for ${filePath} (expected ${testPath} or ${specPath})`,
-        );
-        logger.log(
-          `⚠️ ENFORCER: tests-required violation detected for ${filePath}`,
-        );
+    // Build validation context from the input
+    const context: RuleValidationContext = {
+      operation: tool === "write" ? "write" : tool === "edit" ? "edit" : "read",
+    };
+
+    if (args?.filePath) {
+      context.files = [args.filePath];
+    }
+
+    if (args?.content) {
+      context.newCode = args.content;
+    }
+
+    // Use RuleEnforcer.validateOperation() instead of hardcoded rules
+    const report = await ruleEnforcer.validateOperation(tool, context);
+
+    // Collect blocking violations from errors and failed results
+    const blockingViolations: string[] = [];
+    const allViolations: string[] = [];
+
+    // Check errors (these are blocking by nature)
+    if (report.errors && report.errors.length > 0) {
+      for (const error of report.errors) {
+        allViolations.push(error);
+        blockingViolations.push(error); // All errors are blocking
       }
     }
-  }
 
-  // Rule 2: documentation-required for new features
-  if (tool === "write" && args?.filePath?.includes("src/")) {
-    const docsDir = path.join(process.cwd(), "docs");
-    const readmePath = path.join(process.cwd(), "README.md");
-
-    // Check if docs directory exists
-    if (!fs.existsSync(docsDir) && !fs.existsSync(readmePath)) {
-      violations.push(
-        `documentation-required: No documentation found for new feature`,
-      );
-      logger.log(`⚠️ ENFORCER: documentation-required violation detected`);
-    }
-  }
-
-  // Rule 3: resolve-all-errors - check if we're creating code with error patterns
-  if (args?.content) {
-    const errorPatterns = [
-      /console\.log\s*\(/g,
-      /TODO\s*:/gi,
-      /FIXME\s*:/gi,
-      /throw\s+new\s+Error\s*\(\s*['"]test['"]\s*\)/gi,
-    ];
-
-    for (const pattern of errorPatterns) {
-      if (pattern.test(args.content)) {
-        violations.push(
-          `resolve-all-errors: Found debug/error pattern (${pattern.source}) in code`,
-        );
-        logger.log(`⚠️ ENFORCER: resolve-all-errors violation detected`);
-        break;
+    // Check failed results
+    if (report.results) {
+      for (const result of report.results) {
+        if (!result.passed) {
+          allViolations.push(result.message);
+          // Block on any failure (conservative approach)
+          blockingViolations.push(result.message);
+        }
       }
     }
+
+    if (allViolations.length > 0) {
+      logger.log(`⚠️ ENFORCER: ${allViolations.length} rule violation(s) detected`);
+      for (const v of allViolations.slice(0, 5)) {
+        logger.log(`   - ${v}`);
+      }
+      if (allViolations.length > 5) {
+        logger.log(`   ... and ${allViolations.length - 5} more`);
+      }
+    }
+
+    const passed = blockingViolations.length === 0;
+    violations.push(...blockingViolations);
+
+    if (!passed) {
+      logger.error(`🚫 Quality Gate FAILED with ${blockingViolations.length} blocking violation(s)`);
+    } else {
+      logger.log(`✅ Quality Gate PASSED (${allViolations.length} warning(s))`);
+    }
+
+    return { passed, violations };
+  } catch (error) {
+    // If RuleEnforcer fails to load or run, fall back to minimal checks
+    logger.log(`Warning: RuleEnforcer unavailable, using fallback checks: ${error instanceof Error ? error.message : String(error)}`);
+
+    // Fallback: minimal hardcoded checks (the old logic, as safety net)
+    if (tool === "write" && args?.filePath) {
+      const filePath = args.filePath;
+      if (
+        filePath.endsWith(".ts") &&
+        !filePath.includes(".test.") &&
+        !filePath.includes(".spec.")
+      ) {
+        const testPath = filePath.replace(".ts", ".test.ts");
+        const specPath = filePath.replace(".ts", ".spec.ts");
+        if (!fs.existsSync(testPath) && !fs.existsSync(specPath)) {
+          violations.push(`tests-required: No test file found for ${filePath}`);
+        }
+      }
+    }
+
+    if (args?.content) {
+      const errorPatterns = [/console\.log\s*\(/g, /TODO\s*:/gi, /FIXME\s*:/gi];
+      for (const pattern of errorPatterns) {
+        if (pattern.test(args.content)) {
+          violations.push(`resolve-all-errors: Found error pattern in code`);
+          break;
+        }
+      }
+    }
+
+    const passed = violations.length === 0;
+    if (!passed) {
+      logger.error(`🚫 Fallback Quality Gate FAILED with ${violations.length} violation(s)`);
+    } else {
+      logger.log(`✅ Fallback Quality Gate PASSED`);
+    }
+
+    return { passed, violations };
   }
-
-  const passed = violations.length === 0;
-
-  if (!passed) {
-    logger.error(`🚫 Quality Gate FAILED with ${violations.length} violations`);
-  } else {
-    logger.log(`✅ Quality Gate PASSED`);
-  }
-
-  return { passed, violations };
 }
 
 interface CodexContextEntry {

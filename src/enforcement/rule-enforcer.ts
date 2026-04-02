@@ -251,9 +251,26 @@ export class RuleEnforcer {
 
       const result = await orchestrator.loadAllRules();
 
-      // Register all loaded rules
+      // Get existing rule IDs to prevent duplicates
+      const existingRuleIds = new Set(this.registry.getRules().map(r => r.id));
+      let addedCount = 0;
+      let skippedCount = 0;
+
+      // Register loaded rules, skipping duplicates
       for (const rule of result.rules) {
+        if (existingRuleIds.has(rule.id)) {
+          await frameworkLogger.log(
+            "rule-enforcer",
+            "async-rule-skipped-duplicate",
+            "info",
+            { message: `Skipping duplicate rule: ${rule.id}` }
+          );
+          skippedCount++;
+          continue;
+        }
         this.addRule(rule);
+        existingRuleIds.add(rule.id); // Add to prevent future duplicates in same batch
+        addedCount++;
       }
 
       this.initialized = true;
@@ -263,10 +280,11 @@ export class RuleEnforcer {
         "async-rules-loaded",
         "success",
         {
-          message: `Loaded ${result.rules.length} async rules from ${result.successfulLoaders} loaders`,
-          ruleCount: result.rules.length,
+          message: `Loaded ${addedCount} async rules (${skippedCount} duplicates skipped) from ${result.successfulLoaders} loaders`,
+          ruleCount: addedCount,
+          skippedCount,
           successfulLoaders: result.successfulLoaders,
-          failedLoaders: result.failedLoaders,
+          failedLoaders: result.failedLoaders
         }
       );
     } catch (error) {

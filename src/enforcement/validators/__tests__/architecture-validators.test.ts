@@ -405,7 +405,7 @@ describe("Architecture Validators", () => {
       expect(result.passed).toBe(false);
       expect(result.message).toContain("console.log");
       expect(result.suggestions).toContain(
-        "Replace console.log with proper logging framework (frameworkLogger)"
+        "Replace console.log/debug/info with frameworkLogger"
       );
     });
 
