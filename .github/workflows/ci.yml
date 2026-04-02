@@ -14,6 +14,38 @@ env:
 
 jobs:
   # ═══════════════════════════════════════════════════════
+  # Docs Build Validation
+  # ═══════════════════════════════════════════════════════
+  docs-build:
+    name: Docs Build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'docs') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Install docs dependencies
+        run: cd docs-site && npm ci
+
+      - name: Build docs site
+        run: cd docs-site && npm run build
+
+      - name: Upload docs artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-preview
+          path: docs-site/build/
+          retention-days: 7
+
+  # ═══════════════════════════════════════════════════════
   # Quality Checks
   # ═══════════════════════════════════════════════════════
   quality:
@@ -202,7 +234,7 @@ jobs:
   ci-health:
     name: CI Health Monitor
     runs-on: ubuntu-latest
-    needs: [quality, test-unit, test-pipeline, test-package, security, enforcement]
+    needs: [quality, test-unit, test-pipeline, test-package, security, enforcement, docs-build]
     if: always()
     steps:
       - name: Checkout

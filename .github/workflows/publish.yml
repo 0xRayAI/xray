@@ -53,6 +53,14 @@ jobs:
             exit 1
           }
 
+      - name: Validate Docusaurus docs build
+        run: |
+          echo "Building Docusaurus docs to verify no broken links..."
+          cd docs-site
+          npm ci
+          npm run build
+          echo "✅ Docs build successful"
+
   publish:
     needs: preflight-checks
     runs-on: ubuntu-latest
