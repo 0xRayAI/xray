@@ -136,23 +136,19 @@ async function main() {
   runCommand('npm publish --access public', 'npm publish failed');
   console.log(`✅ Published strray-ai@${newVersion} to npm`);
 
-  // Step 7: Generate tweet
-  console.log('\n📦 Step 7: Generating release tweet...');
-  try {
-    execSync(
-      'node scripts/node/release-tweet.mjs',
-      { cwd: rootDir, stdio: 'inherit' }
-    );
-  } catch (error) {
-    console.log('⚠️  Tweet generation skipped or failed');
-  }
+  // Step 6: Publish to npm
+  console.log('\n📦 Step 6: Publishing to npm...');
+  runCommand('npm publish --access public', 'npm publish failed');
+  console.log(`✅ Published strray-ai@${newVersion} to npm`);
 
   console.log('\n╔════════════════════════════════════════════════════════╗');
   console.log('║        ✅ Release Complete!                            ║');
   console.log('╚════════════════════════════════════════════════════════╝');
   console.log(`\n📦 Package: strray-ai@${newVersion}`);
   console.log(`🏷  Tag: v${newVersion}`);
-  console.log(`🐦 Tweet: Check tweets/ directory`);
+  console.log('\n💡 Want a tweet? Ask: "give me a tweet succinct with 5 tidy');
+  console.log('   bullets with emojis. a quip before or after and hashtags');
+  console.log('   based on the commits in this session. should be consumer focused."');
   console.log('\n🎉 All done!\n');
 }
 
