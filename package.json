@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "1.18.6",
+  "version": "1.18.7",
   "description": "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.",
   "readme": "README.md",
   "license": "MIT",
@@ -95,7 +95,10 @@
     "preversion": "npm run version:sync",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
-    "publish": "npm run pre-publish-guard && npm run safe-publish"
+    "publish": "npm run pre-publish-guard && npm run safe-publish",
+    "release:patch": "node scripts/node/release.mjs patch",
+    "release:minor": "node scripts/node/release.mjs minor",
+    "release:major": "node scripts/node/release.mjs major"
   },
   "files": [
     "dist/",
