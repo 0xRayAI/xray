@@ -26,9 +26,9 @@
   "multi_agent_orchestration": {
     "enabled": true,
     "coordination_model": "async-multi-agent",
-    "max_concurrent_agents": 3,
+    "max_concurrent_agents": 5,
     "task_distribution_strategy": "capability-based",
-    "conflict_resolution": "expert-priority",
+    "conflict_resolution": "majority-vote",
     "progress_tracking": true,
     "session_persistence": true
   },

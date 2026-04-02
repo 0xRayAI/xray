@@ -37,6 +37,10 @@ export interface TaskResult {
   result?: TaskExecutionResult;
   error?: string;
   duration: number;
+  taskId?: string;
+  taskType?: string;
+  resolved?: boolean;
+  resolutionStrategy?: string;
 }
 
 export interface TaskExecutionResult {
@@ -80,12 +84,58 @@ export class StringRayOrchestrator {
   private taskToAgentMap: Map<string, string> = new Map(); // taskId -> agentId
 
   constructor(config: Partial<OrchestratorConfig> = {}) {
+    // Load config from features.json if not explicitly provided
+    const loadedConfig = this.loadOrchestratorConfig();
+    
     this.config = {
-      maxConcurrentTasks: 5,
+      maxConcurrentTasks: loadedConfig?.maxConcurrentTasks ?? 5,
       taskTimeout: 300000, // 5 minutes
-      conflictResolutionStrategy: "majority_vote",
+      conflictResolutionStrategy: loadedConfig?.conflictResolutionStrategy ?? "majority_vote",
       ...config,
     };
+  }
+
+  /**
+   * Load orchestrator config from features.json
+   */
+  private loadOrchestratorConfig(): Partial<OrchestratorConfig> | null {
+    try {
+      const configPaths = [
+        ".strray/features.json",
+        ".opencode/strray/features.json",
+      ];
+      
+      for (const configPath of configPaths) {
+        if (require("fs").existsSync(configPath)) {
+          const content = require("fs").readFileSync(configPath, "utf-8");
+          const features = JSON.parse(content);
+          
+          if (features.multi_agent_orchestration) {
+            const ma = features.multi_agent_orchestration;
+            return {
+              maxConcurrentTasks: ma.max_concurrent_agents,
+              conflictResolutionStrategy: this.mapConflictResolution(ma.conflict_resolution),
+            };
+          }
+        }
+      }
+    } catch (e) {
+      // Silently continue with defaults
+    }
+    return null;
+  }
+
+  /**
+   * Map config key to enum value
+   */
+  private mapConflictResolution(strategy?: string): OrchestratorConfig["conflictResolutionStrategy"] {
+    switch (strategy) {
+      case "expert-priority": return "expert_priority";
+      case "consensus": return "consensus";
+      case "majority-vote":
+      case "majority_vote":
+      default: return "majority_vote";
+    }
   }
 
   /**
@@ -134,6 +184,8 @@ export class StringRayOrchestrator {
 
       try {
         const batchResults = await Promise.all(batchPromises);
+        
+        // Add all results - conflict resolution will be applied in consolidateWorkflowResults
         results.push(...batchResults);
 
         // Mark tasks as completed
@@ -150,6 +202,23 @@ export class StringRayOrchestrator {
     }
 
     // Task completion logging removed - use frameworkLogger instead
+    
+    // Final conflict resolution pass
+    const finalConflictResult = this.detectAndResolveConflicts(results);
+    if (finalConflictResult.conflictsFound > 0) {
+      await frameworkLogger.log(
+        "orchestrator",
+        "final-conflicts-resolved",
+        "info",
+        {
+          conflictsFound: finalConflictResult.conflictsFound,
+          resolutionStrategy: this.config.conflictResolutionStrategy,
+          totalResults: results.length,
+        },
+      );
+      return finalConflictResult.resolvedResults;
+    }
+    
     return results;
   }
 
@@ -222,7 +291,7 @@ export class StringRayOrchestrator {
         );
 
         if (processorManager) {
-          // Create agent task context for logging
+          // Create agent task context for logging with metadata
           const agentContext = {
             agentName: task.subagentType,
             task: task.description,
@@ -231,12 +300,19 @@ export class StringRayOrchestrator {
             success: true,
             result,
             capabilities: [task.subagentType],
+            metadata: {
+              isAgentTask: true,
+              agentType: task.subagentType,
+              taskId: task.id,
+              hook: "agent_execution",
+              timestamp: Date.now(),
+            },
           };
 
           await processorManager.executePostProcessors(
             `agent-${task.subagentType}`,
             agentContext,
-            [], // No pre-results for agent tasks
+            [],
           );
         }
       } catch (processorError) {
@@ -277,6 +353,14 @@ export class StringRayOrchestrator {
             result: null,
             capabilities: [task.subagentType],
             error: error instanceof Error ? error.message : String(error),
+            metadata: {
+              isAgentTask: true,
+              agentType: task.subagentType,
+              taskId: task.id,
+              hook: "agent_execution_failed",
+              timestamp: Date.now(),
+              failed: true,
+            },
           };
 
           await processorManager.executePostProcessors(
@@ -697,19 +781,141 @@ export class StringRayOrchestrator {
   }
 
   private resolveByExpertPriority(conflicts: any[]): any {
-    // Sort by expertise score
-    return conflicts.sort(
+    // Populate expertise scores based on agent type before resolving
+    const scoredConflicts = this.populateExpertiseScore(conflicts);
+    return scoredConflicts.sort(
       (a, b) => (b.expertiseScore || 0) - (a.expertiseScore || 0),
     )[0];
   }
 
   private resolveByConsensus(conflicts: any[]): any {
-    // Return the response if all are identical, otherwise undefined
+    // Return the response if all are identical, otherwise fall back to majority_vote
     const firstResponse = conflicts[0]?.response;
     const allSame = conflicts.every(
       (c) => JSON.stringify(c.response) === JSON.stringify(firstResponse),
     );
-    return allSame ? conflicts[0] : undefined;
+    
+    if (allSame) {
+      return conflicts[0];
+    }
+    
+    // Fall back to majority_vote on disagreement - prevents silent failure
+    return this.resolveByMajorityVote(conflicts);
+  }
+
+  /**
+   * Detect and resolve conflicts between task results in a batch.
+   * This enables multi-agent governance by comparing results from parallel agents.
+   * 
+   * Current implementation: Disabled by default - needs refinement to properly
+   * detect actual conflicts vs. expected different results from different agent types.
+   * Set ENABLE_CONFLICT_DETECTION=true to enable.
+   */
+  private detectAndResolveConflicts(results: TaskResult[]): {
+    conflictsFound: number;
+    resolvedResults: TaskResult[];
+    resolvedBy: string;
+  } {
+    // Conflict resolution disabled by default - needs proper conflict definition
+    // Set ENABLE_CONFLICT_DETECTION=true to enable
+    if (process.env.ENABLE_CONFLICT_DETECTION !== "true") {
+      return { conflictsFound: 0, resolvedResults: results, resolvedBy: "disabled" };
+    }
+    
+    // Rest of implementation for when properly enabled...
+    if (results.length < 2) {
+      return { conflictsFound: 0, resolvedResults: results, resolvedBy: "none" };
+    }
+
+    // Group results by task type (subagentType) to find similar results
+    const resultsByType: Record<string, TaskResult[]> = {};
+    for (const result of results) {
+      const taskType = (result as any).taskType || "default";
+      if (!resultsByType[taskType]) {
+        resultsByType[taskType] = [];
+      }
+      resultsByType[taskType].push(result);
+    }
+
+    let conflictsFound = 0;
+    const resolvedResults: TaskResult[] = [];
+
+    // Check each group for conflicts
+    for (const [taskType, taskResults] of Object.entries(resultsByType)) {
+      if (taskResults.length < 2) {
+        resolvedResults.push(...taskResults);
+        continue;
+      }
+
+      const conflicts = taskResults.map((r, idx) => ({
+        response: r.result,
+        agentType: taskType,
+        taskId: (r as any).taskId || `task-${idx}`,
+      }));
+
+      const responseStrings = conflicts.map(c => JSON.stringify(c.response));
+      const uniqueResponses = new Set(responseStrings);
+
+      if (uniqueResponses.size > 1) {
+        conflictsFound++;
+        const resolved = this.resolveConflicts(conflicts);
+        
+        if (resolved?.response && taskResults.length > 0) {
+          const first = taskResults[0]!;
+          resolvedResults.push({
+            success: first.success,
+            result: resolved.response,
+            duration: first.duration,
+            taskId: "resolved-task",
+            taskType: "resolved",
+            resolved: true,
+            resolutionStrategy: this.config.conflictResolutionStrategy,
+          } as TaskResult);
+        } else {
+          resolvedResults.push(...taskResults);
+        }
+      } else {
+        resolvedResults.push(...taskResults);
+      }
+    }
+
+    return {
+      conflictsFound,
+      resolvedResults,
+      resolvedBy: conflictsFound > 0 ? this.config.conflictResolutionStrategy : "none",
+    };
+  }
+
+  /**
+   * Populate expertiseScore based on agent type for expert_priority resolution.
+   * This maps agent types to expertise levels for conflict resolution.
+   */
+  private populateExpertiseScore(conflicts: any[]): any[] {
+    const agentExpertiseLevels: Record<string, number> = {
+      // High expertise (architectural/strategic decisions)
+      architect: 10,
+      orchestrator: 10,
+      security: 10,
+      strategist: 9,
+      // Medium expertise (implementation)
+      refactorer: 7,
+      enforcer: 7,
+      codeReviewer: 7,
+      testingLead: 7,
+      // Standard expertise
+      researcher: 5,
+      analyzer: 5,
+      bugTriage: 5,
+      // Lower expertise (specialized tasks)
+      default: 3,
+    };
+
+    return conflicts.map((conflict) => ({
+      ...conflict,
+      expertiseScore: conflict.agentType
+        ? agentExpertiseLevels[conflict.agentType] ?? agentExpertiseLevels.default
+        : agentExpertiseLevels.default,
+    }));
   }
 
   /**

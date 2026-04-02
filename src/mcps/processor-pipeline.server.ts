@@ -11,9 +11,12 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { CodexLoader, RuleValidationContext } from "../enforcement/index.js";
 
 class StrRayProcessorPipelineServer {
   private server: Server;
+  private codexLoader: CodexLoader;
+  private codexRules: any[] = [];
   private codexTerms: string[] = [
     "Progressive Prod-Ready Code",
     "No Stubs/Patches",
@@ -27,6 +30,7 @@ class StrRayProcessorPipelineServer {
   ];
 
   constructor() {
+    this.codexLoader = new CodexLoader();
     this.server = new Server(
       {
         name: "processor-pipeline", version: "1.15.27",
@@ -39,7 +43,29 @@ class StrRayProcessorPipelineServer {
     );
 
     this.setupToolHandlers();
+    this.loadCodexRules();
     // Server initialized silently - use frameworkLogger for important events
+  }
+
+  private async loadCodexRules(): Promise<void> {
+    try {
+      if (await this.codexLoader.isAvailable()) {
+        this.codexRules = await this.codexLoader.load();
+        await frameworkLogger.log(
+          "mcps/processor-pipeline",
+          "codex-rules-loaded",
+          "success",
+          { message: `Loaded ${this.codexRules.length} codex rules for MCP validation` }
+        );
+      }
+    } catch (error) {
+      await frameworkLogger.log(
+        "mcps/processor-pipeline",
+        "codex-rules-load-failed",
+        "warning",
+        { message: `Failed to load codex rules: ${error instanceof Error ? error.message : String(error)}` }
+      );
+    }
   }
 
   private setupToolHandlers() {
@@ -392,6 +418,53 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
       reason: "",
     };
 
+    // Use loaded codex rules if available, otherwise fall back to hardcoded terms
+    if (this.codexRules.length > 0) {
+      const termsToCheck = terms && terms.length > 0 && !terms.includes("all")
+        ? terms
+        : this.codexRules.map(r => r.name);
+
+      let passed = 0;
+      for (const rule of this.codexRules) {
+        // Filter by requested terms if specified
+        if (terms && terms.length > 0 && !terms.includes("all") && !terms.includes(rule.name)) {
+          continue;
+        }
+
+        try {
+          const context: RuleValidationContext = {
+            newCode: content,
+            operation: "write",
+            files: []
+          };
+          const validationResult = await rule.validator(context);
+          
+          if (validationResult.passed) {
+            passed++;
+            results.validations.push(`${rule.name}: PASS`);
+          } else {
+            results.violations.push(`${rule.name}: ${validationResult.message}`);
+            results.recommendations.push(...(validationResult.suggestions || []));
+            
+            const isBlocking = rule.severity === "blocking" || rule.severity === "error";
+            if (strict || isBlocking) {
+              results.blocked = true;
+              results.reason = `Codex violation: ${rule.name}`;
+            }
+          }
+        } catch (err) {
+          results.warnings.push(`${rule.name}: Validation error - ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
+      results.compliance = termsToCheck.length > 0 
+        ? Math.round((passed / termsToCheck.length) * 100)
+        : 100;
+
+      return results;
+    }
+
+    // Fallback to hardcoded term checking (legacy behavior)
     const termsToCheck =
       terms && terms.length > 0 && !terms.includes("all")
         ? terms

@@ -240,12 +240,16 @@ export class CodexLoader extends BaseLoader {
 
       // Term 7: Resolve All Errors - no console.log debugging
       if (termNum === 7) {
-        const consoleMatches = newCode.match(/console\.(log|debug|info)\s*\(/g);
+        // Strip comments before checking for console.log
+        const codeWithoutComments = newCode
+          .replace(/\/\/.*$/gm, '')
+          .replace(/\/\*[\s\S]*?\*\//g, '');
+        const consoleMatches = codeWithoutComments.match(/console\.(log|debug|info)\s*\(/g);
         if (consoleMatches) {
           violations.push(`Found ${consoleMatches.length} console.log/debug/info statements - use frameworkLogger`);
         }
         // Check for empty catch blocks
-        if (/catch\s*\([^)]*\)\s*\{\s*\}/.test(newCode)) {
+        if (/catch\s*\([^)]*\)\s*\{\s*\}/.test(codeWithoutComments)) {
           violations.push("Empty catch block - errors must be handled");
         }
       }
@@ -328,6 +332,111 @@ export class CodexLoader extends BaseLoader {
         }
         if (/secret\s*=\s*['"][^'"]{8,}['"]/i.test(newCode)) {
           violations.push("Potential hardcoded secret detected");
+        }
+      }
+
+      // Term 12: Early Returns and Guard Clauses - deeply nested code
+      if (termNum === 12) {
+        let maxNesting = 0;
+        let currentNesting = 0;
+        let inString = false;
+        let inBlockComment = false;
+        
+        for (let i = 0; i < newCode.length; i++) {
+          const char = newCode[i];
+          const nextChar = newCode[i + 1];
+          
+          // Handle comments
+          if (inBlockComment) {
+            if (char === '*' && nextChar === '/') { inBlockComment = false; i++; }
+            continue;
+          }
+          if (char === '/' && nextChar === '*') { inBlockComment = true; i++; continue; }
+          if (char === '/' && nextChar === '/') { i = newCode.indexOf('\n', i); continue; }
+          
+          // Handle strings
+          if (char === '"' || char === "'" || char === '`') {
+            inString = !inString;
+            continue;
+          }
+          if (inString) continue;
+          
+          // Count nesting
+          if (char === '{') {
+            currentNesting++;
+            maxNesting = Math.max(maxNesting, currentNesting);
+          } else if (char === '}') {
+            currentNesting = Math.max(0, currentNesting - 1);
+          }
+        }
+        
+        if (maxNesting > 5) {
+          violations.push(`Excessive nesting depth (${maxNesting} levels) - use early returns/guard clauses`);
+        }
+      }
+
+      // Term 19: Small, Focused Functions - check function size
+      if (termNum === 19) {
+        // Match actual function declarations and arrow functions (not variable declarations)
+        const functionRegex = /(?:^|\n)(?:function\s+\w+|async\s+function\s+\w+|(?:\([^)]*\)|[^=])=>\s*\{)/g;
+        const matches = newCode.match(functionRegex);
+        if (matches) {
+          for (const match of matches) {
+            const startIdx = newCode.indexOf(match);
+            const afterMatch = newCode.substring(startIdx + match.length);
+            const closingIdx = afterMatch.indexOf('}');
+            if (closingIdx > 0) {
+              const functionBody = afterMatch.substring(0, closingIdx);
+              const lines = functionBody.split('\n').filter(l => l.trim().length > 0);
+              if (lines.length > 30) {
+                violations.push(`Function with ${lines.length} lines - consider splitting into smaller functions (max 30)`);
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // Term 16: DRY - Don't Repeat Yourself - detect code duplication
+      if (termNum === 16) {
+        const lines = newCode.split('\n').filter(l => l.trim().length > 0 && !l.trim().startsWith('//') && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+        const seenPatterns = new Map<string, number>();
+        for (const line of lines) {
+          // Normalize: remove extra spaces, take first 40 chars
+          const normalized = line.replace(/\s+/g, ' ').trim().substring(0, 40);
+          if (normalized.length > 10) {
+            const count = (seenPatterns.get(normalized) || 0) + 1;
+            seenPatterns.set(normalized, count);
+            if (count >= 2) {
+              violations.push(`Repeated code pattern detected (${count}x) - extract to reusable function`);
+              break;
+            }
+          }
+        }
+      }
+
+      // Term 3: Do Not Over-Engineer - complexity check
+      if (termNum === 3) {
+        const classMatches = newCode.match(/class\s+\w+/g) || [];
+        const interfaceMatches = newCode.match(/interface\s+\w+/g) || [];
+        const typeMatches = newCode.match(/type\s+\w+\s*=/g) || [];
+        const abstractionCount = classMatches.length + interfaceMatches.length + typeMatches.length;
+        
+        const exportedFunctions = (newCode.match(/export\s+(?:function|const|class|interface|type)/g) || []).length;
+        
+        if (abstractionCount > 5 && exportedFunctions < abstractionCount) {
+          violations.push(`Over-abstraction: ${abstractionCount} types/interfaces/classes with few exports - keep it simpler`);
+        }
+      }
+
+      // Term 13: Error Boundaries and Graceful Degradation
+      if (termNum === 13) {
+        const hasTryCatch = /try\s*\{/.test(newCode);
+        const hasAsyncAwait = /async\s+(?:function|\()/i.test(newCode);
+        const hasPromiseCatch = /\.catch\s*\(/g.test(newCode);
+        
+        if (hasAsyncAwait && !hasTryCatch && !hasPromiseCatch) {
+          violations.push("Async function without try-catch or .catch() - add error boundaries");
         }
       }
 
