@@ -39,6 +39,22 @@ const ROUTING_MAPPINGS = [
   { keywords: ["enforce", "compliance", "rule", "standard", "codex", "block", "prevent"], skill: "enforcer", agent: "enforcer", confidence: 0.95 },
   { keywords: ["design", "architect", "plan", "system", "model", "pattern", "architecture"], skill: "architecture-patterns", agent: "architect", confidence: 0.95 },
   { keywords: ["codebase", "explore", "research", "discover", "implementation"], skill: "git-workflow", agent: "researcher", confidence: 0.88 },
+  // New mappings for previously unmapped skills
+  { keywords: ["api", "rest", "graphql", "openapi", "endpoint", "swagger"], skill: "api-design", agent: "backend-engineer", confidence: 0.9 },
+  { keywords: ["strategy", "roadmap", "planning", "technical", "decision", "architecture"], skill: "architecture-patterns", agent: "strategist", confidence: 0.88 },
+  { keywords: ["reflection", "story", "narrative", "saga", "journey", "document"], skill: "storyteller", agent: "tech-writer", confidence: 0.85 },
+  { keywords: ["analyze", "metrics", "complexity", "maintainability", "quality"], skill: "code-analyzer", agent: "code-analyzer", confidence: 0.9 },
+  { keywords: ["growth", "marketing", "conversion", "acquisition", "user-acquisition"], skill: "growth-strategist", agent: "growth-strategist", confidence: 0.9 },
+  { keywords: ["seo", "search", "organic", "traffic", "keywords", "ranking"], skill: "seo-consultant", agent: "seo-consultant", confidence: 0.92 },
+  { keywords: ["content", "copy", "blog", "marketing", "social"], skill: "content-creator", agent: "content-creator", confidence: 0.88 },
+  { keywords: ["format", "lint", "prettier", "eslint", "style", "formatting"], skill: "auto-format", agent: "code-reviewer", confidence: 0.85 },
+  { keywords: ["project", "structure", "health", "dependencies", "architecture"], skill: "project-analysis", agent: "architect", confidence: 0.88 },
+  { keywords: ["compliance", "audit", "standards", "framework", "validation"], skill: "framework-compliance-audit", agent: "enforcer", confidence: 0.9 },
+  { keywords: ["session", "state", "persistence", "storage", "cache"], skill: "session-management", agent: "backend-engineer", confidence: 0.85 },
+  { keywords: ["image", "visual", "pdf", "diagram", "multimedia", "media"], skill: "multimodal-looker", agent: "multimodal-looker", confidence: 0.92 },
+  { keywords: ["testing", "strategy", "coverage", "test-plan"], skill: "testing-strategy", agent: "testing-lead", confidence: 0.92 },
+  { keywords: ["inference", "model", "llm", "tuning", "optimization"], skill: "inference-improve", agent: "performance-engineer", confidence: 0.88 },
+  { keywords: ["orchestrate", "boot", "initialize", "startup", "bootstrap"], skill: "boot-orchestrator", agent: "orchestrator", confidence: 0.9 },
 ];
 
 export interface RoutingRecommendation {
