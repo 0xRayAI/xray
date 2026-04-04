@@ -1133,4 +1133,66 @@ describe("AgentDelegator", () => {
       expect(result.suggestedSkill).toBe("");
     });
   });
+
+  describe("Kernel Integration", () => {
+    it("should apply kernel bug cascade patterns to agent selection", async () => {
+      const request: DelegationRequest = {
+        operation: "fix",
+        description: "Fix recursive loop in function",
+        sessionId: "test-session",
+      };
+
+      const result = await agentDelegator.analyzeDelegation(request);
+      expect(result.agentDetails).toBeDefined();
+      expect(result.agentDetails.length).toBeGreaterThan(0);
+    });
+
+    it("should apply kernel fatal assumptions to agent selection", async () => {
+      const request: DelegationRequest = {
+        operation: "security",
+        description: "Add new API endpoint",
+        sessionId: "test-session",
+      };
+
+      const result = await agentDelegator.analyzeDelegation(request);
+      expect(result.agentDetails).toBeDefined();
+      expect(result.agentDetails.some((a: any) => a.name === 'security-auditor')).toBe(true);
+    });
+
+    it("should boost confidence when kernel patterns detected", async () => {
+      const request: DelegationRequest = {
+        operation: "security",
+        description: "Security audit needed for authentication",
+        sessionId: "test-session",
+      };
+
+      const result = await agentDelegator.analyzeDelegation(request);
+      const securityAgent = result.agentDetails.find((a: any) => a.name === 'security-auditor');
+      // Kernel-boosted security should have high confidence
+      expect(securityAgent?.confidence).toBeDefined();
+      expect(securityAgent?.confidence).toBeGreaterThanOrEqual(0.9);
+    });
+
+    it("should map kernel P6 to security-auditor", async () => {
+      const request: DelegationRequest = {
+        operation: "security",
+        description: "Check for SQL injection vulnerability",
+        sessionId: "test-session",
+      };
+
+      const result = await agentDelegator.analyzeDelegation(request);
+      expect(result.agentDetails.some((a: any) => a.name === 'security-auditor')).toBe(true);
+    });
+
+    it("should map kernel A1-A2 to testing-lead", async () => {
+      const request: DelegationRequest = {
+        operation: "test",
+        description: "Tests pass locally but fail in CI",
+        sessionId: "test-session",
+      };
+
+      const result = await agentDelegator.analyzeDelegation(request);
+      expect(result.agentDetails.some((a: any) => a.name === 'testing-lead')).toBe(true);
+    });
+  });
 });

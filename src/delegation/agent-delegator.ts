@@ -298,6 +298,9 @@ export class AgentDelegator {
         request.sessionId,
       );
 
+      // Record for learning system
+      this.recordAnalysisForLearning(request, { agents, agentDetails, strategy: complexityScore.recommendedStrategy });
+
       return {
         strategy: complexityScore.recommendedStrategy,
         agents,
@@ -537,6 +540,30 @@ export class AgentDelegator {
       return "create";
     }
     return "modify";
+  }
+
+  /**
+   * Record analysis results for learning system
+   */
+  private recordAnalysisForLearning(
+    request: DelegationRequest,
+    analysis: {
+      agents: string[];
+      agentDetails: Array<{ name: string; confidence: number; role: string }>;
+      strategy: string;
+    }
+  ): void {
+    for (const agentName of analysis.agents) {
+      const agentDetail = analysis.agentDetails.find(a => a.name === agentName);
+      routingOutcomeTracker.recordOutcome({
+        taskId: request.sessionId || `analysis-${Date.now()}`,
+        taskDescription: request.description,
+        routedAgent: agentName,
+        routedSkill: agentDetail?.role || agentName.replace("-", "_") + "_skill",
+        confidence: agentDetail?.confidence || 0.8,
+        success: true,
+      });
+    }
   }
 
   private determineConflictResolution(

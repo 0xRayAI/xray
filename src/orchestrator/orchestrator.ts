@@ -15,6 +15,7 @@ import {
   SystemAction,
 } from "./universal-librarian-consultation.js";
 import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
+import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 
@@ -248,6 +249,12 @@ export class StringRayOrchestrator {
         confidence: 0.8,
         success,
       });
+      
+      // Update pattern performance tracker for learning
+      patternPerformanceTracker.trackPatternPerformance(
+        `${task.subagentType}:${task.subagentType.replace("-", "_")}_skill`,
+        { success, confidence: 0.8 }
+      );
       
       await frameworkLogger.log(
         "orchestrator",
