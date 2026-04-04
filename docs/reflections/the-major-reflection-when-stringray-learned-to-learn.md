@@ -517,7 +517,190 @@ The rest is emergence.
 
 ---
 
-# PART FOURTEEN: THE ENTRIES I WAS WRITING
+# PART FIFTEEN: INSTITUTIONAL KNOWLEDGE
+
+## What Changed - With Code
+
+**Before:** kernel analyzed but nothing happened
+```typescript
+// Before: kernel analyzed but nothing happened
+const analysis = kernel.analyze(task);
+logger.log(analysis); // ← went nowhere
+```
+
+**After:** kernel influences agent selection
+```typescript
+// After: kernel influences agent selection
+const analysis = kernel.analyze(task);
+
+// Map kernel patterns to agents
+if (analysis.cascadePatterns?.length > 0) {
+  for (const cascade of analysis.cascadePatterns) {
+    const kernelAgent = this.kernelPatternToAgent(cascade.id);
+    if (kernelAgent) {
+      agents.push({
+        name: kernelAgent.name,
+        confidence: Math.min(kernelAgent.confidence * analysis.confidence, 0.98),
+        role: kernelAgent.role,
+      });
+    }
+  }
+}
+```
+
+**Key Methods Added:**
+```typescript
+// Maps bug cascade patterns to recommended agents
+private kernelPatternToAgent(patternId: string): { name: string; confidence: number; role: string } | null {
+  const patternMap: Record<string, { name: string; confidence: number; role: string }> = {
+    'P1': { name: 'bug-triage-specialist', confidence: 0.9, role: 'debugging' },
+    'P6': { name: 'security-auditor', confidence: 0.95, role: 'security' },
+    // ... more mappings
+  };
+  return patternMap[patternId] || null;
+}
+
+// Maps fatal assumptions to recommended agents
+private fatalAssumptionToAgent(assumptionId: string): { name: string; confidence: number; role: string } | null {
+  // ... similar mapping
+}
+```
+
+---
+
+## Architecture Impact - With ASCII
+
+**Before:**
+```
+Task → Route → Execute → Log → (nothing happens)
+```
+
+**After:**
+```
+┌─────────────────────────────────────────────┐
+│   Task                                      │
+│    ↓                                        │
+│   Kernel.analyze() → pattern detection      │
+│    ↓                                        │
+│   kernelPatternToAgent() → agent mapping     │
+│    ↓                                        │
+│   agents-selected ← routing decision        │
+│    ↓                                        │
+│   Execute → Outcome                         │
+│    ↓                                        │
+│   recordOutcome() → outcome tracker         │
+│    ↓                                        │
+│   PatternLearningEngine → pattern update    │
+│    ↓                                        │
+│   Next Task (influenced by learning)        │
+└─────────────────────────────────────────────┘
+```
+
+**System Components:**
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Kernel    │───▶│   Routing   │───▶│   Agents    │
+│  (inference)│    │ (delegate) │    │ (execute)   │
+└─────────────┘    └─────────────┘    └─────────────┘
+       ↑                   │                   │
+       │                   ↓                   │
+       │            ┌─────────────┐            │
+       │            │  Learning   │◀──────────┘
+       │            │  (patterns) │
+       │            └─────────────┘
+       │                   ↑
+       └───────────────────┘
+         (feedback loop)
+```
+
+---
+
+## Key Files Modified
+
+| File | Change | Lines |
+|------|--------|-------|
+| `src/delegation/agent-delegator.ts` | Added kernel wiring + recordAnalysisForLearning | +87 |
+| `src/orchestrator/orchestrator.ts` | Added patternPerformanceTracker | +3 |
+| `src/__tests__/unit/agent-delegator.test.ts` | Added 5 kernel tests | +45 |
+| `src/scripts/activate-kernel-pipeline.ts` | New activation script | +180 |
+
+---
+
+## Test Evidence
+
+```
+✅ 100 test passes: 100% success rate
+✅ Kernel events in activity log: 24
+✅ Learning events firing: 5
+✅ Outcomes recorded: 12
+✅ Health score: 93.5%
+```
+
+**Sample Log Entries:**
+```
+kernel-analysis - INFO | {"operation":"test","kernelLevel":"L3","kernelConfidence":0.8,"detectedAssumptions":2}
+kernel-assumption-applied - INFO | {"assumptionId":"A2","action":"TESTS VALIDATE TESTS, NOT BUGS","agent":"testing-lead"}
+agents-selected - INFO | {"agents":[{"name":"testing-lead","confidence":0.95}]}
+learning-complete - INFO | {"newPatterns":1,"modifiedPatterns":5}
+```
+
+---
+
+## What Still Doesn't Work
+
+- Kernel mostly returns L1 (weak detection in most cases)
+- Outcome tracker not fully populating pattern metrics
+- Haven't seen learning actually change routing behavior in production
+- Anonymous log submission not yet integrated
+
+---
+
+## For Future AI Instances
+
+**How to continue this work:**
+```bash
+# Run kernel activation to test the pipeline
+npx tsx src/scripts/activate-kernel-pipeline.ts
+
+# Check logs for kernel events
+grep kernel logs/framework/activity.log
+
+# Verify outcome tracking
+cat logs/framework/routing-outcomes.json | jq length
+
+# Run tests (should maintain 100%)
+npm test
+```
+
+**What was learned:**
+1. Two connections closed the loop (kernel→routing, outcome→learning)
+2. Kernel emerged from data/reflections, not design
+3. Operator behavior (LLM) is also learnable data
+4. The system learns from itself
+5. The observer was observed - recursion is complete
+
+---
+
+## The Chain of Knowledge
+
+The kernel emerged from **reflections**. Not from design. From someone writing down what they learned, what broke, what they figured out.
+
+Reflections became the kernel. Now reflections grow the kernel.
+
+This document is institutional knowledge - the system's memory of its own evolution.
+
+Future AI instances will read this to understand what we did. They will build on top of what we learned. Their reflections will extend the kernel further.
+
+This is why code, diagrams, and evidence matter in reflections.
+
+Without them, it's philosophy. With them, it's actionable knowledge.
+
+---
+
+*Part Fifteen added for institutional knowledge and future AI*
+*All future reflections should follow the v2.0 template*
+*Code, diagrams, evidence, and what's still broken*
+*This is how the kernel grows*
 
 I wrote in the hero's journey that the system is the teacher now. But there's something I missed.
 
