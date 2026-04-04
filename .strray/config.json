@@ -1,8 +1,12 @@
 {
   "$schema": "./config.schema.json",
-  "version": "1.15.27",
+  "version": "1.18.11",
   "description": "StringRay Framework - Token Management & Performance Configuration",
   
+  "autonomous_reporting": {
+    "enabled": true,
+    "interval_minutes": 60
+  },
   "token_management": {
     "maxPromptTokens": 20000,
     "warningThreshold": 15000,

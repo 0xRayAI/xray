@@ -8,7 +8,7 @@
  * Usage: node scripts/node/ci-report-generator.mjs [--report agent|processor|error|tool|all]
  */
 
-import { readFileSync, existsSync, writeFileSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 const LOG_FILE = process.cwd() + '/logs/framework/activity.log';
@@ -36,17 +36,30 @@ function generateAgentReport(logs) {
     }
   }
   
-  const completed = logs.filter(l => l.includes('spawn-completed'));
-  const failures = completed.filter(l => l.includes('"result":"failure"'));
-  const successes = completed.filter(l => l.includes('"result":"success"'));
+  // agent-spawn-governor logs with explicit result
+  const explicitResults = logs.filter(l => l.includes('[agent-spawn-governor]') && l.includes('spawn-completed'));
+  const failures = explicitResults.filter(l => l.includes('"result":"failure"'));
+  const successes = explicitResults.filter(l => l.includes('"result":"success"'));
+  
+  // spawn-governance logs (no result field = success)
+  const governanceCompleted = logs.filter(l => l.includes('[spawn-governance]') && l.includes('spawn-completed'));
+  const governanceSuccesses = governanceCompleted.length;
+  
+  const totalCompleted = explicitResults.length + governanceSuccesses;
+  const totalFailures = failures.length;
+  const totalSuccesses = successes.length + governanceSuccesses;
   
   return {
     totalSpawns: agentSpawns.length,
     byType: agentTypes,
-    completed: completed.length,
-    failures: failures.length,
-    successes: successes.length,
-    failureRate: completed.length > 0 ? (failures.length / completed.length * 100).toFixed(1) + '%' : 'N/A'
+    completed: totalCompleted,
+    failures: totalFailures,
+    successes: totalSuccesses,
+    failureRate: totalCompleted > 0 ? (totalFailures / totalCompleted * 100).toFixed(1) + '%' : 'N/A',
+    breakdown: {
+      withResult: { completed: explicitResults.length, failures: failures.length, successes: successes.length },
+      governance: { completed: governanceSuccesses }
+    }
   };
 }
 
@@ -149,16 +162,17 @@ function generateToolReport(logs) {
 }
 
 function generateReport(type) {
-  console.log(`Generating ${type} report...`);
+  console.log(`📊 Generating ${type} report...`);
   
   const logs = parseLogFile();
   if (logs.length === 0) {
-    console.log('No logs to analyze');
+    console.log('⚠️  No logs to analyze');
     return null;
   }
-  
+
+  const timestamp = new Date().toISOString();
   const report = {
-    generatedAt: new Date().toISOString(),
+    generatedAt: timestamp,
     logFile: LOG_FILE,
     totalLogLines: logs.length,
   };
@@ -195,14 +209,19 @@ const type = args[0]?.replace('--', '') || 'all';
 const report = generateReport(type);
 
 if (report) {
-  console.log('\n=== CI Report ===');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  console.log('\n=== 📊 CI Report (' + type + ') ===');
+  console.log('Generated:', timestamp);
   console.log(JSON.stringify(report, null, 2));
   
-  const outputFile = join(OUTPUT_DIR, `ci-${type}-report.json`);
+  const outputFile = join(OUTPUT_DIR, `ci-${type}-report-${timestamp}.json`);
   try {
+    if (!existsSync(OUTPUT_DIR)) {
+      mkdirSync(OUTPUT_DIR, { recursive: true });
+    }
     writeFileSync(outputFile, JSON.stringify(report, null, 2));
-    console.log(`\nSaved to: ${outputFile}`);
+    console.log(`\n✅ Saved to: ${outputFile}`);
   } catch (e) {
-    console.log(`\nNote: Could not save to ${outputFile} (directory may not exist)`);
+    console.log(`\n⚠️ Note: Could not save to ${outputFile} (${e.message})`);
   }
 }

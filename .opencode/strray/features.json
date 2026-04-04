@@ -254,6 +254,83 @@
       "max_commits_since_reflection": 15
     }
   },
+  "auto_reporting": {
+    "description": "Automatic report generation and display",
+    "enabled": true,
+    "mode": "full",
+    "cadence": {
+      "interval_minutes": 60,
+      "on_commit": true,
+      "on_session_end": true,
+      "on_test_failure": true,
+      "on_ci_failure": true
+    },
+    "report_types": {
+      "session_summary": {
+        "enabled": true,
+        "include_emojis": true,
+        "include_recommendations": true,
+        "include_agent_activities": true,
+        "include_pipeline_operations": true,
+        "include_critical_issues": true
+      },
+      "agent_usage": {
+        "enabled": true,
+        "include_spawn_data": true,
+        "include_failure_analysis": true
+      },
+      "processor_execution": {
+        "enabled": true,
+        "include_timings": true,
+        "include_success_rates": true
+      },
+      "error_summary": {
+        "enabled": true,
+        "include_stack_traces": false,
+        "group_by_type": true
+      },
+      "tool_usage": {
+        "enabled": true,
+        "include_most_used": true,
+        "include_slowest": true
+      }
+    },
+    "display": {
+      "show_recent_reports": true,
+      "max_recent_display": 3,
+      "indicators": {
+        "emojis": true,
+        "color_coding": true,
+        "compact_summary": true
+      },
+      "notification_channels": ["console", "log"]
+    },
+    "storage": {
+      "output_dir": ".ci-reports",
+      "retention_days": 30,
+      "index_file": ".ci-reports/index.json"
+    },
+    "thresholds": {
+      "full": {
+        "commit_trigger": 1,
+        "time_trigger_minutes": 60,
+        "auto_generate": true,
+        "auto_display": true
+      },
+      "minimal": {
+        "commit_trigger": 5,
+        "time_trigger_minutes": 240,
+        "auto_generate": true,
+        "auto_display": true
+      },
+      "off": {
+        "commit_trigger": 999,
+        "time_trigger_minutes": 1440,
+        "auto_generate": false,
+        "auto_display": false
+      }
+    }
+  },
   "inference": {
     "description": "Inference system configuration",
     "enabled": true,

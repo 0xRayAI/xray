@@ -1,0 +1,99 @@
+name: Auto-Report Generation
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Hourly
+  workflow_dispatch:
+    inputs:
+      report_type:
+        description: 'Report type to generate'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - session_summary
+          - agent_usage
+          - processor_execution
+          - error_summary
+          - tool_usage
+      force:
+        description: 'Force generation even if recently generated'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  generate-reports:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --silent
+
+      - name: Generate reports
+        run: |
+          REPORT_TYPE=${{ github.event.inputs.report_type || 'all' }}
+          FORCE=${{ github.event.inputs.force || 'false' }}
+          
+          # Generate all reports
+          node scripts/node/ci-report-generator.mjs --report "$REPORT_TYPE" || true
+
+      - name: Generate session summary
+        run: |
+          # Run autonomous report generator for session summary
+          node scripts/node/generate-autonomous-report.cjs || true
+
+      - name: Display recent reports
+        run: |
+          echo "📊 Recent Reports:"
+          if [ -f .ci-reports/index.json ]; then
+            cat .ci-reports/index.json
+          else
+            echo "No reports generated yet"
+          fi
+
+      - name: Check for critical issues
+        if: always()
+        run: |
+          if [ -f .ci-reports/error-summary.json ]; then
+            ERRORS=$(cat .ci-reports/error-summary.json | grep -c '"severity": "critical"' || echo "0")
+            if [ "$ERRORS" -gt 0 ]; then
+              echo "::warning::⚠️ $ERRORS critical errors detected in recent reports"
+            fi
+          fi
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-reports
+          path: .ci-reports/
+          retention-days: 7
+
+  notify-agents:
+    needs: generate-reports
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update report index for agent discovery
+        run: |
+          # Create/update index for AI agents to discover
+          echo "📋 Report Index Updated" >> $GITHUB_STEP_SUMMARY
+          
+          # List generated files
+          ls -la .ci-reports/ 2>/dev/null || echo "No reports directory"
