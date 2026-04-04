@@ -241,5 +241,65 @@
         "prompt_user": false
       }
     }
+  },
+  "commit_cycle": {
+    "description": "Controls auto-commit behavior and reflection requirements",
+    "auto_commit": {
+      "enabled": false,
+      "min_changes_to_commit": 3,
+      "force_commit_after_minutes": 10
+    },
+    "require_reflection": {
+      "enabled": true,
+      "max_commits_since_reflection": 15
+    }
+  },
+  "inference": {
+    "description": "Inference system configuration",
+    "enabled": true,
+    "workflow_dir": ".strray/inference",
+    "reports_dir": ".strray/reports",
+    "pattern_matching": {
+      "enabled": true,
+      "confidence_threshold": 0.7
+    }
+  },
+  "kernel": {
+    "description": "Kernel pattern and learning configuration",
+    "enabled": true,
+    "pattern_learning": {
+      "enabled": true,
+      "learning_interval_ms": 300000,
+      "auto_apply_threshold": 0.9,
+      "min_success_rate": 0.7
+    },
+    "confidence": {
+      "default_threshold": 0.5,
+      "routing_adjustment": 0.1
+    }
+  },
+  "processors": {
+    "description": "Processor pipeline configuration",
+    "enabled": true,
+    "pre_processors": {
+      "enabled": true,
+      "priority_order": ["preValidate", "codexCompliance"]
+    },
+    "post_processors": {
+      "enabled": true,
+      "priority_order": ["storytellingTrigger", "testExecution", "regressionTesting"]
+    }
+  },
+  "enforcement": {
+    "description": "Rule enforcement and validation configuration",
+    "enabled": true,
+    "auto_fix": {
+      "enabled": true,
+      "require_approval": false
+    },
+    "codex_validation": {
+      "enabled": true,
+      "strict_mode": false
+    }
   }
 }
