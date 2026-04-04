@@ -45,14 +45,47 @@ export class InferenceImprovementProcessor extends PostProcessor {
   private readonly logsDir = "logs/framework";
   private readonly reportsDir: string;
   private readonly workflowDir: string;
+  private readonly inferenceEnabled: boolean;
+  private readonly patternMatchingEnabled: boolean;
+  private readonly patternMatchingThreshold: number;
 
   constructor() {
     super();
-    this.reportsDir = path.join(getConfigDir(), "reports");
-    this.workflowDir = path.join(getConfigDir(), "inference");
+    const config = this.loadInferenceConfig();
+    this.inferenceEnabled = config?.enabled ?? true;
+    this.patternMatchingEnabled = config?.pattern_matching?.enabled ?? true;
+    this.patternMatchingThreshold = config?.pattern_matching?.confidence_threshold ?? 0.7;
+    this.reportsDir = config?.reports_dir 
+      ? path.join(process.cwd(), config.reports_dir) 
+      : path.join(getConfigDir(), "reports");
+    this.workflowDir = config?.workflow_dir 
+      ? path.join(process.cwd(), config.workflow_dir) 
+      : path.join(getConfigDir(), "inference");
+  }
+
+  private loadInferenceConfig(): { enabled?: boolean; workflow_dir?: string; reports_dir?: string; pattern_matching?: { enabled?: boolean; confidence_threshold?: number } } | null {
+    try {
+      const configPaths = [
+        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".opencode", "strray", "features.json"),
+      ];
+      for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+          return config.inference || config;
+        }
+      }
+    } catch (e) {
+      // ignore - use defaults
+    }
+    return null;
   }
 
   protected async run(context: unknown): Promise<unknown> {
+    if (!this.inferenceEnabled) {
+      return { message: "Inference processor disabled", success: true };
+    }
+    
     const ctx = context as Record<string, unknown>;
     const directory = ctx.directory as string || process.cwd();
 

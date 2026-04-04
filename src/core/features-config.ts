@@ -191,6 +191,75 @@ export interface ReflectionConfig {
   store_inference_data: boolean;
 }
 
+export interface AutoReflectionConfig {
+  mode: "full" | "minimal" | "off";
+  description: string;
+  triggers: {
+    ci_failure: { enabled: boolean; auto_generate_stub: boolean };
+    commit_threshold: { enabled: boolean; threshold: number; auto_generate_stub: boolean };
+    time_threshold: { enabled: boolean; days: number; auto_generate_stub: boolean };
+    test_failure: { enabled: boolean; auto_generate_stub: boolean };
+    deployment: { enabled: boolean; auto_generate_stub: boolean };
+  };
+  thresholds: {
+    full: { commit_threshold: number; days_threshold: number; auto_generate: boolean; auto_commit: boolean; prompt_user: boolean };
+    minimal: { commit_threshold: number; days_threshold: number; auto_generate: boolean; auto_commit: boolean; prompt_user: boolean };
+    off: { commit_threshold: number; days_threshold: number; auto_generate: boolean; auto_commit: boolean; prompt_user: boolean };
+  };
+}
+
+export interface InferenceConfig {
+  description: string;
+  enabled: boolean;
+  workflow_dir: string;
+  reports_dir: string;
+  pattern_matching: {
+    enabled: boolean;
+    confidence_threshold: number;
+  };
+}
+
+export interface KernelConfig {
+  description: string;
+  enabled: boolean;
+  pattern_learning: {
+    enabled: boolean;
+    learning_interval_ms: number;
+    auto_apply_threshold: number;
+    min_success_rate: number;
+  };
+  confidence: {
+    default_threshold: number;
+    routing_adjustment: number;
+  };
+}
+
+export interface ProcessorsConfig {
+  description: string;
+  enabled: boolean;
+  pre_processors: {
+    enabled: boolean;
+    priority_order: string[];
+  };
+  post_processors: {
+    enabled: boolean;
+    priority_order: string[];
+  };
+}
+
+export interface EnforcementConfig {
+  description: string;
+  enabled: boolean;
+  auto_fix: {
+    enabled: boolean;
+    require_approval: boolean;
+  };
+  codex_validation: {
+    enabled: boolean;
+    strict_mode: boolean;
+  };
+}
+
 export interface AgentSpawnConfig {
   enabled: boolean;
   max_concurrent: number;
@@ -293,6 +362,11 @@ export interface FeaturesConfig {
   commit_cycle?: CommitCycleConfig;
   reflection?: ReflectionConfig;
   storytelling?: StorytellingConfig;
+  auto_reflection?: AutoReflectionConfig;
+  inference?: InferenceConfig;
+  kernel?: KernelConfig;
+  processors?: ProcessorsConfig;
+  enforcement?: EnforcementConfig;
 }
 
 // ============================================================================
@@ -520,6 +594,13 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
    */
   public getBatchOperations(): BatchOperationsConfig {
     return this.loadConfig().batch_operations;
+  }
+
+  /**
+   * Get agent spawn settings
+   */
+  public getAgentSpawn(): AgentSpawnConfig | undefined {
+    return this.loadConfig().agent_spawn;
   }
 
   /**
@@ -819,3 +900,6 @@ export const getTokenOptimization = () =>
 
 export const getBatchOperations = () =>
   featuresConfigLoader.getBatchOperations();
+
+export const getAgentSpawn = () =>
+  featuresConfigLoader.getAgentSpawn();

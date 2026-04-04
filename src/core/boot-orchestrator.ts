@@ -12,6 +12,9 @@ import { StringRayContextLoader } from "./context-loader.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { ProcessorManager } from "../processors/processor-manager.js";
 import { pathResolver } from "../utils/path-resolver.js";
+import * as fs from "fs";
+import * as path from "path";
+const { existsSync, readFileSync } = fs;
 // Path configuration - can be overridden by environment or use path resolver
 const AGENTS_BASE_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
 import {
@@ -181,6 +184,24 @@ export class BootOrchestrator {
     }
   }
 
+  private loadProcessorsConfig(): { pre_processors?: { priority_order?: string[] }; post_processors?: { priority_order?: string[] } } | null {
+    try {
+      const configPaths = [
+        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".opencode", "strray", "features.json"),
+      ];
+      for (const configPath of configPaths) {
+        if (existsSync(configPath)) {
+          const config = JSON.parse(readFileSync(configPath, "utf-8"));
+          return config.processors || null;
+        }
+      }
+    } catch {
+      // ignore - use defaults
+    }
+    return null;
+  }
+
   /**
    * Load orchestrator as the first component
    */
@@ -284,28 +305,39 @@ export class BootOrchestrator {
       );
 
       // Processor definitions — single source of truth for all registrations
+      // Load from features.json if available, otherwise use defaults
+      const processorsConfig = this.loadProcessorsConfig();
+      const prePriorityOrder = processorsConfig?.pre_processors?.priority_order || ["preValidate", "codexCompliance"];
+      const postPriorityOrder = processorsConfig?.post_processors?.priority_order || ["storytellingTrigger", "testExecution", "regressionTesting"];
+      
+      const prePriorityMap: Record<string, number> = {};
+      prePriorityOrder.forEach((name: string, idx: number) => { prePriorityMap[name] = 10 + (idx * 10); });
+      
+      const postPriorityMap: Record<string, number> = {};
+      postPriorityOrder.forEach((name: string, idx: number) => { postPriorityMap[name] = 5 + (idx * 10); });
+
       const PROCESSOR_DEFS: Array<{ name: string; type: "pre" | "post"; priority: number; enabled: boolean }> = [
-        { name: "preValidate", type: "pre", priority: 10, enabled: true },
-        { name: "typescriptCompilation", type: "pre", priority: 15, enabled: true },
-        { name: "codexCompliance", type: "pre", priority: 20, enabled: true },
-        { name: "testAutoCreation", type: "pre", priority: 22, enabled: true },
-        { name: "versionCompliance", type: "pre", priority: 25, enabled: true },
-        { name: "errorBoundary", type: "pre", priority: 30, enabled: true },
-        { name: "agentsMdValidation", type: "pre", priority: 35, enabled: true },
-        { name: "logProtection", type: "pre", priority: 37, enabled: true },
-        { name: "stateValidation", type: "post", priority: 130, enabled: true },
-        { name: "spawnGovernance", type: "pre", priority: 40, enabled: true },
-        { name: "performanceBudget", type: "pre", priority: 45, enabled: true },
-        { name: "asyncPattern", type: "pre", priority: 50, enabled: true },
-        { name: "consoleLogGuard", type: "pre", priority: 55, enabled: true },
-        { name: "testExecution", type: "post", priority: 60, enabled: true },
-        { name: "regressionTesting", type: "post", priority: 65, enabled: true },
-        { name: "coverageAnalysis", type: "post", priority: 70, enabled: true },
-        { name: "inferenceImprovement", type: "post", priority: 75, enabled: true },
-        { name: "refactoringLogging", type: "post", priority: 80, enabled: true },
-        { name: "postProcessorChain", type: "post", priority: 140, enabled: true },
-        { name: "publishPreflight", type: "post", priority: 125, enabled: true },
-        { name: "storytellingTrigger", type: "post", priority: 5, enabled: true },
+        { name: "preValidate", type: "pre", priority: prePriorityMap["preValidate"] || 10, enabled: true },
+        { name: "typescriptCompilation", type: "pre", priority: prePriorityMap["typescriptCompilation"] || 15, enabled: true },
+        { name: "codexCompliance", type: "pre", priority: prePriorityMap["codexCompliance"] || 20, enabled: true },
+        { name: "testAutoCreation", type: "pre", priority: prePriorityMap["testAutoCreation"] || 22, enabled: true },
+        { name: "versionCompliance", type: "pre", priority: prePriorityMap["versionCompliance"] || 25, enabled: true },
+        { name: "errorBoundary", type: "pre", priority: prePriorityMap["errorBoundary"] || 30, enabled: true },
+        { name: "agentsMdValidation", type: "pre", priority: prePriorityMap["agentsMdValidation"] || 35, enabled: true },
+        { name: "logProtection", type: "pre", priority: prePriorityMap["logProtection"] || 37, enabled: true },
+        { name: "stateValidation", type: "post", priority: postPriorityMap["stateValidation"] || 130, enabled: true },
+        { name: "spawnGovernance", type: "pre", priority: prePriorityMap["spawnGovernance"] || 40, enabled: true },
+        { name: "performanceBudget", type: "pre", priority: prePriorityMap["performanceBudget"] || 45, enabled: true },
+        { name: "asyncPattern", type: "pre", priority: prePriorityMap["asyncPattern"] || 50, enabled: true },
+        { name: "consoleLogGuard", type: "pre", priority: prePriorityMap["consoleLogGuard"] || 55, enabled: true },
+        { name: "testExecution", type: "post", priority: postPriorityMap["testExecution"] || 60, enabled: true },
+        { name: "regressionTesting", type: "post", priority: postPriorityMap["regressionTesting"] || 65, enabled: true },
+        { name: "coverageAnalysis", type: "post", priority: postPriorityMap["coverageAnalysis"] || 70, enabled: true },
+        { name: "inferenceImprovement", type: "post", priority: postPriorityMap["inferenceImprovement"] || 75, enabled: true },
+        { name: "refactoringLogging", type: "post", priority: postPriorityMap["refactoringLogging"] || 80, enabled: true },
+        { name: "postProcessorChain", type: "post", priority: postPriorityMap["postProcessorChain"] || 140, enabled: true },
+        { name: "publishPreflight", type: "post", priority: postPriorityMap["publishPreflight"] || 125, enabled: true },
+        { name: "storytellingTrigger", type: "post", priority: postPriorityMap["storytellingTrigger"] || 5, enabled: true },
       ];
 
       for (const def of PROCESSOR_DEFS) {
