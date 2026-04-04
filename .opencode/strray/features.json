@@ -364,7 +364,7 @@
     },
     "post_processors": {
       "enabled": true,
-      "priority_order": ["storytellingTrigger", "testExecution", "regressionTesting"]
+      "priority_order": ["storytellingTrigger", "sessionSummary", "testExecution", "regressionTesting"]
     }
   },
   "enforcement": {

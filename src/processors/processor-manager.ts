@@ -579,6 +579,9 @@ export class ProcessorManager {
         case "inferenceImprovement":
           result = await this.executeInferenceImprovement(safeContext as PostValidateContext);
           break;
+        case "sessionSummary":
+          result = await this.executeSessionSummary(safeContext as PostValidateContext);
+          break;
         default:
           throw new Error(`Unknown processor: ${name}`);
       }
@@ -1808,6 +1811,16 @@ export class ProcessorManager {
     const { InferenceImprovementProcessor } =
       await import("./implementations/inference-improvement-processor.js");
     const processor = new InferenceImprovementProcessor();
+    return processor.execute(context as ProcessorContext);
+  }
+
+  /**
+   * Execute session summary processor
+   */
+  private async executeSessionSummary(context: PostValidateContext): Promise<ProcessorExecutionResult> {
+    const { SessionSummaryProcessor } =
+      await import("./implementations/session-summary-processor.js");
+    const processor = new SessionSummaryProcessor();
     return processor.execute(context as ProcessorContext);
   }
 }

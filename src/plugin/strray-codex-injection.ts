@@ -828,16 +828,25 @@ export default async function strrayCodexPlugin(input: {
           
           // Determine operation type and enrich context with metadata for processors
           const isPublishOperation = tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+          
+          // Get agent info from session state if available
+          const agentName = (global as any).currentAgent?.agentType || 
+                           (global as any).currentAgent?.type ||
+                           (input as any).agentType ||
+                           "orchestrator";
+          
           const postProcessorContext = {
             directory,
             operation: tool,
             filePath: args?.filePath,
             success: true,
+            agentName,
             metadata: {
               isPublishing: isPublishOperation,
               hook: "tool_execution",
               toolName: tool,
               timestamp: Date.now(),
+              agentType: agentName,
             },
           };
           

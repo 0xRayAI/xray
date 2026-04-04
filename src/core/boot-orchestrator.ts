@@ -338,6 +338,7 @@ export class BootOrchestrator {
         { name: "postProcessorChain", type: "post", priority: postPriorityMap["postProcessorChain"] || 140, enabled: true },
         { name: "publishPreflight", type: "post", priority: postPriorityMap["publishPreflight"] || 125, enabled: true },
         { name: "storytellingTrigger", type: "post", priority: postPriorityMap["storytellingTrigger"] || 5, enabled: true },
+        { name: "sessionSummary", type: "post", priority: postPriorityMap["sessionSummary"] || 10, enabled: true },
       ];
 
       for (const def of PROCESSOR_DEFS) {
@@ -355,12 +356,14 @@ export class BootOrchestrator {
         );
       }
 
-      // Skip refactoring logging processor - not available in this build
+      // Note: refactoringLogging is registered but requires agentName/task/startTime in context
+      // to actually log. When running via tool execution, these fields may not be present.
+      // The sessionSummary processor handles emoji output for tool execution flows.
       frameworkLogger.log(
         "boot-orchestrator",
-        "skipping refactoringLogging processor - not available",
+        "processors configured",
         "info",
-        { jobId },
+        { jobId, postProcessorCount: PROCESSOR_DEFS.filter(p => p.type === "post").length },
       );
 
       const initSuccess = await this.processorManager.initializeProcessors();
