@@ -17,11 +17,6 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
-    "general": {
-      "description": "General-purpose agent for tasks that don't match a specialist — code editing, file operations, research, and ad-hoc problem solving",
-      "temperature": 0.7,
-      "mode": "subagent"
-    },
     "enforcer": {
       "description": "Enforcer agent for codex compliance",
       "temperature": 1.0,
@@ -64,11 +59,6 @@
     },
     "log-monitor": {
       "description": "Log monitor for diagnostics",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "explore": {
-      "description": "Codebase exploration agent",
       "temperature": 1.0,
       "mode": "subagent"
     },
