@@ -1,0 +1,270 @@
+name: Auto-Reflection System
+
+on:
+  workflow_run:
+    workflows: [StringRay CI/CD]
+    types: [completed]
+    branches: [master]
+  schedule:
+    - cron: "0 */6 * *"  # Every 6 hours check for reflection needs
+  repository_dispatch:
+    types: [reflection-trigger]
+
+env:
+  REFLECTIONS_DIR: docs/reflections
+  NODE_VERSION: "20.x"
+
+jobs:
+  # ═══════════════════════════════════════════════════════
+  # Auto-Generate Reflection on CI Failure
+  # ═══════════════════════════════════════════════════════
+  auto-reflect-on-failure:
+    name: Auto-Reflection on CI Failure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Get CI failure details
+        id: failure-details
+        run: |
+          # Get the failed workflow run details
+          RUN_ID=${{ github.event.workflow_run.id }}
+          echo "Fetching workflow run details..."
+          
+          # Get failed jobs
+          FAILED_JOBS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs" | \
+            jq -r '.jobs[] | select(.conclusion == "failure") | .name' | tr '\n' ',' | sed 's/,$//')
+          echo "failed_jobs=$FAILED_JOBS" >> $GITHUB_OUTPUT
+          
+          # Get run started time
+          START_TIME=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID" | \
+            jq -r '.run_started_at')
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+
+      - name: Get recent commits since last reflection
+        id: commit-count
+        run: |
+          # Find most recent reflection
+          LAST_REFLECTION=$(find ${{ env.REFLECTIONS_DIR }} -name "*.md" -type f -exec stat --format="%Y %n" {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+          
+          if [ -z "$LAST_REFLECTION" ]; then
+            # No reflections, count all commits
+            COUNT=$(git rev-list --count HEAD)
+          else
+            # Count commits since last reflection
+            REFLECTION_DATE=$(stat --format="%Y" "$LAST_REFLECTION")
+            COUNT=$(git rev-list --count --since="$REFLECTION_DATE" HEAD 2>/dev/null || echo "0")
+          fi
+          
+          echo "commits_since_reflection=$COUNT" >> $GITHUB_OUTPUT
+          
+          # Get commit messages for context
+          COMMITS=$(git log --oneline -10 --format="- %s (%h)")
+          echo "recent_commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Generate reflection stub
+        id: generate-stub
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          FILENAME="${{ env.REFLECTIONS_DIR }}/auto-ci-failure-$DATE.md"
+          
+          # Get workflow run number
+          RUN_NUMBER=${{ github.event.workflow_run.run_number }}
+          
+          cat > "$FILENAME" << 'EOF'
+---
+story_type: reflection
+title: "CI/CD Failure Investigation"
+date: %%DATE%%
+slug: ci-failure-%%SLUG%%
+emotional_arc: "challenge → discovery → resolution"
+codex_terms: ["ci-cd", "failure-recovery", "testing"]
+framework: three_act_structure
+target_words: 3000
+location: docs/reflections/
+---
+
+# CI/CD Failure Investigation
+
+## 1. Executive Summary
+%%EXECUTIVE_SUMMARY%%
+
+## 2. What Was / What Is / What Should Be
+
+### What Was
+The CI/CD pipeline was operating normally, with successful builds and tests.
+
+### What Is
+The pipeline failed at the following stage(s): %%FAILED_JOBS%%
+
+### What Should Be
+All CI stages should pass consistently, with clear failure messages and automatic recovery.
+
+## 3. INNER DIALOGUE
+%%INNER_DIALOGUE%%
+
+## 4. Counterfactual Thinking
+%%COUNTERFACTUAL%%
+
+## 5. Personal Journey
+%%PERSONAL_JOURNEY%%
+
+## 6. Code Examples
+
+### What Changed
+```bash
+%%CHANGED_FILES%%
+```
+
+### Test Evidence
+```
+%%TEST_OUTPUT%%
+```
+
+## 7. Architecture Impact
+```
+%%ARCHITECTURE%%
+```
+
+## 8. Files Modified
+| File | Change |
+|------|--------|
+| .github/workflows/ci.yml | Updated |
+
+## 9. What Still Doesn't Work
+- Root cause of failure needs investigation
+- Monitoring needs improvement
+
+## 10. For Future AI
+%%FUTURE_AI%%
+EOF
+
+          # Replace placeholders
+          sed -i "s/%%DATE%%/$DATE/g" "$FILENAME"
+          sed -i "s/%%SLUG%%/$(date +%Y-%m-%d)/g" "$FILENAME"
+          sed -i "s/%%FAILED_JOBS%%/${{ steps.failure-details.outputs.failed_jobs }}/g" "$FILENAME"
+          sed -i "s/%%EXECUTIVE_SUMMARY%%/CI failure on workflow run $RUN_NUMBER. Failed jobs: ${{ steps.failure-details.outputs.failed_jobs }}/g" "$FILENAME"
+          sed -i "s/%%INNER_DIALOGUE%%/Analyzing the CI failure to understand what went wrong and how to prevent it./g" "$FILENAME"
+          sed -i "s/%%COUNTERFACTUAL%%/If we had better monitoring, we would have caught this earlier./g" "$FILENAME"
+          sed -i "s/%%PERSONAL_JOURNEY%%/Tracking down CI failures is a key part of maintaining system reliability./g" "$FILENAME"
+          sed -i "s/%%CHANGED_FILES%%/Review recent commits in the git history/g" "$FILENAME"
+          sed -i "s/%%TEST_OUTPUT%%/See workflow run logs for details/g" "$FILENAME"
+          sed -i "s/%%ARCHITECTURE%%/CI/CD infrastructure/g" "$FILENAME"
+          sed -i "s/%%FUTURE_AI%%/Continue monitoring CI health and improving test coverage./g" "$FILENAME"
+
+          echo "stub_path=$FILENAME" >> $GITHUB_OUTPUT
+
+      - name: Commit reflection stub
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add ${{ steps.generate-stub.outputs.stub_path }}
+          git commit -m "docs: auto-generated reflection stub for CI failure
+
+Generated from workflow_run: ${{ github.event.workflow_run.id }}
+Failed jobs: ${{ steps.failure-details.outputs.failed_jobs }}
+
+Use this as a starting point - fill in the details!"
+
+      - name: Push reflection
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create PR for reflection completion
+        run: |
+          gh pr create --title "docs: Complete CI failure reflection" \
+            --body "A reflection stub has been auto-generated for the recent CI failure.
+            
+Please complete the reflection by filling in the details:
+- ${{ steps.generate-stub.outputs.stub_path }}
+            
+This was auto-generated by the reflection system."
+
+  # ═══════════════════════════════════════════════════════
+  # Periodic Reflection Check
+  # ═══════════════════════════════════════════════════════
+  check-reflection-needed:
+    name: Check if Reflection Needed
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Count commits since last reflection
+        run: |
+          # Find most recent reflection
+          LAST_REFLECTION=$(find ${{ env.REFLECTIONS_DIR }} -name "*.md" -type f -exec stat --format="%Y %n" {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
+          
+          if [ -z "$LAST_REFLECTION" ]; then
+            echo "⚠️ No reflections found in ${{ env.REFLECTIONS_DIR }}"
+            echo "commits_since_reflection=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "📄 Most recent reflection: $LAST_REFLECTION"
+          
+          REFLECTION_DATE=$(stat --format="%Y" "$LAST_REFLECTION")
+          COUNT=$(git rev-list --count --since="$REFLECTION_DATE" HEAD 2>/dev/null || echo "0")
+          echo "commits_since_reflection=$COUNT" >> $GITHUB_OUTPUT
+          
+          echo "📊 Commits since last reflection: $COUNT"
+          
+          # Threshold check
+          if [ "$COUNT" -gt 20 ]; then
+            echo "::warning::More than 20 commits since last reflection - consider writing one!"
+            echo "reflection_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "reflection_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for test failures
+        run: |
+          # Check recent test runs
+          FAILURES=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=failure" | \
+            jq -r '.workflow_runs | length')
+          
+          if [ "$FAILURES" -gt 0 ]; then
+            echo "::warning::Found $FAILURES failed workflow run(s)"
+            echo "has_failures=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_failures=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Report status
+        run: |
+          echo "## Reflection System Status"
+          echo ""
+          echo "- Commits since last reflection: ${{ steps.count-commits.outputs.commits_since_reflection }}"
+          echo "- Reflection needed: ${{ steps.count-commits.outputs.reflection_needed }}"
+          echo "- Has failures: ${{ steps.check-failures.outputs.has_failures }}"

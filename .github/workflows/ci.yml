@@ -249,6 +249,19 @@ jobs:
       - name: Run health monitor
         run: node scripts/node/ci-cd-auto-fix.cjs
 
+      - name: Auto-generate reflection on failure
+        if: failure()
+        run: |
+          echo "CI failed - auto-generating reflection stub"
+          node scripts/node/auto-reflection-generator.mjs --trigger ci-failure --title "CI failure investigation"
+          
+          # Commit the reflection stub
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/reflections/auto-ci-*.md 2>/dev/null || true
+          git commit -m "docs: auto-generated reflection stub for CI failure" 2>/dev/null || true
+          git push 2>/dev/null || true
+
       - name: Upload health report
         uses: actions/upload-artifact@v4
         with:
