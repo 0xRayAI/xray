@@ -20,4 +20,19 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
   fi
 ) &
 
+# Check if this was a significant commit - prompt for reflection
+COMMIT_MSG=$(git log -1 --pretty=%B)
+SIGNIFICANT_KEYWORDS="fix|bug|debug|deploy|release|feature|refactor|kernel|learning|pattern|wire|connect|integrate"
+
+if echo "$COMMIT_MSG" | grep -qiE "$SIGNIFICANT_KEYWORDS"; then
+  echo ""
+  echo "📝 REFLECTION SUGGESTION: This commit appears to involve significant changes."
+  echo "   Consider writing a reflection using the v3.0 template:"
+  echo "   → cat docs/reflections/TEMPLATE_v3.md"
+  echo ""
+  echo "   To validate a reflection before committing:"
+  echo "   → ./scripts/node/reflection-validate.sh <path-to-reflection>"
+  echo ""
+fi
+
 exit 0
