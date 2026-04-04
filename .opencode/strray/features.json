@@ -190,5 +190,56 @@
       "fact_check_before_publish": true,
       "peer_review_agent": "growth-strategist"
     }
+  },
+  "auto_reflection": {
+    "mode": "full", 
+    "description": "Controls auto-reflection aggressiveness. 'full' = generate stubs on all triggers, 'minimal' = only prompts, 'off' = disabled",
+    "triggers": {
+      "ci_failure": {
+        "enabled": true,
+        "auto_generate_stub": true
+      },
+      "commit_threshold": {
+        "enabled": true,
+        "threshold": 15,
+        "auto_generate_stub": true
+      },
+      "time_threshold": {
+        "enabled": true,
+        "days": 7,
+        "auto_generate_stub": true
+      },
+      "test_failure": {
+        "enabled": true,
+        "auto_generate_stub": true
+      },
+      "deployment": {
+        "enabled": true,
+        "auto_generate_stub": true
+      }
+    },
+    "thresholds": {
+      "full": {
+        "commit_threshold": 10,
+        "days_threshold": 5,
+        "auto_generate": true,
+        "auto_commit": false,
+        "prompt_user": true
+      },
+      "minimal": {
+        "commit_threshold": 25,
+        "days_threshold": 14,
+        "auto_generate": true,
+        "auto_commit": false,
+        "prompt_user": true
+      },
+      "off": {
+        "commit_threshold": 999,
+        "days_threshold": 365,
+        "auto_generate": false,
+        "auto_commit": false,
+        "prompt_user": false
+      }
+    }
   }
 }
