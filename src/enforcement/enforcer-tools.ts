@@ -55,6 +55,16 @@ const ROUTING_MAPPINGS = [
   { keywords: ["testing", "strategy", "coverage", "test-plan"], skill: "testing-strategy", agent: "testing-lead", confidence: 0.92 },
   { keywords: ["inference", "model", "llm", "tuning", "optimization"], skill: "inference-improve", agent: "performance-engineer", confidence: 0.88 },
   { keywords: ["orchestrate", "boot", "initialize", "startup", "bootstrap"], skill: "boot-orchestrator", agent: "orchestrator", confidence: 0.9 },
+  // Additional unmapped skills
+  { keywords: ["tool", "utility", "helper", "instrument"], skill: "architect-tools", agent: "architect", confidence: 0.85 },
+  { keywords: ["design", "visual", "style", "theme", "css", "accessibility"], skill: "ui-ux-design", agent: "frontend-ui-ux-engineer", confidence: 0.9 },
+  { keywords: ["agent", "multi-agent", "coordination", "hermes", "communication"], skill: "hermes-agent", agent: "orchestrator", confidence: 0.88 },
+  { keywords: ["log", "diagnostic", "trace", "monitor", "watch"], skill: "log-monitor", agent: "log-monitor", confidence: 0.9 },
+  { keywords: ["health", "diagnostic", "model-health", "validate-llm"], skill: "model-health-check", agent: "performance-engineer", confidence: 0.88 },
+  { keywords: ["analyze", "profiling", "memory", "cpu", "latency"], skill: "performance-analysis", agent: "performance-engineer", confidence: 0.9 },
+  { keywords: ["pipeline", "stream", "etl", "batch", "process"], skill: "processor-pipeline", agent: "backend-engineer", confidence: 0.88 },
+  { keywords: ["vulnerability", "cve", "sast", "dast", "dependency-check"], skill: "security-scan", agent: "security-auditor", confidence: 0.92 },
+  { keywords: ["state", "store", "redux", "context", "persistence"], skill: "state-manager", agent: "backend-engineer", confidence: 0.88 },
 ];
 
 export interface RoutingRecommendation {
