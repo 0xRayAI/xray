@@ -611,10 +611,27 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
   }
 
   /**
-   * Check if activity logging is enabled via config
+   * Get performance monitoring alerting settings
    */
-  public isActivityLoggingEnabledFromConfig(): boolean {
-    return this.loadConfig().activity_logging?.enabled ?? true;
+  public getAlertingConfig(): {
+    enabled: boolean;
+    performance_degradation_threshold: number;
+    error_rate_threshold: number;
+    cost_threshold_daily: number;
+  } {
+    return this.loadConfig().performance_monitoring?.alerting || {
+      enabled: true,
+      performance_degradation_threshold: 20,
+      error_rate_threshold: 5,
+      cost_threshold_daily: 10,
+    };
+  }
+
+  /**
+   * Check if alerting is enabled from config
+   */
+  public isAlertingEnabled(): boolean {
+    return this.loadConfig().performance_monitoring?.alerting?.enabled ?? true;
   }
 
   /**

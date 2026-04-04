@@ -1,9 +1,27 @@
 import { EventEmitter } from "events";
+import { frameworkLogger } from "../core/framework-logger.js";
+import { featuresConfigLoader } from "../core/features-config.js";
 
 /**
  * Memory Monitor - Comprehensive memory tracking and leak detection
  * Integrates with framework logging system
+ * Uses alerting config from features.json for thresholds
  */
+
+const defaultAlertingConfig = {
+  enabled: true,
+  performance_degradation_threshold: 20,
+  error_rate_threshold: 5,
+  cost_threshold_daily: 10,
+};
+
+// Get alerting config from features.json
+let alertingConfig = defaultAlertingConfig;
+try {
+  alertingConfig = featuresConfigLoader.getAlertingConfig();
+} catch (e) {
+  // Use defaults if config not available
+}
 
 export interface MemoryStats {
   heapUsed: number;
