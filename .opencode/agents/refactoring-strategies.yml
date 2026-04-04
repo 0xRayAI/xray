@@ -1,4 +1,5 @@
 name: refactoring-strategies
+skill: refactoring-strategies
 description: "refactoring strategies specialist"
 version: "1.0.0"
 mode: subagent

@@ -1,4 +1,5 @@
 name: testing-strategy
+skill: testing-strategy
 description: "testing strategy specialist"
 version: "1.0.0"
 mode: subagent

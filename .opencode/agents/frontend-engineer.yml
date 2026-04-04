@@ -1,4 +1,5 @@
 name: frontend-engineer
+skill: frontend-engineer
 description: "frontend engineer specialist"
 version: "1.0.0"
 mode: subagent

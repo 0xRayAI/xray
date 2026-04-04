@@ -1,4 +1,5 @@
 name: multimodal-looker
+skill: multimodal-looker
 description: "multimodal looker specialist"
 version: "1.0.0"
 mode: subagent

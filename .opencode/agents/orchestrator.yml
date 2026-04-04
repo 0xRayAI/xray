@@ -1,4 +1,5 @@
 name: orchestrator
+skill: orchestrator
 description: "Orchestrator agent for workflow coordination and task delegation"
 version: "2.0.0"
 mode: primary

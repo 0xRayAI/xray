@@ -1,4 +1,5 @@
 name: performance-engineer
+skill: performance-engineer
 description: "performance engineer specialist"
 version: "1.0.0"
 mode: subagent

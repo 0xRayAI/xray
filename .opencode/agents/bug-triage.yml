@@ -1,4 +1,5 @@
 name: bug-triage
+skill: bug-triage
 description: "Bug triage, debugging analysis, and issue prioritization specialist"
 version: "1.0.0"
 mode: subagent

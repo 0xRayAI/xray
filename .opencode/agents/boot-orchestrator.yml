@@ -1,4 +1,5 @@
 name: boot-orchestrator
+skill: boot-orchestrator
 description: "Framework initialization and boot orchestration specialist"
 version: "1.0.0"
 mode: subagent

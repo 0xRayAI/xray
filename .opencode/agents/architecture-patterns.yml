@@ -1,4 +1,5 @@
 name: architecture-patterns
+skill: architecture-patterns
 description: "Software architecture patterns and best practices specialist"
 version: "1.0.0"
 mode: subagent

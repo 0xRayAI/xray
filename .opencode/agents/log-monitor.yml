@@ -1,4 +1,5 @@
 name: log-monitor
+skill: log-monitor
 description: "log monitor specialist"
 version: "1.0.0"
 mode: subagent

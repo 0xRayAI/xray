@@ -1,4 +1,5 @@
 name: framework-compliance-audit
+skill: framework-compliance-audit
 description: "Framework compliance auditing and validation specialist"
 version: "1.0.0"
 mode: subagent

@@ -1,4 +1,5 @@
 name: strategist
+skill: strategist
 description: "strategist specialist"
 version: "1.0.0"
 mode: subagent

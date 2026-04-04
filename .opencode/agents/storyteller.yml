@@ -1,4 +1,5 @@
 name: storyteller
+skill: storyteller
 description: "storyteller specialist"
 version: "1.0.0"
 mode: subagent

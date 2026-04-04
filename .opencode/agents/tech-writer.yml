@@ -1,4 +1,5 @@
 name: tech-writer
+skill: tech-writer
 description: "tech writer specialist"
 version: "1.0.0"
 mode: subagent

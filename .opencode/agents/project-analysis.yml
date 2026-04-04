@@ -1,4 +1,5 @@
 name: project-analysis
+skill: project-analysis
 description: "project analysis specialist"
 version: "1.0.0"
 mode: subagent

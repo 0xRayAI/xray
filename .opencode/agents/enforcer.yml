@@ -1,4 +1,5 @@
 name: enforcer
+skill: enforcer
 description: "Enforcer agent for codex compliance and rule enforcement"
 version: "2.0.0"
 mode: primary

@@ -1,4 +1,5 @@
 name: backend-engineer
+skill: backend-engineer
 description: "backend engineer specialist"
 version: "1.0.0"
 mode: subagent

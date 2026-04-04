@@ -1,4 +1,5 @@
 name: architect-tools
+skill: architect-tools
 description: "System design and technical architecture tools specialist"
 version: "1.0.0"
 mode: subagent

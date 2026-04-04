@@ -1,4 +1,5 @@
 name: session-management
+skill: session-management
 description: "session management specialist"
 version: "1.0.0"
 mode: subagent

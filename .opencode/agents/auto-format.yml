@@ -1,4 +1,5 @@
 name: auto-format
+skill: auto-format
 description: "Automated code formatting and style consistency specialist"
 version: "1.0.0"
 mode: subagent

@@ -1,4 +1,5 @@
 name: model-health-check
+skill: model-health-check
 description: "model health check specialist"
 version: "1.0.0"
 mode: subagent

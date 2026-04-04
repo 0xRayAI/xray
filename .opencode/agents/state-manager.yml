@@ -1,4 +1,5 @@
 name: state-manager
+skill: state-manager
 description: "state manager specialist"
 version: "1.0.0"
 mode: subagent

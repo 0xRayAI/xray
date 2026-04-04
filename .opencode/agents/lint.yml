@@ -1,4 +1,5 @@
 name: lint
+skill: lint
 description: "Code linting and static analysis specialist"
 version: "1.0.0"
 mode: subagent

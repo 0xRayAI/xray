@@ -1,4 +1,5 @@
 name: code-review
+skill: code-review
 description: "Comprehensive code quality assessment and improvement suggestions specialist"
 version: "1.0.0"
 mode: subagent

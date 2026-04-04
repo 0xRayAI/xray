@@ -1,4 +1,5 @@
 name: performance-analysis
+skill: performance-analysis
 description: "performance analysis specialist"
 version: "1.0.0"
 mode: subagent

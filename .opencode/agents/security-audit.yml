@@ -1,4 +1,5 @@
 name: security-audit
+skill: security-audit
 description: "security audit specialist"
 version: "1.0.0"
 mode: subagent

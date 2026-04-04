@@ -1,4 +1,5 @@
 name: code-analyzer
+skill: code-analyzer
 description: "code analyzer specialist"
 version: "1.0.0"
 mode: subagent

@@ -1,4 +1,5 @@
 name: git-workflow
+skill: git-workflow
 description: "Git workflow management and collaboration specialist"
 version: "1.0.0"
 mode: subagent

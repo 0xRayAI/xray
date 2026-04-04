@@ -1,4 +1,5 @@
 name: processor-pipeline
+skill: processor-pipeline
 description: "Data processing pipeline management specialist"
 version: "1.0.0"
 mode: subagent

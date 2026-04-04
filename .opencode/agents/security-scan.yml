@@ -1,4 +1,5 @@
 name: security-scan
+skill: security-scan
 description: "security scan specialist"
 version: "1.0.0"
 mode: subagent
