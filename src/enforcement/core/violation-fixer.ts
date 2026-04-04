@@ -352,6 +352,20 @@ export class ViolationFixer implements IViolationFixer {
         priority: 1,
       },
 
+      // Additional rules requiring mappings
+      'context-analysis-integration': {
+        agent: 'architect',
+        skill: 'project-analysis',
+        tool: 'analyze-project-health',
+        priority: 2,
+      },
+      'memory-optimization': {
+        agent: 'performance-engineer',
+        skill: 'performance-analysis',
+        tool: 'analyze-performance',
+        priority: 2,
+      },
+
       // Testing rules
       'tests-required': {
         agent: 'testing-lead',

@@ -129,7 +129,7 @@ export class RuleExecutor implements IRuleExecutor {
         if (!this.hierarchy.isDependencySatisfied(rule.id, executedRules)) {
           const deps = this.hierarchy.getDependencies(rule.id);
           errors.push(
-            `Rule ${rule.name} dependencies not satisfied: ${deps.join(', ')}`,
+            `${rule.id}: dependencies not satisfied (requires: ${deps.join(', ')})`,
           );
           continue;
         }

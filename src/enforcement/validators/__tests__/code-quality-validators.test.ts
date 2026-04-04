@@ -220,7 +220,7 @@ describe("Code Quality Validators", () => {
       expect(validator.id).toBe("documentation-required-validator");
       expect(validator.ruleId).toBe("documentation-required");
       expect(validator.category).toBe("code-quality");
-      expect(validator.severity).toBe("error");
+      expect(validator.severity).toBe("warning");
     });
 
     it("should pass when no code is provided", async () => {

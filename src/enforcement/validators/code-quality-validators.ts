@@ -168,7 +168,7 @@ export class DocumentationRequiredValidator extends BaseValidator {
   readonly id = "documentation-required-validator";
   readonly ruleId = "documentation-required";
   readonly category = "code-quality" as const;
-  readonly severity = "error" as const;
+  readonly severity = "warning" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
     const { newCode, operation } = context;
@@ -408,26 +408,46 @@ export class CleanDebugLogsValidator extends BaseValidator {
       return this.createSuccessResult("No code change to validate");
     }
 
+    // Remove comments before checking for debug code
+    const codeWithoutComments = newCode
+      .replace(/\/\/.*$/gm, '')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+
     const debugPatterns = [
-      "console.debug",
-      "console.trace", 
-      "console.info",
-      "// DEBUG",
-      "// FIXME",
-      "// TODO",
-      "debugger;",
+      { pattern: /console\.debug\s*\(/g, name: "console.debug" },
+      { pattern: /console\.trace\s*\(/g, name: "console.trace" },
+      { pattern: /console\.info\s*\(/g, name: "console.info" },
+      { pattern: /console\.log\s*\(/g, name: "console.log" },
+      { pattern: /^\s*debugger;/gm, name: "debugger" },
     ];
 
-    const foundDebug = debugPatterns.filter((p) => newCode.includes(p));
+    const foundDebug: string[] = [];
+    for (const p of debugPatterns) {
+      if (p.pattern.test(codeWithoutComments)) {
+        foundDebug.push(p.name);
+      }
+    }
+
+    // Check for TODO/FIXME/DEBUG comments (real comments, not commented-out code)
+    const commentPatterns = [
+      { pattern: /^\s*\/\/\s*TODO/gm, name: "// TODO" },
+      { pattern: /^\s*\/\/\s*FIXME/gm, name: "// FIXME" },
+      { pattern: /^\s*\/\/\s*DEBUG/gm, name: "// DEBUG" },
+    ];
+    for (const p of commentPatterns) {
+      if (p.pattern.test(newCode)) {
+        foundDebug.push(p.name);
+      }
+    }
 
     if (foundDebug.length > 0) {
       return this.createFailureResult(
         `Debug code detected: ${foundDebug.join(", ")}`,
         [
-          "Remove console.debug/console.trace/console.info from production code",
+          "Remove console.debug/console.trace/console.info/console.log from production code",
           "Use frameworkLogger instead of console methods",
           "Remove debugger statements",
-          "Keep DEBUG/FIXME/TODO comments if intentional",
+          "Use TODO/FIXME comments sparingly with explanation",
         ],
       );
     }

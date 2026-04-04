@@ -180,13 +180,15 @@ export class StorytellingTriggerProcessor extends PostProcessor {
       return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
     }
 
-    const ctx = context as ProcessorContext & {
-      metadata?: { isPublishing?: boolean };
-      hook?: string;
-    };
-    const isPublishing = ctx.metadata?.isPublishing ?? false;
+    // Access metadata from context.data (how processor-manager passes it) or context directly
+    const ctx = context as any;
+    const metadata = ctx.data?.metadata || ctx.metadata;
+    const operation = ctx.data?.operation || ctx.operation;
+    const hook = ctx.data?.hook || ctx.hook;
+    
+    const isPublishing = metadata?.isPublishing ?? false;
 
-    if (isPublishing || ctx.hook?.includes("publish")) {
+    if (isPublishing || hook?.includes("publish") || operation?.includes("publish")) {
       const recentSaga = this.getMostRecentDocument("saga");
       const daysSinceSaga = recentSaga ? this.getDaysSinceFile(recentSaga) : Infinity;
 

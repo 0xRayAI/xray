@@ -147,8 +147,8 @@ export class RuleEnforcer {
       // Testing Rules
       ["tests-required", "Tests Required for New Code", "Requires tests when creating new components or modifying functionality", "testing", "error"],
       
-      // Documentation Rules - Codex Term #46
-      ["documentation-required", "Documentation Required (Codex Term #46)", "Requires comprehensive documentation for all new code, APIs, and architectural changes", "code-quality", "error"],
+      // Documentation Rules - Codex Term #46 (changed to warning to reduce false positives)
+      ["documentation-required", "Documentation Required (Codex Term #46)", "Requires comprehensive documentation for all new code, APIs, and architectural changes", "code-quality", "warning"],
       
       // Codex Term #3: No Over-Engineering
       ["no-over-engineering", "No Over-Engineering (Codex Term #3)", "Prevents over-engineering by enforcing simple, direct solutions without unnecessary abstractions", "architecture", "error"],

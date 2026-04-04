@@ -114,6 +114,8 @@ export interface RuleValidationResult {
   suggestions?: string[];
   /** Optional list of automated fixes that can be applied */
   fixes?: RuleFix[];
+  /** Severity level for this result */
+  severity?: RuleSeverity;
 }
 
 /**

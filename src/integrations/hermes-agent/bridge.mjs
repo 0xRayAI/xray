@@ -308,9 +308,14 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
       }
       results = await processorManager.executePostProcessors(tool, {
         directory: projectRoot,
-        operation: "tool_execution",
+        operation: tool,
         filePath: args?.filePath || args?.path,
         success: true,
+        metadata: {
+          hook: "hermes_tool_execution",
+          toolName: tool,
+          timestamp: Date.now(),
+        },
       }, []);
     }
 

@@ -135,16 +135,19 @@ export abstract class BaseValidator implements IValidator {
    * @param message - Failure message
    * @param suggestions - Optional list of suggestions
    * @param fixes - Optional list of automated fixes
+   * @param severity - Optional severity level (defaults to this.severity)
    * @returns RuleValidationResult with passed: false
    */
   protected createFailureResult(
     message: string,
     suggestions?: string[],
     fixes?: RuleValidationResult["fixes"],
+    severity?: RuleSeverity,
   ): RuleValidationResult {
     const result: RuleValidationResult = {
       passed: false,
       message,
+      severity: severity || this.severity,
     };
 
     if (suggestions !== undefined && suggestions.length > 0) {

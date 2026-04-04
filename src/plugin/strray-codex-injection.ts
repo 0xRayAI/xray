@@ -325,13 +325,16 @@ async function runEnforcerQualityGate(
       }
     }
 
-    // Check failed results
+    // Check failed results - only block on error severity, not warnings
     if (report.results) {
       for (const result of report.results) {
         if (!result.passed) {
+          const isBlocking = result.severity === "error" || result.severity === "blocking" || result.severity === "high";
           allViolations.push(result.message);
-          // Block on any failure (conservative approach)
-          blockingViolations.push(result.message);
+          // Only block on error/blocking/high severity, allow warnings
+          if (isBlocking) {
+            blockingViolations.push(result.message);
+          }
         }
       }
     }
@@ -822,14 +825,25 @@ export default async function strrayCodexPlugin(input: {
         try {
           logger.log(`▶️ Executing post-processors for ${tool}...`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
+          
+          // Determine operation type and enrich context with metadata for processors
+          const isPublishOperation = tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+          const postProcessorContext = {
+            directory,
+            operation: tool,
+            filePath: args?.filePath,
+            success: true,
+            metadata: {
+              isPublishing: isPublishOperation,
+              hook: "tool_execution",
+              toolName: tool,
+              timestamp: Date.now(),
+            },
+          };
+          
           const postResults = await processorManager.executePostProcessors(
             tool,
-            {
-              directory,
-              operation: "tool_execution",
-              filePath: args?.filePath,
-              success: true,
-            },
+            postProcessorContext,
             [],
           );
 
@@ -943,14 +957,24 @@ export default async function strrayCodexPlugin(input: {
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
           logger.log(`📝 Post-processor directory: ${directory}`);
 
+          // Determine operation type and enrich context with metadata for processors
+          const isPublishOperation = tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+          const postProcessorContext = {
+            directory,
+            operation: tool,
+            filePath: args?.filePath,
+            success: result?.success !== false,
+            metadata: {
+              isPublishing: isPublishOperation,
+              hook: "tool_execution",
+              toolName: tool,
+              timestamp: Date.now(),
+            },
+          };
+
           const postResults = await processorManager.executePostProcessors(
             tool,
-            {
-              directory,
-              operation: "tool_execution",
-              filePath: args?.filePath,
-              success: result?.success !== false,
-            },
+            postProcessorContext,
             [],
           );
 

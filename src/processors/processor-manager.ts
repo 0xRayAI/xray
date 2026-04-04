@@ -1004,14 +1004,22 @@ export class ProcessorManager {
 
       // If violations found, delegate to enforcer for centralized remediation
       if (!result.passed && result.errors.length > 0) {
-        const violations = result.errors.map((msg: string) => ({
-          rule: "unknown",
-          message: msg,
-        }));
-        await ruleEnforcer.attemptRuleViolationFixes(
-          violations,
-          validationContext,
-        );
+        // Extract rule names from error messages (format: "ruleName: message")
+        const violations = result.errors.map((msg: string) => {
+          const colonIndex = msg.indexOf(':');
+          const rule = colonIndex > 0 ? msg.substring(0, colonIndex).trim() : "unknown";
+          return {
+            rule,
+            message: colonIndex > 0 ? msg.substring(colonIndex + 1).trim() : msg,
+          };
+        });
+        
+        if (violations.length > 0) {
+          await ruleEnforcer.attemptRuleViolationFixes(
+            violations,
+            validationContext,
+          );
+        }
       }
 
       return {

@@ -62,32 +62,69 @@ export class AgentSpawnGovernor {
   private authorizationQueue: Array<() => void> = []; // Queue for serializing authorizations
   private isProcessingAuthorization = false;
 
-  private readonly defaultLimits: SpawnLimits = {
-    perAgentType: {
-      researcher: 1,
-      orchestrator: 3,
-      enforcer: 2,
-      architect: 2,
-      "bug-triage-specialist": 2,
-      "code-reviewer": 2,
-      "security-auditor": 2,
-      refactorer: 2,
-      "testing-lead": 2,
-      explore: 1,
-    },
-    totalConcurrent: 8, // System-wide concurrent limit
-    spawnRateLimit: {
-      maxPerMinute: 10,
-      windowMs: 60000, // 1 minute
-    },
-    memoryLimit: {
-      maxMemoryMB: 100, // 100MB ceiling
-      emergencyThresholdMB: 80, // Emergency cleanup trigger
-      cleanupIntervalMs: 30000, // 30 second cleanup interval
-    },
-  };
+  private getDefaultLimits(): SpawnLimits {
+    // Try to load from features.json
+    let configLimits: Partial<SpawnLimits> = {};
+    try {
+      const { getAgentSpawn } = require("../core/features-config.js");
+      const agentSpawn = getAgentSpawn();
+      if (agentSpawn) {
+        configLimits = {
+          totalConcurrent: agentSpawn.max_concurrent,
+          perAgentType: {
+            researcher: 1,
+            orchestrator: agentSpawn.max_per_type,
+            enforcer: agentSpawn.max_per_type,
+            architect: agentSpawn.max_per_type,
+            "bug-triage-specialist": agentSpawn.max_per_type,
+            "code-reviewer": agentSpawn.max_per_type,
+            "security-auditor": agentSpawn.max_per_type,
+            refactorer: agentSpawn.max_per_type,
+            "testing-lead": agentSpawn.max_per_type,
+            explore: 1,
+          },
+          spawnRateLimit: {
+            maxPerMinute: agentSpawn.rate_limit_per_minute,
+            windowMs: 60000,
+          },
+        };
+      }
+    } catch {
+      // Silently use hardcoded defaults
+    }
+
+    const defaults: SpawnLimits = {
+      perAgentType: {
+        researcher: 1,
+        orchestrator: 3,
+        enforcer: 2,
+        architect: 2,
+        "bug-triage-specialist": 2,
+        "code-reviewer": 2,
+        "security-auditor": 2,
+        refactorer: 2,
+        "testing-lead": 2,
+        explore: 1,
+      },
+      totalConcurrent: 8, // System-wide concurrent limit
+      spawnRateLimit: {
+        maxPerMinute: 10,
+        windowMs: 60000, // 1 minute
+      },
+      memoryLimit: {
+        maxMemoryMB: 100, // 100MB ceiling
+        emergencyThresholdMB: 80, // Emergency cleanup trigger
+        cleanupIntervalMs: 30000, // 30 second cleanup interval
+      },
+    };
+
+    return { ...defaults, ...configLimits };
+  }
+
+  private readonly defaultLimits: SpawnLimits;
 
   constructor(private limits: Partial<SpawnLimits> = {}) {
+    this.defaultLimits = this.getDefaultLimits();
     this.limits = { ...this.defaultLimits, ...limits };
     this.startPeriodicCleanup();
     this.startMemoryMonitoring();
@@ -431,7 +468,7 @@ export class AgentSpawnGovernor {
           trackingId,
           agentType: record.agentType,
           duration: Date.now() - record.timestamp,
-          result: result ? "success" : "failure",
+          result: result === false ? "failure" : "success",
         },
       );
     }

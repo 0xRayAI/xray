@@ -247,12 +247,13 @@ export const testAutoCreationProcessor = {
         c.extensions.includes(ext),
       );
 
-      // Check if test file already exists (use language-appropriate extension)
+      // Resolve directory with fallback
+      const resolvedDirectory = directory || process.cwd();
       const testFilePath = getTestFilePath(
         filePath,
         (langConfig?.language as any) || "TypeScript",
       );
-      const fullTestPath = path.join(directory, testFilePath);
+      const fullTestPath = path.join(resolvedDirectory, testFilePath);
 
       if (fs.existsSync(fullTestPath)) {
         await frameworkLogger.log("test-auto-creation", "test-exists", "info", {
@@ -276,17 +277,17 @@ export const testAutoCreationProcessor = {
       }
 
       // Read source file to analyze exports
-      const fullSourcePath = path.resolve(directory, filePath);
-      // Validate the resolved path stays within the expected directory to prevent path traversal
-      const resolvedDirectory = path.resolve(directory);
-      if (!fullSourcePath.startsWith(resolvedDirectory + path.sep) && fullSourcePath !== resolvedDirectory) {
+      const resolvedSourceDir = directory || process.cwd();
+      const fullSourcePath = path.resolve(resolvedSourceDir, filePath);
+      const checkDir = path.resolve(resolvedSourceDir);
+      if (!fullSourcePath.startsWith(checkDir + path.sep) && fullSourcePath !== checkDir) {
         await frameworkLogger.log(
           "test-auto-creation",
           "skipped-path-traversal",
           "warning",
           {
-            message: `Skipped: resolved path "${fullSourcePath}" escapes expected directory "${resolvedDirectory}"`,
-            directory,
+            message: `Skipped: resolved path "${fullSourcePath}" escapes expected directory "${checkDir}"`,
+            directory: resolvedSourceDir,
             filePath,
           },
         );

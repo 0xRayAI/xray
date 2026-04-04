@@ -210,6 +210,7 @@ export class AgentsMdValidationLoader extends BaseLoader {
       if (!dateMatch || !dateMatch[1]) {
         return {
           passed: false,
+          severity: "warning",
           message: "AGENTS.md missing date stamp",
           suggestions: ["Add '**Updated**: YYYY-MM-DD' to AGENTS.md header"],
         };

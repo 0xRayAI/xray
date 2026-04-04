@@ -351,8 +351,13 @@ export class ErrorResolutionValidator extends BaseValidator {
     const violations: string[] = [];
     const suggestions: string[] = [];
 
+    // Remove comments before checking for console.log
+    const codeWithoutComments = newCode
+      .replace(/\/\/.*$/gm, '')  // Remove single-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '');  // Remove multi-line comments
+
     // Check for console.log debugging (improper error handling)
-    const consoleLogMatches = newCode.match(/console\.(log|debug|info)\s*\(/g);
+    const consoleLogMatches = codeWithoutComments.match(/console\.(log|debug|info)\s*\(/g);
     if (consoleLogMatches && consoleLogMatches.length > 0) {
       violations.push(
         `Found ${consoleLogMatches.length} console.log/debug/info statements - use proper logging`,
@@ -363,8 +368,8 @@ export class ErrorResolutionValidator extends BaseValidator {
     }
 
     // Check for unhandled promise rejections
-    const asyncOps = (newCode.match(/await\s+\w+/g) || []).length;
-    const tryCatchBlocks = (newCode.match(/try\s*{[\s\S]*?}\s*catch/g) || [])
+    const asyncOps = (codeWithoutComments.match(/await\s+\w+/g) || []).length;
+    const tryCatchBlocks = (codeWithoutComments.match(/try\s*{[\s\S]*?}\s*catch/g) || [])
       .length;
 
     // For edge cases, require error handling for any async operations
@@ -373,14 +378,20 @@ export class ErrorResolutionValidator extends BaseValidator {
       suggestions.push("Wrap async operations in try-catch blocks");
     }
 
-    // Check for empty catch blocks
-    const emptyCatchMatches = newCode.match(
+    // Check for empty catch blocks (use code without comments)
+    const emptyCatchMatches = codeWithoutComments.match(
       /catch\s*\(\s*\w+\s*\)\s*{[\s\S]*?}/g,
     );
     if (emptyCatchMatches) {
       for (const match of emptyCatchMatches) {
-        if (match.replace(/\s/g, "").length < 20) {
-          // Very short catch block
+        // Extract content between braces
+        const content = match.match(/catch\s*\([^)]*\)\s*{([^}]*)}/)?.[1] || "";
+        // Check if catch block has meaningful error handling
+        const hasMeaningfulContent = content.trim().length > 5 && 
+          (content.includes("throw") || content.includes("log") || content.includes("error") || 
+           content.includes("return") || content.includes("retry") || content.includes("handle") ||
+           content.includes("retry") || content.includes("reject"));
+        if (!hasMeaningfulContent) {
           violations.push("Empty or minimal catch block detected");
           suggestions.push("Implement proper error handling in catch blocks");
           break;
