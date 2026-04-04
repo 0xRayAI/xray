@@ -604,6 +604,20 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
   }
 
   /**
+   * Get activity logging settings
+   */
+  public getActivityLogging(): ActivityLoggingConfig {
+    return this.loadConfig().activity_logging;
+  }
+
+  /**
+   * Check if activity logging is enabled via config
+   */
+  public isActivityLoggingEnabledFromConfig(): boolean {
+    return this.loadConfig().activity_logging?.enabled ?? true;
+  }
+
+  /**
    * Check if agent is disabled
    */
   public isAgentDisabled(agentName: string): boolean {

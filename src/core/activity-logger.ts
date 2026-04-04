@@ -55,6 +55,39 @@ let sessionId: string;
 let sessionStartTime: number;
 
 /**
+ * Initialize activity logger with config from features.json
+ * Called by boot-orchestrator during initialization
+ */
+export function initializeActivityLogger(config?: {
+  enabled?: boolean;
+  log_path?: string;
+}): void {
+  // Allow override via config (features.json) or environment
+  if (config?.enabled !== undefined) {
+    activityLoggerEnabled = config.enabled;
+  }
+  
+  // Use config path or default
+  const logDir = config?.log_path 
+    ? config.log_path.replace(/\/logs$/, "") 
+    : path.join(process.cwd(), "logs", "framework");
+  
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+  
+  activityLogPath = path.join(logDir, "activity.log");
+  
+  // Initialize session if not already done
+  if (!sessionId) {
+    sessionId = generateSessionId();
+    sessionStartTime = Date.now();
+    initializeLogFile();
+    initializeReportFile();
+  }
+}
+
+/**
  * Initialize the activity logger
  */
 function initialize(): void {

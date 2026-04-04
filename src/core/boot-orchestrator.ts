@@ -27,6 +27,7 @@ import { createSessionStateManager } from "../session/session-state-manager.js";
 import { securityHardener } from "../security/security-hardener.js";
 import { securityHeadersMiddleware } from "../security/security-headers.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { featuresConfigLoader } from "../core/features-config.js";
 import { memoryMonitor } from "../monitoring/memory-monitor.js";
 import { strRayConfigLoader } from "./config-loader.js";
 
@@ -842,9 +843,33 @@ export class BootOrchestrator {
             "error",
             { jobId },
           );
-          result.errors.push("Failed to initialize session management");
-          return result;
         }
+      }
+
+      // Phase 2.5: Initialize activity logging from features.json config
+      try {
+        const { initializeActivityLogger } = await import("./activity-logger.js");
+        const activityConfig = featuresConfigLoader.loadConfig().activity_logging;
+        if (activityConfig?.enabled !== false) {
+          initializeActivityLogger({
+            enabled: activityConfig?.enabled ?? true,
+            log_path: activityConfig?.log_path,
+          });
+          frameworkLogger.log(
+            "boot-orchestrator",
+            "activity logging initialized from config",
+            "info",
+            { jobId, enabled: activityConfig?.enabled ?? true },
+          );
+        }
+      } catch (error) {
+        // Activity logger init failure is non-fatal
+        frameworkLogger.log(
+          "boot-orchestrator",
+          "activity logging init skipped",
+          "info",
+          { jobId },
+        );
       }
 
       // Phase 3: Processors
