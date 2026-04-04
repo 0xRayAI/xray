@@ -38,23 +38,6 @@ interface AgentRegistry {
 }
 
 /**
- * Default fallback configuration — a proper general-purpose agent
- * that handles any task that doesn't match a specialist.
- */
-const DEFAULT_AGENT_CONFIG: AgentConfig = {
-  name: "general",
-  description: "General-purpose agent for tasks that don't match a specialist — code editing, file operations, research, and ad-hoc problem solving",
-  capabilities: ["general-purpose", "code-editing", "file-operations", "research", "problem-solving"],
-  system: "You are a general-purpose developer agent. Handle any task that doesn't require a specialist — write code, edit files, research the codebase, debug issues, and solve problems pragmatically. When a task clearly belongs to a specialist (security, testing, architecture, etc.), note that but still complete the work.",
-  tools: {
-    include: ["read", "grep", "glob", "edit", "bash", "write", "webfetch"],
-  },
-  mode: "subagent",
-  temperature: 0.7,
-  enabled: true,
-};
-
-/**
  * Resolves an agent configuration by name from the StringRay registry
  *
  * @param agentName - The name of the agent to resolve
@@ -84,8 +67,10 @@ export async function resolveAgent(agentName: string): Promise<AgentConfig> {
     { agentName },
   );
   return {
-    ...DEFAULT_AGENT_CONFIG,
     name: agentName,
+    description: "Fallback agent configuration",
+    enabled: true,
+    mode: "subagent",
   };
 }
 
