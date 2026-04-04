@@ -170,13 +170,34 @@ if [ "$REPORT_ENABLED" = true ]; then
     cd "$PROJECT_ROOT"
     node scripts/node/ci-report-generator.mjs all 2>/dev/null || true
     
-    # Generate session summary
+    # Generate session summary with full metrics
     if [ -f "dist/reporting/autonomous-report-generator.js" ]; then
       node --input-type=module -e "
 import { AutonomousReportGenerator } from './dist/reporting/autonomous-report-generator.js';
+import { readFileSync } from 'fs';
+
 const gen = new AutonomousReportGenerator();
 const report = await gen.generateDiagnosticReport('post-commit');
-console.log('📊 Session Report:', report.summary?.recommendation || 'Generated');
+const summary = report.summary || {};
+
+// Get latest CI report for additional metrics
+let agentSpawns = 0, toolCalls = 0, preProcs = 0, postProcs = 0;
+try {
+  const ci = JSON.parse(readFileSync('.ci-reports/ci-all-report-2026-04-04T17-16-46.json', 'utf8'));
+  agentSpawns = ci.agent?.totalSpawns || 0;
+  toolCalls = ci.tool?.totalToolCalls || 0;
+  preProcs = ci.processor?.preProcessors?.count || 0;
+  postProcs = ci.processor?.postProcessors?.count || 0;
+} catch(e) {}
+
+console.log('');
+console.log('📊 Session Metrics:');
+console.log('   ├─ 🧠 Agents: ' + (report.agentsInvolved?.length || 0) + ' involved, ' + agentSpawns + ' spawns');
+console.log('   ├─ 🔧 Processors: ' + preProcs + ' pre, ' + postProcs + ' post');
+console.log('   ├─ 🔧 Pipelines: ' + (report.pipelinesUsed?.length || 0) + ' used');
+console.log('   ├─ 🛠️  Tools: ' + toolCalls + ' calls');
+console.log('   ├─ ⚠️  Issues: ' + (report.criticalIssues?.length || 0) + ' critical');
+console.log('   └─ 📝 ' + (summary.recommendation || 'Report generated'));
 " 2>/dev/null || true
     fi
     
