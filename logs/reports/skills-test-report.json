@@ -1,0 +1,75 @@
+{
+  "baselineProcesses": 0,
+  "tests": [
+    {
+      "skill": "project-analysis",
+      "startTime": "2026-03-12T19:40:50.668Z",
+      "initialProcesses": 0,
+      "prompt": "Analyze project structure",
+      "endTime": "2026-03-12T19:40:50.774Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 106
+    },
+    {
+      "skill": "testing-strategy",
+      "startTime": "2026-03-12T19:40:50.876Z",
+      "initialProcesses": 0,
+      "prompt": "Design testing strategy",
+      "endTime": "2026-03-12T19:40:50.985Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 109
+    },
+    {
+      "skill": "code-review",
+      "startTime": "2026-03-12T19:40:51.087Z",
+      "initialProcesses": 0,
+      "prompt": "Review code quality",
+      "endTime": "2026-03-12T19:40:51.208Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 121
+    },
+    {
+      "skill": "security-audit",
+      "startTime": "2026-03-12T19:40:51.310Z",
+      "initialProcesses": 0,
+      "prompt": "Audit security",
+      "endTime": "2026-03-12T19:40:51.421Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 111
+    },
+    {
+      "skill": "performance-optimization",
+      "startTime": "2026-03-12T19:40:51.521Z",
+      "initialProcesses": 0,
+      "prompt": "Optimize performance",
+      "endTime": "2026-03-12T19:40:51.649Z",
+      "baselineProcesses": 0,
+      "configValid": true,
+      "mcpServerExists": true,
+      "duration": 128
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "totalTests": 5,
+    "successfulTests": 5,
+    "failedTests": 0,
+    "expectedMissingSkills": 0,
+    "acceptableMissingRate": 1,
+    "acceptableMissing": true,
+    "successRate": "100.0%",
+    "totalErrors": 0,
+    "averageDuration": 115,
+    "baselineProcesses": 0,
+    "allConfigsValid": true,
+    "lazyLoadingBehavior": true
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "startTime": "2026-02-26T02:53:12.970Z",
+  "testFile": "/Users/blaze/dev/stringray/test-framework-monitor/src/new-feature.ts",
+  "testContent": "/**\n * New Feature Module - Auto-generated for framework testing\n * @testFrameworkMonitor\n */\n\nexport interface FeatureConfig {\n  name: string;\n  enabled: boolean;\n  priority: number;\n}\n\nexport function initializeFeature(config: FeatureConfig): string {\n  if (!config.enabled) {\n    return \"Feature \" + config.name + \" is disabled\";\n  }\n  return \"Feature \" + config.name + \" initialized with priority \" + config.priority;\n}\n\nexport function validateConfig(config: Partial<FeatureConfig>): boolean {\n  return !!(config.name && typeof config.enabled === 'boolean');\n}\n\nexport class FeatureManager {\n  private features: FeatureConfig[] = [];\n  \n  addFeature(config: FeatureConfig): void {\n    if (validateConfig(config)) {\n      this.features.push(config);\n    }\n  }\n  \n  getEnabledFeatures(): FeatureConfig[] {\n    return this.features.filter(f => f.enabled);\n  }\n  \n  getFeatureCount(): number {\n    return this.features.length;\n  }\n}\n\nexport const DEFAULT_CONFIG: FeatureConfig = {\n  name: 'default',\n  enabled: true,\n  priority: 1,\n};\n",
+  "events": [],
+  "processorsTriggered": [],
+  "testAutoCreated": false,
+  "errors": [],
+  "duration": 10004
+}

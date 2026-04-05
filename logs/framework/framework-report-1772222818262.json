@@ -1,0 +1,32 @@
+{
+  "startTime": "2026-02-27T20:06:58.251Z",
+  "phases": [
+    {
+      "phase": "Setup",
+      "status": "IN_PROGRESS",
+      "details": "Creating test environment",
+      "time": "2026-02-27T20:06:58.252Z"
+    },
+    {
+      "phase": "Setup",
+      "status": "SUCCESS",
+      "details": "Test directory ready",
+      "time": "2026-02-27T20:06:58.252Z"
+    },
+    {
+      "phase": "Framework Boot",
+      "status": "IN_PROGRESS",
+      "details": "Initializing StringRay framework",
+      "time": "2026-02-27T20:06:58.252Z"
+    },
+    {
+      "phase": "Execution",
+      "status": "FAILED",
+      "details": "Cannot use import statement outside a module",
+      "time": "2026-02-27T20:06:58.260Z"
+    }
+  ],
+  "processorsTriggered": [],
+  "testAutoCreated": false,
+  "duration": 0
+}

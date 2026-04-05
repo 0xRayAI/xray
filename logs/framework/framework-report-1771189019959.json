@@ -1,0 +1,114 @@
+{
+  "startTime": "2026-02-15T20:56:58.901Z",
+  "phases": [
+    {
+      "phase": "Setup",
+      "status": "IN_PROGRESS",
+      "details": "Creating test environment",
+      "time": "2026-02-15T20:56:58.902Z"
+    },
+    {
+      "phase": "Setup",
+      "status": "SUCCESS",
+      "details": "Test directory ready",
+      "time": "2026-02-15T20:56:58.903Z"
+    },
+    {
+      "phase": "Framework Boot",
+      "status": "IN_PROGRESS",
+      "details": "Initializing StringRay framework",
+      "time": "2026-02-15T20:56:58.903Z"
+    },
+    {
+      "phase": "Framework Boot",
+      "status": "SUCCESS",
+      "details": "Framework booted with 4 processors",
+      "time": "2026-02-15T20:56:58.907Z"
+    },
+    {
+      "phase": "File Creation",
+      "status": "IN_PROGRESS",
+      "details": "Creating test source file",
+      "time": "2026-02-15T20:56:58.907Z"
+    },
+    {
+      "phase": "File Creation",
+      "status": "SUCCESS",
+      "details": "Created: /Users/blaze/dev/stringray/test-framework-trigger/src/payment-gateway.ts",
+      "time": "2026-02-15T20:56:58.907Z"
+    },
+    {
+      "phase": "Framework Trigger",
+      "status": "IN_PROGRESS",
+      "details": "Executing pre-processors through framework",
+      "time": "2026-02-15T20:56:58.907Z"
+    },
+    {
+      "phase": "Framework Trigger",
+      "status": "PARTIAL",
+      "details": "Pre-processors: 3, Success: false",
+      "time": "2026-02-15T20:56:58.952Z"
+    },
+    {
+      "phase": "Processor: preValidate",
+      "status": "FAILED",
+      "details": "No data provided for validation",
+      "time": "2026-02-15T20:56:58.952Z"
+    },
+    {
+      "phase": "Processor: codexCompliance",
+      "status": "SUCCESS",
+      "details": "Executed successfully",
+      "time": "2026-02-15T20:56:58.952Z"
+    },
+    {
+      "phase": "Processor: testAutoCreation",
+      "status": "SUCCESS",
+      "details": "Executed successfully",
+      "time": "2026-02-15T20:56:58.952Z"
+    },
+    {
+      "phase": "Log Analysis",
+      "status": "IN_PROGRESS",
+      "details": "Checking activity logs",
+      "time": "2026-02-15T20:56:58.952Z"
+    },
+    {
+      "phase": "Log Analysis",
+      "status": "SUCCESS",
+      "details": "Found 15 relevant log entries",
+      "time": "2026-02-15T20:56:59.955Z"
+    },
+    {
+      "phase": "Test Verification",
+      "status": "IN_PROGRESS",
+      "details": "Checking for auto-generated test",
+      "time": "2026-02-15T20:56:59.956Z"
+    },
+    {
+      "phase": "Test Verification",
+      "status": "SUCCESS",
+      "details": "Test created (801 bytes)",
+      "time": "2026-02-15T20:56:59.956Z"
+    },
+    {
+      "phase": "Post-Processing",
+      "status": "IN_PROGRESS",
+      "details": "Executing post-processors",
+      "time": "2026-02-15T20:56:59.956Z"
+    },
+    {
+      "phase": "Post-Processing",
+      "status": "FAILED",
+      "details": "Post-processors completed",
+      "time": "2026-02-15T20:56:59.956Z"
+    }
+  ],
+  "processorsTriggered": [
+    "preValidate",
+    "codexCompliance",
+    "testAutoCreation"
+  ],
+  "testAutoCreated": true,
+  "duration": 1054
+}

@@ -1,0 +1,56 @@
+{
+  "architect:architect_skill": {
+    "patternId": "architect:architect_skill",
+    "totalUsages": 1,
+    "successfulUsages": 1,
+    "failedUsages": 0,
+    "successRate": 1,
+    "avgConfidence": 0.8,
+    "avgResponseTime": 0,
+    "lastUpdated": "2026-04-04T21:32:38.107Z",
+    "timeSeries": [
+      {
+        "timestamp": "2026-04-04T21:32:38.107Z",
+        "successRate": 1,
+        "avgConfidence": 0.8,
+        "usageCount": 1
+      }
+    ]
+  },
+  "researcher:researcher_skill": {
+    "patternId": "researcher:researcher_skill",
+    "totalUsages": 1,
+    "successfulUsages": 1,
+    "failedUsages": 0,
+    "successRate": 1,
+    "avgConfidence": 0.8,
+    "avgResponseTime": 0,
+    "lastUpdated": "2026-04-04T21:32:38.109Z",
+    "timeSeries": [
+      {
+        "timestamp": "2026-04-04T21:32:38.109Z",
+        "successRate": 1,
+        "avgConfidence": 0.8,
+        "usageCount": 1
+      }
+    ]
+  },
+  "enforcer:enforcer_skill": {
+    "patternId": "enforcer:enforcer_skill",
+    "totalUsages": 1,
+    "successfulUsages": 1,
+    "failedUsages": 0,
+    "successRate": 1,
+    "avgConfidence": 0.8,
+    "avgResponseTime": 0,
+    "lastUpdated": "2026-04-04T21:32:38.109Z",
+    "timeSeries": [
+      {
+        "timestamp": "2026-04-04T21:32:38.109Z",
+        "successRate": 1,
+        "avgConfidence": 0.8,
+        "usageCount": 1
+      }
+    ]
+  }
+}

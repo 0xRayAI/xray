@@ -1,0 +1,26 @@
+{
+  "sessions": [],
+  "activities": [
+    {
+      "timestamp": "2026-04-04T21:32:37.119Z",
+      "id": "act-1775338357119-uquidv",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1775338355810-j3xieb",
+      "details": {
+        "duration": 1309
+      }
+    }
+  ],
+  "stats": {
+    "total": 1,
+    "byCategory": {
+      "session": 1
+    },
+    "byLevel": {
+      "info": 1
+    }
+  }
+}

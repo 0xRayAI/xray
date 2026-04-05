@@ -1,0 +1,29 @@
+[
+  {
+    "taskId": "task-1",
+    "taskDescription": "Initialize",
+    "routedAgent": "architect",
+    "routedSkill": "architect_skill",
+    "confidence": 0.8,
+    "success": true,
+    "timestamp": "2026-04-04T21:32:38.105Z"
+  },
+  {
+    "taskId": "task-2",
+    "taskDescription": "Process",
+    "routedAgent": "researcher",
+    "routedSkill": "researcher_skill",
+    "confidence": 0.8,
+    "success": true,
+    "timestamp": "2026-04-04T21:32:38.109Z"
+  },
+  {
+    "taskId": "task-3",
+    "taskDescription": "Validate",
+    "routedAgent": "enforcer",
+    "routedSkill": "enforcer_skill",
+    "confidence": 0.8,
+    "success": true,
+    "timestamp": "2026-04-04T21:32:38.109Z"
+  }
+]
