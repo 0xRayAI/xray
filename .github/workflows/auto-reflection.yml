@@ -1,71 +1,12 @@
-name: Auto-Reflection System
+name: Auto-Reflection
 
 on:
   schedule:
-    - cron: "0 */6 * *"  # Every 6 hours check for reflection needs
-  repository_dispatch:
-    types: [reflection-trigger]
+    - cron: "0 */6 * *"
   workflow_dispatch:
 
-env:
-  REFLECTIONS_DIR: docs/reflections
-  NODE_VERSION: "20.x"
-
 jobs:
-  check-reflection-needed:
-    name: Check if Reflection Needed
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Count commits since last reflection
-        id: count-commits
-        run: |
-          LAST_REFLECTION=$(find ${{ env.REFLECTIONS_DIR }} -name "*.md" -type f -exec stat --format="%Y %n" {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
-          
-          if [ -z "$LAST_REFLECTION" ]; then
-            echo "commits_since_reflection=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
-          else
-            REFLECTION_DATE=$(stat --format="%Y" "$LAST_REFLECTION")
-            COUNT=$(git rev-list --count --since="$REFLECTION_DATE" HEAD 2>/dev/null || echo "0")
-            echo "commits_since_reflection=$COUNT" >> $GITHUB_OUTPUT
-            
-            if [ "$COUNT" -gt 20 ]; then
-              echo "reflection_needed=true" >> $GITHUB_OUTPUT
-            else
-              echo "reflection_needed=false" >> $GITHUB_OUTPUT
-            fi
-          fi
-
-      - name: Check for recent CI failures
-        id: check-failures
-        run: |
-          FAILURES=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/runs?status=failure&per_page=5" | \
-            jq -r '.workflow_runs | length')
-          
-          if [ "$FAILURES" -gt 0 ]; then
-            echo "has_failures=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_failures=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Report status
-        if: always()
-        run: |
-          echo "## Reflection System Status"
-          echo "- Commits since last reflection: ${{ steps.count-commits.outputs.commits_since_reflection }}"
-          echo "- Reflection needed: ${{ steps.count-commits.outputs.reflection_needed }}"
-          echo "- Has recent failures: ${{ steps.check-failures.outputs.has_failures }}"
+      - run: echo "ok"
