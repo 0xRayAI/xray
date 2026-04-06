@@ -446,5 +446,12 @@
     "duration": 0,
     "exitCode": 0,
     "success": true
+  },
+  {
+    "timestamp": 1775474906714,
+    "hookType": "post-commit",
+    "duration": 0,
+    "exitCode": 0,
+    "success": true
   }
 ]

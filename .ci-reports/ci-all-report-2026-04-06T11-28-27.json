@@ -1,0 +1,90 @@
+{
+  "generatedAt": "2026-04-06T11:28:27.197Z",
+  "logFile": "/Users/blaze/dev/stringray/logs/framework/activity.log",
+  "totalLogLines": 1203,
+  "agent": {
+    "totalSpawns": 41,
+    "byType": {
+      "researcher": 28,
+      "orchestrator": 4,
+      "enforcer": 1,
+      "customAgent": 5,
+      "invalid-agent-type": 1,
+      "agent-0": 1,
+      "agent-1": 1
+    },
+    "completed": 17,
+    "failures": 0,
+    "successes": 17,
+    "failureRate": "0.0%",
+    "breakdown": {
+      "withResult": {
+        "completed": 9,
+        "failures": 0,
+        "successes": 9
+      },
+      "governance": {
+        "completed": 8
+      }
+    }
+  },
+  "processor": {
+    "preProcessors": {
+      "count": 30,
+      "byName": {
+        "logProtection": 6,
+        "preValidate": 6,
+        "codexCompliance": 6,
+        "versionCompliance": 6,
+        "errorBoundary": 6
+      },
+      "avgDuration": {
+        "logProtection": "0.0ms",
+        "preValidate": "0.0ms",
+        "codexCompliance": "14.7ms",
+        "versionCompliance": "386.5ms",
+        "errorBoundary": "0.0ms"
+      }
+    },
+    "postProcessors": {
+      "count": 12,
+      "byName": {
+        "refactoringLogging": 2,
+        "stateValidation": 2,
+        "agentsMdValidation": 2,
+        "regressionTesting": 2,
+        "testAutoCreation": 2,
+        "coverageAnalysis": 2
+      }
+    },
+    "failures": 0,
+    "successRate": "100.0%"
+  },
+  "error": {
+    "totalErrors": 17,
+    "bySource": {},
+    "recentErrors": [
+      {
+        "timestamp": "2026-04-05T15:13:43.633Z",
+        "message": "[SECURITY] Data decryption failed: Unsupported state or unable to authenticate data"
+      },
+      {
+        "timestamp": "2026-04-05T15:13:43.661Z",
+        "message": "[SECURITY] Data decryption failed: Unsupported state or unable to authenticate data"
+      }
+    ]
+  },
+  "tool": {
+    "totalToolCalls": 58,
+    "byTool": {
+      "edit": 31,
+      "read": 9,
+      "write": 8,
+      "multiedit": 2,
+      "batch": 2,
+      "grep": 2,
+      "glob": 2,
+      "bash": 2
+    }
+  }
+}
