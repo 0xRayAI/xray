@@ -27,6 +27,7 @@ const ENFORCER_HANDLES = new Set(["enforcer", "code-reviewer"]);
 // The system will fall back gracefully if the skill isn't installed
 
 const ROUTING_MAPPINGS = [
+  // Core built-in skills (high confidence)
   { keywords: ["write", "file", "create"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
   { keywords: ["review", "audit", "assess", "evaluate", "check", "inspect", "quality", "validate", "code-review"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
   { keywords: ["test", "testing", "jest", "coverage", "unit", "e2e", "cypress", "spec", "verify"], skill: "testing-best-practices", agent: "testing-lead", confidence: 0.95 },
@@ -43,7 +44,7 @@ const ROUTING_MAPPINGS = [
   { keywords: ["enforce", "compliance", "rule", "standard", "codex", "block", "prevent"], skill: "enforcer", agent: "enforcer", confidence: 0.95 },
   { keywords: ["design", "architect", "plan", "system", "model", "pattern", "architecture"], skill: "architecture-patterns", agent: "architect", confidence: 0.95 },
   { keywords: ["codebase", "explore", "research", "discover", "implementation"], skill: "git-workflow", agent: "researcher", confidence: 0.88 },
-  // New mappings for previously unmapped skills
+  // Additional built-in skill mappings
   { keywords: ["api", "rest", "graphql", "openapi", "endpoint", "swagger"], skill: "api-design", agent: "backend-engineer", confidence: 0.9 },
   { keywords: ["strategy", "roadmap", "planning", "technical", "decision", "architecture"], skill: "architecture-patterns", agent: "strategist", confidence: 0.88 },
   { keywords: ["reflection", "story", "narrative", "saga", "journey", "document"], skill: "storyteller", agent: "tech-writer", confidence: 0.85 },
@@ -69,25 +70,98 @@ const ROUTING_MAPPINGS = [
   { keywords: ["pipeline", "stream", "etl", "batch", "process"], skill: "processor-pipeline", agent: "backend-engineer", confidence: 0.88 },
   { keywords: ["vulnerability", "cve", "sast", "dast", "dependency-check"], skill: "security-scan", agent: "security-auditor", confidence: 0.92 },
   { keywords: ["state", "store", "redux", "context", "persistence"], skill: "state-manager", agent: "backend-engineer", confidence: 0.88 },
-  // Community skills (optional, lower confidence - may not be installed)
-  { keywords: ["theme", "design", "visual", "css", "style"], skill: "antigravity--theme-factory", agent: "frontend-ui-ux-engineer", confidence: 0.6 },
-  { keywords: ["vector", "embeddings", "similarity", "search", "pinecone", "qdrant"], skill: "antigravity--vector-database-engineer", agent: "database-engineer", confidence: 0.65 },
-  { keywords: ["discord", "bot", "automation"], skill: "antigravity--discord-bot-architect", agent: "backend-engineer", confidence: 0.6 },
-  { keywords: ["svelte", "sveltekit"], skill: "antigravity--sveltekit", agent: "frontend-engineer", confidence: 0.65 },
-  { keywords: ["trpc", "typescript", "rpc"], skill: "antigravity--trpc-fullstack", agent: "backend-engineer", confidence: 0.65 },
-  { keywords: ["golang", "go", "temporal"], skill: "antigravity--temporal-golang-pro", agent: "backend-engineer", confidence: 0.65 },
-  { keywords: ["swiftui", "ios", "mobile"], skill: "antigravity--swiftui-liquid-glass", agent: "mobile-developer", confidence: 0.65 },
-  { keywords: ["python", "async", "pydantic"], skill: "antigravity--async-python-patterns", agent: "backend-engineer", confidence: 0.65 },
-  { keywords: ["javascript", "pro", "advanced"], skill: "antigravity--javascript-pro", agent: "frontend-engineer", confidence: 0.6 },
-  { keywords: ["seo", "technical", "search"], skill: "antigravity--seo-technical", agent: "seo-consultant", confidence: 0.7 },
-  { keywords: ["linkedin", "automation", "social"], skill: "antigravity--linkedin-automation", agent: "growth-strategist", confidence: 0.55 },
-  { keywords: ["reddit", "automation"], skill: "antigravity--reddit-automation", agent: "growth-strategist", confidence: 0.55 },
-  { keywords: ["local-llm", "ollama", "llama"], skill: "antigravity--local-llm-expert", agent: "performance-engineer", confidence: 0.65 },
-  { keywords: ["marketing", "content", "ideas"], skill: "antigravity--marketing-ideas", agent: "content-creator", confidence: 0.6 },
-  { keywords: ["microservices", "architecture"], skill: "antigravity--microservices-patterns", agent: "architect", confidence: 0.65 },
-  { keywords: ["code-review", "request", "pr"], skill: "superpowers--requesting-code-review", agent: "code-reviewer", confidence: 0.7 },
-  { keywords: ["context", "memory", "guardian"], skill: "antigravity--context-guardian", agent: "performance-engineer", confidence: 0.6 },
-  { keywords: ["n8n", "workflow", "automation"], skill: "antigravity--n8n-expression-syntax", agent: "devops-engineer", confidence: 0.6 },
+
+  // ============================================================
+  // Community Skills (optional, lower confidence)
+  // These skills are from antigravity and may not be installed
+  // ============================================================
+
+  // UI/UX Design & Themes (antigravity)
+  { keywords: ["theme", "design-system", "color", "font", "typography", "palette"], skill: "antigravity--theme-factory", agent: "frontend-ui-ux-engineer", confidence: 0.6 },
+  { keywords: ["hig", "salesforce design", "lightning design", "slds"], skill: "antigravity--hig-components-system", agent: "frontend-ui-ux-engineer", confidence: 0.65 },
+  { keywords: ["slide", "deck", "presentation", "powerpoint"], skill: "antigravity--theme-factory", agent: "content-creator", confidence: 0.55 },
+
+  // SEO (antigravity)
+  { keywords: ["seo technical", "crawl", "indexability", "core web vitals", "sitemap"], skill: "antigravity--seo-technical", agent: "seo-consultant", confidence: 0.7 },
+  { keywords: ["seo structure", "content hierarchy", "schema", "internal linking"], skill: "antigravity--seo-structure-architect", agent: "seo-consultant", confidence: 0.7 },
+  { keywords: ["seo snippet", "meta description", "title tag"], skill: "antigravity--seo-snippet-hunter", agent: "seo-consultant", confidence: 0.7 },
+  { keywords: ["seo hreflang", "international seo", "multilingual"], skill: "antigravity--seo-hreflang", agent: "seo-consultant", confidence: 0.65 },
+
+  // Security (antigravity)
+  { keywords: ["backend security", "secure coding", "input validation", "authentication"], skill: "antigravity--backend-security-coder", agent: "security-auditor", confidence: 0.7 },
+  { keywords: ["mobile security", "ios security", "android security"], skill: "antigravity--mobile-security-coder", agent: "security-auditor", confidence: 0.65 },
+  { keywords: ["security audit", "vulnerability assessment", "penetration test"], skill: "security-audit", agent: "security-auditor", confidence: 0.75 },
+
+  // Vector/AI Databases (antigravity)
+  { keywords: ["vector", "embeddings", "similarity search", "pinecone", "qdrant", "chroma"], skill: "antigravity--vector-database-engineer", agent: "database-engineer", confidence: 0.65 },
+  { keywords: ["similarity search", "approximate nearest neighbor"], skill: "antigravity--similarity-search-patterns", agent: "database-engineer", confidence: 0.65 },
+
+  // Frameworks & Libraries (antigravity)
+  { keywords: ["svelte", "sveltekit", "svelte.js"], skill: "antigravity--sveltekit", agent: "frontend-engineer", confidence: 0.65 },
+  { keywords: ["trpc", "typescript rpc", "tRPC"], skill: "antigravity--trpc-fullstack", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["vercel ai", "ai sdk", "vapi"], skill: "antigravity--vercel-ai-sdk-expert", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["threejs", "3d web", "webgl", "3d graphics"], skill: "antigravity--threejs-loaders", agent: "frontend-engineer", confidence: 0.6 },
+  { keywords: ["comfyui", "ai image generation", "stable diffusion"], skill: "antigravity--comfyui-gateway", agent: "multimodal-looker", confidence: 0.6 },
+
+  // Mobile (antigravity)
+  { keywords: ["swiftui", "ios development"], skill: "antigravity--swiftui-liquid-glass", agent: "mobile-developer", confidence: 0.7 },
+  { keywords: ["ios performance", "swift optimization"], skill: "antigravity--swiftui-performance-audit", agent: "mobile-developer", confidence: 0.65 },
+  { keywords: ["react native", "rn"], skill: "mobile-development", agent: "mobile-developer", confidence: 0.7 },
+
+  // Backend/Golang (antigravity)
+  { keywords: ["golang", "go", "gopher"], skill: "antigravity--golang-pro", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["temporal", "workflow", " durable execution"], skill: "antigravity--temporal-golang-pro", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["python async", "asyncio", "uvloop"], skill: "antigravity--async-python-patterns", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["pydantic", "data validation", "python models"], skill: "antigravity--pydantic-models-py", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["scala", "spark", "big data"], skill: "antigravity--scala-pro", agent: "backend-engineer", confidence: 0.6 },
+  { keywords: ["dotnet", "c#", ".net"], skill: "antigravity--dotnet-backend-patterns", agent: "backend-engineer", confidence: 0.6 },
+
+  // Cloud/Azure (antigravity)
+  { keywords: ["azure", "azd", "azure deploy"], skill: "antigravity--azd-deployment", agent: "devops-engineer", confidence: 0.65 },
+  { keywords: ["azure storage", "file share"], skill: "antigravity--azure-storage-file-share-ts", agent: "devops-engineer", confidence: 0.6 },
+  { keywords: ["azure service bus", "messaging"], skill: "antigravity--azure-servicebus-py", agent: "devops-engineer", confidence: 0.6 },
+
+  // Automation/Bots (antigravity)
+  { keywords: ["discord bot", "discord automation"], skill: "antigravity--discord-bot-architect", agent: "backend-engineer", confidence: 0.6 },
+  { keywords: ["n8n", "workflow automation"], skill: "antigravity--n8n-expression-syntax", agent: "devops-engineer", confidence: 0.6 },
+  { keywords: ["linkedin automation", "social posting"], skill: "antigravity--linkedin-automation", agent: "growth-strategist", confidence: 0.55 },
+  { keywords: ["reddit automation"], skill: "antigravity--reddit-automation", agent: "growth-strategist", confidence: 0.55 },
+  { keywords: ["freshdesk", "customer support automation"], skill: "antigravity--freshdesk-automation", agent: "devops-engineer", confidence: 0.55 },
+  { keywords: ["pagerduty", "incident management"], skill: "antigravity--pagerduty-automation", agent: "devops-engineer", confidence: 0.55 },
+
+  // AI/ML (antigravity)
+  { keywords: ["local llm", "ollama", "llama", "local model"], skill: "antigravity--local-llm-expert", agent: "performance-engineer", confidence: 0.65 },
+  { keywords: ["agent", "mcp", "model context protocol"], skill: "antigravity--agent-memory-mcp", agent: "orchestrator", confidence: 0.65 },
+  { keywords: ["agent evaluation", "agent testing"], skill: "antigravity--agent-evaluation", agent: "testing-lead", confidence: 0.65 },
+  { keywords: ["ai agent", "autonomous agent"], skill: "antigravity--ai-agent-development", agent: "backend-engineer", confidence: 0.65 },
+
+  // Content/Marketing (antigravity)
+  { keywords: ["marketing content", "ad creative", "campaign"], skill: "antigravity--marketing-ideas", agent: "content-creator", confidence: 0.6 },
+  { keywords: ["conversion", "cro", "optimization"], skill: "antigravity--onboarding-cro", agent: "growth-strategist", confidence: 0.6 },
+
+  // Documentation & Code Quality (antigravity)
+  { keywords: ["code documentation", "code explain", "explain code"], skill: "antigravity--code-documentation-code-explain", agent: "tech-writer", confidence: 0.65 },
+  { keywords: ["code refactoring", "clean code"], skill: "antigravity--code-refactoring-refactor-clean", agent: "refactorer", confidence: 0.65 },
+  { keywords: ["code review checklist"], skill: "antigravity--code-review-checklist", agent: "code-reviewer", confidence: 0.7 },
+
+  // Microservices & Architecture (antigravity)
+  { keywords: ["microservices", "service mesh", "distributed systems"], skill: "antigravity--microservices-patterns", agent: "architect", confidence: 0.65 },
+  { keywords: ["architecture decision", "adr", "decision records"], skill: "antigravity--architecture-decision-records", agent: "architect", confidence: 0.65 },
+
+  // Context/Memory Management (antigravity)
+  { keywords: ["context management", "context compression", "token optimization"], skill: "antigravity--context-compression", agent: "performance-engineer", confidence: 0.65 },
+  { keywords: ["context guardian", "memory safety"], skill: "antigravity--context-guardian", agent: "performance-engineer", confidence: 0.6 },
+  { keywords: ["context fundamentals"], skill: "antigravity--context-fundamentals", agent: "performance-engineer", confidence: 0.6 },
+
+  // Specialized Skills
+  { keywords: ["interview", "technical interview", "coding interview"], skill: "antigravity--interview-coach", agent: "growth-strategist", confidence: 0.6 },
+  { keywords: ["i18n", "localization", "translation"], skill: "antigravity--i18n-localization", agent: "frontend-engineer", confidence: 0.6 },
+  { keywords: ["accessibility", "a11y", "wcag"], skill: "antigravity--accessibility-compliance-accessibility-audit", agent: "frontend-ui-ux-engineer", confidence: 0.7 },
+  { keywords: ["pwa", "progressive web app"], skill: "antigravity--progressive-web-app", agent: "frontend-engineer", confidence: 0.6 },
+  { keywords: ["data migration", "sql migration"], skill: "antigravity--database-migrations-sql-migrations", agent: "database-engineer", confidence: 0.65 },
+
+  // Requesting Code Review (superpowers)
+  { keywords: ["request code review", "pr review", "pull request"], skill: "superpowers--requesting-code-review", agent: "code-reviewer", confidence: 0.7 },
 ];
 
 export interface RoutingRecommendation {
