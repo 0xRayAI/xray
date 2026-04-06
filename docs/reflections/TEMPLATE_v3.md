@@ -3,8 +3,40 @@
 ## For Personal Growth AND Institutional Knowledge
 
 **Version:** 3.0
-**Location:** `./docs/reflections/[descriptive-name]-reflection.md`
+**Location:** `./docs/reflections/`
 **Required:** After ANY significant session (>30 min, debugging, deployment, new feature)
+
+---
+
+## Naming Conventions
+
+All reflections use this format:
+
+```
+[type]-[topic-description]-[date]-[timestamp].md
+```
+
+### Types
+| Type | Prefix | When to Use |
+|------|--------|-------------|
+| Checkpoint | `checkpoint-` | Auto-triggered after N commits or N days |
+| CI/CD | `auto-ci-` | After CI failures |
+| Test | `auto-test-` | After test failures |
+| Deployment | `auto-deployment-` | After deployments |
+| Manual | `manual-` | User-triggered reflections |
+
+### Examples
+```
+checkpoint-ci-cd-pipeline-fixes-2026-04-06-113048.md
+manual-hermes-agent-integration-2026-04-05.md
+auto-test-suite-failure-2026-04-04.md
+```
+
+### Rules
+- Always include timestamp (HHMMSS) for uniqueness
+- Use descriptive topic from commit message or work done
+- Lowercase, hyphens for separators
+- No special characters
 
 ---
 

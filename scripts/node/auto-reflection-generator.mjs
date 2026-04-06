@@ -259,14 +259,23 @@ function generateFilename(trigger, title, recentCommits = []) {
     slug = "test-suite-failure";
   } else if (trigger === "deployment") {
     slug = "deployment-event";
+  } else if (trigger === "manual") {
+    slug = "manual-reflection";
   } else {
     slug = trigger;
   }
   
-  const prefix = trigger === "commit-threshold" ? "checkpoint" : "auto";
+  const typePrefix = {
+    "commit-threshold": "checkpoint",
+    "ci-failure": "auto-ci",
+    "test-failure": "auto-test",
+    "deployment": "auto-deployment",
+    "manual": "manual",
+  }[trigger] || "auto";
+  
   const uniqueSuffix = timestamp;
   
-  return `${prefix}-${slug}-${date}-${uniqueSuffix}.md`;
+  return `${typePrefix}-${slug}-${date}-${uniqueSuffix}.md`;
 }
 
 function getRecentCommitsForSummary(count = 5) {
