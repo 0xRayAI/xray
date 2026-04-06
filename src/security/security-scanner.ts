@@ -23,8 +23,6 @@ export interface SecurityScanConfig {
     trivy: boolean;
     eslintSecurity: boolean;
     dependencyCheck: boolean;
-    semgrep: boolean;
-    gitleaks: boolean;
   };
   severityThreshold: "low" | "moderate" | "high" | "critical";
   reportPath: string;
@@ -51,8 +49,6 @@ export interface SecurityReport {
     trivy: SecurityVulnerability[];
     eslintSecurity: SecurityVulnerability[];
     dependencyCheck: SecurityVulnerability[];
-    semgrep: SecurityVulnerability[];
-    gitleaks: SecurityVulnerability[];
   };
   summary: {
     totalVulnerabilities: number;
@@ -71,8 +67,6 @@ export class SecurityScanner {
       enabled: true,
       tools: {
         npmAudit: true,
-        semgrep: true,
-        gitleaks: true,
         trivy: false, // Requires separate installation
         eslintSecurity: true,
         dependencyCheck: false, // Requires separate installation
@@ -104,8 +98,6 @@ export class SecurityScanner {
 
     const results = await Promise.allSettled([
       this.config.tools.npmAudit ? this.runNpmAudit() : Promise.resolve([]),
-      this.config.tools.semgrep ? this.runSemgrepScan() : Promise.resolve([]),
-      this.config.tools.gitleaks ? this.runGitleaksScan() : Promise.resolve([]),
       this.config.tools.trivy ? this.runTrivyScan() : Promise.resolve([]),
       this.config.tools.eslintSecurity
         ? this.runEslintSecurity()
@@ -121,8 +113,6 @@ export class SecurityScanner {
       eslintSecurity: results[2].status === "fulfilled" ? results[2].value : [],
       dependencyCheck:
         results[3].status === "fulfilled" ? results[3].value : [],
-      semgrep: results[4].status === "fulfilled" ? results[4].value : [],
-      gitleaks: results[5].status === "fulfilled" ? results[5].value : [],
     };
 
     const duration = Date.now() - startTime;
@@ -295,105 +285,6 @@ export class SecurityScanner {
   }
 
   /**
-   * Run Semgrep SAST scan for code-level vulnerabilities
-   * Uses AST-based analysis to detect SQL injection, XSS, SSRF, and OWASP Top 10
-   */
-  private async runSemgrepScan(): Promise<SecurityVulnerability[]> {
-    try {
-      const { stdout } = await execAsync(
-        "npx semgrep --config=auto --json --quiet . 2>/dev/null || true"
-      );
-      
-      if (!stdout || stdout.trim() === "") return [];
-      
-      const results = JSON.parse(stdout);
-      const vulnerabilities: SecurityVulnerability[] = [];
-      
-      if (results.results) {
-        for (const finding of results.results) {
-          const extra = finding.extra || {};
-          const severity = extra.severity || "moderate";
-          const metadata = extra.metadata || {};
-          
-          vulnerabilities.push({
-            id: metadata.cwe || `semgrep-${finding.check_id || "unknown"}`,
-            title: extra.message || "Security issue detected by Semgrep",
-            description: `${extra.message}\n\nRule: ${finding.check_id}\nFile: ${finding.path}:${finding.start?.line || "?"}`,
-            severity: this.mapSemgrepSeverity(severity),
-            recommendation: extra.fix || metadata.documentation || "Review and fix the identified security issue",
-          });
-        }
-      }
-      
-      return vulnerabilities.slice(0, 50);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (!errorMessage.includes("command not found")) {
-        frameworkLogger.log("security-scanner", "semgrep-scan-failed", "warning", {
-          message: "⚠️ Semgrep scan failed", error: errorMessage
-        });
-      }
-      return [];
-    }
-  }
-
-  /**
-   * Run Gitleaks scan for exposed secrets
-   * Uses entropy analysis and pattern matching (not just grep)
-   */
-  private async runGitleaksScan(): Promise<SecurityVulnerability[]> {
-    try {
-      const { stdout } = await execAsync(
-        "gitleaks detect --report-format json --report-path /dev/stdout --no-banner --source . 2>/dev/null || true"
-      );
-      
-      if (!stdout || stdout.trim() === "" || stdout.trim() === "null" || stdout.trim() === "[]") return [];
-      
-      const findings = JSON.parse(stdout);
-      const vulnerabilities: SecurityVulnerability[] = [];
-      
-      for (const finding of findings) {
-        vulnerabilities.push({
-          id: `gitleaks-${finding.RuleID || "secret"}`,
-          title: `Exposed secret: ${finding.Secret || finding.Match || "detected secret"}`,
-          description: `A secret was found in ${finding.File}:${finding.StartLine}\nRule: ${finding.RuleID}\n${finding.Commit ? `Commit: ${finding.Commit}` : ""}`,
-          severity: finding.RuleID?.includes("generic") ? "moderate" : "high",
-          recommendation: "Remove the secret immediately, add the file to .gitignore, and rotate any exposed credentials",
-        });
-      }
-      
-      return vulnerabilities.slice(0, 50);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (!errorMessage.includes("not found")) {
-        frameworkLogger.log("security-scanner", "gitleaks-scan-failed", "warning", {
-          message: "⚠️ Gitleaks scan failed", error: errorMessage
-        });
-      }
-      return [];
-    }
-  }
-
-  /**
-   * Map Semgrep severity levels
-   */
-  private mapSemgrepSeverity(severity: string): SecurityVulnerability["severity"] {
-    switch (severity) {
-      case "ERROR":
-      case "error":
-        return "critical";
-      case "WARNING":
-      case "warning":
-        return "high";
-      case "INFO":
-      case "info":
-        return "moderate";
-      default:
-        return "moderate";
-    }
-  }
-
-  /**
    * Generate comprehensive security report
    */
   private generateReport(
@@ -405,8 +296,6 @@ export class SecurityScanner {
       ...tools.trivy,
       ...tools.eslintSecurity,
       ...tools.dependencyCheck,
-      ...tools.semgrep,
-      ...tools.gitleaks,
     ];
 
     const bySeverity = allVulnerabilities.reduce(
@@ -689,8 +578,6 @@ export class SecurityScanner {
         trivy: [],
         eslintSecurity: [],
         dependencyCheck: [],
-        semgrep: [],
-        gitleaks: [],
       },
       summary: {
         totalVulnerabilities: 0,
