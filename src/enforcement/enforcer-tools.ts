@@ -22,6 +22,10 @@ const DELEGATION_CONFIDENCE_THRESHOLD = 0.50;
 // Agents that enforcer should NOT delegate to (enforcer handles these itself)
 const ENFORCER_HANDLES = new Set(["enforcer", "code-reviewer"]);
 
+// Community skills are OPTIONAL - they may not be installed
+// These mappings have lower confidence (0.55-0.7) since skills may not be available
+// The system will fall back gracefully if the skill isn't installed
+
 const ROUTING_MAPPINGS = [
   { keywords: ["write", "file", "create"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
   { keywords: ["review", "audit", "assess", "evaluate", "check", "inspect", "quality", "validate", "code-review"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
@@ -65,6 +69,25 @@ const ROUTING_MAPPINGS = [
   { keywords: ["pipeline", "stream", "etl", "batch", "process"], skill: "processor-pipeline", agent: "backend-engineer", confidence: 0.88 },
   { keywords: ["vulnerability", "cve", "sast", "dast", "dependency-check"], skill: "security-scan", agent: "security-auditor", confidence: 0.92 },
   { keywords: ["state", "store", "redux", "context", "persistence"], skill: "state-manager", agent: "backend-engineer", confidence: 0.88 },
+  // Community skills (optional, lower confidence - may not be installed)
+  { keywords: ["theme", "design", "visual", "css", "style"], skill: "antigravity--theme-factory", agent: "frontend-ui-ux-engineer", confidence: 0.6 },
+  { keywords: ["vector", "embeddings", "similarity", "search", "pinecone", "qdrant"], skill: "antigravity--vector-database-engineer", agent: "database-engineer", confidence: 0.65 },
+  { keywords: ["discord", "bot", "automation"], skill: "antigravity--discord-bot-architect", agent: "backend-engineer", confidence: 0.6 },
+  { keywords: ["svelte", "sveltekit"], skill: "antigravity--sveltekit", agent: "frontend-engineer", confidence: 0.65 },
+  { keywords: ["trpc", "typescript", "rpc"], skill: "antigravity--trpc-fullstack", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["golang", "go", "temporal"], skill: "antigravity--temporal-golang-pro", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["swiftui", "ios", "mobile"], skill: "antigravity--swiftui-liquid-glass", agent: "mobile-developer", confidence: 0.65 },
+  { keywords: ["python", "async", "pydantic"], skill: "antigravity--async-python-patterns", agent: "backend-engineer", confidence: 0.65 },
+  { keywords: ["javascript", "pro", "advanced"], skill: "antigravity--javascript-pro", agent: "frontend-engineer", confidence: 0.6 },
+  { keywords: ["seo", "technical", "search"], skill: "antigravity--seo-technical", agent: "seo-consultant", confidence: 0.7 },
+  { keywords: ["linkedin", "automation", "social"], skill: "antigravity--linkedin-automation", agent: "growth-strategist", confidence: 0.55 },
+  { keywords: ["reddit", "automation"], skill: "antigravity--reddit-automation", agent: "growth-strategist", confidence: 0.55 },
+  { keywords: ["local-llm", "ollama", "llama"], skill: "antigravity--local-llm-expert", agent: "performance-engineer", confidence: 0.65 },
+  { keywords: ["marketing", "content", "ideas"], skill: "antigravity--marketing-ideas", agent: "content-creator", confidence: 0.6 },
+  { keywords: ["microservices", "architecture"], skill: "antigravity--microservices-patterns", agent: "architect", confidence: 0.65 },
+  { keywords: ["code-review", "request", "pr"], skill: "superpowers--requesting-code-review", agent: "code-reviewer", confidence: 0.7 },
+  { keywords: ["context", "memory", "guardian"], skill: "antigravity--context-guardian", agent: "performance-engineer", confidence: 0.6 },
+  { keywords: ["n8n", "workflow", "automation"], skill: "antigravity--n8n-expression-syntax", agent: "devops-engineer", confidence: 0.6 },
 ];
 
 export interface RoutingRecommendation {
