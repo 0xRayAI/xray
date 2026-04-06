@@ -241,16 +241,44 @@ function getCommitCountSinceLastReflection(reflectionsDir) {
   }
 }
 
-function generateFilename(trigger, title) {
+function generateFilename(trigger, title, recentCommits = []) {
   const date = new Date().toISOString().split("T")[0];
-  const slug = title 
-    ? title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
-    : trigger;
-  const prefix = trigger === "commit-threshold" ? "commit-threshold" : "auto";
-  return `${prefix}-${slug}-${date}.md`;
+  const timestamp = new Date().toISOString().split("T")[1].replace(/[:-]/g, "").slice(0, 6);
+  
+  let slug;
+  
+  if (title) {
+    slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  } else if (trigger === "commit-threshold" && recentCommits.length > 0) {
+    const firstCommit = recentCommits[0]?.message || "";
+    const meaningful = firstCommit.length > 30 ? firstCommit.slice(0, 30) + "..." : firstCommit;
+    slug = meaningful.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
+  } else if (trigger === "ci-failure") {
+    slug = "ci-pipeline-failure";
+  } else if (trigger === "test-failure") {
+    slug = "test-suite-failure";
+  } else if (trigger === "deployment") {
+    slug = "deployment-event";
+  } else {
+    slug = trigger;
+  }
+  
+  const prefix = trigger === "commit-threshold" ? "checkpoint" : "auto";
+  const uniqueSuffix = timestamp;
+  
+  return `${prefix}-${slug}-${date}-${uniqueSuffix}.md`;
 }
 
-function generateReflectionStub(options) {
+function getRecentCommitsForSummary(count = 5) {
+  try {
+    const result = execSync(`git log --oneline -${count} --format="%s"`, { encoding: "utf-8" });
+    return result.trim().split("\n").map(msg => ({ message: msg }));
+  } catch {
+    return [];
+  }
+}
+
+function generateReflectionStub(options, check = null) {
   const { trigger, title, testOutput, version, storyType } = options;
   const date = new Date().toISOString().split("T")[0];
   const slug = `${trigger}-${date}`;
@@ -297,14 +325,14 @@ function generateReflectionStub(options) {
       futureAI: "Lessons from this work to carry forward.",
     },
     "commit-threshold": {
-      executiveSummary: `Multiple commits without reflection. ${title || "Documenting recent changes."}`,
-      whatWas: "Last reflection was written some time ago.",
-      whatIs: `${title || "Many changes have accumulated since then."}`,
-      whatShouldBe: "Regular reflections to capture learning.",
-      innerDialogue: "What have I learned from all these changes?",
-      counterfactual: "If we wrote reflections more often, we'd capture more insights.",
-      personalJourney: "The journey through these commits.",
-      futureAI: "Maintain regular reflection cadence.",
+      executiveSummary: `Checkpoint reflection: ${title || "Multiple commits since last reflection"}`,
+      whatWas: `Last reflection was written ${check?.daysSince || "recently"} days ago.`,
+      whatIs: `${check?.commitsSince || "Multiple"} commits have been made since the last reflection.`,
+      whatShouldBe: "Regular reflections to capture learning and track progress.",
+      innerDialogue: `What have I learned from the ${check?.commitsSince || "recent"} changes? What patterns are emerging?`,
+      counterfactual: "If we wrote reflections more often, we'd capture more insights for future iterations.",
+      personalJourney: "Documenting the journey through this cycle of commits and learning.",
+      futureAI: "Maintain regular reflection cadence to ensure continuous learning.",
     },
   };
   
@@ -412,14 +440,20 @@ async function main() {
     }
   }
   
-  const filename = generateFilename(options.trigger, options.title);
+  const recentCommits = getRecentCommitsForSummary(5);
+  const filename = generateFilename(options.trigger, options.title, recentCommits);
   const outputPath = join(options.outputDir, filename);
+  
+  let check = null;
+  if (options.trigger === "commit-threshold") {
+    check = checkAutoReflectionNeeded(config);
+  }
   
   console.log(`📝 Trigger: ${options.trigger}`);
   console.log(`📄 Output: ${outputPath}`);
   console.log("");
   
-  const stub = generateReflectionStub(options);
+  const stub = generateReflectionStub(options, check);
   writeFileSync(outputPath, stub, "utf-8");
   
   console.log("✅ Reflection stub generated!");
@@ -427,12 +461,11 @@ async function main() {
   console.log("Next steps:");
   console.log(`1. Open: ${outputPath}`);
   console.log("2. Fill in the details");
-  console.log("3. Validate: ./scripts/node/reflection-validate.sh docs/reflections/${filename}");
+  console.log(`3. Validate: ./scripts/node/reflection-validate.sh docs/reflections/${filename}`);
   console.log("4. Commit when ready");
   console.log("");
   
-  if (options.trigger === "commit-threshold") {
-    const check = checkAutoReflectionNeeded(config);
+  if (check) {
     console.log(`📊 Commits since last reflection: ${check.commitsSince}`);
     console.log(`📊 Days since last reflection: ${check.daysSince}`);
   }
