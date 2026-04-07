@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StringRay - Enterprise AI Orchestration Framework</title>
+    <link rel="icon" href="/StringRay/img/favicon.ico">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1 {
+            color: #10b981;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .tagline {
+            color: #8b949e;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: #e6edf3;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border-color: #10b981;
+        }
+        .card h3 {
+            color: #10b981;
+            margin: 0 0 0.5rem 0;
+        }
+        .card p {
+            color: #8b949e;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        .quickstart {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            font-family: monospace;
+        }
+        .stats {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+        .stat-label {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/StringRay/docs/guides/getting-started">Getting Started</a>
+            <a href="/StringRay/docs/architecture">Architecture</a>
+            <a href="/StringRay/docs/agents">Agents</a>
+            <a href="https://github.com/htafolla/StringRay">GitHub</a>
+            <a href="https://npmjs.com/package/strray-ai">npm</a>
+        </div>
+
+        <h1>⚡ StringRay</h1>
+        <p class="tagline">Enterprise AI Orchestration Framework for OpenCode</p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">25</div>
+                <div class="stat-label">Agents</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">44</div>
+                <div class="stat-label">Skills</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">MCP Servers</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">20</div>
+                <div class="stat-label">Processors</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">99.6%</div>
+                <div class="stat-label">Error Prevention</div>
+            </div>
+        </div>
+
+        <div class="quickstart">
+            <code>
+                $ npx strray-ai install<br>
+                $ npx strray-ai health<br>
+                $ @enforcer analyze this code
+            </code>
+        </div>
+
+        <div class="grid">
+            <a href="/StringRay/docs/introduction/" class="card">
+                <h3>📖 Introduction</h3>
+                <p>Overview of StringRay's capabilities and architecture</p>
+            </a>
+            <a href="/StringRay/docs/guides/getting-started/" class="card">
+                <h3>🚀 Getting Started</h3>
+                <p>Quick setup and first steps guide</p>
+            </a>
+            <a href="/StringRay/docs/architecture/" class="card">
+                <h3>🏗️ Architecture</h3>
+                <p>Pipeline architectures, processor systems, and design</p>
+            </a>
+            <a href="/StringRay/docs/agents/" class="card">
+                <h3>🤖 Agents</h3>
+                <p>All 25 specialized agents and their roles</p>
+            </a>
+            <a href="/StringRay/docs/development/plugin-system/" class="card">
+                <h3>🔌 Plugin System</h3>
+                <p>Industrial-grade plugin architecture</p>
+            </a>
+            <a href="/StringRay/docs/reference/commands/" class="card">
+                <h3>📋 CLI Commands</h3>
+                <p>Complete command reference</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
