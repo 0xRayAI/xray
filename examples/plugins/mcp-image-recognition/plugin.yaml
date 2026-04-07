@@ -1,0 +1,63 @@
+name: mcp-image-recognition
+version: 1.0.0
+type: mcp-server
+description: Image recognition plugin using AI vision capabilities
+
+runtime:
+  command: npx
+  args:
+    - "-y"
+    - "@modelcontextprotocol/server-image-recognition"
+  timeout: 30000
+
+capabilities:
+  - image-analysis
+  - object-detection
+  - text-recognition
+  - scene-understanding
+
+tools:
+  - name: recognize-image
+    description: Analyze an image and identify objects, scenes, and text
+  - name: detect-objects
+    description: Detect and locate objects in an image
+  - name: read-text
+    description: Extract text from images using OCR
+  - name: describe-scene
+    description: Generate a natural language description of an image
+
+routing:
+  - keywords: ["image", "photo", "picture", "visual"]
+    skill: image-recognition
+    agent: multimodal-looker
+    confidence: 0.9
+  - keywords: ["text", "ocr", "read-text"]
+    skill: text-recognition
+    agent: multimodal-looker
+    confidence: 0.85
+
+dependencies:
+  node: ">=18.0.0"
+
+optionalDependencies:
+  sharp: "^0.33.0"
+
+resourceLimits:
+  maxMemoryMB: 512
+  maxCpuPercent: 80
+  maxProcessTime: 300000
+  maxFileDescriptors: 100
+
+security:
+  allowedCommands:
+    - npx
+    - node
+  blockedEnv:
+    - AWS_SECRET_ACCESS_KEY
+    - OPENAI_API_KEY
+    - GITHUB_TOKEN
+  allowedPaths:
+    - /tmp
+    - /var/tmp
+
+autoStart: true

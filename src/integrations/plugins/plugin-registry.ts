@@ -36,6 +36,7 @@ import {
   validatePluginManifest,
   satisfiesVersion,
 } from "./plugin-integration.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 export interface PluginRegistryConfig {
   pluginsDir: string;
@@ -89,6 +90,7 @@ export type PluginRegistryEventType =
   | "plugin-unloaded"
   | "plugin-enabled"
   | "plugin-disabled"
+  | "plugin-reloaded"
   | "plugin-error"
   | "discovery-complete"
   | "dependency-resolved"
@@ -117,19 +119,23 @@ export class PluginRegistry extends EventEmitter {
   private configPath: string;
   private autoStart: boolean;
   private enableMetrics: boolean;
+  private enableHotReload: boolean;
   private maxRestarts: number;
   private restartDelayMs: number;
   private plugins: Map<string, PluginIntegration> = new Map();
   private integrationRegistry: IntegrationRegistry;
   private initialized: boolean = false;
   private metricsInterval?: NodeJS.Timeout;
+  private watcher?: fs.FSWatcher;
+  private reloadDebounce: Map<string, NodeJS.Timeout> = new Map();
 
-  constructor(config: Partial<PluginRegistryConfig> = {}) {
+  constructor(config: Partial<PluginRegistryConfig & { enableHotReload?: boolean }> = {}) {
     super();
     this.pluginsDir = config.pluginsDir || ".strray/plugins";
     this.configPath = config.configPath || ".strray/config/plugin-config.json";
     this.autoStart = config.autoStart ?? true;
     this.enableMetrics = config.enableMetrics ?? true;
+    this.enableHotReload = config.enableHotReload ?? false;
     this.maxRestarts = config.maxRestarts ?? 3;
     this.restartDelayMs = config.restartDelayMs ?? 1000;
     this.integrationRegistry = new IntegrationRegistry();
@@ -147,6 +153,10 @@ export class PluginRegistry extends EventEmitter {
 
     if (this.enableMetrics) {
       this.startMetricsCollection();
+    }
+
+    if (this.enableHotReload) {
+      this.startFileWatcher();
     }
 
     this.emitEvent("discovery-complete", {
@@ -622,14 +632,112 @@ export class PluginRegistry extends EventEmitter {
   }
 
   /**
+   * Start file watcher for hot-reload
+   */
+  private startFileWatcher(): void {
+    try {
+      this.watcher = fs.watch(this.pluginsDir, { recursive: true }, (eventType, filename) => {
+        if (!filename) return;
+        
+        const parts = filename.split(path.sep);
+        const pluginName = parts[0];
+        const isManifest = filename.endsWith("plugin.yaml");
+        
+        if (isManifest && pluginName) {
+          this.debounceReload(pluginName);
+        }
+      });
+
+      frameworkLogger.log(
+        "plugin-registry",
+        "hot-reload-started",
+        "info",
+        { pluginsDir: this.pluginsDir }
+      ).catch(() => {});
+    } catch (error) {
+      frameworkLogger.log(
+        "plugin-registry",
+        "hot-reload-failed",
+        "error",
+        { error: error instanceof Error ? error.message : String(error) }
+      ).catch(() => {});
+    }
+  }
+
+  /**
+   * Debounce plugin reload to avoid multiple reloads during file writes
+   */
+  private debounceReload(pluginName: string): void {
+    const existing = this.reloadDebounce.get(pluginName);
+    if (existing) {
+      clearTimeout(existing);
+    }
+    
+    const timeout = setTimeout(() => {
+      this.reloadDebounce.delete(pluginName);
+      this.hotReloadPlugin(pluginName).catch((error) => {
+        frameworkLogger.log(
+          "plugin-registry",
+          "hot-reload-error",
+          "error",
+          { pluginName, error: error instanceof Error ? error.message : String(error) }
+        ).catch(() => {});
+      });
+    }, 1000);
+    
+    this.reloadDebounce.set(pluginName, timeout);
+  }
+
+  /**
+   * Hot-reload a single plugin
+   */
+  private async hotReloadPlugin(pluginName: string): Promise<void> {
+    const plugin = this.plugins.get(pluginName);
+    const wasEnabled = plugin?.isEnabled() ?? false;
+    const wasActive = plugin?.getPluginState() === PluginState.ACTIVE;
+    
+    // Unload existing plugin
+    if (plugin) {
+      await this.unloadPlugin(pluginName);
+      this.emitEvent("plugin-reloaded", { name: pluginName, phase: "unloaded" });
+    }
+    
+    // Reload plugin
+    const newPlugin = await this.loadPlugin(pluginName);
+    if (newPlugin) {
+      if (wasEnabled || this.autoStart) {
+        await this.enablePlugin(pluginName);
+      }
+      if (wasActive && newPlugin.getPluginState() === PluginState.ENABLED) {
+        await newPlugin.restart();
+      }
+      this.emitEvent("plugin-reloaded", { name: pluginName, phase: "loaded" });
+      
+      await frameworkLogger.log(
+        "plugin-registry",
+        "plugin-hot-reloaded",
+        "info",
+        { name: pluginName }
+      ).catch(() => {});
+    }
+  }
+
+  /**
    * Shutdown all plugins
    */
   async shutdown(): Promise<void> {
     if (this.metricsInterval) {
       clearInterval(this.metricsInterval);
-      // Note: metricsInterval stays defined but interval is cleared
-      // This is intentional - we don't reinitialize
     }
+    
+    if (this.watcher) {
+      this.watcher.close();
+    }
+    
+    for (const timeout of this.reloadDebounce.values()) {
+      clearTimeout(timeout);
+    }
+    this.reloadDebounce.clear();
 
     const shutdownPromises = Array.from(this.plugins.values()).map(p => p.shutdown());
     const results = await Promise.allSettled(shutdownPromises);
@@ -706,5 +814,3 @@ export class PluginRegistry extends EventEmitter {
     this.emit("event", event as unknown as Record<string, unknown>);
   }
 }
-
-import { frameworkLogger } from "../../core/framework-logger.js";

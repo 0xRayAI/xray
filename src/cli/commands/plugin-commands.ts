@@ -3,12 +3,13 @@
  * 
  * CLI commands for plugin management:
  * - plugin list
- * - plugin install
+ * - plugin install (from npm or local)
  * - plugin enable
  * - plugin disable
  * - plugin status
+ * - plugin uninstall
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import * as fs from "fs";
@@ -71,6 +72,55 @@ export async function pluginInstallCommand(pluginName: string): Promise<void> {
     return;
   }
 
+  // Try npm install first
+  try {
+    console.log(`🔍 Checking npm for: ${pluginName}`);
+    
+    // Check if package exists
+    execSync(`npm view ${pluginName} name`, { stdio: "pipe" });
+    
+    console.log(`📥 Installing from npm: ${pluginName}`);
+    execSync(`npm install --prefix "${PLUGINS_DIR}" ${pluginName}`, { stdio: "inherit" });
+    
+    const installedPath = path.join(PLUGINS_DIR, "node_modules", pluginName);
+    if (fs.existsSync(installedPath)) {
+      // Move to plugins dir
+      fs.renameSync(installedPath, pluginPath);
+      console.log(`✅ Installed from npm: ${pluginName}`);
+    } else {
+      console.log(`⚠️  Package installed but no plugin.yaml found`);
+      console.log(`   You may need to create a plugin.yaml manifest`);
+    }
+    
+    // Clean up node_modules
+    const nodeModulesPath = path.join(PLUGINS_DIR, "node_modules");
+    if (fs.existsSync(nodeModulesPath)) {
+      fs.rmSync(nodeModulesPath, { recursive: true, force: true });
+    }
+    
+    return;
+  } catch {
+    // Not an npm package, try local installation
+  }
+
+  // Check if it's a local path
+  if (fs.existsSync(pluginName)) {
+    console.log(`📁 Installing from local path: ${pluginName}`);
+    fs.cpSync(pluginName, pluginPath, { recursive: true });
+    console.log(`✅ Installed from local: ${pluginName}`);
+    return;
+  }
+
+  // Check if it's in examples
+  const examplePath = path.join(process.cwd(), "examples", "plugins", pluginName);
+  if (fs.existsSync(examplePath)) {
+    console.log(`📁 Installing from examples: ${pluginName}`);
+    fs.cpSync(examplePath, pluginPath, { recursive: true });
+    console.log(`✅ Installed from examples: ${pluginName}`);
+    return;
+  }
+
+  // Manual installation
   console.log("⚠️  Manual installation required.");
   console.log(`   1. Clone/create plugin to: ${pluginPath}`);
   console.log("   2. Add plugin.yaml manifest");
