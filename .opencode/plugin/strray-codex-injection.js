@@ -11,38 +11,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
-import { fileURLToPath } from "url";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-async function resolvePluginImport(relativePath) {
-    const fromPlugin = path.resolve(__dirname, relativePath);
-    try { return await import("file://" + fromPlugin); } catch (_) {}
-    const fromNM = path.resolve(__dirname, "..", "..", "node_modules", relativePath);
-    try { return await import("file://" + fromNM); } catch (_) {}
-    const fallbacks = [
-        path.resolve("/app/backend/node_modules", relativePath),
-        path.resolve("/app/node_modules", relativePath),
-        path.resolve(__dirname, "..", "..", "backend", "node_modules", relativePath),
-    ];
-    for (const fb of fallbacks) {
-        try { return await import("file://" + fb); } catch (_) {}
-    }
-    return null;
-}
-
-function findStrrayDistDir() {
-    const candidates = [
-        path.resolve(__dirname, "..", "..", "node_modules", "strray-ai", "dist"),
-        path.resolve("/app/node_modules/strray-ai/dist"),
-        path.resolve("/app/backend/node_modules/strray-ai/dist"),
-        path.resolve(__dirname, "..", "..", "backend", "node_modules", "strray-ai", "dist"),
-    ];
-    for (const d of candidates) { if (fs.existsSync(d)) return d; }
-    return null;
-}
 // Dynamic imports for config-paths and framework-logger
-// Uses candidate-based resolution to work from both dist/plugin/ and .opencode/plugins/
+// Uses candidate-based resolution to work from both dist/plugin/ and .opencode/plugin/
 let _resolveCodexPath;
 let _resolveStateDir;
 let _frameworkLogger;
@@ -50,14 +20,13 @@ async function loadFrameworkLogger() {
     if (_frameworkLogger)
         return _frameworkLogger;
     const candidates = [
-        "strray-ai/dist/core/framework-logger.js",
         "../core/framework-logger.js",
         "../../dist/core/framework-logger.js",
+        "../../node_modules/strray-ai/dist/core/framework-logger.js",
     ];
     for (const p of candidates) {
         try {
-            const mod = await resolvePluginImport(p);
-            if (!mod) throw new Error("not found");
+            const mod = await import(p);
             _frameworkLogger = mod.frameworkLogger;
             return _frameworkLogger;
         }
@@ -75,14 +44,13 @@ async function loadConfigPaths() {
     if (_resolveCodexPath && _resolveStateDir)
         return;
     const candidates = [
-        "strray-ai/dist/core/config-paths.js",
         "../core/config-paths.js",
         "../../dist/core/config-paths.js",
+        "../../node_modules/strray-ai/dist/core/config-paths.js",
     ];
     for (const p of candidates) {
         try {
-            const mod = await resolvePluginImport(p);
-            if (!mod) throw new Error("not found");
+            const mod = await import(p);
             _resolveCodexPath = mod.resolveCodexPath;
             _resolveStateDir = mod.resolveStateDir;
             return;
@@ -108,14 +76,13 @@ let SystemPromptGenerator;
 async function importSystemPromptGenerator() {
     if (!SystemPromptGenerator) {
         const candidates = [
-            "strray-ai/dist/core/system-prompt-generator.js",
             "../core/system-prompt-generator.js",
             "../../dist/core/system-prompt-generator.js",
+            "../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
         ];
         for (const p of candidates) {
             try {
-                const module = await resolvePluginImport(p);
-                if (!module) throw new Error("not found");
+                const module = await import(p);
                 SystemPromptGenerator = module.generateLeanSystemPrompt;
                 return;
             }
@@ -135,25 +102,41 @@ async function loadStrRayComponents() {
     if (ProcessorManager && StrRayStateManager && featuresConfigLoader)
         return;
     const logger = await getOrCreateLogger(process.cwd());
-    const distDir = findStrrayDistDir();
-    if (!distDir) {
-        logger.error("Failed to locate strray-ai dist directory from any known path");
-        return;
-    }
+    // Try local dist first (for development)
     try {
-        logger.log("🔄 Loading from " + distDir);
-        const pm = await import("file://" + path.join(distDir, "processors", "processor-manager.js"));
-        const sm = await import("file://" + path.join(distDir, "state", "state-manager.js"));
-        const fm = await import("file://" + path.join(distDir, "core", "features-config.js"));
-        ProcessorManager = pm.ProcessorManager;
-        StrRayStateManager = sm.StrRayStateManager;
-        featuresConfigLoader = fm.featuresConfigLoader;
-        detectTaskType = fm.detectTaskType;
-        logger.log("✅ Loaded from " + distDir);
+        logger.log(`🔄 Attempting to load from ../../dist/`);
+        const procModule = await import("../../dist/processors/processor-manager.js");
+        const stateModule = await import("../../dist/state/state-manager.js");
+        const featuresModule = await import("../../dist/core/features-config.js");
+        ProcessorManager = procModule.ProcessorManager;
+        StrRayStateManager = stateModule.StrRayStateManager;
+        featuresConfigLoader = featuresModule.featuresConfigLoader;
+        detectTaskType = featuresModule.detectTaskType;
+        logger.log(`✅ Loaded from ../../dist/`);
         return;
     }
     catch (e) {
-        logger.error("❌ Failed to load from " + distDir + ": " + (e?.message || e));
+        logger.error(`❌ Failed to load from ../../dist/: ${e?.message || e}`);
+    }
+    // Try node_modules (for consumer installation)
+    const pluginPaths = ["strray-ai", "strray-framework"];
+    for (const pluginPath of pluginPaths) {
+        try {
+            logger.log(`🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
+            const pm = await import(`../../node_modules/${pluginPath}/dist/processors/processor-manager.js`);
+            const sm = await import(`../../node_modules/${pluginPath}/dist/state/state-manager.js`);
+            const fm = await import(`../../node_modules/${pluginPath}/dist/core/features-config.js`);
+            ProcessorManager = pm.ProcessorManager;
+            StrRayStateManager = sm.StrRayStateManager;
+            featuresConfigLoader = fm.featuresConfigLoader;
+            detectTaskType = fm.detectTaskType;
+            logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
+            return;
+        }
+        catch (e) {
+            logger.error(`❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`);
+            continue;
+        }
     }
 }
 function spawnPromise(command, args, cwd) {
@@ -251,65 +234,108 @@ function getFrameworkIdentity() {
 📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
 🎯 Goal: Progressive, production-ready development workflow
 
-📖 Documentation: .opencode/strray/ (codex, config, agents docs)
+📖 Documentation: config dir (codex, config, agents docs) — resolved via config-paths
 `;
 }
 /**
  * Run Enforcer quality gate check before operations
+ * Now delegates to RuleEnforcer for proper rule enforcement
  */
 async function runEnforcerQualityGate(input, logger) {
     const violations = [];
     const { tool, args } = input;
-    // Rule 1: tests-required for new files
-    if (tool === "write" && args?.filePath) {
-        const filePath = args.filePath;
-        // Check if this is a source file (not test, not config)
-        if (filePath.endsWith(".ts") &&
-            !filePath.includes(".test.") &&
-            !filePath.includes(".spec.")) {
-            // Check if test file exists
-            const testPath = filePath.replace(".ts", ".test.ts");
-            const specPath = filePath.replace(".ts", ".spec.ts");
-            if (!fs.existsSync(testPath) && !fs.existsSync(specPath)) {
-                violations.push(`tests-required: No test file found for ${filePath} (expected ${testPath} or ${specPath})`);
-                logger.log(`⚠️ ENFORCER: tests-required violation detected for ${filePath}`);
+    try {
+        // Lazy load RuleEnforcer to avoid circular dependencies
+        const { RuleEnforcer } = await import("../enforcement/rule-enforcer.js");
+        const ruleEnforcer = new RuleEnforcer();
+        // Build validation context from the input
+        const context = {
+            operation: tool === "write" ? "write" : tool === "edit" ? "edit" : "read",
+        };
+        if (args?.filePath) {
+            context.files = [args.filePath];
+        }
+        if (args?.content) {
+            context.newCode = args.content;
+        }
+        // Use RuleEnforcer.validateOperation() instead of hardcoded rules
+        const report = await ruleEnforcer.validateOperation(tool, context);
+        // Collect blocking violations from errors and failed results
+        const blockingViolations = [];
+        const allViolations = [];
+        // Check errors (these are blocking by nature)
+        if (report.errors && report.errors.length > 0) {
+            for (const error of report.errors) {
+                allViolations.push(error);
+                blockingViolations.push(error); // All errors are blocking
             }
         }
-    }
-    // Rule 2: documentation-required for new features
-    if (tool === "write" && args?.filePath?.includes("src/")) {
-        const docsDir = path.join(process.cwd(), "docs");
-        const readmePath = path.join(process.cwd(), "README.md");
-        // Check if docs directory exists
-        if (!fs.existsSync(docsDir) && !fs.existsSync(readmePath)) {
-            violations.push(`documentation-required: No documentation found for new feature`);
-            logger.log(`⚠️ ENFORCER: documentation-required violation detected`);
-        }
-    }
-    // Rule 3: resolve-all-errors - check if we're creating code with error patterns
-    if (args?.content) {
-        const errorPatterns = [
-            /console\.log\s*\(/g,
-            /TODO\s*:/gi,
-            /FIXME\s*:/gi,
-            /throw\s+new\s+Error\s*\(\s*['"]test['"]\s*\)/gi,
-        ];
-        for (const pattern of errorPatterns) {
-            if (pattern.test(args.content)) {
-                violations.push(`resolve-all-errors: Found debug/error pattern (${pattern.source}) in code`);
-                logger.log(`⚠️ ENFORCER: resolve-all-errors violation detected`);
-                break;
+        // Check failed results - only block on error severity, not warnings
+        if (report.results) {
+            for (const result of report.results) {
+                if (!result.passed) {
+                    const isBlocking = result.severity === "error" || result.severity === "blocking" || result.severity === "high";
+                    allViolations.push(result.message);
+                    // Only block on error/blocking/high severity, allow warnings
+                    if (isBlocking) {
+                        blockingViolations.push(result.message);
+                    }
+                }
             }
         }
+        if (allViolations.length > 0) {
+            logger.log(`⚠️ ENFORCER: ${allViolations.length} rule violation(s) detected`);
+            for (const v of allViolations.slice(0, 5)) {
+                logger.log(`   - ${v}`);
+            }
+            if (allViolations.length > 5) {
+                logger.log(`   ... and ${allViolations.length - 5} more`);
+            }
+        }
+        const passed = blockingViolations.length === 0;
+        violations.push(...blockingViolations);
+        if (!passed) {
+            logger.error(`🚫 Quality Gate FAILED with ${blockingViolations.length} blocking violation(s)`);
+        }
+        else {
+            logger.log(`✅ Quality Gate PASSED (${allViolations.length} warning(s))`);
+        }
+        return { passed, violations };
     }
-    const passed = violations.length === 0;
-    if (!passed) {
-        logger.error(`🚫 Quality Gate FAILED with ${violations.length} violations`);
+    catch (error) {
+        // If RuleEnforcer fails to load or run, fall back to minimal checks
+        logger.log(`Warning: RuleEnforcer unavailable, using fallback checks: ${error instanceof Error ? error.message : String(error)}`);
+        // Fallback: minimal hardcoded checks (the old logic, as safety net)
+        if (tool === "write" && args?.filePath) {
+            const filePath = args.filePath;
+            if (filePath.endsWith(".ts") &&
+                !filePath.includes(".test.") &&
+                !filePath.includes(".spec.")) {
+                const testPath = filePath.replace(".ts", ".test.ts");
+                const specPath = filePath.replace(".ts", ".spec.ts");
+                if (!fs.existsSync(testPath) && !fs.existsSync(specPath)) {
+                    violations.push(`tests-required: No test file found for ${filePath}`);
+                }
+            }
+        }
+        if (args?.content) {
+            const errorPatterns = [/console\.log\s*\(/g, /TODO\s*:/gi, /FIXME\s*:/gi];
+            for (const pattern of errorPatterns) {
+                if (pattern.test(args.content)) {
+                    violations.push(`resolve-all-errors: Found error pattern in code`);
+                    break;
+                }
+            }
+        }
+        const passed = violations.length === 0;
+        if (!passed) {
+            logger.error(`🚫 Fallback Quality Gate FAILED with ${violations.length} violation(s)`);
+        }
+        else {
+            logger.log(`✅ Fallback Quality Gate PASSED`);
+        }
+        return { passed, violations };
     }
-    else {
-        logger.log(`✅ Quality Gate PASSED`);
-    }
-    return { passed, violations };
 }
 /**
  * Global codex context cache (loaded once)
@@ -323,7 +349,7 @@ async function getCodexFileLocations(directory) {
     const root = directory || process.cwd();
     const resolved = await resolveCodexPath(root);
     // Add OpenCode-specific fallbacks not in the standard chain
-    resolved.push(path.join(root, ".opencode", "codex.codex"), path.join(root, ".strray", "agents_template.md"), path.join(root, "AGENTS.md"));
+    resolved.push(path.join(root, ".opencode", "codex.codex"), path.join(root, ".strray", "agents_template.md"), path.join(root, ".opencode", "strray", "agents_template.md"), path.join(root, "AGENTS.md"));
     return resolved;
 }
 /**
@@ -356,7 +382,7 @@ function extractCodexMetadata(content) {
             // Not valid JSON, try markdown format
         }
     }
-    // Markdown format (AGENTS.md, .strray/agents_template.md)
+    // Markdown format (AGENTS.md, agents_template.md via config-paths resolver)
     const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
     const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.6.0";
     const termMatches = content.match(/####\s*\d+\.\s/g);
@@ -551,22 +577,17 @@ export default async function strrayCodexPlugin(input) {
                 let stateManager;
                 let processorManager;
                 // Check if framework is already booted (global state exists)
-                const sessionKey = "strRayStateManager_" + process.pid;
-                const globalState = globalThis[sessionKey];
+                const globalState = globalThis.strRayStateManager;
                 if (globalState) {
                     logger.log("🔗 Connecting to booted StrRay framework");
                     stateManager = globalState;
                 }
                 else {
                     logger.log("🚀 StrRay framework not booted, initializing...");
-                    try {
-                        const stateDir = await resolveStateDir(directory);
-                        stateManager = new StrRayStateManager(stateDir);
-                    } catch (stateErr) {
-                        logger.log("⚠️ resolveStateDir failed, using directory: " + (stateErr?.message || stateErr));
-                        stateManager = new StrRayStateManager(directory);
-                    }
-                    globalThis[sessionKey] = stateManager;
+                    // Create new state manager (framework not booted yet)
+                    stateManager = new StrRayStateManager(await resolveStateDir(directory));
+                    // Store globally for future use
+                    globalThis.strRayStateManager = stateManager;
                 }
                 // Get processor manager from state
                 processorManager = stateManager.get("processor:manager");
@@ -619,11 +640,6 @@ export default async function strrayCodexPlugin(input) {
                 }
                 // PHASE 2: Execute pre-processors with detailed logging
                 try {
-                    if (typeof processorManager.executePreProcessors !== "function") {
-                        logger.error("executePreProcessors is not a function — clearing stale cache");
-                        stateManager.set("processor:manager", null);
-                        globalThis[sessionKey] = null;
-                    } else {
                     logger.log(`▶️ Executing pre-processors for ${tool}...`);
                     const result = await processorManager.executePreProcessors({
                         tool,
@@ -650,22 +666,32 @@ export default async function strrayCodexPlugin(input) {
                 catch (error) {
                     logger.error(`💥 Pre-processor execution error`, error);
                 }
-                    } // end pre-processor guard
                 // PHASE 3: Execute post-processors after tool completion
                 try {
-                    if (typeof processorManager.executePostProcessors !== "function") {
-                        logger.error("executePostProcessors is not a function — clearing stale cache");
-                        stateManager.set("processor:manager", null);
-                        globalThis[sessionKey] = null;
-                    } else {
                     logger.log(`▶️ Executing post-processors for ${tool}...`);
                     logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
-                    const postResults = await processorManager.executePostProcessors(tool, {
+                    // Determine operation type and enrich context with metadata for processors
+                    const isPublishOperation = tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+                    // Get agent info from session state if available
+                    const agentName = global.currentAgent?.agentType ||
+                        global.currentAgent?.type ||
+                        input.agentType ||
+                        "orchestrator";
+                    const postProcessorContext = {
                         directory,
-                        operation: "tool_execution",
+                        operation: tool,
                         filePath: args?.filePath,
                         success: true,
-                    }, []);
+                        agentName,
+                        metadata: {
+                            isPublishing: isPublishOperation,
+                            hook: "tool_execution",
+                            toolName: tool,
+                            timestamp: Date.now(),
+                            agentType: agentName,
+                        },
+                    };
+                    const postResults = await processorManager.executePostProcessors(tool, postProcessorContext, []);
                     // postResults is an array of ProcessorResult
                     const allSuccess = postResults.every((r) => r.success);
                     logger.log(`📊 Post-processor result: ${allSuccess ? "SUCCESS" : "FAILED"} (${postResults.length} processors)`);
@@ -682,7 +708,6 @@ export default async function strrayCodexPlugin(input) {
                 catch (error) {
                     logger.error(`💥 Post-processor execution error`, error);
                 }
-                    } // end post-processor guard
             }
         },
         // Execute POST-processors AFTER tool completes (this is the correct place!)
@@ -694,20 +719,7 @@ export default async function strrayCodexPlugin(input) {
             // This feeds the inference tuner with real tool usage data so it
             // can refine keyword mappings and improve predictive analytics.
             try {
-                let routingOutcomeTracker = null;
-                const distDir = findStrrayDistDir();
-                if (distDir) {
-                    try {
-                        const mod = await import("file://" + path.join(distDir, "delegation", "analytics", "outcome-tracker.js"));
-                        routingOutcomeTracker = mod.routingOutcomeTracker;
-                    } catch (_) {}
-                }
-                if (!routingOutcomeTracker) {
-                    try {
-                        const mod = await resolvePluginImport("strray-ai/dist/delegation/analytics/outcome-tracker.js");
-                        if (mod) routingOutcomeTracker = mod.routingOutcomeTracker;
-                    } catch (_) {}
-                }
+                const { routingOutcomeTracker } = await import("../delegation/analytics/outcome-tracker.js");
                 const mapping = TOOL_AGENT_MAP[tool];
                 const taskType = classifyTaskType(tool, args);
                 const rawDesc = args?.content
@@ -766,12 +778,21 @@ export default async function strrayCodexPlugin(input) {
                     logger.log(`📝 Post-processor tool: ${tool}`);
                     logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
                     logger.log(`📝 Post-processor directory: ${directory}`);
-                    const postResults = await processorManager.executePostProcessors(tool, {
+                    // Determine operation type and enrich context with metadata for processors
+                    const isPublishOperation = tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+                    const postProcessorContext = {
                         directory,
-                        operation: "tool_execution",
+                        operation: tool,
                         filePath: args?.filePath,
                         success: result?.success !== false,
-                    }, []);
+                        metadata: {
+                            isPublishing: isPublishOperation,
+                            hook: "tool_execution",
+                            toolName: tool,
+                            timestamp: Date.now(),
+                        },
+                    };
+                    const postResults = await processorManager.executePostProcessors(tool, postProcessorContext, []);
                     // postResults is an array of ProcessorResult
                     const allSuccess = postResults.every((r) => r.success);
                     logger.log(`📊 Post-processor result: ${allSuccess ? "SUCCESS" : "FAILED"} (${postResults.length} processors)`);
@@ -805,20 +826,7 @@ export default async function strrayCodexPlugin(input) {
             if (_openCodeToolCallCount - _lastTuneToolCallCount >= INFERENCE_TUNE_INTERVAL) {
                 _lastTuneToolCallCount = _openCodeToolCallCount;
                 try {
-                    let inferenceTuner = null;
-                    const tDir = findStrrayDistDir();
-                    if (tDir) {
-                        try {
-                            const mod = await import("file://" + path.join(tDir, "services", "inference-tuner.js"));
-                            inferenceTuner = mod.inferenceTuner;
-                        } catch (_) {}
-                    }
-                    if (!inferenceTuner) {
-                        try {
-                            const mod = await resolvePluginImport("strray-ai/dist/services/inference-tuner.js");
-                            if (mod) inferenceTuner = mod.inferenceTuner;
-                        } catch (_) {}
-                    }
+                    const { inferenceTuner } = await import("../services/inference-tuner.js");
                     inferenceTuner
                         .runTuningCycle()
                         .then(() => {
@@ -854,7 +862,13 @@ export default async function strrayCodexPlugin(input) {
             const logger = await getOrCreateLogger(directory);
             logger.log("🔧 Plugin config hook triggered - initializing StrRay integration");
             // Initialize StrRay framework
-            const initScriptPath = path.join(directory, ".opencode", "init.sh");
+            // Primary: project .opencode/init.sh (copied by postinstall)
+            // Fallback: package .opencode/init.sh (works when postinstall skips for Hermes consumers)
+            let initScriptPath = path.join(directory, ".opencode", "init.sh");
+            const pkgInitPath = path.join(directory, "node_modules", "strray-ai", ".opencode", "init.sh");
+            if (!fs.existsSync(initScriptPath) && fs.existsSync(pkgInitPath)) {
+                initScriptPath = pkgInitPath;
+            }
             if (fs.existsSync(initScriptPath)) {
                 try {
                     const { stderr } = await spawnPromise("bash", [initScriptPath], directory);

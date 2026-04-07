@@ -162,11 +162,13 @@ export class PluginManager {
       
       if (isListItem) {
         const value = trimmed.slice(2).trim();
-        const parent = stack[stack.length - 1].obj;
-        if (!Array.isArray(parent[currentKey])) {
-          parent[currentKey] = [];
+        const top = stack[stack.length - 1];
+        if (top && !Array.isArray(top.obj[currentKey])) {
+          top.obj[currentKey] = [];
         }
-        (parent[currentKey] as unknown[]).push(value);
+        if (top && currentKey) {
+          (top.obj[currentKey] as unknown[]).push(value);
+        }
         continue;
       }
       
@@ -175,11 +177,15 @@ export class PluginManager {
         const key = trimmed.slice(0, colonIndex).trim();
         const value = trimmed.slice(colonIndex + 1).trim();
         
-        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+        const top = stack[stack.length - 1];
+        while (top && stack.length > 1 && indent <= top.indent) {
           stack.pop();
         }
         
-        const parent = stack[stack.length - 1].obj;
+        const current = stack[stack.length - 1];
+        if (!current) continue;
+        
+        const parent = current.obj;
         
         if (value) {
           parent[key] = value;
@@ -202,8 +208,8 @@ export class PluginManager {
     return {
       serverName: name,
       command: manifest.runtime.command,
-      args: manifest.runtime.args,
-      env: manifest.runtime.env as Record<string, string>,
+      args: manifest.runtime.args || [],
+      env: manifest.runtime.env as Record<string, string> || {},
       timeout: manifest.runtime.timeout || 30000,
     };
   }
@@ -305,7 +311,7 @@ export class PluginManager {
           
           return {
             success: true,
-            pid: proc.pid,
+            pid: proc.pid ?? 0,
             tools: plugin.getTools().map(t => t.name),
           };
         } catch (e) {

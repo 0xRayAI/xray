@@ -118,40 +118,6 @@ The storyteller is now a **skill** (not an agent) so it runs with full session c
 
 **Why a skill?** As an agent, @storyteller spawned fresh with zero context and wasted tokens reconstructing what just happened. As a skill, it uses the conversation you are already in -- the LLM knows exactly what occurred.
 
-#### Automatic Storytelling Triggers
-
-Storytelling is enforced automatically in these scenarios:
-
-| Trigger | Threshold | Story Type | Action |
-|---------|-----------|------------|--------|
-| Commit count | 10+ commits without reflection | `reflection` | Reminder to write reflection |
-| Publishing | No recent saga (7+ days) | `saga` | Prompt before publish |
-| Complex changes | 15+ files changed | `journey` | Suggest documenting journey |
-| Long session | 60+ minutes | `reflection` | Suggest capturing learnings |
-
-**Configuration** (`.opencode/strray/features.json`):
-```json
-{
-  "storytelling": {
-    "enabled": true,
-    "reflection_triggers": {
-      "commit_count": { "enabled": true, "threshold": 10 },
-      "publish": { "enabled": true, "require_saga": true },
-      "complex_changes": { "enabled": true, "file_count_threshold": 15 },
-      "session_duration": { "enabled": true, "duration_minutes_threshold": 60 }
-    }
-  }
-}
-```
-
-#### MCP Tool: `skill-storyteller`
-
-The storyteller skill is invocable via MCP with the `skill-storyteller` tool. Accepts parameters:
-- `storyType`: reflection, saga, journey, or narrative
-- `title`: Title for the story
-- `context`: Commits, changes, metadata
-- `framework`: three_act_structure, hero_journey, or spiral
-
 ## Available Agents
 
 | Agent | Purpose | Invoke |
@@ -200,7 +166,7 @@ npx strray-ai validate      # Validate installation
 npx strray-ai capabilities # Show all features
 npx strray-ai report        # Generate reports
 npx strray-ai analytics    # Pattern analytics
-
+npx strray-ai calibrate    # Calibrate complexity
 npm run test:pipelines     # Pipeline integration tests
 ```
 
@@ -443,6 +409,7 @@ StringRay uses complexity scoring to route tasks to appropriate agents:
 
 ```bash
 # Calibrate complexity scoring
+npx strray-ai calibrate
 
 # View current complexity settings
 cat .opencode/strray/features.json | jq '.complexity'
@@ -502,6 +469,7 @@ Control how agents are spawned and coordinated:
 | `npx strray-ai health` | Run health check | Verify installation |
 | `npx strray-ai validate` | Run full validation suite | Pre-commit validation |
 | `npx strray-ai capabilities` | List all available features | Discover capabilities |
+| `npx strray-ai calibrate` | Recalibrate complexity scoring | After major refactors |
 | `npx strray-ai report` | Generate analytics reports | Review performance |
 | `npx strray-ai analytics` | View pattern analytics | Understand agent behavior |
 | `npx strray-ai config` | Manage configuration | Tune settings |

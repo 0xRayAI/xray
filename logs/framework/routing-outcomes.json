@@ -1,29 +1,38 @@
 [
   {
-    "taskId": "task-1",
-    "taskDescription": "Initialize",
+    "taskId": "single-task",
+    "taskDescription": "Execute a single task",
     "routedAgent": "architect",
     "routedSkill": "architect_skill",
     "confidence": 0.8,
     "success": true,
-    "timestamp": "2026-04-04T21:32:38.105Z"
+    "timestamp": "2026-04-07T00:12:48.583Z"
+  },
+  {
+    "taskId": "task-1",
+    "taskDescription": "Task 1",
+    "routedAgent": "architect",
+    "routedSkill": "architect_skill",
+    "confidence": 0.8,
+    "success": true,
+    "timestamp": "2026-04-07T00:12:48.591Z"
   },
   {
     "taskId": "task-2",
-    "taskDescription": "Process",
+    "taskDescription": "Task 2",
     "routedAgent": "researcher",
     "routedSkill": "researcher_skill",
     "confidence": 0.8,
     "success": true,
-    "timestamp": "2026-04-04T21:32:38.109Z"
+    "timestamp": "2026-04-07T00:12:48.592Z"
   },
   {
     "taskId": "task-3",
-    "taskDescription": "Validate",
+    "taskDescription": "Task 3",
     "routedAgent": "enforcer",
     "routedSkill": "enforcer_skill",
     "confidence": 0.8,
     "success": true,
-    "timestamp": "2026-04-04T21:32:38.109Z"
+    "timestamp": "2026-04-07T00:12:48.594Z"
   }
 ]

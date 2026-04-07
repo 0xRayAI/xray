@@ -55,9 +55,9 @@ export type RegistryEventType =
 export interface RegistryEvent {
   type: RegistryEventType;
   timestamp: number;
-  integrationName?: string;
-  data?: Record<string, unknown>;
-  error?: Error;
+  integrationName?: string | undefined;
+  data?: Record<string, unknown> | undefined;
+  error?: Error | undefined;
 }
 
 /**
@@ -707,7 +707,7 @@ export class IntegrationRegistry extends EventEmitter {
       type,
       timestamp: Date.now(),
       ...data,
-      error,
+      ...(error ? { error } : {}),
     };
 
     this.emit(type, event);

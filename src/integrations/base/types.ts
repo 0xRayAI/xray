@@ -66,7 +66,7 @@ export interface HealthResult {
   /** Human-readable message describing the health status */
   message: string;
   /** Optional additional details about the health status */
-  details?: Record<string, unknown>;
+  details?: Record<string, unknown> | undefined;
 }
 
 /**
@@ -81,10 +81,16 @@ export const HEALTHY_RESULT: HealthResult = {
  * Default unhealthy result
  */
 export function createUnhealthyResult(message: string, details?: Record<string, unknown>): HealthResult {
+  if (details && Object.keys(details).length > 0) {
+    return {
+      healthy: false,
+      message,
+      details,
+    };
+  }
   return {
     healthy: false,
     message,
-    details,
   };
 }
 
@@ -140,9 +146,9 @@ export interface IntegrationEvent<T = unknown> {
   /** Timestamp when the event occurred */
   timestamp: number;
   /** Event data */
-  data?: T;
+  data?: T | undefined;
   /** Optional error if event represents an error */
-  error?: Error;
+  error?: Error | undefined;
 }
 
 // ============================================================================

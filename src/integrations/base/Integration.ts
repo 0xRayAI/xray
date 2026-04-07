@@ -428,7 +428,7 @@ export abstract class BaseIntegration
       type,
       timestamp: Date.now(),
       data,
-      error,
+      ...(error ? { error } : {}),
     };
 
     // Emit specific event
