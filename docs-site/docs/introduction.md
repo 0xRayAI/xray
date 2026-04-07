@@ -1,5 +1,5 @@
 ---
-slug: /
+slug: /introduction
 title: "StringRay - Enterprise AI Orchestration Framework"
 sidebar_position: 0
 ---
