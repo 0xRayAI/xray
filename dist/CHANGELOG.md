@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.20.0] - 2026-04-07
+
+### 🔄 Changes
+
+Plugin system - hot-reload, npm install, auto-discovery, CLI, example plugin
+
+---
+
+## [1.19.1] - 2026-04-07
+
+### 🔄 Changes
+
+Release patch - fix npm publish version conflict
+
+---
+
 ## [1.19.0] - 2026-04-07
 
 ### 🔄 Changes
