@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.19.0] - 2026-04-07
+
+### 🔄 Changes
+
+Plugin system enhancements - hot-reload, npm install, example plugin
+
+---
+
 ## [1.18.6] - 2026-04-01
 
 ### 🔄 Changes

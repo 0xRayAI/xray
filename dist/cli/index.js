@@ -738,6 +738,76 @@ program
     const { storytellerCommand } = await import('./commands/storyteller.js');
     await storytellerCommand(type, options);
 });
+// Plugin management command
+program
+    .command('plugin')
+    .description('Manage StringRay plugins')
+    .action(async () => {
+    console.log(`
+📦 StringRay Plugin Management
+
+Usage: npx strray-ai plugin <command>
+
+Commands:
+  list                 List all installed plugins
+  install <name>       Install a new plugin
+  enable <name>        Enable a plugin
+  disable <name>       Disable a plugin
+  status <name>        Show plugin details
+  uninstall <name>     Remove a plugin
+
+Examples:
+  npx strray-ai plugin list
+  npx strray-ai plugin status my-plugin
+  npx strray-ai plugin uninstall old-plugin
+
+Plugins are loaded from: .strray/plugins/
+`);
+});
+// Plugin subcommands
+const pluginCmd = program.command('plugin').description('Manage plugins');
+pluginCmd
+    .command('list')
+    .description('List installed plugins')
+    .action(async () => {
+    const { pluginListCommand } = await import('./commands/plugin-commands.js');
+    await pluginListCommand();
+});
+pluginCmd
+    .command('install <name>')
+    .description('Install a plugin')
+    .action(async (name) => {
+    const { pluginInstallCommand } = await import('./commands/plugin-commands.js');
+    await pluginInstallCommand(name);
+});
+pluginCmd
+    .command('enable <name>')
+    .description('Enable a plugin')
+    .action(async (name) => {
+    const { pluginEnableCommand } = await import('./commands/plugin-commands.js');
+    await pluginEnableCommand(name);
+});
+pluginCmd
+    .command('disable <name>')
+    .description('Disable a plugin')
+    .action(async (name) => {
+    const { pluginDisableCommand } = await import('./commands/plugin-commands.js');
+    await pluginDisableCommand(name);
+});
+pluginCmd
+    .command('status <name>')
+    .description('Show plugin details')
+    .action(async (name) => {
+    const { pluginStatusCommand } = await import('./commands/plugin-commands.js');
+    await pluginStatusCommand(name);
+});
+pluginCmd
+    .command('uninstall <name>')
+    .description('Uninstall a plugin')
+    .action(async (name) => {
+    const { pluginUninstallCommand } = await import('./commands/plugin-commands.js');
+    await pluginUninstallCommand(name);
+});
 // Add help text
 program.addHelpText("after", `
 

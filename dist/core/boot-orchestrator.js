@@ -26,6 +26,8 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { featuresConfigLoader } from "../core/features-config.js";
 import { memoryMonitor } from "../monitoring/memory-monitor.js";
 import { strRayConfigLoader } from "./config-loader.js";
+import { PluginRegistry } from "../integrations/plugins/index.js";
+import { PluginServerConfigRegistry } from "../mcps/config/index.js";
 /**
  * Set up graceful interruption handling to prevent JSON parsing errors
  * when processes are interrupted mid-operation
@@ -92,6 +94,8 @@ export class BootOrchestrator {
     stateManager;
     processorManager;
     config;
+    pluginRegistry;
+    pluginServerRegistry;
     constructor(config = {}, stateManager) {
         // Set up graceful shutdown handling first
         setupGracefulShutdown();
@@ -145,6 +149,32 @@ export class BootOrchestrator {
             // ignore - use defaults
         }
         return null;
+    }
+    /**
+     * Initialize plugin system and register MCP servers
+     */
+    async initializePluginSystem(jobId) {
+        try {
+            frameworkLogger.log("boot-orchestrator", "initializing plugin system", "info", { jobId });
+            const pluginsDir = path.join(process.cwd(), ".strray", "plugins");
+            this.pluginRegistry = new PluginRegistry({
+                pluginsDir,
+                autoStart: true,
+                enableMetrics: true,
+            });
+            await this.pluginRegistry.initialize();
+            this.pluginServerRegistry = new PluginServerConfigRegistry();
+            const registered = this.pluginServerRegistry.registerAllPluginServers(this.pluginRegistry, { overwrite: false });
+            this.stateManager.set("plugin:registry", this.pluginRegistry);
+            this.stateManager.set("plugin:serverRegistry", this.pluginServerRegistry);
+            this.stateManager.set("plugin:registered", registered);
+            frameworkLogger.log("boot-orchestrator", "plugin system initialized", "success", { jobId, pluginsDir, registeredServers: registered });
+            return true;
+        }
+        catch (error) {
+            frameworkLogger.log("boot-orchestrator", "plugin-system-init-failed", "error", { jobId, error: error instanceof Error ? error.message : String(error) });
+            return false;
+        }
     }
     /**
      * Load orchestrator as the first component
@@ -634,6 +664,13 @@ export class BootOrchestrator {
             // Phase 4: Load agents
             if (this.config.agentLoading) {
                 result.agentsLoaded = await this.loadRemainingAgents(jobId);
+            }
+            // Phase 4.5: Initialize plugin system
+            if (await this.initializePluginSystem(jobId)) {
+                frameworkLogger.log("boot-orchestrator", "plugin system initialized", "success", { jobId });
+            }
+            else {
+                frameworkLogger.log("boot-orchestrator", "plugin system init failed", "warning", { jobId });
             }
             // Phase 5: Security & compliance
             if (this.config.enableEnforcement) {

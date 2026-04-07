@@ -30,12 +30,18 @@ export declare class BootOrchestrator {
     private stateManager;
     private processorManager;
     private config;
+    private pluginRegistry?;
+    private pluginServerRegistry?;
     constructor(config?: Partial<BootSequenceConfig>, stateManager?: StringRayStateManager);
     /**
      * Initialize delegation system components
      */
     private initializeDelegationSystem;
     private loadProcessorsConfig;
+    /**
+     * Initialize plugin system and register MCP servers
+     */
+    private initializePluginSystem;
     /**
      * Load orchestrator as the first component
      */
