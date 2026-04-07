@@ -14,12 +14,40 @@ tags: ["architecture"]
 
 ---
 
-## Executive Summary
+## Pipeline Overview
 
-This document catalogs all major system pipelines in the StringRay framework. Each pipeline is analyzed for its components, data flows, artifacts, and testing status.
-
-**Total Pipelines Identified**: 7 major pipelines  
-**Test Coverage**: 2521+ tests across the codebase
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    STRINGRAY 7 MAIN PIPELINES                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │    BOOT     │  │  ROUTING    │  │ ORCHESTRATION│  │ PROCESSOR   │    │
+│  │  PIPELINE   │  │  PIPELINE   │  │   PIPELINE   │  │  PIPELINE   │    │
+│  │             │  │             │  │             │  │             │    │
+│  │ @startup    │  │ @task       │  │ @multi-agent │  │ @validation │    │
+│  │             │  │             │  │             │  │             │    │
+│  │ Layers: 8   │  │ Router     │  │ Delegator   │  │ Pre: 15     │    │
+│  │             │  │ Matcher     │  │ Coordinator │  │ Post: 5+    │    │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘    │
+│         │                │                │                │             │
+│         └────────────────┬┴────────────────┴┴────────────────┘             │
+│                          │                                                 │
+│                          ▼                                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                        │
+│  │ REPORTING   │  │ GOVERNANCE  │  │   PLUGIN    │  ◄── NEW             │
+│  │  PIPELINE   │  │  PIPELINE   │  │  PIPELINE   │                        │
+│  │             │  │             │  │             │                        │
+│  │ @generate   │  │ @commit    │  │ @load       │                        │
+│  │             │  │             │  │             │                        │
+│  │ Analytics   │  │ Rate Limit  │  │ Discovery   │                        │
+│  │ Metrics     │  │ Compliance  │  │ MCP Reg     │                        │
+│  └─────────────┘  └─────────────┘  └─────────────┘                        │
+│                                                                             │
+│  TOTAL: 7 (+1) MAIN PIPELINES                                               │
+│  TESTS: 2521+ COVERAGE                                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
