@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.19.1] - 2026-04-07
+
+### 🔄 Changes
+
+Release patch - fix npm publish version conflict
+
+---
+
 ## [1.19.0] - 2026-04-07
 
 ### 🔄 Changes
