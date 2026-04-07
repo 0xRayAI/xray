@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.21.0] - 2026-04-07
+
+### 🔄 Changes
+
+Plugin system major release
+
+---
+
 ## [1.20.0] - 2026-04-07
 
 ### 🔄 Changes
