@@ -33,7 +33,7 @@ tags: ["architecture", "pipelines"]
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      PROCESSING LAYER                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐  │
-│  │                   BOOT ENGINES (7 layers)                            │  │
+│  │                   BOOT ENGINES (8 layers) ◄── UPDATED             │  │
 │  │                                                                     │  │
 │  │  ┌─────────────────────────────────────────────────────────────┐   │  │
 │  │  │                    LAYER 1: Configuration                   │   │  │
@@ -92,21 +92,40 @@ tags: ["architecture", "pipelines"]
 │  │                             │                                        │  │
 │  │                             v                                        │  │
 │  │  ┌─────────────────────────────────────────────────────────────┐   │  │
-│  │  │                    LAYER 6: Security                        │   │  │
+│  │  │                    LAYER 6: Agents                          │   │  │
 │  │  │  ┌─────────────────────────────────────────────────────────┐ │   │  │
-│  │  │  │               SecurityHardener                          │ │   │  │
-│  │  │  │            security-hardener.ts                         │ │   │  │
-│  │  │  │             initialize()                                │ │   │  │
+│  │  │  │                 enforcer, architect, ...               │ │   │  │
+│  │  │  │              (7 agents loaded from registry)           │ │   │  │
 │  │  │  └─────────────────────────────────────────────────────────┘ │   │  │
 │  │  └──────────────────────────┬──────────────────────────────────┘   │  │
 │  │                             │                                        │  │
 │  │                             v                                        │  │
 │  │  ┌─────────────────────────────────────────────────────────────┐   │  │
-│  │  │                   LAYER 7: Inference                        │   │  │
+│  │  │                 LAYER 7: Plugin System ◄── NEW             │   │  │
+│  │  │  ┌─────────────────────────┐  ┌─────────────────────────┐ │   │  │
+│  │  │  │    PluginRegistry       │  │PluginServerConfigRegistry│ │   │  │
+│  │  │  │ plugin-registry.ts      │  │plugin-server-registry.ts│ │   │  │
+│  │  │  │  • discoverPlugins()    │  │ • registerPluginServer()│ │   │  │
+│  │  │  │  • loadPlugin()         │  │ • registerAllPluginSrvs()│ │   │  │
+│  │  │  │  • startMetrics()       │  │ • getServersByCapability│ │   │  │
+│  │  │  └─────────────────────────┘  └─────────────────────────┘ │   │  │
+│  │  │                                                                     │  │
+│  │  │  Plugins dir: .strray/plugins/                                     │  │
+│  │  │  MCP servers auto-registered                                       │  │
+│  │  └──────────────────────────┬──────────────────────────────────┘   │  │
+│  │                             │                                        │  │
+│  │                             v                                        │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐   │  │
+│  │  │                    LAYER 8: Security                          │   │  │
 │  │  │  ┌─────────────────────────────────────────────────────────┐ │   │  │
-│  │  │  │                InferenceTuner                            │ │   │  │
-│  │  │  │             inference-tuner.ts                           │ │   │  │
-│  │  │  │              initialize()                               │ │   │  │
+│  │  │  │               SecurityHardener                           │ │   │  │
+│  │  │  │            security-hardener.ts                          │ │   │  │
+│  │  │  │             initialize()                                 │ │   │  │
+│  │  │  └─────────────────────────────────────────────────────────┘ │   │  │
+│  │  │  ┌─────────────────────────────────────────────────────────┐ │   │  │
+│  │  │  │                 CodexInjector                            │ │   │  │
+│  │  │  │              codex-injector.ts                           │ │   │  │
+│  │  │  │            injectCodex()                               │ │   │  │
 │  │  │  └─────────────────────────────────────────────────────────┘ │   │  │
 │  │  └─────────────────────────────────────────────────────────────┘   │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
@@ -117,8 +136,8 @@ tags: ["architecture", "pipelines"]
 │  │                  boot-orchestrator.ts:45,76                          │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
-                                     │
-                                     v
+                                      │
+                                      v
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          OUTPUT LAYER                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐  │
@@ -131,7 +150,10 @@ tags: ["architecture", "pipelines"]
 │  │  State Entries Created:                                              │  │
 │  │  • memory:baseline                                                  │  │
 │  │  • boot:errors                                                      │  │
-│  │  • session:agents                                                   │  │
+│  │  • session:agents                                                  │  │
+│  │  • plugin:registry ◄── NEW                                          │  │
+│  │  • plugin:serverRegistry ◄── NEW                                   │  │
+│  │  • plugin:registered ◄── NEW                                       │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -167,6 +189,38 @@ BootOrchestrator constructor()
     ├─► inferenceTuner.initialize()
     │
     ▼
+executeBootSequence()
+    │
+    ├─► loadStringRayConfiguration()
+    │
+    ├─► loadOrchestrator()
+    │
+    ├─► initializeDelegationSystem()
+    │
+    ├─► initializeSessionManagement()
+    │
+    ├─► activateProcessors()
+    │
+    ├─► loadRemainingAgents()
+    │
+    ├─► initializePluginSystem()     ◄── PHASE 4.5 (NEW)
+    │   │                              
+    │   ├─► PluginRegistry.initialize()
+    │   │   │   └── discoverPlugins()
+    │   │   │       └── loadPlugin()
+    │   │   │
+    │   │   └─► startMetricsCollection()
+    │   │
+    │   └─► PluginServerConfigRegistry.registerAllPluginServers()
+    │       └── registerPluginServer() × N
+    │
+    ├─► enableEnforcement()
+    │
+    ├─► activateCodexCompliance()
+    │
+    └─► finalizeSecurityIntegration()
+    │
+    ▼
 BootResult { success, orchestratorLoaded, ... }
 ```
 
@@ -177,8 +231,9 @@ BootResult { success, orchestratorLoaded, ... }
 - **Layer 3**: Delegation System (AgentDelegator, SessionCoordinator)
 - **Layer 4**: Session Management (SessionMonitor, SessionStateManager)
 - **Layer 5**: Processors (ProcessorManager)
-- **Layer 6**: Security (SecurityHardener)
-- **Layer 7**: Inference (InferenceTuner)
+- **Layer 6**: Agents (enforcer, architect, bug-triage, etc.)
+- **Layer 7**: Plugin System (PluginRegistry, PluginServerConfigRegistry) ◄── NEW
+- **Layer 8**: Security & Compliance (SecurityHardener, CodexInjector)
 
 ## Components
 
@@ -195,6 +250,8 @@ BootResult { success, orchestratorLoaded, ... }
 | ProcessorManager | `src/processors/processor-manager.ts` |
 | SecurityHardener | `src/security/security-hardener.ts` |
 | InferenceTuner | `src/services/inference-tuner.ts` |
+| **PluginRegistry** | `src/integrations/plugins/plugin-registry.ts` |
+| **PluginServerConfigRegistry** | `src/mcps/config/plugin-server-registry.ts` |
 
 ## Entry Points
 
@@ -215,6 +272,9 @@ BootResult { success, orchestratorLoaded, ... }
 - `memory:baseline` in StateManager
 - `boot:errors` in StateManager
 - `session:agents` in StateManager
+- `plugin:registry` in StateManager ◄── NEW
+- `plugin:serverRegistry` in StateManager ◄── NEW
+- `plugin:registered` in StateManager ◄── NEW
 
 ## Testing Requirements
 
