@@ -48,24 +48,19 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
+          to: '/docs/guides/getting-started',
+          label: 'Getting Started',
           position: 'left',
-          label: 'Docs',
         },
         {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
-          position: 'left',
+          to: '/docs/architecture',
           label: 'Architecture',
-          to: '/architecture',
+          position: 'left',
         },
         {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
-          position: 'left',
+          to: '/docs/agents',
           label: 'Agents',
-          to: '/agents',
+          position: 'left',
         },
         {
           href: 'https://github.com/htafolla/StringRay',
