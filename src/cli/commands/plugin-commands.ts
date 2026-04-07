@@ -178,11 +178,13 @@ function parseYaml(content: string): Record<string, unknown> {
 
     if (isListItem) {
       const value = trimmed.slice(2).trim();
-      const parent = stack[stack.length - 1].obj;
-      if (!Array.isArray(parent[currentKey])) {
-        parent[currentKey] = [];
+      const top = stack[stack.length - 1];
+      if (top && currentKey && !Array.isArray(top.obj[currentKey])) {
+        top.obj[currentKey] = [];
       }
-      (parent[currentKey] as unknown[]).push(value);
+      if (top && currentKey) {
+        (top.obj[currentKey] as unknown[]).push(value);
+      }
       continue;
     }
 
@@ -191,11 +193,15 @@ function parseYaml(content: string): Record<string, unknown> {
       const key = trimmed.slice(0, colonIndex).trim();
       const value = trimmed.slice(colonIndex + 1).trim();
 
-      while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+      const top = stack[stack.length - 1];
+      while (top && stack.length > 1 && indent <= top.indent) {
         stack.pop();
       }
 
-      const parent = stack[stack.length - 1].obj;
+      const current = stack[stack.length - 1];
+      if (!current) continue;
+
+      const parent = current.obj;
 
       if (value) {
         parent[key] = value;
