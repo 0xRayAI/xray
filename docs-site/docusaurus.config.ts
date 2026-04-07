@@ -12,10 +12,6 @@ const config: Config = {
   projectName: 'StringRay',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
-  i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
-  },
   presets: [
     [
       'classic',
@@ -23,7 +19,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/htafolla/StringRay/tree/master/',
-          routeBasePath: 'docs',
+          routeBasePath: '',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
         },
@@ -39,6 +35,11 @@ const config: Config = {
   },
   themeConfig: {
     image: 'img/social-card.png',
+    colorMode: {
+      defaultMode: 'dark',
+      disableSwitch: false,
+      respectPrefersColorScheme: true,
+    },
     navbar: {
       title: 'StringRay',
       logo: {
@@ -51,6 +52,20 @@ const config: Config = {
           sidebarId: 'docsSidebar',
           position: 'left',
           label: 'Docs',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'docsSidebar',
+          position: 'left',
+          label: 'Architecture',
+          to: '/architecture',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'docsSidebar',
+          position: 'left',
+          label: 'Agents',
+          to: '/agents',
         },
         {
           href: 'https://github.com/htafolla/StringRay',

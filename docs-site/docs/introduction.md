@@ -1,18 +1,50 @@
 ---
-slug: /introduction
-title: "StringRay Documentation"
-sidebar_label: "Introduction"
+slug: /
+title: "StringRay - Enterprise AI Orchestration Framework"
 sidebar_position: 0
-tags: [overview, getting-started]
 ---
 
 # ⚡ StringRay
 
 **Enterprise AI Orchestration Framework for OpenCode**
 
-StringRay provides intelligent multi-agent orchestration with automatic delegation, codex compliance validation, and systematic error prevention. Agents operate via OpenCode plugin injection — no manual setup needed.
+---
 
-## Quick Start
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     STRINGRAY ARCHITECTURE                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                 │
+│    │   AGENTS    │    │   PLUGINS   │    │   PROCESSORS│                 │
+│    │             │    │             │    │             │                 │
+│    │  @enforcer  │    │  Discovery  │    │ Pre-Validate│                 │
+│    │  @architect │    │  Lifecycle  │    │ CodexCompl  │                 │
+│    │  @orchestrat│    │  MCP Reg    │    │ TestAuto    │                 │
+│    │  @bug-triage│    │             │    │ Regression  │                 │
+│    │  @code-revw │    │             │    │ ...         │                 │
+│    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘                 │
+│           │                   │                   │                        │
+│           └───────────────────┼───────────────────┘                        │
+│                               ▼                                            │
+│    ┌──────────────────────────────────────────────────────────────────┐     │
+│    │                    TASK ROUTING                                 │     │
+│    │     Skill-based routing → Agent delegation → Execution         │     │
+│    └──────────────────────────────────────────────────────────────────┘     │
+│                               │                                            │
+│                               ▼                                            │
+│    ┌──────────────────────────────────────────────────────────────────┐     │
+│    │                    OUTPUT                                         │     │
+│    │     Codex-compliant, validated, enterprise-ready code           │     │
+│    └──────────────────────────────────────────────────────────────────┘     │
+│                                                                             │
+│    25 AGENTS  •  44 SKILLS  •  15 MCP SERVERS  •  20 PROCESSORS            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🚀 Quick Start
 
 ```bash
 # Install in your project
@@ -25,38 +57,87 @@ npx strray-ai health
 @enforcer analyze this code
 ```
 
-## What You'll Find Here
+---
 
-| Section | What's Inside |
-|---------|--------------|
-| **[Guides](/docs/guides)** | Getting started, installation, configuration |
-| **[Architecture](/docs/architecture)** | Pipeline architectures, processor systems, advanced topics |
-| **[Agents](/docs/agents)** | All 9 agents: enforcer, orchestrator, architect, and more |
-| **[Reflections](/docs/reflections)** | Deep technical reflections on development journeys |
-| **[Releases](/docs/releases)** | Version history and changelog |
-| **[Research](/docs/research)** | Analysis of external tools and integration strategies |
-| **[Reference](/docs/reference)** | Commands, templates, API documentation |
-| **[Security](/docs/security)** | Best practices and compliance |
+## 🎯 What StringRay Does
 
-## Key Features
-
-- **9 AI Agents** — Specialized roles from code review to architecture
-- **44 Skills** — Lazy-loaded capabilities for every development task
-- **15 MCP Servers** — Tool invocation and skill orchestration
-- **Processor Pipeline** — Pre/post processors for systematic validation
-- **Codex Enforcement** — 60 development standards enforced automatically
-- **Storyteller** — Automatic reflections, sagas, and journey documentation
-- **2392 Tests** — Comprehensive coverage across all subsystems
-
-## Stats
-
-| Metric | Value |
-|--------|-------|
-| Lines of Code | 100k+ |
-| Tests | 2392 passing |
-| npm Downloads | 5k+ / week |
-| Latest Version | [1.18.5](https://npmjs.com/package/strray-ai) |
+| Feature | Description |
+|---------|-------------|
+| **Multi-Agent Orchestration** | Coordinates 25 specialized agents for different tasks |
+| **Codex Compliance** | 60 validation rules preventing errors before they happen |
+| **Auto-Delegation** | Intelligent task routing to the right agent |
+| **Plugin System** | Extensible architecture with auto-discovery |
+| **Processors** | 20 pre/post processors for code validation and testing |
 
 ---
 
-*Built by directing AI through hundreds of iterations. Each one leaves it a little better.*
+## 📚 Documentation
+
+<div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem'}}>
+
+### Getting Started
+- [Installation Guide](/docs/guides/installation/installation)
+- [Configuration](/docs/guides/configuration)
+- [Quick Start](/docs/guides/getting-started/getting-started)
+
+### Architecture
+- [Overview](/docs/architecture)
+- [Boot Pipeline](/docs/architecture/pipelines/boot-pipeline-tree)
+- [Plugin System](/docs/development/plugin-system)
+
+### Agents
+- [Enforcer](/docs/agents/enforcer)
+- [Architect](/docs/agents/architect)
+- [Orchestrator](/docs/agents/orchestrator)
+- [All Agents](/docs/agents)
+
+### Reference
+- [CLI Commands](/docs/reference/commands)
+- [API Reference](/docs/api)
+- [Releases](/docs/releases)
+
+</div>
+
+---
+
+## 🛠️ Available Agents
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         25 SPECIALIZED AGENTS                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  CORE (7)              │  DOMAIN (18)                                      │
+│  ─────────────────────┼───────────────────────────                        │
+│  @enforcer            │  @frontend-engineer    @database-engineer         │
+│  @architect           │  @backend-engineer     @devops-engineer          │
+│  @orchestrator        │  @mobile-developer    @performance-engineer     │
+│  @bug-triage-specialist│ @seo-consultant      @content-creator           │
+│  @code-reviewer       │  @growth-strategist   @tech-writer               │
+│  @security-auditor     │  @multimodal-looker   @code-analyzer             │
+│  @refactorer          │  @log-monitor        @storyteller                │
+│                       │  @testing-lead       @researcher                  │
+│                       │  ...                  ...                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📊 Statistics
+
+| Metric | Value |
+|--------|-------|
+| Agents | 25 |
+| Skills | 44 |
+| MCP Servers | 15+ |
+| Processors | 20 |
+| Tests | 2448 |
+| Error Prevention | 99.6% |
+
+---
+
+## 🔗 Links
+
+- [GitHub](https://github.com/htafolla/StringRay)
+- [npm](https://npmjs.com/package/strray-ai)
+- [OpenCode](https://opencode.ai)
