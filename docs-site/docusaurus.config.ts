@@ -7,7 +7,7 @@ const config: Config = {
   tagline: 'Enterprise AI Orchestration Framework',
   favicon: 'img/favicon.ico',
   url: 'https://htafolla.github.io',
-  baseUrl: '/',
+  baseUrl: '/StringRay/',
   organizationName: 'htafolla',
   projectName: 'StringRay',
   onBrokenLinks: 'warn',
@@ -48,19 +48,29 @@ const config: Config = {
       },
       items: [
         {
-          to: '/docs/guides/getting-started',
+          to: '/StringRay/docs/guides/getting-started',
           label: 'Getting Started',
           position: 'left',
         },
         {
-          to: '/docs/architecture',
+          to: '/StringRay/docs/architecture',
           label: 'Architecture',
           position: 'left',
         },
         {
-          to: '/docs/agents',
+          to: '/StringRay/docs/agents',
           label: 'Agents',
           position: 'left',
+        },
+        {
+          href: 'https://github.com/htafolla/StringRay',
+          label: 'GitHub',
+          position: 'right',
+        },
+        {
+          href: 'https://npmjs.com/package/strray-ai',
+          label: 'npm',
+          position: 'right',
         },
       ],
     },
