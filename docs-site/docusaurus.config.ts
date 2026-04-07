@@ -19,7 +19,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/htafolla/StringRay/tree/master/',
-          routeBasePath: '',
+          routeBasePath: 'docs',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
         },
