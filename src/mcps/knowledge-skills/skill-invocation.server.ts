@@ -7,6 +7,7 @@ import {
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import { mcpClientManager } from "../mcp-client.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 class SkillInvocationServer {
   private server: Server;
@@ -32,6 +33,20 @@ class SkillInvocationServer {
       return {
         tools: [
           {
+            name: "list-skills",
+            description: "List all available skills with descriptions",
+            inputSchema: {
+              type: "object",
+              properties: {
+                category: {
+                  type: "string",
+                  enum: ["all", "core", "registry", "knowledge"],
+                  description: "Filter by category",
+                },
+              },
+            },
+          },
+          {
             name: "invoke-skill",
             description:
               "Generic skill invocation tool for calling any MCP skill server",
@@ -40,43 +55,7 @@ class SkillInvocationServer {
               properties: {
                 skillName: {
                   type: "string",
-                  enum: [
-                    // Core skills
-                    "code-review",
-                    "code-reviewer",
-                    "security-audit",
-                    "security-auditor",
-                    "security-scan",
-                    "performance-optimization",
-                    "testing-strategy",
-                    "testing-lead",
-                    "testing-best-practices",
-                    "project-analysis",
-                    "database-design",
-                    "devops-deployment",
-                    "api-design",
-                    "ui-ux-design",
-                    "documentation-generation",
-                    "refactoring-strategies",
-                    "architecture-patterns",
-                    // Story skills
-                    "storyteller",
-                    // Additional skills
-                    "bug-triage-specialist",
-                    "log-monitor",
-                    "mobile-development",
-                    "git-workflow",
-                    "state-manager",
-                    "session-management",
-                    "boot-orchestrator",
-                    "processor-pipeline",
-                    "code-analyzer",
-                    "lint",
-                    "auto-format",
-                    "model-health-check",
-                    "framework-compliance-audit",
-                  ],
-                  description: "Name of the skill to invoke",
+                  description: "Name of the skill to invoke (use list-skills to see available)",
                 },
                 toolName: {
                   type: "string",
@@ -319,6 +298,8 @@ class SkillInvocationServer {
 
       try {
         switch (name) {
+          case "list-skills":
+            return await this.handleListSkills(args);
           case "invoke-skill":
             return await this.handleInvokeSkill(args);
           case "skill-code-review":
@@ -358,27 +339,178 @@ class SkillInvocationServer {
     });
   }
 
+  private skillMetrics: Map<string, { success: number; failure: number; avgDuration: number }> = new Map();
+
+  /**
+   * Record skill invocation outcome for adaptive learning
+   */
+  private recordSkillOutcome(
+    originalSkill: string,
+    resolvedSkill: string,
+    toolName: string,
+    duration: number,
+    result?: any,
+    error?: string,
+  ): void {
+    const key = `${resolvedSkill}:${toolName}`;
+    const existing = this.skillMetrics.get(key) || { success: 0, failure: 0, avgDuration: 0 };
+
+    const totalInvocations = existing.success + existing.failure;
+    const newAvgDuration = totalInvocations > 0
+      ? (existing.avgDuration * totalInvocations + duration) / (totalInvocations + 1)
+      : duration;
+
+    if (error) {
+      existing.failure++;
+    } else {
+      existing.success++;
+      existing.avgDuration = newAvgDuration;
+    }
+
+    this.skillMetrics.set(key, existing);
+
+    // Log for persistence (simplified - in production would write to analytics)
+    if (existing.failure > 3 && (existing.failure / (existing.success + existing.failure)) > 0.5) {
+      frameworkLogger.log(
+        "skill-invocation",
+        "low-performing-skill",
+        "warning",
+        { skill: resolvedSkill, tool: toolName, failureRate: (existing.failure / (existing.success + existing.failure)).toFixed(2) }
+      );
+    }
+  }
+
+  private async handleListSkills(args: any) {
+    const { category = "all" } = args;
+
+    const coreSkills = [
+      "code-review", "security-audit", "performance-optimization",
+      "testing-strategy", "researcher", "framework-help",
+    ];
+    const registrySkills = [
+      "enforcer", "orchestrator", "architect", "refactorer",
+      "security-auditor", "code-reviewer", "testing-lead",
+      "estimation-validator", "skill-invocation",
+    ];
+    const knowledgeSkills = [
+      "architecture-patterns", "strategist", "tech-writer",
+      "seo-consultant", "content-creator", "growth-strategist",
+      "multimodal-looker", "bug-triage-specialist", "log-monitor",
+      "mobile-development", "git-workflow", "session-management",
+      "code-analyzer", "refactoring-strategies", "project-analysis",
+      "testing-best-practices", "database-design", "devops-deployment",
+      "api-design", "ui-ux-design", "database-engineer",
+    ];
+
+    let skills: string[];
+    switch (category) {
+      case "core":
+        skills = coreSkills;
+        break;
+      case "registry":
+        skills = registrySkills;
+        break;
+      case "knowledge":
+        skills = knowledgeSkills;
+        break;
+      default:
+        skills = [...coreSkills, ...registrySkills, ...knowledgeSkills];
+    }
+
+    const lines = [
+      `Available Skills (${skills.length}):`,
+      "",
+      ...skills.sort().map(s => `  - ${s}`),
+    ];
+
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+
   private async handleInvokeSkill(args: any) {
     const { skillName, toolName, args: toolArgs = {} } = args;
 
-    const result = await mcpClientManager.callServerTool(
-      skillName,
-      toolName,
-      toolArgs,
-    );
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Skill ${skillName} invoked successfully with tool ${toolName}`,
-        },
-        {
-          type: "text",
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
+    const skillAliases: Record<string, string> = {
+      "architect": "architecture-patterns",
+      "architect-tools": "architect",
+      "code-reviewer": "code-review",
+      "security-auditor": "security-audit",
+      "performance-engineer": "performance-optimization",
+      "testing-lead": "testing-strategy",
     };
+
+    const resolvedSkill = skillAliases[skillName] || skillName;
+
+    // Get available servers from config (simulations + real servers)
+    const availableServers = [
+      "code-review", "security-audit", "performance-optimization",
+      "testing-strategy", "researcher", "skill-invocation",
+      "framework-help", "session-management", "code-analyzer",
+      "enforcer", "orchestrator", "estimation-validator",
+      "architect", "bug-triage-specialist", "log-monitor",
+      "code-reviewer", "security-auditor", "refactorer",
+      "growth-strategist", "strategist", "devops-engineer",
+      "database-engineer", "api-designer", "tech-writer",
+      "security-scan", "lint", "auto-format",
+      "model-health-check", "framework-compliance-audit",
+      "documentation", "mobile-development", "seo-consultant",
+      "git-workflow", "content-creator", "ui-ux-design",
+      "code-analyzer", "multimodal-looker", "refactoring-strategies",
+      "project-analysis", "testing-best-practices",
+      "architecture-patterns",  // from knowledge-skills/architecture-patterns.server.ts
+    ];
+
+    if (!availableServers.includes(resolvedSkill)) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Skill "${skillName}" not found. Available skills: ${availableServers.join(", ")}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    try {
+      // Track skill usage for adaptive learning
+      const skillStartTime = Date.now();
+
+      const result = await mcpClientManager.callServerTool(
+        resolvedSkill,
+        toolName,
+        toolArgs,
+      );
+
+      // Record outcome for adaptive learning (success = no error)
+      const duration = Date.now() - skillStartTime;
+      this.recordSkillOutcome(skillName, resolvedSkill, toolName, duration, result);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Skill ${skillName} invoked successfully with tool ${toolName}`,
+          },
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      // Record failure for adaptive learning
+      this.recordSkillOutcome(skillName, resolvedSkill, toolName, 0, null, error instanceof Error ? error.message : String(error));
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error invoking skill "${skillName}": ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
   }
 
   private async handleSkillCodeReview(args: any) {

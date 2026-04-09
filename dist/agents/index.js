@@ -8,7 +8,7 @@ import { refactorer } from "./refactorer.js";
 import { testingLead } from "./testing-lead.js";
 import { logMonitorAgent } from "./log-monitor.js";
 import { researcher } from "./researcher.js";
-import { analyzer } from "./analyzer.js";
+import { codeAnalyzer } from "./code-analyzer.js";
 export const builtinAgents = {
     enforcer,
     architect,
@@ -20,7 +20,7 @@ export const builtinAgents = {
     "testing-lead": testingLead,
     "log-monitor": logMonitorAgent,
     researcher,
-    "code-analyzer": analyzer,
+    "code-analyzer": codeAnalyzer,
 };
-export { enforcer, architect, orchestrator, bugTriageSpecialist, codeReviewer, securityAuditor, refactorer, testingLead, logMonitorAgent, researcher, analyzer, };
+export { enforcer, architect, orchestrator, bugTriageSpecialist, codeReviewer, securityAuditor, refactorer, testingLead, logMonitorAgent, researcher, codeAnalyzer, };
 //# sourceMappingURL=index.js.map

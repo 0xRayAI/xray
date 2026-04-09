@@ -9,7 +9,7 @@ import { refactorer } from "./refactorer.js";
 import { testingLead } from "./testing-lead.js";
 import { logMonitorAgent } from "./log-monitor.js";
 import { researcher } from "./researcher.js";
-import { analyzer } from "./analyzer.js";
+import { codeAnalyzer } from "./code-analyzer.js";
 export declare const builtinAgents: Record<string, AgentConfig>;
-export { enforcer, architect, orchestrator, bugTriageSpecialist, codeReviewer, securityAuditor, refactorer, testingLead, logMonitorAgent, researcher, analyzer, };
+export { enforcer, architect, orchestrator, bugTriageSpecialist, codeReviewer, securityAuditor, refactorer, testingLead, logMonitorAgent, researcher, codeAnalyzer, };
 //# sourceMappingURL=index.d.ts.map

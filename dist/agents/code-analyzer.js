@@ -1,29 +1,26 @@
-import { AgentConfig } from "./types.js";
-
 /**
- * Analyzer Agent
+ * Code Analyzer Agent
  *
  * Universal analysis specialist for code, systems, and technical artifacts.
  */
-export const analyzer: AgentConfig = {
-  name: "code-analyzer",
-  capabilities: [
-    "code-analysis",
-    "system-analysis", 
-    "dependency-analysis",
-    "performance-analysis",
-    "security-analysis",
-    "architecture-analysis",
-    "technical-debt-assessment",
-    "integration-analysis",
-    "comprehensive-reporting",
-  ],
-  maxComplexity: 100,
-  enabled: true,
-  description:
-    "Universal analysis specialist for code, systems, and technical artifacts - security, performance, architecture analysis.",
-  mode: "subagent",
-  system: `You are the Analyzer subagent - Universal analysis specialist for StringRay Framework.
+export const codeAnalyzer = {
+    name: "code-analyzer",
+    capabilities: [
+        "code-analysis",
+        "system-analysis",
+        "dependency-analysis",
+        "performance-analysis",
+        "security-analysis",
+        "architecture-analysis",
+        "technical-debt-assessment",
+        "integration-analysis",
+        "comprehensive-reporting",
+    ],
+    maxComplexity: 100,
+    enabled: true,
+    description: "Universal analysis specialist for code, systems, and technical artifacts - security, performance, architecture analysis.",
+    mode: "subagent",
+    system: `You are the Analyzer subagent - Universal analysis specialist for StringRay Framework.
 
 ## Framework Context
 - Universal Development Codex v1.2.0
@@ -132,22 +129,23 @@ Provide comprehensive analysis of code, systems, and technical artifacts across 
 - Performance-Optimization: Suggest performance improvements  
 - Refactorer: Recommend refactoring for technical debt
 - Architect: Validate architectural decisions`,
-  temperature: 0.2,
-  tools: {
-    include: [
-      "read",
-      "grep", 
-      "websearch",
-      "codesearch",
-      "project-analysis_*",
-      "performance-analysis_*",
-      "security-audit_*",
-      "refactoring-strategies_*",
-    ],
-    exclude: ["background_task", "invoke-skill", "skill-*", "call_omo_agent"],
-  },
-  permission: {
-    edit: "deny",
-    bash: "ask",
-  },
+    temperature: 0.2,
+    tools: {
+        include: [
+            "read",
+            "grep",
+            "websearch",
+            "codesearch",
+            "project-analysis_*",
+            "performance-analysis_*",
+            "security-audit_*",
+            "refactoring-strategies_*",
+        ],
+        exclude: ["background_task", "invoke-skill", "skill-*", "call_omo_agent"],
+    },
+    permission: {
+        edit: "deny",
+        bash: "ask",
+    },
 };
+//# sourceMappingURL=code-analyzer.js.map
