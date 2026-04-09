@@ -773,9 +773,9 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
       },
 
       autonomous_reporting: {
-        enabled: false,
+        enabled: true,
         interval_minutes: 60,
-        auto_schedule: false,
+        auto_schedule: true,
         include_health_assessment: true,
         include_agent_activities: true,
         include_pipeline_operations: true,

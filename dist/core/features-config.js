@@ -321,9 +321,9 @@ export class FeaturesConfigLoader {
                 session_persistence: true,
             },
             autonomous_reporting: {
-                enabled: false,
+                enabled: true,
                 interval_minutes: 60,
-                auto_schedule: false,
+                auto_schedule: true,
                 include_health_assessment: true,
                 include_agent_activities: true,
                 include_pipeline_operations: true,
