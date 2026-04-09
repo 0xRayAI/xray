@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { analyzer } from "../../agents/analyzer.js";
+import { codeAnalyzer } from "../../agents/code-analyzer.js";
 import * as fs from "fs";
 
 // Mock fs module
@@ -39,7 +39,7 @@ describe("Analyzer", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    agent = analyzer;
+    agent = codeAnalyzer;
     mockFs = vi.mocked(fs);
 
     // Setup default mocks
@@ -162,7 +162,7 @@ describe("Analyzer", () => {
       expect(agent.system).toContain("audit");
       expect(agent.system).toContain("review");
       expect(agent.system).toContain("assess");
-      expect(agent.system).toContain("analyzer");
+      expect(agent.system).toContain("Analyzer");
     });
 
     it("should mention framework compliance", () => {
@@ -385,8 +385,8 @@ describe("Analyzer", () => {
   });
 
   describe("Model Integration", () => {
-    it("should get validated model for analyzer", () => {
-      // The analyzer agent uses the model router to get a validated model
+    it("should get validated model for codeAnalyzer", () => {
+      // The codeAnalyzer agent uses the model router to get a validated model
       // Model is optional - if defined, should be a valid model string
       if (agent.model) {
         expect(typeof agent.model).toBe("string");

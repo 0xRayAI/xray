@@ -36,15 +36,39 @@
       "details": {
         "duration": 607
       }
+    },
+    {
+      "timestamp": "2026-04-09T15:18:40.889Z",
+      "id": "act-1775747920889-bwdfwh",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1775747920247-vqgpor",
+      "details": {
+        "duration": 642
+      }
+    },
+    {
+      "timestamp": "2026-04-09T15:20:48.305Z",
+      "id": "act-1775748048305-say7wz",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1775748046657-yss2cz",
+      "details": {
+        "duration": 1648
+      }
     }
   ],
   "stats": {
-    "total": 3,
+    "total": 5,
     "byCategory": {
-      "session": 3
+      "session": 5
     },
     "byLevel": {
-      "info": 3
+      "info": 5
     }
   }
 }

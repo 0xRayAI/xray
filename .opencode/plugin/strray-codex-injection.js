@@ -885,67 +885,6 @@ export default async function strrayCodexPlugin(input) {
             }
             logger.log("✅ Plugin config hook completed");
         },
-        // File edit tracking - logs edited files to .opencode/logs/
-        "file.edited": async (input) => {
-            const logger = await getOrCreateLogger(directory);
-            const { filePath, session } = input;
-            logger.log(`📝 FILE EDITED: ${filePath}`);
-            
-            // Also write to session activity log
-            try {
-                const logsDir = path.join(directory, ".opencode", "logs");
-                if (!fs.existsSync(logsDir)) {
-                    fs.mkdirSync(logsDir, { recursive: true });
-                }
-                const sessionLog = path.join(logsDir, "activity.md");
-                const timestamp = new Date().toISOString();
-                const entry = `- ${timestamp}: ${filePath}\n`;
-                
-                // Append to activity log
-                let existing = "";
-                try { existing = fs.readFileSync(sessionLog, "utf-8"); } catch {}
-                fs.writeFileSync(sessionLog, existing + entry);
-            } catch (e) {
-                logger.error("Failed to log file edit", e);
-            }
-        },
-        // Session created - start activity logging
-        "session.created": async (input) => {
-            const logger = await getOrCreateLogger(directory);
-            const { session } = input;
-            logger.log(`🆕 SESSION CREATED: ${session}`);
-            
-            // Initialize activity log
-            try {
-                const logsDir = path.join(directory, ".opencode", "logs");
-                if (!fs.existsSync(logsDir)) {
-                    fs.mkdirSync(logsDir, { recursive: true });
-                }
-                const sessionLog = path.join(logsDir, "activity.md");
-                const timestamp = new Date().toISOString();
-                fs.writeFileSync(sessionLog, `# Session Activity Log\n\nSession: ${session}\nStarted: ${timestamp}\n\n## Files Edited\n`);
-            } catch (e) {
-                logger.error("Failed to create session log", e);
-            }
-        },
-        // Session idle - end activity logging
-        "session.idle": async (input) => {
-            const logger = await getOrCreateLogger(directory);
-            const { session } = input;
-            logger.log(`💤 SESSION IDLE: ${session}`);
-            
-            // Finalize activity log
-            try {
-                const logsDir = path.join(directory, ".opencode", "logs");
-                const sessionLog = path.join(logsDir, "activity.md");
-                const timestamp = new Date().toISOString();
-                let existing = "";
-                try { existing = fs.readFileSync(sessionLog, "utf-8"); } catch {}
-                fs.writeFileSync(sessionLog, existing + `\n## Session Ended\n${timestamp}\n`);
-            } catch (e) {
-                logger.error("Failed to finalize session log", e);
-            }
-        },
     };
 }
 //# sourceMappingURL=strray-codex-injection.js.map

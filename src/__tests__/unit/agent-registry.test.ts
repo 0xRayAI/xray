@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { builtinAgents } from "../../agents/index.js";
-import { analyzer } from "../../agents/analyzer.js";
+import { codeAnalyzer } from "../../agents/code-analyzer.js";
 
 // Mock model router
 vi.mock("../../core/model-router.js", () => ({
@@ -40,7 +40,7 @@ describe("Agent Registry Integration", () => {
   });
 
   describe("Agent Configuration Consistency", () => {
-    it("should have consistent structure for analyzer", () => {
+    it("should have consistent structure for codeAnalyzer", () => {
       const agent = builtinAgents["code-analyzer"];
 
       expect(agent).toHaveProperty("name");
@@ -57,7 +57,7 @@ describe("Agent Registry Integration", () => {
   });
 
   describe("Agent Capabilities", () => {
-    it("should load analyzer capabilities", () => {
+    it("should load codeAnalyzer capabilities", () => {
       const agent = builtinAgents["code-analyzer"];
       const expectedCapabilities = [
         "code-analysis",
@@ -75,18 +75,18 @@ describe("Agent Registry Integration", () => {
   });
 
   describe("Agent Models", () => {
-    it("should provide model getter for analyzer", () => {
+    it("should provide model getter for codeAnalyzer", () => {
       const agent = builtinAgents["code-analyzer"];
       // Model is optional - only check if defined
       if (agent.model) {
         expect(typeof agent.model).toBe("string");
-        expect(agent.model).toContain("analyzer");
+        expect(agent.model).toContain("codeAnalyzer");
       }
     });
   });
 
   describe("Tool Permissions", () => {
-    it("should restrict analyzer tools appropriately", () => {
+    it("should restrict codeAnalyzer tools appropriately", () => {
       const agent = builtinAgents["code-analyzer"];
 
       expect(agent.tools?.include).toContain("read");
@@ -99,14 +99,14 @@ describe("Agent Registry Integration", () => {
   });
 
   describe("Agent Modes", () => {
-    it("should have correct mode for analyzer", () => {
+    it("should have correct mode for codeAnalyzer", () => {
       const agent = builtinAgents["code-analyzer"];
       expect(agent.mode).toBe("subagent");
     });
   });
 
   describe("Complexity Settings", () => {
-    it("should have appropriate complexity for analyzer", () => {
+    it("should have appropriate complexity for codeAnalyzer", () => {
       const agent = builtinAgents["code-analyzer"];
       expect(agent.maxComplexity).toBe(100);
       expect(agent.enabled).toBe(true);
@@ -114,7 +114,7 @@ describe("Agent Registry Integration", () => {
   });
 
   describe("Temperature Settings", () => {
-    it("should have appropriate temperature for analyzer", () => {
+    it("should have appropriate temperature for codeAnalyzer", () => {
       const agent = builtinAgents["code-analyzer"];
       expect(agent.temperature).toBe(0.2);
     });
@@ -156,14 +156,14 @@ describe("Agent Registry Integration", () => {
   });
 
   describe("Direct Import Access", () => {
-    it("should allow direct import of analyzer", () => {
-      expect(analyzer).toBeDefined();
-      expect(analyzer.name).toBe("code-analyzer");
+    it("should allow direct import of codeAnalyzer", () => {
+      expect(codeAnalyzer).toBeDefined();
+      expect(codeAnalyzer.name).toBe("code-analyzer");
     });
   });
 
   describe("Configuration Values", () => {
-    it("should have correct description for analyzer", () => {
+    it("should have correct description for codeAnalyzer", () => {
       const agent = builtinAgents["code-analyzer"];
 
       expect(agent.description).toContain("Universal analysis specialist");
