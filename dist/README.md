@@ -1,11 +1,11 @@
 # ⚡ 0xRay: Self-Healing AI Governance OS
 
-**Enterprise AI Orchestration Framework for OpenCode/Claude Code** — by [0xRayAI](https://github.com/0xrayai)
+**Enterprise AI Orchestration Framework** — by [0xRayAI](https://github.com/0xrayai)
 
 [![Version](https://img.shields.io/badge/version---silent-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2311%20passed-brightgreen?style=flat-square)](src/__tests__)
-[![GitHub stars](https://img.shields.io/github/stars/0xrayai/0xrayai.github.io?style=social)](https://github.com/0xrayai/0xrayai.github.io)
+[![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
 
 > **Intelligent Multi-Agent Coordination with 99.6% Systematic Error Prevention**
 
