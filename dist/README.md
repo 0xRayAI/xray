@@ -1,6 +1,6 @@
 # ⚡ 0xRay: Self-Healing AI Governance OS
 
-**Enterprise AI Orchestration Framework** — by [0xRayAI](https://github.com/0xrayai)
+**Enterprise AI Orchestration Framework For OpenCode and Hermes** — by [0xRayAI](https://github.com/0xrayai)
 
 [![Version](https://img.shields.io/badge/version---silent-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
@@ -9,7 +9,7 @@
 
 > **Intelligent Multi-Agent Coordination with 99.6% Systematic Error Prevention**
 
-StringRay extends OpenCode/Claude Code with intelligent multi-agent orchestration, Codex compliance validation, and enterprise-grade security. It automatically routes tasks to specialized agents based on complexity and provides systematic error prevention.
+StringRay extends OpenCode and Hermes with intelligent multi-agent orchestration, Codex compliance validation, and enterprise-grade security. It automatically routes tasks to specialized agents based on complexity and provides systematic error prevention.
 
 ## What is StringRay?
 
@@ -31,7 +31,7 @@ This single command:
 
 ### Who is it for?
 
-- **Developers** using OpenCode or Claude Code who want AI-assisted development
+- **Developers** using OpenCode or Hermes who want AI-assisted development
 - **Teams** needing consistent code quality and error prevention
 - **Enterprises** requiring security, compliance, and audit capabilities
 
@@ -42,7 +42,7 @@ This single command:
 npm install strray-ai
 
 # That's it! StringRay is now active.
-# Restart OpenCode/Claude Code to load the plugin.
+# Restart OpenCode or Hermes to load the plugin.
 ```
 
 **What happens during install?**
@@ -50,7 +50,7 @@ npm install strray-ai
 - Configures 25 agents with proper capabilities
 - Sets up Codex enforcement rules
 - Enables webhook triggers for CI/CD integration
-- Ready to use with Claude Code immediately
+- Ready to use with Hermes immediately
 
 ### Standalone Mode (No OpenCode Required)
 
@@ -124,7 +124,7 @@ See [OpenClaw Integration Guide](src/integrations/openclaw/README.md) for detail
 
 ## 🔮 Hermes Agent Integration
 
-StringRay's MCP servers work as native tools in [Hermes Agent](https://github.com/nilslice/hermes) — a standalone AI coding agent with its own runtime, not dependent on OpenCode or Claude Code. This gives you the full StringRay toolset (code analysis, linting, security scanning, orchestration, state management) inside any Hermes session.
+StringRay's MCP servers work as native tools in [Hermes Agent](https://github.com/nilslice/hermes) — a standalone AI coding agent with its own runtime, not dependent on OpenCode or Hermes. This gives you the full StringRay toolset (code analysis, linting, security scanning, orchestration, state management) inside any Hermes session.
 
 ### What You Get
 
