@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * StringRay Integration Script
+ * 0xRay Integration Script
  *
- * Main CLI bridge for external systems (like Jelly commercial modules) to call into StringRay.
- * Allows spawning OpenCode CLI with StringRay agents to execute real tasks.
+ * Main CLI bridge for external systems (like Jelly commercial modules) to call into 0xRay.
+ * Allows spawning OpenCode CLI with 0xRay agents to execute real tasks.
  *
  * @version 1.1.0
  * @since 2026-02-14
@@ -50,14 +50,14 @@ async function main(): Promise<void> {
 
   // Handle --version flag
   if (args.includes("--version")) {
-    console.log("StringRay Integration v1.1.0");
+    console.log("0xRay Integration v1.1.0");
     process.exit(0);
   }
 
   // Handle --help flag
   if (args.includes("--help")) {
     console.log(`
-StringRay Integration - OpenCode Bridge
+0xRay Integration - OpenCode Bridge
 
 Usage:
   node integration.js <agent-name> <task-json>
@@ -69,9 +69,9 @@ Examples:
   node integration.js architect '{"taskDescription": "Design API endpoints"}'
 
 Flow:
-  1. Loads agent configuration from StringRay
+  1. Loads agent configuration from 0xRay
   2. Spawns OpenCode CLI with agent
-  3. OpenCode loads StringRay MCP servers (tools/skills)
+  3. OpenCode loads 0xRay MCP servers (tools/skills)
   4. Agent executes task using available tools
   5. Results returned as JSON
     `);
@@ -98,12 +98,12 @@ Flow:
 
   // Execute the integration
   try {
-    // Get agent configuration from StringRay registry
+    // Get agent configuration from 0xRay registry
     const agent = await resolveAgent(agentName);
 
-    console.log(`[StringRay] Spawning OpenCode with agent: ${agentName}`);
+    console.log(`[0xRay] Spawning OpenCode with agent: ${agentName}`);
     console.log(
-      `[StringRay] Task: ${taskContext.taskDescription || "No description"}`,
+      `[0xRay] Task: ${taskContext.taskDescription || "No description"}`,
     );
 
     // Build the task prompt for OpenCode
@@ -265,7 +265,7 @@ function spawnOpenCode(agentName: string, prompt: string): Promise<unknown> {
 
     // Timeout after 5 minutes - graceful first, then force
     const timeout = setTimeout(() => {
-      console.log("[StringRay] OpenCode timed out, terminating...");
+      console.log("[0xRay] OpenCode timed out, terminating...");
       cleanup(true);
       reject(new Error("OpenCode execution timeout (5 minutes)"));
     }, 300000);

@@ -550,7 +550,7 @@ export class SessionStateManager {
           case "transfer_context": {
             // Transfer all shared context keys for this session
             // Note: This is a simplified implementation
-            const session = this.sessionCoordinator["sessions"].get(
+            const session = this.sessionCoordinator.getSession(
               plan.sessionId,
             );
             if (session) {

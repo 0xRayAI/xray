@@ -2,16 +2,25 @@
 
 # Get script directory for robust path handling
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PROJECT_ROOT=$(realpath "$SCRIPT_DIR/..")
+PROJECT_ROOT=$(realpath "$SCRIPT_DIR")
+if [ -f "$SCRIPT_DIR/package.json" ] && [ -d "$SCRIPT_DIR/.opencode" ]; then
+    PROJECT_ROOT="$SCRIPT_DIR"
+else
+    PROJECT_ROOT=$(realpath "$SCRIPT_DIR/..")
+fi
 
 # Try to find framework package.json - check source first (dev), then node_modules (consumer)
 # For development, prefer the source version over node_modules
-SOURCE_PACKAGE_JSON="$SCRIPT_DIR/../package.json"
+# Need to handle both root-level and .opencode/ subdirectory runs
+SOURCE_PACKAGE_JSON="$SCRIPT_DIR/package.json"
+if [ ! -f "$SOURCE_PACKAGE_JSON" ] && [ -f "$PROJECT_ROOT/package.json" ]; then
+    SOURCE_PACKAGE_JSON="$PROJECT_ROOT/package.json"
+fi
 NODE_MODULES_PACKAGE_JSON="$PROJECT_ROOT/node_modules/strray-ai/package.json"
 
 if [ -f "$SOURCE_PACKAGE_JSON" ]; then
-    # Development mode: use source version
-    FRAMEWORK_ROOT="$SCRIPT_DIR/.."
+    # Development mode: use source version (project root)
+    FRAMEWORK_ROOT="$PROJECT_ROOT"
 elif [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
     # Consumer mode: use installed version
     FRAMEWORK_ROOT="$PROJECT_ROOT/node_modules/strray-ai"
@@ -53,18 +62,17 @@ NC='\033[0m' # No Color
 
 echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}" && sleep 0.1
 echo -e "${PURPLE}//                                                       //${NC}" && sleep 0.1
-echo -e "${PURPLE}//   ███████╗████████╗██████╗ ██████╗  ██████╗ ██╗   ██╗  //${NC}" && sleep 0.1
-echo -e "${PURPLE}//   ██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝  //${NC}" && sleep 0.1
-echo -e "${PURPLE}//   ███████╗   ██║   ██████╔╝██████╔╝███████║ ╚████╔╝   //${NC}" && sleep 0.1
-echo -e "${PURPLE}//   ╚════██║   ██║   ██╔══██╗██╔══██╗██╔══██║  ╚██╔╝    //${NC}" && sleep 0.1
-echo -e "${PURPLE}//   ███████║   ██║   ██║  ██║██║  ██║██║  ██║   ██║     //${NC}" && sleep 0.1
-echo -e "${PURPLE}//   ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝     //${NC}" && sleep 0.1
+echo -e "${PURPLE}//      ██████╗ ██╗  ██╗██████╗  █████╗ ██╗   ██╗        //${NC}" && sleep 0.1
+echo -e "${PURPLE}//      ██╔══██╗╚██╗██╔╝██╔══██╗██╔══██╗╚██╗ ██╔╝        //${NC}" && sleep 0.1
+echo -e "${PURPLE}//      ██║  ██║ ╚███╔╝ ██████╔╝██║  ██║ ╚████╔╝         //${NC}" && sleep 0.1
+echo -e "${PURPLE}//      ██║  ██║ ██╔██╗ ██╔══██╗███████║  ╚██╔╝          //${NC}" && sleep 0.1
+echo -e "${PURPLE}//      ╚█████╔╝██╔╝ ██╗██║  ██║██╔══██║   ██║           //${NC}" && sleep 0.1
+echo -e "${PURPLE}//       ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝           //${NC}" && sleep 0.1
 echo -e "${PURPLE}//                                                       //${NC}" && sleep 0.1
-echo -e "${PURPLE}//        ⚡ Precision-Guided AI Development ⚡          //${NC}" && sleep 0.1
+echo -e "${PURPLE}//      ⚡ 0xRay: Self-Healing AI Governance OS          //${NC}" && sleep 0.1
 echo -e "${PURPLE}//          Platform • 99.6% Error Prevention            //${NC}" && sleep 0.1
-echo -e "${PURPLE}//                                                       //${NC}" && sleep 0.1
 echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}" && sleep 0.2
-echo -e "${PURPLE}//   🚀 Initializing...                                    //${NC}" && sleep 0.3
+echo -e "${PURPLE}//              🚀 Initializing...                          //${NC}" && sleep 0.3
 echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}" && sleep 0.2
 
 # Quick status - count MCP servers, agents, skills (check both dev and consumer paths)
@@ -82,8 +90,11 @@ if [ "$AGENTS_COUNT" -eq 0 ]; then
     AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/strray-ai/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Skills - check .opencode/skills, then node_modules
+# Skills - check .opencode/skills, then .strray/skills (Hermes), then node_modules
 SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
+if [ "$SKILLS_COUNT" -eq 0 ]; then
+    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.strray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
+fi
 if [ "$SKILLS_COUNT" -eq 0 ]; then
     SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/node_modules/strray-ai/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
@@ -113,7 +124,8 @@ if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ]; then
 fi
 
 echo ""
-echo "⚡ StringRay v$STRRAY_VERSION"
+echo "DEBUG: VERSION=$STRRAY_VERSION PROJECT_ROOT=$PROJECT_ROOT"
+echo "⚡ 0xRay v$STRRAY_VERSION"
 echo "🤖 Agents: $AGENTS_COUNT | ⚙️ MCPs: $MCPS_COUNT | 💡 Skills: $SKILLS_COUNT"
 
 # BootOrchestrator check (check dev and consumer paths)
@@ -134,7 +146,7 @@ echo "✅ Framework ready"
 echo "🔌 Plugin: $PLUGIN_STATUS"
 
 INIT_TIME=$(($(date +%s) - START_TIME))
-log "StrRay initialized in ${INIT_TIME}s"
+log "Framework initialized in ${INIT_TIME}s"
 
 sleep 1
 exit 0

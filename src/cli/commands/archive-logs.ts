@@ -160,7 +160,7 @@ async function main(): Promise<void> {
   const dryRun = args.includes("--dry-run");
   const verbose = args.includes("--verbose");
 
-  console.log("📦 StringRay Log Archive");
+  console.log("📦 0xRay Log Archive");
   console.log("========================");
 
   if (dryRun) {

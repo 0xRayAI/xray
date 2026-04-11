@@ -73,6 +73,20 @@ export class SessionCoordinator {
   }
 
   /**
+   * Get read-only view of all sessions - avoids breaking encapsulation
+   */
+  getSessions(): ReadonlyMap<string, SessionContext> {
+    return new Map(this.sessions);
+  }
+
+  /**
+   * Get a specific session by ID
+   */
+  getSession(sessionId: string): SessionContext | undefined {
+    return this.sessions.get(sessionId);
+  }
+
+  /**
    * Initialize session coordination for a new session
    */
   initializeSession(sessionId: string): {

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * StringRay CLI - Command Line Interface
+ * 0xRay CLI - Command Line Interface
  *
- * Provides commands for installing and managing StringRay framework
+ * Provides commands for installing and managing 0xRay framework
  */
 
 import { Command } from "commander";
@@ -52,15 +52,15 @@ const program = new Command();
 program
   .name("strray-ai")
   .description(
-    "⚡ StringRay ⚡: Bulletproof AI orchestration with systematic error prevention",
+    "0xRay: Bulletproof AI orchestration with systematic error prevention",
   )
   .version(version);
 
 program
   .command("install")
-  .description("Install StringRay framework in the current project")
+  .description("Install 0xRay framework in the current project")
   .action(async () => {
-    console.log("🔧 StringRay CLI: Installing framework...");
+    console.log("🔧 0xRay CLI: Installing framework...");
 
     try {
       // Run the postinstaller script
@@ -79,7 +79,7 @@ program
         cwd: process.cwd(),
       });
 
-      console.log("✅ StringRay framework installed successfully!");
+      console.log("✅ 0xRay framework installed successfully!");
       console.log("");
       console.log("📋 Next steps:");
       console.log("1. Restart OpenCode to load the plugin");
@@ -96,9 +96,9 @@ program
 
 program
   .command("init")
-  .description("Initialize StringRay configuration in the current project")
+  .description("Initialize 0xRay configuration in the current project")
   .action(async () => {
-    console.log("🚀 StringRay CLI: Initializing configuration...");
+    console.log("🚀 0xRay CLI: Initializing configuration...");
 
     try {
       // Run the postinstaller script (same as install)
@@ -117,7 +117,7 @@ program
         cwd: process.cwd(),
       });
 
-      console.log("✅ StringRay configuration initialized!");
+      console.log("✅ 0xRay configuration initialized!");
     } catch (error) {
       console.error(
         "❌ Initialization failed:",
@@ -129,9 +129,9 @@ program
 
 program
   .command("status")
-  .description("Check StringRay framework status")
+  .description("Check 0xRay framework status")
   .action(async () => {
-    console.log("🔍 StringRay CLI: Checking framework status...");
+    console.log("🔍 0xRay CLI: Checking framework status...");
 
     try {
       // Check if required files exist
@@ -158,7 +158,7 @@ program
 
       if (allGood) {
         console.log("");
-        console.log("🎉 StringRay framework is properly configured!");
+        console.log("🎉 0xRay framework is properly configured!");
       } else {
         console.log("");
         console.log(
@@ -176,9 +176,9 @@ program
 
 program
   .command("validate")
-  .description("Validate StringRay framework installation")
+  .description("Validate 0xRay framework installation")
   .action(async () => {
-    console.log("🔬 StringRay CLI: Validating installation...");
+    console.log("🔬 0xRay CLI: Validating installation...");
 
     try {
       // Run the init.sh script to validate
@@ -213,7 +213,7 @@ program
   .command("debug")
   .description("Debug command")
   .action(async () => {
-    console.log("📍 StringRay CLI Debug Info");
+    console.log("📍 0xRay CLI Debug Info");
     console.log("   packageRoot:", packageRoot);
     console.log("   cwd:", process.cwd());
   });
@@ -221,9 +221,9 @@ program
 program
   .command("capabilities")
   .alias("caps")
-  .description("Show all available StringRay framework capabilities")
+  .description("Show all available 0xRay framework capabilities")
   .action(async () => {
-    console.log("🚀 StringRay Framework Capabilities");
+    console.log("🚀 0xRay Framework Capabilities");
     console.log("=====================================");
     console.log("");
 
@@ -303,7 +303,7 @@ program
   .alias("check")
   .description("Check framework health and system status")
   .action(async () => {
-    console.log("🏥 StringRay Framework Health Check");
+    console.log("🏥 0xRay Framework Health Check");
     console.log("====================================");
     console.log("");
 
@@ -434,7 +434,7 @@ program
               ? "session"
               : reportType;
 
-    console.log(`📊 StringRay Framework Report: ${label}`);
+    console.log(`📊 0xRay Framework Report: ${label}`);
     console.log("==========================================");
     console.log("");
 
@@ -478,7 +478,7 @@ program
     "Automatically fix common framework issues by running the postinstall setup",
   )
   .action(async () => {
-    console.log("🔧 StringRay Framework Fix");
+    console.log("🔧 0xRay Framework Fix");
     console.log("===========================");
     console.log("");
 
@@ -525,14 +525,14 @@ program
 // Analytics command - pattern analysis, insights, and consent management
 program
   .command("analytics")
-  .description("StringRay Central Analytics - Pattern analysis, insights, and consent management\n" +
+  .description("0xRay Central Analytics - Pattern analysis, insights, and consent management\n" +
                "  In v1.7.2+: Includes consent management with granular control\n" +
                "  Use 'npx strray-ai analytics enable' to opt-in to data sharing\n" +
                "  Core classes: ConsentManager, AnonymizationEngine available programmatically")
   .option("-l, --limit <number>", "Limit analysis to last N task completions")
   .option("-o, --output <file>", "Save report to file")
   .action(async (opts) => {
-    console.log("📊 StringRay Pattern Analytics");
+    console.log("📊 0xRay Pattern Analytics");
     console.log("==============================");
     console.log("");
 
@@ -593,7 +593,7 @@ program
   .command("doctor")
   .description("Diagnose framework issues (does not fix them)")
   .action(async () => {
-    console.log("🩺 StringRay Framework Doctor");
+    console.log("🩺 0xRay Framework Doctor");
     console.log("===============================");
     console.log("");
 
@@ -620,10 +620,10 @@ program
         path.join(process.cwd(), "node_modules", "strray-ai"),
       );
       if (!packageExists) {
-        issues.push("StringRay package not installed");
+        issues.push("0xRay package not installed");
         fixes.push("Run: npm install strray-ai");
       } else {
-        console.log("✅ StringRay package installed");
+        console.log("✅ 0xRay package installed");
       }
 
       // Check configuration - check for opencode.json or .strray/ (headless mode)
@@ -687,7 +687,7 @@ program
   .option("--dry-run", "Show what would be archived without making changes")
   .option("-v, --verbose", "Verbose output")
   .action(async (opts) => {
-    console.log("📦 StringRay Log Archive");
+    console.log("📦 0xRay Log Archive");
     console.log("========================");
     
     if (opts.dryRun) {
@@ -727,7 +727,7 @@ program
   .option('--dry-run', 'Show what would change without applying')
   .option('-v, --verbose', 'Verbose output')
   .action(async (options) => {
-    console.log('🚀 StringRay Inference Improvement');
+    console.log('🚀 0xRay Inference Improvement');
     console.log('=================================');
     console.log('');
 
@@ -921,10 +921,10 @@ program
 // Plugin management command
 program
   .command('plugin')
-  .description('Manage StringRay plugins')
+  .description('Manage 0xRay plugins')
   .action(async () => {
     console.log(`
-📦 StringRay Plugin Management
+📦 0xRay Plugin Management
 
 Usage: npx strray-ai plugin <command>
 
@@ -1002,7 +1002,7 @@ program.addHelpText(
   `
 
 Examples:
-    $ npx strray-ai install       # Install StringRay in current project
+    $ npx strray-ai install       # Install 0xRay in current project
     $ npx strray-ai init          # Initialize configuration
     $ npx strray-ai status        # Check installation status
     $ npx strray-ai validate      # Validate framework setup

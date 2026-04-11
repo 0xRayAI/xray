@@ -213,7 +213,7 @@ export async function storytellerCommand(
   }
 
   if (!storyType || !STORY_TYPES.includes(storyType as StoryType)) {
-    console.log("📖 StringRay Storyteller");
+    console.log("📖 0xRay Storyteller");
     console.log("========================");
     console.log("");
     console.log("Usage: npx strray-ai storyteller <type> [title]");
@@ -254,7 +254,7 @@ ${changedFiles}
   const prompt = generatePrompt(type, title, meta, context, config);
   const outputPath = options?.output || getOutputPath(type, title, meta);
 
-  console.log("📖 StringRay Storyteller");
+  console.log("📖 0xRay Storyteller");
   console.log("========================");
   console.log("");
   console.log(`Type: ${type}`);

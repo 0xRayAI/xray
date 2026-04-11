@@ -144,7 +144,7 @@ export async function publishAgentCommand(): Promise<void> {
 
   console.log("");
   console.log("╔══════════════════════════════════════════════════╗");
-  console.log("║           StringRay Agent Publisher            ║");
+  console.log("║           0xRay Agent Publisher            ║");
   console.log("╚══════════════════════════════════════════════════╝");
   console.log("");
 

@@ -20,7 +20,7 @@ const PLUGINS_DIR = ".strray/plugins";
 const CONFIG_PATH = ".strray/config/plugin-config.json";
 
 export async function pluginListCommand(): Promise<void> {
-  console.log("\n📦 StringRay Plugins\n");
+  console.log("\n📦 0xRay Plugins\n");
   console.log("═".repeat(60));
 
   if (!fs.existsSync(PLUGINS_DIR)) {

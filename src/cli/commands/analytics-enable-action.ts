@@ -1,7 +1,7 @@
 /**
  * Analytics Enable Action
  *
- * Enables StringRay Central Analytics with opt-in consent
+ * Enables 0xRay Central Analytics with opt-in consent
  *
  * Usage: npx strray-ai analytics enable [--categories reflections,logs,metrics,patterns]
  */
@@ -9,7 +9,7 @@
 import { ConsentManager } from "../../analytics/consent-manager.js";
 
 export async function analyticsEnableAction(options: any) {
-    console.log("🔓 Enabling StringRay Central Analytics...\n");
+    console.log("🔓 Enabling 0xRay Central Analytics...\n");
 
     try {
         const consentManager = new ConsentManager();
@@ -43,7 +43,7 @@ export async function analyticsEnableAction(options: any) {
 
         // Confirmation
         if (!options.yes) {
-            console.log(`\n⚠️  This will enable anonymous data submission to StringRay Central Analytics.`);
+            console.log(`\n⚠️  This will enable anonymous data submission to 0xRay Central Analytics.`);
             console.log(`   • Data is anonymized before submission`);
             console.log(`   • You can disable anytime with: npx strray-ai analytics disable`);
             console.log(`   • Preview what would be submitted: npx strray-ai analytics preview`);
