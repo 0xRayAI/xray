@@ -6,11 +6,11 @@ sidebar_position: 71
 tags: ["reflection"]
 ---
 
-# StringRay Routing Architecture: Deep Analysis & Fit-for-Purpose Plan
+# 0xRay Routing Architecture: Deep Analysis & Fit-for-Purpose Plan
 
 ## The Problem Statement
 
-StringRay was built because LLMs are terrible at multi-faceted analysis and routing.
+0xRay was built because LLMs are terrible at multi-faceted analysis and routing.
 The framework should observe tool calls, learn what works, and improve routing over time.
 Right now, **it doesn't** — and here's why.
 
@@ -21,17 +21,17 @@ Right now, **it doesn't** — and here's why.
 ### Layer 1: The LLM Itself (Hermes / OpenCode)
 
 **What happens**: The LLM receives the user prompt and decides which tool to call.
-This is the PRIMARY routing decision — and StringRay has NO influence over it.
+This is the PRIMARY routing decision — and 0xRay has NO influence over it.
 
 **Injection points**:
-- OpenCode: `experimental.chat.system.transform` — replaces the system prompt with a lean StringRay identity (3K token budget). This injects awareness of the framework's existence but contains ZERO routing instructions. No "for security tasks, use @security-auditor" guidance. Nothing.
+- OpenCode: `experimental.chat.system.transform` — replaces the system prompt with a lean 0xRay identity (3K token budget). This injects awareness of the framework's existence but contains ZERO routing instructions. No "for security tasks, use @security-auditor" guidance. Nothing.
 - Hermes: No system prompt injection at all. The Hermes plugin registers `pre_tool_call` and `post_tool_call` hooks, but these fire AFTER the LLM already decided which tool to call.
 
-**Conclusion**: The LLM decides routing based purely on its own training and the tool descriptions in the function schema. StringRay is invisible to this decision.
+**Conclusion**: The LLM decides routing based purely on its own training and the tool descriptions in the function schema. 0xRay is invisible to this decision.
 
 ### Layer 2: The Plugin Hooks (Quality Gate)
 
-**What happens**: AFTER the LLM picks a tool, StringRay's hooks fire:
+**What happens**: AFTER the LLM picks a tool, 0xRay's hooks fire:
 - `pre_tool_call`: Logs the event, runs quality gate (enforcer validation), runs pre-processors
 - `post_tool_call`: Logs the event, runs post-processors, records outcome for analytics
 
@@ -101,7 +101,7 @@ Does not exist. The inference tuner has the code to create it but never has enou
 
 ## Root Cause: Fundamental Architecture Mismatch
 
-The problem isn't a bug — it's architectural. StringRay has three separate systems that don't connect:
+The problem isn't a bug — it's architectural. 0xRay has three separate systems that don't connect:
 
 1. **Observation system** (plugin hooks) — watches what happens, records it
 2. **Analysis system** (analytics pipeline) — processes observations, generates insights
@@ -109,7 +109,7 @@ The problem isn't a bug — it's architectural. StringRay has three separate sys
 
 The observation and analysis systems are connected (outcomes → analytics). But the action system is disconnected from both.
 
-Why? Because **the LLM is the router, not StringRay**. And that was a deliberate decision — someone (correctly) observed that OpenCode/Hermes already handles routing via tool selection. So StringRay stepped back from routing.
+Why? Because **the LLM is the router, not 0xRay**. And that was a deliberate decision — someone (correctly) observed that OpenCode/Hermes already handles routing via tool selection. So 0xRay stepped back from routing.
 
 But then nobody filled the gap. The LLM's routing capability is limited to:
 1. Reading tool descriptions in the function schema
@@ -120,7 +120,7 @@ But then nobody filled the gap. The LLM's routing capability is limited to:
 
 ## What "Learning Over Time" Actually Requires
 
-For StringRay to genuinely improve routing over time, it needs:
+For 0xRay to genuinely improve routing over time, it needs:
 
 ### A. The feedback loop must be CLOSED
 Currently: observe → analyze → suggest → (nothing)
@@ -134,7 +134,7 @@ The LLM makes routing decisions based on:
 - Tool descriptions in the function schema
 - Conversation history
 
-StringRay can influence routing by:
+0xRay can influence routing by:
 1. **System prompt injection** — "For security-related tasks, prefer mcp_strray_security_scan_security_scan over terminal commands" — but the current system prompt is just a 3K identity banner
 2. **Dynamic tool descriptions** — If the plugin could modify tool descriptions based on learned patterns, the LLM would pick better tools
 3. **Context injection in conversation** — Before the LLM responds, inject "Last 5 similar tasks used X tool with Y% success rate" — but this requires a hook that fires BEFORE the LLM generates, not after
@@ -183,13 +183,13 @@ This is the key architectural change. Instead of trying to override the LLM's ro
 
 ### Phase 3: Multi-faceted routing (the original vision)
 
-**Problem**: The LLM picks ONE tool/skill per turn. StringRay's multi-agent orchestration exists but is never triggered.
+**Problem**: The LLM picks ONE tool/skill per turn. 0xRay's multi-agent orchestration exists but is never triggered.
 **Fix**: 
 - When the routing hint detects a complex task (multiple facets), suggest a skill chain: "This task involves security + testing. Consider running security scan first, then tests."
 - The orchestrator MCP server should be invoked via tool call for complex tasks
 - The `determineAgents()` logic should be promoted from dead code to the routing hint generator
 
-**Key insight**: Don't try to make StringRay the router. Make StringRay the ADVISOR. The LLM still makes the final call, but it now has better information.
+**Key insight**: Don't try to make 0xRay the router. Make 0xRay the ADVISOR. The LLM still makes the final call, but it now has better information.
 
 ### Phase 4: Cross-instance learning
 

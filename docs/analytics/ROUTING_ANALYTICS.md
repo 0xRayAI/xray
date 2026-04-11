@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the three new analytics components implemented for the StringRay framework to enhance the task-skill-router system with data-driven insights and automated optimization.
+This document describes the three new analytics components implemented for the 0xRay framework to enhance the task-skill-router system with data-driven insights and automated optimization.
 
 ## Components
 
@@ -247,4 +247,4 @@ Potential improvements for future versions:
 
 - **Version**: 1.0.0
 - **Date**: 2026-03-05
-- **StringRay Framework Version**: 1.7.2
+- **0xRay Framework Version**: 1.7.2

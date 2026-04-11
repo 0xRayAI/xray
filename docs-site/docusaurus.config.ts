@@ -3,7 +3,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'StringRay',
+  title: '0xRay',
   tagline: 'Enterprise AI Orchestration Framework',
   favicon: 'img/favicon.ico',
   url: 'https://htafolla.github.io',
@@ -41,9 +41,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'StringRay',
+      title: '0xRay',
       logo: {
-        alt: 'StringRay Logo',
+        alt: '0xRay Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -94,7 +94,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} StringRay. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} 0xRay. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

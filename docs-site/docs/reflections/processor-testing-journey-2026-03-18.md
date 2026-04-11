@@ -7,7 +7,7 @@ tags: ["reflection"]
 date: 2026-03-18
 ---
 
-# The Shape of a System: A Reflection on the StringRay Processor Journey
+# The Shape of a System: A Reflection on the 0xRay Processor Journey
 
 **Date:** March 18, 2026  
 **Session:** ses_2fe2366beffeqy154d0NTj3YLY

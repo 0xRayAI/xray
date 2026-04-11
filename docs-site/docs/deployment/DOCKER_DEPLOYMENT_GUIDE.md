@@ -5,14 +5,14 @@ sidebar_label: "DOCKER DEPLOYMENT GUIDE"
 sidebar_position: 2
 ---
 
-# StrRay Framework - Docker & Kubernetes Deployment Guide
+# 0xRay Framework - Docker & Kubernetes Deployment Guide
 
 **Version**: v1.15.1  
 **Last Updated**: March 2026
 
 ## Overview
 
-This guide provides comprehensive instructions for deploying the StrRay Framework v1.15.1 using Docker and Kubernetes in production environments.
+This guide provides comprehensive instructions for deploying the 0xRay Framework v1.15.1 using Docker and Kubernetes in production environments.
 
 ## What's New in v1.15.1
 
@@ -46,7 +46,7 @@ Due to 32% memory usage reduction, lower resource requirements:
 ### Container Architecture
 
 ```
-StrRay Framework Container Stack
+0xRay Framework Container Stack
 ├── strray-app (Main application)
 ├── strray-mcp-servers (MCP server pool)
 ├── strray-monitoring (Prometheus/Grafana)
@@ -336,7 +336,7 @@ keywords:
   - enterprise
 home: https://github.com/strray-framework
 maintainers:
-  - name: StrRay Team
+  - name: 0xRay Team
     email: team@strray.dev
 ```
 
@@ -447,7 +447,7 @@ monitoring:
     enabled: true
     adminPassword: ""
 
-# StrRay specific configuration
+# 0xRay specific configuration
 strray:
   # API Keys
   openaiApiKey: ""
@@ -973,7 +973,7 @@ Create a Grafana dashboard configuration:
 ```json
 {
   "dashboard": {
-    "title": "StrRay Framework Overview",
+    "title": "0xRay Framework Overview",
     "tags": ["strray", "ai", "agents"],
     "timezone": "browser",
     "panels": [
@@ -1312,5 +1312,5 @@ caching:
     maxSize: 100000
 ```
 
-This deployment guide provides a comprehensive production-ready setup for the StrRay Framework with high availability, security, and monitoring capabilities.</content>
+This deployment guide provides a comprehensive production-ready setup for the 0xRay Framework with high availability, security, and monitoring capabilities.</content>
 </xai:function_call">Successfully wrote to src/docs/DOCKER_DEPLOYMENT_GUIDE.md

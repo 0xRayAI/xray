@@ -63,7 +63,7 @@ Start with a scene that establishes the "Ordinary World":
 ```markdown
 # The [Descriptive Title]
 
-**Deep Saga | [Date] | StringRay v[X.X.X]**
+**Deep Saga | [Date] | 0xRay v[X.X.X]**
 
 ---
 
@@ -113,7 +113,7 @@ Only add chapter headers when the story naturally divides:
 
 ## What Next?
 
-- Read about [StringRay Codex Terms](../../.opencode/strray/codex.json)
+- Read about [0xRay Codex Terms](../../.opencode/strray/codex.json)
 - Explore [other stories](./)
 - Invoke @storyteller to document your saga
 ```

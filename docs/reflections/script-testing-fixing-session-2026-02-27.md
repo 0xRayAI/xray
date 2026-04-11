@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This reflection documents a 3+ hour session systematically testing and fixing scripts across the StringRay framework. The work involved renaming ESM scripts from .js to .mjs extensions, adding safety protections to dangerous scripts, fixing path issues, and resolving test failures. Through this process I learned that local development environments hide many compatibility issues that only surface in different contexts - the key lesson: always test scripts in isolation, not just in the dev environment.
+This reflection documents a 3+ hour session systematically testing and fixing scripts across the 0xRay framework. The work involved renaming ESM scripts from .js to .mjs extensions, adding safety protections to dangerous scripts, fixing path issues, and resolving test failures. Through this process I learned that local development environments hide many compatibility issues that only surface in different contexts - the key lesson: always test scripts in isolation, not just in the dev environment.
 
 ---
 
@@ -131,7 +131,7 @@ if (!process.argv.includes('--force')) {
 expect(content).toContain("Project Agents Guide");
 
 // After:
-expect(content).toContain("StringRay");
+expect(content).toContain("0xRay");
 expect(content).toContain("Available Agents");
 ```
 

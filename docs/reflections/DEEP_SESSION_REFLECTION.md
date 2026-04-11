@@ -173,7 +173,7 @@ This wasn't theoretical. We lived it. 9+ iterations of "is it done?" before we f
 └─────────────────────────────────────────┘
 
 Most projects: Too much unit testing, not enough pipeline testing
-StringRay had the same problem
+0xRay had the same problem
 ```
 
 ### 2. The Iteration Loop is Non-Negotiable
@@ -212,7 +212,7 @@ This constraint actually helped us crystallize the methodology.
 
 ```
 ┌─────────────────────────────────────────┐
-│ StringRay Pipelines                      │
+│ 0xRay Pipelines                      │
 ├─────────────────────────────────────────┤
 │ Inference Pipeline                       │
 │ Governance Pipeline                       │
@@ -271,7 +271,7 @@ We didn't have:
 
 ## The New Standard
 
-For every pipeline in StringRay:
+For every pipeline in 0xRay:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -377,7 +377,7 @@ After 9+ iterations, running the complete pipeline test multiple times, and find
 Needs pipeline test
 ```
 
-**Is StringRay tested?**
+**Is 0xRay tested?**
 
 ```
 Unit Tests: ✅ 2521 passing
@@ -407,7 +407,7 @@ The next time you ask "is this done?", remember:
 ---
 
 **Session End**
-**Contributors**: Human + AI (StringRay)
+**Contributors**: Human + AI (0xRay)
 **Outcome**: Working inference pipeline, new methodology, documented learning
 **Status**: Context window near limits, but pipeline verified complete
 

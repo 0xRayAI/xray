@@ -8,7 +8,7 @@
 
 ## 🌅 The Journey in Retrospective
 
-The session began with a simple request to improve AGENTS-consumer.md but evolved into a comprehensive exploration of StringRay's documentation ecosystem, reflection strategy, and script architecture. This revealed important gaps in how consumers understand what they have and how to learn from development sessions.
+The session began with a simple request to improve AGENTS-consumer.md but evolved into a comprehensive exploration of 0xRay's documentation ecosystem, reflection strategy, and script architecture. This revealed important gaps in how consumers understand what they have and how to learn from development sessions.
 
 ### The Initial Request
 
@@ -17,14 +17,14 @@ The user asked to "add a few bugs" to AGENTS-consumer.md - specifically:
 2. Note where reflection templates are located
 3. Review consumer agents.md content
 
-On the surface, this seemed straightforward - add missing documentation about basic StringRay operations.
+On the surface, this seemed straightforward - add missing documentation about basic 0xRay operations.
 
 ### What Became a Deep Investigation
 
 As we explored the codebase and architecture, we discovered:
 
 1. **Documentation ecosystem complexity** - Multiple files with similar purposes in different locations
-2. **Plugin architecture misunderstanding** - How OpenCode plugins integrate with StringRay
+2. **Plugin architecture misunderstanding** - How OpenCode plugins integrate with 0xRay
 3. **Consumer experience gaps** - What happens when someone installs strray-ai in their project
 4. **Reflection strategy missing** - No clear guidance on how to create and use reflection documents
 5. **Script documentation gaps** - No explanation of utility scripts and their purposes
@@ -106,7 +106,7 @@ logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
 
 AGENTS-consumer.md serves as the **primary reference** for consumers, but has critical gaps:
 
-1. **No "How StringRay Works" section** - Basic operation guide missing
+1. **No "How 0xRay Works" section** - Basic operation guide missing
 2. **No reflection template location** - Users don't know where to find detailed journey docs
 3. **No consumer vs dev differences** - Consumers may think their experience is the "normal" one
 4. **No plugin behavior documentation** - What happens when plugin is inactive
@@ -115,11 +115,11 @@ AGENTS-consumer.md serves as the **primary reference** for consumers, but has cr
 ### Why This Matters
 
 When someone installs `strray-ai` as a dependency in their project:
-- They get a minimal AGENTS.md without the "How StringRay Works" section
+- They get a minimal AGENTS.md without the "How 0xRay Works" section
 - They don't know about reflection documents
 - They don't understand why agents might behave differently than documented
 - They can't troubleshoot issues effectively
-- They can't learn from StringRay development journeys
+- They can't learn from 0xRay development journeys
 
 ---
 
@@ -164,7 +164,7 @@ This reveals:
 ### Immediate Improvements Needed
 
 1. **Add to AGENTS-consumer.md**:
-   - "How StringRay Works" section covering plugin behavior
+   - "How 0xRay Works" section covering plugin behavior
    - Reflection template location guidance
    - Development vs consumer experience explanation
    - Plugin configuration options (if any exist)
@@ -250,7 +250,7 @@ Special recognition to the **user's insight about agent touchpoints** - this sin
 
 ## 🌟 Final Thoughts
 
-The AGENTS-consumer.md update journey revealed that **documentation strategy is as important as the code it documents**. When users install StringRay in their projects, they need:
+The AGENTS-consumer.md update journey revealed that **documentation strategy is as important as the code it documents**. When users install 0xRay in their projects, they need:
 
 1. **Clear understanding** of what to expect and how the system works
 2. **Access to guidance** on troubleshooting and configuration
@@ -265,7 +265,7 @@ The **current approach** (minimal consumer docs) works but creates confusion. Th
 - Clear guidance on reflection documentation and learning journeys
 - Transparent explanation of plugin behavior and mode differences
 
-As we look toward future StringRay releases, the goal should be: **not just to provide good code, but to provide good documentation that enables users to understand, troubleshoot, and extend the system effectively**.
+As we look toward future 0xRay releases, the goal should be: **not just to provide good code, but to provide good documentation that enables users to understand, troubleshoot, and extend the system effectively**.
 
 ---
 
@@ -273,7 +273,7 @@ As we look toward future StringRay releases, the goal should be: **not just to p
 - Documentation files analyzed: 3 (AGENTS.md, AGENTS-consumer.md, reflection docs)
 - Script locations identified: scripts/, .opencode/hooks/
 - Plugin architecture reviewed: strray-codex-injection.js
-- Missing sections identified: "How StringRay Works", script documentation
+- Missing sections identified: "How 0xRay Works", script documentation
 - User concerns addressed: Plugin behavior, consumer vs dev differences
 
 **Next Steps**: Add missing sections to AGENTS-consumer.md, create comprehensive script documentation

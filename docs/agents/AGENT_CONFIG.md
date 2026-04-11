@@ -1,12 +1,12 @@
 # Agent Configuration Guide
 
-This guide explains how to configure agents in your `opencode.json` for StringRay v1.15.1.
+This guide explains how to configure agents in your `opencode.json` for 0xRay v1.15.1.
 
 ---
 
 ## What's New in v1.15.1
 
-StringRay v1.15.1 introduces a **Facade Pattern** architecture for improved maintainability and performance:
+0xRay v1.15.1 introduces a **Facade Pattern** architecture for improved maintainability and performance:
 
 **Architecture Changes:**
 - **87% Code Reduction**: 8,230 → 1,218 lines (3,170 lines dead code removed)
@@ -25,11 +25,11 @@ No migration needed - your existing `opencode.json` configuration continues to w
 
 ## Default Configuration
 
-StringRay automatically configures these core agents when you install `strray-ai`. The postinstall script copies `opencode.json` to your project root with all agents enabled by default.
+0xRay automatically configures these core agents when you install `strray-ai`. The postinstall script copies `opencode.json` to your project root with all agents enabled by default.
 
 ## Copy-Paste Agent Configuration
 
-Add this section to your `opencode.json` to enable all 27 StringRay agents:
+Add this section to your `opencode.json` to enable all 27 0xRay agents:
 
 ```json
 "agent": {
@@ -157,7 +157,7 @@ Add this section to your `opencode.json` to enable all 27 StringRay agents:
 
 ## Core Agents (All 27)
 
-These 25 agents form the complete StringRay framework v1.15.1:
+These 25 agents form the complete 0xRay framework v1.15.1:
 
 ### Primary Agent
 | Agent | Purpose | Recommended Mode |
@@ -291,7 +291,7 @@ To disable an agent, set `disable: true`:
 
 ## Architecture Notes (v1.15.1 Facade Pattern)
 
-StringRay v1.15.1 uses a **Facade Pattern** architecture:
+0xRay v1.15.1 uses a **Facade Pattern** architecture:
 
 ### Facade Benefits
 - **Simplified Configuration**: Clean APIs hide internal complexity

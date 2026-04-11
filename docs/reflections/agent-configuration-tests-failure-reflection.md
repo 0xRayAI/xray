@@ -16,7 +16,7 @@ This reflection documents the debugging session where we discovered that our ext
 ### 2.1 What Was (The Struggle)
 
 **Initial Assumption:** 
-I believed that because our test suite showed 374 passing tests, the codebase was fundamentally sound. The StringRay Framework claimed 99.6% error prevention through "systematic validation" - surely our infrastructure was robust.
+I believed that because our test suite showed 374 passing tests, the codebase was fundamentally sound. The 0xRay Framework claimed 99.6% error prevention through "systematic validation" - surely our infrastructure was robust.
 
 **The Reality:**
 - 25 agents missing from `opencode.json` (database-engineer, devops-engineer, backend-engineer, frontend-engineer, performance-engineer, mobile-developer)

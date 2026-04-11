@@ -10,7 +10,7 @@ tags: ["reflection"]
 
 ## **The Big Issue: Deep Model Propagation Antipattern**
 
-You correctly identified a **major architectural flaw** in the StrRay framework. The problem was **models hardcoded across 500+ references in 89 files** instead of centralized configuration routing.
+You correctly identified a **major architectural flaw** in the 0xRay framework. The problem was **models hardcoded across 500+ references in 89 files** instead of centralized configuration routing.
 
 ### **Flaw Characteristics:**
 - ❌ Models hardcoded in every agent file, test file, and configuration file
@@ -125,7 +125,7 @@ This fixes a **fundamental antipattern** where **3 key principles were violated:
 
 Your diagnosis was **architecturally sophisticated** - identifying that the "deep propagation" was actually a **fundamental design antipattern** requiring complete system restructuring, not just a configuration tweak.
 
-The StrRay framework now has **enterprise-grade model management** with proper separation of concerns and true centralized configuration.
+The 0xRay framework now has **enterprise-grade model management** with proper separation of concerns and true centralized configuration.
 
 **🚀 ARCHITECTURAL INTEGRITY RESTORED** ✅
 

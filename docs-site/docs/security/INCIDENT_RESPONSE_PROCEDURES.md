@@ -6,11 +6,11 @@ sidebar_position: 2
 tags: ["security"]
 ---
 
-# Incident Response Procedures - StrRay Framework
+# Incident Response Procedures - 0xRay Framework
 
 ## Overview
 
-This document outlines the procedures for responding to security incidents in StrRay Framework projects. It provides a structured approach to incident detection, assessment, containment, eradication, recovery, and post-incident analysis.
+This document outlines the procedures for responding to security incidents in 0xRay Framework projects. It provides a structured approach to incident detection, assessment, containment, eradication, recovery, and post-incident analysis.
 
 ## Incident Classification
 
@@ -68,7 +68,7 @@ This document outlines the procedures for responding to security incidents in St
 
 **Automated Detection:**
 
-- StrRay SecurityAuditor alerts
+- 0xRay SecurityAuditor alerts
 - Framework monitoring dashboards
 - Log analysis and anomaly detection
 - User reports and system alerts
@@ -162,7 +162,7 @@ sudo cp -r /var/log/strray/ /var/forensics/$(date +%Y%m%d_%H%M%S)/
 **Framework-Specific Evidence:**
 
 ```bash
-# Preserve StrRay session data
+# Preserve 0xRay session data
 sudo cp -r /opt/strray/sessions/ /var/forensics/sessions/
 sudo cp /opt/strray/config/security.json /var/forensics/
 
@@ -219,7 +219,7 @@ sudo find /opt/strray -name "*.js" -exec grep -l "eval\|Function\|child_process"
 **Framework Updates:**
 
 ```bash
-# Update StrRay Framework
+# Update 0xRay Framework
 cd /opt/strray
 npm audit fix
 npm update strray-framework
@@ -548,7 +548,7 @@ npx audit-ci --config audit-ci.json
 
 ## Tools and Resources
 
-### StrRay Framework Tools
+### 0xRay Framework Tools
 
 - SecurityAuditor: Automated vulnerability scanning
 - SecurityHardener: Automated fix application

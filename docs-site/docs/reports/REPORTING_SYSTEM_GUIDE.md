@@ -5,11 +5,11 @@ sidebar_label: "REPORTING SYSTEM GUIDE"
 sidebar_position: 1
 ---
 
-# StrRay Framework - On-Demand Reporting System
+# 0xRay Framework - On-Demand Reporting System
 
 ## 🎯 Overview
 
-The StrRay Framework includes a comprehensive **on-demand reporting system** that generates detailed analyses of framework operations, agent orchestration, and system performance. This system allows you to create reports programmatically whenever needed, providing deep insights into framework behavior and agent activities.
+The 0xRay Framework includes a comprehensive **on-demand reporting system** that generates detailed analyses of framework operations, agent orchestration, and system performance. This system allows you to create reports programmatically whenever needed, providing deep insights into framework behavior and agent activities.
 
 ## 📊 Report Types
 
@@ -303,7 +303,7 @@ The reporting system includes built-in monitoring:
 
 ## 🔄 Integration with Framework
 
-The reporting system integrates seamlessly with the StrRay Framework:
+The reporting system integrates seamlessly with the 0xRay Framework:
 
 - **Log Integration**: Uses framework logger for data collection
 - **State Awareness**: Accesses framework state for real-time metrics
@@ -358,4 +358,4 @@ The reporting system integrates seamlessly with the StrRay Framework:
    npx tsx src/reporting/framework-reporting-system.ts full-analysis json ./custom-report.json
    ```
 
-The reporting system provides comprehensive, on-demand insights into your StrRay Framework operations, enabling data-driven optimization and monitoring of your AI orchestration platform. 📊🚀✨
+The reporting system provides comprehensive, on-demand insights into your 0xRay Framework operations, enabling data-driven optimization and monitoring of your AI orchestration platform. 📊🚀✨

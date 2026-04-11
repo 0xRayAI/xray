@@ -5,7 +5,7 @@ sidebar_label: "ENTERPRISE DEPLOYMENT GUIDE"
 sidebar_position: 3
 ---
 
-# StrRay Framework - Enterprise Deployment Guide
+# 0xRay Framework - Enterprise Deployment Guide
 
 **Version**: v1.15.1  
 **Last Updated**: March 2026  
@@ -47,7 +47,7 @@ sidebar_position: 3
 
 ## Deployment Overview
 
-The StrRay Framework supports multiple deployment strategies for enterprise environments, from simple Docker containers to complex Kubernetes orchestrations with high availability.
+The 0xRay Framework supports multiple deployment strategies for enterprise environments, from simple Docker containers to complex Kubernetes orchestrations with high availability.
 
 ### Deployment Options
 
@@ -65,7 +65,7 @@ The StrRay Framework supports multiple deployment strategies for enterprise envi
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │                API Gateway                           │    │
 │  │  ┌─────────────┬─────────────┬─────────────┐        │    │
-│  │  │   StrRay    │   StrRay    │   StrRay    │        │    │
+│  │  │   0xRay    │   0xRay    │   0xRay    │        │    │
 │  │  │ Framework   │ Framework   │ Framework   │        │    │
 │  │  │ Instance 1  │ Instance 2  │ Instance 3  │        │    │
 │  │  └─────────────┴─────────────┴─────────────┘        │    │
@@ -663,7 +663,7 @@ spec:
 
 ```yaml
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "StrRay Framework AWS Deployment"
+Description: "0xRay Framework AWS Deployment"
 
 Parameters:
   InstanceType:
@@ -675,7 +675,7 @@ Parameters:
     Description: SSH key pair name
 
 Resources:
-  StrRayVPC:
+  0xRayVPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/16
@@ -685,8 +685,8 @@ Resources:
   StrraySecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for StrRay Framework
-      VpcId: !Ref StrRayVPC
+      GroupDescription: Security group for 0xRay Framework
+      VpcId: !Ref 0xRayVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -701,7 +701,7 @@ Resources:
           ToPort: 443
           CidrIp: 0.0.0.0/0
 
-  StrRayLaunchTemplate:
+  0xRayLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateName: strray-launch-template
@@ -726,11 +726,11 @@ Resources:
             npm run build
             pm2 start dist/server.js --name strray
 
-  StrRayAutoScalingGroup:
+  0xRayAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       LaunchTemplate:
-        LaunchTemplateId: !Ref StrRayLaunchTemplate
+        LaunchTemplateId: !Ref 0xRayLaunchTemplate
         Version: "1"
       MinSize: "2"
       MaxSize: "10"
@@ -741,7 +741,7 @@ Resources:
       HealthCheckType: EC2
       HealthCheckGracePeriod: 300
 
-  StrRayLoadBalancer:
+  0xRayLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Type: application
@@ -749,30 +749,30 @@ Resources:
       SecurityGroups:
         - !Ref StrraySecurityGroup
 
-  StrRayTargetGroup:
+  0xRayTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Protocol: HTTP
       Port: 3000
-      VpcId: !Ref StrRayVPC
+      VpcId: !Ref 0xRayVPC
       HealthCheckPath: /api/status
 
-  StrRayListener:
+  0xRayListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-      LoadBalancerArn: !Ref StrRayLoadBalancer
+      LoadBalancerArn: !Ref 0xRayLoadBalancer
       Protocol: HTTP
       Port: 80
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref StrRayTargetGroup
+          TargetGroupArn: !Ref 0xRayTargetGroup
 
 Outputs:
   LoadBalancerDNS:
     Description: DNS name of the load balancer
-    Value: !GetAtt StrRayLoadBalancer.DNSName
+    Value: !GetAtt 0xRayLoadBalancer.DNSName
     Export:
-      Name: StrRayLoadBalancerDNS
+      Name: 0xRayLoadBalancerDNS
 ```
 
 #### AWS Fargate Deployment
@@ -1080,14 +1080,14 @@ scrape_configs:
 groups:
   - name: strray
     rules:
-      - alert: StrRayDown
+      - alert: 0xRayDown
         expr: up{job="strray-framework"} == 0
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "StrRay Framework is down"
-          description: "StrRay Framework has been down for more than 5 minutes."
+          summary: "0xRay Framework is down"
+          description: "0xRay Framework has been down for more than 5 minutes."
 
       - alert: HighErrorRate
         expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
@@ -1113,7 +1113,7 @@ groups:
 #### Installation
 
 ```bash
-# Add StrRay dashboard to Grafana
+# Add 0xRay dashboard to Grafana
 curl -X POST -H "Content-Type: application/json" \
   -d @strray-dashboard.json \
   http://admin:admin@localhost:3000/api/dashboards/db
@@ -1124,7 +1124,7 @@ curl -X POST -H "Content-Type: application/json" \
 ```json
 {
   "dashboard": {
-    "title": "StrRay Framework Overview",
+    "title": "0xRay Framework Overview",
     "panels": [
       {
         "title": "Request Rate",
@@ -1377,20 +1377,20 @@ export async function getUserById(id: number) {
 ```yaml
 # AWS CloudFront distribution for static assets
 Resources:
-  StrRayCloudFront:
+  0xRayCloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Origins:
           - DomainName: strray-api.example.com
-            Id: StrRayAPI
+            Id: 0xRayAPI
             CustomOriginConfig:
               HTTPPort: 80
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
         Enabled: true
         DefaultCacheBehavior:
-          TargetOriginId: StrRayAPI
+          TargetOriginId: 0xRayAPI
           ViewerProtocolPolicy: redirect-to-https
           Compress: true
           ForwardedValues:
@@ -1399,7 +1399,7 @@ Resources:
               Forward: none
         CacheBehaviors:
           - PathPattern: "/api/*"
-            TargetOriginId: StrRayAPI
+            TargetOriginId: 0xRayAPI
             ViewerProtocolPolicy: https-only
             Compress: true
             ForwardedValues:
@@ -1782,4 +1782,4 @@ kubectl logs --previous deployment/strray-framework
 kubectl scale deployment strray-framework --replicas=3
 ```
 
-This comprehensive deployment guide provides everything needed to deploy the StrRay Framework in production environments with high availability, security, and performance optimization.
+This comprehensive deployment guide provides everything needed to deploy the 0xRay Framework in production environments with high availability, security, and performance optimization.

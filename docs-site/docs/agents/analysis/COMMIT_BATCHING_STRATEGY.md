@@ -6,7 +6,7 @@ sidebar_position: 2
 tags: ["agents"]
 ---
 
-# StrRay Framework - Intelligent Commit Batching Strategy (v1.15.1)
+# 0xRay Framework - Intelligent Commit Batching Strategy (v1.15.1)
 
 ## 🎯 **Problem: Too Many Micro-Commits**
 

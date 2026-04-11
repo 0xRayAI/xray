@@ -1,4 +1,4 @@
-# StringRay: The Long Road to Agent Operating System
+# 0xRay: The Long Road to Agent Operating System
 
 ## A Deep Reflection on Building an AI Agent Enforcement Platform
 
@@ -14,14 +14,14 @@ We asked: **What if AI could enforce its own rules?**
 
 Not through prompts. Not through "be careful" instructions. But through actual enforcement pipelines that run before code hits production.
 
-That question led us down a five-month journey that transformed StringRay from a simple OpenCode plugin into something we now call an **Agent Operating System**.
+That question led us down a five-month journey that transformed 0xRay from a simple OpenCode plugin into something we now call an **Agent Operating System**.
 
 ---
 
 ## Phase 1: The Plugin Dream
 
 **Original Vision:**
-- StringRay = OpenCode plugin
+- 0xRay = OpenCode plugin
 - Enforcer agent = central enforcement engine
 - RuleEnforcer validates ALL code
 - AI writes code → Enforcer blocks bad code → AI fixes → PR merges
@@ -41,7 +41,7 @@ That question led us down a five-month journey that transformed StringRay from a
 
 ## Phase 2: The Hook Revelation
 
-We discovered the truth through debugging: **OpenCode hooks are the integration point, not StringRay calling itself.**
+We discovered the truth through debugging: **OpenCode hooks are the integration point, not 0xRay calling itself.**
 
 The correct flow:
 ```
@@ -54,12 +54,12 @@ OpenCode (tool use)
 
 Not:
 ```
-StringRay decides to enforce
+0xRay decides to enforce
   → runs RuleEnforcer
   → blocks bad code
 ```
 
-**Key Lesson:** We were building for the wrong architectural model. We assumed StringRay would drive enforcement. The reality is OpenCode (the host) drives, StringRay provides the enforcement machinery.
+**Key Lesson:** We were building for the wrong architectural model. We assumed 0xRay would drive enforcement. The reality is OpenCode (the host) drives, 0xRay provides the enforcement machinery.
 
 ---
 
@@ -195,14 +195,14 @@ Created SUB_PIPELINE_DISCOVERY.md to prevent future teams from making the same m
 
 ## The Philosophy: Why Complexity is Necessary
 
-**Without StringRay:**
+**Without 0xRay:**
 - AI writes code → no enforcement → security vulnerabilities
 - No rate limits → infinite agent spawns
 - No test generation → regressions ship
 - No version sync → npm publishes broken
 - No codex compliance → bad patterns accumulate
 
-**With StringRay:**
+**With 0xRay:**
 - AI writes code → enforced via hooks → production-grade code
 - Governance → controlled agent behavior
 - TestAutoCreation → coverage improves
@@ -234,7 +234,7 @@ Created SUB_PIPELINE_DISCOVERY.md to prevent future teams from making the same m
 
 ## The Vision: Own the Complexity
 
-StringRay is no longer a plugin. It's an **Agent Operating System** that:
+0xRay is no longer a plugin. It's an **Agent Operating System** that:
 
 1. **Bootstraps** — Framework initialization with all processors
 2. **Routes** — Task-to-agent routing with keyword matching
@@ -262,7 +262,7 @@ StringRay is no longer a plugin. It's an **Agent Operating System** that:
 
 ## The Future
 
-StringRay v1.15.41 is just the beginning. The pipelines are in place. The enforcement is wired. The tests are passing.
+0xRay v1.15.41 is just the beginning. The pipelines are in place. The enforcement is wired. The tests are passing.
 
 What's next:
 - More validators (we have 8 placeholders now working)
@@ -273,24 +273,24 @@ What's next:
 
 **The mission remains:** Make AI write production-grade code.
 
-StringRay isn't a plugin. It's the missing layer that makes AI development enterprise-ready.
+0xRay isn't a plugin. It's the missing layer that makes AI development enterprise-ready.
 
 ---
 
 ## Final Thoughts
 
-Building StringRay was messy. We built things that didn't work as expected. We removed the main branch. We found dead code. We discovered pipelines we didn't know existed.
+Building 0xRay was messy. We built things that didn't work as expected. We removed the main branch. We found dead code. We discovered pipelines we didn't know existed.
 
 But in the chaos, we found the architecture that actually works:
 
 - OpenCode hooks → Pre-processors → Validation → Post-processors
-- Not StringRay driving enforcement, but StringRay providing enforcement machinery that OpenCode invokes
+- Not 0xRay driving enforcement, but 0xRay providing enforcement machinery that OpenCode invokes
 
 **The complexity is features.**
 
 Every pipeline, every processor, every validator exists because something broke in production. Every test exists because we discovered a gap.
 
-**StringRay is ready.**
+**0xRay is ready.**
 
 The pipelines run. The tests pass. The enforcement works.
 

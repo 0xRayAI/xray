@@ -38,7 +38,7 @@ codex_terms: [5, 7, 32]  # Optional Codex references
 ```markdown
 # [Descriptive Title]
 
-**Journey | [Date] | StringRay v[X.X.X]**
+**Journey | [Date] | 0xRay v[X.X.X]**
 
 ---
 

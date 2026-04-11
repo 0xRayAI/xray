@@ -6,11 +6,11 @@ sidebar_position: 2
 tags: ["agents"]
 ---
 
-# StrRay Framework - Agent Classification System
+# 0xRay Framework - Agent Classification System
 
 ## Overview
 
-StrRay Framework implements a sophisticated multi-agent architecture with 25 specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
+0xRay Framework implements a sophisticated multi-agent architecture with 25 specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
 
 ## Agent Classification Framework
 
@@ -495,4 +495,4 @@ Need to analyze or plan?
 
 ---
 
-_This classification system ensures users can effectively leverage StrRay's multi-agent capabilities for comprehensive development workflow enhancement._
+_This classification system ensures users can effectively leverage 0xRay's multi-agent capabilities for comprehensive development workflow enhancement._

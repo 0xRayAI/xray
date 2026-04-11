@@ -72,7 +72,7 @@ This system categorizes tests to improve test suite management and enable strate
 
 ### Modular Testing Strategy
 
-StringRay v1.15.1 implements a comprehensive modular testing approach for its facade pattern architecture:
+0xRay v1.15.1 implements a comprehensive modular testing approach for its facade pattern architecture:
 
 ```
 Facade Testing Structure:

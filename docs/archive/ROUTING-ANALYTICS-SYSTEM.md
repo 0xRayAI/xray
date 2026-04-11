@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines a comprehensive system for continuous improvement of task-to-skill and agent routing inference in StringRay, addressing the critical need for data-driven refinement of both simple names and skill mappings.
+This document outlines a comprehensive system for continuous improvement of task-to-skill and agent routing inference in 0xRay, addressing the critical need for data-driven refinement of both simple names and skill mappings.
 
 ## Current State Analysis
 

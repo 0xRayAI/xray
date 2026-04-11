@@ -1,19 +1,19 @@
-# StringRay AI v1.3.4
+# 0xRay AI v1.3.4
 
-StrRay is the evolution of the Universal Development Framework, providing AI-assisted development with systematic error prevention and code quality assurance.
+0xRay is the evolution of the Universal Development Framework, providing AI-assisted development with systematic error prevention and code quality assurance.
 
 ## Features
 
 - ✅ **90% Runtime Error Prevention** - Comprehensive validation prevents common errors
 - ✅ **Zero-Tolerance Code Rot** - Active monitoring and automated fixes
 - ✅ **Multi-Agent Coordination** - 8 specialized AI agents for different concerns
-- ✅ **StrRay Model Integration** - Direct integration with StrRay SDK and model cache
+- ✅ **0xRay Model Integration** - Direct integration with 0xRay SDK and model cache
 - ✅ **Comprehensive Automation** - Pre-commit validation, security scanning, auto-formatting
 
 ## Quick Start
 
 ```bash
-# Initialize StrRay framework
+# Initialize 0xRay framework
 bash strray/init-strray.sh
 
 # Run compliance check
@@ -25,7 +25,7 @@ tail -n +6 strray/commands/security-scan.md | bash
 
 ## Architecture
 
-StrRay uses a direct integration with the @opencode-ai/plugin SDK, providing:
+0xRay uses a direct integration with the @opencode-ai/plugin SDK, providing:
 
 - **Model Cache**: Centralized model configuration in `strray/scripts/.model_cache.json`
 - **Agent System**: 25 specialized agents with optimized model routing
@@ -34,7 +34,7 @@ StrRay uses a direct integration with the @opencode-ai/plugin SDK, providing:
 
 ## Model Configuration
 
-StrRay supports multiple AI models with automatic routing:
+0xRay supports multiple AI models with automatic routing:
 
 - **Claude 3.5 Sonnet**: Complex reasoning and analysis
 - **GPT-5.2**: Code refactoring and generation
@@ -54,7 +54,7 @@ StrRay supports multiple AI models with automatic routing:
 
 ## Integration
 
-StrRay integrates directly with your development workflow:
+0xRay integrates directly with your development workflow:
 
 1. **Pre-commit**: Automatic validation prevents problematic commits
 2. **Continuous**: Daily compliance scans ensure code quality
@@ -62,13 +62,13 @@ StrRay integrates directly with your development workflow:
 
 ## Migration from Universal Development Framework
 
-StrRay is the renamed and evolved version of the Universal Development Framework, with:
+0xRay is the renamed and evolved version of the Universal Development Framework, with:
 
-- Updated model routing for StrRay SDK compatibility
+- Updated model routing for 0xRay SDK compatibility
 - Streamlined architecture with direct plugin integration
 - Enhanced performance and reduced dependencies
 - Preserved all existing functionality and improvements
 
 ---
 
-_StringRay AI v1.3.4 - AI-Assisted Development with Systematic Error Prevention_
+_0xRay AI v1.3.4 - AI-Assisted Development with Systematic Error Prevention_

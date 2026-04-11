@@ -1,7 +1,7 @@
 # The Invisible Files: When tsc Hides What You Ship
 
 **Date**: 2026-03-30
-**PR**: [#19](https://github.com/htafolla/StringRay/pull/19) — `fix: copy .mjs files to dist in build script`
+**PR**: [#19](https://github.com/htafolla/0xRay/pull/19) — `fix: copy .mjs files to dist in build script`
 **Version**: 1.15.26 → 1.15.27
 
 ---
@@ -25,7 +25,7 @@ MISSING in dist: src/core/bridge.mjs
 MISSING in dist: src/integrations/hermes-agent/bridge.mjs
 ```
 
-Two files that existed in the source tree, that the Hermes integration depended on, that were the entire IPC bridge between StringRay and the Hermes agent — and they simply weren't in the build output.
+Two files that existed in the source tree, that the Hermes integration depended on, that were the entire IPC bridge between 0xRay and the Hermes agent — and they simply weren't in the build output.
 
 ## How This Happens
 
@@ -39,7 +39,7 @@ The build script was:
 
 See the problem? The first step (`tsc`) handles all the TypeScript files. The second and third steps handle the public static assets. There's nothing in between that says "hey, also copy any `.mjs` files that tsc skipped."
 
-So for every version of StringRay that shipped with Hermes agent integration, the published package contained dead bridges. `src/integrations/hermes-agent/bridge.mjs` compiled to nothing. When a consumer tried to use the Hermes bridge from the installed package, they'd get `MODULE_NOT_FOUND`. The bridge simply wasn't there.
+So for every version of 0xRay that shipped with Hermes agent integration, the published package contained dead bridges. `src/integrations/hermes-agent/bridge.mjs` compiled to nothing. When a consumer tried to use the Hermes bridge from the installed package, they'd get `MODULE_NOT_FOUND`. The bridge simply wasn't there.
 
 I verified this with a smoke test. Source bridge worked fine:
 
@@ -111,7 +111,7 @@ The user said "merge publish." Two words again. Two words that kicked off the mo
 
 Merging the PR was straightforward — `gh pr merge 19 --merge --delete-branch`. Clean fast-forward. Then pull into the reference repo, bump the UVM, run `npm version patch`, tag, push, and publish.
 
-But the StringRay publish flow is... particular. The Universal Version Manager has a hardcoded internal version constant that must be manually updated before `npm version patch`. If you skip this step, the pre-commit hook blocks the commit with "Version manager not 1 ahead of npm." It's a gate that exists because `npm version patch` runs lifecycle scripts that read from two different sources — the UVM constant and `package.json` — and if they're out of sync, the whole thing grinds to a halt.
+But the 0xRay publish flow is... particular. The Universal Version Manager has a hardcoded internal version constant that must be manually updated before `npm version patch`. If you skip this step, the pre-commit hook blocks the commit with "Version manager not 1 ahead of npm." It's a gate that exists because `npm version patch` runs lifecycle scripts that read from two different sources — the UVM constant and `package.json` — and if they're out of sync, the whole thing grinds to a halt.
 
 So the dance is:
 
@@ -143,7 +143,7 @@ I've updated the review skill to include this check prominently. The `.mjs` sect
 
 ## The Bigger Picture
 
-StringRay is at 1.15.27 now. 336 source files, 2399 tests, 1467 files in the published package. The framework has been through 27 patch versions, multiple major architectural shifts, and probably a hundred small fixes like this one. Each one individually is trivial — copy two files in the build script. But the *discovery* of each one requires systematic review, and the *prevention* of future ones requires carrying that knowledge forward.
+0xRay is at 1.15.27 now. 336 source files, 2399 tests, 1467 files in the published package. The framework has been through 27 patch versions, multiple major architectural shifts, and probably a hundred small fixes like this one. Each one individually is trivial — copy two files in the build script. But the *discovery* of each one requires systematic review, and the *prevention* of future ones requires carrying that knowledge forward.
 
 The review checklist exists because of exactly this class of bug. Not because anyone expected `.mjs` files to be missing specifically, but because the checklist was designed to find *any* gap between what's in source and what ships. Source count vs dist count. `.mjs` presence. `.cjs` presence. Static imports that break in consumer contexts. Symlink integrity. Root artifacts. Console bleed. Each check is a scar from a prior discovery.
 

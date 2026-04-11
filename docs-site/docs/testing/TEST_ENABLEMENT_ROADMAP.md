@@ -10,7 +10,7 @@ tags: ["testing"]
 
 ## Overview
 
-This roadmap outlines the strategic plan for progressively enabling skipped tests as the StringRay framework matures. The roadmap is aligned with framework development priorities and ensures tests are enabled only when prerequisites are met.
+This roadmap outlines the strategic plan for progressively enabling skipped tests as the 0xRay framework matures. The roadmap is aligned with framework development priorities and ensures tests are enabled only when prerequisites are met.
 
 ## Current Status
 
@@ -405,7 +405,7 @@ The key principles:
 3. **Transparent progress** - Clear metrics and documentation
 4. **Continuous improvement** - Regular reviews and adjustments
 
-**This roadmap has been successfully completed as of v1.15.1.** The StringRay test suite now maintains N tests with 87% coverage, providing comprehensive validation of all facade components and their interactions.
+**This roadmap has been successfully completed as of v1.15.1.** The 0xRay test suite now maintains N tests with 87% coverage, providing comprehensive validation of all facade components and their interactions.
 
 ### Modular Testing Success Metrics
 

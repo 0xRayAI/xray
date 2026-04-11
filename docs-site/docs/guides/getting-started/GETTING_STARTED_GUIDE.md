@@ -6,7 +6,7 @@ sidebar_position: 1
 tags: ["guide"]
 ---
 
-# StringRay Framework - Getting Started Guide
+# 0xRay Framework - Getting Started Guide
 
 ## 🚀 Quick Start (5 Minutes)
 
@@ -21,7 +21,7 @@ mkdir my-stringray-project
 cd my-stringray-project
 npm init -y
 
-# Install StringRay Framework
+# Install 0xRay Framework
 npm install strray-ai
 
 # Run postinstall setup (REQUIRED)
@@ -38,8 +38,8 @@ node node_modules/strray-ai/scripts/node/postinstall.cjs
 
 ## 📚 Framework Overview
 
-### What is StringRay?
-StringRay is an AI-powered development framework that provides:
+### What is 0xRay?
+0xRay is an AI-powered development framework that provides:
 - **25 Specialized Agents** for different development tasks
 - **99.6% Error Prevention** through systematic validation
 - **Automatic Task Routing** based on complexity analysis

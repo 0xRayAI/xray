@@ -6,13 +6,13 @@ sidebar_position: 2
 tags: ["guide"]
 ---
 
-# StringRay Configuration Guide
+# 0xRay Configuration Guide
 
-Complete configuration reference for the StringRay AI Framework v1.15.1.
+Complete configuration reference for the 0xRay AI Framework v1.15.1.
 
 ## Overview
 
-StringRay uses a hierarchical configuration system:
+0xRay uses a hierarchical configuration system:
 1. **Default config** - Built into the framework
 2. **Project config** - `.opencode/strray/features.json` in project root
 3. **User config** - `~/.opencode/strray/config.json` (user-level overrides)
@@ -25,7 +25,7 @@ Configuration is loaded in order of priority: default < project < user.
 
 ### Facade Pattern Architecture
 
-StringRay v1.15.1 introduces a modern **Facade Pattern** architecture with modular internal structure:
+0xRay v1.15.1 introduces a modern **Facade Pattern** architecture with modular internal structure:
 
 **Key Improvements:**
 - **87% Code Reduction**: 8,230 → 1,218 lines (3,170 lines of dead code removed)
@@ -49,7 +49,7 @@ Create `.opencode/strray/features.json` in your project root:
 ```json
 {
   "version": "1.15.27",
-  "description": "StringRay Framework Configuration",
+  "description": "0xRay Framework Configuration",
   
   "token_optimization": {
     "enabled": true,
@@ -410,7 +410,7 @@ The main OpenCode configuration file for agent routing:
 
 ### .mcp.json
 
-MCP server registration for StringRay tools (28 servers):
+MCP server registration for 0xRay tools (28 servers):
 
 ```json
 {
@@ -470,7 +470,7 @@ MCP server registration for StringRay tools (28 servers):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENCODE_PLUGIN_PATH` | Path to StringRay plugin | `./.opencode/plugin/` |
+| `OPENCODE_PLUGIN_PATH` | Path to 0xRay plugin | `./.opencode/plugin/` |
 | `STRRAY_LOG_LEVEL` | Log level | `info` |
 | `STRRAY_STATE_DIR` | State directory | `./.opencode/state` |
 | `STRRAY_CACHE_DIR` | Cache directory | `./.opencode/cache` |

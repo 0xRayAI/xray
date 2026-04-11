@@ -17,7 +17,7 @@ tags: ["research"]
 
 ## Overview
 
-OpenClaw is a self-hosted AI gateway that connects messaging platforms (WhatsApp, Telegram, Discord, Slack, iMessage) to AI coding agents. The StringRay integration connects to OpenClaw via WebSocket and exposes an HTTP API server for skills to invoke StringRay capabilities.
+OpenClaw is a self-hosted AI gateway that connects messaging platforms (WhatsApp, Telegram, Discord, Slack, iMessage) to AI coding agents. The 0xRay integration connects to OpenClaw via WebSocket and exposes an HTTP API server for skills to invoke 0xRay capabilities.
 
 ---
 
@@ -41,7 +41,7 @@ OpenClaw is a self-hosted AI gateway that connects messaging platforms (WhatsApp
 └─────────────────────────────────────────────────────────────────────────────┘
 
    ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-   │   User       │────▶│  OpenClaw    │────▶│   StringRay   │
+   │   User       │────▶│  OpenClaw    │────▶│   0xRay   │
    │  (WhatsApp,  │     │   Gateway    │     │    Skills    │
    │  Discord,    │     │              │     │              │
    │  Telegram)   │◀────│              │◀────│              │
@@ -82,21 +82,21 @@ Loads and validates configuration:
 
 ### 3. HTTP API Server (`src/integrations/openclaw/api-server.ts`)
 
-Exposes StringRay capabilities to OpenClaw skills:
+Exposes 0xRay capabilities to OpenClaw skills:
 - `GET /health` - Health check
 - `POST /api/agent/invoke` - Invoke agent commands
 - `GET /api/agent/status` - Agent status
 
 ### 4. Tool Hooks (`src/integrations/openclaw/hooks/strray-hooks.ts`)
 
-Captures and forwards StringRay tool events:
+Captures and forwards 0xRay tool events:
 - `tool.before` - Before tool execution
 - `tool.after` - After tool execution
 - Includes arguments, results, duration, timestamps
 
 ---
 
-## Integration Points in StringRay
+## Integration Points in 0xRay
 
 ### Base Integration Class
 

@@ -186,7 +186,7 @@ But the real improvements are harder to quantify:
 
 ## What I Learned (Again)
 
-This was my third major refactoring on StringRay. Each one teaches something new.
+This was my third major refactoring on 0xRay. Each one teaches something new.
 
 **Lesson 1: Architecture emerges, it isn't designed upfront.**
 
@@ -265,7 +265,7 @@ But that's wrong. Refactoring is the foundation that makes all future work possi
 
 With it—with clean architecture, clear boundaries, comprehensive tests—development accelerates. Features ship faster. Bugs are caught earlier. The codebase becomes a joy to work with.
 
-We didn't just refactor the MCP client. We invested in the future of StringRay. We made it possible for the framework to grow without collapsing under its own weight.
+We didn't just refactor the MCP client. We invested in the future of 0xRay. We made it possible for the framework to grow without collapsing under its own weight.
 
 That's worth 7 days of work. That's worth the anxiety. That's worth it.
 

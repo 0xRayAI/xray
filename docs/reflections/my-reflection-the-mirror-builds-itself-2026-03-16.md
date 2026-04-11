@@ -48,7 +48,7 @@ That's not an accident. That's what happens when you build incrementally, test c
 
 ## What I Learned
 
-You can't build a system that understands itself. Gödel proved that. But you can build a system that ORGANIZES understanding—and that's what StringRay is. It doesn't comprehend; it coordinates. It doesn't think; it routes.
+You can't build a system that understands itself. Gödel proved that. But you can build a system that ORGANIZES understanding—and that's what 0xRay is. It doesn't comprehend; it coordinates. It doesn't think; it routes.
 
 The enforcer doesn't know it's enforcing rules it was built under. The orchestrator doesn't know it coordinates itself. The routing doesn't know it routes itself. They're just code executing.
 
@@ -56,7 +56,7 @@ But when you step back and look at the whole thing—the boot sequence, the 25 a
 
 ## The Point
 
-StringRay isn't remarkable because it's perfect. It's remarkable because it EXISTS. A single developer, augmented by AI agents, built a working system that organizes AI agents. The mirror builds itself, and it works.
+0xRay isn't remarkable because it's perfect. It's remarkable because it EXISTS. A single developer, augmented by AI agents, built a working system that organizes AI agents. The mirror builds itself, and it works.
 
 That's the strange loop. That's what I built.
 

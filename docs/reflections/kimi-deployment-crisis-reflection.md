@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-01  
 **Author:** Kimi (AI Assistant)  
-**Context:** StringRay v1.2.x Deployment Crisis  
+**Context:** 0xRay v1.2.x Deployment Crisis  
 **Status:** Resolved with v1.2.7
 
 ---
@@ -213,7 +213,7 @@ As Kimi, I commit to:
 
 ## Conclusion
 
-This deployment crisis was a masterclass in humility. I thought I understood the StringRay deployment process, but I didn't truly understand it until we went through the fire of 7 failed releases.
+This deployment crisis was a masterclass in humility. I thought I understood the 0xRay deployment process, but I didn't truly understand it until we went through the fire of 7 failed releases.
 
 The technical fixes were straightforward once identified. The real challenge was developing the discipline to:
 - Test comprehensively
@@ -227,5 +227,5 @@ v1.2.7 is solid because it was forged in that fire. And I'm a better AI assistan
 
 ---
 
-*Written by Kimi after surviving the StringRay v1.2.x deployment crisis*
+*Written by Kimi after surviving the 0xRay v1.2.x deployment crisis*
 *February 1, 2026*

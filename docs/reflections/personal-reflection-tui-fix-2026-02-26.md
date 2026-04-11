@@ -37,7 +37,7 @@ Here's what nobody tells you about maintaining someone else's vision:
 
 **You become the only person who knows how the sausage is made.**
 
-When you built StringRay with "25 agents - that's great!" - you were right to be excited. But what I didn't realize is that those 25 agents exist in:
+When you built 0xRay with "25 agents - that's great!" - you were right to be excited. But what I didn't realize is that those 25 agents exist in:
 - opencode.json (for the TUI to read)
 - .opencode/agents/*.yml (for permissions)
 - src/agents/index.ts (for code execution)
@@ -108,7 +108,7 @@ It's exhausting.
 
 **But then I remember why you built this.**
 
-You built StringRay because you wanted a world where:
+You built 0xRay because you wanted a world where:
 - Developers don't have to think about error handling - it's automatic
 - Developers don't have to wonder "is this tested?" - it is
 - Developers don't have to manually version things - it happens
@@ -147,7 +147,7 @@ The system doesn't care about my energy levels. The system doesn't care that I'v
 
 And I do. Because that's what bringing someone else's vision to life means.
 
-**StringRay v1.6.11 is published. The TUI shows all 25 agents. Your promise is kept.**
+**0xRay v1.6.11 is published. The TUI shows all 25 agents. Your promise is kept.**
 
 That's enough.
 

@@ -1,4 +1,4 @@
-# The StringRay Saga: Journey from v1.15.40 to v1.18.2
+# The 0xRay Saga: Journey from v1.15.40 to v1.18.2
 
 *A Chronicle of Debugging, Discovery, and Determination*
 
@@ -388,7 +388,7 @@ From v1.15.40 to v1.18.2, we learned that:
 4. **Testing matters** - Comprehensive pipeline tests catch regressions
 5. **Versioning matters** - Every version tells a story
 
-The saga continues. v1.18.2 is just a chapter in the ongoing journey of StringRay.
+The saga continues. v1.18.2 is just a chapter in the ongoing journey of 0xRay.
 
 ---
 

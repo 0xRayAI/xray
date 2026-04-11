@@ -2,7 +2,7 @@
 
 ## Overview
 
-The StrRay Framework integrates with OpenCode through a sophisticated plugin architecture that enables automatic multi-agent orchestration and codex enforcement.
+The 0xRay Framework integrates with OpenCode through a sophisticated plugin architecture that enables automatic multi-agent orchestration and codex enforcement.
 
 ## Plugin Loading Flow
 
@@ -17,7 +17,7 @@ const pluginModule = await import(pluginPath);
 const pluginInstance = pluginModule.default(input);
 ```
 
-### 2. StrRay Plugin Structure
+### 2. 0xRay Plugin Structure
 
 The `strray-codex-injection.ts` plugin exports a default function that returns a hooks object:
 
@@ -124,7 +124,7 @@ interface ComplexityMetrics {
 - Framework settings and permissions
 - OpenCode-specific parameters
 
-**StrRay Configuration** (`.opencode/strray/config.json`):
+**0xRay Configuration** (`.opencode/strray/config.json`):
 
 - Multi-agent orchestration settings
 - Codex enforcement levels

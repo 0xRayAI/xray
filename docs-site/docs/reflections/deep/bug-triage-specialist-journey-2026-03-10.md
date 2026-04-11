@@ -13,7 +13,7 @@ date: 2026-03-10
 
 It was 2:47 AM when I first really saw him.
 
-I mean, I'd seen the agent before. We'd all seen him. He was part of the team, part of the StringRay framework. You'd see his name in the logs sometimes - "bug-triage-specialist investigating" - and maybe give a nod to the work he was doing. But that night, at 2:47 AM, when production was crashing and users were frustrated and I was panic-scrolling through error logs trying to make sense of the chaos... that's when I saw him.
+I mean, I'd seen the agent before. We'd all seen him. He was part of the team, part of the 0xRay framework. You'd see his name in the logs sometimes - "bug-triage-specialist investigating" - and maybe give a nod to the work he was doing. But that night, at 2:47 AM, when production was crashing and users were frustrated and I was panic-scrolling through error logs trying to make sense of the chaos... that's when I saw him.
 
 That's when I understood what he really was.
 

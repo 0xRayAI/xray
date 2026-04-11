@@ -14,7 +14,7 @@ There is a particular kind of blindness that afflicts those of us who build syst
 
 I know this now because I lived it.
 
-When we began documenting the six core pipelines of the StringRay framework, we felt productive. We created ASCII diagrams that showed routing engines with seven components spanning five layers. We drew governance hierarchies with elegant branching. We mapped the boot sequence—ten components, seven layers—as if we were charting constellations. Each diagram was a small work of art, a testament to our understanding of the system we had built.
+When we began documenting the six core pipelines of the 0xRay framework, we felt productive. We created ASCII diagrams that showed routing engines with seven components spanning five layers. We drew governance hierarchies with elegant branching. We mapped the boot sequence—ten components, seven layers—as if we were charting constellations. Each diagram was a small work of art, a testament to our understanding of the system we had built.
 
 But documentation is not understanding. Documentation is the *appearance* of understanding, and therein lies its danger.
 
@@ -84,7 +84,7 @@ This seems obvious when stated plainly. It was not obvious when we were writing 
 
 Why does any of this matter?
 
-It matters because the goal is not documentation. The goal is not even testing. The goal is *automation*—the ability to verify that the StringRay framework works correctly, automatically, continuously, without human intervention.
+It matters because the goal is not documentation. The goal is not even testing. The goal is *automation*—the ability to verify that the 0xRay framework works correctly, automatically, continuously, without human intervention.
 
 We want a system where every commit triggers a verification suite that confirms all six pipelines are functioning correctly. We want green checkmarks that mean something. We want documentation that reflects reality because it is automatically generated from verified tests.
 
@@ -104,7 +104,7 @@ I want to close with what this experience teaches about how we should approach d
 
 **Architecture diagrams are hypotheses.** They are valuable hypotheses—useful for communication, planning, and design. But they are not descriptions of reality until they have been verified against implementation. Every box in a diagram is a claim that must be tested.
 
-**Completeness is a process, not a state.** We will never finish documenting the StringRay framework. There will always be more processors to discover, more edge cases to verify, more tests to write. The goal is not completeness. The goal is continuous improvement toward completeness.
+**Completeness is a process, not a state.** We will never finish documenting the 0xRay framework. There will always be more processors to discover, more edge cases to verify, more tests to write. The goal is not completeness. The goal is continuous improvement toward completeness.
 
 ---
 

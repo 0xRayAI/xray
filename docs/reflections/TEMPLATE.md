@@ -1,5 +1,5 @@
 # AI Agent Reflection Template (v1.2)
-## Mandatory Structure for All StringRay Reflections
+## Mandatory Structure for All 0xRay Reflections
 
 **Location:** `./docs/reflections/[descriptive-name]-reflection.md`  
 **Required:** After ANY session >30 minutes or involving significant debugging/deployment  

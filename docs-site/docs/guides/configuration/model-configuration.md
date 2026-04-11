@@ -6,11 +6,11 @@ sidebar_position: 2
 tags: ["guide"]
 ---
 
-# StrRay Model Configuration Guide
+# 0xRay Model Configuration Guide
 
 ## Overview
 
-This guide explains how to configure and update AI models in the StrRay framework.
+This guide explains how to configure and update AI models in the 0xRay framework.
 
 ## Key Configuration Files
 
@@ -54,7 +54,7 @@ This guide explains how to configure and update AI models in the StrRay framewor
 **Purpose**: Comprehensive framework configuration loaded at runtime
 
 ```python
-# StrRay Framework Configuration
+# 0xRay Framework Configuration
 defaults = {
     "strray_version": "1.1.1",
     "codex_enabled": True,
@@ -73,7 +73,7 @@ defaults = {
 
 ## Configuration Architecture
 
-The StrRay framework uses a **hybrid configuration system**:
+The 0xRay framework uses a **hybrid configuration system**:
 
 - **OpenCode.json**: OpenCode-compatible settings (model routing, plugins, basic config)
 - **Python ConfigManager**: Runtime framework configuration (codex terms, agent capabilities, monitoring)

@@ -5,7 +5,7 @@
 
 ## Overview
 
-The StringRay Framework implements a comprehensive version management pipeline across three key integration points: Git Hooks, CI/CD Pipeline, and Pre/Post Processor. This ensures version consistency and automated management throughout the development lifecycle.
+The 0xRay Framework implements a comprehensive version management pipeline across three key integration points: Git Hooks, CI/CD Pipeline, and Pre/Post Processor. This ensures version consistency and automated management throughout the development lifecycle.
 
 ## What's New in v1.15.1
 

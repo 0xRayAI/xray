@@ -1,14 +1,14 @@
-# StringRay Pipeline Inventory
+# 0xRay Pipeline Inventory
 
 **Version**: 1.14.0  
 **Date**: 2026-03-21  
-**Author**: StringRay AI Team (via @researcher agent)
+**Author**: 0xRay AI Team (via @researcher agent)
 
 ---
 
 ## Executive Summary
 
-This document catalogs all major system pipelines in the StringRay framework. Each pipeline is analyzed for its components, data flows, artifacts, and testing status.
+This document catalogs all major system pipelines in the 0xRay framework. Each pipeline is analyzed for its components, data flows, artifacts, and testing status.
 
 **Total Pipelines Identified**: 7 major pipelines  
 **Test Coverage**: 2521+ tests across the codebase

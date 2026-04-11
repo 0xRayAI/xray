@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document captures the critical discovery that MCP (Model Context Protocol) servers require an explicit `initialize` handshake before accepting tool calls, and how this affected StringRay's test auto-creation functionality.
+This document captures the critical discovery that MCP (Model Context Protocol) servers require an explicit `initialize` handshake before accepting tool calls, and how this affected 0xRay's test auto-creation functionality.
 
 ---
 
@@ -203,7 +203,7 @@ cat /tmp/init.json /tmp/call.json | node dist/mcps/knowledge-skills/testing-stra
 
 ## Conclusion
 
-The MCP initialize issue was a subtle but critical bug affecting multiple core features. The fix is now centralized in `executeRealMCPCall`, benefiting all 15+ MCP tool invocations across StringRay.
+The MCP initialize issue was a subtle but critical bug affecting multiple core features. The fix is now centralized in `executeRealMCPCall`, benefiting all 15+ MCP tool invocations across 0xRay.
 
 This experience highlights the importance of:
 - Understanding underlying protocols

@@ -1,8 +1,8 @@
-# Developer Security Onboarding - StrRay Framework
+# Developer Security Onboarding - 0xRay Framework
 
-## Welcome to StrRay Security!
+## Welcome to 0xRay Security!
 
-**Congratulations on joining the team!** This guide will help you get started with security practices in the StrRay Framework. Security is everyone's responsibility, and we're committed to the framework's "Security by Design" principle.
+**Congratulations on joining the team!** This guide will help you get started with security practices in the 0xRay Framework. Security is everyone's responsibility, and we're committed to the framework's "Security by Design" principle.
 
 **Estimated completion time: 2 hours**
 
@@ -12,7 +12,7 @@
 
 By the end of this guide, you'll be able to:
 
-- ✅ Understand StrRay's security architecture
+- ✅ Understand 0xRay's security architecture
 - ✅ Write secure code following framework patterns
 - ✅ Use security tools and run security checks
 - ✅ Identify and fix common security issues
@@ -24,7 +24,7 @@ By the end of this guide, you'll be able to:
 
 Before starting, ensure you have:
 
-- [ ] StrRay Framework development environment set up
+- [ ] 0xRay Framework development environment set up
 - [ ] Access to the project repository
 - [ ] Node.js 18+ and npm installed
 - [ ] Basic understanding of TypeScript/JavaScript
@@ -47,7 +47,7 @@ Before starting, ensure you have:
 
 **Key Takeaways:**
 
-- StrRay uses **defense in depth** with multiple security layers
+- 0xRay uses **defense in depth** with multiple security layers
 - **Secure by default** - security features are enabled automatically
 - **Zero-tolerance policy** for security issues
 
@@ -86,7 +86,7 @@ find src -name "*auth*" -type f
 npm install --save-dev eslint-plugin-security
 npm install --save-dev @typescript-eslint/eslint-plugin
 
-# Install StrRay security tools
+# Install 0xRay security tools
 npm install --save-dev strray-security-auditor
 ```
 
@@ -378,7 +378,7 @@ app.post("/api/user", async (req, res) => {
 
 ### 4.1 Automated Security Scanning
 
-**Run StrRay Security Auditor:**
+**Run 0xRay Security Auditor:**
 
 ```bash
 # Comprehensive security audit
@@ -746,7 +746,7 @@ app.get("/user/:id", async (req, res) => {
 2. **[Security Architecture](../security/SECURITY_ARCHITECTURE.md)**
    - Deep dive into framework security components
 
-3. **[StrRay Framework README](../../README.md)**
+3. **[0xRay Framework README](../../README.md)**
    - Understand the broader framework context
 
 ### Useful Tools & Commands
@@ -779,7 +779,7 @@ npm run dev                     # Development server with hot reload
 
 After completing this guide, you should be able to:
 
-- [ ] Understand StrRay's security architecture and principles
+- [ ] Understand 0xRay's security architecture and principles
 - [ ] Implement secure authentication and authorization
 - [ ] Write input validation and data sanitization code
 - [ ] Use security tools and run audits
@@ -788,7 +788,7 @@ After completing this guide, you should be able to:
 - [ ] Handle errors securely
 - [ ] Contribute securely to the codebase
 
-**🎉 Congratulations!** You've completed the StrRay Developer Security Onboarding. You now have the knowledge and tools to contribute securely to our framework.
+**🎉 Congratulations!** You've completed the 0xRay Developer Security Onboarding. You now have the knowledge and tools to contribute securely to our framework.
 
 **Remember:** Security is an ongoing process. Stay vigilant, keep learning, and always prioritize security in your development work.
 

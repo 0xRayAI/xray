@@ -1,7 +1,7 @@
 # OpenClaw Integration - Research Summary
 
 **Date:** 2026-03-23 (Updated)  
-**Researcher:** StringRay Research Agent  
+**Researcher:** 0xRay Research Agent  
 **Status:** ✅ Implemented  
 
 ---
@@ -10,9 +10,9 @@
 
 **OpenClaw** is a **self-hosted AI gateway** that connects messaging platforms (WhatsApp, Telegram, Discord, Slack, iMessage, SMS, Email) to AI coding agents.
 
-StringRay's integration consists of:
+0xRay's integration consists of:
 1. **WebSocket Client** - Connects to OpenClaw Gateway at ws://127.0.0.1:18789
-2. **HTTP API Server** - Exposes StringRay capabilities on port 18431
+2. **HTTP API Server** - Exposes 0xRay capabilities on port 18431
 3. **Tool Hooks** - Captures and forwards tool execution events
 
 This is a **runtime integration** (active connection), unlike the Antigravity skills which are a static library.
@@ -46,14 +46,14 @@ Skill: stringray-orchestrator
     │
     │ HTTP POST to localhost:18431/api/agent/invoke
     ▼
-StringRay HTTP API Server (port 18431)
+0xRay HTTP API Server (port 18431)
     │
     ├── POST /health
     ├── POST /api/agent/invoke
     └── GET /api/agent/status
     │
     ▼
-StringRay Orchestrator
+0xRay Orchestrator
     │
     ▼
 Tool Hooks (tool.before / tool.after)
@@ -94,7 +94,7 @@ The client connects to OpenClaw Gateway using Protocol v3:
 
 ### 2. HTTP API Server
 
-Skills invoke StringRay via HTTP:
+Skills invoke 0xRay via HTTP:
 
 ```javascript
 // In OpenClaw skill
@@ -111,7 +111,7 @@ const result = await response.json();
 
 ### 3. Tool Hooks
 
-StringRay forwards tool events to OpenClaw:
+0xRay forwards tool events to OpenClaw:
 
 ```typescript
 // Subscribed to MCP client events
@@ -132,7 +132,7 @@ mcpClientManager.onToolEvent('tool.after', (event) => {
 
 **Option 1: QR Code Pairing (Recommended)**
 ```bash
-openclaw device pair --name "StringRay Integration"
+openclaw device pair --name "0xRay Integration"
 # Scan QR with mobile app
 openclaw device list
 ```
@@ -140,7 +140,7 @@ openclaw device list
 **Option 2: CLI Token Generation**
 ```bash
 openclaw device create \
-  --name "StringRay Production" \
+  --name "0xRay Production" \
   --type server \
   --scopes "operator.read,operator.write,events.subscribe"
 ```
@@ -190,7 +190,7 @@ After installing skills in OpenClaw:
 
 | Command | Description |
 |---------|-------------|
-| `/strray` | Show StringRay status |
+| `/strray` | Show 0xRay status |
 | `/strray-analyze <file>` | Analyze code file |
 | `/strray-code <file>` | Code review |
 | `/strray-file <file>` | Read file contents |

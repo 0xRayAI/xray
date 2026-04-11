@@ -281,4 +281,4 @@ write/edit tool → ProcessorManager → VersionComplianceProcessor (pre)
 2. **Short-term:** Migrate codex validation (consolidation win)
 3. **Medium-term:** Migrate MCP/health checks (nice to have)
 
-**Jelly should not have ANY of its enforcement in scripts** - it should all be in processors that can be ported back to StringRay core.
+**Jelly should not have ANY of its enforcement in scripts** - it should all be in processors that can be ported back to 0xRay core.

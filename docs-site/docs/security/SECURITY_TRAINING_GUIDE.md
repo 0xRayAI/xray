@@ -6,17 +6,17 @@ sidebar_position: 7
 tags: ["security"]
 ---
 
-# Security Training Guide - StrRay Framework
+# Security Training Guide - 0xRay Framework
 
 ## Overview
 
-This guide provides comprehensive security training for developers working with the StrRay Framework. It covers core security principles, secure coding practices, and framework-specific security recommendations drawn from the framework's implementation.
+This guide provides comprehensive security training for developers working with the 0xRay Framework. It covers core security principles, secure coding practices, and framework-specific security recommendations drawn from the framework's implementation.
 
 ## Core Security Principles
 
 ### Defense in Depth
 
-The StrRay Framework implements multiple layers of security protection:
+The 0xRay Framework implements multiple layers of security protection:
 
 - **Plugin Sandboxing**: Isolated execution environments prevent system compromise
 - **Input Validation**: Multi-layer validation at all entry points
@@ -99,7 +99,7 @@ class SecurityConfig {
 **Validate all inputs at boundaries:**
 
 ```typescript
-// From StrRay SecurityAuditor - comprehensive validation
+// From 0xRay SecurityAuditor - comprehensive validation
 function validateInput(input: any): string {
   // Type checking
   if (!input || typeof input !== "string") {
@@ -134,7 +134,7 @@ function validateInput(input: any): string {
 **Secure session handling:**
 
 ```typescript
-// From StrRay Framework - secure session management
+// From 0xRay Framework - secure session management
 class SessionManager {
   private sessions = new Map<string, SessionData>();
 
@@ -362,7 +362,7 @@ const config = new Config();
 
 ### Plugin Development Security
 
-**When developing StrRay plugins:**
+**When developing 0xRay plugins:**
 
 ```typescript
 // Secure plugin structure
@@ -416,7 +416,7 @@ export class SecurePlugin {
 **Secure multi-agent coordination:**
 
 ```typescript
-// From StrRay Framework - session isolation
+// From 0xRay Framework - session isolation
 class SessionSecurity {
   async createSecureSession(
     agentId: string,
@@ -464,7 +464,7 @@ class SessionSecurity {
 **Implement comprehensive HTTP security headers:**
 
 ```typescript
-// From StrRay SecurityHeadersMiddleware
+// From 0xRay SecurityHeadersMiddleware
 const securityHeaders = {
   "Content-Security-Policy":
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'",
@@ -572,7 +572,7 @@ app.use((req, res, next) => {
 ### Automated Security Scanning
 
 ```typescript
-// From StrRay SecurityAuditor - automated scanning
+// From 0xRay SecurityAuditor - automated scanning
 import { securityAuditor } from "./security/security-auditor";
 
 async function runSecurityAudit() {
@@ -628,7 +628,7 @@ async function runSecurityAudit() {
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Web application security risks
 - [CWE Top 25](https://cwe.mitre.org/top25/) - Common weakness enumeration
-- [StrRay Security Architecture](/docs/security-security-architecture) - Framework security details
+- [0xRay Security Architecture](/docs/security-security-architecture) - Framework security details
 - [Security Audit Report](/docs/security-security-audit-report) - Current security status
 
 Remember: Security is an ongoing process, not a one-time implementation. Stay vigilant, keep learning, and regularly review and update your security practices.

@@ -1,5 +1,5 @@
 ---
-title: "Docusaurus URL Routing Bug - Missing /StringRay/ Prefix"
+title: "Docusaurus URL Routing Bug - Missing /0xRay/ Prefix"
 description: "Users getting 404 when accessing docs without proper baseUrl prefix"
 tags: [bug, documentation, docusaurus, routing]
 ---
@@ -19,30 +19,30 @@ Users are getting 404 when accessing docs using URL format:
 ## Root Cause
 
 Docusaurus is configured with:
-- `baseUrl: '/StringRay/'`
+- `baseUrl: '/0xRay/'`
 - `routeBasePath: 'docs'`
 
 This means all docs require BOTH the baseUrl AND routeBasePath:
-- ✅ `https://htafolla.github.io/StringRay/docs/introduction/`
-- ✅ `https://htafolla.github.io/StringRay/docs/guides/getting-started/`
+- ✅ `https://htafolla.github.io/0xRay/docs/introduction/`
+- ✅ `https://htafolla.github.io/0xRay/docs/guides/getting-started/`
 
 ## Impact
 
-- Users trying to access docs without `/StringRay/` prefix get 404
+- Users trying to access docs without `/0xRay/` prefix get 404
 - Homepage redirects to `/docs/introduction` which works, but direct links without prefix fail
 - Documentation confusion about correct URL structure
 
 ## Solution Options
 
-1. **Keep current config** - Document that URLs must include `/StringRay/` prefix
+1. **Keep current config** - Document that URLs must include `/0xRay/` prefix
 2. **Change baseUrl to '/'** - Would make docs available at root, but conflicts with landing page
-3. **Add redirect rules** - Configure web server to redirect `/docs/*` to `/StringRay/docs/*`
+3. **Add redirect rules** - Configure web server to redirect `/docs/*` to `/0xRay/docs/*`
 
 ## Correct URLs
 
 All docs require the full path:
 ```
-https://htafolla.github.io/StringRay/docs/<doc-path>/
+https://htafolla.github.io/0xRay/docs/<doc-path>/
 ```
 
 ## Files Involved
@@ -52,4 +52,4 @@ https://htafolla.github.io/StringRay/docs/<doc-path>/
 
 ## Resolution
 
-This is a documentation/usability issue, not a code bug. Users need to be informed to use the full URL with `/StringRay/` prefix.
+This is a documentation/usability issue, not a code bug. Users need to be informed to use the full URL with `/0xRay/` prefix.

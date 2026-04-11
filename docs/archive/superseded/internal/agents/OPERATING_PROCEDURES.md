@@ -1,8 +1,8 @@
-# StrRay Framework - Agent Operating Procedures
+# 0xRay Framework - Agent Operating Procedures
 
 ## Overview
 
-This document provides comprehensive operating procedures for all StrRay Framework agents, including workflow execution, inter-agent communication, error handling, and integration patterns. These procedures ensure effective utilization of the multi-agent system for development workflow enhancement.
+This document provides comprehensive operating procedures for all 0xRay Framework agents, including workflow execution, inter-agent communication, error handling, and integration patterns. These procedures ensure effective utilization of the multi-agent system for development workflow enhancement.
 
 ## Agent Workflow Execution
 
@@ -245,7 +245,7 @@ Validation    Routing        Tool Call    Execution    Formatting
 
 ```bash
 #!/bin/bash
-# Pre-commit hook using StrRay agents
+# Pre-commit hook using 0xRay agents
 strray enforce --check compliance
 strray code-reviewer --validate-changes
 ```
@@ -465,4 +465,4 @@ const logger = {
 
 ---
 
-_These operating procedures ensure effective utilization of StrRay's multi-agent capabilities for comprehensive development workflow enhancement and quality assurance._
+_These operating procedures ensure effective utilization of 0xRay's multi-agent capabilities for comprehensive development workflow enhancement and quality assurance._

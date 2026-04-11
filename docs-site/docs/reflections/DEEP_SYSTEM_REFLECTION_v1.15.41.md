@@ -7,17 +7,17 @@ tags: ["reflection"]
 version: 1.15.41
 ---
 
-# StringRay: The Long Road to Agent Runtime - A Deep Reflection
+# 0xRay: The Long Road to Agent Runtime - A Deep Reflection
 
 **Version**: 1.15.41  
 **Date**: April 2026  
-**Author**: StringRay Development Team
+**Author**: 0xRay Development Team
 
 ---
 
 ## The Genesis
 
-In the beginning, StringRay was simple. It was meant to be an OpenCode plugin — a small layer that enforced rules during agent operations. The vision was modest: intercept the AI when it tried to do something dumb, block it, and move on.
+In the beginning, 0xRay was simple. It was meant to be an OpenCode plugin — a small layer that enforced rules during agent operations. The vision was modest: intercept the AI when it tried to do something dumb, block it, and move on.
 
 We didn't know what we were building.
 
@@ -103,7 +103,7 @@ We thought it would be the heart of the system. The enforcer agent would use it 
 The original vision: "Enforcer agent does all enforcement"
 The reality: "Enforcement runs via hooks → processors → RuleEnforcer"
 
-**What we learned**: The most powerful system in StringRay doesn't have an agent. It has a pipeline. The lesson: don't build an agent to do what a pipeline can do better, faster, and more reliably.
+**What we learned**: The most powerful system in 0xRay doesn't have an agent. It has a pipeline. The lesson: don't build an agent to do what a pipeline can do better, faster, and more reliably.
 
 ---
 
@@ -138,19 +138,19 @@ We had that temptation. Looking at:
 It feels like over-engineering.
 
 **But here's the truth**: We're building software that ships to ENTERPRISES. Enterprises have:
-- Security audits (StringRay checks for leaked secrets)
-- CI/CD compliance (StringRay enforces version sync)
-- Production quality gates (StringRay runs pre-commit checks)
-- Regulatory requirements (StringRay has audit trails)
+- Security audits (0xRay checks for leaked secrets)
+- CI/CD compliance (0xRay enforces version sync)
+- Production quality gates (0xRay runs pre-commit checks)
+- Regulatory requirements (0xRay has audit trails)
 
-Without StringRay, AI code ships with:
+Without 0xRay, AI code ships with:
 - No security scanning
 - No test coverage
 - No version control
 - No regression prevention
 
-AI without StringRay = fast code that breaks in production
-AI with StringRay = bullet-proof code that passes every gate
+AI without 0xRay = fast code that breaks in production
+AI with 0xRay = bullet-proof code that passes every gate
 
 **The complexity isn't bloat. It's enterprise-readiness.**
 
@@ -180,13 +180,13 @@ AI with StringRay = bullet-proof code that passes every gate
 
 ---
 
-## The Vision: StringRay as Agent Runtime
+## The Vision: 0xRay as Agent Runtime
 
-Here's what StringRay has become:
+Here's what 0xRay has become:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                 StringRay (Agent Runtime)           │
+│                 0xRay (Agent Runtime)           │
 ├─────────────────────────────────────────────────────┤
 │ 26 Agents │ 1351 Skills │ 16 MCP Servers │ 15+ Proc│
 ├─────────────────────────────────────────────────────┤
@@ -224,7 +224,7 @@ This is no longer a plugin. It's a **platform**.
 - [ ] More enterprise integrations (LDAP, SSO, audit exports)
 
 ### Long Term:
-- [ ] StringRay as a standalone runtime (not just OpenCode plugin)
+- [ ] 0xRay as a standalone runtime (not just OpenCode plugin)
 - [ ] Multi-tenant support
 - [ ] Plugin marketplace for skills/agents
 - [ ] Enterprise dashboard
@@ -241,13 +241,13 @@ We set out to keep AI from making mistakes. We gave AI an enterprise-grade devel
 
 The complexity is real. But so is the value.
 
-Without StringRay, AI writes code that ships fast and breaks in production.
+Without 0xRay, AI writes code that ships fast and breaks in production.
 
-With StringRay, AI writes code that passes security audits, compliance checks, and regression tests.
+With 0xRay, AI writes code that passes security audits, compliance checks, and regression tests.
 
 **That's the difference between "AI developer" and "AI-powered engineering team."**
 
-StringRay isn't over-engineered.
+0xRay isn't over-engineered.
 
 It's exactly-engineered for what enterprises need.
 
@@ -267,7 +267,7 @@ The next time someone says "that's too complex," ask them:
 
 "Do you want code that works, or code that looks simple?"
 
-StringRay chooses works.
+0xRay chooses works.
 
 ---
 

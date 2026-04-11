@@ -6,15 +6,15 @@ sidebar_position: 1
 tags: ["agents"]
 ---
 
-# How to Add an Agent to StringRay AI v1.15.1
+# How to Add an Agent to 0xRay AI v1.15.1
 
-This guide documents how to add agents to StringRay v1.15.1 and lists **every single file** that needs to be updated.
+This guide documents how to add agents to 0xRay v1.15.1 and lists **every single file** that needs to be updated.
 
 ---
 
 ## Architecture Overview
 
-StringRay v1.15.1 uses a **Facade Pattern** architecture with modular internal structure:
+0xRay v1.15.1 uses a **Facade Pattern** architecture with modular internal structure:
 
 **Facade Components:**
 - **RuleEnforcer Facade**: 416 lines (was 2,714) - 6 internal modules for codex enforcement

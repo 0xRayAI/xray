@@ -1,8 +1,8 @@
-# StrRay Framework - Agent Roles & Rule Enforcement Authority
+# 0xRay Framework - Agent Roles & Rule Enforcement Authority
 
 ## 🎯 Executive Summary
 
-The StrRay Framework employs **25 specialized AI agents** with **clear separation of responsibilities** and a **hierarchical rule enforcement system**.
+The 0xRay Framework employs **25 specialized AI agents** with **clear separation of responsibilities** and a **hierarchical rule enforcement system**.
 
 ## Agent Architecture (v1.15.1)
 

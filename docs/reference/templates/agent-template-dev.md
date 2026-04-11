@@ -6,7 +6,7 @@
 **Terms Count**: 45 mandatory terms
 **Purpose**: Enterprise AI orchestration with systematic error prevention and production-ready development
 
-## 🚀 StrRay Framework Overview
+## 🚀 0xRay Framework Overview
 
 \*\*\*\* is an enterprise-grade AI agent orchestration platform that implements systematic error prevention through the Universal Development Codex. This document provides complete context for all agents, enabling intelligent orchestration and codex-compliant development.
 
@@ -15,7 +15,7 @@
 ### Core Architecture: Hybrid TypeScript/Python System
 
 ```
-StrRay Framework - Hybrid TypeScript/Python Architecture
+0xRay Framework - Hybrid TypeScript/Python Architecture
 ═══════════════════════════════════════════════════════════
 
 ┌─────────────────────────────────────────────────────┐
@@ -58,12 +58,12 @@ All agents operate in `subagent` mode with full tool access and automatic delega
 
 ### OpenCode Plugin Integration
 
-**StrRay operates as a comprehensive plugin within the OpenCode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
+**0xRay operates as a comprehensive plugin within the OpenCode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
 
 #### Plugin Architecture
 
 - **Plugin Entry Point**: `plugin/strray-codex-injection.ts` serves as the main plugin interface
-- **Configuration Integration**: `.opencode/OpenCode.json` contains StrRay-specific configuration blocks
+- **Configuration Integration**: `.opencode/OpenCode.json` contains 0xRay-specific configuration blocks
 - **Hook System**: Implements OpenCode's hook system for tool execution interception and system prompt injection
 
 #### OpenCode Integration Points
@@ -110,7 +110,7 @@ interface ComplexityMetrics {
 
 ### Framework Directory Structure
 
-StrRay uses a **hybrid TypeScript/Python architecture** with two key directories:
+0xRay uses a **hybrid TypeScript/Python architecture** with two key directories:
 
 #### `.opencode/` Directory (Primary Framework Hub)
 
@@ -146,7 +146,7 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 1. **Plugin Loading** (`plugin/strray-codex-injection.ts`)
    - Loads on OpenCode startup via plugin system
    - Injects codex terms into all agent system prompts
-   - Registers MCP servers for StrRay agents
+   - Registers MCP servers for 0xRay agents
 
 2. **Context Loader** (`src/core/context-loader.ts` + `src/core/config-loader.ts`)
    - Loads codex terms from `.opencode/strray/codex.json` and `codex.json`
@@ -195,12 +195,12 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 
 ### OpenCode Plugin Integration
 
-**StrRay operates as a comprehensive plugin within the OpenCode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
+**0xRay operates as a comprehensive plugin within the OpenCode ecosystem**, providing systematic error prevention through integrated agent orchestration and codex compliance enforcement.
 
 #### Plugin Architecture
 
 - **Plugin Entry Point**: `plugin/strray-codex-injection.ts` serves as the main plugin interface
-- **Configuration Integration**: `.opencode/OpenCode.json` contains StrRay-specific configuration blocks
+- **Configuration Integration**: `.opencode/OpenCode.json` contains 0xRay-specific configuration blocks
 - **Hook System**: Implements OpenCode's hook system for tool execution interception and system prompt injection
 
 #### OpenCode Integration Points
@@ -223,7 +223,7 @@ Framework initializes in strict dependency order via orchestrator-first boot:
 
 **Purpose**: Systematic error prevention and production-ready development framework
 
-The codex defines terms that guide AI-assisted development under the StrRay Framework. Every agent loads this codex during initialization and validates all actions against these terms to achieve error prevention.
+The codex defines terms that guide AI-assisted development under the 0xRay Framework. Every agent loads this codex during initialization and validates all actions against these terms to achieve error prevention.
 
 ## Critical Codex Terms for Enforcement
 
@@ -786,7 +786,7 @@ Evaluate performance characteristics:
 
 ### Agent Architecture & Capabilities
 
-**All StrRay agents operate in `subagent` mode** with comprehensive tool access and automatic delegation based on complexity analysis. Agents are defined as configuration objects, not classes, enabling dynamic loading and hot-swapping.
+**All 0xRay agents operate in `subagent` mode** with comprehensive tool access and automatic delegation based on complexity analysis. Agents are defined as configuration objects, not classes, enabling dynamic loading and hot-swapping.
 
 #### Core Agent Capabilities Matrix
 

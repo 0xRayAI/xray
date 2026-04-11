@@ -5,7 +5,7 @@
 
 ## Overview
 
-The OpenClaw integration has been completely removed from StringRay framework due to fundamental API incompatibility. The integration was based on incorrect assumptions about OpenClaw's capabilities.
+The OpenClaw integration has been completely removed from 0xRay framework due to fundamental API incompatibility. The integration was based on incorrect assumptions about OpenClaw's capabilities.
 
 ## Reason for Removal
 
@@ -228,7 +228,7 @@ git checkout HEAD~1 -- CHANGELOG.md
 
 ## Conclusion
 
-The OpenClaw integration has been successfully removed from StringRay framework. Comprehensive documentation has been provided for users who may have depended on this feature, including:
+The OpenClaw integration has been successfully removed from 0xRay framework. Comprehensive documentation has been provided for users who may have depended on this feature, including:
 
 - Clear explanation of why it was removed
 - Multiple alternative approaches for file monitoring

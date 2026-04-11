@@ -1,4 +1,4 @@
-# StrRay Framework - Intelligent Commit Batching Strategy
+# 0xRay Framework - Intelligent Commit Batching Strategy
 
 ## 🎯 **Problem: Too Many Micro-Commits**
 

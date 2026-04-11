@@ -5,11 +5,11 @@ sidebar_label: "FRAMEWORK SELECTION"
 sidebar_position: 1
 ---
 
-# StrRay Framework - Version Selection Guide
+# 0xRay Framework - Version Selection Guide
 
 ## 🚀 Framework Versions
 
-Choose the right StrRay Framework version for your team's needs and development workflow.
+Choose the right 0xRay Framework version for your team's needs and development workflow.
 
 ### **Framework Lite** (Recommended for Most Teams)
 

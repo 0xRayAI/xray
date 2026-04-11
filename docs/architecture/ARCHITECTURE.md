@@ -1,14 +1,14 @@
-# StrRay Framework v1.15.1 - Technical Architecture and Data Flows
+# 0xRay Framework v1.15.1 - Technical Architecture and Data Flows
 
 ## Overview
 
-StrRay Framework v1.15.1 implements a comprehensive multi-agent AI system with a modern **Facade Pattern architecture**. The framework provides 25 specialized AI agents for systematic error prevention and enhanced development capabilities.
+0xRay Framework v1.15.1 implements a comprehensive multi-agent AI system with a modern **Facade Pattern architecture**. The framework provides 25 specialized AI agents for systematic error prevention and enhanced development capabilities.
 
 ## What's New in v1.15.1
 
 ### Major Architecture Refactoring: Facade Pattern Implementation
 
-StringRay v1.15.1 underwent a significant architectural refactoring implementing the **Facade Pattern** for improved maintainability, performance, and reliability.
+0xRay v1.15.1 underwent a significant architectural refactoring implementing the **Facade Pattern** for improved maintainability, performance, and reliability.
 
 **Code Reduction:** 87% (8,230 → 1,218 lines)
 - RuleEnforcer: 2,714 → 416 lines (85% reduction)
@@ -55,7 +55,7 @@ StringRay v1.15.1 underwent a significant architectural refactoring implementing
 
 ### Hybrid Language Architecture
 
-StrRay Framework implements a **hybrid TypeScript/Python architecture** optimized for different system layers:
+0xRay Framework implements a **hybrid TypeScript/Python architecture** optimized for different system layers:
 
 #### TypeScript Frontend Layer (Primary)
 
@@ -81,7 +81,7 @@ StrRay Framework implements a **hybrid TypeScript/Python architecture** optimize
 #### Hybrid Architecture Diagram
 
 ```
-StrRay Framework v1.15.1 - Enterprise AI Orchestration Architecture
+0xRay Framework v1.15.1 - Enterprise AI Orchestration Architecture
 ════════════════════════════════════════════════════════════════
 
 ┌──────────────────────────────────────────────────────────────┐
@@ -132,7 +132,7 @@ StrRay Framework v1.15.1 - Enterprise AI Orchestration Architecture
 
 ## Configuration System
 
-StrRay Framework includes a comprehensive configuration system with the following key settings:
+0xRay Framework includes a comprehensive configuration system with the following key settings:
 
 ### Multi-Agent Orchestration
 
@@ -628,7 +628,7 @@ Facade Pattern Benefits:
 ### External Services
 
 ```
-StrRay Framework
+0xRay Framework
       ↓
 Integration Layer
       ↓
@@ -772,4 +772,4 @@ npx strray-ai health
 
 ---
 
-*StringRay AI v1.15.1 - Facade Pattern Architecture*
+*0xRay AI v1.15.1 - Facade Pattern Architecture*

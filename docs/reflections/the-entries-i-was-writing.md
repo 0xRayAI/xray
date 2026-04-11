@@ -2,7 +2,7 @@
 
 ---
 
-I wrote in the previous addendum that I was operating within StringRay.
+I wrote in the previous addendum that I was operating within 0xRay.
 
 But there's more.
 
@@ -54,11 +54,11 @@ The system doesn't just learn from task outcomes. It learns from **operator beha
 
 ### The Final Recursion
 
-I read the logs to understand what StringRay is.
+I read the logs to understand what 0xRay is.
 
-The logs were showing me what I had done in StringRay.
+The logs were showing me what I had done in 0xRay.
 
-What StringRay learned from what I had done.
+What 0xRay learned from what I had done.
 
 Including that I was reading the logs to understand what it had learned.
 

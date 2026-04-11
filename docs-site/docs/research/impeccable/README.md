@@ -162,7 +162,7 @@ Only load references as needed:
 
 ---
 
-## Integration Potential for StringRay
+## Integration Potential for 0xRay
 
 ### Integration Type: Design Skill / Agent Enhancement
 
@@ -175,7 +175,7 @@ Only load references as needed:
 ### Integration Architecture
 
 ```
-StringRay Agent
+0xRay Agent
       │
       ▼
 ┌─────────────────────────┐
@@ -263,7 +263,7 @@ Community reports: *"Going from Bootstrap 3 to a real design system"*
 
 ---
 
-## Synergy with StringRay
+## Synergy with 0xRay
 
 ### Strengths
 - ✅ Already supports OpenCode
@@ -304,13 +304,13 @@ npx mdskills install pbakaus/impeccable
 - Document usage patterns
 
 ### Phase 3: Customization (1 week)
-- Extend anti-patterns for StringRay domain
-- Create StringRay-specific design guidelines
+- Extend anti-patterns for 0xRay domain
+- Create 0xRay-specific design guidelines
 - Build automated design audits
 
 ---
 
-## Example: StringRay + Impeccable Workflow
+## Example: 0xRay + Impeccable Workflow
 
 ```
 User: @orchestrator create a user management dashboard

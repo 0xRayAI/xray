@@ -1,8 +1,8 @@
-# StrRay Framework - Technical Migration Guide
+# 0xRay Framework - Technical Migration Guide
 
 ## 📋 Migration Overview
 
-This guide covers the technical migration procedures for StrRay Framework configuration and component updates. These procedures ensure smooth transitions between framework versions while maintaining system integrity and functionality.
+This guide covers the technical migration procedures for 0xRay Framework configuration and component updates. These procedures ensure smooth transitions between framework versions while maintaining system integrity and functionality.
 
 ## 🔄 Configuration Migration
 
@@ -264,7 +264,7 @@ async function executeConsolidatedHook(
 # Comprehensive validation script
 #!/bin/bash
 
-echo "🔍 StrRay Migration Validation"
+echo "🔍 0xRay Migration Validation"
 echo "============================="
 
 # 1. Configuration syntax
@@ -389,4 +389,4 @@ tail -f .opencode/logs/hook-execution.log
 
 ---
 
-_This technical migration guide ensures smooth transitions between StrRay Framework versions while maintaining system stability and functionality._
+_This technical migration guide ensures smooth transitions between 0xRay Framework versions while maintaining system stability and functionality._

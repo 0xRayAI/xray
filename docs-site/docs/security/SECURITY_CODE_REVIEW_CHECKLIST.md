@@ -10,7 +10,7 @@ tags: ["security"]
 
 ## Overview
 
-This checklist provides comprehensive security-focused guidelines for code reviews in StrRay Framework projects. It covers critical security vulnerabilities, secure coding patterns, and framework-specific security requirements.
+This checklist provides comprehensive security-focused guidelines for code reviews in 0xRay Framework projects. It covers critical security vulnerabilities, secure coding patterns, and framework-specific security requirements.
 
 ## Pre-Review Preparation
 
@@ -23,7 +23,7 @@ This checklist provides comprehensive security-focused guidelines for code revie
 
 ### [ ] Automated Security Checks
 
-- [ ] Run StrRay SecurityAuditor: `npm run security-audit`
+- [ ] Run 0xRay SecurityAuditor: `npm run security-audit`
 - [ ] Verify no critical/high severity issues remain
 - [ ] Check dependency vulnerabilities: `npm audit`
 - [ ] Confirm linting passes without security warnings
@@ -49,7 +49,7 @@ This checklist provides comprehensive security-focused guidelines for code revie
 
 ### [ ] Framework-Specific Validation
 
-- [ ] StrRay input sanitization utilities used where appropriate
+- [ ] 0xRay input sanitization utilities used where appropriate
 - [ ] Plugin inputs validated according to permission boundaries
 - [ ] Session data validated before use in multi-agent coordination
 
@@ -140,7 +140,7 @@ This checklist provides comprehensive security-focused guidelines for code revie
 
 ## Framework-Specific Security
 
-### [ ] StrRay Plugin Security
+### [ ] 0xRay Plugin Security
 
 - [ ] Plugin permissions declared explicitly and minimal
 - [ ] Plugin sandbox execution verified
@@ -158,7 +158,7 @@ This checklist provides comprehensive security-focused guidelines for code revie
 
 ### [ ] Security Headers & Middleware
 
-- [ ] StrRay SecurityHeadersMiddleware integrated
+- [ ] 0xRay SecurityHeadersMiddleware integrated
 - [ ] Content Security Policy configured appropriately
 - [ ] HTTPS enforcement (HSTS) enabled
 - [ ] XSS protection headers present
@@ -243,7 +243,7 @@ This checklist provides comprehensive security-focused guidelines for code revie
 
 ### [ ] Framework Compliance
 
-- [ ] StrRay codex terms followed (Type Safety, Input Validation, etc.)
+- [ ] 0xRay codex terms followed (Type Safety, Input Validation, etc.)
 - [ ] Framework security patterns used correctly
 - [ ] Security by Design principle maintained
 - [ ] 99.6% error prevention targets met

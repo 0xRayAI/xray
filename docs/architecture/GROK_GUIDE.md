@@ -1,8 +1,8 @@
-# StringRay AI v1.15.1 - Complete Guide for Grok Users
+# 0xRay AI v1.15.1 - Complete Guide for Grok Users
 
-## 🚀 Welcome to StringRay v1.15.1
+## 🚀 Welcome to 0xRay v1.15.1
 
-**StringRay (StrRay) v1.15.1** is the AI agent orchestration framework that eliminates dead ends in AI-assisted development. Designed specifically for modern AI workflows, StringRay coordinates N specialized agents to deliver production-ready code while preventing common AI development pitfalls.
+**0xRay (0xRay) v1.15.1** is the AI agent orchestration framework that eliminates dead ends in AI-assisted development. Designed specifically for modern AI workflows, 0xRay coordinates N specialized agents to deliver production-ready code while preventing common AI development pitfalls.
 
 ## What's New in v1.15.1
 
@@ -42,9 +42,9 @@ v1.15.1 introduces a major architectural refactoring implementing the **Facade P
 └─────────────────┴─────────────────────┴─────────────────────┘
 ```
 
-## 🎯 Why StringRay for Grok?
+## 🎯 Why 0xRay for Grok?
 
-StringRay is **optimized for Grok** and other advanced AI models. It leverages Grok's reasoning capabilities through N specialized agents that work together to:
+0xRay is **optimized for Grok** and other advanced AI models. It leverages Grok's reasoning capabilities through N specialized agents that work together to:
 
 - **Eliminate spaghetti code** through coordinated architecture
 - **Prevent AI hallucinations** with cross-agent validation
@@ -60,7 +60,7 @@ StringRay is **optimized for Grok** and other advanced AI models. It leverages G
 - **npm or bun** (package manager)
 - **Grok API access** (via xAI or compatible provider)
 
-### 1. Install StringRay v1.15.1
+### 1. Install 0xRay v1.15.1
 
 ```bash
 # Install OpenCode (required dependency)
@@ -68,12 +68,12 @@ npm install -g OpenCode
 # or
 bun install -g OpenCode
 
-# Install StringRay dependencies
+# Install 0xRay dependencies
 npm install
 # or
 bun install
 
-# Initialize StringRay for Grok
+# Initialize 0xRay for Grok
 npm run init
 ```
 
@@ -112,7 +112,7 @@ npm start
 npm run dev
 ```
 
-**Visit http://localhost:3000** to see your StringRay dashboard with Grok-powered agents.
+**Visit http://localhost:3000** to see your 0xRay dashboard with Grok-powered agents.
 
 ## 🤖 The 27 Grok-Powered Agents
 
@@ -189,27 +189,27 @@ npm run dev
 
 #### And 17 More Specialized Agents...
 
-## 🎯 Dead Ends StringRay Eliminates
+## 🎯 Dead Ends 0xRay Eliminates
 
 ### Spaghetti Code & Monoliths
 
 **Problem**: Tangled, unmaintainable code structures
-**StringRay Solution**: Coordinated agents enforce clean architecture and single sources of truth through the Facade Pattern
+**0xRay Solution**: Coordinated agents enforce clean architecture and single sources of truth through the Facade Pattern
 
 ### AI Hallucinations
 
 **Problem**: Inconsistent or incorrect AI-generated code
-**StringRay Solution**: Cross-agent validation and Grok's reasoning prevent false assumptions
+**0xRay Solution**: Cross-agent validation and Grok's reasoning prevent false assumptions
 
 ### Code Rot
 
 **Problem**: Quality degradation over time
-**StringRay Solution**: Systematic maintenance and modernization prevent entropy
+**0xRay Solution**: Systematic maintenance and modernization prevent entropy
 
 ### Concurrency & State Chaos
 
 **Problem**: Race conditions and tangled state management
-**StringRay Solution**: Safe patterns and disciplined flow enforced by agents
+**0xRay Solution**: Safe patterns and disciplined flow enforced by agents
 
 ## 📊 Performance & Reliability
 
@@ -316,7 +316,7 @@ Update `.opencode/OpenCode.json` with your Grok model settings (see example abov
 # Launch dashboard
 npm start
 
-# Begin development with StringRay's Grok-powered agents
+# Begin development with 0xRay's Grok-powered agents
 ```
 
 ### Step 4: Monitor Progress
@@ -345,7 +345,7 @@ const result = await enforcer.validate({
 });
 ```
 
-## 🎉 Why Grok + StringRay v1.15.1 = Perfect Match
+## 🎉 Why Grok + 0xRay v1.15.1 = Perfect Match
 
 **Grok's Strengths:**
 
@@ -353,7 +353,7 @@ const result = await enforcer.validate({
 - Helpful and truthful responses
 - Real-time learning capabilities
 
-**StringRay v1.15.1 Strengths:**
+**0xRay v1.15.1 Strengths:**
 
 - **N specialized agents** for comprehensive coverage
 - **Facade Pattern** for clean, maintainable architecture
@@ -362,15 +362,15 @@ const result = await enforcer.validate({
 - **Systematic error prevention**
 - **Production-ready code guarantees**
 
-**Together:** Grok's intelligence is amplified through StringRay's orchestration, creating a development experience that's both powerful and reliable.
+**Together:** Grok's intelligence is amplified through 0xRay's orchestration, creating a development experience that's both powerful and reliable.
 
 ## 📚 Resources
 
 - **Documentation**: See `docs/` directory
 - **Architecture Guide**: `docs/architecture/ARCHITECTURE.md`
 - **API Reference**: `docs/api/API_REFERENCE.md`
-- **Model Configuration**: `docs/StrRay_MODEL_CONFIG.md`
-- **Installation Guide**: `docs/StrRay_INSTALLATION_GUIDE.md`
+- **Model Configuration**: `docs/0xRay_MODEL_CONFIG.md`
+- **Installation Guide**: `docs/0xRay_INSTALLATION_GUIDE.md`
 
 ## 🆘 Need Help?
 
@@ -397,10 +397,10 @@ npx strray-ai health
 
 ---
 
-**StringRay v1.15.1 + Grok = The Future of AI-Assisted Development** ⚡🤖
+**0xRay v1.15.1 + Grok = The Future of AI-Assisted Development** ⚡🤖
 
 _Eliminate dead ends. Ship production-ready code. Every time._
 
 ---
 
-*StringRay AI v1.15.1 - Facade Pattern Architecture Guide*
+*0xRay AI v1.15.1 - Facade Pattern Architecture Guide*

@@ -186,7 +186,7 @@ Thank you.
 
 ## What Next?
 
-- Read about the [StringRay Codex Terms](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) — especially Term 5 (Surgical Fixes), Term 7 (Resolve All Errors), and Term 32 (Proper Error Handling)
+- Read about the [0xRay Codex Terms](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) — especially Term 5 (Surgical Fixes), Term 7 (Resolve All Errors), and Term 32 (Proper Error Handling)
 - Explore other agent stories in [docs/reflections/deep/](../) or [docs/reflections/](../../docs/reflections/)
 - Invoke `@storyteller` to document your own development journeys and share the invisible heroes in your codebase
 

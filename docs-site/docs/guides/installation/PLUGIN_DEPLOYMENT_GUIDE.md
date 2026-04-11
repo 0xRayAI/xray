@@ -10,7 +10,7 @@ tags: ["guide"]
 
 ## Overview
 
-This guide documents the complete process for deploying and testing the StrRay Framework as an OpenCode plugin. This process has been refined through multiple iterations to resolve path resolution, initialization conflicts, and integration issues.
+This guide documents the complete process for deploying and testing the 0xRay Framework as an OpenCode plugin. This process has been refined through multiple iterations to resolve path resolution, initialization conflicts, and integration issues.
 
 ## Architecture Understanding
 
@@ -61,7 +61,7 @@ npm pack
 mkdir -p test-install
 cd test-install
 
-# Install StrRay package
+# Install 0xRay package
 npm install ../strray-1.0.0.tgz
 
 # Verify installation
@@ -92,7 +92,7 @@ const { SecurityAuditor } = await import("./security/security-auditor");
 
 **Problem:** `Processor preValidate is already registered` error
 
-**Root Cause:** StrRay initialized twice - once automatically in `strray-init.js` and once manually in plugin
+**Root Cause:** 0xRay initialized twice - once automatically in `strray-init.js` and once manually in plugin
 
 **Fix:** Implemented global initialization flag
 
@@ -102,7 +102,7 @@ declare const globalThis: any;
 const strrayInitialized = (globalThis as any).__strray_initialized;
 if (!strrayInitialized) {
   (globalThis as any).__strray_initialized = true;
-  initializeStrRay();
+  initialize0xRay();
 }
 ```
 
@@ -171,7 +171,7 @@ npm run test:plugin
 
 ```
 🏁 TRIAGE RESULTS: 6/6 checks passed
-🎉 ALL SYSTEMS OPERATIONAL - StrRay Framework is fully functional!
+🎉 ALL SYSTEMS OPERATIONAL - 0xRay Framework is fully functional!
 ```
 
 This verifies that all framework components (agents, MCP servers, codex) are properly deployed and accessible.
@@ -191,11 +191,11 @@ npm run dev:framework
 **Expected Output:**
 
 ```
-🧪 Testing StrRay Plugin Loading...
+🧪 Testing 0xRay Plugin Loading...
 ✅ Plugin loaded successfully
 ✅ System transform hook executed
 📚 Codex context injected: ✅
-🎉 StrRay Framework Plugin Test: PASSED
+🎉 0xRay Framework Plugin Test: PASSED
 ```
 
 ### 5. OpenCode Integration Check
@@ -211,7 +211,7 @@ npx OpenCode doctor
 ✓ User MCP Configuration → 21 user server(s) configured
 ```
 
-**Note:** OpenCode does not automatically display StrRay initialization messages. To see the ASCII art and initialization feedback, run `.opencode/init.sh` manually after setup.
+**Note:** OpenCode does not automatically display 0xRay initialization messages. To see the ASCII art and initialization feedback, run `.opencode/init.sh` manually after setup.
 
 ### 2. Orchestration Functionality Test
 
@@ -222,7 +222,7 @@ npm run test:orchestration
 **Expected Output:**
 
 ```
-🚀 StrRay Framework - Orchestration Test Runner
+🚀 0xRay Framework - Orchestration Test Runner
 ==============================================
 
 📋 TEST 1: Simple Component Analysis
@@ -258,21 +258,21 @@ npm run triage
 **Expected Output:**
 
 ```
-🧪 Testing StrRay Plugin Loading...
+🧪 Testing 0xRay Plugin Loading...
 =====================================
 
 ✅ Plugin loaded successfully
 ✅ System transform hook executed
 📝 System messages added: 2
-✨ Welcome message: ✨ Welcome StrRay 1.0.0 Agentic Framework Successfully Loaded....
+✨ Welcome message: ✨ Welcome 0xRay 1.0.0 Agentic Framework Successfully Loaded....
 📚 Codex context injected: ✅
 📋 Codex terms included: ✅
 
-🎉 StrRay Framework Plugin Test: PASSED
+🎉 0xRay Framework Plugin Test: PASSED
 ✨ Framework is ready for OpenCode integration
 
 🏁 TRIAGE RESULTS: 6/6 checks passed
-🎉 ALL SYSTEMS OPERATIONAL - StrRay Framework is fully functional!
+🎉 ALL SYSTEMS OPERATIONAL - 0xRay Framework is fully functional!
 ```
 
 ### 4. Boot Health Check
@@ -291,7 +291,7 @@ node scripts/boot-check.cjs
    node dist/strray-init.js
    ```
 
-   Expected: StrRay activation messages
+   Expected: 0xRay activation messages
 
 2. **Verify Plugin File:**
 
@@ -316,7 +316,7 @@ node scripts/boot-check.cjs
 ### Plugin Configuration
 
 - [ ] OpenCode.json has correct plugin path
-- [ ] All 8 StrRay agents configured with correct models
+- [ ] All 8 0xRay agents configured with correct models
 - [ ] Plugin path resolves correctly in deployment environment
 
 ### Path Resolution

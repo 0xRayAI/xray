@@ -6,11 +6,11 @@ sidebar_position: 5
 tags: ["analytics"]
 ---
 
-# StringRay Framework - Usage Analytics & Monitoring
+# 0xRay Framework - Usage Analytics & Monitoring
 
 ## 📊 Overview
 
-StringRay provides comprehensive usage analytics and performance monitoring to track framework performance, agent utilization, and system health.
+0xRay provides comprehensive usage analytics and performance monitoring to track framework performance, agent utilization, and system health.
 
 ## 🚀 Quick Setup
 
@@ -380,5 +380,5 @@ class MonitoringDaemon {
 
 ---
 
-**Monitor your StringRay Framework performance and make data-driven development decisions!** 📊</content>
+**Monitor your 0xRay Framework performance and make data-driven development decisions!** 📊</content>
 <parameter name="filePath">USAGE_ANALYTICS_GUIDE.md

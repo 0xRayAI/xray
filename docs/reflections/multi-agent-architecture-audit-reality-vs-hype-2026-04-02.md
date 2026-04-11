@@ -1,7 +1,7 @@
 ---
 title: "Multi-Agent Architecture Audit - Reality vs Hype"
 date: "2026-04-02"
-author: "StringRay Multi-Agent Team"
+author: "0xRay Multi-Agent Team"
 category: "architecture"
 tags: ["audit", "multi-agent", "orchestration", "technical-debt"]
 ---
@@ -10,7 +10,7 @@ tags: ["audit", "multi-agent", "orchestration", "technical-debt"]
 
 ## Executive Summary
 
-A 4-agent audit of StringRay's multi-agent capabilities revealed significant gaps between marketing claims and code reality. This reflection documents findings and fixes applied.
+A 4-agent audit of 0xRay's multi-agent capabilities revealed significant gaps between marketing claims and code reality. This reflection documents findings and fixes applied.
 
 ## The Audit Team
 

@@ -19,7 +19,7 @@ It started with a simple question: "Why does our analytics show zero routing act
 
 That question unraveled everything.
 
-I had been operating under the assumption that StringRay's architecture was sound—that the sophisticated systems we'd built were actually running. The routing system with its 25 agents. The complexity scoring. The post-processors with their triggers and validation engines. It was all there in the code, beautifully organized, comprehensively tested.
+I had been operating under the assumption that 0xRay's architecture was sound—that the sophisticated systems we'd built were actually running. The routing system with its 25 agents. The complexity scoring. The post-processors with their triggers and validation engines. It was all there in the code, beautifully organized, comprehensively tested.
 
 But it wasn't running.
 
@@ -33,7 +33,7 @@ We had built a cathedral and were worshipping in the basement.
 
 ### The Three Parallel Systems
 
-StringRay had evolved three distinct validation systems that didn't know about each other:
+0xRay had evolved three distinct validation systems that didn't know about each other:
 
 **1. Quality Gates (Plugin Level)**
 - 75 lines of hardcoded checks in `strray-codex-injection.ts`
@@ -89,7 +89,7 @@ if (taskDescription && featuresConfigLoader) {
 */
 ```
 
-It had been commented out for who knows how long. The system that was supposed to be StringRay's core value proposition—intelligent task routing—was disabled.
+It had been commented out for who knows how long. The system that was supposed to be 0xRay's core value proposition—intelligent task routing—was disabled.
 
 ### The Dead Plugin Infrastructure
 
@@ -329,7 +329,7 @@ This gave us confidence the refactoring worked.
 
 ### 1. The Plugin is the Real System
 
-StringRay's "framework" was largely aspirational. The actual enforcement—the rules that blocked commits, the validation that ran on every tool execution—lived in the OpenCode plugin. The framework was a sophisticated simulation that rarely ran.
+0xRay's "framework" was largely aspirational. The actual enforcement—the rules that blocked commits, the validation that ran on every tool execution—lived in the OpenCode plugin. The framework was a sophisticated simulation that rarely ran.
 
 This is a common pattern in AI-assisted development: the infrastructure gets built first, then the integration points. But without the integration, it's just architecture astronautics.
 
@@ -435,7 +435,7 @@ We need tests for:
 
 ## The Mirror Effect
 
-Building StringRay taught me something about AI-assisted development. The system is a mirror:
+Building 0xRay taught me something about AI-assisted development. The system is a mirror:
 
 - We built agents to organize intelligence
 - The agents helped us organize the system
@@ -454,7 +454,7 @@ The refactoring forced us to confront the gap between what we designed and what 
 
 ## Future Implications
 
-### For StringRay
+### For 0xRay
 
 1. **Finish the Unification**
    - Merge quality gates with validators
@@ -500,7 +500,7 @@ But the real value wasn't the code changes. It was the understanding:
 - That the plugin was the real system, not the framework
 - That architecture diagrams and actual architecture diverge
 
-We didn't just refactor code. We refactored our understanding of what StringRay is and how it works.
+We didn't just refactor code. We refactored our understanding of what 0xRay is and how it works.
 
 The mirror builds itself. And sometimes, when you look closely enough, you see what you actually built.
 

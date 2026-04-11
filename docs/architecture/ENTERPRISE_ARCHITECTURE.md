@@ -1,4 +1,4 @@
-# StrRay Framework v1.15.1 - Enterprise Architecture Documentation
+# 0xRay Framework v1.15.1 - Enterprise Architecture Documentation
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@
 
 ## System Overview
 
-The StrRay Framework v1.15.1 implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles and the **Facade Pattern architecture**. It provides systematic error prevention and production-ready code generation through a multi-layered, modular architecture.
+The 0xRay Framework v1.15.1 implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles and the **Facade Pattern architecture**. It provides systematic error prevention and production-ready code generation through a multi-layered, modular architecture.
 
 ### Key Architectural Characteristics
 
@@ -71,7 +71,7 @@ All framework operations are governed by 60 mandatory codex terms divided into:
 
 ## Core Components Overview
 
-The StringRay Framework consists of **28 key components** providing enterprise-grade AI agent coordination with systematic error prevention and production-ready development.
+The 0xRay Framework consists of **28 key components** providing enterprise-grade AI agent coordination with systematic error prevention and production-ready development.
 
 ### Facade Layer Components
 
@@ -121,7 +121,7 @@ The StringRay Framework consists of **28 key components** providing enterprise-g
 
 | # | Component | Purpose | Critical Level | Validation in Script |
 |----|-----------|---------|----------------|---------------------|
-| 1 | **StrRay Codex Injection Plugin** | Injects Universal Development Codex into AI system prompts | **CRITICAL** | Step 4 (Plugin loading), Step 17 (Integration validation) |
+| 1 | **0xRay Codex Injection Plugin** | Injects Universal Development Codex into AI system prompts | **CRITICAL** | Step 4 (Plugin loading), Step 17 (Integration validation) |
 | 2 | **State Management System** | Manages framework state and persistence | **CRITICAL** | Unit tests (integrated), Step 18 (Framework stability) |
 | 3 | **Processor Pipeline** | Handles tool execution preprocessing | **CRITICAL** | **Step 24** (Regression tests - StrRayStateManager/ProcessorManager) |
 | 4 | **MCP Server Registry** | Manages 28 Model Context Protocol servers | **HIGH** | Step 16 (MCP connectivity), Step 17 (Server validation) |
@@ -558,13 +558,13 @@ spec:
 
 ```yaml
 Resources:
-  StrRayLoadBalancer:
+  0xRayLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Type: application
       Scheme: internet-facing
 
-  StrRayAutoScalingGroup:
+  0xRayAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       MinSize: "2"
@@ -800,4 +800,4 @@ This architecture provides a solid foundation for enterprise-grade AI agent coor
 
 ---
 
-*StringRay AI v1.15.1 - Enterprise Facade Pattern Architecture*
+*0xRay AI v1.15.1 - Enterprise Facade Pattern Architecture*

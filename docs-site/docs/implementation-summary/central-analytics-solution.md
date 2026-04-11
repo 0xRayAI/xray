@@ -167,9 +167,9 @@ npx strray-ai analytics disable
 1. **Better Performance:** Community-trained patterns improve routing accuracy
 2. **Benchmarking:** Compare your project's performance vs community
 3. **Early Warnings:** Detect issues before they become problems
-4. **Framework Improvement:** Your data makes StringRay better for everyone
+4. **Framework Improvement:** Your data makes 0xRay better for everyone
 
-### For StringRay Framework
+### For 0xRay Framework
 1. **Faster Learning:** More data = quicker pattern convergence
 2. **Better Detection:** Community data reveals emerging patterns
 3. **Calibration:** More accurate confidence predictions
@@ -278,8 +278,8 @@ DELETE /api/v1/analytics/data/:id       # Request data deletion
 
 ## FAQ
 
-**Q: Is participation required to use StringRay?**  
-A: No. StringRay works perfectly without central analytics. Participation is 100% optional.
+**Q: Is participation required to use 0xRay?**  
+A: No. 0xRay works perfectly without central analytics. Participation is 100% optional.
 
 **Q: Can I see exactly what's being submitted?**  
 A: Yes. Use `npx strray-ai analytics preview --all` to see the exact anonymized data before submission.
@@ -288,7 +288,7 @@ A: Yes. Use `npx strray-ai analytics preview --all` to see the exact anonymized 
 A: Run `npx strray-ai analytics disable` and all submission stops immediately.
 
 **Q: Is my data sold or shared with third parties?**  
-A: No. Data is used exclusively for improving StringRay's adaptive learning system.
+A: No. Data is used exclusively for improving 0xRay's adaptive learning system.
 
 **Q: How long is my data retained?**  
 A: 90 days maximum, with option for immediate deletion upon request.
@@ -388,7 +388,7 @@ central-analytics-server/
 This central analytics solution addresses the tough challenge by creating a **win-win system**:
 
 1. **For Projects:** Get improved routing, benchmarks, and early warnings while maintaining complete privacy control
-2. **For StringRay:** Access community data to improve P9 Adaptive Pattern Learning for everyone
+2. **For 0xRay:** Access community data to improve P9 Adaptive Pattern Learning for everyone
 3. **For Users:** Transparency, consent control, and privacy guarantees
 
 The system is designed to be **optional, privacy-first, and valuable** - ensuring that participation is a choice that provides clear benefits without compromising privacy.

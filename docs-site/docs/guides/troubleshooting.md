@@ -6,11 +6,11 @@ sidebar_position: 5
 tags: ["guide"]
 ---
 
-# StrRay Framework - Centralized Troubleshooting Reference
+# 0xRay Framework - Centralized Troubleshooting Reference
 
 ## Overview
 
-This guide provides solutions for common issues encountered when using the StrRay framework. Issues are organized by category with step-by-step resolution procedures.
+This guide provides solutions for common issues encountered when using the 0xRay framework. Issues are organized by category with step-by-step resolution procedures.
 
 ## Installation Issues
 
@@ -26,7 +26,7 @@ This guide provides solutions for common issues encountered when using the StrRa
 1. **Check PATH Configuration**:
 
    ```bash
-   # Check if StrRay is in PATH
+   # Check if 0xRay is in PATH
    which strray
 
    # Add to PATH if missing
@@ -645,7 +645,7 @@ npm --version >> diagnostic.txt
 
 ### Framework Lockup
 
-If StrRay becomes unresponsive:
+If 0xRay becomes unresponsive:
 
 1. **Kill Process**:
 

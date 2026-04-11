@@ -1,10 +1,10 @@
-# StringRay AI Plugin Deployment Guide
+# 0xRay AI Plugin Deployment Guide
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
-This guide provides comprehensive instructions for deploying the StringRay AI framework plugin in your development environment. With StringRay v1.15.1, deployment is simplified through the **Facade Pattern Architecture**, which delivers 87% code reduction while maintaining full functionality.
+This guide provides comprehensive instructions for deploying the 0xRay AI framework plugin in your development environment. With 0xRay v1.15.1, deployment is simplified through the **Facade Pattern Architecture**, which delivers 87% code reduction while maintaining full functionality.
 
 ---
 
@@ -18,7 +18,7 @@ This guide provides comprehensive instructions for deploying the StringRay AI fr
 
 ## Installation
 
-### 1. Install StringRay AI
+### 1. Install 0xRay AI
 
 ```bash
 npm install strray-ai
@@ -44,7 +44,7 @@ npx strray-ai status
 
 **Expected output:**
 ```
-StringRay AI Framework v1.15.1
+0xRay AI Framework v1.15.1
 Status: ✅ Healthy
 Architecture: Facade Pattern
 Facades:
@@ -191,7 +191,7 @@ During deployment, facades initialize automatically:
 
 ```typescript
 // src/core/strray-activation.ts
-async function activateStrRayFramework() {
+async function activate0xRayFramework() {
   // Phase 1: Core components
   await initializeBootOrchestrator();
   await initializeStateManagement();
@@ -202,7 +202,7 @@ async function activateStrRayFramework() {
   // Phase 3: Module loading
   await loadFacadeModules();
   
-  console.log("✅ StringRay AI v1.15.1 activated");
+  console.log("✅ 0xRay AI v1.15.1 activated");
   console.log("   Facades: RuleEnforcer, TaskSkillRouter, MCPClient");
 }
 ```
@@ -389,7 +389,7 @@ status.facades.forEach(facade => {
 
 - [ ] Node.js 18+ installed
 - [ ] OpenCode running
-- [ ] StringRay AI installed (v1.15.1)
+- [ ] 0xRay AI installed (v1.15.1)
 - [ ] Postinstall script executed
 - [ ] Plugin status verified
 - [ ] Facades healthy (RuleEnforcer, TaskSkillRouter, MCPClient)

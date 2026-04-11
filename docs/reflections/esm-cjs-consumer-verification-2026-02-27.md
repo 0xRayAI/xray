@@ -305,7 +305,7 @@ npx strray-ai install
 # Verify
 npx strray-ai validate
 # Output:
-# ⚡ StringRay v1.6.12
+# ⚡ 0xRay v1.6.12
 # 🤖 Agents: 14 | ⚙️ MCPs: 15 | 💡 Skills: 30
 # ✅ Framework ready
 

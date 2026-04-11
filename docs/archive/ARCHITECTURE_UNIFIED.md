@@ -1,4 +1,4 @@
-# StringRay Architecture - Unified View
+# 0xRay Architecture - Unified View
 
 ## High-Level Architecture
 

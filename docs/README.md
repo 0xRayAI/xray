@@ -1,4 +1,4 @@
-# ⚡ StringRay AI v1.15.0 – Enterprise AI Agent Coordination Platform
+# ⚡ 0xRay AI v1.15.0 – Enterprise AI Agent Coordination Platform
 
 [![Version](https://img.shields.io/badge/version-undefined-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,9 +10,9 @@
 
 ## ⚠️ Important Notice
 
-**StringRay AI v1.15.0 - Enterprise CI/CD Automation Plugin**
+**0xRay AI v1.15.0 - Enterprise CI/CD Automation Plugin**
 
-StringRay Framework is available as both:
+0xRay Framework is available as both:
 
 - **Standalone npm package** for direct installation
 - **Integrated plugin** within OpenCode framework
@@ -24,14 +24,14 @@ npm install strray-ai
 npx strray-ai init
 ```
 
-**✅ Or install OpenCode (includes StringRay Framework):**
+**✅ Or install OpenCode (includes 0xRay Framework):**
 
 ```bash
 npm install -g OpenCode
-# StringRay Framework is automatically included
+# 0xRay Framework is automatically included
 ```
 
-This repository contains the complete StringRay Framework source code with enterprise CI/CD automation capabilities.
+This repository contains the complete 0xRay Framework source code with enterprise CI/CD automation capabilities.
 
 ---
 
@@ -39,7 +39,7 @@ This repository contains the complete StringRay Framework source code with enter
 
 ### Architecture Refactoring to Facade Pattern
 
-StringRay v1.15.0 features a modern, modular architecture built on the **Facade Pattern** for enhanced maintainability, performance, and reliability.
+0xRay v1.15.0 features a modern, modular architecture built on the **Facade Pattern** for enhanced maintainability, performance, and reliability.
 
 **Key Improvements:**
 - **87% Code Reduction**: Eliminated 3,170 lines of dead code (8,230 → 1,218 lines)
@@ -65,11 +65,11 @@ StringRay v1.15.0 features a modern, modular architecture built on the **Facade 
 
 **Delivers clean architecture, predictive analytics, secure plugin ecosystem, and sub-millisecond performance — enterprise-grade, every time.**
 
-**Why StringRay?**
+**Why 0xRay?**
 
 **Most AI coding tools fall into the same traps: tangled spaghetti code, hallucinations and inconsistent output, code rot that quietly erodes quality, race conditions, infinite loops, and tangled state/hook chaos.**
 
-**StringRay orchestrates 13 autonomous agents with 60 codex rules to eliminate them — before they take root.**
+**0xRay orchestrates 13 autonomous agents with 60 codex rules to eliminate them — before they take root.**
 
 **🛡️ Dead Ends Eliminated**
 
@@ -97,7 +97,7 @@ StringRay v1.15.0 features a modern, modular architecture built on the **Facade 
 #### Option 1: Standalone Installation (Recommended)
 
 ```bash
-# Install StringRay Framework directly
+# Install 0xRay Framework directly
 npm install strray-ai
 # or
 bun install strray-ai
@@ -109,17 +109,17 @@ npx strray-ai init
 #### Option 2: OpenCode Integration
 
 ```bash
-# Install OpenCode globally (includes StringRay Framework)
+# Install OpenCode globally (includes 0xRay Framework)
 npm install -g OpenCode
 # or
 bun install -g OpenCode
 
-# StringRay Framework is automatically included as a plugin
+# 0xRay Framework is automatically included as a plugin
 ```
 
 ### Configuration
 
-StringRay Framework automatically configures itself based on your installation method:
+0xRay Framework automatically configures itself based on your installation method:
 
 #### Standalone Configuration
 
@@ -140,10 +140,10 @@ StringRay Framework automatically configures itself based on your installation m
 #### Standalone Usage
 
 ```bash
-# Initialize StringRay in your project
+# Initialize 0xRay in your project
 npx strray-ai init
 
-# StringRay will automatically:
+# 0xRay will automatically:
 # - Set up CI/CD post-processor for automated remediation
 # - Load codex terms into agent system prompts
 # - Enable multi-agent orchestration for complex tasks
@@ -155,10 +155,10 @@ npx strray-ai init
 #### OpenCode Integration
 
 ```bash
-# Start OpenCode (includes StringRay Framework)
+# Start OpenCode (includes 0xRay Framework)
 opencode
 
-# All StringRay features are automatically available
+# All 0xRay features are automatically available
 ```
 
 ### OpenCode Documentation
@@ -169,7 +169,7 @@ For complete OpenCode setup and usage instructions, see the [official OpenCode d
 
 Update your `.opencode/OpenCode.json`:
 
-**First, update to your preferred AI model.** Check [OpenCode](https://opencode.ai) for free models and update the `model_routing` section in your config. See [Model Configuration Guide](./docs/StringRay_MODEL_CONFIG.md) for detailed instructions.
+**First, update to your preferred AI model.** Check [OpenCode](https://opencode.ai) for free models and update the `model_routing` section in your config. See [Model Configuration Guide](./docs/0xRay_MODEL_CONFIG.md) for detailed instructions.
 
 ```json
 {
@@ -225,7 +225,7 @@ Update your `.opencode/OpenCode.json`:
 
 ## 🏗️ THE SENTINEL ARCHITECTURE (FACADE PATTERN v1.15.0)
 
-StringRay v1.15.0 uses a modern **Facade Pattern** architecture with modular internal structure:
+0xRay v1.15.0 uses a modern **Facade Pattern** architecture with modular internal structure:
 
 ### 🛡️ 27 VIGILANT SENTRIES - ETERNALLY GUARDING
 
@@ -411,12 +411,12 @@ npm run test:e2e         # End-to-end tests through OpenCode runtime
 
 ### 🧪 Testing Approach
 
-**StringRay Framework uses mock-based testing** due to its OpenCode plugin architecture:
+**0xRay Framework uses mock-based testing** due to its OpenCode plugin architecture:
 
 **❌ Direct Plugin Testing (Not Supported):**
 ```typescript
 // This fails due to ES6 import conflicts
-import { createStringRayCodexInjectorHook } from "./codex-injector";
+import { create0xRayCodexInjectorHook } from "./codex-injector";
 ````
 
 **✅ Mock-Based Plugin Testing (Recommended):**
@@ -577,8 +577,8 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ## Documentation
 
-- [Installation Guide](./docs/StringRay_INSTALLATION_GUIDE.md)
-- [Model Configuration](./docs/StringRay_MODEL_CONFIG.md)
+- [Installation Guide](./docs/0xRay_INSTALLATION_GUIDE.md)
+- [Model Configuration](./docs/0xRay_MODEL_CONFIG.md)
 - [API Reference](./docs/api/API_REFERENCE.md)
 - [Agent Documentation](./docs/agents/)
 - [Architecture](./docs/architecture/)

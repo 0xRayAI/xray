@@ -10,7 +10,7 @@ tags: ["agents"]
 
 ## Executive Overview
 
-The storyteller agent fills a unique niche in the StringRay ecosystem: narrative, emotionally-engaging long-form documentation that captures the *human* experience of technical work. Unlike rigid template-based reflections, storyteller produces compelling 2,000-10,000 word journeys that feel like conversation rather than corporate documentation.
+The storyteller agent fills a unique niche in the 0xRay ecosystem: narrative, emotionally-engaging long-form documentation that captures the *human* experience of technical work. Unlike rigid template-based reflections, storyteller produces compelling 2,000-10,000 word journeys that feel like conversation rather than corporate documentation.
 
 This growth strategy defines who benefits from these stories, when to invoke the agent, how to distribute content, and how to measure success from a growth perspective.
 

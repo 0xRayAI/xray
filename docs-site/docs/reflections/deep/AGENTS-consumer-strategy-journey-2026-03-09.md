@@ -17,7 +17,7 @@ date: 2026-03-09
 
 ## 🌅 The Journey in Retrospective
 
-What began as a simple request to "add a few bugs" to AGENTS-consumer.md evolved into a comprehensive exploration of StringRay's plugin architecture, documentation distribution, and consumer experience design. This session revealed critical insights about how OpenCode plugins interact with the framework and what users actually experience.
+What began as a simple request to "add a few bugs" to AGENTS-consumer.md evolved into a comprehensive exploration of 0xRay's plugin architecture, documentation distribution, and consumer experience design. This session revealed critical insights about how OpenCode plugins interact with the framework and what users actually experience.
 
 ### The Initial Request
 
@@ -33,7 +33,7 @@ On the surface, this appeared straightforward - add missing documentation sectio
 As we explored the codebase and plugin architecture, we discovered:
 
 1. **Documentation ecosystem complexity** - Multiple files with similar purposes in different locations
-2. **Plugin architecture misunderstanding** - How OpenCode plugins integrate with StringRay
+2. **Plugin architecture misunderstanding** - How OpenCode plugins integrate with 0xRay
 3. **Distribution mechanism complexity** - Postinstall scripts copying files to multiple locations
 4. **Consumer experience gaps** - What happens when plugin isn't installed or active
 5. **The "Plugin Kicks Off" mystery** - User reported plugin behavior without documentation
@@ -81,7 +81,7 @@ When the plugin "kicks off," users lose access to:
 6. **Analytics & Logging** - Plugin-specific monitoring is lost
 7. **Hot-Reload Capabilities** - Code changes during development don't trigger plugin reload
 
-**Critical Insight**: The "direct agent touchpoints" are the plugin's **capabilities** - features that enhance how agents work in a fully configured StringRay environment.
+**Critical Insight**: The "direct agent touchpoints" are the plugin's **capabilities** - features that enhance how agents work in a fully configured 0xRay environment.
 
 ### Documentation Distribution Analysis
 
@@ -156,7 +156,7 @@ try {
 ### 1. Plugin Architecture Section
 
 ```markdown
-## StringRay OpenCode Plugin
+## 0xRay OpenCode Plugin
 
 ### How the Plugin Works
 
@@ -168,7 +168,7 @@ The plugin operates in two modes:
 
 #### Development Mode (Full Functionality)
 
-When developing StringRay locally:
+When developing 0xRay locally:
 - ✅ Loads from `node_modules/strray-ai/dist/`
 - ✅ Full codex injection with latest terms
 - ✅ Agent discovery from MCP servers
@@ -195,7 +195,7 @@ When strray-ai is installed in a consumer project:
 ```markdown
 ## Direct Agent Touchpoints
 
-The following capabilities represent direct interaction points with StringRay agents that may be affected when the OpenCode plugin is inactive:
+The following capabilities represent direct interaction points with 0xRay agents that may be affected when the OpenCode plugin is inactive:
 
 ### Available When Plugin Active
 
@@ -236,7 +236,7 @@ The following capabilities represent direct interaction points with StringRay ag
 - May have reduced feature set for stability
 
 **What to Expect**:
-In consumer installations, StringRay agents function identically but may have:
+In consumer installations, 0xRay agents function identically but may have:
 - Static agent list instead of dynamic discovery
 - Framework version 1.7.60 codex terms instead of latest
 - No hot-reload capability
@@ -431,4 +431,4 @@ Special thanks to:
 
 ---
 
-*This reflection was generated on 2026-03-09 following AGENTS-consumer.md documentation strategy session. It captures architectural insights, user feedback, and recommendations for improving StringRay consumer documentation.*
+*This reflection was generated on 2026-03-09 following AGENTS-consumer.md documentation strategy session. It captures architectural insights, user feedback, and recommendations for improving 0xRay consumer documentation.*

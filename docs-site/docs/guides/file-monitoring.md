@@ -6,17 +6,17 @@ sidebar_position: 1
 tags: ["guide"]
 ---
 
-# File Operation Monitoring in StringRay
+# File Operation Monitoring in 0xRay
 
 ## Overview
 
-StringRay provides several ways to monitor file operations during AI agent execution. This guide covers best practices for implementing file monitoring in your StringRay-powered projects.
+0xRay provides several ways to monitor file operations during AI agent execution. This guide covers best practices for implementing file monitoring in your 0xRay-powered projects.
 
 ## Built-in Monitoring
 
 ### Automatic Tool Logging
 
-StringRay's framework automatically logs all tool executions, including file operations. No configuration is required.
+0xRay's framework automatically logs all tool executions, including file operations. No configuration is required.
 
 ```typescript
 // All tool executions are automatically logged
@@ -221,7 +221,7 @@ export class FileMonitorService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'StringRay-FileMonitor/1.0.0',
+        'User-Agent': '0xRay-FileMonitor/1.0.0',
         ...(this.config.apiKey && { 'Authorization': `Bearer ${this.config.apiKey}` }),
         ...(signature && { 'X-Webhook-Signature': signature }),
       },
@@ -280,7 +280,7 @@ export class FileMonitorService {
 }
 ```
 
-### Step 3: Hook into StringRay's Event System
+### Step 3: Hook into 0xRay's Event System
 
 ```typescript
 // file-monitor-hooks.ts
@@ -289,11 +289,11 @@ import { FileEvent, FileMonitorService } from './file-monitor-service.js';
 export function registerFileMonitor(monitor: FileMonitorService): void {
   // Register for tool.before events
   // (if you want to track operations about to start)
-  // Note: StringRay's event system is in development
+  // Note: 0xRay's event system is in development
   // You may need to wrap tool calls manually
 
-  // Alternative: Wrap StringRay tools
-  wrapStringRayTool('read', async (filePath, options) => {
+  // Alternative: Wrap 0xRay tools
+  wrap0xRayTool('read', async (filePath, options) => {
     const startTime = Date.now();
 
     try {
@@ -710,6 +710,6 @@ If you need a custom webhook receiver, consider these options:
 ## Questions?
 
 For more help:
-- [StringRay Documentation](/docs/readme)
+- [0xRay Documentation](/docs/readme)
 - [Migration Guide](/docs/migrations-openclaw-removal)
 - [Open an issue](https://github.com/htafolla/stringray/issues)

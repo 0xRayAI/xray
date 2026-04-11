@@ -6,7 +6,7 @@ sidebar_position: 3
 tags: ["performance"]
 ---
 
-# StrRay Path Resolution Issues & Solutions
+# 0xRay Path Resolution Issues & Solutions
 
 **Version**: v1.15.1  
 **Status**: Partially Resolved  

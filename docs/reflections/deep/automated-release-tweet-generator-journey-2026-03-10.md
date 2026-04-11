@@ -8,7 +8,7 @@
 
 ## 🎯 Executive Summary
 
-Successfully implemented **automated release workflow** for StringRay with consumer-facing tweet generation. The release process now:
+Successfully implemented **automated release workflow** for 0xRay with consumer-facing tweet generation. The release process now:
 
 1. ✅ Trigger words detect release intent automatically (release, npm publish, ship it, etc.)
 2. ✅ Hard stop rule prevents shipping broken code
@@ -200,7 +200,7 @@ if (!hasConsumerChanges) {
 }
 
 // Hashtags + link
-parts.push('\n#StringRay #AI #DevTools');
+parts.push('\n#0xRay #AI #DevTools');
 parts.push('🔗 https://github.com/htafolla/stringray');
 ```
 
@@ -443,7 +443,7 @@ SyntaxError: Identifier 'generateTweetForVersion' has already been declared
 📊 3 fixes
 
 
-#StringRay #AI #DevTools
+#0xRay #AI #DevTools
 🔗 https://github.com/htafolla/stringray
 ```
 
@@ -461,7 +461,7 @@ SyntaxError: Identifier 'generateTweetForVersion' has already been declared
 📊 1 fix
 
 
-#StringRay #AI #DevTools
+#0xRay #AI #DevTools
 🔗 https://github.com/htafolla/stringray
 ```
 
@@ -545,7 +545,7 @@ try {
 - release: v1.7.10 - Add automated release workflow (471ea25)
 
 --- Tweet Preview ---
-🚀 StringRay v1.7.10 released!
+🚀 0xRay v1.7.10 released!
 
 🐛 Add hard stop rule for release workflow
 

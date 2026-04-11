@@ -2,17 +2,17 @@
 
 **Date:** March 25, 2026  
 **Duration:** 5-phase implementation spanning multiple sessions  
-**Focus:** Building comprehensive skills routing architecture for StringRay framework
+**Focus:** Building comprehensive skills routing architecture for 0xRay framework
 
 ---
 
 ## Executive Summary
 
-This reflection documents the implementation of a comprehensive 5-phase skills routing architecture that transformed StringRay from a framework with static agent definitions into a dynamic, routing-driven system capable of intelligently matching tasks to the right skills. The journey spanned Phase 1 (Skill Registry Foundation), Phase 2 (Routing Enhancement), Phase 3 (Agent Config Integration), Phase 4 (Processor Pipeline), and Phase 5 (Hot Reload). We discovered 44 skills from `.opencode/skills/`, built a multi-layered system with registry, matcher, resolver, pipeline, and watcher components, and integrated it all into the boot orchestrator and plugin system.
+This reflection documents the implementation of a comprehensive 5-phase skills routing architecture that transformed 0xRay from a framework with static agent definitions into a dynamic, routing-driven system capable of intelligently matching tasks to the right skills. The journey spanned Phase 1 (Skill Registry Foundation), Phase 2 (Routing Enhancement), Phase 3 (Agent Config Integration), Phase 4 (Processor Pipeline), and Phase 5 (Hot Reload). We discovered 44 skills from `.opencode/skills/`, built a multi-layered system with registry, matcher, resolver, pipeline, and watcher components, and integrated it all into the boot orchestrator and plugin system.
 
 The technical challenges we faced were significant: YAML parsing for nested objects required building a custom parser with proper indentation handling, TypeScript's `exactOptionalPropertyTypes` forced explicit `undefined` types throughout the codebase, OpenCode's sandboxing created visibility issues between Node.js and shell contexts, and circular dependencies between registry and matcher components required careful architectural separation.
 
-What started as a seemingly straightforward feature request evolved into a fundamental architectural shift that touched nearly every layer of the StringRay framework. The implementation now serves as the backbone for intelligent task routing, capability matching, and dynamic skill resolution.
+What started as a seemingly straightforward feature request evolved into a fundamental architectural shift that touched nearly every layer of the 0xRay framework. The implementation now serves as the backbone for intelligent task routing, capability matching, and dynamic skill resolution.
 
 ---
 
@@ -28,7 +28,7 @@ These two systems wanted to pull in opposite directions.
 
 I remember sitting in my home office, staring at two whiteboard diagrams, trying to figure out how to make them coexist. On one side, I had the kernel's context system - slow, deliberate, stateful. On the other, I had the skills routing vision - fast, ephemeral, discovery-driven.
 
-The first instinct was to separate them completely. Let the kernel handle its business, let skills routing live in its own world, and let the plugin bridge them. But that felt wrong. The power of StringRay has always been the tight integration between components. Separating them would mean losing the contextual awareness that makes the framework special.
+The first instinct was to separate them completely. Let the kernel handle its business, let skills routing live in its own world, and let the plugin bridge them. But that felt wrong. The power of 0xRay has always been the tight integration between components. Separating them would mean losing the contextual awareness that makes the framework special.
 
 The resolution came through分层 - layering. We didn't need to choose between preservation and dynamism. We needed to create a system where the registry could be both stateful (with caching and persistence) and dynamic (with discovery and hot reload). The cache would preserve context, the discovery would provide routing. They could coexist at different layers of the architecture.
 
@@ -76,7 +76,7 @@ Simple keyword matching would work for obvious cases. If a task mentioned "secur
 
 This was when we built the SkillMatcher - a capability-based matching system that could reason about what skills could do, not just what their names were. We added keyword boost matching to weight common terms higher. We built in fallback behavior so that if the perfect skill wasn't found, we could still route to something useful.
 
-The plugin integration brought this into the runtime. Now when the framework started, it logged skill discovery and matching activity. The `skill:list` CLI command gave users visibility into what was available. For the first time, StringRay could tell you not just what agents existed, but what skills they could invoke.
+The plugin integration brought this into the runtime. Now when the framework started, it logged skill discovery and matching activity. The `skill:list` CLI command gave users visibility into what was available. For the first time, 0xRay could tell you not just what agents existed, but what skills they could invoke.
 
 ### Phase 3: The Agent Binding Question
 
@@ -348,7 +348,7 @@ This would require tracking execution outcomes and building feedback loops. The 
 
 ### Cross-Framework Skill Sharing
 
-Skills are currently specific to StringRay. The future could include interoperability with other agent frameworks, allowing skills to be shared across systems.
+Skills are currently specific to 0xRay. The future could include interoperability with other agent frameworks, allowing skills to be shared across systems.
 
 This would require standardizing skill definitions, which is a significant undertaking. But the benefits could be substantial - a shared ecosystem of skills that work across frameworks.
 
@@ -390,14 +390,14 @@ This would require standardizing skill definitions, which is a significant under
 
 ## Final Thoughts
 
-Five phases. Thirty skills. Countless hours of debugging, designing, and documenting. What we built is more than a feature - it's a foundation for the future of StringRay.
+Five phases. Thirty skills. Countless hours of debugging, designing, and documenting. What we built is more than a feature - it's a foundation for the future of 0xRay.
 
 The journey wasn't straight. We made mistakes, took wrong turns, encountered problems we didn't know could exist. But each challenge made us stronger, each mistake taught us something new, each dead end led us to better solutions.
 
-I'm proud of what we built. More importantly, I'm excited about what it enables. The skills routing architecture isn't the end of the story - it's the beginning of a new chapter. A chapter where StringRay can intelligently route tasks, where skills can be discovered dynamically, where the framework learns and adapts.
+I'm proud of what we built. More importantly, I'm excited about what it enables. The skills routing architecture isn't the end of the story - it's the beginning of a new chapter. A chapter where 0xRay can intelligently route tasks, where skills can be discovered dynamically, where the framework learns and adapts.
 
 That's the vision. We're just getting started.
 
 ---
 
-*March 25, 2026 - StringRay Framework*
+*March 25, 2026 - 0xRay Framework*

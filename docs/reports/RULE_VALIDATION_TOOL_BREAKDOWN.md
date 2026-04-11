@@ -1,4 +1,4 @@
-# StrRay Framework - Rule Validation Tool Breakdown
+# 0xRay Framework - Rule Validation Tool Breakdown
 
 ## 🎯 **What Is In `rule-validation` Tool?**
 

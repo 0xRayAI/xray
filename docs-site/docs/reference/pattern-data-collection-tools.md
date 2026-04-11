@@ -6,7 +6,7 @@ sidebar_position: 1
 tags: ["reference"]
 ---
 
-# StringRay Data Collection & Analysis Tools - Complete Reference
+# 0xRay Data Collection & Analysis Tools - Complete Reference
 
 **Framework Version**: v1.7.2  
 **Last Updated**: 2026-03-06  
@@ -16,7 +16,7 @@ tags: ["reference"]
 
 ## 🎯 Executive Summary
 
-StringRay v1.7.2 provides **comprehensive data collection and analysis capabilities** through multiple integrated systems:
+0xRay v1.7.2 provides **comprehensive data collection and analysis capabilities** through multiple integrated systems:
 
 ### **Available Systems**:
 1. **CLI Commands** - Interactive command-line tools for analysis
@@ -41,7 +41,7 @@ StringRay v1.7.2 provides **comprehensive data collection and analysis capabilit
 
 #### **1. `npx strray-ai analytics`**
 **Purpose**: Central analytics command for pattern analysis and insights  
-**Description**: StringRay Central Analytics - Pattern analysis, insights, and consent management
+**Description**: 0xRay Central Analytics - Pattern analysis, insights, and consent management
 
 **Options**:
 ```bash
@@ -857,7 +857,7 @@ chmod +x scripts/daily-analytics.sh
 
 ## ✅ Summary
 
-StringRay v1.7.2 provides **comprehensive data collection and analysis capabilities** through:
+0xRay v1.7.2 provides **comprehensive data collection and analysis capabilities** through:
 
 ### **Key Tools**:
 - 🖥️ **6 CLI Commands** for interactive analysis

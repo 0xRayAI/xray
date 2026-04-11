@@ -1,23 +1,23 @@
 ---
 slug: "/docs/enhancements/stringray-enhancement-recommendations"
-title: "StringRay Enhancement Recommendations"
-sidebar_label: "StringRay Enhancement Recommendations"
+title: "0xRay Enhancement Recommendations"
+sidebar_label: "0xRay Enhancement Recommendations"
 sidebar_position: 1
 tags: ["enhancement"]
 ---
 
-# StringRay Enhancement Recommendations
+# 0xRay Enhancement Recommendations
 ## Based on Jelly Commercial Learning System
 
 **Date**: February 24, 2026
 **Source**: Jelly commercial implementation analysis
-**Purpose**: Bring learning capabilities to StringRay free
+**Purpose**: Bring learning capabilities to 0xRay free
 
 ---
 
 ## Executive Summary
 
-**IMPORTANT**: After analyzing StringRay's existing code, I discovered most activity log fields already exist!
+**IMPORTANT**: After analyzing 0xRay's existing code, I discovered most activity log fields already exist!
 
 Looking at `JobContext` and `FrameworkUsageLogger`:
 - ✅ `complexityScore` - Already tracked
@@ -109,7 +109,7 @@ async complete(success: boolean = true, details?: any) {
 ### Concept
 Adjust complexity predictions based on historical accuracy.
 
-**Note**: StringRay already tracks `complexityScore` and `duration`. We just need to compare them.
+**Note**: 0xRay already tracks `complexityScore` and `duration`. We just need to compare them.
 
 ```typescript
 // src/delegation/complexity-calibrator.ts
@@ -205,7 +205,7 @@ class ComplexityCalibrator {
 - `src/analytics/simple-pattern-analyzer.ts` - Pattern analysis
 - `src/analytics/complexity-calibrator.ts` - Calibration logic
 - `src/cli/analytics-command.ts` - CLI command
-- `docs/enhancements/StringRay-Enhancement-Recommendations.md` (this file)
+- `docs/enhancements/0xRay-Enhancement-Recommendations.md` (this file)
 
 ### Modified Files
 - `src/core/framework-logger.ts` - Add outcome and complexityAccuracy
@@ -215,7 +215,7 @@ class ComplexityCalibrator {
 
 ## What This Enables
 
-After implementing these recommendations, StringRay free will have:
+After implementing these recommendations, 0xRay free will have:
 
 1. ✅ **Structured outcome tracking** - success/fail/escalated/auto-fixed
 2. ✅ **Complexity accuracy measurement** - underestimated/accurate/overestimated
@@ -223,7 +223,7 @@ After implementing these recommendations, StringRay free will have:
 4. ✅ **CLI analytics** - `npx strray-ai analytics`
 5. ✅ **Calibrated predictions** - complexity adjusts based on history
 
-**This brings ~70% of Jelly's learning capability to StringRay free, without:**
+**This brings ~70% of Jelly's learning capability to 0xRay free, without:**
 - Task queue system
 - Phase management
 - GUI/web interface
@@ -231,9 +231,9 @@ After implementing these recommendations, StringRay free will have:
 
 ---
 
-## Comparison: StringRay Free vs Jelly
+## Comparison: 0xRay Free vs Jelly
 
-| Feature | StringRay Free (After) | Jelly Commercial |
+| Feature | 0xRay Free (After) | Jelly Commercial |
 |----------|----------------------|------------------|
 | Activity Log | ✅ Enhanced with outcome | Same |
 | Pattern Analysis | ✅ Simple counting | Same |
@@ -248,7 +248,7 @@ After implementing these recommendations, StringRay free will have:
 
 ## Conclusion
 
-StringRay free already has most of the data it needs. We just need to:
+0xRay free already has most of the data it needs. We just need to:
 
 1. **Log the outcome** (add 2 fields)
 2. **Analyze the patterns** (new file)
@@ -262,5 +262,5 @@ This achieves 70% of Jelly's learning value without the commercial overhead.
 ---
 
 *Generated from Jelly commercial analysis*
-*Purpose: Bring learning to StringRay free*
+*Purpose: Bring learning to 0xRay free*
 *Author: Big Pickle*

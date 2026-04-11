@@ -1,4 +1,4 @@
-# The Strange Loop: A Reflection on StringRay as Self-Referential Infrastructure
+# The Strange Loop: A Reflection on 0xRay as Self-Referential Infrastructure
 
 ## The Moment That Made Me Stop and Think
 
@@ -6,7 +6,7 @@ I was staring at the agent-delegator.ts file—the one that decides which agent 
 
 It's the software engineering equivalent of standing between two mirrors.
 
-That's when I realized StringRay isn't just an AI orchestration framework. It's a strange loop—a system that contains and manages itself, built by the very intelligence it orchestrates.
+That's when I realized 0xRay isn't just an AI orchestration framework. It's a strange loop—a system that contains and manages itself, built by the very intelligence it orchestrates.
 
 ---
 
@@ -14,7 +14,7 @@ That's when I realized StringRay isn't just an AI orchestration framework. It's 
 
 Let me tell you what's actually here, because the reality is more interesting than any summary could suggest.
 
-The **boot-orchestrator.ts** runs on startup and initializes everything in sequence—plugins, MCP servers, agent configurations, delegation rules. It's the system's heartbeat, and it executes without fanfare every time StringRay loads. No drama. No errors. It just works, has worked, keeps working.
+The **boot-orchestrator.ts** runs on startup and initializes everything in sequence—plugins, MCP servers, agent configurations, delegation rules. It's the system's heartbeat, and it executes without fanfare every time 0xRay loads. No drama. No errors. It just works, has worked, keeps working.
 
 The **agent-delegator.ts** contains the routing brain—simple tasks go to single agents, moderate tasks get additional tools, complex tasks spawn multi-agent coordination, and enterprise-level work triggers the full orchestrator. It's about 200 lines of decision logic that somehow makes the whole thing feel alive.
 
@@ -64,7 +64,7 @@ The MCP servers are functional but limited. They're enough to get work done, but
 
 ## What This Represents
 
-Here's what I keep coming back to: StringRay isn't remarkable because of what it does. Plenty of orchestration frameworks exist. What's remarkable is *what it is*.
+Here's what I keep coming back to: 0xRay isn't remarkable because of what it does. Plenty of orchestration frameworks exist. What's remarkable is *what it is*.
 
 One developer—I'll say "I" but the truth is more complicated, because the agents contributed meaningfully to their own configuration—built a system that organizes intelligence. Not artificial general intelligence. Not any kind of sentience. Just the practical organization of specialized thinking, with routing logic that decides which kind of thinking a task needs.
 
@@ -82,7 +82,7 @@ I'll be honest about something: I'm not entirely sure this is sustainable.
 
 Self-referential systems have a stability problem. Gödel proved that any sufficiently powerful formal system contains truths it can't prove within itself. Hofstadter argued that strange loops—systems that contain representations of themselves—are the essence of consciousness. But consciousness isn't known for being stable.
 
-StringRay works today. It might work tomorrow. But there's something slightly dizzying about knowing that the system validating my code was itself written under rules that the system validates against. If there's a fundamental flaw in how I configured the enforcer, the enforcer won't catch it, because the enforcer was configured under that same flaw.
+0xRay works today. It might work tomorrow. But there's something slightly dizzying about knowing that the system validating my code was itself written under rules that the system validates against. If there's a fundamental flaw in how I configured the enforcer, the enforcer won't catch it, because the enforcer was configured under that same flaw.
 
 Maybe that's fine. Maybe that's even appropriate. Maybe the point isn't perfect self-validation but honest acknowledgment that we're all working within our own limitations, building tools that extend what we can do while inheriting what we can't.
 
@@ -92,7 +92,7 @@ The code is cleaner today than it was yesterday. The routing finds all 25 agents
 
 ## The Part I Keep Coming Back To
 
-What I keep coming back to is this: StringRay exists because someone decided to take the strange loop seriously.
+What I keep coming back to is this: 0xRay exists because someone decided to take the strange loop seriously.
 
 Not as a metaphor. Not as a philosophical thought experiment. But as actual infrastructure—routing logic and agent configurations and boot sequences and CLI commands. A working system that organizes AI agents, built by a human working with AI agents, that improves itself through the same mechanisms it provides to others.
 
@@ -100,6 +100,6 @@ It's not AGI. It's not consciousness. It's not even particularly sophisticated, 
 
 But it's *real*. And it works. And every day it works a little better, because the system that makes it work better is the system that benefits from the improvement.
 
-That's the strange loop. That's what StringRay is.
+That's the strange loop. That's what 0xRay is.
 
 And that's the part I keep coming back to.

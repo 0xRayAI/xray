@@ -24,20 +24,20 @@ AUTONOMOUS MODULE ANALYSIS
 
  What Are Autonomous Modules?
 
-From configuration analysis, autonomous modules appear to be legacy OpenCode features that were activated during initial StringRay fr...
+From configuration analysis, autonomous modules appear to be legacy OpenCode features that were activated during initial 0xRay fr...
 
 ---
 
-### 🚀 StringRay Framework: Deep Deployment Pipeline Reflection
+### 🚀 0xRay Framework: Deep Deployment Pipeline Reflection
 
 - **Date**: unknown
 - **File**: [DEPLOYMENT_PIPELINE_TRANSFORMATION_REFLECTION.md](./DEPLOYMENT_PIPELINE_TRANSFORMATION_REFLECTION.md)
 
-🚀 StringRay Framework: Deep Deployment Pipeline Reflection
+🚀 0xRay Framework: Deep Deployment Pipeline Reflection
 
  Executive Summary
 
-This reflection analyzes the comprehensive evolution of the StringRay Framework deployment pipeline from a basic sc...
+This reflection analyzes the comprehensive evolution of the 0xRay Framework deployment pipeline from a basic sc...
 
 ---
 
@@ -66,7 +66,7 @@ Gap Analysis: Kimi's Reflection vs Template
 
  The Big Issue: Deep Model Propagation Antipattern
 
-You correctly identified a major architectural flaw in the StrRay framework. The problem was mod...
+You correctly identified a major architectural flaw in the 0xRay framework. The problem was mod...
 
 ---
 
@@ -121,12 +121,12 @@ Refl...
 
 ---
 
-### StringRay Reflection Log - Comprehensive Summary
+### 0xRay Reflection Log - Comprehensive Summary
 
 - **Date**: unknown
 - **File**: [REFLECTION_LOG_SUMMARY.md](./REFLECTION_LOG_SUMMARY.md)
 
-StringRay Reflection Log - Comprehensive Summary
+0xRay Reflection Log - Comprehensive Summary
 
 Generated: 2026-02-27
 Total Reflections Read: 50+
@@ -162,12 +162,12 @@ File: `docs/...
 
 ---
 
-### StringRay 1.2.0 Simulation & Orchestration Test Results
+### 0xRay 1.2.0 Simulation & Orchestration Test Results
 
 - **Date**: unknown
 - **File**: [SIMULATION_TEST_RESULTS.md](./SIMULATION_TEST_RESULTS.md)
 
-StringRay 1.2.0 Simulation & Orchestration Test Results
+0xRay 1.2.0 Simulation & Orchestration Test Results
 
  Test Execution Summary
 
@@ -177,12 +177,12 @@ Total Test Files: 6 core test...
 
 ---
 
-### StringRay Skill System Bug Investigation Report
+### 0xRay Skill System Bug Investigation Report
 
 - **Date**: unknown
 - **File**: [SYSTEM_BUG_INVESTIGATION.md](./SYSTEM_BUG_INVESTIGATION.md)
 
-StringRay Skill System Bug Investigation Report
+0xRay Skill System Bug Investigation Report
 
  Critical Issue Summary
 Status: CRITICAL - Blocking core functionality  
@@ -196,19 +196,19 @@ Impact: Users cannot access essential agents like `@architect`, `@...
 - **File**: [TEMPLATE.md](./TEMPLATE.md)
 
 AI Agent Reflection Template (v1.2)
- Mandatory Structure for All StringRay Reflections
+ Mandatory Structure for All 0xRay Reflections
 
 Location: `./docs/reflections/[descriptive-name]-reflection.md`  
 Required: After ANY session >30 mi...
 
 ---
 
-### StringRay Test Documentation
+### 0xRay Test Documentation
 
 - **Date**: unknown
 - **File**: [TEST_DOCUMENTATION.md](./TEST_DOCUMENTATION.md)
 
-StringRay Test Documentation
+0xRay Test Documentation
 
  Test Suite Status Overview
 
@@ -276,7 +276,7 @@ Manual version management cause...
 CI/CD Pipeline Recovery & Auto-Fix Agent Implementation Reflection
 
 Session Date: 2026-01-31  
-Framework Version: StringRay AI v1.3.4  
+Framework Version: 0xRay AI v1.3.4  
 Duration: Multi-hour intensive session  
 Outcome...
 
@@ -305,7 +305,7 @@ Deep Reflection: The Clean Version Victory
 
 Date: 2026-02-01  
 Author: Kimi (AI Assistant)  
-Context: StringRay AI v1.3.6  
+Context: 0xRay AI v1.3.6  
 Status: COMPLE...
 
 ---
@@ -352,16 +352,16 @@ This session represented a critical architectural validation and systematic test
 
 ---
 
-### Deep Reflection: The StringRay Framework Transformation Journey
+### Deep Reflection: The 0xRay Framework Transformation Journey
 
 - **Date**: unknown
 - **File**: [deep-reflection.md](./deep-reflection.md)
 
-Deep Reflection: The StringRay Framework Transformation Journey
+Deep Reflection: The 0xRay Framework Transformation Journey
 
  Executive Summary
 
-This document chronicles the transformative journey of the StringRay Framework from a resource-intensive, monol...
+This document chronicles the transformative journey of the 0xRay Framework from a resource-intensive, monol...
 
 ---
 
@@ -375,21 +375,21 @@ Deep Reflection: The Deployment Crisis Journey
 
 Date: 2026-02-01  
 Author: Kimi (AI Assistant)  
-Context: StringRay AI v1.3.4  
+Context: 0xRay AI v1.3.4  
 Status: Resolved...
 
 ---
 
-### StringRay Deployment Reflection Document
+### 0xRay Deployment Reflection Document
 
 - **Date**: unknown
 - **File**: [deployment-crisis-v12x-reflection.md](./deployment-crisis-v12x-reflection.md)
 
-StringRay Deployment Reflection Document
+0xRay Deployment Reflection Document
  v1.2.x Release Post-Mortem & Lessons Learned
 
 Date: 2026-02-01  
-Author: StringRay Development Team  
+Author: 0xRay Development Team  
 Version: v1.2.7 (Working Release)  
 St...
 
@@ -428,7 +428,7 @@ Enhanced Reflection Template: Author-Aware Gleaning
 
 Template Version: 2.0 (Author-Aware)
 Enhancement Date: March 3, 2026
-Context: Based on StringRay 1.6.31 experience
+Context: Based on 0xRay 1.6.31 experience
 Key Addition:...
 
 ---
@@ -446,12 +446,12 @@ Framewo...
 
 ---
 
-### StringRay Framework - JSON Codex Integration Test Suite Recovery Reflection
+### 0xRay Framework - JSON Codex Integration Test Suite Recovery Reflection
 
 - **Date**: unknown
 - **File**: [json-codex-test-recovery-reflection.md](./json-codex-test-recovery-reflection.md)
 
-StringRay Framework - JSON Codex Integration Test Suite Recovery Reflection
+0xRay Framework - JSON Codex Integration Test Suite Recovery Reflection
 
 Category: Incident Reflection (Focused) - Test suite failure analysis and systematic recovery
 Date: January 24, 2...
@@ -479,7 +479,7 @@ Personal Reflection: Kimi's Deployment Crisis Learnings
 
 Date: 2026-02-01  
 Author: Kimi (AI Assistant)  
-Context: StringRay v1.2.x Deployment Crisis  
+Context: 0xRay v1.2.x Deployment Crisis  
 Status: Resolved with v1.2.7...
 
 ---
@@ -520,7 +520,7 @@ Reflection: MCP Consumer Path Debugging Journey
 
  Executive Summary
 
-This reflection documents the debugging of the StringRay test auto-creation feature which failed in consumer installations. Wha...
+This reflection documents the debugging of the 0xRay test auto-creation feature which failed in consumer installations. Wha...
 
 ---
 
@@ -567,12 +567,12 @@ Framework V...
 
 ---
 
-### StringRay Framework - Multi-AI Collaboration Reflection
+### 0xRay Framework - Multi-AI Collaboration Reflection
 
 - **Date**: unknown
 - **File**: [multi-ai-collaboration-test-rehabilitation-reflection.md](./multi-ai-collaboration-test-rehabilitation-reflection.md)
 
-StringRay Framework - Multi-AI Collaboration Reflection
+0xRay Framework - Multi-AI Collaboration Reflection
 
 Date: 2026-01-31  
 Framework Version: 1.3.4  
@@ -649,12 +649,12 @@ This document summarizes the Phase 7 final cleanup and the complete RuleEnforcer
 
 ---
 
-### Session Reflections: StringRay Test Suite Resurrection
+### Session Reflections: 0xRay Test Suite Resurrection
 
 - **Date**: unknown
 - **File**: [session-reflection-test-suite-resurrection.md](./session-reflection-test-suite-resurrection.md)
 
-Session Reflections: StringRay Test Suite Resurrection
+Session Reflections: 0xRay Test Suite Resurrection
 
 Date: 2026-01-23  
 Session Type: Test Suite Rehabilitation & Architecture Validation  
@@ -662,24 +662,24 @@ Duration: ~8 hours across multiple sessions...
 
 ---
 
-### StringRay 1.6.31 Reflection: The MacBook Pro Max Context Crisis
+### 0xRay 1.6.31 Reflection: The MacBook Pro Max Context Crisis
 
 - **Date**: unknown
 - **File**: [stringray-1.6.31-gleaning-reflection.md](./stringray-1.6.31-gleaning-reflection.md)
 
-StringRay 1.6.31 Reflection: The MacBook Pro Max Context Crisis
+0xRay 1.6.31 Reflection: The MacBook Pro Max Context Crisis
 
 Reflection Category: Meta-Reflection (Framework Pressure Testing) 
 Example Incident: Local Model Context Survival on MacBook...
 
 ---
 
-### StringRay .md
+### 0xRay .md
 
 - **Date**: unknown
 - **File**: [stringray-complete-journey-reflection.md](./stringray-complete-journey-reflection.md)
 
-StringRay .md
+0xRay .md
 - docs/reflections/deployment-crisis-v12x-reflection.md
 - AGENTS.md (comprehensive framework documentation)
 - .opencode/skills/ui-ux-design/SKILL.md (evolved philosophy)
@@ -688,25 +688,25 @@ Status: L...
 
 ---
 
-### StringRay Framework Deployment Reflection
+### 0xRay Framework Deployment Reflection
 
 - **Date**: unknown
 - **File**: [stringray-deployment-reflection.md](./stringray-deployment-reflection.md)
 
-StringRay Framework Deployment Reflection
+0xRay Framework Deployment Reflection
 
  Overview
 
-The StringRay Framework deployment encountered multiple critical issues during the npm packaging and CLI implementation process. This reflecti...
+The 0xRay Framework deployment encountered multiple critical issues during the npm packaging and CLI implementation process. This reflecti...
 
 ---
 
-### StringRay .md  
+### 0xRay .md  
 
 - **Date**: unknown
 - **File**: [stringray-framework-deep-reflection-v1.4.21.md](./stringray-framework-deep-reflection-v1.4.21.md)
 
-StringRay .md  
+0xRay .md  
 Cross-References: 
 - docs/reflections/deployment-crisis-v12x-reflection.md
 - docs/DOCUMENTATION_REORGANIZATION_PLAN.md
@@ -714,12 +714,12 @@ Cross-References:
 
 ---
 
-### Deep Reflection: StringRay Script Infrastructure Recovery & ES Module Architecture Resolution
+### Deep Reflection: 0xRay Script Infrastructure Recovery & ES Module Architecture Resolution
 
 - **Date**: unknown
 - **File**: [stringray-script-infrastructure-recovery-reflection.md](./stringray-script-infrastructure-recovery-reflection.md)
 
-Deep Reflection: StringRay Script Infrastructure Recovery & ES Module Architecture Resolution
+Deep Reflection: 0xRay Script Infrastructure Recovery & ES Module Architecture Resolution
 
  Executive Summary
 
@@ -740,12 +740,12 @@ In the quiet hours of January 14, 2026, I found myself wrestling with the mundan
 
 ---
 
-### StringRay Framework Self-Evolution Journey Reflection
+### 0xRay Framework Self-Evolution Journey Reflection
 
 - **Date**: unknown
 - **File**: [stringray-self-evolution-reflection.md](./stringray-self-evolution-reflection.md)
 
-StringRay Framework Self-Evolution Journey Reflection
+0xRay Framework Self-Evolution Journey Reflection
 
  Overview
 
@@ -753,12 +753,12 @@ This reflection captures the extraordinary journey from basic framework deployme
 
 ---
 
-### StringRay v1.5.0: The Emergence of an AI Operating System
+### 0xRay v1.5.0: The Emergence of an AI Operating System
 
 - **Date**: unknown
 - **File**: [stringray-v1.5.0-emergence-of-ai-os.md](./stringray-v1.5.0-emergence-of-ai-os.md)
 
-StringRay v1.5.0: The Emergence of an AI Operating System
+0xRay v1.5.0: The Emergence of an AI Operating System
 
 Date: 2026-02-18  
 Version: 1.5.0  
@@ -779,12 +779,12 @@ Example Incident:...
 
 ---
 
-### StringRay Framework Test Suite Rehabilitation
+### 0xRay Framework Test Suite Rehabilitation
 
 - **Date**: unknown
 - **File**: [test-fixing-system-reflection.md](./test-fixing-system-reflection.md)
 
-StringRay Framework Test Suite Rehabilitation
+0xRay Framework Test Suite Rehabilitation
 
  Reflection System
 - Create after >30min sessions: Root cause, actions, next steps.
@@ -839,15 +839,15 @@ It started with a simple question: "Why does our analytics show zero routing act
 
 ---
 
-### StringRay Processor & Rules Engine Architecture Analysis
+### 0xRay Processor & Rules Engine Architecture Analysis
 
 - **Date**: 2026-03-18
 - **File**: [processor-rules-engine-architecture-analysis-2026-03-18.md](./processor-rules-engine-architecture-analysis-2026-03-18.md)
 
-StringRay Processor & Rules Engine Architecture Analysis
+0xRay Processor & Rules Engine Architecture Analysis
 
 Date: March 18, 2026  
-Analyst: StringRay Librarian Agent  
+Analyst: 0xRay Librarian Agent  
 Scope: Deep dive into processor system, rules engine, and pre/post p...
 
 ---
@@ -883,12 +883,12 @@ I didn't set out to build a self-referential system. I set out to solve a practi
 
 ---
 
-### The Strange Loop: A Reflection on StringRay as Self-Referential Infrastructure
+### The Strange Loop: A Reflection on 0xRay as Self-Referential Infrastructure
 
 - **Date**: 2026-03-16
 - **File**: [strange-loop-self-referential-infrastructure-2026-03-16.md](./strange-loop-self-referential-infrastructure-2026-03-16.md)
 
-The Strange Loop: A Reflection on StringRay as Self-Referential Infrastructure
+The Strange Loop: A Reflection on 0xRay as Self-Referential Infrastructure
 
  The Moment That Made Me Stop and Think
 
@@ -896,12 +896,12 @@ I was staring at the agent-delegator.ts file—the one that decides which age...
 
 ---
 
-### StringRay Framework - 100% Test Success Achievement Log
+### 0xRay Framework - 100% Test Success Achievement Log
 
 - **Date**: 2026-03-13
 - **File**: [100-PERCENT-TEST-SUCCESS-2026-03-13.md](./100-PERCENT-TEST-SUCCESS-2026-03-13.md)
 
-StringRay Framework - 100% Test Success Achievement Log
+0xRay Framework - 100% Test Success Achievement Log
 
 Date: March 13, 2026  
 Status: ✅ ALL TESTS PASSING  
@@ -910,12 +910,12 @@ Total Refacto...
 
 ---
 
-### StringRay Framework - Comprehensive Documentation Update Log
+### 0xRay Framework - Comprehensive Documentation Update Log
 
 - **Date**: 2026-03-13
 - **File**: [DOCUMENTATION-UPDATE-COMPLETE-2026-03-13.md](./DOCUMENTATION-UPDATE-COMPLETE-2026-03-13.md)
 
-StringRay Framework - Comprehensive Documentation Update Log
+0xRay Framework - Comprehensive Documentation Update Log
 
 Date: March 13, 2026  
 Version: v1.15.1  
@@ -924,12 +924,12 @@ Status: ✅ CO...
 
 ---
 
-### StringRay Scripts - Testing & Fixing Complete
+### 0xRay Scripts - Testing & Fixing Complete
 
 - **Date**: 2026-03-13
 - **File**: [SCRIPTS-TESTING-FIXING-COMPLETE-2026-03-13.md](./SCRIPTS-TESTING-FIXING-COMPLETE-2026-03-13.md)
 
-StringRay Scripts - Testing & Fixing Complete
+0xRay Scripts - Testing & Fixing Complete
 
 Date: March 13, 2026  
 Status: ✅ ALL SCRIPTS TESTED & FIXED  
@@ -942,12 +942,12 @@ Success Rate: 94%+
 
 ---
 
-### StringRay Framework - Refactoring Log Summary
+### 0xRay Framework - Refactoring Log Summary
 
 - **Date**: 2026-03-12
 - **File**: [refactoring-summary-2026-03-12.md](./refactoring-summary-2026-03-12.md)
 
-StringRay Framework - Refactoring Log Summary
+0xRay Framework - Refactoring Log Summary
 Date: 2026-03-12  
 Framework Version: 1.9.0 → 1.9.2 (Refactoring Release)  
 Status: COMPLETE
@@ -1003,12 +1003,12 @@ Problem: Misnamed `Users/` directory found at project root
 
 ---
 
-### StringRay Reflection: Multi-Release Tweet Generator Implementation
+### 0xRay Reflection: Multi-Release Tweet Generator Implementation
 
 - **Date**: 2026-03-10
 - **File**: [release-workflow-multi-tweet-generator-reflection-2026-03-10.md](./release-workflow-multi-tweet-generator-reflection-2026-03-10.md)
 
-StringRay Reflection: Multi-Release Tweet Generator Implementation
+0xRay Reflection: Multi-Release Tweet Generator Implementation
 
 Date: 2026-03-10
 Type: Bug Fix & Feature Addition
@@ -1070,7 +1070,7 @@ Script Testing & Fixing Session - 2026-02-27
 
  Executive Summary
 
-This reflection documents a 3+ hour session systematically testing and fixing scripts across the StringRay framework. The work inv...
+This reflection documents a 3+ hour session systematically testing and fixing scripts across the 0xRay framework. The work inv...
 
 ---
 
@@ -1096,7 +1096,7 @@ The Antigravity Integration: A Journey Through Framework Extensibility
 
  Prologue: The Gap
 
-Before this session, StringRay stood as a fortress of opinionated development - a comprehensive framewor...
+Before this session, 0xRay stood as a fortress of opinionated development - a comprehensive framewor...
 
 ---
 
@@ -1219,12 +1219,12 @@ Type: Critical Bug Analysis + Incident...
 
 > Investigation/learning journey
 
-### The Shape of a System: A Reflection on the StringRay Processor Journey
+### The Shape of a System: A Reflection on the 0xRay Processor Journey
 
 - **Date**: 2026-03-18
 - **File**: [processor-testing-journey-2026-03-18.md](./processor-testing-journey-2026-03-18.md)
 
-The Shape of a System: A Reflection on the StringRay Processor Journey
+The Shape of a System: A Reflection on the 0xRay Processor Journey
 
 Date: March 18, 2026  
 Session: ses_2fe2366beffeqy154d0NTj3YLY
@@ -1242,15 +1242,15 @@ I remember the...
 | Date | Title | Type |
 |------|-------|------|
 | unknown | [AUTONOMOUS MODULE ANALYSIS](./AUTONOMOUS_MODULE_TODO.md) | reflection |
-| unknown | [🚀 StringRay Framework: Deep Deployment Pipeline Reflection](./DEPLOYMENT_PIPELINE_TRANSFORMATION_REFLECTION.md) | reflection |
+| unknown | [🚀 0xRay Framework: Deep Deployment Pipeline Reflection](./DEPLOYMENT_PIPELINE_TRANSFORMATION_REFLECTION.md) | reflection |
 | unknown | [Gap Analysis: Kimi's Reflection vs Template](./GAP_ANALYSIS_KIMI_REFLECTION.md) | reflection |
 | unknown | [🎯 MAJOR ARCHITECTURAL FLAW RESOLVED](./MODEL_PROPAGATION_FIX_ARCHITECTURE_ANALYSIS.md) | reflection |
 | unknown | [Untitled](./MODEL_UPDATE_SUMMARY.md) | reflection |
 | unknown | [Untitled](./REFACTORING_LOG.md) | reflection |
 | unknown | [Reflection Command System](./REFLECTION_COMMAND_SYSTEM.md) | reflection |
-| unknown | [StringRay Reflection Log - Comprehensive Summary](./REFLECTION_LOG_SUMMARY.md) | reflection |
+| unknown | [0xRay Reflection Log - Comprehensive Summary](./REFLECTION_LOG_SUMMARY.md) | reflection |
 | unknown | [Bullet-Proof Reflection System - Implementation Summary](./REFLECTION_SYSTEM_IMPLEMENTATION.md) | reflection |
-| unknown | [StringRay 1.2.0 Simulation & Orchestration Test Results](./SIMULATION_TEST_RESULTS.md) | reflection |
+| unknown | [0xRay 1.2.0 Simulation & Orchestration Test Results](./SIMULATION_TEST_RESULTS.md) | reflection |
 
 ---
 

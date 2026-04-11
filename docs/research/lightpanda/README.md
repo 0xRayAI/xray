@@ -138,11 +138,11 @@ chmod +x lightpanda
 
 ---
 
-## Integration Potential for StringRay
+## Integration Potential for 0xRay
 
 ### Integration Type: Tool/Automation Layer
 
-### Use Cases for StringRay
+### Use Cases for 0xRay
 1. **Web Scraping Agents** - Fetch and parse web content
 2. **Form Automation** - Fill and submit forms
 3. **Link Verification** - Check URLs automatically
@@ -153,7 +153,7 @@ chmod +x lightpanda
 
 ```
 ┌─────────────────────────────────────────────────┐
-│               StringRay Agent                    │
+│               0xRay Agent                    │
 └─────────────────────┬───────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────┐
@@ -167,7 +167,7 @@ chmod +x lightpanda
 
 ### Integration Example
 ```typescript
-// StringRay web tool using Lightpanda
+// 0xRay web tool using Lightpanda
 async function scrapeWithLightpanda(url: string) {
   const browser = await puppeteer.connect({
     browserWSEndpoint: 'ws://localhost:9222'
@@ -212,7 +212,7 @@ async function scrapeWithLightpanda(url: string) {
 
 ---
 
-## Synergy with StringRay
+## Synergy with 0xRay
 
 ### Strengths
 - ✅ Massive performance improvement
@@ -277,7 +277,7 @@ export class LightpandaAdapter {
 
 ### Phase 3: Optimization (1 week)
 - Benchmark against current approach
-- Configure for StringRay workloads
+- Configure for 0xRay workloads
 - Document supported/unsupported features
 
 ---

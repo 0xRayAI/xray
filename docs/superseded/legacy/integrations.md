@@ -1,6 +1,6 @@
-# StringRay Integration System
+# 0xRay Integration System
 
-The StringRay Integration System provides a flexible, extensible framework for connecting StringRay with external services, frameworks, and protocols. It enables seamless interoperability between StringRay and various tools, platforms, and custom solutions.
+The 0xRay Integration System provides a flexible, extensible framework for connecting 0xRay with external services, frameworks, and protocols. It enables seamless interoperability between 0xRay and various tools, platforms, and custom solutions.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ The StringRay Integration System provides a flexible, extensible framework for c
 
 ## Overview
 
-The StringRay Integration System is designed around three core principles:
+The 0xRay Integration System is designed around three core principles:
 
 - **Standardization** - All integrations follow the same lifecycle patterns (initialize, shutdown, health check)
 - **Extensibility** - New integrations can be added without modifying core code
@@ -37,11 +37,11 @@ The StringRay Integration System is designed around three core principles:
 
 ## Integration Types
 
-StringRay supports three primary categories of integrations:
+0xRay supports three primary categories of integrations:
 
 ### 1. Framework Integrations
 
-Framework integrations connect StringRay with frontend frameworks (React, Vue, Angular, Svelte, etc.), enabling native integration within those ecosystems.
+Framework integrations connect 0xRay with frontend frameworks (React, Vue, Angular, Svelte, etc.), enabling native integration within those ecosystems.
 
 **Location:** `src/integrations/core/`
 
@@ -89,7 +89,7 @@ await integration.initialize();
 
 ### 2. External Service Integrations
 
-External service integrations connect StringRay with third-party services, APIs, and platforms.
+External service integrations connect 0xRay with third-party services, APIs, and platforms.
 
 **Location:** `src/integrations/openclaw/`
 
@@ -118,7 +118,7 @@ const stats = openclaw.getStatistics();
 
 ### 3. Protocol Bridge Integrations
 
-Protocol bridges enable StringRay to communicate using different protocols or data formats.
+Protocol bridges enable 0xRay to communicate using different protocols or data formats.
 
 **Location:** `src/integrations/cross-language-bridge.ts`
 
@@ -136,7 +136,7 @@ Protocol bridges enable StringRay to communicate using different protocols or da
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     StringRay Core                          │
+│                     0xRay Core                          │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │              IntegrationRegistry                    │   │

@@ -5,11 +5,11 @@ sidebar_label: "FRAMEWORK MIGRATION"
 sidebar_position: 2
 ---
 
-# StrRay Framework Migration Guide
+# 0xRay Framework Migration Guide
 
 ## Overview
 
-This document describes migration between StringRay Framework versions, with a focus on the v1.15.1 architecture refactoring which introduced the **Facade Pattern** and delivered significant performance improvements.
+This document describes migration between 0xRay Framework versions, with a focus on the v1.15.1 architecture refactoring which introduced the **Facade Pattern** and delivered significant performance improvements.
 
 **Current Version**: v1.15.1  
 **Previous Version**: v1.7.5  
@@ -19,7 +19,7 @@ This document describes migration between StringRay Framework versions, with a f
 
 ### 🎉 No Breaking Changes!
 
-StringRay v1.15.1 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
+0xRay v1.15.1 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
 
 ### What Improved Behind the Scenes
 
@@ -127,7 +127,7 @@ MCP Client (312 lines)
 
 ```json
 {
-  "framework": "StringRay AI v1.15.1",
+  "framework": "0xRay AI v1.15.1",
   "agents": {
     "enforcer": {
       "enabled": true,
@@ -363,5 +363,5 @@ npx strray-ai health
 
 ---
 
-_This migration guide covers the transition from StrRay v1.0 to v1.15.1. For current version information, check the main documentation._</content>
+_This migration guide covers the transition from 0xRay v1.0 to v1.15.1. For current version information, check the main documentation._</content>
 <parameter name="filePath">docs/framework/migration/FRAMEWORK_MIGRATION.md

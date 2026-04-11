@@ -5,13 +5,13 @@ sidebar_label: "KNOWLEDGE SKILLS EXPANSION PLAN"
 sidebar_position: 1
 ---
 
-# StringRay Knowledge Skills Expansion Plan
+# 0xRay Knowledge Skills Expansion Plan
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
-This document outlines the expansion plan for knowledge skills in StringRay v1.15.1. With the introduction of the **Facade Pattern Architecture**, knowledge skills are now implemented as first-class MCP servers accessible through the **TaskSkillRouter** and **MCP Client** facades.
+This document outlines the expansion plan for knowledge skills in 0xRay v1.15.1. With the introduction of the **Facade Pattern Architecture**, knowledge skills are now implemented as first-class MCP servers accessible through the **TaskSkillRouter** and **MCP Client** facades.
 
 ---
 
@@ -517,7 +517,7 @@ const audit = await mcpClient.callSkill("security-audit", {
 
 ## Conclusion
 
-StringRay v1.15.1's **Facade Pattern Architecture** enables a powerful knowledge skills ecosystem:
+0xRay v1.15.1's **Facade Pattern Architecture** enables a powerful knowledge skills ecosystem:
 
 ✅ **6 Core Skills**: Fully implemented via MCP servers
 ✅ **9+ Planned Skills**: Clear roadmap for expansion

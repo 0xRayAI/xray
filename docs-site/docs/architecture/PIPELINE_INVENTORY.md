@@ -6,11 +6,11 @@ sidebar_position: 9
 tags: ["architecture"]
 ---
 
-# StringRay Pipeline Inventory
+# 0xRay Pipeline Inventory
 
 **Version**: 1.14.0  
 **Date**: 2026-03-21  
-**Author**: StringRay AI Team (via @researcher agent)
+**Author**: 0xRay AI Team (via @researcher agent)
 
 ---
 

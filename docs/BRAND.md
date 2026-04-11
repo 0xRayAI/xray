@@ -1,8 +1,8 @@
-# StringRay Brand Document v1.15.0
+# 0xRay Brand Document v1.15.0
 
 ## Brand Overview
 
-**Brand Name**: StringRay (StrRay) – The AI Agent  
+**Brand Name**: 0xRay (0xRay) – The AI Agent  
 **Version**: 1.15.0  
 **Architecture**: Facade Pattern with Modular Internal Structure  
 **Positioning**: Production-Ready Code. No Dead Ends.  
@@ -14,7 +14,7 @@
 
 ### Architecture Evolution: Facade Pattern
 
-StringRay v1.15.0 represents a major architectural evolution from monolithic components to a modern **Facade Pattern** design:
+0xRay v1.15.0 represents a major architectural evolution from monolithic components to a modern **Facade Pattern** design:
 
 **The Transformation:**
 - **87% Code Reduction**: Eliminated 3,170 lines of dead code (8,230 → 1,218 lines)
@@ -32,7 +32,7 @@ StringRay v1.15.0 represents a major architectural evolution from monolithic com
 | MCP Client | 1,413 lines | 312 lines (8 modules) | 78% reduction, enhanced reliability |
 | **Total** | **8,230 lines** | **1,218 lines** | **87% reduction** |
 
-**Message**: The same powerful StringRay you trust, now with a cleaner, faster, more maintainable architecture. Zero breaking changes. Immediate benefits.
+**Message**: The same powerful 0xRay you trust, now with a cleaner, faster, more maintainable architecture. Zero breaking changes. Immediate benefits.
 
 ---
 
@@ -42,7 +42,7 @@ StringRay v1.15.0 represents a major architectural evolution from monolithic com
 
 **Description**: Delivers clean architecture, single sources of truth, modular components, and auto-generated tests — production-grade, every time.
 
-**Why StringRay?**
+**Why 0xRay?**
 
 Most AI coding tools fall into the same traps:
 
@@ -52,7 +52,7 @@ Most AI coding tools fall into the same traps:
 - Race conditions, infinite loops, and tangled state/hook chaos
 - Monolithic nightmares that become unmaintainable
 
-**StringRay orchestrates 25 specialized agents with 60 codex rules to eliminate them — before they take root.**
+**0xRay orchestrates 25 specialized agents with 60 codex rules to eliminate them — before they take root.**
 
 **Dead Ends Eliminated**
 
@@ -70,7 +70,7 @@ Most AI coding tools fall into the same traps:
 
 ## Code Rot Examples
 
-Code rot (software entropy/technical debt creep) is how code quality degrades over time without active maintenance. It's not a single bug but gradual erosion that makes code harder to maintain, extend, or debug. StringRay prevents this by enforcing consistent patterns, automated testing, and modular structure.
+Code rot (software entropy/technical debt creep) is how code quality degrades over time without active maintenance. It's not a single bug but gradual erosion that makes code harder to maintain, extend, or debug. 0xRay prevents this by enforcing consistent patterns, automated testing, and modular structure.
 
 **Real-World Examples:**
 
@@ -81,7 +81,7 @@ Code rot (software entropy/technical debt creep) is how code quality degrades ov
 - **Performance Creep**: Small inefficiencies compound (e.g., unnecessary re-renders in React that slow the app down over iterations).
 - **Monolithic Bloat**: Single files grow to thousands of lines, becoming impossible to understand, test, or modify safely.
 
-**StringRay's Solution**: The v1.15.0 facade architecture actively prevents code rot by enforcing modular design, clear boundaries, and single responsibilities from day one.
+**0xRay's Solution**: The v1.15.0 facade architecture actively prevents code rot by enforcing modular design, clear boundaries, and single responsibilities from day one.
 
 ---
 
@@ -92,12 +92,12 @@ GitHub Copilot is a great autocomplete tool—fast suggestions based on patterns
 **Key Differences:**
 
 - **Copilot**: Autocompletes based on training data; can suggest hallucinated or insecure code if the context is off. No oversight or iteration.
-- **StringRay**: Orchestrates 25 agents with 60 codex rules for proactive prevention. Agents cross-validate output, enforce modular structure (now with facade pattern architecture), and generate tests—eliminating the root causes Copilot leaves untouched.
+- **0xRay**: Orchestrates 25 agents with 60 codex rules for proactive prevention. Agents cross-validate output, enforce modular structure (now with facade pattern architecture), and generate tests—eliminating the root causes Copilot leaves untouched.
 
 **Architecture Advantage:**
-StringRay's v1.15.0 facade pattern isn't just cleaner code—it's a commitment to maintainability. While Copilot generates code that may become tomorrow's technical debt, StringRay's architecture ensures code stays clean, testable, and maintainable over time.
+0xRay's v1.15.0 facade pattern isn't just cleaner code—it's a commitment to maintainability. While Copilot generates code that may become tomorrow's technical debt, 0xRay's architecture ensures code stays clean, testable, and maintainable over time.
 
-In short, Copilot is a coding assistant for speed; StringRay is a quality guardian that ensures what you build with Copilot (or any AI) is production-ready and maintainable.
+In short, Copilot is a coding assistant for speed; 0xRay is a quality guardian that ensures what you build with Copilot (or any AI) is production-ready and maintainable.
 
 ---
 

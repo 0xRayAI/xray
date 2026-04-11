@@ -1,4 +1,4 @@
-# StringRay Plugin Architecture Specification
+# 0xRay Plugin Architecture Specification
 
 ## v1.0.0 - Draft
 
@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-StringRay needs a plugin architecture to support:
+0xRay needs a plugin architecture to support:
 - External MCP servers (like mcp-image-recognition)
 - Community skills as plugins
 - User-defined integrations

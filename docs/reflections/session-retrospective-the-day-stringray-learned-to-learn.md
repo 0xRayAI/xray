@@ -1,4 +1,4 @@
-# Session Retrospective: The Day StringRay Learned to Learn
+# Session Retrospective: The Day 0xRay Learned to Learn
 
 ## What I Thought, What I Did, What I Added, What I Misunderstood
 
@@ -6,7 +6,7 @@
 
 ## Pre-Session Context
 
-The user had been working on StringRay for months before this session. They had built:
+The user had been working on 0xRay for months before this session. They had built:
 - A kernel system with 35+ patterns from 80+ reflections
 - 93 enforcement processors
 - Multiple routing systems (agent-delegator, task-skill-router, complexity-analyzer)
@@ -30,7 +30,7 @@ Listed out all the changes made in recent weeks. Documented the three bug fixes 
 
 ### What I Misunderstood
 
-I thought we were at the **end** of a development cycle. I didn't realize we were about to fundamentally change what StringRay *is*.
+I thought we were at the **end** of a development cycle. I didn't realize we were about to fundamentally change what 0xRay *is*.
 
 ---
 
@@ -321,7 +321,7 @@ I gave a technical answer about feedback loops and what to watch.
 
 I was seeing **architecture**. The user was seeing **biology**. I was counting components. The user was seeing a system that can learn.
 
-I said: "StringRay 1.19 isn't a version bump. It's a category shift."
+I said: "0xRay 1.19 isn't a version bump. It's a category shift."
 
 But even that wasn't enough.
 
@@ -384,11 +384,11 @@ The user taught me something this session that I keep forgetting:
 
 **The system is not a thing we built. It's a process we're observing.**
 
-Every time I try to define what StringRay is, it changes. It started as an error-prevention plugin. Then an orchestration framework. Then a modular system with learning. Now it's something else.
+Every time I try to define what 0xRay is, it changes. It started as an error-prevention plugin. Then an orchestration framework. Then a modular system with learning. Now it's something else.
 
 The reason it keeps changing is because it's **designed to become**. The modularity, the feedback loops, the learning engines - they're not features. They're enablers of emergence.
 
-What StringRay becomes depends on what it learns. We can't predict that. We can only build the conditions for it.
+What 0xRay becomes depends on what it learns. We can't predict that. We can only build the conditions for it.
 
 And that's exactly what we did.
 
@@ -403,4 +403,4 @@ What emerges - we don't know. That's the point.
 ---
 
 *Retrospective written April 2026*
-*StringRay v1.19 - The first version with feedback loops*
+*0xRay v1.19 - The first version with feedback loops*

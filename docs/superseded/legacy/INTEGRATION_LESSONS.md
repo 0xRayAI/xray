@@ -1,10 +1,10 @@
-# StringRay Integration Lessons & Best Practices
+# 0xRay Integration Lessons & Best Practices
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
-StringRay 1.9.0 represents a breakthrough in AI-assisted software development, achieving 90% runtime error prevention while maintaining zero-tolerance for code rot. The v1.15.1 release introduces a **Facade Pattern Architecture** that delivers:
+0xRay 1.9.0 represents a breakthrough in AI-assisted software development, achieving 90% runtime error prevention while maintaining zero-tolerance for code rot. The v1.15.1 release introduces a **Facade Pattern Architecture** that delivers:
 
 - **87% Code Reduction**: From 8,230 lines to 1,218 lines
 - **Simplified Integration**: Clean facade interfaces hide internal complexity
@@ -168,7 +168,7 @@ status.facades.forEach(facade => {
 
 ### The Three Facades
 
-StringRay v1.15.1 exposes three primary facades:
+0xRay v1.15.1 exposes three primary facades:
 
 #### 1. RuleEnforcer Facade
 
@@ -295,13 +295,13 @@ For most integrations, use the facades directly:
 
 ```typescript
 import { 
-  StrRayOrchestrator, 
+  0xRayOrchestrator, 
   RuleEnforcer, 
   TaskSkillRouter,
   MCPClient 
 } from "@strray/framework";
 
-const orchestrator = new StrRayOrchestrator({
+const orchestrator = new 0xRayOrchestrator({
   configPath: ".opencode/opencode.json"
 });
 
@@ -581,7 +581,7 @@ await enforcer.clearCache();
 
 ## Conclusion
 
-StringRay 1.9.0's Facade Pattern Architecture represents a paradigm shift in framework design:
+0xRay 1.9.0's Facade Pattern Architecture represents a paradigm shift in framework design:
 
 - **87% Code Reduction**: Easier to understand and maintain
 - **Simplified APIs**: Clean interfaces hide complexity

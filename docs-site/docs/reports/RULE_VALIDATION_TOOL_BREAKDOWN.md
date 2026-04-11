@@ -5,7 +5,7 @@ sidebar_label: "RULE VALIDATION TOOL BREAKDOWN"
 sidebar_position: 2
 ---
 
-# StrRay Framework - Rule Validation Tool Breakdown
+# 0xRay Framework - Rule Validation Tool Breakdown
 
 ## 🎯 **What Is In `rule-validation` Tool?**
 

@@ -1,8 +1,8 @@
-# StrRay Framework - Agent Performance and Monitoring
+# 0xRay Framework - Agent Performance and Monitoring
 
 ## Overview
 
-This document provides comprehensive guidance for monitoring StrRay Framework agents, tracking performance metrics, and optimizing agent effectiveness in development workflows. Effective monitoring ensures agents deliver high-quality results while maintaining system performance and reliability.
+This document provides comprehensive guidance for monitoring 0xRay Framework agents, tracking performance metrics, and optimizing agent effectiveness in development workflows. Effective monitoring ensures agents deliver high-quality results while maintaining system performance and reliability.
 
 ## Agent Health Monitoring
 
@@ -517,4 +517,4 @@ const alertIntegration = {
 
 ---
 
-_This comprehensive monitoring guide ensures optimal StrRay Framework agent performance, reliability, and effectiveness in development workflows._
+_This comprehensive monitoring guide ensures optimal 0xRay Framework agent performance, reliability, and effectiveness in development workflows._

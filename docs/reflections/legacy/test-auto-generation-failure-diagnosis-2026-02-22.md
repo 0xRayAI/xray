@@ -15,7 +15,7 @@
 - Identify why the automatic test generation fails in normal usage
 - Understand the architectural issues preventing the feature from working
 
-**Stakeholders**: StringRay Framework, Test Coverage Goals, 85%+ Coverage Requirement
+**Stakeholders**: 0xRay Framework, Test Coverage Goals, 85%+ Coverage Requirement
 
 ---
 

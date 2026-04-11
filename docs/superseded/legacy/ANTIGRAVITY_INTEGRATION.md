@@ -1,16 +1,16 @@
 # Antigravity Awesome Skills Integration
 
-**Version**: 1.9.0 | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Framework**: 0xRay AI
 
 ## Overview
 
-StringRay integrates with [Antigravity Awesome Skills](https://github.com/sickn33/antigravity-awesome-skills) - the largest collection of AI agent skills with **946+ skills** for Claude Code, Gemini CLI, Cursor, and more.
+0xRay integrates with [Antigravity Awesome Skills](https://github.com/sickn33/antigravity-awesome-skills) - the largest collection of AI agent skills with **946+ skills** for Claude Code, Gemini CLI, Cursor, and more.
 
-With StringRay v1.15.1's **Facade Pattern Architecture**, skill integration is now more efficient and easier to manage through the **TaskSkillRouter facade**.
+With 0xRay v1.15.1's **Facade Pattern Architecture**, skill integration is now more efficient and easier to manage through the **TaskSkillRouter facade**.
 
 ## License
 
-Antigravity Awesome Skills is licensed under **MIT License**. StringRay includes curated skills with proper attribution. See `LICENSE.antigravity` for full license text.
+Antigravity Awesome Skills is licensed under **MIT License**. 0xRay includes curated skills with proper attribution. See `LICENSE.antigravity` for full license text.
 
 ---
 
@@ -47,7 +47,7 @@ node scripts/integrations/install-antigravity-skills.js --full
 
 ## Usage with TaskSkillRouter Facade
 
-StringRay v1.15.1's **TaskSkillRouter facade** automatically routes tasks to the appropriate Antigravity skill based on keywords in your prompts.
+0xRay v1.15.1's **TaskSkillRouter facade** automatically routes tasks to the appropriate Antigravity skill based on keywords in your prompts.
 
 ### How It Works
 
@@ -166,7 +166,7 @@ const result = await mcpClient.callSkill(route.skill, {
 
 ## Integration Architecture
 
-### StringRay v1.15.1 Facade Pattern
+### 0xRay v1.15.1 Facade Pattern
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -228,9 +228,9 @@ await router.registerSkills([
 
 ---
 
-## Comparison: StringRay vs Antigravity
+## Comparison: 0xRay vs Antigravity
 
-| Feature | StringRay | Antigravity |
+| Feature | 0xRay | Antigravity |
 |---------|-----------|-------------|
 | Skills | 27 framework-specific + 946+ curated | 946+ general skills |
 | Agents | 22 built-in | Works with all agents |
@@ -243,8 +243,8 @@ await router.registerSkills([
 
 ### When to Use What
 
-**Use StringRay native skills when:**
-- Working with the StringRay framework
+**Use 0xRay native skills when:**
+- Working with the 0xRay framework
 - Need error prevention via Codex
 - Want automated test generation
 - Using built-in orchestration
@@ -259,7 +259,7 @@ await router.registerSkills([
 
 **Use both together for maximum effectiveness:**
 ```typescript
-// StringRay validates and orchestrates
+// 0xRay validates and orchestrates
 const enforcer = new RuleEnforcer(orchestrator);
 await enforcer.validate({ rules: ["codex-compliance"] });
 
@@ -415,7 +415,7 @@ See `LICENSE.antigravity` for full license text.
 - [Antigravity Awesome Skills Repository](https://github.com/sickn33/antigravity-awesome-skills)
 - [Skill Catalog](https://github.com/sickn33/antigravity-awesome-skills/blob/main/CATALOG.md)
 - [Bundle Guide](https://github.com/sickn33/antigravity-awesome-skills/blob/main/docs/BUNDLES.md)
-- [StringRay TaskSkillRouter Facade Documentation](https://stringray.dev/docs/facades/task-skill-router)
+- [0xRay TaskSkillRouter Facade Documentation](https://stringray.dev/docs/facades/task-skill-router)
 
 ---
 

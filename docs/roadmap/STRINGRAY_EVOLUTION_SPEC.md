@@ -1,13 +1,13 @@
-# StringRay Framework Evolution Specification
+# 0xRay Framework Evolution Specification
 *Date: March 23, 2026*
 
 ---
 
-## Core Vision for StringRay
+## Core Vision for 0xRay
 
-**Make StringRay the one-command level-up button for OpenCode.**
+**Make 0xRay the one-command level-up button for OpenCode.**
 
-Instead of "install OpenCode first, then add StringRay", flip it:
+Instead of "install OpenCode first, then add 0xRay", flip it:
 
 ```bash
 npx strray-ai install
@@ -17,7 +17,7 @@ This single command should:
 
 1. Detect if OpenCode is installed
 2. Auto-install the latest OpenCode (MIT, clean) if missing
-3. Layer on the full StringRay kernel (Codex, orchestrator, enforcer, processors, MCP, reflections)
+3. Layer on the full 0xRay kernel (Codex, orchestrator, enforcer, processors, MCP, reflections)
 4. Install skills (Antigravity + Claude/SEO)
 5. Add new high-value skills (Impeccable + OpenViking)
 6. Install new CLI commands
@@ -35,7 +35,7 @@ npx strray-ai install
         ↓
 2. If missing → auto-install OpenCode (MIT)
         ↓
-3. Layer StringRay kernel (Codex + Orchestrator + Enforcer + MCP)
+3. Layer 0xRay kernel (Codex + Orchestrator + Enforcer + MCP)
         ↓
 4. Drop skills (Antigravity + Impeccable + OpenViking + custom)
         ↓
@@ -106,7 +106,7 @@ async function install(options = {}) {
   }
 
   // Install kernel
-  console.log("Installing StringRay kernel...");
+  console.log("Installing 0xRay kernel...");
   await installKernel();
 
   // Install skills based on flags
@@ -120,7 +120,7 @@ async function install(options = {}) {
   // Setup CLI commands
   await installCLIBridge();
 
-  console.log("✅ StringRay is ready. Run: npx strray-ai status");
+  console.log("✅ 0xRay is ready. Run: npx strray-ai status");
 }
 ```
 
@@ -135,7 +135,7 @@ async function install(options = {}) {
 | **No Forking** | Never fork the repos (only copy adapter + skill files) |
 | **Simple Updates** | `npx strray-ai update-skills` |
 
-**This keeps StringRay lightweight and maintainable.**
+**This keeps 0xRay lightweight and maintainable.**
 
 ---
 
@@ -152,7 +152,7 @@ async function install(options = {}) {
 
 ## Key Decisions Made
 
-1. **Invert the dependency**: StringRay installs OpenCode, not the other way around
+1. **Invert the dependency**: 0xRay installs OpenCode, not the other way around
 2. **Skills stay loose**: Antigravity, Impeccable, OpenViking are adapters, not forks
 3. **Single command**: `npx strray-ai install` does everything
 4. **Flag-based control**: `--minimal`, `--full`, `--with-skills`

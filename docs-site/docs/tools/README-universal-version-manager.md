@@ -8,13 +8,13 @@ tags: ["tools"]
 
 # Universal Version Manager
 
-**Automated version standardization across the entire StringRay Framework ecosystem.**
+**Automated version standardization across the entire 0xRay Framework ecosystem.**
 
 ## Overview
 
 The Universal Version Manager (`scripts/universal-version-manager.js`) maintains version consistency across:
 
-- **Framework versions** (StringRay AI releases)
+- **Framework versions** (0xRay AI releases)
 - **Codex versions** (Universal Development Codex)
 - **Dependency versions** (OpenCode, etc.)
 - **Documentation** (README, API docs, etc.)
@@ -26,7 +26,7 @@ The Universal Version Manager (`scripts/universal-version-manager.js`) maintains
 const OFFICIAL_VERSIONS = {
   framework: {
     version: "1.15.27",
-    displayName: "StringRay AI vX.X.X",
+    displayName: "0xRay AI vX.X.X",
     lastUpdated: "2026-01-15",
   },
   codex: {
@@ -65,8 +65,8 @@ git add . && git commit -m "chore: bump version to 1.0.5"
 
 ### Framework References
 
-- `StringRay AI vX.X.X` → `StringRay AI vX.X.X`
-- `StringRay AI vX.X.X` → `StringRay AI vX.X.X`
+- `0xRay AI vX.X.X` → `0xRay AI vX.X.X`
+- `0xRay AI vX.X.X` → `0xRay AI vX.X.X`
 - Version badges and headers
 
 ### Codex References

@@ -6,18 +6,18 @@ sidebar_position: 3
 tags: ["guide"]
 ---
 
-# StringRay Framework - Direct OpenCode Integration
+# 0xRay Framework - Direct OpenCode Integration
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
-StrRay Framework is now **directly integrated** into OpenCode's core rather than using a separate plugin approach. The v1.15.1 release introduces a **Facade Pattern Architecture** that provides:
+0xRay Framework is now **directly integrated** into OpenCode's core rather than using a separate plugin approach. The v1.15.1 release introduces a **Facade Pattern Architecture** that provides:
 
 - ✅ **Full Framework Functionality**: All advanced orchestration, processors, MCP servers, and enterprise features
-- ✅ **Automatic Activation**: StrRay components activate automatically when OpenCode starts
+- ✅ **Automatic Activation**: 0xRay components activate automatically when OpenCode starts
 - ✅ **Seamless Experience**: No separate plugin installation or configuration needed
-- ✅ **Core Integration**: StrRay is now part of OpenCode's fundamental architecture
+- ✅ **Core Integration**: 0xRay is now part of OpenCode's fundamental architecture
 - ✅ **Facade APIs**: Simplified interfaces for common operations (v1.15.1)
 - ✅ **Module Access**: Direct access to 26 internal modules for advanced users (v1.15.1)
 
@@ -28,8 +28,8 @@ StrRay Framework is now **directly integrated** into OpenCode's core rather than
 ### Core Integration Points
 
 1. **src/core/strray-activation.ts**: Handles framework component activation in correct order
-2. **.opencode/init.sh**: Auto-initializes StrRay during OpenCode startup
-3. **src/index.ts**: Exports StrRay components and auto-activates framework
+2. **.opencode/init.sh**: Auto-initializes 0xRay during OpenCode startup
+3. **src/index.ts**: Exports 0xRay components and auto-activates framework
 4. **Boot Orchestrator**: Initializes all components in dependency order
 5. **Facade Layer**: New simplified APIs for RuleEnforcer, TaskSkillRouter, and MCP Client (v1.15.1)
 
@@ -41,7 +41,7 @@ StrRay Framework is now **directly integrated** into OpenCode's core rather than
 └──────────────────────┬──────────────────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────────────────┐
-│               StrRay Framework v1.15.1                       │
+│               0xRay Framework v1.15.1                       │
 │                                                             │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │                  Facade Layer                        │  │
@@ -77,7 +77,7 @@ OpenCode starts
     ↓
 .opencode/init.sh (plugin executed)
     ↓
-activateStrRayFramework()
+activate0xRayFramework()
     ↓
 Phase 1: Codex Injection + Hooks
 Phase 2: Boot Orchestrator
@@ -85,7 +85,7 @@ Phase 3: State Management + Main Orchestrator
 Phase 4: Processor Pipeline
 Phase 5: Facade Layer Initialization (v1.15.1)
     ↓
-StrRay Framework Fully Active
+0xRay Framework Fully Active
 ```
 
 ---
@@ -124,7 +124,7 @@ If upgrading from the old plugin approach:
 # Rebuild to include new integration
 npm run build
 
-# StrRay now activates automatically with OpenCode
+# 0xRay now activates automatically with OpenCode
 # Facade APIs available in v1.15.1
 ```
 
@@ -165,7 +165,7 @@ await enforcer.validate({ ... });
 
 ### Facade Configuration (v1.15.1)
 
-StrRay activation and facades can be configured via environment variables and config files:
+0xRay activation and facades can be configured via environment variables and config files:
 
 ```bash
 # Enable/disable specific components
@@ -226,7 +226,7 @@ STRRAY_MCP_CLIENT_MODULES=all
 
 ### Using Facades in Development (v1.15.1)
 
-When developing with StrRay features:
+When developing with 0xRay features:
 
 1. **Use facades for common operations:**
 ```typescript
@@ -367,7 +367,7 @@ const discovery = mcpClient.getModule("server-discovery");
 
 ## Result
 
-StrRay Framework v1.15.1 is now a **native part of OpenCode** with a modern **Facade Pattern Architecture** that provides:
+0xRay Framework v1.15.1 is now a **native part of OpenCode** with a modern **Facade Pattern Architecture** that provides:
 
 1. **Complete sophisticated orchestration system** with automatic pre/post processors
 2. **Simplified facade APIs** for common operations (87% code reduction)

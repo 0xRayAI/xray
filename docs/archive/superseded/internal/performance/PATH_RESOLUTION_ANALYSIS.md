@@ -1,8 +1,8 @@
-# StrRay Path Resolution Issues & Solutions
+# 0xRay Path Resolution Issues & Solutions
 
 ## Executive Summary
 
-The StrRay Framework suffers from systemic path resolution issues affecting **258+ files** across the codebase. These issues break the framework's portability between development, testing, and production environments.
+The 0xRay Framework suffers from systemic path resolution issues affecting **258+ files** across the codebase. These issues break the framework's portability between development, testing, and production environments.
 
 ## Problem Classification
 

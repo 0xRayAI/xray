@@ -1,4 +1,4 @@
-# StringRay AI v1.3.4 Release Notes
+# 0xRay AI v1.3.4 Release Notes
 
 **Release Date**: 2026-01-31  
 **Codename**: "Multi-AI Orchestration"  
@@ -8,7 +8,7 @@
 
 ## 🎯 Executive Summary
 
-StringRay v1.2.0 represents a watershed moment in AI-assisted development. This release validates the framework's core thesis: **systematic integrity enforcement enables safe multi-AI collaboration at scale**.
+0xRay v1.2.0 represents a watershed moment in AI-assisted development. This release validates the framework's core thesis: **systematic integrity enforcement enables safe multi-AI collaboration at scale**.
 
 What began as a modest version bump became proof of a new paradigm—human orchestration of specialized AIs, contained by an operating system for artificial intelligence.
 
@@ -18,7 +18,7 @@ What began as a modest version bump became proof of a new paradigm—human orche
 
 ### 1. Multi-AI Collaboration Support (Validated)
 - **Proven in production**: 4 AIs (Grok, Claude, BigPickle, Kimi) collaborated successfully
-- **StringRay contained the chaos**: 60 codex terms prevented spaghetti code
+- **0xRay contained the chaos**: 60 codex terms prevented spaghetti code
 - **Result**: Bulletproof code, no regressions, 100% test success
 
 **The Pattern**:
@@ -30,7 +30,7 @@ AI Specialist 2 (Claude) → Refinement
 AI Specialist 3 (BigPickle) → Attempt/Feedback
 AI Specialist 4 (Kimi) → Execution
     ↓
-StringRay Container (integrity enforcement)
+0xRay Container (integrity enforcement)
     ↓
 Production-Ready Code
 ```
@@ -153,9 +153,9 @@ Production-Ready Code
 
 ### The "AI OS" Concept Proven
 
-StringRay v1.2.0 validates its positioning as the **first AI Operating System**:
+0xRay v1.2.0 validates its positioning as the **first AI Operating System**:
 
-| OS Function | StringRay Implementation |
+| OS Function | 0xRay Implementation |
 |-------------|-------------------------|
 | Process Management | Agent spawning, lifecycle, cleanup |
 | Memory Management | Session state, persistence |
@@ -165,7 +165,7 @@ StringRay v1.2.0 validates its positioning as the **first AI Operating System**:
 | Scheduling | Task queues, concurrent limits |
 | System Calls | Delegation API, orchestrator |
 
-**Key Insight**: StringRay isn't a framework—it's a runtime environment with kernel-level enforcement.
+**Key Insight**: 0xRay isn't a framework—it's a runtime environment with kernel-level enforcement.
 
 ---
 
@@ -292,7 +292,7 @@ The missing piece that enables autonomous CI/CD recovery:
 
 ## 🎁 Open Source Gift
 
-**This release is StringRay's open-source gift to the world.**
+**This release is 0xRay's open-source gift to the world.**
 
 After 1.2.0, major new features will be part of the paid commercial tier. This release represents:
 - Complete AI OS foundation
@@ -356,7 +356,7 @@ npm run test:core-framework
 
 ---
 
-**StringRay v1.2.0: Where systematic error prevention meets human creativity.**
+**0xRay v1.2.0: Where systematic error prevention meets human creativity.**
 
 *The future of software development is here. Contained. Validated. Bulletproof.*
 

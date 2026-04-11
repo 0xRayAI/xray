@@ -1,6 +1,6 @@
 ---
 title: Plugin System
-description: Industrial-grade plugin architecture for StringRay
+description: Industrial-grade plugin architecture for 0xRay
 ---
 
 # Plugin System

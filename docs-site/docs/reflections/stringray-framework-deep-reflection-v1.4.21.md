@@ -7,7 +7,7 @@ tags: ["reflection"]
 version: 1.4.21
 ---
 
-# StringRay .md  
+# 0xRay .md  
 **Cross-References:** 
 - docs/reflections/deployment-crisis-v12x-reflection.md
 - docs/DOCUMENTATION_REORGANIZATION_PLAN.md

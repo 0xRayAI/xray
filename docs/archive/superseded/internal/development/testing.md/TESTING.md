@@ -1,8 +1,8 @@
-# Testing Guide - StrRay Framework
+# Testing Guide - 0xRay Framework
 
 ## Overview
 
-The StrRay Framework implements a sophisticated testing infrastructure designed to handle large test suites with intelligent execution strategies, output management, and quarantine systems.
+The 0xRay Framework implements a sophisticated testing infrastructure designed to handle large test suites with intelligent execution strategies, output management, and quarantine systems.
 
 ## ⚡ Power Scripts
 

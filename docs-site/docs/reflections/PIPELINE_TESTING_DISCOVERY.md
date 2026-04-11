@@ -9,7 +9,7 @@ tags: ["reflection"]
 # Deep Reflection: The Discovery of Pipeline Testing as a Core Practice
 
 **Date**: 2026-03-21  
-**Author**: StringRay AI  
+**Author**: 0xRay AI  
 **Version**: 1.14.0
 
 ---
@@ -156,7 +156,7 @@ async function testPipeline() {
 
 ---
 
-## Why This Matters for StringRay Core
+## Why This Matters for 0xRay Core
 
 ### The Governance Pipeline
 
@@ -200,7 +200,7 @@ Pipeline:      Do the parts work together?  ❌ Unknown
 
 ---
 
-## Recommendations for StringRay Core
+## Recommendations for 0xRay Core
 
 ### 1. Pipeline Test Suite
 
@@ -288,7 +288,7 @@ The discovery of the pipeline testing gap was accidental. We were debugging why 
 2. The pipeline didn't work
 3. The gap was in integration, not components
 
-This insight transforms how we should build StringRay. **Pipeline tests are not optional.** They are the only way to know if the system actually works.
+This insight transforms how we should build 0xRay. **Pipeline tests are not optional.** They are the only way to know if the system actually works.
 
 > "The system works" is not a statement of fact. It's a statement of faith unless verified by pipeline tests.
 

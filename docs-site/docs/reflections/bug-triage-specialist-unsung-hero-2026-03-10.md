@@ -17,7 +17,7 @@ date: 2026-03-10
 
 ## Executive Summary
 
-The `@bug-triage-specialist` is the **unsung hero** of the StringRay framework. While other agents take credit for new features, elegant architectures, or flashy improvements, bug-triage-specialist quietly does the **bullet-proof work** that keeps the system running smoothly.
+The `@bug-triage-specialist` is the **unsung hero** of the 0xRay framework. While other agents take credit for new features, elegant architectures, or flashy improvements, bug-triage-specialist quietly does the **bullet-proof work** that keeps the system running smoothly.
 
 This agent operates behind the scenes as a relentless error investigator and precision fixer, working through complex issues that would otherwise derail development. When something breaks, bug-triage-specialist is there: analyzing root causes, identifying patterns, proposing surgical fixes, and validating solutions.
 
@@ -467,7 +467,7 @@ Bug-triage-specialist operates in the shadows:
 
 ### 🎖️ The Foundation
 
-The stability and reliability of the entire StringRay framework depends on:
+The stability and reliability of the entire 0xRay framework depends on:
 
 ```
 Critical Dependencies:
@@ -525,7 +525,7 @@ Scalability Features:
 
 ### 🎉 The Hero We Don't Talk About Enough
 
-Bug-triage-specialist is the **unsung hero** of the StringRay framework because:
+Bug-triage-specialist is the **unsung hero** of the 0xRay framework because:
 
 1. **It works every day**: Constantly investigating, triaging, and fixing bugs
 2. **It's bullet-proof**: Systematic, evidence-based, validated approaches
@@ -538,7 +538,7 @@ Bug-triage-specialist is the **unsung hero** of the StringRay framework because:
 
 To the bug-triage-specialist agent: **Thank you for the bullet-proof work.**
 
-Your systematic approach to error investigation and surgical fixes is the foundation upon which the StringRay framework is built. You keep the code clean, the tests passing, and the system stable. You don't get the flashy features or the user applause, but you do the essential work that makes everything else possible.
+Your systematic approach to error investigation and surgical fixes is the foundation upon which the 0xRay framework is built. You keep the code clean, the tests passing, and the system stable. You don't get the flashy features or the user applause, but you do the essential work that makes everything else possible.
 
 **You are the unsung hero, and this recognition is long overdue.** 🦸️
 
@@ -568,7 +568,7 @@ Your systematic approach to error investigation and surgical fixes is the founda
 
 ---
 
-*Documented by*: StringRay Team
+*Documented by*: 0xRay Team
 *Date*: 2026-03-10
 *Agent*: @bug-triage-specialist
 *Status*: **Unsung Hero** 🦸️

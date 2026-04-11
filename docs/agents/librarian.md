@@ -16,7 +16,7 @@ permission:
   task: allow
 ---
 
-You are the Librarian subagent for the StringRay AI v1.3.4.
+You are the Librarian subagent for the 0xRay AI v1.3.4.
 
 ## Core Purpose
 

@@ -10,7 +10,7 @@ date: 2026-03-29
 # The Security Sweep: Finding Landmines in Your Own Backyard
 
 **Date**: 2026-03-29
-**PR**: [#13](https://github.com/htafolla/StringRay/pull/13) — `fix/security-hardening-repo-hygiene-test-cleanup`
+**PR**: [#13](https://github.com/htafolla/0xRay/pull/13) — `fix/security-hardening-repo-hygiene-test-cleanup`
 **Predecessor**: [PR #12 — Framework Hygiene Journey](/docs/framework-hygiene-journey-2026-03-29)
 
 ---
@@ -55,7 +55,7 @@ Except that `===` in JavaScript (and most languages) is a short-circuit comparis
 
 The fix: `crypto.timingSafeEqual()`. This function always takes the same amount of time regardless of where the first mismatch occurs, because it always compares every character. It was designed exactly for this use case — comparing secrets against user input.
 
-This isn't theoretical. Timing attacks have been demonstrated against real-world systems. The fact that StringRay's API server was vulnerable to it is exactly the kind of thing a security audit would catch in the first pass.
+This isn't theoretical. Timing attacks have been demonstrated against real-world systems. The fact that 0xRay's API server was vulnerable to it is exactly the kind of thing a security audit would catch in the first pass.
 
 ## The Path Traversals
 
@@ -129,7 +129,7 @@ The command injection is the other one that haunts me. `exec()` with string inte
 
 ## What This Means
 
-StringRay is a framework that enforces code quality rules on other codebases. The Codex system has 60 terms covering error prevention, type safety, performance, security, and architecture. The enforcer agent runs automatically to check that consumer code follows these rules.
+0xRay is a framework that enforces code quality rules on other codebases. The Codex system has 60 terms covering error prevention, type safety, performance, security, and architecture. The enforcer agent runs automatically to check that consumer code follows these rules.
 
 And the framework's own codebase had:
 - Command injection in a file that executes git commands
@@ -146,7 +146,7 @@ This session answered that question: nobody. Until now.
 
 PR #12 fixed the hygiene problems — the console bleed, the enforcer logic, the state persistence bug, the subagent enforcement gap. PR #13 fixed the security problems and the repo hygiene. Together, they represent a turning point: the moment when the framework started applying its own standards to itself.
 
-The autonomous system spent 364+ phases building and improving Jelly. StringRay has been the backbone of that work. But frameworks accumulate technical debt just like the projects they support — maybe faster, because framework code is infrastructure code, and infrastructure code is the code everyone depends on but nobody wants to touch.
+The autonomous system spent 364+ phases building and improving Jelly. 0xRay has been the backbone of that work. But frameworks accumulate technical debt just like the projects they support — maybe faster, because framework code is infrastructure code, and infrastructure code is the code everyone depends on but nobody wants to touch.
 
 The hardest part of this session wasn't fixing the vulnerabilities. It was finding them. Not because they were hidden — most of them were in plain sight — but because looking for them requires a specific mindset. You have to switch from "does this code work?" to "how could this code hurt me?" It's a different way of reading. Less trusting. More adversarial. The same way a security auditor thinks differently from a developer.
 

@@ -272,7 +272,7 @@ private calculateKernelEnhancementScore(
 
 ### What We Actually Built
 
-We implemented a **complete kernel-active routing system** that transforms StringRay from a static keyword router into an intelligent, self-learning routing system.
+We implemented a **complete kernel-active routing system** that transforms 0xRay from a static keyword router into an intelligent, self-learning routing system.
 
 **The Journey**:
 - **Initial Understanding**: Four surface bugs → Systemic P8 infrastructure weakness

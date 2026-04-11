@@ -10,7 +10,7 @@
 
 ## The Problem No One Noticed
 
-For two months, StringRay had a skeleton running in production. The plugin loaded. Tests passed. The welcome banner appeared. Everything looked healthy.
+For two months, 0xRay had a skeleton running in production. The plugin loaded. Tests passed. The welcome banner appeared. Everything looked healthy.
 
 But nothing was actually working.
 

@@ -1,4 +1,4 @@
-# StrRay Framework - Enterprise Architecture Documentation
+# 0xRay Framework - Enterprise Architecture Documentation
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## System Overview
 
-The StrRay Framework implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles. It provides systematic error prevention and production-ready code generation through a multi-layered architecture.
+The 0xRay Framework implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles. It provides systematic error prevention and production-ready code generation through a multi-layered architecture.
 
 ### Key Architectural Characteristics
 
@@ -393,13 +393,13 @@ spec:
 
 ```yaml
 Resources:
-  StrRayLoadBalancer:
+  0xRayLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Type: application
       Scheme: internet-facing
 
-  StrRayAutoScalingGroup:
+  0xRayAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       MinSize: "2"

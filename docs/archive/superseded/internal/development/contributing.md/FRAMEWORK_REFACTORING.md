@@ -1,8 +1,8 @@
-# StrRay Framework Migration Guide
+# 0xRay Framework Migration Guide
 
 ## Overview
 
-This document describes the comprehensive migration and consolidation efforts implemented in Phases 2 and 3 of the StrRay simplification plan, including configuration flattening and hook consolidation.
+This document describes the comprehensive migration and consolidation efforts implemented in Phases 2 and 3 of the 0xRay simplification plan, including configuration flattening and hook consolidation.
 
 ## Phase 2: Configuration Migration
 

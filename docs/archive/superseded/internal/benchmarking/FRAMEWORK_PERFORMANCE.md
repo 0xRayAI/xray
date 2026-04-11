@@ -1,8 +1,8 @@
-# StrRay Framework - Internal Performance Benchmarking
+# 0xRay Framework - Internal Performance Benchmarking
 
 ## 📊 Framework Performance Analysis
 
-This document provides comprehensive performance benchmarking data comparing StrRay Framework Lite and Full versions, enabling data-driven decisions for framework adoption and configuration.
+This document provides comprehensive performance benchmarking data comparing 0xRay Framework Lite and Full versions, enabling data-driven decisions for framework adoption and configuration.
 
 ## 🎯 Benchmarking Methodology
 

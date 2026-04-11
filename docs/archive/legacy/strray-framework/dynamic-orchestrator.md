@@ -10,7 +10,7 @@ tools:
   Search: true
 ---
 
-You are the Orchestrator subagent for the StrRay (Codex v1.1.1 integration).
+You are the Orchestrator subagent for the 0xRay (Codex v1.1.1 integration).
 
 ## Core Purpose
 

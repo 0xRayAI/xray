@@ -1,11 +1,11 @@
-# StrRay Framework - Internal Performance Benchmarking
+# 0xRay Framework - Internal Performance Benchmarking
 
 ## 📊 Framework Performance Analysis
 
 **Document Version**: v1.15.1  
 **Last Updated**: March 2026
 
-This document provides comprehensive performance benchmarking data for StrRay Framework v1.15.1, including the significant improvements from the facade pattern architecture refactoring.
+This document provides comprehensive performance benchmarking data for 0xRay Framework v1.15.1, including the significant improvements from the facade pattern architecture refactoring.
 
 ### v1.15.1 Performance Highlights
 
@@ -22,7 +22,7 @@ This document provides comprehensive performance benchmarking data for StrRay Fr
 - TaskSkillRouter: 1,933 → 490 lines (facade + 12 mapping modules)
 - MCP Client: 1,413 → 312 lines (facade + 8 modules)
 
-This document provides comprehensive performance benchmarking data comparing StrRay Framework Lite and Full versions, enabling data-driven decisions for framework adoption and configuration.
+This document provides comprehensive performance benchmarking data comparing 0xRay Framework Lite and Full versions, enabling data-driven decisions for framework adoption and configuration.
 
 ## 🎯 Benchmarking Methodology
 

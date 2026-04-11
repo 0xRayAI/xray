@@ -43,7 +43,7 @@ NOT:
 
 ## The Architecture: Two Separate Worlds
 
-### World 1: Internal Processing (How StringRay Actually Works)
+### World 1: Internal Processing (How 0xRay Actually Works)
 
 ```typescript
 // Direct TypeScript imports - THIS IS WHAT ACTUALLY RUNS
@@ -68,11 +68,11 @@ const report = await ruleEnforcer.validateOperation(operation, context);
 // node dist/mcps/enforcer-tools.server.js
 
 // Or when OpenCode spawns them as MCP servers
-// But StringRay's INTERNAL code NEVER spawns them
+// But 0xRay's INTERNAL code NEVER spawns them
 ```
 
 **When MCP servers ARE used:**
-- When an external system (like another AI agent) wants to invoke StringRay capabilities
+- When an external system (like another AI agent) wants to invoke 0xRay capabilities
 - When explicitly spawned by consumer code
 - Never during normal framework operation
 
@@ -164,7 +164,7 @@ The static `import from "../dist/..."` at line 569 is:
    - ProcessorManager orchestration
    - Boot orchestrator initialization
    
-2. **External System** (for when StringRay is a library):
+2. **External System** (for when 0xRay is a library):
    - MCP servers
    - StdioServerTransport
    - Spawned as separate processes
@@ -198,7 +198,7 @@ The static `import from "../dist/..."` at line 569 is:
 
 **After this session:**
 - The internal system is fully functional via direct imports
-- MCP servers exist for external integration (when StringRay is used as a library)
+- MCP servers exist for external integration (when 0xRay is used as a library)
 - The "fixes" to MCP servers were nice-to-have cleanup, not critical bugs
 - The real issues were agent configuration and routing integration
 

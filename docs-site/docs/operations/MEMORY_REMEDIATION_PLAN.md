@@ -5,7 +5,7 @@ sidebar_label: "MEMORY REMEDIATION PLAN"
 sidebar_position: 3
 ---
 
-# 🚨 MEMORY LEAK REMEDIATION PLAN - StrRay Framework
+# 🚨 MEMORY LEAK REMEDIATION PLAN - 0xRay Framework
 
 **Version**: v1.15.1  
 **Status**: **RESOLVED** - Memory optimizations implemented  

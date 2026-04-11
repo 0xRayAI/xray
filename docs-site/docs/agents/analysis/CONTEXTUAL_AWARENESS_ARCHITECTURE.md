@@ -6,7 +6,7 @@ sidebar_position: 3
 tags: ["agents"]
 ---
 
-# StrRay Framework - Contextual Awareness Architecture
+# 0xRay Framework - Contextual Awareness Architecture
 
 ## 🎯 Executive Summary
 
@@ -334,6 +334,6 @@ Performance (High) | 5.17 MB      | Maximum        | Large codebases
 - ✅ **Performance & Reliability**: Enterprise-grade operation
 - ✅ **Future-Proof Design**: Extensible and maintainable architecture
 
-The contextual awareness system provides the **intelligence foundation** that transforms StrRay from a rule-based orchestrator into a **truly intelligent development assistant** capable of understanding and improving complex codebases.
+The contextual awareness system provides the **intelligence foundation** that transforms 0xRay from a rule-based orchestrator into a **truly intelligent development assistant** capable of understanding and improving complex codebases.
 
 **AST integration, contextual analysis, and agent orchestration work together seamlessly** to deliver enterprise-grade development intelligence! 🚀✨🎯

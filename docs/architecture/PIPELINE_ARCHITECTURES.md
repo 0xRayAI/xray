@@ -1,4 +1,4 @@
-# StringRay Pipeline Architectures
+# 0xRay Pipeline Architectures
 
 Detailed architecture diagrams for each pipeline at the same level of detail.
 

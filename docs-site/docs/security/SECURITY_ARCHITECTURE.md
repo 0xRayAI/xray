@@ -6,7 +6,7 @@ sidebar_position: 3
 tags: ["security"]
 ---
 
-# StrRay Framework Security Architecture
+# 0xRay Framework Security Architecture
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ tags: ["security"]
 
 ## Security Architecture Overview
 
-The StrRay Framework implements a comprehensive, multi-layered security architecture designed to protect against a wide range of threats while maintaining development velocity and system reliability.
+The 0xRay Framework implements a comprehensive, multi-layered security architecture designed to protect against a wide range of threats while maintaining development velocity and system reliability.
 
 ### Core Security Principles
 
@@ -694,7 +694,7 @@ This score reflects the framework's security posture as assessed during the comp
 
 ## Summary
 
-The StrRay Framework implements a comprehensive security architecture with multiple layers of protection:
+The 0xRay Framework implements a comprehensive security architecture with multiple layers of protection:
 
 - **Plugin Sandboxing**: Isolated execution with resource limits
 - **Automated Security Auditing**: Continuous vulnerability detection

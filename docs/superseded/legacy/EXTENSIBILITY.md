@@ -1,6 +1,6 @@
-# StringRay Extensibility Guide
+# 0xRay Extensibility Guide
 
-StringRay provides multiple ways to extend and customize its functionality. This document describes the three main extensibility mechanisms: **Hooks**, **Triggers**, and **Integrations**.
+0xRay provides multiple ways to extend and customize its functionality. This document describes the three main extensibility mechanisms: **Hooks**, **Triggers**, and **Integrations**.
 
 ---
 
@@ -104,7 +104,7 @@ const trigger = new WebhookTrigger({
 
 ## 3. Integrations System
 
-Integrations connect StringRay to external services and platforms.
+Integrations connect 0xRay to external services and platforms.
 
 ### Base Integration Class
 
@@ -137,7 +137,7 @@ class MyIntegration extends BaseIntegration {
 
 ### OpenClaw Integration
 
-Connects StringRay to OpenClaw Gateway:
+Connects 0xRay to OpenClaw Gateway:
 
 ```typescript
 import { initializeOpenClawIntegration } from './integrations/openclaw/index.js';
@@ -181,7 +181,7 @@ class SlackIntegration extends BaseIntegration {
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    StringRay Framework                      │
+│                    0xRay Framework                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
@@ -216,7 +216,7 @@ The following are **NOT** third-party plugins (they're framework code):
 - MCP servers in `src/mcps/` - Framework services
 - Agent definitions - Framework components
 
-StringRay does not currently support third-party plugins. The extensibility model is through hooks, triggers, and integrations.
+0xRay does not currently support third-party plugins. The extensibility model is through hooks, triggers, and integrations.
 
 ---
 

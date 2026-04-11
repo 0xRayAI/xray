@@ -17,7 +17,7 @@ tags: ["reflection"]
 
 ## Executive Summary
 
-The Storyteller agent represents a significant enhancement to the StringRay ecosystem—introducing narrative, emotionally-engaging long-form documentation that captures the *human* experience of technical work. This roadmap defines the phased implementation strategy based on three foundational contributions:
+The Storyteller agent represents a significant enhancement to the 0xRay ecosystem—introducing narrative, emotionally-engaging long-form documentation that captures the *human* experience of technical work. This roadmap defines the phased implementation strategy based on three foundational contributions:
 
 1. **@architect** - Core architecture (story types, modular components, integration patterns)
 2. **@growth-strategist** - Audience strategy (5 personas, use cases, distribution channels)
@@ -422,7 +422,7 @@ v3.0 (P1 - Should Have)
 ### Key Decisions Needed
 
 1. **Hosting strategy** - Where does storyteller run? (embedded, service, hybrid)
-2. **Auth model for v1.0** - How do users authenticate? (existing StringRay auth, new)
+2. **Auth model for v1.0** - How do users authenticate? (existing 0xRay auth, new)
 3. **Metrics priority** - Which analytics matter most for v2.0?
 
 ### Out of Scope (Intentionally)

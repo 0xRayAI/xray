@@ -70,10 +70,10 @@ This reflection documents the critical kernel confidence bug discovered during v
 
 If the kernel confidence bug had NOT been identified:
 
-**Step 1:** Continue using StringRay with "enabled" kernel doing nothing
+**Step 1:** Continue using 0xRay with "enabled" kernel doing nothing
 **Step 2:** 95% of requests escalate to LLM unnecessarily
 **Step 3:** Higher latency, higher costs, slower responses
-**Step 4:** Users disable kernel thinking it's broken, or abandon StringRay
+**Step 4:** Users disable kernel thinking it's broken, or abandon 0xRay
 **Step 5:** Months of wasted resources, degraded user experience
 
 ### What Would Have Been Lost

@@ -6,14 +6,14 @@ sidebar_position: 1
 tags: ["deployment"]
 ---
 
-# 🚀 StrRay Framework Deployment Pipeline
+# 🚀 0xRay Framework Deployment Pipeline
 
 **Version**: v1.15.1  
 **Last Updated**: March 2026
 
 ## Overview
 
-The StrRay Framework uses a comprehensive deployment pipeline that integrates version management, automated testing, and staged releases. The pipeline ensures production-ready deployments with zero-downtime and full rollback capabilities.
+The 0xRay Framework uses a comprehensive deployment pipeline that integrates version management, automated testing, and staged releases. The pipeline ensures production-ready deployments with zero-downtime and full rollback capabilities.
 
 ## What's New in v1.15.1
 

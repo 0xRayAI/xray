@@ -1,7 +1,7 @@
 # Agent Codex Terms Cross-Reference Report
 
 **Generated:** 2026-03-11
-**Framework Version:** StringRay v1.7.10
+**Framework Version:** 0xRay v1.7.10
 **Total Agents Analyzed:** 27
 
 ---

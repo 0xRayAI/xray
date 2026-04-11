@@ -6,11 +6,11 @@ sidebar_position: 6
 tags: ["testing"]
 ---
 
-# StringRay 1.9.0 Modular Test Inventory
+# 0xRay 1.9.0 Modular Test Inventory
 
 ## Overview
 
-StringRay v1.15.1 implements a comprehensive modular testing architecture with **N tests** across 26 facade modules, achieving **87% test coverage**. The testing strategy focuses on component isolation, facade integration, and comprehensive validation of all framework capabilities.
+0xRay v1.15.1 implements a comprehensive modular testing architecture with **N tests** across 26 facade modules, achieving **87% test coverage**. The testing strategy focuses on component isolation, facade integration, and comprehensive validation of all framework capabilities.
 
 ### Test Metrics Summary
 

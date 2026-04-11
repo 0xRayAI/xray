@@ -6,7 +6,7 @@ sidebar_position: 4
 tags: ["agents"]
 ---
 
-# StrRay Framework - Contextual Awareness Workflow (v1.15.1)
+# 0xRay Framework - Contextual Awareness Workflow (v1.15.1)
 
 ## 🎯 **YES - Tools Are Mapped and All 27 Agents Run Them**
 
@@ -426,4 +426,4 @@ Primary (1): Orchestrator
     └── Growth Strategist, Content Creator, SEO Consultant
 ```
 
-**The StrRay Framework now delivers genuine AI-powered development intelligence through active tool execution and coordinated agent orchestration!** 🚀✨🎯
+**The 0xRay Framework now delivers genuine AI-powered development intelligence through active tool execution and coordinated agent orchestration!** 🚀✨🎯

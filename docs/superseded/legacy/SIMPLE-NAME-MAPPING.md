@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Simple Name Mapping feature in StringRay provides human-readable names for all AI agents, making the system more approachable and user-friendly. This feature converts technical agent names into intuitive, benefit-oriented names that clearly communicate each agent's purpose.
+The Simple Name Mapping feature in 0xRay provides human-readable names for all AI agents, making the system more approachable and user-friendly. This feature converts technical agent names into intuitive, benefit-oriented names that clearly communicate each agent's purpose.
 
 ## Purpose
 
@@ -247,4 +247,4 @@ The implementation includes:
 - ✅ Legacy alias compatibility
 - ✅ Strategic naming patterns
 
-This enhancement significantly improves the user experience by making StringRay's AI agents more approachable and understandable to users of all technical backgrounds.
+This enhancement significantly improves the user experience by making 0xRay's AI agents more approachable and understandable to users of all technical backgrounds.

@@ -1,4 +1,4 @@
-# StrRay Framework - Contextual Awareness Workflow
+# 0xRay Framework - Contextual Awareness Workflow
 
 ## 🎯 **YES - Tools Are Mapped and Agents Run Them**
 
@@ -331,4 +331,4 @@ Overall Enforcement    | 97%       | 89%        | 3%     | 105ms
 - ✅ **Quality assurance** happens automatically with rule enforcement
 - ✅ **Enterprise-grade** contextual awareness with performance and reliability
 
-**The StrRay Framework now delivers genuine AI-powered development intelligence through active tool execution and agent orchestration!** 🚀✨🎯
+**The 0xRay Framework now delivers genuine AI-powered development intelligence through active tool execution and agent orchestration!** 🚀✨🎯

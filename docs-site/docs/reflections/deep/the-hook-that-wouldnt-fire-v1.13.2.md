@@ -7,13 +7,13 @@ tags: ["reflection"]
 version: 1.13.2
 ---
 
-# The Hook That Wouldn't Fire: A Deep Reflection on StringRay v1.13.2
+# The Hook That Wouldn't Fire: A Deep Reflection on 0xRay v1.13.2
 
 ## Prologue: The Silence That Should Have Been a Symphony
 
 March 19, 2026. The logs were silent. Not the silence of victory—the kind of silence that haunts you at 2 AM when you know something should be working but isn't.
 
-For two months, the StringRay plugin hooks had been broken. Two months of wondering why the activity logs stayed empty. Two months of assuming everything was fine because the framework itself was working—agents were spawning, tasks were completing, the orchestrator was orchestrating.
+For two months, the 0xRay plugin hooks had been broken. Two months of wondering why the activity logs stayed empty. Two months of assuming everything was fine because the framework itself was working—agents were spawning, tasks were completing, the orchestrator was orchestrating.
 
 But the hooks—the hooks were mute.
 
@@ -349,7 +349,7 @@ We chose to remove them. To simplify. To make the code dumber but more maintaina
 
 ## Final Thoughts
 
-StringRay v1.13.2 isn't just a bug fix release. It's a lesson in humility. A reminder that the most sophisticated system is useless if it doesn't work for the user. A testament to the value of visibility, simplicity, and testing the actual consumer experience.
+0xRay v1.13.2 isn't just a bug fix release. It's a lesson in humility. A reminder that the most sophisticated system is useless if it doesn't work for the user. A testament to the value of visibility, simplicity, and testing the actual consumer experience.
 
 The hooks are firing now. The logs are populating. The routing is working at the right level of abstraction.
 
@@ -362,5 +362,5 @@ That's the real victory. Not the code. The understanding.
 **The hook that wouldn't fire taught us more than any working system ever could.**
 
 *March 19, 2026*  
-*StringRay Team*  
+*0xRay Team*  
 *v1.13.2 - The Release That Almost Wasn't*

@@ -1,4 +1,4 @@
-# StringRay Central Analytics Store Architecture v1.15.1
+# 0xRay Central Analytics Store Architecture v1.15.1
 
 **Version:** 1.9.0  
 **Date:** 2026-03-12  
@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document outlines a privacy-first, opt-in central analytics architecture for StringRay AI v1.15.1 that enables collective learning while maintaining strict data privacy and consent control. The v1.15.1 release implements the **Facade Pattern** with improved modularity for analytics components.
+This document outlines a privacy-first, opt-in central analytics architecture for 0xRay AI v1.15.1 that enables collective learning while maintaining strict data privacy and consent control. The v1.15.1 release implements the **Facade Pattern** with improved modularity for analytics components.
 
 ## Architecture Overview
 
@@ -42,7 +42,7 @@ The v1.15.1 analytics system uses a facade-based architecture:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Consumer Project                        │
 │  ┌──────────────┐         ┌─────────────────────────┐     │
-│  │ StringRay    │────────▶│ AnalyticsManager        │     │
+│  │ 0xRay    │────────▶│ AnalyticsManager        │     │
 │  │ Framework    │         │ (Analytics Facade)      │     │
 │  │  v1.15.1      │         │ (416 lines)             │     │
 │  └──────────────┘         └─────────────────────────┘     │
@@ -634,9 +634,9 @@ class AnalyticsManager {
 
 **Document Version:** 1.9.0  
 **Last Updated:** 2026-03-12  
-**Owner:** StringRay Architecture Team  
+**Owner:** 0xRay Architecture Team  
 **Review Date:** 2026-04-12
 
 ---
 
-*StringRay Central Analytics Store v1.15.1 - Facade Pattern Architecture*
+*0xRay Central Analytics Store v1.15.1 - Facade Pattern Architecture*

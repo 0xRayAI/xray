@@ -108,7 +108,7 @@ tags: ["research"]
 
 ---
 
-## Integration Potential for StringRay
+## Integration Potential for 0xRay
 
 ### Integration Type: External Prediction Service
 
@@ -126,10 +126,10 @@ MiroFish is a full-stack application, not a library:
 └─────────────┘
 ```
 
-### How StringRay Could Use It
+### How 0xRay Could Use It
 
 ```
-StringRay Agent
+0xRay Agent
       │
       ▼
 ┌─────────────────┐
@@ -145,7 +145,7 @@ StringRay Agent
 
 ### API Integration Example
 ```python
-# StringRay could invoke MiroFish prediction
+# 0xRay could invoke MiroFish prediction
 async function predictScenario(seedData, question) {
   const response = await fetch('http://localhost:5001/api/predict', {
     method: 'POST',
@@ -189,7 +189,7 @@ async function predictScenario(seedData, question) {
 
 ---
 
-## Synergy with StringRay
+## Synergy with 0xRay
 
 ### Strengths
 - Novel approach to prediction
@@ -207,9 +207,9 @@ async function predictScenario(seedData, question) {
 
 ---
 
-## Comparison to StringRay
+## Comparison to 0xRay
 
-| Aspect | MiroFish | StringRay |
+| Aspect | MiroFish | 0xRay |
 |--------|----------|-----------|
 | **Focus** | Prediction | Orchestration |
 | **Agents** | Simulated thousands | Coordinated real agents |
@@ -219,7 +219,7 @@ async function predictScenario(seedData, question) {
 
 ---
 
-## Use Cases for StringRay
+## Use Cases for 0xRay
 
 ### Potential Integrations
 1. **Scenario Planning** - "What if we launch feature X?"
@@ -266,7 +266,7 @@ From the documentation:
 
 ## Conclusion
 
-MiroFish is a fascinating project with unique capabilities, but it's not a good fit for immediate StringRay integration due to:
+MiroFish is a fascinating project with unique capabilities, but it's not a good fit for immediate 0xRay integration due to:
 - Full-stack complexity
 - High resource requirements
 - Early-stage development
@@ -274,7 +274,7 @@ MiroFish is a fascinating project with unique capabilities, but it's not a good 
 
 **Priority:** LOW
 **Effort:** Hard (4+ weeks)
-**Recommendation:** Monitor for future integration opportunities. Not a core StringRay priority.
+**Recommendation:** Monitor for future integration opportunities. Not a core 0xRay priority.
 
 ---
 

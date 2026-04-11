@@ -1,7 +1,7 @@
 # OpenClaw Integration Architecture Summary
 
 **Date:** 2026-03-14 (Updated: 2026-03-15)
-**Architect:** StringRay Architect Agent
+**Architect:** 0xRay Architect Agent
 **Status:** ✅ Updated Based on Review Feedback
 **Based on:** Researcher findings + Refactorer code review
 
@@ -9,25 +9,25 @@
 
 ## 1. Executive Summary
 
-This document outlines the architectural design for integrating StringRay with OpenClaw. Based on comprehensive research, we've determined that **OpenClaw is a self-hosted AI gateway** - not a cloud API service.
+This document outlines the architectural design for integrating 0xRay with OpenClaw. Based on comprehensive research, we've determined that **OpenClaw is a self-hosted AI gateway** - not a cloud API service.
 
 ### Recommended Approach: Skill-Based Integration
 
 The integration will allow:
-- StringRay agents to be invoked from OpenClaw channels (WhatsApp, Telegram, Discord, etc.)
-- OpenClaw skills to expose StringRay capabilities to users
-- Bidirectional communication between StringRay and OpenClaw
+- 0xRay agents to be invoked from OpenClaw channels (WhatsApp, Telegram, Discord, etc.)
+- OpenClaw skills to expose 0xRay capabilities to users
+- Bidirectional communication between 0xRay and OpenClaw
 
-### How OpenClaw Skills Invoke StringRay (CRITICAL)
+### How OpenClaw Skills Invoke 0xRay (CRITICAL)
 
-**The invocation mechanism:** StringRay exposes a local HTTP API server that OpenClaw skills call directly.
+**The invocation mechanism:** 0xRay exposes a local HTTP API server that OpenClaw skills call directly.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                        INVOCATION MECHANISM                                     │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
-  OpenClaw Skill (index.mjs)                    StringRay Server
+  OpenClaw Skill (index.mjs)                    0xRay Server
   ─────────────────────────                     ────────────────
          │                                              │
          │  fetch('http://localhost:18431/api/          │
@@ -64,10 +64,10 @@ The integration will allow:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                         StringRay Framework                         │
+│                         0xRay Framework                         │
 │                                                                 │
 │  ┌────────────────────────────────────────────────────────────────────────┐    │
-│  │              StringRay Orchestrator                  │    │
+│  │              0xRay Orchestrator                  │    │
 │  │                                                        │    │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐    │    │
 │  │  │ Agent A  │  │  Agent B  │  │  Agent C  │    │    │
@@ -78,7 +78,7 @@ The integration will allow:
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│              StringRay HTTP API Server                     │
+│              0xRay HTTP API Server                     │
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────────────────┐    │
 │  │          API Endpoints                                  │    │
@@ -124,7 +124,7 @@ The integration will allow:
 │  ┌────────────────────────────────────────────────────────────────────┐    │
 │  │          Pi Agent (AI Runtime)                     │    │
 │  │  - Processes user requests                         │    │
-│  │  - Loads skills including StringRay skills             │    │
+│  │  - Loads skills including 0xRay skills             │    │
 │  │  - Executes skills as tools                      │    │
 │  │  - Manages sessions & channels                   │    │
 │  └────────────────────────────────────────────────────────────────────┘    │
@@ -159,7 +159,7 @@ The integration will allow:
 
 1. USER SENDS MESSAGE
    ┌─────────────┐
-   │  WhatsApp   │  "Use StringRay to analyze src/index.ts"
+   │  WhatsApp   │  "Use 0xRay to analyze src/index.ts"
    └──────┬──────┘
           │
           ▼
@@ -186,7 +186,7 @@ The integration will allow:
           ▼
 4. SKILL INVOKES STRINGRAY HTTP API
    ┌─────────────────────────────────────────────────────────────────┐
-   │           StringRay Orchestrator Skill                          │
+   │           0xRay Orchestrator Skill                          │
    │                                                                 │
    │  - Parses command: "/strray-code src/index.ts"                │
    │  - Calls: fetch('http://localhost:18431/api/agent/invoke',   │
@@ -197,7 +197,7 @@ The integration will allow:
           ▼
 5. STRINGRAY EXECUTES OPERATION
    ┌─────────────────────────────────────────────────────────────────┐
-   │                   StringRay Framework                          │
+   │                   0xRay Framework                          │
    │                                                                 │
    │  ┌─────────────────────────────────────────────────────────┐  │
    │  │ Tool Hook (tool.before)                                 │  │
@@ -253,7 +253,7 @@ OpenClaw uses device-based authentication. The integration requires:
 openclaw gateway start
 
 # 2. Generate pairing QR code (from OpenClaw dashboard or CLI)
-openclaw device pair --name "StringRay Integration"
+openclaw device pair --name "0xRay Integration"
 
 # 3. Scan QR code with OpenClaw mobile app
 #    This associates the device and generates a token
@@ -262,7 +262,7 @@ openclaw device pair --name "StringRay Integration"
 openclaw device list
 # Output:
 # DEVICE ID           | NAME                    | TOKEN
-# strray-integration  | StringRay Integration  | oc_dev_xxxxx...
+# strray-integration  | 0xRay Integration  | oc_dev_xxxxx...
 ```
 
 #### Option 2: Manual Token Generation (Production)
@@ -270,7 +270,7 @@ openclaw device list
 ```bash
 # For server-to-server integrations
 openclaw device create \
-  --name "StringRay Production" \
+  --name "0xRay Production" \
   --type server \
   --scopes "operator.read,operator.write,events.subscribe"
 
@@ -464,7 +464,7 @@ interface OpenClawError {
 - ✅ Configuration validation works
 
 ### Phase 3: HTTP API Server (Week 2)
-**Goal:** Expose StringRay capabilities via HTTP
+**Goal:** Expose 0xRay capabilities via HTTP
 
 | Task | Description | Deliverables |
 |------|-------------|--------------|
@@ -481,7 +481,7 @@ interface OpenClawError {
 - ✅ Health checks work
 
 ### Phase 4: Skill Development (Week 3)
-**Goal:** Create OpenClaw skills for StringRay agents
+**Goal:** Create OpenClaw skills for 0xRay agents
 
 | Task | Description | Deliverables |
 |------|-------------|--------------|
@@ -489,15 +489,15 @@ interface OpenClawError {
 | 4.2 | Create stringray-tools skill | `~/.openclaw/skills/stringray-tools/` |
 | 4.3 | Document installation process | Installation guide |
 
-**Skills Location:** Skills go in `~/.openclaw/skills/` (user's OpenClaw directory), NOT in the StringRay codebase.
+**Skills Location:** Skills go in `~/.openclaw/skills/` (user's OpenClaw directory), NOT in the 0xRay codebase.
 
 **Success Criteria:**
 - ✅ Skills load successfully in OpenClaw
 - ✅ Commands are discoverable
 - ✅ HTTP API calls work correctly
 
-### Phase 5: StringRay Hooks Integration (Week 4)
-**Goal:** Integrate with StringRay's tool.before and tool.after hooks
+### Phase 5: 0xRay Hooks Integration (Week 4)
+**Goal:** Integrate with 0xRay's tool.before and tool.after hooks
 
 | Task | Description | Deliverables |
 |------|-------------|--------------|
@@ -507,7 +507,7 @@ interface OpenClawError {
 | 5.4 | Implement configuration integration | `.opencode/openclaw/hooks.json` |
 
 **Success Criteria:**
-- ✅ Hooks registered with StringRay
+- ✅ Hooks registered with 0xRay
 - ✅ Tool events captured
 - ✅ Events sent to OpenClaw
 
@@ -630,7 +630,7 @@ src/integrations/openclaw/
 │       └── validation.ts       # Request validation
 │
 ├── hooks/
-│   ├── strray-hooks.ts        # StringRay hook integration
+│   ├── strray-hooks.ts        # 0xRay hook integration
 │   ├── tool-listener.ts       # Tool event listener
 │   ├── event-translator.ts
 │   └── message-router.ts
@@ -1067,12 +1067,12 @@ interface ToolExecuteRequest {
 }
 
 /**
- * HTTP API Server that exposes StringRay capabilities to OpenClaw skills
+ * HTTP API Server that exposes 0xRay capabilities to OpenClaw skills
  * 
- * This is the critical piece that enables OpenClaw skills to invoke StringRay!
+ * This is the critical piece that enables OpenClaw skills to invoke 0xRay!
  * Skills make HTTP requests to this server.
  */
-export class StringRayApiServer {
+export class 0xRayApiServer {
   private app: Express;
   private server: ReturnType<typeof import('http').createServer | null> = null;
   private wss: WebSocketServer | null = null;
@@ -1161,7 +1161,7 @@ export class StringRayApiServer {
           return;
         }
 
-        // TODO: Integrate with actual StringRay orchestrator
+        // TODO: Integrate with actual 0xRay orchestrator
         // For now, this is a placeholder that shows the pattern
         const result = await this.invokeAgent(command, args, agent);
         
@@ -1255,13 +1255,13 @@ export class StringRayApiServer {
     this.server?.close();
   }
 
-  // Placeholder methods - to be integrated with actual StringRay
+  // Placeholder methods - to be integrated with actual 0xRay
   private async invokeAgent(
     command: string, 
     args?: Record<string, unknown>,
     agent?: string
   ): Promise<unknown> {
-    // TODO: Integrate with StringRay orchestrator
+    // TODO: Integrate with 0xRay orchestrator
     frameworkLogger.log('api-server', 'invoke-agent', 'debug', { 
       command, 
       args, 
@@ -1279,7 +1279,7 @@ export class StringRayApiServer {
     tool: string, 
     params?: Record<string, unknown>
   ): Promise<unknown> {
-    // TODO: Integrate with StringRay tool system
+    // TODO: Integrate with 0xRay tool system
     frameworkLogger.log('api-server', 'execute-tool', 'debug', { 
       tool, 
       params 
@@ -1294,15 +1294,15 @@ export class StringRayApiServer {
 }
 ```
 
-### Example 3: OpenClaw Skill (invoke StringRay via HTTP)
+### Example 3: OpenClaw Skill (invoke 0xRay via HTTP)
 
 ```javascript
 // ~/.openclaw/skills/stringray-orchestrator/index.mjs
 
 /**
- * StringRay Orchestrator Skill
+ * 0xRay Orchestrator Skill
  * 
- * This skill invokes StringRay via HTTP API.
+ * This skill invokes 0xRay via HTTP API.
  * The API server must be running (default: http://localhost:18431)
  */
 
@@ -1310,7 +1310,7 @@ const DEFAULT_API_URL = process.env.STRINGRAY_API_URL || 'http://localhost:18431
 const DEFAULT_API_KEY = process.env.STRINGRAY_API_KEY;
 
 /**
- * Make an API request to StringRay
+ * Make an API request to 0xRay
  */
 async function request(endpoint, body) {
   const response = await fetch(`${DEFAULT_API_URL}${endpoint}`, {
@@ -1410,16 +1410,16 @@ async function getStatus() {
 }
 ```
 
-### Example 4: StringRay Orchestrator Skill (SKILL.md)
+### Example 4: 0xRay Orchestrator Skill (SKILL.md)
 
 ```yaml
 ---
 name: stringray-orchestrator
 description: |
-  Main orchestration skill for StringRay AI agents.
-  Provides commands to coordinate agent work and invoke StringRay APIs.
+  Main orchestration skill for 0xRay AI agents.
+  Provides commands to coordinate agent work and invoke 0xRay APIs.
   
-  Requires: StringRay API server running at http://localhost:18431
+  Requires: 0xRay API server running at http://localhost:18431
   Environment: STRINGRAY_API_URL, STRINGRAY_API_KEY
 
 metadata:
@@ -1437,10 +1437,10 @@ requires:
 allowed-tools: []
 ---
 
-# StringRay Orchestrator Commands
+# 0xRay Orchestrator Commands
 
 ## /strray-analyze
-Analyze code using StringRay code analysis capabilities.
+Analyze code using 0xRay code analysis capabilities.
 
 Usage: `/strray-analyze <file> [options]`
 
@@ -1461,14 +1461,14 @@ Usage: `/strray-refactor <file> --instructions "<instructions>"`
 Example: `/strray-refactor src/index.ts --instructions "Extract logic to separate function"`
 
 ## /strray-test
-Run tests using StringRay testing capabilities.
+Run tests using 0xRay testing capabilities.
 
 Usage: `/strray-test [file] --framework <framework>`
 
 Example: `/strray-test --framework vitest`
 
 ## /strray-status
-Check StringRay status and capabilities.
+Check 0xRay status and capabilities.
 
 Usage: `/strray-status`
 ```
@@ -1712,7 +1712,7 @@ If integration causes issues:
 ```bash
 # Disable integration
 # 1. Set enabled: false in config
-# 2. Restart StringRay
+# 2. Restart 0xRay
 
 # Full rollback
 # 1. git checkout HEAD~1 -- src/integrations/openclaw/
@@ -1751,6 +1751,6 @@ If integration causes issues:
 
 ---
 
-*Document generated by StringRay Architect Agent*
-*Based on research findings from StringRay Research Agent*
+*Document generated by 0xRay Architect Agent*
+*Based on research findings from 0xRay Research Agent*
 *Updated: 2026-03-15 with review feedback*

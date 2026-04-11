@@ -1,4 +1,4 @@
-# StringRay Skills Routing Architecture Strategy
+# 0xRay Skills Routing Architecture Strategy
 
 **Date:** 2026-03-24  
 **Type:** Strategic Architecture Proposal  
@@ -9,7 +9,7 @@
 
 ## Executive Overview
 
-This document outlines a comprehensive architecture for StringRay's skill routing system. It addresses the fundamental question: **How does a developer add a new skill to StringRay?**
+This document outlines a comprehensive architecture for 0xRay's skill routing system. It addresses the fundamental question: **How does a developer add a new skill to 0xRay?**
 
 The analysis covers five key areas:
 1. Skill lifecycle management (discovery, registration, loading)
@@ -18,7 +18,7 @@ The analysis covers five key areas:
 4. MCP server lifecycle and pipeline integration
 5. Versioning strategy and migration paths
 
-**Key Finding:** StringRay has 70% of the infrastructure already in place (routing, MCP, processor pipeline). The gap is binding skills as runtime-discoverable entities that agents can invoke automatically.
+**Key Finding:** 0xRay has 70% of the infrastructure already in place (routing, MCP, processor pipeline). The gap is binding skills as runtime-discoverable entities that agents can invoke automatically.
 
 ---
 
@@ -221,7 +221,7 @@ mcp:
   "category": "quality",
   "risk_level": "low",
   "source": "framework",
-  "author": "StringRay Team",
+  "author": "0xRay Team",
   "license": "Apache-2.0",
   
   "capabilities": [
@@ -804,7 +804,7 @@ npx strray-ai skill:register my-new-skill
 
 ## Summary
 
-StringRay's skill routing architecture requires transforming skills from documentation-only entities to runtime-discoverable, executable infrastructure. The proposed architecture:
+0xRay's skill routing architecture requires transforming skills from documentation-only entities to runtime-discoverable, executable infrastructure. The proposed architecture:
 
 1. **Discovers** skills dynamically from filesystem at boot
 2. **Binds** skills to MCP servers via manifest declarations

@@ -118,7 +118,7 @@ The team matters more than the tool. @architect, @content-creator, @growth-strat
 
 This saga isn't over—it's just the beginning. Here's where we're going:
 
-More agent stories: Each agent in StringRay has a story worth telling. The orchestrator, the architect, the researcher—all waiting for their narrative moment.
+More agent stories: Each agent in 0xRay has a story worth telling. The orchestrator, the architect, the researcher—all waiting for their narrative moment.
 
 Better tools: The peer review workflow will evolve. More fact-checking. Better feedback loops. Stories that get stronger with each iteration.
 
@@ -132,7 +132,7 @@ The best stories are the ones we tell together.
 
 For those wondering about implementation specifics:
 
-Storyteller operates as a narrative generation agent within the StringRay framework. The full configuration—story types, narrative frameworks, character building, worldbuilding, dialogue writing guides, and the peer review workflow—is defined in [.opencode/agents/storyteller.yml](../../.opencode/agents/storyteller.yml).
+Storyteller operates as a narrative generation agent within the 0xRay framework. The full configuration—story types, narrative frameworks, character building, worldbuilding, dialogue writing guides, and the peer review workflow—is defined in [.opencode/agents/storyteller.yml](../../.opencode/agents/storyteller.yml).
 
 External Chinese storytelling techniques were integrated through @content-creator's research pipeline. The peer review workflow includes automated factual validation against agent capability documentation. Failed stories are logged for pattern analysis (the enforcer incident taught us the value of understanding why stories drift).
 

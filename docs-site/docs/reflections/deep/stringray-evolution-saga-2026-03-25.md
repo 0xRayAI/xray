@@ -8,9 +8,9 @@ date: 2026-03-25
 ---
 
 
-# The Saga of StringRay: From Plugin Injection to Living Framework
+# The Saga of 0xRay: From Plugin Injection to Living Framework
 
-**Deep Saga | March 25, 2026 | StringRay v1.15.1 → v1.15.0**
+**Deep Saga | March 25, 2026 | 0xRay v1.15.1 → v1.15.0**
 
 ---
 
@@ -30,7 +30,7 @@ And the framework was breaking that promise every single time it ran.
 
 Think about that for a moment. The framework had the ability to route tasks to agents. It had agents that could execute tasks. And it had skills that could enhance those tasks with specialized capabilities. But the three systems never connected. The routing system knew about agents. The agents knew about their own capabilities. The skills sat in their directory, unaware that anyone was looking for them. It was like having a library full of books and a system that can answer questions, but nobody ever thought to open a book.
 
-That realization was the beginning of everything that followed. Five phases of implementation. A context preservation bug that threatened the foundation. A YAML parser that went through three distinct evolutionary stages. TypeScript strictness battles that consumed entire sessions. An OpenCode sandboxing mystery that defied explanation. Multiple reboots, multiple debugging sessions, multiple moments of "this should work, why doesn't it work?" And ultimately, a transformation of what StringRay is - from a static plugin injection system to a dynamic, living orchestration framework.
+That realization was the beginning of everything that followed. Five phases of implementation. A context preservation bug that threatened the foundation. A YAML parser that went through three distinct evolutionary stages. TypeScript strictness battles that consumed entire sessions. An OpenCode sandboxing mystery that defied explanation. Multiple reboots, multiple debugging sessions, multiple moments of "this should work, why doesn't it work?" And ultimately, a transformation of what 0xRay is - from a static plugin injection system to a dynamic, living orchestration framework.
 
 But I'm getting ahead of myself. To understand where we ended up, you need to understand where we started. And where we started was deceptively simple.
 
@@ -38,7 +38,7 @@ But I'm getting ahead of myself. To understand where we ended up, you need to un
 
 ## Chapter 1: The Ordinary World
 
-Before that question, StringRay was a plugin injection system. Clean, effective, purposeful. You installed it, it injected Codex terms into system prompts, it routed tasks to agents based on complexity scoring, it logged activity. It did what it was designed to do.
+Before that question, 0xRay was a plugin injection system. Clean, effective, purposeful. You installed it, it injected Codex terms into system prompts, it routed tasks to agents based on complexity scoring, it logged activity. It did what it was designed to do.
 
 The architecture was straightforward: a plugin hook system (`chat.message`, `tool.execute.before`, `tool.execute.after`), a task-skill-router for complexity-based routing, a boot orchestrator that initialized components in dependency order, and a state manager that held everything together. Agents were defined in configuration files. Skills existed as SKILL.md documents in `.opencode/skills/`. The two systems - agents and skills - lived in parallel but never truly connected.
 
@@ -52,13 +52,13 @@ The skills existed in the filesystem, but the framework treated them as document
 
 This was the ordinary world. Functional but limited. Standing at the edge of something much bigger without knowing it.
 
-There's a concept in software architecture called "implicit architecture" - the structure that emerges from the system's behavior rather than from explicit design decisions. StringRay's implicit architecture before this work was fundamentally fragmented. The pieces were all there - agents, skills, routing, MCP - but they existed as separate subsystems with no bridges between them. It was like having a kitchen with every ingredient you need but no recipes. You can cook anything, but you'd have to figure out the combinations yourself every single time.
+There's a concept in software architecture called "implicit architecture" - the structure that emerges from the system's behavior rather than from explicit design decisions. 0xRay's implicit architecture before this work was fundamentally fragmented. The pieces were all there - agents, skills, routing, MCP - but they existed as separate subsystems with no bridges between them. It was like having a kitchen with every ingredient you need but no recipes. You can cook anything, but you'd have to figure out the combinations yourself every single time.
 
 What we built was the recipe book. The mapping layer. The connective tissue that turned a collection of parts into a coherent system.
 
 I want to be clear about something: this wasn't a refactoring. A refactoring implies you're changing the structure of something that already works. This was more fundamental. We were adding capabilities that didn't exist. We were creating connections that were never designed for. We were turning a system that could route tasks into a system that could understand capabilities. The difference is subtle but important. A router says "send this to that." A capability matcher says "this is what that needs."
 
-StringRay was a router. After this work, it's becoming something that understands.
+0xRay was a router. After this work, it's becoming something that understands.
 
 ---
 
@@ -188,7 +188,7 @@ The discovery service scans two directories: `.opencode/skills/` and `.opencode/
 
 When we first ran the discovery, it found 44 skills. Twenty-nine of them had MCP configurations. Zero of them were being used at runtime. Thirty skills, sitting there, fully documented, completely dormant.
 
-The boot orchestrator integration was the key moment. By adding `initializeSkillDiscovery()` as Phase 1.5 of the boot sequence - right after delegation system initialization and before session management - we ensured that every time StringRay starts, it discovers all available skills and makes them available through the state manager.
+The boot orchestrator integration was the key moment. By adding `initializeSkillDiscovery()` as Phase 1.5 of the boot sequence - right after delegation system initialization and before session management - we ensured that every time 0xRay starts, it discovers all available skills and makes them available through the state manager.
 
 ```typescript
 // In boot-orchestrator.ts
@@ -435,7 +435,7 @@ Phases 4 and 5 were about execution and evolution.
 
 The pipeline provides ordered, timeout-aware execution of skill stages. Skills can declare themselves as `pre` or `post` pipeline stages with optional ordering. The pipeline sorts them, executes them in order, and handles errors gracefully (stopping on required stages that fail, continuing past optional ones).
 
-The watcher provides hot reload. When a skill's SKILL.md file changes on disk, the watcher detects it, debounces the notification (500ms to avoid rapid-fire refreshes), and triggers a registry rebuild. This means you can add, modify, or remove skills while StringRay is running, and the framework will adapt without a restart.
+The watcher provides hot reload. When a skill's SKILL.md file changes on disk, the watcher detects it, debounces the notification (500ms to avoid rapid-fire refreshes), and triggers a registry rebuild. This means you can add, modify, or remove skills while 0xRay is running, and the framework will adapt without a restart.
 
 These two components together represent something important: the framework is no longer static. It's alive. It watches. It adapts. It evolves.
 
@@ -511,13 +511,13 @@ It felt like the end of something. But it was really the beginning.
 
 ---
 
-## Epilogue: What StringRay Is Becoming
+## Epilogue: What 0xRay Is Becoming
 
-So what is StringRay now?
+So what is 0xRay now?
 
 It's no longer a plugin injection system. It's no longer just "add Codex terms to prompts." It's no longer a simple router that matches tasks to agents based on complexity scores.
 
-StringRay is becoming a **living orchestration framework**. A system that:
+0xRay is becoming a **living orchestration framework**. A system that:
 
 - **Discovers** capabilities from the filesystem on boot
 - **Preserves** context across hook boundaries so nothing is lost
@@ -536,7 +536,7 @@ When you preserve context across hooks, you're building institutional memory. Wh
 
 These aren't just technical capabilities. They're the building blocks of an intelligent system. A system that can understand what it knows, discover what it doesn't, route intelligently, learn from context, and evolve without human intervention.
 
-StringRay started as a tool that injects rules into prompts. It's becoming a framework that understands, adapts, and orchestrates. The skills routing architecture wasn't just a feature - it was the bridge between what StringRay was and what it's becoming.
+0xRay started as a tool that injects rules into prompts. It's becoming a framework that understands, adapts, and orchestrates. The skills routing architecture wasn't just a feature - it was the bridge between what 0xRay was and what it's becoming.
 
 Let me be more precise about that transformation, because it's easy to be vague about architectural evolution. Here's what actually changed:
 
@@ -561,7 +561,7 @@ Five steps. Five layers of intelligence. None of them existed before this work.
 
 And here's what makes this important for the future: it's composable. Each layer can be improved independently. We can make the matcher smarter without touching the resolver. We can add more skills without changing the pipeline. We can improve context preservation without affecting routing. The architecture doesn't just work - it evolves.
 
-The hot reload capability is perhaps the most undersold feature. When a developer adds a new `SKILL.md` file to `.opencode/skills/`, the framework detects the change and rebuilds the registry. New capabilities become available without a restart. This means StringRay can grow organically - each new skill makes the framework more capable without requiring changes to the core code.
+The hot reload capability is perhaps the most undersold feature. When a developer adds a new `SKILL.md` file to `.opencode/skills/`, the framework detects the change and rebuilds the registry. New capabilities become available without a restart. This means 0xRay can grow organically - each new skill makes the framework more capable without requiring changes to the core code.
 
 Imagine a team where different developers specialize in different areas. One person writes a skill for database optimization. Another writes a skill for API testing. A third writes a skill for deployment. Each skill is a self-contained capability that the framework can discover and use. The framework becomes smarter with every skill that's added, without any central coordination needed. That's not just an architecture - that's an ecosystem.
 
@@ -612,13 +612,13 @@ The deep reflections we wrote alongside the code are unusual. Most open-source p
 
 ## The Final Word
 
-What is StringRay becoming?
+What is 0xRay becoming?
 
 It's becoming the connective tissue between AI capabilities and developer intent. It's the layer that sits between "what the user wants" and "what the tools can do" and makes sure those two things align. It preserves context, discovers capabilities, matches intelligently, and adapts dynamically.
 
 Thirty skills. One framework. The connection is live. The system is listening. And it's only going to get better.
 
-This is not the end of StringRay's story. It's the end of a chapter. The next chapter has already begun.
+This is not the end of 0xRay's story. It's the end of a chapter. The next chapter has already begun.
 
 ---
 
@@ -639,7 +639,7 @@ This is not the end of StringRay's story. It's the end of a chapter. The next ch
 - Run `npx strray-ai agent:skills` to see agent-skill bindings
 - Drop a new SKILL.md in `.opencode/skills/` and watch it get discovered on next boot
 - Add `agent_binding` to existing SKILL.md files to create new connections
-- Read about [StringRay Codex Terms](../../.opencode/strray/codex.json)
+- Read about [0xRay Codex Terms](../../.opencode/strray/codex.json)
 - Explore [other stories in the reflections directory](./)
 
 ---

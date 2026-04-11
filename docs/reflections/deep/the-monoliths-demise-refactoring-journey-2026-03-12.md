@@ -1,7 +1,7 @@
 # The Monolith's Demise: A 39-Day Refactoring Journey
 
 **When:** February 1 - March 12, 2026  
-**What:** Complete transformation of StringRay's enforcement and routing systems  
+**What:** Complete transformation of 0xRay's enforcement and routing systems  
 **The Goal:** Turn two god classes into modular, maintainable architecture  
 **The Result:** 81% code reduction, 500+ new tests, zero breaking changes
 
@@ -13,7 +13,7 @@
 
 That's how many lines RuleEnforcer.ts had when I first opened it. I remember scrolling through the file, watching the line number tick higher and higher, and thinking: *"This can't be right. No single class should be this large."*
 
-But it was right. And it wasn't just RuleEnforcer. TaskSkillRouter clocked in at 1,933 lines. Together, these two files contained nearly 5,000 lines of code—almost 4% of the entire StringRay framework.
+But it was right. And it wasn't just RuleEnforcer. TaskSkillRouter clocked in at 1,933 lines. Together, these two files contained nearly 5,000 lines of code—almost 4% of the entire 0xRay framework.
 
 I knew we had a problem. What I didn't know was how deep it went.
 

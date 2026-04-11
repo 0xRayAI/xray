@@ -37,7 +37,7 @@ If you need file operation monitoring, consider these alternatives:
 
 ### Option 1: Framework-Level Logging
 
-StringRay automatically logs all tool executions, including file operations. No configuration needed.
+0xRay automatically logs all tool executions, including file operations. No configuration needed.
 
 ```typescript
 // Logs are automatically created at:
@@ -47,7 +47,7 @@ StringRay automatically logs all tool executions, including file operations. No 
 import { frameworkLogger } from './src/core/framework-logger.js';
 
 // All file operations are logged automatically
-// when StringRay tools are executed
+// when 0xRay tools are executed
 ```
 
 **View logs:**
@@ -310,12 +310,12 @@ If you have questions about this removal or need help migrating:
 
 1. Check the [File Monitoring Best Practices Guide](../guides/file-monitoring.md)
 2. Review [Example Implementations](../../examples/file-monitoring/)
-3. Open an issue on the StringRay GitHub repository
-4. Join the StringRay community discussions
+3. Open an issue on the 0xRay GitHub repository
+4. Join the 0xRay community discussions
 
 ## Additional Resources
 
-- [StringRay Documentation](../../README.md)
+- [0xRay Documentation](../../README.md)
 - [Framework Logger API](../../docs/api/framework-logger.md)
 - [Event System Documentation](../../docs/api/events.md)
 - [Custom Integration Guide](../../docs/guides/custom-integrations.md)

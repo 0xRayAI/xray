@@ -2,7 +2,7 @@
 
 **Template Version**: 2.0 (Author-Aware)
 **Enhancement Date**: March 3, 2026
-**Context**: Based on StringRay 1.6.31 experience
+**Context**: Based on 0xRay 1.6.31 experience
 **Key Addition**: Explicit author attribution to establish accountability and context
 
 ## Enhanced Template Structure
@@ -121,7 +121,7 @@ This section includes:
 
 ## Example Application
 
-*Based on StringRay 1.6.31 experience:*
+*Based on 0xRay 1.6.31 experience:*
 
 ```
 *Authored by Blaze, with reflection curation by DevAgent - acknowledging their collaborative relationship where field testing meets AI analysis to reveal true framework insights.*

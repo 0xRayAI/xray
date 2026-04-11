@@ -6,7 +6,7 @@ sidebar_position: 2
 tags: ["architecture"]
 ---
 
-# StringRay Architecture - Unified View
+# 0xRay Architecture - Unified View
 
 ## High-Level Architecture
 

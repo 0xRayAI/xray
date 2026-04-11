@@ -25,7 +25,7 @@ date: 2026-02-22
 - Achieve 99%+ test pass rate
 - Ensure build and lint pass
 
-**Stakeholders**: StringRay Framework, AI Agent System, OpenCode Integration
+**Stakeholders**: 0xRay Framework, AI Agent System, OpenCode Integration
 
 ---
 

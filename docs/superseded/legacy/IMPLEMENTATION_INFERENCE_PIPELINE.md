@@ -1,8 +1,8 @@
-# StringRay Inference Pipeline Implementation Document
+# 0xRay Inference Pipeline Implementation Document
 
 **Version**: 1.13.5  
 **Date**: 2026-03-20  
-**Author**: StringRay AI Team
+**Author**: 0xRay AI Team
 
 ---
 
@@ -22,7 +22,7 @@
 
 ## Executive Summary
 
-This document describes the implementation of the **Inference Pipeline** for StringRay v1.13.5, enabling autonomous learning and self-improvement of the task routing system.
+This document describes the implementation of the **Inference Pipeline** for 0xRay v1.13.5, enabling autonomous learning and self-improvement of the task routing system.
 
 ### Key Features Implemented
 
@@ -667,7 +667,7 @@ interface TuningResult {
 
 ## Conclusion
 
-The Inference Pipeline implementation provides StringRay with autonomous learning capabilities, enabling continuous improvement of task routing decisions. The system:
+The Inference Pipeline implementation provides 0xRay with autonomous learning capabilities, enabling continuous improvement of task routing decisions. The system:
 
 - ✅ Collects routing outcomes and pattern metrics
 - ✅ Persists data across sessions

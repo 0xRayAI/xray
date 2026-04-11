@@ -6,13 +6,13 @@ sidebar_position: 1
 tags: ["reference", "commands"]
 ---
 
-# StrRay Framework - Command Reference and Usage Guide
+# 0xRay Framework - Command Reference and Usage Guide
 
-**Version**: **Last Updated**: 2026-01-05 | **Framework**: StringRay AI v1.3.4
+**Version**: **Last Updated**: 2026-01-05 | **Framework**: 0xRay AI v1.3.4
 
 ## Overview
 
-StrRay provides a comprehensive command-line interface for framework operations, agent management, and development workflow automation.
+0xRay provides a comprehensive command-line interface for framework operations, agent management, and development workflow automation.
 
 ## Core Commands
 
@@ -20,7 +20,7 @@ StrRay provides a comprehensive command-line interface for framework operations,
 
 #### `strray init`
 
-Initialize a new StrRay project with default configuration.
+Initialize a new 0xRay project with default configuration.
 
 ```bash
 strray init [project-name]
@@ -247,11 +247,11 @@ strray task "analyze architecture" && strray task "generate tests" && strray bui
 
 ### Pipeline Integration
 
-StrRay commands integrate with CI/CD pipelines:
+0xRay commands integrate with CI/CD pipelines:
 
 ```yaml
 # .github/workflows/ci.yml
-- name: Run StrRay Analysis
+- name: Run 0xRay Analysis
   run: strray analyze architecture --ci
 
 - name: Generate Tests

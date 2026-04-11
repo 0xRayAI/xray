@@ -1,6 +1,6 @@
 # Scripts & Commands Inventory
 
-> Comprehensive documentation of all CLI scripts, npm scripts, and shell commands in the StringRay codebase.
+> Comprehensive documentation of all CLI scripts, npm scripts, and shell commands in the 0xRay codebase.
 
 ---
 
@@ -12,7 +12,7 @@ All commands are available via `npx strray-ai <command>` after installation.
 
 | Command | Description | What It Does |
 |---------|-------------|--------------|
-| `install` | Install StringRay | Runs `postinstall.cjs` to configure framework in current project |
+| `install` | Install 0xRay | Runs `postinstall.cjs` to configure framework in current project |
 | `init` | Initialize configuration | Same as install - runs postinstall setup |
 | `status` | Check installation status | Verifies `opencode.json` and `.opencode/enforcer-config.json` exist |
 | `validate` | Validate framework setup | Runs `.opencode/init.sh` script |

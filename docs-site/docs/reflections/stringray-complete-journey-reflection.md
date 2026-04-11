@@ -6,9 +6,9 @@ sidebar_position: 80
 tags: ["reflection"]
 ---
 
-# StringRay .md
+# 0xRay .md
 - docs/reflections/deployment-crisis-v12x-reflection.md
 - AGENTS.md (comprehensive framework documentation)
 - .opencode/skills/ui-ux-design/SKILL.md (evolved philosophy)
 
-**Status:** Living Document - Updated as StringRay evolves
+**Status:** Living Document - Updated as 0xRay evolves

@@ -1,6 +1,6 @@
-# StrRay Lite Extension
+# 0xRay Lite Extension
 
-StrRay Lite provides essential AI-assisted development capabilities within the OpenCode ecosystem, optimized for teams that need quality safeguards without full framework complexity.
+0xRay Lite provides essential AI-assisted development capabilities within the OpenCode ecosystem, optimized for teams that need quality safeguards without full framework complexity.
 
 ## Relationship to Full Framework
 

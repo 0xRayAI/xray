@@ -5,7 +5,7 @@
 
 ## The Discovery
 
-We set out to understand how StringRay's governance actually worked. What we found exposed a gap between documentation and reality - and it led to meaningful improvements.
+We set out to understand how 0xRay's governance actually worked. What we found exposed a gap between documentation and reality - and it led to meaningful improvements.
 
 ## Two Pipelines, One Goal
 

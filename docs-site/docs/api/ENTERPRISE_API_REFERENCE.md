@@ -6,9 +6,9 @@ sidebar_position: 2
 tags: ["api"]
 ---
 
-# StrRay Framework - Enterprise API Reference
+# 0xRay Framework - Enterprise API Reference
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ tags: ["api"]
 
 ## API Overview
 
-The StrRay Framework v1.15.1 provides comprehensive enterprise APIs built on the **Facade Pattern** architecture, delivering:
+The 0xRay Framework v1.15.1 provides comprehensive enterprise APIs built on the **Facade Pattern** architecture, delivering:
 
 - **87% Code Reduction**: Simplified facade interfaces over complex internal modules
 - **Stable Public APIs**: 100% backward compatible with existing integrations
@@ -49,13 +49,13 @@ The StrRay Framework v1.15.1 provides comprehensive enterprise APIs built on the
 
 ```typescript
 // API key authentication
-const client = new StrRayClient({
+const client = new 0xRayClient({
   apiKey: "your-api-key",
   baseUrl: "https://api.strray.framework",
 });
 
 // OAuth2 authentication
-const client = new StrRayClient({
+const client = new 0xRayClient({
   oauth2: {
     clientId: "your-client-id",
     clientSecret: "your-client-secret",
@@ -170,14 +170,14 @@ const batchResults = await mcpClient.batchCall([
 
 ## Core Framework APIs
 
-### StrRayClient
+### 0xRayClient
 
-Main client for interacting with the StrRay Framework.
+Main client for interacting with the 0xRay Framework.
 
 #### Constructor
 
 ```typescript
-constructor(config: StrRayClientConfig)
+constructor(config: 0xRayClientConfig)
 ```
 
 **Parameters:**
@@ -240,7 +240,7 @@ Gracefully shuts down the client and cleans up resources.
 ### Framework Configuration
 
 ```typescript
-interface StrRayClientConfig {
+interface 0xRayClientConfig {
   apiKey?: string;
   oauth2?: {
     clientId: string;

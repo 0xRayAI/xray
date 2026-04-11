@@ -1,4 +1,4 @@
-# StringRay Documentation Index
+# 0xRay Documentation Index
 
 **Version**: 1.14.0 | **Last Updated**: 2026-03-22
 
@@ -9,7 +9,7 @@
 ### For Agents (Essential Reading)
 | Document | Purpose |
 |----------|---------|
-| [`../AGENTS.md`](../AGENTS.md) | **Main consumer guide** - how to work with StringRay |
+| [`../AGENTS.md`](../AGENTS.md) | **Main consumer guide** - how to work with 0xRay |
 | [`../AGENTS-consumer.md`](../AGENTS-consumer.md) | Simplified consumer version |
 
 ### For Developers

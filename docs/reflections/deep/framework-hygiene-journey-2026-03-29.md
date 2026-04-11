@@ -1,7 +1,7 @@
 # Framework Hygiene Journey: When the Framework's Own Plumbing Leaks
 
 **Date**: 2026-03-29
-**PR**: [#12](https://github.com/htafolla/StringRay/pull/12) — `fix/logging-persistence-enforcer-overhead`
+**PR**: [#12](https://github.com/htafolla/0xRay/pull/12) — `fix/logging-persistence-enforcer-overhead`
 
 ---
 
@@ -13,7 +13,7 @@ I opened the diff. The enforcer changes looked clean — the `blocked` logic had
 
 But then the user said something that changed the trajectory of the entire session:
 
-> "StrRay: Loading from node_modules... generator, using fallback"
+> "0xRay: Loading from node_modules... generator, using fallback"
 
 And another:
 
@@ -23,7 +23,7 @@ They were seeing console output bleeding through into their OpenCode agent UI. T
 
 ## The Bleed
 
-I went looking for where those messages came from. The first one, `console.debug?.("StrRay: Loading from node_modules...")`, was in `~/dev/jelly/.opencode/plugin/strray-codex-injection.ts` — a stale copy of the plugin that lived in the consumer project, not in the StringRay repo at all. The second one, "Failed to load lean system prompt generator," was in `~/dev/stringray/.opencode/plugins/strray-codex-injection.js` — another stale copy in the read-only reference repo.
+I went looking for where those messages came from. The first one, `console.debug?.("0xRay: Loading from node_modules...")`, was in `~/dev/jelly/.opencode/plugin/strray-codex-injection.ts` — a stale copy of the plugin that lived in the consumer project, not in the 0xRay repo at all. The second one, "Failed to load lean system prompt generator," was in `~/dev/stringray/.opencode/plugins/strray-codex-injection.js` — another stale copy in the read-only reference repo.
 
 Both were already fixed in the PR branch source code. The live files were just old deployments. But the user was seeing them *right now*, which meant the fix needed to get shipped.
 
@@ -48,7 +48,7 @@ I ran a grep across all of `src/` and started counting. And counting. And counti
 
 After filtering out comments, string literals, regex patterns, detection logic that *checks* for console.log in user code, JSDoc examples, CLI output (intentional), demo scripts, and test fixtures... there were still **49 remaining** actual `console.*` calls in framework runtime code.
 
-49 places where the framework could silently dump noise into whatever process was running it. 49 places where, if StringRay was loaded as a plugin in OpenCode or Hermes, the user would see garbage in their agent console.
+49 places where the framework could silently dump noise into whatever process was running it. 49 places where, if 0xRay was loaded as a plugin in OpenCode or Hermes, the user would see garbage in their agent console.
 
 ## The Parallel Assault
 
@@ -123,9 +123,9 @@ The fix added `resolveStateFilePath()` to `config-paths.ts` and changed the defa
 
 Here's where the session took an unexpected turn.
 
-After all the cleanup was done, the user asked a simple question: "is the subagent operating in the StringRay framework, aka plugin in Hermes, as it should follow the rules?"
+After all the cleanup was done, the user asked a simple question: "is the subagent operating in the 0xRay framework, aka plugin in Hermes, as it should follow the rules?"
 
-The answer was no. `delegate_task` spawns an isolated Hermes subagent with its own terminal session and toolset. The StringRay plugin hooks — `pre_tool_call`, `post_tool_call`, the quality gates, the codex checks — only fire for the **main agent's** tool calls. Subagents bypass all of it.
+The answer was no. `delegate_task` spawns an isolated Hermes subagent with its own terminal session and toolset. The 0xRay plugin hooks — `pre_tool_call`, `post_tool_call`, the quality gates, the codex checks — only fire for the **main agent's** tool calls. Subagents bypass all of it.
 
 That means the three subagents I'd just dispatched to fix 30+ files? None of them went through a quality gate. None of them had their output validated. They just wrote to the filesystem and returned. I was trusting them to do it right because I gave them detailed instructions, but there was no mechanical enforcement.
 
@@ -140,7 +140,7 @@ The implementation:
 
 It's not perfect — it's post-hoc, so the damage is already done if the subagent wrote bad code. But it's logged, and the parent agent can see the violations in `activity.log`. It's better than nothing, and it's the only architecture that works given that subagents are black boxes.
 
-The tricky part was the canonical source location. I initially modified `~/.hermes/plugins/strray-hermes/__init__.py` — the live deployed plugin — before realizing that the canonical source is `src/integrations/hermes-agent/__init__.py` in the StringRay repo. The postinstall script copies from there to `~/.hermes/plugins/`. Modifying the deployed copy without updating the source means the fix would be lost on the next `npm install`.
+The tricky part was the canonical source location. I initially modified `~/.hermes/plugins/strray-hermes/__init__.py` — the live deployed plugin — before realizing that the canonical source is `src/integrations/hermes-agent/__init__.py` in the 0xRay repo. The postinstall script copies from there to `~/.hermes/plugins/`. Modifying the deployed copy without updating the source means the fix would be lost on the next `npm install`.
 
 And I almost created a `plugins/strray-hermes/` directory in the repo root before the user pointed out the correct location. That would have been a phantom directory with no connection to anything.
 
@@ -162,9 +162,9 @@ The commit messages. I should have been reviewing the full scope of changes agai
 
 ## What This Means
 
-The StringRay framework's console bleed-through was a fundamental hygiene issue. The framework enforces codex rules on consumer code — including "no console.log" — while its own runtime was full of console.* calls. That's the kind of inconsistency that destroys trust. You can't enforce rules you don't follow yourself.
+The 0xRay framework's console bleed-through was a fundamental hygiene issue. The framework enforces codex rules on consumer code — including "no console.log" — while its own runtime was full of console.* calls. That's the kind of inconsistency that destroys trust. You can't enforce rules you don't follow yourself.
 
-The subagent enforcement gap is more structural. StringRay was designed as a plugin system for a single agent context. Multi-agent orchestration via `delegate_task` is a newer capability that the plugin architecture doesn't natively support. The post-hoc validation approach is a pragmatic compromise — not architecturally elegant, but it closes the gap without requiring a fundamental rethinking of the plugin model.
+The subagent enforcement gap is more structural. 0xRay was designed as a plugin system for a single agent context. Multi-agent orchestration via `delegate_task` is a newer capability that the plugin architecture doesn't natively support. The post-hoc validation approach is a pragmatic compromise — not architecturally elegant, but it closes the gap without requiring a fundamental rethinking of the plugin model.
 
 The state persistence bug and the enforcer logic bug are the kind of issues that work for years without being noticed because they fail silently. State writes to the wrong path — you get a file where you expect a directory — and nothing obviously breaks. The enforcer lets errors through because the error message doesn't contain the magic word — nothing crashes, the code just isn't enforced properly.
 

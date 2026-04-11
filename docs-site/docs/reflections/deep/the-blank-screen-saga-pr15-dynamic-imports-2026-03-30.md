@@ -20,7 +20,7 @@ This is the kind of bug that makes you question everything. Not a crash, not an 
 
 ## The Investigation Begins
 
-I started with the obvious culprit: the plugin. The StrRay Codex Plugin was supposed to inject framework context into the system prompt, but something was going wrong during load. The error wasn't showing up anywhere obvious—no stack trace, no warning, nothing in the logs.
+I started with the obvious culprit: the plugin. The 0xRay Codex Plugin was supposed to inject framework context into the system prompt, but something was going wrong during load. The error wasn't showing up anywhere obvious—no stack trace, no warning, nothing in the logs.
 
 That's when I found it. Buried in the plugin initialization code was a static import:
 

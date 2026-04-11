@@ -37,7 +37,7 @@ codex_terms: [5, 7, 32]  # Optional Codex references
 ```markdown
 # [System/Feature Name]: A Story
 
-**Narrative | [Date] | StringRay v[X.X.X]**
+**Narrative | [Date] | 0xRay v[X.X.X]**
 
 ---
 
@@ -73,7 +73,7 @@ codex_terms: [5, 7, 32]  # Optional Codex references
 Start by making the code feel alive:
 
 ```markdown
-Every request that flows through StringRay passes through a single file first. That file is the processor-manager, and it's been waiting to tell you its story.
+Every request that flows through 0xRay passes through a single file first. That file is the processor-manager, and it's been waiting to tell you its story.
 
 This is the tale of how a simple routing decision became the heart of an entire framework.
 ```
@@ -81,7 +81,7 @@ This is the tale of how a simple routing decision became the heart of an entire 
 Or start with a question:
 
 ```markdown
-How does a framework decide what to do with a request? In StringRay, the answer lives in a file called the Processor Manager.
+How does a framework decide what to do with a request? In 0xRay, the answer lives in a file called the Processor Manager.
 
 This is its story.
 ```
@@ -156,7 +156,7 @@ Use the narrative template when:
 ```
 @storyteller write a narrative explaining how the processor system works
 
-@storyteller tell the story of how routing evolved in StringRay
+@storyteller tell the story of how routing evolved in 0xRay
 
 @storyteller write a narrative about the rules engine
 ```

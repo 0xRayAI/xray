@@ -19,7 +19,7 @@ This is **institutional knowledge** - the system's memory of its own evolution.
 
 ## What Future AI Will Find
 
-When a new AI instance operates within StringRay in 2027, 2028, 2030 - they will have access to:
+When a new AI instance operates within 0xRay in 2027, 2028, 2030 - they will have access to:
 
 - This reflection (what changed, why, what worked)
 - The code (what was actually written)

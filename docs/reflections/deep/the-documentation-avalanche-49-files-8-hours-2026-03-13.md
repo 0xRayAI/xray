@@ -253,7 +253,7 @@ Code examples in docs break. They drift from the actual code. Every example need
 
 ## The Aftermath
 
-Now when someone visits the StringRay repository:
+Now when someone visits the 0xRay repository:
 
 - They see README.md describing the modular facade architecture
 - They find CONFIGURATION.md with working examples

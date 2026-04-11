@@ -1,10 +1,10 @@
 ---
 slug: /introduction
-title: "StringRay - Enterprise AI Orchestration Framework"
+title: "0xRay - Enterprise AI Orchestration Framework"
 sidebar_position: 0
 ---
 
-# ⚡ StringRay
+# ⚡ 0xRay
 
 **Enterprise AI Orchestration Framework for OpenCode**
 
@@ -59,7 +59,7 @@ npx strray-ai health
 
 ---
 
-## 🎯 What StringRay Does
+## 🎯 What 0xRay Does
 
 | Feature | Description |
 |---------|-------------|
@@ -138,6 +138,6 @@ npx strray-ai health
 
 ## 🔗 Links
 
-- [GitHub](https://github.com/htafolla/StringRay)
+- [GitHub](https://github.com/htafolla/0xRay)
 - [npm](https://npmjs.com/package/strray-ai)
 - [OpenCode](https://opencode.ai)

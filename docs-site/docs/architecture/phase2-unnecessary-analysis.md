@@ -369,4 +369,4 @@ class AnalyticsPipeline {
 
 ---
 
-*StringRay AI v1.15.1 - Phase 2 Analysis Update*
+*0xRay AI v1.15.1 - Phase 2 Analysis Update*

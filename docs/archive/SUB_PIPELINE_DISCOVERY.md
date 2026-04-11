@@ -1,10 +1,10 @@
 # Sub-Pipeline Discovery Guide
 
-This document provides a methodology for discovering and documenting all sub-pipelines in the StringRay framework.
+This document provides a methodology for discovering and documenting all sub-pipelines in the 0xRay framework.
 
 ## Why This Matters
 
-StringRay has evolved into a complex agent OS with many interconnected systems. During development, we found that some systems (like the RuleEnforcer) were built with grand visions but ended up being used differently (via OpenCode hooks instead of as centralized enforcers).
+0xRay has evolved into a complex agent OS with many interconnected systems. During development, we found that some systems (like the RuleEnforcer) were built with grand visions but ended up being used differently (via OpenCode hooks instead of as centralized enforcers).
 
 ## Discovery Process
 

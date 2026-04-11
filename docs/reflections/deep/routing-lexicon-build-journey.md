@@ -6,7 +6,7 @@ March 20, 2026
 
 ---
 
-It started with a simple question: "How does StringRay know which agent should handle a task?"
+It started with a simple question: "How does 0xRay know which agent should handle a task?"
 
 The answer, it turns out, was more complicated than I expected. And the journey to find it led me down rabbit holes of YAML configurations, TypeScript type definitions, hook architectures, and ultimately to building what I'm calling the "routing lexicon"—a comprehensive map of 400+ keywords that connect user intent to agent capability.
 
@@ -580,7 +580,7 @@ My assessment: keyword routing is good enough for v1. But v2 should incorporate 
 
 ### Should Routing Happen at Plugin or Orchestrator?
 
-This was a key question. The plugin intercepts at the OpenCode level. The orchestrator operates at the StringRay framework level.
+This was a key question. The plugin intercepts at the OpenCode level. The orchestrator operates at the 0xRay framework level.
 
 If routing happens at the plugin level:
 - ✅ Earlier interception (before framework)

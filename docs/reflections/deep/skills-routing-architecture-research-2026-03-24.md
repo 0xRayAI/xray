@@ -3,13 +3,13 @@
 **Date:** 2026-03-24  
 **Session:** ses_2def9e6eeffeJaXXTinpaiPHnc  
 **Topic:** OpenCode Skill Routing and Agent-Skill Relationships  
-**Version:** StringRay v1.15.1
+**Version:** 0xRay v1.15.1
 
 ---
 
 ## Executive Summary
 
-This research investigates how OpenCode handles skill-agent relationships and provides concrete recommendations for StringRay's skill routing architecture. Key findings reveal that StringRay has a task-skill router that performs keyword-based routing, but skills are never actually loaded into agent conversation contexts—the routing results are logged but not used to invoke the `skill()` tool.
+This research investigates how OpenCode handles skill-agent relationships and provides concrete recommendations for 0xRay's skill routing architecture. Key findings reveal that 0xRay has a task-skill router that performs keyword-based routing, but skills are never actually loaded into agent conversation contexts—the routing results are logged but not used to invoke the `skill()` tool.
 
 ---
 
@@ -55,7 +55,7 @@ However, there is **no native declarative wiring**—agents cannot be configured
 
 ---
 
-## 2. Current StringRay Architecture
+## 2. Current 0xRay Architecture
 
 ### 2.1 What Exists (✅)
 
@@ -192,7 +192,7 @@ Install the community plugin that provides:
 ---
 name: <skill-name>           # Required: lowercase, hyphens only
 description: <description>   # Required: What the skill does
-author: StrRay Framework     # Optional
+author: 0xRay Framework     # Optional
 version: 1.0.0               # Optional: Semantic versioning
 schema_version: "1.0"        # Optional: Schema version
 tags: [tag1, tag2]          # Optional: Categorization
@@ -230,7 +230,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
-class StrRay<SkillName>Server {
+class 0xRay<SkillName>Server {
   private server: Server;
 
   constructor() {
@@ -278,7 +278,7 @@ class StrRay<SkillName>Server {
   }
 }
 
-const server = new StrRay<SkillName>Server();
+const server = new 0xRay<SkillName>Server();
 server.run();
 ```
 

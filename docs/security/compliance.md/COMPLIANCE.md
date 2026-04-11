@@ -1,8 +1,8 @@
-# StrRay Extension - OpenCode Compliance Guide
+# 0xRay Extension - OpenCode Compliance Guide
 
 ## Overview
 
-This document outlines the compliance status of the StrRay 1.0.0 framework with OpenCode's official standards and provides guidance for maintaining compatibility.
+This document outlines the compliance status of the 0xRay 1.0.0 framework with OpenCode's official standards and provides guidance for maintaining compatibility.
 
 ## Compliance Status
 
@@ -42,7 +42,7 @@ curl -s https://raw.githubusercontent.com/code-yeongyu/OpenCode/master/assets/Op
 1. **Before OpenCode updates**: Backup current configuration
 2. **Test compatibility**: Run schema validation on new versions
 3. **Migrate extensions**: Adapt custom properties to new schema requirements
-4. **Validate functionality**: Ensure all StringRay features work with updated config
+4. **Validate functionality**: Ensure all 0xRay features work with updated config
 
 ### Extension Best Practices
 
@@ -99,4 +99,4 @@ For questions about OpenCode compliance:
 
 ---
 
-_This compliance guide ensures StrRay Extension maintains compatibility with OpenCode while preserving enhanced functionality._
+_This compliance guide ensures 0xRay Extension maintains compatibility with OpenCode while preserving enhanced functionality._

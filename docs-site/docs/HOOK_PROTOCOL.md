@@ -5,13 +5,13 @@ sidebar_label: "HOOK PROTOCOL"
 sidebar_position: 2
 ---
 
-# StringRay Universal Hook Protocol
+# 0xRay Universal Hook Protocol
 
-Agent-host-agnostic JSON interface for StringRay enforcement.
+Agent-host-agnostic JSON interface for 0xRay enforcement.
 
 ## Overview
 
-The hook protocol lets any agent host (OpenCode, Hermes, Claude Desktop, custom agents in any language) integrate StringRay's quality gates and codex enforcement without importing a single Node.js module.
+The hook protocol lets any agent host (OpenCode, Hermes, Claude Desktop, custom agents in any language) integrate 0xRay's quality gates and codex enforcement without importing a single Node.js module.
 
 **Transport modes:**
 - **Stdin/Stdout** — `echo '&#123;"command":"pre_tool_call",...&#125;' | node bridge.mjs`
@@ -150,7 +150,7 @@ Response:
 ```json
 {
   "status": "ok",
-  "prompt": "## StringRay Universal Development Codex v1.7.8\n...",
+  "prompt": "## 0xRay Universal Development Codex v1.7.8\n...",
   "termCount": 12,
   "totalTerms": 60,
   "version": "1.15.27",
@@ -275,7 +275,7 @@ curl -s http://localhost:18431/health | jq .
 
 ### Claude Desktop / MCP
 
-StringRay ships MCP servers. If your agent supports MCP, no bridge needed — connect to the StringRay MCP server directly. MCP is the preferred integration for MCP-compatible agents.
+0xRay ships MCP servers. If your agent supports MCP, no bridge needed — connect to the 0xRay MCP server directly. MCP is the preferred integration for MCP-compatible agents.
 
 ## Config Resolution
 

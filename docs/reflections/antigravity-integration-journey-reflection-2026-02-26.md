@@ -2,7 +2,7 @@
 
 ## Prologue: The Gap
 
-Before this session, StringRay stood as a fortress of opinionated development - a comprehensive framework with 25 agents, 55-term Codex, 30+ enforcement rules, and pre/post processors. It was impressive, powerful, and... isolated.
+Before this session, 0xRay stood as a fortress of opinionated development - a comprehensive framework with 25 agents, 55-term Codex, 30+ enforcement rules, and pre/post processors. It was impressive, powerful, and... isolated.
 
 The question emerged quietly: **What if we could extend beyond our walls?**
 
@@ -213,11 +213,11 @@ What emerged from this session?
 
 ### The Deeper Insight
 
-StringRay transformed from a **self-contained framework** into a **hub**:
+0xRay transformed from a **self-contained framework** into a **hub**:
 
 ```
-Before: StringRay = opinionated tools only
-After:  StringRay = opinionated tools + community skills + intelligent routing
+Before: 0xRay = opinionated tools only
+After:  0xRay = opinionated tools + community skills + intelligent routing
 ```
 
 **This is no longer just a framework - it's an extensible AI development operating system.**

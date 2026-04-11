@@ -1,10 +1,10 @@
-# StringRay Inference Kernel: The Complete Experience
+# 0xRay Inference Kernel: The Complete Experience
 
 ## A Chronicle of Extraction, Synthesis, and Birth
 
 **Date:** 2026-02-27  
 **Duration:** Single session  
-**Outcome:** First executable inference kernel for StringRay  
+**Outcome:** First executable inference kernel for 0xRay  
 
 ---
 
@@ -225,7 +225,7 @@ The chronicle of creation
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  StringRay Inference Kernel v1.1.0-BYTECODE                            ║
+║  0xRay Inference Kernel v1.1.0-BYTECODE                            ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║  STATUS:    ACTIVE                                               ║
 ║  EMBEDDED:  true                                                ║
@@ -290,7 +290,7 @@ node kernel/bin/kernel.js
 Returns:
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  StringRay Inference Kernel v1.1.0-BYTECODE                            ║
+║  0xRay Inference Kernel v1.1.0-BYTECODE                            ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║  STATUS:    ACTIVE                                               ║
 ║  EMBEDDED:  true                                                ║
@@ -361,4 +361,4 @@ All patterns were validated through actual development experiences during the v1
 - Production environment validation requirements
 - Security score improvement (96→98 points)
 
-This update represents the transformation of StringRay from reactive security to proactive security through pattern-based prevention.
+This update represents the transformation of 0xRay from reactive security to proactive security through pattern-based prevention.

@@ -9,7 +9,7 @@ date: 2026-03-21
 
 # The Pipeline Paradox: A Saga of Knowing What We Built
 
-**Deep Saga Journey | March 21, 2026 | StringRay v1.15.1**
+**Deep Saga Journey | March 21, 2026 | 0xRay v1.15.1**
 
 ---
 
@@ -235,7 +235,7 @@ As I write this, there's still work undone:
 
 The inference pipeline is now known. The others remain believed.
 
-This is the honest state of StringRay: **one pipeline tested, three remaining**.
+This is the honest state of 0xRay: **one pipeline tested, three remaining**.
 
 ---
 

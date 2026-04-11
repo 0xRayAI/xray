@@ -8,7 +8,7 @@ tags: ["reflection"]
 
 # Tuning Engines Inventory
 
-> Comprehensive documentation of all routing, inference improvement, analytics, and autonomous engines in the StringRay codebase.
+> Comprehensive documentation of all routing, inference improvement, analytics, and autonomous engines in the 0xRay codebase.
 
 ## Overview
 

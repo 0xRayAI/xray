@@ -87,7 +87,7 @@ One loop. That's all it took. But finding that one loop required understanding t
 
 Somewhere in all of this, the version manager decided to fight back.
 
-StringRay has a Universal Version Manager (UVM) that enforces a "1 ahead" rule: the version manager must always be one version ahead of what's published to npm. This prevents accidental publishes of stale versions.
+0xRay has a Universal Version Manager (UVM) that enforces a "1 ahead" rule: the version manager must always be one version ahead of what's published to npm. This prevents accidental publishes of stale versions.
 
 But the UVM itself had bugs. It used `require()` in an ESM context. It corrupted version numbers during sync. It updated the wrong files. At one point we had three different version numbers across three different files, and the pre-commit hook was blocking commits because it couldn't figure out which one was right.
 

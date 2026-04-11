@@ -1,8 +1,8 @@
-# StrRay Framework v1.15.1 - Conceptual Architecture
+# 0xRay Framework v1.15.1 - Conceptual Architecture
 
 ## 📚 Framework Foundation
 
-StringRay AI v1.15.1 is built on the **Universal Development Codex v1.1.1** framework and implements the **Facade Pattern architecture**, providing a modular, scalable architecture for agentic development workflows. The framework emphasizes progressive development, shared global state management, single sources of truth, and simplified interfaces through facades.
+0xRay AI v1.15.1 is built on the **Universal Development Codex v1.1.1** framework and implements the **Facade Pattern architecture**, providing a modular, scalable architecture for agentic development workflows. The framework emphasizes progressive development, shared global state management, single sources of truth, and simplified interfaces through facades.
 
 ## 🏗️ Core Architectural Principles
 
@@ -374,8 +374,8 @@ MCP Client (312 lines)
 
 ---
 
-_This conceptual architecture provides the foundational principles and design patterns that guide StrRay Framework v1.15.1 development and evolution._
+_This conceptual architecture provides the foundational principles and design patterns that guide 0xRay Framework v1.15.1 development and evolution._
 
 ---
 
-*StringRay AI v1.15.1 - Facade Pattern Conceptual Architecture*
+*0xRay AI v1.15.1 - Facade Pattern Conceptual Architecture*

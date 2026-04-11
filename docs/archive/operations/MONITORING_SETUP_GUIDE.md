@@ -1,15 +1,15 @@
-# StrRay Framework - Production Monitoring & Alerting Guide
+# 0xRay Framework - Production Monitoring & Alerting Guide
 
 ## Overview
 
-This guide provides comprehensive monitoring and alerting setup for StrRay Framework using Prometheus, Grafana, and AlertManager in production environments.
+This guide provides comprehensive monitoring and alerting setup for 0xRay Framework using Prometheus, Grafana, and AlertManager in production environments.
 
 ## Architecture
 
 ### Monitoring Stack
 
 ```
-StrRay Monitoring Architecture
+0xRay Monitoring Architecture
 ├── Application Metrics (Prometheus client)
 ├── System Metrics (Node Exporter)
 ├── Database Metrics (PostgreSQL/Redis Exporters)
@@ -49,7 +49,7 @@ alerting:
             - alertmanager:9093
 
 scrape_configs:
-  # StrRay Application
+  # 0xRay Application
   - job_name: "strray-app"
     static_configs:
       - targets: ["localhost:3000"]
@@ -59,7 +59,7 @@ scrape_configs:
       service: "strray"
       component: "app"
 
-  # StrRay MCP Servers
+  # 0xRay MCP Servers
   - job_name: "strray-mcp-servers"
     static_configs:
       - targets:
@@ -219,44 +219,44 @@ groups:
   - name: strray_alerts
     rules:
       # Critical Alerts
-      - alert: StrRayDown
+      - alert: 0xRayDown
         expr: up{job="strray-app"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "StrRay Framework is down"
-          description: "StrRay Framework has been down for more than 1 minute."
+          summary: "0xRay Framework is down"
+          description: "0xRay Framework has been down for more than 1 minute."
 
-      - alert: StrRayHighErrorRate
+      - alert: 0xRayHighErrorRate
         expr: rate(strray_agent_errors_total[5m]) / rate(strray_agent_requests_total[5m]) > 0.1
         for: 5m
         labels:
           severity: critical
         annotations:
           summary: "High error rate detected"
-          description: 'StrRay Framework error rate is {{ $value | printf "%.2f" }}% over the last 5 minutes.'
+          description: '0xRay Framework error rate is {{ $value | printf "%.2f" }}% over the last 5 minutes.'
 
-      - alert: StrRayHighLatency
+      - alert: 0xRayHighLatency
         expr: histogram_quantile(0.95, rate(strray_agent_response_time_bucket[5m])) > 30
         for: 5m
         labels:
           severity: critical
         annotations:
           summary: "High response latency"
-          description: 'StrRay Framework 95th percentile response time is {{ $value | printf "%.2f" }}s.'
+          description: '0xRay Framework 95th percentile response time is {{ $value | printf "%.2f" }}s.'
 
       # Warning Alerts
-      - alert: StrRayDegradedPerformance
+      - alert: 0xRayDegradedPerformance
         expr: histogram_quantile(0.95, rate(strray_agent_response_time_bucket[5m])) > 10
         for: 10m
         labels:
           severity: warning
         annotations:
           summary: "Degraded performance detected"
-          description: 'StrRay Framework 95th percentile response time is {{ $value | printf "%.2f" }}s.'
+          description: '0xRay Framework 95th percentile response time is {{ $value | printf "%.2f" }}s.'
 
-      - alert: StrRayHighCPUUsage
+      - alert: 0xRayHighCPUUsage
         expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
         for: 5m
         labels:
@@ -265,7 +265,7 @@ groups:
           summary: "High CPU usage"
           description: 'CPU usage is {{ $value | printf "%.2f" }}%.'
 
-      - alert: StrRayHighMemoryUsage
+      - alert: 0xRayHighMemoryUsage
         expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
         for: 5m
         labels:
@@ -274,7 +274,7 @@ groups:
           summary: "High memory usage"
           description: 'Memory usage is {{ $value | printf "%.2f" }}%.'
 
-      - alert: StrRayDiskSpaceLow
+      - alert: 0xRayDiskSpaceLow
         expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 85
         for: 5m
         labels:
@@ -284,7 +284,7 @@ groups:
           description: 'Disk usage is {{ $value | printf "%.2f" }}%.'
 
       # Database Alerts
-      - alert: StrRayDatabaseDown
+      - alert: 0xRayDatabaseDown
         expr: up{job="postgres-exporter"} == 0
         for: 1m
         labels:
@@ -293,7 +293,7 @@ groups:
           summary: "PostgreSQL database is down"
           description: "PostgreSQL database has been down for more than 1 minute."
 
-      - alert: StrRayDatabaseHighConnections
+      - alert: 0xRayDatabaseHighConnections
         expr: pg_stat_activity_count > pg_settings_max_connections * 0.8
         for: 5m
         labels:
@@ -303,7 +303,7 @@ groups:
           description: 'Database connections are {{ $value }} ({{ $value | printf "%.1f" }}% of max).'
 
       # Redis Alerts
-      - alert: StrRayRedisDown
+      - alert: 0xRayRedisDown
         expr: up{job="redis-exporter"} == 0
         for: 1m
         labels:
@@ -312,7 +312,7 @@ groups:
           summary: "Redis cache is down"
           description: "Redis cache has been down for more than 1 minute."
 
-      - alert: StrRayRedisHighMemoryUsage
+      - alert: 0xRayRedisHighMemoryUsage
         expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
         for: 5m
         labels:
@@ -322,7 +322,7 @@ groups:
           description: 'Redis memory usage is {{ $value | printf "%.2f" }}%.'
 
       # Agent-specific Alerts
-      - alert: StrRayAgentUnhealthy
+      - alert: 0xRayAgentUnhealthy
         expr: strray_agent_health_status != 1
         for: 5m
         labels:
@@ -331,7 +331,7 @@ groups:
           summary: "Agent is unhealthy"
           description: "Agent {{ $labels.agent }} is reporting unhealthy status."
 
-      - alert: StrRayAgentHighErrorRate
+      - alert: 0xRayAgentHighErrorRate
         expr: rate(strray_agent_errors_total[5m]) / rate(strray_agent_requests_total[5m]) > 0.05
         for: 5m
         labels:
@@ -340,7 +340,7 @@ groups:
           summary: "Agent high error rate"
           description: 'Agent {{ $labels.agent }} error rate is {{ $value | printf "%.2f" }}%.'
 
-      - alert: StrRayTaskQueueBacklog
+      - alert: 0xRayTaskQueueBacklog
         expr: strray_task_queue_length > 100
         for: 5m
         labels:
@@ -350,7 +350,7 @@ groups:
           description: "Task queue length is {{ $value }}, indicating processing backlog."
 
       # Business Logic Alerts
-      - alert: StrRaySLABreach
+      - alert: 0xRaySLABreach
         expr: strray_sla_breach_count > 0
         for: 1m
         labels:
@@ -359,7 +359,7 @@ groups:
           summary: "SLA breach detected"
           description: "SLA breach count is {{ $value }}."
 
-      - alert: StrRayCodexViolation
+      - alert: 0xRayCodexViolation
         expr: rate(strray_codex_violations_total[5m]) > 0
         for: 1m
         labels:
@@ -465,7 +465,7 @@ inhibit_rules:
 ```json
 {
   "dashboard": {
-    "title": "StrRay Framework Overview",
+    "title": "0xRay Framework Overview",
     "tags": ["strray", "ai", "agents", "monitoring"],
     "timezone": "browser",
     "panels": [
@@ -599,7 +599,7 @@ inhibit_rules:
 ```json
 {
   "dashboard": {
-    "title": "StrRay Agent Performance",
+    "title": "0xRay Agent Performance",
     "tags": ["strray", "agents", "performance"],
     "timezone": "browser",
     "panels": [
@@ -682,7 +682,7 @@ inhibit_rules:
 ```json
 {
   "dashboard": {
-    "title": "StrRay Business Metrics",
+    "title": "0xRay Business Metrics",
     "tags": ["strray", "business", "sla"],
     "timezone": "browser",
     "panels": [
@@ -758,9 +758,9 @@ inhibit_rules:
 
 ## Application Metrics Implementation
 
-### StrRay Metrics Collection
+### 0xRay Metrics Collection
 
-Add to your StrRay application:
+Add to your 0xRay application:
 
 ```typescript
 import {
@@ -1132,7 +1132,7 @@ readinessProbe:
 
 ### Critical Alert Response
 
-1. **StrRayDown Alert**
+1. **0xRayDown Alert**
    - Check application logs
    - Verify container health
    - Restart affected services
@@ -1175,7 +1175,7 @@ readinessProbe:
 #!/bin/bash
 # Performance benchmarking script
 
-echo "Starting StrRay Performance Benchmark"
+echo "Starting 0xRay Performance Benchmark"
 
 # Load testing
 echo "Running load tests..."
@@ -1209,5 +1209,5 @@ echo "Benchmark complete. Results saved to ./performance-reports/"
 - **Cache Hit Rate**: Percentage of cache hits
 - **Database Performance**: Query response times, connection pooling
 
-This monitoring guide provides a comprehensive production-ready monitoring stack for the StrRay Framework with alerting, visualization, and performance tracking capabilities.</content>
+This monitoring guide provides a comprehensive production-ready monitoring stack for the 0xRay Framework with alerting, visualization, and performance tracking capabilities.</content>
 </xai:function_call">Successfully wrote to src/docs/MONITORING_SETUP_GUIDE.md

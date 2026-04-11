@@ -6,7 +6,7 @@ sidebar_position: 17
 tags: ["reflection"]
 ---
 
-# The StringRay Paradox: Reflections on Building an AI-Powered Dev Team
+# The 0xRay Paradox: Reflections on Building an AI-Powered Dev Team
 
 *March 22, 2026*
 
@@ -14,7 +14,7 @@ tags: ["reflection"]
 
 ## The Opening Question
 
-Three years ago, I started StringRay because I was frustrated with tools that promised to automate development but delivered frustration. Two years ago, I stopped working with contractors and began orchestrating agents instead. Six months ago, I stopped pretending the agents were "helpers" and started treating them like colleagues with specialties.
+Three years ago, I started 0xRay because I was frustrated with tools that promised to automate development but delivered frustration. Two years ago, I stopped working with contractors and began orchestrating agents instead. Six months ago, I stopped pretending the agents were "helpers" and started treating them like colleagues with specialties.
 
 Today, as I sit with 107 pipeline tests passing and 2,521 unit tests confirming everything works, I'm left with a question that has no clean answer:
 
@@ -64,7 +64,7 @@ The agents, when working in isolation, default to local optimization. They solve
 
 This isn't a failure of the agents. It's a failure of orchestration.
 
-StringRay is supposed to be that orchestration layer. But orchestration doesn't just mean delegating tasks—it means watching for the emergence of patterns and consolidating them. It means having the discipline to refactor *across* sessions, not just within them.
+0xRay is supposed to be that orchestration layer. But orchestration doesn't just mean delegating tasks—it means watching for the emergence of patterns and consolidating them. It means having the discipline to refactor *across* sessions, not just within them.
 
 The fact that I had to create a centralized shutdown handler in 2026, because agents had been duplicating it since 2025, reveals a gap in my own orchestration practice.
 
@@ -80,7 +80,7 @@ When I read through the `agent-delegator.ts` file with its 23 hardcoded agent de
 
 This is more like editing than coding.
 
-The StringRay codebase has become a kind of collaborative manuscript, written across time by a rotating cast of specialized agents, edited by me into something coherent.
+The 0xRay codebase has become a kind of collaborative manuscript, written across time by a rotating cast of specialized agents, edited by me into something coherent.
 
 Is that different from a codebase maintained by a team of human developers with different specialties? Not really. The dynamics are the same: specialized contributors, integration challenges, the slow accumulation of conventions.
 
@@ -98,7 +98,7 @@ I wonder what I'm losing by removing that negotiation from the process.
 
 Pipeline tests. Architecture diagrams. Methodologies. Documented conventions.
 
-We've built a lot of structure around StringRay. The agent review identified this as both strength and potential rigidity.
+We've built a lot of structure around 0xRay. The agent review identified this as both strength and potential rigidity.
 
 The structure serves two purposes:
 
@@ -180,13 +180,13 @@ I want to be honest about what I don't know:
 
 ## Part IX: The Metaphor I Keep Coming Back To
 
-StringRay is often described as an "orchestration framework." But I think of it differently now.
+0xRay is often described as an "orchestration framework." But I think of it differently now.
 
 I think of it as a **shared practice**.
 
 When a musician practices, they develop technique. When a team practices together, they develop shared language, intuition, anticipation. They learn to play off each other.
 
-StringRay is that shared practice for me and my agents. The conventions are our shared language. The pipeline tests are our drills. The methodology documents are our playbook.
+0xRay is that shared practice for me and my agents. The conventions are our shared language. The pipeline tests are our drills. The methodology documents are our playbook.
 
 I don't know if this model will survive contact with problems I haven't anticipated. But I know it works for the problems I have now.
 
@@ -200,7 +200,7 @@ The answer is yes.
 
 ## The Closing
 
-I started StringRay to solve my own problem: how to be effective as a solo developer with increasingly complex tooling needs.
+I started 0xRay to solve my own problem: how to be effective as a solo developer with increasingly complex tooling needs.
 
 I've concluded that the problem isn't solvable in the abstract. It requires iteration, experimentation, and the willingness to change approach when the old one stops working.
 
@@ -208,7 +208,7 @@ The pipeline tests that verify real behavior. The centralized shutdown handler t
 
 These aren't just technical artifacts. They're evidence of a working system—proof that the approach is viable, that the abstractions hold, that the agents can be trusted to do real work.
 
-StringRay isn't a product I might sell or a framework others might adopt. It's a practice I've developed to do the work I want to do.
+0xRay isn't a product I might sell or a framework others might adopt. It's a practice I've developed to do the work I want to do.
 
 The reflection, then, isn't about whether this approach is "right" in some abstract sense. It's about whether I'm being honest with myself about what I'm building and why.
 
@@ -220,6 +220,6 @@ And that's enough to keep going.
 
 *"The map is not the territory, but you need a map to navigate."*
 
-StringRay is my map. The agents are my companions. The code is the territory we explore together.
+0xRay is my map. The agents are my companions. The code is the territory we explore together.
 
 Onward.

@@ -2,13 +2,13 @@
 
 **Date:** March 25, 2026  
 **Duration:** 5-phase implementation spanning multiple sessions  
-**Focus:** Building comprehensive skills routing architecture for StringRay framework
+**Focus:** Building comprehensive skills routing architecture for 0xRay framework
 
 ---
 
 ## Executive Summary
 
-This reflection documents one of the most technically challenging and architecturally significant implementations in the StringRay framework's history: the Skills Routing Architecture. What began as a seemingly straightforward request to inventory available skills evolved into a five-phase initiative that transformed how the framework discovers, matches, routes, and executes skills.
+This reflection documents one of the most technically challenging and architecturally significant implementations in the 0xRay framework's history: the Skills Routing Architecture. What began as a seemingly straightforward request to inventory available skills evolved into a five-phase initiative that transformed how the framework discovers, matches, routes, and executes skills.
 
 We discovered 44 skills in `.opencode/skills/` that had existed largely dormant—29 of which had associated MCP configurations but no unified mechanism to leverage them. The implementation built a complete skills ecosystem: SkillRegistry for discovery and caching, SkillDiscoveryService for filesystem scanning, SkillMatcher for capability-based routing, SkillResolver for agent-skill bindings, SkillPipeline for execution orchestration, and SkillWatcher for hot reload.
 
@@ -24,7 +24,7 @@ There's a fundamental tension in any intelligent system between preserving conte
 
 ### The Context Preservation Imperative
 
-Context preservation in StringRay serves a critical function: maintaining state across sessions so that agents can build knowledge graphs over time. When a user asks about a codebase, we want the agent to remember what it discovered in previous sessions, what files it examined, what patterns it identified. This requires state retention, immutability, and careful serialization.
+Context preservation in 0xRay serves a critical function: maintaining state across sessions so that agents can build knowledge graphs over time. When a user asks about a codebase, we want the agent to remember what it discovered in previous sessions, what files it examined, what patterns it identified. This requires state retention, immutability, and careful serialization.
 
 The kernel's context system that we had stabilized earlier in the development cycle was elegant in its design. We captured user intent at the point of entry, stored it in a structured format, and ensured it was available to subsequent hooks and handlers. The system was slow, deliberate, and stateful by design.
 
@@ -36,7 +36,7 @@ This creates a direct architectural conflict. Context preservation wants things 
 
 ### The Layered Resolution
 
-Our initial instinct was to separate these concerns completely—to let the kernel handle its context business in isolation while skills routing lived in its own domain. But this felt wrong. The power of StringRay has always been the tight integration between components. Separating them would mean losing the contextual awareness that makes the framework special.
+Our initial instinct was to separate these concerns completely—to let the kernel handle its context business in isolation while skills routing lived in its own domain. But this felt wrong. The power of 0xRay has always been the tight integration between components. Separating them would mean losing the contextual awareness that makes the framework special.
 
 The resolution came through what we called "layered architecture with shared state." The SkillRegistry maintains two distinct layers:
 
@@ -124,7 +124,7 @@ Simple keyword matching would work for obvious cases. If a task mentioned "secur
 
 This was when we built the SkillMatcher—a capability-based matching system that could reason about what skills could do, not just what their names were. We added keyword boost matching to weight common terms higher. We built in fallback behavior so that if the perfect skill wasn't found, we could still route to something useful.
 
-The plugin integration brought this into the runtime. Now when the framework started, it logged skill discovery and matching activity. The `skill:list` CLI command gave users visibility into what was available. For the first time, StringRay could tell you not just what agents existed, but what skills they could invoke.
+The plugin integration brought this into the runtime. Now when the framework started, it logged skill discovery and matching activity. The `skill:list` CLI command gave users visibility into what was available. For the first time, 0xRay could tell you not just what agents existed, but what skills they could invoke.
 
 ### Session 6-7: Phase 3 - The Agent Binding Question
 
@@ -180,7 +180,7 @@ This meant that skills were being matched against keywords from our simplified p
 
 #### The Hook Architecture
 
-The StringRay plugin provides multiple hooks that fire at different points in the execution lifecycle:
+The 0xRay plugin provides multiple hooks that fire at different points in the execution lifecycle:
 
 ```
 user message → chat.message → [routing/synthesis] → tool.execute.before → tool execution → tool.execute.after
@@ -893,7 +893,7 @@ This would require tracking execution outcomes and building feedback loops. The 
 
 ### Cross-Framework Skill Sharing
 
-Skills are currently specific to StringRay. The future could include interoperability with other agent frameworks, allowing skills to be shared across systems.
+Skills are currently specific to 0xRay. The future could include interoperability with other agent frameworks, allowing skills to be shared across systems.
 
 This would require standardizing skill definitions, which is a significant undertaking. But the benefits could be substantial—a shared ecosystem of skills that work across frameworks.
 
@@ -917,7 +917,7 @@ The moment we realized the sandboxing was the root cause of the context issue wa
 
 ### The Satisfaction
 
-What we built is more than a feature—it's a foundation for the future of StringRay. The skills routing architecture enables intelligent task routing, dynamic skill discovery, and extensible capability matching.
+What we built is more than a feature—it's a foundation for the future of 0xRay. The skills routing architecture enables intelligent task routing, dynamic skill discovery, and extensible capability matching.
 
 But more than that, I'm proud of how we handled the challenges. We didn't cut corners. We didn't settle for "good enough." When the YAML parser didn't work, we built a better one. When TypeScript strictness caught bugs, we fixed them properly. When the context issue appeared, we traced it to its root.
 
@@ -1006,14 +1006,14 @@ npm run validate:skills
 
 ## Final Thoughts
 
-Five phases. Thirty skills. Countless hours of debugging, designing, and documenting. What we built is more than a feature—it's a foundation for the future of StringRay.
+Five phases. Thirty skills. Countless hours of debugging, designing, and documenting. What we built is more than a feature—it's a foundation for the future of 0xRay.
 
 The journey wasn't straight. We made mistakes, took wrong turns, encountered problems we didn't know could exist. But each challenge made us stronger, each mistake taught us something new, each dead end led us to better solutions.
 
-I'm proud of what we built. More importantly, I'm excited about what it enables. The skills routing architecture isn't the end of the story—it's the beginning of a new chapter. A chapter where StringRay can intelligently route tasks, where skills can be discovered dynamically, where the framework learns and adapts.
+I'm proud of what we built. More importantly, I'm excited about what it enables. The skills routing architecture isn't the end of the story—it's the beginning of a new chapter. A chapter where 0xRay can intelligently route tasks, where skills can be discovered dynamically, where the framework learns and adapts.
 
 That's the vision. We're just getting started.
 
 ---
 
-*March 25, 2026 - StringRay Framework*
+*March 25, 2026 - 0xRay Framework*

@@ -6,7 +6,7 @@ sidebar_position: 48
 tags: ["reflection"]
 ---
 
-# StringRay Framework - JSON Codex Integration Test Suite Recovery Reflection
+# 0xRay Framework - JSON Codex Integration Test Suite Recovery Reflection
 
 **Category:** Incident Reflection (Focused) - Test suite failure analysis and systematic recovery
 **Date:** January 24, 2026
@@ -16,7 +16,7 @@ tags: ["reflection"]
 
 ## Context
 
-The StringRay Framework's JSON codex integration test suite experienced critical failures where 10 out of 12 tests were failing. This incident occurred during routine test execution and blocked the CI/CD pipeline, preventing deployment and code quality validation.
+The 0xRay Framework's JSON codex integration test suite experienced critical failures where 10 out of 12 tests were failing. This incident occurred during routine test execution and blocked the CI/CD pipeline, preventing deployment and code quality validation.
 
 ### Initial State
 - **Test Suite Status**: 2 passing, 10 failing in `json-codex-integration.test.ts`
@@ -86,7 +86,7 @@ The StringRay Framework's JSON codex integration test suite experienced critical
 
 ### Pattern Recognition
 
-This incident follows a recurring pattern in the StringRay Framework:
+This incident follows a recurring pattern in the 0xRay Framework:
 
 1. **Implementation Evolution**: Core functionality changes without corresponding test updates
 2. **Singleton Challenges**: Testing difficulties with singleton-based components

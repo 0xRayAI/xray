@@ -122,7 +122,7 @@ Status:     ✅ ALL PASS
 
 ## Compliance
 
-This refactoring adheres to StringRay Codex:
+This refactoring adheres to 0xRay Codex:
 - ✅ **Term #5: Surgical Fixes** - Minimal, targeted changes
 - ✅ **Term #38: Functionality Retention** - 100% backward compatibility
 - ✅ **Term #11: Type Safety First** - Full TypeScript compliance

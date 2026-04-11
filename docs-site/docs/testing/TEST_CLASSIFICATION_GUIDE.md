@@ -6,7 +6,7 @@ sidebar_position: 4
 tags: ["testing"]
 ---
 
-# StringRay Framework - Test Classification Guide
+# 0xRay Framework - Test Classification Guide
 
 ## Test Types & Framework Usage Classification
 
@@ -244,7 +244,7 @@ describe('Facade Integration: RuleEnforcer + TaskSkillRouter', () => {
 
 ### Modular Testing Architecture
 
-StringRay v1.15.1's testing strategy is built around the facade pattern, enabling comprehensive testing of 26 internal modules across 3 main facades:
+0xRay v1.15.1's testing strategy is built around the facade pattern, enabling comprehensive testing of 26 internal modules across 3 main facades:
 
 ```
 Test Architecture:

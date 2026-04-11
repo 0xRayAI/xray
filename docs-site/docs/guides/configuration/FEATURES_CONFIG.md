@@ -1,11 +1,11 @@
 ---
 title: Features Configuration
-description: Complete guide to StringRay features.json configuration
+description: Complete guide to 0xRay features.json configuration
 ---
 
 # Features Configuration
 
-StringRay uses `features.json` to control all framework behavior. This document covers all configuration options.
+0xRay uses `features.json` to control all framework behavior. This document covers all configuration options.
 
 ## Location
 

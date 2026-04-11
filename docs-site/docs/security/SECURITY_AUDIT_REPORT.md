@@ -10,7 +10,7 @@ tags: ["security"]
 
 **Audit Date:** 2026-01-07
 **Framework Version:** v1.3.4
-**Auditor:** StrRay Security Team
+**Auditor:** 0xRay Security Team
 **Audit Scope:** Complete codebase security assessment
 
 ## Executive Summary
@@ -220,6 +220,6 @@ The demonstrates strong security fundamentals with a secure plugin architecture,
 
 ---
 
-**Audit Team**: StrRay Security Team
+**Audit Team**: 0xRay Security Team
 **Next Audit Due**: 2026-02-07 (Monthly)
 **Report Version**: 1.0

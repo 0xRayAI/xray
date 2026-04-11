@@ -64,16 +64,16 @@ Interactive installer copies agents to platform directories.
 
 ---
 
-## Integration Potential for StringRay
+## Integration Potential for 0xRay
 
 ### Integration Type: Agent Persona Library
 
 ### How It Could Work
-1. Import agent `.md` files into StringRay's agent registry
-2. Map agent personas to StringRay agent types
+1. Import agent `.md` files into 0xRay's agent registry
+2. Map agent personas to 0xRay agent types
 3. Create personality injection system
 
-### File Structure for StringRay
+### File Structure for 0xRay
 ```
 src/agents/personas/agency/
 ├── frontend/react-developer.md
@@ -102,7 +102,7 @@ agent.applyPersona(persona);
 | Factor | Rating | Notes |
 |--------|--------|-------|
 | **Technical Complexity** | Low | File-based, no API |
-| **Integration Effort** | Low | Copy agent files, map to StringRay |
+| **Integration Effort** | Low | Copy agent files, map to 0xRay |
 | **Maintenance** | Medium | Regular sync with upstream |
 | **Token Overhead** | Low | Personality adds minimal tokens |
 
@@ -115,7 +115,7 @@ agent.applyPersona(persona);
 | Value Dimension | Rating | Notes |
 |-----------------|--------|-------|
 | **Immediate Utility** | High | 144 ready-made personas |
-| **Unique Capabilities** | Medium | Different methodology than StringRay |
+| **Unique Capabilities** | Medium | Different methodology than 0xRay |
 | **Code Quality** | High | Battle-tested in production |
 | **Community Size** | Very High | 60K stars, active development |
 
@@ -123,7 +123,7 @@ agent.applyPersona(persona);
 
 ---
 
-## Synergy with StringRay
+## Synergy with 0xRay
 
 ### Strengths
 - Rich agent persona library
@@ -142,7 +142,7 @@ agent.applyPersona(persona);
 
 ## Recommended Approach
 
-### For StringRay Integration
+### For 0xRay Integration
 
 1. **Quick Win:** Fork agent definitions as starting points
 2. **Medium-term:** Build persona loader system
@@ -168,9 +168,9 @@ npm install agency-agents
 
 ---
 
-## Comparison to StringRay Agents
+## Comparison to 0xRay Agents
 
-| Aspect | agency-agents | StringRay |
+| Aspect | agency-agents | 0xRay |
 |--------|---------------|-----------|
 | **Focus** | Persona | Orchestration |
 | **Agents** | 144 specialized | Coordinated team |
@@ -182,7 +182,7 @@ npm install agency-agents
 
 ## Conclusion
 
-**agency-agents** offers a rich library of agent personas that StringRay could leverage. The integration is straightforward (file-based), but the different design philosophies mean personas should be adapted rather than adopted wholesale.
+**agency-agents** offers a rich library of agent personas that 0xRay could leverage. The integration is straightforward (file-based), but the different design philosophies mean personas should be adapted rather than adopted wholesale.
 
 **Priority:** Medium
 **Effort:** Low (1-2 weeks)

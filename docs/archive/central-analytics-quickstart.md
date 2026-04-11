@@ -2,13 +2,13 @@
 
 **Purpose:** Get your project contributing anonymized data to the central analytics store for community learning benefits.
 
-**Framework Version:** StringRay AI v1.15.1+
+**Framework Version:** 0xRay AI v1.15.1+
 
 ---
 
 ## What's New in v1.15.1
 
-StringRay v1.15.1 features a modern **Facade Pattern** architecture that improves performance and reliability:
+0xRay v1.15.1 features a modern **Facade Pattern** architecture that improves performance and reliability:
 
 - **87% Code Reduction**: 8,230 → 1,218 lines of code
 - **Facade Architecture**: Modular design with clean APIs
@@ -21,11 +21,11 @@ No migration needed - your existing analytics configuration continues to work ex
 
 ## Overview
 
-This guide walks through setting up your project to contribute anonymized reflections and AI logs to the StringRay Central Analytics Store, enabling the P9 Adaptive Pattern Learning system to benefit from community data.
+This guide walks through setting up your project to contribute anonymized reflections and AI logs to the 0xRay Central Analytics Store, enabling the P9 Adaptive Pattern Learning system to benefit from community data.
 
 ## Prerequisites
 
-- StringRay AI v1.15.1+ installed
+- 0xRay AI v1.15.1+ installed
 - Project initialized with `npx strray-ai init`
 - Basic understanding of privacy and data protection
 
@@ -371,7 +371,7 @@ npx strray-ai analytics impact
 
 - **Documentation:** `/docs/architecture/central-analytics-store.md`
 - **Privacy Policy:** Check central store privacy documentation
-- **Support:** Report issues in StringRay GitHub repository
+- **Support:** Report issues in 0xRay GitHub repository
 - **Community:** Join discussions in community forums
 
 ## FAQ
@@ -386,13 +386,13 @@ A: Yes. Use `npx strray-ai analytics preview --all` to see the exact data before
 A: Simply run `npx strray-ai analytics disable` and submission stops immediately.
 
 **Q: Is my data sold to third parties?**  
-A: No. Data is used exclusively for improving StringRay's adaptive learning system.
+A: No. Data is used exclusively for improving 0xRay's adaptive learning system.
 
 **Q: How long is my data retained?**  
 A: Data is retained for 90 days. You can request deletion anytime.
 
-**Q: Do I have to participate to use StringRay?**  
-A: No. StringRay works perfectly without central analytics. Participation is entirely optional.
+**Q: Do I have to participate to use 0xRay?**  
+A: No. 0xRay works perfectly without central analytics. Participation is entirely optional.
 
 **Q: What's the benefit of participating?**  
 A: Better routing, community benchmarks, early warnings, and contributing to framework improvement.
@@ -410,6 +410,6 @@ A: No. The v1.15.1 architecture refactoring is purely internal. Your existing an
 ---
 
 **Version:** 1.9.0  
-**Framework Version:** StringRay AI v1.15.1  
+**Framework Version:** 0xRay AI v1.15.1  
 **Architecture:** Facade Pattern (87% code reduction)  
 **Last Updated:** 2026-03-12

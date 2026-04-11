@@ -1,14 +1,14 @@
-# StringRay Grok Code Integration Guide
+# 0xRay Grok Code Integration Guide
 
 ## Overview
 
-This guide explains how to integrate and optimize StringRay AI with Grok Code models for maximum performance and accuracy.
+This guide explains how to integrate and optimize 0xRay AI with Grok Code models for maximum performance and accuracy.
 
 ## Model Configuration
 
 ### Supported Models
 
-StringRay AI is optimized for the following Grok Code models:
+0xRay AI is optimized for the following Grok Code models:
 
 - **grok-code**: Primary model for code generation and analysis
 - **grok-code-pro**: Enhanced model with larger context windows
@@ -69,9 +69,9 @@ Consider:
 
 ```typescript
 // Automatic integration via plugin
-import { StringRayPlugin } from 'strray-ai';
+import { 0xRayPlugin } from 'strray-ai';
 
-const plugin = new StringRayPlugin({
+const plugin = new 0xRayPlugin({
   model: 'openrouter/xai-grok-2-1212-fast-1',
   contextWindow: 128000,
   temperature: 0.1

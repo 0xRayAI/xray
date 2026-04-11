@@ -10,7 +10,7 @@
 
 ## Overview
 
-Antigravity is a curated collection of 946+ AI agent skills under MIT license. StringRay integrates a curated subset of these skills to extend its agent capabilities beyond the built-in 25 agents.
+Antigravity is a curated collection of 946+ AI agent skills under MIT license. 0xRay integrates a curated subset of these skills to extend its agent capabilities beyond the built-in 25 agents.
 
 This is **not a runtime integration** - it's a skills library that adds specialized capabilities to the agent pool through the skill router.
 
@@ -128,7 +128,7 @@ This is **not a runtime integration** - it's a skills library that adds speciali
 
 ---
 
-## Integration Points in StringRay
+## Integration Points in 0xRay
 
 ### 1. Skills Directory
 
@@ -276,4 +276,4 @@ The Antigravity skills are licensed under MIT. See `LICENSE.antigravity` for ful
 
 ---
 
-**Status:** ✅ Active - Skills library integrated into StringRay agent pool
+**Status:** ✅ Active - Skills library integrated into 0xRay agent pool

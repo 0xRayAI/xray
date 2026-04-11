@@ -11,7 +11,7 @@ What I found was a fully equipped industrial kitchen — stoves, ovens, prep sta
 
 ## The Kitchen
 
-StringRay has this massive analytics stack. 15 files in `src/analytics/`. An outcome tracker that persists to disk. A pattern learning engine with 383 lines of real logic. An emerging pattern detector doing actual clustering. A routing refiner generating 575 lines of optimization suggestions. A routing performance analyzer. A prompt pattern analyzer. A pattern performance tracker. All of it wired internally, all of it doing real work, all of it producing output that went absolutely nowhere.
+0xRay has this massive analytics stack. 15 files in `src/analytics/`. An outcome tracker that persists to disk. A pattern learning engine with 383 lines of real logic. An emerging pattern detector doing actual clustering. A routing refiner generating 575 lines of optimization suggestions. A routing performance analyzer. A prompt pattern analyzer. A pattern performance tracker. All of it wired internally, all of it doing real work, all of it producing output that went absolutely nowhere.
 
 I started by mapping everything. Every file that touched inference, calibration, tuning, or the kernel. The subagents fanned out — one reading kernel code, one auditing CLI commands, me running the actual tools. `npx strray-ai inference:tuner --run-once` printed "Tuning cycle complete" and did nothing. `npx strray-ai inference:improve` loaded 0 routing outcomes. `npx strray-ai calibrate` — doesn't exist. `analytics:daily` — dead file reference. `strray-analytics` bin — dead file reference.
 
@@ -77,7 +77,7 @@ It's a simple reinforcement signal. Match more → higher confidence. Match less
 
 ## What Got Cut
 
-I planned to hook the inference tuner into the Hermes plugin lifecycle — trigger a tuning cycle every N tool calls. I deferred it. The Hermes plugin is a Python bridge that talks to StringRay via subprocess calls. Adding a `npx strray-ai inference:tuner --run-once` shell-out on every 50th tool call would work, but it's heavy and the CLI already exists for manual runs. The framework-side feedback loop is the critical piece. The plugin-side automation can come later when we have real data to work with.
+I planned to hook the inference tuner into the Hermes plugin lifecycle — trigger a tuning cycle every N tool calls. I deferred it. The Hermes plugin is a Python bridge that talks to 0xRay via subprocess calls. Adding a `npx strray-ai inference:tuner --run-once` shell-out on every 50th tool call would work, but it's heavy and the CLI already exists for manual runs. The framework-side feedback loop is the critical piece. The plugin-side automation can come later when we have real data to work with.
 
 ---
 
@@ -101,7 +101,7 @@ The fix was trivial: complexity = `Math.min(100, Math.floor(description.length /
 
 ## What This Means
 
-Before this PR, StringRay had a sophisticated analytics system that was purely observational. It watched. It recorded. It analyzed. But it couldn't change anything. The routing refiner generated suggestions that nobody read. The pattern learning engine detected drift that nobody acted on. The inference tuner ran cycles that produced no output.
+Before this PR, 0xRay had a sophisticated analytics system that was purely observational. It watched. It recorded. It analyzed. But it couldn't change anything. The routing refiner generated suggestions that nobody read. The pattern learning engine detected drift that nobody acted on. The inference tuner ran cycles that produced no output.
 
 After this PR, there's a closed loop:
 

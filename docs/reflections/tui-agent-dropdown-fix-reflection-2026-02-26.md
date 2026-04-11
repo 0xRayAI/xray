@@ -9,7 +9,7 @@
 
 ## The Problem Statement
 
-The OpenCode TUI agent dropdown was not displaying all StringRay agents. Users reported that while `opencode agent list` showed agents, the interactive dropdown was incomplete.
+The OpenCode TUI agent dropdown was not displaying all 0xRay agents. Users reported that while `opencode agent list` showed agents, the interactive dropdown was incomplete.
 
 ### Initial Symptoms
 - TUI dropdown missing agents
@@ -84,7 +84,7 @@ Studied existing yml files (orchestrator.yml, researcher.yml) to understand the 
 ```bash
 opencode agent list | grep -oE "^[a-zA-Z]* \(" | wc -l
 # Before: Incomplete
-# After: 25 agents (20 StringRay + 2 built-in)
+# After: 25 agents (20 0xRay + 2 built-in)
 ```
 
 ---
@@ -161,14 +161,14 @@ The MCP registration test (`scripts/mjs/test-mcp-registration.mjs`) created in v
 
 ## Epilogue: The Bulletproof Promise
 
-StringRay's tagline: *"Ship clean, tested, optimized code — every time."*
+0xRay's tagline: *"Ship clean, tested, optimized code — every time."*
 
 This session demonstrated that promise in action:
 - Not just code quality, but **configuration quality**
 - Not just features, but **feature accessibility**
 - Not just fixing, but **preventing regression**
 
-The TUI dropdown now shows all 20 StringRay agents + 2 built-ins. Users can access:
+The TUI dropdown now shows all 20 0xRay agents + 2 built-ins. Users can access:
 - orchestrator, enforcer, architect
 - testing-lead, bug-triage-specialist, code-reviewer
 - security-auditor, refactorer, researcher

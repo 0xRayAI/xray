@@ -6,7 +6,7 @@ sidebar_position: 2
 tags: ["research"]
 ---
 
-# GitHub Repository Integration Analysis for StringRay
+# GitHub Repository Integration Analysis for 0xRay
 
 **Date:** 2026-03-23
 **Status:** Research Complete
@@ -16,13 +16,13 @@ tags: ["research"]
 
 ## Executive Summary
 
-This report analyzes 6 trending GitHub repositories for potential integration into the StringRay AI orchestration framework. Each repository offers unique capabilities that could enhance StringRay's agent system.
+This report analyzes 6 trending GitHub repositories for potential integration into the 0xRay AI orchestration framework. Each repository offers unique capabilities that could enhance 0xRay's agent system.
 
 ### Priority Ranking
 
 | Priority | Repository | Stars | Integration Value | Complexity | Recommendation |
 |----------|-----------|-------|-----------------|------------|---------------|
-| **1** | obra/superpowers | ~100K | High | Easy | **Highest priority** - Methodology aligns perfectly with StringRay |
+| **1** | obra/superpowers | ~100K | High | Easy | **Highest priority** - Methodology aligns perfectly with 0xRay |
 | **2** | pbakaus/impeccable | ~9.8K | High | Easy | **High priority** - Design skills complement agent capabilities |
 | **3** | volcengine/OpenViking | ~17.9K | High | Medium | **High priority** - Context database solves agent memory |
 | **4** | msitarzewski/agency-agents | ~60K | Medium | Easy | **Medium priority** - Rich agent personalities, methodology differs |
@@ -33,7 +33,7 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 
 ## Quick Comparison Matrix
 
-| Repo | Purpose | StringRay Fit | Token Cost | Setup | Platform Support |
+| Repo | Purpose | 0xRay Fit | Token Cost | Setup | Platform Support |
 |------|---------|---------------|------------|-------|------------------|
 | **superpowers** | Software dev methodology | ⭐⭐⭐⭐⭐ | Low | 2 min | OpenCode ✅ |
 | **impeccable** | Design language system | ⭐⭐⭐⭐⭐ | Medium | 2 min | OpenCode ✅ |
@@ -57,14 +57,14 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 - Subagent-driven development patterns
 - Auto-install for OpenCode: `npx mdskills install obra/superpowers`
 
-**StringRay Integration:**
+**0xRay Integration:**
 - **Best Fit:** Skill integration
-- **How:** Install as StringRay skill, use methodology as agent workflow
+- **How:** Install as 0xRay skill, use methodology as agent workflow
 - **Synergy:** Already supports OpenCode natively
 - **Complexity:** Easy
 - **Timeline:** 1-2 weeks
 
-**Recommendation:** Integrate as first-class StringRay skill system. Superpowers' methodology aligns perfectly with StringRay's orchestration goals.
+**Recommendation:** Integrate as first-class 0xRay skill system. Superpowers' methodology aligns perfectly with 0xRay's orchestration goals.
 
 ---
 
@@ -79,14 +79,14 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 - Auto-install: `npx mdskills install pbakaus/impeccable`
 - Already supports OpenCode
 
-**StringRay Integration:**
+**0xRay Integration:**
 - **Best Fit:** Skill/Agent enhancement
 - **How:** Install as frontend-design skill, integrate into @architect and @refactorer agents
 - **Synergy:** Strong - makes AI-generated UI actually good
 - **Complexity:** Easy
 - **Timeline:** 1 week
 
-**Recommendation:** High-value addition for any StringRay agents that generate UI. Simple integration with immediate visual improvement.
+**Recommendation:** High-value addition for any 0xRay agents that generate UI. Simple integration with immediate visual improvement.
 
 ---
 
@@ -103,9 +103,9 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 - OpenClaw integration mentioned in docs
 - Requirements: Python 3.10+, Go 1.22+, GCC 9+
 
-**StringRay Integration:**
+**0xRay Integration:**
 - **Best Fit:** Memory/infrastructure layer
-- **How:** Use as persistent context store for StringRay agents
+- **How:** Use as persistent context store for 0xRay agents
 - **Synergy:** High - addresses long-standing agent memory problem
 - **Complexity:** Medium (infrastructure setup required)
 - **Timeline:** 3-4 weeks
@@ -125,9 +125,9 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 - Partial OpenCode support (marked as TODO in install script)
 - Agent template structure for easy contribution
 
-**StringRay Integration:**
+**0xRay Integration:**
 - **Best Fit:** Agent persona library
-- **How:** Import agent definitions as StringRay agent templates
+- **How:** Import agent definitions as 0xRay agent templates
 - **Synergy:** Medium - rich personas but different methodology
 - **Complexity:** Easy (file-based)
 - **Timeline:** 1-2 weeks
@@ -148,7 +148,7 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 - Multi-client concurrent connections
 - NPM package available
 
-**StringRay Integration:**
+**0xRay Integration:**
 - **Best Fit:** Tool/Automation layer
 - **How:** Use as browser automation backend for web scraping agents
 - **Synergy:** Medium - performance benefits for browser-heavy tasks
@@ -170,7 +170,7 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 - Prediction reports from emergent behavior
 - Full stack: Python backend, Vue frontend
 
-**StringRay Integration:**
+**0xRay Integration:**
 - **Best Fit:** External service/Research tool
 - **How:** Could invoke MiroFish API for prediction scenarios
 - **Synergy:** Low - domain-specific, complex setup
@@ -186,8 +186,8 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 ### Phase 1: Quick Wins (1-2 weeks each)
 
 1. **superpowers integration**
-   - Install as StringRay skill
-   - Map StringRay workflow to superpower methodology
+   - Install as 0xRay skill
+   - Map 0xRay workflow to superpower methodology
    - Create integration documentation
 
 2. **impeccable integration**
@@ -223,7 +223,7 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 
 ### Key Observations
 - Both superpowers and impeccable already support OpenCode
-- OpenViking explicitly mentions OpenClaw integration - StringRay could follow similar pattern
+- OpenViking explicitly mentions OpenClaw integration - 0xRay could follow similar pattern
 - agency-agents has OpenCode as TODO - opportunity to implement
 - lightpanda offers significant performance improvements for browser automation
 - MiroFish is powerful but requires full-stack deployment
@@ -239,12 +239,12 @@ This report analyzes 6 trending GitHub repositories for potential integration in
 
 ## Conclusion
 
-StringRay should prioritize:
+0xRay should prioritize:
 1. **superpowers** - Quick win, high value, native fit
 2. **impeccable** - Quick win, solves real UX problem
 3. **OpenViking** - Architectural improvement for agent memory
 
-These three would significantly enhance StringRay's capabilities with moderate integration effort.
+These three would significantly enhance 0xRay's capabilities with moderate integration effort.
 
 ---
 

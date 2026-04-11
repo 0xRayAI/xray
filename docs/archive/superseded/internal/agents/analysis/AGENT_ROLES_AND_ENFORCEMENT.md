@@ -1,8 +1,8 @@
-# StrRay Framework - Agent Roles & Rule Enforcement Authority
+# 0xRay Framework - Agent Roles & Rule Enforcement Authority
 
 ## 🎯 Executive Summary
 
-The StrRay Framework employs **5 specialized AI agents** with **clear separation of responsibilities** and a **hierarchical rule enforcement system**. The **Enforcer agent** holds supreme authority over code quality, codex compliance, and contextual analysis validation.
+The 0xRay Framework employs **5 specialized AI agents** with **clear separation of responsibilities** and a **hierarchical rule enforcement system**. The **Enforcer agent** holds supreme authority over code quality, codex compliance, and contextual analysis validation.
 
 ---
 

@@ -7,9 +7,9 @@ tags: ["reflection"]
 ---
 
 
-# The StringRay Paradox: Building an AI Orchestration Framework That Builds Itself
+# The 0xRay Paradox: Building an AI Orchestration Framework That Builds Itself
 
-**Deep Saga | March 2026 | StringRay v1.15.1**
+**Deep Saga | March 2026 | 0xRay v1.15.1**
 
 ---
 
@@ -25,7 +25,7 @@ The distinction seemed subtle at the time. It wasn't.
 
 ## Chapter 1: The Ordinary World
 
-Before StringRay v1.15.1, we had a collection of scripts. Loose integrations. A CLI that sort of worked. Agents that could be invoked, but only in the most basic sense. There was no real coordination between them, no shared state, no way for one agent to know what another had accomplished.
+Before 0xRay v1.15.1, we had a collection of scripts. Loose integrations. A CLI that sort of worked. Agents that could be invoked, but only in the most basic sense. There was no real coordination between them, no shared state, no way for one agent to know what another had accomplished.
 
 The codebase was a graveyard of good intentions. We had:
 
@@ -115,7 +115,7 @@ With tests becoming real, we discovered a new problem: documentation.
 We had, at last count, four different documentation files that touched on agents:
 
 1. `AGENTS.md` in the root—the full documentation for developers
-2. `AGENTS-consumer.md` in `.opencode/`—a stripped-down version for users who installed StringRay via npm
+2. `AGENTS-consumer.md` in `.opencode/`—a stripped-down version for users who installed 0xRay via npm
 3. `agents_template.md` in `.opencode/strray/`—the template used when spawning new agents
 4. Various templates in `docs/reference/templates/`—different formats for different purposes
 
@@ -171,13 +171,13 @@ By late v1.15.1, we had real tests, real documentation, and a self-improving inf
 
 We had researched six different GitHub repositories to understand how other frameworks handled multi-agent orchestration. Some had elegant solutions. Others had cautionary tales. A few had both.
 
-The integration challenge wasn't technical in the traditional sense. We knew how to make components talk to each other. The challenge was philosophical: what should StringRay integrate with, and what should it leave to other tools?
+The integration challenge wasn't technical in the traditional sense. We knew how to make components talk to each other. The challenge was philosophical: what should 0xRay integrate with, and what should it leave to other tools?
 
 We studied orchestration in open-source projects. We examined how commercial frameworks handled agent delegation. We looked at what users actually needed versus what we thought they needed.
 
 The research took two sessions. In the first, we cataloged every possible integration. In the second, we eliminated all but the essentials.
 
-The answer, when it came, was surprisingly simple: StringRay should integrate with what users explicitly configure, nothing more. If they want GitHub Actions, they configure GitHub Actions. If they want MCP servers, they configure MCP servers. The framework provides the orchestration layer; the user provides the tools.
+The answer, when it came, was surprisingly simple: 0xRay should integrate with what users explicitly configure, nothing more. If they want GitHub Actions, they configure GitHub Actions. If they want MCP servers, they configure MCP servers. The framework provides the orchestration layer; the user provides the tools.
 
 This simplicity felt like a breakthrough. We weren't trying to be everything to everyone. We were trying to be excellent at one thing.
 
@@ -187,7 +187,7 @@ This simplicity felt like a breakthrough. We weren't trying to be everything to 
 
 The final challenge before release was the hardest: proving the system worked end-to-end.
 
-We had tests for individual components. We had integration tests for groups of components. What we didn't have was a test that started from "user installs StringRay" and ended at "agents successfully collaborate on a task."
+We had tests for individual components. We had integration tests for groups of components. What we didn't have was a test that started from "user installs 0xRay" and ended at "agents successfully collaborate on a task."
 
 We built this test. It was a monstrosity—500 lines of setup, execution, and assertion. It installed the framework, configured agents, invoked them in sequence, verified their outputs, and cleaned up after itself.
 
@@ -217,7 +217,7 @@ The answer came from an unexpected source: the inference pipeline. One of the 17
 
 The engine was right. We weren't done. We thought we were, but the system had seen what we'd missed.
 
-That's when we understood the StringRay Paradox fully: we had built a framework that orchestrated AI agents, and those agents had started orchestrating us. They were pointing out our blind spots. They were catching our mistakes before we made them. They were, in a very real sense, building with us.
+That's when we understood the 0xRay Paradox fully: we had built a framework that orchestrated AI agents, and those agents had started orchestrating us. They were pointing out our blind spots. They were catching our mistakes before we made them. They were, in a very real sense, building with us.
 
 Are we building with AI agents, or are the agents building with us?
 
@@ -227,7 +227,7 @@ The answer, we realized, was both. Neither. The distinction had stopped matterin
 
 ## Resolution
 
-StringRay v1.15.1 was released on a Tuesday. There was no fanfare, no announcement. Just a quiet push to the repo, a passing CI pipeline, and the knowledge that something had been completed.
+0xRay v1.15.1 was released on a Tuesday. There was no fanfare, no announcement. Just a quiet push to the repo, a passing CI pipeline, and the knowledge that something had been completed.
 
 But "complete" is a strange word. The framework works, yes. The tests are real. The documentation is consistent. The inference pipeline learns from its own work.
 
@@ -267,10 +267,10 @@ That, we decided, was the point.
 
 ## What Next?
 
-- Explore the [StringRay Codex Terms](../../.opencode/strray/codex.json) that guide our development philosophy
+- Explore the [0xRay Codex Terms](../../.opencode/strray/codex.json) that guide our development philosophy
 - Read about the [inference pipeline architecture](/docs/inference-pipeline-design) in detail
 - Invoke @storyteller to document your own saga
 - Review the [version history](/docs/changelog) for a complete changelog
 
 ---
-*This saga documents the completion of StringRay v1.15.1. May the next version teach us as much as this one did.*
+*This saga documents the completion of 0xRay v1.15.1. May the next version teach us as much as this one did.*

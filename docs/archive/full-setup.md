@@ -1,8 +1,8 @@
-# StrRay Framework Installation & Model Configuration Guide
+# 0xRay Framework Installation & Model Configuration Guide
 
 ## Overview
 
-StrRay (StringRay) is an advanced AI agent orchestration framework that extends OpenCode with systematic error prevention and production-ready development practices. This guide covers installation and model configuration.
+0xRay (0xRay) is an advanced AI agent orchestration framework that extends OpenCode with systematic error prevention and production-ready development practices. This guide covers installation and model configuration.
 
 **Important Update**: All agents now use `openrouter/xai-grok-2-1212-fast-1` as the default model. Legacy Anthropic models have been deprecated and replaced to ensure consistency and reliability.
 
@@ -25,13 +25,13 @@ npm install -g OpenCode
 bun install -g OpenCode
 ```
 
-### Step 2: Initialize StrRay Framework
+### Step 2: Initialize 0xRay Framework
 
 ```bash
 # Navigate to your project directory
 cd /path/to/your/project
 
-# Initialize StrRay framework
+# Initialize 0xRay framework
 npm run init
 
 # This creates:
@@ -55,7 +55,7 @@ OpenCode status
 
 ## Model Configuration
 
-StrRay uses **static model assignment** - each agent is assigned a specific model that cannot be changed dynamically during runtime.
+0xRay uses **static model assignment** - each agent is assigned a specific model that cannot be changed dynamically during runtime.
 
 ### Configuration Files
 
@@ -128,7 +128,7 @@ StrRay uses **static model assignment** - each agent is assigned a specific mode
 
 ### Important: Model Migration Required
 
-If you have an existing StrRay installation with older Anthropic models, you **must update** your `.opencode/OpenCode.json` file to use `openrouter/xai-grok-2-1212-fast-1` for all agents. The framework will not function properly with deprecated models.
+If you have an existing 0xRay installation with older Anthropic models, you **must update** your `.opencode/OpenCode.json` file to use `openrouter/xai-grok-2-1212-fast-1` for all agents. The framework will not function properly with deprecated models.
 
 Run this command to update your configuration:
 
@@ -224,7 +224,7 @@ bash .opencode/scripts/model-validator.sh
 
 ## Available Models
 
-StrRay supports all OpenCode-compatible models. Recommended configurations:
+0xRay supports all OpenCode-compatible models. Recommended configurations:
 
 ### Cost-Effective Setup
 
@@ -321,7 +321,7 @@ export STRRAY_ENV=production
 
 ## Framework Features
 
-Once installed and configured, StrRay provides:
+Once installed and configured, 0xRay provides:
 
 - **60 Codex Terms**: Systematic error prevention
 - **25 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
@@ -331,7 +331,7 @@ Once installed and configured, StrRay provides:
 
 ## Next Steps
 
-1. **Install** OpenCode and StrRay framework
+1. **Install** OpenCode and 0xRay framework
 2. **Configure** models in `OpenCode.json`
 3. **Validate** configuration with framework tools
 4. **Test** agent functionality

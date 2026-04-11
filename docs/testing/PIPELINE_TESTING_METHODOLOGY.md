@@ -2,7 +2,7 @@
 
 **Version**: 2.0.0  
 **Date**: 2026-03-22  
-**Purpose**: Formalize pipeline testing as a core StringRay practice
+**Purpose**: Formalize pipeline testing as a core 0xRay practice
 
 ---
 

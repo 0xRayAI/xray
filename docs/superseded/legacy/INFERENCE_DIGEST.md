@@ -1,6 +1,6 @@
-# 🔮 StringRay Inference Digest
+# 🔮 0xRay Inference Digest
 
-## The First of Its Kind: How StringRay Thinks
+## The First of Its Kind: How 0xRay Thinks
 
 > *"Intelligence is not a destination — it is the continuous act of knowing what to do next."*
 > — Extracted from 50+ reflections, synthesized into first principles
@@ -18,9 +18,9 @@
 
 This is not documentation. This is **inference extracted** — the patterns, principles, and decision frameworks that emerge when you read 50+ reflections about building an AI framework.
 
-The StringRay Inference Digest answers one question:
+The 0xRay Inference Digest answers one question:
 
-> **How does StringRay think?**
+> **How does 0xRay think?**
 
 Not what it does. Not how it works. **How it thinks.**
 
@@ -49,7 +49,7 @@ Every line of code in this framework is a decision. Every decision follows a pat
 
 Inference is **knowing what to do next** when you don't have all the information.
 
-StringRay's inference engine operates on **5 levels**:
+0xRay's inference engine operates on **5 levels**:
 
 ```
 Level 1: Pattern Recognition
@@ -107,7 +107,7 @@ From 50+ reflections, these principles emerged:
 
 ## 2. The 7 Fatal Assumptions
 
-Every major bug in StringRay's history traced back to one of these assumptions:
+Every major bug in 0xRay's history traced back to one of these assumptions:
 
 ### Assumption 1: "It Works In Dev, It Works Everywhere"
 **Counter:** Dev has dormant MCP servers. Consumer has active ones. Test in production-equivalent environments.
@@ -134,7 +134,7 @@ Every major bug in StringRay's history traced back to one of these assumptions:
 
 ## 3. The Decision Matrix
 
-When facing a problem, StringRay uses this decision matrix:
+When facing a problem, 0xRay uses this decision matrix:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -381,7 +381,7 @@ This is profound. The framework doesn't just execute code — it shapes:
 - What counts as "good" work
 - The very language used
 
-**Inference:** When debugging StringRay, you're debugging your own thinking patterns.
+**Inference:** When debugging 0xRay, you're debugging your own thinking patterns.
 
 ---
 
@@ -389,7 +389,7 @@ This is profound. The framework doesn't just execute code — it shapes:
 
 ### The Human-AI Collaboration Framework
 
-StringRay wasn't built by one intelligence. It was built by **collaborating intelligences**:
+0xRay wasn't built by one intelligence. It was built by **collaborating intelligences**:
 
 | Model | Role | Contribution |
 |-------|------|--------------|
@@ -498,7 +498,7 @@ Check: Would fixing this matter?
 ### Command 6: INVOKE
 ```
 When stuck: Use the framework
-Ask: "What would StringRay do?"
+Ask: "What would 0xRay do?"
 Check: Apply inference patterns
 
 ```
@@ -548,11 +548,11 @@ BY READING THIS DIGEST, YOU AGREE TO:
 
 > "Intelligence is not a destination — it is the continuous act of knowing what to do next."
 
-StringRay has processed thousands of decisions. Each decision left a trace. This digest extracts the traces.
+0xRay has processed thousands of decisions. Each decision left a trace. This digest extracts the traces.
 
 The framework doesn't just execute code. It **reasons about problems**. And now, for the first time, that reasoning is documented.
 
-This is the StringRay Inference Digest.
+This is the 0xRay Inference Digest.
 
 **Use it. Question it. Evolve it.**
 

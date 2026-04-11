@@ -247,7 +247,7 @@ No performance degradation:
 
 ## Compliance
 
-All StringRay Codex terms followed:
+All 0xRay Codex terms followed:
 - ✅ **Term #24** (Single Responsibility) - Each component has one job
 - ✅ **Term #3** (No Over-Engineering) - Simple, direct solution
 - ✅ **Term #26** (Test Coverage) - All tests pass

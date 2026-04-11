@@ -1,14 +1,14 @@
-# StrRay Framework - Technical Architecture and Data Flows
+# 0xRay Framework - Technical Architecture and Data Flows
 
 ## Overview
 
-StrRay Framework implements a comprehensive multi-agent AI system integrated with . The framework provides 8 specialized AI agents for systematic error prevention and enhanced development capabilities.
+0xRay Framework implements a comprehensive multi-agent AI system integrated with . The framework provides 8 specialized AI agents for systematic error prevention and enhanced development capabilities.
 
 ## Core Architecture Principles
 
 ### Hybrid Language Architecture
 
-StrRay Framework implements a **hybrid TypeScript/Python architecture** optimized for different system layers:
+0xRay Framework implements a **hybrid TypeScript/Python architecture** optimized for different system layers:
 
 #### TypeScript Frontend Layer (Primary)
 
@@ -34,7 +34,7 @@ StrRay Framework implements a **hybrid TypeScript/Python architecture** optimize
 #### Hybrid Architecture Diagram
 
 ```
-StrRay Framework - Hybrid TypeScript/Python Architecture
+0xRay Framework - Hybrid TypeScript/Python Architecture
 ═══════════════════════════════════════════════════════════
 
 ┌─────────────────────────────────────────────────────┐
@@ -301,7 +301,7 @@ interface StateUpdate {
 ### External Services
 
 ```
-StrRay Framework
+0xRay Framework
       ↓
 Integration Layer
       ↓

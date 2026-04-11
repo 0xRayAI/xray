@@ -45,11 +45,11 @@ No keyword matching. No confidence scoring. No routing tables. No history matche
 
 The first researcher's analysis made the problem crystallize:
 
-> *StringRay's keyword router and skill matcher are entirely redundant. OpenCode's native mechanism is: LLM reads skill descriptions, LLM decides when to invoke `skill({ name })`. StringRay should be feeding its agent/skill mapping knowledge into the SKILL.md description field (which the LLM reads) rather than building custom routing middleware that the LLM never sees.*
+> *0xRay's keyword router and skill matcher are entirely redundant. OpenCode's native mechanism is: LLM reads skill descriptions, LLM decides when to invoke `skill({ name })`. 0xRay should be feeding its agent/skill mapping knowledge into the SKILL.md description field (which the LLM reads) rather than building custom routing middleware that the LLM never sees.*
 
 And the strategist was even more direct:
 
-> *The +0.25 user-installed boost has zero effect because the result is only logged. StringRay competing with OpenCode on routing is a losing position.*
+> *The +0.25 user-installed boost has zero effect because the result is only logged. 0xRay competing with OpenCode on routing is a losing position.*
 
 ---
 
@@ -85,13 +85,13 @@ But we couldn't do it. SKILL.md files come from npm packages. From community rep
 
 That's when the question shifted. Not "how do we fix routing?" but "should routing exist at all?"
 
-The strategist asked it directly: *Is StringRay's routing system the right form factor?*
+The strategist asked it directly: *Is 0xRay's routing system the right form factor?*
 
 The answer was no. And once you see it, you can't unsee it.
 
-OpenCode handles skill routing. The LLM picks tools. StringRay's job is what happens AFTER the tool is selected — ensuring the work meets standards, tracking outcomes, coordinating agents. Compliance and enforcement. That's the gap OpenCode doesn't fill. That's where StringRay provides value.
+OpenCode handles skill routing. The LLM picks tools. 0xRay's job is what happens AFTER the tool is selected — ensuring the work meets standards, tracking outcomes, coordinating agents. Compliance and enforcement. That's the gap OpenCode doesn't fill. That's where 0xRay provides value.
 
-The routing system wasn't just redundant. It was actively harmful — it added latency, it had bugs, it gave wrong answers, it consumed thousands of lines of code that could have been invested in what StringRay actually does well.
+The routing system wasn't just redundant. It was actively harmful — it added latency, it had bugs, it gave wrong answers, it consumed thousands of lines of code that could have been invested in what 0xRay actually does well.
 
 ---
 
@@ -115,7 +115,7 @@ The `tsc` compilation passed first try. That was a good sign.
 
 `npm run build:all` — clean. The TypeScript compiler didn't find a single broken import.
 
-`npm test` — 160 test files, 2334 tests passed, 0 failed. We'd deleted 25+ test files, and the remaining 160 all still passed. That told us something important: the code we deleted wasn't tested by anything that remained. The routing system was its own world, self-contained, and the rest of StringRay never actually depended on it.
+`npm test` — 160 test files, 2334 tests passed, 0 failed. We'd deleted 25+ test files, and the remaining 160 all still passed. That told us something important: the code we deleted wasn't tested by anything that remained. The routing system was its own world, self-contained, and the rest of 0xRay never actually depended on it.
 
 Then the full e2e. Pack the tarball, install in a fresh directory, verify postinstall copies the 30 core skills. All good. Install the minimax skills manually (since we deleted the `skill:install` command — OpenCode doesn't need it, users can copy SKILL.md folders themselves or we can restore it later as a convenience command, not a routing mechanism). 41 total skills.
 
@@ -132,9 +132,9 @@ The only errors in the log were codexCompliance failures — and those are the e
 
 ---
 
-## What StringRay Actually Is
+## What 0xRay Actually Is
 
-After this, the identity is clearer. StringRay is:
+After this, the identity is clearer. 0xRay is:
 
 **Compliance.** Sixty codex terms that prevent common errors. The enforcer agent that validates every tool call against these rules. The pre-processor pipeline that checks code before it's written.
 
@@ -146,7 +146,7 @@ After this, the identity is clearer. StringRay is:
 
 **Agent definitions.** The YAML files in `.opencode/agents/` that define what each agent can do, what tools it has access to, what permissions it operates under.
 
-Things StringRay is NOT:
+Things 0xRay is NOT:
 
 **A skill router.** OpenCode does this. The LLM does this. Better than any keyword table ever could.
 
@@ -174,7 +174,7 @@ That's the trap. The urgent (fix the bug) crowds out the important (question the
 
 ### Ask the right question sooner
 
-The strategist's question — "Is StringRay's routing system the right form factor?" — should have been asked before we built any of it. Not after. The question isn't "how do we make routing better?" The question is "does routing need to exist?"
+The strategist's question — "Is 0xRay's routing system the right form factor?" — should have been asked before we built any of it. Not after. The question isn't "how do we make routing better?" The question is "does routing need to exist?"
 
 ### Check what the platform already provides
 
@@ -215,11 +215,11 @@ The routing system was complex. It had a six-step priority chain, history matchi
 
 ## What This Means Going Forward
 
-StringRay's investment should go into what makes it unique:
+0xRay's investment should go into what makes it unique:
 
 1. **Enforcer integration with OpenCode** — the codex compliance system is genuinely valuable. Making it tighter, faster, more accurate. That's the moat.
 
-2. **Agent delegation protocol** — how `@orchestrator` spawns and coordinates sub-agents. This is unique to StringRay. OpenCode doesn't do multi-agent orchestration.
+2. **Agent delegation protocol** — how `@orchestrator` spawns and coordinates sub-agents. This is unique to 0xRay. OpenCode doesn't do multi-agent orchestration.
 
 3. **Outcome tracking** — after OpenCode routes to a skill, track whether the work passed enforcer checks. Close the loop between selection and quality.
 
@@ -235,7 +235,7 @@ The routing system was a distraction from all of these. Every hour spent on keyw
 
 The commit message said:
 
-> *StringRay now focuses on compliance + enforcement + orchestration — what OpenCode doesn't provide natively.*
+> *0xRay now focuses on compliance + enforcement + orchestration — what OpenCode doesn't provide natively.*
 
 That's the clearest statement of identity this project has ever had. It took deleting 17,000 lines to find it.
 

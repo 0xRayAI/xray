@@ -40,7 +40,7 @@ The integration direction was backwards from what we'd built. We weren't suppose
 
 1. **Listen** for events from OpenClaw (via WebSocket)
 2. **Expose** an HTTP API that OpenClaw skills could invoke
-3. **Hook** into StringRay's tool execution lifecycle to send events back
+3. **Hook** into 0xRay's tool execution lifecycle to send events back
 
 The architecture flipped completely. And we had to rebuild almost everything.
 
@@ -63,11 +63,11 @@ We created the integration in layers, each one dependent on the last:
 
 The client kept track of pending requests in a Map, using the request ID as the key. When a response arrived, it looked up the waiting promise and resolved or rejected it. Simple in concept, but tricky to get right—we had to handle timeouts, duplicate responses, and the edge case where the connection drops while a request is pending.
 
-**Layer Three: The HTTP API Server.** This was the piece that made the integration *work*. OpenClaw skills needed a way to invoke StringRay capabilities, and HTTP was the answer. We built a server listening on port 18431 (chosen to avoid conflicts with common ports) that exposed endpoints like `/api/agent/invoke` and `/health`.
+**Layer Three: The HTTP API Server.** This was the piece that made the integration *work*. OpenClaw skills needed a way to invoke 0xRay capabilities, and HTTP was the answer. We built a server listening on port 18431 (chosen to avoid conflicts with common ports) that exposed endpoints like `/api/agent/invoke` and `/health`.
 
-The server didn't know how to execute agents—that was StringRay's job. Instead, it accepted requests, validated them, and passed them to an `AgentInvoker` that StringRay provided. This separation kept our code clean and let StringRay control how agents actually ran.
+The server didn't know how to execute agents—that was 0xRay's job. Instead, it accepted requests, validated them, and passed them to an `AgentInvoker` that 0xRay provided. This separation kept our code clean and let 0xRay control how agents actually ran.
 
-**Layer Four: The Hooks.** StringRay emits events when tools execute—`tool.before` when a tool starts, `tool.after` when it completes. We built a hooks manager that could subscribe to these events and forward them to OpenClaw via the WebSocket connection. This let users monitor tool executions in real-time through their OpenClaw-connected chat interfaces.
+**Layer Four: The Hooks.** 0xRay emits events when tools execute—`tool.before` when a tool starts, `tool.after` when it completes. We built a hooks manager that could subscribe to these events and forward them to OpenClaw via the WebSocket connection. This let users monitor tool executions in real-time through their OpenClaw-connected chat interfaces.
 
 ---
 
@@ -79,7 +79,7 @@ The initial implementation worked, technically. The pieces connected. Data flowe
 
 We discovered this one during a long-running test session. The integration started fine, but after hours of operation, memory usage began climbing. Eventually, it would grind the process to a halt.
 
-The culprit was event listener accumulation. When we wired the hooks to StringRay's tool events, we registered callbacks. But when the integration shut down—or when connections were reset—we never unregistered them. Each reconnection added new listeners without removing the old ones.
+The culprit was event listener accumulation. When we wired the hooks to 0xRay's tool events, we registered callbacks. But when the integration shut down—or when connections were reset—we never unregistered them. Each reconnection added new listeners without removing the old ones.
 
 The fix was simple but easy to miss: store the unsubscribe functions returned by `mcpClientManager.onToolEvent()` and call them during shutdown. Now the integration properly cleans up after itself:
 
@@ -96,7 +96,7 @@ if (this.mcpToolBeforeUnsubscribe) {
 
 In production, connections drop. That's a fact of distributed systems. But we hadn't accounted for what happened when the OpenClaw connection was lost mid-operation.
 
-If StringRay executed a tool while OpenClaw was disconnected, that `tool.after` event simply... disappeared. No error, no retry, just gone. The user would never know their tool execution hadn't been logged.
+If 0xRay executed a tool while OpenClaw was disconnected, that `tool.after` event simply... disappeared. No error, no retry, just gone. The user would never know their tool execution hadn't been logged.
 
 We solved this with an offline event buffer. When the client isn't connected, events get queued in memory. When the connection is restored, the queue flushes automatically:
 
@@ -147,7 +147,7 @@ Now when something breaks, we know about it.
 
 ### The Missing Health Check
 
-The final piece was visibility. When running health checks on the StringRay system, we needed to report the status of the OpenClaw integration—not just whether it was enabled, but whether it was actually connected and functioning.
+The final piece was visibility. When running health checks on the 0xRay system, we needed to report the status of the OpenClaw integration—not just whether it was enabled, but whether it was actually connected and functioning.
 
 We extended the health check to verify each component:
 - Is the API server running?

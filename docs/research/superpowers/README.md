@@ -89,21 +89,21 @@ The README says:
 
 ---
 
-## Integration Potential for StringRay
+## Integration Potential for 0xRay
 
 ### Integration Type: Methodology + Skills Framework
 
-### Why This is Perfect for StringRay
+### Why This is Perfect for 0xRay
 
-1. **Already supports OpenCode** - Native StringRay compatibility
-2. **Methodology aligns** - StringRay's orchestration needs exactly what Superpowers provides
+1. **Already supports OpenCode** - Native 0xRay compatibility
+2. **Methodology aligns** - 0xRay's orchestration needs exactly what Superpowers provides
 3. **Composable skills** - Can be mixed and matched
 4. **Proven in production** - 77K+ developers, battle-tested
 
-### How StringRay Could Use Superpowers
+### How 0xRay Could Use Superpowers
 
 ```
-StringRay Orchestrator
+0xRay Orchestrator
         │
         ▼
 ┌─────────────────────────┐
@@ -118,7 +118,7 @@ StringRay Orchestrator
 
 ### Skill Mapping
 
-| Superpowers Skill | StringRay Agent | Purpose |
+| Superpowers Skill | 0xRay Agent | Purpose |
 |-------------------|-----------------|---------|
 | brainstorming | @architect | Design refinement |
 | writing-plans | @orchestrator | Implementation planning |
@@ -138,7 +138,7 @@ StringRay Orchestrator
 | **Maintenance** | Low | Active upstream, community-driven |
 | **Token Overhead** | Low | Composable, load as needed |
 
-**Overall Complexity:** Easy (Best fit for StringRay)
+**Overall Complexity:** Easy (Best fit for 0xRay)
 
 ---
 
@@ -155,12 +155,12 @@ StringRay Orchestrator
 
 ---
 
-## Synergy with StringRay
+## Synergy with 0xRay
 
 ### Strengths
 - ✅ Already supports OpenCode natively
 - ✅ Methodology perfectly complements orchestration
-- ✅ Composable skills match StringRay's agent system
+- ✅ Composable skills match 0xRay's agent system
 - ✅ Enforces exactly what complex tasks need
 
 ### Weaknesses
@@ -187,20 +187,20 @@ npx mdskills install obra/superpowers
 ```
 
 ### Phase 2: Agent Mapping (1 week)
-Map StringRay agents to superpower skills:
+Map 0xRay agents to superpower skills:
 - Update @architect to use brainstorming skill
 - Update @testing-lead to use TDD skill
 - Update @bug-triage-specialist to use debugging skill
 
 ### Phase 3: Custom Skills (2 weeks)
-Create StringRay-specific superpowers:
+Create 0xRay-specific superpowers:
 - `stringray-orchestration` - Agent coordination
 - `stringray-complexity` - Task complexity routing
 - `stringray-mcp` - MCP tool integration
 
 ---
 
-## Example: StringRay + Superpowers Workflow
+## Example: 0xRay + Superpowers Workflow
 
 ```
 User: @orchestrator implement user authentication
@@ -232,9 +232,9 @@ User: "JWT with refresh tokens"
 
 ---
 
-## Comparison to StringRay Native Skills
+## Comparison to 0xRay Native Skills
 
-| Aspect | superpowers | StringRay Native |
+| Aspect | superpowers | 0xRay Native |
 |--------|-------------|------------------|
 | **Workflow** | Structured methodology | Flexible |
 | **Skills** | 10+ proven skills | Dynamic discovery |
@@ -242,13 +242,13 @@ User: "JWT with refresh tokens"
 | **Debugging** | Systematic | Ad-hoc |
 | **Planning** | Detailed plans | Abstraction-based |
 
-**Recommendation:** Integrate superpowers as StringRay's methodology layer.
+**Recommendation:** Integrate superpowers as 0xRay's methodology layer.
 
 ---
 
 ## Conclusion
 
-**superpowers** is the highest-priority integration for StringRay because:
+**superpowers** is the highest-priority integration for 0xRay because:
 1. Already supports OpenCode
 2. Perfect methodology match
 3. Proven with 77K+ developers
@@ -257,7 +257,7 @@ User: "JWT with refresh tokens"
 
 **Priority:** HIGHEST
 **Effort:** Low (1-2 weeks)
-**Recommendation:** Integrate immediately as StringRay's workflow methodology.
+**Recommendation:** Integrate immediately as 0xRay's workflow methodology.
 
 ---
 

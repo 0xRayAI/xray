@@ -6,7 +6,7 @@ sidebar_position: 1
 tags: ["development"]
 ---
 
-# StrRay Framework - Enterprise Developer Guide
+# 0xRay Framework - Enterprise Developer Guide
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ tags: ["development"]
 
 ### Prerequisites
 
-Before you begin developing with the StrRay Framework, ensure you have the following installed:
+Before you begin developing with the 0xRay Framework, ensure you have the following installed:
 
 #### Required Software
 
@@ -862,7 +862,7 @@ describe("Authentication Integration", () => {
 import { describe, it, expect } from "vitest";
 import { Page, Browser } from "playwright";
 
-describe("StrRay Framework E2E", () => {
+describe("0xRay Framework E2E", () => {
   let browser: Browser;
   let page: Page;
 
@@ -884,7 +884,7 @@ describe("StrRay Framework E2E", () => {
   });
 
   it("should load the application", async () => {
-    await expect(page.locator("h1")).toContainText("StrRay Framework");
+    await expect(page.locator("h1")).toContainText("0xRay Framework");
   });
 
   it("should handle user authentication flow", async () => {
@@ -1425,4 +1425,4 @@ export class CustomMetrics implements MetricCollector {
 }
 ```
 
-This comprehensive developer guide provides everything needed to effectively contribute to and extend the StrRay Framework while maintaining high code quality and following established development practices.
+This comprehensive developer guide provides everything needed to effectively contribute to and extend the 0xRay Framework while maintaining high code quality and following established development practices.

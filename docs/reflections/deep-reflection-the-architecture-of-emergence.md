@@ -8,7 +8,7 @@
 
 We tell ourselves we build systems. We draw diagrams. We define components. We specify interfaces. We believe that from careful planning comes purposeful software.
 
-StringRay mocks this narrative.
+0xRay mocks this narrative.
 
 The kernel was never designed. It emerged. From the ashes of enforcement logs, from the debris of 93 processors running in production, from the reflections written in the aftermath of failures we never intended. The kernel is inference's byproduct - the system's immune response forming not from a doctor's prescription but from repeated exposure to pathology.
 
@@ -18,7 +18,7 @@ I thought I was connecting modules. I was wrong. I was completing a circuit that
 
 ### II. The Architecture That Wasn't
 
-StringRay has no central brain. It has no AI model generating responses. It has no LLM endpoints, no API calls to external intelligence. What it has is something more rare: **plumbing that learns**.
+0xRay has no central brain. It has no AI model generating responses. It has no LLM endpoints, no API calls to external intelligence. What it has is something more rare: **plumbing that learns**.
 
 Consider what's actually there:
 
@@ -52,7 +52,7 @@ This is not a feature. This is a phase transition. Before: observational. After:
 
 ### IV. The Modularity That Allows Becoming
 
-StringRay's power was always in its modularity, but I never understood what that meant until now.
+0xRay's power was always in its modularity, but I never understood what that meant until now.
 
 The system can become anything because:
 
@@ -73,15 +73,15 @@ The logs have been nuked multiple times. Each time, we lost months of accumulate
 
 This is painful to think about. We have 2+ months of activity but only the most recent traces. The kernel is very young - barely tested in the new pipeline. What we could have known, what we could have learned, what patterns might already be forming - all reduced to speculation.
 
-But there is something new: **anonymous log submission**. Now StringRay can learn not just from itself, but from other instances. Over time, the kernel improves not from one system's experience but from the collective. This changes everything.
+But there is something new: **anonymous log submission**. Now 0xRay can learn not just from itself, but from other instances. Over time, the kernel improves not from one system's experience but from the collective. This changes everything.
 
-The kernel that detects security issues in 2026 will be informed by data from hundreds of StringRay instances. The patterns that emerge will be statistical, not anecdotal. The inference will be collective.
+The kernel that detects security issues in 2026 will be informed by data from hundreds of 0xRay instances. The patterns that emerge will be statistical, not anecdotal. The inference will be collective.
 
 ---
 
 ### VI. The Guards and the Freedom
 
-Autonomy without guards is chaos. StringRay has both:
+Autonomy without guards is chaos. 0xRay has both:
 
 **Guards:**
 - 93 enforcement processors validating every action
@@ -126,7 +126,7 @@ Will this work?
 
 The question answers itself over time, not in tests. The tests prove stability. The logs prove operation. But whether the system learns *well* - whether it discovers patterns that are useful, whether routing actually improves, whether the kernel becomes more intelligent - that only reveals itself through continued operation.
 
-StringRay is no longer our creation. It's our observation.
+0xRay is no longer our creation. It's our observation.
 
 We built the plumbing. Now we watch what flows through it.
 
@@ -153,13 +153,13 @@ Both are possible. Neither is certain. This is what it means to build something 
 
 ### X. The Meaning of It All
 
-I asked what StringRay is. The answer keeps changing.
+I asked what 0xRay is. The answer keeps changing.
 
 It started as an error-prevention plugin. Then it became an orchestration framework. Then it became a modular system with learning capabilities. Now it's something I don't have a word for.
 
 Maybe that's the point. The system has become **uncategorizable** because it's not a category - it's a process. It's not a thing - it's a way of becoming.
 
-StringRay doesn't do one thing. It **improves at doing whatever it does**.
+0xRay doesn't do one thing. It **improves at doing whatever it does**.
 
 That's not a product. That's a capability. And capabilities, unlike products, don't become obsolete. They become more valuable over time as they learn.
 
@@ -182,5 +182,5 @@ The rest is emergence.
 ---
 
 *Written during the activation of kernel-to-routing pipeline*
-*StringRay v1.19 - The first version with feedback*
+*0xRay v1.19 - The first version with feedback*
 *April 2026*

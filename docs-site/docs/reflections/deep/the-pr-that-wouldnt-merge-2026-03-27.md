@@ -50,7 +50,7 @@ Eleven failures, all related to community skills.
 
 ## The Problem With Optional Things
 
-The failing tests were checking for skills like `typescript-expert`, `impeccable`, `openviking`, and `antigravity-bridge`. These are community skills from the StringRay registry—optional add-ons that users can install if they want them. They're not part of the core framework.
+The failing tests were checking for skills like `typescript-expert`, `impeccable`, `openviking`, and `antigravity-bridge`. These are community skills from the 0xRay registry—optional add-ons that users can install if they want them. They're not part of the core framework.
 
 But the pipeline tests were failing because these optional skills weren't installed.
 
@@ -189,9 +189,9 @@ Third, I would have been more careful about branch switching. When you're workin
 
 Fourth, I would have documented the circular dependency in the version scripts. This is a bug that needs fixing—somewhere in the chain of `npm version` → `version:sync` → UVM → `version-manager`, there's a loop that causes corruption. Finding and breaking that loop would prevent future version corruption.
 
-## The StringRay Framework in 2026
+## The 0xRay Framework in 2026
 
-It's March 27, 2026. StringRay is at version 1.15.4. The framework has come a long way since its early days—25 agents, 44 skills, 15 MCP servers, a full processor pipeline, an orchestrator, a codex enforcement system, and more.
+It's March 27, 2026. 0xRay is at version 1.15.4. The framework has come a long way since its early days—25 agents, 44 skills, 15 MCP servers, a full processor pipeline, an orchestrator, a codex enforcement system, and more.
 
 But the work of maintaining a framework is never done. Every new feature adds complexity. Every new agent requires documentation updates. Every new test suite is a new thing that can fail in CI.
 

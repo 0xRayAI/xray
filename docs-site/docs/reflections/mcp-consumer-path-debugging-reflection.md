@@ -10,7 +10,7 @@ tags: ["reflection"]
 
 ## Executive Summary
 
-This reflection documents the debugging of the StringRay test auto-creation feature which failed in consumer installations. What began as a suspected "MCP integration failure" revealed two critical bugs: wrong default path configuration in mcp-client.ts and a completely unused function in prepare-consumer.cjs. The root cause was treating dev and consumer environments as identical when they have fundamentally different path structures. After systematic debugging in isolated environments, the framework now works correctly in consumer npm installations. Key lesson: always verify assumptions in clean environments and check if functions are actually being called.
+This reflection documents the debugging of the 0xRay test auto-creation feature which failed in consumer installations. What began as a suspected "MCP integration failure" revealed two critical bugs: wrong default path configuration in mcp-client.ts and a completely unused function in prepare-consumer.cjs. The root cause was treating dev and consumer environments as identical when they have fundamentally different path structures. After systematic debugging in isolated environments, the framework now works correctly in consumer npm installations. Key lesson: always verify assumptions in clean environments and check if functions are actually being called.
 
 ---
 

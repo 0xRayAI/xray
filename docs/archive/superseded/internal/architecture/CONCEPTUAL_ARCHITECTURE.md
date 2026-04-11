@@ -1,8 +1,8 @@
-# StrRay Framework - Conceptual Architecture
+# 0xRay Framework - Conceptual Architecture
 
 ## 📚 Framework Foundation
 
-StrRay is built on the **Universal Development Codex v1.1.1** framework, providing a modular, scalable architecture for agentic development workflows. The framework emphasizes progressive development, shared global state management, and single sources of truth.
+0xRay is built on the **Universal Development Codex v1.1.1** framework, providing a modular, scalable architecture for agentic development workflows. The framework emphasizes progressive development, shared global state management, and single sources of truth.
 
 ## 🏗️ Core Architectural Principles
 
@@ -262,4 +262,4 @@ interface FrameworkEvent {
 
 ---
 
-_This conceptual architecture provides the foundational principles and design patterns that guide StrRay Framework development and evolution._
+_This conceptual architecture provides the foundational principles and design patterns that guide 0xRay Framework development and evolution._

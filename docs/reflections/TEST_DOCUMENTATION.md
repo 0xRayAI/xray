@@ -1,4 +1,4 @@
-# StringRay Test Documentation
+# 0xRay Test Documentation
 
 ## Test Suite Status Overview
 
@@ -9,7 +9,7 @@
 - **Failed Tests**: 0 ✅
 
 ### Philosophy of Skipped Tests
-Skipped tests in StringRay are **NOT** a sign of technical debt. Instead, they represent the **maturity roadmap** of the framework. Each skipped test has a documented reason based on its complexity and current framework capabilities.
+Skipped tests in 0xRay are **NOT** a sign of technical debt. Instead, they represent the **maturity roadmap** of the framework. Each skipped test has a documented reason based on its complexity and current framework capabilities.
 
 ---
 
@@ -243,7 +243,7 @@ it.skip("should auto-create test file for new source file")
 
 ## Conclusion
 
-The StringRay test suite is **production-ready** with 95.6% test coverage. The skipped tests represent a **maturity roadmap** rather than technical debt. Each category has clear requirements and target versions for enablement.
+The 0xRay test suite is **production-ready** with 95.6% test coverage. The skipped tests represent a **maturity roadmap** rather than technical debt. Each category has clear requirements and target versions for enablement.
 
 Our approach ensures:
 - **Quality over quantity**: Tests that can run reliably are enabled

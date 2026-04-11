@@ -136,7 +136,7 @@ openviking-server --with-bot
 
 ---
 
-## Integration Potential for StringRay
+## Integration Potential for 0xRay
 
 ### Integration Type: Memory/Infrastructure Layer
 
@@ -150,7 +150,7 @@ openviking-server --with-bot
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    StringRay Agents                      │
+│                    0xRay Agents                      │
 └─────────────────────────┬───────────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────────┐
@@ -162,10 +162,10 @@ openviking-server --with-bot
 └─────────────────────────────────────────────────────────┘
 ```
 
-### How StringRay Could Use It
+### How 0xRay Could Use It
 
 ```typescript
-// StringRay agent with OpenViking memory
+// 0xRay agent with OpenViking memory
 const agent = createAgent({
   memory: new OpenVikingMemory({
     protocol: 'viking://',
@@ -209,14 +209,14 @@ const agent = createAgent({
 
 ---
 
-## Synergy with StringRay
+## Synergy with 0xRay
 
 ### Strengths
 - ✅ Solves real agent memory problem
 - ✅ Filesystem model is intuitive
 - ✅ Tiered loading saves tokens
 - ✅ Visible retrieval paths
-- ✅ OpenClaw integration mentioned (StringRay could follow)
+- ✅ OpenClaw integration mentioned (0xRay could follow)
 
 ### Weaknesses
 - Complex setup (Go, C++ requirements)
@@ -227,9 +227,9 @@ const agent = createAgent({
 
 ---
 
-## Comparison to StringRay
+## Comparison to 0xRay
 
-| Aspect | OpenViking | StringRay |
+| Aspect | OpenViking | 0xRay |
 |--------|------------|-----------|
 | **Focus** | Context/Memory | Orchestration |
 | **Storage** | Filesystem-based DB | Dynamic |
@@ -246,8 +246,8 @@ const agent = createAgent({
 - Benchmark tiered loading
 
 ### Phase 2: Integration (2-3 weeks)
-- Create OpenViking adapter for StringRay
-- Map StringRay agent memory to `viking://`
+- Create OpenViking adapter for 0xRay
+- Map 0xRay agent memory to `viking://`
 - Implement retrieval hooks
 
 ### Phase 3: Optimization (1 week)
@@ -295,7 +295,7 @@ OpenViking addresses a critical gap in agent development: persistent, structured
 
 **Priority:** HIGH
 **Effort:** Medium (3-4 weeks)
-**Recommendation:** Integrate as StringRay's persistent memory layer. Addresses architectural need for agent memory persistence.
+**Recommendation:** Integrate as 0xRay's persistent memory layer. Addresses architectural need for agent memory persistence.
 
 ---
 

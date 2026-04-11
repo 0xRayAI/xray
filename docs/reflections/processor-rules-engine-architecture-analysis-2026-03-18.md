@@ -1,14 +1,14 @@
-# StringRay Processor & Rules Engine Architecture Analysis
+# 0xRay Processor & Rules Engine Architecture Analysis
 
 **Date:** March 18, 2026  
-**Analyst:** StringRay Librarian Agent  
+**Analyst:** 0xRay Librarian Agent  
 **Scope:** Deep dive into processor system, rules engine, and pre/post processors  
 
 ---
 
 ## Executive Summary
 
-StringRay's architecture has **three distinct but overlapping systems** for validation and enforcement:
+0xRay's architecture has **three distinct but overlapping systems** for validation and enforcement:
 
 1. **Processor System** (`ProcessorManager`) - Pre/post operation hooks
 2. **Enforcement System** (`RuleEnforcer`) - Rule-based validation with validators  
@@ -547,7 +547,7 @@ return processor.execute(context);
 
 ## Conclusion
 
-StringRay has a **solid foundation** with the enforcement system (RuleEnforcer + Validators) but suffers from **architectural drift**:
+0xRay has a **solid foundation** with the enforcement system (RuleEnforcer + Validators) but suffers from **architectural drift**:
 
 - **Quality gates duplicate validator logic** in the plugin
 - **ProcessorManager mixes orchestration with implementation** (switch statement)

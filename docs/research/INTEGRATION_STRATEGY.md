@@ -1,4 +1,4 @@
-# StringRay Integration Strategy
+# 0xRay Integration Strategy
 
 **Date:** 2026-03-23  
 **Status:** Strategic Recommendation  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-After analyzing 8 integration options (2 existing + 6 potential new), this document provides a strategic roadmap for StringRay's integration ecosystem.
+After analyzing 8 integration options (2 existing + 6 potential new), this document provides a strategic roadmap for 0xRay's integration ecosystem.
 
 ### Key Recommendations
 
@@ -19,7 +19,7 @@ After analyzing 8 integration options (2 existing + 6 potential new), this docum
 
 ### Why This Matters
 
-StringRay's mission is AI orchestration. Every integration must enhance either:
+0xRay's mission is AI orchestration. Every integration must enhance either:
 - Agent discipline (methodology)
 - Agent capabilities (skills)
 - Agent persistence (memory)
@@ -38,7 +38,7 @@ StringRay's mission is AI orchestration. Every integration must enhance either:
 ### Integration Pattern Observed
 
 ```
-StringRay Core
+0xRay Core
     │
     ├── Skills Layer (Antigravity)
     │       └── Static skill files
@@ -92,7 +92,7 @@ StringRay Core
 npx mdskills install obra/superpowers
 ```
 
-**Value:** Enforces structured workflow (brainstorming → spec → plan → implement → review) directly into StringRay agents.
+**Value:** Enforces structured workflow (brainstorming → spec → plan → implement → review) directly into 0xRay agents.
 
 ---
 
@@ -159,7 +159,7 @@ npx mdskills install pbakaus/impeccable
 ### agency-agents (Persona Library)
 
 **Why Deprioritize:**
-- Different methodology from StringRay
+- Different methodology from 0xRay
 - OpenCode support is TODO
 - Low integration value vs effort
 
@@ -228,7 +228,7 @@ Keep maintenance burden low by:
 
 ## Conclusion
 
-StringRay should follow this integration strategy:
+0xRay should follow this integration strategy:
 
 1. **Add superpowers** - Immediate, highest value, perfect fit
 2. **Add impeccable** - Immediate, solves real UX problem

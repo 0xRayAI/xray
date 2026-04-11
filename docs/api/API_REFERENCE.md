@@ -1,14 +1,14 @@
-# StringRay API Reference
+# 0xRay API Reference
 
-**Version**: 1.9.0 | **Last Updated**: 2026-03-12 | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Last Updated**: 2026-03-12 | **Framework**: 0xRay AI
 
 ## Overview
 
-StringRay provides a comprehensive enterprise-grade API for AI agent coordination built on the **Facade Pattern**. This architecture delivers 87% code reduction while maintaining stable public APIs and powerful module interfaces for advanced users.
+0xRay provides a comprehensive enterprise-grade API for AI agent coordination built on the **Facade Pattern**. This architecture delivers 87% code reduction while maintaining stable public APIs and powerful module interfaces for advanced users.
 
 ### Architecture Overview
 
-StringRay v1.15.1 features a modern, modular architecture:
+0xRay v1.15.1 features a modern, modular architecture:
 
 | Component | Before | After | Reduction |
 |-----------|--------|-------|-----------|
@@ -52,14 +52,14 @@ Direct access to internal modules for customization:
 
 ## Core Framework APIs
 
-### StrRayOrchestrator
+### 0xRayOrchestrator
 
 Main orchestrator for framework initialization and agent coordination.
 
 ```typescript
-import { StrRayOrchestrator } from "@strray/framework";
+import { 0xRayOrchestrator } from "@strray/framework";
 
-const orchestrator = new StrRayOrchestrator({
+const orchestrator = new 0xRayOrchestrator({
   configPath: ".opencode/opencode.json",
   performanceMode: "optimized",
   monitoringEnabled: true,
@@ -354,14 +354,14 @@ try {
     input: { files: ["src/**/*.ts"] },
   });
 } catch (error) {
-  if (error instanceof StrRayAgentError) {
+  if (error instanceof 0xRayAgentError) {
     // Handle agent-specific errors
     await orchestrator.handleAgentError(error);
-  } else if (error instanceof StrRayValidationError) {
+  } else if (error instanceof 0xRayValidationError) {
     // Handle validation errors
     console.log("Validation failed:", error.details);
     await orchestrator.retryWithBackoff(error);
-  } else if (error instanceof StrRayPerformanceError) {
+  } else if (error instanceof 0xRayPerformanceError) {
     // Handle performance issues
     await orchestrator.optimizePerformance(error.context);
   }
@@ -581,7 +581,7 @@ await orchestrator.registerAgent(CustomAnalyticsAgent);
 
 **Good news: No migration needed!** ✨
 
-StringRay v1.15.1 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
+0xRay v1.15.1 maintains **100% backward compatibility**. All existing code continues to work exactly as before.
 
 ### What Changed
 

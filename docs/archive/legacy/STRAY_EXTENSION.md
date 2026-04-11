@@ -1,17 +1,17 @@
-# StringRay Extension Ecosystem
+# 0xRay Extension Ecosystem
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: StringRay AI
+**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
-The StringRay Extension Ecosystem provides a comprehensive framework for building, distributing, and managing AI-powered development tools. The v1.15.1 release introduces the **Facade Pattern Architecture**, which simplifies extension development while providing powerful module-level access for advanced customization.
+The 0xRay Extension Ecosystem provides a comprehensive framework for building, distributing, and managing AI-powered development tools. The v1.15.1 release introduces the **Facade Pattern Architecture**, which simplifies extension development while providing powerful module-level access for advanced customization.
 
 ## Extension Architecture
 
 ### Core Components
 
 ```
-StringRay Extension System v1.15.1
+0xRay Extension System v1.15.1
 ├── Facade Layer (NEW)
 │   ├── RuleEnforcer Facade (6 modules)
 │   ├── TaskSkillRouter Facade (14 modules)
@@ -42,7 +42,7 @@ StringRay Extension System v1.15.1
 Custom AI agents with specialized capabilities:
 
 ```typescript
-export class CustomAgent implements StringRayAgent {
+export class CustomAgent implements 0xRayAgent {
   name = 'custom-agent';
   capabilities = ['analysis', 'generation'];
 
@@ -194,7 +194,7 @@ my-extension/
 {
   "name": "strray-extension-custom",
   "version": "1.15.27",
-  "description": "Custom StringRay extension",
+  "description": "Custom 0xRay extension",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "strray": {
@@ -219,10 +219,10 @@ my-extension/
 
 ```typescript
 // src/index.ts
-import { StringRayExtension } from 'strray-ai';
+import { 0xRayExtension } from 'strray-ai';
 import { RuleEnforcer, TaskSkillRouter } from '@strray/framework';
 
-export class MyExtension extends StringRayExtension {
+export class MyExtension extends 0xRayExtension {
   name = 'my-extension';
   version = '1.9.0';
   
@@ -384,10 +384,10 @@ npm install
 
 ```typescript
 // src/index.ts
-import { StringRayExtension } from 'strray-ai';
+import { 0xRayExtension } from 'strray-ai';
 import { RuleEnforcer } from '@strray/framework';
 
-export class MyExtension extends StringRayExtension {
+export class MyExtension extends 0xRayExtension {
   name = 'my-extension';
   version = '1.9.0';
   
@@ -489,7 +489,7 @@ npx strray-ai validate-extension my-extension-1.0.0.tgz
 
 ```typescript
 // Good: Uses facades appropriately
-export class OptimizedExtension extends StringRayExtension {
+export class OptimizedExtension extends 0xRayExtension {
   private enforcer: RuleEnforcer;
   private router: TaskSkillRouter;
   
@@ -514,7 +514,7 @@ export class OptimizedExtension extends StringRayExtension {
 }
 
 // Advanced: Access modules when needed
-export class AdvancedExtension extends StringRayExtension {
+export class AdvancedExtension extends 0xRayExtension {
   async customValidation(params: any): Promise<any> {
     const enforcer = new RuleEnforcer(this.orchestrator);
     

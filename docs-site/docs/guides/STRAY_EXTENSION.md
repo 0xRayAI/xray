@@ -6,13 +6,13 @@ sidebar_position: 4
 tags: ["guide"]
 ---
 
-# StrRay Extension for OpenCode
+# 0xRay Extension for OpenCode
 
 ## Overview
 
-StrRay is a comprehensive extension framework for that adds specialized AI agents and development automation capabilities. This document explains what StrRay adds to OpenCode and how to leverage its enhanced features.
+0xRay is a comprehensive extension framework for that adds specialized AI agents and development automation capabilities. This document explains what 0xRay adds to OpenCode and how to leverage its enhanced features.
 
-## What StrRay Adds to OpenCode
+## What 0xRay Adds to OpenCode
 
 ### Core Enhancements
 
@@ -47,7 +47,7 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
 - Memory usage tracking and leak prevention
 - Build time analysis and caching strategies
 
-## How to Use StrRay Features
+## How to Use 0xRay Features
 
 ### Basic Usage
 
@@ -68,7 +68,7 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
    ```
 
 3. **Agent Interaction**:
-   All StrRay agents are accessible through OpenCode's standard interface:
+   All 0xRay agents are accessible through OpenCode's standard interface:
    ```bash
    opencode architect "Design a user authentication system"
    opencode code-reviewer "Review this React component"
@@ -108,25 +108,25 @@ StrRay is a comprehensive extension framework for that adds specialized AI agent
 ```bash
 # Automatic code quality checks
 git commit -m "feat: add user authentication"
-# StrRay enforcer validates compliance automatically
+# 0xRay enforcer validates compliance automatically
 ```
 
 **CI/CD Integration**:
 
 ```yaml
 # .github/workflows/ci.yml
-- name: StrRay Code Quality Check
+- name: 0xRay Code Quality Check
   run: bash .opencode/commands/framework-compliance-audit.md
 ```
 
-## Architecture: StrRay + OpenCode
+## Architecture: 0xRay + OpenCode
 
 ```
 
 ├── Core Plugin System
 ├── Agent Orchestration (Sisyphus)
 ├── Model Integration
-└── StrRay Framework Extension
+└── 0xRay Framework Extension
     ├── 8 Specialized AI Agents
     ├── Development Automation Hooks
     ├── Quality Validation
@@ -143,10 +143,10 @@ git commit -m "feat: add user authentication"
    cp .opencode/OpenCode.json .opencode/OpenCode.backup.json
    ```
 
-2. **Update to StrRay Configuration**:
-   The `.opencode` directory already contains the integrated StrRay-OpenCode framework. Your existing OpenCode configuration will continue to work.
+2. **Update to 0xRay Configuration**:
+   The `.opencode` directory already contains the integrated 0xRay-OpenCode framework. Your existing OpenCode configuration will continue to work.
 
-3. **Enable StrRay Features**:
+3. **Enable 0xRay Features**:
 
    ```bash
    bash .opencode/init.sh
@@ -160,7 +160,7 @@ git commit -m "feat: add user authentication"
 
 ### Feature Comparison
 
-| Feature             | Standard OpenCode | StrRay Extension                       |
+| Feature             | Standard OpenCode | 0xRay Extension                       |
 | ------------------- | ----------------------- | -------------------------------------- |
 | AI Agents           | Basic set               | 25 specialized agents                   |
 | Code Quality        | Standard checks         | Universal Development Codex compliance |
@@ -168,7 +168,7 @@ git commit -m "feat: add user authentication"
 | Error Prevention    | ~70%                    | ~90%                                   |
 | Architecture Review | Limited                 | Comprehensive design validation        |
 
-## Benefits of StrRay Extension
+## Benefits of 0xRay Extension
 
 ### For Individual Developers
 
@@ -223,23 +223,23 @@ bash .opencode/commands/mode-switch.md lite
 
 ## Future Development
 
-StrRay continues to evolve with OpenCode, adding new specialized agents and enhanced automation capabilities. Stay updated with the latest features and improvements.
+0xRay continues to evolve with OpenCode, adding new specialized agents and enhanced automation capabilities. Stay updated with the latest features and improvements.
 
 ## Frequently Asked Questions
 
-### What is StrRay's relationship to OpenCode?
+### What is 0xRay's relationship to OpenCode?
 
-StrRay is implemented as a comprehensive extension within the OpenCode ecosystem. OpenCode provides the core plugin architecture and agent orchestration, while StrRay adds 8 specialized AI agents for development-focused tasks.
+0xRay is implemented as a comprehensive extension within the OpenCode ecosystem. OpenCode provides the core plugin architecture and agent orchestration, while 0xRay adds 8 specialized AI agents for development-focused tasks.
 
 ### Do I need to install OpenCode separately?
 
-No. The `.opencode` directory contains the complete integrated StrRay-OpenCode framework. All OpenCode components are included and configured automatically.
+No. The `.opencode` directory contains the complete integrated 0xRay-OpenCode framework. All OpenCode components are included and configured automatically.
 
-### Can I use StrRay without OpenCode?
+### Can I use 0xRay without OpenCode?
 
-No. StrRay requires OpenCode's plugin system and orchestration capabilities to function.
+No. 0xRay requires OpenCode's plugin system and orchestration capabilities to function.
 
-### What's the difference between StrRay Lite and Full?
+### What's the difference between 0xRay Lite and Full?
 
 Both use the same OpenCode foundation but with different agent configurations:
 
@@ -255,9 +255,9 @@ bash .opencode/commands/mode-switch.md full  # All N agents
 bash .opencode/commands/mode-switch.md lite  # 4 core agents
 ```
 
-### What models does StrRay use?
+### What models does 0xRay use?
 
-All StrRay agents use `openrouter/xai-grok-2-1212-fast-1` by default, which provides excellent performance for development tasks while maintaining compatibility with OpenCode's model system.
+All 0xRay agents use `openrouter/xai-grok-2-1212-fast-1` by default, which provides excellent performance for development tasks while maintaining compatibility with OpenCode's model system.
 
 ### How do I customize agent behavior?
 
@@ -272,7 +272,7 @@ Modify the agents configuration in `.opencode/OpenCode.json`:
 }
 ```
 
-### What if I encounter issues with StrRay?
+### What if I encounter issues with 0xRay?
 
 1. Check framework initialization: `bash .opencode/init.sh`
 2. Verify mode settings: `jq '.disabled_agents' .opencode/OpenCode.json`
@@ -281,4 +281,4 @@ Modify the agents configuration in `.opencode/OpenCode.json`:
 
 ---
 
-_StrRay AI  - Enhancing OpenCode with systematic AI-assisted development capabilities._
+_0xRay AI  - Enhancing OpenCode with systematic AI-assisted development capabilities._

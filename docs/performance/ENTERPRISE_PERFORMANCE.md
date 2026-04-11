@@ -1,4 +1,4 @@
-# StrRay Framework - Enterprise Performance Documentation
+# 0xRay Framework - Enterprise Performance Documentation
 
 **Version**: v1.15.1  
 **Last Updated**: March 2026
@@ -19,7 +19,7 @@
 
 ## Performance Overview
 
-The StrRay Framework implements comprehensive performance monitoring and optimization capabilities designed for enterprise-scale applications. With sub-millisecond response times and 99.6% error prevention, the framework maintains high performance while providing extensive AI agent coordination.
+The 0xRay Framework implements comprehensive performance monitoring and optimization capabilities designed for enterprise-scale applications. With sub-millisecond response times and 99.6% error prevention, the framework maintains high performance while providing extensive AI agent coordination.
 
 ### Key Performance Characteristics
 
@@ -1694,4 +1694,4 @@ class PerformanceAlerting {
 }
 ```
 
-This comprehensive performance documentation provides enterprise teams with all the tools and knowledge needed to monitor, optimize, and troubleshoot StrRay Framework performance in production environments.
+This comprehensive performance documentation provides enterprise teams with all the tools and knowledge needed to monitor, optimize, and troubleshoot 0xRay Framework performance in production environments.

@@ -6,7 +6,7 @@
 
 ## 1. Pipeline Architecture
 
-The StringRay inference pipeline is a layered system of 17 engines across 5 categories:
+The 0xRay inference pipeline is a layered system of 17 engines across 5 categories:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐

@@ -5,9 +5,9 @@ description: Automated daily framework compliance monitoring with threshold vali
 
 #!/bin/bash
 
-# Daily compliance scan for StrRay Framework
+# Daily compliance scan for 0xRay Framework
 
-echo "🔍 StrRay Framework - Daily Compliance Scan"
+echo "🔍 0xRay Framework - Daily Compliance Scan"
 echo "========================================================="
 
 # Initialize compliance status

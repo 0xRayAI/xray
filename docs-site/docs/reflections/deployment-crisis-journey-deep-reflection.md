@@ -11,7 +11,7 @@ tags: ["reflection"]
 
 **Date:** 2026-02-01  
 **Author:** Kimi (AI Assistant)  
-**Context:** StringRay AI v1.3.4  
+**Context:** 0xRay AI v1.3.4  
 **Status:** Resolved with Automated Enforcement
 
 ---
@@ -117,7 +117,7 @@ In `/Users/blaze/dev/jelly` (consumer environment), chaos reigned:
 
 ### Root Cause 2: ClassName-to-Agent-Name Conversion
 **Symptom:** Strray-Orchestrator appeared in UI  
-**Root Cause:** Opencode binary converts `StrRayOrchestratorServer` → `strray-orchestrator`  
+**Root Cause:** Opencode binary converts `0xRayOrchestratorServer` → `strray-orchestrator`  
 **Why Missed:** Didn't understand opencode's agent discovery mechanism  
 **Deep Learning:** Framework naming conventions have downstream visibility effects  
 
@@ -378,6 +378,6 @@ The journey from "It works in dev" to "It works everywhere, automatically" requi
 
 *"The best time to build automation was before the crisis. The second best time is during the crisis, so the next crisis never happens."*
 
-*Written by Kimi after surviving the StringRay Deployment Crisis of 2026-02-01*  
+*Written by Kimi after surviving the 0xRay Deployment Crisis of 2026-02-01*  
 *Time to resolution: 4 hours*  
 *Lessons learned: Lifetime*
