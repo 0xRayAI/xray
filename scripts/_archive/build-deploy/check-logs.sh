@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework Usage Logger Checker
+# 0xRay Framework Usage Logger Checker
 # Displays current framework component usage logs
 
 echo "🎯 STRRAY FRAMEWORK USAGE LOGGER CHECKER"
@@ -9,15 +9,15 @@ echo ""
 
 # Check if we're in the right directory
 if [ ! -f "src/core/framework-logger.ts" ]; then
-    echo "❌ Error: Not in StrRay project directory"
-    echo "Please run from the root of the StrRay project"
+    echo "❌ Error: Not in 0xRay project directory"
+    echo "Please run from the root of the 0xRay project"
     exit 1
 fi
 
 echo "📊 Checking framework component status..."
 echo ""
 
-# Check for recent StrRay log messages in console history
+# Check for recent 0xRay log messages in console history
 
 echo "🔍 Checking for recent framework activity..."
 
@@ -59,7 +59,7 @@ if [ -d "logs/" ] && [ -f "logs/framework/activity.log" ]; then
     echo ""
     echo "💡 To verify framework is active:"
     echo "   1. Perform an action using a critical tool (write, edit, multiedit, batch)"
-    echo "   2. Check console output for StrRay log messages"
+    echo "   2. Check console output for 0xRay log messages"
     echo "   3. Look for 'codex-injector' and 'processor-manager' activity"
 
     echo ""

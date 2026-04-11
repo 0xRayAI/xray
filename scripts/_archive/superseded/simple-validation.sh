@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Simple StrRay Framework Validation
+# Simple 0xRay Framework Validation
 # Basic checks to ensure core components are working
 
-echo "🔍 StrRay Framework - Basic Validation"
+echo "🔍 0xRay Framework - Basic Validation"
 echo "======================================"
 
 # Colors

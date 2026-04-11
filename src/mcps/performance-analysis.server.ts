@@ -1,5 +1,5 @@
 /**
- * StrRay Performance Analysis MCP Server
+ * 0xRay Performance Analysis MCP Server
  *
  * Comprehensive metrics analysis for framework integration and optimization
  */
@@ -16,7 +16,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-class StrRayPerformanceAnalysisServer {
+class StringRayPerformanceAnalysisServer {
   private server: Server;
   private startTime: number;
 
@@ -198,7 +198,7 @@ class StrRayPerformanceAnalysisServer {
       );
     }
 
-    const response = `📊 StrRay Performance Analysis Results
+    const response = `📊 0xRay Performance Analysis Results
 
 ${analysisResults.summary}
 
@@ -668,8 +668,8 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayPerformanceAnalysisServer();
+  const server = new StringRayPerformanceAnalysisServer();
   server.run().catch((error) => frameworkLogger.log("mcps/performance-analysis", "run", "error", { error: String(error) }));
 }
 
-export { StrRayPerformanceAnalysisServer };
+export { StringRayPerformanceAnalysisServer };

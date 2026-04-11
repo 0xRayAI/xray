@@ -1,5 +1,5 @@
 {
-  "framework": "StringRay 1.15.17",
+  "framework": "0xRay 1.15.17",
   "version": "1.15.27",
   "description": "Codex-compliant framework configuration for Credible UI project",
   "thresholds": {

@@ -28,7 +28,7 @@ else
     FRAMEWORK_ROOT="$PROJECT_ROOT"
 fi
 
-# StringRay Framework Version - read from FRAMEWORK_ROOT (already resolved above)
+# 0xRay Framework Version - read from FRAMEWORK_ROOT (already resolved above)
 # FRAMEWORK_ROOT correctly picks source in dev mode, node_modules in consumer mode
 STRRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)" 2>/dev/null || echo "unknown")
 

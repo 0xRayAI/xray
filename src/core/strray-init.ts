@@ -1,15 +1,15 @@
 /**
- * StringRay Framework Initialization
+ * 0xRay Framework Initialization
  *
- * This file integrates StringRay framework activation directly into OpenCode's
+ * This file integrates 0xRay framework activation directly into OpenCode's
  * core initialization process.
  */
 
-// Import and activate StringRay framework during OpenCode startup
+// Import and activate 0xRay framework during OpenCode startup
 import { activateStringRayFramework } from "./strray-activation.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-// Initialize StringRay framework when OpenCode starts
+// Initialize 0xRay framework when OpenCode starts
 export async function initializeStringRay(): Promise<void> {
   const jobId = `init-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -17,20 +17,20 @@ export async function initializeStringRay(): Promise<void> {
     await activateStringRayFramework();
     frameworkLogger.log(
       "stringray-init",
-      "StringRay framework initialized successfully",
+      "0xRay framework initialized successfully",
       "success",
       { jobId },
     );
   } catch (error: unknown) {
     frameworkLogger.log(
       "stringray-init",
-      "StringRay framework initialization failed",
+      "0xRay framework initialization failed",
       "error",
       { jobId, error },
     );
-    // Don't throw - allow OpenCode to continue without StringRay
+    // Don't throw - allow OpenCode to continue without 0xRay
     frameworkLogger.log("stringray-init", "init-failed-warning", "warning", {
-      message: "⚠️ StringRay framework failed to initialize",
+      message: "⚠️ 0xRay framework failed to initialize",
       error: error instanceof Error ? error.message : String(error),
     });
   }

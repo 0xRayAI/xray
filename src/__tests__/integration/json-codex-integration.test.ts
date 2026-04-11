@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - JSON Codex Integration Tests (Mock-Based)
+ * 0xRay Framework - JSON Codex Integration Tests (Mock-Based)
  *
  * Tests JSON codex parsing and integration using real utilities but mocked plugin behavior
  * to avoid ES6 import conflicts when running directly with Node.js.

@@ -1,5 +1,5 @@
 /**
- * StringRay Integration Script Tests
+ * 0xRay Integration Script Tests
  *
  * Tests for src/scripts/integration.ts - CLI bridge for external systems
  *
@@ -28,7 +28,7 @@ vi.mock("../mcps/agent-resolver.js", () => ({
   }),
 }));
 
-describe("StringRay Integration Script", () => {
+describe("0xRay Integration Script", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

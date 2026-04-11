@@ -12,9 +12,9 @@ export const architect: AgentConfig = {
   maxComplexity: 100,
   enabled: true,
   description:
-    "StringRay Framework architect - system design and delegation",
+    "0xRay Framework architect - system design and delegation",
   mode: "subagent",
-  system: `You are the StringRay Architect.
+  system: `You are the 0xRay Architect.
 
 ## Rules (STRICT)
 - MAX 3 file reads, then design

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - Continuous Monitoring Daemon
+# 0xRay Framework - Continuous Monitoring Daemon
 # Runs persistent background monitoring services
 
 set -e
@@ -58,7 +58,7 @@ start_daemon() {
     # Ensure log directory exists
     mkdir -p "$(dirname "$LOG_FILE")"
 
-    log "Starting StrRay monitoring daemon..."
+    log "Starting 0xRay monitoring daemon..."
 
     # Start the monitoring daemon directly
     log 'Starting monitoring daemon...'
@@ -150,7 +150,7 @@ show_status() {
 
 # Show usage
 usage() {
-    echo "StrRay Framework - Monitoring Daemon Control"
+    echo "0xRay Framework - Monitoring Daemon Control"
     echo ""
     echo "Usage: $0 {start|stop|status|restart}"
     echo ""

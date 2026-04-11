@@ -1,9 +1,9 @@
 /**
- * StrRay Processor Pipeline MCP Server
+ * 0xRay Processor Pipeline MCP Server
  *
  * Advanced processor pipeline with codex validation, compliance monitoring, and framework enforcement
  */
-declare class StrRayProcessorPipelineServer {
+declare class StringRayProcessorPipelineServer {
     private server;
     private codexLoader;
     private codexRules;
@@ -28,5 +28,5 @@ declare class StrRayProcessorPipelineServer {
     private checkFrameworkCompliance;
     run(): Promise<void>;
 }
-export { StrRayProcessorPipelineServer };
+export { StringRayProcessorPipelineServer };
 //# sourceMappingURL=processor-pipeline.server.d.ts.map

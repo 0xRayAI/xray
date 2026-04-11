@@ -7,7 +7,7 @@
  * This is a critical regression test - previously the plugin was creating a new
  * ProcessorManager on each tool execution, which meant no processors were registered.
  *
- * @issue https://github.com/htafolla/StringRay/issues/processor-reuse
+ * @issue https://github.com/htafolla/0xRay/issues/processor-reuse
  * @testRegression
  */
 

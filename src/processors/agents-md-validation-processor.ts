@@ -2,14 +2,14 @@
  * AGENTS.md Validation Processor
  *
  * Pre-processor that validates AGENTS.md exists and is up-to-date before
- * allowing commits. Integrates with StringRay's processor pipeline.
+ * allowing commits. Integrates with 0xRay's processor pipeline.
  *
  * @processor_type pre
  * @priority 90 (high - runs early)
  * @blocking true (blocks commit if AGENTS.md is invalid)
  *
  * @version 1.0.0
- * @framework StringRay 1.3.5
+ * @framework 0xRay 1.3.5
  */
 
 import * as fs from "fs";

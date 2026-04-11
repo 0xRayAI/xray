@@ -176,7 +176,7 @@ describe("SecurityAuditor", () => {
 
       const report = auditor.generateReport(mockResult);
 
-      expect(report).toContain("StringRay Framework Security Audit Report");
+      expect(report).toContain("0xRay Framework Security Audit Report");
       expect(report).toContain("CRITICAL SEVERITY");
       expect(report).toContain("80/100");
       expect(report).toContain("Eval usage detected");

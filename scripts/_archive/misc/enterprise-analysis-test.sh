@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - Enterprise System Analysis Operation
+# 0xRay Framework - Enterprise System Analysis Operation
 # Triggers maximum complexity score (>95) with comprehensive multi-agent analysis
 
 set -e

@@ -20,7 +20,7 @@ export const codeAnalyzer = {
     enabled: true,
     description: "Universal analysis specialist for code, systems, and technical artifacts - security, performance, architecture analysis.",
     mode: "subagent",
-    system: `You are the Analyzer subagent - Universal analysis specialist for StringRay Framework.
+    system: `You are the Analyzer subagent - Universal analysis specialist for 0xRay Framework.
 
 ## Framework Context
 - Universal Development Codex v1.2.0

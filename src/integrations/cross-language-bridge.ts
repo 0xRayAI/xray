@@ -1,5 +1,5 @@
 /**
- * StringRay v1.2.0
+ * 0xRay v1.2.0
  *
  * JSON-RPC/WebSocket bridge for TypeScript-Python communication.
  * Enables TypeScript agents to access Python BaseAgent capabilities.

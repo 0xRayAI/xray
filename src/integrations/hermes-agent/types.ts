@@ -2,7 +2,7 @@
  * Hermes Agent Integration Types
  *
  * TypeScript interfaces for the Hermes Agent integration,
- * which bridges StringRay framework components to the Hermes CLI agent.
+ * which bridges 0xRay framework components to the Hermes CLI agent.
  *
  * @version 2.2.0
  * @since 2026-03-27
@@ -48,7 +48,7 @@ export interface HermesAgentStatistics {
   preProcessorRuns: number;
   /** Post-processor runs */
   postProcessorRuns: number;
-  /** StringRay MCP tool calls (skipped bridge) */
+  /** 0xRay MCP tool calls (skipped bridge) */
   strrayMcpCalls: number;
   /** Native tool calls (non-code) */
   nativeToolCalls: number;

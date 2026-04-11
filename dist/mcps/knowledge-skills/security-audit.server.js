@@ -1,5 +1,5 @@
 /**
- * StrRay Security Audit MCP Server
+ * 0xRay Security Audit MCP Server
  *
  * Knowledge skill for comprehensive security analysis, vulnerability assessment,
  * and compliance validation - ensures production-ready security posture
@@ -10,7 +10,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-class StrRaySecurityAuditServer {
+class StringRaySecurityAuditServer {
     server;
     constructor() {
         this.server = new Server({
@@ -766,8 +766,8 @@ class StrRaySecurityAuditServer {
 }
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRaySecurityAuditServer();
+    const server = new StringRaySecurityAuditServer();
     server.run().catch(() => { });
 }
-export { StrRaySecurityAuditServer };
+export { StringRaySecurityAuditServer };
 //# sourceMappingURL=security-audit.server.js.map

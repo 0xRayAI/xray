@@ -1,7 +1,7 @@
 /**
- * StringRay Integration Layer
+ * 0xRay Integration Layer
  *
- * Provides generic connectors for integrating StringRay's PostProcessor
+ * Provides generic connectors for integrating 0xRay's PostProcessor
  * with external applications and frameworks.
  *
  * This is framework-agnostic - works with Express, Fastify, Koa, etc.
@@ -22,7 +22,7 @@ export type { WebhookConfig, WebhookEvent } from './triggers/WebhookTrigger.js';
 export type { APIConfig, APIRequest } from './triggers/APITrigger.js';
 
 /**
- * Generic StringRay integration for any external application
+ * Generic 0xRay integration for any external application
  * 
  * Provides:
  * - Webhook receivers (GitHub, GitLab, Bitbucket, Stripe)

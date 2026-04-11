@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-describe("StringRay Framework - End-to-End Orchestration Integration", () => {
+describe("0xRay Framework - End-to-End Orchestration Integration", () => {
   describe("Orchestration Engine", () => {
     it("should orchestrate single-agent operations", async () => {
       // This test validates that simple operations use single-agent orchestration

@@ -1,5 +1,5 @@
 /**
- * StrRay Project Analysis MCP Server
+ * 0xRay Project Analysis MCP Server
  *
  * Knowledge skill for project structure analysis, complexity assessment,
  * and pattern recognition - provides deep project intelligence
@@ -36,7 +36,7 @@ interface ComplexityAnalysis {
   };
 }
 
-class StrRayProjectAnalysisServer {
+class StringRayProjectAnalysisServer {
   private server: Server;
 
   constructor() {
@@ -948,8 +948,8 @@ class StrRayProjectAnalysisServer {
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayProjectAnalysisServer();
+  const server = new StringRayProjectAnalysisServer();
   server.run().catch((error) => frameworkLogger.log("mcps/project-analysis", "run", "error", { error: String(error) }));
 }
 
-export default StrRayProjectAnalysisServer;
+export default StringRayProjectAnalysisServer;

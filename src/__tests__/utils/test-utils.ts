@@ -1,5 +1,5 @@
 /**
- * StringRay Framework Test Utilities
+ * 0xRay Framework Test Utilities
  * Standardized mocking and test setup utilities
  */
 

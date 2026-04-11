@@ -1,5 +1,5 @@
 /**
- * StrRay Security Audit MCP Server
+ * 0xRay Security Audit MCP Server
  *
  * Knowledge skill for comprehensive security analysis, vulnerability assessment,
  * and compliance validation - ensures production-ready security posture
@@ -58,7 +58,7 @@ interface SecurityAuditReport {
   };
 }
 
-class StrRaySecurityAuditServer {
+class StringRaySecurityAuditServer {
   private server: Server;
 
   constructor() {
@@ -1086,8 +1086,8 @@ class StrRaySecurityAuditServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRaySecurityAuditServer();
+  const server = new StringRaySecurityAuditServer();
   server.run().catch(() => {});
 }
 
-export { StrRaySecurityAuditServer };
+export { StringRaySecurityAuditServer };

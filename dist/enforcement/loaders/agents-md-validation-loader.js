@@ -214,8 +214,8 @@ export class AgentsMdValidationLoader extends BaseLoader {
             const content = await this.readFile(this.agentsPath);
             const missingSections = [];
             // Check for required sections
-            if (!content.includes("# StringRay Agents")) {
-                missingSections.push("Main title (StringRay Agents)");
+            if (!content.includes("# 0xRay Agents")) {
+                missingSections.push("Main title (0xRay Agents)");
             }
             if (!content.includes("Available Agents")) {
                 missingSections.push("Available Agents section");

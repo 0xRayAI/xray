@@ -163,7 +163,7 @@ describe("SimplePatternAnalyzer", () => {
 
     const report = await analyzer.generateReport();
 
-    expect(report).toContain("StringRay Pattern Analytics Report");
+    expect(report).toContain("0xRay Pattern Analytics Report");
     expect(report).toContain("Analyzed:");
   });
 

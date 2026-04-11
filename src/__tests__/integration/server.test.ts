@@ -58,7 +58,7 @@ const createTestServer = () => {
   // API endpoints
   app.get("/api/status", (req, res) => {
     res.json({
-      framework: "StringRay",
+      framework: "0xRay",
       version: "1.15.27",
       status: "active",
       agents: 8,

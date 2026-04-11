@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Memory Health Dashboard
-echo "🧠 StrRay Framework - Memory Health Dashboard"
+echo "🧠 0xRay Framework - Memory Health Dashboard"
 echo "=============================================="
 
 # Get current memory status

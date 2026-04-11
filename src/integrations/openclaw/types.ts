@@ -2,7 +2,7 @@
  * OpenClaw Integration Types
  *
  * TypeScript interfaces for OpenClaw Gateway Protocol v3
- * and StringRay integration components.
+ * and 0xRay integration components.
  *
  * @version 1.0.0
  * @since 2026-03-14
@@ -131,11 +131,11 @@ export interface OpenClawClientConfig {
 }
 
 // ============================================================================
-// StringRay API Server Types
+// 0xRay API Server Types
 // ============================================================================
 
 /**
- * StringRay API server configuration
+ * 0xRay API server configuration
  */
 export interface StringRayAPIServerConfig {
   port: number;
@@ -254,11 +254,11 @@ export interface SkillExecutionResponse {
 }
 
 // ============================================================================
-// StringRay Tool Hook Types
+// 0xRay Tool Hook Types
 // ============================================================================
 
 /**
- * Tool execution event from StringRay
+ * Tool execution event from 0xRay
  */
 export interface ToolExecutionEvent {
   toolName: string;
@@ -319,7 +319,7 @@ export interface OpenClawIntegrationConfig {
   maxReconnectAttempts: number;
   reconnectDelay: number;
   
-  // StringRay API Server
+  // 0xRay API Server
   apiServer: {
     enabled: boolean;
     port: number;
@@ -397,7 +397,7 @@ export enum OpenClawErrorCode {
   SKILL_LOAD_FAILED = 'SKILL_LOAD_FAILED',
   SKILL_EXECUTION_FAILED = 'SKILL_EXECUTION_FAILED',
   
-  // StringRay errors
+  // 0xRay errors
   STRINGRAY_UNAVAILABLE = 'STRINGRAY_UNAVAILABLE',
   STRINGRAY_TIMEOUT = 'STRINGRAY_TIMEOUT',
   STRINGRAY_ERROR = 'STRINGRAY_ERROR',

@@ -1,4 +1,4 @@
-# StrRay Framework - Production Monitoring Configuration
+# 0xRay Framework - Production Monitoring Configuration
 
 # Prometheus Configuration
 global:
@@ -62,5 +62,5 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "StrRay Framework is down"
-          description: "StrRay Framework has been down for more than 1 minute"
+          summary: "0xRay Framework is down"
+          description: "0xRay Framework has been down for more than 1 minute"

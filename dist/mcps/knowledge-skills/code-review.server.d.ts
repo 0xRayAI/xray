@@ -1,10 +1,10 @@
 /**
- * StrRay Code Review MCP Server
+ * 0xRay Code Review MCP Server
  *
  * Knowledge skill for automated code review, quality assessment,
  * and best practices validation - provides comprehensive code quality analysis
  */
-declare class StrRayCodeReviewServer {
+declare class StringRayCodeReviewServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -28,5 +28,5 @@ declare class StrRayCodeReviewServer {
     private calculateComplianceScore;
     run(): Promise<void>;
 }
-export { StrRayCodeReviewServer };
+export { StringRayCodeReviewServer };
 //# sourceMappingURL=code-review.server.d.ts.map

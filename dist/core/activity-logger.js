@@ -1,7 +1,7 @@
 /**
  * Activity Logger
  *
- * Comprehensive logging for all StringRay activities including:
+ * Comprehensive logging for all 0xRay activities including:
  * - Framework operations
  * - Development sessions
  * - Script executions

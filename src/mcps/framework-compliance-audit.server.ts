@@ -1,5 +1,5 @@
 /**
- * StrRay Framework Compliance Audit MCP Server
+ * 0xRay Framework Compliance Audit MCP Server
  *
  * Comprehensive validation of all framework components and Universal Development Codex compliance
  */
@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-class StrRayFrameworkComplianceAuditServer {
+class StringRayFrameworkComplianceAuditServer {
   private server: Server;
 
   constructor() {
@@ -34,7 +34,7 @@ class StrRayFrameworkComplianceAuditServer {
       "framework-compliance-audit.server",
       "-strray-framework-compliance-audit-mcp-server-init",
       "info",
-      { message: "StrRay Framework Compliance Audit MCP Server initialized" },
+      { message: "0xRay Framework Compliance Audit MCP Server initialized" },
     );
   }
 
@@ -183,7 +183,7 @@ class StrRayFrameworkComplianceAuditServer {
       );
     }
 
-    const response = `📋 StrRay Framework Compliance Audit Results
+    const response = `📋 0xRay Framework Compliance Audit Results
 
 ${auditResults.summary}
 
@@ -617,15 +617,15 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
       "framework-compliance-audit.server",
       "-strray-framework-compliance-audit-mcp-server-star",
       "info",
-      { message: "StrRay Framework Compliance Audit MCP Server started" },
+      { message: "0xRay Framework Compliance Audit MCP Server started" },
     );
   }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayFrameworkComplianceAuditServer();
+  const server = new StringRayFrameworkComplianceAuditServer();
   server.run().catch((error) => frameworkLogger.log("mcps/framework-compliance-audit", "run", "error", { error: String(error) }));
 }
 
-export { StrRayFrameworkComplianceAuditServer };
+export { StringRayFrameworkComplianceAuditServer };

@@ -1,5 +1,5 @@
 /**
- * StrRay Orchestrator MCP Server
+ * 0xRay Orchestrator MCP Server
  *
  * This is a re-export from the new modular structure.
  * For the full implementation, see: src/mcps/orchestrator/

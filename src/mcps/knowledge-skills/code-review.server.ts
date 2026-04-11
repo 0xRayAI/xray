@@ -1,5 +1,5 @@
 /**
- * StrRay Code Review MCP Server
+ * 0xRay Code Review MCP Server
  *
  * Knowledge skill for automated code review, quality assessment,
  * and best practices validation - provides comprehensive code quality analysis
@@ -42,7 +42,7 @@ interface CodeMetrics {
   testCoverage?: number;
 }
 
-class StrRayCodeReviewServer {
+class StringRayCodeReviewServer {
   private server: Server;
 
   constructor() {
@@ -1025,8 +1025,8 @@ class StrRayCodeReviewServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayCodeReviewServer();
+  const server = new StringRayCodeReviewServer();
   server.run().catch(() => {});
 }
 
-export { StrRayCodeReviewServer };
+export { StringRayCodeReviewServer };

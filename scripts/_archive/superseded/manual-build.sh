@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Manual Build Script for StringRay Framework
+# Manual Build Script for 0xRay Framework
 echo "🔨 Starting Manual Build Process..."
 
 # Create dist directory

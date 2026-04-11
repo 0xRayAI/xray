@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "=== StrRay Framework Plugin Testing and Validation Process ==="
+echo "=== 0xRay Framework Plugin Testing and Validation Process ==="
 echo "Testing Date: $(date)"
 echo "Node Version: $(node --version)"
 echo "NPM Version: $(npm --version)"
@@ -589,6 +589,6 @@ fi
 echo ""
 echo "=== DEPLOYMENT READINESS ASSESSMENT COMPLETE ==="
 echo ""
-echo "🎉 StrRay Framework Plugin Testing Complete"
+echo "🎉 0xRay Framework Plugin Testing Complete"
 echo ""
 echo "Test completed at: $(date)"

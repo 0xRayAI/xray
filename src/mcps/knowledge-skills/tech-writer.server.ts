@@ -1,5 +1,5 @@
 /**
- * StrRay Documentation Generation MCP Server
+ * 0xRay Documentation Generation MCP Server
  *
  * Knowledge skill for automated documentation creation, API docs generation,
  * code documentation maintenance, and technical writing assistance
@@ -114,7 +114,7 @@ interface ErrorCode {
   resolution: string;
 }
 
-class StrRayDocumentationGenerationServer {
+class StringRayDocumentationGenerationServer {
   private server: Server;
 
   constructor() {
@@ -1585,8 +1585,8 @@ class StrRayDocumentationGenerationServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayDocumentationGenerationServer();
+  const server = new StringRayDocumentationGenerationServer();
   server.run().catch(() => {});
 }
 
-export { StrRayDocumentationGenerationServer };
+export { StringRayDocumentationGenerationServer };

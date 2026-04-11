@@ -2,7 +2,7 @@
  * Base Integration Class
  *
  * Abstract base class providing common lifecycle management, event emission,
- * configuration handling, and logging for all StringRay integrations.
+ * configuration handling, and logging for all 0xRay integrations.
  *
  * @version 1.0.0
  * @since 2026-03-15
@@ -11,7 +11,7 @@ import { EventEmitter } from "events";
 import type { LogStatus } from "../../core/framework-logger.js";
 import { type IntegrationConfig, type IntegrationStatus, type IntegrationStats, type HealthResult, type IntegrationEvent, type IntegrationEventType, type IIntegration, type IEventedIntegration, type LogLevel } from "./types.js";
 /**
- * Abstract base class for all StringRay integrations
+ * Abstract base class for all 0xRay integrations
  *
  * Provides:
  * - Lifecycle management (initialize/shutdown)

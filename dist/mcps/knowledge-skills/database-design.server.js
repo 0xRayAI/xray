@@ -1,5 +1,5 @@
 /**
- * StrRay Database Design MCP Server
+ * 0xRay Database Design MCP Server
  *
  * Knowledge skill for database architecture, schema optimization,
  * query performance analysis, and data modeling best practices
@@ -10,7 +10,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-class StrRayDatabaseDesignServer {
+class StringRayDatabaseDesignServer {
     server;
     constructor() {
         this.server = new Server({
@@ -815,8 +815,8 @@ class StrRayDatabaseDesignServer {
 }
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayDatabaseDesignServer();
+    const server = new StringRayDatabaseDesignServer();
     server.run().catch(() => { });
 }
-export { StrRayDatabaseDesignServer };
+export { StringRayDatabaseDesignServer };
 //# sourceMappingURL=database-design.server.js.map

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StringRay Framework - Documentation Consolidation Script
+# 0xRay Framework - Documentation Consolidation Script
 # Consolidates duplicate documentation files and removes obsolete content
 
 set -e

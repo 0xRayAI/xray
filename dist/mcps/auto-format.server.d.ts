@@ -1,9 +1,9 @@
 /**
- * StrRay Auto Format MCP Server
+ * 0xRay Auto Format MCP Server
  *
  * Automated code formatting hook with Prettier and framework-specific formatters
  */
-declare class StrRayAutoFormatServer {
+declare class StringRayAutoFormatServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -16,5 +16,5 @@ declare class StrRayAutoFormatServer {
     private generateFormatSummary;
     run(): Promise<void>;
 }
-export { StrRayAutoFormatServer };
+export { StringRayAutoFormatServer };
 //# sourceMappingURL=auto-format.server.d.ts.map

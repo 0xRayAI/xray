@@ -1,8 +1,10 @@
 ---
 name: sales-automator
-description: 'Draft cold emails, follow-ups, and proposal templates. Creates
+description: 'Draft cold emails, follow-ups, and proposal templates. Creates pricing pages, case studies, and sales scripts. Use PROACTIVELY for sales outreach or lead nurturing. '
+risk: unknown
 source: community
 source_name: antigravity
+date_added: '2026-02-27'
 attribution: |
   Originally from https://github.com/sickn33/antigravity-awesome-skills
   License: MIT

@@ -70,7 +70,7 @@ export class OrchestratorServer {
     this.setupToolHandlers();
 
     frameworkLogger.log('orchestrator.server', 'initialize', 'info', {
-      message: 'StringRay Orchestrator MCP Server initialized',
+      message: '0xRay Orchestrator MCP Server initialized',
     });
   }
 
@@ -258,7 +258,7 @@ export class OrchestratorServer {
     await this.server.connect(transport);
     
     await frameworkLogger.log('orchestrator.server', 'start', 'info', {
-      message: 'StringRay Orchestrator MCP Server started',
+      message: '0xRay Orchestrator MCP Server started',
     });
   }
 
@@ -267,7 +267,7 @@ export class OrchestratorServer {
    */
   async stop(): Promise<void> {
     await frameworkLogger.log('orchestrator.server', 'shutdown', 'info', {
-      message: 'StringRay Orchestrator MCP Server shutting down',
+      message: '0xRay Orchestrator MCP Server shutting down',
     });
     await this.server.close();
   }

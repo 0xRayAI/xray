@@ -12,7 +12,7 @@
  * @blocking true (blocks publish on violations)
  *
  * @version 1.0.0
- * @framework StringRay 1.15.41
+ * @framework 0xRay 1.15.41
  */
 import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext, ProcessorResult } from "../processor-types.js";

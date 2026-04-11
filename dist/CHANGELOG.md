@@ -583,7 +583,7 @@ Plugin system enhancements - hot-reload, npm install, example plugin
 - feat: record routing outcomes on every tool call in both plugins (9bace72fd)
 - feat: auto inference tuning every 100 tool calls in both plugins (c5fdfc1f5)
 - feat: activate inference feedback loop — analytics pipeline now writes back (f2a3f34ef)
-- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+- feat: decouple 0xRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
 
 ### 🐛 Bug Fixes
 - fix: security hardening, path traversal, code injection, auth bypass, repo hygiene, test cleanup (#13) (#13) (0af058e66)
@@ -630,7 +630,7 @@ Plugin system enhancements - hot-reload, npm install, example plugin
 ### 🔄 Changes
 
 ### ✨ Features
-- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+- feat: decouple 0xRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
 
 ### 🐛 Bug Fixes
 - fix: resolve config-paths.js import failure from .opencode/plugins/ (a365843e9)
@@ -664,7 +664,7 @@ Plugin system enhancements - hot-reload, npm install, example plugin
 ### 🔄 Changes
 
 ### ✨ Features
-- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+- feat: decouple 0xRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
 
 ### 🐛 Bug Fixes
 - fix: UVM version corruption, delete 42 stub test files (509b5ac39)
@@ -693,7 +693,7 @@ Plugin system enhancements - hot-reload, npm install, example plugin
 ### 🔄 Changes
 
 ### ✨ Features
-- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+- feat: decouple 0xRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
 
 ### 🐛 Bug Fixes
 - fix: post-merge cleanup — deps, index.ts, pipelines, root artifacts (bcbc31b01)
@@ -719,7 +719,7 @@ Plugin system enhancements - hot-reload, npm install, example plugin
 ### 🔄 Changes
 
 ### ✨ Features
-- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+- feat: decouple 0xRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
 
 ### 🐛 Bug Fixes
 - fix: post-merge cleanup — deps, index.ts, pipelines, root artifacts (bcbc31b01)
@@ -740,7 +740,7 @@ Plugin system enhancements - hot-reload, npm install, example plugin
 ### 🔄 Changes
 
 ### ✨ Features
-- feat: decouple StringRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
+- feat: decouple 0xRay from OpenCode — bridge, codex formatter, codex-gap processors (#10) (a24f3b406)
 
 ### 🐛 Bug Fixes
 - fix: post-merge PR #10 review issues — bugs, security, dead code, version (#11) (ef32821f2)

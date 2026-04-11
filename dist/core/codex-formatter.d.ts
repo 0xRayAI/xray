@@ -1,7 +1,7 @@
 /**
  * Codex Formatter — Standalone Codex-to-Prompt Converter
  *
- * Converts StringRay's Universal Development Codex terms into
+ * Converts 0xRay's Universal Development Codex terms into
  * formatted system prompt text. No OpenCode dependency, no plugin
  * API, no framework imports. Pure input/output.
  *

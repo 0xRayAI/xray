@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - Analyzer Agent Integration
+# 0xRay Framework - Analyzer Agent Integration
 # Implements the analyzer agent that monitors logs and writes to REFACTORING_LOG.md
 
 set -e

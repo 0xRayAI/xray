@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# StringRay Full Plugin Test (No Timeout)
-# Runs the complete StringRay plugin initialization without any timeouts
+# 0xRay Full Plugin Test (No Timeout)
+# Runs the complete 0xRay plugin initialization without any timeouts
 
 echo "🚀 STRINGRAY FULL PLUGIN TEST (NO TIMEOUT)"
 echo "=========================================="
-echo "Running complete StringRay framework initialization..."
+echo "Running complete 0xRay framework initialization..."
 echo "This may take several minutes due to enterprise component loading."
 echo ""
 

@@ -1,10 +1,10 @@
 /**
- * StrRay UI/UX Design MCP Server
+ * 0xRay UI/UX Design MCP Server
  *
  * Knowledge skill for user interface and user experience design,
  * component patterns, accessibility compliance, and design system guidance
  */
-declare class StrRayUIUXDesignServer {
+declare class StringRayUIUXDesignServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -66,5 +66,5 @@ declare class StrRayUIUXDesignServer {
     private recommendImages;
     run(): Promise<void>;
 }
-export { StrRayUIUXDesignServer };
+export { StringRayUIUXDesignServer };
 //# sourceMappingURL=ui-ux-design.server.d.ts.map

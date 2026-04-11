@@ -1,12 +1,12 @@
 /**
- * StrRay Codex Injection Plugin for OpenCode
+ * 0xRay Codex Injection Plugin for OpenCode
  *
  * This plugin automatically injects the Universal Development Codex v1.2.0
  * into the system prompt for all AI agents, ensuring codex terms are
  * consistently enforced across the entire development session.
  *
  * @version 1.0.0
- * @author StrRay Framework
+ * @author 0xRay Framework
  */
 
 import * as fs from "fs";
@@ -106,7 +106,7 @@ let StrRayStateManager: any;
 let featuresConfigLoader: any;
 let detectTaskType: any;
 
-async function loadStrRayComponents() {
+async function loadStringRayComponents() {
   if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
 
   const logger = await getOrCreateLogger(process.cwd());
@@ -271,7 +271,7 @@ function getFrameworkVersion(): string {
  */
 function getFrameworkIdentity(): string {
   const version = getFrameworkVersion();
-  return `StringRay Framework v${version} - AI Orchestration
+  return `0xRay Framework v${version} - AI Orchestration
 
 🔧 Core: enforcer, architect, orchestrator, code-reviewer, refactorer, testing-lead
 📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
@@ -547,7 +547,7 @@ function formatCodexContext(contexts: CodexContextEntry[]): string {
 
   for (const context of contexts) {
     parts.push(
-      `# StrRay Codex Context v${context.metadata.version}`,
+      `# 0xRay Codex Context v${context.metadata.version}`,
       `Source: ${context.source}`,
       `Terms Loaded: ${context.metadata.termCount}`,
       `Loaded At: ${context.metadata.loadedAt}`,
@@ -674,7 +674,7 @@ export default async function strrayCodexPlugin(input: {
       const logger = await getOrCreateLogger(directory);
       logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
       logger.log(`📥 Full input: ${JSON.stringify(input)}`);
-      await loadStrRayComponents();
+      await loadStringRayComponents();
 
       if (featuresConfigLoader && detectTaskType) {
         try {
@@ -721,10 +721,10 @@ export default async function strrayCodexPlugin(input: {
         // Check if framework is already booted (global state exists)
         const globalState = (globalThis as any).strRayStateManager;
         if (globalState) {
-          logger.log("🔗 Connecting to booted StrRay framework");
+          logger.log("🔗 Connecting to booted 0xRay framework");
           stateManager = globalState;
         } else {
-          logger.log("🚀 StrRay framework not booted, initializing...");
+          logger.log("🚀 0xRay framework not booted, initializing...");
           // Create new state manager (framework not booted yet)
           stateManager = new StrRayStateManager(
             await resolveStateDir(directory),
@@ -888,7 +888,7 @@ export default async function strrayCodexPlugin(input: {
       _output: any,
     ) => {
       const logger = await getOrCreateLogger(directory);
-      await loadStrRayComponents();
+      await loadStringRayComponents();
 
       const { tool, args, result } = input;
 
@@ -1073,10 +1073,10 @@ export default async function strrayCodexPlugin(input: {
 
       const logger = await getOrCreateLogger(directory);
       logger.log(
-        "🔧 Plugin config hook triggered - initializing StrRay integration",
+        "🔧 Plugin config hook triggered - initializing 0xRay integration",
       );
 
-      // Initialize StrRay framework
+      // Initialize 0xRay framework
       // Primary: project .opencode/init.sh (copied by postinstall)
       // Fallback: package .opencode/init.sh (works when postinstall skips for Hermes consumers)
       let initScriptPath = path.join(directory, ".opencode", "init.sh");
@@ -1095,7 +1095,7 @@ export default async function strrayCodexPlugin(input: {
           if (stderr) {
             logger.error(`Framework init error: ${stderr}`);
           } else {
-            logger.log("✅ StrRay Framework initialized successfully");
+            logger.log("✅ 0xRay Framework initialized successfully");
           }
         } catch (error: unknown) {
           logger.error("Framework initialization failed", error);

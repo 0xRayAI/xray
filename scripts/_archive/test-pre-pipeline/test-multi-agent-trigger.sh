@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# StrRay Framework - Multi-Agent Orchestration Trigger Test
+# 0xRay Framework - Multi-Agent Orchestration Trigger Test
 # Tests that multi-agent orchestration is properly enabled and can be triggered
 
 set -e
 
-echo "🚀 StrRay Framework - Multi-Agent Orchestration Trigger Test"
+echo "🚀 0xRay Framework - Multi-Agent Orchestration Trigger Test"
 echo "============================================================"
 
 # Function to log with timestamp

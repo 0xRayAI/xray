@@ -1,5 +1,5 @@
 /**
- * StringRay Lean System Prompt Generator
+ * 0xRay Lean System Prompt Generator
  *
  * Generates optimized, token-efficient system prompts by implementing
  * selective injection and smart compression strategies.

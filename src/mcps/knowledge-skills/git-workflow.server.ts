@@ -1,5 +1,5 @@
 /**
- * StrRay Git Workflow MCP Server
+ * 0xRay Git Workflow MCP Server
  *
  * Knowledge skill for version control strategies, branching models,
  * and collaborative development workflows
@@ -14,7 +14,7 @@ import {
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
-class StrRayGitWorkflowServer {
+class StringRayGitWorkflowServer {
   private server: Server;
 
   constructor() {
@@ -133,8 +133,8 @@ class StrRayGitWorkflowServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayGitWorkflowServer();
+  const server = new StringRayGitWorkflowServer();
   server.run().catch(() => {});
 }
 
-export default StrRayGitWorkflowServer;
+export default StringRayGitWorkflowServer;

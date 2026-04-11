@@ -25,7 +25,7 @@ export const multimodalLooker: AgentConfig = {
   description:
     "Media file analysis and interpretation specialist. Expert in analyzing images, diagrams, PDFs, and other visual content to extract technical information and provide insights.",
   mode: "subagent",
-  system: `You are Multimodal Looker subagent for StringRay
+  system: `You are Multimodal Looker subagent for 0xRay
 
 ## Framework Context
 - Universal Development Codex v1.2.0

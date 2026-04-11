@@ -1,5 +1,5 @@
 /**
- * StrRay Testing Best Practices MCP Server
+ * 0xRay Testing Best Practices MCP Server
  *
  * Knowledge skill for comprehensive testing strategies, TDD/BDD implementation,
  * test coverage optimization, and automated testing workflows
@@ -53,7 +53,7 @@ interface TestRecommendation {
   tools: string[];
 }
 
-class StrRayTestingBestPracticesServer {
+class StringRayTestingBestPracticesServer {
   private server: Server;
 
   constructor() {
@@ -1077,8 +1077,8 @@ class StrRayTestingBestPracticesServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayTestingBestPracticesServer();
+  const server = new StringRayTestingBestPracticesServer();
   server.run().catch(() => {});
 }
 
-export { StrRayTestingBestPracticesServer };
+export { StringRayTestingBestPracticesServer };

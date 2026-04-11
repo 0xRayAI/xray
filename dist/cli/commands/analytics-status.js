@@ -13,7 +13,7 @@ export const analyticsStatusCommand = program
     .description("Show current analytics consent status")
     .option("-v, --verbose", "Show detailed information", false)
     .action(async (options) => {
-    console.log("📊 StringRay Central Analytics Status\n");
+    console.log("📊 0xRay Central Analytics Status\n");
     try {
         const consentManager = new ConsentManager();
         const status = await consentManager.getStatus();

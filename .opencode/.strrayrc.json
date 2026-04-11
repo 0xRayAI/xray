@@ -1,6 +1,6 @@
 {
   "framework": {
-    "name": "StringRay Framework",
+    "name": "0xRay Framework",
     "version": "1.15.27",
     "buildMode": "production",
     "logLevel": "info"

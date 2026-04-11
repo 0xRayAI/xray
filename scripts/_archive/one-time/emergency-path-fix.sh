@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# StringRay Framework Path Resolution Crisis Fixer
+# 0xRay Framework Path Resolution Crisis Fixer
 # Quick resolution for 95% of scripts with path/module issues
-# Author: StringRay Enforcer Agent
+# Author: 0xRay Enforcer Agent
 # Version: 1.1.1
 # Date: 2026-01-28
 
@@ -74,7 +74,7 @@ if [[ "${1:-fix}" == "all" ]]; then
     fix_all_script_paths
 fi
 
-log "🚀 StringRay Framework - Emergency Path Resolution"
+log "🚀 0xRay Framework - Emergency Path Resolution"
 log "=========================================="
 
 if [[ $fixes -gt 0 ]]; then

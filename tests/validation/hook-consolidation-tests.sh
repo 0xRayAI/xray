@@ -1,5 +1,5 @@
 #!/bin/bash
-# StrRay Framework - Hook Consolidation Tests
+# 0xRay Framework - Hook Consolidation Tests
 # Tests hook system consolidation and backward compatibility
 
 set -e

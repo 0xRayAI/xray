@@ -83,7 +83,7 @@ program
       console.log("");
       console.log("📋 Next steps:");
       console.log("1. Restart OpenCode to load the plugin");
-      console.log('2. Run "opencode agent list" to see StrRay agents');
+      console.log('2. Run "opencode agent list" to see 0xRay agents');
       console.log('3. Try "@architect analyze this code" or "@enforcer validate this code" to test the plugin');
     } catch (error) {
       console.error(

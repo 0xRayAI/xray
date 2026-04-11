@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# StringRay AI v1.3.4 - Advanced Profiling Integration Demo
+# 0xRay AI v1.3.4 - Advanced Profiling Integration Demo
 # Demonstrates comprehensive agent performance profiling and monitoring
 
 set -e
 
-echo "🚀 StrRay Framework - Advanced Profiling Integration Demo"
+echo "🚀 0xRay Framework - Advanced Profiling Integration Demo"
 echo "======================================================"
 
 # Colors for output
@@ -180,7 +180,7 @@ create_validation_script() {
     cat > validate-profiling.sh << 'EOF'
 #!/bin/bash
 
-echo "🔍 StrRay Framework - Profiling System Validation"
+echo "🔍 0xRay Framework - Profiling System Validation"
 echo "==============================================="
 
 # Colors
@@ -253,7 +253,7 @@ create_dashboard_script() {
     cat > profiling-dashboard.sh << 'EOF'
 #!/bin/bash
 
-echo "📊 StrRay Framework - Profiling Performance Dashboard"
+echo "📊 0xRay Framework - Profiling Performance Dashboard"
 echo "=================================================="
 
 # Colors
@@ -264,7 +264,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 show_dashboard() {
-    echo -e "${BLUE}🚀 StrRay Advanced Profiling Dashboard${NC}"
+    echo -e "${BLUE}🚀 0xRay Advanced Profiling Dashboard${NC}"
     echo "========================================"
 
     # Check if profiling directory exists

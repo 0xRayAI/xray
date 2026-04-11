@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StringRay Model Router Refactoring Script
+# 0xRay Model Router Refactoring Script
 # Replaces all hardcoded model references with dynamic modelRouter calls
 
 # Find all files with hardcoded model references

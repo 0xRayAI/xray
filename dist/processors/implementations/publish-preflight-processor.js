@@ -12,7 +12,7 @@
  * @blocking true (blocks publish on violations)
  *
  * @version 1.0.0
- * @framework StringRay 1.15.41
+ * @framework 0xRay 1.15.41
  */
 import * as fs from "fs";
 import * as path from "path";

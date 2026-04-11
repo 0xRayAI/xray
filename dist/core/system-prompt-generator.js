@@ -1,5 +1,5 @@
 /**
- * StringRay Lean System Prompt Generator
+ * 0xRay Lean System Prompt Generator
  *
  * Generates optimized, token-efficient system prompts by implementing
  * selective injection and smart compression strategies.
@@ -93,7 +93,7 @@ When fixing tests:
  */
 function getLeanWelcomeBanner() {
     const version = getFrameworkVersion();
-    return `StringRay Framework v${version} - AI Orchestration Engine
+    return `0xRay Framework v${version} - AI Orchestration Engine
 
 🔧 Core: enforcer, architect, orchestrator, code-reviewer, refactorer, testing-lead
 📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
@@ -105,7 +105,7 @@ function getLeanWelcomeBanner() {
  * Format critical codex terms for injection
  */
 function formatEssentialTerms() {
-    const parts = ["## Essential StringRay Rules (Blocking Enforcement)"];
+    const parts = ["## Essential 0xRay Rules (Blocking Enforcement)"];
     for (const term of ESSENTIAL_TERMS) {
         const termNum = term.number;
         const zeroTolBadge = term.zeroTolerance ? " ⚠️ ZERO TOLERANCE" : " 🟡 High Priority";
@@ -184,7 +184,7 @@ export async function generateLeanSystemPrompt(config = {}) {
  * Generate compressed codex summary
  */
 function generateCodexSummary(context, maxTokens) {
-    const parts = ["\n## StringRay Codex Summary"];
+    const parts = ["\n## 0xRay Codex Summary"];
     // Add just the most essential metadata
     parts.push(`\nVersion: ${context.version}`);
     parts.push(`Terms: ${context.terms?.size || 0} total`);
@@ -199,7 +199,7 @@ function generateCodexSummary(context, maxTokens) {
  * Absolute minimal fallback prompt
  */
 function generateMinimalFallbackPrompt() {
-    return `StringRay Framework v${getFrameworkVersion()}
+    return `0xRay Framework v${getFrameworkVersion()}
 Essential: Production-ready code, zero-tolerance errors, type safety
 📖: config dir (resolved via config-paths) | AGENTS.md
 `;

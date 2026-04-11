@@ -1,5 +1,5 @@
 /**
- * StrRay Auto Format MCP Server
+ * 0xRay Auto Format MCP Server
  *
  * Automated code formatting hook with Prettier and framework-specific formatters
  */
@@ -9,7 +9,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import { execFileSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
-class StrRayAutoFormatServer {
+class StringRayAutoFormatServer {
     server;
     constructor() {
         this.server = new Server({
@@ -162,7 +162,7 @@ class StrRayAutoFormatServer {
             formatResults.success = false;
             formatResults.errors.push(`Auto-format failed: ${error instanceof Error ? error.message : String(error)}`);
         }
-        const response = `🎨 StrRay Auto Format Results
+        const response = `🎨 0xRay Auto Format Results
 
 ${formatResults.summary}
 
@@ -407,8 +407,8 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 }
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayAutoFormatServer();
+    const server = new StringRayAutoFormatServer();
     server.run().catch((error) => frameworkLogger.log("mcps/auto-format", "run", "error", { error: String(error) }));
 }
-export { StrRayAutoFormatServer };
+export { StringRayAutoFormatServer };
 //# sourceMappingURL=auto-format.server.js.map

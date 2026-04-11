@@ -2,73 +2,25 @@
   "sessions": [],
   "activities": [
     {
-      "timestamp": "2026-04-04T21:32:37.119Z",
-      "id": "act-1775338357119-uquidv",
+      "timestamp": "2026-04-11T16:03:18.924Z",
+      "id": "act-1775923398924-8hd9pr",
       "category": "session",
       "level": "info",
       "action": "session-ended",
       "message": "Activity logging session ended",
-      "sessionId": "session-1775338355810-j3xieb",
+      "sessionId": "session-1775923396798-7gmfix",
       "details": {
-        "duration": 1309
-      }
-    },
-    {
-      "timestamp": "2026-04-06T23:57:04.972Z",
-      "id": "act-1775519824972-pheec2",
-      "category": "session",
-      "level": "info",
-      "action": "session-ended",
-      "message": "Activity logging session ended",
-      "sessionId": "session-1775519824064-udidbg",
-      "details": {
-        "duration": 908
-      }
-    },
-    {
-      "timestamp": "2026-04-07T00:11:04.274Z",
-      "id": "act-1775520664274-5p0ete",
-      "category": "session",
-      "level": "info",
-      "action": "session-ended",
-      "message": "Activity logging session ended",
-      "sessionId": "session-1775520663667-lbyny8",
-      "details": {
-        "duration": 607
-      }
-    },
-    {
-      "timestamp": "2026-04-09T15:18:40.889Z",
-      "id": "act-1775747920889-bwdfwh",
-      "category": "session",
-      "level": "info",
-      "action": "session-ended",
-      "message": "Activity logging session ended",
-      "sessionId": "session-1775747920247-vqgpor",
-      "details": {
-        "duration": 642
-      }
-    },
-    {
-      "timestamp": "2026-04-09T15:20:48.305Z",
-      "id": "act-1775748048305-say7wz",
-      "category": "session",
-      "level": "info",
-      "action": "session-ended",
-      "message": "Activity logging session ended",
-      "sessionId": "session-1775748046657-yss2cz",
-      "details": {
-        "duration": 1648
+        "duration": 2126
       }
     }
   ],
   "stats": {
-    "total": 5,
+    "total": 1,
     "byCategory": {
-      "session": 5
+      "session": 1
     },
     "byLevel": {
-      "info": 5
+      "info": 1
     }
   }
 }

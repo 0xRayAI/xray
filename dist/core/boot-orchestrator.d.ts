@@ -99,7 +99,7 @@ export declare class BootOrchestrator {
      */
     executeBootSequence(): Promise<BootResult>;
     /**
-     * Load StringRay configuration from Python ConfigManager
+     * Load 0xRay configuration from Python ConfigManager
      */
     private loadStringRayConfiguration;
 }

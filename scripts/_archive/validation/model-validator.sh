@@ -1,5 +1,5 @@
 #!/bin/bash
-# StrRay Framework - Model Validator
+# 0xRay Framework - Model Validator
 # Validates AI model configurations and availability
 
 set -e
@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 
 CONFIG_FILE="${PROJECT_ROOT}/opencode.json"
 
-echo "🤖 StrRay Model Validator"
+echo "🤖 0xRay Model Validator"
 echo "========================"
 
 # Load configuration

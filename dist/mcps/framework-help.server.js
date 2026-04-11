@@ -21,7 +21,7 @@ class FrameworkHelpServer {
                 tools: [
                     {
                         name: "strray_get_capabilities",
-                        description: "Get comprehensive list of all StringRay framework capabilities, commands, and available tools",
+                        description: "Get comprehensive list of all 0xRay framework capabilities, commands, and available tools",
                         inputSchema: {
                             type: "object",
                             properties: {
@@ -43,7 +43,7 @@ class FrameworkHelpServer {
                     },
                     {
                         name: "strray_get_commands",
-                        description: "Get list of available StringRay commands and their usage",
+                        description: "Get list of available 0xRay commands and their usage",
                         inputSchema: {
                             type: "object",
                             properties: {
@@ -63,7 +63,7 @@ class FrameworkHelpServer {
                     },
                     {
                         name: "strray_explain_capability",
-                        description: "Get detailed explanation of a specific StringRay capability",
+                        description: "Get detailed explanation of a specific 0xRay capability",
                         inputSchema: {
                             type: "object",
                             properties: {
@@ -303,7 +303,7 @@ Lazy-loaded capabilities with on-demand MCP server activation.
         };
         const explanation = explanations[capability] ||
             `**${capability}**
-No detailed explanation available. This capability provides specialized functionality within the StringRay framework. Use @enforcer or check the framework documentation for more details.`;
+No detailed explanation available. This capability provides specialized functionality within the 0xRay framework. Use @enforcer or check the framework documentation for more details.`;
         return {
             content: [
                 {
@@ -315,7 +315,7 @@ No detailed explanation available. This capability provides specialized function
     }
     generateCommandList(capabilities) {
         return `
-**StringRay Framework Commands:**
+**0xRay Framework Commands:**
 
 **Agent Commands:**
 ${Object.entries(capabilities.agents)
@@ -347,7 +347,7 @@ ${Object.entries(capabilities.reporting)
     generateFullCapabilities(capabilities, format) {
         if (format === "detailed") {
             return `
-**StringRay Framework - Complete Capabilities Overview**
+**0xRay Framework - Complete Capabilities Overview**
 
 **25 Specialized Agents:**
 ${Object.entries(capabilities.agents)
@@ -385,7 +385,7 @@ ${Object.entries(capabilities.reporting)
         }
         else {
             return `
-**StringRay Framework Capabilities:**
+**0xRay Framework Capabilities:**
 
 **25 Agents:** enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, researcher, strategist, seo-consultant, content-creator, growth-strategist, multimodal-looker, frontend-ui-ux-engineer, frontend-engineer, tech-writer, log-monitor, analyzer, backend-engineer, performance-engineer, database-engineer, devops-engineer, mobile-developer, librarian-agents-updater
 
@@ -406,7 +406,7 @@ ${Object.entries(capabilities.reporting)
         }
         const items = Object.entries(categoryData);
         return `
-**StringRay ${category.charAt(0).toUpperCase() + category.slice(1)}:**
+**0xRay ${category.charAt(0).toUpperCase() + category.slice(1)}:**
 
 ${items.map(([name, desc]) => `- **${name}**: ${desc}`).join("\n")}
 
@@ -416,7 +416,7 @@ ${items.map(([name, desc]) => `- **${name}**: ${desc}`).join("\n")}
     async start() {
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        frameworkLogger.log("mcps/framework-help", "start", "info", { message: "StringRay Framework Help Server started" });
+        frameworkLogger.log("mcps/framework-help", "start", "info", { message: "0xRay Framework Help Server started" });
     }
 }
 // Auto-start if this file is run directly - conditional server initialization for development/testing

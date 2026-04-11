@@ -1,13 +1,13 @@
 #!/bin/bash
 # manual-kernel-testing.sh
 # Manual kernel testing script following enforcer reflection requirements
-# Author: StringRay Development Team
+# Author: 0xRay Development Team
 # Version: v1.8.0
 # Last Updated: 2026-03-05
 
 set -e
 
-echo "🧪 StringRay Manual Kernel Testing"
+echo "🧪 0xRay Manual Kernel Testing"
 echo "================================"
 
 # Test Configuration
@@ -251,7 +251,7 @@ EOF
 main() {
   local start_time=$(date +%s)
   
-  echo -e "${GREEN}StringRay Kernel v2.0.0 - Manual Testing${NC}"
+  echo -e "${GREEN}0xRay Kernel v2.0.0 - Manual Testing${NC}"
   echo "================================"
   
   # Check kernel availability

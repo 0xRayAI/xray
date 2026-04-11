@@ -1,7 +1,7 @@
 /**
  * Processor Interface and Base Classes
  *
- * Defines the contract for all processors in the StringRay framework.
+ * Defines the contract for all processors in the 0xRay framework.
  * Replaces the switch statement anti-pattern in ProcessorManager with
  * polymorphic processor classes.
  *

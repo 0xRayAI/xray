@@ -1,7 +1,7 @@
 /**
  * Config Path Resolver
  *
- * Centralizes all StringRay config file path resolution.
+ * Centralizes all 0xRay config file path resolution.
  * Supports STRRAY_CONFIG_DIR env var for custom config roots,
  * making .opencode/ completely optional for environments like Hermes Agent.
  *

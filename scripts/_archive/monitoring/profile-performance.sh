@@ -1,4 +1,4 @@
-# StrRay Framework - Performance Profiling Script
+# 0xRay Framework - Performance Profiling Script
 
 #!/bin/bash
 
@@ -239,7 +239,7 @@ case "${1:-help}" in
         run_ci_gates
         ;;
     "help"|*)
-        echo "StrRay Framework - Performance Profiling Script"
+        echo "0xRay Framework - Performance Profiling Script"
         echo ""
         echo "Usage: $0 [command]"
         echo ""

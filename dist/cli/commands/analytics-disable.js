@@ -1,7 +1,7 @@
 /**
  * Analytics Disable CLI Command
  *
- * Disables StringRay Central Analytics with immediate opt-out
+ * Disables 0xRay Central Analytics with immediate opt-out
  *
  * Usage: npx strray-ai analytics disable
  */
@@ -9,10 +9,10 @@ import { program } from "commander";
 import { ConsentManager } from "../../analytics/consent-manager.js";
 export const analyticsDisableCommand = program
     .command("analytics disable")
-    .description("Disable StringRay Central Analytics (opt-out)")
+    .description("Disable 0xRay Central Analytics (opt-out)")
     .option("-y, --yes", "Skip confirmation prompts", false)
     .action(async (options) => {
-    console.log("🔒 Disabling StringRay Central Analytics...\n");
+    console.log("🔒 Disabling 0xRay Central Analytics...\n");
     try {
         const consentManager = new ConsentManager();
         const currentStatus = await consentManager.initialize();

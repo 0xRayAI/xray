@@ -12,7 +12,7 @@ import { getFrameworkVersion } from "../utils/test-helpers.js";
 // Mock console.log to avoid test output pollution
 vi.spyOn(console, "log").mockImplementation(() => {});
 
-describe("StringRay Codex Parser", () => {
+describe("0xRay Codex Parser", () => {
   describe("detectContentFormat", () => {
     it("should detect JSON format with high confidence", () => {
       const jsonContent = '{"version": "1.0.0", "terms": {}}';

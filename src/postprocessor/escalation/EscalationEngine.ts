@@ -354,7 +354,7 @@ export class EscalationEngine {
       payload: {
         summary: `[${payload.incident.severity.toUpperCase()}] ${payload.incident.impact}`,
         severity: payload.incident.severity === "critical" ? "critical" : "error",
-        source: "StringRay EscalationEngine",
+        source: "0xRay EscalationEngine",
         timestamp: payload.incident.timestamp instanceof Date
           ? payload.incident.timestamp.toISOString()
           : new Date().toISOString(),

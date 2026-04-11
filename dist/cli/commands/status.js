@@ -151,7 +151,7 @@ export function printStatus(report) {
             : "No data";
     console.log("");
     console.log("╔══════════════════════════════════════════════════╗");
-    console.log("║           StringRay Status                      ║");
+    console.log("║           0xRay Status                      ║");
     console.log("╚══════════════════════════════════════════════════╝");
     console.log("");
     console.log(`✅ OpenCode: ${opencodeStatus}`);

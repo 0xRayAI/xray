@@ -1,10 +1,10 @@
 /**
- * StrRay Librarian MCP Server
+ * 0xRay Librarian MCP Server
  *
  * Knowledge skill for codebase documentation lookup, implementation examples,
  * and multi-repo analysis - serves as the universal documentation reference
  *
- * NOTE: Class is named StrRayLibrarianServer but the MCP server name is
+ * NOTE: Class is named StringRayLibrarianServer but the MCP server name is
  * "researcher" for backwards compatibility with existing tool references.
  */
 
@@ -24,7 +24,7 @@ interface SearchResult {
   lineNumbers: number[];
 }
 
-class StrRayLibrarianServer {
+class StringRayLibrarianServer {
   private server: Server;
 
   constructor() {
@@ -495,8 +495,8 @@ class StrRayLibrarianServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayLibrarianServer();
+  const server = new StringRayLibrarianServer();
   server.run().catch((error) => frameworkLogger.log("mcps/researcher", "run", "error", { error: String(error) }));
 }
 
-export { StrRayLibrarianServer };
+export { StringRayLibrarianServer };

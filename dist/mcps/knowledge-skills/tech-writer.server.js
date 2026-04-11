@@ -1,5 +1,5 @@
 /**
- * StrRay Documentation Generation MCP Server
+ * 0xRay Documentation Generation MCP Server
  *
  * Knowledge skill for automated documentation creation, API docs generation,
  * code documentation maintenance, and technical writing assistance
@@ -10,7 +10,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-class StrRayDocumentationGenerationServer {
+class StringRayDocumentationGenerationServer {
     server;
     constructor() {
         this.server = new Server({
@@ -1185,8 +1185,8 @@ class StrRayDocumentationGenerationServer {
 }
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayDocumentationGenerationServer();
+    const server = new StringRayDocumentationGenerationServer();
     server.run().catch(() => { });
 }
-export { StrRayDocumentationGenerationServer };
+export { StringRayDocumentationGenerationServer };
 //# sourceMappingURL=tech-writer.server.js.map

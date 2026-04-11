@@ -1,5 +1,5 @@
 #!/bin/bash
-# StrRay Framework - Configuration Loader
+# 0xRay Framework - Configuration Loader
 # Loads and validates framework configuration with environment-specific overrides
 
 set -e
@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 
 CONFIG_FILE="${PROJECT_ROOT}/.opencode/OpenCode.json"
 
-echo "🔧 StrRay Configuration Loader"
+echo "🔧 0xRay Configuration Loader"
 echo "=============================="
 
 # Validate configuration file exists
@@ -52,7 +52,7 @@ done
 
 echo -e "${GREEN}✓ All required configuration sections present${NC}"
 
-# Validate StrRay agents configuration
+# Validate 0xRay agents configuration
 if ! python3 -c "
 import json
 config = json.load(open('$CONFIG_FILE'))
@@ -69,11 +69,11 @@ if set(enabled) != set(expected_agents):
 
 exit(0)
 " >/dev/null 2>&1; then
-    echo -e "${RED}✗ Invalid StrRay agents configuration${NC}"
+    echo -e "${RED}✗ Invalid 0xRay agents configuration${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✓ StrRay agents configuration valid${NC}"
+echo -e "${GREEN}✓ 0xRay agents configuration valid${NC}"
 
 # Validate model configuration
 if ! python3 -c "
@@ -149,5 +149,5 @@ done
 echo ""
 echo -e "${GREEN}🎉 Configuration validation completed successfully!${NC}"
 echo ""
-echo "StrRay Framework is ready to use."
+echo "0xRay Framework is ready to use."
 echo "Run 'bash .opencode/init.sh' to initialize the framework."

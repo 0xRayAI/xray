@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# StringRay Framework Script Maintenance System
+# 0xRay Framework Script Maintenance System
 # Ensures 95% of scripts have correct paths and are properly maintained
-# Author: StringRay Enforcer Agent
+# Author: 0xRay Enforcer Agent
 # Version: 1.1.1
 # Date: 2026-01-28
 
@@ -182,7 +182,7 @@ check_all_scripts() {
 
 # Main execution
 main() {
-    echo -e "${BLUE}🔧 StringRay Framework - Script Maintenance System${NC}"
+    echo -e "${BLUE}🔧 0xRay Framework - Script Maintenance System${NC}"
     echo -e "${BLUE}=============================================${NC}"
     
     # Phase 1: Systematic audit

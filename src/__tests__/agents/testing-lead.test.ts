@@ -25,7 +25,7 @@ describe("Testing Lead Agent Configuration", () => {
   describe("Description and System Prompt", () => {
     it("should have appropriate test architect description", () => {
       expect(testingLead.description).toContain(
-        "StringRay Framework test architect",
+        "0xRay Framework test architect",
       );
       expect(testingLead.description).toContain("automatic test generation");
       expect(testingLead.description).toContain("coverage optimization");
@@ -34,7 +34,7 @@ describe("Testing Lead Agent Configuration", () => {
 
     it("should have comprehensive test architect system prompt", () => {
       const system = testingLead.system;
-      expect(system).toContain("StringRay Test Architect");
+      expect(system).toContain("0xRay Test Architect");
       expect(system).toContain("comprehensive testing strategy");
       expect(system).toContain("quality assurance");
     });

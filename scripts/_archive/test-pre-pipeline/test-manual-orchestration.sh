@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StringRay Framework - Manual Multi-Agent Orchestration Demo
+# 0xRay Framework - Manual Multi-Agent Orchestration Demo
 # Demonstrates explicit agent coordination for specific tasks
 
 set -e
@@ -81,7 +81,7 @@ manual_orchestration_demo() {
 }
 
 # Main execution
-log "🎯 StringRay Framework - Manual Multi-Agent Orchestration Demo"
+log "🎯 0xRay Framework - Manual Multi-Agent Orchestration Demo"
 log "=========================================================="
 
 log "🔄 AUTOMATED ORCHESTRATION (Previous Demo)"

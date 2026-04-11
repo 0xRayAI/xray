@@ -9,11 +9,11 @@
 
 > **Intelligent Multi-Agent Coordination with 99.6% Systematic Error Prevention**
 
-StringRay extends OpenCode and Hermes with intelligent multi-agent orchestration, Codex compliance validation, and enterprise-grade security. It automatically routes tasks to specialized agents based on complexity and provides systematic error prevention.
+0xRay extends OpenCode and Hermes with intelligent multi-agent orchestration, Codex compliance validation, and enterprise-grade security. It automatically routes tasks to specialized agents based on complexity and provides systematic error prevention.
 
-## What is StringRay?
+## What is 0xRay?
 
-StringRay is a **one-command level-up** for OpenCode. Instead of installing OpenCode first, then adding StringRay, just run:
+0xRay is a **one-command level-up** for OpenCode. Instead of installing OpenCode first, then adding 0xRay, just run:
 
 ```bash
 npx strray-ai install
@@ -22,7 +22,7 @@ npx strray-ai install
 This single command:
 1. Detects if OpenCode is installed
 2. Auto-installs OpenCode if missing
-3. Layers on the full StringRay kernel (Codex, orchestrator, enforcer, processors, MCP, reflections)
+3. Layers on the full 0xRay kernel (Codex, orchestrator, enforcer, processors, MCP, reflections)
 4. Installs 44 framework skills
 5. Sets up the skills registry with 10 curated community sources
 6. Adds CLI commands for agent publishing, skills management, and status
@@ -38,10 +38,10 @@ This single command:
 ## 🚀 Quick Start
 
 ```bash
-# Install StringRay (auto-configures OpenCode on install)
+# Install 0xRay (auto-configures OpenCode on install)
 npm install strray-ai
 
-# That's it! StringRay is now active.
+# That's it! 0xRay is now active.
 # Restart OpenCode or Hermes to load the plugin.
 ```
 
@@ -88,18 +88,18 @@ This installs only the MCP servers - no OpenCode dependency.
 | `@bug-triage-specialist` | Error investigation |
 | `@researcher` | Codebase exploration |
 
-> **Note:** StringRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/master/docs/AGENT_CONFIG.md).
+> **Note:** 0xRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/master/docs/AGENT_CONFIG.md).
 
 [View all 25 agents →](https://github.com/htafolla/stringray/blob/master/AGENTS.md)
 
 ## 📦 OpenClaw Integration
 
-StringRay integrates with **OpenClaw** - a self-hosted AI gateway that connects messaging platforms (WhatsApp, Telegram, Discord, Slack) to AI coding agents.
+0xRay integrates with **OpenClaw** - a self-hosted AI gateway that connects messaging platforms (WhatsApp, Telegram, Discord, Slack) to AI coding agents.
 
 ### What It Does
 
 - **WebSocket Connection**: Connect to OpenClaw Gateway at `ws://127.0.0.1:18789`
-- **Skill Invocation**: OpenClaw skills invoke StringRay agents via HTTP API (port 18431)
+- **Skill Invocation**: OpenClaw skills invoke 0xRay agents via HTTP API (port 18431)
 - **Tool Events**: Forward tool.before/tool.after events to OpenClaw for real-time tracking
 - **Offline Buffering**: Events queued when disconnected, sent on reconnect
 
@@ -124,11 +124,11 @@ See [OpenClaw Integration Guide](src/integrations/openclaw/README.md) for detail
 
 ## 🔮 Hermes Agent Integration
 
-StringRay's MCP servers work as native tools in [Hermes Agent](https://github.com/nilslice/hermes) — a standalone AI coding agent with its own runtime, not dependent on OpenCode or Hermes. This gives you the full StringRay toolset (code analysis, linting, security scanning, orchestration, state management) inside any Hermes session.
+0xRay's MCP servers work as native tools in [Hermes Agent](https://github.com/nilslice/hermes) — a standalone AI coding agent with its own runtime, not dependent on OpenCode or Hermes. This gives you the full 0xRay toolset (code analysis, linting, security scanning, orchestration, state management) inside any Hermes session.
 
 ### What You Get
 
-Hermes discovers 10 StringRay MCP servers automatically. Each server exposes tools that Hermes can call directly — no prompts, no proxies, no agent delegation overhead.
+Hermes discovers 10 0xRay MCP servers automatically. Each server exposes tools that Hermes can call directly — no prompts, no proxies, no agent delegation overhead.
 
 | MCP Server | Tools Exposed | What It Does |
 |-----------|--------------|--------------|
@@ -145,7 +145,7 @@ Hermes discovers 10 StringRay MCP servers automatically. Each server exposes too
 
 ### Setup
 
-1. Install StringRay in your project:
+1. Install 0xRay in your project:
 
 ```bash
 npm install strray-ai
@@ -249,7 +249,7 @@ Once connected, Hermes can use the tools directly in conversation:
 
 ## 🔧 CLI Tools
 
-StringRay provides CLI utilities for managing and monitoring your installation:
+0xRay provides CLI utilities for managing and monitoring your installation:
 
 ```bash
 # Core commands
@@ -276,7 +276,7 @@ npx strray-ai antigravity status       # Show installed skills with licenses
 
 ### Default Configuration
 
-StringRay works out of the box with sensible defaults. The npm postinstall hook automatically sets up:
+0xRay works out of the box with sensible defaults. The npm postinstall hook automatically sets up:
 
 ```
 .opencode/
@@ -331,7 +331,7 @@ See [Configuration Reference](https://github.com/htafolla/stringray/blob/master/
 
 ### Version Pinning
 
-StringRay supports pinning versions for reproducible installations:
+0xRay supports pinning versions for reproducible installations:
 
 ```json
 {
@@ -381,12 +381,12 @@ stringray/
 │   └── jobs/                  # Background job management
 ├── .opencode/                 # OpenCode configuration
 │   ├── agents/               # Agent configs (25 agents)
-│   ├── strray/               # StringRay config
+│   ├── strray/               # 0xRay config
 │   │   ├── codex.json        # 60-term development codex
 │   │   ├── features.json     # Feature flags
 │   │   └── config.json       # Token management
 │   └── hooks/                # Git hooks
-├── skills/                    # StringRay skills
+├── skills/                    # 0xRay skills
 ├── docs/                      # Documentation
 │   ├── reflections/          # Deep technical reflections
 │   └── research/             # Research documents
@@ -411,7 +411,7 @@ stringray/
 
 ## 🔌 Framework Integration
 
-StringRay integrates with your existing infrastructure via webhooks and APIs:
+0xRay integrates with your existing infrastructure via webhooks and APIs:
 
 ```bash
 # CLI tool for integration
@@ -442,7 +442,7 @@ fastify.register(integration.getAPIRouter(), { prefix: '/api/post-process' });
 
 ## 🎯 Skills
 
-StringRay ships with **44 framework skills** and provides a registry of **10 curated community sources** with 170+ additional skills.
+0xRay ships with **44 framework skills** and provides a registry of **10 curated community sources** with 170+ additional skills.
 
 ### Skills Registry
 
@@ -504,7 +504,7 @@ npx strray-ai skill:registry remove --name X
 
 ### Framework Skills (30 Built-in)
 
-StringRay includes 30 core skills for orchestration, compliance, architecture, and more — installed to `.opencode/skills/` automatically.
+0xRay includes 30 core skills for orchestration, compliance, architecture, and more — installed to `.opencode/skills/` automatically.
 
 ## License Information
 
@@ -525,7 +525,7 @@ All community skill sources are properly licensed. License files are in `license
 
 ## 🙏 Support & Star
 
-If StringRay helps you build better software, please consider:
+If 0xRay helps you build better software, please consider:
 
 - ⭐ **Starring the repo** on [GitHub](https://github.com/htafolla/stringray)
 - 📢 **Sharing** with your team

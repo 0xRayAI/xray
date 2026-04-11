@@ -1,7 +1,7 @@
 /**
  * Plugin Manager
  *
- * Core class for managing StringRay plugins.
+ * Core class for managing 0xRay plugins.
  * Handles plugin lifecycle: install, enable, activate, disable, deactivate, uninstall.
  *
  * @version 1.0.0

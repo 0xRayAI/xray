@@ -1,7 +1,7 @@
 /**
  * Agent Resolver
  *
- * Resolves agent configurations from the StringRay registry.
+ * Resolves agent configurations from the 0xRay registry.
  * Used by the integration layer to programmatically access agent configs.
  *
  * @version 1.1.0
@@ -38,7 +38,7 @@ interface AgentRegistry {
 }
 
 /**
- * Resolves an agent configuration by name from the StringRay registry
+ * Resolves an agent configuration by name from the 0xRay registry
  *
  * @param agentName - The name of the agent to resolve
  * @returns The agent configuration object

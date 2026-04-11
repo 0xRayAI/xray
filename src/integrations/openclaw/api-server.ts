@@ -1,8 +1,8 @@
 /**
- * StringRay API Server
+ * 0xRay API Server
  *
- * HTTP API server that OpenClaw skills call to invoke StringRay capabilities.
- * This is the bridge between OpenClaw skills and StringRay.
+ * HTTP API server that OpenClaw skills call to invoke 0xRay capabilities.
+ * This is the bridge between OpenClaw skills and 0xRay.
  *
  * @version 1.0.0
  * @since 2026-03-14
@@ -19,7 +19,7 @@ import {
 } from './types.js';
 
 /**
- * Agent invoker interface - implemented by StringRay
+ * Agent invoker interface - implemented by 0xRay
  */
 export interface AgentInvoker {
   invoke(request: AgentInvokeRequest): Promise<AgentInvokeResponse>;
@@ -27,7 +27,7 @@ export interface AgentInvoker {
 }
 
 /**
- * StringRay API Server
+ * 0xRay API Server
  */
 export class StringRayAPIServer {
   private server: http.Server | null = null;

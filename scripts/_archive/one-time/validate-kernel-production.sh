@@ -1,13 +1,13 @@
 #!/bin/bash
 # validate-kernel-production.sh
 # Production validation for kernel integration
-# Author: StringRay Development Team
+# Author: 0xRay Development Team
 # Version: v1.8.0
 # Last Updated: 2026-03-05
 
 set -e
 
-echo "🔍 StringRay Kernel Production Validation"
+echo "🔍 0xRay Kernel Production Validation"
 echo "================================"
 
 # Configuration
@@ -179,7 +179,7 @@ create_validation_report() {
   
   mkdir -p "$VALIDATION_LOG_DIR"
   
-  echo "# StringRay Kernel Production Validation Report" > "$report_file"
+  echo "# 0xRay Kernel Production Validation Report" > "$report_file"
   echo "" >> "$report_file"
   echo "Generated: $timestamp" >> "$report_file"
   echo "" >> "$report_file"
@@ -195,7 +195,7 @@ create_validation_report() {
 main() {
   local start_time=$(date +%s)
   
-  echo -e "${GREEN}StringRay Kernel Production Validation v1.8.0${NC}"
+  echo -e "${GREEN}0xRay Kernel Production Validation v1.8.0${NC}"
   echo "================================"
   echo ""
   echo -e "Started: $(date -u +"%Y-%m-%d %H:%M:%S")"

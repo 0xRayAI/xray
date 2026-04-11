@@ -1,4 +1,4 @@
-# StringRay Framework - Complete System Architecture & Technical Reference
+# 0xRay Framework - Complete System Architecture & Technical Reference
 
 **Version**: 1.14.1
 **Purpose**: Enterprise AI orchestration with systematic error prevention and modular architecture
@@ -37,7 +37,7 @@
 ### Installation
 
 ```bash
-# Install StringRay in your project
+# Install 0xRay in your project
 npm install strray-ai
 
 # Run post-install configuration
@@ -81,7 +81,7 @@ npx strray-ai capabilities
 
 ### 2.1 Modular Architecture Transformation
 
-StringRay v1.15.1 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
+0xRay v1.15.1 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
 
 #### Before vs After Comparison
 
@@ -116,7 +116,7 @@ StringRay v1.15.1 represents a **major architectural transformation** from monol
 
 ### 2.2 Facade Pattern Design
 
-The **Facade Pattern** is the cornerstone of StringRay's modular architecture. It provides a simplified interface to a complex subsystem of modules.
+The **Facade Pattern** is the cornerstone of 0xRay's modular architecture. It provides a simplified interface to a complex subsystem of modules.
 
 #### What is a Facade?
 
@@ -241,11 +241,11 @@ interface IRoutingModule extends IModule {
 
 ## 3. Agent Reference - Complete (27 Agents)
 
-StringRay provides **13 autonomous AI agents** (plus 43 framework skills) organized into core and specialized categories.
+0xRay provides **13 autonomous AI agents** (plus 43 framework skills) organized into core and specialized categories.
 
 ### 3.1 Core Agents (9)
 
-These are the primary agents that form the foundation of the StringRay framework.
+These are the primary agents that form the foundation of the 0xRay framework.
 
 ---
 

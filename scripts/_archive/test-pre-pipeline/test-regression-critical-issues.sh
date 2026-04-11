@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StringRay Framework - Critical Issue Regression Test Suite
+# 0xRay Framework - Critical Issue Regression Test Suite
 # Tests for StrRayStateManager initialization and README link validation
 #
 # This script runs targeted tests to ensure we don't regress on:
@@ -50,7 +50,7 @@ test_plugin_hook_framework_components() {
     # Initialize test project
     npm init -y > /dev/null 2>&1
 
-    # Install StringRay
+    # Install 0xRay
     npm install "$PROJECT_ROOT/strray-ai-1.1.1.tgz" > /dev/null 2>&1
 
     # Run postinstall

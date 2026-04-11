@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StringRay Framework - Comprehensive End-to-End Test Suite
+# 0xRay Framework - Comprehensive End-to-End Test Suite
 # Fixed for 1.2.0 refactored structure
 # This script performs COMPLETE validation from build to deployment
 
@@ -145,7 +145,7 @@ main() {
     fi
     run_cmd "mkdir -p '$TEST_DIR'" "Create test directory"
     run_cmd "cd '$TEST_DIR' && npm init -y" "Initialize NPM project"
-    run_cmd "cd '$TEST_DIR' && npm install '$PROJECT_DIR/$PACKAGE_FILE'" "Install StringRay package"
+    run_cmd "cd '$TEST_DIR' && npm install '$PROJECT_DIR/$PACKAGE_FILE'" "Install 0xRay package"
     run_cmd "cd '$TEST_DIR' && node node_modules/strray-ai/scripts/node/postinstall.cjs" "Run postinstall"
     log_success "Consumer environment setup complete"
     

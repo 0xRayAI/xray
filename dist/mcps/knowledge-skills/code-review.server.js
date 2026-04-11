@@ -1,5 +1,5 @@
 /**
- * StrRay Code Review MCP Server
+ * 0xRay Code Review MCP Server
  *
  * Knowledge skill for automated code review, quality assessment,
  * and best practices validation - provides comprehensive code quality analysis
@@ -10,7 +10,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-class StrRayCodeReviewServer {
+class StringRayCodeReviewServer {
     server;
     constructor() {
         this.server = new Server({
@@ -774,8 +774,8 @@ class StrRayCodeReviewServer {
 }
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayCodeReviewServer();
+    const server = new StringRayCodeReviewServer();
     server.run().catch(() => { });
 }
-export { StrRayCodeReviewServer };
+export { StringRayCodeReviewServer };
 //# sourceMappingURL=code-review.server.js.map

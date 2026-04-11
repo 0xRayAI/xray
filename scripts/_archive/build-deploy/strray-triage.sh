@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# StrRay Framework Triage & Verification Script
+# 0xRay Framework Triage & Verification Script
 #
-# This script performs comprehensive diagnostics on the StrRay Framework
+# This script performs comprehensive diagnostics on the 0xRay Framework
 # to quickly identify and verify all components are working properly.
 #
 # Usage: ./scripts/strray-triage.sh [--verbose]
@@ -77,21 +77,21 @@ check_plugin_file() {
     fi
 }
 
-# Check 2: StrRay initialization
+# Check 2: 0xRay initialization
 check_strray_init() {
-    log_header "🚀 CHECK 2: StrRay Framework Initialization"
+    log_header "🚀 CHECK 2: 0xRay Framework Initialization"
 
     if [[ ! -f "$PROJECT_ROOT/.opencode/init.sh" ]]; then
         log_error "init.sh script not found"
         return 1
     fi
 
-    log_info "Running StrRay initialization check..."
+    log_info "Running 0xRay initialization check..."
     local init_output
-    init_output="$("$PROJECT_ROOT/.opencode/init.sh" 2>&1 | grep -E "(🎉|✅|❌|StrRay Framework|99.6%|MCP servers|Plugin system)" || true)"
+    init_output="$("$PROJECT_ROOT/.opencode/init.sh" 2>&1 | grep -E "(🎉|✅|❌|0xRay Framework|99.6%|MCP servers|Plugin system)" || true)"
 
-    if echo "$init_output" | grep -q "🎉 StrRay Framework: SESSION INITIALIZED"; then
-        log_success "StrRay Framework initialization: SUCCESS"
+    if echo "$init_output" | grep -q "🎉 0xRay Framework: SESSION INITIALIZED"; then
+        log_success "0xRay Framework initialization: SUCCESS"
 
         # Parse component counts
         local agents=$(echo "$init_output" | grep "Agent Configs:" | sed 's/.*✅ \([0-9]*\) loaded.*/\1/' || echo "0")
@@ -108,7 +108,7 @@ check_strray_init() {
 
     else
         # OpenCode not running - this is expected in CI/local dev without OpenCode
-        log_warning "StrRay Framework initialization: SKIPPED (OpenCode not running)"
+        log_warning "0xRay Framework initialization: SKIPPED (OpenCode not running)"
         return 0
     fi
 }
@@ -167,7 +167,7 @@ check_mcp_servers() {
         return 1
     fi
 
-    # Test one StrRay server
+    # Test one 0xRay server
     local test_server="$PROJECT_ROOT/dist/mcps/knowledge-skills/project-analysis.server.js"
     if [[ -f "$test_server" ]]; then
         log_info "Testing MCP server execution..."
@@ -202,7 +202,7 @@ check_plugin_functionality() {
     local test_output
     test_output="$(cd "$PROJECT_ROOT" && npm run test:plugin 2>&1)"
 
-    if echo "$test_output" | grep -q "StrRay Framework Plugin Test: PASSED"; then
+    if echo "$test_output" | grep -q "0xRay Framework Plugin Test: PASSED"; then
         log_success "Plugin functionality test: PASSED"
 
         if echo "$test_output" | grep -q "Codex context injected: ✅"; then
@@ -236,7 +236,7 @@ check_configuration() {
     # Check project config in opencode.json
     # The framework uses .opencode/strray/config.json instead
     if [[ -f "$PROJECT_ROOT/.opencode/strray/config.json" ]]; then
-        log_success "Project StrRay config exists: .opencode/strray/config.json"
+        log_success "Project 0xRay config exists: .opencode/strray/config.json"
     fi
     
     # Check codex - can be in multiple locations
@@ -259,7 +259,7 @@ check_configuration() {
 generate_summary() {
     log_header "📊 TRIAGE SUMMARY REPORT"
 
-    echo "StrRay Framework Triage completed at $(date)"
+    echo "0xRay Framework Triage completed at $(date)"
     echo ""
     echo "Status: All critical systems operational ✅"
     echo ""
@@ -275,7 +275,7 @@ generate_summary() {
 main() {
     echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}"
     echo -e "${PURPLE}//                                                       //${NC}"
-    echo -e "${PURPLE}//   🩺 StrRay Framework Triage & Verification 🩺     //${NC}"
+    echo -e "${PURPLE}//   🩺 0xRay Framework Triage & Verification 🩺     //${NC}"
     echo -e "${PURPLE}//                                                       //${NC}"
     echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}"
     echo ""
@@ -306,7 +306,7 @@ main() {
     log_header "🏁 TRIAGE RESULTS: $checks_passed/$checks_total checks passed"
 
     if [[ $checks_passed -eq $checks_total ]]; then
-        log_success "🎉 ALL SYSTEMS OPERATIONAL - StrRay Framework is fully functional!"
+        log_success "🎉 ALL SYSTEMS OPERATIONAL - 0xRay Framework is fully functional!"
     else
         log_warning "⚠️ SOME ISSUES DETECTED - Review output above for details"
         log_info "Run with --verbose flag for detailed diagnostic information"
@@ -319,7 +319,7 @@ main() {
 # Handle arguments
 case "${1:-}" in
     --help|-h)
-        echo "StrRay Framework Triage Script"
+        echo "0xRay Framework Triage Script"
         echo ""
         echo "Usage: $0 [--verbose]"
         echo ""
@@ -329,7 +329,7 @@ case "${1:-}" in
         echo ""
         echo "This script performs comprehensive diagnostics on:"
         echo "- Plugin file location and integrity"
-        echo "- StrRay framework initialization"
+        echo "- 0xRay framework initialization"
         echo "- OpenCode integration"
         echo "- MCP server configuration and functionality"
         echo "- Plugin functionality and codex injection"

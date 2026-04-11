@@ -85,7 +85,7 @@ export class TokenManager {
         const criticalSections = [];
         // Always preserve codex terms and framework overview
         const codexSection = this.extractSection(lines, "Universal Development Codex");
-        const frameworkSection = this.extractSection(lines, "StrRay Framework");
+        const frameworkSection = this.extractSection(lines, "0xRay Framework");
         if (codexSection)
             criticalSections.push(codexSection);
         if (frameworkSection)

@@ -1,5 +1,5 @@
 /**
- * StrRay Enforcer Tools MCP Server
+ * 0xRay Enforcer Tools MCP Server
  *
  * Converts enforcer-tools.ts functions into MCP server tools
  * Provides rule enforcement and validation capabilities via MCP protocol
@@ -19,7 +19,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { ruleValidation as runRuleValidation, getTaskRoutingRecommendation } from "../enforcement/enforcer-tools.js";
 import { RuleValidationContext } from "../enforcement/rule-enforcer.js";
 
-class StrRayEnforcerToolsServer {
+class StringRayEnforcerToolsServer {
   private server: Server;
 
   constructor() {
@@ -940,8 +940,8 @@ class StrRayEnforcerToolsServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayEnforcerToolsServer();
+  const server = new StringRayEnforcerToolsServer();
   server.run().catch((error) => frameworkLogger.log("mcps/enforcer", "run", "error", { error: String(error) }));
 }
 
-export default StrRayEnforcerToolsServer;
+export default StringRayEnforcerToolsServer;

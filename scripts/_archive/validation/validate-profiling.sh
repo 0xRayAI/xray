@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🔍 StrRay Framework - Profiling System Validation"
+echo "🔍 0xRay Framework - Profiling System Validation"
 echo "==============================================="
 
 # Colors

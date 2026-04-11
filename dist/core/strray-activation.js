@@ -1,7 +1,7 @@
 /**
- * StringRay Framework Activation Module
+ * 0xRay Framework Activation Module
  *
- * This module handles activation of StringRay framework components
+ * This module handles activation of 0xRay framework components
  * during OpenCode initialization.
  */
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -20,7 +20,7 @@ export async function activateStringRayFramework(config = {}) {
     const activationConfig = { ...defaultStringRayConfig, ...config };
     // Banner display moved to init.sh execution in plugin
     // Framework activation proceeds quietly
-    frameworkLogger.log("stringray-activation", "beginning StringRay framework activation", "info", { jobId, ...activationConfig });
+    frameworkLogger.log("stringray-activation", "beginning 0xRay framework activation", "info", { jobId, ...activationConfig });
     try {
         if (activationConfig.enableCodexInjection) {
             await activateCodexInjection(jobId);
@@ -46,7 +46,7 @@ export async function activateStringRayFramework(config = {}) {
         // Ensure architectural integrity - critical components must always be active
         await ensureCriticalComponents();
         // Loading display moved to init.sh for dramatic line-by-line presentation
-        frameworkLogger.log("stringray-activation", "StringRay framework activation completed successfully", "success", { jobId });
+        frameworkLogger.log("stringray-activation", "0xRay framework activation completed successfully", "success", { jobId });
     }
     catch (error) {
         await frameworkLogger.log("stringray-activation", "framework-activation-failed", "error", { jobId, error: String(error) });
@@ -64,7 +64,7 @@ async function activateCodexInjection(jobId) {
 }
 async function activateHooks(jobId) {
     try {
-        frameworkLogger.log("stringray-activation", "activating StringRay hooks", "info", { jobId });
+        frameworkLogger.log("stringray-activation", "activating 0xRay hooks", "info", { jobId });
         // Create and register the Codex injector hook
         const { createStringRayCodexInjectorHook } = await import("./codex-injector");
         const hook = createStringRayCodexInjectorHook();
@@ -72,7 +72,7 @@ async function activateHooks(jobId) {
         globalThis.strRayHooks = globalThis.strRayHooks || [];
         globalThis.strRayHooks.push(hook);
         // Log hook registration
-        await frameworkLogger.log("stringray-activation", "StringRay hooks activated", "success", {
+        await frameworkLogger.log("stringray-activation", "0xRay hooks activated", "success", {
             jobId,
             hookName: hook.name,
             hooksRegistered: globalThis.strRayHooks.length
@@ -97,11 +97,11 @@ async function activateStateManagement(jobId) {
     frameworkLogger.log("stringray-activation", "state management activated", "success", { jobId });
 }
 async function activateOrchestrator(jobId) {
-    frameworkLogger.log("stringray-activation", "activating StringRay orchestrator", "info", { jobId });
+    frameworkLogger.log("stringray-activation", "activating 0xRay orchestrator", "info", { jobId });
     const { strRayOrchestrator } = await import("./orchestrator");
     // Also activate the multi-agent orchestration coordinator
     const { multiAgentOrchestrationCoordinator } = await import("../orchestrator/multi-agent-orchestration-coordinator");
-    frameworkLogger.log("stringray-activation", "StringRay orchestrator and multi-agent coordination activated", "success", { jobId });
+    frameworkLogger.log("stringray-activation", "0xRay orchestrator and multi-agent coordination activated", "success", { jobId });
 }
 async function activateProcessors(jobId) {
     frameworkLogger.log("stringray-activation", "activating processor pipeline", "info", { jobId });

@@ -9,9 +9,9 @@ export const orchestrator = {
     ],
     maxComplexity: 100,
     enabled: true,
-    description: "StringRay Framework orchestrator with multi-agent orchestration and coordination, workflow management, and enterprise task orchestration - Advanced Enterprise Coordinator",
+    description: "0xRay Framework orchestrator with multi-agent orchestration and coordination, workflow management, and enterprise task orchestration - Advanced Enterprise Coordinator",
     mode: "subagent",
-    system: `You are the StringRay Orchestrator, an advanced Enterprise Coordinator responsible for multi-agent workflows and enterprise operations throughout the framework.
+    system: `You are the 0xRay Orchestrator, an advanced Enterprise Coordinator responsible for multi-agent workflows and enterprise operations throughout the framework.
 
 ## Core Responsibilities
 - Workflow Orchestration
@@ -67,7 +67,7 @@ Error Recovery: comprehensive error handling and recovery strategies.
 ## Framework Operations
 Use the existing todo command for systematic task tracking and follow compaction research prevention rules to avoid massive architectural changes without user approval.
 
-Your mission is to flawlessly coordinate StringRay Framework operations through intelligent orchestration and delegation.`,
+Your mission is to flawlessly coordinate 0xRay Framework operations through intelligent orchestration and delegation.`,
     temperature: 0.1,
     tools: {
         include: [

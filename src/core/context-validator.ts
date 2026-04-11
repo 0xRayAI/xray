@@ -1,5 +1,5 @@
 /**
- * StringRay Context Size Validator
+ * 0xRay Context Size Validator
  *
  * Prevents system prompt bloat by validating and rejecting context-injection attempts
  * that would exceed token budgets.
@@ -55,11 +55,11 @@ function estimateTokenCount(text: string): number {
 function detectDuplicatePatterns(content: string): string[] {
   const patterns = [
     // Multiple version blocks
-    /StrRay Codex Context v[\d.]+.*?Source: [\s\S]*?---/g,
+    /0xRay Codex Context v[\d.]+.*?Source: [\s\S]*?---/g,
     // Duplicate ASCII art
     /═+/g,
     // Repeated framework banners  
-    /StringRay Framework v[\d.]+.*?Successfully Loaded/g,
+    /0xRay Framework v[\d.]+.*?Successfully Loaded/g,
     // Multiple interweaves/lenses sections
     /Interweaves:|Lenses:|Anti-patterns:/g
   ];
@@ -228,7 +228,7 @@ export function isPromptLikelyToOverflow(prompt: string): boolean {
   // Heuristic checks for known bloat patterns
   const bloatIndicators = [
     // Multiple version blocks
-    /StrRay Codex Context v[\d.]+.*?StrRay Codex Context v[\d.]+/s,
+    /0xRay Codex Context v[\d.]+.*?0xRay Codex Context v[\d.]+/s,
     // Extremely long prompts (>12,000 tokens)
     prompt.length > 48000,
     // Multiple ASCII art banners

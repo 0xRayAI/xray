@@ -6,7 +6,7 @@ if [ "$1" = "--monitor" ]; then
     MONITOR_MODE=true
 fi
 
-echo "🔍 StrRay Framework - Enhanced Operational Validation"
+echo "🔍 0xRay Framework - Enhanced Operational Validation"
 echo "==================================================="
 
 if [ "$MONITOR_MODE" = true ]; then
@@ -182,7 +182,7 @@ fi
 echo ""
 echo "🔬 Framework Activation Test:"
 if node -e "
-import('./dist/strray-activation.js').then(m => m.activateStrRayFramework()).then(() => {
+import('./dist/strray-activation.js').then(m => m.activate0xRayFramework()).then(() => {
   console.log('✅ Framework activation: Operational');
   process.exit(0);
 }).catch(e => {

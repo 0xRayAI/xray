@@ -2,7 +2,7 @@
  * Version Compliance Processor
  *
  * Pre-processor that enforces version compliance rules before allowing
- * commits or publishes. Integrates with StringRay's processor pipeline.
+ * commits or publishes. Integrates with 0xRay's processor pipeline.
  *
  * Rules Enforced:
  * 1. Universal Version Manager MUST be 1 ahead of NPM published version
@@ -15,7 +15,7 @@
  * @blocking true (blocks on violations)
  *
  * @version 1.0.0
- * @framework StringRay 1.3.5
+ * @framework 0xRay 1.3.5
  */
 
 import * as fs from "fs";

@@ -1,5 +1,5 @@
 /**
- * Prompt Pattern Analyzer for StringRay
+ * Prompt Pattern Analyzer for 0xRay
  *
  * Analyzes actual vs. template prompts to detect gaps and emerging patterns.
  * Integrates with RoutingOutcomeTracker to provide insights for template optimization.

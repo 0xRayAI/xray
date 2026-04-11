@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - Script Execution Integration Tests
+ * 0xRay Framework - Script Execution Integration Tests
  *
  * Tests for CommonJS (.cjs) and ES Module (.mjs) script execution
  * including timeout handling, stdout/stderr capture, and exit code detection.
@@ -13,7 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-describe("StringRay Script Execution Integration", () => {
+describe("0xRay Script Execution Integration", () => {
   // Use native os.tmpdir() instead of tmpdirSync to avoid type issues
   let tempDir: string;
 
@@ -183,7 +183,7 @@ process.exit(0);
     });
   });
 
-  describe("Integration with StringRay Framework", () => {
+  describe("Integration with 0xRay Framework", () => {
     test("should execute postinstall script if exists", () => {
       const postinstallPath = path.join(
         process.cwd(),

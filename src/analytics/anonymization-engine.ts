@@ -1,5 +1,5 @@
 /**
- * Anonymization Engine for StringRay Central Analytics
+ * Anonymization Engine for 0xRay Central Analytics
  *
  * Removes personally identifiable information and project-specific data
  * while preserving learning value through pattern extraction.

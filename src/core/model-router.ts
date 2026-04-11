@@ -67,7 +67,7 @@ class ModelRouter {
 
   private discoverModels(): string[] {
     const defaultModels = [
-      // Anthropic Claude models (preferred for StringRay)
+      // Anthropic Claude models (preferred for 0xRay)
       "claude-opus-4",
       "claude-sonnet-4",
       "claude-haiku-4",

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Disable StrRay Framework Logging
+# Disable 0xRay Framework Logging
 # Sets environment variable to disable all framework logging
 
-echo "🔇 Disabling StrRay Framework Logging"
+echo "🔇 Disabling 0xRay Framework Logging"
 echo "====================================="
 
 # Set environment variable to disable logging

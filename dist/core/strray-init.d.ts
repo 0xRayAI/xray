@@ -1,7 +1,7 @@
 /**
- * StringRay Framework Initialization
+ * 0xRay Framework Initialization
  *
- * This file integrates StringRay framework activation directly into OpenCode's
+ * This file integrates 0xRay framework activation directly into OpenCode's
  * core initialization process.
  */
 export declare function initializeStringRay(): Promise<void>;

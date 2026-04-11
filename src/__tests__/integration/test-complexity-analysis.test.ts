@@ -1,7 +1,7 @@
 /**
  * Integration Test - Complexity Analysis
  *
- * Tests complexity analysis integration with StringRay framework
+ * Tests complexity analysis integration with 0xRay framework
  */
 
 import { describe, test, expect, beforeEach } from "vitest";

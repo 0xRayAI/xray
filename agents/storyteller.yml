@@ -698,7 +698,7 @@ structured_sections:
     example: |
       ## What Next?
       
-      - Read about [StringRay Codex Terms](../.opencode/strray/codex.json)
+      - Read about [0xRay Codex Terms](../.opencode/strray/codex.json)
       - Explore [other agent stories](../docs/deep-reflections/)
       - Invoke @storyteller to document your journey
 
@@ -712,7 +712,7 @@ structured_sections:
     example: |
       ## What Next?
       
-      - Read about [StringRay Codex Terms](/.opencode/strray/codex.json)
+      - Read about [0xRay Codex Terms](/.opencode/strray/codex.json)
       - Explore [other agent stories](/docs/deep-reflections/)
       - Invoke @storyteller to document your journey
 
@@ -996,7 +996,7 @@ peer_review:
     - "Target audience alignment"
   # Fact-checking requirements
   fact_check:
-    - "Verify agent's actual role in StringRay framework"
+    - "Verify agent's actual role in 0xRay framework"
     - "Verify how the agent is invoked (@mention vs default)"
     - "Verify technical details about capabilities"
     - "Check that claimed behaviors match actual implementation"

@@ -7,7 +7,7 @@
 
 set -e
 
-echo "🧪 StringRay Central Analytics - Integration Test"
+echo "🧪 0xRay Central Analytics - Integration Test"
 echo "=============================================="
 echo ""
 

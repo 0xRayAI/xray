@@ -25,7 +25,7 @@ describe("Security Auditor Agent Configuration", () => {
   describe("Description and System Prompt", () => {
     it("should have appropriate security-focused description", () => {
       expect(securityAuditor.description).toContain(
-        "StringRay Framework security auditor",
+        "0xRay Framework security auditor",
       );
       expect(securityAuditor.description).toContain("compliance monitoring");
       expect(securityAuditor.description).toContain("vulnerability detection");
@@ -33,7 +33,7 @@ describe("Security Auditor Agent Configuration", () => {
 
     it("should have comprehensive security auditor system prompt", () => {
       const system = securityAuditor.system;
-      expect(system).toContain("StringRay Security Auditor");
+      expect(system).toContain("0xRay Security Auditor");
       expect(system).toContain("comprehensive security validation");
       expect(system).toContain("compliance monitoring");
     });

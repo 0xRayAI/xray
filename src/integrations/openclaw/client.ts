@@ -303,7 +303,7 @@ export class OpenClawClient {
       scopes: ['operator.read', 'operator.write'],
       caps: [],
       commands: [],
-      userAgent: `StringRay-OpenClaw-Integration/1.0.0`,
+      userAgent: `0xRay-OpenClaw-Integration/1.0.0`,
     };
 
     // Add auth if provided

@@ -1,5 +1,5 @@
 /**
- * Consent Manager for StringRay Central Analytics
+ * Consent Manager for 0xRay Central Analytics
  *
  * Manages user consent for analytics data submission with granular
  * control over what categories can be shared.

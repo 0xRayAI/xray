@@ -1,5 +1,5 @@
 /**
- * StrRay Refactoring Strategies MCP Server
+ * 0xRay Refactoring Strategies MCP Server
  *
  * Knowledge skill for code refactoring, technical debt elimination,
  * modernization, and code improvement patterns
@@ -53,7 +53,7 @@ interface ModernizationSuggestion {
   risks: string[];
 }
 
-class StrRayRefactoringStrategiesServer {
+class StringRayRefactoringStrategiesServer {
   private server: Server;
 
   constructor() {
@@ -985,8 +985,8 @@ class StrRayRefactoringStrategiesServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayRefactoringStrategiesServer();
+  const server = new StringRayRefactoringStrategiesServer();
   server.run().catch(() => {});
 }
 
-export { StrRayRefactoringStrategiesServer };
+export { StringRayRefactoringStrategiesServer };

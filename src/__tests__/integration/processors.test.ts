@@ -1,7 +1,7 @@
 /**
  * Processor Implementations Integration Tests
  *
- * Tests real processor execution in the StringRay framework.
+ * Tests real processor execution in the 0xRay framework.
  * These tests verify that processors in src/processors/implementations/
  * execute correctly with actual data.
  *

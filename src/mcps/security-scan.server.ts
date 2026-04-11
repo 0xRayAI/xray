@@ -1,5 +1,5 @@
 /**
- * StrRay Security Scan MCP Server
+ * 0xRay Security Scan MCP Server
  *
  * Automated security vulnerability scanning with dependency and code analysis
  */
@@ -19,7 +19,7 @@ import {
 } from "../utils/language-detector.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-class StrRaySecurityScanServer {
+class StringRaySecurityScanServer {
   private server: Server;
 
   constructor() {
@@ -171,7 +171,7 @@ class StrRaySecurityScanServer {
       content: [
         {
           type: "text",
-          text: `🔒 StrRay Security Scan Results
+          text: `🔒 0xRay Security Scan Results
 
 ${results.summary}
 
@@ -621,8 +621,8 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRaySecurityScanServer();
+  const server = new StringRaySecurityScanServer();
   server.run().catch((error) => frameworkLogger.log("mcps/security-scan", "run", "error", { error: String(error) }));
 }
 
-export { StrRaySecurityScanServer };
+export { StringRaySecurityScanServer };

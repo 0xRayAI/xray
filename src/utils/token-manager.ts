@@ -143,7 +143,7 @@ export class TokenManager {
       lines,
       "Universal Development Codex",
     );
-    const frameworkSection = this.extractSection(lines, "StrRay Framework");
+    const frameworkSection = this.extractSection(lines, "0xRay Framework");
 
     if (codexSection) criticalSections.push(codexSection);
     if (frameworkSection) criticalSections.push(frameworkSection);

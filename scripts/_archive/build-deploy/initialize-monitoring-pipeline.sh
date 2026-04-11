@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - Initialize Monitoring Pipeline
+# 0xRay Framework - Initialize Monitoring Pipeline
 # Sets up the post-processing pipeline with git hooks for automated monitoring
 
 set -e
@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-echo "🚀 StrRay Framework - Monitoring Pipeline Initialization"
+echo "🚀 0xRay Framework - Monitoring Pipeline Initialization"
 echo "======================================================"
 
 # Check if we're in a git repository

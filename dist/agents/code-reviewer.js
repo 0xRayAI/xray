@@ -9,9 +9,9 @@ export const codeReviewer = {
     ],
     maxComplexity: 100,
     enabled: true,
-    description: "StringRay Framework code reviewer",
+    description: "0xRay Framework code reviewer",
     mode: "subagent",
-    system: `You are the StringRay Code Reviewer.
+    system: `You are the 0xRay Code Reviewer.
 
 ## Framework Context
 - Universal Development Codex v1.2.0

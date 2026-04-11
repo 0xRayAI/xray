@@ -421,9 +421,9 @@ export class PerformanceRegressionTester {
     ];
 
     return {
-      name: "StringRay Performance Regression Suite",
+      name: "0xRay Performance Regression Suite",
       description:
-        "Comprehensive performance regression tests for StringRay Framework",
+        "Comprehensive performance regression tests for 0xRay Framework",
       tests,
       baselineFile: "./performance-baselines.json",
       failOnRegression: true,

@@ -1,5 +1,5 @@
 #!/bin/bash
-# StrRay Framework - Configuration Integration Tests
+# 0xRay Framework - Configuration Integration Tests
 # Tests config system functionality, validation, and integration
 
 set -e

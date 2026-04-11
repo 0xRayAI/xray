@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# StringRay Scripts Path Fix
+# 0xRay Scripts Path Fix
 # Fixes all hardcoded broken paths in script files
 
-echo "🔧 Fixing broken paths in StringRay scripts..."
+echo "🔧 Fixing broken paths in 0xRay scripts..."
 echo "=========================================="
 
 # Fix scripts with broken plugin paths

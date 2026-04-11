@@ -67,7 +67,7 @@ app.use(express.static(PUBLIC_DIR));
 app.get("/api/status", requireAuth, (req, res) => {
     // Return framework status
     res.json({
-        framework: "StringRay",
+        framework: "0xRay",
         version,
         status: "active",
         agents: 8,

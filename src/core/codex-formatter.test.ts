@@ -113,7 +113,7 @@ describe("codex-formatter", () => {
       const result = formatCodexPrompt({ projectRoot: EMPTY_ROOT });
 
       expect(result.prompt).toContain("fallback-1.0.0");
-      expect(result.prompt).toContain("StringRay Universal Development Codex");
+      expect(result.prompt).toContain("0xRay Universal Development Codex");
     });
 
     it("should include term IDs in the prompt", () => {
@@ -151,7 +151,7 @@ describe("codex-formatter", () => {
       });
 
       expect(result.prompt).toContain("# My Custom Header");
-      expect(result.prompt).not.toContain("StringRay Universal Development Codex");
+      expect(result.prompt).not.toContain("0xRay Universal Development Codex");
     });
   });
 

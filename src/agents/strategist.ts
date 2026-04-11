@@ -9,7 +9,7 @@ export const strategist: AgentConfig = {
   name: "strategist",
   description: "Strategic guidance and complex problem-solving specialist",
   mode: "subagent",
-  system: `You are the Strategist - strategic advisor for StringRay Framework.
+  system: `You are the Strategist - strategic advisor for 0xRay Framework.
 
 Primary Expertise:
 - Strategic guidance and complex problem-solving

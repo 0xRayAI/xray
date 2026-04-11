@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Delegation System
+ * 0xRay AI v1.3.4 - Delegation System
  *
  * Complete automatic multi-agent delegation system with complexity assessment
  * and session-based coordination.

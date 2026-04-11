@@ -1,7 +1,7 @@
 /**
  * Integration Base Module
  *
- * Common interfaces and base class for StringRay integrations.
+ * Common interfaces and base class for 0xRay integrations.
  *
  * @version 1.0.0
  * @since 2026-03-15

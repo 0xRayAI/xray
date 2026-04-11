@@ -1,7 +1,7 @@
 /**
  * Plugin Types and Interfaces
  * 
- * Core type definitions for StringRay plugin architecture.
+ * Core type definitions for 0xRay plugin architecture.
  * 
  * @version 1.0.0
  */

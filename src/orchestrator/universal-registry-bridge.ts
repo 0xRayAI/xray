@@ -1,7 +1,7 @@
 /**
  * Universal Registry Bridge
  *
- * Connects StringRay to external agent registries.
+ * Connects 0xRay to external agent registries.
  * Enables dynamic agent configuration loading from external sources.
  *
  * @version 1.0.0

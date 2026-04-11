@@ -1,7 +1,7 @@
 name: strray-hermes
 version: 2.2.0
-description: StringRay AI integration plugin — auto-enforcement hooks, quality gates, git hooks, and tool awareness for Hermes Agent
-author: StringRay AI
+description: 0xRay AI integration plugin — auto-enforcement hooks, quality gates, git hooks, and tool awareness for Hermes Agent
+author: 0xRay AI
 provides_tools:
   - strray_validate
   - strray_codex_check

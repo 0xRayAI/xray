@@ -26,7 +26,7 @@ describe("Orchestrator Agent Configuration", () => {
   describe("Description and System Prompt", () => {
     it("should have appropriate description", () => {
       expect(orchestrator.description).toContain(
-        "StringRay Framework orchestrator",
+        "0xRay Framework orchestrator",
       );
       expect(orchestrator.description).toContain("coordination");
       expect(orchestrator.description).toContain("multi-agent orchestration");
@@ -34,7 +34,7 @@ describe("Orchestrator Agent Configuration", () => {
 
     it("should have comprehensive system prompt", () => {
       const system = orchestrator.system;
-      expect(system).toContain("StringRay Orchestrator");
+      expect(system).toContain("0xRay Orchestrator");
       expect(system).toContain("multi-agent workflows");
       expect(system).toContain("enterprise operations");
     });
@@ -217,7 +217,7 @@ describe("Orchestrator Agent Configuration", () => {
     it("should define clear orchestration goal", () => {
       const system = orchestrator.system;
       expect(system).toContain("flawlessly coordinate");
-      expect(system).toContain("StringRay Framework operations");
+      expect(system).toContain("0xRay Framework operations");
       expect(system).toContain("intelligent orchestration");
       expect(system).toContain("delegation");
     });

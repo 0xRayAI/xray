@@ -1,7 +1,7 @@
 /**
- * StringRay Framework Activation Module
+ * 0xRay Framework Activation Module
  *
- * This module handles activation of StringRay framework components
+ * This module handles activation of 0xRay framework components
  * during OpenCode initialization.
  */
 export interface StringRayActivationConfig {

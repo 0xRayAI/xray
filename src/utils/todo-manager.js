@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Todo Manager for StringRay Framework
+ * Todo Manager for 0xRay Framework
  * Provides file-based JSON todo management
  * Compatible with both CommonJS and ES modules
  */

@@ -1,12 +1,12 @@
 /**
- * StrRay Codex Injection Plugin for OpenCode
+ * 0xRay Codex Injection Plugin for OpenCode
  *
  * This plugin automatically injects the Universal Development Codex v1.2.0
  * into the system prompt for all AI agents, ensuring codex terms are
  * consistently enforced across the entire development session.
  *
  * @version 1.0.0
- * @author StrRay Framework
+ * @author 0xRay Framework
  */
 import * as fs from "fs";
 import * as path from "path";
@@ -98,7 +98,7 @@ let ProcessorManager;
 let StrRayStateManager;
 let featuresConfigLoader;
 let detectTaskType;
-async function loadStrRayComponents() {
+async function loadStringRayComponents() {
     if (ProcessorManager && StrRayStateManager && featuresConfigLoader)
         return;
     const logger = await getOrCreateLogger(process.cwd());
@@ -228,7 +228,7 @@ function getFrameworkVersion() {
  */
 function getFrameworkIdentity() {
     const version = getFrameworkVersion();
-    return `StringRay Framework v${version} - AI Orchestration
+    return `0xRay Framework v${version} - AI Orchestration
 
 🔧 Core: enforcer, architect, orchestrator, code-reviewer, refactorer, testing-lead
 📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
@@ -440,7 +440,7 @@ function formatCodexContext(contexts) {
     }
     const parts = [];
     for (const context of contexts) {
-        parts.push(`# StrRay Codex Context v${context.metadata.version}`, `Source: ${context.source}`, `Terms Loaded: ${context.metadata.termCount}`, `Loaded At: ${context.metadata.loadedAt}`, "", context.content, "", "---", "");
+        parts.push(`# 0xRay Codex Context v${context.metadata.version}`, `Source: ${context.source}`, `Terms Loaded: ${context.metadata.termCount}`, `Loaded At: ${context.metadata.loadedAt}`, "", context.content, "", "---", "");
     }
     return parts.join("\n");
 }
@@ -543,7 +543,7 @@ export default async function strrayCodexPlugin(input) {
             const logger = await getOrCreateLogger(directory);
             logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
             logger.log(`📥 Full input: ${JSON.stringify(input)}`);
-            await loadStrRayComponents();
+            await loadStringRayComponents();
             if (featuresConfigLoader && detectTaskType) {
                 try {
                     const config = featuresConfigLoader.loadConfig();
@@ -579,11 +579,11 @@ export default async function strrayCodexPlugin(input) {
                 // Check if framework is already booted (global state exists)
                 const globalState = globalThis.strRayStateManager;
                 if (globalState) {
-                    logger.log("🔗 Connecting to booted StrRay framework");
+                    logger.log("🔗 Connecting to booted 0xRay framework");
                     stateManager = globalState;
                 }
                 else {
-                    logger.log("🚀 StrRay framework not booted, initializing...");
+                    logger.log("🚀 0xRay framework not booted, initializing...");
                     // Create new state manager (framework not booted yet)
                     stateManager = new StrRayStateManager(await resolveStateDir(directory));
                     // Store globally for future use
@@ -713,7 +713,7 @@ export default async function strrayCodexPlugin(input) {
         // Execute POST-processors AFTER tool completes (this is the correct place!)
         "tool.execute.after": async (input, _output) => {
             const logger = await getOrCreateLogger(directory);
-            await loadStrRayComponents();
+            await loadStringRayComponents();
             const { tool, args, result } = input;
             // Record routing outcome for analytics pipeline.
             // This feeds the inference tuner with real tool usage data so it
@@ -860,8 +860,8 @@ export default async function strrayCodexPlugin(input) {
                 // lock check failed — proceed anyway
             }
             const logger = await getOrCreateLogger(directory);
-            logger.log("🔧 Plugin config hook triggered - initializing StrRay integration");
-            // Initialize StrRay framework
+            logger.log("🔧 Plugin config hook triggered - initializing 0xRay integration");
+            // Initialize 0xRay framework
             // Primary: project .opencode/init.sh (copied by postinstall)
             // Fallback: package .opencode/init.sh (works when postinstall skips for Hermes consumers)
             let initScriptPath = path.join(directory, ".opencode", "init.sh");
@@ -876,7 +876,7 @@ export default async function strrayCodexPlugin(input) {
                         logger.error(`Framework init error: ${stderr}`);
                     }
                     else {
-                        logger.log("✅ StrRay Framework initialized successfully");
+                        logger.log("✅ 0xRay Framework initialized successfully");
                     }
                 }
                 catch (error) {

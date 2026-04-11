@@ -1,5 +1,5 @@
 /**
- * StrRay Mobile Development MCP Server
+ * 0xRay Mobile Development MCP Server
  *
  * Knowledge skill for mobile app development including iOS, Android,
  * React Native, Flutter, and mobile performance optimization
@@ -57,7 +57,7 @@ interface MobilePerformanceProfile {
   recommendations: string[];
 }
 
-class StrRayMobileDevelopmentServer {
+class StringRayMobileDevelopmentServer {
   private server: Server;
 
   constructor() {
@@ -605,7 +605,7 @@ class HomePage extends StatelessWidget {
       description:
         features.length > 0
           ? `Features include: ${features.slice(0, 5).join(", ")}. Download now!`
-          : "A mobile app built with StringRay.",
+          : "A mobile app built with 0xRay.",
       keywords: features.join(", "),
       screenshots: {
         ios: ["screenshot1.png", "screenshot2.png"],
@@ -634,5 +634,5 @@ class HomePage extends StatelessWidget {
 }
 
 // Start server if run directly
-const server = new StrRayMobileDevelopmentServer();
+const server = new StringRayMobileDevelopmentServer();
 server.start().catch(() => {});

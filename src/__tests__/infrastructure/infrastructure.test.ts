@@ -14,7 +14,7 @@ import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { StringRayStateManager } from "../../state/state-manager.js";
 
-describe("StringRay Infrastructure Tests", () => {
+describe("0xRay Infrastructure Tests", () => {
   // Get project root (two levels up from this test file)
   const projectRoot = path.resolve(__dirname, "../../..");
 

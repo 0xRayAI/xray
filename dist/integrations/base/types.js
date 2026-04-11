@@ -1,7 +1,7 @@
 /**
  * Integration Base Types
  *
- * Common TypeScript interfaces for StringRay integrations.
+ * Common TypeScript interfaces for 0xRay integrations.
  * Provides a standardized foundation for all integration types.
  *
  * @version 1.0.0

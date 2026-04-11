@@ -1,10 +1,10 @@
 /**
- * StrRay API Design MCP Server
+ * 0xRay API Design MCP Server
  *
  * Knowledge skill for API design patterns, RESTful conventions,
  * GraphQL schema design, and API documentation standards
  */
-declare class StrRayApiDesignServer {
+declare class StringRayApiDesignServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -12,5 +12,5 @@ declare class StrRayApiDesignServer {
     private validateApiDesign;
     run(): Promise<void>;
 }
-export default StrRayApiDesignServer;
+export default StringRayApiDesignServer;
 //# sourceMappingURL=api-design.server.d.ts.map

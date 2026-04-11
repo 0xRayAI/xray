@@ -1,5 +1,5 @@
 /**
- * StringRay Kernel Pattern Definitions
+ * 0xRay Kernel Pattern Definitions
  * 
  * Pattern definitions from v1.1.0 → v2.0 kernel update
  * Includes 35+ patterns from 80+ reflections

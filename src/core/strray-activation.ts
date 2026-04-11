@@ -1,7 +1,7 @@
 /**
- * StringRay Framework Activation Module
+ * 0xRay Framework Activation Module
  *
- * This module handles activation of StringRay framework components
+ * This module handles activation of 0xRay framework components
  * during OpenCode initialization.
  */
 
@@ -39,7 +39,7 @@ export async function activateStringRayFramework(
 
   frameworkLogger.log(
     "stringray-activation",
-    "beginning StringRay framework activation",
+    "beginning 0xRay framework activation",
     "info",
     { jobId, ...activationConfig },
   );
@@ -80,7 +80,7 @@ export async function activateStringRayFramework(
 
     frameworkLogger.log(
       "stringray-activation",
-      "StringRay framework activation completed successfully",
+      "0xRay framework activation completed successfully",
       "success",
       { jobId },
     );
@@ -122,7 +122,7 @@ async function activateHooks(jobId: string): Promise<void> {
   try {
     frameworkLogger.log(
       "stringray-activation",
-      "activating StringRay hooks",
+      "activating 0xRay hooks",
       "info",
       { jobId },
     );
@@ -138,7 +138,7 @@ async function activateHooks(jobId: string): Promise<void> {
     // Log hook registration
     await frameworkLogger.log(
       "stringray-activation",
-      "StringRay hooks activated",
+      "0xRay hooks activated",
       "success",
       { 
         jobId, 
@@ -201,7 +201,7 @@ async function activateStateManagement(jobId: string): Promise<void> {
 async function activateOrchestrator(jobId: string): Promise<void> {
   frameworkLogger.log(
     "stringray-activation",
-    "activating StringRay orchestrator",
+    "activating 0xRay orchestrator",
     "info",
     { jobId },
   );
@@ -214,7 +214,7 @@ async function activateOrchestrator(jobId: string): Promise<void> {
 
   frameworkLogger.log(
     "stringray-activation",
-    "StringRay orchestrator and multi-agent coordination activated",
+    "0xRay orchestrator and multi-agent coordination activated",
     "success",
     { jobId },
   );

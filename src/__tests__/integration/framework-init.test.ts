@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - Framework Initialization Integration Tests
+ * 0xRay Framework - Framework Initialization Integration Tests
  *
  * Comprehensive integration tests for framework initialization using real validation logic
  * from shell scripts and framework components. Tests the complete boot sequence and
@@ -57,7 +57,7 @@ const mockSpawnPromise = (
   });
 };
 
-describe("StringRay Framework Initialization Integration", () => {
+describe("0xRay Framework Initialization Integration", () => {
   let stateManager: StringRayStateManager;
   const testSessionId = "test-framework-init-session";
 

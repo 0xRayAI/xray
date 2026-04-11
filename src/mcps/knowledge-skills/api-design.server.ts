@@ -1,5 +1,5 @@
 /**
- * StrRay API Design MCP Server
+ * 0xRay API Design MCP Server
  *
  * Knowledge skill for API design patterns, RESTful conventions,
  * GraphQL schema design, and API documentation standards
@@ -14,7 +14,7 @@ import {
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
-class StrRayApiDesignServer {
+class StringRayApiDesignServer {
   private server: Server;
 
   constructor() {
@@ -142,8 +142,8 @@ class StrRayApiDesignServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayApiDesignServer();
+  const server = new StringRayApiDesignServer();
   server.run().catch(() => {});
 }
 
-export default StrRayApiDesignServer;
+export default StringRayApiDesignServer;

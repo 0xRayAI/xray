@@ -1,13 +1,13 @@
 #!/bin/bash
 # triage-kernel-issues.sh
 # Triage automation for kernel-related issues
-# Author: StringRay Development Team
+# Author: 0xRay Development Team
 # Version: v1.8.0
 # Last Updated: 2026-03-05
 
 set -e
 
-echo "🔍 StringRay Kernel Issue Triage"
+echo "🔍 0xRay Kernel Issue Triage"
 echo "================================"
 
 # Configuration
@@ -158,7 +158,7 @@ analyze_orchestration_security() {
 main() {
   local start_time=$(date +%s)
   
-  echo -e "${GREEN}StringRay Kernel Issue Triage v1.8.0${NC}"
+  echo -e "${GREEN}0xRay Kernel Issue Triage v1.8.0${NC}"
   echo "================================"
   echo ""
   echo -e "Started: $(date -u +"%Y-%m-%d %H:%M:%S")"

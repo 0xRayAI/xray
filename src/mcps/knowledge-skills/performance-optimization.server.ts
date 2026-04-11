@@ -1,5 +1,5 @@
 /**
- * StrRay Performance Optimization MCP Server
+ * 0xRay Performance Optimization MCP Server
  *
  * Knowledge skill for performance analysis, optimization recommendations,
  * and bottleneck identification
@@ -14,7 +14,7 @@ import {
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
-class StrRayPerformanceOptimizationServer {
+class StringRayPerformanceOptimizationServer {
   private server: Server;
 
   constructor() {
@@ -128,8 +128,8 @@ class StrRayPerformanceOptimizationServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayPerformanceOptimizationServer();
+  const server = new StringRayPerformanceOptimizationServer();
   server.run().catch(() => {});
 }
 
-export default StrRayPerformanceOptimizationServer;
+export default StringRayPerformanceOptimizationServer;

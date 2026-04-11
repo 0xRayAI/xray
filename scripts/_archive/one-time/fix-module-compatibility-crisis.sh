@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# StringRay Framework - Path Resolution Crisis Fixer
+# 0xRay Framework - Path Resolution Crisis Fixer
 # Fixes module compatibility and path issues affecting 95% of scripts
-# Author: StringRay Enforcer Agent
+# Author: 0xRay Enforcer Agent
 # Version: 1.1.1
 # Date: 2026-01-28
 
@@ -97,7 +97,7 @@ fix_bash_paths() {
 
 # Main execution
 main() {
-    echo -e "${BLUE}🚀 StringRay Framework - Module Compatibility Crisis Fixer${NC}"
+    echo -e "${BLUE}🚀 0xRay Framework - Module Compatibility Crisis Fixer${NC}"
     echo -e "${BLUE}=============================================${NC}"
     echo -e "${YELLOW}⚠️  STATUS: 95% of framework scripts have path/module compatibility issues${NC}"
     echo -e "${BLUE}=============================================${NC}"

@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Performance Module Index
+ * 0xRay AI v1.3.4 - Performance Module Index
  *
  * Unified exports for the comprehensive performance testing and monitoring system.
  *

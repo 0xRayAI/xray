@@ -330,7 +330,7 @@ export class BootOrchestrator {
                 const agentPath = pathResolver.resolveAgentPath(agentName);
                 await frameworkLogger.log("boot-orchestrator", "agent-loading", "info", { jobId, agentName, agentPath });
                 const agentModule = await import(agentPath);
-                const agentClass = agentModule[`StringRay${agentName.charAt(0).toUpperCase() + agentName.slice(1)}Agent`];
+                const agentClass = agentModule[`0xRay${agentName.charAt(0).toUpperCase() + agentName.slice(1)}Agent`];
                 if (agentClass) {
                     const agentInstance = new agentClass();
                     this.stateManager.set(`agent:${agentName}`, agentInstance);
@@ -595,10 +595,10 @@ export class BootOrchestrator {
             errors: [],
         };
         try {
-            frameworkLogger.log("boot-orchestrator", "loading StringRay configuration", "info", { jobId });
-            // Phase 0: Load StringRay configuration from Python ConfigManager
+            frameworkLogger.log("boot-orchestrator", "loading 0xRay configuration", "info", { jobId });
+            // Phase 0: Load 0xRay configuration from Python ConfigManager
             await this.loadStringRayConfiguration(jobId);
-            frameworkLogger.log("boot-orchestrator", "StringRay configuration loaded", "success", { jobId });
+            frameworkLogger.log("boot-orchestrator", "0xRay configuration loaded", "success", { jobId });
             // Phase 1: Initialize core systems
             frameworkLogger.log("boot-orchestrator", "initializing core systems", "info", { jobId });
             result.orchestratorLoaded = await this.loadOrchestrator();
@@ -710,11 +710,11 @@ export class BootOrchestrator {
         return result;
     }
     /**
-     * Load StringRay configuration from Python ConfigManager
+     * Load 0xRay configuration from Python ConfigManager
      */
     async loadStringRayConfiguration(jobId) {
         try {
-            // Load StringRay configuration directly (no Python dependency)
+            // Load 0xRay configuration directly (no Python dependency)
             const stringRayConfig = {
                 version: "1.15.27",
                 codex_enabled: true,
@@ -787,7 +787,7 @@ export class BootOrchestrator {
             await frameworkLogger.log("boot-orchestrator", "configuration-loaded", "success", { jobId });
         }
         catch (error) {
-            frameworkLogger.log("boot-orchestrator", "config-load-warning", "warning", { error, message: "Failed to load StringRay configuration" });
+            frameworkLogger.log("boot-orchestrator", "config-load-warning", "warning", { error, message: "Failed to load 0xRay configuration" });
             // Continue with defaults if loading fails
         }
     }

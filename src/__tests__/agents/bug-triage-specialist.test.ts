@@ -25,7 +25,7 @@ describe("Bug Triage Specialist Agent Configuration", () => {
   describe("Description and System Prompt", () => {
     it("should have appropriate bug triage description", () => {
       expect(bugTriageSpecialist.description).toContain(
-        "StringRay Framework bug triage specialist",
+        "0xRay Framework bug triage specialist",
       );
       expect(bugTriageSpecialist.description).toContain(
         "systematic error investigation",
@@ -35,7 +35,7 @@ describe("Bug Triage Specialist Agent Configuration", () => {
 
     it("should have comprehensive bug triage specialist system prompt", () => {
       const system = bugTriageSpecialist.system;
-      expect(system).toContain("StringRay Bug Triage Specialist");
+      expect(system).toContain("0xRay Bug Triage Specialist");
       expect(system).toContain("systematic error investigation");
       expect(system).toContain("surgical code fixes");
     });

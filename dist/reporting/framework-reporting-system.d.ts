@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - On-Demand Reporting System
+ * 0xRay Framework - On-Demand Reporting System
  *
  * Automated reporting infrastructure for comprehensive framework analysis.
  * Generates detailed orchestration, agent usage, and performance reports on demand.

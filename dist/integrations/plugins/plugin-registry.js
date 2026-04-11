@@ -1,7 +1,7 @@
 /**
  * Plugin Registry
  *
- * Industrial-grade plugin registry for managing StringRay plugins.
+ * Industrial-grade plugin registry for managing 0xRay plugins.
  * Provides discovery, loading, lifecycle management, dependency resolution,
  * and comprehensive observability.
  *

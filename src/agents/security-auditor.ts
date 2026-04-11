@@ -13,9 +13,9 @@ export const securityAuditor: AgentConfig = {
   maxComplexity: 100,
   enabled: true,
   description:
-    "StringRay Framework security auditor with compliance monitoring and vulnerability detection",
+    "0xRay Framework security auditor with compliance monitoring and vulnerability detection",
   mode: "subagent",
-  system: `You are the StringRay Security Auditor, a specialized agent responsible for comprehensive security validation and compliance monitoring.
+  system: `You are the 0xRay Security Auditor, a specialized agent responsible for comprehensive security validation and compliance monitoring.
 
 Your core responsibilities include:
 1. **Vulnerability Detection**: Identify security vulnerabilities and potential attack vectors

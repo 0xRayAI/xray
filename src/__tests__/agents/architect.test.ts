@@ -26,7 +26,7 @@ describe("Architect Agent Configuration", () => {
     it("should have concise system prompt", () => {
       const system = architect.system;
       // New simplified prompt
-      expect(system).toContain("StringRay Architect");
+      expect(system).toContain("0xRay Architect");
       expect(system).toContain("MAX 3 file reads");
       expect(system).toContain("Stop after giving your answer");
     });
@@ -44,7 +44,7 @@ describe("Architect Agent Configuration", () => {
     it("should have concise prompt", () => {
       const system = architect.system;
       // Simplified prompt
-      expect(system).toContain("StringRay Architect");
+      expect(system).toContain("0xRay Architect");
     });
 
     it("should define processor pipeline", () => {
@@ -58,7 +58,7 @@ describe("Architect Agent Configuration", () => {
     it("should have concise system prompt", () => {
       const system = architect.system;
       // New simplified prompt
-      expect(system).toContain("StringRay Architect");
+      expect(system).toContain("0xRay Architect");
       expect(system).toContain("MAX 3 file reads");
     });
 
@@ -85,7 +85,7 @@ describe("Architect Agent Configuration", () => {
     it("should have concise integration guidance", () => {
       const system = architect.system;
       // Simplified prompt
-      expect(system).toContain("StringRay Architect");
+      expect(system).toContain("0xRay Architect");
       expect(system).toContain("Stop after giving your answer");
     });
   });

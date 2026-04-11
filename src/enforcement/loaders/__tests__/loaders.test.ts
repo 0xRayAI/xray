@@ -240,7 +240,7 @@ describe("Rule Loaders", () => {
 
     it("should load triage rules from AGENTS.md", async () => {
       const mockAgentsMd = `
-# StringRay Agents
+# 0xRay Agents
 
 ## Available Agents
 

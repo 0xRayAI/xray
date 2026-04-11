@@ -1,5 +1,5 @@
 /**
- * StrRay Lint MCP Server
+ * 0xRay Lint MCP Server
  *
  * Comprehensive ESLint validation and automated code quality checking
  */
@@ -14,7 +14,7 @@ import { execFileSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-class StrRayLintServer {
+class StringRayLintServer {
   private server: Server;
 
   constructor() {
@@ -34,7 +34,7 @@ class StrRayLintServer {
       "lint.server",
       "-strray-lint-mcp-server-initialized-",
       "info",
-      { message: "StrRay Lint MCP Server initialized" },
+      { message: "0xRay Lint MCP Server initialized" },
     );
   }
 
@@ -161,7 +161,7 @@ class StrRayLintServer {
       );
     }
 
-    const response = `🔍 StrRay Lint Results
+    const response = `🔍 0xRay Lint Results
 
 ${lintResults.summary}
 
@@ -450,15 +450,15 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
       "lint.server",
       "-strray-lint-mcp-server-started-",
       "info",
-      { message: "StrRay Lint MCP Server started" },
+      { message: "0xRay Lint MCP Server started" },
     );
   }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayLintServer();
+  const server = new StringRayLintServer();
   server.run().catch((error) => frameworkLogger.log("mcps/lint", "run", "error", { error: String(error) }));
 }
 
-export { StrRayLintServer };
+export { StringRayLintServer };

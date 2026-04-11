@@ -103,7 +103,7 @@ function createAgentManifest(
     name: agentName,
     version: version,
     description: extractYamlField(content, "description") || `Agent: ${agentName}`,
-    author: extractYamlField(content, "author") || extractYamlField(content, "maintainer") || "StringRay User",
+    author: extractYamlField(content, "author") || extractYamlField(content, "maintainer") || "0xRay User",
     license: extractYamlField(content, "license") || "MIT",
     source: extractYamlField(content, "source") || "custom",
     framework: "stringray",

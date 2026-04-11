@@ -121,7 +121,7 @@ describe("Multimodal Looker", () => {
     });
 
     it("should mention framework compliance", () => {
-      expect(agent.system).toContain("StringRay");
+      expect(agent.system).toContain("0xRay");
       expect(agent.system).toContain("Visual Analysis Compliance");
     });
   });
@@ -270,8 +270,8 @@ describe("Multimodal Looker", () => {
     });
 
     it("should mention integration with other agents", () => {
-      // System should mention working with other StringRay components
-      expect(agent.system).toContain("StringRay");
+      // System should mention working with other 0xRay components
+      expect(agent.system).toContain("0xRay");
       // Verify framework alignment section exists
       expect(agent.system).toContain("Framework Alignment");
     });

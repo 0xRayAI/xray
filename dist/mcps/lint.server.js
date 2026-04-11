@@ -1,5 +1,5 @@
 /**
- * StrRay Lint MCP Server
+ * 0xRay Lint MCP Server
  *
  * Comprehensive ESLint validation and automated code quality checking
  */
@@ -9,7 +9,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import { execFileSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
-class StrRayLintServer {
+class StringRayLintServer {
     server;
     constructor() {
         this.server = new Server({
@@ -20,7 +20,7 @@ class StrRayLintServer {
             },
         });
         this.setupToolHandlers();
-        void frameworkLogger.log("lint.server", "-strray-lint-mcp-server-initialized-", "info", { message: "StrRay Lint MCP Server initialized" });
+        void frameworkLogger.log("lint.server", "-strray-lint-mcp-server-initialized-", "info", { message: "0xRay Lint MCP Server initialized" });
     }
     setupToolHandlers() {
         // List available tools
@@ -128,7 +128,7 @@ class StrRayLintServer {
             lintResults.success = false;
             lintResults.details.push(`Lint failed: ${error instanceof Error ? error.message : String(error)}`);
         }
-        const response = `🔍 StrRay Lint Results
+        const response = `🔍 0xRay Lint Results
 
 ${lintResults.summary}
 
@@ -370,13 +370,13 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
     async run() {
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        await frameworkLogger.log("lint.server", "-strray-lint-mcp-server-started-", "info", { message: "StrRay Lint MCP Server started" });
+        await frameworkLogger.log("lint.server", "-strray-lint-mcp-server-started-", "info", { message: "0xRay Lint MCP Server started" });
     }
 }
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayLintServer();
+    const server = new StringRayLintServer();
     server.run().catch((error) => frameworkLogger.log("mcps/lint", "run", "error", { error: String(error) }));
 }
-export { StrRayLintServer };
+export { StringRayLintServer };
 //# sourceMappingURL=lint.server.js.map

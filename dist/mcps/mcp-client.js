@@ -17,6 +17,15 @@ import { defaultServerRegistry } from './config/index.js';
 import { ToolRegistry, ToolDiscovery, ToolExecutor, ToolCache, } from './tools/index.js';
 import { SimulationEngine, getAllServerSimulations, } from './simulation/index.js';
 /**
+ * Retry configuration for MCP tool execution
+ */
+const DEFAULT_RETRY_CONFIG = {
+    maxRetries: 3,
+    initialDelayMs: 100,
+    maxDelayMs: 5000,
+    backoffMultiplier: 2,
+};
+/**
  * MCP Client
  *
  * Facade that orchestrates tool discovery, caching, execution, and simulation.
@@ -28,15 +37,38 @@ export class MCPClient extends EventEmitter {
     toolExecutor;
     toolCache;
     simulationEngine;
-    constructor(config) {
+    retryConfig;
+    constructor(config, retryConfig) {
         super();
         this.config = config;
+        this.retryConfig = { ...DEFAULT_RETRY_CONFIG, ...retryConfig };
         this.toolRegistry = new ToolRegistry();
         this.toolDiscovery = new ToolDiscovery();
         this.toolExecutor = new ToolExecutor();
         this.toolCache = new ToolCache();
         this.simulationEngine = new SimulationEngine();
         this.registerDefaultSimulations();
+    }
+    /**
+     * Execute with exponential backoff retry
+     */
+    async executeWithRetry(operation, operationName) {
+        let lastError;
+        let delay = this.retryConfig.initialDelayMs;
+        for (let attempt = 0; attempt <= this.retryConfig.maxRetries; attempt++) {
+            try {
+                return await operation();
+            }
+            catch (error) {
+                lastError = error instanceof Error ? error : new Error(String(error));
+                if (attempt < this.retryConfig.maxRetries) {
+                    frameworkLogger.log('mcp-client', `Retry ${attempt + 1}/${this.retryConfig.maxRetries} for ${operationName}: ${lastError.message}`, 'warning', { operationName, attempt: attempt + 1 });
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay = Math.min(delay * this.retryConfig.backoffMultiplier, this.retryConfig.maxDelayMs);
+                }
+            }
+        }
+        throw lastError || new Error(`Operation ${operationName} failed after ${this.retryConfig.maxRetries} retries`);
     }
     /**
      * Register default simulation implementations
@@ -161,12 +193,12 @@ export class MCPClient extends EventEmitter {
             'framework-help': [
                 {
                     name: 'strray_get_capabilities',
-                    description: 'Get StringRay framework capabilities',
+                    description: 'Get 0xRay framework capabilities',
                     inputSchema: { type: 'object', properties: {} },
                 },
                 {
                     name: 'strray_get_commands',
-                    description: 'Get available StringRay commands',
+                    description: 'Get available 0xRay commands',
                     inputSchema: { type: 'object', properties: {} },
                 },
                 {
@@ -213,10 +245,10 @@ export class MCPClient extends EventEmitter {
         };
         this.emit('tool.before', beforeEvent);
         try {
-            // Try simulation first (fallback behavior)
+            // Wrap with retry for simulation (and future real connections)
             if (this.simulationEngine.canSimulate(this.config.serverName, toolName)) {
                 try {
-                    const result = await this.simulationEngine.simulate(this.config.serverName, toolName, args);
+                    const result = await this.executeWithRetry(() => this.simulationEngine.simulate(this.config.serverName, toolName, args), `simulate:${toolName}`);
                     // Emit tool.after event (success)
                     const afterEvent = {
                         ...beforeEvent,

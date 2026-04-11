@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# StringRay Framework Deployment Script (Simplified)
-# Deploys StringRay plugin for OpenCode integration
+# 0xRay Framework Deployment Script (Simplified)
+# Deploys 0xRay plugin for OpenCode integration
 
 # @since 2026-01-12
 
@@ -26,7 +26,7 @@ log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-log_info "Starting StringRay Framework Deployment"
+log_info "Starting 0xRay Framework Deployment"
 echo "=============================================="
 
 # Pre-deployment checks
@@ -41,7 +41,7 @@ fi
 log_success "Pre-deployment checks passed"
 
 # Build framework
-log_info "Building StringRay framework..."
+log_info "Building 0xRay framework..."
 
 npm run build
 

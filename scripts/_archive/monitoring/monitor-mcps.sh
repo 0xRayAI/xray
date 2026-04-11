@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# StrRay MCP Monitoring Script
+# 0xRay MCP Monitoring Script
 # Watch MCP processes and memory before/after tasks
 
 echo "============================================================"
-echo "🔬 StrRay MCP Process Monitor"
+echo "🔬 0xRay MCP Process Monitor"
 echo "============================================================"
 
 while true; do

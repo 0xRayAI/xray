@@ -1,10 +1,10 @@
 /**
- * StrRay Project Analysis MCP Server
+ * 0xRay Project Analysis MCP Server
  *
  * Knowledge skill for project structure analysis, complexity assessment,
  * and pattern recognition - provides deep project intelligence
  */
-declare class StrRayProjectAnalysisServer {
+declare class StringRayProjectAnalysisServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -30,5 +30,5 @@ declare class StrRayProjectAnalysisServer {
     private calculateMaxNesting;
     run(): Promise<void>;
 }
-export default StrRayProjectAnalysisServer;
+export default StringRayProjectAnalysisServer;
 //# sourceMappingURL=project-analysis.server.d.ts.map

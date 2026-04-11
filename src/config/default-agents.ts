@@ -1,7 +1,7 @@
 /**
  * Default Agent Configurations
  *
- * Centralized agent definitions for the StringRay delegation system.
+ * Centralized agent definitions for the 0xRay delegation system.
  * This file externalizes all hardcoded agent configurations.
  *
  * @version 1.0.0

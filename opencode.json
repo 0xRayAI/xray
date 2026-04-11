@@ -61,6 +61,11 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
+    "explore": {
+      "description": "Codebase exploration agent",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
     "strategist": {
       "description": "Expert in system design, architecture decisions, and technical roadmaps",
       "temperature": 1.0,
@@ -135,6 +140,199 @@
       "description": "Code analyzer for metrics",
       "temperature": 1.0,
       "mode": "subagent"
+    },
+    "sisyphus": {
+      "description": "Sisyphus task agent",
+      "disable": true
+    },
+    "Planner-Sisyphus": {
+      "description": "Planner Sisyphus",
+      "disable": true
+    },
+    "OpenCode-Builder": {
+      "description": "OpenCode Builder",
+      "disable": true
+    },
+    "build": {
+      "description": "Build agent",
+      "disable": true
+    },
+    "plan": {
+      "description": "Plan agent",
+      "disable": true
+    },
+    "strray-architect": {
+      "description": "0xRay architect",
+      "disable": true
+    },
+    "strray-orchestrator": {
+      "description": "0xRay orchestrator",
+      "disable": true
+    },
+    "strray-researcher": {
+      "description": "0xRay researcher",
+      "disable": true
+    },
+    "strray-refactorer": {
+      "description": "0xRay refactorer",
+      "disable": true
+    },
+    "strray-security-auditor": {
+      "description": "0xRay security auditor",
+      "disable": true
+    },
+    "strray-testing-lead": {
+      "description": "0xRay testing lead",
+      "disable": true
+    },
+    "strray-enforcer": {
+      "description": "0xRay enforcer",
+      "disable": true
+    },
+    "strray-code-reviewer": {
+      "description": "0xRay code reviewer",
+      "disable": true
+    },
+    "strray-bug-triage-specialist": {
+      "description": "0xRay bug triage",
+      "disable": true
+    },
+    "strray-state-manager": {
+      "description": "0xRay state manager",
+      "disable": true
+    },
+    "strray-security-scan": {
+      "description": "0xRay security scan",
+      "disable": true
+    },
+    "strray-processor-pipeline": {
+      "description": "0xRay processor pipeline",
+      "disable": true
+    },
+    "strray-performance-analysis": {
+      "description": "0xRay performance analysis",
+      "disable": true
+    },
+    "strray-model-health-check": {
+      "description": "0xRay model health check",
+      "disable": true
+    },
+    "strray-lint": {
+      "description": "0xRay lint",
+      "disable": true
+    },
+    "strray-framework-compliance-audit": {
+      "description": "0xRay compliance audit",
+      "disable": true
+    },
+    "strray-boot-orchestrator": {
+      "description": "0xRay boot orchestrator",
+      "disable": true
+    },
+    "strray-auto-format": {
+      "description": "0xRay auto format",
+      "disable": true
+    },
+    "strray-architect-tools": {
+      "description": "0xRay architect tools",
+      "disable": true
+    },
+    "strray-ui-ux-design": {
+      "description": "0xRay UI/UX design",
+      "disable": true
+    },
+    "strray-testing-strategy": {
+      "description": "0xRay testing strategy",
+      "disable": true
+    },
+    "strray-testing-best-practices": {
+      "description": "0xRay testing best practices",
+      "disable": true
+    },
+    "strray-project-analysis": {
+      "description": "0xRay project analysis",
+      "disable": true
+    },
+    "project-analysis": {
+      "description": "Project analysis (skill)",
+      "disable": true,
+      "note": "This is a skill/MCP, not an agent"
+    },
+    "strray-performance-optimization": {
+      "description": "0xRay performance optimization",
+      "disable": true
+    },
+    "strray-git-workflow": {
+      "description": "0xRay git workflow",
+      "disable": true
+    },
+    "strray-documentation-generation": {
+      "description": "0xRay documentation generation",
+      "disable": true
+    },
+    "strray-devops-deployment": {
+      "description": "0xRay devops deployment",
+      "disable": true
+    },
+    "strray-database-design": {
+      "description": "0xRay database design",
+      "disable": true
+    },
+    "strray-code-review": {
+      "description": "0xRay code review",
+      "disable": true
+    },
+    "strray-architecture-patterns": {
+      "description": "0xRay architecture patterns",
+      "disable": true
+    },
+    "strray-api-design": {
+      "description": "0xRay API design",
+      "disable": true
+    },
+    "strray-enforcer-tools": {
+      "description": "0xRay enforcer tools",
+      "disable": true
+    },
+    "testing-strategy": {
+      "description": "Testing strategy (skill)",
+      "disable": true
+    },
+    "performance-optimization": {
+      "description": "Performance optimization (skill)",
+      "disable": true
+    },
+    "code-review": {
+      "description": "Code review (skill)",
+      "disable": true
+    },
+    "security-audit": {
+      "description": "Security audit (skill)",
+      "disable": true
+    },
+    "architecture-patterns": {
+      "description": "Architecture patterns (skill)",
+      "disable": true
+    },
+    "git-workflow": {
+      "description": "Git workflow (skill)",
+      "disable": true
+    },
+    "api-design": {
+      "description": "API design (skill)",
+      "disable": true
+    },
+    "ui-ux-design": {
+      "description": "UI/UX design (skill)",
+      "disable": true
+    },
+    "documentation-generation": {
+      "description": "Documentation generation (skill)",
+      "disable": true
+    },
+    "refactoring-strategies": {
+      "description": "Refactoring strategies (skill)",
+      "disable": true
     }
   }
 }

@@ -1,5 +1,5 @@
 /**
- * StringRay Post-Processor - Core Infrastructure
+ * 0xRay Post-Processor - Core Infrastructure
  *
  * Automated CI/CD loop orchestration: commit → push → monitor → fix → redeploy → monitor
  * Provides systematic error prevention and deployment automation.
@@ -221,7 +221,7 @@ export class PostProcessor {
      * Initialize the post-processor system
      */
     async initialize() {
-        await frameworkLogger.log("-post-processor", "-initializing-stringray-post-processor-", "info", { message: "🚀 Initializing StringRay Post-Processor..." });
+        await frameworkLogger.log("-post-processor", "-initializing-stringray-post-processor-", "info", { message: "🚀 Initializing 0xRay Post-Processor..." });
         // Initialize monitoring
         if (this.config.monitoring.enabled) {
             await this.monitoringEngine.initialize();

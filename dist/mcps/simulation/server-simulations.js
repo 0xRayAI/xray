@@ -77,7 +77,7 @@ export const frameworkHelpSimulations = {
         content: [
             {
                 type: 'text',
-                text: `**StringRay Framework Capabilities:**
+                text: `**0xRay Framework Capabilities:**
 
 **25 Specialized Agents:**
 - enforcer: Codex compliance & error prevention
@@ -108,7 +108,7 @@ export const frameworkHelpSimulations = {
         content: [
             {
                 type: 'text',
-                text: `**StringRay Framework Commands:**
+                text: `**0xRay Framework Commands:**
 
 **Agent Commands:**
 @enforcer - Codex compliance & error prevention

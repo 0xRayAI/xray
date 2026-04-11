@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "📊 StrRay Framework - Profiling Performance Dashboard"
+echo "📊 0xRay Framework - Profiling Performance Dashboard"
 echo "=================================================="
 
 # Colors
@@ -11,7 +11,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 show_dashboard() {
-    echo -e "${BLUE}🚀 StrRay Advanced Profiling Dashboard${NC}"
+    echo -e "${BLUE}🚀 0xRay Advanced Profiling Dashboard${NC}"
     echo "========================================"
 
     # Check if profiling directory exists

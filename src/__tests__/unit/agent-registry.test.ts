@@ -125,7 +125,7 @@ describe("Agent Registry Integration", () => {
       const agent = builtinAgents["code-analyzer"];
 
       expect(agent.system).toContain("Analyzer subagent");
-      expect(agent.system).toContain("StringRay");
+      expect(agent.system).toContain("0xRay");
       expect(agent.system).toContain("Universal analysis specialist");
     });
   });

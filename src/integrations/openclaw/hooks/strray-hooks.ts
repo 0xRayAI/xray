@@ -1,7 +1,7 @@
 /**
- * OpenClaw StringRay Hooks Integration
+ * OpenClaw 0xRay Hooks Integration
  *
- * Integrates OpenClaw with StringRay's tool.before and tool.after hooks
+ * Integrates OpenClaw with 0xRay's tool.before and tool.after hooks
  * to send tool execution events to OpenClaw Gateway.
  *
  * @version 1.0.0
@@ -27,7 +27,7 @@ export interface OpenClawHooksConfig {
 }
 
 /**
- * StringRay tool event
+ * 0xRay tool event
  */
 export interface StringRayToolEvent {
   toolName: string;
@@ -82,7 +82,7 @@ export class OpenClawHooksManager {
   }
 
   /**
-   * Initialize hooks - registers with StringRay's event system
+   * Initialize hooks - registers with 0xRay's event system
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
@@ -95,11 +95,11 @@ export class OpenClawHooksManager {
       return;
     }
 
-    this.logger.info('[OpenClawHooks] Initializing StringRay tool hooks...');
+    this.logger.info('[OpenClawHooks] Initializing 0xRay tool hooks...');
     
-    // Register with StringRay's event system
+    // Register with 0xRay's event system
     // The integration should call registerToolBefore and registerToolAfter
-    // to connect to StringRay's actual tool execution events
+    // to connect to 0xRay's actual tool execution events
     
     this.initialized = true;
     this.logger.info('[OpenClawHooks] Hooks initialized successfully');
@@ -107,7 +107,7 @@ export class OpenClawHooksManager {
 
   /**
    * Register a callback for tool.before events
-   * Call this to connect to StringRay's tool.before event system
+   * Call this to connect to 0xRay's tool.before event system
    */
   registerToolBefore(callback: ToolEventCallback): void {
     this.toolBeforeCallbacks.add(callback);
@@ -122,7 +122,7 @@ export class OpenClawHooksManager {
 
   /**
    * Register a callback for tool.after events
-   * Call this to connect to StringRay's tool.after event system
+   * Call this to connect to 0xRay's tool.after event system
    */
   registerToolAfter(callback: ToolEventCallback): void {
     this.toolAfterCallbacks.add(callback);
@@ -136,7 +136,7 @@ export class OpenClawHooksManager {
   }
 
   /**
-   * Handle tool.before event from StringRay
+   * Handle tool.before event from 0xRay
    */
   async onToolBefore(event: StringRayToolEvent): Promise<void> {
     if (!this.config.enabled || !this.config.toolBefore) {
@@ -186,7 +186,7 @@ export class OpenClawHooksManager {
   }
 
   /**
-   * Handle tool.after event from StringRay
+   * Handle tool.after event from 0xRay
    */
   async onToolAfter(event: StringRayToolEvent): Promise<void> {
     if (!this.config.enabled || !this.config.toolAfter) {

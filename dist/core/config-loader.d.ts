@@ -1,7 +1,7 @@
 /**
  * Configuration Loader
  *
- * Loads and validates StringRay-specific configuration from opencode.json
+ * Loads and validates 0xRay-specific configuration from opencode.json
  *
  * @version 1.0.0
  * @since 2026-01-09
@@ -39,7 +39,7 @@ export declare class StringRayConfigLoader {
     private lastLoadTime;
     constructor(configPath?: string);
     /**
-     * Load StringRay configuration from the resolved config directory
+     * Load 0xRay configuration from the resolved config directory
      */
     loadConfig(): StringRayConfig;
     /**

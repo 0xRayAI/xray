@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# StrRay Framework MCP Server Registration Script
+# 0xRay Framework MCP Server Registration Script
 # Registers all 15 MCP servers with OpenCode skill registry
 
 set -e
 
-echo "🚀 StrRay Framework - MCP Server Registration"
+echo "🚀 0xRay Framework - MCP Server Registration"
 echo "=============================================="
 
 # Colors for output
@@ -43,7 +43,7 @@ main() {
     echo -e "${GREEN}✅ Ready to register MCP servers${NC}"
     echo ""
 
-    echo -e "${BLUE}🎯 Registering StrRay Framework MCP Servers${NC}"
+    echo -e "${BLUE}🎯 Registering 0xRay Framework MCP Servers${NC}"
     echo "=============================================="
 
     # Knowledge Skill Servers
@@ -67,7 +67,7 @@ main() {
     echo "   ✅ Agent Tools: 2 registered"
     echo "   📈 Total MCP Servers: 8 registered"
     echo ""
-    echo -e "${GREEN}🚀 StrRay Framework MCP integration ready!${NC}"
+    echo -e "${GREEN}🚀 0xRay Framework MCP integration ready!${NC}"
 }
 
 # Run main function

@@ -89,7 +89,7 @@ run_with_timeout() {
 
 # Header
 echo -e "${BLUE}╔════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║     StringRay CI NPM Orchestration Test          ║${NC}"
+echo -e "${BLUE}║     0xRay CI NPM Orchestration Test          ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════╝${NC}"
 echo ""
 log_info "Project: $PROJECT_DIR"

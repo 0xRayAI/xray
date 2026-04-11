@@ -1,5 +1,5 @@
 /**
- * StrRay Boot Orchestrator MCP Server
+ * 0xRay Boot Orchestrator MCP Server
  *
  * Advanced initialization orchestration with dependency management and health monitoring
  */
@@ -11,7 +11,7 @@ import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveLogDir, resolveStateDir } from "../core/config-paths.js";
-class StrRayBootOrchestratorServer {
+class StringRayBootOrchestratorServer {
     server;
     bootStatus;
     // Boot sequence in dependency order
@@ -95,7 +95,7 @@ class StrRayBootOrchestratorServer {
                 tools: [
                     {
                         name: "execute-boot-sequence",
-                        description: "Execute the complete StrRay boot sequence with dependency resolution",
+                        description: "Execute the complete 0xRay boot sequence with dependency resolution",
                         inputSchema: {
                             type: "object",
                             properties: {
@@ -862,8 +862,8 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w) => `â
 }
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayBootOrchestratorServer();
+    const server = new StringRayBootOrchestratorServer();
     server.run().catch((error) => frameworkLogger.log("mcps/boot-orchestrator", "run", "error", { error: String(error) }));
 }
-export { StrRayBootOrchestratorServer };
+export { StringRayBootOrchestratorServer };
 //# sourceMappingURL=boot-orchestrator.server.js.map

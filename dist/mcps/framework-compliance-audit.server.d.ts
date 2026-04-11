@@ -1,9 +1,9 @@
 /**
- * StrRay Framework Compliance Audit MCP Server
+ * 0xRay Framework Compliance Audit MCP Server
  *
  * Comprehensive validation of all framework components and Universal Development Codex compliance
  */
-declare class StrRayFrameworkComplianceAuditServer {
+declare class StringRayFrameworkComplianceAuditServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -19,5 +19,5 @@ declare class StrRayFrameworkComplianceAuditServer {
     private getDetailedFindings;
     run(): Promise<void>;
 }
-export { StrRayFrameworkComplianceAuditServer };
+export { StringRayFrameworkComplianceAuditServer };
 //# sourceMappingURL=framework-compliance-audit.server.d.ts.map

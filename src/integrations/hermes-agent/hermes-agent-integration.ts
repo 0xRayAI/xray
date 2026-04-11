@@ -1,7 +1,7 @@
 /**
  * Hermes Agent Integration
  *
- * Bridges StringRay framework components to the Hermes CLI agent.
+ * Bridges 0xRay framework components to the Hermes CLI agent.
  * Manages the bridge.mjs subprocess and wires tool event hooks
  * through the framework's quality gate, processors, and state manager.
  *
@@ -57,7 +57,7 @@ const NUDGE_TOOLS = new Set(["terminal", "search_files"]);
  * Hermes Agent Integration
  *
  * Manages the bridge subprocess and provides tool event hooks
- * that pipe through StringRay's quality gate and processor pipeline.
+ * that pipe through 0xRay's quality gate and processor pipeline.
  */
 export class HermesAgentIntegration extends BaseIntegration {
   private bridgePath: string;
@@ -308,7 +308,7 @@ export class HermesAgentIntegration extends BaseIntegration {
     };
     this.getEventEmitter().emit("pre-tool-call", event);
 
-    // StringRay MCP tools — skip bridge entirely
+    // 0xRay MCP tools — skip bridge entirely
     if (this.isStrrayMcp(tool)) {
       this.hermesStats.strrayMcpCalls++;
       return { allowed: true };
@@ -396,7 +396,7 @@ export class HermesAgentIntegration extends BaseIntegration {
     };
     this.getEventEmitter().emit("post-tool-call", event);
 
-    // Skip non-code tools and StringRay MCP tools
+    // Skip non-code tools and 0xRay MCP tools
     if (!CODE_TOOLS.has(tool) || this.isStrrayMcp(tool)) {
       return;
     }
@@ -475,7 +475,7 @@ export class HermesAgentIntegration extends BaseIntegration {
   // ==========================================================================
 
   /**
-   * Check if a tool name belongs to a StringRay MCP server
+   * Check if a tool name belongs to a 0xRay MCP server
    */
   isStrrayMcp(tool: string): boolean {
     return tool.startsWith("mcp_strray_");
@@ -486,7 +486,7 @@ export class HermesAgentIntegration extends BaseIntegration {
    */
   private getToolNudge(tool: string): string | undefined {
     if (tool === "terminal") {
-      return 'Tip: Consider using "execute_code" for multi-step code operations with StringRay enforcement.';
+      return 'Tip: Consider using "execute_code" for multi-step code operations with 0xRay enforcement.';
     }
     if (tool === "search_files") {
       return 'Tip: Consider using "execute_code" with hermes_tools for complex search operations.';

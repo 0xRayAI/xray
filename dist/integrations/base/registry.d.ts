@@ -1,7 +1,7 @@
 /**
  * Integration Registry
  *
- * Central registry for managing StringRay integrations.
+ * Central registry for managing 0xRay integrations.
  * Provides registration, loading, unloading, health checking, and stats retrieval.
  *
  * @version 1.0.0

@@ -85,7 +85,7 @@ function createAgentManifest(agentName, configPath, version, cwd) {
         name: agentName,
         version: version,
         description: extractYamlField(content, "description") || `Agent: ${agentName}`,
-        author: extractYamlField(content, "author") || extractYamlField(content, "maintainer") || "StringRay User",
+        author: extractYamlField(content, "author") || extractYamlField(content, "maintainer") || "0xRay User",
         license: extractYamlField(content, "license") || "MIT",
         source: extractYamlField(content, "source") || "custom",
         framework: "stringray",
@@ -109,7 +109,7 @@ export async function publishAgentCommand() {
     const options = parseArgs();
     console.log("");
     console.log("╔══════════════════════════════════════════════════╗");
-    console.log("║           StringRay Agent Publisher            ║");
+    console.log("║           0xRay Agent Publisher            ║");
     console.log("╚══════════════════════════════════════════════════╝");
     console.log("");
     if (!options.agent) {

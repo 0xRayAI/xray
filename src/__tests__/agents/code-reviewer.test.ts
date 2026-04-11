@@ -25,14 +25,14 @@ describe("Code Reviewer Agent Configuration", () => {
   describe("Description and System Prompt", () => {
     it("should have appropriate code review description", () => {
       expect(codeReviewer.description).toContain(
-        "StringRay",
+        "0xRay",
       );
       expect(codeReviewer.description).toContain("code reviewer");
     });
 
     it("should have comprehensive code reviewer system prompt", () => {
       const system = codeReviewer.system;
-      expect(system).toContain("StringRay");
+      expect(system).toContain("0xRay");
       expect(system).toContain("Code Reviewer");
       expect(system).toContain("code");
     });

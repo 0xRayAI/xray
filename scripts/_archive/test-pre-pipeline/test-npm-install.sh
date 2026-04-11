@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework NPM Installation Test Script
+# 0xRay Framework NPM Installation Test Script
 # Comprehensive automated testing of npm package installation and functionality
 
 set -e
@@ -41,7 +41,7 @@ run_with_timeout() {
     )
 }
 
-log_info "Starting StrRay Framework NPM Installation Test"
+log_info "Starting 0xRay Framework NPM Installation Test"
 log_info "Test Directory: $TEST_DIR"
 
 # Create test directory

@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - Application Metrics Endpoint
+ * 0xRay Framework - Application Metrics Endpoint
  *
  * Production-ready metrics endpoint for Prometheus monitoring
  * Exposes key performance and health metrics

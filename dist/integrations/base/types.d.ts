@@ -1,7 +1,7 @@
 /**
  * Integration Base Types
  *
- * Common TypeScript interfaces for StringRay integrations.
+ * Common TypeScript interfaces for 0xRay integrations.
  * Provides a standardized foundation for all integration types.
  *
  * @version 1.0.0
@@ -86,7 +86,7 @@ export interface IntegrationEvent<T = unknown> {
 }
 /**
  * Integration interface
- * All StringRay integrations must implement this interface
+ * All 0xRay integrations must implement this interface
  */
 export interface IIntegration {
     /** Unique name of the integration */

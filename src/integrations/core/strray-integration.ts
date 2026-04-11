@@ -1,7 +1,7 @@
 /**
  * Cross-Framework Integration Core
  *
- * Framework-agnostic integration layer enabling StringRay Framework adoption
+ * Framework-agnostic integration layer enabling 0xRay Framework adoption
  * across React, Vue, Angular, Svelte, and other frontend frameworks.
  *
  * @version 1.0.0
@@ -162,7 +162,7 @@ export interface MonitoringIntegrationData {
 }
 
 /**
- * Core StringRay Framework integration orchestrator
+ * Core 0xRay Framework integration orchestrator
  */
 export class StringRayIntegration extends EventEmitter {
   private adapter: FrameworkAdapter | null = null;
@@ -205,7 +205,7 @@ export class StringRayIntegration extends EventEmitter {
         "-initializing-stringray-framework-integration-for-",
         "info",
         {
-          message: `🚀 Initializing StringRay Framework integration for ${this.config.framework}`,
+          message: `🚀 Initializing 0xRay Framework integration for ${this.config.framework}`,
         },
       );
 
@@ -215,7 +215,7 @@ export class StringRayIntegration extends EventEmitter {
       // Initialize framework adapter
       await this.adapter.initialize(this.config);
 
-      // Initialize core StringRay components
+      // Initialize core 0xRay components
       await this.initializeCoreComponents();
 
       // Setup framework-specific integrations
@@ -234,11 +234,11 @@ export class StringRayIntegration extends EventEmitter {
         "-stringray-framework-integration-initialized-for-t",
         "success",
         {
-          message: `✅ StringRay Framework integration initialized for ${this.config.framework} v${this.config.version}`,
+          message: `✅ 0xRay Framework integration initialized for ${this.config.framework} v${this.config.version}`,
         },
       );
     } catch (error) {
-      frameworkLogger.log("StrRayIntegration", "initialize", "error", { error, message: "❌ Failed to initialize StringRay Framework integration:" });
+      frameworkLogger.log("0xRayIntegration", "initialize", "error", { error, message: "❌ Failed to initialize 0xRay Framework integration:" });
       throw error;
     }
   }
@@ -257,7 +257,7 @@ export class StringRayIntegration extends EventEmitter {
         "-destroying-stringray-framework-integration-for-th",
         "info",
         {
-          message: `🛑 Destroying StringRay Framework integration for ${this.config.framework}`,
+          message: `🛑 Destroying 0xRay Framework integration for ${this.config.framework}`,
         },
       );
 
@@ -281,11 +281,11 @@ export class StringRayIntegration extends EventEmitter {
         "-stringray-framework-integration-destroyed-for-thi",
         "success",
         {
-          message: `✅ StringRay Framework integration destroyed for ${this.config.framework}`,
+          message: `✅ 0xRay Framework integration destroyed for ${this.config.framework}`,
         },
       );
     } catch (error) {
-      frameworkLogger.log("StrRayIntegration", "destroy", "error", { error, message: "❌ Failed to destroy StringRay Framework integration:" });
+      frameworkLogger.log("0xRayIntegration", "destroy", "error", { error, message: "❌ Failed to destroy 0xRay Framework integration:" });
       throw error;
     }
   }
@@ -521,7 +521,7 @@ export class StringRayIntegration extends EventEmitter {
   }
 
   /**
-   * Initialize core StringRay components
+   * Initialize core 0xRay components
    */
   private async initializeCoreComponents(): Promise<void> {
     // Initialize orchestrator
@@ -544,7 +544,7 @@ export class StringRayIntegration extends EventEmitter {
   }
 
   /**
-   * Destroy core StringRay components
+   * Destroy core 0xRay components
    */
   private async destroyCoreComponents(): Promise<void> {
     // Destroy orchestrator
@@ -598,7 +598,7 @@ export class StringRayIntegration extends EventEmitter {
   private ensureInitialized(): void {
     if (!this.initialized) {
       throw new Error(
-        "StringRay Framework integration not initialized. Call initialize() first.",
+        "0xRay Framework integration not initialized. Call initialize() first.",
       );
     }
   }
@@ -627,7 +627,7 @@ export class StringRayIntegration extends EventEmitter {
   }
 
   private handleErrorCaught(event: IntegrationEvent): void {
-    frameworkLogger.log("StrRayIntegration", "error-caught", "error", { error: event.data, message: "❌ Framework error caught:" });
+    frameworkLogger.log("0xRayIntegration", "error-caught", "error", { error: event.data, message: "❌ Framework error caught:" });
   }
 
   private async handlePerformanceMeasured(

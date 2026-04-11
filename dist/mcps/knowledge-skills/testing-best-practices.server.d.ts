@@ -1,10 +1,10 @@
 /**
- * StrRay Testing Best Practices MCP Server
+ * 0xRay Testing Best Practices MCP Server
  *
  * Knowledge skill for comprehensive testing strategies, TDD/BDD implementation,
  * test coverage optimization, and automated testing workflows
  */
-declare class StrRayTestingBestPracticesServer {
+declare class StringRayTestingBestPracticesServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -33,5 +33,5 @@ declare class StrRayTestingBestPracticesServer {
     private getTestTypeIcon;
     run(): Promise<void>;
 }
-export { StrRayTestingBestPracticesServer };
+export { StringRayTestingBestPracticesServer };
 //# sourceMappingURL=testing-best-practices.server.d.ts.map

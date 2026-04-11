@@ -4,7 +4,7 @@
 
 set -e
 
-echo "📦 Copying StrRay plugin files..."
+echo "📦 Copying 0xRay plugin files..."
 
 # Create dist directories
 mkdir -p dist/plugin

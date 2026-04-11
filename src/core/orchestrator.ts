@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - Core Orchestrator
+ * 0xRay Framework - Core Orchestrator
  * Main orchestration engine for multi-agent task coordination
  */
 

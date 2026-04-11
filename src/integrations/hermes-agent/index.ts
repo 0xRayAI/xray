@@ -1,7 +1,7 @@
 /**
  * Hermes Agent Integration - Main Module
  *
- * Exports the TypeScript integration class that bridges StringRay
+ * Exports the TypeScript integration class that bridges 0xRay
  * framework components to the Hermes CLI agent via bridge.mjs.
  *
  * @version 2.0.0

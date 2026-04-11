@@ -11,7 +11,7 @@ export const BOOT_PHASES = [
     {
         id: 0,
         name: "Configuration",
-        description: "Load StringRay configuration",
+        description: "Load 0xRay configuration",
         required: true,
     },
     {

@@ -1,5 +1,5 @@
 #!/bin/bash
-# StrRay Framework - Job Summary Logger
+# 0xRay Framework - Job Summary Logger
 # Location: scripts/job-summary-logger.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

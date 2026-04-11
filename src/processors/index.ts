@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Processors Module
+ * 0xRay AI v1.3.4 - Processors Module
  *
  * Exports all processor-related functionality.
  *

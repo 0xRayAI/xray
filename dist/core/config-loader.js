@@ -1,7 +1,7 @@
 /**
  * Configuration Loader
  *
- * Loads and validates StringRay-specific configuration from opencode.json
+ * Loads and validates 0xRay-specific configuration from opencode.json
  *
  * @version 1.0.0
  * @since 2026-01-09
@@ -19,7 +19,7 @@ export class StringRayConfigLoader {
         this.configPath = configPath || resolveConfigPath("config.json") || path.join(getConfigDir(), "config.json");
     }
     /**
-     * Load StringRay configuration from the resolved config directory
+     * Load 0xRay configuration from the resolved config directory
      */
     loadConfig() {
         const now = Date.now();
@@ -39,7 +39,7 @@ export class StringRayConfigLoader {
             return config;
         }
         catch (error) {
-            frameworkLogger.log("config-loader", "load-failed", "error", { error, message: "Failed to load StringRay config" });
+            frameworkLogger.log("config-loader", "load-failed", "error", { error, message: "Failed to load 0xRay config" });
             return this.getDefaultConfig();
         }
     }

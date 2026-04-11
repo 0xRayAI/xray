@@ -1,5 +1,5 @@
 /**
- * StrRay UI/UX Design MCP Server
+ * 0xRay UI/UX Design MCP Server
  *
  * Knowledge skill for user interface and user experience design,
  * component patterns, accessibility compliance, and design system guidance
@@ -92,7 +92,7 @@ interface DesignPattern {
   accessibility: string[];
 }
 
-class StrRayUIUXDesignServer {
+class StringRayUIUXDesignServer {
   private server: Server;
 
   constructor() {
@@ -1893,7 +1893,7 @@ Available: ${Object.keys(system.components).length} component types
       "ui-ux-design.server",
       "-strray-ui-ux-design-mcp-server-running-",
       "info",
-      { message: "StrRay UI/UX Design MCP Server running..." },
+      { message: "0xRay UI/UX Design MCP Server running..." },
     );
 
     const cleanup = async (signal: string) => {
@@ -1919,7 +1919,7 @@ Available: ${Object.keys(system.components).length} component types
           "ui-ux-design.server",
           "-strray-mcp-server-shut-down-gracefully-",
           "info",
-          { message: "StrRay MCP Server shut down gracefully" },
+          { message: "0xRay MCP Server shut down gracefully" },
         );
         process.exit(0);
       } catch (error) {
@@ -1975,8 +1975,8 @@ Available: ${Object.keys(system.components).length} component types
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayUIUXDesignServer();
+  const server = new StringRayUIUXDesignServer();
   server.run().catch((error) => frameworkLogger.log("mcps/ui-ux-design", "run", "error", { error: String(error) }));
 }
 
-export { StrRayUIUXDesignServer };
+export { StringRayUIUXDesignServer };

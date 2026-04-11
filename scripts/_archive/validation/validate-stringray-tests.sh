@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# StringRay Framework - Comprehensive Test Suite
+# 0xRay Framework - Comprehensive Test Suite
 # This script runs the complete test suite assuming build artifacts exist
 
 set -e  # Exit on any error
 
-echo "🧪 StringRay Framework - Comprehensive Test Suite"
+echo "🧪 0xRay Framework - Comprehensive Test Suite"
 echo "================================================="
 
 # Configuration - detect project directory intelligently
@@ -137,8 +137,8 @@ run_cmd "cd '$TEST_DIR'"
 print_step "4" "Initialize NPM Project"
 run_cmd "cd '$TEST_DIR' && npm init -y"
 
-# 5. Install StringRay package
-print_step "5" "Install StringRay Package"
+# 5. Install 0xRay package
+print_step "5" "Install 0xRay Package"
 run_cmd "cd '$TEST_DIR' && npm install '$PROJECT_DIR/$PACKAGE_FILE'"
 
 print_step "6" "Run Postinstall Configuration"
@@ -265,7 +265,7 @@ else
 fi
 
 echo ""
-echo "🎉 StringRay Framework Test Suite Complete!"
+echo "🎉 0xRay Framework Test Suite Complete!"
 echo "==========================================="
 echo ""
 

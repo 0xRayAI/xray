@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Simple test script for StrRay Framework NPM Installation
+# Simple test script for 0xRay Framework NPM Installation
 
 set -e
 
-echo "Testing StrRay Framework NPM Installation..."
+echo "Testing 0xRay Framework NPM Installation..."
 
 # Create test directory
 TEST_DIR="/tmp/strray-simple-test"

@@ -317,7 +317,7 @@ export class MultiAgentOrchestrationCoordinator {
 
     // Use different orchestration strategies based on complexity
     if (executionPlan.recommendedStrategy === "single-agent") {
-      // Simple workflow - use StringRay orchestrator
+      // Simple workflow - use 0xRay orchestrator
       const task: TaskDefinition = {
         id: `workflow-${workflow.id}`,
         type: "simple",

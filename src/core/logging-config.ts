@@ -1,4 +1,4 @@
-// Global logging configuration for StringRay framework
+// Global logging configuration for 0xRay framework
 export interface LoggingConfig {
   enabled: boolean;
   level: "debug" | "info" | "warn" | "error";

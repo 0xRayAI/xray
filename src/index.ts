@@ -1,7 +1,7 @@
 /**
- * StringRay Framework - Main Entry Point
+ * 0xRay Framework - Main Entry Point
  *
- * This is the main entry point for the StringRay framework.
+ * This is the main entry point for the 0xRay framework.
  * It exports the core initialization function and key components.
  */
 
@@ -15,13 +15,13 @@ import { defaultStringRayConfig } from "./core/index.js";
 export { defaultStringRayConfig };
 
 // Main initialization function
-export function initializeStrRay(config = {}) {
+export function initializeStringRay(config = {}) {
   const mergedConfig = { ...defaultStringRayConfig, ...config };
 
   // Return a standardized initialization result
   return {
     success: true,
     config: mergedConfig,
-    message: "StringRay framework initialized successfully",
+    message: "0xRay framework initialized successfully",
   };
 }

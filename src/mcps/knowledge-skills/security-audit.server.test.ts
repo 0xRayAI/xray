@@ -3,37 +3,37 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { StrRaySecurityAuditServer } from "./security-audit.server";
+import { StringRaySecurityAuditServer } from "./security-audit.server";
 import * as fs from "fs";
 import * as path from "path";
 
 describe("security-audit.server integration", () => {
   describe("module exports", () => {
     it("should export server class", () => {
-      expect(StrRaySecurityAuditServer).toBeDefined();
-      expect(typeof StrRaySecurityAuditServer).toBe("function");
+      expect(StringRaySecurityAuditServer).toBeDefined();
+      expect(typeof StringRaySecurityAuditServer).toBe("function");
     });
 
     it("should be able to instantiate the server", () => {
-      const server = new StrRaySecurityAuditServer();
+      const server = new StringRaySecurityAuditServer();
       expect(server).toBeDefined();
     });
 
     it("should have run method", () => {
-      const server = new StrRaySecurityAuditServer();
+      const server = new StringRaySecurityAuditServer();
       expect(typeof server.run).toBe("function");
     });
   });
 
   describe("server structure", () => {
-    let server: StrRaySecurityAuditServer;
+    let server: StringRaySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StrRaySecurityAuditServer();
+      server = new StringRaySecurityAuditServer();
     });
 
     it("should instantiate correctly", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
 
     it("should have run async method", () => {
@@ -42,10 +42,10 @@ describe("security-audit.server integration", () => {
   });
 
   describe("security audit capabilities", () => {
-    let server: StrRaySecurityAuditServer;
+    let server: StringRaySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StrRaySecurityAuditServer();
+      server = new StringRaySecurityAuditServer();
     });
 
     it("should analyze TypeScript files", () => {
@@ -61,52 +61,52 @@ describe("security-audit.server integration", () => {
     });
 
     it("should detect multiple vulnerability categories", () => {
-      const server = new StrRaySecurityAuditServer();
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      const server = new StringRaySecurityAuditServer();
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
   });
 
   describe("vulnerability detection", () => {
-    let server: StrRaySecurityAuditServer;
+    let server: StringRaySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StrRaySecurityAuditServer();
+      server = new StringRaySecurityAuditServer();
     });
 
     it("should handle injection vulnerabilities", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
 
     it("should handle authentication vulnerabilities", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
 
     it("should handle cryptography issues", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
 
     it("should handle configuration issues", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
 
     it("should handle data protection issues", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
   });
 
   describe("compliance checking", () => {
-    let server: StrRaySecurityAuditServer;
+    let server: StringRaySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StrRaySecurityAuditServer();
+      server = new StringRaySecurityAuditServer();
     });
 
     it("should check OWASP Top 10 compliance", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
 
     it("should support multiple compliance frameworks", () => {
-      expect(server).toBeInstanceOf(StrRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
     });
   });
 });

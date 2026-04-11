@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# StringRay 1.2.0 - Complete Simulation & Orchestration Test Suite
+# 0xRay 1.2.0 - Complete Simulation & Orchestration Test Suite
 # Runs all real engine tests including orchestration, multi-agent, and pipeline flows
 
 set -e
 
-echo "🚀 StringRay 1.2.0 - Complete Simulation Test Suite"
+echo "🚀 0xRay 1.2.0 - Complete Simulation Test Suite"
 echo "===================================================="
 echo ""
 
@@ -97,7 +97,7 @@ run_test "Rule Enforcer" "cd '$PROJECT_DIR' && npm test -- src/__tests__/unit/ru
 
 # Summary
 echo ""
-echo "🎉 StringRay Simulation Test Suite Complete!"
+echo "🎉 0xRay Simulation Test Suite Complete!"
 echo "============================================="
 echo ""
 echo "📊 Results Summary:"
@@ -108,7 +108,7 @@ echo ""
 
 if [ $FAILED -eq 0 ]; then
     echo "🏆 ALL TESTS PASSED!"
-    echo "The StringRay engine is fully operational."
+    echo "The 0xRay engine is fully operational."
     exit 0
 else
     echo "⚠️  SOME TESTS FAILED"

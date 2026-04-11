@@ -1,5 +1,5 @@
 /**
- * StrRay Architect Tools MCP Server
+ * 0xRay Architect Tools MCP Server
  *
  * Converts architect-tools.ts functions into MCP server tools
  * Provides contextual analysis capabilities via MCP protocol
@@ -10,7 +10,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-class StrRayArchitectToolsServer {
+class StringRayArchitectToolsServer {
     server;
     constructor() {
         this.server = new Server({
@@ -21,7 +21,7 @@ class StrRayArchitectToolsServer {
             },
         });
         this.setupToolHandlers();
-        frameworkLogger.log("mcps/architect-tools", "init", "info", { message: "StrRay Architect Tools MCP Server initialized" });
+        frameworkLogger.log("mcps/architect-tools", "init", "info", { message: "0xRay Architect Tools MCP Server initialized" });
     }
     setupToolHandlers() {
         this.server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -625,8 +625,8 @@ class StrRayArchitectToolsServer {
     }
 }
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayArchitectToolsServer();
+    const server = new StringRayArchitectToolsServer();
     server.run().catch((error) => frameworkLogger.log("mcps/architect-tools", "run", "error", { error: String(error) }));
 }
-export default StrRayArchitectToolsServer;
+export default StringRayArchitectToolsServer;
 //# sourceMappingURL=architect-tools.server.js.map

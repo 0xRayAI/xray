@@ -97,7 +97,7 @@ export class PerformanceCIGates {
       "performance-ci-gates",
       "-running-stringray-performance-gates-",
       "info",
-      { message: "🚀 Running StringRay Performance Gates" },
+      { message: "🚀 Running 0xRay Performance Gates" },
     );
     await frameworkLogger.log("performance-ci-gates", "-", "info", {
       message: "=====================================",
@@ -553,7 +553,7 @@ export class PerformanceCIGates {
    * Create GitHub Actions workflow for performance gates
    */
   createGitHubWorkflow(): string {
-    return `# StringRay Performance Gates Workflow
+    return `# 0xRay Performance Gates Workflow
 name: Performance Gates
 
 on:
@@ -652,7 +652,7 @@ jobs:
    * Create Jenkins pipeline for performance gates
    */
   createJenkinsPipeline(): string {
-    return `// StringRay Performance Gates Jenkins Pipeline
+    return `// 0xRay Performance Gates Jenkins Pipeline
 pipeline {
     agent any
 
@@ -716,7 +716,7 @@ pipeline {
    * Create Azure DevOps pipeline for performance gates
    */
   createAzurePipeline(): string {
-    return `# StringRay Performance Gates Azure Pipeline
+    return `# 0xRay Performance Gates Azure Pipeline
 trigger:
 - main
 - develop

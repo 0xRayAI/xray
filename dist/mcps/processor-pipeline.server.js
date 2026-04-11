@@ -1,5 +1,5 @@
 /**
- * StrRay Processor Pipeline MCP Server
+ * 0xRay Processor Pipeline MCP Server
  *
  * Advanced processor pipeline with codex validation, compliance monitoring, and framework enforcement
  */
@@ -8,7 +8,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { CodexLoader } from "../enforcement/index.js";
-class StrRayProcessorPipelineServer {
+class StringRayProcessorPipelineServer {
     server;
     codexLoader;
     codexRules = [];
@@ -438,7 +438,7 @@ ${complianceResults.actions.map((a) => `• 🔧 ${a}`).join("\n") || "None requ
     enrichWithContext(content, context) {
         // Add framework context if needed
         if (context.codex) {
-            return `/* StrRay Framework - Codex Compliant */\n${content}`;
+            return `/* 0xRay Framework - Codex Compliant */\n${content}`;
         }
         return content;
     }
@@ -557,8 +557,8 @@ ${complianceResults.actions.map((a) => `• 🔧 ${a}`).join("\n") || "None requ
 }
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayProcessorPipelineServer();
+    const server = new StringRayProcessorPipelineServer();
     server.run().catch((error) => frameworkLogger.log("mcps/processor-pipeline", "run", "error", { error: String(error) }));
 }
-export { StrRayProcessorPipelineServer };
+export { StringRayProcessorPipelineServer };
 //# sourceMappingURL=processor-pipeline.server.js.map

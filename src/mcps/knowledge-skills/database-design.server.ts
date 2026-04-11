@@ -1,5 +1,5 @@
 /**
- * StrRay Database Design MCP Server
+ * 0xRay Database Design MCP Server
  *
  * Knowledge skill for database architecture, schema optimization,
  * query performance analysis, and data modeling best practices
@@ -74,7 +74,7 @@ interface QueryAnalysis {
   optimizationOpportunities: string[];
 }
 
-class StrRayDatabaseDesignServer {
+class StringRayDatabaseDesignServer {
   private server: Server;
 
   constructor() {
@@ -1155,8 +1155,8 @@ class StrRayDatabaseDesignServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayDatabaseDesignServer();
+  const server = new StringRayDatabaseDesignServer();
   server.run().catch(() => {});
 }
 
-export { StrRayDatabaseDesignServer };
+export { StringRayDatabaseDesignServer };

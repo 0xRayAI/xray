@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# StringRay Framework - Build & Packaging Validation
+# 0xRay Framework - Build & Packaging Validation
 # This script handles build, packaging, and basic setup validation
 
 set -e  # Exit on any error
 
-echo "🏗️  StringRay Framework - Build & Packaging Validation"
+echo "🏗️  0xRay Framework - Build & Packaging Validation"
 echo "===================================================="
 
 # Configuration - detect project directory intelligently
@@ -126,7 +126,7 @@ run_cmd "rm -rf '$TEMP_TEST_DIR'"
 echo "✅ Package installation verified"
 
 echo ""
-echo "🎉 StringRay Framework Build & Packaging Validation Complete!"
+echo "🎉 0xRay Framework Build & Packaging Validation Complete!"
 echo "============================================================"
 echo ""
 echo "✅ Build Phase: SUCCESS"

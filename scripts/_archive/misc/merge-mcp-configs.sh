@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# StrRay Framework - MCP Server Configuration Merger
+# 0xRay Framework - MCP Server Configuration Merger
 # Merges all individual MCP server configs into main .mcp.json
 
 set -e
 
-echo "🔧 StrRay Framework - MCP Server Configuration Merger"
+echo "🔧 0xRay Framework - MCP Server Configuration Merger"
 echo "==================================================="
 
 # Colors for output
@@ -59,7 +59,7 @@ merge_mcp_configs() {
       "args": ["-y", "@modelcontextprotocol/server-brave-search"]
     }'
 
-    # Add StrRay MCP servers
+    # Add 0xRay MCP servers
     local strray_servers=""
     local server_count=0
 
@@ -125,7 +125,7 @@ merge_mcp_configs() {
     # Write the merged configuration
     echo "$merged_config" > .mcp.json
 
-    success "Merged $server_count StrRay MCP servers into .mcp.json"
+    success "Merged $server_count 0xRay MCP servers into .mcp.json"
 }
 
 # Validate the merged configuration
@@ -207,10 +207,10 @@ main() {
     echo ""
     info "Summary:"
     info "- MCP servers merged into .mcp.json"
-    info "- OpenCode can now access StrRay agents as subagents"
+    info "- OpenCode can now access 0xRay agents as subagents"
     info "- Multi-agent orchestration should now work through MCP protocol"
     echo ""
-    success "StrRay subagents are now active in OpenConsole!"
+    success "0xRay subagents are now active in OpenConsole!"
     echo ""
     info "To test: Run OpenCode and check for available MCP tools"
     info "Agents should appear as: orchestrator, enforcer, architect, etc."

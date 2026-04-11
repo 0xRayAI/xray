@@ -1,5 +1,5 @@
 /**
- * StrRay DevOps Deployment MCP Server
+ * 0xRay DevOps Deployment MCP Server
  *
  * Knowledge skill for DevOps practices, deployment strategies,
  * CI/CD pipeline design, and infrastructure automation
@@ -68,7 +68,7 @@ interface InfrastructureRecommendation {
   reliability: number;
 }
 
-class StrRayDevOpsDeploymentServer {
+class StringRayDevOpsDeploymentServer {
   private server: Server;
 
   constructor() {
@@ -1478,8 +1478,8 @@ spec:
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayDevOpsDeploymentServer();
+  const server = new StringRayDevOpsDeploymentServer();
   server.run().catch(() => {});
 }
 
-export { StrRayDevOpsDeploymentServer };
+export { StringRayDevOpsDeploymentServer };

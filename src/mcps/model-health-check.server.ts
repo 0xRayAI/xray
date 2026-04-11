@@ -1,5 +1,5 @@
 /**
- * StrRay Model Health Check MCP Server
+ * 0xRay Model Health Check MCP Server
  *
  * Advanced model compatibility validation and dynamic health assessment
  */
@@ -15,7 +15,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 
-class StrRayModelHealthCheckServer {
+class StringRayModelHealthCheckServer {
   private server: Server;
 
   constructor() {
@@ -264,8 +264,8 @@ class StrRayModelHealthCheckServer {
 
 // Start the server if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayModelHealthCheckServer();
+  const server = new StringRayModelHealthCheckServer();
   server.start().catch((error) => frameworkLogger.log("mcps/model-health-check", "run", "error", { error: String(error) }));
 }
 
-export default StrRayModelHealthCheckServer;
+export default StringRayModelHealthCheckServer;

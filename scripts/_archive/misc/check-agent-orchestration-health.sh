@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework Agent Orchestration Health Check
+# 0xRay Framework Agent Orchestration Health Check
 echo "🏥 Agent Orchestration Health Check"
 echo "===================================="
 

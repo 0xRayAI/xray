@@ -1,5 +1,5 @@
 /**
- * StrRay Architecture Patterns MCP Server
+ * 0xRay Architecture Patterns MCP Server
  *
  * Knowledge skill for architectural pattern recognition,
  * design pattern recommendations, and system architecture guidance
@@ -8,7 +8,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-class StrRayArchitecturePatternsServer {
+class StringRayArchitecturePatternsServer {
     server;
     constructor() {
         this.server = new Server({
@@ -107,8 +107,8 @@ class StrRayArchitecturePatternsServer {
     }
 }
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const server = new StrRayArchitecturePatternsServer();
+    const server = new StringRayArchitecturePatternsServer();
     server.run().catch(() => { });
 }
-export default StrRayArchitecturePatternsServer;
+export default StringRayArchitecturePatternsServer;
 //# sourceMappingURL=architecture-patterns.server.js.map

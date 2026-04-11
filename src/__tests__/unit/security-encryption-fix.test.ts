@@ -10,7 +10,7 @@ describe("H-001: Broken Encryption Fix", () => {
   const securitySystem = new SecurityHardeningSystem("test-encryption-key-12345");
 
   it("should encrypt and decrypt data correctly", () => {
-    const originalData = "Hello, StringRay!";
+    const originalData = "Hello, 0xRay!";
     const encrypted = securitySystem.encryptData(originalData);
     const decrypted = securitySystem.decryptData(encrypted);
 
@@ -18,7 +18,7 @@ describe("H-001: Broken Encryption Fix", () => {
   });
 
   it("should produce different ciphertexts for same plaintext (random IV)", () => {
-    const originalData = "Hello, StringRay!";
+    const originalData = "Hello, 0xRay!";
     const encrypted1 = securitySystem.encryptData(originalData);
     const encrypted2 = securitySystem.encryptData(originalData);
 
@@ -27,7 +27,7 @@ describe("H-001: Broken Encryption Fix", () => {
   });
 
   it("should detect tampering (wrong auth tag)", () => {
-    const originalData = "Hello, StringRay!";
+    const originalData = "Hello, 0xRay!";
     const encrypted = securitySystem.encryptData(originalData);
 
     // Decode Base64 to get the buffer
@@ -47,7 +47,7 @@ describe("H-001: Broken Encryption Fix", () => {
   });
 
   it("should reject decryption with wrong key", () => {
-    const originalData = "Hello, StringRay!";
+    const originalData = "Hello, 0xRay!";
     const encrypted = securitySystem.encryptData(originalData);
 
     // Try to decrypt with different key
@@ -90,7 +90,7 @@ describe("H-001: Broken Encryption Fix", () => {
   });
 
   it("should use Base64 encoding for ciphertext", () => {
-    const data = "Hello, StringRay!";
+    const data = "Hello, 0xRay!";
     const encrypted = securitySystem.encryptData(data);
 
     // Should be valid Base64

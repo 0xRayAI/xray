@@ -1,4 +1,4 @@
-// StringRay Framework State Management
+// 0xRay Framework State Management
 // Export all state management utilities and providers
 
 export * from "./state-manager.js";
