@@ -272,7 +272,6 @@ export class AutomatedBenchmarkingSuite extends EventEmitter {
 
     this.emit("initialized");
   }
-  catch(error: unknown) {}
 
   /**
    * Start continuous benchmarking

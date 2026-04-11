@@ -16,6 +16,7 @@ import {
 } from "./universal-librarian-consultation.js";
 import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
+import type { ProcessorManager } from "../processors/processor-manager.js";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 
@@ -273,8 +274,7 @@ export class StringRayOrchestrator {
       // Execute post-processors for agent task completion logging
       try {
         // Get processor manager from global state
-        const globalStateManager = (globalThis as any).strRayStateManager;
-        // Global state debug - remove for production
+        const globalStateManager = globalThis.strRayStateManager;
         frameworkLogger.log("orchestrator", "global-state-check", "debug", {
           jobId,
           exists: !!globalStateManager,
@@ -282,8 +282,7 @@ export class StringRayOrchestrator {
           hasGet: typeof globalStateManager?.get === "function",
         });
 
-        const processorManager = globalStateManager?.get("processor:manager");
-        // Processor manager debug - remove for production
+        const processorManager = globalStateManager?.get<ProcessorManager>("processor:manager");
         frameworkLogger.log(
           "orchestrator",
           "processor-manager-check",
@@ -347,8 +346,8 @@ export class StringRayOrchestrator {
 
       // Execute post-processors even on failure for error logging
       try {
-        const globalStateManager = (globalThis as any).strRayStateManager;
-        const processorManager = globalStateManager?.get("processor:manager");
+        const globalStateManager = globalThis.strRayStateManager;
+        const processorManager = globalStateManager?.get<ProcessorManager>("processor:manager");
 
         if (processorManager) {
           const agentContext = {

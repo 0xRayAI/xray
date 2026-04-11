@@ -719,7 +719,7 @@ export default async function strrayCodexPlugin(input: {
         let processorManager: any;
 
         // Check if framework is already booted (global state exists)
-        const globalState = (globalThis as any).strRayStateManager;
+        const globalState = globalThis.strRayStateManager;
         if (globalState) {
           logger.log("🔗 Connecting to booted 0xRay framework");
           stateManager = globalState;
@@ -730,7 +730,7 @@ export default async function strrayCodexPlugin(input: {
             await resolveStateDir(directory),
           );
           // Store globally for future use
-          (globalThis as any).strRayStateManager = stateManager;
+          globalThis.strRayStateManager = stateManager;
         }
 
         // Get processor manager from state

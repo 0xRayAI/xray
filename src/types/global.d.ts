@@ -1,0 +1,46 @@
+/**
+ * 0xRay Framework — Global This Extensions
+ *
+ * Typed declarations for framework singletons stored on globalThis.
+ * Eliminates `as any` casts across the codebase.
+ *
+ * @version 1.0.0
+ * @since 2026-04-11
+ */
+
+import type { StringRayStateManager } from "../state/state-manager.js";
+import type { ProcessorManager } from "../processors/processor-manager.js";
+import type { PostProcessor } from "../postprocessor/PostProcessor.js";
+import type { PathResolver } from "../utils/path-resolver.js";
+import type { CodexInjector } from "../core/codex-injector.js";
+
+export interface StringRayHook {
+  name: string;
+  [key: string]: unknown;
+}
+
+export interface StringRayGlobalScope {
+  strRayStateManager: StringRayStateManager;
+  strRayProcessorManager: ProcessorManager;
+  strRayPostProcessor: PostProcessor;
+  strRayPathResolver: PathResolver;
+  strRayCodexInjector: CodexInjector;
+  strRayHooks: StringRayHook[];
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var strRayStateManager: StringRayGlobalScope["strRayStateManager"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayProcessorManager: StringRayGlobalScope["strRayProcessorManager"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayPostProcessor: StringRayGlobalScope["strRayPostProcessor"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayPathResolver: StringRayGlobalScope["strRayPathResolver"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayCodexInjector: StringRayGlobalScope["strRayCodexInjector"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayHooks: StringRayHook[] | undefined;
+}
+
+export type { StringRayGlobalScope };

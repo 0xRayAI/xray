@@ -28,7 +28,7 @@ export async function verifyArchitecturalIntegrity(): Promise<{
   const recommendations: string[] = [];
 
   // Check state manager
-  const stateManager = (globalThis as any).strRayStateManager;
+  const stateManager = globalThis.strRayStateManager;
   if (!stateManager) {
     issues.push("State manager not initialized");
     recommendations.push(
@@ -36,8 +36,7 @@ export async function verifyArchitecturalIntegrity(): Promise<{
     );
   }
 
-  // Check post-processor
-  const postProcessor = (globalThis as any).strRayPostProcessor;
+  const postProcessor = globalThis.strRayPostProcessor;
   if (!postProcessor) {
     issues.push("Post-processor not activated");
     recommendations.push(
@@ -45,8 +44,7 @@ export async function verifyArchitecturalIntegrity(): Promise<{
     );
   }
 
-  // Check codex injector
-  const codexInjector = (globalThis as any).strRayCodexInjector;
+  const codexInjector = globalThis.strRayCodexInjector;
   if (!codexInjector) {
     issues.push("Codex injector not initialized");
     recommendations.push("Ensure codex injection is active in plugin context");

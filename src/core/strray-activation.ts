@@ -106,9 +106,8 @@ async function activateCodexInjection(jobId: string): Promise<void> {
   const { createStringRayCodexInjectorHook } = await import("./codex-injector.js");
   const hook = createStringRayCodexInjectorHook();
 
-  // Store hook globally for OpenCode to pick up
-  (globalThis as any).strRayHooks = (globalThis as any).strRayHooks || [];
-  (globalThis as any).strRayHooks.push(hook);
+  globalThis.strRayHooks = globalThis.strRayHooks || [];
+  globalThis.strRayHooks.push(hook);
 
   frameworkLogger.log(
     "stringray-activation",
@@ -132,18 +131,17 @@ async function activateHooks(jobId: string): Promise<void> {
     const hook = createStringRayCodexInjectorHook();
     
     // Store hook globally for OpenCode to pick up
-    (globalThis as any).strRayHooks = (globalThis as any).strRayHooks || [];
-    (globalThis as any).strRayHooks.push(hook);
+    globalThis.strRayHooks = globalThis.strRayHooks || [];
+    (globalThis.strRayHooks as Array<import("../types/global.js").StringRayHook>).push(hook);
 
-    // Log hook registration
-    await frameworkLogger.log(
+    frameworkLogger.log(
       "stringray-activation",
       "0xRay hooks activated",
       "success",
       { 
         jobId, 
         hookName: hook.name,
-        hooksRegistered: (globalThis as any).strRayHooks.length 
+        hooksRegistered: globalThis.strRayHooks!.length 
       },
     );
   } catch (error) {
@@ -188,7 +186,7 @@ async function activateStateManagement(jobId: string): Promise<void> {
   const stateManager = new StringRayStateManager();
 
   // Store the state manager instance globally for framework use
-  (globalThis as any).strRayStateManager = stateManager;
+  globalThis.strRayStateManager = stateManager;
 
   frameworkLogger.log(
     "stringray-activation",
@@ -235,7 +233,7 @@ async function activateProcessors(jobId: string): Promise<void> {
   const processorManager = new ProcessorManager(stateManager);
 
   // Store the processor manager instance globally for framework use
-  (globalThis as any).strRayProcessorManager = processorManager;
+  globalThis.strRayProcessorManager = processorManager;
 
   frameworkLogger.log(
     "stringray-activation",
@@ -256,19 +254,16 @@ async function activatePostProcessor(jobId: string): Promise<void> {
   const { PostProcessor } = await import("../postprocessor/PostProcessor");
 
   // Get existing state manager (should be initialized by boot orchestrator)
-  const stateManager = (globalThis as any).strRayStateManager as any;
+  const stateManager = globalThis.strRayStateManager;
   if (!stateManager) {
     throw new Error(
       "State manager not initialized - boot orchestrator must run first",
     );
   }
 
-  // Create post-processor with optional session monitor
-  // Session monitor may not be available in plugin context
   const postProcessor = new PostProcessor(stateManager, null, {});
 
-  // Store the post-processor instance globally for framework use
-  (globalThis as any).strRayPostProcessor = postProcessor;
+  globalThis.strRayPostProcessor = postProcessor;
 
   frameworkLogger.log(
     "stringray-activation",
@@ -277,9 +272,8 @@ async function activatePostProcessor(jobId: string): Promise<void> {
     { jobId },
   );
 
-  // Initialize path resolver globally
   const { pathResolver } = await import("../utils/path-resolver.js");
-  (globalThis as any).strRayPathResolver = pathResolver;
+  globalThis.strRayPathResolver = pathResolver;
 
   frameworkLogger.log(
     "stringray-activation",
@@ -288,10 +282,9 @@ async function activatePostProcessor(jobId: string): Promise<void> {
     { jobId },
   );
 
-  // Initialize codex injector globally
   const { CodexInjector } = await import("./codex-injector.js");
   const codexInjector = new CodexInjector();
-  (globalThis as any).strRayCodexInjector = codexInjector;
+  globalThis.strRayCodexInjector = codexInjector;
 
   frameworkLogger.log(
     "stringray-activation",

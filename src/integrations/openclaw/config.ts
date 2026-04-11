@@ -363,9 +363,9 @@ export class OpenClawConfigLoader {
         enabled: true,
         port: 18431,
         host: '127.0.0.1',
-        // SECURITY WARNING: apiKey MUST be configured before exposing the API server.
-        // Without an API key, the server is open to unauthenticated access.
-        apiKey: process.env.OPENCLAW_API_KEY || '',
+        // SECURITY: apiKey defaults to undefined — auth is skipped when absent.
+        // Set OPENCLAW_API_KEY env var before enabling the API server in production.
+        apiKey: process.env.OPENCLAW_API_KEY || undefined,
       },
       hooks: {
         enabled: true,

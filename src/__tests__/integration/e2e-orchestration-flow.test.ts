@@ -121,7 +121,7 @@ describe("E2E Orchestration Flow", () => {
       fs.rmSync(testDir, { recursive: true });
     }
     // Clear global state
-    delete (globalThis as any).strRayStateManager;
+    delete globalThis.strRayStateManager;
   });
 
   it("should boot framework and register all processors", async () => {
@@ -163,12 +163,11 @@ describe("E2E Orchestration Flow", () => {
     expect(storedProcessorManager).toBe(processorManager);
 
     // Store state manager globally (like plugin would find it)
-    (globalThis as any).strRayStateManager = stateManager;
+    globalThis.strRayStateManager = stateManager;
   });
 
   it("should reuse booted framework from plugin context", () => {
-    // Simulate plugin finding booted framework
-    const globalState = (globalThis as any).strRayStateManager;
+    const globalState = globalThis.strRayStateManager;
     expect(globalState).toBeDefined();
 
     // Simulate plugin getting processor manager
@@ -187,7 +186,7 @@ describe("E2E Orchestration Flow", () => {
   });
 
   it("should execute pre-processors on write operation", async () => {
-    const processorManager = (globalThis as any).strRayStateManager.get(
+    const processorManager = globalThis.strRayStateManager!.get(
       "processor:manager",
     );
 
@@ -219,7 +218,7 @@ describe("E2E Orchestration Flow", () => {
   });
 
   it("should auto-create test file for new source file", async () => {
-    const processorManager = (globalThis as any).strRayStateManager.get(
+    const processorManager = globalThis.strRayStateManager!.get(
       "processor:manager",
     );
 
@@ -297,7 +296,7 @@ export function newFeature() {
   });
 
   it("should execute post-processors after operation", async () => {
-    const processorManager = (globalThis as any).strRayStateManager.get(
+    const processorManager = globalThis.strRayStateManager!.get(
       "processor:manager",
     );
 
@@ -323,8 +322,8 @@ export function newFeature() {
   });
 
   it("should maintain processor state across multiple operations", () => {
-    const globalState = (globalThis as any).strRayStateManager;
-    const processorManager1 = globalState.get("processor:manager");
+    const globalState = globalThis.strRayStateManager;
+    const processorManager1 = globalState!.get("processor:manager");
 
     // Simulate another operation
     const processorManager2 = globalState.get("processor:manager");

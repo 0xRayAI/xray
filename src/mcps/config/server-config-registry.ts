@@ -8,6 +8,7 @@
  */
 
 import { IServerConfig } from '../types/index.js';
+import { frameworkLogger } from '../../core/framework-logger.js';
 
 /**
  * Registry for managing MCP server configurations
@@ -233,7 +234,7 @@ export class ServerConfigRegistry {
     // Validate serverName against path traversal attacks
     if (!serverName || serverName.includes('..') || serverName.includes('/') || serverName.includes('\\') || serverName.includes('\0')) {
       const errorMsg = `Invalid server name "${serverName}": must not contain "..", "/", "\\", or null bytes`;
-      console.warn(`[ServerConfigRegistry] Security warning: ${errorMsg}`);
+      frameworkLogger.log("server-config-registry", "path-traversal-blocked", "warning", { serverName, error: errorMsg });
       throw new Error(errorMsg);
     }
 

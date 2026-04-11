@@ -210,7 +210,7 @@ class StringRayBootOrchestratorServer {
     const skipHealthChecks = args.skipHealthChecks || false;
     const parallelInit = args.parallelInit !== false;
 
-    console.log("🚀 MCP: Executing boot sequence:", {
+    frameworkLogger.log("mcp-boot-orchestrator", "execute-boot-sequence", "info", {
       skipHealthChecks,
       parallelInit,
     });
@@ -261,7 +261,7 @@ class StringRayBootOrchestratorServer {
     const detailed = args.detailed || false;
     const component = args.component;
 
-    console.log("📊 MCP: Getting boot status:", { detailed, component });
+    frameworkLogger.log("mcp-boot-orchestrator", "get-boot-status", "info", { detailed, component });
 
     try {
       if (component) {
@@ -303,7 +303,7 @@ class StringRayBootOrchestratorServer {
     const component = args.component;
     const force = args.force || false;
 
-    console.log("🔧 MCP: Initializing component:", { component, force });
+    frameworkLogger.log("mcp-boot-orchestrator", "initialize-component", "info", { component, force });
 
     try {
       if (!this.bootSequence.includes(component)) {
@@ -373,7 +373,7 @@ class StringRayBootOrchestratorServer {
     const fix = args.fix || false;
     const verbose = args.verbose || false;
 
-    console.log("🔍 MCP: Validating boot dependencies:", { fix, verbose });
+    frameworkLogger.log("mcp-boot-orchestrator", "validate-boot-dependencies", "info", { fix, verbose });
 
     try {
       const results = await this.validateAllDependencies(fix, verbose);

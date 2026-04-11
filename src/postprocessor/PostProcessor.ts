@@ -567,16 +567,15 @@ export class PostProcessor {
     context: PostProcessorContext,
   ): Promise<{ passed: boolean; message: string }> {
     // Check if all critical framework components are active
-    const stateManager = (globalThis as any).strRayStateManager;
-    const postProcessor = (globalThis as any).strRayPostProcessor;
+    const stateManager = globalThis.strRayStateManager;
+    const postProcessor = globalThis.strRayPostProcessor;
 
-    // If globals not set, try graceful degradation for standalone operation
     if (!stateManager) {
       try {
         const { StrRayStateManager } =
           await import("../state/state-manager.js");
         const tempStateManager = new StrRayStateManager();
-        (globalThis as any).strRayStateManager = tempStateManager;
+        globalThis.strRayStateManager = tempStateManager;
         return {
           passed: true,
           message: "System integrity verified (graceful mode)",
@@ -616,9 +615,8 @@ export class PostProcessor {
     // Check for path resolution issues in committed files
     // This would require reading the actual file contents from git
     // For now, we verify that the framework's path resolution is working
-    const pathResolver = (globalThis as any).strRayPathResolver;
+    const pathResolver = globalThis.strRayPathResolver;
     if (!pathResolver) {
-      // Graceful degradation - path resolver not available in standalone mode
       return {
         passed: true,
         message: "Path resolution check skipped (no full framework context)",
