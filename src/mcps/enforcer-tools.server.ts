@@ -236,6 +236,25 @@ class StringRayEnforcerToolsServer {
               required: ["files"],
             },
           },
+          {
+            name: "security-scan",
+            description:
+              "Run security scan using npm audit, Trivy, ESLint security, and OWASP dependency check",
+            inputSchema: {
+              type: "object",
+              properties: {
+                includePromptValidation: {
+                  type: "boolean",
+                  default: false,
+                  description: "Also validate prompts for injection attacks",
+                },
+                promptText: {
+                  type: "string",
+                  description: "Prompt text to validate for injection attacks",
+                },
+              },
+            },
+          },
         ],
       };
     });
@@ -257,6 +276,8 @@ class StringRayEnforcerToolsServer {
             return await this.getEnforcementStatus(args);
           case "run-pre-commit-validation":
             return await this.runPreCommitValidation(args);
+          case "security-scan":
+            return await this.securityScan(args);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -936,6 +957,41 @@ class StringRayEnforcerToolsServer {
       frameworkLogger.log("mcps/enforcer", "unhandledRejection", "error", { error: String(reason) });
       cleanup("unhandledRejection");
     });
+  }
+
+  private async securityScan(args: any): Promise<any> {
+    const { includePromptValidation, promptText } = args;
+    const results: any = { tools: {}, summary: {} };
+
+    try {
+      const { securityScanner } = await import("../security/security-scanner.js");
+      const scanResult = await securityScanner.runSecurityScan();
+      results.tools = scanResult.tools;
+      results.summary = scanResult.summary;
+      results.recommendations = scanResult.recommendations;
+      results.compliant = scanResult.compliant;
+      results.timestamp = scanResult.timestamp;
+    } catch (error) {
+      results.summary.scanError = error instanceof Error ? error.message : String(error);
+    }
+
+    if (includePromptValidation && promptText) {
+      try {
+        const { promptSecurityValidator } = await import("../security/prompt-security-validator.js");
+        const validation = promptSecurityValidator.validatePrompt(promptText);
+        results.promptValidation = {
+          isSafe: validation.isSafe,
+          riskLevel: validation.riskLevel,
+          violations: validation.violations,
+        };
+      } catch (error) {
+        results.promptValidation = { error: error instanceof Error ? error.message : String(error) };
+      }
+    }
+
+    return {
+      content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
   }
 }
 

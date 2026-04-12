@@ -340,6 +340,32 @@ export class ProcessorManager {
       .filter((p) => p.type === "pre" && p.enabled)
       .sort((a, b) => a.priority - b.priority);
 
+    if (args && typeof args === "object") {
+      const promptText = (args.prompt as string) || (args.message as string) || (args.content as string) || (args.input as string);
+      if (promptText && typeof promptText === "string" && promptText.length > 10) {
+        try {
+          const { promptSecurityValidator } = await import("../security/prompt-security-validator.js");
+          const validation = promptSecurityValidator.validatePrompt(promptText);
+          if (!validation.isSafe) {
+            frameworkLogger.log("processor-manager", "prompt-security-blocked", "warning", {
+              tool,
+              riskLevel: validation.riskLevel,
+              violations: validation.violations,
+            });
+            return {
+              success: false,
+              results: [{
+                success: false,
+                processorName: "prompt-security-validator",
+                error: `Prompt security violation: ${validation.violations.join(", ")}`,
+                duration: 0,
+              }],
+            };
+          }
+        } catch { /* non-blocking */ }
+      }
+    }
+
     const results: ProcessorResult[] = [];
 
     for (const config of preProcessors) {
