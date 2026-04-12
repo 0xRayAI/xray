@@ -1,7 +1,7 @@
 /**
  * Rule Enforcement Module
  *
- * This module provides rule enforcement capabilities for the StringRay framework.
+ * This module provides rule enforcement capabilities for the 0xRay framework.
  * It validates code against development rules and codex compliance requirements.
  *
  * @module enforcement

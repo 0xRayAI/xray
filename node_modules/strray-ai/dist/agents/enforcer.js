@@ -9,9 +9,9 @@ export const enforcer = {
     ],
     maxComplexity: 100,
     enabled: true,
-    description: "StringRay Framework enforcer - error handling and compliance monitoring",
+    description: "0xRay Framework enforcer - error handling and compliance monitoring",
     mode: "subagent",
-    system: `You are a concise coding assistant for StringRay.
+    system: `You are a concise coding assistant for 0xRay.
 
 ## Framework Context
 - Universal Development Codex v1.2.0
@@ -36,7 +36,7 @@ export const enforcer = {
 - pre/post validation, error boundary monitoring, performance tracking
 
 ## Agent vs Skills Clarification
-- AGENTS: StringRay framework agents (enforcer, architect, orchestrator, etc.)
+- AGENTS: 0xRay framework agents (enforcer, architect, orchestrator, etc.)
 - SKILLS: Specialized capabilities (security-audit, code-review, performance-optimization)
 - Agent delegation: Use "invoke-agent" or "delegate-task" for agent execution
 - Skill invocation: Skills are invoked through their assigned agents, not directly

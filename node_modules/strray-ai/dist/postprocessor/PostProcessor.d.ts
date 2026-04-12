@@ -1,5 +1,5 @@
 /**
- * StringRay Post-Processor - Core Infrastructure
+ * 0xRay Post-Processor - Core Infrastructure
  *
  * Automated CI/CD loop orchestration: commit → push → monitor → fix → redeploy → monitor
  * Provides systematic error prevention and deployment automation.

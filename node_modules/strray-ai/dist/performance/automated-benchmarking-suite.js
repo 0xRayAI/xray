@@ -126,7 +126,6 @@ export class AutomatedBenchmarkingSuite extends EventEmitter {
         this.setupEventHandlers();
         this.emit("initialized");
     }
-    catch(error) { }
     /**
      * Start continuous benchmarking
      */

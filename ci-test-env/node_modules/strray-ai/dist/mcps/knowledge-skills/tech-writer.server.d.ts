@@ -1,10 +1,10 @@
 /**
- * StrRay Documentation Generation MCP Server
+ * 0xRay Documentation Generation MCP Server
  *
  * Knowledge skill for automated documentation creation, API docs generation,
  * code documentation maintenance, and technical writing assistance
  */
-declare class StrRayDocumentationGenerationServer {
+declare class StringRayDocumentationGenerationServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -44,5 +44,5 @@ declare class StrRayDocumentationGenerationServer {
     private getSeverityIcon;
     run(): Promise<void>;
 }
-export { StrRayDocumentationGenerationServer };
+export { StringRayDocumentationGenerationServer };
 //# sourceMappingURL=tech-writer.server.d.ts.map

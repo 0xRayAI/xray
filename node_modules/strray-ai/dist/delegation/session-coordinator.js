@@ -15,6 +15,18 @@ export class SessionCoordinator {
         this.stateManager = stateManager;
     }
     /**
+     * Get read-only view of all sessions - avoids breaking encapsulation
+     */
+    getSessions() {
+        return new Map(this.sessions);
+    }
+    /**
+     * Get a specific session by ID
+     */
+    getSession(sessionId) {
+        return this.sessions.get(sessionId);
+    }
+    /**
      * Initialize session coordination for a new session
      */
     initializeSession(sessionId) {

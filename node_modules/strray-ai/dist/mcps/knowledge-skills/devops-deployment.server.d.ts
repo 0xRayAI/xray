@@ -1,10 +1,10 @@
 /**
- * StrRay DevOps Deployment MCP Server
+ * 0xRay DevOps Deployment MCP Server
  *
  * Knowledge skill for DevOps practices, deployment strategies,
  * CI/CD pipeline design, and infrastructure automation
  */
-declare class StrRayDevOpsDeploymentServer {
+declare class StringRayDevOpsDeploymentServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -40,5 +40,5 @@ declare class StrRayDevOpsDeploymentServer {
     private getInfrastructureLanguage;
     run(): Promise<void>;
 }
-export { StrRayDevOpsDeploymentServer };
+export { StringRayDevOpsDeploymentServer };
 //# sourceMappingURL=devops-deployment.server.d.ts.map

@@ -1,10 +1,10 @@
 /**
- * StrRay Testing Strategy MCP Server
+ * 0xRay Testing Strategy MCP Server
  *
  * Knowledge skill for test planning, coverage optimization,
  * and testing methodology recommendations
  */
-declare class StrRayTestingStrategyServer {
+declare class StringRayTestingStrategyServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -44,5 +44,5 @@ declare class StrRayTestingStrategyServer {
     private shouldIgnorePath;
     run(): Promise<void>;
 }
-export default StrRayTestingStrategyServer;
+export default StringRayTestingStrategyServer;
 //# sourceMappingURL=testing-strategy.server.d.ts.map

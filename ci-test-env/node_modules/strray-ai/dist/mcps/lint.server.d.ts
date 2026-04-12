@@ -1,9 +1,9 @@
 /**
- * StrRay Lint MCP Server
+ * 0xRay Lint MCP Server
  *
  * Comprehensive ESLint validation and automated code quality checking
  */
-declare class StrRayLintServer {
+declare class StringRayLintServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -14,5 +14,5 @@ declare class StrRayLintServer {
     private generateLintSummary;
     run(): Promise<void>;
 }
-export { StrRayLintServer };
+export { StringRayLintServer };
 //# sourceMappingURL=lint.server.d.ts.map

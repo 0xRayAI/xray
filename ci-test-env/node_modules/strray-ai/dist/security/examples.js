@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - Security Usage Examples
+ * 0xRay Framework - Security Usage Examples
  *
  * Examples of how to use the security components in an AI orchestration context
  */

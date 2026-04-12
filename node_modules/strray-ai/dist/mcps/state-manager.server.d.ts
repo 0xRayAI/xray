@@ -1,5 +1,5 @@
 /**
- * StrRay State Manager MCP Server
+ * 0xRay State Manager MCP Server
  *
  * Advanced state management with persistence, synchronization, and conflict resolution
  */

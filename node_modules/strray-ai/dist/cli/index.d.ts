@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * StringRay CLI - Command Line Interface
+ * 0xRay CLI - Command Line Interface
  *
- * Provides commands for installing and managing StringRay framework
+ * Provides commands for installing and managing 0xRay framework
  */
 export {};
 //# sourceMappingURL=index.d.ts.map

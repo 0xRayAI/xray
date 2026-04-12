@@ -1,10 +1,10 @@
 /**
- * StrRay Architect Tools MCP Server
+ * 0xRay Architect Tools MCP Server
  *
  * Converts architect-tools.ts functions into MCP server tools
  * Provides contextual analysis capabilities via MCP protocol
  */
-declare class StrRayArchitectToolsServer {
+declare class StringRayArchitectToolsServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -36,5 +36,5 @@ declare class StrRayArchitectToolsServer {
     private shouldIgnorePath;
     run(): Promise<void>;
 }
-export default StrRayArchitectToolsServer;
+export default StringRayArchitectToolsServer;
 //# sourceMappingURL=architect-tools.server.d.ts.map

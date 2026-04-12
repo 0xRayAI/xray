@@ -1,5 +1,5 @@
 /**
- * Test Template Generator for StringRay Framework
+ * Test Template Generator for 0xRay Framework
  *
  * Automatically generates test templates for different file types
  * to ensure consistent test coverage and structure.

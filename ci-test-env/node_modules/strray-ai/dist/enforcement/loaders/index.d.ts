@@ -1,7 +1,7 @@
 /**
  * Rule Loaders Module
  *
- * This module provides rule loading capabilities for the StringRay framework.
+ * This module provides rule loading capabilities for the 0xRay framework.
  * Loaders encapsulate the logic for loading rules from various sources.
  *
  * Phase 4 refactoring: Extracted async rule loading from RuleEnforcer

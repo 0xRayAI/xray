@@ -1,7 +1,7 @@
 /**
  * Analytics Enable Action
  *
- * Enables StringRay Central Analytics with opt-in consent
+ * Enables 0xRay Central Analytics with opt-in consent
  *
  * Usage: npx strray-ai analytics enable [--categories reflections,logs,metrics,patterns]
  */

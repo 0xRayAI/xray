@@ -13,6 +13,12 @@
  */
 import { EventEmitter } from 'events';
 import { MCPClientConfig, MCPTool, MCPToolResult } from './types/index.js';
+interface RetryConfig {
+    maxRetries: number;
+    initialDelayMs: number;
+    maxDelayMs: number;
+    backoffMultiplier: number;
+}
 /**
  * Tool event types for hooks
  */
@@ -40,7 +46,12 @@ export declare class MCPClient extends EventEmitter {
     private toolExecutor;
     private toolCache;
     private simulationEngine;
-    constructor(config: MCPClientConfig);
+    private retryConfig;
+    constructor(config: MCPClientConfig, retryConfig?: Partial<RetryConfig>);
+    /**
+     * Execute with exponential backoff retry
+     */
+    private executeWithRetry;
     /**
      * Register default simulation implementations
      */
@@ -134,4 +145,5 @@ export declare class MCPClientManager {
     clearClients(): void;
 }
 export declare const mcpClientManager: MCPClientManager;
+export {};
 //# sourceMappingURL=mcp-client.d.ts.map

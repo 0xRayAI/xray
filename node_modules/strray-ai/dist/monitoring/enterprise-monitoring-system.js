@@ -86,7 +86,7 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
             message: `   Health Check Interval: ${this.config.healthChecks.interval}ms`,
         });
         this.isRunning = true;
-        // Initial data collection
+        advancedProfiler.start();
         await this.collectMetrics();
         await this.performHealthChecks();
         // Start periodic collection
@@ -129,6 +129,7 @@ export class EnterpriseMonitoringSystem extends EventEmitter {
             clearInterval(this.cleanupTimer);
             this.cleanupTimer = undefined;
         }
+        advancedProfiler.stop();
         // System stopped - removed redundant shutdown logging
         this.emit("stopped");
     }

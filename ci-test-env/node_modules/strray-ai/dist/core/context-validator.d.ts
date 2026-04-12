@@ -1,5 +1,5 @@
 /**
- * StringRay Context Size Validator
+ * 0xRay Context Size Validator
  *
  * Prevents system prompt bloat by validating and rejecting context-injection attempts
  * that would exceed token budgets.

@@ -13,7 +13,7 @@ export const analyticsPreviewCommand = program
     .option("-t, --type <type>", "Specific data type to preview", "all")
     .option("--all", "Preview all data types", false)
     .action(async (options) => {
-    console.log("👁️ StringRay Central Analytics - Data Preview\n");
+    console.log("👁️ 0xRay Central Analytics - Data Preview\n");
     try {
         const consentManager = new ConsentManager();
         const status = await consentManager.initialize();

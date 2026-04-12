@@ -1,7 +1,7 @@
 /**
  * Analytics Disable CLI Command
  *
- * Disables StringRay Central Analytics with immediate opt-out
+ * Disables 0xRay Central Analytics with immediate opt-out
  *
  * Usage: npx strray-ai analytics disable
  */

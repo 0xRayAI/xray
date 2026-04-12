@@ -343,7 +343,7 @@ export class SessionStateManager {
                     case "transfer_context": {
                         // Transfer all shared context keys for this session
                         // Note: This is a simplified implementation
-                        const session = this.sessionCoordinator["sessions"].get(plan.sessionId);
+                        const session = this.sessionCoordinator.getSession(plan.sessionId);
                         if (session) {
                             const contextMap = Object.fromEntries(session.coordinationState.sharedContext);
                             this.stateManager.set(`session:${plan.sessionId}:shared`, contextMap);

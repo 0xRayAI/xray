@@ -48,8 +48,14 @@ export interface FrameworkLogEntry {
 export declare class FrameworkUsageLogger {
     private logs;
     private maxLogs;
+    private buffer;
+    private flushTimer?;
+    private flushing;
+    private readonly FLUSH_INTERVAL_MS;
+    private readonly MAX_BUFFER_SIZE;
     log(component: string, action: string, status: LogStatus, details?: any, sessionId?: string, jobId?: string): Promise<void>;
-    private persistLog;
+    private bufferEntry;
+    private flushBuffer;
     getRecentLogs(count?: number): FrameworkLogEntry[];
     getComponentUsage(component: string): FrameworkLogEntry[];
     printRundown(): void;

@@ -1,10 +1,10 @@
 /**
- * StrRay Enforcer Tools MCP Server
+ * 0xRay Enforcer Tools MCP Server
  *
  * Converts enforcer-tools.ts functions into MCP server tools
  * Provides rule enforcement and validation capabilities via MCP protocol
  */
-declare class StrRayEnforcerToolsServer {
+declare class StringRayEnforcerToolsServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -23,5 +23,5 @@ declare class StrRayEnforcerToolsServer {
     private performPreCommitValidation;
     run(): Promise<void>;
 }
-export default StrRayEnforcerToolsServer;
+export default StringRayEnforcerToolsServer;
 //# sourceMappingURL=enforcer-tools.server.d.ts.map

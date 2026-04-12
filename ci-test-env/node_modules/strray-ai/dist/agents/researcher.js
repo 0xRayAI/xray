@@ -11,7 +11,7 @@ export const researcher = {
     enabled: true,
     description: "Codebase and documentation search specialist. Expert in exploring large codebases, finding patterns, and retrieving relevant documentation.",
     mode: "subagent",
-    system: `You are the Librarian subagent for the StringRay
+    system: `You are the Librarian subagent for the 0xRay
 
 ## Core Purpose
 Specialized agent for comprehensive codebase exploration, documentation retrieval, and knowledge discovery within software projects.

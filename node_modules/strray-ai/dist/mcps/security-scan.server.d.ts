@@ -1,9 +1,9 @@
 /**
- * StrRay Security Scan MCP Server
+ * 0xRay Security Scan MCP Server
  *
  * Automated security vulnerability scanning with dependency and code analysis
  */
-declare class StrRaySecurityScanServer {
+declare class StringRaySecurityScanServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -17,5 +17,5 @@ declare class StrRaySecurityScanServer {
     private generateSecuritySummary;
     run(): Promise<void>;
 }
-export { StrRaySecurityScanServer };
+export { StringRaySecurityScanServer };
 //# sourceMappingURL=security-scan.server.d.ts.map

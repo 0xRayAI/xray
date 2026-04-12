@@ -1,9 +1,9 @@
 /**
- * StrRay Performance Analysis MCP Server
+ * 0xRay Performance Analysis MCP Server
  *
  * Comprehensive metrics analysis for framework integration and optimization
  */
-declare class StrRayPerformanceAnalysisServer {
+declare class StringRayPerformanceAnalysisServer {
     private server;
     private startTime;
     constructor();
@@ -24,5 +24,5 @@ declare class StrRayPerformanceAnalysisServer {
     private generateDetailedReport;
     run(): Promise<void>;
 }
-export { StrRayPerformanceAnalysisServer };
+export { StringRayPerformanceAnalysisServer };
 //# sourceMappingURL=performance-analysis.server.d.ts.map

@@ -1,5 +1,5 @@
 /**
- * Routing Refiner for StringRay
+ * Routing Refiner for 0xRay
  *
  * Suggests new keyword mappings, optimizes existing mappings, and generates
  * configuration updates based on analytics data from the routing system.

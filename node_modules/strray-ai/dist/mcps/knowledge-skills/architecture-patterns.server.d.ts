@@ -1,10 +1,10 @@
 /**
- * StrRay Architecture Patterns MCP Server
+ * 0xRay Architecture Patterns MCP Server
  *
  * Knowledge skill for architectural pattern recognition,
  * design pattern recommendations, and system architecture guidance
  */
-declare class StrRayArchitecturePatternsServer {
+declare class StringRayArchitecturePatternsServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -12,5 +12,5 @@ declare class StrRayArchitecturePatternsServer {
     private recommendPatterns;
     run(): Promise<void>;
 }
-export default StrRayArchitecturePatternsServer;
+export default StringRayArchitecturePatternsServer;
 //# sourceMappingURL=architecture-patterns.server.d.ts.map

@@ -1,9 +1,9 @@
 /**
- * StrRay Boot Orchestrator MCP Server
+ * 0xRay Boot Orchestrator MCP Server
  *
  * Advanced initialization orchestration with dependency management and health monitoring
  */
-declare class StrRayBootOrchestratorServer {
+declare class StringRayBootOrchestratorServer {
     private server;
     private bootStatus;
     private bootSequence;
@@ -46,5 +46,5 @@ declare class StrRayBootOrchestratorServer {
     private formatOverallStatus;
     run(): Promise<void>;
 }
-export { StrRayBootOrchestratorServer };
+export { StringRayBootOrchestratorServer };
 //# sourceMappingURL=boot-orchestrator.server.d.ts.map

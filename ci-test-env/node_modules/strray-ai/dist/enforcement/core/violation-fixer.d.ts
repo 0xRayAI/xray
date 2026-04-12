@@ -3,7 +3,7 @@
  *
  * This class maps rule violations to appropriate agents/skills and attempts
  * automatic fixes. It serves as the central governance point for all
- * violation remediation in the StringRay framework.
+ * violation remediation in the 0xRay framework.
  *
  * Phase 5 refactoring: Extracted from RuleEnforcer.
  *

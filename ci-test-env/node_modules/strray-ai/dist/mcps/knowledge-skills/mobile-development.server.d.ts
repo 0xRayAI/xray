@@ -1,5 +1,5 @@
 /**
- * StrRay Mobile Development MCP Server
+ * 0xRay Mobile Development MCP Server
  *
  * Knowledge skill for mobile app development including iOS, Android,
  * React Native, Flutter, and mobile performance optimization

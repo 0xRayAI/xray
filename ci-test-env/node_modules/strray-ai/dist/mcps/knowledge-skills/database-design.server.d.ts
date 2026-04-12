@@ -1,10 +1,10 @@
 /**
- * StrRay Database Design MCP Server
+ * 0xRay Database Design MCP Server
  *
  * Knowledge skill for database architecture, schema optimization,
  * query performance analysis, and data modeling best practices
  */
-declare class StrRayDatabaseDesignServer {
+declare class StringRayDatabaseDesignServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -40,5 +40,5 @@ declare class StrRayDatabaseDesignServer {
     private getIssueSeverityIcon;
     run(): Promise<void>;
 }
-export { StrRayDatabaseDesignServer };
+export { StringRayDatabaseDesignServer };
 //# sourceMappingURL=database-design.server.d.ts.map

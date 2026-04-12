@@ -1,5 +1,5 @@
 /**
- * Simple Pattern Analyzer for StringRay
+ * Simple Pattern Analyzer for 0xRay
  *
  * Reads activity log → Counts patterns → Generates insights
  *

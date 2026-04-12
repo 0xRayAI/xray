@@ -1,9 +1,9 @@
 /**
- * StrRay Model Health Check MCP Server
+ * 0xRay Model Health Check MCP Server
  *
  * Advanced model compatibility validation and dynamic health assessment
  */
-declare class StrRayModelHealthCheckServer {
+declare class StringRayModelHealthCheckServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -13,5 +13,5 @@ declare class StrRayModelHealthCheckServer {
     private generateHealthReport;
     start(): Promise<void>;
 }
-export default StrRayModelHealthCheckServer;
+export default StringRayModelHealthCheckServer;
 //# sourceMappingURL=model-health-check.server.d.ts.map

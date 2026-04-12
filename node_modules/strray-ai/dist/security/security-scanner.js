@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - Security Scanner
+ * 0xRay Framework - Security Scanner
  *
  * Automated security vulnerability scanning and compliance validation
  * Integrates with security tools and provides comprehensive security reports

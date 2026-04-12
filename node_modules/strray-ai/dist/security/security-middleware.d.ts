@@ -1,5 +1,5 @@
 /**
- * StringRay Framework - Security Middleware
+ * 0xRay Framework - Security Middleware
  *
  * Production-ready security middleware with comprehensive protection
  * Implements OWASP security headers, input validation, and attack prevention

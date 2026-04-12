@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * StringRay Integration Script
+ * 0xRay Integration Script
  *
- * Main CLI bridge for external systems (like Jelly commercial modules) to call into StringRay.
- * Allows spawning OpenCode CLI with StringRay agents to execute real tasks.
+ * Main CLI bridge for external systems (like Jelly commercial modules) to call into 0xRay.
+ * Allows spawning OpenCode CLI with 0xRay agents to execute real tasks.
  *
  * @version 1.1.0
  * @since 2026-02-14

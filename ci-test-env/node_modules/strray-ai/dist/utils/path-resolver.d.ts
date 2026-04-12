@@ -1,5 +1,5 @@
 /**
- * Path Resolution Utility for StringRay Framework
+ * Path Resolution Utility for 0xRay Framework
  * Resolves import paths that work across development, build, and installed environments
  */
 export declare class PathResolver {

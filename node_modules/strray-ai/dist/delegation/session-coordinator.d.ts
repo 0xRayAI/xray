@@ -60,6 +60,14 @@ export declare class SessionCoordinator {
     private sessions;
     constructor(stateManager: StringRayStateManager);
     /**
+     * Get read-only view of all sessions - avoids breaking encapsulation
+     */
+    getSessions(): ReadonlyMap<string, SessionContext>;
+    /**
+     * Get a specific session by ID
+     */
+    getSession(sessionId: string): SessionContext | undefined;
+    /**
      * Initialize session coordination for a new session
      */
     initializeSession(sessionId: string): {

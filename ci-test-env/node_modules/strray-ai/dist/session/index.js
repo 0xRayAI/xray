@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Session Management Module
+ * 0xRay AI v1.3.4 - Session Management Module
  *
  * Comprehensive session management system with cleanup, monitoring,
  * and cross-session coordination capabilities.

@@ -1,10 +1,10 @@
 /**
- * StrRay Performance Optimization MCP Server
+ * 0xRay Performance Optimization MCP Server
  *
  * Knowledge skill for performance analysis, optimization recommendations,
  * and bottleneck identification
  */
-declare class StrRayPerformanceOptimizationServer {
+declare class StringRayPerformanceOptimizationServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -12,5 +12,5 @@ declare class StrRayPerformanceOptimizationServer {
     private optimizePerformance;
     run(): Promise<void>;
 }
-export default StrRayPerformanceOptimizationServer;
+export default StringRayPerformanceOptimizationServer;
 //# sourceMappingURL=performance-optimization.server.d.ts.map

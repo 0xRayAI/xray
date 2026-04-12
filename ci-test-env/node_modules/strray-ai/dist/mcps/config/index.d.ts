@@ -27,4 +27,6 @@
 export { ServerConfigRegistry, defaultServerRegistry } from './server-config-registry.js';
 export { ConfigLoader, defaultConfigLoader } from './config-loader.js';
 export { ConfigValidator, defaultConfigValidator } from './config-validator.js';
+export { PluginServerConfigRegistry } from './plugin-server-registry.js';
+export type { PluginServerConfig, PluginServerRegistrationOptions } from './plugin-server-registry.js';
 //# sourceMappingURL=index.d.ts.map

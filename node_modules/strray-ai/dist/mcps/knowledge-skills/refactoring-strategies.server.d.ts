@@ -1,10 +1,10 @@
 /**
- * StrRay Refactoring Strategies MCP Server
+ * 0xRay Refactoring Strategies MCP Server
  *
  * Knowledge skill for code refactoring, technical debt elimination,
  * modernization, and code improvement patterns
  */
-declare class StrRayRefactoringStrategiesServer {
+declare class StringRayRefactoringStrategiesServer {
     private server;
     constructor();
     private setupToolHandlers;
@@ -30,5 +30,5 @@ declare class StrRayRefactoringStrategiesServer {
     private getMigrationIcon;
     run(): Promise<void>;
 }
-export { StrRayRefactoringStrategiesServer };
+export { StringRayRefactoringStrategiesServer };
 //# sourceMappingURL=refactoring-strategies.server.d.ts.map

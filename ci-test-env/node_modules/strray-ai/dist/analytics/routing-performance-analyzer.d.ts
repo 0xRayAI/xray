@@ -1,5 +1,5 @@
 /**
- * Routing Performance Analyzer for StringRay
+ * Routing Performance Analyzer for 0xRay
  *
  * Analyzes routing success rates, keyword effectiveness, and confidence thresholds.
  * Integrates with RoutingOutcomeTracker to provide comprehensive routing metrics.
