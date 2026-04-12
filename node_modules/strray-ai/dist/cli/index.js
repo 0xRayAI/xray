@@ -452,6 +452,10 @@ program
         process.exit(1);
     }
 });
+import("./commands/analytics-disable.js");
+import("./commands/analytics-enable-action.js");
+import("./commands/analytics-status.js");
+import("./commands/analytics-preview.js");
 program
     .command("doctor")
     .description("Diagnose framework issues (does not fix them)")
