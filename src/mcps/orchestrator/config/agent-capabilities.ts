@@ -5,64 +5,18 @@
  */
 
 import type { AgentCapability } from '../types.js';
+import { AGENT_REGISTRY } from "../../../agents/registry.js";
 
-const DEFAULT_AGENT_CAPABILITIES: Record<string, AgentCapability> = {
-  enforcer: {
-    capabilities: ['validation', 'security', 'compliance'],
-    complexityThreshold: 25,
-    concurrentTasks: 3,
-  },
-  architect: {
-    capabilities: ['design', 'planning', 'system-thinking'],
-    complexityThreshold: 50,
-    concurrentTasks: 2,
-  },
-  'code-reviewer': {
-    capabilities: ['analysis', 'quality', 'validation'],
-    complexityThreshold: 30,
-    concurrentTasks: 4,
-  },
-  orchestrator: {
-    capabilities: ['coordination', 'management', 'optimization'],
-    complexityThreshold: 95,
-    concurrentTasks: 1,
-  },
-  'bug-triage-specialist': {
-    capabilities: ['debugging', 'investigation', 'fixing'],
-    complexityThreshold: 40,
-    concurrentTasks: 2,
-  },
-  'security-auditor': {
-    capabilities: ['security', 'vulnerability', 'audit'],
-    complexityThreshold: 35,
-    concurrentTasks: 2,
-  },
-  refactorer: {
-    capabilities: ['optimization', 'maintenance', 'improvement'],
-    complexityThreshold: 45,
-    concurrentTasks: 1,
-  },
-  'testing-lead': {
-    capabilities: ['testing', 'coverage', 'validation'],
-    complexityThreshold: 38,
-    concurrentTasks: 3,
-  },
-  'log-monitor': {
-    capabilities: ['monitoring', 'analysis', 'alerting'],
-    complexityThreshold: 20,
-    concurrentTasks: 5,
-  },
-  researcher: {
-    capabilities: ['research', 'analysis', 'investigation'],
-    complexityThreshold: 30,
-    concurrentTasks: 3,
-  },
-  techwriter: {
-    capabilities: ['documentation', 'writing', 'technical'],
-    complexityThreshold: 28,
-    concurrentTasks: 3,
-  },
-};
+const DEFAULT_AGENT_CAPABILITIES: Record<string, AgentCapability> = Object.fromEntries(
+  Object.entries(AGENT_REGISTRY).map(([name, entry]) => [
+    name,
+    {
+      capabilities: entry.capabilities,
+      complexityThreshold: entry.maxComplexity,
+      concurrentTasks: entry.concurrentTasks,
+    },
+  ]),
+);
 
 /**
  * Agent Capabilities Manager

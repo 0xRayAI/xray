@@ -7,6 +7,7 @@
 
 import { frameworkLogger } from "../core/framework-logger.js";
 import { ensureCriticalComponents } from "../architect/architectural-integrity.js";
+import { validateRegistryConsistency } from "../agents/registry.js";
 
 export interface StringRayActivationConfig {
   enableOrchestrator: boolean;
@@ -43,6 +44,16 @@ export async function activateStringRayFramework(
     "info",
     { jobId, ...activationConfig },
   );
+
+  const registryValidation = validateRegistryConsistency();
+  if (!registryValidation.valid) {
+    frameworkLogger.log(
+      "stringray-activation",
+      "registry-validation-failed",
+      "warning",
+      { errors: registryValidation.errors },
+    );
+  }
 
   try {
     if (activationConfig.enableCodexInjection) {

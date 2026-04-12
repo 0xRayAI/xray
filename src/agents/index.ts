@@ -10,6 +10,18 @@ import { testingLead } from "./testing-lead.js";
 import { logMonitorAgent } from "./log-monitor.js";
 import { researcher } from "./researcher.js";
 import { codeAnalyzer } from "./code-analyzer.js";
+import { backendEngineer } from "./backend-engineer.js";
+import { seoCopywriter as contentCreator } from "./content-creator.js";
+import { databaseEngineer } from "./database-engineer.js";
+import { devopsEngineer } from "./devops-engineer.js";
+import { frontendEngineer } from "./frontend-engineer.js";
+import { frontendUiUxEngineer } from "./frontend-ui-ux-engineer.js";
+import { marketingExpert as growthStrategist } from "./growth-strategist.js";
+import { mobileDeveloper } from "./mobile-developer.js";
+import { performanceEngineer } from "./performance-engineer.js";
+import { seoSpecialist as seoConsultant } from "./seo-consultant.js";
+import { strategist } from "./strategist.js";
+import { documentationWriter as techWriter } from "./tech-writer.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   enforcer,
@@ -23,6 +35,18 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "log-monitor": logMonitorAgent,
   researcher,
   "code-analyzer": codeAnalyzer,
+  "backend-engineer": backendEngineer,
+  "content-creator": contentCreator,
+  "database-engineer": databaseEngineer,
+  "devops-engineer": devopsEngineer,
+  "frontend-engineer": frontendEngineer,
+  "frontend-ui-ux-engineer": frontendUiUxEngineer,
+  "growth-strategist": growthStrategist,
+  "mobile-developer": mobileDeveloper,
+  "performance-engineer": performanceEngineer,
+  "seo-consultant": seoConsultant,
+  strategist,
+  "tech-writer": techWriter,
 };
 
 export {
@@ -37,4 +61,16 @@ export {
   logMonitorAgent,
   researcher,
   codeAnalyzer,
+  backendEngineer,
+  contentCreator,
+  databaseEngineer,
+  devopsEngineer,
+  frontendEngineer,
+  frontendUiUxEngineer,
+  growthStrategist,
+  mobileDeveloper,
+  performanceEngineer,
+  seoConsultant,
+  strategist,
+  techWriter,
 };

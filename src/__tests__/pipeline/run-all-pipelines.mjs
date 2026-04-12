@@ -20,6 +20,7 @@ const PIPELINES = [
   { name: 'Enforcement', path: 'test-enforcement-pipeline.mjs' },
   { name: 'MCP-Server', path: 'test-mcp-server-pipeline.mjs' },
   { name: 'Inference', path: 'test-inference-pipeline.mjs' },
+  { name: 'Agent-Registry', path: 'test-agent-registry-pipeline.mjs' },
 ];
 
 const CONSECUTIVE_PASSES_REQUIRED = 3;

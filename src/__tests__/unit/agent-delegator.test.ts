@@ -75,7 +75,7 @@ describe("AgentDelegator", () => {
 
     it("should initialize default agent capabilities", () => {
       const agents = agentDelegator.getAvailableAgents();
-      expect(agents).toHaveLength(11); // All builtin agents
+      expect(agents).toHaveLength(23);
       expect(agents.some((a) => a.name === "enforcer")).toBe(true);
       expect(agents.some((a) => a.name === "architect")).toBe(true);
       expect(agents.some((a) => a.name === "orchestrator")).toBe(true);
