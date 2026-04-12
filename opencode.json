@@ -198,40 +198,25 @@
       "disable": true
     },
     "strray-state-manager": {
-      "description": "0xRay state manager",
-      "disable": true
+      "description": "0xRay state manager"
     },
     "strray-security-scan": {
-      "description": "0xRay security scan",
-      "disable": true
-    },
-    "strray-processor-pipeline": {
-      "description": "0xRay processor pipeline",
-      "disable": true
+      "description": "0xRay security scan"
     },
     "strray-performance-analysis": {
-      "description": "0xRay performance analysis",
-      "disable": true
-    },
-    "strray-model-health-check": {
-      "description": "0xRay model health check",
-      "disable": true
+      "description": "0xRay performance analysis"
     },
     "strray-lint": {
-      "description": "0xRay lint",
-      "disable": true
+      "description": "0xRay lint"
     },
     "strray-framework-compliance-audit": {
-      "description": "0xRay compliance audit",
-      "disable": true
+      "description": "0xRay compliance audit"
     },
     "strray-boot-orchestrator": {
-      "description": "0xRay boot orchestrator",
-      "disable": true
+      "description": "0xRay boot orchestrator"
     },
     "strray-auto-format": {
-      "description": "0xRay auto format",
-      "disable": true
+      "description": "0xRay auto format"
     },
     "strray-architect-tools": {
       "description": "0xRay architect tools",
