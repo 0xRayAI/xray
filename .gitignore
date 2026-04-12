@@ -2,3 +2,10 @@
 docs-site/build/
 docs-site/.docusaurus/
 docs-site/node_modules/
+
+# Generated runtime files
+performance-reports/
+logs/framework/activity-report.json
+logs/framework/pattern-metrics.json
+logs/framework/routing-outcomes.json
+*.tgz
