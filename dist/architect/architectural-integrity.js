@@ -25,13 +25,11 @@ export async function verifyArchitecturalIntegrity() {
         issues.push("State manager not initialized");
         recommendations.push("Ensure boot orchestrator runs before framework activation");
     }
-    // Check post-processor
     const postProcessor = globalThis.strRayPostProcessor;
     if (!postProcessor) {
         issues.push("Post-processor not activated");
         recommendations.push("Add post-processor activation to strray-activation.ts");
     }
-    // Check codex injector
     const codexInjector = globalThis.strRayCodexInjector;
     if (!codexInjector) {
         issues.push("Codex injector not initialized");

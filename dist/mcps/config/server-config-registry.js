@@ -6,6 +6,7 @@
  *
  * Extracted from mcp-client.ts as part of Phase 2 refactoring.
  */
+import { frameworkLogger } from '../../core/framework-logger.js';
 /**
  * Registry for managing MCP server configurations
  */
@@ -157,6 +158,55 @@ export class ServerConfigRegistry {
             args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
             timeout: 30000,
         });
+        // Auto Format Server
+        this.register({
+            serverName: 'auto-format',
+            command: 'node',
+            args: [`${basePath}/mcps/auto-format.server.js`],
+            timeout: 30000,
+        });
+        // Boot Orchestrator Server
+        this.register({
+            serverName: 'boot-orchestrator',
+            command: 'node',
+            args: [`${basePath}/mcps/boot-orchestrator.server.js`],
+            timeout: 60000,
+        });
+        // Framework Compliance Audit Server
+        this.register({
+            serverName: 'framework-compliance-audit',
+            command: 'node',
+            args: [`${basePath}/mcps/framework-compliance-audit.server.js`],
+            timeout: 45000,
+        });
+        // Lint Server
+        this.register({
+            serverName: 'lint',
+            command: 'node',
+            args: [`${basePath}/mcps/lint.server.js`],
+            timeout: 30000,
+        });
+        // Performance Analysis Server
+        this.register({
+            serverName: 'performance-analysis',
+            command: 'node',
+            args: [`${basePath}/mcps/performance-analysis.server.js`],
+            timeout: 30000,
+        });
+        // Security Scan Server
+        this.register({
+            serverName: 'security-scan',
+            command: 'node',
+            args: [`${basePath}/mcps/security-scan.server.js`],
+            timeout: 45000,
+        });
+        // State Manager Server
+        this.register({
+            serverName: 'state-manager',
+            command: 'node',
+            args: [`${basePath}/mcps/state-manager.server.js`],
+            timeout: 30000,
+        });
     }
     /**
      * Register a new server configuration
@@ -202,7 +252,7 @@ export class ServerConfigRegistry {
         // Validate serverName against path traversal attacks
         if (!serverName || serverName.includes('..') || serverName.includes('/') || serverName.includes('\\') || serverName.includes('\0')) {
             const errorMsg = `Invalid server name "${serverName}": must not contain "..", "/", "\\", or null bytes`;
-            console.warn(`[ServerConfigRegistry] Security warning: ${errorMsg}`);
+            frameworkLogger.log("server-config-registry", "path-traversal-blocked", "warning", { serverName, error: errorMsg });
             throw new Error(errorMsg);
         }
         const basePath = process.env.STRRAY_DEV_PATH

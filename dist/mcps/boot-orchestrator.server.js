@@ -179,7 +179,7 @@ class StringRayBootOrchestratorServer {
         const config = args.config || {};
         const skipHealthChecks = args.skipHealthChecks || false;
         const parallelInit = args.parallelInit !== false;
-        console.log("🚀 MCP: Executing boot sequence:", {
+        frameworkLogger.log("mcp-boot-orchestrator", "execute-boot-sequence", "info", {
             skipHealthChecks,
             parallelInit,
         });
@@ -221,7 +221,7 @@ class StringRayBootOrchestratorServer {
     async handleGetBootStatus(args) {
         const detailed = args.detailed || false;
         const component = args.component;
-        console.log("📊 MCP: Getting boot status:", { detailed, component });
+        frameworkLogger.log("mcp-boot-orchestrator", "get-boot-status", "info", { detailed, component });
         try {
             if (component) {
                 // Get specific component status
@@ -262,7 +262,7 @@ class StringRayBootOrchestratorServer {
     async handleInitializeComponent(args) {
         const component = args.component;
         const force = args.force || false;
-        console.log("🔧 MCP: Initializing component:", { component, force });
+        frameworkLogger.log("mcp-boot-orchestrator", "initialize-component", "info", { component, force });
         try {
             if (!this.bootSequence.includes(component)) {
                 return {
@@ -326,7 +326,7 @@ class StringRayBootOrchestratorServer {
     async handleValidateBootDependencies(args) {
         const fix = args.fix || false;
         const verbose = args.verbose || false;
-        console.log("🔍 MCP: Validating boot dependencies:", { fix, verbose });
+        frameworkLogger.log("mcp-boot-orchestrator", "validate-boot-dependencies", "info", { fix, verbose });
         try {
             const results = await this.validateAllDependencies(fix, verbose);
             const response = `🔍 Dependency Validation Results

@@ -68,7 +68,7 @@ export class SessionSummaryProcessor extends PostProcessor {
         const shouldSummarize = this.shouldGenerateSummary(context);
         if (shouldSummarize) {
             const summary = this.generateEmojiSummary(context);
-            console.log(summary);
+            frameworkLogger.log("sessionSummary", "session-summary-output", "info", { summary });
             frameworkLogger.log("sessionSummary", "session-summary-generated", "info", { summary: this.stripEmojis(summary), operationCount: this.operations.length });
             return { summaryGenerated: true, summary };
         }

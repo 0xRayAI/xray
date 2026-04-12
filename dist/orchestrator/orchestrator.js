@@ -148,7 +148,6 @@ export class StringRayOrchestrator {
             try {
                 // Get processor manager from global state
                 const globalStateManager = globalThis.strRayStateManager;
-                // Global state debug - remove for production
                 frameworkLogger.log("orchestrator", "global-state-check", "debug", {
                     jobId,
                     exists: !!globalStateManager,
@@ -156,7 +155,6 @@ export class StringRayOrchestrator {
                     hasGet: typeof globalStateManager?.get === "function",
                 });
                 const processorManager = globalStateManager?.get("processor:manager");
-                // Processor manager debug - remove for production
                 frameworkLogger.log("orchestrator", "processor-manager-check", "debug", {
                     jobId,
                     retrieved: !!processorManager,

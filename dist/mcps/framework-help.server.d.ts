@@ -2,6 +2,7 @@ declare class FrameworkHelpServer {
     private server;
     constructor();
     private setupToolHandlers;
+    private getActiveAgentEntries;
     private handleGetCapabilities;
     private handleGetCommands;
     private handleExplainCapability;

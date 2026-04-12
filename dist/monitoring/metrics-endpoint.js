@@ -4,7 +4,7 @@
  * Production-ready metrics endpoint for Prometheus monitoring
  * Exposes key performance and health metrics
  */
-import { performanceSystem } from "../performance/index.js";
+import { performanceSystem } from "../performance/performance-system-orchestrator.js";
 import { strRayOrchestrator } from "../core/orchestrator.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 export class MetricsEndpoint {

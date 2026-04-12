@@ -148,7 +148,6 @@ export declare class AutomatedBenchmarkingSuite extends EventEmitter {
      * Initialize the benchmarking suite
      */
     initialize(): Promise<void>;
-    catch(error: unknown): void;
     /**
      * Start continuous benchmarking
      */

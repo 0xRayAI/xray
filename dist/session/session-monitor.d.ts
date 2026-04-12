@@ -76,7 +76,7 @@ export declare class SessionMonitor {
     private sessionResponseTimes;
     private sessionErrors;
     constructor(stateManager: StringRayStateManager, sessionCoordinator: SessionCoordinator, cleanupManager: SessionCleanupManager, config?: Partial<MonitorConfig>);
-    private initialize;
+    start(): void;
     registerSession(sessionId: string): void;
     unregisterSession(sessionId: string): void;
     performHealthCheck(sessionId: string): Promise<SessionHealth>;

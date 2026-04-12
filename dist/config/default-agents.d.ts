@@ -1,12 +1,3 @@
-/**
- * Default Agent Configurations
- *
- * Centralized agent definitions for the 0xRay delegation system.
- * This file externalizes all hardcoded agent configurations.
- *
- * @version 1.0.0
- * @since 2026-01-07
- */
 export interface DefaultAgentConfig {
     name: string;
     capabilities: string[];

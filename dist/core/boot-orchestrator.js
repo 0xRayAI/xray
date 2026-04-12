@@ -103,8 +103,6 @@ export class BootOrchestrator {
         this.contextLoader = StringRayContextLoader.getInstance();
         this.stateManager = stateManager || new StringRayStateManager();
         this.processorManager = new ProcessorManager(this.stateManager);
-        // Initialize memory monitoring with alerts
-        this.setupMemoryMonitoring();
         this.config = {
             enableEnforcement: true,
             codexValidation: true,
@@ -583,6 +581,7 @@ export class BootOrchestrator {
      */
     async executeBootSequence() {
         const jobId = `boot-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        this.setupMemoryMonitoring();
         frameworkLogger.log("boot-orchestrator", "executeBootSequence started", "info", { jobId });
         const result = {
             success: false,

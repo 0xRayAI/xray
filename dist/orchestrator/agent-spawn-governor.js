@@ -79,12 +79,14 @@ export class AgentSpawnGovernor {
         return { ...defaults, ...configLimits };
     }
     defaultLimits;
-    constructor(limits = {}) {
+    constructor(limits = {}, autoStart = false) {
         this.limits = limits;
         this.defaultLimits = this.getDefaultLimits();
         this.limits = { ...this.defaultLimits, ...limits };
-        this.startPeriodicCleanup();
-        this.startMemoryMonitoring();
+        if (autoStart) {
+            this.startPeriodicCleanup();
+            this.startMemoryMonitoring();
+        }
     }
     startPeriodicCleanup() {
         this.cleanupTimer = setInterval(() => {
@@ -540,7 +542,10 @@ export class AgentSpawnGovernor {
         }
         throw lastError;
     }
-    // Cleanup on destruction
+    start() {
+        this.startPeriodicCleanup();
+        this.startMemoryMonitoring();
+    }
     destroy() {
         if (this.cleanupTimer) {
             clearInterval(this.cleanupTimer);
@@ -548,9 +553,8 @@ export class AgentSpawnGovernor {
         if (this.memoryMonitorInterval) {
             clearInterval(this.memoryMonitorInterval);
         }
-        this.aggressiveCleanup(); // Final cleanup
+        this.aggressiveCleanup();
     }
 }
-// Export singleton instance
-export const agentSpawnGovernor = new AgentSpawnGovernor();
+export const agentSpawnGovernor = new AgentSpawnGovernor(undefined, false);
 //# sourceMappingURL=agent-spawn-governor.js.map

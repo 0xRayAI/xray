@@ -320,7 +320,6 @@ export class PostProcessor {
         // Check if all critical framework components are active
         const stateManager = globalThis.strRayStateManager;
         const postProcessor = globalThis.strRayPostProcessor;
-        // If globals not set, try graceful degradation for standalone operation
         if (!stateManager) {
             try {
                 const { StrRayStateManager } = await import("../state/state-manager.js");
@@ -360,7 +359,6 @@ export class PostProcessor {
         // For now, we verify that the framework's path resolution is working
         const pathResolver = globalThis.strRayPathResolver;
         if (!pathResolver) {
-            // Graceful degradation - path resolver not available in standalone mode
             return {
                 passed: true,
                 message: "Path resolution check skipped (no full framework context)",

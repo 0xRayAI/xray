@@ -6,6 +6,7 @@
  */
 import { frameworkLogger } from "../core/framework-logger.js";
 import { ensureCriticalComponents } from "../architect/architectural-integrity.js";
+import { validateRegistryConsistency } from "../agents/registry.js";
 export const defaultStringRayConfig = {
     enableOrchestrator: true,
     enableBootOrchestrator: true,
@@ -21,6 +22,10 @@ export async function activateStringRayFramework(config = {}) {
     // Banner display moved to init.sh execution in plugin
     // Framework activation proceeds quietly
     frameworkLogger.log("stringray-activation", "beginning 0xRay framework activation", "info", { jobId, ...activationConfig });
+    const registryValidation = validateRegistryConsistency();
+    if (!registryValidation.valid) {
+        frameworkLogger.log("stringray-activation", "registry-validation-failed", "warning", { errors: registryValidation.errors });
+    }
     try {
         if (activationConfig.enableCodexInjection) {
             await activateCodexInjection(jobId);
@@ -57,7 +62,6 @@ async function activateCodexInjection(jobId) {
     frameworkLogger.log("stringray-activation", "activating codex injection", "info", { jobId });
     const { createStringRayCodexInjectorHook } = await import("./codex-injector.js");
     const hook = createStringRayCodexInjectorHook();
-    // Store hook globally for OpenCode to pick up
     globalThis.strRayHooks = globalThis.strRayHooks || [];
     globalThis.strRayHooks.push(hook);
     frameworkLogger.log("stringray-activation", "codex injection activated", "success", { jobId, hookName: hook.name });
@@ -71,8 +75,7 @@ async function activateHooks(jobId) {
         // Store hook globally for OpenCode to pick up
         globalThis.strRayHooks = globalThis.strRayHooks || [];
         globalThis.strRayHooks.push(hook);
-        // Log hook registration
-        await frameworkLogger.log("stringray-activation", "0xRay hooks activated", "success", {
+        frameworkLogger.log("stringray-activation", "0xRay hooks activated", "success", {
             jobId,
             hookName: hook.name,
             hooksRegistered: globalThis.strRayHooks.length
@@ -121,17 +124,12 @@ async function activatePostProcessor(jobId) {
     if (!stateManager) {
         throw new Error("State manager not initialized - boot orchestrator must run first");
     }
-    // Create post-processor with optional session monitor
-    // Session monitor may not be available in plugin context
     const postProcessor = new PostProcessor(stateManager, null, {});
-    // Store the post-processor instance globally for framework use
     globalThis.strRayPostProcessor = postProcessor;
     frameworkLogger.log("stringray-activation", "post-processor system activated", "success", { jobId });
-    // Initialize path resolver globally
     const { pathResolver } = await import("../utils/path-resolver.js");
     globalThis.strRayPathResolver = pathResolver;
     frameworkLogger.log("stringray-activation", "path resolver activated", "success", { jobId });
-    // Initialize codex injector globally
     const { CodexInjector } = await import("./codex-injector.js");
     const codexInjector = new CodexInjector();
     globalThis.strRayCodexInjector = codexInjector;

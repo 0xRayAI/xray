@@ -33,7 +33,6 @@ export class EnhancedMultiAgentOrchestrator {
             currentAgentId: null,
             spawnStack: [],
         };
-        this.initializeCleanupSystem();
     }
     /**
      * 🚨 SECURITY: Check if currently executing as a subagent
@@ -338,7 +337,17 @@ export class EnhancedMultiAgentOrchestrator {
         await Promise.all(activeAgentIds.map((id) => this.cancelAgent(id)));
         frameworkLogger.log("orchestrator", "🔄 Enhanced Multi-Agent Orchestrator shutdown complete", "info");
     }
+    start() {
+        if (this.cleanupTimer)
+            return;
+        this.initializeCleanupSystem();
+    }
+    stop() {
+        if (this.cleanupTimer) {
+            clearInterval(this.cleanupTimer);
+            this.cleanupTimer = null;
+        }
+    }
 }
-// Export singleton instance
-export const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator(undefined, true); // Main orchestrator
+export const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator(undefined, true);
 //# sourceMappingURL=enhanced-multi-agent-orchestrator.js.map

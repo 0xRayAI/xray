@@ -3,6 +3,7 @@ import { exec } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import * as fs from "fs";
+import * as crypto from "crypto";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveConfigPath } from "../core/config-paths.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -14,18 +15,26 @@ const packageJsonPath = join(ROOT_DIR, "package.json");
 const { version } = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 const app = express();
 const PORT = 3000;
-// API key authentication
-const API_KEY = process.env.STRRAY_API_KEY;
+const API_KEY = process.env.STRRAY_API_KEY || undefined;
+function timingSafeCompare(a, b) {
+    const aBuf = Buffer.from(a, "utf-8");
+    const bBuf = Buffer.from(b, "utf-8");
+    if (aBuf.length !== bBuf.length)
+        return false;
+    return crypto.timingSafeEqual(aBuf, bBuf);
+}
 function requireAuth(req, res, next) {
     if (!API_KEY) {
-        // If no API key configured, allow access (development mode)
+        frameworkLogger.log("cli-server", "auth-skipped", "warning", {
+            message: "No STRRAY_API_KEY set — API is unauthenticated. Set STRRAY_API_KEY in production.",
+        });
         return next();
     }
     const providedKey = req.headers["x-api-key"];
-    if (!providedKey) {
+    if (typeof providedKey !== "string") {
         return res.status(401).json({ error: "API key required. Set STRRAY_API_KEY environment variable." });
     }
-    if (providedKey !== API_KEY) {
+    if (!timingSafeCompare(providedKey, API_KEY)) {
         return res.status(403).json({ error: "Invalid API key" });
     }
     next();

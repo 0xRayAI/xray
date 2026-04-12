@@ -57,7 +57,7 @@ export declare class AgentSpawnGovernor {
     private isProcessingAuthorization;
     private getDefaultLimits;
     private readonly defaultLimits;
-    constructor(limits?: Partial<SpawnLimits>);
+    constructor(limits?: Partial<SpawnLimits>, autoStart?: boolean);
     private startPeriodicCleanup;
     private startMemoryMonitoring;
     private checkMemoryBudget;
@@ -121,6 +121,7 @@ export declare class AgentSpawnGovernor {
     private cleanupOldRecords;
     private withTimeout;
     private withRetry;
+    start(): void;
     destroy(): void;
 }
 export declare const agentSpawnGovernor: AgentSpawnGovernor;

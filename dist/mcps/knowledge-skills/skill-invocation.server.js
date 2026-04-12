@@ -350,7 +350,7 @@ class SkillInvocationServer {
         const knowledgeSkills = [
             "architecture-patterns", "strategist", "tech-writer",
             "seo-consultant", "content-creator", "growth-strategist",
-            "multimodal-looker", "bug-triage-specialist", "log-monitor",
+            "bug-triage-specialist", "log-monitor",
             "mobile-development", "git-workflow", "session-management",
             "code-analyzer", "refactoring-strategies", "project-analysis",
             "testing-best-practices", "database-design", "devops-deployment",
@@ -382,13 +382,19 @@ class SkillInvocationServer {
         const skillAliases = {
             "architect": "architecture-patterns",
             "architect-tools": "architect",
+            "backend-engineer": "api-design",
             "code-reviewer": "code-review",
-            "security-auditor": "security-audit",
+            "database-engineer": "database-design",
+            "devops-engineer": "devops-deployment",
+            "mobile-developer": "mobile-development",
             "performance-engineer": "performance-optimization",
+            "security-auditor": "security-audit",
             "testing-lead": "testing-strategy",
+            "tech-writer": "documentation-generation",
+            "frontend-ui-ux-engineer": "ui-ux-design",
+            "frontend-engineer": "project-analysis",
         };
         const resolvedSkill = skillAliases[skillName] || skillName;
-        // Get available servers from config (simulations + real servers)
         const availableServers = [
             "code-review", "security-audit", "performance-optimization",
             "testing-strategy", "researcher", "skill-invocation",
@@ -396,15 +402,13 @@ class SkillInvocationServer {
             "enforcer", "orchestrator", "estimation-validator",
             "architect", "bug-triage-specialist", "log-monitor",
             "code-reviewer", "security-auditor", "refactorer",
-            "growth-strategist", "strategist", "devops-engineer",
-            "database-engineer", "api-designer", "tech-writer",
-            "security-scan", "lint", "auto-format",
-            "model-health-check", "framework-compliance-audit",
-            "documentation", "mobile-development", "seo-consultant",
+            "growth-strategist", "strategist", "devops-deployment",
+            "database-design", "tech-writer", "documentation-generation",
+            "mobile-development", "seo-consultant",
             "git-workflow", "content-creator", "ui-ux-design",
-            "code-analyzer", "multimodal-looker", "refactoring-strategies",
+            "multimodal-looker", "refactoring-strategies",
             "project-analysis", "testing-best-practices",
-            "architecture-patterns", // from knowledge-skills/architecture-patterns.server.ts
+            "architecture-patterns",
         ];
         if (!availableServers.includes(resolvedSkill)) {
             return {

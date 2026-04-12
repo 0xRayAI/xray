@@ -136,6 +136,8 @@ export declare class EnhancedMultiAgentOrchestrator {
      * Shutdown orchestration system
      */
     shutdown(): Promise<void>;
+    start(): void;
+    stop(): void;
 }
 export declare const enhancedMultiAgentOrchestrator: EnhancedMultiAgentOrchestrator;
 //# sourceMappingURL=enhanced-multi-agent-orchestrator.d.ts.map

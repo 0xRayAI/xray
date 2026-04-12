@@ -39,10 +39,9 @@ export class SessionMonitor {
             enableMetrics: true,
             ...config,
         };
-        this.initialize();
-    }
-    initialize() {
         this.loadPersistedData();
+    }
+    start() {
         if (this.config.enableAlerts) {
             this.startHealthChecks();
         }

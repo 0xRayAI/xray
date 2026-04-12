@@ -8,24 +8,40 @@ export class AdvancedProfiler extends EventEmitter {
     activeProfiles = new Map();
     profilingEnabled = true;
     profileStoragePath;
+    reportTimer;
+    cleanupTimer;
+    isRunning = false;
     constructor(storagePath = undefined) {
         super();
         this.profileStoragePath = storagePath || resolveProfilesDir();
         this.ensureStorageDirectory();
-        this.setupPeriodicReporting();
+    }
+    start() {
+        if (this.isRunning)
+            return;
+        this.isRunning = true;
+        this.reportTimer = setInterval(() => {
+            this.generatePerformanceReport();
+        }, 5 * 60 * 1000);
+        this.cleanupTimer = setInterval(() => {
+            this.cleanupOldProfiles();
+        }, 24 * 60 * 60 * 1000);
+    }
+    stop() {
+        this.isRunning = false;
+        if (this.reportTimer) {
+            clearInterval(this.reportTimer);
+            this.reportTimer = undefined;
+        }
+        if (this.cleanupTimer) {
+            clearInterval(this.cleanupTimer);
+            this.cleanupTimer = undefined;
+        }
     }
     ensureStorageDirectory() {
         if (!existsSync(this.profileStoragePath)) {
             mkdirSync(this.profileStoragePath, { recursive: true });
         }
-    }
-    setupPeriodicReporting() {
-        setInterval(() => {
-            this.generatePerformanceReport();
-        }, 5 * 60 * 1000);
-        setInterval(() => {
-            this.cleanupOldProfiles();
-        }, 24 * 60 * 60 * 1000);
     }
     startProfiling(operationId, agentName, operation, metadata = {}) {
         if (!this.profilingEnabled)

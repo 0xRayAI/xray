@@ -2,6 +2,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError, } from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { AGENT_REGISTRY } from "../agents/registry.js";
 class FrameworkHelpServer {
     server;
     constructor() {
@@ -102,20 +103,15 @@ class FrameworkHelpServer {
             }
         });
     }
+    getActiveAgentEntries() {
+        return Object.values(AGENT_REGISTRY).filter((e) => e.status === "active");
+    }
     handleGetCapabilities(args) {
         const category = args?.category || "all";
         const format = args?.format || "summary";
+        const agentEntries = this.getActiveAgentEntries();
         const capabilities = {
-            agents: {
-                enforcer: "Codex compliance & error prevention",
-                architect: "System design & technical decisions",
-                orchestrator: "Multi-agent workflow coordination",
-                "bug-triage-specialist": "Error investigation & surgical fixes",
-                "code-reviewer": "Quality assessment & standards validation",
-                "security-auditor": "Vulnerability detection & compliance",
-                refactorer: "Technical debt elimination & code consolidation",
-                "testing-lead": "Testing strategy & coverage optimization",
-            },
+            agents: Object.fromEntries(agentEntries.map((e) => [e.name, e.description])),
             skills: {
                 "project-analysis": "Codebase analysis and metrics",
                 "testing-strategy": "Test planning and execution",
@@ -165,30 +161,7 @@ class FrameworkHelpServer {
                 commands = `
 **Agent Commands Available:**
 
-@enforcer - Codex compliance & error prevention
-@architect - System design & technical decisions  
-@orchestrator - Multi-agent workflow coordination
-@bug-triage-specialist - Error investigation & surgical fixes
-@code-reviewer - Quality assessment & standards validation
-@security-auditor - Vulnerability detection & compliance
-@refactorer - Technical debt elimination & code consolidation
-@testing-lead - Testing strategy & coverage optimization
-@researcher - Codebase exploration & documentation search
-@strategist - Strategic guidance & complex problem-solving
-@seo-consultant - SEO analysis & optimization
-@content-creator - Marketing copy & content writing
-@growth-strategist - Marketing strategy & growth
-@multimodal-looker - Visual content & media analysis
-@frontend-ui-ux-engineer - Frontend development & UI/UX
-@tech-writer - Technical documentation generation
-@log-monitor - Log analysis & pattern detection
-@explore - Fast codebase exploration
-@analyzer - Code metrics & pattern detection
-@backend-engineer - API & backend development
-@performance-engineer - Performance optimization
-@database-engineer - Database design & optimization
-@devops-engineer - DevOps & infrastructure
-@mobile-developer - Mobile app development
+${this.getActiveAgentEntries().map((e) => `@${e.name} - ${e.description}`).join("\n")}
 
 **Usage Examples:**
 - "@enforcer analyze this code for violations"
@@ -349,7 +322,7 @@ ${Object.entries(capabilities.reporting)
             return `
 **0xRay Framework - Complete Capabilities Overview**
 
-**25 Specialized Agents:**
+**${Object.keys(capabilities.agents).length} Specialized Agents:**
 ${Object.entries(capabilities.agents)
                 .map(([name, desc]) => `- **${name}**: ${desc}`)
                 .join("\n")}
@@ -387,7 +360,7 @@ ${Object.entries(capabilities.reporting)
             return `
 **0xRay Framework Capabilities:**
 
-**25 Agents:** enforcer, architect, orchestrator, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead, researcher, strategist, seo-consultant, content-creator, growth-strategist, multimodal-looker, frontend-ui-ux-engineer, frontend-engineer, tech-writer, log-monitor, analyzer, backend-engineer, performance-engineer, database-engineer, devops-engineer, mobile-developer, librarian-agents-updater
+**${this.getActiveAgentEntries().length} Agents:** ${this.getActiveAgentEntries().map((e) => e.name).join(", ")}
 
 **23 Skills:** project-analysis, testing-strategy, code-review, security-audit, performance-optimization, refactoring-strategies, ui-ux-design, documentation-generation, and more
 
