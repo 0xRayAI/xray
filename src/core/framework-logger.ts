@@ -173,6 +173,11 @@ export interface FrameworkLogEntry {
 export class FrameworkUsageLogger {
   private logs: FrameworkLogEntry[] = [];
   private maxLogs = 1000;
+  private buffer: string[] = [];
+  private flushTimer?: ReturnType<typeof setTimeout> | undefined;
+  private flushing = false;
+  private readonly FLUSH_INTERVAL_MS = 5000;
+  private readonly MAX_BUFFER_SIZE = 100;
 
   async log(
     component: string,
@@ -182,20 +187,16 @@ export class FrameworkUsageLogger {
     sessionId?: string,
     jobId?: string,
   ) {
-    // Check if logging is enabled globally
     if (!isLoggingEnabled()) {
       return;
     }
 
-    // Check if this log level should be logged
     if (!shouldLog(status)) {
       return;
     }
 
-    // Use current job context if available, otherwise auto-generate
     const actualJobId = jobId || getCurrentJobId() || generateJobId("auto");
 
-    // Ensure we always have a jobId
     if (!actualJobId) {
       throw new Error("JobId generation failed");
     }
@@ -217,40 +218,62 @@ export class FrameworkUsageLogger {
       this.logs.shift();
     }
 
-    // Always persist to file, never output to console to avoid UI bleed-through
-    try {
-      this.persistLog(entry);
-    } catch (error) {
-      // Silently fail - logging should never break application
+    this.bufferEntry(entry);
+  }
+
+  private bufferEntry(entry: FrameworkLogEntry): void {
+    const jobIdPart = entry.jobId ? `[${entry.jobId}] ` : "";
+    const detailsPart = entry.details
+      ? ` | ${JSON.stringify(entry.details)}`
+      : "";
+    const line = `${new Date(entry.timestamp).toISOString()} ${jobIdPart}[${entry.component}] ${entry.action} - ${entry.status.toUpperCase()}${detailsPart}\n`;
+    this.buffer.push(line);
+
+    if (this.buffer.length >= this.MAX_BUFFER_SIZE) {
+      this.flushBuffer();
+      return;
+    }
+
+    if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => {
+        this.flushTimer = undefined;
+        this.flushBuffer();
+      }, this.FLUSH_INTERVAL_MS);
+      if (this.flushTimer && typeof this.flushTimer === "object" && "unref" in this.flushTimer) {
+        this.flushTimer.unref();
+      }
     }
   }
 
-  private async persistLog(entry: FrameworkLogEntry) {
-    // Write to log file for monitoring subagent
+  private flushBuffer(): void {
+    if (this.flushing || this.buffer.length === 0) return;
+    this.flushing = true;
+
+    const toWrite = this.buffer.splice(0, this.buffer.length);
+    const data = toWrite.join("");
+
+    const fs = require("fs") as typeof import("fs");
+    const path = require("path") as typeof import("path");
+
     try {
-      const fs = await import("fs");
-      const path = await import("path");
       const cwd = process.cwd();
-      if (!cwd) {
-        // Skip logging if cwd is not available (e.g., in test environments)
-        return;
-      }
+      if (!cwd) return;
+
       const logDir = path.join(cwd, "logs", "framework");
       const logFile = path.join(logDir, "activity.log");
 
-      // Ensure log directory exists
       if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
       }
 
-      const jobIdPart = entry.jobId ? `[${entry.jobId}] ` : "";
-      const detailsPart = entry.details 
-        ? ` | ${JSON.stringify(entry.details)}` 
-        : "";
-      const logEntry = `${new Date(entry.timestamp).toISOString()} ${jobIdPart}[${entry.component}] ${entry.action} - ${entry.status.toUpperCase()}${detailsPart}\n`;
-      fs.appendFileSync(logFile, logEntry);
-    } catch (error) {
-      // Silent fail - cannot log to console as this IS the logger
+      fs.appendFile(logFile, data, (err) => {
+        this.flushing = false;
+        if (err) {
+          // silent
+        }
+      });
+    } catch {
+      this.flushing = false;
     }
   }
 

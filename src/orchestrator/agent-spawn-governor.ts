@@ -123,11 +123,13 @@ export class AgentSpawnGovernor {
 
   private readonly defaultLimits: SpawnLimits;
 
-  constructor(private limits: Partial<SpawnLimits> = {}) {
+  constructor(private limits: Partial<SpawnLimits> = {}, autoStart: boolean = false) {
     this.defaultLimits = this.getDefaultLimits();
     this.limits = { ...this.defaultLimits, ...limits };
-    this.startPeriodicCleanup();
-    this.startMemoryMonitoring();
+    if (autoStart) {
+      this.startPeriodicCleanup();
+      this.startMemoryMonitoring();
+    }
   }
 
   private startPeriodicCleanup(): void {
@@ -748,7 +750,11 @@ export class AgentSpawnGovernor {
     throw lastError;
   }
 
-  // Cleanup on destruction
+  start(): void {
+    this.startPeriodicCleanup();
+    this.startMemoryMonitoring();
+  }
+
   destroy(): void {
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
@@ -756,9 +762,8 @@ export class AgentSpawnGovernor {
     if (this.memoryMonitorInterval) {
       clearInterval(this.memoryMonitorInterval);
     }
-    this.aggressiveCleanup(); // Final cleanup
+    this.aggressiveCleanup();
   }
 }
 
-// Export singleton instance
-export const agentSpawnGovernor = new AgentSpawnGovernor();
+export const agentSpawnGovernor = new AgentSpawnGovernor(undefined, false);

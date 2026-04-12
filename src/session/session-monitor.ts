@@ -108,12 +108,10 @@ export class SessionMonitor {
       ...config,
     };
 
-    this.initialize();
+    this.loadPersistedData();
   }
 
-  private initialize(): void {
-    this.loadPersistedData();
-
+  start(): void {
     if (this.config.enableAlerts) {
       this.startHealthChecks();
     }

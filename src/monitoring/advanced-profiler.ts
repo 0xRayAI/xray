@@ -34,34 +34,43 @@ export class AdvancedProfiler extends EventEmitter {
   private activeProfiles: Map<string, ProfileData> = new Map();
   private profilingEnabled: boolean = true;
   private profileStoragePath: string;
+  private reportTimer?: NodeJS.Timeout | undefined;
+  private cleanupTimer?: NodeJS.Timeout | undefined;
+  private isRunning = false;
 
   constructor(storagePath: string | undefined = undefined) {
     super();
     this.profileStoragePath = storagePath || resolveProfilesDir();
     this.ensureStorageDirectory();
-    this.setupPeriodicReporting();
+  }
+
+  start(): void {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.reportTimer = setInterval(() => {
+      this.generatePerformanceReport();
+    }, 5 * 60 * 1000);
+    this.cleanupTimer = setInterval(() => {
+      this.cleanupOldProfiles();
+    }, 24 * 60 * 60 * 1000);
+  }
+
+  stop(): void {
+    this.isRunning = false;
+    if (this.reportTimer) {
+      clearInterval(this.reportTimer);
+      this.reportTimer = undefined;
+    }
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = undefined;
+    }
   }
 
   private ensureStorageDirectory(): void {
     if (!existsSync(this.profileStoragePath)) {
       mkdirSync(this.profileStoragePath, { recursive: true });
     }
-  }
-
-  private setupPeriodicReporting(): void {
-    setInterval(
-      () => {
-        this.generatePerformanceReport();
-      },
-      5 * 60 * 1000,
-    );
-
-    setInterval(
-      () => {
-        this.cleanupOldProfiles();
-      },
-      24 * 60 * 60 * 1000,
-    );
   }
 
   startProfiling(

@@ -119,8 +119,6 @@ export class EnhancedMultiAgentOrchestrator {
       currentAgentId: null,
       spawnStack: [],
     };
-
-    this.initializeCleanupSystem();
   }
 
   /**
@@ -567,8 +565,19 @@ export class EnhancedMultiAgentOrchestrator {
       "info",
     );
   }
+
+  start(): void {
+    if (this.cleanupTimer) return;
+    this.initializeCleanupSystem();
+  }
+
+  stop(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+  }
 }
 
-// Export singleton instance
 export const enhancedMultiAgentOrchestrator =
-  new EnhancedMultiAgentOrchestrator(undefined, true); // Main orchestrator
+  new EnhancedMultiAgentOrchestrator(undefined, true);
