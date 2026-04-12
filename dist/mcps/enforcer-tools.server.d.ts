@@ -22,6 +22,7 @@ declare class StringRayEnforcerToolsServer {
     private simulateEnforcementStatus;
     private performPreCommitValidation;
     run(): Promise<void>;
+    private securityScan;
 }
 export default StringRayEnforcerToolsServer;
 //# sourceMappingURL=enforcer-tools.server.d.ts.map
