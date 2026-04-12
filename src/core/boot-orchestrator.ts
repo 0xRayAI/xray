@@ -29,6 +29,7 @@ import { securityHeadersMiddleware } from "../security/security-headers.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { featuresConfigLoader } from "../core/features-config.js";
 import { memoryMonitor } from "../monitoring/memory-monitor.js";
+import { advancedProfiler } from "../monitoring/advanced-profiler.js";
 import { strRayConfigLoader } from "./config-loader.js";
 import { PluginRegistry } from "../integrations/plugins/index.js";
 import { PluginServerConfigRegistry } from "../mcps/config/index.js";
@@ -77,6 +78,7 @@ function setupGracefulShutdown(): void {
 
     try {
       memoryMonitor.stop();
+      advancedProfiler.stop();
       await new Promise((resolve) => setTimeout(resolve, 500));
       process.exit(0);
     } catch (error) {
@@ -94,6 +96,19 @@ function setupGracefulShutdown(): void {
       frameworkLogger.log("boot-orchestrator", "uncaught-exception", "error", { error, message: "Uncaught Exception" });
     }
     memoryMonitor.stop();
+    advancedProfiler.stop();
+    process.exit(1);
+  });
+
+  process.on("unhandledRejection", (reason, promise) => {
+    // Suppress error output in CLI mode to avoid breaking interface
+    if (
+      process.env.OPENCODE_CLI !== "true"
+    ) {
+      frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
+    }
+    memoryMonitor.stop();
+    advancedProfiler.stop();
     process.exit(1);
   });
 
@@ -694,6 +709,7 @@ export class BootOrchestrator {
   private setupMemoryMonitoring(): void {
     // Start memory monitor
     memoryMonitor.start();
+    advancedProfiler.start();
 
     // CRITICAL FIX: Only add alert listener once to prevent memory leak
     // Each BootOrchestrator instantiation was adding duplicate listeners
