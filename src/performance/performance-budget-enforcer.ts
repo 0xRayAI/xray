@@ -104,10 +104,13 @@ export class PerformanceBudgetEnforcer extends EventEmitter {
   private reports: PerformanceReport[] = [];
   private monitoringActive = false;
   private alertThresholds = {
-    warning: 0.9, // 90% of budget
-    error: 1.0, // 100% of budget
-    critical: 1.1, // 110% of budget
+    warning: 0.9,
+    error: 1.0,
+    critical: 1.1,
   };
+
+  private boundViolation!: (violation: PerformanceBudgetViolation) => void;
+  private boundBudgetExceeded!: (violation: PerformanceBudgetViolation) => void;
 
   constructor() {
     super();
@@ -118,8 +121,16 @@ export class PerformanceBudgetEnforcer extends EventEmitter {
    * Setup event handlers for performance monitoring
    */
   private setupEventHandlers(): void {
-    this.on("violation", this.handleViolation.bind(this));
-    this.on("budget-exceeded", this.handleBudgetExceeded.bind(this));
+    this.boundViolation = this.handleViolation.bind(this);
+    this.boundBudgetExceeded = this.handleBudgetExceeded.bind(this);
+    this.on("violation", this.boundViolation);
+    this.on("budget-exceeded", this.boundBudgetExceeded);
+  }
+
+  destroy(): void {
+    this.off("violation", this.boundViolation);
+    this.off("budget-exceeded", this.boundBudgetExceeded);
+    this.removeAllListeners();
   }
 
   /**

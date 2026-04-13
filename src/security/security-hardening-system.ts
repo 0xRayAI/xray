@@ -132,6 +132,10 @@ export class SecurityHardeningSystem extends EventEmitter {
   private encryptionKey: Buffer;
   private auditLogEnabled: boolean = true;
 
+  private boundSecurityEvent!: (event: SecurityEvent) => void;
+  private boundRateLimitExceeded!: (event: SecurityEvent) => void;
+  private boundValidationFailure!: (event: SecurityEvent) => void;
+
   constructor(encryptionKey?: string) {
     super();
     this.encryptionKey = encryptionKey
@@ -149,9 +153,19 @@ export class SecurityHardeningSystem extends EventEmitter {
    * Setup event handlers for security events
    */
   private setupEventHandlers(): void {
-    this.on("security-event", this.handleSecurityEvent.bind(this));
-    this.on("rate-limit-exceeded", this.handleRateLimitExceeded.bind(this));
-    this.on("validation-failure", this.handleValidationFailure.bind(this));
+    this.boundSecurityEvent = this.handleSecurityEvent.bind(this);
+    this.boundRateLimitExceeded = this.handleRateLimitExceeded.bind(this);
+    this.boundValidationFailure = this.handleValidationFailure.bind(this);
+    this.on("security-event", this.boundSecurityEvent);
+    this.on("rate-limit-exceeded", this.boundRateLimitExceeded);
+    this.on("validation-failure", this.boundValidationFailure);
+  }
+
+  destroy(): void {
+    this.off("security-event", this.boundSecurityEvent);
+    this.off("rate-limit-exceeded", this.boundRateLimitExceeded);
+    this.off("validation-failure", this.boundValidationFailure);
+    this.removeAllListeners();
   }
 
   /**
