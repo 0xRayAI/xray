@@ -11,7 +11,8 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { CodexLoader, RuleValidationContext } from "../enforcement/index.js";
+import { CodexLoader } from "../enforcement/loaders/codex-loader.js";
+import type { RuleValidationContext } from "../enforcement/types.js";
 
 class StringRayProcessorPipelineServer {
   private server: Server;

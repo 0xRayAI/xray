@@ -16,12 +16,32 @@ export interface AgentCapability {
     name: string;
     capabilities: string[];
     status: "active" | "inactive";
-    [key: string]: any;
+    [key: string]: string | string[] | boolean | number;
+}
+export interface DelegationContext {
+    workingDirectory?: string;
+    availableTools?: string[];
+    isDelegated?: boolean;
+    files?: string[];
+    dependencies?: string[];
+    changeVolume?: number;
+    riskLevel?: string;
+    [key: string]: unknown;
+}
+export interface DelegationResponse {
+    agent: string;
+    operation: string;
+    description: string;
+    capabilities: string[];
+    mode: string;
+    status: string;
+    timestamp: string;
+    message: string;
 }
 export interface DelegationRequest {
     operation: string;
     description: string;
-    context?: any;
+    context?: DelegationContext;
     sessionId?: string;
 }
 export interface DelegationAnalysis {
@@ -35,15 +55,13 @@ export interface DelegationAnalysis {
     complexity: ComplexityScore;
     conflictResolution: "majority_vote" | "expert_priority" | "consensus";
     estimatedDuration: number;
-    metrics?: {
-        [key: string]: any;
-    };
+    metrics?: Record<string, string | number | boolean>;
 }
 export interface DelegationResult {
     success: boolean;
     results: Array<{
         agent: string;
-        output: any;
+        output: DelegationResponse;
         executionTime: number;
     }>;
     totalTime: number;

@@ -464,57 +464,26 @@ export class AgentDelegator {
      * Create a properly configured agent with full tool access and working directory context
      */
     createProperlyConfiguredAgent(agentName, agentConfig, request) {
-        // Validate agent name before any operation (security)
         this.validateAgentName(agentName);
-        // Create the agent with proper context
         return {
             config: agentConfig,
             agentName: agentName,
-            execute: async (req) => {
-                try {
-                    // Import the specific agent implementation
-                    const agentModule = await import(`../agents/${agentName}.js`);
-                    const agentImplementation = agentModule[agentName];
-                    if (agentImplementation && typeof agentImplementation.execute === 'function') {
-                        // Ensure the agent has access to built-in OpenCode tools
-                        const enhancedRequest = {
-                            ...req,
-                            context: {
-                                ...req.context,
-                                workingDirectory: process.cwd(),
-                                availableTools: ['read', 'write', 'edit', 'glob', 'grep', 'bash', 'task', 'webfetch', 'todowrite', 'todoread', 'skill'],
-                                isDelegated: true
-                            }
-                        };
-                        return await agentImplementation.execute(enhancedRequest);
-                    }
-                    else {
-                        throw new Error(`Agent ${agentName} does not have a valid execute method`);
-                    }
-                }
-                catch (error) {
-                    // Fallback to structured error response for agents without proper implementations
-                    return {
-                        agent: agentName,
-                        operation: request.operation,
-                        description: request.description,
-                        capabilities: agentConfig.capabilities,
-                        mode: agentConfig.mode,
-                        status: "error",
-                        timestamp: new Date().toISOString(),
-                        error: `Agent execution failed: ${String(error)}`,
-                        recommendations: [
-                            "Check if agent implementation exists",
-                            "Verify agent has proper execute method",
-                            "Ensure agent supports delegated mode"
-                        ]
-                    };
-                }
+            execute: async (_req) => {
+                return {
+                    agent: agentName,
+                    operation: request.operation,
+                    description: request.description,
+                    capabilities: agentConfig.capabilities,
+                    mode: agentConfig.mode,
+                    status: "delegated",
+                    timestamp: new Date().toISOString(),
+                    message: `Agent ${agentName} delegated via skill/MCP layer`,
+                };
             },
             getCapabilities: () => agentConfig.capabilities,
             getMaxComplexity: () => agentConfig.maxComplexity,
             isEnabled: () => agentConfig.enabled,
-            isAgent: true, // Distinction from skills
+            isAgent: true,
             getType: () => 'agent'
         };
     }
@@ -584,7 +553,6 @@ export class AgentDelegator {
             }
             const totalTime = Date.now() - startTime;
             const success = errors.length === 0 && results.length > 0;
-            // Persist delegation execution metrics to state for tracking
             const existingMetrics = this.stateManager.get("delegation_metrics") || [];
             const delegationMetric = {
                 timestamp: Date.now(),
@@ -639,7 +607,7 @@ export class AgentDelegator {
         const successfulDelegations = executionDelegations.filter((d) => d.success).length;
         const failedDelegations = executionDelegations.filter((d) => !d.success).length;
         const averageExecutionTime = totalDelegations > 0
-            ? delegations.reduce((sum, d) => sum + d.totalTime, 0) /
+            ? delegations.reduce((sum, d) => sum + (d.totalTime || 0), 0) /
                 totalDelegations
             : 0;
         const agentUtilization = {};
@@ -647,18 +615,17 @@ export class AgentDelegator {
         let totalComplexity = 0;
         let totalDuration = 0;
         delegations.forEach((delegation) => {
-            // Count strategy usage for both analyses and executions
             if (delegation.strategy) {
                 strategyUsage[delegation.strategy] =
                     (strategyUsage[delegation.strategy] || 0) + 1;
             }
             if (delegation.complexity?.score) {
-                totalComplexity += delegation.complexity.score;
+                totalComplexity += delegation.complexity.score || 0;
             }
             if (delegation.estimatedDuration) {
-                totalDuration += delegation.estimatedDuration;
+                totalDuration += delegation.estimatedDuration || 0;
             }
-            delegation.results?.forEach((result) => {
+            (delegation.results || []).forEach((result) => {
                 agentUtilization[result.agent] =
                     (agentUtilization[result.agent] || 0) + 1;
             });

@@ -31,6 +31,81 @@ function keywordOverlapScore(description, historicalDescriptions) {
     }
     return matchCount > 0 ? totalScore / matchCount : 0;
 }
+/**
+ * Calculate risk level based on confidence and success probability.
+ * Ported from advanced-features for enhanced decision-making.
+ */
+function calculateRiskLevel(confidence, successProbability) {
+    const riskScore = 1 - confidence + (1 - successProbability);
+    if (riskScore < 0.3)
+        return "low";
+    if (riskScore < 0.7)
+        return "medium";
+    return "high";
+}
+/**
+ * Estimate task duration based on agent's historical performance.
+ */
+function estimateTaskDuration(agentOutcomes) {
+    if (agentOutcomes.length === 0)
+        return 0;
+    const durations = agentOutcomes
+        .filter(o => o.executionTimeMs !== undefined)
+        .map(o => o.executionTimeMs);
+    if (durations.length === 0)
+        return 0;
+    const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
+    const variance = durations.reduce((acc, d) => acc + Math.pow(d - avg, 2), 0) / durations.length;
+    const stdDev = Math.sqrt(variance);
+    const coefficientOfVariation = avg > 0 ? stdDev / avg : 0;
+    return Math.max(avg * (1 + coefficientOfVariation * 0.1), 10);
+}
+/**
+ * Build agent performance summary from historical outcomes.
+ */
+function buildAgentMetrics(agentOutcomes) {
+    const totalTasks = agentOutcomes.length;
+    const successfulTasks = agentOutcomes.filter(o => o.success).length;
+    const failedTasks = totalTasks - successfulTasks;
+    // Calculate average execution time
+    const durations = agentOutcomes
+        .filter(o => o.executionTimeMs !== undefined)
+        .map(o => o.executionTimeMs);
+    const averageExecutionTime = durations.length > 0
+        ? durations.reduce((a, b) => a + b, 0) / durations.length
+        : 0;
+    // Recent performance (last 20 tasks)
+    const recentPerformance = agentOutcomes
+        .slice(-20)
+        .map(o => o.success ? 1 : 0);
+    // Task type breakdown
+    const taskTypeBreakdown = {};
+    for (const outcome of agentOutcomes) {
+        const taskType = outcome.taskType || "unknown";
+        if (!taskTypeBreakdown[taskType]) {
+            taskTypeBreakdown[taskType] = { count: 0, successRate: 0 };
+        }
+        taskTypeBreakdown[taskType].count++;
+    }
+    // Calculate per-task-type success rates
+    for (const taskType of Object.keys(taskTypeBreakdown)) {
+        const taskOutcomes = agentOutcomes.filter(o => (o.taskType || "unknown") === taskType);
+        const successes = taskOutcomes.filter(o => o.success).length;
+        const entry = taskTypeBreakdown[taskType];
+        if (entry) {
+            entry.successRate = successes / taskOutcomes.length;
+        }
+    }
+    return {
+        totalTasks,
+        successfulTasks,
+        failedTasks,
+        averageExecutionTime,
+        successRate: totalTasks > 0 ? successfulTasks / totalTasks : 0,
+        recentPerformance,
+        taskTypeBreakdown,
+    };
+}
 export const predictiveAnalytics = {
     /**
      * Predict the optimal agent for a given task description.
@@ -66,11 +141,17 @@ export const predictiveAnalytics = {
             const score = (overlap * 0.7) + (successRate * 0.3);
             if (score > bestScore) {
                 bestScore = score;
+                const riskLevel = calculateRiskLevel(score, successRate);
+                const estimatedDuration = estimateTaskDuration(agentOutcomes);
+                const agentMetrics = buildAgentMetrics(agentOutcomes);
                 bestPrediction = {
                     agent,
                     confidence: Math.min(score, 1),
                     historicalSuccessRate: successRate,
                     sampleSize: agentOutcomes.length,
+                    riskLevel,
+                    estimatedDuration,
+                    agentMetrics,
                 };
             }
         }
@@ -96,11 +177,19 @@ export const predictiveAnalytics = {
             return b.total - a.total;
         });
         const top = qualified[0];
+        const outcomes = routingOutcomeTracker.getOutcomes();
+        const agentOutcomes = outcomes.filter(o => o.routedAgent === top.agent);
+        const riskLevel = calculateRiskLevel(top.successRate, top.successRate);
+        const estimatedDuration = estimateTaskDuration(agentOutcomes);
+        const agentMetrics = buildAgentMetrics(agentOutcomes);
         return {
             agent: top.agent,
             confidence: top.successRate,
             historicalSuccessRate: top.successRate,
             sampleSize: top.total,
+            riskLevel,
+            estimatedDuration,
+            agentMetrics,
         };
     },
     /**
@@ -123,6 +212,7 @@ export const predictiveAnalytics = {
         let bestScore = -1;
         let bestRate = 0;
         let bestSamples = 0;
+        let bestAgentOutcomes = [];
         for (const [agent, agentOutcomes] of byAgent) {
             const descriptions = agentOutcomes.map(o => o.taskDescription);
             const overlap = keywordOverlapScore(taskDescription, descriptions);
@@ -136,15 +226,23 @@ export const predictiveAnalytics = {
                 bestAgent = agent;
                 bestRate = successRate;
                 bestSamples = total;
+                // Store for enhanced return
+                bestAgentOutcomes = agentOutcomes;
             }
         }
         if (!bestAgent || bestScore < 0.3)
             return null;
+        const riskLevel = calculateRiskLevel(bestScore, bestRate);
+        const estimatedDuration = estimateTaskDuration(bestAgentOutcomes);
+        const agentMetrics = buildAgentMetrics(bestAgentOutcomes);
         return {
             agent: bestAgent,
             confidence: Math.min(bestScore, 1.0),
             historicalSuccessRate: bestRate,
             sampleSize: bestSamples,
+            riskLevel,
+            estimatedDuration,
+            agentMetrics,
         };
     },
 };

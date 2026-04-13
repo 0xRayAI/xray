@@ -11,7 +11,26 @@ export interface RoutingPrediction {
     confidence: number;
     historicalSuccessRate: number;
     sampleSize: number;
+    /** Risk level based on confidence and success probability */
+    riskLevel?: "low" | "medium" | "high";
+    /** Estimated task duration in milliseconds */
+    estimatedDuration?: number;
+    /** Agent performance metrics used for prediction */
+    agentMetrics?: AgentPerformanceSummary;
 }
+export interface AgentPerformanceSummary {
+    totalTasks: number;
+    successfulTasks: number;
+    failedTasks: number;
+    averageExecutionTime: number;
+    successRate: number;
+    recentPerformance: number[];
+    taskTypeBreakdown: Record<string, {
+        count: number;
+        successRate: number;
+    }>;
+}
+export type RiskLevel = "low" | "medium" | "high";
 export interface PredictiveAnalytics {
     predict(taskDescription: string): Promise<RoutingPrediction | null>;
     predictOptimalAgent(): Promise<RoutingPrediction | null>;

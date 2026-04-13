@@ -207,6 +207,20 @@ export class ServerConfigRegistry {
             args: [`${basePath}/mcps/state-manager.server.js`],
             timeout: 30000,
         });
+        // Processor Pipeline Server
+        this.register({
+            serverName: 'processor-pipeline',
+            command: 'node',
+            args: [`${basePath}/mcps/processor-pipeline.server.js`],
+            timeout: 30000,
+        });
+        // Model Health Check Server
+        this.register({
+            serverName: 'model-health-check',
+            command: 'node',
+            args: [`${basePath}/mcps/model-health-check.server.js`],
+            timeout: 30000,
+        });
     }
     /**
      * Register a new server configuration

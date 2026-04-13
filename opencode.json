@@ -141,190 +141,110 @@
       "temperature": 1.0,
       "mode": "subagent"
     },
-    "sisyphus": {
-      "description": "Sisyphus task agent",
-      "disable": true
-    },
-    "Planner-Sisyphus": {
-      "description": "Planner Sisyphus",
-      "disable": true
-    },
-    "OpenCode-Builder": {
-      "description": "OpenCode Builder",
-      "disable": true
-    },
-    "build": {
-      "description": "Build agent",
-      "disable": true
-    },
-    "plan": {
-      "description": "Plan agent",
-      "disable": true
-    },
-    "strray-architect": {
-      "description": "0xRay architect",
-      "disable": true
-    },
-    "strray-orchestrator": {
-      "description": "0xRay orchestrator",
-      "disable": true
-    },
-    "strray-researcher": {
-      "description": "0xRay researcher",
-      "disable": true
-    },
-    "strray-refactorer": {
-      "description": "0xRay refactorer",
-      "disable": true
-    },
-    "strray-security-auditor": {
-      "description": "0xRay security auditor",
-      "disable": true
-    },
-    "strray-testing-lead": {
-      "description": "0xRay testing lead",
-      "disable": true
-    },
-    "strray-enforcer": {
-      "description": "0xRay enforcer",
-      "disable": true
-    },
-    "strray-code-reviewer": {
-      "description": "0xRay code reviewer",
-      "disable": true
-    },
-    "strray-bug-triage-specialist": {
-      "description": "0xRay bug triage",
-      "disable": true
-    },
-    "strray-state-manager": {
-      "description": "0xRay state manager",
+    "hermes-agent": {
+      "description": "Hermes Agent native plugin for 0xRay CLI integration",
+      "temperature": 1.0,
       "mode": "subagent"
     },
-    "strray-security-scan": {
-      "description": "0xRay security scan",
+    "inference-improve": {
+      "description": "Autonomous inference improvement through collaborative agent analysis",
+      "temperature": 1.0,
       "mode": "subagent"
     },
-    "strray-performance-analysis": {
-      "description": "0xRay performance analysis",
+    "session-management": {
+      "description": "Manage user sessions and persistent state",
+      "temperature": 1.0,
       "mode": "subagent"
     },
-    "strray-lint": {
-      "description": "0xRay lint",
+    "storyteller": {
+      "description": "Write deep narrative reflections, sagas, journeys, and technical stories",
+      "temperature": 1.0,
       "mode": "subagent"
     },
-    "strray-framework-compliance-audit": {
-      "description": "0xRay compliance audit",
+    "auto-format": {
+      "description": "Automated code formatting and style consistency",
+      "temperature": 1.0,
       "mode": "subagent"
     },
-    "strray-boot-orchestrator": {
-      "description": "0xRay boot orchestrator",
+    "boot-orchestrator": {
+      "description": "Framework initialization and boot orchestration",
+      "temperature": 1.0,
       "mode": "subagent"
     },
-    "strray-auto-format": {
-      "description": "0xRay auto format",
+    "framework-compliance-audit": {
+      "description": "Framework compliance auditing and validation",
+      "temperature": 1.0,
       "mode": "subagent"
     },
-    "strray-architect-tools": {
-      "description": "0xRay architect tools",
-      "disable": true
+    "lint": {
+      "description": "Code linting and static analysis",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
-    "strray-ui-ux-design": {
-      "description": "0xRay UI/UX design",
-      "disable": true
+    "performance-analysis": {
+      "description": "System performance analysis and optimization",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
-    "strray-testing-strategy": {
-      "description": "0xRay testing strategy",
-      "disable": true
+    "security-scan": {
+      "description": "Security vulnerability scanning and assessment",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
-    "strray-testing-best-practices": {
-      "description": "0xRay testing best practices",
-      "disable": true
+    "state-manager": {
+      "description": "Application state management and persistence",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
-    "strray-project-analysis": {
-      "description": "0xRay project analysis",
-      "disable": true
+    "processor-pipeline": {
+      "description": "Data processing pipeline management",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
-    "project-analysis": {
-      "description": "Project analysis (skill)",
-      "disable": true,
-      "note": "This is a skill/MCP, not an agent"
+    "model-health-check": {
+      "description": "AI model health monitoring and diagnostics",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
-    "strray-performance-optimization": {
-      "description": "0xRay performance optimization",
-      "disable": true
-    },
-    "strray-git-workflow": {
-      "description": "0xRay git workflow",
-      "disable": true
-    },
-    "strray-documentation-generation": {
-      "description": "0xRay documentation generation",
-      "disable": true
-    },
-    "strray-devops-deployment": {
-      "description": "0xRay devops deployment",
-      "disable": true
-    },
-    "strray-database-design": {
-      "description": "0xRay database design",
-      "disable": true
-    },
-    "strray-code-review": {
-      "description": "0xRay code review",
-      "disable": true
-    },
-    "strray-architecture-patterns": {
-      "description": "0xRay architecture patterns",
-      "disable": true
-    },
-    "strray-api-design": {
-      "description": "0xRay API design",
-      "disable": true
-    },
-    "strray-enforcer-tools": {
-      "description": "0xRay enforcer tools",
-      "disable": true
-    },
-    "testing-strategy": {
-      "description": "Testing strategy (skill)",
-      "disable": true
-    },
-    "performance-optimization": {
-      "description": "Performance optimization (skill)",
-      "disable": true
-    },
-    "code-review": {
-      "description": "Code review (skill)",
-      "disable": true
-    },
-    "security-audit": {
-      "description": "Security audit (skill)",
-      "disable": true
-    },
-    "architecture-patterns": {
-      "description": "Architecture patterns (skill)",
-      "disable": true
-    },
-    "git-workflow": {
-      "description": "Git workflow (skill)",
-      "disable": true
+    "estimation": {
+      "description": "Effort estimation and project sizing",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
     "api-design": {
-      "description": "API design (skill)",
-      "disable": true
+      "description": "RESTful API design and validation",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "architecture-patterns": {
+      "description": "Software architecture patterns and best practices",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "git-workflow": {
+      "description": "Git workflow management and collaboration tools",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "performance-optimization": {
+      "description": "Application performance optimization and tuning",
+      "temperature": 1.0,
+      "mode": "subagent"
+    },
+    "project-analysis": {
+      "description": "Analyze project structure, complexity, and health metrics",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
     "ui-ux-design": {
-      "description": "UI/UX design (skill)",
-      "disable": true
+      "description": "User interface and user experience design with mobile-first approach, cognitive simplicity, and accessibility-first principles",
+      "temperature": 1.0,
+      "mode": "subagent"
     },
-    "documentation-generation": {
-      "description": "Documentation generation (skill)",
-      "disable": true
-    },
-    "refactoring-strategies": {
-      "description": "Refactoring strategies (skill)",
-      "disable": true
-    }
-  },
+    "sisyphus": { "description": "Sisyphus task agent", "disable": true },
+    "Planner-Sisyphus": { "description": "Planner Sisyphus", "disable": true },
+    "OpenCode-Builder": { "description": "OpenCode Builder", "disable": true },
+    "build": { "description": "Build agent", "disable": true },
+    "plan": { "description": "Plan agent", "disable": true }
+  }
 }

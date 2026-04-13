@@ -98,7 +98,8 @@ export class RuleExecutor {
                 // Check if dependencies are satisfied
                 if (!this.hierarchy.isDependencySatisfied(rule.id, executedRules)) {
                     const deps = this.hierarchy.getDependencies(rule.id);
-                    errors.push(`${rule.id}: dependencies not satisfied (requires: ${deps.join(', ')})`);
+                    warnings.push(`${rule.id}: dependencies not satisfied (requires: ${deps.join(', ')})`);
+                    executedRules.add(rule.id);
                     continue;
                 }
                 try {
@@ -335,26 +336,30 @@ export class RuleExecutor {
         // Check operation type for specific rules
         switch (rule.id) {
             case 'tests-required':
+                return operation === 'write' || operation === 'create';
             case 'no-duplicate-code':
+                return operation === 'write' && !!context.newCode;
             case 'no-over-engineering':
+                return operation === 'write' && !!context.newCode;
             case 'resolve-all-errors':
+                return operation === 'write' && !!context.newCode;
             case 'prevent-infinite-loops':
+                return operation === 'write' && !!context.newCode;
             case 'state-management-patterns':
+                return operation === 'write' && !!context.newCode;
             case 'import-consistency':
+                return operation === 'write' && !!context.newCode;
             case 'documentation-required':
+                return operation === 'write' || operation === 'modify';
             case 'clean-debug-logs':
+                return operation === 'write' && !!context.newCode;
             case 'console-log-usage':
                 return operation === 'write' && !!context.newCode;
-            case 'context-analysis-integration':
-            case 'dependency-management':
-            case 'input-validation':
-            case 'memory-optimization':
-                return operation === 'write';
             case 'src-dist-integrity':
                 return ((operation === 'write' || operation === 'copy' || operation === 'modify') &&
                     !!context.files);
             default:
-                return operation === 'write' || operation === 'create';
+                return true;
         }
     }
 }

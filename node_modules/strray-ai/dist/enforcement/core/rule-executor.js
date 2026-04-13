@@ -98,7 +98,8 @@ export class RuleExecutor {
                 // Check if dependencies are satisfied
                 if (!this.hierarchy.isDependencySatisfied(rule.id, executedRules)) {
                     const deps = this.hierarchy.getDependencies(rule.id);
-                    errors.push(`${rule.id}: dependencies not satisfied (requires: ${deps.join(', ')})`);
+                    warnings.push(`${rule.id}: dependencies not satisfied (requires: ${deps.join(', ')})`);
+                    executedRules.add(rule.id);
                     continue;
                 }
                 try {

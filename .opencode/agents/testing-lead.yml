@@ -1,5 +1,6 @@
-name: heremes-agent
-description: "heremes agent specialist"
+name: testing-lead
+skill: testing-strategy
+description: "testing strategy specialist"
 version: "1.0.0"
 mode: subagent
 

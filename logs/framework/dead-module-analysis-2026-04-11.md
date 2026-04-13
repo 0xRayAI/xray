@@ -1,8 +1,8 @@
 # Dead Module Analysis Report — 0xRay (`src/`)
 
 **Date:** 2026-04-11
-**Scope:** All `.ts` files under `src/` excluding `src/__tests__/`, `src/types/` directory, `.d.ts` files
-**Total files analyzed:** 344 production `.ts` files
+**Updated:** 2026-04-13 (Most cleanup completed)
+**Status:** MOSTLY RESOLVED - Many dead files have been removed
 
 ---
 
@@ -443,6 +443,83 @@ Several files were flagged by the initial broad scan but confirmed alive through
 6. **Processor implementations (11 in index.ts barrel):** Only imported through the dead `processors/implementations/index.ts` barrel. Other processor files ARE alive via direct dynamic imports from `processor-manager.ts`. The barrel is dead but some individual processors are alive through other paths.
 
 7. **Dead CLI commands (5):** `analytics-disable.ts`, `analytics-enable-action.ts`, `analytics-preview.ts`, `analytics-status.ts`, and `status.ts` are never imported by `cli/index.ts` or any other file. These appear to be unfinished CLI subcommands.
+
+---
+
+## Update Notes (2026-04-13)
+
+### Completed Cleanup ✅
+
+Since this analysis was run, most items have been addressed:
+
+| Item | Status | Commit |
+|------|--------|--------|
+| **Community skills** (1337 files) | ✅ Removed from context | f78a7b99f |
+| **Skills directory restructuring** | ✅ Moved to .opencode/skills/ | f78a7b99f |
+| **17 enterprise stubs** | ✅ Deleted (-7500 lines) | 05c896578 |
+| **10 dead processor implementations** | ✅ Deleted | e8ad208b7 |
+| **2 dead integration clusters** (openclaw, hermes-agent) | ✅ Deleted | e8ad208b7 |
+| **11 dead barrel files** | ✅ Deleted | 8991709e5 |
+| **7 MCP servers wired** (auto-format, boot-orchestrator, etc.) | ✅ Wired | 0f3e9df44 |
+| **3 dead MCP modules** (processor-pipeline, model-health-check, mcp-logger) | ✅ Deleted | 0f3e9df44 |
+| **Dead sub-systems** (jobs, circuit-breaker, infrastructure) | ✅ Deleted | 0f3e9df44 |
+| **3 junk files** | ✅ Deleted | 9d412c3f5 |
+| **12 broken agents** | ✅ Fixed via agent registry | 0f71c41f9 |
+
+### Items Retained (Not Deleted) ⚠️
+
+The following were flagged but intentionally retained:
+
+| File/Directory | Reason |
+|----------------|--------|
+| **12 orphaned agents** | Now wired via agents/index.ts and opencode.json |
+| **14 MCP knowledge-skills** (dynamic loadable) | Runtime-loaded via createDynamicConfig() - DO NOT DELETE |
+| **inference-tuner** | Kept for future wiring |
+| **security-scanner** | Kept for future wiring |
+| **prompt-security-validator** | Kept, now wired (d0b5148bc) |
+| **performance-regression-tester** | Kept for future wiring |
+| **performance-budget-enforcer** | Kept for future wiring |
+| **Dead CLI commands** (5) | NOT dead — dynamic imports in cli/index.ts (lines 592-595) |
+
+### Restoration (2026-04-13) 🔄
+
+The following were incorrectly deleted as "dead" but were real, functional code:
+
+| File/Directory | Lines | Why Restored |
+|----------------|-------|-------------|
+| **integrations/hermes-agent/** (10 files) | ~2,895 | Real integration extending BaseIntegration, Python plugin + bridge.mjs |
+| **integrations/openclaw/** (8 TS + 2 test) | ~2,366 | Full WebSocket client + API server + hooks, extends BaseIntegration |
+| **integrations/hermes-agent/index.ts** | 35 | Barrel export for hermes integration |
+| **integrations/openclaw/index.ts** | 399 | OpenClawIntegration class with lifecycle + MCP event wiring |
+| **circuit-breaker/circuit-breaker.ts** | 477 | Real circuit breaker pattern with configurable thresholds |
+| **infrastructure/iac-validator.ts** | 610 | Real zod-based IaC validation for AWS/Azure/GCP |
+| **infrastructure/schemas/cloud-schemas.ts** | 589 | Real zod schemas for cloud configurations |
+| **mcps/processor-pipeline.server.ts** | 706 | Real MCP server, import path fixed |
+| **mcps/model-health-check.server.ts** | 271 | Real MCP server, restored with model-router dependency |
+| **core/model-router.ts** | transitively dead | Dependency of model-health-check |
+| **utils/token-manager.ts** | transitively dead | Dependency of model-router |
+
+### Additional Deletions (Session 2) 🗑️
+
+| File | Lines | Reason |
+|------|-------|--------|
+| src/hooks/ (4 files) | 296 | Entire hooks subsystem dead — validation-hooks duplicated processor-manager |
+| src/core/boot-phases.ts | 69 | Replaced by boot-orchestrator phases |
+| src/core/memory-monitor-setup.ts | 125 | Replaced by boot-orchestrator direct wiring |
+| src/core/strray-init.ts | 40 | Replaced by strray-activation.ts |
+| src/core/tool-event-emitter.ts | 125 | Dead singleton, activity-logger handles tool logging |
+| src/plugins/ (3 files) | 535 | Replaced by plugin-server-registry.ts |
+| src/cli/framework-console.ts | 28 | Wraps console.log — violates AGENTS.md |
+| src/test-utils/ (2 files) | 133 | Test helpers with zero importers |
+| src/analytics/predictive-analytics.ts | +130 | Enhanced with risk levels, duration estimates, agent metrics |
+
+### Stats Update
+
+| Original | Current |
+|----------|----------|
+| 155 total flagged | ~20 restored, ~110 deleted, ~25 retained |
+| 141 safe to delete | ~110 confirmed dead deleted, ~15 restored, ~16 still retained |
+| 93 confirmed dead | ~65 genuinely dead, ~28 restored (were misclassified) |
 
 ---
 
