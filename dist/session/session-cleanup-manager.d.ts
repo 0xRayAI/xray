@@ -49,6 +49,7 @@ export declare class SessionCleanupManager {
      * Initialize cleanup manager and start auto-cleanup if enabled
      */
     private initialize;
+    start(): void;
     /**
      * Register a new session for cleanup tracking
      */

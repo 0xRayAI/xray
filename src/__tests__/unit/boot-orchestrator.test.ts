@@ -109,6 +109,7 @@ describe("BootOrchestrator", () => {
     vi.doMock("../session/session-cleanup-manager", () => ({
       createSessionCleanupManager: vi.fn().mockReturnValue({
         registerSession: vi.fn(),
+        start: vi.fn(),
       }),
     }));
 

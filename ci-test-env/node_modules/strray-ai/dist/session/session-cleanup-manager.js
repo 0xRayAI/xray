@@ -53,12 +53,17 @@ export class SessionCleanupManager {
             maxSessions: this.config.maxSessions,
         });
         this.loadSessionMetadata();
+        frameworkLogger.log("session-cleanup", "initialize", "success", {
+            autoCleanupEnabled: this.config.enableAutoCleanup,
+            note: "auto-cleanup timer deferred to explicit start() call",
+        });
+    }
+    start() {
+        if (this.cleanupInterval)
+            return;
         if (this.config.enableAutoCleanup) {
             this.startAutoCleanup();
         }
-        frameworkLogger.log("session-cleanup", "initialize", "success", {
-            autoCleanupEnabled: this.config.enableAutoCleanup,
-        });
     }
     /**
      * Register a new session for cleanup tracking

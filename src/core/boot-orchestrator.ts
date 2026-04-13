@@ -335,6 +335,7 @@ export class BootOrchestrator {
           sessionMonitor,
         );
         this.stateManager.set("session:cleanup_manager", cleanupManager);
+        cleanupManager.start();
 
         // Update session monitor with cleanup manager reference
         (sessionMonitor as any).cleanupManager = cleanupManager;

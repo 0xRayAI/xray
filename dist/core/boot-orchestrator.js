@@ -234,6 +234,7 @@ export class BootOrchestrator {
                 // Initialize session cleanup manager with session monitor reference
                 const cleanupManager = createSessionCleanupManager(this.stateManager, {}, sessionMonitor);
                 this.stateManager.set("session:cleanup_manager", cleanupManager);
+                cleanupManager.start();
                 // Update session monitor with cleanup manager reference
                 sessionMonitor.cleanupManager = cleanupManager;
                 const stateManagerInstance = createSessionStateManager(this.stateManager, sessionCoordinator);

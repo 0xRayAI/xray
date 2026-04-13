@@ -61,6 +61,7 @@ vi.mock("../../delegation/index.js", () => ({
 vi.mock("../../session/session-cleanup-manager.js", () => ({
   createSessionCleanupManager: vi.fn().mockReturnValue({
     registerSession: vi.fn(),
+    start: vi.fn(),
   }),
 }));
 
