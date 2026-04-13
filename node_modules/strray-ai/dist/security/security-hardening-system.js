@@ -66,6 +66,9 @@ export class SecurityHardeningSystem extends EventEmitter {
     securityEvents = [];
     encryptionKey;
     auditLogEnabled = true;
+    boundSecurityEvent;
+    boundRateLimitExceeded;
+    boundValidationFailure;
     constructor(encryptionKey) {
         super();
         this.encryptionKey = encryptionKey
@@ -77,9 +80,18 @@ export class SecurityHardeningSystem extends EventEmitter {
      * Setup event handlers for security events
      */
     setupEventHandlers() {
-        this.on("security-event", this.handleSecurityEvent.bind(this));
-        this.on("rate-limit-exceeded", this.handleRateLimitExceeded.bind(this));
-        this.on("validation-failure", this.handleValidationFailure.bind(this));
+        this.boundSecurityEvent = this.handleSecurityEvent.bind(this);
+        this.boundRateLimitExceeded = this.handleRateLimitExceeded.bind(this);
+        this.boundValidationFailure = this.handleValidationFailure.bind(this);
+        this.on("security-event", this.boundSecurityEvent);
+        this.on("rate-limit-exceeded", this.boundRateLimitExceeded);
+        this.on("validation-failure", this.boundValidationFailure);
+    }
+    destroy() {
+        this.off("security-event", this.boundSecurityEvent);
+        this.off("rate-limit-exceeded", this.boundRateLimitExceeded);
+        this.off("validation-failure", this.boundValidationFailure);
+        this.removeAllListeners();
     }
     /**
      * Create security middleware for HTTP requests
