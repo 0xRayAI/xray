@@ -93,10 +93,13 @@ export declare class SecurityHardeningSystem extends EventEmitter {
     private securityEvents;
     private encryptionKey;
     private auditLogEnabled;
+    private started;
+    private pendingEncryptionKey;
     private boundSecurityEvent;
     private boundRateLimitExceeded;
     private boundValidationFailure;
     constructor(encryptionKey?: string);
+    start(): void;
     /**
      * Setup event handlers for security events
      */

@@ -8,6 +8,7 @@ import { SecurityHardeningSystem } from "../../security/security-hardening-syste
 
 describe("H-001: Broken Encryption Fix", () => {
   const securitySystem = new SecurityHardeningSystem("test-encryption-key-12345");
+  securitySystem.start();
 
   it("should encrypt and decrypt data correctly", () => {
     const originalData = "Hello, 0xRay!";
@@ -52,6 +53,7 @@ describe("H-001: Broken Encryption Fix", () => {
 
     // Try to decrypt with different key
     const wrongKeySystem = new SecurityHardeningSystem("different-key-67890");
+    wrongKeySystem.start();
 
     expect(() => {
       wrongKeySystem.decryptData(encrypted);

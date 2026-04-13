@@ -108,9 +108,8 @@ export class BootOrchestrator {
     config;
     pluginRegistry;
     pluginServerRegistry;
+    shutdownInitialized = false;
     constructor(config = {}, stateManager) {
-        // Set up graceful shutdown handling first
-        setupGracefulShutdown();
         // Initialize components first for state management
         this.contextLoader = StringRayContextLoader.getInstance();
         this.stateManager = stateManager || new StringRayStateManager();
@@ -595,6 +594,10 @@ export class BootOrchestrator {
      */
     async executeBootSequence() {
         const jobId = `boot-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        if (!this.shutdownInitialized) {
+            setupGracefulShutdown();
+            this.shutdownInitialized = true;
+        }
         this.setupMemoryMonitoring();
         frameworkLogger.log("boot-orchestrator", "executeBootSequence started", "info", { jobId });
         const result = {

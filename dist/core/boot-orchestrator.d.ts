@@ -32,6 +32,7 @@ export declare class BootOrchestrator {
     private config;
     private pluginRegistry?;
     private pluginServerRegistry?;
+    private shutdownInitialized;
     constructor(config?: Partial<BootSequenceConfig>, stateManager?: StringRayStateManager);
     /**
      * Initialize delegation system components

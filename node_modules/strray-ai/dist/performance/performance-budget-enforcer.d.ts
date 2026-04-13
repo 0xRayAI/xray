@@ -90,12 +90,11 @@ export declare class PerformanceBudgetEnforcer extends EventEmitter {
     private reports;
     private monitoringActive;
     private alertThresholds;
+    private started;
     private boundViolation;
     private boundBudgetExceeded;
     constructor();
-    /**
-     * Setup event handlers for performance monitoring
-     */
+    start(): void;
     private setupEventHandlers;
     destroy(): void;
     /**

@@ -48,15 +48,18 @@ export class PerformanceBudgetEnforcer extends EventEmitter {
         error: 1.0,
         critical: 1.1,
     };
+    started = false;
     boundViolation;
     boundBudgetExceeded;
     constructor() {
         super();
+    }
+    start() {
+        if (this.started)
+            return;
+        this.started = true;
         this.setupEventHandlers();
     }
-    /**
-     * Setup event handlers for performance monitoring
-     */
     setupEventHandlers() {
         this.boundViolation = this.handleViolation.bind(this);
         this.boundBudgetExceeded = this.handleBudgetExceeded.bind(this);

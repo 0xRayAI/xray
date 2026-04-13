@@ -64,15 +64,23 @@ export const SECURITY_CONFIG = {
 export class SecurityHardeningSystem extends EventEmitter {
     rateLimitStore = new Map();
     securityEvents = [];
-    encryptionKey;
+    encryptionKey = Buffer.alloc(0);
     auditLogEnabled = true;
+    started = false;
+    pendingEncryptionKey;
     boundSecurityEvent;
     boundRateLimitExceeded;
     boundValidationFailure;
     constructor(encryptionKey) {
         super();
-        this.encryptionKey = encryptionKey
-            ? crypto.scryptSync(encryptionKey, "salt", SECURITY_CONFIG.encryption.keyLength)
+        this.pendingEncryptionKey = encryptionKey;
+    }
+    start() {
+        if (this.started)
+            return;
+        this.started = true;
+        this.encryptionKey = this.pendingEncryptionKey
+            ? crypto.scryptSync(this.pendingEncryptionKey, "salt", SECURITY_CONFIG.encryption.keyLength)
             : crypto.randomBytes(SECURITY_CONFIG.encryption.keyLength);
         this.setupEventHandlers();
     }

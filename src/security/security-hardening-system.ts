@@ -129,8 +129,10 @@ export interface SecurityMiddlewareOptions {
 export class SecurityHardeningSystem extends EventEmitter {
   private rateLimitStore: Map<string, RateLimitEntry> = new Map();
   private securityEvents: SecurityEvent[] = [];
-  private encryptionKey: Buffer;
+  private encryptionKey: Buffer = Buffer.alloc(0);
   private auditLogEnabled: boolean = true;
+  private started = false;
+  private pendingEncryptionKey: string | undefined;
 
   private boundSecurityEvent!: (event: SecurityEvent) => void;
   private boundRateLimitExceeded!: (event: SecurityEvent) => void;
@@ -138,14 +140,19 @@ export class SecurityHardeningSystem extends EventEmitter {
 
   constructor(encryptionKey?: string) {
     super();
-    this.encryptionKey = encryptionKey
+    this.pendingEncryptionKey = encryptionKey;
+  }
+
+  start(): void {
+    if (this.started) return;
+    this.started = true;
+    this.encryptionKey = this.pendingEncryptionKey
       ? crypto.scryptSync(
-          encryptionKey,
+          this.pendingEncryptionKey,
           "salt",
           SECURITY_CONFIG.encryption.keyLength,
         )
       : crypto.randomBytes(SECURITY_CONFIG.encryption.keyLength);
-
     this.setupEventHandlers();
   }
 
