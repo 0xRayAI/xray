@@ -35,9 +35,9 @@ export interface ValidationResult {
  * Default configuration settings
  */
 const DEFAULT_CONFIG: ContextSizeConfig = {
-  maxSystemPromptLength: 4000,      // Max system prompt length
-  maxCodexContextLength: 2000,      // Max codex terms (reduced from 7000)
-  maxTotalPromptLength: 8000,       // Maximum total token budget
+  maxSystemPromptLength: 8000,      // Max system prompt length
+  maxCodexContextLength: 4000,      // Max codex terms (increased)
+  maxTotalPromptLength: 16000,       // Maximum total token budget (increased)
   enableCompression: true,          // Enable automatic compression
   preventDuplicateContent: true,    // Prevent duplicate context blocks
 };

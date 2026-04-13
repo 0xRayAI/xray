@@ -150,7 +150,7 @@ export async function generateLeanSystemPrompt(
     showWelcomeBanner = true,
     showCodexContext = false,  // Disabled by default for token efficiency
     enableTokenOptimization = true,
-    maxTokenBudget = 2000,     // Conservative token budget
+    maxTokenBudget = 8192,     // Increased token budget
     showCriticalTermsOnly = true,
     showEssentialLinks = true
   } = config;

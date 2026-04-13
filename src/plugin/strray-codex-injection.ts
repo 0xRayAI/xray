@@ -642,7 +642,7 @@ export default async function strrayCodexPlugin(input: {
             showWelcomeBanner: true,
             showCodexContext: false,  // Disabled for token efficiency
             enableTokenOptimization: true,
-            maxTokenBudget: 3000,     // Conservative token budget
+            maxTokenBudget: 8192,     // Increased token budget
             showCriticalTermsOnly: true,
             showEssentialLinks: true
           });

@@ -338,7 +338,7 @@ export async function skillInstallCommand(
   options?: { force?: boolean; path?: string },
 ): Promise<void> {
   const registry = getRegistry();
-  const skillsDir = join(getConfigDir(), "skills");
+  const skillsDir = join(process.cwd(), ".opencode", "skills");
 
   if (!sourceArg) {
     console.log("\n  Recommended Starter Packs");
