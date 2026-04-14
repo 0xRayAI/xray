@@ -12,6 +12,7 @@ import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 
 interface TestStrategy {
@@ -51,6 +52,155 @@ interface TestRecommendation {
   impact: "high" | "medium" | "low";
   effort: "low" | "medium" | "high";
   tools: string[];
+}
+
+interface AnalyzeTestCoverageArgs {
+  codePath: string;
+  testFramework?: string;
+  coverageThreshold?: number;
+}
+
+interface DesignTestStrategyArgs {
+  projectType: string;
+  techStack?: string[];
+  teamSize?: string;
+  timeline?: string;
+}
+
+interface ImplementTDDWorkflowArgs {
+  language?: string;
+  framework?: string;
+  existingTests?: boolean;
+}
+
+interface OptimizeTestPerformanceArgs {
+  testResults: string;
+  targetRuntime?: number;
+  parallelExecution?: boolean;
+}
+
+interface SetupCICDTestingArgs {
+  ciPlatform: string;
+  testTypes: string[];
+  coverageReporting?: boolean;
+}
+
+interface TDDWorkflowStep {
+  title: string;
+  description: string;
+  command: string;
+}
+
+interface TDDWorkflow {
+  steps: TDDWorkflowStep[];
+}
+
+interface PerformanceBottleneck {
+  type: string;
+  description: string;
+  impact: number;
+  difficulty: string;
+  solution: string;
+}
+
+interface PerformanceRecommendation {
+  title: string;
+  improvement: number;
+  effort: string;
+  description: string;
+}
+
+interface TestPerformanceAnalysis {
+  currentRuntime: number;
+  bottlenecks: PerformanceBottleneck[];
+  recommendations: PerformanceRecommendation[];
+}
+
+interface CIStage {
+  name: string;
+  description: string;
+  estimatedDuration: number;
+  tests: string[];
+  conditions: string[];
+}
+
+interface CIConfigFile {
+  filename: string;
+  location: string;
+  description: string;
+}
+
+interface CIDependency {
+  name: string;
+  version?: string;
+  purpose: string;
+}
+
+interface CIPipeline {
+  stages: CIStage[];
+  configFiles: CIConfigFile[];
+  dependencies: CIDependency[];
+}
+
+interface CoverageImprovementPhase {
+  name: string;
+  duration: string;
+  focus: string;
+  tasks: string[];
+}
+
+interface CoverageImprovementPlan {
+  phases: CoverageImprovementPhase[];
+}
+
+interface ImplementationMilestone {
+  phase: string;
+  week: number;
+  deliverables: string[];
+}
+
+interface ImplementationRoadmap {
+  phases: string[];
+  timeline: string;
+  milestones: ImplementationMilestone[];
+}
+
+interface TDDExampleSet {
+  language: string;
+  framework: string;
+  examples: Array<{
+    scenario: string;
+    test: string;
+    implementation: string;
+  }>;
+}
+
+interface PerformanceOptimizationPlan {
+  immediate: PerformanceRecommendation[];
+  shortTerm: PerformanceRecommendation[];
+  longTerm: PerformanceRecommendation[];
+  totalImprovement: number;
+}
+
+interface PerformanceMonitoringStrategy {
+  metrics: string[];
+  alerts: string[];
+  dashboards: string[];
+}
+
+interface CIConfigTemplates {
+  platform: string;
+  templates: Record<string, string>;
+}
+
+interface CITroubleshootingGuide {
+  commonIssues: Array<{ issue: string; solution: string }>;
+  debuggingSteps: string[];
+}
+
+interface McpToolResponse {
+  content: Array<{ type: "text"; text: string }>;
+  data?: Record<string, unknown>;
 }
 
 class StringRayTestingBestPracticesServer {
@@ -226,27 +376,27 @@ class StringRayTestingBestPracticesServer {
       };
     });
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
       const { name, arguments: args } = request.params;
 
       switch (name) {
         case "analyze_test_coverage":
-          return await this.analyzeTestCoverage(args);
+          return await this.analyzeTestCoverage(args as unknown as AnalyzeTestCoverageArgs) as CallToolResult;
         case "design_test_strategy":
-          return await this.designTestStrategy(args);
+          return await this.designTestStrategy(args as unknown as DesignTestStrategyArgs) as CallToolResult;
         case "implement_tdd_workflow":
-          return await this.implementTDDWorkflow(args);
+          return await this.implementTDDWorkflow(args as unknown as ImplementTDDWorkflowArgs) as CallToolResult;
         case "optimize_test_performance":
-          return await this.optimizeTestPerformance(args);
+          return await this.optimizeTestPerformance(args as unknown as OptimizeTestPerformanceArgs) as CallToolResult;
         case "setup_ci_cd_testing":
-          return await this.setupCICDTesting(args);
+          return await this.setupCICDTesting(args as unknown as SetupCICDTestingArgs) as CallToolResult;
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeTestCoverage(args: any): Promise<any> {
+  private async analyzeTestCoverage(args: AnalyzeTestCoverageArgs): Promise<McpToolResponse> {
     const {
       codePath,
       testFramework = "auto-detect",
@@ -260,9 +410,9 @@ class StringRayTestingBestPracticesServer {
       );
 
       const gaps = analysis.gaps.filter(
-        (gap: any) => gap.currentCoverage < coverageThreshold,
+        (gap: TestGap) => gap.currentCoverage < coverageThreshold,
       );
-      const criticalGaps = gaps.filter((gap: any) => gap.priority === "high");
+      const criticalGaps = gaps.filter((gap: TestGap) => gap.priority === "high");
 
       return {
         content: [
@@ -278,7 +428,7 @@ class StringRayTestingBestPracticesServer {
               `🚨 COVERAGE GAPS (${gaps.length} total, ${criticalGaps.length} critical)\n${gaps
                 .slice(0, 5)
                 .map(
-                  (gap: any) =>
+                  (gap: TestGap) =>
                     `${this.getPriorityIcon(gap.priority)} ${gap.area}\n` +
                     `   Current: ${gap.currentCoverage}% | Target: ${gap.recommendedCoverage}%\n` +
                     `   Priority: ${gap.priority.toUpperCase()} | Effort: ${gap.effort.toUpperCase()}`,
@@ -287,8 +437,7 @@ class StringRayTestingBestPracticesServer {
               `🎯 TEST STRATEGY RECOMMENDATIONS\n${analysis.recommendations
                 .slice(0, 5)
                 .map(
-                  (rec: any) =>
-                    `${this.getImpactIcon(rec.impact)} ${rec.type}: ${rec.description}\n` +
+                  (rec: TestRecommendation) =>
                     `   Impact: ${rec.impact.toUpperCase()} | Effort: ${rec.effort.toUpperCase()}\n` +
                     `   Tools: ${rec.tools.join(", ")}`,
                 )
@@ -318,7 +467,7 @@ class StringRayTestingBestPracticesServer {
     }
   }
 
-  private async designTestStrategy(args: any): Promise<any> {
+  private async designTestStrategy(args: DesignTestStrategyArgs): Promise<McpToolResponse> {
     const {
       projectType,
       techStack = [],
@@ -346,7 +495,7 @@ class StringRayTestingBestPracticesServer {
               `Tech Stack: ${techStack.join(", ") || "Not specified"}\n\n` +
               `🧪 RECOMMENDED TEST PYRAMID\n${strategy
                 .map(
-                  (testType: any) =>
+                  (testType: TestStrategy) =>
                     `${this.getTestTypeIcon(testType.type)} ${testType.type.toUpperCase()} TESTS\n` +
                     `   Framework: ${testType.framework}\n` +
                     `   Target Coverage: ${testType.coverage}%\n` +
@@ -385,7 +534,7 @@ class StringRayTestingBestPracticesServer {
     }
   }
 
-  private async implementTDDWorkflow(args: any): Promise<any> {
+  private async implementTDDWorkflow(args: ImplementTDDWorkflowArgs): Promise<McpToolResponse> {
     const {
       language = "typescript",
       framework = "jest",
@@ -416,7 +565,7 @@ class StringRayTestingBestPracticesServer {
               `Existing Tests: ${existingTests ? "Yes" : "No"}\n\n` +
               `📝 PRACTICAL WORKFLOW\n${workflow.steps
                 .map(
-                  (step: any, i: number) =>
+                  (step: TDDWorkflowStep, i: number) =>
                     `${i + 1}. ${step.title}\n` +
                     `   ${step.description}\n` +
                     `   Command: ${step.command}`,
@@ -453,7 +602,7 @@ class StringRayTestingBestPracticesServer {
     }
   }
 
-  private async optimizeTestPerformance(args: any): Promise<any> {
+  private async optimizeTestPerformance(args: OptimizeTestPerformanceArgs): Promise<McpToolResponse> {
     const { testResults, targetRuntime = 300, parallelExecution = true } = args;
 
     try {
@@ -476,7 +625,7 @@ class StringRayTestingBestPracticesServer {
               `Parallel Execution: ${parallelExecution ? "Enabled" : "Disabled"}\n\n` +
               `🐌 PERFORMANCE BOTTLENECKS\n${optimization.bottlenecks
                 .map(
-                  (bottleneck: any, i: number) =>
+                  (bottleneck: PerformanceBottleneck, i: number) =>
                     `${i + 1}. ${bottleneck.type}: ${bottleneck.description}\n` +
                     `   Impact: ${bottleneck.impact}s saved\n` +
                     `   Difficulty: ${bottleneck.difficulty}\n` +
@@ -485,8 +634,7 @@ class StringRayTestingBestPracticesServer {
                 .join("\n\n")}\n\n` +
               `⚡ OPTIMIZATION RECOMMENDATIONS\n${optimization.recommendations
                 .map(
-                  (rec: any, i: number) =>
-                    `${i + 1}. ${rec.title}\n` +
+                  (rec: PerformanceRecommendation, i: number) =>
                     `   Expected Improvement: ${rec.improvement}s\n` +
                     `   Effort: ${rec.effort}\n` +
                     `   ${rec.description}`,
@@ -519,7 +667,7 @@ class StringRayTestingBestPracticesServer {
     }
   }
 
-  private async setupCICDTesting(args: any): Promise<any> {
+  private async setupCICDTesting(args: SetupCICDTestingArgs): Promise<McpToolResponse> {
     const { ciPlatform, testTypes, coverageReporting = true } = args;
 
     try {
@@ -541,7 +689,7 @@ class StringRayTestingBestPracticesServer {
               `Coverage Reporting: ${coverageReporting ? "Enabled" : "Disabled"}\n\n` +
               `📋 PIPELINE STAGES\n${pipeline.stages
                 .map(
-                  (stage: any, i: number) =>
+                  (stage: CIStage, i: number) =>
                     `Stage ${i + 1}: ${stage.name}\n` +
                     `   Purpose: ${stage.description}\n` +
                     `   Duration: ~${stage.estimatedDuration}min\n` +
@@ -551,7 +699,7 @@ class StringRayTestingBestPracticesServer {
                 .join("\n\n")}\n\n` +
               `📄 CONFIGURATION FILES\n${pipeline.configFiles
                 .map(
-                  (file: any) =>
+                  (file: CIConfigFile) =>
                     `${file.filename}\n` +
                     `   Location: ${file.location}\n` +
                     `   Purpose: ${file.description}`,
@@ -559,7 +707,7 @@ class StringRayTestingBestPracticesServer {
                 .join("\n\n")}\n\n` +
               `🛠️ REQUIRED TOOLS & DEPENDENCIES\n${pipeline.dependencies
                 .map(
-                  (dep: any) =>
+                  (dep: CIDependency) =>
                     `• ${dep.name}: ${dep.version || "latest"} (${dep.purpose})`,
                 )
                 .join("\n")}\n\n` +
@@ -714,7 +862,7 @@ class StringRayTestingBestPracticesServer {
     language: string,
     framework: string,
     existingTests: boolean,
-  ): any {
+  ): TDDWorkflow {
     return {
       steps: [
         {
@@ -753,7 +901,7 @@ class StringRayTestingBestPracticesServer {
     testResults: string,
     targetRuntime: number,
     parallelExecution: boolean,
-  ): Promise<any> {
+  ): Promise<TestPerformanceAnalysis> {
     return {
       currentRuntime: 450,
       bottlenecks: [
@@ -793,8 +941,8 @@ class StringRayTestingBestPracticesServer {
     ciPlatform: string,
     testTypes: string[],
     coverageReporting: boolean,
-  ): any {
-    const stages = [];
+  ): CIPipeline {
+    const stages: CIStage[] = [];
 
     if (testTypes.includes("unit")) {
       stages.push({
@@ -857,7 +1005,7 @@ class StringRayTestingBestPracticesServer {
 
   // Helper methods
   private prioritizeGaps(gaps: TestGap[]): TestGap[] {
-    return gaps.sort((a: any, b: any) => {
+    return gaps.sort((a: TestGap, b: TestGap) => {
       const priorityScore = { high: 3, medium: 2, low: 1 };
       const effortScore = { low: 3, medium: 2, high: 1 };
       return (
@@ -869,7 +1017,7 @@ class StringRayTestingBestPracticesServer {
     });
   }
 
-  private createCoverageImprovementPlan(analysis: TestAnalysis): any {
+  private createCoverageImprovementPlan(analysis: TestAnalysis): CoverageImprovementPlan {
     return {
       phases: [
         {
@@ -897,7 +1045,7 @@ class StringRayTestingBestPracticesServer {
   private createImplementationRoadmap(
     strategy: TestStrategy[],
     timeline: string,
-  ): any {
+  ): ImplementationRoadmap {
     const phases = [
       "Setup testing infrastructure",
       "Implement unit testing",
@@ -926,7 +1074,7 @@ class StringRayTestingBestPracticesServer {
   private recommendTestingTools(strategy: TestStrategy[]): string[] {
     const tools = new Set<string>();
 
-    strategy.forEach((testType: any) => {
+    strategy.forEach((testType: TestStrategy) => {
       tools.add(testType.framework);
       if (testType.type === "e2e") {
         tools.add("Selenium");
@@ -941,7 +1089,7 @@ class StringRayTestingBestPracticesServer {
     return Array.from(tools);
   }
 
-  private provideTDDExamples(language: string, framework: string): any {
+  private provideTDDExamples(language: string, framework: string): TDDExampleSet {
     return {
       language,
       framework,
@@ -965,25 +1113,25 @@ class StringRayTestingBestPracticesServer {
     ];
   }
 
-  private createPerformanceOptimizationPlan(optimization: any): any {
+  private createPerformanceOptimizationPlan(optimization: TestPerformanceAnalysis): PerformanceOptimizationPlan {
     return {
       immediate: optimization.recommendations.filter(
-        (rec: any) => rec.effort === "low",
+        (rec: PerformanceRecommendation) => rec.effort === "low",
       ),
       shortTerm: optimization.recommendations.filter(
-        (rec: any) => rec.effort === "medium",
+        (rec: PerformanceRecommendation) => rec.effort === "medium",
       ),
       longTerm: optimization.recommendations.filter(
-        (rec: any) => rec.effort === "high",
+        (rec: PerformanceRecommendation) => rec.effort === "high",
       ),
       totalImprovement: optimization.recommendations.reduce(
-        (sum: number, rec: any) => sum + rec.improvement,
+        (sum: number, rec: PerformanceRecommendation) => sum + rec.improvement,
         0,
       ),
     };
   }
 
-  private setupPerformanceMonitoring(optimization: any): any {
+  private setupPerformanceMonitoring(optimization: TestPerformanceAnalysis): PerformanceMonitoringStrategy {
     return {
       metrics: [
         "Test execution time",
@@ -1004,7 +1152,7 @@ class StringRayTestingBestPracticesServer {
     };
   }
 
-  private generateCIConfigTemplates(ciPlatform: string, pipeline: any): any {
+  private generateCIConfigTemplates(ciPlatform: string, pipeline: CIPipeline): CIConfigTemplates {
     return {
       platform: ciPlatform,
       templates: {
@@ -1014,7 +1162,7 @@ class StringRayTestingBestPracticesServer {
     };
   }
 
-  private createCITroubleshootingGuide(pipeline: any): any {
+  private createCITroubleshootingGuide(pipeline: CIPipeline): CITroubleshootingGuide {
     return {
       commonIssues: [
         {

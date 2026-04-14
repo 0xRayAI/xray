@@ -17,12 +17,87 @@ import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveLogDir, resolveStateDir } from "../core/config-paths.js";
 
+interface ComponentInitResult {
+  success: boolean;
+  duration: number;
+  message?: string;
+  error?: string;
+}
+
+interface BootResults {
+  success: boolean;
+  initializedComponents: string[];
+  failedComponents: string[];
+  duration: number;
+  errors: string[];
+  warnings: string[];
+}
+
+interface ComponentStatus {
+  initialized: boolean;
+  healthy: boolean;
+  info: ComponentInitResult | undefined;
+  dependencies: string[];
+}
+
+interface OverallBootStatus {
+  initialized: boolean;
+  uptime: number;
+  totalComponents: number;
+  initializedComponents: number;
+  healthyComponents: number;
+  failedComponents: number;
+}
+
+interface DependencyValidationResult {
+  total: number;
+  valid: number;
+  missing: number;
+  circular: number;
+  issues: string[];
+  fixes: string[];
+}
+
+interface ShutdownResult {
+  success: boolean;
+  shutDown: number;
+  stateSaved: boolean;
+  errors: string[];
+  duration: number;
+}
+
+interface ExecuteBootSequenceArgs {
+  config?: Record<string, unknown>;
+  skipHealthChecks?: boolean;
+  parallelInit?: boolean;
+}
+
+interface GetBootStatusArgs {
+  detailed?: boolean;
+  component?: string;
+}
+
+interface InitializeComponentArgs {
+  component: string;
+  force?: boolean;
+}
+
+interface ValidateBootDependenciesArgs {
+  fix?: boolean;
+  verbose?: boolean;
+}
+
+interface ShutdownFrameworkArgs {
+  force?: boolean;
+  saveState?: boolean;
+}
+
 class StringRayBootOrchestratorServer {
   private server: Server;
   private bootStatus: {
     initialized: boolean;
     startTime: number;
-    components: Map<string, any>;
+    components: Map<string, ComponentInitResult>;
     dependencies: Map<string, string[]>;
     health: Map<string, boolean>;
   };
@@ -189,15 +264,15 @@ class StringRayBootOrchestratorServer {
 
         switch (name) {
           case "execute-boot-sequence":
-            return await this.handleExecuteBootSequence(args);
+            return await this.handleExecuteBootSequence(args as unknown as ExecuteBootSequenceArgs);
           case "get-boot-status":
-            return await this.handleGetBootStatus(args);
+            return await this.handleGetBootStatus(args as unknown as GetBootStatusArgs);
           case "initialize-component":
-            return await this.handleInitializeComponent(args);
+            return await this.handleInitializeComponent(args as unknown as InitializeComponentArgs);
           case "validate-boot-dependencies":
-            return await this.handleValidateBootDependencies(args);
+            return await this.handleValidateBootDependencies(args as unknown as ValidateBootDependenciesArgs);
           case "shutdown-framework":
-            return await this.handleShutdownFramework(args);
+            return await this.handleShutdownFramework(args as unknown as ShutdownFrameworkArgs);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -205,7 +280,7 @@ class StringRayBootOrchestratorServer {
     );
   }
 
-  private async handleExecuteBootSequence(args: any) {
+  private async handleExecuteBootSequence(args: ExecuteBootSequenceArgs) {
     const config = args.config || {};
     const skipHealthChecks = args.skipHealthChecks || false;
     const parallelInit = args.parallelInit !== false;
@@ -257,7 +332,7 @@ class StringRayBootOrchestratorServer {
     }
   }
 
-  private async handleGetBootStatus(args: any) {
+  private async handleGetBootStatus(args: GetBootStatusArgs) {
     const detailed = args.detailed || false;
     const component = args.component;
 
@@ -299,7 +374,7 @@ class StringRayBootOrchestratorServer {
     }
   }
 
-  private async handleInitializeComponent(args: any) {
+  private async handleInitializeComponent(args: InitializeComponentArgs) {
     const component = args.component;
     const force = args.force || false;
 
@@ -369,7 +444,7 @@ class StringRayBootOrchestratorServer {
     }
   }
 
-  private async handleValidateBootDependencies(args: any) {
+  private async handleValidateBootDependencies(args: ValidateBootDependenciesArgs) {
     const fix = args.fix || false;
     const verbose = args.verbose || false;
 
@@ -405,7 +480,7 @@ ${results.fixes.length > 0 ? `**Fixes Applied:**\n${results.fixes.map((fix: stri
     }
   }
 
-  private async handleShutdownFramework(args: any) {
+  private async handleShutdownFramework(args: ShutdownFrameworkArgs) {
     const force = args.force || false;
     const saveState = args.saveState !== false;
 
@@ -486,7 +561,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async executeParallelBoot(skipHealthChecks: boolean, results: any) {
+  private async executeParallelBoot(skipHealthChecks: boolean, results: BootResults) {
     const componentPromises = this.bootSequence.map((component) =>
       this.initializeComponent(component, skipHealthChecks),
     );
@@ -500,7 +575,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
       if (!result) continue;
 
       if (result.status === "fulfilled") {
-        const fulfilledResult = result as PromiseFulfilledResult<any>;
+        const fulfilledResult = result as PromiseFulfilledResult<ComponentInitResult>;
         if (fulfilledResult.value.success) {
           results.initializedComponents.push(component);
           this.bootStatus.components.set(component, fulfilledResult.value);
@@ -522,7 +597,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     results.success = results.failedComponents.length === 0;
   }
 
-  private async executeSequentialBoot(skipHealthChecks: boolean, results: any) {
+  private async executeSequentialBoot(skipHealthChecks: boolean, results: BootResults) {
     for (const component of this.bootSequence) {
       try {
         const result = await this.initializeComponent(
@@ -554,7 +629,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
   private async initializeComponent(
     component: string,
     skipHealthChecks = false,
-  ): Promise<any> {
+  ): Promise<ComponentInitResult> {
     const startTime = Date.now();
 
     try {
@@ -593,7 +668,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     }
   }
 
-  private async initConfiguration(): Promise<any> {
+  private async initConfiguration(): Promise<ComponentInitResult> {
     // Check for configuration files
     const configFiles = ["src/strray/config/manager.py"];
 
@@ -610,7 +685,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initLogging(): Promise<any> {
+  private async initLogging(): Promise<ComponentInitResult> {
     // Initialize logging system
     const logDir = resolveLogDir();
     if (!fs.existsSync(logDir)) {
@@ -624,7 +699,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initStateManagement(): Promise<any> {
+  private async initStateManagement(): Promise<ComponentInitResult> {
     // Validate state management setup
     const stateDir = resolveStateDir();
     if (!fs.existsSync(stateDir)) {
@@ -638,7 +713,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initSecurity(): Promise<any> {
+  private async initSecurity(): Promise<ComponentInitResult> {
     // Basic security initialization
     return {
       success: true,
@@ -647,7 +722,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initCodexLoader(): Promise<any> {
+  private async initCodexLoader(): Promise<ComponentInitResult> {
     // Check for codex files
     if (!fs.existsSync("src/strray/core/codex_loader.py")) {
       throw new Error("Codex loader not found");
@@ -660,7 +735,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initContextLoader(): Promise<any> {
+  private async initContextLoader(): Promise<ComponentInitResult> {
     // Check for context loading
     if (!fs.existsSync("src/strray/core/context_loader.py")) {
       throw new Error("Context loader not found");
@@ -673,7 +748,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initProcessorPipeline(): Promise<any> {
+  private async initProcessorPipeline(): Promise<ComponentInitResult> {
     // Validate processor pipeline
     return {
       success: true,
@@ -682,7 +757,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initAgentRegistry(): Promise<any> {
+  private async initAgentRegistry(): Promise<ComponentInitResult> {
     // Check agent files exist
     const agentCount = this.countAgentFiles();
     if (agentCount < 5) {
@@ -696,7 +771,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initOrchestrator(): Promise<any> {
+  private async initOrchestrator(): Promise<ComponentInitResult> {
     // Validate orchestrator setup
     return {
       success: true,
@@ -705,7 +780,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initMCPServers(): Promise<any> {
+  private async initMCPServers(): Promise<ComponentInitResult> {
     // Check MCP servers
     const mcpCount = this.countMCPFiles();
     if (mcpCount < 3) {
@@ -719,7 +794,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     };
   }
 
-  private async initFrameworkHooks(): Promise<any> {
+  private async initFrameworkHooks(): Promise<ComponentInitResult> {
     // Initialize framework hooks
     return {
       success: true,
@@ -781,7 +856,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
   private async validateAllDependencies(
     fix: boolean,
     verbose: boolean,
-  ): Promise<any> {
+  ): Promise<DependencyValidationResult> {
     const results = {
       total: this.bootSequence.length,
       valid: 0,
@@ -887,8 +962,8 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
   private async executeShutdownSequence(
     force: boolean,
     saveState: boolean,
-  ): Promise<any> {
-    const results = {
+  ): Promise<ShutdownResult> {
+    const results: ShutdownResult = {
       success: true,
       shutDown: 0,
       stateSaved: saveState,
@@ -953,7 +1028,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     fs.writeFileSync(stateFile, JSON.stringify(shutdownState, null, 2));
   }
 
-  private formatBootResults(results: any) {
+  private formatBootResults(results: BootResults) {
     const response = `🚀 Boot Sequence Results
 
 **Success:** ${results.success ? "✅ COMPLETE" : "❌ FAILED"}
@@ -977,7 +1052,7 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w: strin
 
   private formatComponentStatus(
     component: string,
-    status: any,
+    status: ComponentStatus,
     detailed: boolean,
   ): string {
     let response = `**Component:** ${component}
@@ -992,7 +1067,7 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w: strin
     return response;
   }
 
-  private formatOverallStatus(status: any, detailed: boolean): string {
+  private formatOverallStatus(status: OverallBootStatus, detailed: boolean): string {
     let response = `**Initialized:** ${status.initialized ? "✅ Yes" : "❌ No"}
 **Uptime:** ${Math.round(status.uptime / 1000)}s
 **Components:** ${status.initializedComponents}/${status.totalComponents} initialized

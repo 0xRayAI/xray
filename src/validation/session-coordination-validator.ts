@@ -2,11 +2,25 @@
  * Session Coordination Validator
  * Validates agent communication patterns and coordination integrity
  */
-export class SessionCoordinationValidator {
-  private sessionCoordinator: any;
-  private sessionMonitor: any;
+export interface SessionCoordinator {
+  getSessionStatus(sessionId: string): { active: boolean; agentCount: number; status?: string } | null;
+  getSharedContext(sessionId: string, filter: string): Record<string, unknown> | null;
+  getSessionAgents(sessionId: string): string[];
+}
 
-  constructor(sessionCoordinator: any, sessionMonitor: any) {
+export interface SessionMonitor {
+  collectMetrics(sessionId: string): {
+    totalInteractions: number;
+    successfulInteractions: number;
+    failedInteractions: number;
+  };
+}
+
+export class SessionCoordinationValidator {
+  private sessionCoordinator: SessionCoordinator;
+  private sessionMonitor: SessionMonitor;
+
+  constructor(sessionCoordinator: SessionCoordinator, sessionMonitor: SessionMonitor) {
     this.sessionCoordinator = sessionCoordinator;
     this.sessionMonitor = sessionMonitor;
   }
@@ -190,7 +204,7 @@ export class SessionCoordinationValidator {
     };
   }
 
-  private calculateAverageResponseTime(communications: any[]): number {
+  private calculateAverageResponseTime(communications: Array<{ responseTime?: number }>): number {
     if (communications.length === 0) return 0;
 
     const responseTimes = communications
@@ -204,7 +218,7 @@ export class SessionCoordinationValidator {
 
   private findIsolatedAgents(
     sessionId: string,
-    communications: any[],
+    communications: Array<{ from: string; to: string }>,
   ): string[] {
     const agents = this.sessionCoordinator.getSessionAgents(sessionId);
     const activeAgents = new Set();
@@ -217,7 +231,7 @@ export class SessionCoordinationValidator {
     return agents.filter((agent: string) => !activeAgents.has(agent));
   }
 
-  private detectCycles(dependencies: any): string[][] {
+  private detectCycles(dependencies: Record<string, string[]>): string[][] {
     const cycles: string[][] = [];
     const visited = new Set<string>();
     const recursionStack = new Set<string>();
@@ -251,12 +265,12 @@ export class SessionCoordinationValidator {
     return cycles;
   }
 
-  private findOrphanedAgents(allAgents: string[], dependencies: any): string[] {
+  private findOrphanedAgents(allAgents: string[], dependencies: Record<string, string[]>): string[] {
     const agentsWithDeps = new Set(Object.keys(dependencies));
 
     // Add agents that are dependencies of others
     for (const deps of Object.values(dependencies)) {
-      for (const dep of deps as string[]) {
+      for (const dep of deps) {
         agentsWithDeps.add(dep);
       }
     }

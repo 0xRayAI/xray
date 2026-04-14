@@ -12,7 +12,7 @@ export interface OrchestrationResult {
   taskId: string;
   agentUsed: string;
   duration: number;
-  result: any;
+  result: unknown;
   error?: string;
   errors?: string[];
 }
@@ -448,7 +448,7 @@ export class KernelOrchestrator {
     }
   }
 
-  resolveConflicts(conflicts: any[]): {
+  resolveConflicts(conflicts: Array<{ response?: unknown; proposed?: unknown; expertiseScore?: number }>): {
     response: string;
     expertiseScore: number;
   } {
@@ -460,7 +460,7 @@ export class KernelOrchestrator {
       const votes: Record<string, number> = {};
 
       conflicts.forEach((conflict) => {
-        const response = conflict.response || conflict.proposed;
+        const response = String(conflict.response ?? conflict.proposed ?? '');
         votes[response] = (votes[response] || 0) + 1;
       });
 
@@ -471,11 +471,11 @@ export class KernelOrchestrator {
 
       if (winner) {
         const winningConflicts = conflicts.filter(
-          (c) => (c.response || c.proposed) === winner[0],
+          (c) => String(c.response ?? c.proposed ?? '') === winner[0],
         );
         const avgExpertise =
           winningConflicts.reduce(
-            (sum: number, c: any) => sum + (c.expertiseScore || 0),
+            (sum: number, c: { expertiseScore?: number }) => sum + (c.expertiseScore || 0),
             0,
           ) / winningConflicts.length;
 
@@ -484,14 +484,14 @@ export class KernelOrchestrator {
     }
 
     // Fallback to highest expertise score
-    const bestConflict = conflicts.reduce((best: any, current: any) =>
+    const bestConflict = conflicts.reduce((best, current) =>
       (current.expertiseScore || 0) > (best.expertiseScore || 0)
         ? current
         : best,
     );
 
     return {
-      response: bestConflict.response || bestConflict.proposed,
+      response: String(bestConflict.response ?? bestConflict.proposed ?? ''),
       expertiseScore: bestConflict.expertiseScore || 0,
     };
   }
@@ -503,7 +503,7 @@ export class KernelOrchestrator {
   /**
    * Delegate a task to a specific agent with timeout protection
    */
-  async delegateToSubagent(agentName: string, task: any): Promise<any> {
+  async delegateToSubagent(agentName: string, task: TaskDefinition): Promise<{ success: boolean; result: unknown; agentName: string; executionTime: number }> {
     const timeoutMs = this.config.taskTimeout;
 
     frameworkLogger.log("orchestrator", "delegate-to-subagent", "info", {
@@ -530,7 +530,7 @@ export class KernelOrchestrator {
     }
   }
 
-  private async performDelegation(agentName: string, task: any): Promise<any> {
+  private async performDelegation(agentName: string, task: TaskDefinition): Promise<{ success: boolean; result: unknown; agentName: string; executionTime: number }> {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     return {

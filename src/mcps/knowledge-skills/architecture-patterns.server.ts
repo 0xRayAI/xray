@@ -16,6 +16,17 @@ import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
+interface AnalyzeArchitectureArgs {
+  projectRoot: string;
+  focusPatterns?: string[];
+}
+
+interface RecommendPatternsArgs {
+  useCase: string;
+  constraints?: string[];
+  scale?: string;
+}
+
 class StringRayArchitecturePatternsServer {
   private server: Server;
 
@@ -75,16 +86,16 @@ class StringRayArchitecturePatternsServer {
 
       switch (name) {
         case "analyze-architecture":
-          return await this.analyzeArchitecture(args);
+          return await this.analyzeArchitecture(args as unknown as AnalyzeArchitectureArgs);
         case "recommend-patterns":
-          return await this.recommendPatterns(args);
+          return await this.recommendPatterns(args as unknown as RecommendPatternsArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeArchitecture(args: any): Promise<any> {
+  private async analyzeArchitecture(args: AnalyzeArchitectureArgs) {
     const { projectRoot, focusPatterns } = args;
 
     // Simplified architecture analysis
@@ -103,7 +114,7 @@ class StringRayArchitecturePatternsServer {
     };
   }
 
-  private async recommendPatterns(args: any): Promise<any> {
+  private async recommendPatterns(args: RecommendPatternsArgs) {
     const { useCase, constraints, scale } = args;
 
     const recommendations = {

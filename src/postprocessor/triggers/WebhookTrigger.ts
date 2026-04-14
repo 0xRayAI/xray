@@ -245,25 +245,28 @@ export class WebhookTrigger {
    * Different webhook providers have different payload structures.
    * This method extracts files in a unified way.
    */
-  private extractFilesFromPayload(payload: any, event: string): string[] {
+  private extractFilesFromPayload(payload: Record<string, unknown>, _event: string): string[] {
     try {
       // GitHub push event
-      if (payload.commits && Array.isArray(payload.commits)) {
+      const commits = payload.commits;
+      if (commits && Array.isArray(commits)) {
         const files = new Set<string>();
-        for (const commit of payload.commits) {
-          if (commit.added && Array.isArray(commit.added)) {
-            commit.added.forEach((f: string) => files.add(f));
+        for (const commit of commits) {
+          const typedCommit = commit as { added?: string[]; modified?: string[] };
+          if (typedCommit.added && Array.isArray(typedCommit.added)) {
+            typedCommit.added.forEach((f: string) => files.add(f));
           }
-          if (commit.modified && Array.isArray(commit.modified)) {
-            commit.modified.forEach((f: string) => files.add(f));
+          if (typedCommit.modified && Array.isArray(typedCommit.modified)) {
+            typedCommit.modified.forEach((f: string) => files.add(f));
           }
         }
         return Array.from(files);
       }
       
       // GitHub pull_request event
-      if (payload.pull_request && payload.pull_request.files) {
-        return payload.pull_request.files.map((f: any) => f.filename);
+      const pullRequest = payload.pull_request as { files?: Array<{ filename: string }> } | undefined;
+      if (pullRequest && pullRequest.files) {
+        return pullRequest.files.map((f) => f.filename);
       }
       
       return [];

@@ -16,6 +16,19 @@ import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 
+interface DirectoryNode {
+  name: string;
+  path: string;
+  type: "directory";
+  children: Array<DirectoryNode | FileNode | { truncated: boolean } | { error: string }>,
+};
+
+interface FileNode {
+  name: string;
+  type: "file";
+  extension: string;
+}
+
 class StringRayArchitectToolsServer {
   private server: Server;
 
@@ -182,8 +195,10 @@ class StringRayArchitectToolsServer {
 
   // Tool implementations - wrappers around the original architect-tools functions
 
-  private async contextAnalysis(args: any): Promise<any> {
-    const { projectRoot, depth = "detailed", includeFiles } = args;
+  private async contextAnalysis(args: Record<string, unknown> | undefined) {
+    const projectRoot = (args?.projectRoot as string) || "";
+    const depth = (args?.depth as string) || "detailed";
+    const includeFiles = args?.includeFiles as string[] | undefined;
 
     frameworkLogger.log("mcps/architect-tools", "context-analysis", "info", { projectRoot });
 
@@ -212,8 +227,10 @@ class StringRayArchitectToolsServer {
     };
   }
 
-  private async codebaseStructure(args: any): Promise<any> {
-    const { projectRoot, includeMetrics = true, maxDepth = 10 } = args;
+  private async codebaseStructure(args: Record<string, unknown> | undefined) {
+    const projectRoot = (args?.projectRoot as string) || "";
+    const includeMetrics = (args?.includeMetrics as boolean) ?? true;
+    const maxDepth = (args?.maxDepth as number) ?? 10;
 
     frameworkLogger.log("mcps/architect-tools", "codebase-structure", "info", { projectRoot });
 
@@ -236,8 +253,10 @@ class StringRayArchitectToolsServer {
     };
   }
 
-  private async dependencyAnalysis(args: any): Promise<any> {
-    const { projectRoot, focusAreas, includeGraphs = true } = args;
+  private async dependencyAnalysis(args: Record<string, unknown> | undefined) {
+    const projectRoot = (args?.projectRoot as string) || "";
+    const focusAreas = args?.focusAreas as string[] | undefined;
+    const includeGraphs = (args?.includeGraphs as boolean) ?? true;
 
     frameworkLogger.log("mcps/architect-tools", "dependency-analysis", "info", { projectRoot });
 
@@ -264,12 +283,10 @@ class StringRayArchitectToolsServer {
     };
   }
 
-  private async architectureAssessment(args: any): Promise<any> {
-    const {
-      projectRoot,
-      assessmentType = "comprehensive",
-      focusMetrics,
-    } = args;
+  private async architectureAssessment(args: Record<string, unknown> | undefined) {
+    const projectRoot = (args?.projectRoot as string) || "";
+    const assessmentType = (args?.assessmentType as string) || "comprehensive";
+    const focusMetrics = args?.focusMetrics as string[] | undefined;
 
     frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
 
@@ -399,12 +416,12 @@ class StringRayArchitectToolsServer {
     projectRoot: string,
     maxDepth: number,
   ): Promise<any> {
-    const traverse = (dirPath: string, currentDepth: number): any => {
+    const traverse = (dirPath: string, currentDepth: number): DirectoryNode | { truncated: boolean } | { error: string } => {
       if (currentDepth >= maxDepth) return { truncated: true };
 
       try {
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-        const result: any = {
+        const result: DirectoryNode = {
           name: path.basename(dirPath),
           path: path.relative(projectRoot, dirPath),
           type: "directory",

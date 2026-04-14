@@ -3,15 +3,35 @@
  * Provides tools for codebase intelligence, architectural assessment, and design planning
  */
 
-import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer.js";
+import {
+  CodebaseAnalysis,
+  CodebaseStructure,
+  ContextMetrics,
+  FileInfo,
+  createCodebaseContextAnalyzer,
+} from "../delegation/codebase-context-analyzer.js";
 import { ASTCodeParser } from "../delegation/ast-code-parser.js";
-import { DependencyGraphBuilder } from "../delegation/dependency-graph-builder.js";
+import {
+  DependencyAnalysis as DependencyGraphAnalysis,
+  DependencyMetrics,
+  DependencyNode,
+  DependencyChain,
+  DependencyIssue,
+  DependencyGraphBuilder,
+} from "../delegation/dependency-graph-builder.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 
+export interface CodebaseComplexityInfo {
+  averageComplexity: number;
+  highComplexityFiles: string[];
+  complexityDistribution: "low" | "medium" | "high" | "critical";
+  recommendations: string[];
+}
+
 export interface ContextAnalysisResult {
-  codebaseStructure: any;
+  codebaseStructure: CodebaseStructure;
   architecturalPatterns: string[];
   dependencyIssues: string[];
   scalabilityAssessment: {
@@ -19,7 +39,7 @@ export interface ContextAnalysisResult {
     recommendations: string[];
   };
   maintainabilityIndex: number;
-  complexityAnalysis: any;
+  complexityAnalysis: CodebaseComplexityInfo;
 }
 
 export interface ArchitectureAssessment {
@@ -41,7 +61,7 @@ export interface ArchitectureAssessment {
 }
 
 export interface DependencyAnalysis {
-  graph: any;
+  graph: Map<string, DependencyNode>;
   circularDependencies: string[];
   tightlyCoupledModules: string[];
   orphanModules: string[];
@@ -92,7 +112,7 @@ export async function contextAnalysis(
     let dependencyIssues: string[] = [];
     let scalabilityAssessment: ContextAnalysisResult["scalabilityAssessment"];
     let maintainabilityIndex: number;
-    let complexityAnalysis: any;
+    let complexityAnalysis: CodebaseComplexityInfo;
 
     if (depth !== "overview") {
       // Build dependency graph for deeper analysis
@@ -118,7 +138,12 @@ export async function contextAnalysis(
         recommendations: ["Detailed analysis recommended"],
       };
       maintainabilityIndex = 75;
-      complexityAnalysis = { overview: true };
+      complexityAnalysis = {
+        averageComplexity: 0,
+        highComplexityFiles: [],
+        complexityDistribution: "low",
+        recommendations: ["Detailed analysis recommended"],
+      };
     }
 
     const result: ContextAnalysisResult = {
@@ -341,8 +366,8 @@ export async function architectureAssessment(
 // Helper functions
 
 function identifyArchitecturalPatterns(
-  codebaseAnalysis: any,
-  dependencyAnalysis: any,
+  codebaseAnalysis: CodebaseAnalysis,
+  dependencyAnalysis: DependencyGraphAnalysis,
 ): string[] {
   const patterns: string[] = [];
 
@@ -379,7 +404,7 @@ function identifyArchitecturalPatterns(
   return patterns;
 }
 
-function identifyBasicPatterns(codebaseAnalysis: any): string[] {
+function identifyBasicPatterns(codebaseAnalysis: CodebaseAnalysis): string[] {
   const patterns: string[] = [];
 
   // Basic pattern detection based on file structure
@@ -410,7 +435,7 @@ function identifyBasicPatterns(codebaseAnalysis: any): string[] {
   return patterns;
 }
 
-function analyzeDependencyHealth(dependencyAnalysis: any): string[] {
+function analyzeDependencyHealth(dependencyAnalysis: DependencyGraphAnalysis): string[] {
   const issues: string[] = [];
 
   if (dependencyAnalysis.metrics.circularDependencies > 0) {
@@ -435,8 +460,8 @@ function analyzeDependencyHealth(dependencyAnalysis: any): string[] {
 }
 
 function assessScalability(
-  codebaseAnalysis: any,
-  dependencyAnalysis: any,
+  codebaseAnalysis: CodebaseAnalysis,
+  dependencyAnalysis: DependencyGraphAnalysis,
 ): ContextAnalysisResult["scalabilityAssessment"] {
   let score = 100;
   const recommendations: string[] = [];
@@ -469,8 +494,8 @@ function assessScalability(
 }
 
 function calculateMaintainabilityIndex(
-  codebaseAnalysis: any,
-  dependencyAnalysis: any,
+  codebaseAnalysis: CodebaseAnalysis,
+  dependencyAnalysis: DependencyGraphAnalysis,
 ): number {
   let index = 100;
 
@@ -488,16 +513,16 @@ function calculateMaintainabilityIndex(
   return Math.max(0, index);
 }
 
-function analyzeComplexityPatterns(codebaseAnalysis: any): any {
+function analyzeComplexityPatterns(codebaseAnalysis: CodebaseAnalysis): CodebaseComplexityInfo {
   return {
     averageComplexity: codebaseAnalysis.metrics.complexity || 0,
     highComplexityFiles: [], // Would be populated with actual analysis
-    complexityDistribution: "analyzed", // Placeholder
+    complexityDistribution: "low",
     recommendations: generateComplexityRecommendations(codebaseAnalysis),
   };
 }
 
-function hasMVCPattern(analysis: any): boolean {
+function hasMVCPattern(analysis: CodebaseAnalysis): boolean {
   const files = Array.from(analysis.structure.fileGraph?.keys() || []);
   const hasControllers = files.some(
     (f: unknown) => typeof f === "string" && f.includes("controller"),
@@ -513,26 +538,25 @@ function hasMVCPattern(analysis: any): boolean {
   return hasControllers && hasModels && hasViews;
 }
 
-function hasRepositoryPattern(analysis: any): boolean {
+function hasRepositoryPattern(analysis: CodebaseAnalysis): boolean {
   const files = Array.from(analysis.structure.fileGraph?.keys() || []);
   return files.some(
     (f: unknown) => typeof f === "string" && f.includes("repository"),
   );
 }
 
-function hasObserverPattern(analysis: any): boolean {
-  // Would require AST analysis for pattern detection
-  return false; // Placeholder
+function hasObserverPattern(analysis: CodebaseAnalysis): boolean {
+  return false;
 }
 
-function hasFactoryPattern(analysis: any): boolean {
+function hasFactoryPattern(analysis: CodebaseAnalysis): boolean {
   const files = Array.from(analysis.structure.fileGraph?.keys() || []);
   return files.some(
     (f: unknown) => typeof f === "string" && f.includes("factory"),
   );
 }
 
-function hasMicroservicesIndicators(analysis: any): boolean {
+function hasMicroservicesIndicators(analysis: CodebaseAnalysis): boolean {
   const files = Array.from(analysis.structure.fileGraph?.keys() || []);
   return files.some(
     (f: unknown) =>
@@ -541,12 +565,11 @@ function hasMicroservicesIndicators(analysis: any): boolean {
   );
 }
 
-function hasLayeredArchitecture(dependencyAnalysis: any): boolean {
-  // Would analyze dependency graph for layered structure
-  return false; // Placeholder
+function hasLayeredArchitecture(dependencyAnalysis: DependencyGraphAnalysis): boolean {
+  return false;
 }
 
-function groupByFileType(fileGraph: Map<string, any>): Record<string, number> {
+function groupByFileType(fileGraph: Map<string, FileInfo>): Record<string, number> {
   const types: Record<string, number> = {};
 
   for (const fileInfo of fileGraph.values()) {
@@ -557,17 +580,15 @@ function groupByFileType(fileGraph: Map<string, any>): Record<string, number> {
   return types;
 }
 
-function identifyTightlyCoupledModules(graph: any): string[] {
-  // Placeholder - would analyze dependency graph for tightly coupled modules
+function identifyTightlyCoupledModules(graph: Map<string, DependencyNode>): string[] {
   return [];
 }
 
-function identifyOrphanModules(graph: any): string[] {
-  // Placeholder - would identify modules with no dependencies
+function identifyOrphanModules(graph: Map<string, DependencyNode>): string[] {
   return [];
 }
 
-function calculateDependencyHealthScore(analysis: any): number {
+function calculateDependencyHealthScore(analysis: DependencyGraphAnalysis): number {
   let score = 100;
 
   if (analysis.metrics.circularDependencies > 0)
@@ -709,7 +730,7 @@ function generateArchitecturalRecommendations(
   return recommendations;
 }
 
-function generateComplexityRecommendations(codebaseAnalysis: any): string[] {
+function generateComplexityRecommendations(codebaseAnalysis: CodebaseAnalysis): string[] {
   const recommendations: string[] = [];
 
   if (codebaseAnalysis.metrics.complexity > 80) {

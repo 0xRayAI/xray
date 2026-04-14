@@ -58,6 +58,24 @@ interface SecurityAuditReport {
   };
 }
 
+interface AuditSecurityArgs {
+  files: string[];
+  includeDependencies?: boolean;
+  complianceFrameworks?: string[];
+}
+
+interface CheckVulnerabilityArgs {
+  filePath: string;
+  vulnerabilityType: string;
+  severity?: string;
+}
+
+interface GenerateSecurityReportArgs {
+  auditResults: { data?: SecurityAuditReport; [key: string]: unknown };
+  format?: string;
+  includeRemediation?: boolean;
+}
+
 class StringRaySecurityAuditServer {
   private server: Server;
 
@@ -176,18 +194,18 @@ class StringRaySecurityAuditServer {
 
       switch (name) {
         case "audit_security":
-          return await this.auditSecurity(args);
+          return await this.auditSecurity(args as unknown as AuditSecurityArgs);
         case "check_vulnerability":
-          return await this.checkVulnerability(args);
+          return await this.checkVulnerability(args as unknown as CheckVulnerabilityArgs);
         case "generate_security_report":
-          return await this.generateSecurityReport(args);
+          return await this.generateSecurityReport(args as unknown as GenerateSecurityReportArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async auditSecurity(args: any): Promise<any> {
+  private async auditSecurity(args: AuditSecurityArgs) {
     const {
       files,
       includeDependencies = true,
@@ -277,7 +295,7 @@ class StringRaySecurityAuditServer {
     }
   }
 
-  private async checkVulnerability(args: any): Promise<any> {
+  private async checkVulnerability(args: CheckVulnerabilityArgs) {
     const { filePath, vulnerabilityType, severity = "info" } = args;
 
     try {
@@ -338,7 +356,7 @@ class StringRaySecurityAuditServer {
     }
   }
 
-  private async generateSecurityReport(args: any): Promise<any> {
+  private async generateSecurityReport(args: GenerateSecurityReportArgs) {
     const {
       auditResults,
       format = "markdown",
@@ -346,7 +364,9 @@ class StringRaySecurityAuditServer {
     } = args;
 
     try {
-      const report = auditResults.data || auditResults;
+      const report: SecurityAuditReport = auditResults.data 
+        ? auditResults.data 
+        : auditResults as unknown as SecurityAuditReport;
       let output = "";
 
       switch (format) {

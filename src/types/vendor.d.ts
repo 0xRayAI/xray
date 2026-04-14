@@ -22,8 +22,8 @@ declare module 'ws' {
     static readonly CONNECTING: number;
     readonly readyState: number;
     constructor(address: string | URL, protocols?: string | string[], options?: Record<string, unknown>);
-    on(event: string, listener: (...args: any[]) => void): this;
-    once(event: string, listener: (...args: any[]) => void): this;
+    on(event: string, listener: (...args: unknown[]) => void): this;
+    once(event: string, listener: (...args: unknown[]) => void): this;
     send(data: string | Buffer | ArrayBuffer | ArrayBufferView, cb?: (err?: Error) => void): void;
     close(code?: number, reason?: string): void;
     ping(data?: string | Buffer | ArrayBuffer | ArrayBufferView, mask?: boolean, cb?: (err?: Error) => void): void;

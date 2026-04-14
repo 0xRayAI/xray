@@ -13,16 +13,126 @@ import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
 
-// Import types needed for RuleEnforcer context
-import type { RuleValidationContext, ValidationReport, RuleValidationResult, RuleSeverity } from "../enforcement/types.js";
+import type { ProcessorConfig, ProcessorResult } from "../processors/processor-manager.js";
+import type { ProcessorContext } from "../processors/processor-types.js";
+import type { StateManager } from "../state/state-manager.js";
+import type { FeaturesConfig, TaskType } from "../core/features-config.js";
+import type { RuleValidationContext } from "../enforcement/types.js";
 
-// Dynamic imports for config-paths and framework-logger
-// Uses candidate-based resolution to work from both dist/plugin/ and .opencode/plugin/
-let _resolveCodexPath: any;
-let _resolveStateDir: any;
-let _frameworkLogger: any;
+// ---------------------------------------------------------------------------
+// Local type definitions for dynamically loaded modules
+// ---------------------------------------------------------------------------
 
-async function loadFrameworkLogger() {
+interface FrameworkLoggerLike {
+  log(module: string, event: string, status: string, data?: Record<string, string | number | boolean>): void;
+}
+
+interface ProcessorRegistrationConfig {
+  name: string;
+  type: "pre" | "post";
+  priority: number;
+  enabled: boolean;
+}
+
+interface PreProcessorInput {
+  tool?: string;
+  args?: unknown;
+  context?: unknown;
+}
+
+interface PreProcessorContext {
+  filePath?: string;
+  operation?: string;
+  content?: string;
+  directory?: string;
+  tool?: string;
+}
+
+interface PreProcessorResult {
+  success: boolean;
+  results: ProcessorResult[];
+}
+
+interface StateManagerLike {
+  get<T>(key: string): T | undefined;
+  set<T>(key: string, value: T): void;
+}
+
+interface FeaturesConfigLoaderLike {
+  loadConfig(): FeaturesConfig;
+}
+
+type ResolveCodexPathFn = (root: string) => string[];
+type ResolveStateDirFn = (projectRoot?: string) => string;
+type SystemPromptGeneratorFn = (config: SystemPromptConfigLike) => Promise<string>;
+
+interface SystemPromptConfigLike {
+  showWelcomeBanner?: boolean;
+  showCodexContext?: boolean;
+  enableTokenOptimization?: boolean;
+  maxTokenBudget?: number;
+  showCriticalTermsOnly?: boolean;
+  showEssentialLinks?: boolean;
+}
+
+interface ToolExecuteAfterInput {
+  tool: string;
+  args?: ToolArguments;
+  result?: ToolResult;
+}
+
+interface ToolExecuteBeforeOutput {
+  model?: string;
+}
+
+interface ToolArguments {
+  content?: string;
+  filePath?: string;
+  command?: string;
+  prompt?: string;
+  message?: string;
+  directory?: string;
+  replace?: boolean;
+}
+
+interface ToolResult {
+  success?: boolean;
+  error?: string;
+  content?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Dynamic module holders (loaded via candidate-based resolution)
+// ---------------------------------------------------------------------------
+
+let _resolveCodexPath: ResolveCodexPathFn | null = null;
+let _resolveStateDir: ResolveStateDirFn | null = null;
+let _frameworkLogger: FrameworkLoggerLike | null = null;
+let _systemPromptGenerator: SystemPromptGeneratorFn | null = null;
+
+let _ProcessorManager: any = null;
+let _StrRayStateManager: (new (persistencePath?: string) => StateManagerLike) | null = null;
+let _featuresConfigLoader: FeaturesConfigLoaderLike | null = null;
+let _detectTaskType: DetectTaskTypeFn | null = null;
+
+interface ProcessorManagerLike {
+  registerProcessor(config: ProcessorConfig): void;
+  executePreProcessors(input: PreProcessorInput): Promise<PreProcessorResult>;
+  executePostProcessors(operation: string, data: ProcessorContext, preResults: ProcessorResult[]): Promise<ProcessorResult[]>;
+}
+
+type DetectTaskTypeFn = (toolName: string, context?: { fileCount?: number; isComplex?: boolean }) => TaskType;
+
+type ModuleWithProcessorManager = { ProcessorManager: new (sm: StateManagerLike) => ProcessorManagerLike };
+type ModuleWithStateManager = { StrRayStateManager: new (persistencePath?: string) => StateManagerLike };
+type ModuleWithFeaturesConfig = { featuresConfigLoader: FeaturesConfigLoaderLike; detectTaskType: DetectTaskTypeFn };
+type ModuleWithSystemPrompt = { generateLeanSystemPrompt: SystemPromptGeneratorFn };
+
+// ---------------------------------------------------------------------------
+// Module loaders (candidate-based resolution for dev, dist, and consumer paths)
+// ---------------------------------------------------------------------------
+
+async function loadFrameworkLogger(): Promise<FrameworkLoggerLike> {
   if (_frameworkLogger) return _frameworkLogger;
   const candidates = [
     "../core/framework-logger.js",
@@ -31,21 +141,20 @@ async function loadFrameworkLogger() {
   ];
   for (const p of candidates) {
     try {
-      const mod = await import(p);
+      const mod: { frameworkLogger: FrameworkLoggerLike } = await import(p) as { frameworkLogger: FrameworkLoggerLike };
       _frameworkLogger = mod.frameworkLogger;
       return _frameworkLogger;
     } catch (_) {
       // try next candidate
     }
   }
-  // Fallback: no-op logger so plugin doesn't crash
   _frameworkLogger = {
-    log: (_module: string, _event: string, _status: string, _data?: any) => {},
+    log: (_module: string, _event: string, _status: string, _data?: Record<string, string | number | boolean>) => {},
   };
   return _frameworkLogger;
 }
 
-async function loadConfigPaths() {
+async function loadConfigPaths(): Promise<void> {
   if (_resolveCodexPath && _resolveStateDir) return;
   const candidates = [
     "../core/config-paths.js",
@@ -54,7 +163,7 @@ async function loadConfigPaths() {
   ];
   for (const p of candidates) {
     try {
-      const mod = await import(p);
+      const mod: { resolveCodexPath: ResolveCodexPathFn; resolveStateDir: ResolveStateDirFn } = await import(p) as { resolveCodexPath: ResolveCodexPathFn; resolveStateDir: ResolveStateDirFn };
       _resolveCodexPath = mod.resolveCodexPath;
       _resolveStateDir = mod.resolveStateDir;
       return;
@@ -66,104 +175,91 @@ async function loadConfigPaths() {
   logger.log("strray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
 }
 
-/** Convenience wrapper — must be awaited before use */
-async function resolveCodexPath(...args: any[]) {
+async function resolveCodexPath(root: string): Promise<string[]> {
   await loadConfigPaths();
-  return _resolveCodexPath(...args);
+  if (!_resolveCodexPath) throw new Error("resolveCodexPath not available after loading");
+  return _resolveCodexPath(root);
 }
 
-async function resolveStateDir(...args: any[]) {
+async function resolveStateDir(root?: string): Promise<string> {
   await loadConfigPaths();
-  return _resolveStateDir(...args);
+  if (!_resolveStateDir) throw new Error("resolveStateDir not available after loading");
+  return _resolveStateDir(root);
 }
 
-// Import lean system prompt generator
-let SystemPromptGenerator: any;
+async function importSystemPromptGenerator(): Promise<void> {
+  if (_systemPromptGenerator) return;
 
-async function importSystemPromptGenerator() {
-  if (!SystemPromptGenerator) {
-    const candidates = [
-      "../core/system-prompt-generator.js",
-      "../../dist/core/system-prompt-generator.js",
-      "../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
-    ];
-    for (const p of candidates) {
-      try {
-        const module = await import(p);
-        SystemPromptGenerator = module.generateLeanSystemPrompt;
-        return;
-      } catch (_) {
-        // try next candidate
-      }
+  const candidates = [
+    "../core/system-prompt-generator.js",
+    "../../dist/core/system-prompt-generator.js",
+    "../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
+  ];
+  for (const p of candidates) {
+    try {
+      const module: ModuleWithSystemPrompt = await import(p) as ModuleWithSystemPrompt;
+      _systemPromptGenerator = module.generateLeanSystemPrompt;
+      return;
+    } catch (_) {
+      // try next candidate
     }
-    const logger = await loadFrameworkLogger();
-    logger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
   }
+  const logger = await loadFrameworkLogger();
+  logger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
 }
 
-let ProcessorManager: any;
-let StrRayStateManager: any;
-let featuresConfigLoader: any;
-let detectTaskType: any;
-
-async function loadStringRayComponents() {
-  if (ProcessorManager && StrRayStateManager && featuresConfigLoader) return;
+async function loadStringRayComponents(): Promise<void> {
+  if (_ProcessorManager && _StrRayStateManager && _featuresConfigLoader) return;
 
   const logger = await getOrCreateLogger(process.cwd());
 
-  // Try local dist first (for development)
   try {
     logger.log(`🔄 Attempting to load from ../../dist/`);
-    const procModule = await import(
-      "../../dist/processors/processor-manager.js" as any
-    );
-    const stateModule = await import(
-      "../../dist/state/state-manager.js" as any
-    );
-    const featuresModule = await import(
-      "../../dist/core/features-config.js" as any
-    );
-    ProcessorManager = procModule.ProcessorManager;
-    StrRayStateManager = stateModule.StrRayStateManager;
-    featuresConfigLoader = featuresModule.featuresConfigLoader;
-    detectTaskType = featuresModule.detectTaskType;
+    // @ts-ignore - Runtime fallback, dist/ only exists after build
+    const procModule = await import("../../dist/processors/processor-manager.js");
+    // @ts-ignore - Runtime fallback
+    const stateModule = await import("../../dist/state/state-manager.js");
+    // @ts-ignore - Runtime fallback
+    const featuresModule = await import("../../dist/core/features-config.js");
+    _ProcessorManager = procModule.ProcessorManager;
+    _StrRayStateManager = stateModule.StrRayStateManager;
+    _featuresConfigLoader = featuresModule.featuresConfigLoader;
+    _detectTaskType = featuresModule.detectTaskType;
     logger.log(`✅ Loaded from ../../dist/`);
     return;
-  } catch (e: any) {
-    logger.error(`❌ Failed to load from ../../dist/: ${e?.message || e}`);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    logger.log(`❌ Failed to load from ../../dist/: ${message}`);
   }
 
-  // Try node_modules (for consumer installation)
+  // @ts-ignore - Runtime fallback
   const pluginPaths = ["strray-ai", "strray-framework"];
 
   for (const pluginPath of pluginPaths) {
     try {
-      logger.log(
-        `🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`,
-      );
-      const pm = await import(
-        `../../node_modules/${pluginPath}/dist/processors/processor-manager.js`
-      );
-      const sm = await import(
-        `../../node_modules/${pluginPath}/dist/state/state-manager.js`
-      );
-      const fm = await import(
-        `../../node_modules/${pluginPath}/dist/core/features-config.js`
-      );
-      ProcessorManager = pm.ProcessorManager;
-      StrRayStateManager = sm.StrRayStateManager;
-      featuresConfigLoader = fm.featuresConfigLoader;
-      detectTaskType = fm.detectTaskType;
+      logger.log(`🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
+      // @ts-ignore - Runtime fallback, node_modules only exists after install
+      const pm = await import(`../../node_modules/${pluginPath}/dist/processors/processor-manager.js`);
+      // @ts-ignore
+      const sm = await import(`../../node_modules/${pluginPath}/dist/state/state-manager.js`);
+      // @ts-ignore
+      const fm = await import(`../../node_modules/${pluginPath}/dist/core/features-config.js`);
+      _ProcessorManager = pm.ProcessorManager;
+      _StrRayStateManager = sm.StrRayStateManager;
+      _featuresConfigLoader = fm.featuresConfigLoader;
+      _detectTaskType = fm.detectTaskType;
       logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
       return;
-    } catch (e: any) {
-      logger.error(
-        `❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${e?.message || e}`,
-      );
-      continue;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      logger.log(`❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${message}`);
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function spawnPromise(
   command: string,
@@ -173,12 +269,10 @@ function spawnPromise(
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      stdio: ["ignore", "inherit", "pipe"], // Original working stdio - stdout to terminal (ASCII visible)
+      stdio: ["ignore", "inherit", "pipe"],
     });
-    let stdout = "";
     let stderr = "";
 
-    // Capture stderr only (stdout goes to inherit/terminal)
     if (child.stderr) {
       child.stderr.on("data", (data) => {
         stderr += data.toString();
@@ -187,7 +281,7 @@ function spawnPromise(
 
     child.on("close", (code) => {
       if (code === 0) {
-        resolve({ stdout, stderr });
+        resolve({ stdout: "", stderr });
       } else {
         reject(new Error(`Process exited with code ${code}: ${stderr}`));
       }
@@ -217,7 +311,7 @@ class PluginLogger {
       const timestamp = new Date().toISOString();
       const logEntry = `[${timestamp}] ${message}\n`;
       await fs.promises.appendFile(this.logPath, logEntry, "utf-8");
-    } catch (error) {
+    } catch {
       // Silent fail - logging failure should not break plugin
     }
   }
@@ -253,9 +347,6 @@ async function getOrCreateLogger(directory: string): Promise<PluginLogger> {
   return loggerInitPromise;
 }
 
-/**
- * Get the current framework version from package.json
- */
 function getFrameworkVersion(): string {
   try {
     const packageJsonPath = path.join(process.cwd(), "package.json");
@@ -266,9 +357,6 @@ function getFrameworkVersion(): string {
   }
 }
 
-/**
- * Get lean framework identity message (token-efficient version)
- */
 function getFrameworkIdentity(): string {
   const version = getFrameworkVersion();
   return `0xRay Framework v${version} - AI Orchestration
@@ -281,10 +369,10 @@ function getFrameworkIdentity(): string {
 `;
 }
 
-/**
- * Run Enforcer quality gate check before operations
- * Now delegates to RuleEnforcer for proper rule enforcement
- */
+// ---------------------------------------------------------------------------
+// Enforcer quality gate
+// ---------------------------------------------------------------------------
+
 async function runEnforcerQualityGate(
   input: { tool: string; args?: { content?: string; filePath?: string } },
   logger: PluginLogger,
@@ -293,11 +381,9 @@ async function runEnforcerQualityGate(
   const { tool, args } = input;
 
   try {
-    // Lazy load RuleEnforcer to avoid circular dependencies
     const { RuleEnforcer } = await import("../enforcement/rule-enforcer.js");
     const ruleEnforcer = new RuleEnforcer();
 
-    // Build validation context from the input
     const context: RuleValidationContext = {
       operation: tool === "write" ? "write" : tool === "edit" ? "edit" : "read",
     };
@@ -310,28 +396,23 @@ async function runEnforcerQualityGate(
       context.newCode = args.content;
     }
 
-    // Use RuleEnforcer.validateOperation() instead of hardcoded rules
     const report = await ruleEnforcer.validateOperation(tool, context);
 
-    // Collect blocking violations from errors and failed results
     const blockingViolations: string[] = [];
     const allViolations: string[] = [];
 
-    // Check errors (these are blocking by nature)
     if (report.errors && report.errors.length > 0) {
       for (const error of report.errors) {
         allViolations.push(error);
-        blockingViolations.push(error); // All errors are blocking
+        blockingViolations.push(error);
       }
     }
 
-    // Check failed results - only block on error severity, not warnings
     if (report.results) {
       for (const result of report.results) {
         if (!result.passed) {
           const isBlocking = result.severity === "error" || result.severity === "blocking" || result.severity === "high";
           allViolations.push(result.message);
-          // Only block on error/blocking/high severity, allow warnings
           if (isBlocking) {
             blockingViolations.push(result.message);
           }
@@ -360,10 +441,8 @@ async function runEnforcerQualityGate(
 
     return { passed, violations };
   } catch (error) {
-    // If RuleEnforcer fails to load or run, fall back to minimal checks
-    logger.log(`Warning: RuleEnforcer unavailable, using fallback checks: ${error instanceof Error ? error.message : String(error)}`);
+    logger.log(`Warning: RuleEnforcer unavailable, using fallback checks: ${error instanceof Error ? (error as Error).message : String(error)}`);
 
-    // Fallback: minimal hardcoded checks (the old logic, as safety net)
     if (tool === "write" && args?.filePath) {
       const filePath = args.filePath;
       if (
@@ -400,6 +479,10 @@ async function runEnforcerQualityGate(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Codex context loading
+// ---------------------------------------------------------------------------
+
 interface CodexContextEntry {
   id: string;
   source: string;
@@ -412,19 +495,11 @@ interface CodexContextEntry {
   };
 }
 
-/**
- * Global codex context cache (loaded once)
- */
 let cachedCodexContexts: CodexContextEntry[] | null = null;
 
-/**
- * Codex file locations resolved through the standard priority chain.
- * Falls back to additional OpenCode-specific files not covered by the resolver.
- */
 async function getCodexFileLocations(directory?: string): Promise<string[]> {
   const root = directory || process.cwd();
   const resolved = await resolveCodexPath(root);
-  // Add OpenCode-specific fallbacks not in the standard chain
   resolved.push(
     path.join(root, ".opencode", "codex.codex"),
     path.join(root, ".strray", "agents_template.md"),
@@ -434,9 +509,6 @@ async function getCodexFileLocations(directory?: string): Promise<string[]> {
   return resolved;
 }
 
-/**
- * Read file content safely
- */
 function readFileContent(filePath: string): string | null {
   try {
     return fs.readFileSync(filePath, "utf-8");
@@ -447,14 +519,7 @@ function readFileContent(filePath: string): string | null {
   }
 }
 
-/**
- * Extract codex metadata from content
- */
-function extractCodexMetadata(content: string): {
-  version: string;
-  termCount: number;
-} {
-  // Try JSON format first (codex.json)
+function extractCodexMetadata(content: string): { version: string; termCount: number } {
   if (content.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(content);
@@ -467,9 +532,8 @@ function extractCodexMetadata(content: string): {
     }
   }
 
-  // Markdown format (AGENTS.md, agents_template.md via config-paths resolver)
   const versionMatch = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
-  const version = versionMatch && versionMatch[1] ? versionMatch[1] : "1.6.0";
+  const version = versionMatch?.[1] ?? "1.6.0";
 
   const termMatches = content.match(/####\s*\d+\.\s/g);
   const termCount = termMatches ? termMatches.length : 0;
@@ -477,13 +541,7 @@ function extractCodexMetadata(content: string): {
   return { version, termCount };
 }
 
-/**
- * Create codex context entry
- */
-function createCodexContextEntry(
-  filePath: string,
-  content: string,
-): CodexContextEntry {
+function createCodexContextEntry(filePath: string, content: string): CodexContextEntry {
   const metadata = extractCodexMetadata(content);
 
   return {
@@ -499,9 +557,6 @@ function createCodexContextEntry(
   };
 }
 
-/**
- * Load codex context (cached globally, loaded once)
- */
 async function loadCodexContext(directory: string): Promise<CodexContextEntry[]> {
   if (cachedCodexContexts) {
     return cachedCodexContexts;
@@ -526,18 +581,13 @@ async function loadCodexContext(directory: string): Promise<CodexContextEntry[]>
 
   if (codexContexts.length === 0) {
     void getOrCreateLogger(directory).then((l) =>
-      l.error(
-        `No valid codex files found. Checked: ${locations.join(", ")}`,
-      ),
+      l.error(`No valid codex files found. Checked: ${locations.join(", ")}`),
     );
   }
 
   return codexContexts;
 }
 
-/**
- * Format codex context for injection
- */
 function formatCodexContext(contexts: CodexContextEntry[]): string {
   if (contexts.length === 0) {
     return "";
@@ -562,23 +612,14 @@ function formatCodexContext(contexts: CodexContextEntry[]): string {
   return parts.join("\n");
 }
 
-/**
- * Main plugin function
- *
- * This plugin hooks into experimental.chat.system.transform event
- * to inject codex terms into system prompt before it's sent to LLM.
- */
+// ---------------------------------------------------------------------------
+// Analytics and task classification
+// ---------------------------------------------------------------------------
 
-/** Inference tuning: run every N tool calls */
 const INFERENCE_TUNE_INTERVAL = 100;
 let _openCodeToolCallCount = 0;
 let _lastTuneToolCallCount = 0;
 
-/**
- * Map tool names to agent/skill identifiers for outcome tracking.
- * This lets the analytics pipeline correlate tool usage patterns
- * with agent routing effectiveness.
- */
 const TOOL_AGENT_MAP: Record<string, { agent: string; skill: string }> = {
   write:     { agent: "code-reviewer", skill: "write" },
   edit:      { agent: "code-reviewer", skill: "edit" },
@@ -591,12 +632,7 @@ const TOOL_AGENT_MAP: Record<string, { agent: string; skill: string }> = {
   ls:        { agent: "researcher",    skill: "list" },
 };
 
-/**
- * Classify a tool call into a meaningful task type for analytics.
- * Mirrors _classify_task_type in the Hermes plugin so both plugins
- * produce comparable outcome data for the inference tuner.
- */
-function classifyTaskType(tool: string, args?: Record<string, unknown>): string {
+function classifyTaskType(tool: string, args?: ToolArguments): string {
   const cmd = String(args?.command ?? "").toLowerCase().trim();
 
   if (tool === "bash" && cmd) {
@@ -617,6 +653,89 @@ function classifyTaskType(tool: string, args?: Record<string, unknown>): string 
   return "unknown";
 }
 
+// ---------------------------------------------------------------------------
+// Shared helpers extracted from duplicated plugin logic
+// ---------------------------------------------------------------------------
+
+function isWriteEditOperation(tool: string): boolean {
+  return tool === "write" || tool === "edit" || tool === "multiedit";
+}
+
+function isPublishOperation(tool: string): boolean {
+  return tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+}
+
+function resolveAgentName(input: { agentType?: string } | undefined): string {
+  const globalAgent = globalThis.currentAgent;
+  if (globalAgent?.agentType) return globalAgent.agentType;
+  if (globalAgent?.type) return globalAgent.type;
+  if (input?.agentType) return input.agentType;
+  return "orchestrator";
+}
+
+function registerAllProcessors(pm: ProcessorManagerLike): void {
+  pm.registerProcessor({ name: "preValidate", type: "pre", priority: 10, enabled: true });
+  pm.registerProcessor({ name: "codexCompliance", type: "pre", priority: 20, enabled: true });
+  pm.registerProcessor({ name: "versionCompliance", type: "pre", priority: 25, enabled: true });
+  pm.registerProcessor({ name: "testAutoCreation", type: "post", priority: 5, enabled: true });
+  pm.registerProcessor({ name: "testExecution", type: "post", priority: 10, enabled: true });
+  pm.registerProcessor({ name: "coverageAnalysis", type: "post", priority: 20, enabled: true });
+}
+
+function registerAfterPostProcessors(pm: ProcessorManagerLike): void {
+  pm.registerProcessor({ name: "testAutoCreation", type: "post", priority: 50, enabled: true });
+  pm.registerProcessor({ name: "testExecution", type: "post", priority: 10, enabled: true });
+  pm.registerProcessor({ name: "coverageAnalysis", type: "post", priority: 20, enabled: true });
+}
+
+function logPreProcessorResults(results: PreProcessorResult, logger: PluginLogger): void {
+  logger.log(
+    `📊 Pre-processor result: ${results.success ? "SUCCESS" : "FAILED"} (${results.results.length} processors)`,
+  );
+
+  if (!results.success) {
+    const failures = results.results.filter((r) => !r.success);
+    for (const f of failures) {
+      logger.error(`❌ Pre-processor ${f.processorName} failed: ${f.error}`);
+    }
+  } else {
+    for (const r of results.results) {
+      logger.log(`✅ Pre-processor ${r.processorName}: ${r.success ? "OK" : "FAILED"}`);
+    }
+  }
+}
+
+function logPostProcessorResults(results: ProcessorResult[], logger: PluginLogger): void {
+  const allSuccess = results.every((r) => r.success);
+  logger.log(
+    `📊 Post-processor result: ${allSuccess ? "SUCCESS" : "FAILED"} (${results.length} processors)`,
+  );
+
+  for (const r of results) {
+    if (r.success) {
+      logger.log(`✅ Post-processor ${r.processorName}: OK`);
+    } else {
+      logger.error(`❌ Post-processor ${r.processorName} failed: ${r.error}`);
+    }
+  }
+}
+
+function logTestAutoCreationResult(results: ProcessorResult[], logger: PluginLogger): void {
+  const testAutoResult = results.find((r) => r.processorName === "testAutoCreation");
+  if (testAutoResult) {
+    const data = testAutoResult.data as { testCreated?: boolean; testFile?: string } | undefined;
+    if (testAutoResult.success && data?.testCreated && data?.testFile) {
+      logger.log(`✅ TEST AUTO-CREATION: Created ${data.testFile}`);
+    } else if (!testAutoResult.success) {
+      logger.log(`ℹ️ TEST AUTO-CREATION: ${testAutoResult.error ?? "skipped - no new files"}`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main plugin function
+// ---------------------------------------------------------------------------
+
 export default async function strrayCodexPlugin(input: {
   client?: string;
   directory?: string;
@@ -631,32 +750,27 @@ export default async function strrayCodexPlugin(input: {
       output: { system?: string[] },
     ) => {
       try {
-        // Use lean system prompt generator for token efficiency
         await importSystemPromptGenerator();
-        
+
         let leanPrompt = getFrameworkIdentity();
 
-        // Use lean generator if available, otherwise fall back to minimal logic
-        if (SystemPromptGenerator) {
-          leanPrompt = await SystemPromptGenerator({
+        if (_systemPromptGenerator) {
+          leanPrompt = await _systemPromptGenerator({
             showWelcomeBanner: true,
-            showCodexContext: false,  // Disabled for token efficiency
+            showCodexContext: false,
             enableTokenOptimization: true,
-            maxTokenBudget: 8192,     // Increased token budget
+            maxTokenBudget: 8192,
             showCriticalTermsOnly: true,
-            showEssentialLinks: true
+            showEssentialLinks: true,
           });
         }
 
         if (output.system && Array.isArray(output.system)) {
-          // Replace verbose system prompt with lean version
           output.system = [leanPrompt];
         }
       } catch (error) {
-        // Critical failure - log error but don't break the plugin
         const logger = await getOrCreateLogger(directory);
         logger.error("System prompt injection failed:", error);
-        // Fallback to minimal prompt
         const fallback = getFrameworkIdentity();
         if (output.system && Array.isArray(output.system)) {
           output.system = [fallback];
@@ -669,24 +783,24 @@ export default async function strrayCodexPlugin(input: {
         tool: string;
         args?: { content?: string; filePath?: string };
       },
-      output: any,
+      output: ToolExecuteBeforeOutput,
     ) => {
       const logger = await getOrCreateLogger(directory);
       logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
       logger.log(`📥 Full input: ${JSON.stringify(input)}`);
       await loadStringRayComponents();
 
-      if (featuresConfigLoader && detectTaskType) {
+      if (_featuresConfigLoader && _detectTaskType) {
         try {
-          const config = featuresConfigLoader.loadConfig();
+          const config = _featuresConfigLoader.loadConfig();
           if (config.model_routing?.enabled) {
-            const taskType = detectTaskType(input.tool);
-            const routing = config.model_routing.task_routing?.[taskType];
+            const taskType = _detectTaskType(input.tool);
+            const routing = taskType !== "unknown" 
+              ? config.model_routing.task_routing?.[taskType]
+              : undefined;
             if (routing?.model) {
               output.model = routing.model;
-              logger.log(
-                `Model routed: ${input.tool} → ${taskType} → ${routing.model}`,
-              );
+              logger.log(`Model routed: ${input.tool} → ${taskType} → ${routing.model}`);
             }
           }
         } catch (e) {
@@ -696,145 +810,70 @@ export default async function strrayCodexPlugin(input: {
 
       const { tool, args } = input;
 
-      // ENFORCER QUALITY GATE CHECK - Block on violations
       const qualityGateResult = await runEnforcerQualityGate(input, logger);
       if (!qualityGateResult.passed) {
-        logger.error(
-          `🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`,
-        );
-        throw new Error(
-          `ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`,
-        );
+        logger.error(`🚫 Quality gate failed: ${qualityGateResult.violations.join(", ")}`);
+        throw new Error(`ENFORCER BLOCKED: ${qualityGateResult.violations.join("; ")}`);
       }
       logger.log(`✅ Quality gate passed for ${tool}`);
 
-      if (["write", "edit", "multiedit"].includes(tool)) {
-        if (!ProcessorManager || !StrRayStateManager) {
+      if (isWriteEditOperation(tool)) {
+        if (!_ProcessorManager || !_StrRayStateManager) {
           logger.error("ProcessorManager or StrRayStateManager not loaded");
           return;
         }
 
-        // PHASE 1: Connect to booted framework or boot if needed
-        let stateManager: any;
-        let processorManager: any;
+        let stateManager: StateManagerLike;
+        let processorManager: ProcessorManagerLike | null;
 
-        // Check if framework is already booted (global state exists)
         const globalState = globalThis.strRayStateManager;
         if (globalState) {
           logger.log("🔗 Connecting to booted 0xRay framework");
-          stateManager = globalState;
+          stateManager = globalState as StateManagerLike;
         } else {
           logger.log("🚀 0xRay framework not booted, initializing...");
-          // Create new state manager (framework not booted yet)
-          stateManager = new StrRayStateManager(
+          stateManager = new _StrRayStateManager(
             await resolveStateDir(directory),
           );
-          // Store globally for future use
-          globalThis.strRayStateManager = stateManager;
+          globalThis.strRayStateManager = stateManager as typeof globalThis.strRayStateManager;
         }
 
-        // Get processor manager from state
-        processorManager = stateManager.get("processor:manager");
+        processorManager = stateManager.get<ProcessorManagerLike>("processor:manager") ?? null;
 
         if (!processorManager) {
           logger.log("⚙️ Creating and registering processors...");
-          processorManager = new ProcessorManager(stateManager);
-
-          // Register the same processors as boot-orchestrator
-          processorManager.registerProcessor({
-            name: "preValidate",
-            type: "pre",
-            priority: 10,
-            enabled: true,
-          });
-          processorManager.registerProcessor({
-            name: "codexCompliance",
-            type: "pre",
-            priority: 20,
-            enabled: true,
-          });
-          processorManager.registerProcessor({
-            name: "versionCompliance",
-            type: "pre",
-            priority: 25,
-            enabled: true,
-          });
-          processorManager.registerProcessor({
-            name: "testAutoCreation",
-            type: "post",
-            priority: 5, // FIX: Run BEFORE testExecution so tests exist when we run them
-            enabled: true,
-          });
-          processorManager.registerProcessor({
-            name: "testExecution",
-            type: "post",
-            priority: 10,
-            enabled: true,
-          });
-          processorManager.registerProcessor({
-            name: "coverageAnalysis",
-            type: "post",
-            priority: 20,
-            enabled: true,
-          });
-
-          // Store for future use
+          processorManager = new _ProcessorManager(stateManager) as ProcessorManagerLike;
+          registerAllProcessors(processorManager);
           stateManager.set("processor:manager", processorManager);
           logger.log("✅ Processors registered successfully");
         } else {
           logger.log("✅ Using existing processor manager");
         }
 
-        // PHASE 2: Execute pre-processors with detailed logging
         try {
           logger.log(`▶️ Executing pre-processors for ${tool}...`);
-          const result = await processorManager.executePreProcessors({
+          const preProcessorInput = {
             tool,
-            args,
+            args: args as Record<string, string | number | boolean> | undefined,
             context: {
               directory,
               operation: "tool_execution",
               filePath: args?.filePath,
             },
-          });
+          };
+          const result = await processorManager!.executePreProcessors(preProcessorInput as unknown as PreProcessorInput);
 
-          logger.log(
-            `📊 Pre-processor result: ${result.success ? "SUCCESS" : "FAILED"} (${result.results?.length || 0} processors)`,
-          );
-
-          if (!result.success) {
-            const failures =
-              result.results?.filter((r: any) => !r.success) || [];
-            failures.forEach((f: any) => {
-              logger.error(
-                `❌ Pre-processor ${f.processorName} failed: ${f.error}`,
-              );
-            });
-          } else {
-            result.results?.forEach((r: any) => {
-              logger.log(
-                `✅ Pre-processor ${r.processorName}: ${r.success ? "OK" : "FAILED"}`,
-              );
-            });
-          }
+          logPreProcessorResults(result, logger);
         } catch (error) {
           logger.error(`💥 Pre-processor execution error`, error);
         }
 
-        // PHASE 3: Execute post-processors after tool completion
         try {
           logger.log(`▶️ Executing post-processors for ${tool}...`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
-          
-          // Determine operation type and enrich context with metadata for processors
-          const isPublishOperation = tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
-          
-          // Get agent info from session state if available
-          const agentName = (global as any).currentAgent?.agentType || 
-                           (global as any).currentAgent?.type ||
-                           (input as any).agentType ||
-                           "orchestrator";
-          
+
+          const agentName = resolveAgentName(input as { agentType?: string });
+
           const postProcessorContext = {
             directory,
             operation: tool,
@@ -842,59 +881,36 @@ export default async function strrayCodexPlugin(input: {
             success: true,
             agentName,
             metadata: {
-              isPublishing: isPublishOperation,
+              isPublishing: isPublishOperation(tool),
               hook: "tool_execution",
               toolName: tool,
               timestamp: Date.now(),
               agentType: agentName,
             },
-          };
-          
-          const postResults = await processorManager.executePostProcessors(
+          } as unknown as ProcessorContext;
+
+          const postResults = await processorManager!.executePostProcessors(
             tool,
             postProcessorContext,
             [],
           );
 
-          // postResults is an array of ProcessorResult
-          const allSuccess = postResults.every((r: any) => r.success);
-          logger.log(
-            `📊 Post-processor result: ${allSuccess ? "SUCCESS" : "FAILED"} (${postResults.length} processors)`,
-          );
-
-          // Log each post-processor result for debugging
-          for (const r of postResults) {
-            if (r.success) {
-              logger.log(`✅ Post-processor ${r.processorName}: OK`);
-            } else {
-              logger.error(
-                `❌ Post-processor ${r.processorName} failed: ${r.error}`,
-              );
-            }
-          }
+          logPostProcessorResults(postResults, logger);
         } catch (error) {
           logger.error(`💥 Post-processor execution error`, error);
         }
       }
     },
 
-    // Execute POST-processors AFTER tool completes (this is the correct place!)
     "tool.execute.after": async (
-      input: {
-        tool: string;
-        args?: { content?: string; filePath?: string };
-        result?: any;
-      },
-      _output: any,
+      input: ToolExecuteAfterInput,
+      _output: Record<string, unknown>,
     ) => {
       const logger = await getOrCreateLogger(directory);
       await loadStringRayComponents();
 
       const { tool, args, result } = input;
 
-      // Record routing outcome for analytics pipeline.
-      // This feeds the inference tuner with real tool usage data so it
-      // can refine keyword mappings and improve predictive analytics.
       try {
         const { routingOutcomeTracker } = await import(
           "../delegation/analytics/outcome-tracker.js"
@@ -905,8 +921,8 @@ export default async function strrayCodexPlugin(input: {
           ? String(args.content).slice(0, 150)
           : args?.filePath
             ? String(args.filePath)
-            : (args as Record<string, unknown>)?.command
-              ? String((args as Record<string, unknown>).command).slice(0, 150)
+            : args?.command
+              ? String(args.command).slice(0, 150)
               : tool;
         const description = `[${taskType}] ${rawDesc}`;
         const outcomeFields: Record<string, unknown> = {
@@ -926,55 +942,32 @@ export default async function strrayCodexPlugin(input: {
         // Outcome tracker not available — skip silently
       }
 
-      // Debug: log full input
       logger.log(
         `📥 After hook input: ${JSON.stringify({ tool, hasArgs: !!args, args, hasResult: !!result }).slice(0, 200)}`,
       );
 
-      // Run post-processors for write/edit operations AFTER tool completes
-      if (["write", "edit", "multiedit"].includes(tool)) {
-        if (!ProcessorManager || !StrRayStateManager) return;
+      if (isWriteEditOperation(tool)) {
+        if (!_ProcessorManager || !_StrRayStateManager) return;
 
-        const stateManager = new StrRayStateManager(
+        const stateManager = new _StrRayStateManager(
           await resolveStateDir(directory),
         );
-        const processorManager = new ProcessorManager(stateManager);
+        const processorManager = new _ProcessorManager(stateManager);
 
-        // Register post-processors
-        processorManager.registerProcessor({
-          name: "testAutoCreation",
-          type: "post",
-          priority: 50,
-          enabled: true,
-        });
-        processorManager.registerProcessor({
-          name: "testExecution",
-          type: "post",
-          priority: 10,
-          enabled: true,
-        });
-        processorManager.registerProcessor({
-          name: "coverageAnalysis",
-          type: "post",
-          priority: 20,
-          enabled: true,
-        });
+        registerAfterPostProcessors(processorManager);
 
         try {
-          // Execute post-processors AFTER tool - with actual filePath for testAutoCreation
           logger.log(`📝 Post-processor tool: ${tool}`);
           logger.log(`📝 Post-processor args: ${JSON.stringify(args)}`);
           logger.log(`📝 Post-processor directory: ${directory}`);
 
-          // Determine operation type and enrich context with metadata for processors
-          const isPublishOperation = tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
           const postProcessorContext = {
             directory,
             operation: tool,
             filePath: args?.filePath,
             success: result?.success !== false,
             metadata: {
-              isPublishing: isPublishOperation,
+              isPublishing: isPublishOperation(tool),
               hook: "tool_execution",
               toolName: tool,
               timestamp: Date.now(),
@@ -987,45 +980,13 @@ export default async function strrayCodexPlugin(input: {
             [],
           );
 
-          // postResults is an array of ProcessorResult
-          const allSuccess = postResults.every((r: any) => r.success);
-          logger.log(
-            `📊 Post-processor result: ${allSuccess ? "SUCCESS" : "FAILED"} (${postResults.length} processors)`,
-          );
-
-          // Log each post-processor result for debugging
-          for (const r of postResults) {
-            if (r.success) {
-              logger.log(`✅ Post-processor ${r.processorName}: OK`);
-            } else {
-              logger.error(
-                `❌ Post-processor ${r.processorName} failed: ${r.error}`,
-              );
-            }
-          }
-
-          // Log testAutoCreation results specifically
-          const testAutoResult = postResults.find(
-            (r: any) => r.processorName === "testAutoCreation",
-          );
-          if (testAutoResult) {
-            if (testAutoResult.success && testAutoResult.testCreated) {
-              logger.log(
-                `✅ TEST AUTO-CREATION: Created ${testAutoResult.testFile}`,
-              );
-            } else if (!testAutoResult.success) {
-              logger.log(
-                `ℹ️ TEST AUTO-CREATION: ${testAutoResult.message || "skipped - no new files"}`,
-              );
-            }
-          }
+          logPostProcessorResults(postResults, logger);
+          logTestAutoCreationResult(postResults, logger);
         } catch (error) {
           logger.error(`💥 Post-processor error`, error);
         }
       }
 
-      // Auto inference tuning: every INFERENCE_TUNE_INTERVAL tool calls,
-      // run a single tuning cycle to close the feedback loop.
       _openCodeToolCallCount++;
       if (
         _openCodeToolCallCount - _lastTuneToolCallCount >= INFERENCE_TUNE_INTERVAL
@@ -1054,16 +1015,13 @@ export default async function strrayCodexPlugin(input: {
     },
 
     config: async (_config: Record<string, unknown>) => {
-      // Guard: only run init.sh once per startup session
-      // OpenCode may fire the config hook multiple times in fresh contexts
-      // where globalThis is reset, so we use a TTL lockfile
       const lockFile = path.join(directory, ".opencode", "logs", ".strray-init.lock");
       const now = Date.now();
       try {
         if (fs.existsSync(lockFile)) {
           const stat = fs.statSync(lockFile);
           if (now - stat.mtimeMs < 15000) {
-            return; // already ran within 15s window
+            return;
           }
         }
         fs.writeFileSync(lockFile, String(now));
@@ -1072,13 +1030,8 @@ export default async function strrayCodexPlugin(input: {
       }
 
       const logger = await getOrCreateLogger(directory);
-      logger.log(
-        "🔧 Plugin config hook triggered - initializing 0xRay integration",
-      );
+      logger.log("🔧 Plugin config hook triggered - initializing 0xRay integration");
 
-      // Initialize 0xRay framework
-      // Primary: project .opencode/init.sh (copied by postinstall)
-      // Fallback: package .opencode/init.sh (works when postinstall skips for Hermes consumers)
       let initScriptPath = path.join(directory, ".opencode", "init.sh");
       const pkgInitPath = path.join(directory, "node_modules", "strray-ai", ".opencode", "init.sh");
       if (!fs.existsSync(initScriptPath) && fs.existsSync(pkgInitPath)) {

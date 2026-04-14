@@ -10,12 +10,16 @@
  * @since 2026-03-08
  */
 
+import express from "express";
 import { PostProcessor } from './PostProcessor.js';
+import type { PostProcessorContext } from './types.js';
 
 import type { WebhookConfig, WebhookEvent } from './triggers/WebhookTrigger.js';
 import type { APIConfig, APIRequest } from './triggers/APITrigger.js';
 
+import { WebhookTrigger } from './triggers/WebhookTrigger.js';
 export { WebhookTrigger } from './triggers/WebhookTrigger.js';
+import { APITrigger } from './triggers/APITrigger.js';
 export { APITrigger } from './triggers/APITrigger.js';
 
 export type { WebhookConfig, WebhookEvent } from './triggers/WebhookTrigger.js';
@@ -46,8 +50,8 @@ export type { APIConfig, APIRequest } from './triggers/APITrigger.js';
  * ```
  */
 export class StringRayIntegration {
-  private webhookTrigger: any;
-  private apiTrigger: any;
+  private webhookTrigger: WebhookTrigger | null = null;
+  private apiTrigger: APITrigger | null = null;
 
   constructor(private postProcessor: PostProcessor) {}
 
@@ -100,8 +104,8 @@ export class StringRayIntegration {
    * app.use(integration.getWebhookRouter().routes());
    * ```
    */
-  getWebhookApp(): any {
-    return this.webhookTrigger?.getApp();
+  getWebhookApp(): express.Application | null {
+    return this.webhookTrigger?.getApp() ?? null;
   }
 
   /**
@@ -110,8 +114,8 @@ export class StringRayIntegration {
    * Useful for frameworks that need the router instance directly
    * rather than the full Express app.
    */
-  getWebhookRouter(): any {
-    return this.webhookTrigger?.getApp();
+  getWebhookRouter(): express.Router | null {
+    return this.webhookTrigger?.getApp() ?? null;
   }
 
   /**
@@ -126,8 +130,8 @@ export class StringRayIntegration {
    * await fastify.register(integration.getAPIRouter(), { prefix: '/api/post-process' });
    * ```
    */
-  getAPIApp(): any {
-    return this.apiTrigger?.getApp();
+  getAPIApp(): express.Application | null {
+    return this.apiTrigger?.getApp() ?? null;
   }
 
   /**
@@ -135,8 +139,8 @@ export class StringRayIntegration {
    * 
    * Useful for frameworks that need the router instance directly.
    */
-  getAPIRouter(): any {
-    return this.apiTrigger?.getApp();
+  getAPIRouter(): express.Router | null {
+    return this.apiTrigger?.getApp() ?? null;
   }
 
   /**
@@ -161,11 +165,17 @@ export class StringRayIntegration {
     directory?: string;
     reason?: string;
   }): Promise<void> {
-    const context: any = {
+    const context: PostProcessorContext = {
+      commitSha: `manual-${Date.now()}`,
+      repository: '',
+      branch: '',
+      author: 'manual',
+      files: [],
+      trigger: 'manual',
       tool: options.tool,
       operation: options.operation,
-      filePath: options.filePath || '',
-      directory: options.directory || process.cwd()
+      filePath: options.filePath,
+      directory: options.directory,
     };
     
     await this.postProcessor.executePostProcessorLoop(context);

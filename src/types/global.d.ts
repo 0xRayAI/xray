@@ -19,6 +19,12 @@ export interface StringRayHook {
   [key: string]: unknown;
 }
 
+export interface CurrentAgent {
+  agentType?: string;
+  type?: string;
+  [key: string]: unknown;
+}
+
 export interface StringRayGlobalScope {
   strRayStateManager: StringRayStateManager;
   strRayProcessorManager: ProcessorManager;
@@ -26,6 +32,7 @@ export interface StringRayGlobalScope {
   strRayPathResolver: PathResolver;
   strRayCodexInjector: CodexInjector;
   strRayHooks: StringRayHook[];
+  currentAgent: CurrentAgent;
 }
 
 declare global {
@@ -41,6 +48,8 @@ declare global {
   var strRayCodexInjector: StringRayGlobalScope["strRayCodexInjector"] | undefined;
   // eslint-disable-next-line no-var
   var strRayHooks: StringRayHook[] | undefined;
+  // eslint-disable-next-line no-var
+  var currentAgent: StringRayGlobalScope["currentAgent"] | undefined;
 }
 
 export type { StringRayGlobalScope };

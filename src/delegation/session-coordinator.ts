@@ -26,7 +26,7 @@ export interface AgentInteraction {
   agentName: string;
   timestamp: number;
   action: string;
-  result: any;
+  result: unknown;
   duration: number;
   success: boolean;
 }
@@ -36,21 +36,27 @@ export interface ConflictRecord {
   timestamp: number;
   agents: string[];
   resolution: "consensus" | "majority_vote" | "expert_priority" | "manual";
-  outcome: any;
+  outcome: unknown;
 }
 
 export interface CoordinationState {
   activeAgents: Set<string>;
   pendingCommunications: Communication[];
-  sharedContext: Map<string, any>;
+  sharedContext: Map<string, SharedContextEntry[]>;
   sessionMetrics: SessionMetrics;
+}
+
+export interface SharedContextEntry {
+  value: unknown;
+  fromAgent: string;
+  timestamp: number;
 }
 
 export interface Communication {
   id: string;
   fromAgent: string;
   toAgent: string;
-  message: any;
+  message: unknown;
   timestamp: number;
   priority: "low" | "medium" | "high";
 }
@@ -217,7 +223,7 @@ export class SessionCoordinator {
     sessionId: string,
     fromAgent: string,
     toAgent: string,
-    message: any,
+    message: unknown,
     priority: "low" | "medium" | "high" = "medium",
   ): Promise<void> {
     const session = this.sessions.get(sessionId);
@@ -283,7 +289,7 @@ export class SessionCoordinator {
   shareContext(
     sessionId: string,
     key: string,
-    value: any,
+    value: unknown,
     fromAgent: string,
   ): void {
     const session = this.sessions.get(sessionId);
@@ -323,7 +329,7 @@ export class SessionCoordinator {
   /**
    * Get shared context data
    */
-  getSharedContext(sessionId: string, key: string): any {
+  getSharedContext(sessionId: string, key: string): unknown {
     const session = this.sessions.get(sessionId);
     if (!session) {
       return undefined;
@@ -332,7 +338,9 @@ export class SessionCoordinator {
     const contextData = session.coordinationState.sharedContext.get(key);
     if (Array.isArray(contextData) && contextData.length > 0) {
       const last = contextData[contextData.length - 1];
-      return { ...last.value, sharedBy: last.fromAgent };
+      if (last) {
+        return { ...(last.value as object), sharedBy: last.fromAgent };
+      }
     }
     return undefined;
   }
@@ -344,7 +352,7 @@ export class SessionCoordinator {
     sessionId: string,
     agents: string[],
     resolution: ConflictRecord["resolution"],
-    outcome: any,
+    outcome: unknown,
   ): void {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -381,7 +389,7 @@ export class SessionCoordinator {
   completeDelegation(
     sessionId: string,
     delegationId: string,
-    result: any,
+    result: unknown,
   ): void {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -424,7 +432,7 @@ export class SessionCoordinator {
     sessionId: string,
     conflictKey: string,
     strategy: "majority_vote" | "expert_priority" | "consensus",
-  ): any {
+  ): unknown {
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new Error(`Session ${sessionId} not found`);
@@ -435,13 +443,13 @@ export class SessionCoordinator {
       return undefined;
     }
 
-    let resolved: any;
+    let resolved: unknown;
 
     switch (strategy) {
       case "majority_vote":
         // Find most common value
         const counts: Record<string, number> = {};
-        sharedData.forEach((item: any) => {
+        sharedData.forEach((item: SharedContextEntry) => {
           const value = JSON.stringify(item.value);
           counts[value] = (counts[value] || 0) + 1;
         });
@@ -461,7 +469,7 @@ export class SessionCoordinator {
       case "expert_priority":
         // Use security-auditor if available, otherwise first value
         const expertItem = sharedData.find(
-          (item: any) => item.fromAgent === "security-auditor",
+          (item: SharedContextEntry) => item.fromAgent === "security-auditor",
         );
         resolved = expertItem ? expertItem.value : sharedData[0]?.value;
         break;
@@ -470,7 +478,7 @@ export class SessionCoordinator {
         // All values must be the same
         const firstValue = sharedData[0]?.value;
         const allSame = sharedData.every(
-          (item: any) =>
+          (item: SharedContextEntry) =>
             JSON.stringify(item.value) === JSON.stringify(firstValue),
         );
         resolved = allSame ? firstValue : undefined;
@@ -478,7 +486,7 @@ export class SessionCoordinator {
     }
 
     // Record the conflict resolution
-    const agents = sharedData.map((item: any) => item.fromAgent);
+    const agents = sharedData.map((item: SharedContextEntry) => item.fromAgent);
     this.recordConflict(sessionId, agents, strategy, resolved);
 
     return resolved;

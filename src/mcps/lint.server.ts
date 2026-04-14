@@ -14,6 +14,25 @@ import { execFileSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 
+interface LintArgs {
+  files?: string[];
+  fix?: boolean;
+  strict?: boolean;
+}
+
+interface LintCheckArgs {
+  files?: string[];
+  rules?: string[];
+}
+
+interface LintResults {
+  success: boolean;
+  issues: { errors: number; warnings: number; fixed: number };
+  files: string[];
+  summary: string;
+  details: string[];
+}
+
 class StringRayLintServer {
   private server: Server;
 
@@ -100,9 +119,9 @@ class StringRayLintServer {
       try {
         switch (name) {
           case "lint":
-            return await this.handleLint(args);
+            return await this.handleLint(args as unknown as LintArgs);
           case "lint-check":
-            return await this.handleLintCheck(args);
+            return await this.handleLintCheck(args as unknown as LintCheckArgs);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -119,7 +138,7 @@ class StringRayLintServer {
     });
   }
 
-  private async handleLint(args: any) {
+  private async handleLint(args: LintArgs) {
     const files = args.files || [];
     const fix = args.fix || false;
     const strict = args.strict || false;
@@ -180,7 +199,7 @@ ${lintResults.details.length > 0 ? lintResults.details.map((d) => `• ${d}`).jo
     };
   }
 
-  private async handleLintCheck(args: any) {
+  private async handleLintCheck(args: LintCheckArgs) {
     const files = args.files || [];
     const rules = args.rules || [];
 
@@ -432,7 +451,7 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
     return results;
   }
 
-  private generateLintSummary(results: any): string {
+  private generateLintSummary(results: LintResults): string {
     const totalIssues = results.issues.errors + results.issues.warnings;
     const status = results.success ? "PASSED" : "ISSUES DETECTED";
 

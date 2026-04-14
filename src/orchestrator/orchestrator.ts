@@ -400,7 +400,7 @@ export class StringRayOrchestrator {
     sessionId?: string,
   ): Promise<{
     success: boolean;
-    healingResult: any;
+    healingResult: unknown;
     agentCoordination: string[];
     performanceImprovement: number;
   }> {
@@ -751,7 +751,7 @@ export class StringRayOrchestrator {
   /**
    * Resolve conflicts between subagent responses
    */
-  resolveConflicts(conflicts: any[]): any {
+  resolveConflicts(conflicts: Array<{ response?: unknown; agentType?: string; expertiseScore?: number }>): unknown {
     switch (this.config.conflictResolutionStrategy) {
       case "majority_vote":
         return this.resolveByMajorityVote(conflicts);
@@ -764,7 +764,7 @@ export class StringRayOrchestrator {
     }
   }
 
-  private resolveByMajorityVote(conflicts: any[]): any {
+  private resolveByMajorityVote(conflicts: Array<{ response?: unknown }>): unknown {
     // Find the response that appears most frequently
     const counts: Record<string, number> = {};
     conflicts.forEach((conflict) => {
@@ -786,7 +786,7 @@ export class StringRayOrchestrator {
     return conflicts[0];
   }
 
-  private resolveByExpertPriority(conflicts: any[]): any {
+  private resolveByExpertPriority(conflicts: Array<{ response?: unknown; agentType?: string; expertiseScore?: number }>): unknown {
     // Populate expertise scores based on agent type before resolving
     const scoredConflicts = this.populateExpertiseScore(conflicts);
     return scoredConflicts.sort(
@@ -794,7 +794,7 @@ export class StringRayOrchestrator {
     )[0];
   }
 
-  private resolveByConsensus(conflicts: any[]): any {
+  private resolveByConsensus(conflicts: Array<{ response?: unknown }>): unknown {
     // Return the response if all are identical, otherwise fall back to majority_vote
     const firstResponse = conflicts[0]?.response;
     const allSame = conflicts.every(
@@ -853,10 +853,10 @@ export class StringRayOrchestrator {
         continue;
       }
 
-      const conflicts = taskResults.map((r, idx) => ({
+      const conflicts: Array<{ response?: unknown; agentType?: string; expertiseScore?: number }> = taskResults.map((r, idx) => ({
         response: r.result,
         agentType: taskType,
-        taskId: (r as any).taskId || `task-${idx}`,
+        expertiseScore: 0,
       }));
 
       const responseStrings = conflicts.map(c => JSON.stringify(c.response));
@@ -864,7 +864,7 @@ export class StringRayOrchestrator {
 
       if (uniqueResponses.size > 1) {
         conflictsFound++;
-        const resolved = this.resolveConflicts(conflicts);
+        const resolved = this.resolveConflicts(conflicts) as { response?: unknown } | undefined;
         
         if (resolved?.response && taskResults.length > 0) {
           const first = taskResults[0]!;
@@ -896,32 +896,32 @@ export class StringRayOrchestrator {
    * Populate expertiseScore based on agent type for expert_priority resolution.
    * This maps agent types to expertise levels for conflict resolution.
    */
-  private populateExpertiseScore(conflicts: any[]): any[] {
+  private populateExpertiseScore(conflicts: Array<{ response?: unknown; agentType?: string; expertiseScore?: number }>): Array<{ response?: unknown; agentType?: string; expertiseScore?: number }> {
     const agentExpertiseLevels: Record<string, number> = {
-      // High expertise (architectural/strategic decisions)
       architect: 10,
       orchestrator: 10,
       security: 10,
       strategist: 9,
-      // Medium expertise (implementation)
       refactorer: 7,
       enforcer: 7,
       codeReviewer: 7,
       testingLead: 7,
-      // Standard expertise
       researcher: 5,
       analyzer: 5,
       bugTriage: 5,
-      // Lower expertise (specialized tasks)
       default: 3,
     };
 
-    return conflicts.map((conflict) => ({
-      ...conflict,
-      expertiseScore: conflict.agentType
-        ? agentExpertiseLevels[conflict.agentType] ?? agentExpertiseLevels.default
-        : agentExpertiseLevels.default,
-    }));
+    return conflicts.map((conflict) => {
+      const agentType = conflict.agentType ?? 'default';
+      const score = agentExpertiseLevels[agentType];
+      const expertiseScore = score !== undefined ? score : agentExpertiseLevels.default;
+      return {
+        response: conflict.response,
+        agentType: agentType,
+        expertiseScore: expertiseScore,
+      } as { response?: unknown; agentType?: string; expertiseScore?: number };
+    });
   }
 
   /**

@@ -67,20 +67,21 @@ export interface EmergentPattern {
   userRequest?: string;
   generatedPrompt?: string;
   templatePrompt?: string;
-  evidence?: any[];
+  evidence?: Record<string, unknown>[] | undefined;
+  stringEvidence?: string[] | undefined;
 }
 
 export interface PatternUpdate {
   patternId: string;
   type: 'CONFIDENCE' | 'FREQUENCY' | 'TRIGGER' | 'ACTION';
-  oldValue: any;
-  newValue: any;
+  oldValue: number | string | string[];
+  newValue: number | string | string[];
   timestamp: Date;
   reason: string;
   updateType?: string;
   confidence?: number;
   validated?: boolean;
-  changes?: any[];
+  changes?: Record<string, unknown>[];
 }
 
 export interface PatternDriftInfo {

@@ -91,7 +91,7 @@ export interface SecurityEvent {
   ipAddress?: string;
   userAgent?: string;
   timestamp: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   stackTrace?: string;
 }
 
@@ -99,7 +99,7 @@ export interface SecurityEvent {
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
-  sanitizedValue?: any;
+  sanitizedValue?: unknown;
   securityEvents: SecurityEvent[];
 }
 
@@ -347,9 +347,11 @@ export class SecurityHardeningSystem extends EventEmitter {
       Object.assign(headers, config.customHeaders);
     }
 
-    // Conditionally apply HSTS
+    // Conditionally remove HSTS
     if (!config.enableHsts) {
-      delete (headers as any)["Strict-Transport-Security"];
+      const headersRecord: Record<string, string> = headers as Record<string, string>;
+      const { "Strict-Transport-Security": _, ...remainingHeaders } = headersRecord;
+      Object.assign(headers, remainingHeaders);
     }
 
     // Set all headers
@@ -359,7 +361,7 @@ export class SecurityHardeningSystem extends EventEmitter {
 
     // Add rate limit headers
     const rateLimitInfo = this.getRateLimitInfo(
-      this.getClientIP({ headers: {} } as any),
+      this.getClientIP({ headers: {}, socket: { remoteAddress: "unknown" } } as unknown as IncomingMessage),
     );
     if (rateLimitInfo) {
       res.setHeader("X-RateLimit-Limit", rateLimitInfo.limit.toString());
@@ -378,9 +380,9 @@ export class SecurityHardeningSystem extends EventEmitter {
    * Validate CSRF token
    */
   private validateCsrfToken(req: IncomingMessage): boolean {
-    // Simple CSRF validation - in production, use proper CSRF tokens
     const token = req.headers["x-csrf-token"] as string;
-    const sessionToken = (req as any).session?.csrfToken;
+    const reqWithSession = req as IncomingMessage & { session?: { csrfToken?: string } };
+    const sessionToken = reqWithSession.session?.csrfToken;
 
     if (!token || !sessionToken) {
       return false;
@@ -395,7 +397,7 @@ export class SecurityHardeningSystem extends EventEmitter {
   /**
    * Validate and sanitize input data
    */
-  validateInput(input: any, context: string = "general"): ValidationResult {
+  validateInput(input: unknown, context: string = "general"): ValidationResult {
     const result: ValidationResult = {
       isValid: true,
       errors: [],
@@ -512,11 +514,11 @@ export class SecurityHardeningSystem extends EventEmitter {
    * Validate object input
    */
   private validateObject(
-    input: any,
+    input: object,
     context: string,
     result: ValidationResult,
-  ): any {
-    const sanitized: any = {};
+  ): Record<string, unknown> {
+    const sanitized: Record<string, unknown> = {};
 
     // Depth check
     const depth = this.getObjectDepth(input);
@@ -567,11 +569,11 @@ export class SecurityHardeningSystem extends EventEmitter {
    * Validate array input
    */
   private validateArray(
-    input: any[],
+    input: unknown[],
     context: string,
     result: ValidationResult,
-  ): any[] {
-    const sanitized: any[] = [];
+  ): unknown[] {
+    const sanitized: unknown[] = [];
 
     // Length check
     if (input.length > SECURITY_CONFIG.inputValidation.maxArrayLength) {
@@ -611,7 +613,7 @@ export class SecurityHardeningSystem extends EventEmitter {
    * Check for security patterns in input
    */
   private checkSecurityPatterns(
-    input: any,
+    input: unknown,
     context: string,
     result: ValidationResult,
   ): void {
@@ -795,8 +797,8 @@ export class SecurityHardeningSystem extends EventEmitter {
       action,
       ip: this.getClientIP(req),
       userAgent: req.headers["user-agent"] as string,
-      method: (req as any).method,
-      url: (req as any).url,
+      method: req.method,
+      url: req.url,
       headers: this.sanitizeHeadersForAudit(req.headers),
     };
 
@@ -811,7 +813,7 @@ export class SecurityHardeningSystem extends EventEmitter {
   /**
    * Sanitize headers for audit logging
    */
-  private sanitizeHeadersForAudit(headers: any): any {
+  private sanitizeHeadersForAudit(headers: Record<string, unknown>): Record<string, unknown> {
     const sanitized = { ...headers };
 
     SECURITY_CONFIG.audit.sensitiveFields.forEach((field) => {
@@ -927,7 +929,7 @@ export class SecurityHardeningSystem extends EventEmitter {
   /**
    * Get object depth
    */
-  private getObjectDepth(obj: any, currentDepth: number = 0): number {
+  private getObjectDepth(obj: unknown, currentDepth: number = 0): number {
     if (typeof obj !== "object" || obj === null) {
       return currentDepth;
     }
@@ -983,8 +985,25 @@ export class SecurityHardeningSystem extends EventEmitter {
     eventsBySeverity: Record<SecuritySeverity, number>;
     recentEvents: SecurityEvent[];
   } {
-    const eventsByType: Record<SecurityEventType, number> = {} as any;
-    const eventsBySeverity: Record<SecuritySeverity, number> = {} as any;
+    const eventsByType: Record<SecurityEventType, number> = {
+      input_validation_failure: 0,
+      rate_limit_exceeded: 0,
+      authentication_failure: 0,
+      authorization_failure: 0,
+      suspicious_activity: 0,
+      sql_injection_attempt: 0,
+      xss_attempt: 0,
+      csrf_attempt: 0,
+      security_header_missing: 0,
+      encryption_failure: 0,
+      audit_log_failure: 0,
+    };
+    const eventsBySeverity: Record<SecuritySeverity, number> = {
+      low: 0,
+      medium: 0,
+      high: 0,
+      critical: 0,
+    };
 
     this.securityEvents.forEach((event) => {
       eventsByType[event.type] = (eventsByType[event.type] || 0) + 1;

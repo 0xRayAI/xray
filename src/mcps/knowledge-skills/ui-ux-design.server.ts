@@ -10,6 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
@@ -90,6 +91,99 @@ interface DesignPattern {
   description: string;
   useCases: string[];
   accessibility: string[];
+}
+
+interface AnalyzeUIComponentArgs {
+  componentCode: string;
+  framework: string;
+  checkAccessibility?: boolean;
+  checkResponsive?: boolean;
+}
+
+interface DesignComponentArgs {
+  componentType: string;
+  requirements: string;
+  framework: string;
+  accessibility?: boolean;
+}
+
+interface AuditAccessibilityArgs {
+  htmlContent: string;
+  cssContent?: string;
+  wcagLevel?: string;
+}
+
+interface GenerateDesignSystemArgs {
+  brandGuidelines: string;
+  targetAudience?: string;
+  platform: string;
+  includeAccessibility?: boolean;
+}
+
+interface ValidateMobileDesignArgs {
+  componentCode: string;
+  viewportWidth?: number;
+  framework?: string;
+}
+
+interface AnalyzeVisualHierarchyArgs {
+  designCode: string;
+  pageType?: string;
+}
+
+interface RecommendImagesArgs {
+  context: string;
+  style?: string;
+  budget?: string;
+}
+
+interface ComponentDesign {
+  componentType: string;
+  requirements: string;
+  framework: string;
+  accessibility: boolean;
+  structure: string[];
+  props: string[];
+  states: string[];
+  variants: string[];
+}
+
+interface WCAGViolation {
+  guideline: string;
+  severity: string;
+  description: string;
+  recommendation?: string;
+}
+
+interface MobileDesignIssue {
+  type: string;
+  severity: string;
+  message: string;
+  wcag?: string;
+}
+
+interface HierarchyIssue {
+  type: string;
+  severity: string;
+  message: string;
+}
+
+interface ImageLibrary {
+  name: string;
+  url: string;
+  description: string;
+}
+
+interface ImageRecommendations {
+  libraries: ImageLibrary[];
+  tips: string[];
+  style: string;
+}
+
+interface ToolResponse {
+  content: Array<{ type: "text"; text: string }>;
+  data?: unknown;
+  isError?: boolean;
 }
 
 class StringRayUIUXDesignServer {
@@ -325,31 +419,31 @@ class StringRayUIUXDesignServer {
       };
     });
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
       const { name, arguments: args } = request.params;
 
       switch (name) {
         case "analyze_ui_component":
-          return await this.analyzeUIComponent(args);
+          return await this.analyzeUIComponent(args as unknown as AnalyzeUIComponentArgs) as CallToolResult;
         case "design_component":
-          return await this.designComponent(args);
+          return await this.designComponent(args as unknown as DesignComponentArgs) as CallToolResult;
         case "audit_accessibility":
-          return await this.auditAccessibility(args);
+          return await this.auditAccessibility(args as unknown as AuditAccessibilityArgs) as CallToolResult;
         case "generate_design_system":
-          return await this.generateDesignSystem(args);
+          return await this.generateDesignSystem(args as unknown as GenerateDesignSystemArgs) as CallToolResult;
         case "validate_mobile_design":
-          return await this.validateMobileDesign(args);
+          return await this.validateMobileDesign(args as unknown as ValidateMobileDesignArgs) as CallToolResult;
         case "analyze_visual_hierarchy":
-          return await this.analyzeVisualHierarchy(args);
+          return await this.analyzeVisualHierarchy(args as unknown as AnalyzeVisualHierarchyArgs) as CallToolResult;
         case "recommend_images":
-          return await this.recommendImages(args);
+          return await this.recommendImages(args as unknown as RecommendImagesArgs) as CallToolResult;
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeUIComponent(args: any): Promise<any> {
+  private async analyzeUIComponent(args: AnalyzeUIComponentArgs): Promise<ToolResponse> {
     const {
       componentCode,
       framework,
@@ -425,7 +519,7 @@ class StringRayUIUXDesignServer {
     }
   }
 
-  private async designComponent(args: any): Promise<any> {
+  private async designComponent(args: DesignComponentArgs): Promise<ToolResponse> {
     const {
       componentType,
       requirements,
@@ -474,7 +568,7 @@ class StringRayUIUXDesignServer {
     }
   }
 
-  private async auditAccessibility(args: any): Promise<any> {
+  private async auditAccessibility(args: AuditAccessibilityArgs): Promise<ToolResponse> {
     const { htmlContent, cssContent, wcagLevel = "AA" } = args;
 
     try {
@@ -523,7 +617,7 @@ class StringRayUIUXDesignServer {
     }
   }
 
-  private async generateDesignSystem(args: any): Promise<any> {
+  private async generateDesignSystem(args: GenerateDesignSystemArgs): Promise<ToolResponse> {
     const {
       brandGuidelines,
       targetAudience,
@@ -976,7 +1070,7 @@ class StringRayUIUXDesignServer {
     requirements: string,
     framework: string,
     accessibility: boolean,
-  ): any {
+  ): ComponentDesign {
     const design = {
       componentType,
       requirements,
@@ -1066,7 +1160,7 @@ class StringRayUIUXDesignServer {
     return design;
   }
 
-  private generateComponentCode(design: any, framework: string): string {
+  private generateComponentCode(design: ComponentDesign, framework: string): string {
     // Generate basic component code structure
     switch (framework) {
       case "react":
@@ -1080,7 +1174,7 @@ class StringRayUIUXDesignServer {
     }
   }
 
-  private generateReactComponent(design: any): string {
+  private generateReactComponent(design: ComponentDesign): string {
     const propsInterface = design.props
       .map((prop: string) => `  ${prop};`)
       .join("\n");
@@ -1102,7 +1196,7 @@ export const ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 };`;
   }
 
-  private generateVueComponent(design: any): string {
+  private generateVueComponent(design: ComponentDesign): string {
     return `<template>
   <div class="${design.componentType}-container">
     <!-- ${design.componentType} implementation -->
@@ -1120,7 +1214,7 @@ export const ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 </style>`;
   }
 
-  private generateAngularComponent(design: any): string {
+  private generateAngularComponent(design: ComponentDesign): string {
     return `import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { frameworkLogger } from "../framework-logger.js";
 
@@ -1142,7 +1236,7 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 }`;
   }
 
-  private addAccessibilityFeatures(design: any, framework: string): string[] {
+  private addAccessibilityFeatures(design: ComponentDesign, framework: string): string[] {
     const features: string[] = [];
 
     switch (design.componentType) {
@@ -1173,10 +1267,10 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 
   private checkWCAGCompliance(
     htmlContent: string,
-    cssContent: string,
+    cssContent: string | undefined,
     level: string,
-  ): any[] {
-    const violations: any[] = [];
+  ): WCAGViolation[] {
+    const violations: WCAGViolation[] = [];
 
     // Basic WCAG checks (simplified)
     if (!htmlContent.includes("lang=")) {
@@ -1297,8 +1391,8 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
   /**
    * Analyze color contrast in CSS
    */
-  private analyzeColorContrast(cssContent: string, htmlContent: string): any[] {
-    const violations: any[] = [];
+  private analyzeColorContrast(cssContent: string, htmlContent: string): WCAGViolation[] {
+    const violations: WCAGViolation[] = [];
 
     // Extract color pairs from CSS
     const colorRegex = /color:\s*([^;]+)/gi;
@@ -1350,8 +1444,8 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
   private analyzeHeroSectionContrast(
     cssContent: string,
     htmlContent: string,
-  ): any[] {
-    const violations: any[] = [];
+  ): WCAGViolation[] {
+    const violations: WCAGViolation[] = [];
 
     // Check for hero section patterns
     const heroPatterns = [
@@ -1430,7 +1524,7 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
     return matches.length > 0 ? matches.join(" ") : null;
   }
 
-  private calculateWCAGScore(violations: any[], level: string): number {
+  private calculateWCAGScore(violations: WCAGViolation[], level: string): number {
     let score = 100;
 
     violations.forEach((violation) => {
@@ -1453,7 +1547,7 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
     return Math.max(0, Math.min(100, score));
   }
 
-  private generateAccessibilityRecommendations(violations: any[]): string[] {
+  private generateAccessibilityRecommendations(violations: WCAGViolation[]): string[] {
     const recommendations: string[] = [];
 
     violations.forEach((violation) => {
@@ -1471,7 +1565,7 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 
   private createDesignSystem(
     brandGuidelines: string,
-    targetAudience: string,
+    targetAudience: string | undefined,
     platform: string,
     includeAccessibility: boolean,
   ): DesignSystem {
@@ -1585,7 +1679,7 @@ export class ${design.componentType.charAt(0).toUpperCase() + design.componentTy
     return { colors, typography, spacing, components, patterns };
   }
 
-  private generateDesignTokens(system: DesignSystem): any {
+  private generateDesignTokens(system: DesignSystem): Record<string, unknown> {
     return {
       colors: {
         primary: system.colors.primary,
@@ -1632,10 +1726,10 @@ Available: ${Object.keys(system.components).length} component types
     return icons[severity as keyof typeof icons] || "❓";
   }
 
-  private async validateMobileDesign(args: any): Promise<any> {
+  private async validateMobileDesign(args: ValidateMobileDesignArgs): Promise<ToolResponse> {
     const { componentCode, viewportWidth = 320, framework = "css" } = args;
 
-    const issues: any[] = [];
+    const issues: MobileDesignIssue[] = [];
     const recommendations: string[] = [];
 
     // Check touch target sizes
@@ -1692,16 +1786,16 @@ Available: ${Object.keys(system.components).length} component types
       content: [
         {
           type: "text",
-          text: `## Mobile Design Validation (Viewport: ${viewportWidth}px)\n\n### Issues Found: ${issues.length}\n${issues.map((i: any) => `- ${i.severity.toUpperCase()}: ${i.message} (WCAG ${i.wcag})`).join("\n") || "None"}\n\n### Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### Mobile-First Checklist:\n- [ ] Touch targets ≥ 44px\n- [ ] Responsive typography (rem/em)\n- [ ] Media queries for breakpoints\n- [ ] Mobile navigation pattern\n- [ ] Readable without zoom (16px min)`,
+          text: `## Mobile Design Validation (Viewport: ${viewportWidth}px)\n\n### Issues Found: ${issues.length}\n${issues.map((i: MobileDesignIssue) => `- ${i.severity.toUpperCase()}: ${i.message} (WCAG ${i.wcag})`).join("\n") || "None"}\n\n### Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### Mobile-First Checklist:\n- [ ] Touch targets ≥ 44px\n- [ ] Responsive typography (rem/em)\n- [ ] Media queries for breakpoints\n- [ ] Mobile navigation pattern\n- [ ] Readable without zoom (16px min)`,
         },
       ],
     };
   }
 
-  private async analyzeVisualHierarchy(args: any): Promise<any> {
+  private async analyzeVisualHierarchy(args: AnalyzeVisualHierarchyArgs): Promise<ToolResponse> {
     const { designCode, pageType = "landing" } = args;
 
-    const issues: any[] = [];
+    const issues: HierarchyIssue[] = [];
     const cognitiveLoadScore = 100;
     const recommendations: string[] = [];
 
@@ -1775,16 +1869,16 @@ Available: ${Object.keys(system.components).length} component types
       content: [
         {
           type: "text",
-          text: `## Visual Hierarchy & Cognitive Load Analysis\n\n### "Don't Make Me Think" Score: ${Math.max(0, cognitiveLoadScore - issues.length * 10)}/100\n\n### Heading Structure:\n- H1: ${h1Count} ${h1Count === 1 ? "✅" : "❌"}\n- H2: ${h2Count}\n- H3: ${h3Count}\n\n### Issues (${issues.length}):\n${issues.map((i: any) => `- ${i.severity.toUpperCase()}: ${i.message}`).join("\n") || "None"}\n\n### Cognitive Load Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### 3-Second Rule Checklist:\n- [ ] Page purpose immediately clear\n- [ ] Primary action obvious\n- [ ] No ambiguous labels\n- [ ] Clear visual hierarchy\n- [ ] Progressive disclosure used`,
+          text: `## Visual Hierarchy & Cognitive Load Analysis\n\n### "Don't Make Me Think" Score: ${Math.max(0, cognitiveLoadScore - issues.length * 10)}/100\n\n### Heading Structure:\n- H1: ${h1Count} ${h1Count === 1 ? "✅" : "❌"}\n- H2: ${h2Count}\n- H3: ${h3Count}\n\n### Issues (${issues.length}):\n${issues.map((i: HierarchyIssue) => `- ${i.severity.toUpperCase()}: ${i.message}`).join("\n") || "None"}\n\n### Cognitive Load Recommendations:\n${recommendations.map((r: string) => `- ${r}`).join("\n") || "None"}\n\n### 3-Second Rule Checklist:\n- [ ] Page purpose immediately clear\n- [ ] Primary action obvious\n- [ ] No ambiguous labels\n- [ ] Clear visual hierarchy\n- [ ] Progressive disclosure used`,
         },
       ],
     };
   }
 
-  private async recommendImages(args: any): Promise<any> {
+  private async recommendImages(args: RecommendImagesArgs): Promise<ToolResponse> {
     const { context, style = "photography", budget = "free" } = args;
 
-    const recommendations: any = {
+    const recommendations: ImageRecommendations = {
       libraries: [],
       tips: [],
       style: style,
@@ -1880,7 +1974,7 @@ Available: ${Object.keys(system.components).length} component types
       content: [
         {
           type: "text",
-          text: `## Image Recommendations for: ${context}\n\n### Style: ${style}\n### Budget: ${budget}\n\n### Recommended Libraries:\n${recommendations.libraries.map((lib: any) => `- **${lib.name}** (${lib.url})\n  ${lib.description}`).join("\n")}\n\n### Context-Specific Tips:\n${recommendations.tips.map((tip: string) => `- ${tip}`).join("\n")}\n\n### Image Optimization Checklist:\n- [ ] WebP format with JPEG fallback\n- [ ] Responsive srcset for different sizes\n- [ ] Alt text describing purpose (not just "image")\n- [ ] Lazy loading for below-fold images\n- [ ] Compressed to < 200KB without quality loss\n- [ ] Consistent style across all images`,
+          text: `## Image Recommendations for: ${context}\n\n### Style: ${style}\n### Budget: ${budget}\n\n### Recommended Libraries:\n${recommendations.libraries.map((lib: ImageLibrary) => `- **${lib.name}** (${lib.url})\n  ${lib.description}`).join("\n")}\n\n### Context-Specific Tips:\n${recommendations.tips.map((tip: string) => `- ${tip}`).join("\n")}\n\n### Image Optimization Checklist:\n- [ ] WebP format with JPEG fallback\n- [ ] Responsive srcset for different sizes\n- [ ] Alt text describing purpose (not just "image")\n- [ ] Lazy loading for below-fold images\n- [ ] Compressed to < 200KB without quality loss\n- [ ] Consistent style across all images`,
         },
       ],
     };

@@ -88,21 +88,23 @@ export class StringRayConfigLoader {
   /**
    * Parse configuration data with validation
    */
-  private parseConfig(configData: any): StringRayConfig {
+  private parseConfig(configData: unknown): StringRayConfig {
     // Handle null/undefined config data
-    if (!configData) {
+    if (!configData || typeof configData !== 'object') {
       return this.getDefaultConfig();
     }
 
+    const data = configData as Record<string, unknown>;
+
     return {
       multi_agent_orchestration: this.parseMultiAgentConfig(
-        configData.multi_agent_orchestration,
+        data.multi_agent_orchestration,
       ),
       autonomous_reporting: this.parseAutonomousReportingConfig(
-        configData.autonomous_reporting,
+        data.autonomous_reporting,
       ),
-      disabled_agents: Array.isArray(configData.disabled_agents)
-        ? configData.disabled_agents
+      disabled_agents: Array.isArray(data.disabled_agents)
+        ? data.disabled_agents
         : [],
     };
   }
@@ -110,30 +112,34 @@ export class StringRayConfigLoader {
   /**
    * Parse multi-agent orchestration configuration
    */
-  private parseMultiAgentConfig(config: any): MultiAgentOrchestrationConfig {
+  private parseMultiAgentConfig(config: unknown): MultiAgentOrchestrationConfig {
+    if (!config || typeof config !== 'object') {
+      return this.getDefaultConfig().multi_agent_orchestration;
+    }
+    const cfg = config as Record<string, unknown>;
     return {
-      enabled: config?.enabled ?? true,
+      enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : true,
       coordination_model: this.validateEnum(
-        config?.coordination_model,
+        cfg.coordination_model,
         ["async-multi-agent", "sync-multi-agent"],
         "async-multi-agent",
       ),
       max_concurrent_agents: Math.max(
         1,
-        Math.min(10, config?.max_concurrent_agents ?? 3),
+        Math.min(10, typeof cfg.max_concurrent_agents === 'number' ? cfg.max_concurrent_agents : 3),
       ),
       task_distribution_strategy: this.validateEnum(
-        config?.task_distribution_strategy,
+        cfg.task_distribution_strategy,
         ["capability-based", "load-balanced", "round-robin"],
         "capability-based",
       ),
       conflict_resolution: this.validateEnum(
-        config?.conflict_resolution,
+        cfg.conflict_resolution,
         ["expert-priority", "majority-vote", "consensus"],
         "expert-priority",
       ),
-      progress_tracking: config?.progress_tracking ?? true,
-      session_persistence: config?.session_persistence ?? true,
+      progress_tracking: typeof cfg.progress_tracking === 'boolean' ? cfg.progress_tracking : true,
+      session_persistence: typeof cfg.session_persistence === 'boolean' ? cfg.session_persistence : true,
     };
   }
 
@@ -141,26 +147,30 @@ export class StringRayConfigLoader {
    * Parse autonomous reporting configuration
    */
   private parseAutonomousReportingConfig(
-    config: any,
+    config: unknown,
   ): AutonomousReportingConfig {
+    if (!config || typeof config !== 'object') {
+      return this.getDefaultConfig().autonomous_reporting;
+    }
+    const cfg = config as Record<string, unknown>;
     return {
-      enabled: config?.enabled ?? false,
+      enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : false,
       interval_minutes: Math.max(
         5,
-        Math.min(1440, config?.interval_minutes ?? 60),
+        Math.min(1440, typeof cfg.interval_minutes === 'number' ? cfg.interval_minutes : 60),
       ), // 5min to 24hrs
-      auto_schedule: config?.auto_schedule ?? false,
-      include_health_assessment: config?.include_health_assessment ?? true,
-      include_agent_activities: config?.include_agent_activities ?? true,
-      include_pipeline_operations: config?.include_pipeline_operations ?? true,
-      include_critical_issues: config?.include_critical_issues ?? true,
-      include_recommendations: config?.include_recommendations ?? true,
+      auto_schedule: typeof cfg.auto_schedule === 'boolean' ? cfg.auto_schedule : false,
+      include_health_assessment: typeof cfg.include_health_assessment === 'boolean' ? cfg.include_health_assessment : true,
+      include_agent_activities: typeof cfg.include_agent_activities === 'boolean' ? cfg.include_agent_activities : true,
+      include_pipeline_operations: typeof cfg.include_pipeline_operations === 'boolean' ? cfg.include_pipeline_operations : true,
+      include_critical_issues: typeof cfg.include_critical_issues === 'boolean' ? cfg.include_critical_issues : true,
+      include_recommendations: typeof cfg.include_recommendations === 'boolean' ? cfg.include_recommendations : true,
       report_retention_days: Math.max(
         1,
-        Math.min(365, config?.report_retention_days ?? 30),
+        Math.min(365, typeof cfg.report_retention_days === 'number' ? cfg.report_retention_days : 30),
       ),
-      notification_channels: Array.isArray(config?.notification_channels)
-        ? config.notification_channels.filter((ch: string) =>
+      notification_channels: Array.isArray(cfg.notification_channels)
+        ? (cfg.notification_channels as string[]).filter((ch) =>
             ["console", "file", "webhook"].includes(ch),
           )
         : ["console"],
@@ -200,8 +210,8 @@ export class StringRayConfigLoader {
   /**
    * Validate enum values
    */
-  private validateEnum<T>(value: any, allowedValues: T[], defaultValue: T): T {
-    return allowedValues.includes(value) ? value : defaultValue;
+  private validateEnum<T>(value: unknown, allowedValues: T[], defaultValue: T): T {
+    return allowedValues.includes(value as T) ? value as T : defaultValue;
   }
 
   /**

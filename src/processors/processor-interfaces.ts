@@ -9,7 +9,27 @@
  * @version 1.0.0
  */
 
-import { ProcessorContext, ProcessorResult } from "./processor-types.js";
+import {
+  ProcessorContext,
+  ProcessorResult,
+  LogProtectionProcessorResult,
+  TestExecutionResult,
+  CodexComplianceProcessorResult,
+  VersionComplianceProcessorResult,
+  TestAutoCreationResult,
+  CoverageAnalysisResult,
+} from "./processor-types.js";
+
+/**
+ * Union of all known processor result types for type safety
+ */
+export type ProcessorResultData =
+  | LogProtectionProcessorResult
+  | TestExecutionResult
+  | CodexComplianceProcessorResult
+  | VersionComplianceProcessorResult
+  | TestAutoCreationResult
+  | CoverageAnalysisResult;
 
 /**
  * Processor interface - all processors must implement this

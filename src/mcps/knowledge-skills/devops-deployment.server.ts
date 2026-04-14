@@ -62,10 +62,148 @@ interface PipelineMetrics {
 interface InfrastructureRecommendation {
   platform: "aws" | "azure" | "gcp" | "kubernetes" | "docker";
   service: string;
-  configuration: Record<string, any>;
+  configuration: Record<string, unknown>;
   scalingStrategy: string;
   costEstimate: number;
   reliability: number;
+}
+
+interface CICDPipelineArgs {
+  pipelineConfig: string;
+  platform: string;
+  includeSecurity?: boolean;
+}
+
+interface DeploymentStrategyArgs {
+  applicationType: string;
+  scale: string;
+  availability: string;
+  budget?: string;
+}
+
+interface InfrastructureCodeArgs {
+  platform: string;
+  services: string[];
+  environment: string;
+  scaling?: boolean;
+}
+
+interface DeploymentMetricsInput {
+  deployTime?: number;
+  failureRate?: number;
+  rollbackTime?: number;
+}
+
+interface DeploymentPerformanceArgs {
+  currentMetrics: DeploymentMetricsInput;
+  constraints?: {
+    maxDowntime?: number;
+    budget?: number;
+    teamSize?: number;
+  };
+}
+
+interface McpToolResponse {
+  content: Array<{ type: string; text: string }>;
+  data?: Record<string, unknown>;
+}
+
+interface PipelineStructureAnalysis {
+  parallelization: number;
+  dependencyComplexity: number;
+  stageDistribution: Record<string, number>;
+  optimizationOpportunities: string[];
+}
+
+interface PipelineSecurityAnalysis {
+  securityGates: SecurityGate[];
+  recommendations: string[];
+}
+
+type PipelineScoreAnalysis = PipelineStructureAnalysis & {
+  totalDuration?: number;
+  performanceMetrics?: PipelineMetrics;
+};
+
+interface StrategyRequirements {
+  applicationType: string;
+  scale: string;
+  availability: string;
+  budget: string;
+}
+
+interface StrategyImplementation {
+  steps: string[];
+  tools: string[];
+  metrics: string[];
+}
+
+interface InfrastructureCodeResult {
+  code: string;
+  scaling: {
+    min: number;
+    max: number;
+    cpuThreshold: number;
+    memoryThreshold: number;
+  };
+}
+
+interface MonitoringConfig {
+  dashboards: string[];
+  alerts: string[];
+  metrics: string[];
+}
+
+interface SecurityConfig {
+  policies: string[];
+  tools: string[];
+  compliance: string[];
+}
+
+interface DeploymentSpeedResult {
+  deployTime: number;
+  rollbackTime: number;
+  efficiency: number;
+}
+
+interface DeploymentMetricsAnalysis {
+  efficiency: number;
+  reliability: number;
+  speed: DeploymentSpeedResult;
+  bottlenecks: string[];
+}
+
+interface DeploymentBottleneck {
+  issue: string;
+  impact: string;
+  cause: string;
+}
+
+interface DeploymentOptimization {
+  title: string;
+  effort: string;
+  impact: string;
+  description: string;
+}
+
+interface DeploymentConstraints {
+  maxDowntime?: number;
+  budget?: number;
+  teamSize?: number;
+  currentMetrics?: DeploymentMetricsInput;
+}
+
+interface RoadmapPhase {
+  name: string;
+  duration: number;
+  optimizations: DeploymentOptimization[];
+  focus: string;
+}
+
+interface OptimizationRoadmap {
+  phases: RoadmapPhase[];
+  totalDuration: number;
+  finalMetrics: DeploymentMetricsInput;
 }
 
 class StringRayDevOpsDeploymentServer {
@@ -228,20 +366,20 @@ class StringRayDevOpsDeploymentServer {
 
       switch (name) {
         case "analyze_ci_cd_pipeline":
-          return await this.analyzeCICDPipeline(args);
+          return await this.analyzeCICDPipeline(args as unknown as CICDPipelineArgs);
         case "design_deployment_strategy":
-          return await this.designDeploymentStrategy(args);
+          return await this.designDeploymentStrategy(args as unknown as DeploymentStrategyArgs);
         case "generate_infrastructure_code":
-          return await this.generateInfrastructureCode(args);
+          return await this.generateInfrastructureCode(args as unknown as InfrastructureCodeArgs);
         case "optimize_deployment_performance":
-          return await this.optimizeDeploymentPerformance(args);
+          return await this.optimizeDeploymentPerformance(args as unknown as DeploymentPerformanceArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeCICDPipeline(args: any): Promise<any> {
+  private async analyzeCICDPipeline(args: CICDPipelineArgs) {
     const { pipelineConfig, platform, includeSecurity = true } = args;
 
     try {
@@ -270,21 +408,21 @@ class StringRayDevOpsDeploymentServer {
               `CI/CD Pipeline Analysis for ${platform.toUpperCase()}:\n\n` +
               `📊 PIPELINE METRICS\n` +
               `Stages: ${pipeline.stages.length}\n` +
-              `Total Duration: ${analysis.totalDuration} minutes\n` +
+              `Total Duration: ${pipeline.totalDuration} minutes\n` +
               `Parallelizable Stages: ${pipeline.stages.filter((s) => s.parallelizable).length}/${pipeline.stages.length}\n` +
-              `Bottleneck Stage: ${analysis.bottleneckStage}\n\n` +
+              `Bottleneck Stage: ${pipeline.bottleneckStage}\n\n` +
               `🔍 PERFORMANCE ANALYSIS\n` +
-              `Build Time: ${analysis.performanceMetrics.buildTime} min\n` +
-              `Test Time: ${analysis.performanceMetrics.testTime} min\n` +
-              `Deploy Time: ${analysis.performanceMetrics.deployTime} min\n` +
-              `Failure Rate: ${(analysis.performanceMetrics.failureRate * 100).toFixed(1)}%\n` +
-              `MTTR: ${analysis.performanceMetrics.meanTimeToRecovery} min\n\n` +
+              `Build Time: ${pipeline.performanceMetrics.buildTime} min\n` +
+              `Test Time: ${pipeline.performanceMetrics.testTime} min\n` +
+              `Deploy Time: ${pipeline.performanceMetrics.deployTime} min\n` +
+              `Failure Rate: ${(pipeline.performanceMetrics.failureRate * 100).toFixed(1)}%\n` +
+              `MTTR: ${pipeline.performanceMetrics.meanTimeToRecovery} min\n\n` +
               `${
                 includeSecurity
                   ? `🛡️ SECURITY GATES\n` +
-                    `Total Gates: ${securityAnalysis.securityGates.length}\n` +
-                    `Blocking Gates: ${securityAnalysis.securityGates.filter((g: SecurityGate) => g.blocking).length}\n` +
-                    `Coverage: ${securityAnalysis.securityGates.reduce((sum: number, g: SecurityGate) => sum + g.coverage, 0) / securityAnalysis.securityGates.length}%\n\n`
+                    `Total Gates: ${securityAnalysis!.securityGates.length}\n` +
+                    `Blocking Gates: ${securityAnalysis!.securityGates.filter((g: SecurityGate) => g.blocking).length}\n` +
+                    `Coverage: ${securityAnalysis!.securityGates.reduce((sum: number, g: SecurityGate) => sum + g.coverage, 0) / securityAnalysis!.securityGates.length}%\n\n`
                   : ""
               }` +
               `💡 OPTIMIZATION RECOMMENDATIONS\n${recommendations.map((rec, i) => `${i + 1}. ${rec}`).join("\n")}`,
@@ -310,7 +448,7 @@ class StringRayDevOpsDeploymentServer {
     }
   }
 
-  private async designDeploymentStrategy(args: any): Promise<any> {
+  private async designDeploymentStrategy(args: DeploymentStrategyArgs) {
     const { applicationType, scale, availability, budget = "balanced" } = args;
 
     try {
@@ -369,7 +507,7 @@ class StringRayDevOpsDeploymentServer {
     }
   }
 
-  private async generateInfrastructureCode(args: any): Promise<any> {
+  private async generateInfrastructureCode(args: InfrastructureCodeArgs) {
     const { platform, services, environment, scaling = true } = args;
 
     try {
@@ -436,7 +574,7 @@ class StringRayDevOpsDeploymentServer {
     }
   }
 
-  private async optimizeDeploymentPerformance(args: any): Promise<any> {
+  private async optimizeDeploymentPerformance(args: DeploymentPerformanceArgs) {
     const { currentMetrics, constraints = {} } = args;
 
     try {
@@ -470,11 +608,11 @@ class StringRayDevOpsDeploymentServer {
               `Team Size: ${constraints.teamSize || "N/A"} people\n\n` +
               `🔍 BOTTLENECK ANALYSIS\n${bottlenecks.map((b, i) => `${i + 1}. ${b.issue} (Impact: ${b.impact})`).join("\n")}\n\n` +
               `⚡ OPTIMIZATION RECOMMENDATIONS\n${optimizations.map((opt, i) => `${i + 1}. ${opt.title} (Effort: ${opt.effort}, Impact: ${opt.impact})`).join("\n")}\n\n` +
-              `🗓️ OPTIMIZATION ROADMAP\n${roadmap.phases.map((phase: any, i: number) => `Phase ${i + 1}: ${phase.name} (${phase.duration} weeks)`).join("\n")}\n\n` +
+              `🗓️ OPTIMIZATION ROADMAP\n${roadmap.phases.map((phase: RoadmapPhase, i: number) => `Phase ${i + 1}: ${phase.name} (${phase.duration} weeks)`).join("\n")}\n\n` +
               `📈 PROJECTED IMPROVEMENTS\n` +
-              `Deploy Time: ${roadmap.finalMetrics.deployTime} min (-${(((currentMetrics.deployTime - roadmap.finalMetrics.deployTime) / currentMetrics.deployTime) * 100).toFixed(0)}%)\n` +
-              `Failure Rate: ${(roadmap.finalMetrics.failureRate * 100).toFixed(1)}% (-${(((currentMetrics.failureRate - roadmap.finalMetrics.failureRate) / currentMetrics.failureRate) * 100).toFixed(0)}%)\n` +
-              `Rollback Time: ${roadmap.finalMetrics.rollbackTime} min (-${(((currentMetrics.rollbackTime - roadmap.finalMetrics.rollbackTime) / currentMetrics.rollbackTime) * 100).toFixed(0)}%)`,
+              `Deploy Time: ${roadmap.finalMetrics.deployTime ?? 0} min (-${currentMetrics.deployTime ? (((currentMetrics.deployTime - (roadmap.finalMetrics.deployTime ?? 0)) / currentMetrics.deployTime) * 100).toFixed(0) : 0}%)\n` +
+              `Failure Rate: ${((roadmap.finalMetrics.failureRate ?? 0) * 100).toFixed(1)}% (-${currentMetrics.failureRate ? (((currentMetrics.failureRate - (roadmap.finalMetrics.failureRate ?? 0)) / currentMetrics.failureRate) * 100).toFixed(0) : 0}%)\n` +
+              `Rollback Time: ${roadmap.finalMetrics.rollbackTime ?? 0} min (-${currentMetrics.rollbackTime ? (((currentMetrics.rollbackTime - (roadmap.finalMetrics.rollbackTime ?? 0)) / currentMetrics.rollbackTime) * 100).toFixed(0) : 0}%)`,
           },
         ],
         data: {
@@ -624,7 +762,7 @@ class StringRayDevOpsDeploymentServer {
     };
   }
 
-  private analyzePipelineStructure(pipeline: PipelineAnalysis): any {
+  private analyzePipelineStructure(pipeline: PipelineAnalysis): PipelineStructureAnalysis {
     return {
       parallelization:
         pipeline.stages.filter((s) => s.parallelizable).length /
@@ -637,7 +775,7 @@ class StringRayDevOpsDeploymentServer {
 
   private generatePipelineOptimizations(
     pipeline: PipelineAnalysis,
-    analysis: any,
+    analysis: PipelineStructureAnalysis,
   ): string[] {
     const optimizations: string[] = [];
 
@@ -675,7 +813,7 @@ class StringRayDevOpsDeploymentServer {
     return optimizations;
   }
 
-  private analyzePipelineSecurity(pipeline: PipelineAnalysis): any {
+  private analyzePipelineSecurity(pipeline: PipelineAnalysis): PipelineSecurityAnalysis {
     const securityGates: SecurityGate[] = [
       {
         name: "SAST",
@@ -710,15 +848,14 @@ class StringRayDevOpsDeploymentServer {
     };
   }
 
-  private calculatePipelineScore(analysis: any, securityAnalysis: any): number {
+  private calculatePipelineScore(analysis: PipelineScoreAnalysis, securityAnalysis: PipelineSecurityAnalysis | null): number {
     let score = 100;
 
     // Deduct for long duration
-    if (analysis.totalDuration > 30) score -= 20;
-    if (analysis.totalDuration > 60) score -= 30;
+    if ((analysis.totalDuration ?? 0) > 30) score -= 20;
+    if ((analysis.totalDuration ?? 0) > 60) score -= 30;
 
-    // Deduct for high failure rate
-    score -= analysis.performanceMetrics.failureRate * 100;
+    score -= (analysis.performanceMetrics?.failureRate ?? 0) * 100;
 
     // Deduct for poor parallelization
     if (analysis.parallelization < 0.3) score -= 15;
@@ -798,7 +935,7 @@ class StringRayDevOpsDeploymentServer {
 
   private selectOptimalStrategy(
     strategies: DeploymentStrategy[],
-    requirements: any,
+    requirements: StrategyRequirements,
   ): DeploymentStrategy {
     // Score strategies based on requirements
     const scored = strategies.map((strategy) => {
@@ -842,7 +979,7 @@ class StringRayDevOpsDeploymentServer {
     return (topScored?.strategy || strategies[0]) as DeploymentStrategy;
   }
 
-  private generateStrategyImplementation(strategy: DeploymentStrategy): any {
+  private generateStrategyImplementation(strategy: DeploymentStrategy): StrategyImplementation {
     const implementations = {
       "blue-green": {
         steps: [
@@ -993,7 +1130,7 @@ class StringRayDevOpsDeploymentServer {
     platform: string,
     recommendations: InfrastructureRecommendation[],
     scaling: boolean,
-  ): any {
+  ): InfrastructureCodeResult {
     let code = "";
 
     switch (platform) {
@@ -1163,7 +1300,7 @@ spec:
   private generateMonitoringConfiguration(
     platform: string,
     services: string[],
-  ): any {
+  ): MonitoringConfig {
     return {
       dashboards: [
         "Application Performance Dashboard",
@@ -1192,7 +1329,7 @@ spec:
   private generateSecurityConfiguration(
     platform: string,
     environment: string,
-  ): any {
+  ): SecurityConfig {
     return {
       policies: [
         "Least privilege access control",
@@ -1221,7 +1358,7 @@ spec:
     };
   }
 
-  private analyzeDeploymentMetrics(metrics: any): any {
+  private analyzeDeploymentMetrics(metrics: DeploymentMetricsInput): DeploymentMetricsAnalysis {
     return {
       efficiency: this.calculateDeploymentEfficiency(metrics),
       reliability: this.calculateDeploymentReliability(metrics),
@@ -1231,9 +1368,9 @@ spec:
   }
 
   private identifyDeploymentBottlenecks(
-    analysis: any,
-    constraints: any,
-  ): any[] {
+    analysis: DeploymentMetricsAnalysis,
+    constraints: DeploymentConstraints,
+  ): DeploymentBottleneck[] {
     const bottlenecks = [];
 
     if (analysis.speed.deployTime > 30) {
@@ -1245,7 +1382,7 @@ spec:
       });
     }
 
-    if (analysis.reliability.failureRate > 0.1) {
+    if (analysis.reliability < 90) {
       bottlenecks.push({
         issue: "High failure rate",
         impact: "critical",
@@ -1277,10 +1414,10 @@ spec:
   }
 
   private generateDeploymentOptimizations(
-    bottlenecks: any[],
-    constraints: any,
-  ): any[] {
-    const optimizations: any[] = [];
+    bottlenecks: DeploymentBottleneck[],
+    constraints: DeploymentConstraints,
+  ): DeploymentOptimization[] {
+    const optimizations: DeploymentOptimization[] = [];
 
     bottlenecks.forEach((bottleneck) => {
       switch (bottleneck.issue) {
@@ -1320,9 +1457,9 @@ spec:
   }
 
   private createOptimizationRoadmap(
-    optimizations: any[],
-    constraints: any,
-  ): any {
+    optimizations: DeploymentOptimization[],
+    constraints: DeploymentConstraints,
+  ): OptimizationRoadmap {
     const phases = [];
     let currentWeek = 0;
 
@@ -1372,32 +1509,32 @@ spec:
       phases,
       totalDuration: currentWeek,
       finalMetrics: {
-        deployTime: constraints.currentMetrics?.deployTime * 0.6 || 10,
-        failureRate: constraints.currentMetrics?.failureRate * 0.3 || 0.02,
+        deployTime: (constraints.currentMetrics?.deployTime ?? 10) * 0.6,
+        failureRate: (constraints.currentMetrics?.failureRate ?? 0.05) * 0.3,
         rollbackTime: Math.min(
-          constraints.currentMetrics?.rollbackTime * 0.2 || 2,
+          (constraints.currentMetrics?.rollbackTime ?? 5) * 0.2,
           5,
         ),
       },
     };
   }
 
-  private calculateDeploymentEfficiency(metrics: any): number {
+  private calculateDeploymentEfficiency(metrics: DeploymentMetricsInput): number {
     // Efficiency based on resource utilization and process optimization
     let efficiency = 100;
 
-    if (metrics.deployTime > 20) efficiency -= 20;
-    if (metrics.failureRate > 0.05) efficiency -= 15;
-    if (metrics.rollbackTime > 5) efficiency -= 10;
+    if ((metrics.deployTime ?? 0) > 20) efficiency -= 20;
+    if ((metrics.failureRate ?? 0) > 0.05) efficiency -= 15;
+    if ((metrics.rollbackTime ?? 0) > 5) efficiency -= 10;
 
     return Math.max(0, efficiency);
   }
 
-  private calculateDeploymentReliability(metrics: any): number {
-    return Math.max(0, 100 - metrics.failureRate * 100);
+  private calculateDeploymentReliability(metrics: DeploymentMetricsInput): number {
+    return Math.max(0, 100 - (metrics.failureRate ?? 0) * 100);
   }
 
-  private calculateDeploymentSpeed(metrics: any): any {
+  private calculateDeploymentSpeed(metrics: DeploymentMetricsInput): DeploymentSpeedResult {
     return {
       deployTime: metrics.deployTime || 0,
       rollbackTime: metrics.rollbackTime || 0,
@@ -1405,12 +1542,12 @@ spec:
     };
   }
 
-  private identifyMetricBottlenecks(metrics: any): string[] {
+  private identifyMetricBottlenecks(metrics: DeploymentMetricsInput): string[] {
     const bottlenecks = [];
 
-    if (metrics.deployTime > 15) bottlenecks.push("deployment-speed");
-    if (metrics.failureRate > 0.05) bottlenecks.push("reliability");
-    if (metrics.rollbackTime > 3) bottlenecks.push("rollback-speed");
+    if ((metrics.deployTime ?? 0) > 15) bottlenecks.push("deployment-speed");
+    if ((metrics.failureRate ?? 0) > 0.05) bottlenecks.push("reliability");
+    if ((metrics.rollbackTime ?? 0) > 3) bottlenecks.push("rollback-speed");
 
     return bottlenecks;
   }
@@ -1422,7 +1559,7 @@ spec:
     );
   }
 
-  private analyzeStageDistribution(stages: PipelineStage[]): any {
+  private analyzeStageDistribution(stages: PipelineStage[]): Record<string, number> {
     const types = stages.reduce(
       (acc, stage) => {
         acc[stage.type] = (acc[stage.type] || 0) + 1;

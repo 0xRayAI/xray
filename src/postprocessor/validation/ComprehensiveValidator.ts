@@ -84,9 +84,10 @@ class ComprehensiveValidator {
             "success",
             { jobId },
           );
-        } catch (error: any) {
+        } catch (error) {
+          const execError = error as { stdout?: unknown; stderr?: unknown };
           const output =
-            error.stdout?.toString() || error.stderr?.toString() || "";
+            execError.stdout?.toString() || execError.stderr?.toString() || "";
           const errorCount = (output.match(/error/g) || []).length;
           const warningCount = (output.match(/warning/g) || []).length;
 
@@ -137,7 +138,11 @@ class ComprehensiveValidator {
   private async runTests(jobId: string): Promise<{
     errors: string[];
     warnings: string[];
-    testResults?: any;
+    testResults?: {
+      passed: number;
+      failed: number;
+      total: number;
+    };
   }> {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -247,8 +252,9 @@ class ComprehensiveValidator {
             "success",
             { jobId },
           );
-        } catch (error: any) {
-          const output = error.stdout?.toString() || "";
+        } catch (error) {
+          const execError = error as { stdout?: unknown };
+          const output = execError.stdout?.toString() || "";
           const vulnCount = (output.match(/vulnerabilities/g) || []).length;
           if (vulnCount > 0) {
             errors.push(

@@ -585,28 +585,37 @@ export class ProcessorManager {
           result = await this.executeSpawnGovernance(safeContext);
           break;
         case "performanceBudget":
-          result = await this.executePerformanceBudget(safeContext as PreValidateContext);
+          result = await this.executePerformanceBudget(safeContext as unknown as PreValidateContext);
           break;
         case "asyncPattern":
-          result = await this.executeAsyncPattern(safeContext as PreValidateContext);
+          result = await this.executeAsyncPattern(safeContext as unknown as PreValidateContext);
           break;
         case "consoleLogGuard":
-          result = await this.executeConsoleLogGuard(safeContext as PreValidateContext);
+          result = await this.executeConsoleLogGuard(safeContext as unknown as PreValidateContext);
           break;
         case "postProcessorChain":
-          result = await this.executePostProcessorChain(safeContext as PostValidateContext);
+          result = await this.executePostProcessorChain(safeContext as unknown as PostValidateContext);
+          break;
+        case "versionCompliance":
+          result = await this.executeVersionCompliance(safeContext as unknown as PostValidateContext);
+          break;
+        case "asyncPattern":
+          result = await this.executeAsyncPattern(safeContext as unknown as PostValidateContext);
+          break;
+        case "consoleLogGuardPost":
+          result = await this.executeConsoleLogGuard(safeContext as unknown as PostValidateContext);
           break;
         case "publishPreflight":
-          result = await this.executePublishPreflight(safeContext as PostValidateContext);
+          result = await this.executePublishPreflight(safeContext as unknown as PostValidateContext);
           break;
         case "storytellingTrigger":
-          result = await this.executeStorytellingTrigger(safeContext as PostValidateContext);
+          result = await this.executeStorytellingTrigger(safeContext as unknown as PostValidateContext);
           break;
         case "inferenceImprovement":
-          result = await this.executeInferenceImprovement(safeContext as PostValidateContext);
+          result = await this.executeInferenceImprovement(safeContext as unknown as PostValidateContext);
           break;
         case "sessionSummary":
-          result = await this.executeSessionSummary(safeContext as PostValidateContext);
+          result = await this.executeSessionSummary(safeContext as unknown as PostValidateContext);
           break;
         default:
           throw new Error(`Unknown processor: ${name}`);
@@ -1817,7 +1826,7 @@ export class ProcessorManager {
     const { PublishPreflightProcessor } =
       await import("./implementations/publish-preflight-processor.js");
     const processor = new PublishPreflightProcessor();
-    return processor.execute(context as ProcessorContext);
+    return processor.execute(context as unknown as ProcessorContext);
   }
 
   /**
@@ -1827,7 +1836,7 @@ export class ProcessorManager {
     const { StorytellingTriggerProcessor } =
       await import("./implementations/storytelling-trigger-processor.js");
     const processor = new StorytellingTriggerProcessor();
-    return processor.execute(context as ProcessorContext);
+    return processor.execute(context as unknown as ProcessorContext);
   }
 
   /**
@@ -1837,7 +1846,7 @@ export class ProcessorManager {
     const { InferenceImprovementProcessor } =
       await import("./implementations/inference-improvement-processor.js");
     const processor = new InferenceImprovementProcessor();
-    return processor.execute(context as ProcessorContext);
+    return processor.execute(context as unknown as ProcessorContext);
   }
 
   /**
@@ -1847,6 +1856,6 @@ export class ProcessorManager {
     const { SessionSummaryProcessor } =
       await import("./implementations/session-summary-processor.js");
     const processor = new SessionSummaryProcessor();
-    return processor.execute(context as ProcessorContext);
+    return processor.execute(context as unknown as ProcessorContext);
   }
 }

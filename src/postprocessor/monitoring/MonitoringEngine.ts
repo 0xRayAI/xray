@@ -7,6 +7,27 @@ import { frameworkLogger } from "../../core/framework-logger.js";
 import { SessionMonitor } from "../../session/session-monitor.js";
 import { MonitoringResult } from "../types.js";
 
+export interface CIStatus {
+  status: "success" | "failure" | "running";
+  failedJobs: string[];
+  totalJobs: number;
+  duration: number;
+}
+
+export interface PerformanceStatus {
+  status: "passed" | "failed" | "warning";
+  score: number;
+  regressions: string[];
+  duration: number;
+}
+
+export interface SecurityStatus {
+  status: "passed" | "failed" | "warning";
+  vulnerabilities: number;
+  criticalVulnerabilities: number;
+  scanDuration: number;
+}
+
 export class PostProcessorMonitoringEngine {
   constructor(
     private stateManager: StringRayStateManager,
@@ -49,7 +70,7 @@ export class PostProcessorMonitoringEngine {
     };
   }
 
-  private async checkCIStatus(commitSha: string): Promise<any> {
+  private async checkCIStatus(commitSha: string): Promise<CIStatus> {
     // Use existing GitHub Actions monitor
     try {
       const { execSync } = await import("child_process");
@@ -66,22 +87,23 @@ export class PostProcessorMonitoringEngine {
         output.includes("SUCCESS") ||
         output.includes("All workflows passed")
       ) {
-        return { status: "success", failedJobs: [] };
+        return { status: "success", failedJobs: [], totalJobs: 1, duration: 0 };
       } else if (output.includes("FAILURE") || output.includes("failed")) {
-        return { status: "failure", failedJobs: ["ci-pipeline"] };
+        return { status: "failure", failedJobs: ["ci-pipeline"], totalJobs: 1, duration: 0 };
       } else {
-        return { status: "running", failedJobs: [] };
+        return { status: "running", failedJobs: [], totalJobs: 1, duration: 0 };
       }
     } catch (error) {
       return {
         status: "failure",
         failedJobs: ["ci-pipeline"],
-        error: error instanceof Error ? error.message : String(error),
+        totalJobs: 1,
+        duration: 0,
       };
     }
   }
 
-  private async checkPerformanceStatus(commitSha: string): Promise<any> {
+  private async checkPerformanceStatus(_commitSha: string): Promise<PerformanceStatus> {
     // Check if performance tests passed
     try {
       const { execSync } = await import("child_process");
@@ -89,17 +111,18 @@ export class PostProcessorMonitoringEngine {
         encoding: "utf8",
         timeout: 120000,
       });
-      return { status: "passed", score: 1.0, regressions: [] };
+      return { status: "passed", score: 1.0, regressions: [], duration: 0 };
     } catch (error) {
       return {
         status: "failed",
         score: 0.0,
         regressions: ["performance-tests"],
+        duration: 0,
       };
     }
   }
 
-  private async checkSecurityStatus(commitSha: string): Promise<any> {
+  private async checkSecurityStatus(_commitSha: string): Promise<SecurityStatus> {
     // Check for security issues
     try {
       const { execSync } = await import("child_process");
@@ -111,20 +134,22 @@ export class PostProcessorMonitoringEngine {
         status: "passed",
         vulnerabilities: 0,
         criticalVulnerabilities: 0,
+        scanDuration: 0,
       };
     } catch (error) {
       return {
         status: "failed",
         vulnerabilities: 1,
         criticalVulnerabilities: 1,
+        scanDuration: 0,
       };
     }
   }
 
   private determineOverallStatus(
-    ci: any,
-    performance: any,
-    security: any,
+    ci: CIStatus,
+    performance: PerformanceStatus,
+    security: SecurityStatus,
   ): "success" | "failure" | "running" {
     if (ci.status === "failure" || performance.status === "failed") {
       return "failure";
@@ -135,7 +160,7 @@ export class PostProcessorMonitoringEngine {
     return "success";
   }
 
-  async getStatus(): Promise<any> {
+  async getStatus(): Promise<{ monitoringEnabled: boolean; activeSessions: number; lastCheck: Date }> {
     return {
       monitoringEnabled: true,
       activeSessions: 0, // Placeholder

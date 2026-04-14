@@ -36,7 +36,7 @@ export interface ConsentCategory {
 export class ConsentManager {
   private configPath: string;
   private config: ConsentConfiguration | null = null;
-  private submissionQueue: any[] = [];
+  private submissionQueue: unknown[] = [];
   
   constructor(configPath: string | undefined = undefined) {
 this.configPath = configPath || resolveConfigPath("consent.json") || path.join(getConfigDir(), "consent.json");
@@ -293,7 +293,7 @@ this.configPath = configPath || resolveConfigPath("consent.json") || path.join(g
   /**
    * Add item to submission queue
    */
-  async queueSubmission(data: any): Promise<void> {
+  async queueSubmission(data: unknown): Promise<void> {
     if (!this.canSubmit("all")) {
       throw new Error("Analytics is disabled or category not enabled");
     }

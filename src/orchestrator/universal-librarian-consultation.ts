@@ -12,14 +12,35 @@ export interface SystemAction {
     | "code-change"
     | "rule-modification"
     | "architectural-change"
-    | "configuration-update"
-    | "documentation-update";
+    | "configuration_update"
+    | "documentation_update";
   description: string;
   scope: "framework" | "agent" | "tool" | "configuration" | "documentation";
   complexity: "low" | "medium" | "high" | "critical";
   files?: string[];
   components?: string[];
   metadata?: { triggeredBy?: string; [key: string]: unknown };
+}
+
+export interface LibrarianConsultationResult {
+  approved: boolean;
+  documentationImpact: "none" | "minor" | "major" | "critical";
+  versionUpdates: VersionUpdate[];
+  recommendations: string[];
+  pairProgrammingRequired: boolean;
+}
+
+export interface VersionUpdate {
+  file: string;
+  field: string;
+  oldVersion: string;
+  newVersion: string;
+  reason: string;
+}
+
+export interface ActionResult {
+  success: boolean;
+  [key: string]: unknown;
 }
 
 export interface LibrarianConsultationResult {
@@ -121,7 +142,7 @@ export class UniversalLibrarianConsultation {
   /**
    * Post-action consultation - must be called after any major system action
    */
-  async consultAfterAction(action: SystemAction, result: any): Promise<void> {
+  async consultAfterAction(action: SystemAction, result: ActionResult): Promise<void> {
     await frameworkLogger.log(
       "universal-librarian-consultation",
       "post-action-consultation-started",
@@ -274,7 +295,7 @@ export class UniversalLibrarianConsultation {
    */
   private async updateDocumentation(
     action: SystemAction,
-    result: any,
+    _result: ActionResult,
   ): Promise<void> {
     await frameworkLogger.log(
       "universal-librarian-consultation",
@@ -293,7 +314,7 @@ export class UniversalLibrarianConsultation {
    */
   private async updateVersions(
     action: SystemAction,
-    result: any,
+    _result: ActionResult,
   ): Promise<void> {
     await frameworkLogger.log(
       "universal-librarian-consultation",

@@ -8,6 +8,7 @@ import {
   EscalationResult,
   IncidentReport,
   EventTimeline,
+  MonitoringResult,
 } from "../types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
@@ -34,7 +35,7 @@ export interface AlertMessage {
   title: string;
   message: string;
   context: PostProcessorContext;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface IncidentReportPayload {
@@ -73,7 +74,7 @@ export class EscalationEngine {
     context: PostProcessorContext,
     attempts: number,
     error: string,
-    monitoringResults: any[],
+    monitoringResults: MonitoringResult[],
   ): Promise<EscalationResult | null> {
     let escalationLevel: "manual-intervention" | "rollback" | "emergency";
     let reason: string;
@@ -140,7 +141,7 @@ export class EscalationEngine {
     reason: string,
     error: string,
     attempts: number,
-    monitoringResults: any[],
+    monitoringResults: MonitoringResult[],
   ): Promise<IncidentReport> {
     const incidentId = `incident-${context.commitSha}-${Date.now()}`;
 
@@ -245,11 +246,11 @@ export class EscalationEngine {
       case "pagerduty":
         return this.sendToPagerDuty(endpoint, payload);
       case "webhook":
-        return this.sendWebhook(endpoint, payload);
+        return this.sendWebhook(endpoint, payload as unknown as Record<string, unknown>);
       case "email":
         return this.sendEmail(endpoint, payload);
       default:
-        return this.sendWebhook(endpoint, payload);
+        return this.sendWebhook(endpoint, payload as unknown as Record<string, unknown>);
     }
   }
 
@@ -374,7 +375,7 @@ export class EscalationEngine {
   /**
    * Send generic webhook
    */
-  private async sendWebhook(endpoint: ReportingEndpoint, payload: any): Promise<boolean> {
+  private async sendWebhook(endpoint: ReportingEndpoint, payload: Record<string, unknown>): Promise<boolean> {
     try {
       const response = await fetch(endpoint.url, {
         method: "POST",

@@ -57,6 +57,54 @@ interface MobilePerformanceProfile {
   recommendations: string[];
 }
 
+interface MobilePerformanceMetrics {
+  appLaunchTime?: number;
+  memoryUsage?: number;
+  batteryDrain?: number;
+  networkRequests?: number;
+  uiFrameRate?: number;
+}
+
+interface IOSBlueprintArgs {
+  projectName: string;
+  language?: string;
+  architecture?: string;
+  features?: string[];
+}
+
+interface AndroidBlueprintArgs {
+  projectName: string;
+  uiFramework?: string;
+  architecture?: string;
+  features?: string[];
+}
+
+interface ReactNativeBlueprintArgs {
+  projectName: string;
+  expo?: boolean;
+  navigation?: string;
+  stateManagement?: string;
+  typescript?: boolean;
+}
+
+interface FlutterBlueprintArgs {
+  projectName: string;
+  stateManagement?: string;
+  architecture?: string;
+}
+
+interface MobilePerformanceArgs {
+  platform: string;
+  metrics?: MobilePerformanceMetrics;
+}
+
+interface AppStoreMetadataArgs {
+  appName: string;
+  platform: string;
+  category?: string;
+  features?: string[];
+}
+
 class StringRayMobileDevelopmentServer {
   private server: Server;
 
@@ -264,35 +312,30 @@ class StringRayMobileDevelopmentServer {
 
       switch (name) {
         case "ios_blueprint":
-          return await this.generateIOSBlueprint(args);
+          return await this.generateIOSBlueprint(args ?? {});
         case "android_blueprint":
-          return await this.generateAndroidBlueprint(args);
+          return await this.generateAndroidBlueprint(args ?? {});
         case "react_native_boilerplate":
-          return await this.generateReactNativeBlueprint(args);
+          return await this.generateReactNativeBlueprint(args ?? {});
         case "flutter_boilerplate":
-          return await this.generateFlutterBlueprint(args);
+          return await this.generateFlutterBlueprint(args ?? {});
         case "mobile_performance_profile":
-          return await this.analyzeMobilePerformance(args);
+          return await this.analyzeMobilePerformance(args ?? {});
         case "app_store_metadata":
-          return await this.generateAppStoreMetadata(args);
+          return await this.generateAppStoreMetadata(args ?? {});
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async generateIOSBlueprint(args: any): Promise<any> {
-    const {
-      projectName,
-      language = "swiftui",
-      architecture = "mvvm",
-      features = [],
-    } = args;
+  private async generateIOSBlueprint(args: Record<string, unknown>) {
+    const { projectName, language = "swiftui", architecture = "mvvm", features = [] } = args as unknown as IOSBlueprintArgs;
 
     const blueprint: IOSBlueprint = {
       projectName,
       swiftVersion: "5.9",
-      architecture,
+      architecture: architecture as IOSBlueprint["architecture"],
       frameworks: ["Foundation", "SwiftUI", "Combine"],
       dependencies: [],
       files: [
@@ -367,19 +410,14 @@ class AuthService: ObservableObject {
     };
   }
 
-  private async generateAndroidBlueprint(args: any): Promise<any> {
-    const {
-      projectName,
-      uiFramework = "compose",
-      architecture = "mvvm",
-      features = [],
-    } = args;
+  private async generateAndroidBlueprint(args: Record<string, unknown>) {
+    const { projectName, uiFramework = "compose", architecture = "mvvm", features = [] } = args as unknown as AndroidBlueprintArgs;
 
     const blueprint: AndroidBlueprint = {
       projectName,
       kotlinVersion: "1.9.22",
       composeVersion: "1.5.8",
-      architecture,
+      architecture: architecture as AndroidBlueprint["architecture"],
       dependencies: [
         "androidx.core:core-ktx",
         "androidx.lifecycle:lifecycle-runtime-ktx",
@@ -394,11 +432,11 @@ class AuthService: ObservableObject {
 }
 
 android {
-    namespace = "${projectName.lowercase()}"
+    namespace = "${projectName.toLowerCase()}"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "${projectName.lowercase()}"
+        applicationId = "${projectName.toLowerCase()}"
         minSdk = 24
         targetSdk = 34
     }
@@ -428,14 +466,8 @@ dependencies {
     };
   }
 
-  private async generateReactNativeBlueprint(args: any): Promise<any> {
-    const {
-      projectName,
-      expo = true,
-      navigation = "react-navigation",
-      stateManagement = "zustand",
-      typescript = true,
-    } = args;
+  private async generateReactNativeBlueprint(args: Record<string, unknown>) {
+    const { projectName, expo = true, navigation = "react-navigation", stateManagement = "zustand", typescript = true } = args as unknown as ReactNativeBlueprintArgs;
 
     const blueprint: ReactNativeBlueprint = {
       projectName,
@@ -485,12 +517,8 @@ const styles = StyleSheet.create({
     };
   }
 
-  private async generateFlutterBlueprint(args: any): Promise<any> {
-    const {
-      projectName,
-      stateManagement = "provider",
-      architecture = "clean",
-    } = args;
+  private async generateFlutterBlueprint(args: Record<string, unknown>) {
+    const { projectName, stateManagement = "provider", architecture = "clean" } = args as unknown as FlutterBlueprintArgs;
 
     const blueprint: FlutterBlueprint = {
       projectName,
@@ -548,8 +576,8 @@ class HomePage extends StatelessWidget {
     };
   }
 
-  private async analyzeMobilePerformance(args: any): Promise<any> {
-    const { platform, metrics = {} } = args;
+  private async analyzeMobilePerformance(args: Record<string, unknown>) {
+    const { platform, metrics = {} } = args as unknown as MobilePerformanceArgs;
 
     const profile: MobilePerformanceProfile = {
       appLaunchTime: metrics.appLaunchTime || 2000,
@@ -593,8 +621,8 @@ class HomePage extends StatelessWidget {
     };
   }
 
-  private async generateAppStoreMetadata(args: any): Promise<any> {
-    const { appName, platform, category, features = [] } = args;
+  private async generateAppStoreMetadata(args: Record<string, unknown>) {
+    const { appName, platform, category, features = [] } = args as unknown as AppStoreMetadataArgs;
 
     const metadata = {
       appName,

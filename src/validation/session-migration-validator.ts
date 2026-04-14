@@ -2,11 +2,22 @@
  * Session Migration Validator
  * Validates session migration operations and state integrity
  */
-export class SessionMigrationValidator {
-  private stateManager: any;
-  private sessionCoordinator: any;
+import { MigrationPlan } from "../session/session-state-manager.js";
 
-  constructor(stateManager: any, sessionCoordinator: any) {
+export interface StateManager {
+  get(key: string): unknown;
+}
+
+export interface SessionCoordinator {
+  getSessionStatus(sessionId: string): { status: string; lastActivity: number } | null;
+  getSharedContext(sessionId: string, filter: string): Record<string, unknown> | null;
+}
+
+export class SessionMigrationValidator {
+  private stateManager: StateManager;
+  private sessionCoordinator: SessionCoordinator;
+
+  constructor(stateManager: StateManager, sessionCoordinator: SessionCoordinator) {
     this.stateManager = stateManager;
     this.sessionCoordinator = sessionCoordinator;
   }
@@ -14,7 +25,7 @@ export class SessionMigrationValidator {
   /**
    * Validate migration plan before execution
    */
-  async validateMigrationPlan(plan: any): Promise<{
+  async validateMigrationPlan(plan: MigrationPlan): Promise<{
     valid: boolean;
     errors: string[];
     warnings: string[];
@@ -80,7 +91,7 @@ export class SessionMigrationValidator {
    * Validate migration execution results
    */
   async validateMigrationResult(
-    plan: any,
+    plan: MigrationPlan,
     success: boolean,
   ): Promise<{
     valid: boolean;
@@ -127,7 +138,7 @@ export class SessionMigrationValidator {
   /**
    * Validate rollback capability
    */
-  validateRollbackCapability(plan: any): {
+  validateRollbackCapability(plan: MigrationPlan): {
     canRollback: boolean;
     reason?: string;
   } {

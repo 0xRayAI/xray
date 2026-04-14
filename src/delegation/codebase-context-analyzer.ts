@@ -15,7 +15,7 @@ export interface FileInfo {
   exports: string[];
   dependencies: string[];
   lastModified: Date;
-  content?: string; // Lazy-loaded, only when explicitly requested
+  content?: string | undefined;
 }
 
 export interface ModuleInfo {
@@ -76,10 +76,19 @@ export interface MemoryConfig {
   concurrencyLimit?: number; // Maximum concurrent file operations (default: 10)
 }
 
+export interface CodebaseAnalysisCacheData {
+  linesOfCode: number;
+  imports: string[];
+  exports: string[];
+  content?: string;
+  lastModified?: Date;
+  timestamp: number;
+}
+
 export class CodebaseContextAnalyzer {
   private projectRoot: string;
   private memoryConfig: MemoryConfig;
-  private analysisCache = new Map<string, { data: any; timestamp: number }>();
+  private analysisCache = new Map<string, CodebaseAnalysisCacheData>();
 
   private ignorePatterns = [
     /node_modules/,
@@ -224,7 +233,7 @@ export class CodebaseContextAnalyzer {
   /**
    * Get cached analysis result with intelligent invalidation
    */
-  private getCachedAnalysis(cacheKey: string): any | null {
+  private getCachedAnalysis(cacheKey: string): CodebaseAnalysisCacheData | null {
     if (!this.memoryConfig.enableCaching) return null;
 
     const cached = this.analysisCache.get(cacheKey);
@@ -241,7 +250,7 @@ export class CodebaseContextAnalyzer {
     if (filePath) {
       try {
         const currentStats = fs.statSync(filePath);
-        const cachedMtime = cached.data.lastModified?.getTime() || 0;
+        const cachedMtime = cached.lastModified?.getTime() || 0;
 
         if (currentStats.mtime.getTime() !== cachedMtime) {
           // File has changed, invalidate cache
@@ -255,13 +264,13 @@ export class CodebaseContextAnalyzer {
       }
     }
 
-    return cached.data;
+    return cached;
   }
 
   /**
    * Set cached analysis result with size limits
    */
-  private setCachedAnalysis(cacheKey: string, data: any): void {
+  private setCachedAnalysis(cacheKey: string, data: CodebaseAnalysisCacheData): void {
     if (!this.memoryConfig.enableCaching) return;
 
     // Prevent cache from growing too large (keep last 1000 entries)
@@ -273,7 +282,7 @@ export class CodebaseContextAnalyzer {
     }
 
     this.analysisCache.set(cacheKey, {
-      data,
+      ...data,
       timestamp: Date.now(),
     });
   }
@@ -537,7 +546,7 @@ export class CodebaseContextAnalyzer {
             exports: cached.exports,
             dependencies: cached.imports,
             lastModified: stats.mtime,
-            content: cached.content, // Lazy-loaded from cache
+            content: cached.content ?? undefined,
           };
         }
 
@@ -563,6 +572,7 @@ export class CodebaseContextAnalyzer {
             imports,
             exports,
             content,
+            timestamp: Date.now(),
           });
         }
       } catch (contentError) {

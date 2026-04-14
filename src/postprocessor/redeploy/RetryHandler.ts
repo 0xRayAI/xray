@@ -4,13 +4,21 @@
 
 import { frameworkLogger } from "../../core/framework-logger.js";
 
+export interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number;
+  backoffStrategy: "linear" | "exponential";
+}
+
+export interface RetryableError {
+  type?: string;
+  code?: string;
+  statusCode?: number;
+}
+
 export class RetryHandler {
   constructor(
-    private config: {
-      maxRetries: number;
-      baseDelay: number;
-      backoffStrategy: "linear" | "exponential";
-    } = {
+    private config: RetryConfig = {
       maxRetries: 3,
       baseDelay: 30000,
       backoffStrategy: "exponential",
@@ -22,9 +30,9 @@ export class RetryHandler {
    */
   async executeWithRetry<T>(
     operation: () => Promise<T>,
-    shouldRetry?: (error: any, attempt: number) => boolean,
+    shouldRetry?: (error: RetryableError, attempt: number) => boolean,
   ): Promise<T> {
-    let lastError: any;
+    let lastError: RetryableError;
 
     for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
       try {
@@ -87,7 +95,7 @@ export class RetryHandler {
   /**
    * Default retry conditions for deployment operations
    */
-  static shouldRetryDeployment(error: any, attempt: number): boolean {
+  static shouldRetryDeployment(error: RetryableError, attempt: number): boolean {
     // Don't retry certain types of errors
     const nonRetryableErrors = [
       "authentication_failed",

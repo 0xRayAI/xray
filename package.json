@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "1.22.12",
+  "version": "1.22.13",
   "description": "⚡ 0xRay: Self-Healing AI Governance OS - Enterprise AI orchestration for OpenCode and Hermes",
   "readme": "README.md",
   "license": "MIT",
@@ -130,6 +130,7 @@
     "commander": "^11.1.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "strray-ai": "^1.22.12",
     "ws": "^8.16.0"
   },
   "devDependencies": {

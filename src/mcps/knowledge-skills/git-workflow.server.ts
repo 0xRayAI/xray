@@ -14,6 +14,18 @@ import {
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
+interface AnalyzeGitHistoryArgs {
+  projectRoot: string;
+  since?: string;
+  author?: string;
+}
+
+interface RecommendBranchingStrategyArgs {
+  teamSize: number;
+  projectType: string;
+  releaseFrequency?: string;
+}
+
 class StringRayGitWorkflowServer {
   private server: Server;
 
@@ -73,16 +85,16 @@ class StringRayGitWorkflowServer {
 
       switch (name) {
         case "analyze-git-history":
-          return await this.analyzeGitHistory(args);
+          return await this.analyzeGitHistory(args as unknown as AnalyzeGitHistoryArgs);
         case "recommend-branching-strategy":
-          return await this.recommendBranchingStrategy(args);
+          return await this.recommendBranchingStrategy(args as unknown as RecommendBranchingStrategyArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeGitHistory(args: any): Promise<any> {
+  private async analyzeGitHistory(args: AnalyzeGitHistoryArgs) {
     const { projectRoot, since, author } = args;
 
     const analysis = {
@@ -101,7 +113,7 @@ class StringRayGitWorkflowServer {
     };
   }
 
-  private async recommendBranchingStrategy(args: any): Promise<any> {
+  private async recommendBranchingStrategy(args: RecommendBranchingStrategyArgs) {
     const { teamSize, projectType, releaseFrequency } = args;
 
     const strategy = {

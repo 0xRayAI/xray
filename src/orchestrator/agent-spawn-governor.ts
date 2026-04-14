@@ -272,7 +272,7 @@ export class AgentSpawnGovernor {
           );
           resolve(result);
         } catch (error) {
-          await this.handleAuthorizationError(error, trackingId, context);
+          await this.handleAuthorizationError(error instanceof Error ? error : new Error(String(error)), trackingId, context);
           reject(error);
         } finally {
           // Process next authorization in queue
@@ -415,7 +415,7 @@ export class AgentSpawnGovernor {
   }
 
   private async handleAuthorizationError(
-    error: any,
+    error: Error,
     trackingId: string,
     context: SpawnContext,
   ): Promise<void> {
@@ -438,7 +438,7 @@ export class AgentSpawnGovernor {
     }
   }
 
-  private categorizeError(error: any): string {
+  private categorizeError(error: Error): string {
     if (error.message?.includes("timeout")) return "timeout";
     if (error.message?.includes("persistence")) return "persistence";
     if (error.message?.includes("memory")) return "memory";
@@ -458,7 +458,7 @@ export class AgentSpawnGovernor {
   /**
    * Complete an agent spawn (mark as completed)
    */
-  async completeSpawn(trackingId: string, result?: any): Promise<void> {
+  async completeSpawn(trackingId: string, result?: boolean): Promise<void> {
     const record = this.findRecord(trackingId);
     if (record) {
       record.status = "completed";
@@ -720,13 +720,13 @@ export class AgentSpawnGovernor {
     operation: () => Promise<T>,
     operationName: string,
   ): Promise<T> {
-    let lastError: any;
+    let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error) {
-        lastError = error;
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt < this.maxRetries) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1);

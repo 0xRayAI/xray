@@ -13,19 +13,23 @@ import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveCodexPath } from "./config-paths.js";
 // Dynamic imports for cross-environment compatibility
-let extractCodexMetadata: any;
-let StringRayContextLoader: any;
+let extractCodexMetadata: ((content: string) => { version: string; termCount: number }) | undefined;
+let StringRayContextLoader: new () => unknown;
 let importsInitialized = false;
 
 async function initializeImports() {
   if (importsInitialized) return;
 
   try {
-    ({ extractCodexMetadata } = await import("../utils/codex-parser.js"));
-    ({ StringRayContextLoader } = await import("./context-loader.js"));
-  } catch (error) {
-    ({ extractCodexMetadata } = await import("../utils/codex-parser"));
-    ({ StringRayContextLoader } = await import("./context-loader"));
+    const codexParser = await import("../utils/codex-parser.js");
+    const contextLoaderModule = await import("./context-loader.js");
+    extractCodexMetadata = codexParser.extractCodexMetadata;
+    StringRayContextLoader = contextLoaderModule.StringRayContextLoader as unknown as new () => unknown;
+  } catch {
+    const codexParser = await import("../utils/codex-parser");
+    const contextLoaderModule = await import("./context-loader");
+    extractCodexMetadata = codexParser.extractCodexMetadata;
+    StringRayContextLoader = contextLoaderModule.StringRayContextLoader as unknown as new () => unknown;
   }
 
   importsInitialized = true;
@@ -82,6 +86,9 @@ async function createCodexContextEntry(
   content: string,
 ): Promise<CodexContextEntry> {
   await initializeImports();
+  if (!extractCodexMetadata) {
+    throw new Error("Codex metadata extractor not available");
+  }
   const metadata = extractCodexMetadata(content);
 
   return {
@@ -310,7 +317,19 @@ export function createStringRayCodexInjectorHook() {
 
           // Use the initialized context loader
           await initializeImports();
-          const contextLoader = new StringRayContextLoader();
+          const ContextLoaderClass = StringRayContextLoader as new () => {
+            loadCodexContext: (sessionId: string) => Promise<{ success: boolean; context?: unknown }>;
+            validateAgainstCodex: (
+              context: unknown,
+              action: string,
+              actionDetails: { strictMode: boolean; blockOnViolations: boolean }
+            ) => {
+              compliant: boolean;
+              violations: Array<{ severity: string; reason: string }>;
+              recommendations: string[];
+            };
+          };
+          const contextLoader = new ContextLoaderClass();
           const loadResult = await contextLoader.loadCodexContext(sessionId);
 
           if (!loadResult.success || !loadResult.context) {
@@ -332,11 +351,11 @@ export function createStringRayCodexInjectorHook() {
           if (!validation.compliant) {
             // Check for blocking violations
             const blockingViolations = validation.violations.filter(
-              (v: any) => v.severity === "blocking",
+              (v: { severity: string; reason: string }) => v.severity === "blocking",
             );
 
             if (blockingViolations.length > 0) {
-              const errorMsg = `🚫 BLOCKED: Codex violation detected\n${blockingViolations.map((v: any) => `• ${v.reason}`).join("\n")}`;
+              const errorMsg = `🚫 BLOCKED: Codex violation detected\n${blockingViolations.map((v: { reason: string }) => `• ${v.reason}`).join("\n")}`;
               frameworkLogger.log("codex-injector", "blocking-violation", "error", { message: errorMsg, jobId });
               frameworkLogger.log(
                 "codex-injector",
@@ -588,7 +607,7 @@ export function clearCodexCache(sessionId?: string): void {
  * CodexInjector class for plugin compatibility
  */
 export class CodexInjector {
-  injectCodexRules(context: any, options: any) {
+  injectCodexRules(context: Record<string, unknown>, options: { priority?: string; mergeStrategy?: string }): Record<string, unknown> {
     // Implementation for plugin compatibility
     return context;
   }

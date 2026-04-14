@@ -13,7 +13,9 @@ import {
   PatternDriftAnalysis,
   LearningResult,
   AdaptiveThresholds,
+  RoutingOutcome,
 } from '../config/types.js';
+import { PatternDriftAnalysis as PatternDriftAnalysisType } from '../../analytics/pattern-performance-tracker.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 
 /**
@@ -69,7 +71,7 @@ export class LearningEngine {
       const outcomes = routingOutcomeTracker.getOutcomes();
       if (outcomes.length === 0) return 1.0;
       
-      const successes = outcomes.filter((o: any) => o.success).length;
+      const successes = outcomes.filter((o: RoutingOutcome) => o.success).length;
       return successes / outcomes.length;
     } catch {
       return 1.0;
@@ -91,11 +93,11 @@ export class LearningEngine {
     try {
       const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
       const driftAnalyses = patternPerformanceTracker.getAllDriftAnalyses();
-      const significantDrift = driftAnalyses.filter((a: any) => a.drifted);
+      const significantDrift = driftAnalyses.filter((a: PatternDriftAnalysisType) => a.drifted);
 
       return {
         driftDetected: significantDrift.length > 0,
-        affectedPatterns: significantDrift.map((a: any) => a.patternId),
+        affectedPatterns: significantDrift.map((a: PatternDriftAnalysisType) => a.patternId),
         severity: significantDrift.length > 5 ? 'high' : significantDrift.length > 0 ? 'medium' : 'low',
       };
     } catch {
@@ -164,7 +166,7 @@ export class LearningEngine {
       
       // Detect emerging patterns
       const emergentResult = emergingPatternDetector.detectEmergingPatterns(
-        outcomes.map((o: any) => ({
+        outcomes.map((o: RoutingOutcome) => ({
           taskId: o.taskId,
           taskDescription: o.taskDescription || o.taskId,
           routedAgent: o.routedAgent,
@@ -176,7 +178,12 @@ export class LearningEngine {
       );
       
       // Learn from data - filter outcomes with success defined and cast type
-      const existingMappings: any[] = [];
+      const existingMappings: Array<{
+        keywords: string[];
+        skill: string;
+        agent: string;
+        confidence: number;
+      }> = [];
       const validOutcomes = outcomes
         .filter((o) => o.success !== undefined)
         .map((o) => ({

@@ -16,6 +16,24 @@ import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 
+interface AutoFormatArgs {
+  files?: string[];
+  formatters?: string[];
+  checkOnly?: boolean;
+}
+
+interface FormatCheckArgs {
+  files?: string[];
+}
+
+interface FormatResults {
+  success: boolean;
+  formattedFiles: string[];
+  errors: string[];
+  summary: string;
+  changes: Record<string, string[]>;
+}
+
 class StringRayAutoFormatServer {
   private server: Server;
 
@@ -98,9 +116,9 @@ class StringRayAutoFormatServer {
         try {
           switch (name) {
             case "auto-format":
-              return await this.handleAutoFormat(args);
+              return await this.handleAutoFormat(args as unknown as AutoFormatArgs);
             case "format-check":
-              return await this.handleFormatCheck(args);
+              return await this.handleFormatCheck(args as unknown as FormatCheckArgs);
             default:
               throw new Error(`Unknown tool: ${name}`);
           }
@@ -123,7 +141,7 @@ class StringRayAutoFormatServer {
     );
   }
 
-  private async handleAutoFormat(args: any) {
+  private async handleAutoFormat(args: AutoFormatArgs) {
     const files = args.files || [];
     const formatters = args.formatters || ["all"];
     const checkOnly = args.checkOnly || false;
@@ -221,7 +239,7 @@ ${Object.entries(formatResults.changes)
     };
   }
 
-  private async handleFormatCheck(args: any) {
+  private async handleFormatCheck(args: FormatCheckArgs) {
     const files = args.files || [];
 
     frameworkLogger.log("mcps/auto-format", "check", "info", { files: files.length });
@@ -484,7 +502,7 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
     return results;
   }
 
-  private generateFormatSummary(results: any): string {
+  private generateFormatSummary(results: FormatResults): string {
     const totalFiles = results.formattedFiles.length;
     const errorCount = results.errors.length;
     const status = results.success ? "COMPLETED" : "ISSUES DETECTED";

@@ -52,6 +52,13 @@ export interface AutoHealingResult {
   nextSteps: string[];
 }
 
+export interface TestResults {
+  timedOut?: boolean;
+  executionTime?: number;
+  file?: string;
+  failed?: number;
+}
+
 export class TestAutoHealingSystem {
   private healingHistory: Map<string, TestFailureAnalysis[]> = new Map();
 
@@ -59,7 +66,7 @@ export class TestAutoHealingSystem {
    * Main auto-healing entry point for test failures
    */
   async healTestFailures(
-    testResults: any,
+    testResults: TestResults,
     context: RuleValidationContext,
   ): Promise<AutoHealingResult> {
     const jobId = `test-healing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -126,7 +133,7 @@ export class TestAutoHealingSystem {
       });
 
       return result;
-    } catch (error: any) {
+    } catch (error) {
       frameworkLogger.log("test-auto-healing", "healing-error", "error", {
         jobId,
         error:
@@ -152,7 +159,7 @@ export class TestAutoHealingSystem {
    * Analyze test failures and determine root causes
    */
   private async analyzeTestFailures(
-    testResults: any,
+    testResults: TestResults,
     context: RuleValidationContext,
   ): Promise<TestFailureAnalysis[]> {
     const analyses: TestFailureAnalysis[] = [];
@@ -179,7 +186,7 @@ export class TestAutoHealingSystem {
     }
 
     // Analyze performance issues
-    if (testResults.executionTime > 300000) {
+    if ((testResults.executionTime ?? 0) > 300000) {
       // 5 minutes
       analyses.push({
         testFile: testResults.file || "unknown",
@@ -281,7 +288,7 @@ export class TestAutoHealingSystem {
             }
             break;
         }
-      } catch (error: any) {
+      } catch (error) {
         nextSteps.push(
           `Manual intervention needed for ${issue.testFile}: ${error instanceof Error ? error.message : String(error)}`,
         );
@@ -305,7 +312,7 @@ export class TestAutoHealingSystem {
     complexIssues: TestFailureAnalysis[],
     context: RuleValidationContext,
     jobId: string,
-  ): Promise<any> {
+  ): Promise<{ success: boolean; fixesApplied: number; testsOptimized: number; performanceImprovement: number; agentsUsed: string[]; recommendations: string[]; nextSteps: string[] }> {
     let fixesApplied = 0;
     let testsOptimized = 0;
     let performanceImprovement = 0;
@@ -343,7 +350,7 @@ export class TestAutoHealingSystem {
             `Agent ${agentName} coordination needed for ${issues.length} issues`,
           );
         }
-      } catch (error: any) {
+      } catch (error) {
         nextSteps.push(
           `Failed to coordinate with ${agentName}: ${error instanceof Error ? error.message : String(error)}`,
         );
@@ -457,7 +464,7 @@ export class TestAutoHealingSystem {
    * Detect flaky tests based on inconsistent results
    */
   private detectFlakyTests(
-    testResults: any,
+    testResults: TestResults,
   ): Array<{ file: string; name: string; failureRate: number }> {
     // Implementation would analyze test history for flaky patterns
     return []; // Placeholder

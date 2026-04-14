@@ -14,6 +14,17 @@ import {
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
+interface DesignApiEndpointsArgs {
+  resource: string;
+  operations?: string[];
+  relationships?: string[];
+}
+
+interface ValidateApiDesignArgs {
+  endpoints: string[];
+  standards?: string[];
+}
+
 class StringRayApiDesignServer {
   private server: Server;
 
@@ -73,16 +84,16 @@ class StringRayApiDesignServer {
 
       switch (name) {
         case "design-api-endpoints":
-          return await this.designApiEndpoints(args);
+          return await this.designApiEndpoints(args as unknown as DesignApiEndpointsArgs);
         case "validate-api-design":
-          return await this.validateApiDesign(args);
+          return await this.validateApiDesign(args as unknown as ValidateApiDesignArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async designApiEndpoints(args: any): Promise<any> {
+  private async designApiEndpoints(args: DesignApiEndpointsArgs) {
     const { resource, operations, relationships } = args;
 
     const design = {
@@ -107,7 +118,7 @@ class StringRayApiDesignServer {
     };
   }
 
-  private async validateApiDesign(args: any): Promise<any> {
+  private async validateApiDesign(args: ValidateApiDesignArgs) {
     const { endpoints, standards } = args;
 
     const validation = {

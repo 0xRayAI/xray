@@ -13,6 +13,14 @@ import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 
+export interface AppliedFixRecord {
+  type: string;
+  files: string[];
+  description: string;
+  timestamp: Date;
+  appliedChanges: string[];
+}
+
 export class AutoFixEngine {
   private appliedFixes: AppliedFixRecord[] = [];
 
@@ -52,7 +60,7 @@ export class AutoFixEngine {
       };
     }
 
-    const appliedFixes: any[] = [];
+    const appliedFixes: AppliedFixRecord[] = [];
 
     // Apply fixes in order of confidence
     const sortedFixes = analysis.suggestedFixes.sort(
@@ -73,10 +81,10 @@ export class AutoFixEngine {
         if (result.success) {
           appliedFixes.push({
             type: fix.type,
-            files: fix.files,
+            files: fix.files ?? [],
             description: fix.description,
             timestamp: new Date(),
-            appliedChanges: result.changes,
+            appliedChanges: result.changes ?? [],
           });
 
           await frameworkLogger.log(
@@ -291,7 +299,7 @@ export class AutoFixEngine {
    * Validate that applied fixes resolve the issue
    */
   async validateFixes(
-    fixes: any[],
+    fixes: AppliedFixRecord[],
     originalFailure: FailureAnalysis,
     context: PostProcessorContext,
   ): Promise<boolean> {
@@ -356,7 +364,7 @@ export class AutoFixEngine {
   /**
    * Rollback applied fixes if validation fails
    */
-  async rollbackFixes(fixes: any[]): Promise<void> {
+  async rollbackFixes(fixes: AppliedFixRecord[]): Promise<void> {
     await frameworkLogger.log(
       "-auto-fix-engine",
       "-rolling-back-applied-fixes-",
@@ -385,12 +393,4 @@ export class AutoFixEngine {
   getAppliedFixes(): AppliedFixRecord[] {
     return this.appliedFixes;
   }
-}
-
-interface AppliedFixRecord {
-  type: string;
-  files: string[];
-  description: string;
-  timestamp: Date;
-  appliedChanges: string[];
 }

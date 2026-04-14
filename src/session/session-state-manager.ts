@@ -18,7 +18,7 @@ export interface SessionDependency {
   dependedBy: string[];
   state: "pending" | "active" | "completed" | "failed";
   priority: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface SessionGroup {
@@ -26,7 +26,7 @@ export interface SessionGroup {
   sessionIds: string[];
   coordinatorSession: string;
   state: "forming" | "active" | "completing" | "completed" | "failed";
-  sharedState: Map<string, any>;
+  sharedState: Map<string, { value: unknown; fromSessionId: string; timestamp: number }>;
   createdAt: number;
   completedAt?: number;
 }
@@ -34,7 +34,7 @@ export interface SessionGroup {
 export interface MigrationPlan {
   sessionId: string;
   targetCoordinator: string;
-  stateTransfer: Map<string, any>;
+  stateTransfer: Map<string, unknown>;
   migrationSteps: string[];
   rollbackSteps: string[];
 }
@@ -68,7 +68,7 @@ export class SessionStateManager {
     fromSessionId: string,
     toSessionId: string,
     key: string,
-    value: any,
+    value: unknown,
   ): boolean {
     try {
       const fromSession =
@@ -114,7 +114,7 @@ export class SessionStateManager {
     fromSessionId: string,
     targetSessionIds: string[],
     key: string,
-    value: any,
+    value: unknown,
   ): number {
     let successCount = 0;
 
@@ -138,7 +138,7 @@ export class SessionStateManager {
   registerDependency(
     sessionId: string,
     dependsOn: string[],
-    metadata: Record<string, any> = {},
+    metadata: Record<string, unknown> = {},
   ): void {
     const dependency: SessionDependency = {
       sessionId,
@@ -310,7 +310,7 @@ export class SessionStateManager {
   shareGroupState(
     groupId: string,
     key: string,
-    value: any,
+    value: unknown,
     fromSessionId: string,
   ): boolean {
     const group = this.sessionGroups.get(groupId);
@@ -338,7 +338,7 @@ export class SessionStateManager {
   /**
    * Get session group state
    */
-  getGroupState(groupId: string, key: string): any {
+  getGroupState(groupId: string, key: string): unknown {
     const group = this.sessionGroups.get(groupId);
     return group?.sharedState.get(key)?.value;
   }
@@ -355,7 +355,7 @@ export class SessionStateManager {
     const plan: MigrationPlan = {
       sessionId,
       targetCoordinator,
-      stateTransfer: new Map<string, any>([
+      stateTransfer: new Map<string, unknown>([
         ["active", currentState.active],
         ["agentCount", currentState.agentCount],
       ]),
@@ -460,12 +460,12 @@ export class SessionStateManager {
   /**
    * Find orphaned agents in dependency graph
    */
-  findOrphanedAgents(allAgents: string[], dependencies: any): string[] {
+  findOrphanedAgents(allAgents: string[], dependencies: Record<string, string[]>): string[] {
     const agentsWithDeps = new Set(Object.keys(dependencies));
 
     // Add agents that are dependencies of others
     for (const deps of Object.values(dependencies)) {
-      for (const dep of deps as string[]) {
+      for (const dep of deps) {
         agentsWithDeps.add(dep);
       }
     }
@@ -478,7 +478,7 @@ export class SessionStateManager {
    */
   async executeMigration(plan: MigrationPlan): Promise<boolean> {
     const jobId = `migration-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const rollbackData: any[] = [];
+    const rollbackData: Array<{ step: string; sessionState?: { active: boolean; agentCount: number } | null | undefined; dependencies?: SessionDependency | undefined; group?: SessionGroup | undefined }> = [];
 
     try {
       frameworkLogger.log(
@@ -508,9 +508,9 @@ export class SessionStateManager {
 
             rollbackData.push({
               step,
-              sessionState,
-              dependencies,
-              group,
+              sessionState: sessionState ?? undefined,
+              dependencies: dependencies ?? undefined,
+              group: group ?? undefined,
             });
             break;
           }
@@ -743,7 +743,7 @@ export class SessionStateManager {
 
   private async rollbackMigration(
     plan: MigrationPlan,
-    rollbackData: any[] = [],
+    rollbackData: Array<{ step: string; sessionState?: { active: boolean; agentCount: number } | null | undefined; dependencies?: SessionDependency | undefined; group?: SessionGroup | undefined }> = [],
   ): Promise<void> {
     await frameworkLogger.log(
       "session-state-manager",
@@ -770,7 +770,7 @@ export class SessionStateManager {
               this.persistDependencies();
             }
             if (backup.group) {
-              this.sessionGroups.set(backup.group.id, backup.group);
+              this.sessionGroups.set(backup.group.groupId, backup.group);
               this.persistSessionGroups();
             }
             break;

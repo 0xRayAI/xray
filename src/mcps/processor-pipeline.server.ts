@@ -12,12 +12,85 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { CodexLoader } from "../enforcement/loaders/codex-loader.js";
-import type { RuleValidationContext } from "../enforcement/types.js";
+import type { RuleDefinition, RuleValidationContext } from "../enforcement/types.js";
+
+interface PreProcessorArgs {
+  content: string;
+  context?: Record<string, unknown>;
+  validateCodex?: boolean;
+  strictMode?: boolean;
+}
+
+interface PostProcessorArgs {
+  content: string;
+  results?: Record<string, unknown>;
+  enforceCompliance?: boolean;
+  auditTrail?: boolean;
+}
+
+interface CodexValidationArgs {
+  content: string;
+  terms?: string[];
+  strict?: boolean;
+}
+
+interface ComplianceCheckArgs {
+  content: string;
+  operation: string;
+  context?: Record<string, unknown>;
+}
+
+interface CodexValidationResult {
+  validations: string[];
+  warnings: string[];
+  violations: string[];
+  recommendations: string[];
+  compliance: number;
+  blocked: boolean;
+  reason: string;
+}
+
+interface CodexTermCheckResult {
+  passed: boolean;
+  reason: string;
+  recommendation: string;
+  critical: boolean;
+}
+
+interface SecurityCheckResult {
+  warnings: string[];
+}
+
+interface ComplianceEnforcementResult {
+  compliance: string[];
+  recommendations: string[];
+  approved: boolean;
+}
+
+interface PostProcessResult {
+  processed: string;
+  compliance: string[];
+  auditEntries: string[];
+  recommendations: string[];
+  finalApproval: boolean;
+}
+
+interface QualityAssuranceResult {
+  recommendations: string[];
+}
+
+interface FrameworkComplianceResult {
+  score: number;
+  criticalIssues: string[];
+  warnings: string[];
+  actions: string[];
+  approved: boolean;
+}
 
 class StringRayProcessorPipelineServer {
   private server: Server;
   private codexLoader: CodexLoader;
-  private codexRules: any[] = [];
+  private codexRules: RuleDefinition[] = [];
   private codexTerms: string[] = [
     "Progressive Prod-Ready Code",
     "No Stubs/Patches",
@@ -146,20 +219,20 @@ class StringRayProcessorPipelineServer {
 
       switch (name) {
         case "execute-pre-processors":
-          return await this.handlePreProcessors(args);
+          return await this.handlePreProcessors(args as unknown as PreProcessorArgs);
         case "execute-post-processors":
-          return await this.handlePostProcessors(args);
+          return await this.handlePostProcessors(args as unknown as PostProcessorArgs);
         case "codex-validation":
-          return await this.handleCodexValidation(args);
+          return await this.handleCodexValidation(args as unknown as CodexValidationArgs);
         case "framework-compliance-check":
-          return await this.handleComplianceCheck(args);
+          return await this.handleComplianceCheck(args as unknown as ComplianceCheckArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async handlePreProcessors(args: any) {
+  private async handlePreProcessors(args: PreProcessorArgs) {
     const content = args.content;
     const context = args.context || {};
     const validateCodex = args.validateCodex !== false;
@@ -219,7 +292,7 @@ ${results.warnings.length > 0 ? results.warnings.map((w: string) => `• ⚠️ 
     };
   }
 
-  private async handlePostProcessors(args: any) {
+  private async handlePostProcessors(args: PostProcessorArgs) {
     const content = args.content;
     const results = args.results || {};
     const enforceCompliance = args.enforceCompliance !== false;
@@ -292,7 +365,7 @@ ${postResults.auditEntries
     };
   }
 
-  private async handleCodexValidation(args: any) {
+  private async handleCodexValidation(args: CodexValidationArgs) {
     const content = args.content;
     const terms = args.terms || ["all"];
     const strict = args.strict || false;
@@ -341,7 +414,7 @@ ${validationResults.recommendations.map((r: string) => `• 💡 ${r}`).join("\n
     }
   }
 
-  private async handleComplianceCheck(args: any) {
+  private async handleComplianceCheck(args: ComplianceCheckArgs) {
     const content = args.content;
     const operation = args.operation;
     const context = args.context || {};
@@ -408,8 +481,8 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
     content: string,
     strict: boolean,
     terms?: string[],
-  ): Promise<any> {
-    const results = {
+  ): Promise<CodexValidationResult> {
+    const results: CodexValidationResult = {
       validations: [] as string[],
       warnings: [] as string[],
       violations: [] as string[],
@@ -494,7 +567,7 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
     return results;
   }
 
-  private checkCodexTerm(content: string, term: string): any {
+  private checkCodexTerm(content: string, term: string): CodexTermCheckResult {
     // Simplified codex term checking
     switch (term) {
       case "Type Safety First":
@@ -531,15 +604,14 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
     }
   }
 
-  private enrichWithContext(content: string, context: any): string {
-    // Add framework context if needed
-    if (context.codex) {
+  private enrichWithContext(content: string, context: Record<string, unknown>): string {
+    if (context.codex != null) {
       return `/* 0xRay Framework - Codex Compliant */\n${content}`;
     }
     return content;
   }
 
-  private performSecurityChecks(content: string): any {
+  private performSecurityChecks(content: string): SecurityCheckResult {
     const warnings = [];
 
     if (content.includes("eval(")) {
@@ -553,15 +625,14 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
     return { warnings };
   }
 
-  private validateResults(content: string, results: any): string {
-    // Basic result validation
-    if (typeof results === "object" && results.error) {
-      return `${content}\n/* ERROR: ${results.error} */`;
+  private validateResults(content: string, results: Record<string, unknown>): string {
+    if (results.error != null) {
+      return `${content}\n/* ERROR: ${String(results.error)} */`;
     }
     return content;
   }
 
-  private async enforceCompliance(content: string): Promise<any> {
+  private async enforceCompliance(content: string): Promise<ComplianceEnforcementResult> {
     const results = {
       compliance: [] as string[],
       recommendations: [] as string[],
@@ -594,20 +665,20 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
 
   private generateAuditTrail(
     content: string,
-    results: any,
-    postResults: any,
+    results: Record<string, unknown>,
+    postResults: PostProcessResult,
   ): string[] {
     const audit = [
       `Operation completed at ${new Date().toISOString()}`,
       `Content length: ${content.length}`,
-      `Processing time: ${results.duration || "unknown"}ms`,
+      `Processing time: ${String(results.duration ?? "unknown")}ms`,
       `Compliance status: ${postResults.finalApproval ? "approved" : "requires review"}`,
     ];
 
     return audit;
   }
 
-  private performQualityAssurance(content: string): any {
+  private performQualityAssurance(content: string): QualityAssuranceResult {
     const recommendations = [];
 
     // Basic quality checks
@@ -646,9 +717,9 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
   private async checkFrameworkCompliance(
     content: string,
     operation: string,
-    context: any,
-  ): Promise<any> {
-    const results = {
+    context: Record<string, unknown>,
+  ): Promise<FrameworkComplianceResult> {
+    const results: FrameworkComplianceResult = {
       score: 100,
       criticalIssues: [] as string[],
       warnings: [] as string[],

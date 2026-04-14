@@ -10,6 +10,22 @@
 
 import { frameworkLogger } from "../core/framework-logger.js";
 
+export interface HttpResponse {
+  setHeader(name: string, value: string): void;
+}
+
+export interface ExpressMiddlewareParams {
+  req: unknown;
+  res: HttpResponse;
+  next: (err?: Error) => void;
+}
+
+export interface FastifyMiddlewareParams {
+  request: unknown;
+  reply: HttpResponse;
+  done: (err?: Error) => void;
+}
+
 export interface SecurityHeadersConfig {
   enableCSP: boolean;
   enableHSTS: boolean;
@@ -46,7 +62,7 @@ export class SecurityHeadersMiddleware {
   /**
    * Apply security headers to HTTP response
    */
-  applySecurityHeaders(response: any): void {
+  applySecurityHeaders(response: HttpResponse): void {
     if (!response || typeof response.setHeader !== "function") {
       frameworkLogger.log("security-headers", "invalid-response-object", "warning", { warning: "SecurityHeadersMiddleware: Invalid response object" });
       return;
@@ -109,7 +125,7 @@ export class SecurityHeadersMiddleware {
    * Express.js middleware function
    */
   getExpressMiddleware() {
-    return (req: any, res: any, next: any) => {
+    return (req: unknown, res: HttpResponse, next: (err?: Error) => void) => {
       this.applySecurityHeaders(res);
       next();
     };
@@ -119,7 +135,7 @@ export class SecurityHeadersMiddleware {
    * Fastify middleware function
    */
   getFastifyMiddleware() {
-    return (request: any, reply: any, done: any) => {
+    return (request: unknown, reply: HttpResponse, done: (err?: Error) => void) => {
       this.applySecurityHeaders(reply);
       done();
     };

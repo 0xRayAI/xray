@@ -9,6 +9,13 @@ import {
 import { frameworkLogger } from "../core/framework-logger.js";
 import { AGENT_REGISTRY, getActiveAgents } from "../agents/registry.js";
 
+interface CapabilitiesMap {
+  agents: { [key: string]: string };
+  skills: { [key: string]: string };
+  commands: { [key: string]: string };
+  reporting: { [key: string]: string };
+}
+
 class FrameworkHelpServer {
   private server: Server;
 
@@ -127,9 +134,9 @@ class FrameworkHelpServer {
     return Object.values(AGENT_REGISTRY).filter((e: { status: string }) => e.status === "active");
   }
 
-  private handleGetCapabilities(args: any) {
-    const category = args?.category || "all";
-    const format = args?.format || "summary";
+  private handleGetCapabilities(args: Record<string, unknown> | undefined) {
+    const category = (args?.category as string) || "all";
+    const format = (args?.format as string) || "summary";
 
     const agentEntries = this.getActiveAgentEntries();
     const capabilities = {
@@ -185,8 +192,8 @@ class FrameworkHelpServer {
     };
   }
 
-  private handleGetCommands(args: any) {
-    const type = args?.type || "agent-commands";
+  private handleGetCommands(args: Record<string, unknown> | undefined) {
+    const type = (args?.type as string) || "agent-commands";
 
     let commands = "";
 
@@ -252,8 +259,8 @@ Test Coverage - Automated testing analysis
     };
   }
 
-  private handleExplainCapability(args: any) {
-    const capability = args?.capability;
+  private handleExplainCapability(args: Record<string, unknown> | undefined) {
+    const capability = args?.capability as string | undefined;
 
     if (!capability) {
       throw new McpError(
@@ -337,7 +344,7 @@ No detailed explanation available. This capability provides specialized function
     };
   }
 
-  private generateCommandList(capabilities: any): string {
+  private generateCommandList(capabilities: CapabilitiesMap): string {
     return `
 **0xRay Framework Commands:**
 
@@ -369,7 +376,7 @@ ${Object.entries(capabilities.reporting)
     `.trim();
   }
 
-  private generateFullCapabilities(capabilities: any, format: string): string {
+  private generateFullCapabilities(capabilities: CapabilitiesMap, format: string): string {
     if (format === "detailed") {
       return `
 **0xRay Framework - Complete Capabilities Overview**
@@ -425,11 +432,11 @@ ${Object.entries(capabilities.reporting)
   }
 
   private generateCategoryCapabilities(
-    capabilities: any,
+    capabilities: CapabilitiesMap,
     category: string,
     format: string,
   ): string {
-    const categoryData = capabilities[category];
+    const categoryData = capabilities[category as keyof CapabilitiesMap];
     if (!categoryData) {
       return `Category "${category}" not found. Available categories: agents, skills, commands, reporting`;
     }

@@ -136,7 +136,7 @@ export class StringRayPerformanceBenchmark {
    * Benchmark boot sequence performance
    */
   async benchmarkBootSequence(
-    bootOrchestrator: any,
+    _bootOrchestrator: unknown,
   ): Promise<BootBenchmarkResult> {
     const result: BootBenchmarkResult = {
       totalBootTime: 0,
@@ -247,7 +247,7 @@ export class StringRayPerformanceBenchmark {
    * Benchmark orchestrator task execution
    */
   async benchmarkOrchestratorTasks(
-    orchestrator: any,
+    _orchestrator: unknown,
     taskCount: number = 10,
     concurrentTasks: number = 3,
   ): Promise<OrchestratorBenchmarkResult> {
@@ -355,7 +355,7 @@ export class StringRayPerformanceBenchmark {
    * Benchmark session management operations
    */
   async benchmarkSessionOperations(
-    sessionStateManager: any,
+    _sessionStateManager: unknown,
     operationCount: number = 20,
   ): Promise<SessionBenchmarkResult> {
     const result: SessionBenchmarkResult = {

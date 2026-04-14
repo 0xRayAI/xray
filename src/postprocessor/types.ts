@@ -91,8 +91,8 @@ export interface PostProcessorResult {
   commitSha: string;
   sessionId: string;
   attempts: number;
-  monitoringResults?: any[];
-  fixesApplied?: any[];
+  monitoringResults?: MonitoringResult[];
+  fixesApplied?: AppliedFix[];
   error?: string;
   duration?: number;
 }
@@ -106,6 +106,22 @@ export interface MonitoringResult {
   securityStatus?: SecurityStatus;
   failedJobs?: string[];
   duration: number;
+}
+
+export interface AppliedFix {
+  type: string;
+  files: string[];
+  description: string;
+  timestamp: Date;
+  rollbackData?: unknown;
+}
+
+export interface FixResult {
+  success: boolean;
+  appliedFixes: AppliedFix[];
+  requiresManualIntervention: boolean;
+  confidence: number;
+  rollbackAvailable: boolean;
 }
 
 export interface CIStatus {
@@ -147,7 +163,7 @@ export interface SuggestedFix {
   confidence: number;
   description: string;
   files: string[];
-  changes: any[];
+  changes: (Record<string, unknown> | string)[];
 }
 
 export interface FixResult {
@@ -156,14 +172,6 @@ export interface FixResult {
   requiresManualIntervention: boolean;
   confidence: number;
   rollbackAvailable: boolean;
-}
-
-export interface AppliedFix {
-  type: string;
-  files: string[];
-  description: string;
-  timestamp: Date;
-  rollbackData?: any;
 }
 
 export interface EscalationResult {

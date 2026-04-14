@@ -24,6 +24,22 @@ interface SearchResult {
   lineNumbers: number[];
 }
 
+interface SearchCodebaseArgs {
+  query: string;
+  fileExtension?: string;
+  maxResults?: number;
+}
+
+interface FindImplementationArgs {
+  feature: string;
+  context?: string;
+}
+
+interface GetDocumentationArgs {
+  target: string;
+  includeExamples?: boolean;
+}
+
 class StringRayLibrarianServer {
   private server: Server;
 
@@ -120,18 +136,18 @@ class StringRayLibrarianServer {
 
       switch (name) {
         case "search_codebase":
-          return await this.searchCodebase(args);
+          return await this.searchCodebase(args as unknown as SearchCodebaseArgs);
         case "find_implementation":
-          return await this.findImplementation(args);
+          return await this.findImplementation(args as unknown as FindImplementationArgs);
         case "get_documentation":
-          return await this.getDocumentation(args);
+          return await this.getDocumentation(args as unknown as GetDocumentationArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async searchCodebase(args: any): Promise<any> {
+  private async searchCodebase(args: SearchCodebaseArgs) {
     const { query, fileExtension = ".ts", maxResults = 10 } = args;
 
     try {
@@ -244,7 +260,7 @@ class StringRayLibrarianServer {
     }
   }
 
-  private async findImplementation(args: any): Promise<any> {
+  private async findImplementation(args: FindImplementationArgs) {
     const { feature, context } = args;
 
     try {
@@ -356,7 +372,7 @@ class StringRayLibrarianServer {
     }
   }
 
-  private async getDocumentation(args: any): Promise<any> {
+  private async getDocumentation(args: GetDocumentationArgs) {
     const { target, includeExamples = true } = args;
 
     try {

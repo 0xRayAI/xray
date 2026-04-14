@@ -9,16 +9,64 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs";
 import path from "path";
 import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 
+interface GetStateArgs {
+  key: string;
+  defaultValue?: unknown;
+  validate?: boolean;
+}
+
+interface SetStateArgs {
+  key: string;
+  value: unknown;
+  persist?: boolean;
+  backup?: boolean;
+}
+
+interface DeleteStateArgs {
+  key: string;
+  force?: boolean;
+}
+
+interface ListStateArgs {
+  prefix?: string;
+  includeValues?: boolean;
+  limit?: number;
+}
+
+interface BackupStateArgs {
+  keys?: string[];
+  name?: string;
+}
+
+interface RestoreStateArgs {
+  name: string;
+  keys?: string[];
+}
+
+interface ValidateStateArgs {
+  deep?: boolean;
+  repair?: boolean;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  message: string;
+  canRepair: boolean;
+}
+
+type StateValue = string | number | boolean | object | null | undefined;
+
 class StrRayStateManagerServer {
   private server: Server;
-  private state: Map<string, any> = new Map();
+  private state: Map<string, unknown> = new Map();
   private stateFile: string;
-  private backups: Map<string, any> = new Map();
+  private backups: Map<string, unknown> = new Map();
 
   constructor() {
     this.server = new Server(
@@ -217,25 +265,25 @@ class StrRayStateManagerServer {
     });
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
       try {
         const { name, arguments: args } = request.params;
 
         switch (name) {
           case "get-state":
-            return await this.handleGetState(args);
+            return await this.handleGetState(args as unknown as GetStateArgs);
           case "set-state":
-            return await this.handleSetState(args);
+            return await this.handleSetState(args as unknown as SetStateArgs);
           case "delete-state":
-            return await this.handleDeleteState(args);
+            return await this.handleDeleteState(args as unknown as DeleteStateArgs);
           case "list-state":
-            return await this.handleListState(args);
+            return await this.handleListState(args as unknown as ListStateArgs);
           case "backup-state":
-            return await this.handleBackupState(args);
+            return await this.handleBackupState(args as unknown as BackupStateArgs);
           case "restore-state":
-            return await this.handleRestoreState(args);
+            return await this.handleRestoreState(args as unknown as RestoreStateArgs);
           case "validate-state":
-            return await this.handleValidateState(args);
+            return await this.handleValidateState(args as unknown as ValidateStateArgs);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -250,7 +298,7 @@ class StrRayStateManagerServer {
     });
   }
 
-  private async handleGetState(args: any) {
+  private async handleGetState(args: GetStateArgs): Promise<CallToolResult> {
     const key = args.key;
     const defaultValue = args.defaultValue;
     const validate = args.validate !== false;
@@ -314,7 +362,7 @@ class StrRayStateManagerServer {
     }
   }
 
-  private async handleSetState(args: any) {
+  private async handleSetState(args: SetStateArgs): Promise<CallToolResult> {
     const key = args.key;
     const value = args.value;
     const persist = args.persist !== false;
@@ -368,7 +416,7 @@ class StrRayStateManagerServer {
     }
   }
 
-  private async handleDeleteState(args: any) {
+  private async handleDeleteState(args: DeleteStateArgs): Promise<CallToolResult> {
     const key = args.key;
     const force = args.force || false;
 
@@ -427,7 +475,7 @@ class StrRayStateManagerServer {
     }
   }
 
-  private async handleListState(args: any) {
+  private async handleListState(args: ListStateArgs): Promise<CallToolResult> {
     const prefix = args.prefix || "";
     const includeValues = args.includeValues || false;
     const limit = args.limit || 100;
@@ -467,12 +515,12 @@ class StrRayStateManagerServer {
     }
   }
 
-  private async handleBackupState(args: any) {
+  private async handleBackupState(args: BackupStateArgs): Promise<CallToolResult> {
     const keys = args.keys || [];
     const name = args.name || `backup_${Date.now()}`;
 
     try {
-      const backupData: Record<string, any> = {};
+      const backupData: Record<string, unknown> = {};
 
       if (keys.length > 0) {
         // Backup specific keys
@@ -508,7 +556,7 @@ class StrRayStateManagerServer {
     }
   }
 
-  private async handleRestoreState(args: any) {
+  private async handleRestoreState(args: RestoreStateArgs): Promise<CallToolResult> {
     const name = args.name;
     const keys = args.keys || [];
 
@@ -524,20 +572,19 @@ class StrRayStateManagerServer {
         };
       }
 
-      const backupData = this.backups.get(name);
+      const backupData = this.backups.get(name)!;
       let restoredCount = 0;
 
       if (keys.length > 0) {
-        // Restore specific keys
         for (const key of keys) {
-          if (backupData[key] !== undefined) {
-            this.state.set(key, backupData[key]);
+          if (typeof backupData === "object" && backupData !== null && key in backupData) {
+            this.state.set(key, (backupData as Record<string, unknown>)[key]);
             restoredCount++;
           }
         }
-      } else if (backupData.all) {
-        // Restore all from full backup
-        for (const [key, value] of Object.entries(backupData.all)) {
+      } else if (typeof backupData === "object" && backupData !== null && "all" in backupData) {
+        const allData = (backupData as { all: Record<string, unknown> }).all;
+        for (const [key, value] of Object.entries(allData)) {
           this.state.set(key, value);
           restoredCount++;
         }
@@ -565,7 +612,7 @@ class StrRayStateManagerServer {
     }
   }
 
-  private async handleValidateState(args: any) {
+  private async handleValidateState(args: ValidateStateArgs): Promise<CallToolResult> {
     const deep = args.deep || false;
     const repair = args.repair || false;
 
@@ -630,11 +677,7 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
     }
   }
 
-  private validateStateValue(value: any): {
-    valid: boolean;
-    message: string;
-    canRepair: boolean;
-  } {
+  private validateStateValue(value: unknown): ValidationResult {
     try {
       // Basic validation - check for circular references, etc.
       const serialized = JSON.stringify(value);
@@ -669,7 +712,7 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
     }
   }
 
-  private repairStateValue(value: any): any {
+  private repairStateValue(value: unknown): StateValue {
     try {
       // Simple repair attempts
       if (typeof value === "string") {
@@ -679,7 +722,7 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
 
       // For objects, try to clean problematic properties
       if (typeof value === "object" && value !== null) {
-        const cleaned: any = {};
+        const cleaned: Record<string, unknown> = {};
         for (const [key, val] of Object.entries(value)) {
           if (this.validateStateValue(val).valid) {
             cleaned[key] = val;

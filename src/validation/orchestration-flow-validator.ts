@@ -29,13 +29,16 @@ interface ValidationStep {
   step: string;
   success: boolean;
   timestamp: number;
-  details?: any;
+  details?: unknown;
 }
+
+import { createAgentDelegator, AgentDelegator } from "../delegation/agent-delegator.js";
+import type { SpawnedAgent } from "../orchestrator/enhanced-multi-agent-orchestrator.js";
 
 class OrchestrationFlowValidator {
   private orchestrator: StringRayOrchestrator;
   private stateManager: StringRayStateManager;
-  private agentDelegator: any;
+  private agentDelegator: AgentDelegator;
   private testResults: Map<string, TestResult> = new Map();
 
   constructor() {
@@ -328,10 +331,10 @@ class OrchestrationFlowValidator {
       const monitoringData =
         enhancedMultiAgentOrchestrator.getMonitoringInterface();
       const hasCompletedAgents = Object.values(monitoringData).some(
-        (agent: any) => agent.status === "completed",
+        (agent: SpawnedAgent) => agent.status === "completed",
       );
       const hasFailedAgents = Object.values(monitoringData).some(
-        (agent: any) => agent.status === "failed",
+        (agent: SpawnedAgent) => agent.status === "failed",
       );
 
       validationSteps.push({
@@ -518,10 +521,10 @@ class OrchestrationFlowValidator {
       const monitoringData =
         enhancedMultiAgentOrchestrator.getMonitoringInterface();
       const hasClickableAgents = Object.values(monitoringData).every(
-        (agent: any) => agent.clickable,
+        (agent: SpawnedAgent) => agent.clickable,
       );
       const hasProgressTracking = Object.values(monitoringData).every(
-        (agent: any) => typeof agent.progress === "number",
+        (agent: SpawnedAgent) => typeof agent.progress === "number",
       );
 
       validationSteps.push({

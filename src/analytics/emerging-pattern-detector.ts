@@ -210,7 +210,8 @@ export class EmergingPatternDetector {
         effectiveness: successRate,
         firstSeen: clusterOutcomes[0]?.success ? new Date() : new Date(),
         lastSeen: new Date(),
-        evidence: cluster.patterns.slice(0, 3),
+        evidence: undefined,
+        stringEvidence: cluster.patterns.slice(0, 3),
         suggestedAction: successRate < 0.7
           ? 'Improve routing for this pattern'
           : successRate > 0.9

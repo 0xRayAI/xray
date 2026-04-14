@@ -9,6 +9,76 @@ import {
 import { mcpClientManager } from "../mcp-client.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
+interface ListSkillsArgs {
+  category?: "all" | "core" | "registry" | "knowledge";
+}
+
+interface InvokeSkillArgs {
+  skillName: string;
+  toolName: string;
+  args?: Record<string, unknown>;
+}
+
+interface CodeReviewArgs {
+  code: string;
+  language?: string;
+  context?: Record<string, unknown>;
+}
+
+interface SecurityAuditArgs {
+  files: string[];
+  severity?: "low" | "medium" | "high" | "critical";
+}
+
+interface PerformanceOptimizationArgs {
+  code: string;
+  language?: string;
+  metrics?: string[];
+}
+
+interface TestingStrategyArgs {
+  code: string;
+  existingTests?: string[];
+  requirements?: Record<string, unknown>;
+}
+
+interface ProjectAnalysisArgs {
+  scope?: "full" | "directory" | "file";
+  analysis?: string[];
+}
+
+interface DatabaseDesignArgs {
+  schema: string;
+  databaseType?: "postgresql" | "mysql" | "mongodb" | "dynamodb";
+}
+
+interface DevopsDeploymentArgs {
+  projectType: string;
+  cloudProvider?: "aws" | "gcp" | "azure";
+}
+
+interface ApiDesignArgs {
+  resources: string[];
+  style?: "rest" | "graphql";
+}
+
+interface UiUxDesignArgs {
+  component: string;
+  framework?: "react" | "vue" | "angular" | "svelte";
+}
+
+interface DocumentationGenerationArgs {
+  type: "api" | "readme" | "guide";
+  code?: string;
+}
+
+interface StorytellerArgs {
+  storyType: "reflection" | "saga" | "journey" | "narrative";
+  title?: string;
+  context?: Record<string, unknown>;
+  framework?: "three_act_structure" | "hero_journey" | "spiral";
+}
+
 class SkillInvocationServer {
   private server: Server;
 
@@ -299,31 +369,31 @@ class SkillInvocationServer {
       try {
         switch (name) {
           case "list-skills":
-            return await this.handleListSkills(args);
+            return await this.handleListSkills(args as unknown as ListSkillsArgs);
           case "invoke-skill":
-            return await this.handleInvokeSkill(args);
+            return await this.handleInvokeSkill(args as unknown as InvokeSkillArgs);
           case "skill-code-review":
-            return await this.handleSkillCodeReview(args);
+            return await this.handleSkillCodeReview(args as unknown as CodeReviewArgs);
           case "skill-security-audit":
-            return await this.handleSkillSecurityAudit(args);
+            return await this.handleSkillSecurityAudit(args as unknown as SecurityAuditArgs);
           case "skill-performance-optimization":
-            return await this.handleSkillPerformanceOptimization(args);
+            return await this.handleSkillPerformanceOptimization(args as unknown as PerformanceOptimizationArgs);
           case "skill-testing-strategy":
-            return await this.handleSkillTestingStrategy(args);
+            return await this.handleSkillTestingStrategy(args as unknown as TestingStrategyArgs);
           case "skill-project-analysis":
-            return await this.handleSkillProjectAnalysis(args);
+            return await this.handleSkillProjectAnalysis(args as unknown as ProjectAnalysisArgs);
           case "skill-database-design":
-            return await this.handleSkillDatabaseDesign(args);
+            return await this.handleSkillDatabaseDesign(args as unknown as DatabaseDesignArgs);
           case "skill-devops-deployment":
-            return await this.handleSkillDevopsDeployment(args);
+            return await this.handleSkillDevopsDeployment(args as unknown as DevopsDeploymentArgs);
           case "skill-api-design":
-            return await this.handleSkillApiDesign(args);
+            return await this.handleSkillApiDesign(args as unknown as ApiDesignArgs);
           case "skill-ui-ux-design":
-            return await this.handleSkillUiUxDesign(args);
+            return await this.handleSkillUiUxDesign(args as unknown as UiUxDesignArgs);
           case "skill-documentation-generation":
-            return await this.handleSkillDocumentationGeneration(args);
+            return await this.handleSkillDocumentationGeneration(args as unknown as DocumentationGenerationArgs);
           case "skill-storyteller":
-            return await this.handleSkillStoryteller(args);
+            return await this.handleSkillStoryteller(args as unknown as StorytellerArgs);
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -349,7 +419,7 @@ class SkillInvocationServer {
     resolvedSkill: string,
     toolName: string,
     duration: number,
-    result?: any,
+    result?: unknown,
     error?: string,
   ): void {
     const key = `${resolvedSkill}:${toolName}`;
@@ -380,7 +450,7 @@ class SkillInvocationServer {
     }
   }
 
-  private async handleListSkills(args: any) {
+  private async handleListSkills(args: ListSkillsArgs) {
     const { category = "all" } = args;
 
     const coreSkills = [
@@ -426,7 +496,7 @@ class SkillInvocationServer {
     return { content: [{ type: "text", text: lines.join("\n") }] };
   }
 
-  private async handleInvokeSkill(args: any) {
+  private async handleInvokeSkill(args: InvokeSkillArgs) {
     const { skillName, toolName, args: toolArgs = {} } = args;
 
     const skillAliases: Record<string, string> = {
@@ -517,7 +587,7 @@ class SkillInvocationServer {
     }
   }
 
-  private async handleSkillCodeReview(args: any) {
+  private async handleSkillCodeReview(args: CodeReviewArgs) {
     const result = await mcpClientManager.callServerTool(
       "code-review",
       "analyze_code_quality",
@@ -538,7 +608,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillSecurityAudit(args: any) {
+  private async handleSkillSecurityAudit(args: SecurityAuditArgs) {
     const result = await mcpClientManager.callServerTool(
       "security-audit",
       "scan_vulnerabilities",
@@ -559,7 +629,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillPerformanceOptimization(args: any) {
+  private async handleSkillPerformanceOptimization(args: PerformanceOptimizationArgs) {
     const result = await mcpClientManager.callServerTool(
       "performance-optimization",
       "analyze_performance",
@@ -580,7 +650,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillTestingStrategy(args: any) {
+  private async handleSkillTestingStrategy(args: TestingStrategyArgs) {
     const result = await mcpClientManager.callServerTool(
       "testing-strategy",
       "analyze_test_coverage",
@@ -601,7 +671,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillProjectAnalysis(args: any) {
+  private async handleSkillProjectAnalysis(args: ProjectAnalysisArgs) {
     const result = await mcpClientManager.callServerTool(
       "researcher",
       "analyze-project-health",
@@ -622,7 +692,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillDatabaseDesign(args: any) {
+  private async handleSkillDatabaseDesign(args: DatabaseDesignArgs) {
     const result = await mcpClientManager.callServerTool(
       "database-design",
       "schema_analysis",
@@ -643,7 +713,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillDevopsDeployment(args: any) {
+  private async handleSkillDevopsDeployment(args: DevopsDeploymentArgs) {
     const result = await mcpClientManager.callServerTool(
       "devops-deployment",
       "pipeline_generation",
@@ -664,7 +734,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillApiDesign(args: any) {
+  private async handleSkillApiDesign(args: ApiDesignArgs) {
     const result = await mcpClientManager.callServerTool(
       "api-design",
       "endpoint_design",
@@ -685,7 +755,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillUiUxDesign(args: any) {
+  private async handleSkillUiUxDesign(args: UiUxDesignArgs) {
     const result = await mcpClientManager.callServerTool(
       "ui-ux-design",
       "design_component",
@@ -706,7 +776,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillDocumentationGeneration(args: any) {
+  private async handleSkillDocumentationGeneration(args: DocumentationGenerationArgs) {
     const result = await mcpClientManager.callServerTool(
       "documentation-generation",
       "generate_documentation",
@@ -727,7 +797,7 @@ class SkillInvocationServer {
     };
   }
 
-  private async handleSkillStoryteller(args: any) {
+  private async handleSkillStoryteller(args: StorytellerArgs) {
     const { storyType, title, context, framework } = args;
     const result = await mcpClientManager.callServerTool(
       "storyteller",

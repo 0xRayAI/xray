@@ -19,6 +19,22 @@ interface Tool {
   inputSchema: object;
 }
 
+interface StrategicGuidanceArgs {
+  context: string;
+  options?: string[];
+  criteria?: string[];
+}
+
+interface RiskAssessmentArgs {
+  decision: string;
+  scope?: string;
+}
+
+interface ArchitectureReviewArgs {
+  architecture: string;
+  requirements?: string[];
+}
+
 class StrategistServer {
   private server: Server;
   private tools: Tool[] = [
@@ -121,11 +137,11 @@ class StrategistServer {
       try {
         switch (name) {
           case "strategic_guidance":
-            return await this.handleStrategicGuidance(args);
+            return await this.handleStrategicGuidance(args as unknown as StrategicGuidanceArgs);
           case "risk_assessment":
-            return await this.handleRiskAssessment(args);
+            return await this.handleRiskAssessment(args as unknown as RiskAssessmentArgs);
           case "architecture_review":
-            return await this.handleArchitectureReview(args);
+            return await this.handleArchitectureReview(args as unknown as ArchitectureReviewArgs);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -143,7 +159,7 @@ class StrategistServer {
     });
   }
 
-  private async handleStrategicGuidance(args: any) {
+  private async handleStrategicGuidance(args: StrategicGuidanceArgs) {
     const { context, options = [], criteria = [] } = args;
 
     const analysis = [
@@ -170,7 +186,7 @@ class StrategistServer {
     };
   }
 
-  private async handleRiskAssessment(args: any) {
+  private async handleRiskAssessment(args: RiskAssessmentArgs) {
     const { decision, scope = "medium" } = args;
 
     const riskLevels: Record<string, string> = {
@@ -203,7 +219,7 @@ class StrategistServer {
     };
   }
 
-  private async handleArchitectureReview(args: any) {
+  private async handleArchitectureReview(args: ArchitectureReviewArgs) {
     const { architecture, requirements = [] } = args;
 
     const analysis = [

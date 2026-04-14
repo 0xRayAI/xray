@@ -2,15 +2,69 @@
  * Session Security Validator
  * Validates session-level security controls and access patterns
  */
+
+interface SessionCoordinator {
+  getSessionStatus(sessionId: string): SessionStatus | null;
+  getSharedContext(sessionId: string, filter: string): Record<string, unknown> | null;
+  getCommunications(sessionId: string): Communication[];
+}
+
+interface StateManager {
+  get(key: string): unknown;
+}
+
+interface SecurityScanner {
+  scanForVulnerabilities(sessionId: string): Promise<{ vulnerabilities: string[] }>;
+  validateEncryption(sessionId: string): Promise<{ valid: boolean }>;
+}
+
+interface SessionStatus {
+  status: string;
+  agentCount: number;
+}
+
+interface Communication {
+  encrypted: boolean;
+  id?: string;
+  content?: string;
+}
+
+interface SessionState {
+  sessionId: string;
+  createdAt: number;
+}
+
+interface AccessAttempt {
+  authorized: boolean;
+  agentId: string;
+  timestamp?: number;
+}
+
+interface SessionEvent {
+  type: string;
+  audited: boolean;
+  timestamp?: number;
+}
+
+interface SessionData {
+  state: unknown;
+  context: Record<string, unknown> | null;
+  communications: Communication[];
+}
+
+interface ResourceMap {
+  [key: string]: unknown;
+}
+
 export class SessionSecurityValidator {
-  private sessionCoordinator: any;
-  private stateManager: any;
-  private securityScanner: any;
+  private sessionCoordinator: SessionCoordinator;
+  private stateManager: StateManager;
+  private securityScanner: SecurityScanner;
 
   constructor(
-    sessionCoordinator: any,
-    stateManager: any,
-    securityScanner: any,
+    sessionCoordinator: SessionCoordinator,
+    stateManager: StateManager,
+    securityScanner: SecurityScanner,
   ) {
     this.sessionCoordinator = sessionCoordinator;
     this.stateManager = stateManager;
@@ -144,7 +198,7 @@ export class SessionSecurityValidator {
     const communications = this.sessionCoordinator.getCommunications(sessionId);
     if (communications && communications.length > 0) {
       const unencryptedCount = communications.filter(
-        (comm: any) => !comm.encrypted,
+        (comm) => !comm.encrypted,
       ).length;
       if (unencryptedCount > 0) {
         issues.push(`${unencryptedCount} communications not encrypted`);
@@ -309,7 +363,7 @@ export class SessionSecurityValidator {
     return trustedAgents.includes(agentId);
   }
 
-  private validateStateIntegrity(state: any): {
+  private validateStateIntegrity(state: SessionState): {
     valid: boolean;
     issues: string[];
   } {
@@ -327,7 +381,7 @@ export class SessionSecurityValidator {
     return { valid: issues.length === 0, issues };
   }
 
-  private isEncrypted(data: any): boolean {
+  private isEncrypted(data: unknown): boolean {
     // Simple check for encrypted data (would use proper crypto validation)
     if (typeof data === "string" && data.startsWith("encrypted:")) {
       return true;
@@ -335,7 +389,7 @@ export class SessionSecurityValidator {
     return false;
   }
 
-  private containsSensitiveData(key: string, value: any): boolean {
+  private containsSensitiveData(key: string, value: unknown): boolean {
     const sensitiveKeys = ["password", "token", "secret", "key", "credential"];
     return sensitiveKeys.some((sensitive) =>
       key.toLowerCase().includes(sensitive),
@@ -354,7 +408,7 @@ export class SessionSecurityValidator {
     return calculatedChecksum === checksum;
   }
 
-  private collectSessionData(sessionId: string): any {
+  private collectSessionData(sessionId: string): SessionData {
     return {
       state: this.stateManager.get(`session:${sessionId}:state`),
       context: this.sessionCoordinator.getSharedContext(sessionId, "*"),
@@ -362,7 +416,7 @@ export class SessionSecurityValidator {
     };
   }
 
-  private detectDataLeakage(sessionId: string, sessionData: any): string[] {
+  private detectDataLeakage(sessionId: string, sessionData: SessionData): string[] {
     const leaks: string[] = [];
 
     // Check for cross-session references
@@ -379,9 +433,10 @@ export class SessionSecurityValidator {
     return leaks;
   }
 
-  private monitorAccessAttempts(sessionId: string): any[] {
+  private monitorAccessAttempts(sessionId: string): AccessAttempt[] {
     // Return access attempt history (would be populated by security monitoring)
-    return this.stateManager.get(`session:${sessionId}:access-attempts`) || [];
+    const result = this.stateManager.get(`session:${sessionId}:access-attempts`);
+    return (result as AccessAttempt[]) || [];
   }
 
   private checkResourceIsolation(sessionId: string): {
@@ -406,8 +461,9 @@ export class SessionSecurityValidator {
     };
   }
 
-  private getSessionEvents(sessionId: string): any[] {
-    return this.stateManager.get(`session:${sessionId}:events`) || [];
+  private getSessionEvents(sessionId: string): SessionEvent[] {
+    const result = this.stateManager.get(`session:${sessionId}:events`);
+    return (result as SessionEvent[]) || [];
   }
 
   private detectAuditTampering(sessionId: string): boolean {
@@ -428,14 +484,14 @@ export class SessionSecurityValidator {
     return this.stateManager.get("system:active-sessions") || [];
   }
 
-  private containsReference(data: any, sessionId: string): boolean {
+  private containsReference(data: SessionData, sessionId: string): boolean {
     const dataStr = JSON.stringify(data);
     return dataStr.includes(sessionId);
   }
 
   private hasResourceOverlap(
-    sessionResources: any,
-    globalResources: any,
+    sessionResources: ResourceMap | null,
+    globalResources: ResourceMap | null,
   ): boolean {
     if (!sessionResources || !globalResources) return false;
 
@@ -446,14 +502,14 @@ export class SessionSecurityValidator {
     return sessionIds.some((id) => globalIds.includes(id));
   }
 
-  private calculateChecksum(data: any): string {
+  private calculateChecksum(data: SessionData): string {
     const crypto = require("crypto");
     const hash = crypto.createHash("sha256");
     hash.update(JSON.stringify(data));
     return hash.digest("hex");
   }
 
-  private calculateHash(data: any): string {
+  private calculateHash(data: SessionData): string {
     return this.calculateChecksum(data);
   }
 }

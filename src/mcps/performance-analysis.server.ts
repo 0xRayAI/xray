@@ -16,6 +16,47 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
+interface AnalysisMetrics {
+  runtime?: RuntimeMetrics;
+  build?: BuildMetrics;
+  resources?: ResourceMetrics;
+  analysis_time?: string;
+}
+
+interface AnalysisResults {
+  metrics: AnalysisMetrics;
+  bottlenecks: string[];
+  recommendations: string[];
+  summary: string;
+  passed: boolean;
+}
+
+interface RuntimeMetrics {
+  responseTime: number;
+  throughput: number;
+  memoryUsage: number;
+  cpuUsage: number;
+  bottlenecks: string[];
+  recommendations: string[];
+}
+
+interface BuildMetrics {
+  buildTime: number;
+  bundleSize: number;
+  compressionRatio: number;
+  bottlenecks: string[];
+  recommendations: string[];
+}
+
+interface ResourceMetrics {
+  totalMemory: number;
+  freeMemory: number;
+  diskUsage: number;
+  networkLatency: number;
+  bottlenecks: string[];
+  recommendations: string[];
+}
+
 class StringRayPerformanceAnalysisServer {
   private server: Server;
   private startTime: number;
@@ -116,10 +157,10 @@ class StringRayPerformanceAnalysisServer {
     });
   }
 
-  private async handlePerformanceAnalysis(args: any) {
-    const scope = args.scope || "full";
-    const duration = args.duration || 30;
-    const detailed = args.detailed || false;
+  private async handlePerformanceAnalysis(args: Record<string, unknown> | undefined) {
+    const scope = (args?.scope as string) || "full";
+    const duration = (args?.duration as number) || 30;
+    const detailed = (args?.detailed as boolean) || false;
 
     const jobId = generateJobId("mcp-performance-analysis");
     await frameworkLogger.log(
@@ -136,7 +177,7 @@ class StringRayPerformanceAnalysisServer {
     );
 
     const analysisResults = {
-      metrics: {} as Record<string, any>,
+      metrics: {} as AnalysisMetrics,
       bottlenecks: [] as string[],
       recommendations: [] as string[],
       summary: "",
@@ -236,9 +277,9 @@ ${analysisResults.recommendations.length > 0 ? analysisResults.recommendations.m
     };
   }
 
-  private async handleBottleneckDetection(args: any) {
-    const operation = args.operation || "general";
-    const threshold = args.threshold || 1000;
+  private async handleBottleneckDetection(args: Record<string, unknown> | undefined) {
+    const operation = (args?.operation as string) || "general";
+    const threshold = (args?.threshold as number) || 1000;
 
     const jobId = generateJobId("mcp-performance-analysis-bottleneck");
     await frameworkLogger.log(
@@ -585,7 +626,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
     return largeFiles;
   }
 
-  private checkPerformanceThresholds(results: any): boolean {
+  private checkPerformanceThresholds(results: AnalysisResults): boolean {
     // Check if any critical thresholds are exceeded
     const bottlenecks = results.bottlenecks || [];
     const criticalIndicators = [
@@ -600,7 +641,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
     );
   }
 
-  private generatePerformanceSummary(results: any): string {
+  private generatePerformanceSummary(results: AnalysisResults): string {
     const bottleneckCount = results.bottlenecks.length;
     const recommendationCount = results.recommendations.length;
     const status = results.passed ? "✅ ACCEPTABLE" : "❌ ISSUES DETECTED";
@@ -611,7 +652,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
 - Analysis Duration: ${results.metrics.analysis_time}`;
   }
 
-  private formatMetrics(metrics: any): string {
+  private formatMetrics(metrics: AnalysisMetrics | RuntimeMetrics | BuildMetrics | ResourceMetrics | undefined): string {
     if (!metrics) return "Not analyzed";
 
     const formatted = Object.entries(metrics)
@@ -622,7 +663,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
     return formatted || "No metrics collected";
   }
 
-  private async generateDetailedReport(results: any): Promise<string> {
+  private async generateDetailedReport(results: AnalysisResults): Promise<string> {
     let report = "## Detailed Performance Report\n\n";
 
     // Runtime details

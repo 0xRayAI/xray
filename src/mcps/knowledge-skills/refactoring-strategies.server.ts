@@ -12,6 +12,7 @@ import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 
 interface RefactoringOpportunity {
@@ -51,6 +52,106 @@ interface ModernizationSuggestion {
   migrationEffort: "low" | "medium" | "high";
   benefits: string[];
   risks: string[];
+}
+
+interface AnalyzeTechnicalDebtArgs {
+  codePath: string;
+  includeModernization?: boolean;
+  debtThreshold?: number;
+}
+
+interface SuggestRefactoringArgs {
+  filePath: string;
+  refactoringTypes?: string[];
+  maxSuggestions?: number;
+}
+
+interface GenerateRefactoringPlanArgs {
+  codePath: string;
+  timeBudget: string;
+  riskTolerance?: string;
+  priorities?: string[];
+}
+
+interface ModernizeCodebaseArgs {
+  codePath: string;
+  technologies?: string[];
+  safeMode?: boolean;
+}
+
+interface RefactoringPlanPhase {
+  name: string;
+  duration: number;
+  focus: string;
+  changes: string[];
+  risk: string;
+  expectedImpact: string;
+}
+
+interface RefactoringPlan {
+  phases: RefactoringPlanPhase[];
+  totalWeeks: number;
+  overallRisk: string;
+  expectedImprovement: number;
+  priorities: string[];
+}
+
+interface ModernizationAnalysisSummary {
+  totalSuggestions: number;
+  safeUpdates: number;
+  breakingUpdates: number;
+}
+
+interface ModernizationAnalysis {
+  suggestions: ModernizationSuggestion[];
+  summary: ModernizationAnalysisSummary;
+}
+
+interface ImplementationPlanPhase {
+  name: string;
+  steps: string[];
+  parallel?: number;
+}
+
+interface ImplementationPlan {
+  phases: ImplementationPlanPhase[];
+  estimatedTime: number;
+}
+
+interface RiskAssessment {
+  overallRisk: string;
+  riskFactors: string[];
+  mitigationStrategies: string[];
+}
+
+interface SuccessMetrics {
+  codeQuality: { target: string; current: string; measurement: string };
+  performance: { target: string; current: string; measurement: string };
+  delivery: { target: string; current: string; measurement: string };
+}
+
+interface MigrationStrategyPhase {
+  name: string;
+  duration: number;
+  tasks: string[];
+}
+
+interface MigrationStrategy {
+  phases: MigrationStrategyPhase[];
+  totalDuration: number;
+  successCriteria: string[];
+}
+
+interface RollbackStrategy {
+  type: string;
+  description: string;
+  effort: string;
+  effectiveness: string;
+}
+
+interface RollbackPlan {
+  strategies: RollbackStrategy[];
+  emergencyProcedures: string[];
 }
 
 class StringRayRefactoringStrategiesServer {
@@ -203,20 +304,20 @@ class StringRayRefactoringStrategiesServer {
 
       switch (name) {
         case "analyze_technical_debt":
-          return await this.analyzeTechnicalDebt(args);
+          return await this.analyzeTechnicalDebt(args as unknown as AnalyzeTechnicalDebtArgs) as CallToolResult;
         case "suggest_refactoring":
-          return await this.suggestRefactoring(args);
+          return await this.suggestRefactoring(args as unknown as SuggestRefactoringArgs) as CallToolResult;
         case "generate_refactoring_plan":
-          return await this.generateRefactoringPlan(args);
+          return await this.generateRefactoringPlan(args as unknown as GenerateRefactoringPlanArgs) as CallToolResult;
         case "modernize_codebase":
-          return await this.modernizeCodebase(args);
+          return await this.modernizeCodebase(args as unknown as ModernizeCodebaseArgs) as CallToolResult;
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeTechnicalDebt(args: any): Promise<any> {
+  private async analyzeTechnicalDebt(args: AnalyzeTechnicalDebtArgs) {
     const { codePath, includeModernization = true, debtThreshold = 20 } = args;
 
     try {
@@ -286,7 +387,7 @@ class StringRayRefactoringStrategiesServer {
     }
   }
 
-  private async suggestRefactoring(args: any): Promise<any> {
+  private async suggestRefactoring(args: SuggestRefactoringArgs) {
     const { filePath, refactoringTypes, maxSuggestions = 10 } = args;
 
     try {
@@ -342,7 +443,7 @@ class StringRayRefactoringStrategiesServer {
     }
   }
 
-  private async generateRefactoringPlan(args: any): Promise<any> {
+  private async generateRefactoringPlan(args: GenerateRefactoringPlanArgs) {
     const {
       codePath,
       timeBudget,
@@ -358,7 +459,7 @@ class StringRayRefactoringStrategiesServer {
       const plan = this.createPrioritizedRefactoringPlan(
         fullAnalysis,
         timeBudget,
-        riskTolerance,
+        riskTolerance ?? "medium",
         priorities,
       );
 
@@ -369,7 +470,7 @@ class StringRayRefactoringStrategiesServer {
             text:
               `Refactoring Plan for ${codePath}:\n\n` +
               `⏰ TIME BUDGET: ${timeBudget.toUpperCase()}\n` +
-              `🎯 RISK TOLERANCE: ${riskTolerance.toUpperCase()}\n` +
+              `🎯 RISK TOLERANCE: ${(riskTolerance ?? "medium").toUpperCase()}\n` +
               `📍 PRIORITIES: ${priorities.join(", ")}\n\n` +
               `📊 PLAN OVERVIEW\n` +
               `Total Phases: ${plan.phases.length}\n` +
@@ -378,7 +479,7 @@ class StringRayRefactoringStrategiesServer {
               `Expected Improvement: ${plan.expectedImprovement}%\n\n` +
               `🗓️ PHASE-BY-PHASE PLAN\n${plan.phases
                 .map(
-                  (phase: any, i: number) =>
+                  (phase: RefactoringPlanPhase, i: number) =>
                     `Phase ${i + 1}: ${phase.name} (${phase.duration} weeks)\n` +
                     `   Focus: ${phase.focus}\n` +
                     `   Changes: ${phase.changes.length}\n` +
@@ -412,13 +513,13 @@ class StringRayRefactoringStrategiesServer {
     }
   }
 
-  private async modernizeCodebase(args: any): Promise<any> {
+  private async modernizeCodebase(args: ModernizeCodebaseArgs) {
     const { codePath, technologies, safeMode = true } = args;
 
     try {
       const modernization = await this.analyzeModernizationOpportunities(
         codePath,
-        technologies,
+        technologies ?? [],
         safeMode,
       );
 
@@ -430,11 +531,11 @@ class StringRayRefactoringStrategiesServer {
               `Codebase Modernization Analysis for ${codePath}:\n\n` +
               `🔄 MODERNIZATION OPPORTUNITIES\n` +
               `Total Suggestions: ${modernization.suggestions.length}\n` +
-              `Safe Updates: ${modernization.suggestions.filter((s: any) => !s.breakingChanges).length}\n` +
-              `Breaking Changes: ${modernization.suggestions.filter((s: any) => s.breakingChanges).length}\n\n` +
+              `Safe Updates: ${modernization.suggestions.filter((s: ModernizationSuggestion) => !s.breakingChanges).length}\n` +
+              `Breaking Changes: ${modernization.suggestions.filter((s: ModernizationSuggestion) => s.breakingChanges).length}\n\n` +
               `📦 DEPENDENCY UPDATES\n${modernization.suggestions
                 .map(
-                  (suggestion: any) =>
+                  (suggestion: ModernizationSuggestion) =>
                     `${this.getMigrationIcon(suggestion.migrationEffort)} ${suggestion.technology}\n` +
                     `   ${suggestion.currentVersion} → ${suggestion.recommendedVersion}\n` +
                     `   ${suggestion.breakingChanges ? "⚠️ BREAKING" : "✅ SAFE"}\n` +
@@ -632,9 +733,8 @@ class StringRayRefactoringStrategiesServer {
     timeBudget: string,
     riskTolerance: string,
     priorities: string[],
-  ): any {
+  ): RefactoringPlan {
     const timeLimits = {
-      "1-week": 1,
       "1-month": 4,
       "3-months": 12,
       "6-months": 26,
@@ -680,7 +780,7 @@ class StringRayRefactoringStrategiesServer {
         risk: "high",
         expectedImpact: "medium",
       },
-    ].filter((phase: any) => phase.duration > 0);
+    ].filter((phase: RefactoringPlanPhase) => phase.duration > 0);
 
     return {
       phases,
@@ -695,7 +795,7 @@ class StringRayRefactoringStrategiesServer {
     codePath: string,
     technologies: string[],
     safeMode: boolean,
-  ): Promise<any> {
+  ): Promise<ModernizationAnalysis> {
     const suggestions: ModernizationSuggestion[] = [];
 
     // Check package.json for dependencies
@@ -794,7 +894,7 @@ class StringRayRefactoringStrategiesServer {
     return recommendations;
   }
 
-  private createImplementationPlan(suggestions: RefactoringOpportunity[]): any {
+  private createImplementationPlan(suggestions: RefactoringOpportunity[]): ImplementationPlan {
     return {
       phases: [
         {
@@ -827,9 +927,9 @@ class StringRayRefactoringStrategiesServer {
     };
   }
 
-  private assessPlanRisks(plan: any): any {
+  private assessPlanRisks(plan: RefactoringPlan): RiskAssessment {
     return {
-      overallRisk: plan.phases.some((p: any) => p.risk === "high")
+      overallRisk: plan.phases.some((p: RefactoringPlanPhase) => p.risk === "high")
         ? "high"
         : "medium",
       riskFactors: [
@@ -847,7 +947,7 @@ class StringRayRefactoringStrategiesServer {
     };
   }
 
-  private defineSuccessMetrics(plan: any): any {
+  private defineSuccessMetrics(plan: RefactoringPlan): SuccessMetrics {
     return {
       codeQuality: {
         target: "Improve maintainability score by 20%",
@@ -867,7 +967,7 @@ class StringRayRefactoringStrategiesServer {
     };
   }
 
-  private createMigrationStrategy(modernization: any): any {
+  private createMigrationStrategy(modernization: ModernizationAnalysis): MigrationStrategy {
     return {
       phases: [
         {
@@ -917,7 +1017,7 @@ class StringRayRefactoringStrategiesServer {
     };
   }
 
-  private createRollbackPlan(modernization: any): any {
+  private createRollbackPlan(modernization: ModernizationAnalysis): RollbackPlan {
     return {
       strategies: [
         {

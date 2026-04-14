@@ -10,6 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -55,14 +56,14 @@ interface APIParameter {
   type: string;
   required: boolean;
   description: string;
-  example?: any;
+  example?: unknown;
 }
 
 interface APIResponse {
   statusCode: number;
   description: string;
   schema?: APISchema;
-  example?: any;
+  example?: unknown;
 }
 
 interface APISchema {
@@ -75,7 +76,7 @@ interface APISchema {
 interface SchemaProperty {
   type: string;
   description: string;
-  example?: any;
+  example?: unknown;
   required?: boolean;
 }
 
@@ -85,12 +86,12 @@ interface APIExample {
     method: string;
     path: string;
     headers?: Record<string, string>;
-    body?: any;
+    body?: unknown;
   };
   response: {
     statusCode: number;
     headers?: Record<string, string>;
-    body?: any;
+    body?: unknown;
   };
 }
 
@@ -112,6 +113,51 @@ interface ErrorCode {
   message: string;
   description: string;
   resolution: string;
+}
+
+interface AnalyzeDocumentationArgs {
+  docsPath: string;
+  codePath?: string;
+  docTypes?: string[];
+}
+
+interface GenerateAPIDocsArgs {
+  codePath: string;
+  framework: string;
+  format?: string;
+  includeExamples?: boolean;
+}
+
+interface GenerateCodeDocumentationArgs {
+  codePath: string;
+  language: string;
+  style?: string;
+  includePrivate?: boolean;
+}
+
+interface GenerateReadmeArgs {
+  projectPath: string;
+  projectType: string;
+  includeSections?: string[];
+  existingReadme?: string;
+}
+
+interface CodeDocumentationAnalysis {
+  filesProcessed: number;
+  totalFunctions: number;
+  functionsDocumented: number;
+  totalClasses: number;
+  classesDocumented: number;
+  coverage: number;
+}
+
+interface ProjectStructureAnalysis {
+  name?: string;
+  description?: string;
+  languages: string[];
+  dependencies: string[];
+  entryPoints: string[];
+  structure: Record<string, unknown>;
 }
 
 class StringRayDocumentationGenerationServer {
@@ -294,20 +340,20 @@ class StringRayDocumentationGenerationServer {
 
       switch (name) {
         case "analyze_documentation":
-          return await this.analyzeDocumentation(args);
+          return await this.analyzeDocumentation(args as unknown as AnalyzeDocumentationArgs) as CallToolResult;
         case "generate_api_docs":
-          return await this.generateAPIDocs(args);
+          return await this.generateAPIDocs(args as unknown as GenerateAPIDocsArgs) as CallToolResult;
         case "generate_code_documentation":
-          return await this.generateCodeDocumentation(args);
+          return await this.generateCodeDocumentation(args as unknown as GenerateCodeDocumentationArgs) as CallToolResult;
         case "generate_readme":
-          return await this.generateReadme(args);
+          return await this.generateReadme(args as unknown as GenerateReadmeArgs) as CallToolResult;
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeDocumentation(args: any): Promise<any> {
+  private async analyzeDocumentation(args: AnalyzeDocumentationArgs) {
     const { docsPath, codePath, docTypes = ["readme", "api", "code"] } = args;
 
     try {
@@ -353,7 +399,7 @@ class StringRayDocumentationGenerationServer {
     }
   }
 
-  private async generateAPIDocs(args: any): Promise<any> {
+  private async generateAPIDocs(args: GenerateAPIDocsArgs) {
     const {
       codePath,
       framework,
@@ -413,7 +459,7 @@ class StringRayDocumentationGenerationServer {
     }
   }
 
-  private async generateCodeDocumentation(args: any): Promise<any> {
+  private async generateCodeDocumentation(args: GenerateCodeDocumentationArgs) {
     const {
       codePath,
       language,
@@ -467,7 +513,7 @@ class StringRayDocumentationGenerationServer {
     }
   }
 
-  private async generateReadme(args: any): Promise<any> {
+  private async generateReadme(args: GenerateReadmeArgs) {
     const {
       projectPath,
       projectType,
@@ -1036,7 +1082,7 @@ class StringRayDocumentationGenerationServer {
             };
             return acc;
           },
-          {} as Record<string, any>,
+          {} as Record<string, Record<string, unknown>>,
         ),
       },
       paths: apiDocs.endpoints.reduce(
@@ -1070,14 +1116,14 @@ class StringRayDocumentationGenerationServer {
                 };
                 return resAcc;
               },
-              {} as Record<string, any>,
+              {} as Record<string, unknown>,
             ),
             tags: endpoint.tags,
           };
 
           return acc;
         },
-        {} as Record<string, any>,
+        {} as Record<string, Record<string, unknown>>,
       ),
     };
 
@@ -1184,8 +1230,8 @@ class StringRayDocumentationGenerationServer {
     codePath: string,
     language: string,
     includePrivate: boolean,
-  ): Promise<any> {
-    const analysis = {
+  ): Promise<CodeDocumentationAnalysis> {
+    const analysis: CodeDocumentationAnalysis = {
       filesProcessed: 0,
       totalFunctions: 0,
       functionsDocumented: 0,
@@ -1340,7 +1386,7 @@ class StringRayDocumentationGenerationServer {
   }
 
   private generateDocumentationComments(
-    documentation: any,
+    documentation: CodeDocumentationAnalysis,
     style: string,
   ): string[] {
     const comments: string[] = [];
@@ -1366,12 +1412,12 @@ class StringRayDocumentationGenerationServer {
   private async analyzeProjectStructure(
     projectPath: string,
     projectType: string,
-  ): Promise<any> {
-    const analysis = {
+  ): Promise<ProjectStructureAnalysis> {
+    const analysis: ProjectStructureAnalysis = {
       languages: [] as string[],
       dependencies: [] as string[],
       entryPoints: [] as string[],
-      structure: {} as Record<string, any>,
+      structure: {} as Record<string, unknown>,
     };
 
     try {
@@ -1416,7 +1462,7 @@ class StringRayDocumentationGenerationServer {
   }
 
   private generateReadmeContent(
-    projectAnalysis: any,
+    projectAnalysis: ProjectStructureAnalysis,
     includeSections: string[],
     existingReadme?: string,
   ): string {
@@ -1467,7 +1513,7 @@ class StringRayDocumentationGenerationServer {
     return content;
   }
 
-  private generateInstallationSection(projectAnalysis: any): string {
+  private generateInstallationSection(projectAnalysis: ProjectStructureAnalysis): string {
     let content = "## Installation\n\n";
 
     if (
@@ -1499,7 +1545,7 @@ class StringRayDocumentationGenerationServer {
     return content;
   }
 
-  private generateUsageSection(projectAnalysis: any): string {
+  private generateUsageSection(projectAnalysis: ProjectStructureAnalysis): string {
     let content = "## Usage\n\n";
 
     content += "```javascript\n";
@@ -1515,7 +1561,7 @@ class StringRayDocumentationGenerationServer {
     return content;
   }
 
-  private generateAPISection(projectAnalysis: any): string {
+  private generateAPISection(projectAnalysis: ProjectStructureAnalysis): string {
     let content = "## API\n\n";
 
     content += "### Core Functions\n\n";

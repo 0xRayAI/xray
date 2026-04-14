@@ -15,6 +15,27 @@ import { execSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 
+interface ModelHealthCheckArgs {
+  models?: string[];
+  compatibility?: boolean;
+  performance?: boolean;
+}
+
+interface ModelHealthResult {
+  model: string;
+  healthy: boolean;
+  issues: string[];
+  latency?: number;
+  timestamp?: string;
+}
+
+interface ModelHealthReportData {
+  models: ModelHealthResult[];
+  compatibilityMatrix: Record<string, Record<string, boolean>>;
+  performanceMetrics: Record<string, { latency: number; throughput: string }>;
+  summary: { total: number; healthy: number; issues: number };
+}
+
 class StringRayModelHealthCheckServer {
   private server: Server;
 
@@ -75,14 +96,14 @@ class StringRayModelHealthCheckServer {
 
       switch (name) {
         case "model-health-check":
-          return await this.handleModelHealthCheck(args || {});
+          return await this.handleModelHealthCheck((args || {}) as unknown as ModelHealthCheckArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async handleModelHealthCheck(args: any) {
+  private async handleModelHealthCheck(args: ModelHealthCheckArgs) {
     const models = args.models || [modelRouter.getValidatedModel()];
     const includeCompatibility = args.compatibility !== false;
     const includePerformance = args.performance !== false;
@@ -191,7 +212,7 @@ class StringRayModelHealthCheckServer {
     return matrix;
   }
 
-  private generateHealthReport(results: any): string {
+  private generateHealthReport(results: ModelHealthReportData): string {
     let report = "# Model Health Check Report\n\n";
 
     // Summary
@@ -226,11 +247,11 @@ class StringRayModelHealthCheckServer {
           "\n";
 
         for (const model1 of Object.keys(results.compatibilityMatrix)) {
+          const row = results.compatibilityMatrix[model1];
+          if (!row) continue;
           report += `| ${model1} |`;
-          for (const model2 of Object.keys(
-            results.compatibilityMatrix[model1],
-          )) {
-            const compatible = results.compatibilityMatrix[model1][model2];
+          for (const model2 of Object.keys(row)) {
+            const compatible = row[model2];
             report += ` ${compatible ? "✅" : "❌"} |`;
           }
           report += "\n";

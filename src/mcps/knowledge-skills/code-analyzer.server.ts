@@ -27,6 +27,43 @@ interface Tool {
   inputSchema: object;
 }
 
+interface CodeMetrics {
+  totalLines: number;
+  nonEmptyLines: number;
+  functions: number;
+  classes: number;
+  interfaces: number;
+  imports: number;
+  exports: number;
+  cyclomaticComplexity: number;
+  error?: string;
+}
+
+interface CodeSmell {
+  file: string;
+  type: string;
+  line?: number;
+}
+
+interface PatternMatch {
+  file: string;
+  line: number;
+  content: string;
+}
+
+interface FunctionDefinition {
+  file: string;
+  line: number;
+  context: string;
+}
+
+interface FileTreeNode {
+  type: "directory" | "file" | "error";
+  name: string;
+  children?: FileTreeNode[];
+  size?: number;
+}
+
 class CodeAnalyzerServer {
   private server: Server;
   private tools: Tool[] = [
@@ -300,19 +337,19 @@ class CodeAnalyzerServer {
     });
   }
 
-  private handleAnalyzeCode(args: any) {
-    const { files = [], language = "typescript" } = args;
-    const results: Array<{ file: string; metrics: any }> = [];
+  private handleAnalyzeCode(args: unknown) {
+    const { files = [], language = "typescript" } = args as { files?: string[]; language?: string };
+    const results: Array<{ file: string; metrics: CodeMetrics }> = [];
     for (const file of files) {
       try {
         const content = fs.readFileSync(file, "utf-8");
         results.push({ file, metrics: this.calculateCodeMetrics(content, language) });
-      } catch (e) { results.push({ file, metrics: { error: String(e) } }); }
+      } catch (e) { results.push({ file, metrics: { totalLines: 0, nonEmptyLines: 0, functions: 0, classes: 0, interfaces: 0, imports: 0, exports: 0, cyclomaticComplexity: 0, error: String(e) } }); }
     }
     return { content: [{ type: "text", text: JSON.stringify({ totalFiles: results.length, results }, null, 2) }] };
   }
 
-  private calculateCodeMetrics(content: string, language: string): any {
+  private calculateCodeMetrics(content: string, language: string): CodeMetrics {
     const lines = content.split("\n");
     return {
       totalLines: lines.length,
@@ -333,16 +370,16 @@ class CodeAnalyzerServer {
     return c;
   }
 
-  private handleCalculateComplexity(args: any) {
-    const { code, language = "typescript" } = args;
+  private handleCalculateComplexity(args: unknown) {
+    const { code, language = "typescript" } = args as { code: string; language?: string };
     const complexity = this.calculateCyclomaticComplexity(code);
     return { content: [{ type: "text", text: JSON.stringify({ cyclomaticComplexity: complexity, complexityLevel: complexity < 10 ? "low" : complexity < 20 ? "moderate" : "high", metrics: this.calculateCodeMetrics(code, language) }, null, 2) }] };
   }
 
-  private handleDetectCodeSmells(args: any) {
-    const { files = [], thresholds = {} } = args;
+  private handleDetectCodeSmells(args: unknown) {
+    const { files = [], thresholds = {} } = args as { files?: string[]; thresholds?: { maxFunctionLength?: number; maxNestingDepth?: number; maxParameters?: number } };
     const { maxFunctionLength = 30, maxNestingDepth = 4, maxParameters = 5 } = thresholds;
-    const smells: any[] = [];
+    const smells: CodeSmell[] = [];
     for (const file of files) {
       try {
         const content = fs.readFileSync(file, "utf-8");
@@ -361,15 +398,15 @@ class CodeAnalyzerServer {
     return { content: [{ type: "text", text: JSON.stringify({ totalSmells: smells.length, smells }, null, 2) }] };
   }
 
-  private handleExtractMetrics(args: any) {
-    const { filePath } = args;
-    const metrics: any = { file: filePath, analyzedAt: new Date().toISOString() };
+  private handleExtractMetrics(args: unknown) {
+    const { filePath } = args as { filePath: string };
+    const metrics: { file: string; analyzedAt: string; size?: number; codeMetrics?: CodeMetrics; error?: string } = { file: filePath, analyzedAt: new Date().toISOString() };
     try { const stat = fs.statSync(filePath); metrics.size = stat.size; if (stat.isFile()) metrics.codeMetrics = this.calculateCodeMetrics(fs.readFileSync(filePath, "utf-8"), "typescript"); } catch (e) { metrics.error = String(e); }
     return { content: [{ type: "text", text: JSON.stringify(metrics, null, 2) }] };
   }
 
-  private handleExploreCodebase(args: any) {
-    const { patterns, basePath = ".", maxResults = 50 } = args;
+  private handleExploreCodebase(args: unknown) {
+    const { patterns, basePath = ".", maxResults = 50 } = args as { patterns: string[]; basePath?: string; maxResults?: number };
     const results: string[] = [];
     const root = path.resolve(basePath);
     const walk = (dir: string, depth = 0) => {
@@ -394,9 +431,9 @@ class CodeAnalyzerServer {
     return name.includes(pattern);
   }
 
-  private handleFindPatterns(args: any) {
-    const { pattern, fileTypes = [], basePath = ".", maxMatches = 100 } = args;
-    const results: any[] = [];
+  private handleFindPatterns(args: unknown) {
+    const { pattern, fileTypes = [], basePath = ".", maxMatches = 100 } = args as { pattern: string; fileTypes?: string[]; basePath?: string; maxMatches?: number };
+    const results: PatternMatch[] = [];
     const root = path.resolve(basePath);
     const search = (file: string) => {
       try {
@@ -423,9 +460,9 @@ class CodeAnalyzerServer {
     return { content: [{ type: "text", text: JSON.stringify({ totalMatches: results.length, matches: results }, null, 2) }] };
   }
 
-  private handleFindFunction(args: any) {
-    const { functionName, fileTypes = [".ts", ".js"] } = args;
-    const results: any[] = [];
+  private handleFindFunction(args: unknown) {
+    const { functionName, fileTypes = [".ts", ".js"] } = args as { functionName: string; fileTypes?: string[] };
+    const results: FunctionDefinition[] = [];
     const search = (file: string) => {
       try {
         const lines = fs.readFileSync(file, "utf-8").split("\n");
@@ -451,17 +488,17 @@ class CodeAnalyzerServer {
     return { content: [{ type: "text", text: JSON.stringify({ functionName, totalFound: results.length, definitions: results }, null, 2) }] };
   }
 
-  private handleGetFileStructure(args: any) {
-    const { path: dirPath, maxDepth = 3, includeFiles = true } = args;
+  private handleGetFileStructure(args: unknown) {
+    const { path: dirPath, maxDepth = 3, includeFiles = true } = args as { path: string; maxDepth?: number; includeFiles?: boolean };
     const root = path.resolve(dirPath);
-    const build = (dir: string, depth: number): any => {
+    const build = (dir: string, depth: number): FileTreeNode | null => {
       if (depth > maxDepth) return null;
       try {
-        const node: any = { type: "directory", name: path.basename(dir), children: [] };
+        const node: FileTreeNode = { type: "directory", name: path.basename(dir), children: [] };
         for (const entry of fs.readdirSync(dir, { withFileTypes: true }).filter(e => e.isDirectory() ? !["node_modules", ".git", "dist"].includes(e.name) : includeFiles).sort((a, b) => (a.isDirectory() ? -1 : 1) - (b.isDirectory() ? -1 : 1))) {
           const full = path.join(dir, entry.name);
-          if (entry.isDirectory()) { const child = build(full, depth + 1); if (child) node.children.push(child); }
-          else try { node.children.push({ type: "file", name: entry.name, size: fs.statSync(full).size }); } catch { /* skip */ }
+          if (entry.isDirectory()) { const child = build(full, depth + 1); if (child) node.children!.push(child); }
+          else try { node.children!.push({ type: "file", name: entry.name, size: fs.statSync(full).size }); } catch { /* skip */ }
         }
         return node;
       } catch { return { type: "error", name: path.basename(dir) }; }
@@ -469,8 +506,8 @@ class CodeAnalyzerServer {
     return { content: [{ type: "text", text: JSON.stringify({ structure: build(root, 0) }, null, 2) }] };
   }
 
-  private handleAnalyzeDependencies(args: any) {
-    const { rootDir, maxDepth = 3 } = args;
+  private handleAnalyzeDependencies(args: unknown) {
+    const { rootDir, maxDepth = 3 } = args as { rootDir: string; maxDepth?: number };
     const deps: Record<string, string[]> = {};
     const visited = new Set<string>();
     const process = (file: string, depth: number) => {
@@ -501,8 +538,8 @@ class CodeAnalyzerServer {
     return { content: [{ type: "text", text: JSON.stringify({ totalFiles: Object.keys(deps).length, externalDependencies: [...new Set(Object.values(deps).flat())], dependencies: deps }, null, 2) }] };
   }
 
-  private handleFindDuplicates(args: any) {
-    const { directory, minLength = 10 } = args;
+  private handleFindDuplicates(args: unknown) {
+    const { directory, minLength = 10 } = args as { directory: string; minLength?: number };
     const blocks = new Map<string, string[]>();
     const extract = (content: string): string[] => {
       const b: string[] = [], lines = content.split("\n");

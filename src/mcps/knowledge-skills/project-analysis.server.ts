@@ -10,6 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -34,6 +35,105 @@ interface ComplexityAnalysis {
     difficulty: number;
     effort: number;
   };
+}
+
+interface DirectoryNode {
+  type: "directory";
+  path?: string;
+  truncated?: boolean;
+  children?: (DirectoryNode | FileNode)[];
+  error?: string;
+}
+
+interface FileNode {
+  type: "file";
+  name: string;
+  extension: string;
+  size: number;
+}
+
+interface AnalyzeProjectStructureArgs {
+  projectRoot: string;
+  includeMetrics?: boolean;
+  maxDepth?: number;
+}
+
+interface AssessProjectComplexityArgs {
+  projectRoot: string;
+  includeBreakdown?: boolean;
+  focusAreas?: string[];
+}
+
+interface IdentifyProjectPatternsArgs {
+  projectRoot: string;
+  patternTypes?: string[];
+  confidenceThreshold?: number;
+}
+
+interface AnalyzeProjectHealthArgs {
+  projectRoot: string;
+  includeTrends?: boolean;
+  focusMetrics?: string[];
+}
+
+interface DetectedPattern {
+  type: string;
+  pattern: string;
+  confidence: number;
+  description: string;
+  severity?: string;
+}
+
+interface FileComplexityResult {
+  complexity: number;
+  functions: number;
+  classes: number;
+  imports: number;
+}
+
+interface ComplexityAnalysisResult {
+  averageComplexity: number;
+  maxComplexity: number;
+  totalFunctions: number;
+  totalClasses: number;
+  totalImports: number;
+  maintainabilityIndex: number;
+  technicalDebtRatio: number;
+  fileBreakdown?: Array<{
+    file: string;
+    complexity: FileComplexityResult;
+    size: number;
+  }>;
+}
+
+interface HealthIssue {
+  type: string;
+  severity: string;
+  description: string;
+}
+
+interface HealthAssessment {
+  overall: string;
+  scores: {
+    complexity: number;
+    maintainability: number;
+    testability: number;
+    reliability: number;
+    security: number;
+  };
+  issues: HealthIssue[];
+  metrics: ComplexityAnalysisResult;
+  trends?: HealthTrends;
+}
+
+interface HealthTrends {
+  complexity: { trend: string; change: number };
+  maintainability: { trend: string; change: number };
+  issues: { trend: string; change: number };
+}
+
+interface McpToolResponse {
+  content: Array<{ type: "text"; text: string }>;
 }
 
 class StringRayProjectAnalysisServer {
@@ -185,19 +285,19 @@ class StringRayProjectAnalysisServer {
     });
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
       const { name, arguments: args } = request.params;
 
       try {
         switch (name) {
           case "analyze-project-structure":
-            return await this.analyzeProjectStructure(args);
+            return await this.analyzeProjectStructure(args as unknown as AnalyzeProjectStructureArgs) as CallToolResult;
           case "assess-project-complexity":
-            return await this.assessProjectComplexity(args);
+            return await this.assessProjectComplexity(args as unknown as AssessProjectComplexityArgs) as CallToolResult;
           case "identify-project-patterns":
-            return await this.identifyProjectPatterns(args);
+            return await this.identifyProjectPatterns(args as unknown as IdentifyProjectPatternsArgs) as CallToolResult;
           case "analyze-project-health":
-            return await this.analyzeProjectHealth(args);
+            return await this.analyzeProjectHealth(args as unknown as AnalyzeProjectHealthArgs) as CallToolResult;
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -208,7 +308,7 @@ class StringRayProjectAnalysisServer {
     });
   }
 
-  private async analyzeProjectStructure(args: any): Promise<any> {
+  private async analyzeProjectStructure(args: AnalyzeProjectStructureArgs): Promise<McpToolResponse> {
     const { projectRoot, includeMetrics = true, maxDepth = 10 } = args;
 
     // Project analysis start - removed unnecessary operational logging
@@ -237,7 +337,7 @@ class StringRayProjectAnalysisServer {
     };
   }
 
-  private async assessProjectComplexity(args: any): Promise<any> {
+  private async assessProjectComplexity(args: AssessProjectComplexityArgs): Promise<McpToolResponse> {
     const { projectRoot, includeBreakdown = true, focusAreas } = args;
 
     // Project complexity analysis - removed unnecessary operational logging
@@ -271,7 +371,7 @@ class StringRayProjectAnalysisServer {
     };
   }
 
-  private async identifyProjectPatterns(args: any): Promise<any> {
+  private async identifyProjectPatterns(args: IdentifyProjectPatternsArgs): Promise<McpToolResponse> {
     const {
       projectRoot,
       patternTypes = ["architectural", "code"],
@@ -306,7 +406,7 @@ class StringRayProjectAnalysisServer {
     };
   }
 
-  private async analyzeProjectHealth(args: any): Promise<any> {
+  private async analyzeProjectHealth(args: AnalyzeProjectHealthArgs): Promise<McpToolResponse> {
     const { projectRoot, includeTrends = false, focusMetrics } = args;
 
     frameworkLogger.log("mcps/project-analysis", "analyze-health", "info", { projectRoot });
@@ -345,12 +445,12 @@ class StringRayProjectAnalysisServer {
     dirPath: string,
     maxDepth: number,
     currentDepth = 0,
-  ): any {
+  ): DirectoryNode {
     if (currentDepth >= maxDepth) return { type: "directory", truncated: true };
 
     try {
       const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-      const structure: any = {
+      const structure: DirectoryNode = {
         type: "directory",
         path: path.relative(process.cwd(), dirPath),
         children: [],
@@ -363,7 +463,7 @@ class StringRayProjectAnalysisServer {
         if (this.shouldIgnorePath(entryPath)) continue;
 
         if (entry.isDirectory()) {
-          structure.children.push(
+          structure.children!.push(
             this.analyzeDirectoryStructure(
               entryPath,
               maxDepth,
@@ -371,7 +471,7 @@ class StringRayProjectAnalysisServer {
             ),
           );
         } else if (entry.isFile()) {
-          structure.children.push({
+          structure.children!.push({
             type: "file",
             name: entry.name,
             extension: path.extname(entry.name),
@@ -391,7 +491,7 @@ class StringRayProjectAnalysisServer {
 
   private calculateProjectMetrics(
     projectRoot: string,
-    structure: any,
+    structure: DirectoryNode,
   ): ProjectMetrics {
     const metrics: ProjectMetrics = {
       totalFiles: 0,
@@ -461,7 +561,7 @@ class StringRayProjectAnalysisServer {
     return files;
   }
 
-  private analyzeComplexity(files: string[], focusAreas?: string[]): any {
+  private analyzeComplexity(files: string[], focusAreas?: string[]): ComplexityAnalysisResult {
     const analysis = {
       averageComplexity: 0,
       maxComplexity: 0,
@@ -500,7 +600,7 @@ class StringRayProjectAnalysisServer {
     return analysis;
   }
 
-  private calculateFileComplexity(filePath: string): any {
+  private calculateFileComplexity(filePath: string): FileComplexityResult {
     try {
       const content = fs.readFileSync(filePath, "utf8");
       const lines = content.split("\n");
@@ -526,8 +626,8 @@ class StringRayProjectAnalysisServer {
     projectRoot: string,
     patternTypes: string[],
     confidenceThreshold: number,
-  ): Promise<any[]> {
-    const patterns: any[] = [];
+  ): Promise<DetectedPattern[]> {
+    const patterns: DetectedPattern[] = [];
 
     if (patternTypes.includes("architectural")) {
       patterns.push(
@@ -553,8 +653,8 @@ class StringRayProjectAnalysisServer {
   private detectArchitecturalPatterns(
     projectRoot: string,
     threshold: number,
-  ): any[] {
-    const patterns: any[] = [];
+  ): DetectedPattern[] {
+    const patterns: DetectedPattern[] = [];
     const files = this.getProjectFiles(projectRoot);
 
     // MVC Pattern
@@ -586,8 +686,8 @@ class StringRayProjectAnalysisServer {
     return patterns.filter((p) => p.confidence >= threshold);
   }
 
-  private detectCodePatterns(projectRoot: string, threshold: number): any[] {
-    const patterns: any[] = [];
+  private detectCodePatterns(projectRoot: string, threshold: number): DetectedPattern[] {
+    const patterns: DetectedPattern[] = [];
     const files = this.getProjectFiles(projectRoot);
 
     // Check for common patterns in a sample of files
@@ -647,8 +747,8 @@ class StringRayProjectAnalysisServer {
     return patterns.filter((p) => p.confidence >= threshold);
   }
 
-  private detectAntiPatterns(projectRoot: string, threshold: number): any[] {
-    const patterns: any[] = [];
+  private detectAntiPatterns(projectRoot: string, threshold: number): DetectedPattern[] {
+    const patterns: DetectedPattern[] = [];
     const files = this.getProjectFiles(projectRoot);
 
     // Check for anti-patterns in sample files
@@ -729,8 +829,8 @@ class StringRayProjectAnalysisServer {
   private async assessProjectHealth(
     projectRoot: string,
     focusMetrics?: string[],
-  ): Promise<any> {
-    const health = {
+  ): Promise<HealthAssessment> {
+    const health: HealthAssessment = {
       overall: "good",
       scores: {
         complexity: 75,
@@ -739,8 +839,8 @@ class StringRayProjectAnalysisServer {
         reliability: 85,
         security: 75,
       },
-      issues: [] as any[],
-      metrics: {} as any,
+      issues: [],
+      metrics: {} as ComplexityAnalysisResult,
     };
 
     const files = this.getProjectFiles(projectRoot);
@@ -780,7 +880,7 @@ class StringRayProjectAnalysisServer {
     return health;
   }
 
-  private calculateHealthTrends(projectRoot: string): any {
+  private calculateHealthTrends(projectRoot: string): HealthTrends {
     // Placeholder for trend analysis
     return {
       complexity: { trend: "stable", change: 0 },
@@ -789,7 +889,7 @@ class StringRayProjectAnalysisServer {
     };
   }
 
-  private generateHealthRecommendations(health: any): string[] {
+  private generateHealthRecommendations(health: HealthAssessment): string[] {
     const recommendations: string[] = [];
 
     if (health.scores.complexity < 70) {
@@ -802,7 +902,7 @@ class StringRayProjectAnalysisServer {
       recommendations.push("Improve code documentation and naming conventions");
     }
 
-    if (health.issues.some((i: any) => i.severity === "critical")) {
+    if (health.issues.some((i: HealthIssue) => i.severity === "critical")) {
       recommendations.push("Address critical health issues immediately");
     }
 
@@ -810,14 +910,18 @@ class StringRayProjectAnalysisServer {
   }
 
   private traverseStructure(
-    structure: any,
-    callback: (item: any, depth: number) => void,
+    structure: DirectoryNode,
+    callback: (item: DirectoryNode | FileNode, depth: number) => void,
     depth = 0,
   ): void {
     callback(structure, depth);
     if (structure.children) {
       for (const child of structure.children) {
-        this.traverseStructure(child, callback, depth + 1);
+        if (child.type === "directory") {
+          this.traverseStructure(child, callback, depth + 1);
+        } else {
+          callback(child, depth + 1);
+        }
       }
     }
   }

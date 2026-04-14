@@ -74,6 +74,43 @@ interface QueryAnalysis {
   optimizationOpportunities: string[];
 }
 
+interface SchemaIssue {
+  table: string;
+  column: string | null;
+  description: string;
+  severity: "info" | "warning" | "error";
+}
+
+interface SchemaAnalysis {
+  normalizationLevel: number;
+  indexingStrategy: string;
+  relationshipComplexity: string;
+  performanceConsiderations: string[];
+  indexes: IndexRecommendation[];
+}
+
+interface ModelValidation {
+  issues: string[];
+  score: number;
+}
+
+interface EntityRelationship {
+  from: string;
+  to: string;
+  type: "one-to-one" | "one-to-many" | "many-to-many";
+}
+
+interface SchemaComparison {
+  addTables: string[];
+  dropTables: string[];
+  addColumns: string[];
+  modifyColumns: string[];
+  dropColumns: string[];
+  addIndexes: string[];
+  dropIndexes: string[];
+  hasDataLoss: boolean;
+}
+
 class StringRayDatabaseDesignServer {
   private server: Server;
 
@@ -237,12 +274,12 @@ class StringRayDatabaseDesignServer {
     });
   }
 
-  private async analyzeSchema(args: any): Promise<any> {
-    const {
-      schemaFile,
-      databaseType = "postgresql",
-      includeIndexes = true,
-    } = args;
+  private async analyzeSchema(args: Record<string, unknown> | undefined) {
+      const {
+        schemaFile,
+        databaseType = "postgresql",
+        includeIndexes = true,
+      } = args as { schemaFile: string; databaseType?: string; includeIndexes?: boolean };
 
     try {
       if (!fs.existsSync(schemaFile)) {
@@ -314,8 +351,8 @@ class StringRayDatabaseDesignServer {
     }
   }
 
-  private async optimizeQuery(args: any): Promise<any> {
-    const { query, schemaContext, databaseType = "postgresql" } = args;
+  private async optimizeQuery(args: Record<string, unknown> | undefined) {
+      const { query, schemaContext, databaseType = "postgresql" } = args as { query: string; schemaContext?: string; databaseType?: string };
 
     try {
       const analysis = this.analyzeQuery(query, databaseType);
@@ -380,13 +417,13 @@ class StringRayDatabaseDesignServer {
     }
   }
 
-  private async designDataModel(args: any): Promise<any> {
-    const {
-      requirements,
-      entities,
-      relationships = [],
-      databaseType = "postgresql",
-    } = args;
+  private async designDataModel(args: Record<string, unknown> | undefined) {
+      const {
+        requirements,
+        entities,
+        relationships = [],
+        databaseType = "postgresql",
+      } = args as { requirements: string; entities: string[]; relationships?: EntityRelationship[]; databaseType?: string };
 
     try {
       const model = this.generateDataModel(
@@ -443,13 +480,13 @@ class StringRayDatabaseDesignServer {
     }
   }
 
-  private async migrateSchema(args: any): Promise<any> {
-    const {
-      currentSchema,
-      targetSchema,
-      databaseType = "postgresql",
-      safeMode = true,
-    } = args;
+  private async migrateSchema(args: Record<string, unknown> | undefined) {
+      const {
+        currentSchema,
+        targetSchema,
+        databaseType = "postgresql",
+        safeMode = true,
+      } = args as { currentSchema: string; targetSchema: string; databaseType?: string; safeMode?: boolean };
 
     try {
       const current = this.parseSchemaString(currentSchema, databaseType);
@@ -631,7 +668,7 @@ class StringRayDatabaseDesignServer {
   private analyzeSchemaDesign(
     schema: DatabaseSchema,
     databaseType: string,
-  ): any {
+  ): SchemaAnalysis {
     return {
       normalizationLevel: this.assessNormalization(schema),
       indexingStrategy: this.evaluateIndexing(schema),
@@ -642,6 +679,7 @@ class StringRayDatabaseDesignServer {
         schema,
         databaseType,
       ),
+      indexes: [],
     };
   }
 
@@ -747,8 +785,8 @@ class StringRayDatabaseDesignServer {
   private identifySchemaIssues(
     schema: DatabaseSchema,
     databaseType: string,
-  ): any[] {
-    const issues: any[] = [];
+  ): SchemaIssue[] {
+    const issues: SchemaIssue[] = [];
 
     schema.tables.forEach((table) => {
       // Check for missing primary keys
@@ -788,7 +826,7 @@ class StringRayDatabaseDesignServer {
   }
 
   private generateSchemaRecommendations(
-    issues: any[],
+    issues: SchemaIssue[],
     schema: DatabaseSchema,
     databaseType: string,
   ): string[] {
@@ -947,7 +985,7 @@ class StringRayDatabaseDesignServer {
   private generateDataModel(
     requirements: string,
     entities: string[],
-    relationships: any[],
+    relationships: EntityRelationship[],
     databaseType: string,
   ): DatabaseSchema {
     const tables: TableSchema[] = entities.map((entity) => ({
@@ -1004,7 +1042,7 @@ class StringRayDatabaseDesignServer {
     };
   }
 
-  private validateDataModel(model: DatabaseSchema, databaseType: string): any {
+  private validateDataModel(model: DatabaseSchema, databaseType: string): ModelValidation {
     const validation = {
       issues: [] as string[],
       score: 100,
@@ -1025,7 +1063,7 @@ class StringRayDatabaseDesignServer {
 
   private generateModelRecommendations(
     model: DatabaseSchema,
-    validation: any,
+    validation: ModelValidation,
   ): string[] {
     const recommendations: string[] = [];
 
@@ -1048,7 +1086,7 @@ class StringRayDatabaseDesignServer {
     return recommendations;
   }
 
-  private compareSchemas(current: DatabaseSchema, target: DatabaseSchema): any {
+  private compareSchemas(current: DatabaseSchema, target: DatabaseSchema): SchemaComparison {
     const changes = {
       addTables: [] as string[],
       dropTables: [] as string[],
@@ -1078,7 +1116,7 @@ class StringRayDatabaseDesignServer {
   }
 
   private generateMigrationScript(
-    changes: any,
+    changes: SchemaComparison,
     databaseType: string,
     safeMode: boolean,
   ): string {
@@ -1113,7 +1151,7 @@ class StringRayDatabaseDesignServer {
     return script;
   }
 
-  private generateRollbackScript(changes: any, databaseType: string): string {
+  private generateRollbackScript(changes: SchemaComparison, databaseType: string): string {
     let script = `-- Rollback script generated at ${new Date().toISOString()}\n\n`;
 
     // Rollback logic would reverse the changes

@@ -14,6 +14,25 @@ import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 
+interface FrameworkComplianceAuditArgs {
+  scope?: string;
+  detailed?: boolean;
+}
+
+interface CodexValidationArgs {
+  terms?: number[];
+  strict?: boolean;
+}
+
+interface AuditResults {
+  passed: boolean;
+  criticalIssues: string[];
+  warnings: string[];
+  complianceScores: Record<string, string>;
+  recommendations: string[];
+  summary: string;
+}
+
 class StringRayFrameworkComplianceAuditServer {
   private server: Server;
 
@@ -100,16 +119,16 @@ class StringRayFrameworkComplianceAuditServer {
 
       switch (name) {
         case "framework-compliance-audit":
-          return await this.handleFrameworkComplianceAudit(args);
+          return await this.handleFrameworkComplianceAudit(args as unknown as FrameworkComplianceAuditArgs);
         case "codex-validation":
-          return await this.handleCodexValidation(args);
+          return await this.handleCodexValidation(args as unknown as CodexValidationArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async handleFrameworkComplianceAudit(args: any) {
+  private async handleFrameworkComplianceAudit(args: FrameworkComplianceAuditArgs) {
     const scope = args.scope || "full";
     const detailed = args.detailed || false;
 
@@ -128,7 +147,7 @@ class StringRayFrameworkComplianceAuditServer {
       passed: true,
       criticalIssues: [] as string[],
       warnings: [] as string[],
-      complianceScores: {} as Record<string, any>,
+      complianceScores: {} as Record<string, string>,
       recommendations: [] as string[],
       summary: "",
     };
@@ -222,7 +241,7 @@ ${auditResults.recommendations.length > 0 ? auditResults.recommendations.map((re
     };
   }
 
-  private async handleCodexValidation(args: any) {
+  private async handleCodexValidation(args: CodexValidationArgs) {
     const terms = args.terms || [];
     const strict = args.strict !== false;
 
@@ -580,7 +599,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     return patterns.some((pattern) => pattern.test(content));
   }
 
-  private generateAuditSummary(results: any): string {
+  private generateAuditSummary(results: AuditResults): string {
     const status = results.passed ? "✅ COMPLIANT" : "❌ NON-COMPLIANT";
     const criticalCount = results.criticalIssues.length;
     const warningCount = results.warnings.length;
@@ -591,7 +610,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
 - Compliance Areas: ${Object.keys(results.complianceScores).length}`;
   }
 
-  private async getDetailedFindings(results: any): Promise<string> {
+  private async getDetailedFindings(results: AuditResults): Promise<string> {
     // Generate detailed findings report
     let details = "## Detailed Compliance Findings\n\n";
 

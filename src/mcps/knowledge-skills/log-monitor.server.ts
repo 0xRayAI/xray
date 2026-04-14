@@ -18,7 +18,7 @@ interface LogEntry {
   level: "error" | "warn" | "info" | "debug" | "trace";
   message: string;
   source?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface LogPattern {
@@ -47,6 +47,20 @@ interface LogAnalysis {
     count: number;
   }>;
   recommendations: string[];
+}
+
+interface LogSummary {
+  totalEntries: number;
+  errorCount: number;
+  warnCount: number;
+  infoCount: number;
+}
+
+interface LogAnomaly {
+  type: string;
+  description: string;
+  severity: string;
+  count: number;
 }
 
 class LogMonitorServer {
@@ -256,7 +270,7 @@ class LogMonitorServer {
           }
           case "alert_on_issues": {
             const result = this.alertOnIssues(
-              params.analysis as any,
+              params.analysis as unknown as LogAnalysis,
               (params.thresholds as Record<string, unknown>) || {},
             );
             return {
@@ -279,7 +293,7 @@ class LogMonitorServer {
           }
           case "generate_report": {
             const result = this.generateReport(
-              params.analysis as any,
+              params.analysis as unknown as LogAnalysis,
               (params.format as string) || "json",
             );
             return {
@@ -300,7 +314,7 @@ class LogMonitorServer {
     });
   }
 
-  private analyzeLogs(logs: string[], options: any): LogAnalysis {
+  private analyzeLogs(logs: string[], options: Record<string, unknown>): LogAnalysis {
     const entries = logs.map(this.parseLogEntry);
 
     const summary = {
@@ -329,7 +343,7 @@ class LogMonitorServer {
     logs: string[],
     customPatterns: string[],
     sensitivity: number,
-  ): { matched: LogPattern[]; custom: any[] } {
+  ): { matched: LogPattern[]; custom: Array<{ id: string; pattern: string; matches: number; examples: string[] }> } {
     const entries = logs.map(this.parseLogEntry);
     const matched = this.detectPatternsInLogs(entries);
 
@@ -347,14 +361,14 @@ class LogMonitorServer {
     return { matched, custom };
   }
 
-  private alertOnIssues(analysis: LogAnalysis, thresholds: any) {
+  private alertOnIssues(analysis: LogAnalysis, thresholds: Record<string, unknown>) {
     const alerts: Array<{ severity: string; message: string; action: string }> =
       [];
 
     if (thresholds.errorRate) {
       const errorRate =
         (analysis.summary.errorCount / analysis.summary.totalEntries) * 100;
-      if (errorRate > thresholds.errorRate) {
+      if (errorRate > (thresholds.errorRate as number)) {
         alerts.push({
           severity: "critical",
           message: `Error rate (${errorRate.toFixed(1)}%) exceeds threshold (${thresholds.errorRate}%)`,
@@ -365,7 +379,7 @@ class LogMonitorServer {
 
     if (thresholds.criticalPatterns) {
       const criticalFound = analysis.patterns.filter(
-        (p) => thresholds.criticalPatterns.includes(p.id) && p.occurrences > 0,
+        (p) => (thresholds.criticalPatterns as string[]).includes(p.id) && p.occurrences > 0,
       );
       criticalFound.forEach((p) => {
         alerts.push({
@@ -496,7 +510,7 @@ ${analysis.recommendations.map((r) => `- ${r}`).join("\n")}
     return match && match[2] && match[3] && match[4]
       ? {
           timestamp: match[2],
-          level: (match[3].toLowerCase() as any) || "info",
+          level: (match[3].toLowerCase() as LogEntry["level"]) || "info",
           message: match[4],
         }
       : {
@@ -518,7 +532,7 @@ ${analysis.recommendations.map((r) => `- ${r}`).join("\n")}
     });
   }
 
-  private detectAnomalies(entries: LogEntry[], summary: any) {
+  private detectAnomalies(entries: LogEntry[], summary: LogSummary) {
     const anomalies: Array<{
       type: string;
       description: string;
@@ -551,9 +565,9 @@ ${analysis.recommendations.map((r) => `- ${r}`).join("\n")}
   }
 
   private generateRecommendations(
-    summary: any,
+    summary: LogSummary,
     patterns: LogPattern[],
-    anomalies: any[],
+    anomalies: LogAnomaly[],
   ): string[] {
     const recs: string[] = [];
 

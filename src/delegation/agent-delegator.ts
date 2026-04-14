@@ -31,8 +31,10 @@ import type { RoutingMapping } from "./config/types.js";
 export interface AgentCapability {
   name: string;
   capabilities: string[];
+  expertise?: string[];
+  specialties?: string[];
   status: "active" | "inactive";
-  [key: string]: string | string[] | boolean | number;
+  [key: string]: string | string[] | boolean | number | undefined;
 }
 
 export interface DelegationContext {

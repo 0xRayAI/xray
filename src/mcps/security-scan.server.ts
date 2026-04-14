@@ -16,8 +16,28 @@ import path from "path";
 import {
   detectProjectLanguage,
   LANGUAGE_CONFIGS,
+  type LanguageConfig,
 } from "../utils/language-detector.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+
+interface SecurityScanArgs {
+  scope?: string;
+  auditLevel?: string;
+  includeOutdated?: boolean;
+}
+
+interface DependencyAuditArgs {
+  packageManager?: string;
+  auditLevel?: string;
+}
+
+interface SecuritySummaryResults {
+  secure: boolean;
+  vulnerabilities: string[];
+  threats: string[];
+  recommendations: string[];
+  summary: string;
+}
 
 class StringRaySecurityScanServer {
   private server: Server;
@@ -122,25 +142,26 @@ class StringRaySecurityScanServer {
     });
   }
 
-  private async handleSecurityScan(args: any) {
-    const scope = args.scope || "full";
-    const auditLevel = args.auditLevel || "moderate";
-    const includeOutdated = args.includeOutdated !== false;
+  private async handleSecurityScan(args: unknown) {
+    const { scope, auditLevel, includeOutdated } = args as SecurityScanArgs;
+    const scopeValue = scope || "full";
+    const auditLevelValue = auditLevel || "moderate";
+    const includeOutdatedValue = includeOutdated !== false;
 
-    const results = {
+    const results: SecuritySummaryResults = {
       secure: true,
-      vulnerabilities: [] as string[],
-      threats: [] as string[],
-      recommendations: [] as string[],
+      vulnerabilities: [],
+      threats: [],
+      recommendations: [],
       summary: "",
     };
 
     try {
       // 1. Dependency Vulnerability Scanning
-      if (scope === "dependencies" || scope === "full") {
+      if (scopeValue === "dependencies" || scopeValue === "full") {
         const depResults = await this.scanDependencies(
-          auditLevel,
-          includeOutdated,
+          auditLevelValue,
+          includeOutdatedValue,
           "npm",
         );
         results.vulnerabilities.push(...depResults.vulnerabilities);
@@ -149,7 +170,7 @@ class StringRaySecurityScanServer {
       }
 
       // 2. Code Security Analysis
-      if (scope === "code" || scope === "full") {
+      if (scopeValue === "code" || scopeValue === "full") {
         const codeResults = await this.scanCodeSecurity();
         results.vulnerabilities.push(...codeResults.vulnerabilities);
         results.threats.push(...codeResults.threats);
@@ -190,9 +211,8 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n")}
     };
   }
 
-  private async handleDependencyAudit(args: any) {
-    const packageManager = args.packageManager || "auto";
-    const auditLevel = args.auditLevel || "moderate";
+  private async handleDependencyAudit(args: unknown) {
+    const { packageManager = "auto", auditLevel = "moderate" } = args as DependencyAuditArgs;
 
     try {
       const detectedPm = this.detectPackageManager(packageManager);
@@ -282,13 +302,13 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
             `Run "${pmCmd} audit fix" to address vulnerabilities`,
           );
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // npm/yarn/pnpm audit returns non-zero exit code when vulnerabilities found
         // The JSON output is in error.stdout
-        let auditData: any = null;
-        if (error && error.stdout) {
+        let auditData: { vulnerabilities?: Record<string, unknown> } | null = null;
+        if (error && typeof error === "object" && "stdout" in error) {
           try {
-            auditData = JSON.parse(error.stdout);
+            auditData = JSON.parse(String((error as { stdout: string }).stdout));
           } catch {
             // stdout was not valid JSON, fall through
           }
@@ -302,8 +322,11 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
           results.secure = false;
           const vulnCount = Object.keys(auditData.vulnerabilities).length;
           const vulnEntries = Object.entries(auditData.vulnerabilities)
-            .filter(([, info]: [string, any]) => info && info.severity !== undefined)
-            .map(([name, info]: [string, any]) => `  - ${name} (${info.severity}): ${info.via?.[0]?.title || "unknown"}`);
+            .filter(([, info]) => info && typeof info === "object" && "severity" in (info as Record<string, unknown>))
+            .map(([name, info]) => {
+              const details = info as { severity?: string; via?: Array<{ title?: string }> };
+              return `  - ${name} (${details.severity}): ${details.via?.[0]?.title || "unknown"}`;
+            });
           results.vulnerabilities.push(
             `${vulnCount} ${pmCmd} vulnerabilities found:\n${vulnEntries.join("\n")}`,
           );
@@ -346,10 +369,10 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
         } catch (error) {
           // npm/yarn/pnpm outdated may return non-zero if packages are outdated or none found
           // Try to parse stdout for structured data
-          let outdatedData: any = null;
-          if (error && typeof error === "object" && "stdout" in error && error.stdout) {
+          let outdatedData: Record<string, unknown> | null = null;
+          if (error && typeof error === "object" && "stdout" in error && (error as { stdout?: string }).stdout) {
             try {
-              outdatedData = JSON.parse((error as any).stdout);
+              outdatedData = JSON.parse((error as { stdout: string }).stdout);
             } catch {
               // not valid JSON, ignore
             }
@@ -428,7 +451,7 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
     const projectLanguage = detectProjectLanguage(projectRoot);
     const langConfig = projectLanguage
       ? LANGUAGE_CONFIGS.find(
-          (c: any) => c.language === projectLanguage.language,
+      (c: LanguageConfig) => c.language === projectLanguage.language,
         )
       : null;
     const extensions = langConfig?.extensions || [
@@ -600,7 +623,7 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
     return issues;
   }
 
-  private generateSecuritySummary(results: any): string {
+  private generateSecuritySummary(results: SecuritySummaryResults): string {
     const status = results.secure ? "✅ SECURE" : "❌ VULNERABILITIES DETECTED";
     const vulnCount = results.vulnerabilities.length;
     const threatCount = results.threats.length;

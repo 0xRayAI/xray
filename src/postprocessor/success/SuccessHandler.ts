@@ -5,6 +5,7 @@
  * notifications, cleanup, and reporting.
  */
 
+import { PostProcessorContext, PostProcessorResult, MonitoringResult } from "../types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
 export interface SuccessHandlerConfig {
@@ -21,32 +22,6 @@ export interface SuccessMetrics {
   monitoringChecks: number;
   redeployments: number;
   timestamp: Date;
-}
-
-export interface PostProcessorContext {
-  commitSha: string;
-  repository: string;
-  branch: string;
-  author: string;
-  files: string[];
-  trigger: "git-hook" | "webhook" | "api" | "manual";
-  testResults?: {
-    unit?: { passed: boolean; coverage: number };
-    integration?: { passed: boolean; coverage: number };
-    e2e?: { passed: boolean; coverage: number };
-    performance?: { passed: boolean; coverage: number };
-  };
-}
-
-export interface PostProcessorResult {
-  success: boolean;
-  commitSha: string;
-  sessionId: string;
-  attempts: number;
-  monitoringResults?: any[];
-  fixesApplied?: any[];
-  error?: string;
-  duration?: number;
 }
 
 export class SuccessHandler {
@@ -68,7 +43,7 @@ export class SuccessHandler {
   async handleSuccess(
     context: PostProcessorContext,
     result: PostProcessorResult,
-    monitoringResults: any[],
+    monitoringResults: MonitoringResult[],
   ): Promise<SuccessMetrics> {
     const jobId = `success-handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -154,7 +129,7 @@ export class SuccessHandler {
   private collectMetrics(
     context: PostProcessorContext,
     result: PostProcessorResult,
-    monitoringResults: any[],
+    monitoringResults: MonitoringResult[],
   ): SuccessMetrics {
     const totalDuration = result.duration || 0;
     const attempts = result.attempts;

@@ -2,6 +2,28 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 
+export interface RefactoringContext {
+  agentName: string;
+  task: {
+    id?: string;
+    description?: string;
+    operationType?: string;
+  };
+  startTime: number;
+  complexityScore?: number;
+  changes?: Array<{ description?: string; type?: string }>;
+  files?: string[];
+  metrics?: Record<string, unknown>;
+  operationType?: string;
+}
+
+export interface RefactoringLogResult {
+  logged: boolean;
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
 export class RefactoringLoggingProcessor {
   private logPath: string;
 
@@ -22,14 +44,8 @@ export class RefactoringLoggingProcessor {
     }
   }
 
-  async execute(context: any): Promise<{
-    logged: boolean;
-    success: boolean;
-    message: string;
-    error?: string;
-  }> {
+  async execute(context: RefactoringContext): Promise<RefactoringLogResult> {
     try {
-      // Check if context is agent task completion context
       if (
         context.agentName &&
         context.task &&
@@ -69,7 +85,7 @@ export class RefactoringLoggingProcessor {
     }
   }
 
-  private createLogEntry(context: any): string {
+  private createLogEntry(context: RefactoringContext): string {
     const timestamp = new Date().toISOString();
     const duration = Date.now() - context.startTime;
 
@@ -85,14 +101,14 @@ export class RefactoringLoggingProcessor {
 
     if (context.changes && Array.isArray(context.changes)) {
       logEntry += `\n**Changes Made:**\n`;
-      context.changes.forEach((change: any, index: number) => {
+      context.changes.forEach((change, index) => {
         logEntry += `${index + 1}. ${change.description || change.type || "Unknown change"}\n`;
       });
     }
 
     if (context.files && Array.isArray(context.files)) {
       logEntry += `\n**Files Modified:**\n`;
-      context.files.forEach((file: string) => {
+      context.files.forEach((file) => {
         logEntry += `- ${file}\n`;
       });
     }
@@ -111,7 +127,6 @@ export class RefactoringLoggingProcessor {
 
   private async appendToLog(entry: string): Promise<void> {
     try {
-      // Check if log file exists, create header if not
       if (!fs.existsSync(this.logPath)) {
         let header = `# 0xRay Framework Refactoring Log\n\n`;
         header += `This log tracks all refactoring operations performed by 0xRay agents.\n\n`;
@@ -120,7 +135,6 @@ export class RefactoringLoggingProcessor {
         fs.writeFileSync(this.logPath, header, "utf8");
       }
 
-      // Append the log entry
       fs.appendFileSync(this.logPath, entry, "utf8");
 
       await frameworkLogger.log(

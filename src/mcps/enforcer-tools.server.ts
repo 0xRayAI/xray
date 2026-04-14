@@ -16,8 +16,126 @@ import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 
 // Import actual enforcer-tools functions
-import { ruleValidation as runRuleValidation, getTaskRoutingRecommendation } from "../enforcement/enforcer-tools.js";
-import { RuleValidationContext } from "../enforcement/rule-enforcer.js";
+import { ruleValidation as runRuleValidation, getTaskRoutingRecommendation, EnforcementResult } from "../enforcement/enforcer-tools.js";
+import { RuleValidationContext, ValidationReport } from "../enforcement/rule-enforcer.js";
+import type { RuleFix } from "../enforcement/types.js";
+import type { SecurityReport } from "../security/security-scanner.js";
+import type { SecurityValidationResult } from "../security/prompt-security-validator.js";
+
+interface RuleValidationArgs {
+  operation: string;
+  files?: string[];
+  newCode?: string;
+  existingCode?: Record<string, string>;
+  dependencies?: string[];
+  tests?: string[];
+}
+
+interface CodexEnforcementArgs {
+  operation: string;
+  files?: string[];
+  newCode?: string;
+  focusAreas?: string[];
+}
+
+interface ContextAnalysisValidationArgs {
+  files: string[];
+  operation: string;
+  checkPatterns?: string[];
+}
+
+interface QualityGateContext {
+  files?: string[];
+  newCode?: string;
+  existingCode?: Record<string, string>;
+  dependencies?: string[];
+  tests?: string[];
+}
+
+interface QualityGateCheckArgs {
+  operation: string;
+  context: QualityGateContext;
+  strictMode?: boolean;
+}
+
+interface EnforcementStatusArgs {
+  includeHistory?: boolean;
+  focusAreas?: string[];
+}
+
+interface PreCommitValidationArgs {
+  files: string[];
+  operation?: string;
+  autoFix?: boolean;
+  strictBlocking?: boolean;
+}
+
+interface SecurityScanArgs {
+  includePromptValidation?: boolean;
+  promptText?: string;
+}
+
+interface FixEntry {
+  type: "auto" | "manual";
+  description: string;
+  action?: string;
+  applied?: boolean;
+  result?: unknown;
+  error?: string;
+}
+
+interface SimulationResult {
+  passed: boolean;
+  errors: string[];
+  warnings: string[];
+  fixes: FixEntry[];
+  rulesValidated: number;
+  score: number;
+}
+
+interface CodexSimulationResult {
+  score: number;
+  violations: string[];
+  warnings: string[];
+  termsValidated: number;
+  compliance: "FULL" | "PARTIAL" | "MINIMAL";
+}
+
+interface ContextSimulationResult {
+  score: number;
+  errors: string[];
+  warnings: string[];
+  patternsChecked: string[];
+  filesValidated: number;
+  integrationStatus: "VALID" | "ISSUES_FOUND";
+}
+
+interface QualityGateResult {
+  passed: boolean;
+  blocked: boolean;
+  errors: string[];
+  warnings: string[];
+  fixes: FixEntry[];
+  fixesApplied?: number;
+  checksPerformed: string[];
+  overallScore: number;
+}
+
+interface PreCommitResult extends QualityGateResult {
+  validationType: string;
+  autoFixRequested: boolean;
+  strictBlocking: boolean;
+  filesProcessed: number;
+}
+
+interface SecurityScanResults {
+  tools: SecurityReport["tools"];
+  summary: SecurityReport["summary"] & { scanError?: string };
+  recommendations?: string[];
+  compliant?: boolean;
+  timestamp?: string;
+  promptValidation?: { isSafe: boolean; riskLevel: string; violations: string[] } | { error: string };
+}
 
 class StringRayEnforcerToolsServer {
   private server: Server;
@@ -290,18 +408,18 @@ class StringRayEnforcerToolsServer {
 
   // Tool implementations - wrappers around the original enforcer-tools functions
 
-  private async ruleValidation(args: any): Promise<any> {
+  private async ruleValidation(args: unknown) {
     const { operation, files, newCode, existingCode, dependencies, tests } =
-      args;
+      args as unknown as RuleValidationArgs;
 
     // Tool execution - no logging to console (results returned to agent)
 
     // This would integrate with the actual rule-enforcer.ts validation logic
-    const context = {
+    const context: RuleValidationContext = {
       operation,
       files: files || [],
-      newCode,
-      existingCode: existingCode || new Map(),
+      ...(newCode != null && { newCode }),
+      ...(existingCode && { existingCode: new Map(Object.entries(existingCode)) }),
       dependencies: dependencies || [],
       tests: tests || [],
     };
@@ -335,15 +453,15 @@ class StringRayEnforcerToolsServer {
     };
   }
 
-  private async codexEnforcement(args: any): Promise<any> {
-    const { operation, files, newCode, focusAreas } = args;
+  private async codexEnforcement(args: unknown) {
+    const { operation, files, newCode, focusAreas } = args as unknown as CodexEnforcementArgs;
 
     // Codex enforcement - no logging to console (results returned to agent)
 
     // Simulate codex validation (would call actual codex validation)
-    const codexCheck = await this.simulateCodexValidation(
+      const codexCheck = await this.simulateCodexValidation(
       operation,
-      files,
+      files ?? [],
       newCode,
       focusAreas,
     );
@@ -369,9 +487,8 @@ class StringRayEnforcerToolsServer {
     };
   }
 
-  private async contextAnalysisValidation(args: any): Promise<any> {
-    const files = args.files || [];
-    const { operation, checkPatterns } = args;
+  private async contextAnalysisValidation(args: unknown) {
+    const { files = [], operation, checkPatterns } = args as unknown as ContextAnalysisValidationArgs;
 
     // Context analysis - no logging to console (results returned to agent)
 
@@ -391,11 +508,6 @@ class StringRayEnforcerToolsServer {
               operation,
               files: files.length,
               contextValidation,
-              patternsChecked: checkPatterns || [
-                "memory-optimization",
-                "error-handling",
-                "type-safety",
-              ],
               integrationScore: contextValidation.score,
               timestamp: new Date().toISOString(),
             },
@@ -407,8 +519,8 @@ class StringRayEnforcerToolsServer {
     };
   }
 
-  private async qualityGateCheck(args: any): Promise<any> {
-    const { operation, context, strictMode = true } = args;
+  private async qualityGateCheck(args: unknown) {
+    const { operation, context, strictMode = true } = args as unknown as QualityGateCheckArgs;
 
     // Quality gate check - no logging to console (results returned to agent)
 
@@ -434,7 +546,7 @@ class StringRayEnforcerToolsServer {
                 "context-analysis-validation",
               ],
               autoFixesApplied:
-                qualityCheck.fixes?.filter((f: any) => f.type === "auto")
+                qualityCheck.fixes?.filter((f: FixEntry) => f.type === "auto")
                   .length || 0,
               timestamp: new Date().toISOString(),
             },
@@ -446,8 +558,8 @@ class StringRayEnforcerToolsServer {
     };
   }
 
-  private async getEnforcementStatus(args: any): Promise<any> {
-    const { includeHistory = false, focusAreas } = args;
+  private async getEnforcementStatus(args: unknown) {
+    const { includeHistory = false, focusAreas } = args as unknown as EnforcementStatusArgs;
 
     // Status retrieval - no logging to console (results returned to agent)
 
@@ -481,13 +593,13 @@ class StringRayEnforcerToolsServer {
     };
   }
 
-  private async runPreCommitValidation(args: any): Promise<any> {
+  private async runPreCommitValidation(args: unknown) {
     const {
       files,
       operation = "commit",
       autoFix = true,
       strictBlocking = true,
-    } = args;
+    } = args as unknown as PreCommitValidationArgs;
 
     // Pre-commit validation - no logging to console (results returned to agent)
 
@@ -510,7 +622,7 @@ class StringRayEnforcerToolsServer {
               filesValidated: files.length,
               commitStatus: preCommitResult.blocked ? "BLOCKED" : "ALLOWED",
               autoFixesApplied: autoFix
-                ? preCommitResult.fixes?.filter((f: any) => f.type === "auto")
+                ? preCommitResult.fixes?.filter((f: FixEntry) => f.type === "auto")
                     .length || 0
                 : 0,
               blockingErrors: preCommitResult.errors?.length || 0,
@@ -541,18 +653,15 @@ class StringRayEnforcerToolsServer {
 
   // Simulation methods (would integrate with actual enforcer-tools logic)
 
-  private async simulateRuleValidation(context: any): Promise<any> {
-    // Simulate comprehensive rule validation
+  private async simulateRuleValidation(context: RuleValidationContext): Promise<SimulationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
-    const fixes: any[] = [];
+    const fixes: FixEntry[] = [];
 
     // Check for basic rule violations
     if (context.newCode && context.existingCode) {
       // Check for duplicate code
-      for (const [filePath, existingContent] of Object.entries(
-        context.existingCode,
-      ) as [string, string][]) {
+      for (const [filePath, existingContent] of context.existingCode) {
         if (
           typeof existingContent === "string" &&
           existingContent.includes(context.newCode)
@@ -607,12 +716,11 @@ class StringRayEnforcerToolsServer {
     files: string[],
     newCode?: string,
     focusAreas?: string[],
-  ): Promise<any> {
+  ): Promise<CodexSimulationResult> {
     const violations: string[] = [];
     const warnings: string[] = [];
 
     if (newCode) {
-      // Check for codex violations
       if (newCode.includes("any") || newCode.includes("@ts-ignore")) {
         violations.push(
           'Codex violation: Type safety first - avoid "any" types and ts-ignore',
@@ -645,7 +753,6 @@ class StringRayEnforcerToolsServer {
       }
     }
 
-    // Simulate codex term checking
     const totalTerms = this.getCodexTermCount();
     const violationsCount = violations.length;
     const warningsCount = warnings.length;
@@ -668,7 +775,7 @@ class StringRayEnforcerToolsServer {
     files: string[],
     operation: string,
     checkPatterns?: string[],
-  ): Promise<any> {
+  ): Promise<ContextSimulationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -733,17 +840,17 @@ class StringRayEnforcerToolsServer {
 
   private async performQualityGateCheck(
     operation: string,
-    context: any,
+    context: QualityGateContext,
     strictMode: boolean,
-  ): Promise<any> {
+  ): Promise<QualityGateResult> {
     // Run all quality checks using actual functions
     const ruleCheckResult = await runRuleValidation(operation, {
       operation,
       files: context.files || [],
-      newCode: context.newCode,
-      existingCode: context.existingCode,
-      dependencies: context.dependencies,
-      tests: context.tests,
+      ...(context.newCode != null && { newCode: context.newCode }),
+      ...(context.existingCode && { existingCode: new Map(Object.entries(context.existingCode)) }),
+      dependencies: context.dependencies || [],
+      tests: context.tests || [],
     });
     
     const codexCheck = {
@@ -776,7 +883,10 @@ class StringRayEnforcerToolsServer {
       : allErrors.length === 0 || allWarnings.length < 3;
     const blocked = !passed;
 
-    const fixes = ruleCheckResult.fixes || [];
+    const fixes: FixEntry[] = (ruleCheckResult.fixes || []).map((f) => ({
+      type: f.type,
+      description: f.description,
+    }));
 
     return {
       passed,
@@ -802,7 +912,7 @@ class StringRayEnforcerToolsServer {
   private async simulateEnforcementStatus(
     includeHistory: boolean,
     focusAreas?: string[],
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     return {
       totalRules: 6,
       enabledRules: 6,
@@ -835,8 +945,7 @@ class StringRayEnforcerToolsServer {
     operation: string,
     autoFix: boolean,
     strictBlocking: boolean,
-  ): Promise<any> {
-    // Simulate comprehensive pre-commit validation
+  ): Promise<PreCommitResult> {
     const context = {
       operation,
       files,
@@ -852,9 +961,9 @@ class StringRayEnforcerToolsServer {
     // Apply auto-fixes if requested
     if (autoFix && qualityCheck.fixes) {
       const autoFixes = qualityCheck.fixes.filter(
-        (f: any) => f.type === "auto",
-      );
-      for (const fix of autoFixes) {
+        (f: FixEntry) => f.type === "auto",
+       );
+       for (const fix of autoFixes) {
         // Execute actual auto-fix logic
 
         if (fix.action === "createTestFile" && files.length > 0) {
@@ -890,7 +999,7 @@ class StringRayEnforcerToolsServer {
         }
       }
       qualityCheck.fixesApplied = autoFixes.filter(
-        (f: any) => f.applied,
+        (f: FixEntry) => f.applied,
       ).length;
     }
 
@@ -959,9 +1068,9 @@ class StringRayEnforcerToolsServer {
     });
   }
 
-  private async securityScan(args: any): Promise<any> {
-    const { includePromptValidation, promptText } = args;
-    const results: any = { tools: {}, summary: {} };
+  private async securityScan(args: unknown) {
+    const { includePromptValidation, promptText } = args as unknown as SecurityScanArgs;
+    const results: SecurityScanResults = { tools: {} as SecurityReport["tools"], summary: {} as SecurityReport["summary"] };
 
     try {
       const { securityScanner } = await import("../security/security-scanner.js");

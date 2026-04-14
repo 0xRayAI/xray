@@ -1,7 +1,7 @@
 // Type definitions for jsonwebtoken module
 declare module "jsonwebtoken" {
   interface JwtPayload {
-    [key: string]: any;
+    [key: string]: unknown;
   }
 
   interface SignOptions {

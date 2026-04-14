@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, RequestHandler } from "express";
 import { exec } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -49,7 +49,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 // Lazy load security headers middleware
-let securityMiddleware: any = null;
+let securityMiddleware: RequestHandler | null = null;
 const getSecurityMiddleware = async () => {
   if (!securityMiddleware) {
     try {
@@ -68,10 +68,10 @@ const getSecurityMiddleware = async () => {
 };
 
 // Apply security headers middleware lazily
-app.use(async (req: Request, res: Response, next: NextFunction) => {
+app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const middleware = await getSecurityMiddleware();
-    return middleware(req, res, next);
+    middleware(req, res, next);
   } catch (error) {
     frameworkLogger.log("cli-server", "security-middleware-load-failed", "warning", {
       error,
@@ -96,7 +96,7 @@ app.get("/api/status", requireAuth, (req: Request, res: Response) => {
   });
 });
 
-app.get("/api/agents", requireAuth, (req: any, res: any) => {
+app.get("/api/agents", requireAuth, (req: Request, res: Response) => {
   // Return agent configurations
   res.json({
     agents: [
@@ -113,7 +113,7 @@ app.get("/api/agents", requireAuth, (req: any, res: any) => {
 });
 
 // Performance monitoring middleware
-app.use((req: any, res: any, next: any) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   const start = process.hrtime.bigint();
   res.on("finish", () => {
     const end = process.hrtime.bigint();
@@ -124,7 +124,7 @@ app.use((req: any, res: any, next: any) => {
 });
 
 // Add route for root path
-app.get("/", (req: any, res: any) => {
+app.get("/", (req: Request, res: Response) => {
   res.sendFile(join(PUBLIC_DIR, "index.html"));
 });
 
@@ -152,7 +152,7 @@ app.get("/logs", requireAuth, async (req: Request, res: Response) => {
 });
 
 // Global error handler (4-param middleware must be registered before listen)
-app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   frameworkLogger.log("cli-server", "unhandled-error", "error", { error: err, path: req.path });
   res.status(500).send("Internal Server Error");
 });

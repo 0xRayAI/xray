@@ -370,11 +370,11 @@ export class MemoryMonitor extends EventEmitter {
   /**
    * Safely add an alert listener, preventing duplicates
    */
-  addAlertListener(callback: (alert: any) => void): void {
+  addAlertListener(callback: (alert: MemoryLeakAlert) => void): void {
     // Check if this exact callback already exists
     const existingListeners = this.listeners("alert");
     const alreadyAdded = existingListeners.some(
-      (listener: any) => listener === callback,
+      (listener) => listener === callback,
     );
 
     if (!alreadyAdded) {

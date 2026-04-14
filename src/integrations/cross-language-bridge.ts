@@ -15,71 +15,102 @@ import {
   type HealthResult,
 } from "./base/index.js";
 
+export type JSONPrimitives = string | number | boolean | null;
+
+export interface JSONArray extends Array<JSONValue> {}
+
+export interface JSONObject {
+  [key: string]: JSONValue;
+}
+
+export type JSONValue = JSONPrimitives | JSONArray | JSONObject;
+
+export interface RPCParamsObject {
+  [key: string]: JSONValue;
+}
+
+export type RPCParams = JSONValue | RPCParamsObject;
+
 export interface RPCRequest {
   jsonrpc: "2.0";
   id: string | number;
   method: string;
-  params?: any;
+  params?: RPCParams;
+}
+
+export interface RPCErrorData {
+  code: number;
+  message: string;
+  data?: JSONValue;
 }
 
 export interface RPCResponse {
   jsonrpc: "2.0";
   id: string | number;
-  result?: any;
-  error?: {
-    code: number;
-    message: string;
-    data?: any;
-  };
+  result?: JSONValue;
+  error?: RPCErrorData;
 }
 
 export interface RPCNotification {
   jsonrpc: "2.0";
   method: string;
-  params?: any;
+  params?: RPCParams;
+}
+
+export interface CodexViolation {
+  term_id: string;
+  message: string;
+  severity: "low" | "medium" | "high" | "critical";
+}
+
+export interface CodexComplianceResult {
+  compliant: boolean;
+  violations: CodexViolation[];
+  recommendations: string[];
+}
+
+export interface DeepReasoningResult {
+  reasoning: string;
+  confidence: number;
+  recommendations: string[];
+}
+
+export interface AgentState {
+  [key: string]: JSONValue;
+}
+
+export interface PerformanceMetrics {
+  responseTime: number;
+  memoryUsage: number;
+  errorRate: number;
+}
+
+export interface SecurityValidationResult {
+  safe: boolean;
+  threats: string[];
+  recommendations: string[];
 }
 
 export interface BaseAgentCapabilities {
-  // Codex compliance validation
   validateCodexCompliance(
     content: string,
-    context: any,
-  ): Promise<{
-    compliant: boolean;
-    violations: Array<{ term_id: string; message: string; severity: string }>;
-    recommendations: string[];
-  }>;
+    context: RPCParamsObject,
+  ): Promise<CodexComplianceResult>;
 
-  // Advanced AI reasoning
   performDeepReasoning(
     query: string,
-    context: any,
-  ): Promise<{
-    reasoning: string;
-    confidence: number;
-    recommendations: any[];
-  }>;
+    context: RPCParamsObject,
+  ): Promise<DeepReasoningResult>;
 
-  // State persistence
-  persistAgentState(agentId: string, state: any): Promise<boolean>;
-  loadAgentState(agentId: string): Promise<any>;
+  persistAgentState(agentId: string, state: AgentState): Promise<boolean>;
+  loadAgentState(agentId: string): Promise<AgentState>;
 
-  // Performance monitoring
-  getPerformanceMetrics(agentId: string): Promise<{
-    responseTime: number;
-    memoryUsage: number;
-    errorRate: number;
-  }>;
+  getPerformanceMetrics(agentId: string): Promise<PerformanceMetrics>;
 
-  // Security validation
   validateSecurity(
     content: string,
     operation: string,
-  ): Promise<{
-    safe: boolean;
-    threats: string[];
-    recommendations: string[];
-  }>;
+  ): Promise<SecurityValidationResult>;
 }
 
 export interface CrossLanguageBridgeConfig extends Partial<IntegrationConfig> {
@@ -93,7 +124,7 @@ export class CrossLanguageBridge extends BaseIntegration {
   private pendingRequests = new Map<
     string | number,
     {
-      resolve: (value: any) => void;
+      resolve: (value: JSONValue) => void;
       reject: (error: Error) => void;
       timeout: NodeJS.Timeout;
     }
@@ -255,9 +286,9 @@ export class CrossLanguageBridge extends BaseIntegration {
 
   async sendRequest(
     method: string,
-    params?: any,
+    params?: RPCParams,
     timeoutMs = 30000,
-  ): Promise<any> {
+  ): Promise<JSONValue> {
     if (!this.connected) {
       await this.connect();
     }
@@ -289,28 +320,34 @@ export class CrossLanguageBridge extends BaseIntegration {
   }
 
   // BaseAgent capability implementations
-  async validateCodexCompliance(content: string, context: any): Promise<any> {
-    return this.sendRequest("validateCodexCompliance", { content, context });
+  async validateCodexCompliance(
+    content: string,
+    context: RPCParamsObject,
+  ): Promise<CodexComplianceResult> {
+    return this.sendRequest("validateCodexCompliance", { content, context }) as unknown as Promise<CodexComplianceResult>;
   }
 
-  async performDeepReasoning(query: string, context: any): Promise<any> {
-    return this.sendRequest("performDeepReasoning", { query, context });
+  async performDeepReasoning(
+    query: string,
+    context: RPCParamsObject,
+  ): Promise<DeepReasoningResult> {
+    return this.sendRequest("performDeepReasoning", { query, context }) as unknown as Promise<DeepReasoningResult>;
   }
 
-  async persistAgentState(agentId: string, state: any): Promise<boolean> {
-    return this.sendRequest("persistAgentState", { agentId, state });
+  async persistAgentState(agentId: string, state: AgentState): Promise<boolean> {
+    return this.sendRequest("persistAgentState", { agentId, state }) as unknown as Promise<boolean>;
   }
 
-  async loadAgentState(agentId: string): Promise<any> {
-    return this.sendRequest("loadAgentState", { agentId });
+  async loadAgentState(agentId: string): Promise<AgentState> {
+    return this.sendRequest("loadAgentState", { agentId }) as unknown as Promise<AgentState>;
   }
 
-  async getPerformanceMetrics(agentId: string): Promise<any> {
-    return this.sendRequest("getPerformanceMetrics", { agentId });
+  async getPerformanceMetrics(agentId: string): Promise<PerformanceMetrics> {
+    return this.sendRequest("getPerformanceMetrics", { agentId }) as unknown as Promise<PerformanceMetrics>;
   }
 
-  async validateSecurity(content: string, operation: string): Promise<any> {
-    return this.sendRequest("validateSecurity", { content, operation });
+  async validateSecurity(content: string, operation: string): Promise<SecurityValidationResult> {
+    return this.sendRequest("validateSecurity", { content, operation }) as unknown as Promise<SecurityValidationResult>;
   }
 
   // Utility methods
@@ -347,8 +384,8 @@ export function getCrossLanguageBridge(): CrossLanguageBridge {
 // Convenience function for TypeScript agents to access BaseAgent capabilities
 export async function callBaseAgent(
   method: string,
-  params: any = {},
-): Promise<any> {
+  params: RPCParamsObject = {},
+): Promise<JSONValue> {
   const bridge = getCrossLanguageBridge();
   return bridge.sendRequest(method, params);
 }

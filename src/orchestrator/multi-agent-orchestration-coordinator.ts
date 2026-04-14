@@ -8,10 +8,10 @@
  * @since 2026-01-23
  */
 
-import { KernelOrchestrator } from "../core/orchestrator.js";
+import { KernelOrchestrator, OrchestrationResult as KernelOrchestrationResult } from "../core/orchestrator.js";
 import { TaskDefinition } from "../agents/types.js";
 import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
-import { createAgentDelegator } from "../delegation/agent-delegator.js";
+import { createAgentDelegator, AgentDelegator, AgentCapability } from "../delegation/agent-delegator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { ComplexityAnalyzer } from "../delegation/complexity-analyzer.js";
@@ -35,7 +35,7 @@ export interface OrchestrationResult {
   failedTasks: number;
   totalTasks: number;
   duration: number;
-  results: any[];
+  results: unknown[];
   errors: string[];
   agentCoordination: {
     agentsUsed: string[];
@@ -44,7 +44,35 @@ export interface OrchestrationResult {
   };
 }
 
-export interface CoordinationMetrics {
+export interface ExecutionPlan {
+  complexityScore: number;
+  recommendedStrategy: "single-agent" | "multi-agent" | "orchestrator-led";
+  parallelGroups: TaskDefinition[][];
+  dependencyGraph: Map<string, string[]>;
+  estimatedDuration: number;
+}
+
+export interface ResourceAllocation {
+  allocatedAgents: string[];
+  resourceAvailability: Record<string, boolean>;
+  coordinationCapacity: number;
+}
+
+export interface WorkflowTaskResult {
+  success: boolean;
+  taskId?: string | undefined;
+  result?: unknown | undefined;
+  error?: string | undefined;
+  duration: number;
+}
+
+export interface CoordinatedWorkflowResult {
+  taskResults: WorkflowTaskResult[];
+  coordinationEvents: number;
+  conflictsResolved: number;
+  agentsUsed: string[];
+}
+  export interface CoordinationMetrics {
   totalWorkflows: number;
   successfulWorkflows: number;
   failedWorkflows: number;
@@ -56,7 +84,7 @@ export interface CoordinationMetrics {
 export class MultiAgentOrchestrationCoordinator {
   private strRayOrchestrator: KernelOrchestrator;
   private enhancedOrchestrator: EnhancedMultiAgentOrchestrator;
-  private agentDelegator: any;
+  private agentDelegator: AgentDelegator;
   private stateManager: StringRayStateManager;
   private complexityAnalyzer: ComplexityAnalyzer;
   private coordinationMetrics: CoordinationMetrics;
@@ -260,12 +288,8 @@ export class MultiAgentOrchestrationCoordinator {
    */
   private async allocateWorkflowResources(
     workflow: OrchestrationWorkflow,
-    executionPlan: any,
-  ): Promise<{
-    allocatedAgents: string[];
-    resourceAvailability: Record<string, boolean>;
-    coordinationCapacity: number;
-  }> {
+    executionPlan: ExecutionPlan,
+  ): Promise<ResourceAllocation> {
     const allocatedAgents: string[] = [];
     const resourceAvailability: Record<string, boolean> = {};
 
@@ -273,13 +297,13 @@ export class MultiAgentOrchestrationCoordinator {
     const availableAgents = this.agentDelegator.getAvailableAgents();
 
     // Allocate agents based on workflow requirements
-    workflow.tasks.forEach((task: any) => {
+    workflow.tasks.forEach((task: TaskDefinition) => {
       const matchingAgent = availableAgents.find(
-        (agent: any) =>
-          agent.expertise.some((exp: any) => task.subagentType.includes(exp)) ||
-          agent.specialties.some((spec: any) =>
-            task.subagentType.includes(spec.split("-")[0]),
-          ),
+        (agent: AgentCapability) =>
+          (agent.expertise?.some((exp: string) => task.subagentType?.includes(exp)) ?? false) ||
+          (agent.specialties?.some((spec: string) =>
+            task.subagentType?.includes(spec.split("-")[0] ?? ""),
+          ) ?? false),
       );
 
       if (matchingAgent && !allocatedAgents.includes(matchingAgent.name)) {
@@ -291,7 +315,7 @@ export class MultiAgentOrchestrationCoordinator {
     return {
       allocatedAgents,
       resourceAvailability,
-      coordinationCapacity: allocatedAgents.length * 2, // Rough coordination capacity estimate
+      coordinationCapacity: allocatedAgents.length * 2,
     };
   }
 
@@ -300,17 +324,12 @@ export class MultiAgentOrchestrationCoordinator {
    */
   private async executeCoordinatedWorkflow(
     workflow: OrchestrationWorkflow,
-    executionPlan: any,
-    resourceAllocation: any,
+    executionPlan: ExecutionPlan,
+    resourceAllocation: ResourceAllocation,
     sessionId?: string,
     jobId?: string,
-  ): Promise<{
-    taskResults: any[];
-    coordinationEvents: number;
-    conflictsResolved: number;
-    agentsUsed: string[];
-  }> {
-    const taskResults: any[] = [];
+  ): Promise<CoordinatedWorkflowResult> {
+    const taskResults: WorkflowTaskResult[] = [];
     let coordinationEvents = 0;
     let conflictsResolved = 0;
     const agentsUsed: string[] = [];
@@ -335,7 +354,15 @@ export class MultiAgentOrchestrationCoordinator {
         [task],
       );
 
-      taskResults.push(result);
+      result.forEach((r: KernelOrchestrationResult) => {
+        taskResults.push({
+          success: r.success,
+          taskId: r.taskId,
+          result: r.result,
+          error: r.error,
+          duration: r.duration,
+        });
+      });
       coordinationEvents += 1;
       agentsUsed.push(...resourceAllocation.allocatedAgents);
     } else {
@@ -407,11 +434,11 @@ export class MultiAgentOrchestrationCoordinator {
 
       coordinationResults.forEach((result) => {
         if (result.status === "fulfilled") {
-          taskResults.push(result.value);
+          taskResults.push(result.value as WorkflowTaskResult);
         } else {
           taskResults.push({
             success: false,
-            error: result.reason,
+            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
             duration: 0,
           });
         }
@@ -431,15 +458,15 @@ export class MultiAgentOrchestrationCoordinator {
    */
   private async consolidateWorkflowResults(
     workflow: OrchestrationWorkflow,
-    executionResult: any,
+    executionResult: CoordinatedWorkflowResult,
     startTime: number,
   ): Promise<OrchestrationResult> {
     const duration = Date.now() - startTime;
     const successfulTasks = executionResult.taskResults.filter(
-      (r: any) => r.success,
+      (r: WorkflowTaskResult) => r.success,
     );
     const failedTasks = executionResult.taskResults.filter(
-      (r: any) => !r.success,
+      (r: WorkflowTaskResult) => !r.success,
     );
 
     const success = successfulTasks.length === workflow.tasks.length;
@@ -457,8 +484,8 @@ export class MultiAgentOrchestrationCoordinator {
       failedTasks: failedTasks.length,
       totalTasks: workflow.tasks.length,
       duration,
-      results: successfulTasks.map((r: any) => r.result),
-      errors: failedTasks.map((r: any) => r.error || "Unknown error"),
+      results: successfulTasks.map((r: WorkflowTaskResult) => r.result),
+      errors: failedTasks.map((r: WorkflowTaskResult) => r.error || "Unknown error"),
       agentCoordination: {
         agentsUsed: executionResult.agentsUsed,
         coordinationEvents: executionResult.coordinationEvents,

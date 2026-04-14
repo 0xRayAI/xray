@@ -14,6 +14,16 @@ import {
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
+interface AnalyzePerformanceArgs {
+  projectRoot: string;
+  metrics?: string[];
+}
+
+interface OptimizePerformanceArgs {
+  bottlenecks: string[];
+  constraints?: string[];
+}
+
 class StringRayPerformanceOptimizationServer {
   private server: Server;
 
@@ -70,16 +80,16 @@ class StringRayPerformanceOptimizationServer {
 
       switch (name) {
         case "analyze-performance":
-          return await this.analyzePerformance(args);
+          return await this.analyzePerformance(args as unknown as AnalyzePerformanceArgs);
         case "optimize-performance":
-          return await this.optimizePerformance(args);
+          return await this.optimizePerformance(args as unknown as OptimizePerformanceArgs);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzePerformance(args: any): Promise<any> {
+  private async analyzePerformance(args: AnalyzePerformanceArgs) {
     const { projectRoot, metrics } = args;
 
     const analysis = {
@@ -97,7 +107,7 @@ class StringRayPerformanceOptimizationServer {
     };
   }
 
-  private async optimizePerformance(args: any): Promise<any> {
+  private async optimizePerformance(args: OptimizePerformanceArgs) {
     const { bottlenecks, constraints } = args;
 
     const optimizations = {

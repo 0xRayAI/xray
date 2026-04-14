@@ -18,6 +18,7 @@ import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 import {
   detectProjectLanguage,
   LANGUAGE_CONFIGS,
+  type LanguageConfig,
 } from "../../utils/language-detector.js";
 
 interface TestAnalysis {
@@ -36,6 +37,96 @@ interface TestStrategy {
   performanceTests: number;
   securityTests: number;
   totalEstimated: number;
+}
+
+interface AnalyzeTestCoverageArgs {
+  projectRoot: string;
+  includeBreakdown?: boolean;
+  coverageThreshold?: number;
+}
+
+interface DesignTestStrategyArgs {
+  projectRoot: string;
+  projectType?: string;
+  complexity?: string;
+  timeline?: string;
+}
+
+interface IdentifyTestGapsArgs {
+  projectRoot: string;
+  sourceFiles?: string[];
+  existingTests?: string[];
+}
+
+interface OptimizeTestCoverageArgs {
+  projectRoot: string;
+  currentCoverage?: number;
+  targetCoverage?: number;
+  focusAreas?: string[];
+}
+
+interface GenerateTestFileArgs {
+  sourceFile: string;
+  sourceContent: string;
+  exports: Array<{ name: string; type: string }>;
+  testFilePath: string;
+  directory?: string;
+}
+
+interface TestGap {
+  sourceFile: string;
+  expectedTest: string;
+  type: string;
+  priority: number;
+  complexity: number;
+}
+
+interface OptimizationPhase {
+  name: string;
+  focus: string;
+  targetCoverage: number;
+  estimatedTests: number;
+}
+
+interface CoverageOptimizationPlan {
+  currentCoverage: number;
+  targetCoverage: number;
+  gap: number;
+  phases: OptimizationPhase[];
+  estimatedEffort: string;
+  priorityAreas: string[];
+}
+
+interface OptimizationTimeline {
+  estimatedDays: number;
+  phases: Array<{ name: string; estimatedDays: number }>;
+}
+
+interface OptimizationROI {
+  coverageIncrease: string;
+  effortDays: number;
+  bugsPrevented: number;
+  confidenceIncrease: string;
+}
+
+interface Milestone {
+  milestone: string;
+  tests: number;
+  focus: string;
+}
+
+interface ImplementationPlan {
+  phases: Array<{ name: string; focus: string; estimatedTests: number }>;
+  timeline: string;
+  milestones: Milestone[];
+}
+
+interface BaseTestCounts {
+  unit: number;
+  integration: number;
+  e2e: number;
+  performance: number;
+  security: number;
 }
 
 class StringRayTestingStrategyServer {
@@ -174,15 +265,15 @@ class StringRayTestingStrategyServer {
       try {
         switch (name) {
           case "analyze-test-coverage":
-            return await this.analyzeTestCoverage(args);
+            return await this.analyzeTestCoverage(args as unknown as AnalyzeTestCoverageArgs);
           case "design-test-strategy":
-            return await this.designTestStrategy(args);
+            return await this.designTestStrategy(args as unknown as DesignTestStrategyArgs);
           case "identify-test-gaps":
-            return await this.identifyTestGaps(args);
+            return await this.identifyTestGaps(args as unknown as IdentifyTestGapsArgs);
           case "optimize-test-coverage":
-            return await this.optimizeTestCoverage(args);
+            return await this.optimizeTestCoverage(args as unknown as OptimizeTestCoverageArgs);
           case "generate-test-file":
-            return await this.generateTestFile(args);
+            return await this.generateTestFile(args as unknown as GenerateTestFileArgs);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -193,7 +284,7 @@ class StringRayTestingStrategyServer {
     });
   }
 
-  private async analyzeTestCoverage(args: any): Promise<any> {
+  private async analyzeTestCoverage(args: AnalyzeTestCoverageArgs) {
     const {
       projectRoot,
       includeBreakdown = true,
@@ -225,8 +316,8 @@ class StringRayTestingStrategyServer {
     };
   }
 
-  private async designTestStrategy(args: any): Promise<any> {
-    const { projectRoot, projectType, complexity, timeline } = args;
+  private async designTestStrategy(args: DesignTestStrategyArgs) {
+    const { projectRoot, projectType = "web", complexity = "medium", timeline = "agile" } = args;
 
     const strategy = this.generateTestStrategy(
       projectRoot,
@@ -258,7 +349,7 @@ class StringRayTestingStrategyServer {
     };
   }
 
-  private async identifyTestGaps(args: any): Promise<any> {
+  private async identifyTestGaps(args: IdentifyTestGapsArgs) {
     const { projectRoot, sourceFiles, existingTests } = args;
 
     const gaps = this.analyzeTestGaps(sourceFiles || [], existingTests || []);
@@ -286,7 +377,7 @@ class StringRayTestingStrategyServer {
     };
   }
 
-  private async optimizeTestCoverage(args: any): Promise<any> {
+  private async optimizeTestCoverage(args: OptimizeTestCoverageArgs) {
     const {
       projectRoot,
       currentCoverage,
@@ -296,7 +387,7 @@ class StringRayTestingStrategyServer {
 
     const optimization = this.createCoverageOptimizationPlan(
       projectRoot,
-      currentCoverage,
+      currentCoverage ?? 0,
       targetCoverage,
       focusAreas,
     );
@@ -321,7 +412,7 @@ class StringRayTestingStrategyServer {
     };
   }
 
-  private async generateTestFile(args: any): Promise<any> {
+  private async generateTestFile(args: GenerateTestFileArgs) {
     const { sourceFile, sourceContent, exports, testFilePath, directory } =
       args;
 
@@ -478,8 +569,8 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
   private analyzeTestGaps(
     sourceFiles: string[],
     existingTests: string[],
-  ): any[] {
-    const gaps: any[] = [];
+  ): TestGap[] {
+    const gaps: TestGap[] = [];
 
     for (const sourceFile of sourceFiles) {
       const expectedTest = this.generateExpectedTestFile(sourceFile);
@@ -504,13 +595,13 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     currentCoverage: number,
     targetCoverage: number,
     focusAreas?: string[],
-  ): any {
+  ): CoverageOptimizationPlan {
     const gap = targetCoverage - currentCoverage;
-    const plan = {
+    const plan: CoverageOptimizationPlan = {
       currentCoverage,
       targetCoverage,
       gap,
-      phases: [] as any[],
+      phases: [],
       estimatedEffort: this.estimateOptimizationEffort(gap),
       priorityAreas: this.identifyPriorityAreas(projectRoot, focusAreas),
     };
@@ -539,7 +630,7 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     const projectLanguage = detectProjectLanguage(projectRoot);
     const langConfig = projectLanguage
       ? LANGUAGE_CONFIGS.find(
-          (c: any) => c.language === projectLanguage.language,
+          (c: LanguageConfig) => c.language === projectLanguage.language,
         )
       : null;
     const supportedExtensions = langConfig?.extensions || [
@@ -729,7 +820,7 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     return recommendations;
   }
 
-  private estimateBaseTestCounts(projectType: string, complexity: string): any {
+  private estimateBaseTestCounts(projectType: string, complexity: string): BaseTestCounts {
     const baseMultipliers = {
       web: { unit: 10, integration: 3, e2e: 2, performance: 1, security: 1 },
       api: { unit: 8, integration: 4, e2e: 1, performance: 2, security: 2 },
@@ -787,7 +878,7 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
   private createImplementationPlan(
     strategy: TestStrategy,
     timeline: string,
-  ): any {
+  ): ImplementationPlan {
     const phases =
       timeline === "agile"
         ? ["sprint1", "sprint2", "sprint3"]
@@ -872,12 +963,12 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     return Math.min(Math.round((functions + branches + asyncOps) / 3), 5);
   }
 
-  private calculateGapCoverage(gaps: any[], totalFiles: number): number {
+  private calculateGapCoverage(gaps: TestGap[], totalFiles: number): number {
     if (totalFiles === 0) return 100;
     return Math.round(((totalFiles - gaps.length) / totalFiles) * 100);
   }
 
-  private generateGapRecommendations(gaps: any[]): string[] {
+  private generateGapRecommendations(gaps: TestGap[]): string[] {
     const recommendations: string[] = [];
 
     const highPriorityGaps = gaps.filter((g) => g.priority >= 4);
@@ -935,8 +1026,8 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     return priorityAreas;
   }
 
-  private createOptimizationPhases(gap: number, focusAreas?: string[]): any[] {
-    const phases: any[] = [];
+  private createOptimizationPhases(gap: number, focusAreas?: string[]): OptimizationPhase[] {
+    const phases: OptimizationPhase[] = [];
 
     if (gap > 30) {
       phases.push({
@@ -966,20 +1057,20 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     return phases;
   }
 
-  private estimateOptimizationTimeline(optimization: any): any {
+  private estimateOptimizationTimeline(optimization: CoverageOptimizationPlan): OptimizationTimeline {
     const baseDays = optimization.phases.length * 3;
     const complexityMultiplier = optimization.gap > 20 ? 1.5 : 1.0;
 
     return {
       estimatedDays: Math.round(baseDays * complexityMultiplier),
-      phases: optimization.phases.map((phase: any) => ({
+      phases: optimization.phases.map((phase) => ({
         name: phase.name,
-        estimatedDays: Math.round(phase.estimatedTests / 5), // 5 tests per day estimate
+        estimatedDays: Math.round(phase.estimatedTests / 5),
       })),
     };
   }
 
-  private calculateOptimizationROI(optimization: any): any {
+  private calculateOptimizationROI(optimization: CoverageOptimizationPlan): OptimizationROI {
     const effortDays = optimization.estimatedEffort.includes("days")
       ? parseInt(optimization.estimatedEffort)
       : 14;
@@ -993,7 +1084,7 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     };
   }
 
-  private generateMilestones(strategy: TestStrategy, timeline: string): any[] {
+  private generateMilestones(strategy: TestStrategy, timeline: string): Milestone[] {
     const totalTests =
       strategy.unitTests +
       strategy.integrationTests +

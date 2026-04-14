@@ -103,7 +103,7 @@ export class AgentConfigValidator {
 
       // Read and parse file
       const content = fs.readFileSync(filePath, "utf8");
-      let config: any;
+      let config: AgentConfig;
 
       if (filePath.endsWith(".yml") || filePath.endsWith(".yaml")) {
         config = yaml.parse(content);
@@ -161,7 +161,7 @@ export class AgentConfigValidator {
   /**
    * Validate agent configuration object
    */
-  validateConfig(config: any): ValidationResult {
+  validateConfig(config: AgentConfig): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -220,7 +220,7 @@ export class AgentConfigValidator {
    * Validate logging configuration
    */
   private validateLoggingConfig(
-    logging: any,
+    logging: AgentConfig["logging"],
     errors: string[],
     warnings: string[],
   ): void {
@@ -252,7 +252,7 @@ export class AgentConfigValidator {
    * Validate processor pipeline configuration
    */
   private validateProcessorPipeline(
-    pipeline: any[],
+    pipeline: AgentConfig["processor_pipeline"],
     errors: string[],
     warnings: string[],
   ): void {
@@ -307,7 +307,7 @@ export class AgentConfigValidator {
    * Validate performance configuration
    */
   private validatePerformanceConfig(
-    performance: any,
+    performance: AgentConfig["performance"],
     errors: string[],
     warnings: string[],
   ): void {
@@ -348,7 +348,7 @@ export class AgentConfigValidator {
    * Validate security configuration
    */
   private validateSecurityConfig(
-    security: any,
+    security: AgentConfig["security"],
     errors: string[],
     warnings: string[],
   ): void {
@@ -371,7 +371,7 @@ export class AgentConfigValidator {
    * Validate error handling configuration
    */
   private validateErrorHandlingConfig(
-    errorHandling: any,
+    errorHandling: AgentConfig["error_handling"],
     errors: string[],
     warnings: string[],
   ): void {

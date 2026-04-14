@@ -29,6 +29,9 @@ import {
   PostProcessorConfig,
   PostProcessorResult,
   PostProcessorContext,
+  MonitoringResult,
+  FixResult,
+  FailureAnalysis,
 } from "./types.js";
 import { defaultConfig } from "./config.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
@@ -1064,7 +1067,7 @@ All path violations will be automatically detected and blocked.
   ): Promise<PostProcessorResult> {
     let attempts = 0;
     const maxAttempts = this.config.maxAttempts || 3;
-    const monitoringResults: any[] = [];
+    const monitoringResults: MonitoringResult[] = [];
 
     while (attempts < maxAttempts) {
       attempts++;
@@ -1303,7 +1306,7 @@ All path violations will be automatically detected and blocked.
    */
   private async redeployWithFixes(
     context: PostProcessorContext,
-    fixResult: any,
+    fixResult: FixResult,
     jobId: string,
   ): Promise<void> {
     await frameworkLogger.log(
@@ -1342,9 +1345,9 @@ All path violations will be automatically detected and blocked.
    * Attempt to apply automatic fixes
    */
   private async attemptAutoFix(
-    analysis: any,
+    analysis: FailureAnalysis,
     context: PostProcessorContext,
-  ): Promise<any> {
+  ): Promise<{ success: boolean; requiresManualIntervention: boolean }> {
     // Placeholder for auto-fix - disabled for now
     return { success: false, requiresManualIntervention: true };
   }
@@ -1354,7 +1357,7 @@ All path violations will be automatically detected and blocked.
    */
   private async escalateToManualIntervention(
     context: PostProcessorContext,
-    monitoringResult: any,
+    monitoringResult: MonitoringResult,
     attempts: number,
   ): Promise<void> {
     await frameworkLogger.log(
@@ -1506,7 +1509,7 @@ All path violations will be automatically detected and blocked.
    * Calculate complexity score for automated report triggering
    */
   private calculateComplexityScore(
-    monitoringResults: any[],
+    monitoringResults: MonitoringResult[],
     context: PostProcessorContext,
   ): number {
     // Simple complexity calculation based on file count and monitoring results

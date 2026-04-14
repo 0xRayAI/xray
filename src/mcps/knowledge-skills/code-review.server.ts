@@ -10,6 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -40,6 +41,30 @@ interface CodeMetrics {
   commentRatio: number;
   duplicateLines: number;
   testCoverage?: number;
+}
+
+interface AnalyzeCodeQualityArgs {
+  filePath: string;
+  includeMetrics?: boolean;
+  focusAreas?: string[];
+}
+
+interface ReviewPullRequestArgs {
+  files: string[];
+  baseBranch?: string;
+  focusAreas?: string[];
+}
+
+interface CheckBestPracticesArgs {
+  filePath: string;
+  language?: string;
+  standards?: string[];
+}
+
+interface StandardsViolation {
+  rule: string;
+  description: string;
+  severity: "high" | "medium" | "low";
 }
 
 class StringRayCodeReviewServer {
@@ -169,18 +194,18 @@ class StringRayCodeReviewServer {
 
       switch (name) {
         case "analyze_code_quality":
-          return await this.analyzeCodeQuality(args);
+          return await this.analyzeCodeQuality(args as unknown as AnalyzeCodeQualityArgs) as CallToolResult;
         case "review_pull_request":
-          return await this.reviewPullRequest(args);
+          return await this.reviewPullRequest(args as unknown as ReviewPullRequestArgs) as CallToolResult;
         case "check_best_practices":
-          return await this.checkBestPractices(args);
+          return await this.checkBestPractices(args as unknown as CheckBestPracticesArgs) as CallToolResult;
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
     });
   }
 
-  private async analyzeCodeQuality(args: any): Promise<any> {
+  private async analyzeCodeQuality(args: AnalyzeCodeQualityArgs) {
     const { filePath, includeMetrics = true, focusAreas } = args;
 
     try {
@@ -246,7 +271,7 @@ class StringRayCodeReviewServer {
     }
   }
 
-  private async reviewPullRequest(args: any): Promise<any> {
+  private async reviewPullRequest(args: ReviewPullRequestArgs) {
     const { files, baseBranch = "main", focusAreas } = args;
 
     try {
@@ -328,7 +353,7 @@ class StringRayCodeReviewServer {
     }
   }
 
-  private async checkBestPractices(args: any): Promise<any> {
+  private async checkBestPractices(args: CheckBestPracticesArgs) {
     const { filePath, language: specifiedLanguage, standards = [] } = args;
 
     try {
@@ -907,8 +932,8 @@ class StringRayCodeReviewServer {
     content: string,
     language: string,
     standards: string[],
-  ): any[] {
-    const violations: any[] = [];
+  ): StandardsViolation[] {
+    const violations: StandardsViolation[] = [];
 
     // TypeScript specific checks
     if (language === "typescript") {
@@ -956,7 +981,7 @@ class StringRayCodeReviewServer {
   }
 
   private generateStandardsRecommendations(
-    violations: any[],
+    violations: StandardsViolation[],
     language: string,
     standards: string[],
   ): string[] {
@@ -993,7 +1018,7 @@ class StringRayCodeReviewServer {
     return recommendations;
   }
 
-  private calculateComplianceScore(violations: any[]): number {
+  private calculateComplianceScore(violations: StandardsViolation[]): number {
     const baseScore = 100;
     const deductions = violations.reduce((total, violation) => {
       switch (violation.severity) {

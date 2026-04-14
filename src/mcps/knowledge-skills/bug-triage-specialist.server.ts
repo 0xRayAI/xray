@@ -60,6 +60,21 @@ interface TriageResult {
   rootCausePatterns: Record<string, number>;
 }
 
+interface StackFrame {
+  index: number;
+  function?: string;
+  file?: string;
+  line?: number;
+  column?: number;
+  raw?: string;
+}
+
+interface PrioritizedBug {
+  priorityScore: number;
+  effortEstimate: number;
+  [key: string]: unknown;
+}
+
 class BugTriageSpecialistServer {
   private server: Server;
 
@@ -210,7 +225,7 @@ class BugTriageSpecialistServer {
           case "analyze_stack_trace": {
             const result = this.analyzeStackTrace(
               (params.stackTrace as string) || "",
-              params.sourceMap,
+              params.sourceMap as Record<string, unknown> | undefined,
             );
             return {
               content: [
@@ -232,7 +247,7 @@ class BugTriageSpecialistServer {
           }
           case "prioritize_issues": {
             const result = this.prioritizeIssues(
-              (params.bugs as any[]) || [],
+              (params.bugs as Array<Record<string, unknown>>) || [],
               (params.sprintVelocity as number) || 20,
             );
             return {
@@ -264,7 +279,7 @@ class BugTriageSpecialistServer {
     });
   }
 
-  private triageBugs(errorLogs: string[], context: any): TriageResult {
+  private triageBugs(errorLogs: string[], context: Record<string, unknown>): TriageResult {
     const bugs: BugReport[] = errorLogs.map((log, idx) => {
       const severity = this.estimateSeverity(log);
       const category = this.categorizeBug(log);
@@ -322,7 +337,7 @@ class BugTriageSpecialistServer {
     return { summary, bugs, prioritizedFixes, rootCausePatterns };
   }
 
-  private analyzeStackTrace(stackTrace: string, sourceMap?: any) {
+  private analyzeStackTrace(stackTrace: string, sourceMap?: Record<string, unknown>) {
     const lines = stackTrace.split("\n");
     const frames = lines
       .map((line) => line.trim())
@@ -360,7 +375,7 @@ class BugTriageSpecialistServer {
         framework: frames.find(
           (f) => "file" in f && f.file?.includes("node_modules"),
         ),
-        suggestion: this.suggestFixFromTrace(frames),
+        suggestion: this.suggestFixFromTrace(frames as StackFrame[]),
       },
     };
   }
@@ -384,7 +399,7 @@ class BugTriageSpecialistServer {
     };
   }
 
-  private prioritizeIssues(bugs: any[], sprintVelocity: number) {
+  private prioritizeIssues(bugs: Array<Record<string, unknown>>, sprintVelocity: number) {
     const prioritized = bugs
       .map((bug) => ({
         ...bug,
@@ -515,7 +530,7 @@ class BugTriageSpecialistServer {
       logic: "moderate",
       runtime: "moderate",
     };
-    return (complexities[category] as any) || "moderate";
+    return (complexities[category] as "simple" | "moderate" | "complex") || "moderate";
   }
 
   private generateRecommendations(
@@ -556,7 +571,7 @@ class BugTriageSpecialistServer {
     return `// Fix for ${bugId}\n// TODO: Implement based on analysis\n${existingCode}`;
   }
 
-  private suggestFixFromTrace(frames: any[]): string {
+  private suggestFixFromTrace(frames: StackFrame[]): string {
     const userFrame = frames.find(
       (f) => "file" in f && f.file && !f.file.includes("node_modules"),
     );
@@ -566,7 +581,7 @@ class BugTriageSpecialistServer {
     return "Unable to pinpoint exact location";
   }
 
-  private calculatePriorityScore(bug: any): number {
+  private calculatePriorityScore(bug: Record<string, unknown>): number {
     const severityWeight: Record<string, number> = {
       critical: 40,
       high: 30,
@@ -584,13 +599,13 @@ class BugTriageSpecialistServer {
     );
   }
 
-  private estimateEffort(bug: any): number {
+  private estimateEffort(bug: Record<string, unknown>): number {
     const effortMap: Record<string, number> = {
       simple: 1,
       moderate: 3,
       complex: 8,
     };
-    return effortMap[bug.fixComplexity] || 3;
+    return effortMap[bug.fixComplexity as string] || 3;
   }
 
   async run() {
