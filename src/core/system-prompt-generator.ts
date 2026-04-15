@@ -15,14 +15,14 @@ import {
   generateSafeSystemPrompt,
   ValidationResult
 } from "./context-validator.js";
+import fs from "fs";
+import path from "path";
 
 /**
  * Get the current framework version from package.json
  */
 function getFrameworkVersion(): string {
   try {
-    const fs = require("fs");
-    const path = require("path");
     const packageJsonPath = path.join(process.cwd(), "package.json");
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
     return packageJson.version || "1.4.6";

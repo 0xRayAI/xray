@@ -10,6 +10,7 @@
 import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { existsSync, readFileSync } from "fs";
 
 interface CoverageMetrics {
   linesCovered: number;
@@ -148,7 +149,6 @@ export class CoverageAnalysisProcessor extends PostProcessor {
 
     return testFiles.filter((f) => {
       try {
-        const { existsSync } = require("fs");
         return existsSync(f);
       } catch {
         return false;
@@ -158,7 +158,6 @@ export class CoverageAnalysisProcessor extends PostProcessor {
 
   private async countSourceLines(filePath: string): Promise<number> {
     try {
-      const { readFileSync } = require("fs");
       const content = readFileSync(filePath, "utf-8");
       return content.split("\n").filter((line: string) => {
         const trimmed = line.trim();
@@ -172,7 +171,6 @@ export class CoverageAnalysisProcessor extends PostProcessor {
   private async countTestLines(testFiles: string[]): Promise<number> {
     let total = 0;
     try {
-      const { readFileSync, existsSync } = require("fs");
       for (const testFile of testFiles) {
         if (existsSync(testFile)) {
           const content = readFileSync(testFile, "utf-8");

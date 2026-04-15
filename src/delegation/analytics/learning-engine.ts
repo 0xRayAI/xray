@@ -8,6 +8,7 @@
  * @since 2026-03-12
  */
 
+import type { AdaptiveThresholds as KernelAdaptiveThresholds } from '../../core/kernel-patterns.js';
 import {
   P9LearningStats,
   PatternDriftAnalysis,
@@ -15,7 +16,8 @@ import {
   AdaptiveThresholds,
   RoutingOutcome,
 } from '../config/types.js';
-import { PatternDriftAnalysis as PatternDriftAnalysisType } from '../../analytics/pattern-performance-tracker.js';
+import { PatternDriftAnalysis as PatternDriftAnalysisType, patternPerformanceTracker } from '../../analytics/pattern-performance-tracker.js';
+import { routingOutcomeTracker } from './outcome-tracker.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 
 /**
@@ -67,7 +69,6 @@ export class LearningEngine {
    */
   private calculateOverallSuccessRate(): number {
     try {
-      const { routingOutcomeTracker } = require('./outcome-tracker.js');
       const outcomes = routingOutcomeTracker.getOutcomes();
       if (outcomes.length === 0) return 1.0;
       
@@ -91,7 +92,6 @@ export class LearningEngine {
     }
 
     try {
-      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
       const driftAnalyses = patternPerformanceTracker.getAllDriftAnalyses();
       const significantDrift = driftAnalyses.filter((a: PatternDriftAnalysisType) => a.drifted);
 
@@ -125,8 +125,7 @@ export class LearningEngine {
     }
 
     try {
-      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
-      return patternPerformanceTracker.calculateAdaptiveThresholds();
+      return patternPerformanceTracker.calculateAdaptiveThresholds() as AdaptiveThresholds;
     } catch {
       return {
         overall: {
@@ -135,7 +134,7 @@ export class LearningEngine {
           frequencyMin: 5,
           frequencyMax: 100,
         },
-      };
+      } satisfies AdaptiveThresholds;
     }
   }
 
@@ -266,7 +265,6 @@ export class LearningEngine {
     confidence: number;
   } {
     try {
-      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
       const metrics = patternPerformanceTracker.getPatternMetrics(patternId);
       
       if (!metrics) {
@@ -310,7 +308,6 @@ export class LearningEngine {
     }> = [];
 
     try {
-      const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
       const metrics = patternPerformanceTracker.getAllPatternMetrics();
 
       for (const metric of metrics) {

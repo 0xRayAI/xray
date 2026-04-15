@@ -9,6 +9,7 @@
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
+import { getAgentSpawn } from "../core/features-config.js";
 
 export interface SpawnContext {
   agentType: string;
@@ -66,7 +67,6 @@ export class AgentSpawnGovernor {
     // Try to load from features.json
     let configLimits: Partial<SpawnLimits> = {};
     try {
-      const { getAgentSpawn } = require("../core/features-config.js");
       const agentSpawn = getAgentSpawn();
       if (agentSpawn) {
         configLimits = {

@@ -12,7 +12,7 @@
  * Example: npx strray-ai publish-agent --agent orchestrator --dry-run
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { execSync } from "child_process";
 
@@ -174,8 +174,7 @@ export async function publishAgentCommand(): Promise<void> {
     console.log("Available agents in this project:");
     const agentsDir = join(cwd, "agents");
     if (existsSync(agentsDir)) {
-      const agents = require("fs")
-        .readdirSync(agentsDir)
+      const agents = readdirSync(agentsDir)
         .filter((f: string) => f.endsWith(".yml") || f.endsWith(".yaml"));
       if (agents.length > 0) {
         agents.forEach((a: string) => console.log(`  • ${a.replace(/\.(yml|yaml)$/, "")}`));

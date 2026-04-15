@@ -139,11 +139,11 @@ describe('LearningEngine', () => {
   });
 
   describe('analyzePattern', () => {
-    it('should return placeholder analysis', () => {
+    it('should return placeholder analysis for unknown pattern', () => {
       const analysis = engine.analyzePattern('test-pattern');
       expect(analysis.optimized).toBe(false);
-      expect(analysis.recommendations).toHaveLength(0);
-      expect(analysis.confidence).toBe(0.5);
+      expect(analysis.confidence).toBe(0);
+      expect(analysis.recommendations).toContain('Pattern not found');
     });
   });
 

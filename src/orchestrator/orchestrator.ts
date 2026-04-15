@@ -17,6 +17,7 @@ import {
 import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
 import type { ProcessorManager } from "../processors/processor-manager.js";
+import fs from "fs";
 
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 
@@ -108,8 +109,8 @@ export class StringRayOrchestrator {
       ];
       
       for (const configPath of configPaths) {
-        if (require("fs").existsSync(configPath)) {
-          const content = require("fs").readFileSync(configPath, "utf-8");
+        if (fs.existsSync(configPath)) {
+          const content = fs.readFileSync(configPath, "utf-8");
           const features = JSON.parse(content);
           
           if (features.multi_agent_orchestration) {

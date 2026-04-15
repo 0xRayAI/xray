@@ -546,7 +546,6 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
   private getDiskUsage(): number {
     try {
       // Simplified disk usage check
-      const { execSync } = require("child_process");
       const output = execSync(
         "df / | tail -1 | awk '{print $5}' | sed 's/%//'",
         { encoding: "utf8" },

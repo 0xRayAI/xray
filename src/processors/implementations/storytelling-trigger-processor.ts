@@ -16,6 +16,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { execSync as nodeExecSync } from "child_process";
 import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext, ProcessorResult } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
@@ -330,8 +331,7 @@ export class StorytellingTriggerProcessor extends PostProcessor {
 
   private execSync(command: string, options: { silent?: boolean }): string | Buffer | null {
     try {
-      const { execSync } = require("child_process");
-      return execSync(command, { encoding: "utf-8", stdio: options.silent ? "pipe" : "inherit" });
+      return nodeExecSync(command, { encoding: "utf-8", stdio: options.silent ? "pipe" : "inherit" });
     } catch {
       return null;
     }

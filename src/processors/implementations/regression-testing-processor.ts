@@ -11,6 +11,7 @@
 import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { execSync } from "child_process";
 
 interface RegressionTestResult {
   passed: boolean;
@@ -144,7 +145,6 @@ export class RegressionTestingProcessor extends PostProcessor {
   private async executeTestFile(testFile: string): Promise<{ tests: number; failures: number; errors: string[] }> {
     return new Promise((resolve) => {
       try {
-        const { execSync } = require("child_process");
         const result = execSync(`npx vitest run --reporter=json ${testFile}`, {
           encoding: "utf-8",
           timeout: 60000,

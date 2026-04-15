@@ -11,6 +11,7 @@
 import { StringRayStateManager } from "../state/state-manager.js";
 import { DelegationResult } from "./agent-delegator.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import * as crypto from "crypto";
 
 export interface SessionContext {
   sessionId: string;
@@ -231,7 +232,6 @@ export class SessionCoordinator {
       throw new Error(`Session ${sessionId} not found`);
     }
 
-    const crypto = require("crypto");
     const communication: Communication = {
       id: `comm_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       fromAgent,
@@ -359,7 +359,6 @@ export class SessionCoordinator {
       return;
     }
 
-    const crypto = require("crypto");
     const conflict: ConflictRecord = {
       conflictId: `conflict_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
       timestamp: Date.now(),

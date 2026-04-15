@@ -103,24 +103,13 @@ function setupGracefulShutdown(): void {
   process.on("unhandledRejection", (reason, promise) => {
     // Suppress error output in CLI mode to avoid breaking interface
     if (
-      process.env.OPENCODE_CLI !== "true"
-    ) {
-      frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
-    }
-    memoryMonitor.stop();
-    advancedProfiler.stop();
-    process.exit(1);
-  });
-
-  process.on("unhandledRejection", (reason, promise) => {
-    // Suppress error output in CLI mode to avoid breaking interface
-    if (
       process.env.STRRAY_CLI_MODE !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
       frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
     }
     memoryMonitor.stop();
+    advancedProfiler.stop();
     process.exit(1);
   });
 }

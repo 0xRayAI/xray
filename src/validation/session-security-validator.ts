@@ -3,6 +3,8 @@
  * Validates session-level security controls and access patterns
  */
 
+import crypto from "crypto";
+
 interface SessionCoordinator {
   getSessionStatus(sessionId: string): SessionStatus | null;
   getSharedContext(sessionId: string, filter: string): Record<string, unknown> | null;
@@ -503,7 +505,6 @@ export class SessionSecurityValidator {
   }
 
   private calculateChecksum(data: SessionData): string {
-    const crypto = require("crypto");
     const hash = crypto.createHash("sha256");
     hash.update(JSON.stringify(data));
     return hash.digest("hex");

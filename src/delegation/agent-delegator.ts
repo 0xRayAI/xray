@@ -12,6 +12,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import * as nodePath from "path";
 import {
   ComplexityAnalyzer,
   ComplexityMetrics,
@@ -327,6 +328,9 @@ export class AgentDelegator {
         sessionId: request.sessionId,
       };
       existingMetrics.push(delegationMetric);
+      if (existingMetrics.length > 100) {
+        existingMetrics.shift();
+      }
       this.stateManager.set("delegation_metrics", existingMetrics);
 
       await frameworkLogger.log(
@@ -633,28 +637,22 @@ export class AgentDelegator {
    * Ensures working directory is set correctly (src/ vs dist/ vs project root)
    */
   private resolveProjectDirectory(): string {
-    // Try to find the project root by looking for key files
-    // Only use process.cwd() and validate it exists
     const root = process.cwd();
-    const fs = require('fs');
     
-    // Check if this looks like a valid project root
     if (fs.existsSync(`${root}/package.json`) || fs.existsSync(`${root}/strray.config.json`)) {
       return root;
     }
     
-    // Fallback - try to find a parent with package.json
     let current = root;
     const maxLevels = 5;
     for (let i = 0; i < maxLevels; i++) {
-      const parent = require('path').dirname(current);
+      const parent = nodePath.dirname(current);
       if (fs.existsSync(`${parent}/package.json`)) {
         return parent;
       }
       current = parent;
     }
     
-    // Last resort fallback
     return root;
   }
 
@@ -832,6 +830,9 @@ export class AgentDelegator {
         sessionId: request.sessionId,
       };
       existingMetrics.push(delegationMetric);
+      if (existingMetrics.length > 100) {
+        existingMetrics.shift();
+      }
       this.stateManager.set("delegation_metrics", existingMetrics);
 
       await frameworkLogger.log(

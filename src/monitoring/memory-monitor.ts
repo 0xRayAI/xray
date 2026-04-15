@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import * as fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { featuresConfigLoader } from "../core/features-config.js";
 
@@ -350,9 +351,7 @@ export class MemoryMonitor extends EventEmitter {
    * Internal logging method - writes to framework log only
    */
   private log(message: string): void {
-    // Write to framework activity log instead of console
     try {
-      const fs = require("fs");
       const logDir = "./logs/monitoring";
       const logFile = `${logDir}/memory-monitor-${new Date().toISOString().split("T")[0]}.log`;
 

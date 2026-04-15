@@ -8,6 +8,8 @@
  * @since 2026-03-12
  */
 
+import fs from 'fs';
+import path from 'path';
 import {
   RoutingOutcome,
   AgentStats,
@@ -72,7 +74,6 @@ export class RoutingOutcomeTracker {
    */
   private loadFromDisk(): void {
     try {
-      const fs = require('fs');
       if (fs.existsSync(this.persistencePath)) {
         const data = fs.readFileSync(this.persistencePath, 'utf-8');
         const parsed = JSON.parse(data);
@@ -103,9 +104,6 @@ export class RoutingOutcomeTracker {
    */
   private saveToDisk(): void {
     try {
-      const fs = require('fs');
-      const path = require('path');
-      
       // Ensure directory exists
       const dir = path.dirname(this.persistencePath);
       if (!fs.existsSync(dir)) {
@@ -218,7 +216,6 @@ export class RoutingOutcomeTracker {
     this.outcomes = [];
     // Also clear the file to ensure clean state
     try {
-      const fs = require('fs');
       fs.writeFileSync(this.persistencePath, '[]');
     } catch (error) {
       // Silent fail

@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync } from "fs";
+import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync, statSync, unlinkSync } from "fs";
 import { join, basename, dirname } from "path";
 import { execSync } from "child_process";
 import { getConfigDir } from "../../core/config-paths.js";
@@ -129,13 +129,13 @@ function cloneRepo(url: string, targetDir: string): string {
     const archiveUrl = `https://codeload.github.com/${slug.owner}/${slug.repo}/tar.gz/${branch}`;
     try {
       execSync(`curl -fsSL "${archiveUrl}" -o "${tarPath}"`, { stdio: "pipe", timeout: 30000 });
-      if (!existsSync(tarPath) || require("fs").statSync(tarPath).size < 100) {
-        if (existsSync(tarPath)) require("fs").unlinkSync(tarPath);
+      if (!existsSync(tarPath) || statSync(tarPath).size < 100) {
+        if (existsSync(tarPath)) unlinkSync(tarPath);
         errors.push(`  ${branch}: downloaded empty file (repo may not exist)`);
         continue;
       }
       execSync(`tar -xzf "${tarPath}" -C "${targetDir}"`, { stdio: "pipe" });
-      require("fs").unlinkSync(tarPath);
+      unlinkSync(tarPath);
       const dirName = `${slug.repo}-${branch}`;
       const repoDir = join(targetDir, dirName);
       if (existsSync(repoDir)) return repoDir;
@@ -146,9 +146,13 @@ function cloneRepo(url: string, targetDir: string): string {
       errors.push(`  ${branch}: archive extracted but repo directory not found`);
     } catch (tarErr: unknown) {
       if (existsSync(tarPath)) {
-        try { require("fs").unlinkSync(tarPath); } catch { /* ignore */ }
+        try { unlinkSync(tarPath); } catch { /* ignore */ }
       }
       errors.push(`  tarball (${branch}): ${(tarErr as Error).message.split("\n")[0]}`);
+    } finally {
+      if (existsSync(tarPath)) {
+        try { unlinkSync(tarPath); } catch { /* ignore */ }
+      }
     }
   }
 

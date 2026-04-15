@@ -6,6 +6,7 @@
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
+import fs from "fs";
 
 export interface TestTemplateOptions {
   filePath: string;
@@ -186,7 +187,6 @@ export function analyzeSourceFile(filePath: string): {
   isTypeScript: boolean;
 } {
   try {
-    const fs = require("fs");
     const content = fs.readFileSync(filePath, "utf-8");
 
     const exports: string[] = [];
