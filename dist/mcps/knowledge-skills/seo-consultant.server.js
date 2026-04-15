@@ -839,7 +839,7 @@ ${result.structuredData
 ${sitemap}
 
 <!-- For large sites, use sitemap index -->
-<!-- ${index.replace(/<!-- /g, "").replace(/ -->)/g, "")} -->
+<!-- ${index.replace(/<!-- /g, "").replace(/ -->/g, "")} -->
 `,
                 },
             ],

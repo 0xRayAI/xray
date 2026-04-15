@@ -336,7 +336,9 @@ class StringRayPerformanceOptimizationServer {
     generateCallGraph(analysis) {
         const graph = {};
         for (const [fullName] of Object.entries(analysis.functionCounts)) {
-            const [file, fnName] = fullName.split(":");
+            const parts = fullName.split(":");
+            const file = parts[0] ?? "unknown";
+            const fnName = parts[1] ?? fullName;
             if (!graph[file])
                 graph[file] = [];
             graph[file].push(fnName);
@@ -413,7 +415,16 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
                 closures: 0,
                 domNodes: 0
             },
-            allocationsByType: {}
+            allocationsByType: {
+                strings: 0,
+                arrays: 0,
+                objects: 0,
+                functions: 0,
+                buffers: 0,
+                closures: 0,
+                promises: 0,
+                eventListeners: 0
+            }
         };
         if (fs.existsSync(path.join(projectRoot, "src"))) {
             const codeFiles = this.findCodeFiles(projectRoot);
@@ -482,6 +493,8 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
                 allocations.functions += (content.match(/function\s+\w+|const\s+\w+\s*=\s*(?:async\s*)?\(/g) || []).length;
                 allocations.closures += (content.match(/\([^)]*\)\s*=>/g) || []).length;
                 allocations.promises += (content.match(/\bnew\s+Promise\b|\bPromise\.\w+\b|\basync\s+/g) || []).length;
+                allocations.eventListeners += (content.match(/\.addEventListener\(/g) || []).length;
+                allocations.buffers += (content.match(/\.push\(|\.concat\(|\.splice\(/g) || []).length;
                 allocations.eventListeners += (content.match(/\.addEventListener\(/g) || []).length;
                 allocations.buffers += (content.match(/\.push\(|\.concat\(|\.splice\(/g) || []).length;
             }
@@ -716,12 +729,14 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
         if (compareBaseline && benchmarks.length > 1) {
             const baseline = benchmarks[0];
             const current = benchmarks[benchmarks.length - 1];
-            comparison = {
-                baseline,
-                current,
-                improvement: ((baseline.opsPerSecond - current.opsPerSecond) / baseline.opsPerSecond) * 100,
-                significant: Math.abs(((baseline.opsPerSecond - current.opsPerSecond) / baseline.opsPerSecond)) > 0.1
-            };
+            if (baseline && current) {
+                comparison = {
+                    baseline,
+                    current,
+                    improvement: baseline.opsPerSecond > 0 ? ((baseline.opsPerSecond - current.opsPerSecond) / baseline.opsPerSecond) * 100 : 0,
+                    significant: baseline.opsPerSecond > 0 ? Math.abs(((baseline.opsPerSecond - current.opsPerSecond) / baseline.opsPerSecond)) > 0.1 : false
+                };
+            }
         }
         const stats = {
             totalBenchmarks: benchmarks.length,
@@ -731,7 +746,7 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
             variance: this.calculateVariance(benchmarks.map(b => b.opsPerSecond))
         };
         const recommendations = this.generateBenchmarkRecommendations(benchmarks);
-        return { benchmarks, comparison, statistics: stats, recommendations };
+        return { benchmarks, comparison: comparison ?? undefined, statistics: stats, recommendations };
     }
     runSingleBenchmark(projectRoot, filePath, iterations, warmupRuns) {
         let totalTime = 0;
@@ -748,21 +763,21 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
         }
         times.sort((a, b) => a - b);
         const mean = totalTime / iterations;
-        const median = times[Math.floor(times.length / 2)];
+        const median = times[Math.floor(times.length / 2)] ?? 0;
         const variance = times.reduce((sum, t) => sum + Math.pow(t - mean, 2), 0) / times.length;
         const stdDev = Math.sqrt(variance);
         return {
             name: filePath,
             operations: iterations,
             duration: Math.round(totalTime),
-            opsPerSecond: Math.round(1000 / mean),
+            opsPerSecond: mean > 0 ? Math.round(1000 / mean) : 0,
             meanMs: Math.round(mean * 100) / 100,
             medianMs: Math.round(median * 100) / 100,
             stdDevMs: Math.round(stdDev * 100) / 100,
-            minMs: Math.round(times[0] * 100) / 100,
-            maxMs: Math.round(times[times.length - 1] * 100) / 100,
-            p95Ms: Math.round(times[Math.floor(times.length * 0.95)] * 100) / 100,
-            p99Ms: Math.round(times[Math.floor(times.length * 0.99)] * 100) / 100
+            minMs: times[0] ? Math.round(times[0] * 100) / 100 : 0,
+            maxMs: times[times.length - 1] ? Math.round(times[times.length - 1] * 100) / 100 : 0,
+            p95Ms: times[Math.floor(times.length * 0.95)] ? Math.round(times[Math.floor(times.length * 0.95)] * 100) / 100 : 0,
+            p99Ms: times[Math.floor(times.length * 0.99)] ? Math.round(times[Math.floor(times.length * 0.99)] * 100) / 100 : 0
         };
     }
     simulateBenchmarkWorkload(filePath) {
@@ -1238,7 +1253,7 @@ ${icon} **${suggestion.title}** (${suggestion.impact} impact, ${suggestion.effor
             }
         }
         for (const [, files] of Object.entries(fileContents)) {
-            if (files.length > 1) {
+            if (files.length > 1 && files[0]) {
                 analysis.duplication.push({
                     name: files[0],
                     count: files.length

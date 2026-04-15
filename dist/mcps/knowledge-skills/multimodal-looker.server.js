@@ -236,7 +236,7 @@ class MultimodalLookerServer {
         const accessibility = checkAccessibility ? this.performAccessibilityAudit(components, imageData) : { score: 100, issues: [], passed: [] };
         const colorScheme = this.detectColorScheme(imageData);
         const complexity = components.length > 20 ? "complex" : components.length > 10 ? "moderate" : "simple";
-        return {
+        const result = {
             summary: {
                 totalComponents: components.length,
                 layoutType: layout?.type || "unknown",
@@ -244,10 +244,13 @@ class MultimodalLookerServer {
                 colorScheme,
             },
             components,
-            layout,
             accessibility,
             recommendations: this.generateRecommendations(components, accessibility.issues, layout),
         };
+        if (layout) {
+            result.layout = layout;
+        }
+        return result;
     }
     describeDiagram(imageData, diagramType, extractMetadata) {
         const detectedType = diagramType === "auto"
@@ -289,7 +292,9 @@ class MultimodalLookerServer {
             ...usability.issues,
         ].sort((a, b) => {
             const order = { critical: 0, high: 1, medium: 2, low: 3 };
-            return order[a.severity] - order[b.severity];
+            const severityA = a.severity ?? "low";
+            const severityB = b.severity ?? "low";
+            return (order[severityA] ?? 3) - (order[severityB] ?? 3);
         });
         return {
             overallScore,
@@ -379,12 +384,13 @@ class MultimodalLookerServer {
         for (const pattern of componentPatterns) {
             for (const keyword of pattern.keywords) {
                 if (data.includes(keyword)) {
+                    const textValue = this.extractTextForComponent(imageData, keyword);
                     components.push({
                         id: `el-${idCounter++}`,
                         type: pattern.type,
-                        text: this.extractTextForComponent(imageData, keyword),
+                        text: textValue,
                         position: this.estimatePosition(components.length),
-                        interactive: pattern.interactive,
+                        interactive: pattern.interactive ?? false,
                         accessible: true,
                     });
                     break;
@@ -399,7 +405,8 @@ class MultimodalLookerServer {
     extractTextForComponent(imageData, keyword) {
         const regex = new RegExp(`${keyword}[:\\s]+["']?([^"'\n]+)["']?`, "i");
         const match = imageData.match(regex);
-        return match ? match[1].trim() : undefined;
+        const text = match?.[1];
+        return text?.trim() ?? undefined;
     }
     estimatePosition(index) {
         const positions = [
@@ -441,7 +448,8 @@ class MultimodalLookerServer {
             }
         }
         typeScores.sort((a, b) => b.score - a.score);
-        return typeScores[0].score > 0 ? typeScores[0].type : "unknown";
+        const bestMatch = typeScores[0];
+        return bestMatch && bestMatch.score > 0 ? bestMatch.type : "unknown";
     }
     extractDiagramNodes(data, type) {
         const nodes = [];
@@ -473,6 +481,9 @@ class MultimodalLookerServer {
             ],
         };
         const patterns = nodeLabelPatterns[type] || nodeLabelPatterns.flowchart;
+        if (!patterns) {
+            return [];
+        }
         const seen = new Set();
         let idCounter = 0;
         for (const pattern of patterns) {
@@ -529,7 +540,7 @@ class MultimodalLookerServer {
             for (const match of matches) {
                 const from = match[1];
                 const to = match[2];
-                if (nodeLabels.has(from.toLowerCase()) && nodeLabels.has(to.toLowerCase())) {
+                if (from && to && nodeLabels.has(from.toLowerCase()) && nodeLabels.has(to.toLowerCase())) {
                     const sourceNode = nodes.find((n) => n.label.toLowerCase() === from.toLowerCase());
                     if (sourceNode) {
                         sourceNode.connections.push(to);
@@ -689,7 +700,7 @@ class MultimodalLookerServer {
             "Responsive text sizing",
         ];
         const severityWeights = { critical: 25, high: 15, medium: 5, low: 2 };
-        const penalty = issues.reduce((acc, i) => acc + severityWeights[i.severity], 0);
+        const penalty = issues.reduce((acc, i) => acc + (severityWeights[i.severity] || 0), 0);
         const score = Math.max(0, 100 - penalty);
         return { score, issues, passed };
     }
@@ -698,14 +709,18 @@ class MultimodalLookerServer {
         const lower = data.toLowerCase();
         if (!lower.includes("consistent") && !lower.includes("uniform")) {
             issues.push({
+                category: "consistency",
                 severity: "medium",
                 description: "No explicit consistency indicators found",
+                suggestion: "Consider documenting design guidelines",
             });
         }
         if (lower.includes("different") || lower.includes("vary")) {
             issues.push({
+                category: "consistency",
                 severity: "medium",
                 description: "Potential inconsistent element sizes or spacing detected",
+                suggestion: "Review spacing and sizing patterns",
             });
         }
         const score = Math.max(0, 100 - issues.length * 15);
@@ -716,14 +731,18 @@ class MultimodalLookerServer {
         const lower = data.toLowerCase();
         if (!lower.includes("responsive") && !lower.includes("mobile")) {
             issues.push({
+                category: "responsiveness",
                 severity: "high",
                 description: "No responsive design indicators found",
+                suggestion: "Add responsive design patterns with mobile-first approach",
             });
         }
         if (!lower.includes("breakpoint") && !lower.includes("media query")) {
             issues.push({
+                category: "responsiveness",
                 severity: "medium",
                 description: "No breakpoint specifications detected",
+                suggestion: "Define breakpoints for mobile, tablet, and desktop",
             });
         }
         const score = Math.max(0, 100 - issues.length * 20);
@@ -734,14 +753,18 @@ class MultimodalLookerServer {
         const lower = data.toLowerCase();
         if (components.length > 20) {
             issues.push({
+                category: "usability",
                 severity: "medium",
                 description: "High component count may indicate UI complexity",
+                suggestion: "Consider simplifying or lazy loading components",
             });
         }
         if (!lower.includes("clear") && !lower.includes("simple")) {
             issues.push({
+                category: "usability",
                 severity: "low",
                 description: "Consider simplifying the interface",
+                suggestion: "Review user flow and information architecture",
             });
         }
         const score = Math.max(0, 100 - issues.length * 10);
@@ -789,7 +812,7 @@ class MultimodalLookerServer {
             "#6c757d": { name: "secondary", role: "Secondary text, borders" },
             "#343a40": { name: "dark", role: "Dark text, headings" },
             "#212529": { name: "dark-text", role: "Primary text" },
-            "#6c757d": { name: "muted-text", role: "Secondary text" },
+            "#adb5bd": { name: "muted-text", role: "Secondary text" },
             "#ffffff": { name: "background", role: "Page background" },
             "#f8f9fa": { name: "surface", role: "Card, panel backgrounds" },
             "#e9ecef": { name: "border", role: "Borders, dividers" },
@@ -799,13 +822,13 @@ class MultimodalLookerServer {
         const foundColors = new Set();
         for (const match of matches) {
             const hex = "#" + match[1];
-            if (!foundColors.has(hex) && colorMap[hex.toLowerCase()]) {
+            const colorInfo = colorMap[hex.toLowerCase()];
+            if (!foundColors.has(hex) && colorInfo) {
                 foundColors.add(hex);
-                const info = colorMap[hex.toLowerCase()];
                 colors.push({
-                    name: info.name,
+                    name: colorInfo.name,
                     value: hex.toLowerCase(),
-                    role: info.role,
+                    role: colorInfo.role,
                 });
             }
         }
@@ -889,8 +912,8 @@ class MultimodalLookerServer {
         const shadowPattern = /box-shadow[:\s]*(.+?)(?:;|$)/gi;
         const matches = data.matchAll(shadowPattern);
         for (const match of matches) {
-            const shadow = match[1].trim();
-            if (!shadows.includes(shadow)) {
+            const shadow = match[1]?.trim();
+            if (shadow && !shadows.includes(shadow)) {
                 shadows.push(shadow);
             }
         }
@@ -905,7 +928,7 @@ class MultimodalLookerServer {
         const matches = data.matchAll(radiusPattern);
         for (const match of matches) {
             const value = match[1];
-            if (!radius.includes(value)) {
+            if (value && !radius.includes(value)) {
                 radius.push(value);
             }
         }

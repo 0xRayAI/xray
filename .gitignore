@@ -9,3 +9,9 @@ logs/framework/activity-report.json
 logs/framework/pattern-metrics.json
 logs/framework/routing-outcomes.json
 *.tgz
+
+# Temp files
+*.log
+strray-ai-*.tgz
+*.tmp
+
