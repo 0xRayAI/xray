@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/security-auditor"
-title: "Security Auditor"
-sidebar_label: "Security Auditor"
-sidebar_position: 18
-tags: ["agents"]
----
-
 # Security Auditor Agent
 
 **Role**: Vulnerability detection & compliance

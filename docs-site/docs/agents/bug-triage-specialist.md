@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/bug-triage-specialist"
-title: "Bug Triage Specialist"
-sidebar_label: "Bug Triage Specialist"
-sidebar_position: 9
-tags: ["agents"]
----
-
 # Bug Triage Specialist Agent
 
 **Role**: Error investigation & surgical fixes

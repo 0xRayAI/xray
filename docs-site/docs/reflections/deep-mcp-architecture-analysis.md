@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deep-mcp-architecture-analysis"
-title: "Deep MCP Architecture Analysis"
-sidebar_label: "Deep MCP Architecture Analysis"
-sidebar_position: 32
-tags: ["reflection"]
----
-
 # Deep System Analysis Reflection - MCP Servers, Stubs, and Actual Architecture
 
 **Date:** 2026-03-02  

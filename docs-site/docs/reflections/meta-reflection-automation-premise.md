@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/meta-reflection-automation-premise"
-title: "Meta Reflection Automation Premise"
-sidebar_label: "Meta Reflection Automation Premise"
-sidebar_position: 56
-tags: ["reflection"]
----
-
 # Meta-Reflection: The Automation Premise Realized
 
 **Category:** Evolution Reflection (Philosophical) - Paradigm shift in understanding framework capabilities

@@ -1,10 +1,3 @@
----
-slug: "/docs/operations/memory-remediation-plan"
-title: "MEMORY REMEDIATION PLAN"
-sidebar_label: "MEMORY REMEDIATION PLAN"
-sidebar_position: 3
----
-
 # 🚨 MEMORY LEAK REMEDIATION PLAN - 0xRay Framework
 
 **Version**: v1.15.1  
@@ -289,7 +282,7 @@ export async function runMemoryRegressionTests(): Promise<TestResult[]> {
 
   results.push({
     name: "Normal Operations Memory Growth",
-    passed: growth < 50, // &lt;50MB growth allowed
+    passed: growth < 50, // <50MB growth allowed
     actual: growth,
     threshold: 50,
   });

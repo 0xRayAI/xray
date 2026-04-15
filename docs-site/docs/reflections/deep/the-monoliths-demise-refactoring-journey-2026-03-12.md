@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/the-monoliths-demise-refactoring-journey-2026-03-12"
-title: "The Monoliths Demise Refactoring Journey 2026 03 12"
-sidebar_label: "The Monoliths Demise Refactoring Journey…"
-sidebar_position: 31
-tags: ["reflection"]
-date: 2026-03-12
----
-
 # The Monolith's Demise: A 39-Day Refactoring Journey
 
 **When:** February 1 - March 12, 2026  

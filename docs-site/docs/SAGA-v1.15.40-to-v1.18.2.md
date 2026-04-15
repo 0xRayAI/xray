@@ -1,11 +1,3 @@
----
-slug: "/docs//saga-v1-15-40-to-v1-18-2"
-title: "SAGA V1.15.40 To V1.18"
-sidebar_label: v1.15.40
-sidebar_position: 5
-version: 1.15.40
----
-
 # The 0xRay Saga: Journey from v1.15.40 to v1.18.2
 
 *A Chronicle of Debugging, Discovery, and Determination*
@@ -150,7 +142,7 @@ The culprit: **Missing `"readme": "README.md"` field in package.json**
 ```json
 {
   "name": "strray-ai",
-  "version": "1.18.2",
+  "version": "1.22.13",
   "readme": "README.md",  // <-- The hero we needed
   ...
 }

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/agent-configuration-tests-failure-reflection"
-title: "Agent Configuration Tests Failure Reflection"
-sidebar_label: "Agent Configuration Tests Failure Reflec…"
-sidebar_position: 20
-tags: ["reflection"]
----
-
 # Agent Configuration Crisis Reflection - Why Tests Failed to Catch Simple Issues
 
 **Location:** `./docs/reflections/agent-configuration-tests-failure-reflection.md`  

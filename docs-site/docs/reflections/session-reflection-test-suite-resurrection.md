@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/session-reflection-test-suite-resurrection"
-title: "Session Reflection Test Suite Resurrection"
-sidebar_label: "Session Reflection Test Suite Resurrecti…"
-sidebar_position: 76
-tags: ["reflection"]
----
-
 # Session Reflections: 0xRay Test Suite Resurrection
 
 **Date**: 2026-01-23  

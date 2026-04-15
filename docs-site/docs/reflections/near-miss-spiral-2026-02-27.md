@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/near-miss-spiral-2026-02-27"
-title: "Near Miss Spiral 2026 02 27"
-sidebar_label: "Near Miss Spiral 2026 02 27"
-sidebar_position: 60
-tags: ["reflection"]
-date: 2026-02-27
----
-
 # Reflection: How This Could Have Spun Out of Control
 
 ## What Actually Happened

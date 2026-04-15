@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deep-system-reflection"
-title: "DEEP SYSTEM REFLECTION"
-sidebar_label: "DEEP SYSTEM REFLECTION"
-sidebar_position: 5
-tags: ["reflection"]
----
-
 # 0xRay: The Long Road to Agent Operating System
 
 ## A Deep Reflection on Building an AI Agent Enforcement Platform

@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/misnamed-users-directory-cleanup-2026-03-10"
-title: "Misnamed Users Directory Cleanup 2026 03 10"
-sidebar_label: "Misnamed Users Directory Cleanup 2026 03…"
-sidebar_position: 57
-tags: ["reflection"]
-date: 2026-03-10
----
-
 # Misnamed Users/ Directory Cleanup - 2026-03-10
 
 **Problem**: Misnamed `Users/` directory found at project root

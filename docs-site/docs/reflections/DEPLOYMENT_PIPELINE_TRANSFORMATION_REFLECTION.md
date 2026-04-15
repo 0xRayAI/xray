@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deployment-pipeline-transformation-reflection"
-title: "DEPLOYMENT PIPELINE TRANSFORMATION REFLECTION"
-sidebar_label: "DEPLOYMENT PIPELINE TRANSFORMATION REFLE…"
-sidebar_position: 7
-tags: ["reflection"]
----
-
 # 🚀 0xRay Framework: Deep Deployment Pipeline Reflection
 
 ## Executive Summary

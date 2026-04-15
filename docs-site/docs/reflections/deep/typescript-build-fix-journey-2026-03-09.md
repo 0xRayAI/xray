@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/typescript-build-fix-journey-2026-03-09"
-title: "Typescript Build Fix Journey 2026 03 09"
-sidebar_label: "Typescript Build Fix Journey 2026 03 09"
-sidebar_position: 35
-tags: ["reflection"]
-date: 2026-03-09
----
-
 # Deep Reflection: 0xRay v1.7.7-1.7.8 Build & Test Fixing Journey
 
 **Date**: 2026-03-09

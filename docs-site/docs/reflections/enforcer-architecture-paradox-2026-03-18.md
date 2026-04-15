@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/enforcer-architecture-paradox-2026-03-18"
-title: "Enforcer Architecture Paradox 2026 03 18"
-sidebar_label: "Enforcer Architecture Paradox 2026 03 18"
-sidebar_position: 39
-tags: ["reflection"]
-date: 2026-03-18
----
-
 # Deep Reflection: The Enforcer Architecture Paradox
 
 *March 18, 2026*

@@ -1,11 +1,3 @@
----
-slug: "/docs/security/security-code-review-checklist"
-title: "SECURITY CODE REVIEW CHECKLIST"
-sidebar_label: "SECURITY CODE REVIEW CHECKLIST"
-sidebar_position: 6
-tags: ["security"]
----
-
 # Security-Focused Code Review Checklist
 
 ## Overview

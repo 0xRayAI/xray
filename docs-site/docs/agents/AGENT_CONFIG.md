@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/agent-config"
-title: "AGENT CONFIG"
-sidebar_label: "AGENT CONFIG"
-sidebar_position: 3
-tags: ["agents"]
----
-
 # Agent Configuration Guide
 
 This guide explains how to configure agents in your `opencode.json` for 0xRay v1.15.1.
@@ -316,13 +308,13 @@ All facades expose clean configuration interfaces that work seamlessly with your
 
 ## Next Steps
 
-- [View Agent Documentation](/docs/agents) - Detailed agent capabilities
-- [Configuration Reference](/docs/configuration) - Full features.json settings
+- [View Agent Documentation](AGENTS.md) - Detailed agent capabilities
+- [Configuration Reference](CONFIGURATION.md) - Full features.json settings
 - [Universal Codex](.opencode/strray/codex.json) - 60-term codex reference
 
 ---
 
 **Version:** 1.9.0  
 **Architecture:** Facade Pattern (87% code reduction)  
-**Agents:** N specialized agents  
+**Agents:** 27 specialized agents  
 **Last Updated:** 2026-03-12

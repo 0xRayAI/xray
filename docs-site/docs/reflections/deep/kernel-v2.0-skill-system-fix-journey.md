@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/kernel-v2-0-skill-system-fix-journey"
-title: "Kernel V2"
-sidebar_label: v2.0
-sidebar_position: 14
-tags: ["reflection"]
-version: 2.0
----
-
 # Deep Reflection: 0xRay v1.7.2 Development Journey
 
 **Date**: 2026-03-06  

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deployment-crisis-v12x-reflection"
-title: "Deployment Crisis V12x Reflection"
-sidebar_label: "Deployment Crisis V12x Reflection"
-sidebar_position: 36
-tags: ["reflection"]
----
-
 # 0xRay Deployment Reflection Document
 ## v1.2.x Release Post-Mortem & Lessons Learned
 
@@ -176,7 +168,7 @@ config.disabled_agents.some(agent => agent.toLowerCase() === "sisyphus")
 
 ```typescript
 // src/cli/index.ts
-.version("1.15.27");
+.version("1.22.13");
 
 // scripts/node/universal-version-manager.js
 const UPDATE_PATTERNS = [

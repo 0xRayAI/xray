@@ -1,11 +1,3 @@
----
-slug: "/docs/governance/governance-systems-test-report"
-title: "Governance Systems Test Report"
-sidebar_label: "Governance Systems Test Report"
-sidebar_position: 1
-tags: ["governance"]
----
-
 # AI Governance Systems Test Report
 
 **Test Date**: 2026-03-08

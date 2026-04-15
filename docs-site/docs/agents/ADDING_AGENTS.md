@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/adding-agents"
-title: "ADDING AGENTS"
-sidebar_label: "ADDING AGENTS"
-sidebar_position: 1
-tags: ["agents"]
----
-
 # How to Add an Agent to 0xRay AI v1.15.1
 
 This guide documents how to add agents to 0xRay v1.15.1 and lists **every single file** that needs to be updated.
@@ -32,7 +24,7 @@ When adding a new agent, you MUST update these files:
 | # | File | What to Add |
 |---|------|-------------|
 | 1 | `opencode.json` | Agent entry in `agent` section |
-| 2 | `.opencode/agents/&#123;agent&#125;.yml` | Agent YAML configuration |
+| 2 | `.opencode/agents/{agent}.yml` | Agent YAML configuration |
 | 3 | `AGENTS.md` | Agent in the agents table |
 | 4 | `README.md` | Agent in the agents table |
 | 5 | `docs/README.md` | Agent in model routing config |
@@ -109,14 +101,14 @@ Add agent entry in the `agent` section:
 }
 ```
 
-### 2. .opencode/agents/&#123;agent&#125;.yml
+### 2. .opencode/agents/{agent}.yml
 
 Create the agent YAML file:
 
 ```yaml
 name: my-agent
 description: "What this agent does"
-version: "1.15.27"
+version: "1.22.13"
 mode: subagent
 ```
 
@@ -351,7 +343,7 @@ When removing an agent, you MUST update these files (reverse of adding):
 | # | File | What to Remove |
 |---|------|----------------|
 | 1 | `opencode.json` | Agent entry in `agent` section |
-| 2 | `.opencode/agents/&#123;agent&#125;.yml` | Agent YAML configuration file |
+| 2 | `.opencode/agents/{agent}.yml` | Agent YAML configuration file |
 | 3 | `AGENTS.md` | Agent from the agents table |
 | 4 | `README.md` | Agent from the agents table |
 | 5 | `docs/README.md` | Agent from model routing config |

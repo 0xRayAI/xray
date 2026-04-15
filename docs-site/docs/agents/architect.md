@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/architect"
-title: Architect
-sidebar_label: Architect
-sidebar_position: 8
-tags: ["agents"]
----
-
 # Architect Agent
 
 **Role**: System design & technical decisions

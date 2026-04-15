@@ -1,11 +1,3 @@
----
-slug: "/docs/testing/test-classification-guide"
-title: "TEST CLASSIFICATION GUIDE"
-sidebar_label: "TEST CLASSIFICATION GUIDE"
-sidebar_position: 4
-tags: ["testing"]
----
-
 # 0xRay Framework - Test Classification Guide
 
 ## Test Types & Framework Usage Classification
@@ -103,9 +95,9 @@ These tests use some real components with mocked dependencies.
 4. **Performance Tests** (Hybrid) - Regression detection and optimization
 
 ### CI/CD Pipeline
-1. **Unit + Integration** (Mock-based) - Fast feedback, &lt;2 minutes
-2. **E2E Framework** (Real) - Comprehensive validation, &lt;5 minutes
-3. **Performance Regression** (Hybrid) - Performance validation, &lt;3 minutes
+1. **Unit + Integration** (Mock-based) - Fast feedback, <2 minutes
+2. **E2E Framework** (Real) - Comprehensive validation, <5 minutes
+3. **Performance Regression** (Hybrid) - Performance validation, <3 minutes
 
 ### Auto-Commit Threshold
 - **Unit Tests**: Must pass (fast feedback)

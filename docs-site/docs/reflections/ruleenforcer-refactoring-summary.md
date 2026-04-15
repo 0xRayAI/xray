@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/ruleenforcer-refactoring-summary"
-title: "Ruleenforcer Refactoring Summary"
-sidebar_label: "Ruleenforcer Refactoring Summary"
-sidebar_position: 73
-tags: ["reflection"]
----
-
 # RuleEnforcer Refactoring Summary
 
 ## Overview

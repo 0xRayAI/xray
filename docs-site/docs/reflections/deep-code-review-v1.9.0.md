@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/deep-code-review-v1-9-0"
-title: "Deep Code Review V1.9"
-sidebar_label: v1.9.0
-sidebar_position: 31
-tags: ["reflection"]
-version: 1.9.0
----
-
 # 0xRay Framework - Deep Code Review Report
 
 **Date:** 2026-03-11
@@ -114,7 +105,7 @@ Handles validation, autofix, escalation, and deployment coordination.
 | >2,000 lines | 2 | 🔴 Critical |
 | 1,000-2,000 | 16 | 🟡 High |
 | 500-1,000 | ~35 | 🟠 Medium |
-| &lt;500 lines | ~331 | 🟢 Low |
+| <500 lines | ~331 | 🟢 Low |
 
 **Total at-risk files: 53 (14% of codebase)**
 

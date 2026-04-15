@@ -1,23 +1,16 @@
----
-slug: "/docs//readme"
-title: README
-sidebar_label: README
-sidebar_position: 4
----
+# ⚡ 0xRay AI v1.22.13 – Enterprise AI Agent Coordination Platform
 
-# ⚡ 0xRay AI v1.15.0 – Enterprise AI Agent Coordination Platform
-
-[![Version](https://img.shields.io/badge/version-undefined-blue.svg)](https://github.com/htafolla/strray)
+[![Version](https://img.shields.io/badge/version-1.22.13-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-2311-brightgreen.svg)](https://github.com/htafolla/strray)
+[![Tests](https://img.shields.io/badge/tests-2403-brightgreen.svg)](https://github.com/htafolla/strray)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-passing-brightgreen.svg)](https://github.com/htafolla/strray/actions)
 [![Error Prevention](https://img.shields.io/badge/error%20prevention-99.6%25-red.svg)](https://github.com/htafolla/strray)
 
 ## ⚠️ Important Notice
 
-**0xRay AI v1.15.0 - Enterprise CI/CD Automation Plugin**
+**0xRay AI v1.22.13 - Enterprise CI/CD Automation Plugin**
 
 0xRay Framework is available as both:
 
@@ -76,7 +69,7 @@ This repository contains the complete 0xRay Framework source code with enterpris
 
 **Most AI coding tools fall into the same traps: tangled spaghetti code, hallucinations and inconsistent output, code rot that quietly erodes quality, race conditions, infinite loops, and tangled state/hook chaos.**
 
-**0xRay orchestrates 13 autonomous agents with 60 codex rules to eliminate them — before they take root.**
+**0xRay orchestrates 25 autonomous agents with 60 codex rules to eliminate them — before they take root.**
 
 **🛡️ Dead Ends Eliminated**
 
@@ -130,10 +123,10 @@ bun install -g OpenCode
 
 #### Standalone Configuration
 
-- Loads the Universal Development Codex v1.1.1
+- Loads the Universal Development Codex v1.7.5
 - Enables enterprise CI/CD automation with post-processor
-- Registers all 13 autonomous agents
-- Sets up 15 MCP servers for agent communication
+- Registers all 25 autonomous agents
+- Sets up 40 MCP servers for agent communication
 - Configures automated deployment pipelines
 
 #### OpenCode Integration
@@ -154,7 +147,7 @@ npx strray-ai init
 # - Set up CI/CD post-processor for automated remediation
 # - Load codex terms into agent system prompts
 # - Enable multi-agent orchestration for complex tasks
-# - Provide 13 autonomous agents (enforcer, architect, orchestrator, etc.)
+# - Provide 25 autonomous agents (enforcer, architect, orchestrator, etc.)
 # - Monitor and enforce code quality standards
 # - Enable automated deployment with canary rollouts
 ```
@@ -176,7 +169,7 @@ For complete OpenCode setup and usage instructions, see the [official OpenCode d
 
 Update your `.opencode/OpenCode.json`:
 
-**First, update to your preferred AI model.** Check [OpenCode](https://opencode.ai) for free models and update the `model_routing` section in your config. See [Model Configuration Guide](/docs/docs-stringray-model-config) for detailed instructions.
+**First, update to your preferred AI model.** Check [OpenCode](https://opencode.ai) for free models and update the `model_routing` section in your config. See [Model Configuration Guide](./docs/0xRay_MODEL_CONFIG.md) for detailed instructions.
 
 ```json
 {
@@ -209,7 +202,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.15.27"
+    "version": "1.22.13"
   }
 }
 ```
@@ -334,25 +327,25 @@ npm run init
 
 ### Core Documentation
 
-- **[Architecture Overview](/docs/architecture-enterprise-architecture)** - Complete 28-component system overview with testing coverage
-- **[Agent Documentation](./agents/)** - Detailed specifications for all 13 autonomous agents with operating procedures
-- **[API Reference](/docs/api-api-reference)** - Developer API documentation for programmatic access
-- **[Installation Guide](/docs/user-guide-installation-installation)** - Complete setup and configuration guide
-- **[Model Configuration](/docs/user-guide-configuration-model-configuration)** - Model setup with openrouter/xai-grok-2-1212-fast-1 assignments
+- **[Architecture Overview](./architecture/ENTERPRISE_ARCHITECTURE.md)** - Complete 28-component system overview with testing coverage
+- **[Agent Documentation](./agents/)** - Detailed specifications for all 25 autonomous agents with operating procedures
+- **[API Reference](./api/API_REFERENCE.md)** - Developer API documentation for programmatic access
+- **[Installation Guide](./user-guide/installation/INSTALLATION.md)** - Complete setup and configuration guide
+- **[Model Configuration](./user-guide/configuration/model-configuration.md)** - Model setup with openrouter/xai-grok-2-1212-fast-1 assignments
 - **[Troubleshooting](./troubleshooting/)** - Solutions for common issues and edge cases
 
 ### Development & Operations
 
-- **[Testing Guide](/docs/development-testing-md-testing)** - Comprehensive testing strategies and frameworks
-- **[Security Architecture](/docs/security-security-architecture)** - Enterprise security configuration and auditing
+- **[Testing Guide](./development/testing.md/TESTING.md)** - Comprehensive testing strategies and frameworks
+- **[Security Architecture](./security/SECURITY_ARCHITECTURE.md)** - Enterprise security configuration and auditing
 - **[Performance Monitoring](./performance/)** - Metrics collection and optimization tracking
-- **[Plugin Deployment](/docs/user-guide-plugin-deployment)** - Complete plugin deployment and validation guide
-- **[Orchestrator Integration](/docs/architecture-orchestrator-integration)** - Advanced orchestration and agent coordination
+- **[Plugin Deployment](./user-guide/plugin-deployment.md)** - Complete plugin deployment and validation guide
+- **[Orchestrator Integration](./architecture/orchestrator-integration.md)** - Advanced orchestration and agent coordination
 
 ### Archive & Legacy
 
 - **[Archive Documentation](./archive/)** - Historical documentation and deprecated guides
-- **[Migration Guide](/docs/operations-migration-framework-migration)** - Framework migration and upgrade guides
+- **[Migration Guide](./operations/migration/FRAMEWORK_MIGRATION.md)** - Framework migration and upgrade guides
 - **[Reflections](./reflections/)** - Incident analysis and framework evolution insights
 
 ## 📊 TECHNICAL SPECIFICATIONS & PERFORMANCE METRICS
@@ -364,13 +357,13 @@ npm run init
 - **CI/CD Automation**: Automated remediation with canary deployments
 - **Response Time**: Sub-millisecond task processing
 - **Cache Hit Rate**: 85%+ with LRU/LFU optimization
-- **Memory Efficiency**: Pool-based object reuse with &lt;1% overhead
+- **Memory Efficiency**: Pool-based object reuse with <1% overhead
 
 ### Enterprise Capabilities
 
 - **Concurrent Sessions**: Unlimited with automatic lifecycle management
-- **Agent Coordination**: 13 autonomous agents with intelligent delegation
-- **MCP Servers**: 15 MCP servers providing specialized capabilities
+- **Agent Coordination**: 25 autonomous agents with intelligent delegation
+- **MCP Servers**: 40 MCP servers providing specialized capabilities
 - **CI/CD Automation**: Automated remediation loop with canary deployments
 - **Plugin Security**: Sandboxed execution with permission-based access
 - **Monitoring Coverage**: Real-time anomaly detection and predictive alerting
@@ -386,9 +379,9 @@ npm run init
 
 ### Production Benchmarks
 
-- **Boot Time**: &lt;500ms cold start, &lt;100ms warm start
-- **Task Processing**: &lt;1ms average response time
-- **Memory Usage**: &lt;50MB baseline, &lt;200MB under load
+- **Boot Time**: <500ms cold start, <100ms warm start
+- **Task Processing**: <1ms average response time
+- **Memory Usage**: <50MB baseline, <200MB under load
 - **Concurrent Operations**: 1000+ simultaneous sessions supported
 - **Uptime**: 99.9%+ with automatic recovery mechanisms
 
@@ -466,9 +459,9 @@ npm run test:security # Security-focused test suite
 Update your `.opencode/OpenCode.json` for enterprise deployment:
 
 ```json
-&#123;
+{
   "$schema": "https://opencode.ai/OpenCode.schema.json",
-  "model_routing": &#123;
+  "model_routing": {
     "enforcer": "openrouter/xai-grok-2-1212-fast-1",
     "architect": "openrouter/xai-grok-2-1212-fast-1",
     "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
@@ -477,33 +470,33 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
     "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
     "refactorer": "openrouter/xai-grok-2-1212-fast-1",
     "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
-  &#125;,
-  "framework": &#123;
+  },
+  "framework": {
     "name": "strray",
-    "version": "1.15.27",
+    "version": "1.22.13",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"
-  &#125;,
-  "advanced_features": &#123;
+  },
+  "advanced_features": {
     "predictive_analytics": true,
     "performance_benchmarking": true,
     "plugin_ecosystem": true,
     "advanced_monitoring": true,
     "performance_optimization": true
-  &#125;,
-  "security": &#123;
+  },
+  "security": {
     "plugin_sandboxing": true,
     "permission_based_access": true,
     "audit_logging": true
-  &#125;,
-  "monitoring": &#123;
+  },
+  "monitoring": {
     "real_time_alerts": true,
     "anomaly_detection": true,
     "performance_tracking": true,
     "health_dashboards": true
-  &#125;
-&#125;
+  }
+}
 ```
 
 ### Environment Variables
@@ -584,9 +577,9 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ## Documentation
 
-- [Installation Guide](/docs/docs-stringray-installation-guide)
-- [Model Configuration](/docs/docs-stringray-model-config)
-- [API Reference](/docs/docs-api-api-reference)
+- [Installation Guide](./docs/0xRay_INSTALLATION_GUIDE.md)
+- [Model Configuration](./docs/0xRay_MODEL_CONFIG.md)
+- [API Reference](./docs/api/API_REFERENCE.md)
 - [Agent Documentation](./docs/agents/)
 - [Architecture](./docs/architecture/)
 - [Troubleshooting](./docs/troubleshooting/)

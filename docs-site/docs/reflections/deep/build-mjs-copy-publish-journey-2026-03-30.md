@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/build-mjs-copy-publish-journey-2026-03-30"
-title: "Build Mjs Copy Publish Journey 2026 03 30"
-sidebar_label: "Build Mjs Copy Publish Journey 2026 03 3…"
-sidebar_position: 8
-tags: ["reflection"]
-date: 2026-03-30
----
-
 # The Invisible Files: When tsc Hides What You Ship
 
 **Date**: 2026-03-30
@@ -53,7 +44,7 @@ So for every version of 0xRay that shipped with Hermes agent integration, the pu
 I verified this with a smoke test. Source bridge worked fine:
 
 ```json
-{"status":"ok","framework":"version":"1.15.26","components":{"qualityGate":true,...}}
+{"status":"ok","framework":"version":"1.22.13","components":{"qualityGate":true,...}}
 ```
 
 Dist bridge:
@@ -85,7 +76,7 @@ See it? `dist/src/...`. The files landed in `dist/src/core/` instead of `dist/co
 
 The dist bridge still failed with MODULE_NOT_FOUND, because it was looking for `dist/integrations/hermes-agent/bridge.mjs`, not `dist/src/integrations/hermes-agent/bridge.mjs`.
 
-One character fix — well, one shell parameter expansion. `$&#123;f#src/&#125;` strips the `src/` prefix from the path. So `src/integrations/hermes-agent/bridge.mjs` becomes `integrations/hermes-agent/bridge.mjs`, and the target becomes `dist/integrations/hermes-agent/bridge.mjs`. Exactly where it needs to be.
+One character fix — well, one shell parameter expansion. `${f#src/}` strips the `src/` prefix from the path. So `src/integrations/hermes-agent/bridge.mjs` becomes `integrations/hermes-agent/bridge.mjs`, and the target becomes `dist/integrations/hermes-agent/bridge.mjs`. Exactly where it needs to be.
 
 ```bash
 find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do
@@ -93,7 +84,7 @@ find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do
 done
 ```
 
-That's the kind of bug that makes you feel stupid for five seconds and then grateful it was caught in review and not in production. The difference between `dirname $f` and `$&#123;f#src/&#125;` is one shell expansion. But it's the difference between "bridge works" and "bridge doesn't exist."
+That's the kind of bug that makes you feel stupid for five seconds and then grateful it was caught in review and not in production. The difference between `dirname $f` and `${f#src/}` is one shell expansion. But it's the difference between "bridge works" and "bridge doesn't exist."
 
 ## The Source vs Dist Gap
 
@@ -148,7 +139,7 @@ The .mjs gap is a category of bug that's easy to miss and hard to catch with aut
 
 The only way to catch this is the specific check: "do all `.mjs` files in `src/` have corresponding files in `dist/`?" That's not a standard CI check. It's not something `tsc --noEmit` catches. It's not something `npm pack --dry-run` flags. It requires someone who knows that `tsc` skips `.mjs` files and thinks to verify the dist output.
 
-I've updated the review skill to include this check prominently. The `.mjs` section was already there from a prior discovery, but the path-stripping gotcha (`dirname $f` vs `$&#123;f#src/&#125;`) is new knowledge. Next time, the skill will steer toward the correct fix on the first attempt.
+I've updated the review skill to include this check prominently. The `.mjs` section was already there from a prior discovery, but the path-stripping gotcha (`dirname $f` vs `${f#src/}`) is new knowledge. Next time, the skill will steer toward the correct fix on the first attempt.
 
 ## The Bigger Picture
 

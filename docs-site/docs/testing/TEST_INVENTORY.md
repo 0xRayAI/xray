@@ -1,12 +1,4 @@
----
-slug: "/docs/testing/test-inventory"
-title: "TEST INVENTORY"
-sidebar_label: "TEST INVENTORY"
-sidebar_position: 6
-tags: ["testing"]
----
-
-# 0xRay 1.9.0 Modular Test Inventory
+# 0xRay 1.22.13 Modular Test Inventory
 
 ## Overview
 

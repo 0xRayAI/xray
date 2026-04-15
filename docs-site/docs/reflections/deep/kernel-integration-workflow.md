@@ -1,11 +1,3 @@
----
-slug: "/reflections/deep/kernel-integration-workflow"
-title: "Kernel Integration Workflow"
-sidebar_label: "Kernel Integration Workflow"
-sidebar_position: 13
-tags: ["reflection"]
----
-
 # 0xRay Kernel Integration Complete Workflow
 # Based on: v1.6.31 → v1.7.2 Journey Analysis
 # Status: Ready for Integration
@@ -380,7 +372,7 @@ npx strray-ai calibrate --confidence-update
 ### **Immediate Validation (After Integration):**
 - **Pattern Activation Rate:** % of tasks triggering kernel patterns
 - **Prevention Success Rate:** % of issues prevented
-- **Performance Impact:** Additional time added (&lt;50ms per task)
+- **Performance Impact:** Additional time added (<50ms per task)
 - **Integration Test Pass Rate:** >95% success
 
 ### **Medium-term Validation (30-60 days):**
@@ -496,6 +488,6 @@ This workflow transforms the kernel from **documentation artifact** to **active 
 
 ---
 **Estimated Implementation Time:** 2-3 days for full integration  
-**Success Criteria:** >85% pattern effectiveness, &lt;50ms performance impact  
+**Success Criteria:** >85% pattern effectiveness, <50ms performance impact  
 **Rollout Strategy:** Gradual with validation at each phase  
 **Long-term Goal:** True human-AI collaboration in software development

@@ -1,11 +1,14 @@
 ---
-slug: "/reflections/deep/storyteller-bug-triage-story"
-title: "Storyteller Bug Triage Story"
-sidebar_label: "Storyteller Bug Triage Story"
-sidebar_position: 23
-tags: ["reflection"]
+story_type: bug_fix
+emotional_arc: "invisibility → crisis → revelation → recognition"
+codex_terms: [5, 7, 32]
+framework: hero_journey
+iceberg_model:
+  external: Fix bugs, investigate errors
+  internal: Needs recognition and appreciation
+  flaw: Doesn't seek credit for his work
+  ghost: "Summer of Silent Failures - a period when unfixed bugs accumulated and nobody noticed"
 ---
-
 
 # The Bug Hunter Who Wouldn't Be Seen
 

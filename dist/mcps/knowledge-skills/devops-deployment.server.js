@@ -12,7 +12,7 @@ class StringRayDevOpsDeploymentServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "devops-deployment", version: "1.15.27",
+            name: "devops-deployment", version: "1.22.13",
         }, {
             capabilities: {
                 tools: {},

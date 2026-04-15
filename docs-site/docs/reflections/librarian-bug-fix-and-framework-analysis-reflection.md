@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/librarian-bug-fix-and-framework-analysis-reflection"
-title: "Librarian Bug Fix And Framework Analysis Reflection"
-sidebar_label: "Librarian Bug Fix And Framework Analysis…"
-sidebar_position: 51
-tags: ["reflection"]
----
-
 # Librarian Infinite Subagent Bug Fix and Framework Analysis - Inference Introspection
 
 ## Context

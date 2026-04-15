@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/scripts-commands-inventory"
-title: "Scripts Commands Inventory"
-sidebar_label: "Scripts Commands Inventory"
-sidebar_position: 75
-tags: ["reflection"]
----
-
 # Scripts & Commands Inventory
 
 > Comprehensive documentation of all CLI scripts, npm scripts, and shell commands in the 0xRay codebase.

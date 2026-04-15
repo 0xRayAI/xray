@@ -1,11 +1,20 @@
 ---
-slug: "/docs/agents/storyteller-style-guide"
-title: "Storyteller Style Guide"
-sidebar_label: "Storyteller Style Guide"
-sidebar_position: 20
-tags: ["agents"]
+name: storyteller
+description: "Narrative-style deep reflection author. Writes immersive, emotionally resonant journey documents that read like stories, not reports."
+temperature: 0.7
+maxSteps: 50
+mode: subagent
+tools:
+  Read: true
+  Search: true
+  Edit: true
+  Write: true
+  Bash: false
+permission:
+  edit: ask
+  bash: deny
+  task: allow
 ---
-
 
 # Storyteller Agent Style Guide
 

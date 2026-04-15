@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/refactorer"
-title: Refactorer
-sidebar_label: Refactorer
-sidebar_position: 17
-tags: ["agents"]
----
-
 # Refactorer Agent
 
 **Role**: Technical debt elimination & code consolidation

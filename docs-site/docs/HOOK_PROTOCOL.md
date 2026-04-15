@@ -1,10 +1,3 @@
----
-slug: "/docs//hook-protocol"
-title: "HOOK PROTOCOL"
-sidebar_label: "HOOK PROTOCOL"
-sidebar_position: 2
----
-
 # 0xRay Universal Hook Protocol
 
 Agent-host-agnostic JSON interface for 0xRay enforcement.
@@ -14,15 +7,15 @@ Agent-host-agnostic JSON interface for 0xRay enforcement.
 The hook protocol lets any agent host (OpenCode, Hermes, Claude Desktop, custom agents in any language) integrate 0xRay's quality gates and codex enforcement without importing a single Node.js module.
 
 **Transport modes:**
-- **Stdin/Stdout** — `echo '&#123;"command":"pre_tool_call",...&#125;' | node bridge.mjs`
+- **Stdin/Stdout** — `echo '{"command":"pre_tool_call",...}' | node bridge.mjs`
 - **HTTP** — `POST http://localhost:18431` with JSON body
-- **Library** — `import &#123; formatCodexPrompt &#125; from 'strray-ai'` (Node.js only)
+- **Library** — `import { formatCodexPrompt } from 'strray-ai'` (Node.js only)
 
 ## Events
 
 ### pre_tool_call
 
-Called before a tool executes. Can block the action by returning `&#123; blocked: true &#125;`.
+Called before a tool executes. Can block the action by returning `{ blocked: true }`.
 
 ```json
 {
@@ -153,7 +146,7 @@ Response:
   "prompt": "## 0xRay Universal Development Codex v1.7.8\n...",
   "termCount": 12,
   "totalTerms": 60,
-  "version": "1.15.27",
+  "version": "1.22.13",
   "charCount": 2048
 }
 ```
@@ -174,7 +167,7 @@ Response:
 {
   "status": "ok",
   "projectRoot": "/path/to/project",
-  "codex": { "path": ".strray/codex.json", "version": "1.15.27", "termCount": 60 },
+  "codex": { "path": ".strray/codex.json", "version": "1.22.13", "termCount": 60 },
   "features": { "token_optimization": { "enabled": true } }
 }
 ```

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/openclaw-integration-reflection"
-title: "Openclaw Integration Reflection"
-sidebar_label: "Openclaw Integration Reflection"
-sidebar_position: 61
-tags: ["reflection"]
----
-
 # The OpenClaw Integration: A Story of Wrong Turns and Hard-Won Insights
 
 I remember the moment we started this project. We had a name—OpenClaw—and based on that name alone, we made an assumption that would cost us weeks of work.

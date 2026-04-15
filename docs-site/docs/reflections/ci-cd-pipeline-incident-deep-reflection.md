@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/ci-cd-pipeline-incident-deep-reflection"
-title: "Ci Cd Pipeline Incident Deep Reflection"
-sidebar_label: "Ci Cd Pipeline Incident Deep Reflection"
-sidebar_position: 27
-tags: ["reflection"]
----
-
 # Deep Reflection: CI/CD Pipeline Failures & Recovery
 
 ## Executive Summary

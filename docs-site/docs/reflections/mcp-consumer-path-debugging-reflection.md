@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/mcp-consumer-path-debugging-reflection"
-title: "MCP Consumer Path Debugging Reflection"
-sidebar_label: "MCP Consumer Path Debugging Reflection"
-sidebar_position: 53
-tags: ["reflection"]
----
-
 # Reflection: MCP Consumer Path Debugging Journey
 
 ## Executive Summary

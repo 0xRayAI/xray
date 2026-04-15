@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/pragmatic-code-review-v1-9-0"
-title: "Pragmatic Code Review V1.9"
-sidebar_label: v1.9.0
-sidebar_position: 65
-tags: ["reflection"]
-version: 1.9.0
----
-
 # 0xRay Framework - Pragmatic Code Review v1.15.1
 
 **Date:** 2026-03-11  

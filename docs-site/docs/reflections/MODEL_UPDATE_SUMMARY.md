@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/model-update-summary"
-title: "MODEL UPDATE SUMMARY"
-sidebar_label: "MODEL UPDATE SUMMARY"
-sidebar_position: 11
-tags: ["reflection"]
----
-
 ## Summary
 
 ✅ **Successfully updated all model references** from `openrouter/xai-grok-2-1212-fast-1` to `grok` or `openrouter/xai-grok-2-1212-fast-1` as appropriate:

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/inference-system-design"
-title: "Inference System Design"
-sidebar_label: "Inference System Design"
-sidebar_position: 46
-tags: ["reflection"]
----
-
 # Inference Improvement System
 
 > Autonomous inference improvement through collaborative agent workflows.

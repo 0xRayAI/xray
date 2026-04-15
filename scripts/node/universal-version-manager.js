@@ -22,6 +22,9 @@
  * @updated 2026-03-09 - Enhanced with documentation management, validation, and backup
  */
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -56,10 +59,24 @@ function calculateCounts() {
       }).length;
     }
 
-    // Count MCP servers
+    // Count MCP servers (root level + knowledge-skills)
     const mcpsDir = "src/mcps";
     if (fs.existsSync(mcpsDir)) {
-      counts.mcpServers = fs.readdirSync(mcpsDir).filter(f => f.endsWith(".server.ts")).length;
+      // Count root level servers
+      const rootServers = fs.readdirSync(mcpsDir).filter(f => 
+        f.endsWith(".server.ts") && !f.includes(".test.")
+      ).length;
+      
+      // Count knowledge-skills servers
+      const ksDir = path.join(mcpsDir, "knowledge-skills");
+      let ksServers = 0;
+      if (fs.existsSync(ksDir)) {
+        ksServers = fs.readdirSync(ksDir).filter(f => 
+          f.endsWith(".server.ts") && !f.includes(".test.")
+        ).length;
+      }
+      
+      counts.mcpServers = rootServers + ksServers;
     }
   } catch (e) {
     console.warn("⚠️  Could not calculate counts:", e.message);
@@ -78,9 +95,9 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.22.11",
+    version: "1.22.13",
     displayName: "0xRay: Self-Healing AI Governance OS",
-    lastUpdated: "2026-04-11",
+    lastUpdated: "2026-04-15",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },
@@ -114,7 +131,9 @@ function findFiles(
   ignoreDirs = [
     "node_modules", ".git", "dist", "build", "temp", "test-install", 
     "ci-deploy", "test-config", 
-    "docs/reflections", "docs/archive",  // Historical documents - keep original versions
+    "docs/reflections", "docs/archive", "docs/user-guide", "docs/pipeline-trees",
+    "docs/superseded", "docs/commands", "docs/advanced", "docs/session-summary",
+    "docs-site", "scripts/mjs", "scripts/test", "scripts/integrations",
     ".opencode/state",  // Runtime state data
     "logs", "reports",  // Generated logs/reports
     ".strray",  // Circular symlink
@@ -150,7 +169,11 @@ function findFiles(
       const stat = fs.statSync(fullPath);
 
       if (stat.isDirectory()) {
-        if (!ignoreDirs.includes(item)) {
+        // Check both exact name and partial path match
+        const shouldIgnore = ignoreDirs.some(ignored => 
+          item === ignored || fullPath.includes(ignored)
+        );
+        if (!shouldIgnore) {
           walk(fullPath);
         }
       } else {
@@ -579,6 +602,8 @@ const UPDATE_PATTERNS = [
   ];
 
   let docsUpdated = 0;
+  let userGuideFilesUpdated = 0;
+  let historicalUpdated = 0;
   for (const docFile of documentationFiles) {
     if (fs.existsSync(docFile)) {
       try {
@@ -615,39 +640,40 @@ const UPDATE_PATTERNS = [
     console.log(`✅ Updated ${docsUpdated} documentation files`);
   }
 
-  // Phase 3: Update user guide files
-  console.log("\n📁 Phase 3: Updating user guide files...");
-  const userGuideFiles = findFiles("docs/user-guide", [".md"]);
-  let userGuideFilesUpdated = 0;
+// Phase 3: Update user guide files (optional - skip if dir doesn't exist)
+  if (fs.existsSync("docs/user-guide")) {
+    console.log("\n📁 Phase 3: Updating user guide files...");
+    const userGuideFiles = findFiles("docs/user-guide", [".md"]);
 
-  for (const file of userGuideFiles) {
-    try {
-      const content = fs.readFileSync(file, "utf8");
-      let updatedContent = content;
-      let fileChanged = false;
+    for (const file of userGuideFiles) {
+      try {
+        const content = fs.readFileSync(file, "utf8");
+        let updatedContent = content;
+        let fileChanged = false;
 
-      // Apply all version patterns
-      for (const { pattern, replacement } of UPDATE_PATTERNS) {
-        const matches = content.match(pattern);
-        if (matches) {
-          updatedContent = updatedContent.replace(pattern, replacement);
-          fileChanged = true;
+        // Apply all version patterns
+        for (const { pattern, replacement } of UPDATE_PATTERNS) {
+          const matches = content.match(pattern);
+          if (matches) {
+            updatedContent = updatedContent.replace(pattern, replacement);
+            fileChanged = true;
+          }
         }
-      }
 
-      if (fileChanged) {
-        fs.writeFileSync(file, updatedContent, "utf8");
-        console.log(`✅ Updated: ${file}`);
-        userGuideFilesUpdated++;
-        addToChangelog("user-guide", file);
+        if (fileChanged) {
+          fs.writeFileSync(file, updatedContent, "utf8");
+          console.log(`✅ Updated: ${file}`);
+          userGuideFilesUpdated++;
+          addToChangelog("docs", file);
+        }
+      } catch (e) {
+        console.log(`⚠️  Error updating ${file}: ${e.message}`);
       }
-    } catch (error) {
-      console.error(`❌ Error processing ${file}:`, error.message);
     }
-  }
 
-  if (userGuideFilesUpdated > 0) {
-    console.log(`✅ Updated ${userGuideFilesUpdated} user guide files`);
+    if (userGuideFilesUpdated > 0) {
+      console.log(`✅ Updated ${userGuideFilesUpdated} user guide files`);
+    }
   }
 
   // Phase 4: Update historical docs (selective updates for consistency)
@@ -655,9 +681,14 @@ const UPDATE_PATTERNS = [
   const historicalFiles = findFiles("docs", [".md"], [], [
     "reflections",
     "archive",
+    "user-guide",
+    "pipeline-trees",
+    "superseded",
+    "commands",
+    "advanced",
+    "session-summary",
   ]);
 
-  let historicalUpdated = 0;
   for (const file of historicalFiles) {
     try {
       const content = fs.readFileSync(file, "utf8");

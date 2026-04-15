@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/routing-system-removal-journey-2026-03-26"
-title: "Routing System Removal Journey 2026 03 26"
-sidebar_label: "Routing System Removal Journey 2026 03 2…"
-sidebar_position: 17
-tags: ["reflection"]
-date: 2026-03-26
----
-
 # The Day We Deleted 17,000 Lines
 
 ## And Why That Was the Best Thing That Could Have Happened
@@ -46,7 +37,7 @@ The second researcher came back with the finding that changed everything.
 
 ## What OpenCode Actually Does
 
-OpenCode discovers skills from `.opencode/skills/<name>/SKILL.md`. It reads the YAML frontmatter — specifically the `name` and `description` fields. It presents these to the LLM in the system prompt. And then the LLM decides when to call `skill(&#123; name: "..." &#125;)`.
+OpenCode discovers skills from `.opencode/skills/<name>/SKILL.md`. It reads the YAML frontmatter — specifically the `name` and `description` fields. It presents these to the LLM in the system prompt. And then the LLM decides when to call `skill({ name: "..." })`.
 
 That's it.
 
@@ -54,7 +45,7 @@ No keyword matching. No confidence scoring. No routing tables. No history matche
 
 The first researcher's analysis made the problem crystallize:
 
-> *0xRay's keyword router and skill matcher are entirely redundant. OpenCode's native mechanism is: LLM reads skill descriptions, LLM decides when to invoke `skill(&#123; name &#125;)`. 0xRay should be feeding its agent/skill mapping knowledge into the SKILL.md description field (which the LLM reads) rather than building custom routing middleware that the LLM never sees.*
+> *0xRay's keyword router and skill matcher are entirely redundant. OpenCode's native mechanism is: LLM reads skill descriptions, LLM decides when to invoke `skill({ name })`. 0xRay should be feeding its agent/skill mapping knowledge into the SKILL.md description field (which the LLM reads) rather than building custom routing middleware that the LLM never sees.*
 
 And the strategist was even more direct:
 

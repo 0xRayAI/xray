@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/script-testing-fixing-session-2026-02-27"
-title: "Script Testing Fixing Session 2026 02 27"
-sidebar_label: "Script Testing Fixing Session 2026 02 27"
-sidebar_position: 74
-tags: ["reflection"]
-date: 2026-02-27
----
-
 # Script Testing & Fixing Session - 2026-02-27
 
 ## Executive Summary

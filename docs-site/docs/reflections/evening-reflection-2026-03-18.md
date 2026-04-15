@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/evening-reflection-2026-03-18"
-title: "Evening Reflection 2026 03 18"
-sidebar_label: "Evening Reflection 2026 03 18"
-sidebar_position: 42
-tags: ["reflection"]
-date: 2026-03-18
----
-
 # Evening Reflection
 
 **March 18, 2026**

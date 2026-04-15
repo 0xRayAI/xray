@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/inference-pipeline-design"
-title: "Inference Pipeline Design"
-sidebar_label: "Inference Pipeline Design"
-sidebar_position: 45
-tags: ["reflection"]
----
-
 # Inference Pipeline Design
 
 > How the 17 tuning engines connect, process data, and achieve autonomous inference improvement.

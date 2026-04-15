@@ -1,11 +1,3 @@
----
-slug: "/docs/architecture/migration-guide"
-title: "MIGRATION GUIDE"
-sidebar_label: "MIGRATION GUIDE"
-sidebar_position: 6
-tags: ["architecture"]
----
-
 # 0xRay Framework v1.15.1 - Technical Migration Guide
 
 ## 📋 Migration Overview

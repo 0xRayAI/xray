@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/scripts-testing-fixing-complete-2026-03-13"
-title: "SCRIPTS TESTING FIXING COMPLETE 2026 03 13"
-sidebar_label: "SCRIPTS TESTING FIXING COMPLETE 2026 03 …"
-sidebar_position: 15
-tags: ["reflection"]
-date: 2026-03-13
----
-
 # 0xRay Scripts - Testing & Fixing Complete
 
 **Date:** March 13, 2026  

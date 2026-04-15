@@ -1,11 +1,3 @@
----
-slug: "/reflections/deep/the-hook-that-wouldnt-fire"
-title: "The Hook That Wouldnt Fire"
-sidebar_label: "The Hook That Wouldnt Fire"
-sidebar_position: 29
-tags: ["reflection"]
----
-
 # The Hook That Wouldn't Fire
 
 ## A Deep Reflection on Debugging the Invisible
@@ -175,7 +167,7 @@ We assumed hooks fired for all tool executions. They don't.
 
 Three changes made it work:
 
-1. **Export format** - Wrap hooks in `&#123; hooks: &#123; &#125; &#125;`
+1. **Export format** - Wrap hooks in `{ hooks: { } }`
 2. **Direct file writes** - Plugin writes to its own log file
 3. **Separate log paths** - Avoids framework overwrite
 

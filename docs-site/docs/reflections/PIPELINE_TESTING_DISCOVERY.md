@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/pipeline-testing-discovery"
-title: "PIPELINE TESTING DISCOVERY"
-sidebar_label: "PIPELINE TESTING DISCOVERY"
-sidebar_position: 12
-tags: ["reflection"]
----
-
 # Deep Reflection: The Discovery of Pipeline Testing as a Core Practice
 
 **Date**: 2026-03-21  

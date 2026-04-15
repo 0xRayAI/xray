@@ -1,11 +1,3 @@
----
-slug: "/reflections/deep/routing-lexicon-build-journey"
-title: "Routing Lexicon Build Journey"
-sidebar_label: "Routing Lexicon Build Journey"
-sidebar_position: 16
-tags: ["reflection"]
----
-
 # The Routing Lexicon: Building a Map for 26 Agents
 
 ## A Deep Reflection on the Journey from Keywords to Intelligent Routing
@@ -1053,3 +1045,4 @@ Sometimes the journey is the destination.
 **Confidence Score**: 95% (in the methodology, if not always in the routing)
 
 *The map is complete. The territory remains to be explored.*
+

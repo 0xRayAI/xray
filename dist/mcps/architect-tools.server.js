@@ -10,12 +10,11 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-;
 class StringRayArchitectToolsServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "architect-tools", version: "1.15.27",
+            name: "architect-tools", version: "1.22.13",
         }, {
             capabilities: {
                 tools: {},

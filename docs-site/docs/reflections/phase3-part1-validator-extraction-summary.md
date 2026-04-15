@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/phase3-part1-validator-extraction-summary"
-title: "Phase3 Part1 Validator Extraction Summary"
-sidebar_label: "Phase3 Part1 Validator Extraction Summar…"
-sidebar_position: 64
-tags: ["reflection"]
----
-
 # Phase 3 (Part 1) Implementation Summary
 
 ## Overview

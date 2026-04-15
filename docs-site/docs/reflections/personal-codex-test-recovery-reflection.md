@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/personal-codex-test-recovery-reflection"
-title: "Personal Codex Test Recovery Reflection"
-sidebar_label: "Personal Codex Test Recovery Reflection"
-sidebar_position: 62
-tags: ["reflection"]
----
-
 ## Personal Reflection: My Journey Through the Codex Test Recovery
 
 **Personal Category**: Growth Reflection (Introspective) - Self-awareness and learning evolution

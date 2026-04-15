@@ -21,7 +21,7 @@ interface DirectoryNode {
   path: string;
   type: "directory";
   children: Array<DirectoryNode | FileNode | { truncated: boolean } | { error: string }>,
-};
+}
 
 interface FileNode {
   name: string;
@@ -35,7 +35,7 @@ class StringRayArchitectToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "architect-tools", version: "1.15.27",
+        name: "architect-tools", version: "1.22.13",
       },
       {
         capabilities: {

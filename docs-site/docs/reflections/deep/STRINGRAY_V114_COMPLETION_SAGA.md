@@ -1,11 +1,8 @@
 ---
-slug: "/reflections/deep/stringray-v114-completion-saga"
-title: "STRINGRAY V114 COMPLETION SAGA"
-sidebar_label: "STRINGRAY V114 COMPLETION SAGA"
-sidebar_position: 4
-tags: ["reflection"]
+story_type: saga
+emotional_arc: "beginning → trials → climax → resolution"
+codex_terms: [5, 7, 32, 42, 58]
 ---
-
 
 # The 0xRay Paradox: Building an AI Orchestration Framework That Builds Itself
 
@@ -268,9 +265,9 @@ That, we decided, was the point.
 ## What Next?
 
 - Explore the [0xRay Codex Terms](../../.opencode/strray/codex.json) that guide our development philosophy
-- Read about the [inference pipeline architecture](/docs/inference-pipeline-design) in detail
+- Read about the [inference pipeline architecture](../inference-pipeline-design.md) in detail
 - Invoke @storyteller to document your own saga
-- Review the [version history](/docs/changelog) for a complete changelog
+- Review the [version history](../../CHANGELOG.md) for a complete changelog
 
 ---
 *This saga documents the completion of 0xRay v1.15.1. May the next version teach us as much as this one did.*

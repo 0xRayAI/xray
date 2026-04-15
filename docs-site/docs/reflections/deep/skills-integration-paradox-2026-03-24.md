@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/skills-integration-paradox-2026-03-24"
-title: "Skills Integration Paradox 2026 03 24"
-sidebar_label: "Skills Integration Paradox 2026 03 24"
-sidebar_position: 19
-tags: ["reflection"]
-date: 2026-03-24
----
-
 # The Skills Integration Paradox
 
 **Deep Reflection | March 24, 2026 | 0xRay v1.15.1-v1.15.0 Evolution**

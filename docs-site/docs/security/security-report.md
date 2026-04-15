@@ -1,11 +1,3 @@
----
-slug: "/docs/security/security-report"
-title: "Security Report"
-sidebar_label: "Security Report"
-sidebar_position: 8
-tags: ["security"]
----
-
 ## Security Audit Report
 
 ### NPM Audit Results

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/agent-reflection-v114"
-title: "Agent Reflection V114"
-sidebar_label: "Agent Reflection V114"
-sidebar_position: 21
-tags: ["reflection"]
----
-
 # Agent Reflection Log
 
 *Date: 2026-03-23*

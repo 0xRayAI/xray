@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/green-means-go-completion-triumph-2026-03-13"
-title: "Green Means Go Completion Triumph 2026 03 13"
-sidebar_label: "Green Means Go Completion Triumph 2026 0…"
-sidebar_position: 11
-tags: ["reflection"]
-date: 2026-03-13
----
-
 # Green Means Go: The Triumph of Completing the Refactoring
 
 **When:** March 12-13, 2026  

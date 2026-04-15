@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/esm-cjs-consumer-verification-2026-02-27"
-title: "ESM Cjs Consumer Verification 2026 02 27"
-sidebar_label: "ESM Cjs Consumer Verification 2026 02 27"
-sidebar_position: 41
-tags: ["reflection"]
-date: 2026-02-27
----
-
 # Reflection: ESM/CJS Debugging & Consumer Verification - 2026-02-27
 
 ## Executive Summary
@@ -232,7 +223,7 @@ The inner dialogue was fierce:
 - "Why won't they let me fix it?"
 - "They don't understand the severity!"
 
-I was ready to override the constraint and modify src/index.ts anyway. I had already identified the exact line to change: `require("./core")` → `import &#123; defaultStringRayConfig &#125; from "./core/index.js"`. It seemed SO obvious.
+I was ready to override the constraint and modify src/index.ts anyway. I had already identified the exact line to change: `require("./core")` → `import { defaultStringRayConfig } from "./core/index.js"`. It seemed SO obvious.
 
 ### The Humbling Truth
 The user said: "test it and find out whey triage" - meaning, GO VERIFY before you diagnose.

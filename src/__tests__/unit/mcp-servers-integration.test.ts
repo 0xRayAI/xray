@@ -52,7 +52,7 @@ describe("Antigravity Skills Integration", () => {
   });
 
   it("should have Antigravity documentation", () => {
-    const docPath = path.join(process.cwd(), "docs/superseded/legacy/ANTIGRAVITY_INTEGRATION.md");
+    const docPath = path.join(process.cwd(), "docs/archive/active-archived/superseded/legacy/ANTIGRAVITY_INTEGRATION.md");
     expect(fs.existsSync(docPath)).toBe(true);
   });
 
@@ -62,7 +62,7 @@ describe("Antigravity Skills Integration", () => {
   });
 
   it("should list curated skills in documentation", () => {
-    const docPath = path.join(process.cwd(), "docs/superseded/legacy/ANTIGRAVITY_INTEGRATION.md");
+    const docPath = path.join(process.cwd(), "docs/archive/active-archived/superseded/legacy/ANTIGRAVITY_INTEGRATION.md");
     const content = fs.readFileSync(docPath, "utf-8");
 
     expect(content).toContain("typescript-expert");

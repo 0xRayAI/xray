@@ -1,11 +1,3 @@
----
-slug: "/docs/testing/pipeline-testing-methodology"
-title: "PIPELINE TESTING METHODOLOGY"
-sidebar_label: "PIPELINE TESTING METHODOLOGY"
-sidebar_position: 1
-tags: ["testing"]
----
-
 # Pipeline Testing Methodology
 
 **Version**: 2.0.0  

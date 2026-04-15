@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/the-documentation-avalanche-49-files-8-hours-2026-03-13"
-title: "The Documentation Avalanche 49 Files 8 Hours 2026 03 13"
-sidebar_label: "The Documentation Avalanche 49 Files 8 H…"
-sidebar_position: 27
-tags: ["reflection"]
-date: 2026-03-13
----
-
 # The Documentation Avalanche: When 49 Files Need Updating
 
 **When:** March 13, 2026  

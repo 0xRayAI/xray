@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/enhanced-template-author-aware"
-title: "Enhanced Template Author Aware"
-sidebar_label: "Enhanced Template Author Aware"
-sidebar_position: 40
-tags: ["reflection"]
----
-
 # Enhanced Reflection Template: Author-Aware Gleaning
 
 **Template Version**: 2.0 (Author-Aware)

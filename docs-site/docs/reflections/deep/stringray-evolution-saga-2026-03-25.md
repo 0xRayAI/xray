@@ -1,12 +1,8 @@
 ---
-slug: "/reflections/deep/stringray-evolution-saga-2026-03-25"
-title: "Stringray Evolution Saga 2026 03 25"
-sidebar_label: "Stringray Evolution Saga 2026 03 25"
-sidebar_position: 25
-tags: ["reflection"]
-date: 2026-03-25
+story_type: saga
+emotional_arc: "innocence → discovery → frustration → crisis → breakthrough → victory → transformation"
+codex_terms: [5, 7, 14, 32, 45]
 ---
-
 
 # The Saga of 0xRay: From Plugin Injection to Living Framework
 
@@ -119,7 +115,7 @@ Eventually, the pattern became clear. OpenCode's execution environment uses some
 
 The breakthrough came when we tried writing to the project root instead of `.opencode/logs/`. We wrote a `context-test-12345.json` file to the project root, and it appeared in `ls`. It was visible to both Node.js and the shell. The same file, the same content, but now it persisted.
 
-The solution was pragmatic: write context files to the project root instead of `.opencode/logs/`. Project root files are visible to both Node.js and the shell. It's not elegant - you end up with `context-&#123;sessionId&#125;.json` files sitting in the root directory, which is exactly the kind of thing the AGENTS.md says you shouldn't do ("Never save to root"). But sometimes pragmatism wins over aesthetics. The system needed to work, and this made it work.
+The solution was pragmatic: write context files to the project root instead of `.opencode/logs/`. Project root files are visible to both Node.js and the shell. It's not elegant - you end up with `context-{sessionId}.json` files sitting in the root directory, which is exactly the kind of thing the AGENTS.md says you shouldn't do ("Never save to root"). But sometimes pragmatism wins over aesthetics. The system needed to work, and this made it work.
 
 ```typescript
 // chat.message hook - saves original context
@@ -449,7 +445,7 @@ We wrote a comprehensive test suite covering all five phases - registry initiali
 
 The failures told a story:
 - Tests in the matcher tried to call `initializeSkillRegistry()` without importing it - scoping issue
-- The parser returned `&#123;_items: [...]&#125;` instead of flat arrays - parser bug
+- The parser returned `{_items: [...]}` instead of flat arrays - parser bug
 - Validation tests expected `test-skill-1` to exist but the test created `test-skill-1` with a capital S - casing mismatch
 - Pipeline execution returned 0 results because skills without MCP tools are filtered out - design assumption
 - File writes to nested directories failed because parent directories weren't created - filesystem assumption
@@ -602,7 +598,7 @@ This hybrid approach - deterministic first, intelligent fallback - is how produc
 
 I want to acknowledge something that doesn't show up in commit messages or code reviews: this work was hard. Not technically hard - the individual components are each straightforward. But the cumulative cognitive load of keeping all the pieces connected, debugging across multiple sessions and reboots, and maintaining coherence across five phases was significant.
 
-There were moments of genuine frustration. The YAML parser that kept producing `&#123;_items: [...]&#125;` instead of arrays. The context files that existed in Node.js but not in the shell. The test suite that needed three iterations before it could tell us anything useful. Each of these was a small obstacle that consumed a session's worth of attention.
+There were moments of genuine frustration. The YAML parser that kept producing `{_items: [...]}` instead of arrays. The context files that existed in Node.js but not in the shell. The test suite that needed three iterations before it could tell us anything useful. Each of these was a small obstacle that consumed a session's worth of attention.
 
 But there were also moments of genuine satisfaction. When the matcher first matched "review this code" to code-review with 100% confidence. When `npx strray-ai skill:list` first showed all 44 skills with their capabilities. When the agent:skills command showed the bindings working. These were small victories, but they felt like proof that the architecture was sound.
 

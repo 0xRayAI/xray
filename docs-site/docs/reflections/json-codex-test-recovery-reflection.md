@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/json-codex-test-recovery-reflection"
-title: "JavaScripton Codex Test Recovery Reflection"
-sidebar_label: "JavaScripton Codex Test Recovery Reflect…"
-sidebar_position: 48
-tags: ["reflection"]
----
-
 # 0xRay Framework - JSON Codex Integration Test Suite Recovery Reflection
 
 **Category:** Incident Reflection (Focused) - Test suite failure analysis and systematic recovery

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deep-reflection-orchestrator-test-suite-rehabilitation"
-title: "Deep Reflection Orchestrator Test Suite Rehabilitation"
-sidebar_label: "Deep Reflection Orchestrator Test Suite …"
-sidebar_position: 33
-tags: ["reflection"]
----
-
 # Deep Reflection: Orchestrator Integration Test Suite Rehabilitation
 
 ## Executive Summary
@@ -124,7 +116,7 @@ vi.mocked(require('fs').promises).readFile.mockImplementation(
 
 **Change**: Establish quantitative test health tracking:
 - **Test Coverage**: >85% behavioral coverage required
-- **Skipped Test Ratio**: &lt;10% of total tests (currently 24% - unacceptable)
+- **Skipped Test Ratio**: <10% of total tests (currently 24% - unacceptable)
 - **Integration Test Success Rate**: >80% for enterprise claims
 
 **Monitoring**: Automated dashboards tracking test health trends and alerting on degradation.

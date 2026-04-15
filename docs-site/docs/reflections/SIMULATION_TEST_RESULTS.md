@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/simulation-test-results"
-title: "SIMULATION TEST RESULTS"
-sidebar_label: "SIMULATION TEST RESULTS"
-sidebar_position: 16
-tags: ["reflection"]
----
-
 # 0xRay 1.2.0 Simulation & Orchestration Test Results
 
 ## Test Execution Summary

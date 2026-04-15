@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/automated-version-compliance-system"
-title: "Automated Version Compliance System"
-sidebar_label: "Automated Version Compliance System"
-sidebar_position: 24
-tags: ["reflection"]
----
-
 # Automated Version Compliance System v1.0
 
 **Date:** 2026-02-01  
@@ -199,7 +191,7 @@ npm view strray-ai@latest version  # → 1.3.2
 
 # Edit version manager
 code scripts/node/universal-version-manager.js
-# → Set version: "1.15.27"
+# → Set version: "1.22.13"
 
 # Run sync
 npm run version:sync

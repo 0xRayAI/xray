@@ -215,11 +215,8 @@ async function loadStringRayComponents(): Promise<void> {
 
   try {
     logger.log(`🔄 Attempting to load from ../../dist/`);
-    // @ts-ignore - Runtime fallback, dist/ only exists after build
     const procModule = await import("../../dist/processors/processor-manager.js");
-    // @ts-ignore - Runtime fallback
     const stateModule = await import("../../dist/state/state-manager.js");
-    // @ts-ignore - Runtime fallback
     const featuresModule = await import("../../dist/core/features-config.js");
     _ProcessorManager = procModule.ProcessorManager;
     _StrRayStateManager = stateModule.StrRayStateManager;
@@ -232,17 +229,13 @@ async function loadStringRayComponents(): Promise<void> {
     logger.log(`❌ Failed to load from ../../dist/: ${message}`);
   }
 
-  // @ts-ignore - Runtime fallback
   const pluginPaths = ["strray-ai", "strray-framework"];
 
   for (const pluginPath of pluginPaths) {
     try {
       logger.log(`🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
-      // @ts-ignore - Runtime fallback, node_modules only exists after install
       const pm = await import(`../../node_modules/${pluginPath}/dist/processors/processor-manager.js`);
-      // @ts-ignore
       const sm = await import(`../../node_modules/${pluginPath}/dist/state/state-manager.js`);
-      // @ts-ignore
       const fm = await import(`../../node_modules/${pluginPath}/dist/core/features-config.js`);
       _ProcessorManager = pm.ProcessorManager;
       _StrRayStateManager = sm.StrRayStateManager;

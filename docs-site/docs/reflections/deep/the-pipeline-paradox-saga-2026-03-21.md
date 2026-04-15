@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/the-pipeline-paradox-saga-2026-03-21"
-title: "The Pipeline Paradox Saga 2026 03 21"
-sidebar_label: "The Pipeline Paradox Saga 2026 03 21"
-sidebar_position: 32
-tags: ["reflection"]
-date: 2026-03-21
----
-
 # The Pipeline Paradox: A Saga of Knowing What We Built
 
 **Deep Saga Journey | March 21, 2026 | 0xRay v1.15.1**

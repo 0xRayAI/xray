@@ -411,12 +411,6 @@ export class ProcessorManager {
                 case "postProcessorChain":
                     result = await this.executePostProcessorChain(safeContext);
                     break;
-                case "versionCompliance":
-                    result = await this.executeVersionCompliance(safeContext);
-                    break;
-                case "asyncPattern":
-                    result = await this.executeAsyncPattern(safeContext);
-                    break;
                 case "consoleLogGuardPost":
                     result = await this.executeConsoleLogGuard(safeContext);
                     break;

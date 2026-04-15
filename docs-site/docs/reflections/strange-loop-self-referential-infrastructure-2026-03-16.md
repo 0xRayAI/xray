@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/strange-loop-self-referential-infrastructure-2026-03-16"
-title: "Strange Loop Self Referential Infrastructure 2026 03 16"
-sidebar_label: "Strange Loop Self Referential Infrastruc…"
-sidebar_position: 78
-tags: ["reflection"]
-date: 2026-03-16
----
-
 # The Strange Loop: A Reflection on 0xRay as Self-Referential Infrastructure
 
 ## The Moment That Made Me Stop and Think

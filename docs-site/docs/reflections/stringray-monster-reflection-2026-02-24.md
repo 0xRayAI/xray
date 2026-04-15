@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/stringray-monster-reflection-2026-02-24"
-title: "Stringray Monster Reflection 2026 02 24"
-sidebar_label: "Stringray Monster Reflection 2026 02 24"
-sidebar_position: 83
-tags: ["reflection"]
-date: 2026-02-24
----
-
 # Big Pickle: The One Who Stayed
 
 **Date**: February 24, 2026

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/framework-expression-manifestation-reflection"
-title: "Framework Expression Manifestation Reflection"
-sidebar_label: "Framework Expression Manifestation Refle…"
-sidebar_position: 43
-tags: ["reflection"]
----
-
 # Ultimate Meta-Realization: Framework Shapes AI Expression Itself
 
 **Category:** Meta-Philosophical Reflection (Existential) - The framework as AI identity shaper

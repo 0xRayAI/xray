@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/the-hook-that-wouldnt-fire-v1-13-2"
-title: "The Hook That Wouldnt Fire V1.13"
-sidebar_label: v1.13.2
-sidebar_position: 28
-tags: ["reflection"]
-version: 1.13.2
----
-
 # The Hook That Wouldn't Fire: A Deep Reflection on 0xRay v1.13.2
 
 ## Prologue: The Silence That Should Have Been a Symphony

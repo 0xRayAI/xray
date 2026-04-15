@@ -1,10 +1,3 @@
----
-slug: "/docs/operations/mcp-integration-analysis"
-title: "MCP INTEGRATION ANALYSIS"
-sidebar_label: "MCP INTEGRATION ANALYSIS"
-sidebar_position: 2
----
-
 # 0xRay MCP Integration Analysis
 
 **Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI

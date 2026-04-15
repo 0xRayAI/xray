@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/template-gleaning-demonstration"
-title: "Template Gleaning Demonstration"
-sidebar_label: "Template Gleaning Demonstration"
-sidebar_position: 89
-tags: ["reflection"]
----
-
 # Template Demonstration: Personal Gleaning in Action
 
 **Demonstration Category**: Meta-Reflection (Template Application) - Showing how to apply the enhanced gleaning philosophy

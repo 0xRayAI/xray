@@ -1,11 +1,3 @@
----
-slug: "/docs/testing/test-categorization"
-title: "TEST CATEGORIZATION"
-sidebar_label: "TEST CATEGORIZATION"
-sidebar_position: 3
-tags: ["testing"]
----
-
 # Test Categorization System
 
 ## Purpose

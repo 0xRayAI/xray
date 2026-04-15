@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/completing-mcp-client-test-stabilization-2026-03-12"
-title: "Completing MCP CLIent Test Stabilization 2026 03 12"
-sidebar_label: "Completing MCP CLIent Test Stabilization…"
-sidebar_position: 9
-tags: ["reflection"]
-date: 2026-03-12
----
-
 # Completing the MCP Client: When the Finish Line Moves
 
 **When:** March 12, 2026  

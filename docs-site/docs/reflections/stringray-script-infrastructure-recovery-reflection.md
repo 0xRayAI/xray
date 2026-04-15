@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/stringray-script-infrastructure-recovery-reflection"
-title: "Stringray Script Infrastructure Recovery Reflection"
-sidebar_label: "Stringray Script Infrastructure Recovery…"
-sidebar_position: 84
-tags: ["reflection"]
----
-
 # Deep Reflection: 0xRay Script Infrastructure Recovery & ES Module Architecture Resolution
 
 ## Executive Summary

@@ -1,10 +1,3 @@
----
-slug: "/docs//plan-storyteller-enforcement"
-title: "PLAN Storyteller Enforcement"
-sidebar_label: "PLAN Storyteller Enforcement"
-sidebar_position: 3
----
-
 # Plan: Enforce Storyteller Skill for Reflections, Sagas, and Journeys
 
 ## Status: PARTIALLY IMPLEMENTED (2026-04-01)

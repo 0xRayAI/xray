@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/agent-review-action-items"
-title: "AGENT REVIEW ACTION ITEMS"
-sidebar_label: "AGENT REVIEW ACTION ITEMS"
-sidebar_position: 4
-tags: ["agents"]
----
-
 # Agent Review Action Items
 
 **Generated**: 2026-03-22

@@ -1,10 +1,3 @@
----
-slug: "/docs/operations/knowledge-skills-expansion-plan"
-title: "KNOWLEDGE SKILLS EXPANSION PLAN"
-sidebar_label: "KNOWLEDGE SKILLS EXPANSION PLAN"
-sidebar_position: 1
----
-
 # 0xRay Knowledge Skills Expansion Plan
 
 **Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
@@ -501,8 +494,8 @@ const audit = await mcpClient.callSkill("security-audit", {
 
 | Metric | Target | Current |
 |--------|--------|---------|
-| Skill routing time | &lt;100ms | 25ms ✅ |
-| Skill discovery time | &lt;500ms | 150ms ✅ |
+| Skill routing time | <100ms | 25ms ✅ |
+| Skill discovery time | <500ms | 150ms ✅ |
 | Cache hit rate | >80% | 85% ✅ |
 | Routing accuracy | >90% | 95% ✅ |
 

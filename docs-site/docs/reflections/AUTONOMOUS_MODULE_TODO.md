@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/autonomous-module-todo"
-title: "AUTONOMOUS MODULE TODO"
-sidebar_label: "AUTONOMOUS MODULE TODO"
-sidebar_position: 3
-tags: ["reflection"]
----
-
 # AUTONOMOUS MODULE ANALYSIS
 
 ## What Are Autonomous Modules?

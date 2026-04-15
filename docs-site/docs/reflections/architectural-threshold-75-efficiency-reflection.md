@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/architectural-threshold-75-efficiency-reflection"
-title: "Architectural Threshold 75 Efficiency Reflection"
-sidebar_label: "Architectural Threshold 75 Efficiency Re…"
-sidebar_position: 23
-tags: ["reflection"]
----
-
 # Architectural Threshold: 75% Operational Efficiency
 
 **Category:** Evolution Reflection (Philosophical) - Recognition of fundamental system design constraints
@@ -106,9 +98,9 @@ When systems approach 100% optimization, they experience:
 
 #### 2. Complexity Monitoring
 **Improvement**: Track system complexity metrics
-- Coupling density (target: &lt;75% interconnectedness)
-- Test complexity ratio (target: &lt;3:1 test-to-code ratio)
-- Modification impact (target: &lt;25% cascade effect)
+- Coupling density (target: <75% interconnectedness)
+- Test complexity ratio (target: <3:1 test-to-code ratio)
+- Modification impact (target: <25% cascade effect)
 
 #### 3. Architectural Resilience Reviews
 **Improvement**: Regular assessment of system resilience

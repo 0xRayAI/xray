@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/test-architect"
-title: "Test Architect"
-sidebar_label: "Test Architect"
-sidebar_position: 21
-tags: ["agents"]
----
-
 # Test Architect Agent
 
 **Role**: Testing strategy & coverage optimization

@@ -86,15 +86,15 @@ console.log('\n📍 Processor Integration via MCP\n');
 test('should have processor-pipeline MCP server source', () => {
   const serverPath = join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
   const content = readFileSync(serverPath, 'utf-8');
-  if (!content.includes('handleToolCall') && !content.includes('class StrRayProcessorPipelineServer')) {
-    throw new Error('Processor pipeline server missing handleToolCall');
+  if (!content.includes('execute-pre-processors') && !content.includes('execute-post-processors')) {
+    throw new Error('Processor pipeline server missing processor execution tools');
   }
 });
 
 test('should register pre-processors via MCP', () => {
   const serverPath = join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
   const content = readFileSync(serverPath, 'utf-8');
-  if (!content.includes('preValidate') && !content.includes('codexCompliance')) {
+  if (!content.includes('execute-pre-processors')) {
     throw new Error('MCP server not registering pre-processors');
   }
 });
@@ -102,7 +102,7 @@ test('should register pre-processors via MCP', () => {
 test('should register post-processors via MCP', () => {
   const serverPath = join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
   const content = readFileSync(serverPath, 'utf-8');
-  if (!content.includes('stateValidation') && !content.includes('postProcessor')) {
+  if (!content.includes('execute-post-processors')) {
     throw new Error('MCP server not registering post-processors');
   }
 });
@@ -117,11 +117,11 @@ test('should have MCP client module', () => {
   }
 });
 
-// Test MCP logger
-test('should have MCP logger module', () => {
-  const loggerPath = join(PROJECT_ROOT, 'src/mcps/mcp-logger.ts');
+// Test MCP logger - MCP servers use the shared framework logger
+test('should have MCP logging via framework-logger', () => {
+  const loggerPath = join(PROJECT_ROOT, 'src/core/framework-logger.ts');
   if (!existsSync(loggerPath)) {
-    throw new Error('MCP logger not found');
+    throw new Error('Framework logger not found - MCP servers depend on this');
   }
 });
 

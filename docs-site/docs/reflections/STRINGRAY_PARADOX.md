@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/stringray-paradox"
-title: "STRINGRAY PARADOX"
-sidebar_label: "STRINGRAY PARADOX"
-sidebar_position: 17
-tags: ["reflection"]
----
-
 # The 0xRay Paradox: Reflections on Building an AI-Powered Dev Team
 
 *March 22, 2026*

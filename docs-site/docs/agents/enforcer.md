@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/enforcer"
-title: Enforcer
-sidebar_label: Enforcer
-sidebar_position: 12
-tags: ["agents"]
----
-
 # Enforcer Agent
 
 **Role**: Codex compliance & error prevention
@@ -21,7 +13,7 @@ Runtime error detection and prevention across all system components with 99.6% e
 - Runtime monitoring with circuit breaker patterns
 - Comprehensive error boundary implementation (3 levels)
 - Memory leak detection and prevention
-- Universal Development Codex v1.1.1 enforcement
+- Universal Development Codex v1.7.5 enforcement
 
 ## Commands
 

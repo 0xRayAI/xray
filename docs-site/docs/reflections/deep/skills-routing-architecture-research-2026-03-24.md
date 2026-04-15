@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/skills-routing-architecture-research-2026-03-24"
-title: "Skills Routing Architecture Research 2026 03 24"
-sidebar_label: "Skills Routing Architecture Research 202…"
-sidebar_position: 21
-tags: ["reflection"]
-date: 2026-03-24
----
-
 # Skills Routing Architecture Research
 
 **Date:** 2026-03-24  
@@ -35,7 +26,7 @@ OpenCode implements a distinctive architectural pattern for skills:
 
 2. **Progressive Disclosure**: Only skill names and descriptions from YAML frontmatter are shown to agents initially. Full content loads on-demand via the `skill()` tool.
 
-3. **LLM Decision**: The LLM decides when to call `skill(&#123; name: "..." &#125;)` to load skill content based on task requirements. This is purely implicit—there's no explicit wiring.
+3. **LLM Decision**: The LLM decides when to call `skill({ name: "..." })` to load skill content based on task requirements. This is purely implicit—there's no explicit wiring.
 
 ### 1.2 Permission Controls
 
@@ -244,7 +235,7 @@ class 0xRay<SkillName>Server {
 
   constructor() {
     this.server = new Server(
-      { name: "<skill-name>", version: "1.15.27" },
+      { name: "<skill-name>", version: "1.22.13" },
       { capabilities: { tools: {} } }
     );
     this.setupToolHandlers();

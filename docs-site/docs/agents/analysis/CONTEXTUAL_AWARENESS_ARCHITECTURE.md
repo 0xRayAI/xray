@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/analysis/contextual-awareness-architecture"
-title: "CONTEXTUAL AWARENESS ARCHITECTURE"
-sidebar_label: "CONTEXTUAL AWARENESS ARCHITECTURE"
-sidebar_position: 3
-tags: ["agents"]
----
-
 # 0xRay Framework - Contextual Awareness Architecture
 
 ## 🎯 Executive Summary

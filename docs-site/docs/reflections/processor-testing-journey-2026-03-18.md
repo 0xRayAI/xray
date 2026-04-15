@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/processor-testing-journey-2026-03-18"
-title: "Processor Testing Journey 2026 03 18"
-sidebar_label: "Processor Testing Journey 2026 03 18"
-sidebar_position: 67
-tags: ["reflection"]
-date: 2026-03-18
----
-
 # The Shape of a System: A Reflection on the 0xRay Processor Journey
 
 **Date:** March 18, 2026  
@@ -71,7 +62,7 @@ But elegance in architecture is only half the battle. The other half is making s
 
 I didn't anticipate what would happen when I started writing the tests.
 
-The first tests were easy. PreValidateProcessor has no side effects—just returns `&#123; validated: true &#125;`. ErrorBoundaryProcessor returns static config. These tests wrote themselves:
+The first tests were easy. PreValidateProcessor has no side effects—just returns `{ validated: true }`. ErrorBoundaryProcessor returns static config. These tests wrote themselves:
 
 ```typescript
 it("should execute successfully", async () => {

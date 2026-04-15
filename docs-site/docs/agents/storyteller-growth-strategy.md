@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/storyteller-growth-strategy"
-title: "Storyteller Growth Strategy"
-sidebar_label: "Storyteller Growth Strategy"
-sidebar_position: 19
-tags: ["agents"]
----
-
 # Storyteller Agent: Growth Strategy & Audience Development
 
 ## Executive Overview

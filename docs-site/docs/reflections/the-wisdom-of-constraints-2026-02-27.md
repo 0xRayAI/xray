@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/the-wisdom-of-constraints-2026-02-27"
-title: "The Wisdom Of Constraints 2026 02 27"
-sidebar_label: "The Wisdom Of Constraints 2026 02 27"
-sidebar_position: 94
-tags: ["reflection"]
-date: 2026-02-27
----
-
 # Reflection: The Wisdom of Constraints - What Would Have Been Lost
 
 ## Executive Summary

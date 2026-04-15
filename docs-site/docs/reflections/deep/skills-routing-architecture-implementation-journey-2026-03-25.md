@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/skills-routing-architecture-implementation-journey-2026-03-25"
-title: "Skills Routing Architecture Implementation Journey 2026 03 25"
-sidebar_label: "Skills Routing Architecture Implementati…"
-sidebar_position: 20
-tags: ["reflection"]
-date: 2026-03-25
----
-
 # Skills Routing Architecture Implementation Journey
 
 **Date:** March 25, 2026  

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/test-suite-stability-version-mgmt-reflection"
-title: "Test Suite Stability Version Mgmt Reflection"
-sidebar_label: "Test Suite Stability Version Mgmt Reflec…"
-sidebar_position: 93
-tags: ["reflection"]
----
-
 # Test Suite Stability & Version Management Reflection
 
 **Location:** `./docs/reflections/test-suite-stability-version-mgmt-reflection.md`  

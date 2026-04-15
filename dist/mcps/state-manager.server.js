@@ -16,7 +16,7 @@ class StrRayStateManagerServer {
     backups = new Map();
     constructor() {
         this.server = new Server({
-            name: "state-manager", version: "1.15.27",
+            name: "state-manager", version: "1.22.13",
         }, {
             capabilities: {
                 tools: {},

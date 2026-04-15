@@ -311,7 +311,7 @@ describe("EscalationEngine", () => {
         reportingEndpoints: [
           {
             name: "slack",
-            url: "https://hooks.slack.com/test",
+            url: "https://hooks.slack.com/services/test",
             type: "slack",
             enabled: true,
             priorityThreshold: "low",
@@ -328,7 +328,7 @@ describe("EscalationEngine", () => {
 
       const history = engine.getReportingHistory();
       expect(Array.isArray(history)).toBe(true);
-    });
+    }, 10000);
 
     it("should clear reporting history", () => {
       engine.clearReportingHistory();

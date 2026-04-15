@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/kimi-deployment-crisis-reflection"
-title: "Kimi Deployment Crisis Reflection"
-sidebar_label: "Kimi Deployment Crisis Reflection"
-sidebar_position: 50
-tags: ["reflection"]
----
-
 # Personal Reflection: Kimi's Deployment Crisis Learnings
 
 **Date:** 2026-02-01  

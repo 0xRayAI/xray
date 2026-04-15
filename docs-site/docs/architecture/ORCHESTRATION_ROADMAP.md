@@ -1,11 +1,3 @@
----
-slug: "/docs/architecture/orchestration-roadmap"
-title: "ORCHESTRATION ROADMAP"
-sidebar_label: "ORCHESTRATION ROADMAP"
-sidebar_position: 7
-tags: ["architecture"]
----
-
 # 0xRay AI v1.15.1 Orchestration Alignment Implementation Roadmap
 
 ## Executive Summary

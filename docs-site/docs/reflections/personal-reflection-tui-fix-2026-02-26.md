@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/personal-reflection-tui-fix-2026-02-26"
-title: "Personal Reflection Tui Fix 2026 02 26"
-sidebar_label: "Personal Reflection Tui Fix 2026 02 26"
-sidebar_position: 63
-tags: ["reflection"]
-date: 2026-02-26
----
-
 # The Weight of Small Fixes: A Developer's Reflection
 
 **Date**: 2026-02-26  

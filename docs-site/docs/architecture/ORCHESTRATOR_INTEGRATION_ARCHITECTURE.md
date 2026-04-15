@@ -1,11 +1,3 @@
----
-slug: "/docs/architecture/orchestrator-integration-architecture"
-title: "ORCHESTRATOR INTEGRATION ARCHITECTURE"
-sidebar_label: "ORCHESTRATOR INTEGRATION ARCHITECTURE"
-sidebar_position: 8
-tags: ["architecture"]
----
-
 # 0xRay Orchestrator Integration Architecture v1.15.1
 
 ## Overview

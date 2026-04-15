@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/deep-system-reflection-v1-15-41"
-title: "DEEP SYSTEM REFLECTION V1.15"
-sidebar_label: v1.15.41
-sidebar_position: 6
-tags: ["reflection"]
-version: 1.15.41
----
-
 # 0xRay: The Long Road to Agent Runtime - A Deep Reflection
 
 **Version**: 1.15.41  

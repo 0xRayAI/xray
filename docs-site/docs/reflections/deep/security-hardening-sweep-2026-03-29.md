@@ -1,17 +1,8 @@
----
-slug: "/reflections/deep/security-hardening-sweep-2026-03-29"
-title: "Security Hardening Sweep 2026 03 29"
-sidebar_label: "Security Hardening Sweep 2026 03 29"
-sidebar_position: 18
-tags: ["reflection"]
-date: 2026-03-29
----
-
 # The Security Sweep: Finding Landmines in Your Own Backyard
 
 **Date**: 2026-03-29
 **PR**: [#13](https://github.com/htafolla/0xRay/pull/13) — `fix/security-hardening-repo-hygiene-test-cleanup`
-**Predecessor**: [PR #12 — Framework Hygiene Journey](/docs/framework-hygiene-journey-2026-03-29)
+**Predecessor**: [PR #12 — Framework Hygiene Journey](./framework-hygiene-journey-2026-03-29.md)
 
 ---
 

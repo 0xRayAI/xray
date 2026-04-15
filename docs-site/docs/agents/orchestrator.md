@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/orchestrator"
-title: Orchestrator
-sidebar_label: Orchestrator
-sidebar_position: 16
-tags: ["agents"]
----
-
 # Orchestrator Agent
 
 **Role**: Multi-agent workflow coordination

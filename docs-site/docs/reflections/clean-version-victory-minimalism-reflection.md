@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/clean-version-victory-minimalism-reflection"
-title: "Clean Version Victory Minimalism Reflection"
-sidebar_label: "Clean Version Victory Minimalism Reflect…"
-sidebar_position: 29
-tags: ["reflection"]
----
-
 # Deep Reflection: The Clean Version Victory
 ## From Version Chaos to Minimal Perfection
 

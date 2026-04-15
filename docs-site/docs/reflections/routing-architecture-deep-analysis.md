@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/routing-architecture-deep-analysis"
-title: "Routing Architecture Deep Analysis"
-sidebar_label: "Routing Architecture Deep Analysis"
-sidebar_position: 71
-tags: ["reflection"]
----
-
 # 0xRay Routing Architecture: Deep Analysis & Fit-for-Purpose Plan
 
 ## The Problem Statement

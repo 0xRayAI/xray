@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deep-reflection"
-title: "Deep Reflection"
-sidebar_label: "Deep Reflection"
-sidebar_position: 34
-tags: ["reflection"]
----
-
 # Deep Reflection: The 0xRay Framework Transformation Journey
 
 ## Executive Summary

@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/analysis/commit-batching-strategy"
-title: "COMMIT BATCHING STRATEGY"
-sidebar_label: "COMMIT BATCHING STRATEGY"
-sidebar_position: 2
-tags: ["agents"]
----
-
 # 0xRay Framework - Intelligent Commit Batching Strategy (v1.15.1)
 
 ## 🎯 **Problem: Too Many Micro-Commits**

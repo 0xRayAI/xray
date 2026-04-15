@@ -1,12 +1,10 @@
 ---
-slug: "/reflections/deep/the-pr-that-wouldnt-merge-2026-03-27"
-title: "The Pr That Wouldnt Merge 2026 03 27"
-sidebar_label: "The Pr That Wouldnt Merge 2026 03 27"
-sidebar_position: 33
-tags: ["reflection"]
+story_type: saga
+emotional_arc: "routine → discovery → frustration → recovery → satisfaction"
+codex_terms: [5, 12, 18, 32, 45]
 date: 2026-03-27
+duration: "2+ hours"
 ---
-
 
 # The PR That Wouldn't Merge: A Tale of Branch Archaeology and Version Archaeology
 

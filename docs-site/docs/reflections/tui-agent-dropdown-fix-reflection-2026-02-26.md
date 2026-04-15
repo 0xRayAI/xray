@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/tui-agent-dropdown-fix-reflection-2026-02-26"
-title: "Tui Agent Dropdown Fix Reflection 2026 02 26"
-sidebar_label: "Tui Agent Dropdown Fix Reflection 2026 0…"
-sidebar_position: 95
-tags: ["reflection"]
-date: 2026-02-26
----
-
 # The TUI Agent Dropdown Fix: A Study in Configuration Synchronization
 
 ## Session Summary

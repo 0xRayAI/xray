@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/agent-codex-cross-reference"
-title: "Agent Codex Cross Reference"
-sidebar_label: "Agent Codex Cross Reference"
-sidebar_position: 7
-tags: ["agents"]
----
-
 # Agent Codex Terms Cross-Reference Report
 
 **Generated:** 2026-03-11

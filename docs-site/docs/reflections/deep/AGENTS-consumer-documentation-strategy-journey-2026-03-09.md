@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/agents-consumer-documentation-strategy-journey-2026-03-09"
-title: "AGENTS Consumer Documentation Strategy Journey 2026 03 09"
-sidebar_label: "AGENTS Consumer Documentation Strategy J…"
-sidebar_position: 1
-tags: ["reflection"]
-date: 2026-03-09
----
-
 # Deep Reflection: AGENTS-consumer.md Documentation & Script Strategy
 
 **Date**: 2026-03-09

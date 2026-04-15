@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/inference-feedback-loop-activation-journey-2026-03-29"
-title: "Inference Feedback Loop Activation Journey 2026 03 29"
-sidebar_label: "Inference Feedback Loop Activation Journ…"
-sidebar_position: 12
-tags: ["reflection"]
-date: 2026-03-29
----
-
 # Deep Reflection: The Dead Kitchen
 ## inference-feedback-loop-activation — PR #14
 
@@ -46,7 +37,7 @@ It went from a one-way observability pipe to a closed feedback loop.
 
 One of the first things I noticed running tests was the codex-1 duplicate registration error, firing 5 times per test run. The error message was clean: "Rule with ID 'codex-1' already exists in registry." The fix seemed obvious — make `addRule()` idempotent. But I wanted to understand *why* it was happening before I fixed it.
 
-The `RuleEnforcer` constructor calls `initializeRules()` synchronously, which registers hardcoded rules. Then it calls `loadAsyncRules()` fire-and-forget (no await). That async loader uses a `LoaderOrchestrator` which spins up a `CodexLoader`, an `AgentTriageLoader`, a `ProcessorLoader`, and an `AgentsMdValidationLoader`. The `CodexLoader` reads `.opencode/strray/codex.json` and converts 60 codex terms into `RuleDefinition` objects, each with ID `codex-$&#123;key&#125;`. Then the orchestrator calls `this.addRule(rule)` for each one.
+The `RuleEnforcer` constructor calls `initializeRules()` synchronously, which registers hardcoded rules. Then it calls `loadAsyncRules()` fire-and-forget (no await). That async loader uses a `LoaderOrchestrator` which spins up a `CodexLoader`, an `AgentTriageLoader`, a `ProcessorLoader`, and an `AgentsMdValidationLoader`. The `CodexLoader` reads `.opencode/strray/codex.json` and converts 60 codex terms into `RuleDefinition` objects, each with ID `codex-${key}`. Then the orchestrator calls `this.addRule(rule)` for each one.
 
 The singleton `ruleEnforcer` at the bottom of rule-enforcer.ts triggers this once. But the async loading is fire-and-forget, and the RuleRegistry throws on duplicates. If anything causes the enforcer to be instantiated twice — a test that creates a fresh instance after the singleton exists, a hot-reload, a module re-import — the async loader from the first instantiation might still be running when the second instantiation starts registering the same codex rules. The race condition.
 

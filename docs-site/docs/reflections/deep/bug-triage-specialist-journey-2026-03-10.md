@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/bug-triage-specialist-journey-2026-03-10"
-title: "Bug Triage Specialist Journey 2026 03 10"
-sidebar_label: "Bug Triage Specialist Journey 2026 03 10"
-sidebar_position: 7
-tags: ["reflection"]
-date: 2026-03-10
----
-
 # The Night Shift Hero
 
 ## A Deep Reflection on Bug-Triage-Specialist

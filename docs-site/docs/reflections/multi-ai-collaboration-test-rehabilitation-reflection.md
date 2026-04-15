@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/multi-ai-collaboration-test-rehabilitation-reflection"
-title: "Multi Ai Collaboration Test Rehabilitation Reflection"
-sidebar_label: "Multi Ai Collaboration Test Rehabilitati…"
-sidebar_position: 58
-tags: ["reflection"]
----
-
 # 0xRay Framework - Multi-AI Collaboration Reflection
 
 **Date**: 2026-01-31  

@@ -1,12 +1,14 @@
 ---
-slug: "/reflections/deep/last-mile-plugin-to-agent-os-journey-2026-04-01"
-title: "Last Mile Plugin To Agent Os Journey 2026 04 01"
-sidebar_label: "Last Mile Plugin To Agent Os Journey 202…"
-sidebar_position: 15
-tags: ["reflection"]
+story_type: deep-reflection
+title: "The Last Mile: From Plugin to Agent OS"
 date: 2026-04-01
+slug: last-mile-plugin-to-agent-os
+emotional_arc: "confidence → crisis → clarity → conviction"
+codex_terms: ["error-prevention", "systematic-validation", "consumer-mode", "publish-pipeline"]
+framework: hero_journey
+target_words: 8000
+location: docs/reflections/deep/
 ---
-
 
 # The Last Mile: From Plugin to Agent OS
 

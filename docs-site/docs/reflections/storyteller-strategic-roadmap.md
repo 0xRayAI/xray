@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/storyteller-strategic-roadmap"
-title: "Storyteller Strategic Roadmap"
-sidebar_label: "Storyteller Strategic Roadmap"
-sidebar_position: 77
-tags: ["reflection"]
----
-
 # Storyteller Agent: Strategic Roadmap
 
 **Version:** 1.0  

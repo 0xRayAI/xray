@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/mcp-initialize-protocol-fix"
-title: "MCP Initialize Protocol Fix"
-sidebar_label: "MCP Initialize Protocol Fix"
-sidebar_position: 55
-tags: ["reflection"]
----
-
 # Deep Reflection: MCP Server Initialize Protocol Issue
 
 ## Executive Summary
@@ -77,7 +69,7 @@ const initializeRequest = {
   params: {
     protocolVersion: "2024-11-05",
     capabilities: {},
-    clientInfo: { name: "strray-mcp-client", version: "1.15.27" },
+    clientInfo: { name: "strray-mcp-client", version: "1.22.13" },
   },
 };
 

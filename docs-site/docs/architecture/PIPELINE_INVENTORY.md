@@ -1,53 +1,17 @@
----
-slug: "/docs/architecture/pipeline-inventory"
-title: "PIPELINE INVENTORY"
-sidebar_label: "PIPELINE INVENTORY"
-sidebar_position: 9
-tags: ["architecture"]
----
-
 # 0xRay Pipeline Inventory
 
-**Version**: 1.14.0  
-**Date**: 2026-03-21  
+**Version**: 1.22.13  
+**Date**: 2026-04-15  
 **Author**: 0xRay AI Team (via @researcher agent)
 
 ---
 
-## Pipeline Overview
+## Executive Summary
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    STRINGRAY 7 MAIN PIPELINES                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
-│  │    BOOT     │  │  ROUTING    │  │ ORCHESTRATION│  │ PROCESSOR   │    │
-│  │  PIPELINE   │  │  PIPELINE   │  │   PIPELINE   │  │  PIPELINE   │    │
-│  │             │  │             │  │             │  │             │    │
-│  │ @startup    │  │ @task       │  │ @multi-agent │  │ @validation │    │
-│  │             │  │             │  │             │  │             │    │
-│  │ Layers: 8   │  │ Router     │  │ Delegator   │  │ Pre: 15     │    │
-│  │             │  │ Matcher     │  │ Coordinator │  │ Post: 5+    │    │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘    │
-│         │                │                │                │             │
-│         └────────────────┬┴────────────────┴┴────────────────┘             │
-│                          │                                                 │
-│                          ▼                                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                        │
-│  │ REPORTING   │  │ GOVERNANCE  │  │   PLUGIN    │  ◄── NEW             │
-│  │  PIPELINE   │  │  PIPELINE   │  │  PIPELINE   │                        │
-│  │             │  │             │  │             │                        │
-│  │ @generate   │  │ @commit    │  │ @load       │                        │
-│  │             │  │             │  │             │                        │
-│  │ Analytics   │  │ Rate Limit  │  │ Discovery   │                        │
-│  │ Metrics     │  │ Compliance  │  │ MCP Reg     │                        │
-│  └─────────────┘  └─────────────┘  └─────────────┘                        │
-│                                                                             │
-│  TOTAL: 7 (+1) MAIN PIPELINES                                               │
-│  TESTS: 2521+ COVERAGE                                                      │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+This document catalogs all major system pipelines in the 0xRay framework. Each pipeline is analyzed for its components, data flows, artifacts, and testing status.
+
+**Total Pipelines Identified**: 7 major pipelines  
+**Test Coverage**: 2521+ tests across the codebase
 
 ---
 
@@ -60,7 +24,7 @@ tags: ["architecture"]
 - Layer 1: Core Orchestrator (StringRayOrchestrator)
 - Layer 2: Delegation System (AgentDelegator, SessionCoordinator)
 - Layer 3: Session Management (SessionMonitor, SessionCleanupManager, SessionStateManager)
-- Layer 4: Processors (ProcessorManager + 11 processors)
+- Layer 4: Processors (ProcessorManager + 7 processors)
 - Layer 5: Agents (enforcer, architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead)
 - Layer 6: Security & Compliance (SecurityHardener, CodexInjector)
 - Layer 7: Inference (InferenceTuner - optional)
@@ -286,7 +250,7 @@ consolidateHealingResults() → healingResult
 ```
 
 **Artifacts**:
-- Job ID: `complex-task-$&#123;timestamp&#125;-$&#123;random&#125;`
+- Job ID: `complex-task-${timestamp}-${random}`
 - Task results in orchestrator state
 - Agent-to-task mapping: `taskToAgentMap`
 - Monitoring interface with agent status
@@ -422,7 +386,7 @@ ViolationFix[] with status
 - `src/processors/processor-manager.ts` (ProcessorManager)
 - `src/processors/processor-interfaces.ts` (ProcessorRegistry, IProcessor)
 - `src/processors/processor-pipeline.server.ts` (MCP server)
-- `src/processors/implementations/*.ts` (12 implementations)
+- `src/processors/implementations/*.ts` (7 implementations)
 
 **Pre-Processors** (priority order):
 1. preValidate (10) - Syntax checking, validation
@@ -506,8 +470,8 @@ framework-compliance-check:
 ```
 
 **Artifacts**:
-- Processor metrics: `ProcessorMetrics &#123; totalExecutions, successRate, avgDuration &#125;`
-- Health status: `ProcessorHealth &#123; healthy | degraded | failed &#125;`
+- Processor metrics: `ProcessorMetrics { totalExecutions, successRate, avgDuration }`
+- Health status: `ProcessorHealth { healthy | degraded | failed }`
 - MCP tools: `execute-pre-processors`, `execute-post-processors`, `codex-validation`, `framework-compliance-check`
 
 **Testing Status**: ✅ Well-tested
@@ -683,7 +647,7 @@ ReportData { generatedAt, timeRange, metrics, insights, recommendations, summary
 **Artifacts**:
 - `logs/framework/activity.log` (current log)
 - `logs/framework/framework-activity-*.log.gz` (rotated, compressed)
-- `reports/$&#123;type&#125;-report-$&#123;date&#125;.md|json|html` (generated reports)
+- `reports/${type}-report-${date}.md|json|html` (generated reports)
 
 **Testing Status**: ✅ Well-tested
 - `src/reporting/framework-reporting-system.test.ts`
@@ -726,7 +690,7 @@ ReportData { generatedAt, timeRange, metrics, insights, recommendations, summary
 ## Pipeline Testing Status
 
 > **Important Discovery (v1.15.1)**: Unit tests passing ≠ Pipeline working.
-> See [Pipeline Testing Methodology](/docs/pipeline-testing-methodology) for details.
+> See [Pipeline Testing Methodology](../PIPELINE_TESTING_METHODOLOGY.md) for details.
 
 ## Complete Sub-Pipeline Inventory (v1.15.41)
 

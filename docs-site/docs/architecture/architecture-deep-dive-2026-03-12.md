@@ -1,12 +1,3 @@
----
-slug: "/docs/architecture/architecture-deep-dive-2026-03-12"
-title: "Architecture Deep Dive 2026 03 12"
-sidebar_label: "Architecture Deep Dive 2026 03 12"
-sidebar_position: 11
-tags: ["architecture"]
-date: 2026-03-12
----
-
 # 0xRay Framework - Deep Architecture Analysis
 ## Generated: $(date)
 
@@ -18,8 +9,8 @@ date: 2026-03-12
 
 - **490 TypeScript source files**
 - **99 test files with 85%+ coverage**
-- **N specialized agents**
-- **15 MCP servers**
+- **25 specialized agents**
+- **38 MCP servers**
 - **60-term Universal Development Codex**
 - **99.6% systematic error prevention**
 

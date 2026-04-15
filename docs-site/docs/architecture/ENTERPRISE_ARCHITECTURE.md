@@ -1,11 +1,3 @@
----
-slug: "/docs/architecture/enterprise-architecture"
-title: "ENTERPRISE ARCHITECTURE"
-sidebar_label: "ENTERPRISE ARCHITECTURE"
-sidebar_position: 4
-tags: ["architecture"]
----
-
 # 0xRay Framework v1.15.1 - Enterprise Architecture Documentation
 
 ## Table of Contents
@@ -637,14 +629,14 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.15.27"
+    "version": "1.22.13"
   }
 }
 ```
 
 ### MCP Server Integration
 
-The framework exposes 15 MCP servers for AI integration:
+The framework exposes 38 MCP servers for AI integration:
 
 1. **Agent Servers**: Individual agent capabilities
 2. **Knowledge Servers**: Project analysis and patterns
@@ -725,9 +717,9 @@ query GetSystemStatus {
 
 #### Performance Validation
 
-- **Bundle Size**: &lt;2MB uncompressed, &lt;700KB gzipped
-- **Boot Time**: &lt;500ms cold start, &lt;100ms warm start
-- **Response Time**: &lt;1ms average task processing
+- **Bundle Size**: <2MB uncompressed, <700KB gzipped
+- **Boot Time**: <500ms cold start, <100ms warm start
+- **Response Time**: <1ms average task processing
 
 #### Security Validation
 

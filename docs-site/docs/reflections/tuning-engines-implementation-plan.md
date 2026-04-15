@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/tuning-engines-implementation-plan"
-title: "Tuning Engines Implementation Plan"
-sidebar_label: "Tuning Engines Implementation Plan"
-sidebar_position: 97
-tags: ["reflection"]
----
-
 # Tuning Engines Implementation Plan
 
 > Phased plan to enable autonomous learning and outcome tracking in 0xRay.

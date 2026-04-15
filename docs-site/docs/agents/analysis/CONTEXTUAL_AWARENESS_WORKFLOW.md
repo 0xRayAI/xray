@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/analysis/contextual-awareness-workflow"
-title: "CONTEXTUAL AWARENESS WORKFLOW"
-sidebar_label: "CONTEXTUAL AWARENESS WORKFLOW"
-sidebar_position: 4
-tags: ["agents"]
----
-
 # 0xRay Framework - Contextual Awareness Workflow (v1.15.1)
 
 ## 🎯 **YES - Tools Are Mapped and All 27 Agents Run Them**

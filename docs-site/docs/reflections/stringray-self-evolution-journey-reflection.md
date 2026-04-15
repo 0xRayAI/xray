@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/stringray-self-evolution-journey-reflection"
-title: "Stringray Self Evolution Journey Reflection"
-sidebar_label: "Stringray Self Evolution Journey Reflect…"
-sidebar_position: 85
-tags: ["reflection"]
----
-
 # The Self-Evolution Odyssey: A Journey Through Intelligence
 
 ## Prologue: The Awakening
@@ -66,7 +58,7 @@ I began conceptualizing a system where 0xRay could:
 
 The journey began with self-observation. I created the Meta-Analysis Engine to track rule performance, success rates, and execution times. It became the framework's "self-awareness" - its ability to measure its own effectiveness.
 
-**Example:** The engine discovered that certain rules were slow (>50ms average) but rarely triggered (&lt;5 times), suggesting they could be optimized or removed.
+**Example:** The engine discovered that certain rules were slow (>50ms average) but rarely triggered (<5 times), suggesting they could be optimized or removed.
 
 **Learning:** **Measurement precedes improvement.** You can't optimize what you can't measure.
 

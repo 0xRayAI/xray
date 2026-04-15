@@ -1,11 +1,3 @@
----
-slug: "/docs/architecture/architecture"
-title: ARCHITECTURE
-sidebar_label: ARCHITECTURE
-sidebar_position: 1
-tags: ["architecture"]
----
-
 # 0xRay Framework v1.15.1 - Technical Architecture and Data Flows
 
 ## Overview
@@ -596,10 +588,10 @@ interface StateUpdate {
 
 ```
 Framework Performance Budget:
-├── Bundle Size: &lt;2MB uncompressed, &lt;700KB gzipped
-├── Boot Time: &lt;500ms cold start, &lt;100ms warm start
-├── Response Time: &lt;1ms average task processing
-└── Memory Usage: &lt;100MB baseline
+├── Bundle Size: <2MB uncompressed, <700KB gzipped
+├── Boot Time: <500ms cold start, <100ms warm start
+├── Response Time: <1ms average task processing
+└── Memory Usage: <100MB baseline
 
 Facade Pattern Benefits:
 ├── 87% code reduction (8,230 → 1,218 lines)

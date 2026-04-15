@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/stringray-self-evolution-reflection"
-title: "Stringray Self Evolution Reflection"
-sidebar_label: "Stringray Self Evolution Reflection"
-sidebar_position: 86
-tags: ["reflection"]
----
-
 # 0xRay Framework Self-Evolution Journey Reflection
 
 ## Overview

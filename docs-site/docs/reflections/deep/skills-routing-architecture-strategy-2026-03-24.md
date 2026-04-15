@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/skills-routing-architecture-strategy-2026-03-24"
-title: "Skills Routing Architecture Strategy 2026 03 24"
-sidebar_label: "Skills Routing Architecture Strategy 202…"
-sidebar_position: 22
-tags: ["reflection"]
-date: 2026-03-24
----
-
 # 0xRay Skills Routing Architecture Strategy
 
 **Date:** 2026-03-24  
@@ -223,7 +214,7 @@ mcp:
 {
   "$schema": "./schemas/skill-manifest.schema.json",
   "name": "code-review",
-  "version": "1.15.27",
+  "version": "1.22.13",
   "schema_version": "2.0",
   "description": "Comprehensive code review and quality analysis",
   
@@ -242,7 +233,7 @@ mcp:
   "dependencies": [
     {
       "skill": "lint",
-      "version": ">=1.0.0 &lt;3.0.0",
+      "version": ">=1.0.0 <3.0.0",
       "optional": false
     },
     {
@@ -453,7 +444,7 @@ class SkillNameServer {
 
   constructor() {
     this.server = new Server(
-      { name: "skill-name", version: "1.15.27" },
+      { name: "skill-name", version: "1.22.13" },
       { capabilities: { tools: {} } }
     );
     this.setupToolHandlers();
@@ -582,15 +573,15 @@ const VERSION_RULES = {
 ```yaml
 # In SKILL.md for skills with migrations
 migrations:
-  - from_version: "1.15.27"
-    to_version: "1.15.27"
+  - from_version: "1.22.13"
+    to_version: "1.22.13"
     breaking_changes:
       - "Removed 'analyze_code' tool, use 'analyze_code_quality'"
       - "Changed input schema for 'scan_security'"
     automated_migration: true
     
-  - from_version: "1.15.27"
-    to_version: "1.15.27"
+  - from_version: "1.22.13"
+    to_version: "1.22.13"
     breaking_changes: []
     notes: "Added new 'generate_report' tool"
 ```
@@ -690,7 +681,7 @@ migrations:
 │  │                                                                      │   │
 │  │   SkillPipelineStage                                                │   │
 │  │   ├── skill: "code-review"                                         │   │
-│  │   ├── version: "1.15.27"                                             │   │
+│  │   ├── version: "1.22.13"                                             │   │
 │  │   ├── tool: "analyze_code_quality"                                 │   │
 │  │   └── timeout: 30000ms                                             │   │
 │  └──────────────────────────────────────────────────────────────────────┘   │

@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/test-fixing-system-reflection"
-title: "Test Fixing System Reflection"
-sidebar_label: "Test Fixing System Reflection"
-sidebar_position: 92
-tags: ["reflection"]
----
-
 # 0xRay Framework Test Suite Rehabilitation
 
 ## Reflection System

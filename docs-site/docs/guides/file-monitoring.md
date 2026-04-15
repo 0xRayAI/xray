@@ -1,11 +1,3 @@
----
-slug: "/docs/guides/file-monitoring"
-title: "File Monitoring"
-sidebar_label: "File Monitoring"
-sidebar_position: 1
-tags: ["guide"]
----
-
 # File Operation Monitoring in 0xRay
 
 ## Overview
@@ -607,7 +599,7 @@ function isRetryableError(error: unknown): boolean {
 
 ## Example: Complete Implementation
 
-See [`examples/file-monitoring/`](../../examples/file-monitoring/) for a complete working example.
+Implement the file monitoring service following the patterns above. For a complete working example, adapt the monitoring service pattern to your specific use case with custom event schemas and monitoring service integrations.
 
 ## Common Monitoring Services
 
@@ -710,6 +702,5 @@ If you need a custom webhook receiver, consider these options:
 ## Questions?
 
 For more help:
-- [0xRay Documentation](/docs/readme)
-- [Migration Guide](/docs/migrations-openclaw-removal)
+- [0xRay Documentation](../../README.md)
 - [Open an issue](https://github.com/htafolla/stringray/issues)

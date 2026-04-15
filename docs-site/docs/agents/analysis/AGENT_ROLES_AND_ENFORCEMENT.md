@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/analysis/agent-roles-and-enforcement"
-title: "AGENT ROLES AND ENFORCEMENT"
-sidebar_label: "AGENT ROLES AND ENFORCEMENT"
-sidebar_position: 1
-tags: ["agents"]
----
-
 # 0xRay Framework - Agent Roles & Rule Enforcement Authority
 
 ## 🎯 Executive Summary

@@ -1,11 +1,3 @@
----
-slug: "/docs/security/security-best-practices"
-title: "SECURITY BEST PRACTICES"
-sidebar_label: "SECURITY BEST PRACTICES"
-sidebar_position: 5
-tags: ["security"]
----
-
 # Security Best Practices - 0xRay Framework
 
 ## Overview

@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/performance-monitoring"
-title: "PERFORMANCE MONITORING"
-sidebar_label: "PERFORMANCE MONITORING"
-sidebar_position: 6
-tags: ["agents"]
----
-
 # 0xRay Framework - Agent Performance and Monitoring (v1.15.1)
 
 ## Overview

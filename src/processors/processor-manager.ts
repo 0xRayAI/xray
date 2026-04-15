@@ -596,12 +596,6 @@ export class ProcessorManager {
         case "postProcessorChain":
           result = await this.executePostProcessorChain(safeContext as unknown as PostValidateContext);
           break;
-        case "versionCompliance":
-          result = await this.executeVersionCompliance(safeContext as unknown as PostValidateContext);
-          break;
-        case "asyncPattern":
-          result = await this.executeAsyncPattern(safeContext as unknown as PostValidateContext);
-          break;
         case "consoleLogGuardPost":
           result = await this.executeConsoleLogGuard(safeContext as unknown as PostValidateContext);
           break;

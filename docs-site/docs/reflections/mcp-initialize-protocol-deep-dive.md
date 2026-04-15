@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/mcp-initialize-protocol-deep-dive"
-title: "MCP Initialize Protocol Deep Dive"
-sidebar_label: "MCP Initialize Protocol Deep Dive"
-sidebar_position: 54
-tags: ["reflection"]
----
-
 # Deep Technical Reflection: MCP Initialize Protocol Discovery
 
 ## A Post-Mortem Analysis of the Test Auto-Creation Failure
@@ -227,7 +219,7 @@ const initializeRequest = {
   params: {
     protocolVersion: "2024-11-05",
     capabilities: {},
-    clientInfo: { name: "strray-mcp-client", version: "1.15.27" },
+    clientInfo: { name: "strray-mcp-client", version: "1.22.13" },
   },
 };
 
@@ -257,8 +249,8 @@ serverProcess.stdout.on("data", (data) => {
 ### JSON-RPC 2.0 Basics
 
 MCP is built on JSON-RPC 2.0, which has:
-- **Requests**: `&#123; jsonrpc: "2.0", id, method, params &#125;`
-- **Responses**: `&#123; jsonrpc: "2.0", id, result &#125;` or `&#123; jsonrpc: "2.0", id, error &#125;`
+- **Requests**: `{ jsonrpc: "2.0", id, method, params }`
+- **Responses**: `{ jsonrpc: "2.0", id, result }` or `{ jsonrpc: "2.0", id, error }`
 - **Batching**: Array of requests (not used here)
 
 ### MCP Specifics

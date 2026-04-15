@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/madman-architect-collaboration-reflection"
-title: "Madman Architect Collaboration Reflection"
-sidebar_label: "Madman Architect Collaboration Reflectio…"
-sidebar_position: 52
-tags: ["reflection"]
----
-
 # Madman or Architect? The seARCH 2.0 Conversation
 
 **Category:** Meta-Reflection (Humorous) - Self-aware acknowledgment of the madman-architect spectrum

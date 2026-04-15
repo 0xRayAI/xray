@@ -1,11 +1,3 @@
----
-slug: "/docs/security/security-architecture"
-title: "SECURITY ARCHITECTURE"
-sidebar_label: "SECURITY ARCHITECTURE"
-sidebar_position: 3
-tags: ["security"]
----
-
 # 0xRay Framework Security Architecture
 
 ## Table of Contents
@@ -479,7 +471,7 @@ node scripts/security-audit.js
 - **80-89**: Good security with minor issues
 - **70-79**: Adequate security, address high-priority issues
 - **60-69**: Security concerns present, immediate action required
-- **&lt;60**: Critical security issues, immediate remediation needed
+- **<60**: Critical security issues, immediate remediation needed
 
 **Issue Severity Levels**:
 

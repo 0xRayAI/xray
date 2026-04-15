@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deconstruction-module-monolith-reflection"
-title: "Deconstruction Module Monolith Reflection"
-sidebar_label: "Deconstruction Module Monolith Reflectio…"
-sidebar_position: 30
-tags: ["reflection"]
----
-
 # Deconstruction: The Module Monolith Construct
 
 **Category:** Evolution Reflection (Philosophical) - Recognizing monolithic complexity and the need for deconstruction

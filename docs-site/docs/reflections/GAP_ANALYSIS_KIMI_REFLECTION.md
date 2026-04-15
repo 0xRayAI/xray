@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/gap-analysis-kimi-reflection"
-title: "GAP ANALYSIS KIMI REFLECTION"
-sidebar_label: "GAP ANALYSIS KIMI REFLECTION"
-sidebar_position: 9
-tags: ["reflection"]
----
-
 # Gap Analysis: Kimi's Reflection vs Template
 
 ## Comparison of KIMI_REFLECTION.md to Required Template

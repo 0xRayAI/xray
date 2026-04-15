@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/operating-procedures"
-title: "OPERATING PROCEDURES"
-sidebar_label: "OPERATING PROCEDURES"
-sidebar_position: 5
-tags: ["agents"]
----
-
 # 0xRay Framework - Agent Operating Procedures (v1.15.1)
 
 ## Overview

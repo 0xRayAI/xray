@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/stringray-v1-5-0-emergence-of-ai-os"
-title: "Stringray V1.5"
-sidebar_label: v1.5.0
-sidebar_position: 87
-tags: ["reflection"]
-version: 1.5.0
----
-
 # 0xRay v1.5.0: The Emergence of an AI Operating System
 
 **Date:** 2026-02-18  

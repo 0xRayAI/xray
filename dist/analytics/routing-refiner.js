@@ -36,7 +36,7 @@ class RoutingRefiner {
         const optimizations = this.suggestMappingOptimizations(promptAnalysis, performanceReport);
         const warnings = this.generateWarnings(newMappings, optimizations);
         return {
-            version: "1.15.27",
+            version: "1.22.13",
             generatedAt: new Date(),
             summary: {
                 newMappings: newMappings.length,

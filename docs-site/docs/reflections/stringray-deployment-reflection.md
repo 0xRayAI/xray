@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/stringray-deployment-reflection"
-title: "Stringray Deployment Reflection"
-sidebar_label: "Stringray Deployment Reflection"
-sidebar_position: 81
-tags: ["reflection"]
----
-
 # 0xRay Framework Deployment Reflection
 
 ## Overview

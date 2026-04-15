@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/2026-03-05-kernel-confidence-fix"
-title: "2026 03 05 Kernel Confidence Fix"
-sidebar_label: "2026 03 05 Kernel Confidence Fix"
-sidebar_position: 2
-tags: ["reflection"]
-date: 2026-03-05
----
-
 # Kernel Confidence Fix & P9 Adaptive Learning Reflection
 
 ## 1. EXECUTIVE SUMMARY
@@ -25,7 +16,7 @@ This reflection documents the critical kernel confidence bug discovered during v
 
 **The Struggle:**
 - Tests failing for "security tasks", "testing tasks", "bug fixing"
-- Traced through code step by step - kernel.analyze() returns &#123; confidence: 0 &#125;
+- Traced through code step by step - kernel.analyze() returns { confidence: 0 }
 - Thought: "How can analyze() return 0 if it's enabled?"
 - Spent 20 minutes looking at keyword matching before realizing kernel was the issue
 - The bug was invisible because the kernel looked "enabled" but provided no value
@@ -225,7 +216,7 @@ if (intentKeywords.includes(keyword)) enhancementFactor *= 1.08;
 **Problem:** Disabled kernel vs no-match both returned same value
 **Solution:** Return 0 when disabled, 0.5 when no match
 **Files Modified:** src/core/kernel-patterns.ts
-**Verification:** analyze() when disabled returns &#123; confidence: 0 &#125;
+**Verification:** analyze() when disabled returns { confidence: 0 }
 **Was This Actually Needed?** YES - enables proper testing
 
 ---

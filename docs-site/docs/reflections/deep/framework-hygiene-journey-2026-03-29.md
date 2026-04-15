@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/framework-hygiene-journey-2026-03-29"
-title: "Framework Hygiene Journey 2026 03 29"
-sidebar_label: "Framework Hygiene Journey 2026 03 29"
-sidebar_position: 10
-tags: ["reflection"]
-date: 2026-03-29
----
-
 # Framework Hygiene Journey: When the Framework's Own Plumbing Leaks
 
 **Date**: 2026-03-29
@@ -77,7 +68,7 @@ I still had to manually fix two stragglers that the subagents missed — `code-a
 
 ## The Silent Catch
 
-One pattern decision that's worth calling out: for `.catch(console.error)` at the end of promise chains — especially in MCP server entrypoints and process-level shutdown handlers — I used `.catch(() => &#123;&#125;)` instead of trying to route through `frameworkLogger`. 
+One pattern decision that's worth calling out: for `.catch(console.error)` at the end of promise chains — especially in MCP server entrypoints and process-level shutdown handlers — I used `.catch(() => {})` instead of trying to route through `frameworkLogger`. 
 
 The reasoning: these are terminal handlers. The MCP servers use `.catch(console.error)` at the bottom of their entrypoint script — `server.run().catch(console.error)`. If the server crashes, the process is exiting. Trying to log through `frameworkLogger` at that point could itself fail (the logger writes to disk, what if the disk is full? what if the logger is in a bad state?). Silent catch is the right call here. Die quietly.
 
@@ -88,9 +79,9 @@ For `framework-logger.ts` itself — the logger's own internal error handlers �
 Six tests broke. All the same pattern: they were spying on `console.log` or `console.warn` and asserting those calls happened. But we'd just removed those console calls from the source code and replaced them with `frameworkLogger.log`, which writes to file and never touches console.
 
 The test fixes were straightforward but tedious. For each one:
-1. Add `import &#123; frameworkLogger &#125;` with the right relative path
+1. Add `import { frameworkLogger }` with the right relative path
 2. Replace `vi.spyOn(console, "log")` with `vi.spyOn(frameworkLogger, "log").mockResolvedValue(undefined)`
-3. Replace `expect(console.log).toHaveBeenCalledWith("📊 Success Metrics:")` with `expect(frameworkLogger.log).toHaveBeenCalledWith(expect.any(String), "log-metrics", expect.any(String), expect.objectContaining(&#123;&#125;))`
+3. Replace `expect(console.log).toHaveBeenCalledWith("📊 Success Metrics:")` with `expect(frameworkLogger.log).toHaveBeenCalledWith(expect.any(String), "log-metrics", expect.any(String), expect.objectContaining({}))`
 
 The key insight: don't be too strict on the details object in the assertion. Use `expect.objectContaining` or `expect.any(String)` for fields you don't care about. The tests are checking "did this thing happen," not "did this thing happen with exactly these parameters." Over-specifying the assertion makes it fragile.
 

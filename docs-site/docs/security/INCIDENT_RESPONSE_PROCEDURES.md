@@ -1,11 +1,3 @@
----
-slug: "/docs/security/incident-response-procedures"
-title: "INCIDENT RESPONSE PROCEDURES"
-sidebar_label: "INCIDENT RESPONSE PROCEDURES"
-sidebar_position: 2
-tags: ["security"]
----
-
 # Incident Response Procedures - 0xRay Framework
 
 ## Overview

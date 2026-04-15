@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/init-sh-duplicate-cleanup-plan-2026-03-10"
-title: Init
-sidebar_label: Init
-sidebar_position: 47
-tags: ["reflection"]
-date: 2026-03-10
----
-
 # Fix Init.sh Duplicate and .gitignore Corruption - 2026-03-10
 
 **Problem**: `init.sh` exists in TWO locations:

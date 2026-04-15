@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/antigravity-integration-journey-reflection-2026-02-26"
-title: "Antigravity Integration Journey Reflection 2026 02 26"
-sidebar_label: "Antigravity Integration Journey Reflecti…"
-sidebar_position: 22
-tags: ["reflection"]
-date: 2026-02-26
----
-
 # The Antigravity Integration: A Journey Through Framework Extensibility
 
 ## Prologue: The Gap

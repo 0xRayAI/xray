@@ -1,11 +1,3 @@
----
-slug: "/docs/security/security-audit-report"
-title: "SECURITY AUDIT REPORT"
-sidebar_label: "SECURITY AUDIT REPORT"
-sidebar_position: 4
-tags: ["security"]
----
-
 # - Security Audit Report
 
 **Audit Date:** 2026-01-07

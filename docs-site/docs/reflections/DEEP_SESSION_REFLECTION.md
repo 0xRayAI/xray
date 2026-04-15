@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deep-session-reflection"
-title: "DEEP SESSION REFLECTION"
-sidebar_label: "DEEP SESSION REFLECTION"
-sidebar_position: 4
-tags: ["reflection"]
----
-
 # Deep Reflection: The Inference Pipeline Journey
 
 **Date**: 2026-03-21  

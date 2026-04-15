@@ -1,12 +1,10 @@
 ---
-slug: "/reflections/deep/the-blank-screen-saga-pr15-dynamic-imports-2026-03-30"
-title: "The Blank Screen Saga Pr15 Dynamic Imports 2026 03 30"
-sidebar_label: "The Blank Screen Saga Pr15 Dynamic Impor…"
-sidebar_position: 26
-tags: ["reflection"]
+story_type: saga
+emotional_arc: "confusion → investigation → discovery → solution → understanding"
+codex_terms: [7, 15, 22, 33]
 date: 2026-03-30
+duration: "2 hours"
 ---
-
 
 # The Blank Screen: A Tale of Dynamic Imports and Missing Public Files
 

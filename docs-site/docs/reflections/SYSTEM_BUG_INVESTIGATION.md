@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/system-bug-investigation"
-title: "SYSTEM BUG INVESTIGATION"
-sidebar_label: "SYSTEM BUG INVESTIGATION"
-sidebar_position: 18
-tags: ["reflection"]
----
-
 # 0xRay Skill System Bug Investigation Report
 
 ## Critical Issue Summary

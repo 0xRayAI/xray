@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/the-mcp-client-transformation-2026-03-12"
-title: "The MCP CLIent Transformation 2026 03 12"
-sidebar_label: "The MCP CLIent Transformation 2026 03 12"
-sidebar_position: 30
-tags: ["reflection"]
-date: 2026-03-12
----
-
 # The MCP Client Transformation: From Monolith to Modular
 
 **When:** March 2026  

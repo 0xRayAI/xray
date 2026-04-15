@@ -1,11 +1,3 @@
----
-slug: "/docs/agents/code-reviewer"
-title: "Code Reviewer"
-sidebar_label: "Code Reviewer"
-sidebar_position: 10
-tags: ["agents"]
----
-
 # Code Reviewer Agent
 
 **Role**: Quality assessment & standards validation

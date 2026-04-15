@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/bug-triage-specialist-unsung-hero-2026-03-10"
-title: "Bug Triage Specialist Unsung Hero 2026 03 10"
-sidebar_label: "Bug Triage Specialist Unsung Hero 2026 0…"
-sidebar_position: 25
-tags: ["reflection"]
-date: 2026-03-10
----
-
 # The Unsung Hero: Bug Triage Specialist
 
 **Date**: 2026-03-10

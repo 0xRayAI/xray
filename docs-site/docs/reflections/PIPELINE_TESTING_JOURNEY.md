@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/pipeline-testing-journey"
-title: "PIPELINE TESTING JOURNEY"
-sidebar_label: "PIPELINE TESTING JOURNEY"
-sidebar_position: 13
-tags: ["reflection"]
----
-
 # The Chronicle of False Confidence: A Reflection on Pipeline Documentation
 
 ## On the Nature of Documentation

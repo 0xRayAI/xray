@@ -1,11 +1,3 @@
----
-slug: "/reflections/deep/implementation-journey-2026-03-25"
-title: "IMPLEMENTATION JOURNEY 2026 03 25"
-sidebar_label: "IMPLEMENTATION JOURNEY 2026 03 25"
-sidebar_position: 3
-tags: ["reflection"]
----
-
 # Skills Routing Architecture Implementation Journey: A Monumental Technical Deep Dive
 
 **Date:** March 25, 2026  
@@ -504,9 +496,9 @@ The difference is subtle but important:
 - `category?: string` means "category may or may not exist"
 - `category?: string | undefined` means "category may exist with a string value, or it may exist with the value undefined"
 
-With `exactOptionalPropertyTypes`, you cannot assign `&#123; name: "test" &#125;` to an interface that has `category?: string`—you must either:
-1. Not include the property: `&#123; name: "test" &#125;`
-2. Explicitly set it to undefined: `&#123; name: "test", category: undefined &#125;`
+With `exactOptionalPropertyTypes`, you cannot assign `{ name: "test" }` to an interface that has `category?: string`—you must either:
+1. Not include the property: `{ name: "test" }`
+2. Explicitly set it to undefined: `{ name: "test", category: undefined }`
 
 This catches a class of bugs where you accidentally check for a property's existence when it was actually set to `undefined`.
 
@@ -707,7 +699,7 @@ In the end, we lived with the interface solution. It worked, even if it wasn't e
 
 When implementing the file-based context storage, we initially tried to write to `.opencode/logs/` as that seemed like the appropriate location for framework-generated files. However, this directory is sandboxed in OpenCode's environment, meaning files written there are not visible to shell commands or external tools.
 
-We switched to writing context files directly in the project root (`context-&#123;sessionId&#125;.json`). This ensured:
+We switched to writing context files directly in the project root (`context-{sessionId}.json`). This ensured:
 1. Files are visible from both Node.js and shell contexts
 2. Context can be shared between the `chat.message` and `tool.execute.before` hooks
 3. The files are easily discoverable and debuggable

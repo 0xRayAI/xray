@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/tuning-engines-deep-review"
-title: "Tuning Engines Deep Review"
-sidebar_label: "Tuning Engines Deep Review"
-sidebar_position: 96
-tags: ["reflection"]
----
-
 # Tuning Engines Deep Review
 
 > Analysis of the 17 tuning engines - what's working, what's stubbed, what's disconnected.

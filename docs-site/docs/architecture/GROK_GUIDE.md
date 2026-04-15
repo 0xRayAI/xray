@@ -1,11 +1,3 @@
----
-slug: "/docs/architecture/grok-guide"
-title: "GROK GUIDE"
-sidebar_label: "GROK GUIDE"
-sidebar_position: 5
-tags: ["architecture"]
----
-
 # 0xRay AI v1.15.1 - Complete Guide for Grok Users
 
 ## 🚀 Welcome to 0xRay v1.15.1
@@ -106,7 +98,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.15.27"
+    "version": "1.22.13"
   }
 }
 ```

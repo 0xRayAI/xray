@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/deployment-crisis-journey-deep-reflection"
-title: "Deployment Crisis Journey Deep Reflection"
-sidebar_label: "Deployment Crisis Journey Deep Reflectio…"
-sidebar_position: 35
-tags: ["reflection"]
----
-
 # Deep Reflection: The Deployment Crisis Journey
 ## From Chaos to Automated Compliance
 

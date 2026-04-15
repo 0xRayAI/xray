@@ -1,11 +1,3 @@
----
-slug: "/docs/reflections/reflection"
-title: Reflection
-sidebar_label: Reflection
-sidebar_position: 69
-tags: ["reflection"]
----
-
 # 0xRay Framework - Deep Reflection v1.1.1
 
 **Date**: 2026-01-23
@@ -174,7 +166,7 @@ async function fixBug(bug: BugReport): Promise<FixResult> {
 0xRay achieves production-grade performance:
 
 - **Response Time**: Sub-millisecond task delegation
-- **Memory Efficiency**: Pool-based object reuse (&lt;1% overhead)
+- **Memory Efficiency**: Pool-based object reuse (<1% overhead)
 - **Concurrent Sessions**: Unlimited with automatic lifecycle management
 - **Error Prevention**: 99.6% systematic validation
 - **Test Coverage**: 100% success rate on active tests

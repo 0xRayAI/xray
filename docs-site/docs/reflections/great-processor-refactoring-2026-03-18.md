@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/great-processor-refactoring-2026-03-18"
-title: "Great Processor Refactoring 2026 03 18"
-sidebar_label: "Great Processor Refactoring 2026 03 18"
-sidebar_position: 44
-tags: ["reflection"]
-date: 2026-03-18
----
-
 # Deep Reflection: The Great Processor Refactoring
 
 *March 18, 2026*

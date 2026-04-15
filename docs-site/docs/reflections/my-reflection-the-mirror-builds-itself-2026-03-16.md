@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/my-reflection-the-mirror-builds-itself-2026-03-16"
-title: "My Reflection The Mirror Builds Itself 2026 03 16"
-sidebar_label: "My Reflection The Mirror Builds Itself 2…"
-sidebar_position: 59
-tags: ["reflection"]
-date: 2026-03-16
----
-
 # A Developer's Reflection: What I Actually Built
 
 *March 16, 2026*

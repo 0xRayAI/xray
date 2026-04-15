@@ -1,12 +1,3 @@
----
-slug: "/reflections/deep/automated-release-tweet-generator-journey-2026-03-10"
-title: "Automated Release Tweet Generator Journey 2026 03 10"
-sidebar_label: "Automated Release Tweet Generator Journe…"
-sidebar_position: 6
-tags: ["reflection"]
-date: 2026-03-10
----
-
 # Deep Reflection: Automated Release Tweet Generator Implementation Journey
 **Date**: 2026-03-10
 **Type**: Deep Reflection
@@ -143,7 +134,7 @@ node scripts/node/release-tweet-single.mjs --preview  # Preview only
 2. Get commits between last tag and HEAD
 3. Categorize commits (consumer-facing only)
 4. Generate tweet text (max 3 highlights)
-5. Save to `tweets/tweets-&#123;timestamp&#125;.json`
+5. Save to `tweets/tweets-{timestamp}.json`
 
 **Consumer-Facing Rules**:
 - `feat:` → ✨ Show users
@@ -384,7 +375,7 @@ node scripts/node/release-tweet-single.mjs --preview  # Preview only
 | Release Workflow | ✅ Done | `src/enforcement/enforcer-tools.ts` | Added `executeReleaseWorkflow()` |
 | Build Verification | ✅ Done | `src/enforcement/enforcer-tools.ts` | Hard stop rule added |
 | Changelog Auto-Gen | ✅ Done | `scripts/node/version-manager.mjs` | Auto-generates from git commits |
-| Git Tag Creation | ✅ Done | `scripts/node/version-manager.mjs` | Creates `v&#123;x.y.z&#125;` tags |
+| Git Tag Creation | ✅ Done | `scripts/node/version-manager.mjs` | Creates `v{x.y.z}` tags |
 
 ---
 

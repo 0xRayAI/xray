@@ -1,11 +1,3 @@
----
-slug: "/docs/architecture/conceptual-architecture"
-title: "CONCEPTUAL ARCHITECTURE"
-sidebar_label: "CONCEPTUAL ARCHITECTURE"
-sidebar_position: 3
-tags: ["architecture"]
----
-
 # 0xRay Framework v1.15.1 - Conceptual Architecture
 
 ## 📚 Framework Foundation

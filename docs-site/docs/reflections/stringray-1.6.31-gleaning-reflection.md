@@ -1,12 +1,3 @@
----
-slug: "/docs/reflections/stringray-1-6-31-gleaning-reflection"
-title: "Stringray 1.6"
-sidebar_label: v1.6.31
-sidebar_position: 79
-tags: ["reflection"]
-version: 1.6.31
----
-
 # 0xRay 1.6.31 Reflection: The MacBook Pro Max Context Crisis
 
 **Reflection Category**: Meta-Reflection (Framework Pressure Testing) 

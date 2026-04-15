@@ -25,9 +25,9 @@ const PIPELINES = [
 
 const CONSECUTIVE_PASSES_REQUIRED = 3;
 
-function runTest(pipelinePath) {
+function runTest(fullPath) {
   try {
-    const result = execSync(`node ${pipelinePath}`, {
+    const result = execSync(`node ${fullPath}`, {
       encoding: 'utf-8',
       cwd: '/Users/blaze/dev/stringray',
       timeout: 60000
@@ -45,12 +45,13 @@ function runConsecutive(pipeline) {
   
   let consecutivePasses = 0;
   let iteration = 0;
+  const fullPath = `/Users/blaze/dev/stringray/src/__tests__/pipeline/${pipeline.path}`;
   
   while (consecutivePasses < CONSECUTIVE_PASSES_REQUIRED) {
     iteration++;
     console.log(`\n  Iteration ${iteration}...`);
     
-    const result = runTest(pipeline.path);
+    const result = runTest(fullPath);
     
     if (result.success) {
       consecutivePasses++;

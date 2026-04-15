@@ -1,11 +1,3 @@
----
-slug: "/docs/testing/scripts-testing-status"
-title: "SCRIPTS TESTING STATUS"
-sidebar_label: "SCRIPTS TESTING STATUS"
-sidebar_position: 2
-tags: ["testing"]
----
-
 # 0xRay Scripts Testing Status Report
 **Date**: 2026-03-12  
 **Total Scripts**: 94  
