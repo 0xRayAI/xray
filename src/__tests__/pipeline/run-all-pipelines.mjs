@@ -29,7 +29,7 @@ function runTest(pipelinePath) {
   try {
     const result = execSync(`node ${pipelinePath}`, {
       encoding: 'utf-8',
-      cwd: '/Users/blaze/dev/stringray/src/__tests__/pipeline',
+      cwd: '/Users/blaze/dev/stringray',
       timeout: 60000
     });
     return { success: true, output: result };

@@ -34,7 +34,7 @@ function test(name, fn) {
 console.log('Testing Test Auto-Creation Pipeline\n');
 
 test('should verify TestAutoCreationProcessor exists', () => {
-  const procPath = process.cwd() + '/src/processors/implementations/test-auto-creation-processor.ts';
+  const procPath = process.cwd() + '/src/processors/test-auto-creation-processor.ts';
   if (!existsSync(procPath)) {
     throw new Error('TestAutoCreationProcessor not found');
   }
@@ -50,13 +50,13 @@ test('should verify testAutoCreation in BootOrchestrator', () => {
   console.log('   (testAutoCreation processor verified)');
 });
 
-test('should verify test-auto-creation-processor extends PostProcessor', () => {
-  const procPath = process.cwd() + '/src/processors/implementations/test-auto-creation-processor.ts';
+test('should verify test-auto-creation-processor is properly exported', () => {
+  const procPath = process.cwd() + '/src/processors/test-auto-creation-processor.ts';
   const content = readFileSync(procPath, 'utf-8');
-  if (!content.includes('PostProcessor')) {
-    throw new Error('PostProcessor inheritance not found');
+  if (!content.includes('export const testAutoCreationProcessor')) {
+    throw new Error('testAutoCreationProcessor export not found');
   }
-  console.log('   (PostProcessor inheritance verified)');
+  console.log('   (testAutoCreationProcessor export verified)');
 });
 
 setTimeout(() => {

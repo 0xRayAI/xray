@@ -3,6 +3,8 @@ import {
   shouldLog,
   getLoggingConfig,
 } from "./logging-config.js";
+import { promises as fs, existsSync, mkdirSync } from "fs";
+import { join } from "path";
 
 /**
  * Generate a unique job ID for tracking work sessions
@@ -245,33 +247,26 @@ export class FrameworkUsageLogger {
     }
   }
 
-  private flushBuffer(): void {
+  private async flushBuffer(): Promise<void> {
     if (this.flushing || this.buffer.length === 0) return;
     this.flushing = true;
 
     const toWrite = this.buffer.splice(0, this.buffer.length);
     const data = toWrite.join("");
 
-    const fs = require("fs") as typeof import("fs");
-    const path = require("path") as typeof import("path");
-
     try {
       const cwd = process.cwd();
       if (!cwd) return;
 
-      const logDir = path.join(cwd, "logs", "framework");
-      const logFile = path.join(logDir, "activity.log");
+      const logDir = join(cwd, "logs", "framework");
+      const logFile = join(logDir, "activity.log");
 
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir, { recursive: true });
+      if (!existsSync(logDir)) {
+        mkdirSync(logDir, { recursive: true });
       }
 
-      fs.appendFile(logFile, data, (err) => {
-        this.flushing = false;
-        if (err) {
-          // silent
-        }
-      });
+      await fs.appendFile(logFile, data).catch(() => {});
+      this.flushing = false;
     } catch {
       this.flushing = false;
     }

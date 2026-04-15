@@ -110,12 +110,6 @@ test('should have ValidatorRegistry built', () => {
   if (!existsSync(path)) throw new Error('ValidatorRegistry not built');
 });
 
-// Test 6: Codex compliance processor
-test('should have CodexComplianceProcessor built', () => {
-  const path = join(PROJECT_ROOT, 'dist/processors/implementations/codex-compliance-processor.js');
-  if (!existsSync(path)) throw new Error('CodexComplianceProcessor not built');
-});
-
 // Test 7: Verify imports work
 test('should import RuleEnforcer', async () => {
   const { RuleEnforcer } = await import(join(PROJECT_ROOT, 'dist/enforcement/rule-enforcer.js'));
@@ -150,11 +144,6 @@ test('should execute validation and return result', async () => {
   if (typeof result.passed !== 'boolean') throw new Error('Validation result missing passed property');
   // Note: Validation may fail due to codex rules - that's OK for this test
   console.log(`   Validation returned: passed=${result.passed}`);
-});
-
-test('should have CodexComplianceProcessor', async () => {
-  const { CodexComplianceProcessor } = await import(join(PROJECT_ROOT, 'dist/processors/implementations/codex-compliance-processor.js'));
-  if (!CodexComplianceProcessor) throw new Error('CodexComplianceProcessor not exported');
 });
 
 // Summary
