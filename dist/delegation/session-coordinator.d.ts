@@ -22,7 +22,7 @@ export interface AgentInteraction {
     agentName: string;
     timestamp: number;
     action: string;
-    result: any;
+    result: unknown;
     duration: number;
     success: boolean;
 }
@@ -31,19 +31,24 @@ export interface ConflictRecord {
     timestamp: number;
     agents: string[];
     resolution: "consensus" | "majority_vote" | "expert_priority" | "manual";
-    outcome: any;
+    outcome: unknown;
 }
 export interface CoordinationState {
     activeAgents: Set<string>;
     pendingCommunications: Communication[];
-    sharedContext: Map<string, any>;
+    sharedContext: Map<string, SharedContextEntry[]>;
     sessionMetrics: SessionMetrics;
+}
+export interface SharedContextEntry {
+    value: unknown;
+    fromAgent: string;
+    timestamp: number;
 }
 export interface Communication {
     id: string;
     fromAgent: string;
     toAgent: string;
-    message: any;
+    message: unknown;
     timestamp: number;
     priority: "low" | "medium" | "high";
 }
@@ -87,7 +92,7 @@ export declare class SessionCoordinator {
     /**
      * Send message between agents within session
      */
-    sendMessage(sessionId: string, fromAgent: string, toAgent: string, message: any, priority?: "low" | "medium" | "high"): Promise<void>;
+    sendMessage(sessionId: string, fromAgent: string, toAgent: string, message: unknown, priority?: "low" | "medium" | "high"): Promise<void>;
     /**
      * Receive pending messages for an agent
      */
@@ -95,19 +100,19 @@ export declare class SessionCoordinator {
     /**
      * Share context data between agents
      */
-    shareContext(sessionId: string, key: string, value: any, fromAgent: string): void;
+    shareContext(sessionId: string, key: string, value: unknown, fromAgent: string): void;
     /**
      * Get shared context data
      */
-    getSharedContext(sessionId: string, key: string): any;
+    getSharedContext(sessionId: string, key: string): unknown;
     /**
      * Record conflict and resolution
      */
-    recordConflict(sessionId: string, agents: string[], resolution: ConflictRecord["resolution"], outcome: any): void;
+    recordConflict(sessionId: string, agents: string[], resolution: ConflictRecord["resolution"], outcome: unknown): void;
     /**
      * Complete delegation and cleanup
      */
-    completeDelegation(sessionId: string, delegationId: string, result: any): void;
+    completeDelegation(sessionId: string, delegationId: string, result: unknown): void;
     /**
      * Get session coordination status
      */
@@ -118,7 +123,7 @@ export declare class SessionCoordinator {
     /**
      * Resolve conflicts using specified strategy
      */
-    resolveConflict(sessionId: string, conflictKey: string, strategy: "majority_vote" | "expert_priority" | "consensus"): any;
+    resolveConflict(sessionId: string, conflictKey: string, strategy: "majority_vote" | "expert_priority" | "consensus"): unknown;
     /**
      * Cleanup session coordination data
      */

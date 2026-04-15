@@ -60,7 +60,7 @@ const getSecurityMiddleware = async () => {
 app.use(async (req, res, next) => {
     try {
         const middleware = await getSecurityMiddleware();
-        return middleware(req, res, next);
+        middleware(req, res, next);
     }
     catch (error) {
         frameworkLogger.log("cli-server", "security-middleware-load-failed", "warning", {

@@ -50,7 +50,7 @@ export class StringRayPerformanceBenchmark {
     /**
      * Benchmark boot sequence performance
      */
-    async benchmarkBootSequence(bootOrchestrator) {
+    async benchmarkBootSequence(_bootOrchestrator) {
         const result = {
             totalBootTime: 0,
             phaseTimings: {},
@@ -142,7 +142,7 @@ export class StringRayPerformanceBenchmark {
     /**
      * Benchmark orchestrator task execution
      */
-    async benchmarkOrchestratorTasks(orchestrator, taskCount = 10, concurrentTasks = 3) {
+    async benchmarkOrchestratorTasks(_orchestrator, taskCount = 10, concurrentTasks = 3) {
         const result = {
             taskExecutionTimes: [],
             delegationLatencies: [],
@@ -223,7 +223,7 @@ export class StringRayPerformanceBenchmark {
     /**
      * Benchmark session management operations
      */
-    async benchmarkSessionOperations(sessionStateManager, operationCount = 20) {
+    async benchmarkSessionOperations(_sessionStateManager, operationCount = 20) {
         const result = {
             stateShareLatencies: [],
             dependencyUpdateTimes: [],

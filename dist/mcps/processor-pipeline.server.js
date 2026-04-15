@@ -436,8 +436,7 @@ ${complianceResults.actions.map((a) => `• 🔧 ${a}`).join("\n") || "None requ
         }
     }
     enrichWithContext(content, context) {
-        // Add framework context if needed
-        if (context.codex) {
+        if (context.codex != null) {
             return `/* 0xRay Framework - Codex Compliant */\n${content}`;
         }
         return content;
@@ -453,9 +452,8 @@ ${complianceResults.actions.map((a) => `• 🔧 ${a}`).join("\n") || "None requ
         return { warnings };
     }
     validateResults(content, results) {
-        // Basic result validation
-        if (typeof results === "object" && results.error) {
-            return `${content}\n/* ERROR: ${results.error} */`;
+        if (results.error != null) {
+            return `${content}\n/* ERROR: ${String(results.error)} */`;
         }
         return content;
     }
@@ -482,7 +480,7 @@ ${complianceResults.actions.map((a) => `• 🔧 ${a}`).join("\n") || "None requ
         const audit = [
             `Operation completed at ${new Date().toISOString()}`,
             `Content length: ${content.length}`,
-            `Processing time: ${results.duration || "unknown"}ms`,
+            `Processing time: ${String(results.duration ?? "unknown")}ms`,
             `Compliance status: ${postResults.finalApproval ? "approved" : "requires review"}`,
         ];
         return audit;

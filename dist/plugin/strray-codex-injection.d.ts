@@ -8,6 +8,28 @@
  * @version 1.0.0
  * @author 0xRay Framework
  */
+interface ToolExecuteAfterInput {
+    tool: string;
+    args?: ToolArguments;
+    result?: ToolResult;
+}
+interface ToolExecuteBeforeOutput {
+    model?: string;
+}
+interface ToolArguments {
+    content?: string;
+    filePath?: string;
+    command?: string;
+    prompt?: string;
+    message?: string;
+    directory?: string;
+    replace?: boolean;
+}
+interface ToolResult {
+    success?: boolean;
+    error?: string;
+    content?: string;
+}
 export default function strrayCodexPlugin(input: {
     client?: string;
     directory?: string;
@@ -22,15 +44,9 @@ export default function strrayCodexPlugin(input: {
             content?: string;
             filePath?: string;
         };
-    }, output: any) => Promise<void>;
-    "tool.execute.after": (input: {
-        tool: string;
-        args?: {
-            content?: string;
-            filePath?: string;
-        };
-        result?: any;
-    }, _output: any) => Promise<void>;
+    }, output: ToolExecuteBeforeOutput) => Promise<void>;
+    "tool.execute.after": (input: ToolExecuteAfterInput, _output: Record<string, unknown>) => Promise<void>;
     config: (_config: Record<string, unknown>) => Promise<void>;
 }>;
+export {};
 //# sourceMappingURL=strray-codex-injection.d.ts.map

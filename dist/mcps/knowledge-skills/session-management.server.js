@@ -180,12 +180,14 @@ class SessionManagementServer {
         return Date.now() > session.expiresAt;
     }
     handleCreateSession(args) {
-        const { sessionId, data = {}, ttl } = args;
+        const sessionId = args.sessionId;
+        const data = args.data || {};
+        const ttl = args.ttl;
         const id = sessionId || this.generateSessionId();
         const now = Date.now();
         const session = {
             id,
-            data,
+            data: data,
             createdAt: now,
             lastAccessed: now,
             expiresAt: ttl ? now + ttl * 1000 : undefined,
@@ -209,7 +211,7 @@ class SessionManagementServer {
         };
     }
     handleGetSession(args) {
-        const { sessionId } = args;
+        const sessionId = args.sessionId;
         const session = this.sessions.get(sessionId);
         if (!session) {
             return {
@@ -263,7 +265,9 @@ class SessionManagementServer {
         };
     }
     handleUpdateSession(args) {
-        const { sessionId, data, extendTtl } = args;
+        const sessionId = args.sessionId;
+        const data = args.data;
+        const extendTtl = args.extendTtl;
         const session = this.sessions.get(sessionId);
         if (!session) {
             return {
@@ -308,7 +312,7 @@ class SessionManagementServer {
         };
     }
     handleDeleteSession(args) {
-        const { sessionId } = args;
+        const sessionId = args.sessionId;
         const existed = this.sessions.has(sessionId);
         this.sessions.delete(sessionId);
         return {
@@ -325,7 +329,8 @@ class SessionManagementServer {
         };
     }
     handleListSessions(args) {
-        const { includeExpired = false, limit = 50 } = args;
+        const includeExpired = args.includeExpired || false;
+        const limit = args.limit || 50;
         const now = Date.now();
         const sessions = Array.from(this.sessions.values())
             .filter((session) => {
@@ -361,7 +366,7 @@ class SessionManagementServer {
         };
     }
     handleSessionExists(args) {
-        const { sessionId } = args;
+        const sessionId = args.sessionId;
         const session = this.sessions.get(sessionId);
         const exists = session && !this.isExpired(session);
         return {
@@ -383,7 +388,7 @@ class SessionManagementServer {
         };
     }
     handleCleanupExpiredSessions(args) {
-        const { dryRun = false } = args;
+        const dryRun = args.dryRun || false;
         const now = Date.now();
         let cleaned = 0;
         const expiredIds = [];

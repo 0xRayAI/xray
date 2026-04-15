@@ -96,9 +96,9 @@ class StringRayPerformanceAnalysisServer {
         });
     }
     async handlePerformanceAnalysis(args) {
-        const scope = args.scope || "full";
-        const duration = args.duration || 30;
-        const detailed = args.detailed || false;
+        const scope = args?.scope || "full";
+        const duration = args?.duration || 30;
+        const detailed = args?.detailed || false;
         const jobId = generateJobId("mcp-performance-analysis");
         await frameworkLogger.log("mcp-performance-analysis", "analysis-started", "info", {
             scope,
@@ -191,8 +191,8 @@ ${analysisResults.recommendations.length > 0 ? analysisResults.recommendations.m
         };
     }
     async handleBottleneckDetection(args) {
-        const operation = args.operation || "general";
-        const threshold = args.threshold || 1000;
+        const operation = args?.operation || "general";
+        const threshold = args?.threshold || 1000;
         const jobId = generateJobId("mcp-performance-analysis-bottleneck");
         await frameworkLogger.log("mcp-performance-analysis", "bottleneck-detection", "info", { operation, threshold }, undefined, // sessionId
         jobId);

@@ -7,6 +7,19 @@
  * @version 1.0.0
  * @since 2026-01-07
  */
+export interface HttpResponse {
+    setHeader(name: string, value: string): void;
+}
+export interface ExpressMiddlewareParams {
+    req: unknown;
+    res: HttpResponse;
+    next: (err?: Error) => void;
+}
+export interface FastifyMiddlewareParams {
+    request: unknown;
+    reply: HttpResponse;
+    done: (err?: Error) => void;
+}
 export interface SecurityHeadersConfig {
     enableCSP: boolean;
     enableHSTS: boolean;
@@ -26,19 +39,19 @@ export declare class SecurityHeadersMiddleware {
     /**
      * Apply security headers to HTTP response
      */
-    applySecurityHeaders(response: any): void;
+    applySecurityHeaders(response: HttpResponse): void;
     /**
      * Express.js middleware function
      */
-    getExpressMiddleware(): (req: any, res: any, next: any) => void;
+    getExpressMiddleware(): (req: unknown, res: HttpResponse, next: (err?: Error) => void) => void;
     /**
      * Fastify middleware function
      */
-    getFastifyMiddleware(): (request: any, reply: any, done: any) => void;
+    getFastifyMiddleware(): (request: unknown, reply: HttpResponse, done: (err?: Error) => void) => void;
     /**
      * Generic middleware for any HTTP framework
      */
-    getMiddleware(): (response: any) => void;
+    getMiddleware(): (response: HttpResponse) => void;
     /**
      * Update configuration
      */

@@ -8,6 +8,7 @@
  * @since 2026-01-07
  */
 import { StringRayStateManager } from "../state/state-manager.js";
+import { type MemoryStats } from "../monitoring/memory-monitor.js";
 export interface BootSequenceConfig {
     enableEnforcement: boolean;
     codexValidation: boolean;
@@ -89,8 +90,8 @@ export declare class BootOrchestrator {
         healthy: boolean;
         issues: string[];
         metrics: {
-            current: any;
-            peak: any;
+            current: MemoryStats;
+            peak: MemoryStats;
             average: number;
             trend: string;
         };

@@ -60,13 +60,13 @@ export interface SecurityEvent {
     ipAddress?: string;
     userAgent?: string;
     timestamp: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     stackTrace?: string;
 }
 export interface ValidationResult {
     isValid: boolean;
     errors: string[];
-    sanitizedValue?: any;
+    sanitizedValue?: unknown;
     securityEvents: SecurityEvent[];
 }
 export interface RateLimitEntry {
@@ -124,7 +124,7 @@ export declare class SecurityHardeningSystem extends EventEmitter {
     /**
      * Validate and sanitize input data
      */
-    validateInput(input: any, context?: string): ValidationResult;
+    validateInput(input: unknown, context?: string): ValidationResult;
     /**
      * Validate string input
      */

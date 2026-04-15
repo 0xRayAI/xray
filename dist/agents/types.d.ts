@@ -1,7 +1,7 @@
 export interface ToolConfig {
     include?: string[];
     exclude?: string[];
-    [key: string]: any;
+    [key: string]: unknown;
 }
 export interface PermissionConfig {
     edit?: "ask" | "allow" | "deny";
@@ -9,7 +9,7 @@ export interface PermissionConfig {
         [command: string]: "ask" | "allow" | "deny";
     };
     webfetch?: "ask" | "allow" | "deny";
-    [key: string]: any;
+    [key: string]: unknown;
 }
 export interface TaskDefinition {
     id: string;
@@ -20,7 +20,7 @@ export interface TaskDefinition {
     createdAt: Date;
     assignedAgent?: string;
     status: "pending" | "running" | "completed" | "failed";
-    result?: any;
+    result?: unknown;
     error?: string;
     dependencies?: string[];
     subagentType?: string;

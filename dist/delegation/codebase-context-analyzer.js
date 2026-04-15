@@ -135,7 +135,7 @@ export class CodebaseContextAnalyzer {
         if (filePath) {
             try {
                 const currentStats = fs.statSync(filePath);
-                const cachedMtime = cached.data.lastModified?.getTime() || 0;
+                const cachedMtime = cached.lastModified?.getTime() || 0;
                 if (currentStats.mtime.getTime() !== cachedMtime) {
                     // File has changed, invalidate cache
                     this.analysisCache.delete(cacheKey);
@@ -148,7 +148,7 @@ export class CodebaseContextAnalyzer {
                 return null;
             }
         }
-        return cached.data;
+        return cached;
     }
     /**
      * Set cached analysis result with size limits
@@ -164,7 +164,7 @@ export class CodebaseContextAnalyzer {
             }
         }
         this.analysisCache.set(cacheKey, {
-            data,
+            ...data,
             timestamp: Date.now(),
         });
     }
@@ -357,7 +357,7 @@ export class CodebaseContextAnalyzer {
                         exports: cached.exports,
                         dependencies: cached.imports,
                         lastModified: stats.mtime,
-                        content: cached.content, // Lazy-loaded from cache
+                        content: cached.content ?? undefined,
                     };
                 }
                 // Load content with streaming for large files if enabled
@@ -376,6 +376,7 @@ export class CodebaseContextAnalyzer {
                         imports,
                         exports,
                         content,
+                        timestamp: Date.now(),
                     });
                 }
             }

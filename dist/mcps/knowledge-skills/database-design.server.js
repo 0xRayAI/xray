@@ -458,6 +458,7 @@ class StringRayDatabaseDesignServer {
             indexingStrategy: this.evaluateIndexing(schema),
             relationshipComplexity: this.assessRelationshipComplexity(schema.relationships),
             performanceConsiderations: this.identifyPerformanceIssues(schema, databaseType),
+            indexes: [],
         };
     }
     assessNormalization(schema) {

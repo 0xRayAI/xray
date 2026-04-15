@@ -280,7 +280,7 @@ class CodeAnalyzerServer {
                 results.push({ file, metrics: this.calculateCodeMetrics(content, language) });
             }
             catch (e) {
-                results.push({ file, metrics: { error: String(e) } });
+                results.push({ file, metrics: { totalLines: 0, nonEmptyLines: 0, functions: 0, classes: 0, interfaces: 0, imports: 0, exports: 0, cyclomaticComplexity: 0, error: String(e) } });
             }
         }
         return { content: [{ type: "text", text: JSON.stringify({ totalFiles: results.length, results }, null, 2) }] };

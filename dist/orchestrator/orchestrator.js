@@ -578,7 +578,7 @@ export class StringRayOrchestrator {
             const conflicts = taskResults.map((r, idx) => ({
                 response: r.result,
                 agentType: taskType,
-                taskId: r.taskId || `task-${idx}`,
+                expertiseScore: 0,
             }));
             const responseStrings = conflicts.map(c => JSON.stringify(c.response));
             const uniqueResponses = new Set(responseStrings);
@@ -617,29 +617,29 @@ export class StringRayOrchestrator {
      */
     populateExpertiseScore(conflicts) {
         const agentExpertiseLevels = {
-            // High expertise (architectural/strategic decisions)
             architect: 10,
             orchestrator: 10,
             security: 10,
             strategist: 9,
-            // Medium expertise (implementation)
             refactorer: 7,
             enforcer: 7,
             codeReviewer: 7,
             testingLead: 7,
-            // Standard expertise
             researcher: 5,
             analyzer: 5,
             bugTriage: 5,
-            // Lower expertise (specialized tasks)
             default: 3,
         };
-        return conflicts.map((conflict) => ({
-            ...conflict,
-            expertiseScore: conflict.agentType
-                ? agentExpertiseLevels[conflict.agentType] ?? agentExpertiseLevels.default
-                : agentExpertiseLevels.default,
-        }));
+        return conflicts.map((conflict) => {
+            const agentType = conflict.agentType ?? 'default';
+            const score = agentExpertiseLevels[agentType];
+            const expertiseScore = score !== undefined ? score : agentExpertiseLevels.default;
+            return {
+                response: conflict.response,
+                agentType: agentType,
+                expertiseScore: expertiseScore,
+            };
+        });
     }
     /**
      * Get orchestrator status

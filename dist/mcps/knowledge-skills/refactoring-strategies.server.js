@@ -257,14 +257,14 @@ class StringRayRefactoringStrategiesServer {
         const { codePath, timeBudget, riskTolerance, priorities = ["maintainability", "performance"], } = args;
         try {
             const fullAnalysis = await this.performTechnicalDebtAnalysis(codePath, false);
-            const plan = this.createPrioritizedRefactoringPlan(fullAnalysis, timeBudget, riskTolerance, priorities);
+            const plan = this.createPrioritizedRefactoringPlan(fullAnalysis, timeBudget, riskTolerance ?? "medium", priorities);
             return {
                 content: [
                     {
                         type: "text",
                         text: `Refactoring Plan for ${codePath}:\n\n` +
                             `⏰ TIME BUDGET: ${timeBudget.toUpperCase()}\n` +
-                            `🎯 RISK TOLERANCE: ${riskTolerance.toUpperCase()}\n` +
+                            `🎯 RISK TOLERANCE: ${(riskTolerance ?? "medium").toUpperCase()}\n` +
                             `📍 PRIORITIES: ${priorities.join(", ")}\n\n` +
                             `📊 PLAN OVERVIEW\n` +
                             `Total Phases: ${plan.phases.length}\n` +
@@ -307,7 +307,7 @@ class StringRayRefactoringStrategiesServer {
     async modernizeCodebase(args) {
         const { codePath, technologies, safeMode = true } = args;
         try {
-            const modernization = await this.analyzeModernizationOpportunities(codePath, technologies, safeMode);
+            const modernization = await this.analyzeModernizationOpportunities(codePath, technologies ?? [], safeMode);
             return {
                 content: [
                     {
@@ -482,7 +482,6 @@ class StringRayRefactoringStrategiesServer {
     }
     createPrioritizedRefactoringPlan(analysis, timeBudget, riskTolerance, priorities) {
         const timeLimits = {
-            "1-week": 1,
             "1-month": 4,
             "3-months": 12,
             "6-months": 26,

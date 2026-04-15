@@ -170,24 +170,27 @@ export class WebhookTrigger {
      * Different webhook providers have different payload structures.
      * This method extracts files in a unified way.
      */
-    extractFilesFromPayload(payload, event) {
+    extractFilesFromPayload(payload, _event) {
         try {
             // GitHub push event
-            if (payload.commits && Array.isArray(payload.commits)) {
+            const commits = payload.commits;
+            if (commits && Array.isArray(commits)) {
                 const files = new Set();
-                for (const commit of payload.commits) {
-                    if (commit.added && Array.isArray(commit.added)) {
-                        commit.added.forEach((f) => files.add(f));
+                for (const commit of commits) {
+                    const typedCommit = commit;
+                    if (typedCommit.added && Array.isArray(typedCommit.added)) {
+                        typedCommit.added.forEach((f) => files.add(f));
                     }
-                    if (commit.modified && Array.isArray(commit.modified)) {
-                        commit.modified.forEach((f) => files.add(f));
+                    if (typedCommit.modified && Array.isArray(typedCommit.modified)) {
+                        typedCommit.modified.forEach((f) => files.add(f));
                     }
                 }
                 return Array.from(files);
             }
             // GitHub pull_request event
-            if (payload.pull_request && payload.pull_request.files) {
-                return payload.pull_request.files.map((f) => f.filename);
+            const pullRequest = payload.pull_request;
+            if (pullRequest && pullRequest.files) {
+                return pullRequest.files.map((f) => f.filename);
             }
             return [];
         }

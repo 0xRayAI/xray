@@ -15,7 +15,6 @@ export class RefactoringLoggingProcessor {
     }
     async execute(context) {
         try {
-            // Check if context is agent task completion context
             if (context.agentName &&
                 context.task &&
                 typeof context.startTime === "number") {
@@ -78,7 +77,6 @@ export class RefactoringLoggingProcessor {
     }
     async appendToLog(entry) {
         try {
-            // Check if log file exists, create header if not
             if (!fs.existsSync(this.logPath)) {
                 let header = `# 0xRay Framework Refactoring Log\n\n`;
                 header += `This log tracks all refactoring operations performed by 0xRay agents.\n\n`;
@@ -86,7 +84,6 @@ export class RefactoringLoggingProcessor {
                 header += `---\n\n`;
                 fs.writeFileSync(this.logPath, header, "utf8");
             }
-            // Append the log entry
             fs.appendFileSync(this.logPath, entry, "utf8");
             await frameworkLogger.log("refactoring-logging-processor", "-refactoring-operation-logged-successfully-", "info", { message: "Refactoring operation logged successfully" });
         }

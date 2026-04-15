@@ -19,12 +19,16 @@ async function initializeImports() {
     if (importsInitialized)
         return;
     try {
-        ({ extractCodexMetadata } = await import("../utils/codex-parser.js"));
-        ({ StringRayContextLoader } = await import("./context-loader.js"));
+        const codexParser = await import("../utils/codex-parser.js");
+        const contextLoaderModule = await import("./context-loader.js");
+        extractCodexMetadata = codexParser.extractCodexMetadata;
+        StringRayContextLoader = contextLoaderModule.StringRayContextLoader;
     }
-    catch (error) {
-        ({ extractCodexMetadata } = await import("../utils/codex-parser"));
-        ({ StringRayContextLoader } = await import("./context-loader"));
+    catch {
+        const codexParser = await import("../utils/codex-parser");
+        const contextLoaderModule = await import("./context-loader");
+        extractCodexMetadata = codexParser.extractCodexMetadata;
+        StringRayContextLoader = contextLoaderModule.StringRayContextLoader;
     }
     importsInitialized = true;
 }
@@ -59,6 +63,9 @@ function readFileContent(filePath) {
  */
 async function createCodexContextEntry(filePath, content) {
     await initializeImports();
+    if (!extractCodexMetadata) {
+        throw new Error("Codex metadata extractor not available");
+    }
     const metadata = extractCodexMetadata(content);
     return {
         id: `strray-codex-${path.basename(filePath)}`,
@@ -186,7 +193,8 @@ export function createStringRayCodexInjectorHook() {
                     await frameworkLogger.log("codex-injector", "codex context loaded for validation", "success", { jobId, contextCount: codexContexts.length });
                     // Use the initialized context loader
                     await initializeImports();
-                    const contextLoader = new StringRayContextLoader();
+                    const ContextLoaderClass = StringRayContextLoader;
+                    const contextLoader = new ContextLoaderClass();
                     const loadResult = await contextLoader.loadCodexContext(sessionId);
                     if (!loadResult.success || !loadResult.context) {
                         // Codex context warning - operational, keep

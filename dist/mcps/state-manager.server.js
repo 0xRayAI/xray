@@ -459,17 +459,16 @@ class StrRayStateManagerServer {
             const backupData = this.backups.get(name);
             let restoredCount = 0;
             if (keys.length > 0) {
-                // Restore specific keys
                 for (const key of keys) {
-                    if (backupData[key] !== undefined) {
+                    if (typeof backupData === "object" && backupData !== null && key in backupData) {
                         this.state.set(key, backupData[key]);
                         restoredCount++;
                     }
                 }
             }
-            else if (backupData.all) {
-                // Restore all from full backup
-                for (const [key, value] of Object.entries(backupData.all)) {
+            else if (typeof backupData === "object" && backupData !== null && "all" in backupData) {
+                const allData = backupData.all;
+                for (const [key, value] of Object.entries(allData)) {
                     this.state.set(key, value);
                     restoredCount++;
                 }

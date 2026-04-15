@@ -378,5 +378,10 @@
       "enabled": true,
       "strict_mode": false
     }
+  },
+  "publish": {
+    "require_documentation": {
+      "readme_version_sync": true
+    }
   }
 }

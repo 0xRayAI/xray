@@ -10,7 +10,7 @@ export interface FileInfo {
     exports: string[];
     dependencies: string[];
     lastModified: Date;
-    content?: string;
+    content?: string | undefined;
 }
 export interface ModuleInfo {
     name: string;
@@ -64,6 +64,14 @@ export interface MemoryConfig {
     cacheTtlMs: number;
     enableConcurrentProcessing?: boolean;
     concurrencyLimit?: number;
+}
+export interface CodebaseAnalysisCacheData {
+    linesOfCode: number;
+    imports: string[];
+    exports: string[];
+    content?: string;
+    lastModified?: Date;
+    timestamp: number;
 }
 export declare class CodebaseContextAnalyzer {
     private projectRoot;

@@ -8,7 +8,7 @@ export interface OrchestrationResult {
     taskId: string;
     agentUsed: string;
     duration: number;
-    result: any;
+    result: unknown;
     error?: string;
     errors?: string[];
 }
@@ -38,7 +38,11 @@ export declare class KernelOrchestrator {
      */
     private validateTaskDependencies;
     executeComplexTaskSingle(task: TaskDefinition): Promise<OrchestrationResult>;
-    resolveConflicts(conflicts: any[]): {
+    resolveConflicts(conflicts: Array<{
+        response?: unknown;
+        proposed?: unknown;
+        expertiseScore?: number;
+    }>): {
         response: string;
         expertiseScore: number;
     };
@@ -46,7 +50,12 @@ export declare class KernelOrchestrator {
     /**
      * Delegate a task to a specific agent with timeout protection
      */
-    delegateToSubagent(agentName: string, task: any): Promise<any>;
+    delegateToSubagent(agentName: string, task: TaskDefinition): Promise<{
+        success: boolean;
+        result: unknown;
+        agentName: string;
+        executionTime: number;
+    }>;
     private performDelegation;
     getStatus(): {
         queueSize: number;

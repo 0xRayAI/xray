@@ -4,6 +4,7 @@
  * Handles successful post-processor operations including metrics collection,
  * notifications, cleanup, and reporting.
  */
+import { PostProcessorContext, PostProcessorResult, MonitoringResult } from "../types.js";
 export interface SuccessHandlerConfig {
     successConfirmation?: boolean;
     cleanupEnabled?: boolean;
@@ -18,49 +19,13 @@ export interface SuccessMetrics {
     redeployments: number;
     timestamp: Date;
 }
-export interface PostProcessorContext {
-    commitSha: string;
-    repository: string;
-    branch: string;
-    author: string;
-    files: string[];
-    trigger: "git-hook" | "webhook" | "api" | "manual";
-    testResults?: {
-        unit?: {
-            passed: boolean;
-            coverage: number;
-        };
-        integration?: {
-            passed: boolean;
-            coverage: number;
-        };
-        e2e?: {
-            passed: boolean;
-            coverage: number;
-        };
-        performance?: {
-            passed: boolean;
-            coverage: number;
-        };
-    };
-}
-export interface PostProcessorResult {
-    success: boolean;
-    commitSha: string;
-    sessionId: string;
-    attempts: number;
-    monitoringResults?: any[];
-    fixesApplied?: any[];
-    error?: string;
-    duration?: number;
-}
 export declare class SuccessHandler {
     private config;
     constructor(config?: SuccessHandlerConfig);
     /**
      * Handle successful post-processor completion
      */
-    handleSuccess(context: PostProcessorContext, result: PostProcessorResult, monitoringResults: any[]): Promise<SuccessMetrics>;
+    handleSuccess(context: PostProcessorContext, result: PostProcessorResult, monitoringResults: MonitoringResult[]): Promise<SuccessMetrics>;
     /**
      * Confirm deployment success
      */

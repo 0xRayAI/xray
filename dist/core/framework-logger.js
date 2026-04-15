@@ -1,4 +1,6 @@
 import { isLoggingEnabled, shouldLog, } from "./logging-config.js";
+import { promises as fs, existsSync, mkdirSync } from "fs";
+import { join } from "path";
 /**
  * Generate a unique job ID for tracking work sessions
  */
@@ -179,29 +181,23 @@ export class FrameworkUsageLogger {
             }
         }
     }
-    flushBuffer() {
+    async flushBuffer() {
         if (this.flushing || this.buffer.length === 0)
             return;
         this.flushing = true;
         const toWrite = this.buffer.splice(0, this.buffer.length);
         const data = toWrite.join("");
-        const fs = require("fs");
-        const path = require("path");
         try {
             const cwd = process.cwd();
             if (!cwd)
                 return;
-            const logDir = path.join(cwd, "logs", "framework");
-            const logFile = path.join(logDir, "activity.log");
-            if (!fs.existsSync(logDir)) {
-                fs.mkdirSync(logDir, { recursive: true });
+            const logDir = join(cwd, "logs", "framework");
+            const logFile = join(logDir, "activity.log");
+            if (!existsSync(logDir)) {
+                mkdirSync(logDir, { recursive: true });
             }
-            fs.appendFile(logFile, data, (err) => {
-                this.flushing = false;
-                if (err) {
-                    // silent
-                }
-            });
+            await fs.appendFile(logFile, data).catch(() => { });
+            this.flushing = false;
         }
         catch {
             this.flushing = false;

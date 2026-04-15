@@ -80,7 +80,7 @@ export declare class AgentSpawnGovernor {
     /**
      * Complete an agent spawn (mark as completed)
      */
-    completeSpawn(trackingId: string, result?: any): Promise<void>;
+    completeSpawn(trackingId: string, result?: boolean): Promise<void>;
     /**
      * Fail an agent spawn
      */

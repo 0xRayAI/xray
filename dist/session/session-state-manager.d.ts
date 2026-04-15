@@ -15,21 +15,25 @@ export interface SessionDependency {
     dependedBy: string[];
     state: "pending" | "active" | "completed" | "failed";
     priority: number;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
 }
 export interface SessionGroup {
     groupId: string;
     sessionIds: string[];
     coordinatorSession: string;
     state: "forming" | "active" | "completing" | "completed" | "failed";
-    sharedState: Map<string, any>;
+    sharedState: Map<string, {
+        value: unknown;
+        fromSessionId: string;
+        timestamp: number;
+    }>;
     createdAt: number;
     completedAt?: number;
 }
 export interface MigrationPlan {
     sessionId: string;
     targetCoordinator: string;
-    stateTransfer: Map<string, any>;
+    stateTransfer: Map<string, unknown>;
     migrationSteps: string[];
     rollbackSteps: string[];
 }
@@ -49,15 +53,15 @@ export declare class SessionStateManager {
     /**
      * Share state between sessions
      */
-    shareState(fromSessionId: string, toSessionId: string, key: string, value: any): boolean;
+    shareState(fromSessionId: string, toSessionId: string, key: string, value: unknown): boolean;
     /**
      * Broadcast state to multiple sessions
      */
-    broadcastState(fromSessionId: string, targetSessionIds: string[], key: string, value: any): number;
+    broadcastState(fromSessionId: string, targetSessionIds: string[], key: string, value: unknown): number;
     /**
      * Register session dependency
      */
-    registerDependency(sessionId: string, dependsOn: string[], metadata?: Record<string, any>): void;
+    registerDependency(sessionId: string, dependsOn: string[], metadata?: Record<string, unknown>): void;
     /**
      * Update dependency state
      */
@@ -81,11 +85,11 @@ export declare class SessionStateManager {
     /**
      * Share state within a session group
      */
-    shareGroupState(groupId: string, key: string, value: any, fromSessionId: string): boolean;
+    shareGroupState(groupId: string, key: string, value: unknown, fromSessionId: string): boolean;
     /**
      * Get session group state
      */
-    getGroupState(groupId: string, key: string): any;
+    getGroupState(groupId: string, key: string): unknown;
     /**
      * Plan session migration
      */
@@ -108,7 +112,7 @@ export declare class SessionStateManager {
     /**
      * Find orphaned agents in dependency graph
      */
-    findOrphanedAgents(allAgents: string[], dependencies: any): string[];
+    findOrphanedAgents(allAgents: string[], dependencies: Record<string, string[]>): string[];
     /**
      * Execute session migration
      */

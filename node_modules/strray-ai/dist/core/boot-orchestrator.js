@@ -336,29 +336,24 @@ export class BootOrchestrator {
         const loadedAgents = [];
         for (const agentName of agents) {
             try {
-                // Dynamic import of agent modules using path resolver
-                const agentPath = pathResolver.resolveAgentPath(agentName);
-                await frameworkLogger.log("boot-orchestrator", "agent-loading", "info", { jobId, agentName, agentPath });
-                const agentModule = await import(agentPath);
-                const agentClass = agentModule[`0xRay${agentName.charAt(0).toUpperCase() + agentName.slice(1)}Agent`];
-                if (agentClass) {
-                    const agentInstance = new agentClass();
-                    this.stateManager.set(`agent:${agentName}`, agentInstance);
+                await frameworkLogger.log("boot-orchestrator", "agent-loading", "info", { jobId, agentName });
+                const { getAgentEntry } = await import("../agents/registry.js");
+                const agentEntry = getAgentEntry(agentName);
+                if (agentEntry) {
+                    this.stateManager.set(`agent:${agentName}`, agentEntry);
                     loadedAgents.push(agentName);
                 }
                 else {
-                    frameworkLogger.log("boot-orchestrator", "agent-class-not-found", "warning", { agentName, message: `Agent class not found in module: ${agentName}` });
+                    frameworkLogger.log("boot-orchestrator", "agent-not-found", "warning", { agentName });
                 }
             }
             catch (error) {
                 frameworkLogger.log("boot-orchestrator", "agent-load-failed", "warning", {
                     agentName,
                     error: error instanceof Error ? error.message : String(error),
-                    message: `Failed to load agent ${agentName}`,
                 });
             }
         }
-        // Update session state with loaded agents
         this.stateManager.set("session:agents", loadedAgents);
         return loadedAgents;
     }

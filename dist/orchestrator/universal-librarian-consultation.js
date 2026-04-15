@@ -162,7 +162,7 @@ export class UniversalLibrarianConsultation {
     /**
      * Update documentation after action completion
      */
-    async updateDocumentation(action, result) {
+    async updateDocumentation(action, _result) {
         await frameworkLogger.log("universal-librarian-consultation", "documentation-update-triggered", "info", {
             actionType: action.type,
             scope: action.scope,
@@ -172,7 +172,7 @@ export class UniversalLibrarianConsultation {
     /**
      * Update versions after action completion
      */
-    async updateVersions(action, result) {
+    async updateVersions(action, _result) {
         await frameworkLogger.log("universal-librarian-consultation", "version-update-triggered", "info", {
             actionType: action.type,
             scope: action.scope,

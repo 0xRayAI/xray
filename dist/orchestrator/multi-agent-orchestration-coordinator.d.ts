@@ -26,13 +26,38 @@ export interface OrchestrationResult {
     failedTasks: number;
     totalTasks: number;
     duration: number;
-    results: any[];
+    results: unknown[];
     errors: string[];
     agentCoordination: {
         agentsUsed: string[];
         coordinationEvents: number;
         conflictsResolved: number;
     };
+}
+export interface ExecutionPlan {
+    complexityScore: number;
+    recommendedStrategy: "single-agent" | "multi-agent" | "orchestrator-led";
+    parallelGroups: TaskDefinition[][];
+    dependencyGraph: Map<string, string[]>;
+    estimatedDuration: number;
+}
+export interface ResourceAllocation {
+    allocatedAgents: string[];
+    resourceAvailability: Record<string, boolean>;
+    coordinationCapacity: number;
+}
+export interface WorkflowTaskResult {
+    success: boolean;
+    taskId?: string | undefined;
+    result?: unknown | undefined;
+    error?: string | undefined;
+    duration: number;
+}
+export interface CoordinatedWorkflowResult {
+    taskResults: WorkflowTaskResult[];
+    coordinationEvents: number;
+    conflictsResolved: number;
+    agentsUsed: string[];
 }
 export interface CoordinationMetrics {
     totalWorkflows: number;

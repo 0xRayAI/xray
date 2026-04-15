@@ -213,8 +213,7 @@ class StringRayTestingBestPracticesServer {
                                 .join("\n\n")}\n\n` +
                             `🎯 TEST STRATEGY RECOMMENDATIONS\n${analysis.recommendations
                                 .slice(0, 5)
-                                .map((rec) => `${this.getImpactIcon(rec.impact)} ${rec.type}: ${rec.description}\n` +
-                                `   Impact: ${rec.impact.toUpperCase()} | Effort: ${rec.effort.toUpperCase()}\n` +
+                                .map((rec) => `   Impact: ${rec.impact.toUpperCase()} | Effort: ${rec.effort.toUpperCase()}\n` +
                                 `   Tools: ${rec.tools.join(", ")}`)
                                 .join("\n\n")}\n\n` +
                             `⚡ QUICK WINS\n` +
@@ -368,8 +367,7 @@ class StringRayTestingBestPracticesServer {
                                 `   Solution: ${bottleneck.solution}`)
                                 .join("\n\n")}\n\n` +
                             `⚡ OPTIMIZATION RECOMMENDATIONS\n${optimization.recommendations
-                                .map((rec, i) => `${i + 1}. ${rec.title}\n` +
-                                `   Expected Improvement: ${rec.improvement}s\n` +
+                                .map((rec, i) => `   Expected Improvement: ${rec.improvement}s\n` +
                                 `   Effort: ${rec.effort}\n` +
                                 `   ${rec.description}`)
                                 .join("\n\n")}\n\n` +

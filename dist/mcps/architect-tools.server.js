@@ -10,6 +10,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+;
 class StringRayArchitectToolsServer {
     server;
     constructor() {
@@ -161,7 +162,9 @@ class StringRayArchitectToolsServer {
     }
     // Tool implementations - wrappers around the original architect-tools functions
     async contextAnalysis(args) {
-        const { projectRoot, depth = "detailed", includeFiles } = args;
+        const projectRoot = args?.projectRoot || "";
+        const depth = args?.depth || "detailed";
+        const includeFiles = args?.includeFiles;
         frameworkLogger.log("mcps/architect-tools", "context-analysis", "info", { projectRoot });
         // This would integrate with the actual architect-tools.ts functions
         // For now, providing a simplified implementation
@@ -187,7 +190,9 @@ class StringRayArchitectToolsServer {
         };
     }
     async codebaseStructure(args) {
-        const { projectRoot, includeMetrics = true, maxDepth = 10 } = args;
+        const projectRoot = args?.projectRoot || "";
+        const includeMetrics = args?.includeMetrics ?? true;
+        const maxDepth = args?.maxDepth ?? 10;
         frameworkLogger.log("mcps/architect-tools", "codebase-structure", "info", { projectRoot });
         const structure = {
             projectRoot,
@@ -207,7 +212,9 @@ class StringRayArchitectToolsServer {
         };
     }
     async dependencyAnalysis(args) {
-        const { projectRoot, focusAreas, includeGraphs = true } = args;
+        const projectRoot = args?.projectRoot || "";
+        const focusAreas = args?.focusAreas;
+        const includeGraphs = args?.includeGraphs ?? true;
         frameworkLogger.log("mcps/architect-tools", "dependency-analysis", "info", { projectRoot });
         const analysis = {
             projectRoot,
@@ -230,7 +237,9 @@ class StringRayArchitectToolsServer {
         };
     }
     async architectureAssessment(args) {
-        const { projectRoot, assessmentType = "comprehensive", focusMetrics, } = args;
+        const projectRoot = args?.projectRoot || "";
+        const assessmentType = args?.assessmentType || "comprehensive";
+        const focusMetrics = args?.focusMetrics;
         frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
         const assessment = {
             projectRoot,

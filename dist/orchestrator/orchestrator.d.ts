@@ -86,7 +86,7 @@ export declare class StringRayOrchestrator {
      */
     orchestrateTestAutoHealing(failureContext: TestFailureContext, sessionId?: string): Promise<{
         success: boolean;
-        healingResult: any;
+        healingResult: unknown;
         agentCoordination: string[];
         performanceImprovement: number;
     }>;
@@ -109,7 +109,11 @@ export declare class StringRayOrchestrator {
     /**
      * Resolve conflicts between subagent responses
      */
-    resolveConflicts(conflicts: any[]): any;
+    resolveConflicts(conflicts: Array<{
+        response?: unknown;
+        agentType?: string;
+        expertiseScore?: number;
+    }>): unknown;
     private resolveByMajorityVote;
     private resolveByExpertPriority;
     private resolveByConsensus;

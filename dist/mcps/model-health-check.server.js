@@ -58,7 +58,7 @@ class StringRayModelHealthCheckServer {
             const { name, arguments: args } = request.params;
             switch (name) {
                 case "model-health-check":
-                    return await this.handleModelHealthCheck(args || {});
+                    return await this.handleModelHealthCheck((args || {}));
                 default:
                     throw new Error(`Unknown tool: ${name}`);
             }
@@ -189,9 +189,12 @@ class StringRayModelHealthCheckServer {
                             .join("") +
                         "\n";
                 for (const model1 of Object.keys(results.compatibilityMatrix)) {
+                    const row = results.compatibilityMatrix[model1];
+                    if (!row)
+                        continue;
                     report += `| ${model1} |`;
-                    for (const model2 of Object.keys(results.compatibilityMatrix[model1])) {
-                        const compatible = results.compatibilityMatrix[model1][model2];
+                    for (const model2 of Object.keys(row)) {
+                        const compatible = row[model2];
                         report += ` ${compatible ? "✅" : "❌"} |`;
                     }
                     report += "\n";

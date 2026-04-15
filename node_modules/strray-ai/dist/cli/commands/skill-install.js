@@ -1,7 +1,6 @@
 import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync } from "fs";
 import { join, basename, dirname } from "path";
 import { execSync } from "child_process";
-import { getConfigDir } from "../../core/config-paths.js";
 function getLocalRegistryPath() {
     return join(process.cwd(), ".opencode", "strray", "skill-registry.json");
 }
@@ -297,7 +296,7 @@ function installFlatMd(repoDir, skillsDir, sourcePrefix, sourceUrl, license) {
 }
 export async function skillInstallCommand(sourceArg, options) {
     const registry = getRegistry();
-    const skillsDir = join(getConfigDir(), "skills");
+    const skillsDir = join(process.cwd(), ".opencode", "skills");
     if (!sourceArg) {
         console.log("\n  Recommended Starter Packs");
         console.log("  ────────────────────────\n");

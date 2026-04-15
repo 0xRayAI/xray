@@ -31,12 +31,18 @@ export interface AutoHealingResult {
     recommendations: string[];
     nextSteps: string[];
 }
+export interface TestResults {
+    timedOut?: boolean;
+    executionTime?: number;
+    file?: string;
+    failed?: number;
+}
 export declare class TestAutoHealingSystem {
     private healingHistory;
     /**
      * Main auto-healing entry point for test failures
      */
-    healTestFailures(testResults: any, context: RuleValidationContext): Promise<AutoHealingResult>;
+    healTestFailures(testResults: TestResults, context: RuleValidationContext): Promise<AutoHealingResult>;
     /**
      * Analyze test failures and determine root causes
      */

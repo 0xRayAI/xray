@@ -39,10 +39,10 @@ export class AutoFixEngine {
                 if (result.success) {
                     appliedFixes.push({
                         type: fix.type,
-                        files: fix.files,
+                        files: fix.files ?? [],
                         description: fix.description,
                         timestamp: new Date(),
-                        appliedChanges: result.changes,
+                        appliedChanges: result.changes ?? [],
                     });
                     await frameworkLogger.log("-auto-fix-engine", "-fix-applied-successfully-fix-description-", "success", { message: `✅ Fix applied successfully: ${fix.description}` });
                 }

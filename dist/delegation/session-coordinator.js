@@ -208,7 +208,9 @@ export class SessionCoordinator {
         const contextData = session.coordinationState.sharedContext.get(key);
         if (Array.isArray(contextData) && contextData.length > 0) {
             const last = contextData[contextData.length - 1];
-            return { ...last.value, sharedBy: last.fromAgent };
+            if (last) {
+                return { ...last.value, sharedBy: last.fromAgent };
+            }
         }
         return undefined;
     }

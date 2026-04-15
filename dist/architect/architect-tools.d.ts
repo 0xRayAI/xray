@@ -2,8 +2,16 @@
  * Architect Tools - Integration layer between architect agent and contextual analysis system
  * Provides tools for codebase intelligence, architectural assessment, and design planning
  */
+import { CodebaseStructure } from "../delegation/codebase-context-analyzer.js";
+import { DependencyNode } from "../delegation/dependency-graph-builder.js";
+export interface CodebaseComplexityInfo {
+    averageComplexity: number;
+    highComplexityFiles: string[];
+    complexityDistribution: "low" | "medium" | "high" | "critical";
+    recommendations: string[];
+}
 export interface ContextAnalysisResult {
-    codebaseStructure: any;
+    codebaseStructure: CodebaseStructure;
     architecturalPatterns: string[];
     dependencyIssues: string[];
     scalabilityAssessment: {
@@ -11,7 +19,7 @@ export interface ContextAnalysisResult {
         recommendations: string[];
     };
     maintainabilityIndex: number;
-    complexityAnalysis: any;
+    complexityAnalysis: CodebaseComplexityInfo;
 }
 export interface ArchitectureAssessment {
     overallHealth: "excellent" | "good" | "fair" | "poor" | "critical";
@@ -31,7 +39,7 @@ export interface ArchitectureAssessment {
     recommendations: string[];
 }
 export interface DependencyAnalysis {
-    graph: any;
+    graph: Map<string, DependencyNode>;
     circularDependencies: string[];
     tightlyCoupledModules: string[];
     orphanModules: string[];

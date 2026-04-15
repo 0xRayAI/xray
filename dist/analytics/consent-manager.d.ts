@@ -85,7 +85,7 @@ export declare class ConsentManager {
     /**
      * Add item to submission queue
      */
-    queueSubmission(data: any): Promise<void>;
+    queueSubmission(data: unknown): Promise<void>;
     /**
      * Save submission queue to file
      */

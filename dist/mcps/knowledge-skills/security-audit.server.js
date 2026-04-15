@@ -235,7 +235,9 @@ class StringRaySecurityAuditServer {
     async generateSecurityReport(args) {
         const { auditResults, format = "markdown", includeRemediation = true, } = args;
         try {
-            const report = auditResults.data || auditResults;
+            const report = auditResults.data
+                ? auditResults.data
+                : auditResults;
             let output = "";
             switch (format) {
                 case "markdown":

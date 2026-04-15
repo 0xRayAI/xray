@@ -235,16 +235,18 @@ export class SecurityHardeningSystem extends EventEmitter {
         if (config.customHeaders) {
             Object.assign(headers, config.customHeaders);
         }
-        // Conditionally apply HSTS
+        // Conditionally remove HSTS
         if (!config.enableHsts) {
-            delete headers["Strict-Transport-Security"];
+            const headersRecord = headers;
+            const { "Strict-Transport-Security": _, ...remainingHeaders } = headersRecord;
+            Object.assign(headers, remainingHeaders);
         }
         // Set all headers
         Object.entries(headers).forEach(([key, value]) => {
             res.setHeader(key, value);
         });
         // Add rate limit headers
-        const rateLimitInfo = this.getRateLimitInfo(this.getClientIP({ headers: {} }));
+        const rateLimitInfo = this.getRateLimitInfo(this.getClientIP({ headers: {}, socket: { remoteAddress: "unknown" } }));
         if (rateLimitInfo) {
             res.setHeader("X-RateLimit-Limit", rateLimitInfo.limit.toString());
             res.setHeader("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
@@ -255,9 +257,9 @@ export class SecurityHardeningSystem extends EventEmitter {
      * Validate CSRF token
      */
     validateCsrfToken(req) {
-        // Simple CSRF validation - in production, use proper CSRF tokens
         const token = req.headers["x-csrf-token"];
-        const sessionToken = req.session?.csrfToken;
+        const reqWithSession = req;
+        const sessionToken = reqWithSession.session?.csrfToken;
         if (!token || !sessionToken) {
             return false;
         }
@@ -690,8 +692,25 @@ export class SecurityHardeningSystem extends EventEmitter {
      * Get security statistics
      */
     getSecurityStats() {
-        const eventsByType = {};
-        const eventsBySeverity = {};
+        const eventsByType = {
+            input_validation_failure: 0,
+            rate_limit_exceeded: 0,
+            authentication_failure: 0,
+            authorization_failure: 0,
+            suspicious_activity: 0,
+            sql_injection_attempt: 0,
+            xss_attempt: 0,
+            csrf_attempt: 0,
+            security_header_missing: 0,
+            encryption_failure: 0,
+            audit_log_failure: 0,
+        };
+        const eventsBySeverity = {
+            low: 0,
+            medium: 0,
+            high: 0,
+            critical: 0,
+        };
         this.securityEvents.forEach((event) => {
             eventsByType[event.type] = (eventsByType[event.type] || 0) + 1;
             eventsBySeverity[event.severity] =

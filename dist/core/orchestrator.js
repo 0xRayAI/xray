@@ -339,13 +339,13 @@ export class KernelOrchestrator {
         if (this.config.conflictResolutionStrategy === "majority_vote") {
             const votes = {};
             conflicts.forEach((conflict) => {
-                const response = conflict.response || conflict.proposed;
+                const response = String(conflict.response ?? conflict.proposed ?? '');
                 votes[response] = (votes[response] || 0) + 1;
             });
             const maxVotes = Math.max(...Object.values(votes));
             const winner = Object.entries(votes).find(([_, voteCount]) => voteCount === maxVotes);
             if (winner) {
-                const winningConflicts = conflicts.filter((c) => (c.response || c.proposed) === winner[0]);
+                const winningConflicts = conflicts.filter((c) => String(c.response ?? c.proposed ?? '') === winner[0]);
                 const avgExpertise = winningConflicts.reduce((sum, c) => sum + (c.expertiseScore || 0), 0) / winningConflicts.length;
                 return { response: winner[0], expertiseScore: avgExpertise };
             }
@@ -355,7 +355,7 @@ export class KernelOrchestrator {
             ? current
             : best);
         return {
-            response: bestConflict.response || bestConflict.proposed,
+            response: String(bestConflict.response ?? bestConflict.proposed ?? ''),
             expertiseScore: bestConflict.expertiseScore || 0,
         };
     }

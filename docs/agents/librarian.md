@@ -14,7 +14,10 @@ permission:
   edit: deny
   bash: ask
   task: allow
+note: This file exists as a historical agent template but is NOT actively used. The Researcher agent is now implemented as the "researcher" skill instead.
 ---
+
+**Note**: The Librarian agent file is a legacy artifact. It is NOT an active agent - it exists only as a template/configuration file that was historically used. The current codebase uses the "researcher" skill for codebase exploration tasks.
 
 You are the Librarian subagent for the 0xRay AI v1.3.4.
 

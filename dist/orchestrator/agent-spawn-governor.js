@@ -198,7 +198,7 @@ export class AgentSpawnGovernor {
                     resolve(result);
                 }
                 catch (error) {
-                    await this.handleAuthorizationError(error, trackingId, context);
+                    await this.handleAuthorizationError(error instanceof Error ? error : new Error(String(error)), trackingId, context);
                     reject(error);
                 }
                 finally {
@@ -521,13 +521,13 @@ export class AgentSpawnGovernor {
         });
     }
     async withRetry(operation, operationName) {
-        let lastError;
+        let lastError = null;
         for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
             try {
                 return await operation();
             }
             catch (error) {
-                lastError = error;
+                lastError = error instanceof Error ? error : new Error(String(error));
                 if (attempt < this.maxRetries) {
                     const delay = this.retryDelay * Math.pow(2, attempt - 1);
                     await new Promise((resolve) => setTimeout(resolve, delay));

@@ -77,15 +77,15 @@ export declare class StringRayPerformanceBenchmark {
     /**
      * Benchmark boot sequence performance
      */
-    benchmarkBootSequence(bootOrchestrator: any): Promise<BootBenchmarkResult>;
+    benchmarkBootSequence(_bootOrchestrator: unknown): Promise<BootBenchmarkResult>;
     /**
      * Benchmark orchestrator task execution
      */
-    benchmarkOrchestratorTasks(orchestrator: any, taskCount?: number, concurrentTasks?: number): Promise<OrchestratorBenchmarkResult>;
+    benchmarkOrchestratorTasks(_orchestrator: unknown, taskCount?: number, concurrentTasks?: number): Promise<OrchestratorBenchmarkResult>;
     /**
      * Benchmark session management operations
      */
-    benchmarkSessionOperations(sessionStateManager: any, operationCount?: number): Promise<SessionBenchmarkResult>;
+    benchmarkSessionOperations(_sessionStateManager: unknown, operationCount?: number): Promise<SessionBenchmarkResult>;
     /**
      * Calculate performance metrics from benchmark results
      */

@@ -316,5 +316,5 @@ All facades expose clean configuration interfaces that work seamlessly with your
 
 **Version:** 1.9.0  
 **Architecture:** Facade Pattern (87% code reduction)  
-**Agents:** N specialized agents  
+**Agents:** 27 specialized agents  
 **Last Updated:** 2026-03-12

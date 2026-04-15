@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# StringRay AI v1.3.4 - Pre-commit Introspection
+# 0xRay AI v1.3.4 - Pre-commit Introspection
 # Comprehensive code quality and architecture validation
 
-echo "🔬 StringRay AI v1.3.4 - Pre-commit Introspection"
+echo "🔬 0xRay AI v1.3.4 - Pre-commit Introspection"
 echo "============================================================"
 
 # Initialize analysis status

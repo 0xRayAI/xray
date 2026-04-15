@@ -1,7 +1,7 @@
 # 0xRay Pipeline Inventory
 
-**Version**: 1.14.0  
-**Date**: 2026-03-21  
+**Version**: 1.22.13  
+**Date**: 2026-04-15  
 **Author**: 0xRay AI Team (via @researcher agent)
 
 ---
@@ -24,7 +24,7 @@ This document catalogs all major system pipelines in the 0xRay framework. Each p
 - Layer 1: Core Orchestrator (StringRayOrchestrator)
 - Layer 2: Delegation System (AgentDelegator, SessionCoordinator)
 - Layer 3: Session Management (SessionMonitor, SessionCleanupManager, SessionStateManager)
-- Layer 4: Processors (ProcessorManager + 11 processors)
+- Layer 4: Processors (ProcessorManager + 7 processors)
 - Layer 5: Agents (enforcer, architect, bug-triage-specialist, code-reviewer, security-auditor, refactorer, testing-lead)
 - Layer 6: Security & Compliance (SecurityHardener, CodexInjector)
 - Layer 7: Inference (InferenceTuner - optional)
@@ -386,7 +386,7 @@ ViolationFix[] with status
 - `src/processors/processor-manager.ts` (ProcessorManager)
 - `src/processors/processor-interfaces.ts` (ProcessorRegistry, IProcessor)
 - `src/processors/processor-pipeline.server.ts` (MCP server)
-- `src/processors/implementations/*.ts` (12 implementations)
+- `src/processors/implementations/*.ts` (7 implementations)
 
 **Pre-Processors** (priority order):
 1. preValidate (10) - Syntax checking, validation

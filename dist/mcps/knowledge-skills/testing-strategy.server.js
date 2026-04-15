@@ -179,7 +179,7 @@ class StringRayTestingStrategyServer {
         };
     }
     async designTestStrategy(args) {
-        const { projectRoot, projectType, complexity, timeline } = args;
+        const { projectRoot, projectType = "web", complexity = "medium", timeline = "agile" } = args;
         const strategy = this.generateTestStrategy(projectRoot, projectType, complexity, timeline);
         return {
             content: [
@@ -216,7 +216,7 @@ class StringRayTestingStrategyServer {
     }
     async optimizeTestCoverage(args) {
         const { projectRoot, currentCoverage, targetCoverage = 85, focusAreas, } = args;
-        const optimization = this.createCoverageOptimizationPlan(projectRoot, currentCoverage, targetCoverage, focusAreas);
+        const optimization = this.createCoverageOptimizationPlan(projectRoot, currentCoverage ?? 0, targetCoverage, focusAreas);
         return {
             content: [
                 {
@@ -732,7 +732,7 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
             estimatedDays: Math.round(baseDays * complexityMultiplier),
             phases: optimization.phases.map((phase) => ({
                 name: phase.name,
-                estimatedDays: Math.round(phase.estimatedTests / 5), // 5 tests per day estimate
+                estimatedDays: Math.round(phase.estimatedTests / 5),
             })),
         };
     }

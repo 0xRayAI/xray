@@ -638,7 +638,12 @@ class StringRayProjectAnalysisServer {
         callback(structure, depth);
         if (structure.children) {
             for (const child of structure.children) {
-                this.traverseStructure(child, callback, depth + 1);
+                if (child.type === "directory") {
+                    this.traverseStructure(child, callback, depth + 1);
+                }
+                else {
+                    callback(child, depth + 1);
+                }
             }
         }
     }

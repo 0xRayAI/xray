@@ -313,9 +313,9 @@ export class SessionStateManager {
                         const group = Array.from(this.sessionGroups.values()).find((g) => g.sessionIds.includes(plan.sessionId));
                         rollbackData.push({
                             step,
-                            sessionState,
-                            dependencies,
-                            group,
+                            sessionState: sessionState ?? undefined,
+                            dependencies: dependencies ?? undefined,
+                            group: group ?? undefined,
                         });
                         break;
                     }
@@ -482,7 +482,7 @@ export class SessionStateManager {
                             this.persistDependencies();
                         }
                         if (backup.group) {
-                            this.sessionGroups.set(backup.group.id, backup.group);
+                            this.sessionGroups.set(backup.group.groupId, backup.group);
                             this.persistSessionGroups();
                         }
                         break;

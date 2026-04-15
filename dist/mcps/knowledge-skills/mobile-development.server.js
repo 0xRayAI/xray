@@ -200,28 +200,28 @@ class StringRayMobileDevelopmentServer {
             const { name, arguments: args } = request.params;
             switch (name) {
                 case "ios_blueprint":
-                    return await this.generateIOSBlueprint(args);
+                    return await this.generateIOSBlueprint(args ?? {});
                 case "android_blueprint":
-                    return await this.generateAndroidBlueprint(args);
+                    return await this.generateAndroidBlueprint(args ?? {});
                 case "react_native_boilerplate":
-                    return await this.generateReactNativeBlueprint(args);
+                    return await this.generateReactNativeBlueprint(args ?? {});
                 case "flutter_boilerplate":
-                    return await this.generateFlutterBlueprint(args);
+                    return await this.generateFlutterBlueprint(args ?? {});
                 case "mobile_performance_profile":
-                    return await this.analyzeMobilePerformance(args);
+                    return await this.analyzeMobilePerformance(args ?? {});
                 case "app_store_metadata":
-                    return await this.generateAppStoreMetadata(args);
+                    return await this.generateAppStoreMetadata(args ?? {});
                 default:
                     throw new Error(`Unknown tool: ${name}`);
             }
         });
     }
     async generateIOSBlueprint(args) {
-        const { projectName, language = "swiftui", architecture = "mvvm", features = [], } = args;
+        const { projectName, language = "swiftui", architecture = "mvvm", features = [] } = args;
         const blueprint = {
             projectName,
             swiftVersion: "5.9",
-            architecture,
+            architecture: architecture,
             frameworks: ["Foundation", "SwiftUI", "Combine"],
             dependencies: [],
             files: [
@@ -292,12 +292,12 @@ class AuthService: ObservableObject {
         };
     }
     async generateAndroidBlueprint(args) {
-        const { projectName, uiFramework = "compose", architecture = "mvvm", features = [], } = args;
+        const { projectName, uiFramework = "compose", architecture = "mvvm", features = [] } = args;
         const blueprint = {
             projectName,
             kotlinVersion: "1.9.22",
             composeVersion: "1.5.8",
-            architecture,
+            architecture: architecture,
             dependencies: [
                 "androidx.core:core-ktx",
                 "androidx.lifecycle:lifecycle-runtime-ktx",
@@ -312,11 +312,11 @@ class AuthService: ObservableObject {
 }
 
 android {
-    namespace = "${projectName.lowercase()}"
+    namespace = "${projectName.toLowerCase()}"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "${projectName.lowercase()}"
+        applicationId = "${projectName.toLowerCase()}"
         minSdk = 24
         targetSdk = 34
     }
@@ -345,7 +345,7 @@ dependencies {
         };
     }
     async generateReactNativeBlueprint(args) {
-        const { projectName, expo = true, navigation = "react-navigation", stateManagement = "zustand", typescript = true, } = args;
+        const { projectName, expo = true, navigation = "react-navigation", stateManagement = "zustand", typescript = true } = args;
         const blueprint = {
             projectName,
             expo,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
         };
     }
     async generateFlutterBlueprint(args) {
-        const { projectName, stateManagement = "provider", architecture = "clean", } = args;
+        const { projectName, stateManagement = "provider", architecture = "clean" } = args;
         const blueprint = {
             projectName,
             flutterVersion: "3.16.0",

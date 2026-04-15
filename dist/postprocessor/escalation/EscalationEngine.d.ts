@@ -2,7 +2,7 @@
  * Escalation Engine for Post-Processor
  * Handles incident reporting, manual intervention triggers, and alerting
  */
-import { PostProcessorContext, EscalationResult, IncidentReport } from "../types.js";
+import { PostProcessorContext, EscalationResult, IncidentReport, MonitoringResult } from "../types.js";
 export interface EscalationConfig {
     manualInterventionThreshold: number;
     rollbackThreshold: number;
@@ -24,7 +24,7 @@ export interface AlertMessage {
     title: string;
     message: string;
     context: PostProcessorContext;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
 }
 export interface IncidentReportPayload {
     incident: IncidentReport;
@@ -40,7 +40,7 @@ export declare class EscalationEngine {
     /**
      * Evaluate if escalation is needed based on failure context
      */
-    evaluateEscalation(context: PostProcessorContext, attempts: number, error: string, monitoringResults: any[]): Promise<EscalationResult | null>;
+    evaluateEscalation(context: PostProcessorContext, attempts: number, error: string, monitoringResults: MonitoringResult[]): Promise<EscalationResult | null>;
     /**
      * Create a detailed incident report
      */

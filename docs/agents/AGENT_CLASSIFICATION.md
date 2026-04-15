@@ -2,7 +2,7 @@
 
 ## Overview
 
-0xRay Framework implements a sophisticated multi-agent architecture with 25 specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
+0xRay Framework implements a sophisticated multi-agent architecture with 25 specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
 
 ## Agent Classification Framework
 
@@ -36,7 +36,7 @@ These agents focus on analysis, design, coordination, and strategic planning. Th
 
 #### 2. Orchestrator
 
-**Primary Role**: Coordinates complex multi-step tasks, delegates work to specialized subagents, and ensures completion through progress tracking and conflict resolution. This is the PRIMARY agent that routes tasks to all 26 other specialized agents.
+**Primary Role**: Coordinates complex multi-step tasks, delegates work to specialized subagents, and ensures completion through progress tracking and conflict resolution. This is the PRIMARY agent that routes tasks to 24 specialized subagents.
 
 **Key Characteristics**:
 
@@ -51,24 +51,6 @@ These agents focus on analysis, design, coordination, and strategic planning. Th
 - Team coordination across multiple agents
 - Progress tracking and milestone validation
 - Inter-agent conflict resolution
-
-#### 3. Test Architect
-
-**Primary Role**: Designs comprehensive testing strategies, behavioral testing frameworks, and validation approaches to ensure 87% test coverage.
-
-**Key Characteristics**:
-
-- **Operating Modes**: Strategy, Design, Analysis, Optimization
-- **Tools**: Read, Search, Bash (design-focused)
-- **Output**: Testing frameworks, coverage strategies, automation plans
-- **Integration**: Provides testing blueprints for implementation teams
-
-**When to Use**:
-
-- Testing strategy development
-- Test framework architecture design
-- Coverage gap analysis
-- CI/CD testing pipeline planning
 
 ### 4. Code Reviewer
 
@@ -175,9 +157,9 @@ These agents focus on analysis, design, coordination, and strategic planning. Th
 
 #### 11. Storyteller
 
-**Primary Role**: Creates narrative-style documentation including technical deep reflections, sagas, journeys, and narratives.
+**Primary Role**: This is a **SKILL** (not an agent). Creates narrative-style documentation including technical deep reflections, sagas, journeys, and narratives via the storyteller skill.
 
-**Specialized Types**:
+**Specialized Types** (invoked via skill tool):
 - `reflection` - Technical deep reflections
 - `saga` - Long-form technical sagas
 - `journey` - Investigation/learning journeys
@@ -300,7 +282,7 @@ These agents include implementation capabilities in their workflow, performing s
 - Diagram understanding
 - UI/UX mockup evaluation
 
-#### 21. UI/UX Design Agent
+#### 21. frontend-ui-ux-engineer
 
 **Primary Role**: Designs user interfaces following mobile-first and accessibility-first principles.
 
@@ -359,37 +341,37 @@ These agents include implementation capabilities in their workflow, performing s
 
 ---
 
-**Total Agents: 27**
+**Total Agents: 25**
 
 ### Complete Agent List
 
 | # | Agent Name | Type | Primary Role |
 |---|------------|------|--------------|
-| 1 | Orchestrator | Primary | Multi-agent coordination |
+| 1 | Orchestrator | Primary | Multi-agent coordination (routes to 24 subagents) |
 | 2 | Architect | Planning | System design |
 | 3 | Enforcer | Planning | Codex compliance |
-| 4 | Test Architect | Planning | Testing strategy |
-| 5 | Security Auditor | Planning | Security validation |
-| 6 | Code Reviewer | Planning | Code quality |
-| 7 | Researcher | Planning | Codebase exploration |
-| 8 | Testing Lead | Planning | Test coordination |
-| 9 | Performance Engineer | Planning | Performance optimization |
-| 10 | Storyteller | Planning | Technical documentation |
-| 11 | Backend Engineer | Planning | Backend design |
-| 12 | Frontend Engineer | Planning | Frontend design |
-| 13 | Database Engineer | Planning | Database design |
-| 14 | Bug Triage Specialist | Implementation | Bug fixing |
-| 15 | Refactorer | Implementation | Code refactoring |
-| 16 | Tech Writer | Implementation | Documentation |
-| 17 | Code Analyzer | Implementation | Code analysis |
-| 18 | Multimodal Looker | Implementation | Visual analysis |
-| 19 | UI/UX Design | Implementation | Interface design |
-| 20 | DevOps Engineer | Implementation | CI/CD automation |
-| 21 | Mobile Developer | Implementation | Mobile apps |
-| 22 | Growth Strategist | Implementation | Growth planning |
-| 23 | Content Creator | Implementation | Content production |
-| 24 | SEO Consultant | Implementation | SEO optimization |
-| 25 | [Additional specialized agents] | Mixed | Domain-specific tasks |
+| 4 | Security Auditor | Planning | Security validation |
+| 5 | Code Reviewer | Planning | Code quality |
+| 6 | Researcher | Planning | Codebase exploration |
+| 7 | Testing Lead | Planning | Test coordination |
+| 8 | Performance Engineer | Planning | Performance optimization |
+| 9 | Backend Engineer | Planning | Backend design |
+| 10 | Frontend Engineer | Planning | Frontend design |
+| 11 | Database Engineer | Planning | Database design |
+| 12 | Bug Triage Specialist | Implementation | Bug fixing |
+| 13 | Refactorer | Implementation | Code refactoring |
+| 14 | Tech Writer | Implementation | Documentation |
+| 15 | Code Analyzer | Implementation | Code analysis |
+| 16 | Multimodal Looker | Implementation | Visual analysis |
+| 17 | frontend-ui-ux-engineer | Implementation | Interface design |
+| 18 | DevOps Engineer | Implementation | CI/CD automation |
+| 19 | Mobile Developer | Implementation | Mobile apps |
+| 20 | Growth Strategist | Implementation | Growth planning |
+| 21 | Content Creator | Implementation | Content production |
+| 22 | SEO Consultant | Implementation | SEO optimization |
+| 23 | Log Monitor | Implementation | Log analysis |
+| 24 | Librarian Agents Updater | Utility | Agent registry updates |
+| 25 | Storyteller | SKILL | Technical documentation |
 
 ## 🔧 Tool Access Patterns
 
@@ -440,7 +422,7 @@ Need to analyze or plan?
 
 ### Development Workflow Integration
 
-- **Planning Phase**: Use Architect, Orchestrator, Test Architect for design and planning
+- **Planning Phase**: Use Architect, Orchestrator, Testing Lead for design and planning
 - **Implementation Phase**: Use Bug Triage Specialist and Refactorer for code changes
 - **Quality Assurance**: Use Code Reviewer, Security Auditor, Enforcer for validation
 - **Monitoring**: Continuous oversight by all agent types

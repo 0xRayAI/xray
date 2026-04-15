@@ -53,7 +53,10 @@ export declare function clearCodexCache(sessionId?: string): void;
  * CodexInjector class for plugin compatibility
  */
 export declare class CodexInjector {
-    injectCodexRules(context: any, options: any): any;
+    injectCodexRules(context: Record<string, unknown>, options: {
+        priority?: string;
+        mergeStrategy?: string;
+    }): Record<string, unknown>;
     getCodexStats(): {
         loaded: boolean;
         fileCount: number;

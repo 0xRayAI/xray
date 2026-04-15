@@ -105,9 +105,10 @@ class StringRaySecurityScanServer {
         });
     }
     async handleSecurityScan(args) {
-        const scope = args.scope || "full";
-        const auditLevel = args.auditLevel || "moderate";
-        const includeOutdated = args.includeOutdated !== false;
+        const { scope, auditLevel, includeOutdated } = args;
+        const scopeValue = scope || "full";
+        const auditLevelValue = auditLevel || "moderate";
+        const includeOutdatedValue = includeOutdated !== false;
         const results = {
             secure: true,
             vulnerabilities: [],
@@ -117,15 +118,15 @@ class StringRaySecurityScanServer {
         };
         try {
             // 1. Dependency Vulnerability Scanning
-            if (scope === "dependencies" || scope === "full") {
-                const depResults = await this.scanDependencies(auditLevel, includeOutdated, "npm");
+            if (scopeValue === "dependencies" || scopeValue === "full") {
+                const depResults = await this.scanDependencies(auditLevelValue, includeOutdatedValue, "npm");
                 results.vulnerabilities.push(...depResults.vulnerabilities);
                 results.recommendations.push(...depResults.recommendations);
                 if (!depResults.secure)
                     results.secure = false;
             }
             // 2. Code Security Analysis
-            if (scope === "code" || scope === "full") {
+            if (scopeValue === "code" || scopeValue === "full") {
                 const codeResults = await this.scanCodeSecurity();
                 results.vulnerabilities.push(...codeResults.vulnerabilities);
                 results.threats.push(...codeResults.threats);
@@ -164,8 +165,7 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n")}
         };
     }
     async handleDependencyAudit(args) {
-        const packageManager = args.packageManager || "auto";
-        const auditLevel = args.auditLevel || "moderate";
+        const { packageManager = "auto", auditLevel = "moderate" } = args;
         try {
             const detectedPm = this.detectPackageManager(packageManager);
             const results = await this.scanDependencies(auditLevel, true, detectedPm);
@@ -245,9 +245,9 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
                 // npm/yarn/pnpm audit returns non-zero exit code when vulnerabilities found
                 // The JSON output is in error.stdout
                 let auditData = null;
-                if (error && error.stdout) {
+                if (error && typeof error === "object" && "stdout" in error) {
                     try {
-                        auditData = JSON.parse(error.stdout);
+                        auditData = JSON.parse(String(error.stdout));
                     }
                     catch {
                         // stdout was not valid JSON, fall through
@@ -259,8 +259,11 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
                     results.secure = false;
                     const vulnCount = Object.keys(auditData.vulnerabilities).length;
                     const vulnEntries = Object.entries(auditData.vulnerabilities)
-                        .filter(([, info]) => info && info.severity !== undefined)
-                        .map(([name, info]) => `  - ${name} (${info.severity}): ${info.via?.[0]?.title || "unknown"}`);
+                        .filter(([, info]) => info && typeof info === "object" && "severity" in info)
+                        .map(([name, info]) => {
+                        const details = info;
+                        return `  - ${name} (${details.severity}): ${details.via?.[0]?.title || "unknown"}`;
+                    });
                     results.vulnerabilities.push(`${vulnCount} ${pmCmd} vulnerabilities found:\n${vulnEntries.join("\n")}`);
                     results.recommendations.push(`Run "${pmCmd} audit fix" to resolve vulnerabilities`);
                 }

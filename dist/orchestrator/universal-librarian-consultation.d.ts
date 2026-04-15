@@ -4,7 +4,7 @@
  */
 import { RuleEnforcer } from "../enforcement/rule-enforcer.js";
 export interface SystemAction {
-    type: "code-change" | "rule-modification" | "architectural-change" | "configuration-update" | "documentation-update";
+    type: "code-change" | "rule-modification" | "architectural-change" | "configuration_update" | "documentation_update";
     description: string;
     scope: "framework" | "agent" | "tool" | "configuration" | "documentation";
     complexity: "low" | "medium" | "high" | "critical";
@@ -14,6 +14,24 @@ export interface SystemAction {
         triggeredBy?: string;
         [key: string]: unknown;
     };
+}
+export interface LibrarianConsultationResult {
+    approved: boolean;
+    documentationImpact: "none" | "minor" | "major" | "critical";
+    versionUpdates: VersionUpdate[];
+    recommendations: string[];
+    pairProgrammingRequired: boolean;
+}
+export interface VersionUpdate {
+    file: string;
+    field: string;
+    oldVersion: string;
+    newVersion: string;
+    reason: string;
+}
+export interface ActionResult {
+    success: boolean;
+    [key: string]: unknown;
 }
 export interface LibrarianConsultationResult {
     approved: boolean;
@@ -39,7 +57,7 @@ export declare class UniversalLibrarianConsultation {
     /**
      * Post-action consultation - must be called after any major system action
      */
-    consultAfterAction(action: SystemAction, result: any): Promise<void>;
+    consultAfterAction(action: SystemAction, result: ActionResult): Promise<void>;
     /**
      * Check if this action is related to researcher operations (to prevent recursion)
      */

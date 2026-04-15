@@ -45,24 +45,25 @@ export class PostProcessorMonitoringEngine {
             // Parse the output to determine status
             if (output.includes("SUCCESS") ||
                 output.includes("All workflows passed")) {
-                return { status: "success", failedJobs: [] };
+                return { status: "success", failedJobs: [], totalJobs: 1, duration: 0 };
             }
             else if (output.includes("FAILURE") || output.includes("failed")) {
-                return { status: "failure", failedJobs: ["ci-pipeline"] };
+                return { status: "failure", failedJobs: ["ci-pipeline"], totalJobs: 1, duration: 0 };
             }
             else {
-                return { status: "running", failedJobs: [] };
+                return { status: "running", failedJobs: [], totalJobs: 1, duration: 0 };
             }
         }
         catch (error) {
             return {
                 status: "failure",
                 failedJobs: ["ci-pipeline"],
-                error: error instanceof Error ? error.message : String(error),
+                totalJobs: 1,
+                duration: 0,
             };
         }
     }
-    async checkPerformanceStatus(commitSha) {
+    async checkPerformanceStatus(_commitSha) {
         // Check if performance tests passed
         try {
             const { execSync } = await import("child_process");
@@ -70,17 +71,18 @@ export class PostProcessorMonitoringEngine {
                 encoding: "utf8",
                 timeout: 120000,
             });
-            return { status: "passed", score: 1.0, regressions: [] };
+            return { status: "passed", score: 1.0, regressions: [], duration: 0 };
         }
         catch (error) {
             return {
                 status: "failed",
                 score: 0.0,
                 regressions: ["performance-tests"],
+                duration: 0,
             };
         }
     }
-    async checkSecurityStatus(commitSha) {
+    async checkSecurityStatus(_commitSha) {
         // Check for security issues
         try {
             const { execSync } = await import("child_process");
@@ -92,6 +94,7 @@ export class PostProcessorMonitoringEngine {
                 status: "passed",
                 vulnerabilities: 0,
                 criticalVulnerabilities: 0,
+                scanDuration: 0,
             };
         }
         catch (error) {
@@ -99,6 +102,7 @@ export class PostProcessorMonitoringEngine {
                 status: "failed",
                 vulnerabilities: 1,
                 criticalVulnerabilities: 1,
+                scanDuration: 0,
             };
         }
     }

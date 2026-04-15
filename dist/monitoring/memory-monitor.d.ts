@@ -102,7 +102,7 @@ export declare class MemoryMonitor extends EventEmitter {
     /**
      * Safely add an alert listener, preventing duplicates
      */
-    addAlertListener(callback: (alert: any) => void): void;
+    addAlertListener(callback: (alert: MemoryLeakAlert) => void): void;
 }
 export declare const memoryMonitor: MemoryMonitor;
 export declare function getMemoryUsage(): MemoryStats;

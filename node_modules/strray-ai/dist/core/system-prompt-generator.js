@@ -119,7 +119,7 @@ function formatEssentialTerms() {
  */
 export async function generateLeanSystemPrompt(config = {}) {
     const { showWelcomeBanner = true, showCodexContext = false, // Disabled by default for token efficiency
-    enableTokenOptimization = true, maxTokenBudget = 2000, // Conservative token budget
+    enableTokenOptimization = true, maxTokenBudget = 8192, // Increased token budget
     showCriticalTermsOnly = true, showEssentialLinks = true } = config;
     let systemPrompt = "";
     // 1. Welcome banner (minimal if enabled)
