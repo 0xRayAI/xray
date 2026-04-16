@@ -1776,15 +1776,51 @@
       "details": {
         "duration": 3356
       }
+    },
+    {
+      "timestamp": "2026-04-16T00:20:36.530Z",
+      "id": "act-1776298836530-jtzc1z",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1776298835073-gkc0jl",
+      "details": {
+        "duration": 1457
+      }
+    },
+    {
+      "timestamp": "2026-04-16T01:49:31.053Z",
+      "id": "act-1776304171053-x6t45i",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1776304169760-gczms9",
+      "details": {
+        "duration": 1293
+      }
+    },
+    {
+      "timestamp": "2026-04-16T01:50:14.934Z",
+      "id": "act-1776304214934-fvi6g6",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1776304213683-pdve3j",
+      "details": {
+        "duration": 1251
+      }
     }
   ],
   "stats": {
-    "total": 148,
+    "total": 151,
     "byCategory": {
-      "session": 148
+      "session": 151
     },
     "byLevel": {
-      "info": 148
+      "info": 151
     }
   }
 }
