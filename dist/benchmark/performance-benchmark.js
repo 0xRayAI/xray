@@ -8,6 +8,7 @@
  * @since 2026-01-07
  */
 import { frameworkLogger } from "../core/framework-logger.js";
+import crypto from "crypto";
 export class StringRayPerformanceBenchmark {
     results = [];
     activeBenchmarks = new Map();
@@ -15,7 +16,6 @@ export class StringRayPerformanceBenchmark {
      * Start a benchmark measurement
      */
     startBenchmark(operation, metadata = {}) {
-        const crypto = require("crypto");
         const benchmarkId = `${operation}_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
         this.activeBenchmarks.set(benchmarkId, {
             startTime: performance.now(),

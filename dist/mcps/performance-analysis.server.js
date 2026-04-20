@@ -7,6 +7,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
+import { execSync } from "child_process";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -389,7 +390,6 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
     getDiskUsage() {
         try {
             // Simplified disk usage check
-            const { execSync } = require("child_process");
             const output = execSync("df / | tail -1 | awk '{print $5}' | sed 's/%//'", { encoding: "utf8" });
             return parseInt(output.trim()) || 0;
         }

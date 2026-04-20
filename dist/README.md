@@ -76,17 +76,21 @@ This installs only the MCP servers - no OpenCode dependency.
 
 ## 🤖 Available Agents
 
-| Agent | Purpose |
-|-------|---------|
-| `@enforcer` | Codex compliance & error prevention |
-| `@orchestrator` | Complex multi-step task coordination |
-| `@architect` | System design & technical decisions |
-| `@security-auditor` | Vulnerability detection |
-| `@code-reviewer` | Quality assessment |
-| `@refactorer` | Technical debt elimination |
-| `@testing-lead` | Testing strategy & coverage |
-| `@bug-triage-specialist` | Error investigation |
-| `@researcher` | Codebase exploration |
+| Agent | Purpose | Status |
+|-------|---------|--------|
+| `@architect` | System design & technical decisions | Active |
+| `@security-auditor` | Vulnerability detection | Active |
+| `@code-reviewer` | Quality assessment | Active |
+| `@refactorer` | Technical debt elimination | Active |
+| `@testing-lead` | Testing strategy & coverage | Active |
+| `@bug-triage-specialist` | Error investigation | Active |
+| `@researcher` | Codebase exploration | Active |
+| ~~`@enforcer`~~ | ~~Codex compliance & error prevention~~ | **DEPRECATED** |
+| ~~`@orchestrator`~~ | ~~Complex multi-step task coordination~~ | **DEPRECATED** |
+
+> **Architecture Note (2026-04-17)**: `@enforcer` and `@orchestrator` are deprecated.
+> - **Enforcement** is now handled by the **plugin-level preValidate processor** and **MCP servers**
+> - **Orchestration** is now handled by **agent-delegator** based on **complexity analysis**
 
 > **Note:** 0xRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/master/docs/AGENT_CONFIG.md).
 

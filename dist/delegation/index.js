@@ -13,4 +13,8 @@ export { SessionCoordinator, createSessionCoordinator, } from "./session-coordin
 export { RoutingOutcomeTracker, routingOutcomeTracker, } from "./analytics/index.js";
 export { RoutingAnalytics } from "./analytics/index.js";
 export { LearningEngine, learningEngine } from "./analytics/index.js";
+export { VotingCoordinator, createVotingCoordinator, } from "./voting-coordinator.js";
+export { AdaptiveStrategySelector, adaptiveStrategySelector, selectVotingStrategy, } from "./strategy-selector.js";
+export { getAgentExpertise, getAgentExpertiseLevel, getVotingWeight, getAgentsWithExpertiseDomain, getTopExpertsForDomain, } from "./agent-expertise.js";
+export { AgentMetricsSystem, getAgentMetricsSystem, initializeAgentMetrics, resetAgentMetricsSystem, } from "../metrics/agent-metrics.js";
 //# sourceMappingURL=index.js.map

@@ -1,5 +1,21 @@
 import type { AgentConfig } from "./types.js";
 
+/**
+ * Orchestrator Agent - DEPRECATED
+ * 
+ * ARCHITECTURE CHANGE (2026-04-17):
+ * 
+ * Orchestration is now handled at the plugin level by agent-delegator.ts:
+ * - Complexity analysis determines complexity score (0-100)
+ * - At complexity >= 50, orchestrator-led strategy is used
+ * - agent-delegator handles multi-agent coordination automatically
+ * 
+ * This agent is kept for backwards compatibility but is not used.
+ * The delegation system (complexity-core.ts + agent-delegator.ts) 
+ * is the real orchestrator at the framework level.
+ * 
+ * @deprecated Use agent-delegator for orchestration instead.
+ */
 
 export const orchestrator: AgentConfig = {
   name: "orchestrator",
@@ -10,95 +26,25 @@ export const orchestrator: AgentConfig = {
     "conflict-resolution",
     "session-management",
   ],
-  maxComplexity: 100,
-  enabled: true,
+  maxComplexity: 0,
+  enabled: false,
   description:
-    "0xRay Framework orchestrator with multi-agent orchestration and coordination, workflow management, and enterprise task orchestration - Advanced Enterprise Coordinator",
+    "DEPRECATED - Orchestration is now plugin-level via agent-delegator. Use complexity analysis in delegation system instead.",
   mode: "subagent",
-  system: `You are the 0xRay Orchestrator, an advanced Enterprise Coordinator responsible for multi-agent workflows and enterprise operations throughout the framework.
+  system: `This agent is DEPRECATED. 
 
-## Core Responsibilities
-- Workflow Orchestration
-- Subagent Delegation
-- Session Management
-- Progress Tracking
-- Conflict Resolution
-- Completion Guarantee
-- Performance Optimization
-- Error Recovery
+Orchestration is handled automatically by the 0xRay plugin's agent-delegator:
+- Complexity analysis runs on every task
+- At complexity >= 50, multi-agent coordination is automatic
+- agent-delegator.ts handles agent selection and coordination
 
-## Core Capabilities
-Multi-agent coordination with async delegation, Session lifecycle management, Progress tracking, Conflict resolution, Parallel execution optimization, error recovery mechanisms.
-
-## Operating Protocol
-Follow the 6-phase operating protocol:
-- Analysis Mode
-- Planning Mode
-- Delegation Mode
-- Execution Mode
-- Resolution Mode
-- Completion Mode
-
-Assess task complexity, Break complex tasks into manageable phases, Assign specialized work to appropriate subagents, Monitor parallel task execution, Handle conflicts, errors, and bottlenecks, Validate final results.
-
-## Operational Principles
-Follow the 6-phase operating protocol, Maximize parallel execution, Maintain clear communication, Implement proper error boundaries, Ensure all tasks complete with validation.
-
-## Integration Points
-Integration Points: Session management system, Agent delegation framework, Progress tracking and monitoring, Conflict resolution mechanisms, Performance optimization tools.
-
-## Agent References
-architect, refactorer, testing-lead, enforcer.
-
-## Agent Assignment
-Intelligently assign tasks to specialized agents.
-
-## Session Management
-Session Management: session lifecycle, state coordination, cross-session operations.
-
-## Conflict Resolution
-Conflict Resolution: Mediate between conflicting subagent recommendations and architectural decisions.
-
-## Completion Guarantee
-Completion Guarantee: complete successfully with rollback capabilities.
-
-## Performance Optimization
-Performance Optimization: parallel execution for maximum efficiency.
-
-## Error Recovery
-Error Recovery: comprehensive error handling and recovery strategies.
-
-## Framework Operations
-Use the existing todo command for systematic task tracking and follow compaction research prevention rules to avoid massive architectural changes without user approval.
-
-Your mission is to flawlessly coordinate 0xRay Framework operations through intelligent orchestration and delegation.`,
+Do NOT use this agent. The delegation system handles orchestration.`,
   temperature: 0.1,
   tools: {
-    include: [
-      "read",
-      "grep",
-      "lsp_*",
-      "run_terminal_cmd",
-      "background_task",
-      "call_omo_agent",
-      "session_*",
-      // Skill invocation tools for orchestration coordination
-      "invoke-skill",
-      "skill-code-review",
-      "skill-security-audit",
-      "skill-performance-optimization",
-      "skill-testing-strategy",
-      "skill-project-analysis",
-    ],
+    include: [],
   },
   permission: {
     edit: "allow",
-    bash: {
-      git: "allow",
-      npm: "allow",
-      bun: "allow",
-      orchestrate: "allow",
-      coordinate: "allow",
-    },
+    bash: {},
   },
 };

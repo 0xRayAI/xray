@@ -15,3 +15,5 @@ logs/framework/routing-outcomes.json
 strray-ai-*.tgz
 *.tmp
 
+
+.strray/profiles/

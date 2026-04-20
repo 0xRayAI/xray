@@ -7,6 +7,8 @@
  * @version 1.0.0
  * @since 2026-03-12
  */
+import { patternPerformanceTracker } from '../../analytics/pattern-performance-tracker.js';
+import { routingOutcomeTracker } from './outcome-tracker.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 /**
  * LearningEngine class
@@ -46,7 +48,6 @@ export class LearningEngine {
      */
     calculateOverallSuccessRate() {
         try {
-            const { routingOutcomeTracker } = require('./outcome-tracker.js');
             const outcomes = routingOutcomeTracker.getOutcomes();
             if (outcomes.length === 0)
                 return 1.0;
@@ -69,7 +70,6 @@ export class LearningEngine {
             };
         }
         try {
-            const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
             const driftAnalyses = patternPerformanceTracker.getAllDriftAnalyses();
             const significantDrift = driftAnalyses.filter((a) => a.drifted);
             return {
@@ -101,7 +101,6 @@ export class LearningEngine {
             };
         }
         try {
-            const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
             return patternPerformanceTracker.calculateAdaptiveThresholds();
         }
         catch {
@@ -214,7 +213,6 @@ export class LearningEngine {
      */
     analyzePattern(patternId) {
         try {
-            const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
             const metrics = patternPerformanceTracker.getPatternMetrics(patternId);
             if (!metrics) {
                 return { optimized: false, recommendations: ['Pattern not found'], confidence: 0 };
@@ -245,7 +243,6 @@ export class LearningEngine {
     suggestImprovements() {
         const suggestions = [];
         try {
-            const { patternPerformanceTracker } = require('../../analytics/pattern-performance-tracker.js');
             const metrics = patternPerformanceTracker.getAllPatternMetrics();
             for (const metric of metrics) {
                 if (metric.totalUsages < 5)

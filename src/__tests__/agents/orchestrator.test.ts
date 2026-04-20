@@ -14,8 +14,8 @@ describe("Orchestrator Agent Configuration", () => {
       expect(orchestrator.name).toBe("orchestrator");
     });
 
-    it("should be configured as subagent mode", () => {
-      expect(orchestrator.mode).toBe("subagent");
+    it("should be configured as primary mode for top-level task coordination", () => {
+      expect(orchestrator.mode).toBe("primary");
     });
 
     it("should have low temperature for consistent coordination", () => {
@@ -120,11 +120,11 @@ describe("Orchestrator Agent Configuration", () => {
       expect(orchestrator.tools?.include).toContain("lsp_*");
       expect(orchestrator.tools?.include).toContain("run_terminal_cmd");
       expect(orchestrator.tools?.include).toContain("background_task");
-      expect(orchestrator.tools?.include).toContain("call_omo_agent");
+      expect(orchestrator.tools?.include).toContain("task");
       expect(orchestrator.tools?.include).toContain("session_*");
     });
 
-    it("should have 13 orchestration-specific tools including skill invocation", () => {
+    it("should have 13 orchestration-specific tools including task for sub-agent spawning", () => {
       expect(orchestrator.tools?.include).toHaveLength(13);
     });
   });

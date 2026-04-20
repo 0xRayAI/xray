@@ -742,6 +742,26 @@ program
     const { storytellerCommand } = await import('./commands/storyteller.js');
     await storytellerCommand(type, options);
 });
+// Dashboard command - Real-time monitoring dashboard (temporarily disabled)
+// TODO: Re-enable after fixing dashboard module
+// program
+//   .command('dashboard')
+//   .description('Real-time monitoring dashboard for orchestration metrics')
+//   .option('--refresh <ms>', 'Refresh interval in milliseconds', '5000')
+//   .option('--theme <theme>', 'Dashboard theme (dark|light)', 'dark')
+//   .option('--no-watch', 'Run in snapshot mode (no live updates)')
+//   .option('--no-trends', 'Hide historical trends')
+//   .option('--no-alerts', 'Hide alerts panel')
+//   .action(async (options) => {
+//     const { dashboardCommand } = await import('./commands/dashboard.js');
+//     await dashboardCommand({
+//       refreshInterval: parseInt(options.refresh) || 5000,
+//       theme: (options.theme as 'dark' | 'light') || 'dark',
+//       watch: options.watch !== false,
+//       showTrends: options.trends !== false,
+//       showAlerts: options.alerts !== false,
+//     });
+//   });
 // Plugin management command
 program
     .command('plugin')
@@ -823,6 +843,7 @@ Examples:
     $ npx strray-ai capabilities  # Show all available capabilities
     $ npx strray-ai health        # Check framework health and status
     $ npx strray-ai report        # Generate activity and health reports
+    $ npx strray-ai dashboard     # Real-time orchestration monitoring dashboard
     $ npx strray-ai fix           # Automatically restore missing config files
     $ npx strray-ai doctor        # Diagnose issues (does not fix them)
     $ npx strray-ai analytics     # Pattern analytics and insights
@@ -838,10 +859,11 @@ Quick Start:
    2. Check health: npx strray-ai health
    3. Use agents: @enforcer analyze this code
    4. Generate reports: npx strray-ai report
-   5. Fix issues: npx strray-ai fix
-   6. View analytics: npx strray-ai analytics
-   7. Add skills: npx strray-ai skill:install agency-agents
-   8. Write stories: npx strray-ai storyteller saga "Release Journey"
+   5. Monitor: npx strray-ai dashboard
+   6. Fix issues: npx strray-ai fix
+   7. View analytics: npx strray-ai analytics
+   8. Add skills: npx strray-ai skill:install agency-agents
+   9. Write stories: npx strray-ai storyteller saga "Release Journey"
 
 For more information, visit: https://github.com/htafolla/stringray
 `);

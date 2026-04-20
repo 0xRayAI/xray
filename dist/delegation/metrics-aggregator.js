@@ -1,0 +1,336 @@
+/**
+ * Metrics Aggregator
+ *
+ * Provides aggregation, reporting, and export functionality for delegation
+ * and orchestration metrics stored in stateManager.
+ *
+ * @version 1.0.0
+ * @since 2026-04-16
+ */
+const MAX_METRICS_ENTRIES = 100;
+export function getDelegationMetrics(stateManager) {
+    return stateManager.get("delegation_metrics") || [];
+}
+export function getOrchestrationMetrics(stateManager) {
+    return stateManager.get("orchestration_metrics") || [];
+}
+export function aggregateDelegationMetrics(stateManager) {
+    const metrics = getDelegationMetrics(stateManager);
+    return aggregateMetricsData(metrics, "delegation");
+}
+export function aggregateOrchestrationMetrics(stateManager) {
+    const metrics = getOrchestrationMetrics(stateManager);
+    return aggregateMetricsData(metrics, "orchestration");
+}
+function aggregateMetricsData(metrics, type) {
+    if (metrics.length === 0) {
+        return {
+            summary: {
+                totalEntries: 0,
+                timeRange: { start: Date.now(), end: Date.now() },
+                oldestEntry: 0,
+                newestEntry: 0,
+            },
+            byAgent: {},
+            byComplexityLevel: {},
+            byTimePeriod: {},
+        };
+    }
+    const timestamps = metrics.map((m) => m.timestamp);
+    const result = {
+        summary: {
+            totalEntries: metrics.length,
+            timeRange: { start: Math.min(...timestamps), end: Math.max(...timestamps) },
+            oldestEntry: Math.min(...timestamps),
+            newestEntry: Math.max(...timestamps),
+        },
+        byAgent: {},
+        byComplexityLevel: {},
+        byTimePeriod: {},
+    };
+    const byAgent = result.byAgent;
+    const byComplexityLevel = result.byComplexityLevel;
+    const byTimePeriod = result.byTimePeriod;
+    for (const metric of metrics) {
+        const agents = type === "delegation"
+            ? metric.agents
+            : metric.subAgents.map((s) => s.name);
+        for (const agent of agents) {
+            if (!byAgent[agent]) {
+                byAgent[agent] = {
+                    count: 0,
+                    operations: [],
+                    avgComplexity: 0,
+                    successRate: 0,
+                };
+            }
+            byAgent[agent].count++;
+            byAgent[agent].operations.push(metric.operation);
+            if (type === "delegation") {
+                const delMetric = metric;
+                const complexityScore = delMetric.complexity
+                    ?.score;
+                const success = delMetric.success;
+                byAgent[agent].avgComplexity += complexityScore || 0;
+                if (success) {
+                    byAgent[agent].successRate++;
+                }
+            }
+        }
+        const complexityLevel = type === "delegation"
+            ? metric.complexity
+                ?.level
+            : metric.complexityLevel;
+        const timePeriod = getTimePeriod(metric.timestamp);
+        if (complexityLevel) {
+            if (!byComplexityLevel[complexityLevel]) {
+                byComplexityLevel[complexityLevel] = {
+                    count: 0,
+                    avgDuration: 0,
+                    operations: [],
+                };
+            }
+            byComplexityLevel[complexityLevel].count++;
+            byComplexityLevel[complexityLevel].operations.push(metric.operation);
+            if (type === "delegation") {
+                const delMetric = metric;
+                byComplexityLevel[complexityLevel].avgDuration +=
+                    delMetric.totalTime || 0;
+            }
+        }
+        if (!byTimePeriod[timePeriod]) {
+            byTimePeriod[timePeriod] = {
+                count: 0,
+                operations: [],
+            };
+        }
+        byTimePeriod[timePeriod].count++;
+        byTimePeriod[timePeriod].operations.push(metric.operation);
+    }
+    for (const agent of Object.keys(byAgent)) {
+        const data = byAgent[agent];
+        if (data) {
+            data.operations = [...new Set(data.operations)];
+            data.avgComplexity = data.count > 0 ? data.avgComplexity / data.count : 0;
+            data.successRate = data.count > 0 ? (data.successRate / data.count) * 100 : 0;
+        }
+    }
+    for (const level of Object.keys(byComplexityLevel)) {
+        const data = byComplexityLevel[level];
+        if (data) {
+            data.operations = [...new Set(data.operations)];
+            data.avgDuration = data.count > 0 ? data.avgDuration / data.count : 0;
+        }
+    }
+    return result;
+}
+function getTimePeriod(timestamp) {
+    const date = new Date(timestamp);
+    const hour = date.getHours();
+    if (hour >= 0 && hour < 6)
+        return "night";
+    if (hour >= 6 && hour < 12)
+        return "morning";
+    if (hour >= 12 && hour < 18)
+        return "afternoon";
+    return "evening";
+}
+export function summarizeByAgent(stateManager, type = "delegation") {
+    const metrics = type === "delegation"
+        ? getDelegationMetrics(stateManager)
+        : getOrchestrationMetrics(stateManager);
+    const byAgent = {};
+    for (const metric of metrics) {
+        const agents = type === "delegation"
+            ? metric.agents
+            : metric.subAgents.map((s) => s.name);
+        for (const agent of agents) {
+            if (!byAgent[agent]) {
+                byAgent[agent] = {
+                    count: 0,
+                    operations: new Set(),
+                    avgComplexity: 0,
+                    successCount: 0,
+                };
+            }
+            byAgent[agent].count++;
+            byAgent[agent].operations.add(metric.operation);
+            if (type === "delegation") {
+                const delMetric = metric;
+                const complexityScore = delMetric.complexity
+                    ?.score;
+                byAgent[agent].avgComplexity += complexityScore || 0;
+                if (delMetric.success) {
+                    byAgent[agent].successCount++;
+                }
+            }
+        }
+    }
+    const result = {};
+    for (const [agent, data] of Object.entries(byAgent)) {
+        result[agent] = {
+            invocationCount: data.count,
+            operations: [...data.operations],
+            avgComplexity: data.count > 0 ? data.avgComplexity / data.count : 0,
+            successRate: data.count > 0 ? (data.successCount / data.count) * 100 : 0,
+        };
+    }
+    return result;
+}
+export function summarizeByComplexityLevel(stateManager, type = "delegation") {
+    const metrics = type === "delegation"
+        ? getDelegationMetrics(stateManager)
+        : getOrchestrationMetrics(stateManager);
+    const byLevel = {};
+    for (const metric of metrics) {
+        const complexityLevel = type === "delegation"
+            ? metric.complexity
+                ?.level
+            : metric.complexityLevel;
+        if (!complexityLevel)
+            continue;
+        if (!byLevel[complexityLevel]) {
+            byLevel[complexityLevel] = {
+                count: 0,
+                totalDuration: 0,
+                operations: new Set(),
+            };
+        }
+        byLevel[complexityLevel].count++;
+        byLevel[complexityLevel].operations.add(metric.operation);
+        if (type === "delegation") {
+            byLevel[complexityLevel].totalDuration +=
+                metric.totalTime || 0;
+        }
+    }
+    const result = {};
+    for (const [level, data] of Object.entries(byLevel)) {
+        result[level] = {
+            count: data.count,
+            avgDuration: data.count > 0 ? data.totalDuration / data.count : 0,
+            operations: [...data.operations],
+        };
+    }
+    return result;
+}
+export function summarizeByTimePeriod(stateManager, type = "delegation") {
+    const metrics = type === "delegation"
+        ? getDelegationMetrics(stateManager)
+        : getOrchestrationMetrics(stateManager);
+    const periods = {};
+    for (const metric of metrics) {
+        const period = getTimePeriod(metric.timestamp);
+        if (!periods[period]) {
+            periods[period] = {
+                count: 0,
+                operations: new Set(),
+            };
+        }
+        periods[period].count++;
+        periods[period].operations.add(metric.operation);
+    }
+    const result = {};
+    for (const [period, data] of Object.entries(periods)) {
+        result[period] = {
+            count: data.count,
+            operations: [...data.operations],
+        };
+    }
+    return result;
+}
+export function rotateMetrics(stateManager, maxEntries = MAX_METRICS_ENTRIES) {
+    const delegationMetrics = getDelegationMetrics(stateManager);
+    const orchestrationMetrics = getOrchestrationMetrics(stateManager);
+    const delegationRemoved = Math.max(0, delegationMetrics.length - maxEntries);
+    const orchestrationRemoved = Math.max(0, orchestrationMetrics.length - maxEntries);
+    const rotatedDelegation = delegationMetrics.slice(-maxEntries);
+    const rotatedOrchestration = orchestrationMetrics.slice(-maxEntries);
+    stateManager.set("delegation_metrics", rotatedDelegation);
+    stateManager.set("orchestration_metrics", rotatedOrchestration);
+    return {
+        delegation: delegationRemoved,
+        orchestration: orchestrationRemoved,
+    };
+}
+export function cleanupOldMetrics(stateManager, olderThan) {
+    const currentDelegation = getDelegationMetrics(stateManager);
+    const currentOrchestration = getOrchestrationMetrics(stateManager);
+    const cutoff = Date.now() - olderThan;
+    const filteredDelegation = currentDelegation.filter((m) => m.timestamp >= cutoff);
+    const filteredOrchestration = currentOrchestration.filter((m) => m.timestamp >= cutoff);
+    const removedDelegation = currentDelegation.length - filteredDelegation.length;
+    const removedOrchestration = currentOrchestration.length - filteredOrchestration.length;
+    stateManager.set("delegation_metrics", filteredDelegation);
+    stateManager.set("orchestration_metrics", filteredOrchestration);
+    return {
+        delegation: removedDelegation,
+        orchestration: removedOrchestration,
+    };
+}
+export function exportMetrics(stateManager, format = "json") {
+    const delegation = getDelegationMetrics(stateManager);
+    const orchestration = getOrchestrationMetrics(stateManager);
+    const exportedAt = Date.now();
+    switch (format) {
+        case "json": {
+            return {
+                format: "json",
+                data: {
+                    delegation,
+                    orchestration,
+                    exportedAt,
+                },
+                exportedAt,
+                entryCount: delegation.length + orchestration.length,
+            };
+        }
+        case "csv": {
+            const rows = [
+                ["type", "timestamp", "operation", "agents", "complexity", "success"].join(","),
+            ];
+            for (const d of delegation) {
+                const complexity = d.complexity?.level;
+                const agents = d.agents.join(";");
+                rows.push([
+                    "delegation",
+                    d.timestamp,
+                    d.operation,
+                    agents,
+                    complexity,
+                    d.success,
+                ].join(","));
+            }
+            for (const o of orchestration) {
+                const agents = o.subAgents.map((s) => s.name).join(";");
+                rows.push([
+                    "orchestration",
+                    o.timestamp,
+                    o.operation,
+                    agents,
+                    o.complexityLevel,
+                    "N/A",
+                ].join(","));
+            }
+            return {
+                format: "csv",
+                data: rows.join("\n"),
+                exportedAt,
+                entryCount: delegation.length + orchestration.length,
+            };
+        }
+        case "summary": {
+            return {
+                format: "summary",
+                data: {
+                    delegation: aggregateMetricsData(delegation, "delegation"),
+                    orchestration: aggregateMetricsData(orchestration, "orchestration"),
+                },
+                exportedAt,
+                entryCount: delegation.length + orchestration.length,
+            };
+        }
+        default:
+            return exportMetrics(stateManager, "json");
+    }
+}
+//# sourceMappingURL=metrics-aggregator.js.map

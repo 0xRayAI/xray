@@ -11,6 +11,7 @@
  */
 import * as fs from "fs";
 import * as path from "path";
+import * as nodePath from "path";
 import { ComplexityAnalyzer, } from "./complexity-analyzer.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getKernel } from "../core/kernel-patterns.js";
@@ -18,6 +19,8 @@ import { DEFAULT_AGENTS } from "../config/default-agents.js";
 import { getActiveAgents, isAllowedAgent } from "../agents/registry.js";
 import { routingOutcomeTracker } from "./analytics/outcome-tracker.js";
 import { predictiveAnalytics } from "../analytics/predictive-analytics.js";
+import { aggregateDelegationMetrics, aggregateOrchestrationMetrics, summarizeByAgent, summarizeByComplexityLevel, summarizeByTimePeriod, rotateMetrics, cleanupOldMetrics, exportMetrics, } from "./metrics-aggregator.js";
+import { initializeAgentMetrics, } from "../metrics/agent-metrics.js";
 /**
  * AgentDelegator class for intelligent task delegation
  */
@@ -26,6 +29,7 @@ export class AgentDelegator {
     stateManager;
     configLoader;
     kernel;
+    agentMetrics;
     /** Minimum confidence for a learned mapping to override hardcoded routing. */
     static MAPPING_CONFIDENCE_THRESHOLD = 0.7;
     constructor(stateManager, configLoader) {
@@ -33,6 +37,7 @@ export class AgentDelegator {
         this.configLoader = configLoader;
         this.complexityAnalyzer = new ComplexityAnalyzer();
         this.kernel = getKernel();
+        this.agentMetrics = initializeAgentMetrics(stateManager);
     }
     /**
      * Load routing-mappings.json from disk (fresh each call — picks up tuner writes).
@@ -168,6 +173,33 @@ export class AgentDelegator {
             const agentDetails = this.determineAgents(metrics, complexityScore, kernelInsights);
             const conflictResolution = this.determineConflictResolution(metrics, complexityScore);
             const agents = agentDetails.map((a) => a.name);
+            // Persist orchestration metrics for tracking sub-agent invocations
+            const orchestrationMetrics = this.stateManager.get("orchestration_metrics") || [];
+            const orchestrationEntry = {
+                timestamp: Date.now(),
+                parentTask: request.description?.substring(0, 100),
+                operation: request.operation,
+                orchestratorType: "orchestrator-led",
+                subAgents: agents.map((name, idx) => ({
+                    name,
+                    role: agentDetails[idx]?.role || "delegated",
+                    confidence: agentDetails[idx]?.confidence || 0.8,
+                })),
+                complexityLevel: complexityScore.level,
+                complexityScore: complexityScore.score,
+                sessionId: request.sessionId,
+            };
+            orchestrationMetrics.push(orchestrationEntry);
+            if (orchestrationMetrics.length > 100) {
+                orchestrationMetrics.shift();
+            }
+            this.stateManager.set("orchestration_metrics", orchestrationMetrics);
+            await frameworkLogger.log("agent-delegator", "orchestration-metrics-logged", "info", {
+                parentTask: request.description?.substring(0, 50),
+                subAgentCount: agents.length,
+                subAgents: agents,
+                complexityLevel: complexityScore.level,
+            }, request.sessionId);
             // Persist delegation analysis metrics to state for tracking
             const existingMetrics = this.stateManager.get("delegation_metrics") || [];
             const delegationMetric = {
@@ -181,6 +213,9 @@ export class AgentDelegator {
                 sessionId: request.sessionId,
             };
             existingMetrics.push(delegationMetric);
+            if (existingMetrics.length > 100) {
+                existingMetrics.shift();
+            }
             this.stateManager.set("delegation_metrics", existingMetrics);
             await frameworkLogger.log("agent-delegator", "delegation-analyzed", "info", {
                 operation: request.operation,
@@ -416,25 +451,19 @@ export class AgentDelegator {
    * Ensures working directory is set correctly (src/ vs dist/ vs project root)
    */
     resolveProjectDirectory() {
-        // Try to find the project root by looking for key files
-        // Only use process.cwd() and validate it exists
         const root = process.cwd();
-        const fs = require('fs');
-        // Check if this looks like a valid project root
         if (fs.existsSync(`${root}/package.json`) || fs.existsSync(`${root}/strray.config.json`)) {
             return root;
         }
-        // Fallback - try to find a parent with package.json
         let current = root;
         const maxLevels = 5;
         for (let i = 0; i < maxLevels; i++) {
-            const parent = require('path').dirname(current);
+            const parent = nodePath.dirname(current);
             if (fs.existsSync(`${parent}/package.json`)) {
                 return parent;
             }
             current = parent;
         }
-        // Last resort fallback
         return root;
     }
     /**
@@ -532,6 +561,19 @@ export class AgentDelegator {
                         output,
                         executionTime,
                     });
+                    const successInvocation = {
+                        agentName,
+                        agentType: agentName,
+                        operation: request.operation,
+                        description: request.description,
+                        complexityLevel: analysis.complexity.level,
+                        complexityScore: analysis.complexity.score,
+                        duration: executionTime,
+                    };
+                    if (request.sessionId) {
+                        successInvocation.sessionId = request.sessionId;
+                    }
+                    this.agentMetrics.trackSuccess(successInvocation);
                     await frameworkLogger.log("agent-delegator", "agent-executed", "success", {
                         agent: agentName,
                         executionTime,
@@ -543,6 +585,20 @@ export class AgentDelegator {
                     const executionTime = Date.now() - agentStartTime;
                     const errorMessage = `Agent ${agentName} failed: ${String(error)}`;
                     errors.push(errorMessage);
+                    const failureInvocation = {
+                        agentName,
+                        agentType: agentName,
+                        operation: request.operation,
+                        description: request.description,
+                        complexityLevel: analysis.complexity.level,
+                        complexityScore: analysis.complexity.score,
+                        duration: executionTime,
+                        error: errorMessage,
+                    };
+                    if (request.sessionId) {
+                        failureInvocation.sessionId = request.sessionId;
+                    }
+                    this.agentMetrics.trackFailure(failureInvocation);
                     await frameworkLogger.log("agent-delegator", "agent-execution-failed", "error", {
                         agent: agentName,
                         executionTime,
@@ -569,6 +625,9 @@ export class AgentDelegator {
                 sessionId: request.sessionId,
             };
             existingMetrics.push(delegationMetric);
+            if (existingMetrics.length > 100) {
+                existingMetrics.shift();
+            }
             this.stateManager.set("delegation_metrics", existingMetrics);
             await frameworkLogger.log("agent-delegator", "delegation-completed", success ? "success" : "error", {
                 strategy: analysis.strategy,
@@ -660,6 +719,30 @@ export class AgentDelegator {
             ...baseMetrics,
             recentDelegations,
         };
+    }
+    aggregateAllMetrics() {
+        return {
+            delegation: aggregateDelegationMetrics(this.stateManager),
+            orchestration: aggregateOrchestrationMetrics(this.stateManager),
+        };
+    }
+    getMetricsByAgent(type = "delegation") {
+        return summarizeByAgent(this.stateManager, type);
+    }
+    getMetricsByComplexity(type = "delegation") {
+        return summarizeByComplexityLevel(this.stateManager, type);
+    }
+    getMetricsByTimePeriod(type = "delegation") {
+        return summarizeByTimePeriod(this.stateManager, type);
+    }
+    rotateMetricsEntries(maxEntries = 100) {
+        return rotateMetrics(this.stateManager, maxEntries);
+    }
+    cleanupMetricsOlderThan(olderThanMs) {
+        return cleanupOldMetrics(this.stateManager, olderThanMs);
+    }
+    exportMetricsData(format = "json") {
+        return exportMetrics(this.stateManager, format);
     }
     updateAgentCapability(agentName, capabilities) {
         const availableAgents = this.getAvailableAgents();

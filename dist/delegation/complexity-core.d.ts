@@ -72,9 +72,6 @@ export declare const DEFAULT_THRESHOLDS: ComplexityThresholds;
  * Operation type weights for complexity calculation
  */
 export declare const OPERATION_WEIGHTS: Record<ComplexityMetrics['operationType'], number>;
-/**
- * Risk level multipliers for complexity calculation
- */
 export declare const RISK_MULTIPLIERS: Record<ComplexityMetrics['riskLevel'], number>;
 /**
  * Map complexity level to routing tier

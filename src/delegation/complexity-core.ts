@@ -84,10 +84,10 @@ export interface ComplexityThresholds {
  * - Enterprise (76-100): Maximum complexity, full orchestration
  */
 export const DEFAULT_THRESHOLDS: ComplexityThresholds = {
-  simple: 25,
-  moderate: 50,
-  complex: 75,
-  enterprise: 100,
+  simple: 15,
+  moderate: 25,
+  complex: 50,
+  enterprise: 75,
 };
 
 /**
@@ -102,9 +102,6 @@ export const OPERATION_WEIGHTS: Record<ComplexityMetrics['operationType'], numbe
   test: 1.3,
 };
 
-/**
- * Risk level multipliers for complexity calculation
- */
 export const RISK_MULTIPLIERS: Record<ComplexityMetrics['riskLevel'], number> = {
   low: 0.8,
   medium: 1.0,

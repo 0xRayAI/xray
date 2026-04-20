@@ -24,6 +24,38 @@ export {
 export { RoutingAnalytics } from "./analytics/index.js";
 export { LearningEngine, learningEngine } from "./analytics/index.js";
 
+export {
+  VotingCoordinator,
+  createVotingCoordinator,
+} from "./voting-coordinator.js";
+export {
+  AdaptiveStrategySelector,
+  adaptiveStrategySelector,
+  selectVotingStrategy,
+} from "./strategy-selector.js";
+export {
+  getAgentExpertise,
+  getAgentExpertiseLevel,
+  getVotingWeight,
+  getAgentsWithExpertiseDomain,
+  getTopExpertsForDomain,
+} from "./agent-expertise.js";
+
+export type {
+  VotingSession,
+  VotingStrategy,
+  VoteChoice,
+  VotingResult,
+  VotingResultDetail,
+  AgentExpertise,
+  StrategySelectionContext,
+  VotingHistoryEntry,
+  AdaptiveStrategyConfig,
+  VotingMetrics,
+  ConflictResolutionRequest,
+  ConflictResolutionResponse,
+} from "./voting-types.js";
+
 export type {
   ComplexityMetrics,
   ComplexityScore,
@@ -45,3 +77,23 @@ export type {
   Communication,
   SessionMetrics,
 } from "./session-coordinator.js";
+
+export {
+  AgentMetricsSystem,
+  getAgentMetricsSystem,
+  initializeAgentMetrics,
+  resetAgentMetricsSystem,
+} from "../metrics/agent-metrics.js";
+
+export type {
+  AgentInvocation,
+  AgentType,
+  ComplexityLevel,
+  AgentInvocationSummary,
+  TimePeriodSummary,
+  ComplexitySummary,
+  AggregatedAgentMetrics,
+  MetricsRetentionConfig,
+  MetricsExport,
+  AgentMetricsFilter,
+} from "../metrics/agent-metrics.js";

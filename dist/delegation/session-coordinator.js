@@ -8,6 +8,7 @@
  * @since 2026-01-07
  */
 import { frameworkLogger } from "../core/framework-logger.js";
+import * as crypto from "crypto";
 export class SessionCoordinator {
     stateManager;
     sessions = new Map();
@@ -122,7 +123,6 @@ export class SessionCoordinator {
         if (!session) {
             throw new Error(`Session ${sessionId} not found`);
         }
-        const crypto = require("crypto");
         const communication = {
             id: `comm_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
             fromAgent,
@@ -222,7 +222,6 @@ export class SessionCoordinator {
         if (!session) {
             return;
         }
-        const crypto = require("crypto");
         const conflict = {
             conflictId: `conflict_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
             timestamp: Date.now(),

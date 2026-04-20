@@ -120,32 +120,36 @@ The storyteller is now a **skill** (not an agent) so it runs with full session c
 
 ## Available Agents
 
-| Agent | Purpose | Invoke |
-|-------|---------|--------|
-| `@enforcer` | Codex compliance & error prevention | `@enforcer analyze this code` |
-| `@orchestrator` | Complex multi-step task coordination | `@orchestrator implement feature` |
-| `@architect` | System design & technical decisions | `@architect design API` |
-| `@security-auditor` | Vulnerability detection | `@security-auditor scan` |
-| `@code-reviewer` | Quality assessment | `@code-reviewer review PR` |
-| `@refactorer` | Technical debt elimination | `@refactorer optimize code` |
-| `@testing-lead` | Testing strategy | `@testing-lead plan tests` |
-| `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
-| `@researcher` | Codebase exploration | `@researcher find implementation` |
-| `@code-analyzer` | Deep code analysis & metrics | `@code-analyzer analyze codebase` |
-| `@tech-writer` | Technical documentation | `@tech-writer write docs` |
-| `@frontend-engineer` | Frontend development | `@frontend-engineer build UI` |
-| `@frontend-ui-ux-engineer` | UI/UX design | `@frontend-ui-ux-engineer design interface` |
-| `@backend-engineer` | Backend development | `@backend-engineer build API` |
-| `@database-engineer` | Database design & optimization | `@database-engineer design schema` |
-| `@devops-engineer` | CI/CD & infrastructure | `@devops-engineer setup pipeline` |
-| `@performance-engineer` | Performance optimization | `@performance-engineer optimize` |
-| `@mobile-developer` | Mobile development | `@mobile-developer build app` |
-| `@strategist` | Strategic planning | `@strategist plan roadmap` |
-| `@content-creator` | Content creation | `@content-creator write content` |
-| `@growth-strategist` | Growth strategies | `@growth-strategist plan growth` |
-| `@seo-consultant` | SEO optimization | `@seo-consultant optimize SEO` |
-| `@log-monitor` | Log analysis & monitoring | `@log-monitor analyze logs` |
-| `@multimodal-looker` | Visual content analysis | `@multimodal-looker analyze image` |
+| Agent | Purpose | Invoke | Status |
+|-------|---------|--------|--------|
+| `@architect` | System design & technical decisions | `@architect design API` | Active |
+| `@strategist` | Strategic planning | `@strategist plan roadmap` | Active |
+| `@security-auditor` | Vulnerability detection | `@security-auditor scan` | Active |
+| `@code-reviewer` | Quality assessment | `@code-reviewer review PR` | Active |
+| `@refactorer` | Technical debt elimination | `@refactorer optimize code` | Active |
+| `@testing-lead` | Testing strategy | `@testing-lead plan tests` | Active |
+| `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` | Active |
+| `@researcher` | Codebase exploration | `@researcher find implementation` | Active |
+| `@code-analyzer` | Deep code analysis & metrics | `@code-analyzer analyze codebase` | Active |
+| `@tech-writer` | Technical documentation | `@tech-writer write docs` | Active |
+| `@frontend-engineer` | Frontend development | `@frontend-engineer build UI` | Active |
+| `@frontend-ui-ux-engineer` | UI/UX design | `@frontend-ui-ux-engineer design interface` | Active |
+| `@backend-engineer` | Backend development | `@backend-engineer build API` | Active |
+| `@database-engineer` | Database design & optimization | `@database-engineer design schema` | Active |
+| `@devops-engineer` | CI/CD & infrastructure | `@devops-engineer setup pipeline` | Active |
+| `@performance-engineer` | Performance optimization | `@performance-engineer optimize` | Active |
+| `@mobile-developer` | Mobile development | `@mobile-developer build app` | Active |
+| `@content-creator` | Content creation | `@content-creator write content` | Active |
+| `@growth-strategist` | Growth strategies | `@growth-strategist plan growth` | Active |
+| `@seo-consultant` | SEO optimization | `@seo-consultant optimize SEO` | Active |
+| `@log-monitor` | Log analysis & monitoring | `@log-monitor analyze logs` | Active |
+| `@multimodal-looker` | Visual content analysis | `@multimodal-looker analyze image` | Active |
+| ~~`@enforcer`~~ | ~~Codex compliance & error prevention~~ | ~~`@enforcer analyze this code`~~ | **DEPRECATED** |
+| ~~`@orchestrator`~~ | ~~Complex multi-step task coordination~~ | ~~`@orchestrator implement feature`~~ | **DEPRECATED** |
+
+> **Architecture Note (2026-04-17)**: `@enforcer` and `@orchestrator` are deprecated. 
+> - Enforcement is now handled by the **plugin-level preValidate processor** and **MCP servers**
+> - Orchestration is now handled by **agent-delegator** based on **complexity analysis** (≥50 triggers multi-agent)
 
 
 ## Available Skills
@@ -255,9 +259,10 @@ When agents are first spawned:
 3. Configuration: `.opencode/strray/features.json`
 
 **Spawn Authorization**:
-- Only main orchestrator can spawn agents
-- Subagents cannot spawn other agents
+- Orchestration is plugin-level via agent-delegator (complexity-based)
+- Subagents cannot spawn other agents - they are invoked by the delegation system
 - Workers cannot spawn agents directly
+- Enforcement is plugin-level via preValidate processor
 
 ## Activity Log & Reporting
 

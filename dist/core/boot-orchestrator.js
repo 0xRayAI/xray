@@ -4,6 +4,18 @@
  * Implements orchestrator-first boot sequence with automatic enforcement activation.
  * Coordinates the initialization of all framework components in the correct order.
  *
+ * EXECUTION PATHS:
+ * - PRIMARY: .opencode/plugin/strray-codex-injection.js - Intercepts prompts in OpenCode
+ * - FALLBACK: This boot-orchestrator runs when plugin is not loaded
+ *
+ * The framework is designed to work through OpenCode's plugin system where:
+ *   1. StringRay plugin intercepts prompts via hooks
+ *   2. Routes to agents via .opencode/agents/*.yml configs
+ *   3. OpenCode spawns actual agent processes
+ *   4. Hermes Agent handles MCP server execution
+ *
+ * This orchestrator provides fallback initialization when the plugin isn't available.
+ *
  * @version 1.1.2
  * @since 2026-01-07
  */
@@ -84,20 +96,12 @@ function setupGracefulShutdown() {
     });
     process.on("unhandledRejection", (reason, promise) => {
         // Suppress error output in CLI mode to avoid breaking interface
-        if (process.env.OPENCODE_CLI !== "true") {
-            frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
-        }
-        memoryMonitor.stop();
-        advancedProfiler.stop();
-        process.exit(1);
-    });
-    process.on("unhandledRejection", (reason, promise) => {
-        // Suppress error output in CLI mode to avoid breaking interface
         if (process.env.STRRAY_CLI_MODE !== "true" &&
             process.env.OPENCODE_CLI !== "true") {
             frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
         }
         memoryMonitor.stop();
+        advancedProfiler.stop();
         process.exit(1);
     });
 }

@@ -28,6 +28,26 @@ import type { AgentConfig } from "../agents/types.js";
 import { routingOutcomeTracker } from "./analytics/outcome-tracker.js";
 import { predictiveAnalytics } from "../analytics/predictive-analytics.js";
 import type { RoutingMapping } from "./config/types.js";
+import {
+  aggregateDelegationMetrics,
+  aggregateOrchestrationMetrics,
+  summarizeByAgent,
+  summarizeByComplexityLevel,
+  summarizeByTimePeriod,
+  rotateMetrics,
+  cleanupOldMetrics,
+  exportMetrics,
+  getDelegationMetrics,
+  getOrchestrationMetrics,
+  type AggregatedMetrics,
+  type MetricsExport,
+} from "./metrics-aggregator.js";
+import {
+  AgentMetricsSystem,
+  initializeAgentMetrics,
+  type AgentType,
+  type ComplexityLevel,
+} from "../metrics/agent-metrics.js";
 
 export interface AgentCapability {
   name: string;
@@ -123,6 +143,7 @@ export class AgentDelegator {
   private stateManager: StringRayStateManager;
   private configLoader: typeof strRayConfigLoader;
   private kernel: ReturnType<typeof getKernel>;
+  private agentMetrics: AgentMetricsSystem;
 
   /** Minimum confidence for a learned mapping to override hardcoded routing. */
   private static readonly MAPPING_CONFIDENCE_THRESHOLD = 0.7;
@@ -135,6 +156,7 @@ export class AgentDelegator {
     this.configLoader = configLoader;
     this.complexityAnalyzer = new ComplexityAnalyzer();
     this.kernel = getKernel();
+    this.agentMetrics = initializeAgentMetrics(stateManager);
   }
 
   /**
@@ -313,6 +335,41 @@ export class AgentDelegator {
         complexityScore,
       );
       const agents = agentDetails.map((a) => a.name);
+
+      // Persist orchestration metrics for tracking sub-agent invocations
+      const orchestrationMetrics = this.stateManager.get("orchestration_metrics") as Record<string, unknown>[] || [];
+      const orchestrationEntry: Record<string, unknown> = {
+        timestamp: Date.now(),
+        parentTask: request.description?.substring(0, 100),
+        operation: request.operation,
+        orchestratorType: "orchestrator-led",
+        subAgents: agents.map((name, idx) => ({
+          name,
+          role: agentDetails[idx]?.role || "delegated",
+          confidence: agentDetails[idx]?.confidence || 0.8,
+        })),
+        complexityLevel: complexityScore.level,
+        complexityScore: complexityScore.score,
+        sessionId: request.sessionId,
+      };
+      orchestrationMetrics.push(orchestrationEntry);
+      if (orchestrationMetrics.length > 100) {
+        orchestrationMetrics.shift();
+      }
+      this.stateManager.set("orchestration_metrics", orchestrationMetrics);
+
+      await frameworkLogger.log(
+        "agent-delegator",
+        "orchestration-metrics-logged",
+        "info",
+        {
+          parentTask: request.description?.substring(0, 50),
+          subAgentCount: agents.length,
+          subAgents: agents,
+          complexityLevel: complexityScore.level,
+        },
+        request.sessionId,
+      );
 
       // Persist delegation analysis metrics to state for tracking
       const existingMetrics =
@@ -778,6 +835,29 @@ export class AgentDelegator {
             executionTime,
           });
 
+          const successInvocation: {
+            agentName: string;
+            agentType: AgentType;
+            operation: string;
+            description: string;
+            complexityLevel: ComplexityLevel;
+            complexityScore: number;
+            duration: number;
+            sessionId?: string;
+          } = {
+            agentName,
+            agentType: agentName as AgentType,
+            operation: request.operation,
+            description: request.description,
+            complexityLevel: analysis.complexity.level as ComplexityLevel,
+            complexityScore: analysis.complexity.score,
+            duration: executionTime,
+          };
+          if (request.sessionId) {
+            successInvocation.sessionId = request.sessionId;
+          }
+          this.agentMetrics.trackSuccess(successInvocation);
+
           await frameworkLogger.log(
             "agent-delegator",
             "agent-executed",
@@ -794,6 +874,31 @@ export class AgentDelegator {
           const executionTime = Date.now() - agentStartTime;
           const errorMessage = `Agent ${agentName} failed: ${String(error)}`;
           errors.push(errorMessage);
+
+          const failureInvocation: {
+            agentName: string;
+            agentType: AgentType;
+            operation: string;
+            description: string;
+            complexityLevel: ComplexityLevel;
+            complexityScore: number;
+            duration: number;
+            error: string;
+            sessionId?: string;
+          } = {
+            agentName,
+            agentType: agentName as AgentType,
+            operation: request.operation,
+            description: request.description,
+            complexityLevel: analysis.complexity.level as ComplexityLevel,
+            complexityScore: analysis.complexity.score,
+            duration: executionTime,
+            error: errorMessage,
+          };
+          if (request.sessionId) {
+            failureInvocation.sessionId = request.sessionId;
+          }
+          this.agentMetrics.trackFailure(failureInvocation);
 
           await frameworkLogger.log(
             "agent-delegator",
@@ -960,6 +1065,40 @@ export class AgentDelegator {
       ...baseMetrics,
       recentDelegations,
     };
+  }
+
+  aggregateAllMetrics(): {
+    delegation: AggregatedMetrics;
+    orchestration: AggregatedMetrics;
+  } {
+    return {
+      delegation: aggregateDelegationMetrics(this.stateManager),
+      orchestration: aggregateOrchestrationMetrics(this.stateManager),
+    };
+  }
+
+  getMetricsByAgent(type: "delegation" | "orchestration" = "delegation"): Record<string, unknown> {
+    return summarizeByAgent(this.stateManager, type);
+  }
+
+  getMetricsByComplexity(type: "delegation" | "orchestration" = "delegation"): Record<string, unknown> {
+    return summarizeByComplexityLevel(this.stateManager, type);
+  }
+
+  getMetricsByTimePeriod(type: "delegation" | "orchestration" = "delegation"): Record<string, unknown> {
+    return summarizeByTimePeriod(this.stateManager, type);
+  }
+
+  rotateMetricsEntries(maxEntries = 100): { delegation: number; orchestration: number } {
+    return rotateMetrics(this.stateManager, maxEntries);
+  }
+
+  cleanupMetricsOlderThan(olderThanMs: number): { delegation: number; orchestration: number } {
+    return cleanupOldMetrics(this.stateManager, olderThanMs);
+  }
+
+  exportMetricsData(format: "json" | "csv" | "summary" = "json"): MetricsExport {
+    return exportMetrics(this.stateManager, format);
   }
 
   updateAgentCapability(

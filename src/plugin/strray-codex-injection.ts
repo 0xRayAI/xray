@@ -1007,6 +1007,77 @@ export default async function strrayCodexPlugin(input: {
       }
     },
 
+    "chat.message": async (
+      input: { parts?: Array<{ type?: string; text?: string }> },
+      output: { parts?: Array<{ type?: string; text?: string }> },
+    ) => {
+      const logger = await getOrCreateLogger(directory);
+
+      if (!output.parts) {
+        return;
+      }
+
+      const textContent = input.parts?.find(p => p.type === "text")?.text ?? "";
+      if (!textContent) {
+        return;
+      }
+
+      const agentMentionRegex = /@(\w+)(?:\s+(.+?))?(?=$|\n\n|\r\r)/g;
+      let match;
+      let hasAgentMention = false;
+      let transformedText = textContent;
+
+      const knownAgents: Record<string, string> = {
+        "architect": "architect",
+        "strategist": "strategist",
+        "testing-lead": "testing-lead",
+        "bug-triage-specialist": "bug-triage-specialist",
+        "code-reviewer": "code-reviewer",
+        "security-auditor": "security-auditor",
+        "refactorer": "refactorer",
+        "researcher": "researcher",
+        "code-analyzer": "code-analyzer",
+        "frontend-engineer": "frontend-engineer",
+        "frontend-ui-ux-engineer": "frontend-ui-ux-engineer",
+        "backend-engineer": "backend-engineer",
+        "database-engineer": "database-engineer",
+        "devops-engineer": "devops-engineer",
+        "performance-engineer": "performance-engineer",
+        "mobile-developer": "mobile-developer",
+        "content-creator": "content-creator",
+        "growth-strategist": "growth-strategist",
+        "seo-consultant": "seo-consultant",
+        "tech-writer": "tech-writer",
+        "multimodal-looker": "multimodal-looker",
+        "log-monitor": "log-monitor",
+      };
+
+      while ((match = agentMentionRegex.exec(textContent)) !== null) {
+        const agentName = match[1].toLowerCase().replace(/-/g, "");
+        const taskPart = match[2]?.trim() ?? "";
+
+        if (knownAgents[agentName]) {
+          hasAgentMention = true;
+          const canonicalAgent = knownAgents[agentName];
+
+          logger.log(`🎯 Agent mention detected: @${canonicalAgent}`);
+
+          const prefix = `\n[DELEGATE TO AGENT: ${canonicalAgent}]\n`;
+          transformedText = prefix + (taskPart || textContent.replace(`@${match[1]}`, "").trim());
+
+          break;
+        }
+      }
+
+      if (hasAgentMention) {
+        const textPart = output.parts.find(p => p.type === "text");
+        if (textPart) {
+          textPart.text = transformedText;
+          logger.log(`✅ Transformed prompt for agent routing`);
+        }
+      }
+    },
+
     config: async (_config: Record<string, unknown>) => {
       const lockFile = path.join(directory, ".opencode", "logs", ".strray-init.lock");
       const now = Date.now();

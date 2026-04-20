@@ -8,6 +8,7 @@
  * @since 2026-01-23
  */
 import { frameworkLogger } from "../core/framework-logger.js";
+import { getAgentSpawn } from "../core/features-config.js";
 export class AgentSpawnGovernor {
     limits;
     activeAgents = new Map();
@@ -25,7 +26,6 @@ export class AgentSpawnGovernor {
         // Try to load from features.json
         let configLimits = {};
         try {
-            const { getAgentSpawn } = require("../core/features-config.js");
             const agentSpawn = getAgentSpawn();
             if (agentSpawn) {
                 configLimits = {

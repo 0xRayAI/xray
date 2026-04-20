@@ -1,3 +1,17 @@
+/**
+ * Agent Registry
+ * 
+ * ARCHITECTURE NOTE (2026-04-17):
+ * After discovering that orchestration/enforcement happen at plugin level
+ * (not via agents), we differentiate between:
+ * - AGENTS: True coordinators that need spawning (architect, strategist)
+ * - SKILLS: MCP-based capabilities invoked via skill tools (most others)
+ * 
+ * The agent-delegator handles orchestration based on complexity analysis.
+ * Enforcement happens via preValidate processor and MCP servers.
+ * Agents are mainly prompts with skills - they don't route or orchestrate.
+ */
+
 export interface AgentRegistryEntry {
   name: string;
   description: string;
@@ -15,16 +29,16 @@ export interface AgentRegistryEntry {
 export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
   enforcer: {
     name: "enforcer",
-    description: "Codex compliance & error prevention",
+    description: "DEPRECATED - enforcement handled by preValidate processor & MCP servers",
     capabilities: ["code-quality", "validation"],
-    capacity: 100,
+    capacity: 0,
     specialties: ["validation", "compliance"],
-    mode: "primary",
-    maxComplexity: 25,
-    concurrentTasks: 3,
-    status: "active",
-    performance: 95,
-    expertise: "code quality enforcement",
+    mode: "subagent",
+    maxComplexity: 0,
+    concurrentTasks: 0,
+    status: "inactive", // DEPRECATED - enforcement is plugin-level
+    performance: 0,
+    expertise: "enforcement via preValidate processor and codex-injection plugin",
   },
   architect: {
     name: "architect",
@@ -41,16 +55,16 @@ export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
   },
   orchestrator: {
     name: "orchestrator",
-    description: "Multi-agent workflow coordination",
+    description: "DEPRECATED - orchestration handled by agent-delegator at plugin level",
     capabilities: ["task-coordination", "multi-agent-management", "workflow-orchestration"],
-    capacity: 90,
+    capacity: 0,
     specialties: ["coordination", "delegation", "workflow"],
-    mode: "primary",
-    maxComplexity: 95,
-    concurrentTasks: 1,
-    status: "active",
-    performance: 85,
-    expertise: "orchestrating complex multi-agent workflows",
+    mode: "subagent",
+    maxComplexity: 0,
+    concurrentTasks: 0,
+    status: "inactive", // DEPRECATED - orchestration is plugin-level
+    performance: 0,
+    expertise: "orchestration handled by agent-delegator complexity analysis",
   },
   "bug-triage-specialist": {
     name: "bug-triage-specialist",

@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import * as fs from "fs";
 import { featuresConfigLoader } from "../core/features-config.js";
 /**
  * Memory Monitor - Comprehensive memory tracking and leak detection
@@ -263,9 +264,7 @@ export class MemoryMonitor extends EventEmitter {
      * Internal logging method - writes to framework log only
      */
     log(message) {
-        // Write to framework activity log instead of console
         try {
-            const fs = require("fs");
             const logDir = "./logs/monitoring";
             const logFile = `${logDir}/memory-monitor-${new Date().toISOString().split("T")[0]}.log`;
             if (!fs.existsSync(logDir)) {

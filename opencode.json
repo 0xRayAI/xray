@@ -11,18 +11,13 @@
     "global-git": { "enabled": false }
   },
   "agent": {
-    "orchestrator": {
-      "description": "Orchestrator agent for workflow coordination",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "enforcer": {
-      "description": "Enforcer agent for codex compliance",
+    "architect": {
+      "description": "Architect agent for system design - PRIMARY for design decisions",
       "temperature": 1.0,
       "mode": "primary"
     },
-    "architect": {
-      "description": "Architect agent for system design",
+    "strategist": {
+      "description": "Expert in system design, architecture decisions, and technical roadmaps - PRIMARY for planning",
       "temperature": 1.0,
       "mode": "subagent"
     },

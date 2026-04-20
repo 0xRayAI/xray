@@ -8,6 +8,7 @@
  */
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { existsSync, readFileSync } from "fs";
 export class CoverageAnalysisProcessor extends PostProcessor {
     name = "coverageAnalysis";
     priority = 45;
@@ -99,7 +100,6 @@ export class CoverageAnalysisProcessor extends PostProcessor {
         }
         return testFiles.filter((f) => {
             try {
-                const { existsSync } = require("fs");
                 return existsSync(f);
             }
             catch {
@@ -109,7 +109,6 @@ export class CoverageAnalysisProcessor extends PostProcessor {
     }
     async countSourceLines(filePath) {
         try {
-            const { readFileSync } = require("fs");
             const content = readFileSync(filePath, "utf-8");
             return content.split("\n").filter((line) => {
                 const trimmed = line.trim();
@@ -123,7 +122,6 @@ export class CoverageAnalysisProcessor extends PostProcessor {
     async countTestLines(testFiles) {
         let total = 0;
         try {
-            const { readFileSync, existsSync } = require("fs");
             for (const testFile of testFiles) {
                 if (existsSync(testFile)) {
                     const content = readFileSync(testFile, "utf-8");

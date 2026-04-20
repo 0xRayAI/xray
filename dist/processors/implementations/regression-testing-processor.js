@@ -9,6 +9,7 @@
  */
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { execSync } from "child_process";
 export class RegressionTestingProcessor extends PostProcessor {
     name = "regressionTesting";
     priority = 50;
@@ -101,7 +102,6 @@ export class RegressionTestingProcessor extends PostProcessor {
     async executeTestFile(testFile) {
         return new Promise((resolve) => {
             try {
-                const { execSync } = require("child_process");
                 const result = execSync(`npx vitest run --reporter=json ${testFile}`, {
                     encoding: "utf-8",
                     timeout: 60000,

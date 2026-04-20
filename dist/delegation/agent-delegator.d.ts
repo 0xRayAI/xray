@@ -12,6 +12,7 @@
 import { ComplexityScore } from "./complexity-analyzer.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
+import { type AggregatedMetrics, type MetricsExport } from "./metrics-aggregator.js";
 export interface AgentCapability {
     name: string;
     capabilities: string[];
@@ -98,6 +99,7 @@ export declare class AgentDelegator {
     private stateManager;
     private configLoader;
     private kernel;
+    private agentMetrics;
     /** Minimum confidence for a learned mapping to override hardcoded routing. */
     private static readonly MAPPING_CONFIDENCE_THRESHOLD;
     constructor(stateManager: StringRayStateManager, configLoader: typeof strRayConfigLoader);
@@ -163,6 +165,22 @@ export declare class AgentDelegator {
     executeDelegation(analysis: DelegationAnalysis, request: DelegationRequest): Promise<DelegationResult>;
     getPerformanceMetrics(): PerformanceMetrics;
     getDelegationMetrics(): DelegationMetrics;
+    aggregateAllMetrics(): {
+        delegation: AggregatedMetrics;
+        orchestration: AggregatedMetrics;
+    };
+    getMetricsByAgent(type?: "delegation" | "orchestration"): Record<string, unknown>;
+    getMetricsByComplexity(type?: "delegation" | "orchestration"): Record<string, unknown>;
+    getMetricsByTimePeriod(type?: "delegation" | "orchestration"): Record<string, unknown>;
+    rotateMetricsEntries(maxEntries?: number): {
+        delegation: number;
+        orchestration: number;
+    };
+    cleanupMetricsOlderThan(olderThanMs: number): {
+        delegation: number;
+        orchestration: number;
+    };
+    exportMetricsData(format?: "json" | "csv" | "summary"): MetricsExport;
     updateAgentCapability(agentName: string, capabilities: Partial<AgentCapability>): void;
 }
 export declare function createAgentDelegator(stateManager: StringRayStateManager, configLoader: typeof strRayConfigLoader): AgentDelegator;
