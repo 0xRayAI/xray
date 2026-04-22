@@ -80,4 +80,4 @@ console.log("📋 Next steps:");
 console.log("1. Run 'npm run build:all' to build the framework");
 console.log("2. Restart OpenCode to load the plugin");
 console.log("3. Run 'opencode agent list' to see StrRay agents");
-console.log("4. Try '@enforcer analyze this code' to test the plugin");
+console.log("4. Try '@architect analyze this code' or '@security-auditor scan' to test");

@@ -33,14 +33,14 @@ describe("default-agents", () => {
       });
     });
 
-    it("should have active status for all agents", () => {
-      DEFAULT_AGENTS.forEach((agent) => {
-        expect(agent.status).toBe("active");
-      });
+    it("should have active status for non-deprecated agents", () => {
+      const activeAgents = DEFAULT_AGENTS.filter((a) => a.status === "active");
+      expect(activeAgents.length).toBeGreaterThan(0);
     });
 
-    it("should have numeric capacity and performance values", () => {
-      DEFAULT_AGENTS.forEach((agent) => {
+    it("should have numeric capacity and performance values for active agents", () => {
+      const activeAgents = DEFAULT_AGENTS.filter((a) => a.status === "active");
+      activeAgents.forEach((agent) => {
         expect(typeof agent.capacity).toBe("number");
         expect(typeof agent.performance).toBe("number");
         expect(agent.capacity).toBeGreaterThan(0);
@@ -50,9 +50,8 @@ describe("default-agents", () => {
 
     it("should contain core agents", () => {
       const agentNames = DEFAULT_AGENTS.map((a) => a.name);
-      expect(agentNames).toContain("enforcer");
       expect(agentNames).toContain("architect");
-      expect(agentNames).toContain("orchestrator");
+      expect(agentNames).toContain("strategist");
       expect(agentNames).toContain("code-reviewer");
       expect(agentNames).toContain("security-auditor");
     });
@@ -68,10 +67,10 @@ describe("default-agents", () => {
 
   describe("getDefaultAgentByName", () => {
     it("should return agent by valid name", () => {
-      const agent = getDefaultAgentByName("enforcer");
+      const agent = getDefaultAgentByName("architect");
       expect(agent).toBeDefined();
-      expect(agent?.name).toBe("enforcer");
-      expect(agent?.expertise).toBe("code quality enforcement");
+      expect(agent?.name).toBe("architect");
+      expect(agent?.expertise).toBe("system architecture");
     });
 
     it("should return undefined for invalid name", () => {

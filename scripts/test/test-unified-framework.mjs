@@ -101,7 +101,7 @@ class UnifiedTestFramework {
     this.log('Testing Integration...', 'test');
     
     const tests = [
-      { file: 'src/__tests__/integration/boot-orchestrator.integration.test.ts', name: 'Boot Orchestrator Integration' },
+      { file: 'src/__tests__/unit/boot-orchestrator.test.ts', name: 'Boot Orchestrator Integration' },
       { file: 'src/__tests__/integration/orchestration-e2e.test.ts', name: 'Orchestration E2E' }
     ];
 

@@ -67,8 +67,6 @@ function getSkillsList(cwd: string): { count: number; names: string[] } {
 
 function getAgentsList(cwd: string): { count: number; names: string[] } {
   const agentsFromSkills = [
-    "enforcer",
-    "orchestrator",
     "architect",
     "security-auditor",
     "code-reviewer",
@@ -182,7 +180,7 @@ export function getStatusReport(cwd: string = process.cwd()): StatusReport {
   return {
     opencode: {
       installed: existsSync(join(cwd, "node_modules", "strray-ai")),
-      configFound: existsSync(opencodeConfigPath),
+      configFound: existsSync(opencodeConfigPath) || existsSync(join(cwd, ".opencode", "enforcer-config.json")),
     },
     skills: cwdSkills,
     agents,
@@ -195,7 +193,11 @@ export function printStatus(report: StatusReport): void {
   const opencodeStatus = report.opencode.installed
     ? "✅ Installed"
     : "⚠️  Not installed locally";
-  const configStatus = report.opencode.configFound ? "✅ Found" : "❌ Missing";
+  const configStatus = report.opencode.configFound 
+    ? "✅ Found" 
+    : report.opencode.installed 
+      ? "⚠️  Optional for consumers" 
+      : "❌ Missing";
   const logStatus = report.health.logExists
     ? `✅ ${report.health.recentEntries} entries`
     : "⚠️  No activity log";

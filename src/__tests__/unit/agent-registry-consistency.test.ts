@@ -36,8 +36,10 @@ describe("Agent Registry Consistency", () => {
   });
 
   describe("DEFAULT_AGENTS completeness", () => {
-    it("should have DEFAULT_AGENTS count matching active registry count", () => {
-      expect(DEFAULT_AGENTS.length).toBe(ACTIVE_NAMES.length);
+    it("should have DEFAULT_AGENTS matching registry", () => {
+      // DEFAULT_AGENTS derives from full AGENT_REGISTRY (including deprecated)
+      const registryCount = Object.keys(AGENT_REGISTRY).length;
+      expect(DEFAULT_AGENTS.length).toBe(registryCount);
     });
 
     it("should have every DEFAULT_AGENTS entry in registry", () => {
@@ -148,14 +150,17 @@ describe("Agent Registry Consistency", () => {
       }
     });
 
-    it("should have every registry agent in opencode.json", () => {
+    it("should have every active registry agent in opencode.json", () => {
       if (!fs.existsSync(OPENCODE_JSON_PATH)) return;
 
       const config = JSON.parse(fs.readFileSync(OPENCODE_JSON_PATH, "utf-8"));
       const opencodeAgents = Object.keys(config.agent || {});
       const missing: string[] = [];
 
+      // Skip deprecated agents (enforcer, orchestrator) that are no longer in opencode.json
+      const DEPRECATED = ["enforcer", "orchestrator"];
       for (const name of REGISTRY_NAMES) {
+        if (DEPRECATED.includes(name)) continue;
         if (!opencodeAgents.includes(name)) {
           missing.push(name);
         }

@@ -122,28 +122,55 @@ class StringRayValidator {
     this.log('Phase 1: Build System Validation', 'step');
     this.log('================================', 'step');
 
-    // Check package.json
     this.checkFile(PACKAGE_JSON_PATH, 'package.json');
     
-    // Check dist directory structure
     this.checkDirectory(DIST_DIR, 'dist directory');
     this.checkDirectory(path.join(DIST_DIR, 'cli'), 'CLI binaries');
-    this.checkDirectory(path.join(DIST_DIR, 'plugin'), 'Plugin files');
     this.checkDirectory(path.join(DIST_DIR, 'mcps'), 'MCP servers');
     this.checkDirectory(path.join(DIST_DIR, 'processors'), 'Processors');
     this.checkDirectory(path.join(DIST_DIR, 'state'), 'State management');
     this.checkDirectory(path.join(DIST_DIR, 'enforcement'), 'Rule enforcement');
+    this.checkDirectory(path.join(DIST_DIR, 'integrations'), 'Integrations');
+    this.checkDirectory(path.join(DIST_DIR, 'skills'), 'Skills');
+    this.checkDirectory(path.join(DIST_DIR, 'agents'), 'Agents');
+    this.checkDirectory(path.join(DIST_DIR, 'core'), 'Core framework');
+    this.checkDirectory(path.join(DIST_DIR, 'analytics'), 'Analytics');
+    this.checkDirectory(path.join(DIST_DIR, 'orchestrator'), 'Orchestrator');
+    this.checkDirectory(path.join(DIST_DIR, 'session'), 'Session management');
+    this.checkDirectory(path.join(DIST_DIR, 'validation'), 'Validation');
+    this.checkDirectory(path.join(DIST_DIR, 'utils'), 'Utils');
+    this.checkDirectory(path.join(DIST_DIR, 'security'), 'Security');
+    this.checkDirectory(path.join(DIST_DIR, 'performance'), 'Performance');
+    this.checkDirectory(path.join(DIST_DIR, 'monitoring'), 'Monitoring');
+    this.checkDirectory(path.join(DIST_DIR, 'reporting'), 'Reporting');
+    this.checkDirectory(path.join(DIST_DIR, 'postprocessor'), 'Postprocessor');
+    this.checkDirectory(path.join(DIST_DIR, 'delegation'), 'Delegation');
+    this.checkDirectory(path.join(DIST_DIR, 'config'), 'Config');
+    this.checkDirectory(path.join(DIST_DIR, 'testing'), 'Testing');
+    this.checkDirectory(path.join(DIST_DIR, 'services'), 'Services');
+    this.checkDirectory(path.join(PROJECT_DIR, 'src/infrastructure'), 'Infrastructure');
+    this.checkDirectory(path.join(DIST_DIR, 'dashboard'), 'Dashboard');
+    this.checkDirectory(path.join(DIST_DIR, 'public'), 'Public assets');
     
     this.checkDirectory(path.join(DIST_DIR, 'cli'), 'CLI help');
 
-    // Check critical files
+    // Check critical files (MCP + Plugin architecture)
     const criticalFiles = [
       ['dist/cli/index.js', 'CLI entry point'],
-      ['dist/plugin/strray-codex-injection.js', 'Main plugin'],
+      ['.opencode/plugin/strray-codex-injection.js', 'OpenCode plugin'],
+      ['dist/mcps/framework-help.server.js', 'Framework help MCP'],
       ['dist/processors/processor-manager.js', 'Processor manager'],
       ['dist/state/state-manager.js', 'State manager'],
       ['dist/enforcement/rule-enforcer.js', 'Rule enforcer']
     ];
+
+    // OpenClaw integration - validated via test
+    try {
+      await this.runCommand('npm run test -- --run src/integrations/openclaw/openclaw-integration.test.ts', 'OpenClaw integration', 60000);
+      this.results.passed.push('OpenClaw integration');
+    } catch (error) {
+      this.results.failed.push('OpenClaw integration');
+    }
 
     for (const [filePath, description] of criticalFiles) {
       this.checkFile(path.join(PROJECT_DIR, filePath), description);
@@ -210,6 +237,20 @@ class StringRayValidator {
     const mcpServers = [
       'dist/mcps/enforcer-tools.server.js',
       'dist/mcps/orchestrator.server.js',
+      'dist/mcps/framework-help.server.js',
+      'dist/mcps/boot-orchestrator.server.js',
+      'dist/mcps/auto-format.server.js',
+      'dist/mcps/lint.server.js',
+      'dist/mcps/estimation.server.js',
+      'dist/mcps/framework-compliance-audit.server.js',
+      'dist/mcps/model-health-check.server.js',
+      'dist/mcps/performance-analysis.server.js',
+      'dist/mcps/processor-pipeline.server.js',
+      'dist/mcps/researcher.server.js',
+      'dist/mcps/security-scan.server.js',
+      'dist/mcps/state-manager.server.js',
+      'dist/mcps/architect-tools.server.js',
+      'dist/mcps/agent-resolver.js',
       'dist/mcps/knowledge-skills/project-analysis.server.js',
       'dist/mcps/knowledge-skills/api-design.server.js',
       'dist/mcps/knowledge-skills/architecture-patterns.server.js',
@@ -220,7 +261,21 @@ class StringRayValidator {
       'dist/mcps/knowledge-skills/security-audit.server.js',
       'dist/mcps/knowledge-skills/ui-ux-design.server.js',
       'dist/mcps/knowledge-skills/refactoring-strategies.server.js',
-      'dist/mcps/knowledge-skills/testing-best-practices.server.js'
+      'dist/mcps/knowledge-skills/testing-best-practices.server.js',
+      'dist/mcps/knowledge-skills/bug-triage-specialist.server.js',
+      'dist/mcps/knowledge-skills/code-analyzer.server.js',
+      'dist/mcps/knowledge-skills/content-creator.server.js',
+      'dist/mcps/knowledge-skills/database-design.server.js',
+      'dist/mcps/knowledge-skills/devops-deployment.server.js',
+      'dist/mcps/knowledge-skills/mobile-development.server.js',
+      'dist/mcps/knowledge-skills/strategist.server.js',
+      'dist/mcps/knowledge-skills/growth-strategist.server.js',
+      'dist/mcps/knowledge-skills/seo-consultant.server.js',
+      'dist/mcps/knowledge-skills/session-management.server.js',
+      'dist/mcps/knowledge-skills/log-monitor.server.js',
+      'dist/mcps/knowledge-skills/multimodal-looker.server.js',
+      'dist/mcps/knowledge-skills/tech-writer.server.js',
+      'dist/mcps/knowledge-skills/skill-invocation.server.js'
     ];
 
     let mcpSuccessCount = 0;
@@ -289,14 +344,29 @@ class StringRayValidator {
     this.log('Phase 6: Integration Points Validation', 'step');
     this.log('======================================', 'step');
 
-    // Check postinstall script
     this.checkFile(path.join(PROJECT_DIR, 'scripts', 'node', 'postinstall.cjs'), 'Postinstall script');
-
-    // Check configuration files
     this.checkFile(path.join(PROJECT_DIR, 'opencode.json'), 'OpenCode configuration');
     this.checkDirectory(path.join(PROJECT_DIR, '.opencode'), 'OpenCode directory');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'codex.json'), 'Codex configuration');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'features.json'), 'Features configuration');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'config.json'), 'Strray config');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'routing-mappings.json'), 'Routing mappings');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'workflow_state.json'), 'Workflow state');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'integrations.json'), 'Integrations config');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'agents_template.md'), 'Agents template');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'strray'), 'Strray config directory');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'commands'), 'OpenCode commands');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'hooks'), 'OpenCode hooks');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'workflows'), 'OpenCode workflows');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'agents'), 'OpenCode agents');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'skills'), 'OpenCode skills');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'core'), 'OpenCode core');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'enforcement'), 'OpenCode enforcement');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'init.sh'), 'Init script');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'codex.codex'), 'Codex file');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'enforcer-config.json'), 'Enforcer config');
+    this.checkFile(path.join(PROJECT_DIR, '.opencode', '.strrayrc.json'), 'Strray RC config');
 
-    // Test consumer readiness if available
     const consumerTestPath = path.join(PROJECT_DIR, 'scripts', 'mjs', 'test-consumer-readiness.mjs');
     if (this.checkFile(consumerTestPath, 'Consumer readiness test')) {
       try {
@@ -304,6 +374,175 @@ class StringRayValidator {
         this.results.passed.push('Consumer readiness validation');
       } catch (error) {
         this.results.failed.push('Consumer readiness validation');
+      }
+    }
+  }
+
+  async validateSkillsAndAgents() {
+    this.log('Phase 7: Skills and Agents Validation', 'step');
+    this.log('======================================', 'step');
+
+    const skills = [
+      'dist/skills/api-design',
+      'dist/skills/architect-tools',
+      'dist/skills/architecture-patterns',
+      'dist/skills/auto-format',
+      'dist/skills/backend-engineer',
+      'dist/skills/boot-orchestrator',
+      'dist/skills/bug-triage',
+      'dist/skills/code-analyzer',
+      'dist/skills/code-review',
+      'dist/skills/content-creator',
+      'dist/skills/database-engineer',
+      'dist/skills/devops-engineer',
+      'dist/skills/enforcer',
+      'dist/skills/frontend-engineer',
+      'dist/skills/frontend-ui-ux-engineer',
+      'dist/skills/git-workflow',
+      'dist/skills/growth-strategist',
+      'dist/skills/hermes-agent',
+      'dist/skills/inference-improve',
+      'dist/skills/lint',
+      'dist/skills/log-monitor',
+      'dist/skills/mobile-developer',
+      'dist/skills/model-health-check',
+      'dist/skills/multimodal-looker',
+      'dist/skills/orchestrator',
+      'dist/skills/performance-analysis',
+      'dist/skills/performance-engineer',
+      'dist/skills/performance-optimization',
+      'dist/skills/processor-pipeline',
+      'dist/skills/project-analysis',
+      'dist/skills/refactoring-strategies',
+      'dist/skills/researcher',
+      'dist/skills/security-audit',
+      'dist/skills/security-scan',
+      'dist/skills/seo-consultant',
+      'dist/skills/session-management',
+      'dist/skills/state-manager',
+      'dist/skills/storyteller',
+      'dist/skills/strategist',
+      'dist/skills/tech-writer',
+      'dist/skills/testing-best-practices',
+      'dist/skills/testing-strategy',
+      'dist/skills/ui-ux-design'
+    ];
+
+    let skillCount = 0;
+    for (const skillPath of skills) {
+      const fullPath = path.join(PROJECT_DIR, skillPath);
+      if (fs.existsSync(fullPath)) {
+        skillCount++;
+        this.results.passed.push(`Skill: ${path.basename(skillPath)}`);
+      }
+    }
+    this.log(`Skills: ${skillCount}/${skills.length} found`, 'info');
+
+    const agents = [
+      'dist/agents/architect.js',
+      'dist/agents/backend-engineer.js',
+      'dist/agents/bug-triage-specialist.js',
+      'dist/agents/code-analyzer.js',
+      'dist/agents/code-reviewer.js',
+      'dist/agents/content-creator.js',
+      'dist/agents/database-engineer.js',
+      'dist/agents/devops-engineer.js',
+      'dist/agents/enforcer.js',
+      'dist/agents/frontend-engineer.js',
+      'dist/agents/frontend-ui-ux-engineer.js',
+      'dist/agents/growth-strategist.js',
+      'dist/agents/index.js',
+      'dist/agents/librarian-agents-updater.js',
+      'dist/agents/log-monitor.js',
+      'dist/agents/mobile-developer.js',
+      'dist/agents/multimodal-looker.js',
+      'dist/agents/orchestrator.js',
+      'dist/agents/performance-engineer.js',
+      'dist/agents/refactorer.js',
+      'dist/agents/registry.js',
+      'dist/agents/researcher.js',
+      'dist/agents/security-auditor.js',
+      'dist/agents/seo-consultant.js',
+      'dist/agents/strategist.js',
+      'dist/agents/tech-writer.js',
+      'dist/agents/testing-lead.js',
+      'dist/agents/types.js'
+    ];
+
+    let agentCount = 0;
+    for (const agentPath of agents) {
+      const fullPath = path.join(PROJECT_DIR, agentPath);
+      if (this.checkFile(fullPath, `Agent: ${path.basename(agentPath)}`)) {
+        agentCount++;
+      }
+    }
+    this.log(`Agents: ${agentCount}/${agents.length} found`, 'info');
+  }
+
+  async validateCoreAndInfrastructure() {
+    this.log('Phase 8: Core and Infrastructure Validation', 'step');
+    this.log('============================================', 'step');
+
+    const coreFiles = [
+      ['dist/core/kernel-patterns.js', 'Kernel patterns'],
+      ['dist/core/index.js', 'Core index'],
+      ['dist/index.js', 'Main index']
+    ];
+
+    for (const [filePath, description] of coreFiles) {
+      this.checkFile(path.join(PROJECT_DIR, filePath), description);
+    }
+
+    const infrastructureDirs = [
+      ['src/infrastructure', 'Infrastructure'],
+      ['dist/config', 'Config'],
+      ['dist/dashboard', 'Dashboard'],
+      ['dist/benchmark', 'Benchmark']
+    ];
+
+    for (const [dirPath, description] of infrastructureDirs) {
+      const fullPath = path.join(PROJECT_DIR, dirPath);
+      if (this.checkDirectory(fullPath, description)) {
+        this.results.passed.push(description);
+      }
+    }
+
+    const criticalDistFiles = [
+      '.opencode/plugin/strray-codex-injection.js',
+      'dist/scripts/integration.js',
+      'dist/public/',
+      'dist/cli/index.js'
+    ];
+
+    for (const filePath of criticalDistFiles) {
+      const fullPath = path.join(PROJECT_DIR, filePath);
+      if (filePath.endsWith('/')) {
+        this.checkDirectory(fullPath, `Directory: ${path.basename(filePath)}`);
+      } else {
+        this.checkFile(fullPath, `File: ${path.basename(filePath)}`);
+      }
+    }
+  }
+
+  async validateTestSuiteCoverage() {
+    this.log('Phase 9: Extended Test Suite Validation', 'step');
+    this.log('========================================', 'step');
+
+    const additionalTestCommands = [
+      'test:session-management',
+      'test:code-analysis',
+      'test:processors',
+      'test:performance-all',
+      'test:agents-all',
+      'test:infrastructure'
+    ];
+
+    for (const testCommand of additionalTestCommands) {
+      try {
+        await this.runCommand(`npm run ${testCommand}`, `Test suite: ${testCommand}`, 120000);
+        this.results.passed.push(`Test suite: ${testCommand}`);
+      } catch (error) {
+        this.results.failed.push(`Test suite: ${testCommand}`);
       }
     }
   }
@@ -365,6 +604,8 @@ class StringRayValidator {
       await this.validateTestSuite();
       await this.validateCLICommands();
       await this.validateIntegrationPoints();
+      await this.validateSkillsAndAgents();
+      await this.validateCoreAndInfrastructure();
 
       const success = this.printSummary();
       return success;

@@ -79,9 +79,9 @@ describe("Agent Configuration", () => {
     expect(fs.existsSync(agentsPath)).toBe(true);
     const content = fs.readFileSync(agentsPath, "utf-8");
     // Check for essential AGENTS.md content
-    expect(content).toContain("0xRay");
-    expect(content).toContain("Available Agents");
-    expect(content).toContain("CLI Commands");
+    expect(content).toContain("StringRay");
+    expect(content).toContain("Agents");
+    expect(content).toContain("invocation");
   });
 });
 

@@ -515,6 +515,30 @@ async function handlePostPush() {
   process.exit(0);
 }
 
+async function handlePreCommand() {
+  const preCommandPath = join(projectRoot, "scripts", "hooks", "pre-command.mjs");
+
+  if (!existsSync(preCommandPath)) {
+    log("Pre-command hook not found, skipping");
+    process.exit(0);
+  }
+
+  log("Running pre-command context check...");
+
+  try {
+    const { execSync: nodeExecSync } = await import("child_process");
+    nodeExecSync(`node "${preCommandPath}"`, {
+      cwd: projectRoot,
+      stdio: "inherit",
+    });
+    log("Pre-command: complete");
+    process.exit(0);
+  } catch (err) {
+    logError(`Pre-command hook failed: ${err.message}`);
+    process.exit(0);
+  }
+}
+
 // ── Main ─────────────────────────────────────────────────────
 
 const handlers = {
@@ -522,6 +546,7 @@ const handlers = {
   "post-commit": handlePostCommit,
   "pre-push": handlePrePush,
   "post-push": handlePostPush,
+  "pre-command": handlePreCommand,
 };
 
 const handler = handlers[hookType];

@@ -45,12 +45,15 @@ const MERGE_FILES = [
   'enforcer-config.json'
 ];
 
-// Detect Hermes Agent installation (skip .opencode/ for Hermes consumers)
-const homeDir = process.env.HOME || process.env.USERPROFILE || require('os').homedir();
-const isHermes = fs.existsSync(path.join(homeDir, '.hermes'));
+// Detect if Hermes Agent is present (Rust binary in consumer's home directory)
+// Hermes consumers don't need .opencode/ - they use .strray/ natively
+// Check consumer's HOME - if Hermes exists, skip .opencode/ setup
+const consumerHomeDir = process.env.HOME || process.env.USERPROFILE;
+const hasHermes = consumerHomeDir && fs.existsSync(path.join(consumerHomeDir, '.hermes')) && 
+                  fs.lstatSync(path.join(consumerHomeDir, '.hermes')).isDirectory();
 
-if (isHermes) {
-  console.log('🔍 Hermes Agent detected — skipping .opencode/ setup (uses .strray/ directly)');
+if (hasHermes) {
+  console.log('🔍 Hermes Agent present — using .strray/ (skipping .opencode/ setup)');
 }
 
 // Directories to skip entirely
@@ -68,7 +71,7 @@ const SKIP_FILES = [
 ];
 
 // Copy core skills from src/skills/ to .opencode/skills/ (OpenCode consumers only)
-if (!isHermes) {
+if (!hasHermes) {
 const skillsSource = path.join(packageRoot, 'src', 'skills');
 const skillsDest = path.join(targetDir, '.opencode', 'skills');
 
@@ -115,10 +118,10 @@ if (fs.existsSync(skillsSource)) {
     console.warn(`⚠️ Could not copy skills:`, error.message);
   }
 } // end existsSync(skillsSource)
-} // end isHermes guard for skills
+} // end hasHermes guard for skills
 
 // Copy .opencode directory recursively with smart merging (OpenCode consumers only)
-if (!isHermes) {
+if (!hasHermes) {
 const opencodeSource = path.join(packageRoot, '.opencode');
 const opencodeDest = path.join(targetDir, '.opencode');
 
@@ -227,10 +230,10 @@ if (fs.existsSync(opencodeSource)) {
     console.warn(`⚠️ Could not copy directory .opencode:`, error.message);
   }
 } // end existsSync(opencodeSource)
-} // end isHermes guard for .opencode dir
+} // end hasHermes guard for .opencode dir
 
 // Copy plugin from dist/plugin/ to .opencode/plugin/ (OpenCode consumers only)
-if (!isHermes) {
+if (!hasHermes) {
 const pluginSource = path.join(packageRoot, 'dist', 'plugin', 'strray-codex-injection.js');
 const pluginDest = path.join(targetDir, '.opencode', 'plugin', 'strray-codex-injection.js');
 
@@ -255,10 +258,10 @@ if (fs.existsSync(pluginSource)) {
 } else {
   console.warn(`⚠️ Plugin source not found: ${pluginSource}`);
 }
-} // end isHermes guard for plugin
+} // end hasHermes guard for plugin
 
 // Copy individual files (OpenCode consumers only — Hermes uses .strray/ directly)
-if (!isHermes) {
+if (!hasHermes) {
 console.log("🔧 StrRay Postinstall: Copying configuration files...");
 console.log("📍 Package root:", packageRoot);
 console.log("📍 Target directory:", targetDir);
@@ -287,7 +290,7 @@ configFiles.forEach(fileMapping => {
     console.warn(`⚠️ Could not copy ${fileMapping}:`, error.message);
   }
 });
-} // end isHermes guard for config files
+} // end hasHermes guard for config files
 
 // Create symlink to scripts directory for post-processor monitoring
 const scriptsSource = path.join(packageRoot, 'scripts');
@@ -321,7 +324,7 @@ const isConsumerEnvironment = fs.existsSync(
 );
 
 // Convert paths for consumer environment (OpenCode consumers only)
-if (!isHermes && isConsumerEnvironment) {
+if (!hasHermes && isConsumerEnvironment) {
   console.log("🔧 StrRay Postinstall: Converting paths for consumer environment...");
 
   // Note: .mcp.json was refactored out - no longer need to update MCP paths
@@ -606,5 +609,5 @@ try {
 console.log("📋 Next steps:");
 console.log("1. Restart OpenCode to load the plugin");
 console.log("2. Run 'opencode agent list' to see StrRay agents");
-console.log("3. Try '@enforcer analyze this code' to test the plugin");
+console.log("3. Try '@architect analyze this code' or '@security-auditor scan' to test");
 console.log("4. Hermes Agent users: restart Hermes to load MCP tools and hermes-agent skill");
