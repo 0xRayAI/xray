@@ -3,21 +3,60 @@
 **Version**: 1.22.14
 
 ```
-┌──────────────────────────────────────┐
-│      0xRay Architecture v1.22.14    │
-├──────────────────────────────────────┤
-│         Governance Layer              │
-│  Codex (60 rules) + Processors      │
-│  Agents + Skills + Security          │
-└──────────────────────────────────────┘
-                ↓
-        ┌───────┼───────┐
-        ↓       ↓       ↓
-    OpenCode  Hermes  OpenClaw
-     (plugin) (MCP)    (WS)
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                 ENTRY POINTS                                 │
+├──────────────────────┬──────────────────────────────┬───────────────────────┤
+│ CLI (src/cli/)       │ Plugin                       │ MCP Servers           │
+│ - commands           │ stray-codex-                 │ 14+ servers           │
+│ - index.ts           │ injection                    │ for agents            │
+│ - server.ts          │                              │                       │
+└──────────────────────┴──────────────────────────────┴───────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                 CORE (src/core/)                             │
+│                                                                              │
+│ boot-orchestrator  →  kernel Patterns  →  Codex                              │
+│ context-loader     →  config-loader    →  Injector                           │
+│ activity-logger    →  framework-logger →  Model router                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+                  │                        │                        │
+                  ▼                        ▼                        ▼
+┌─────────────────────────────┬─────────────────────────────┬─────────────────────────────┐
+│         AGENTS              │          SKILLS             │        PROCESSORS           │
+│       (26 agents)           │        (43 skills)          │        (16 procs)           │
+│                             │                             │                             │
+│ - architect                │ - api-design                │ - processor-               │
+│ - researcher              │ - researcher              │   manager                 │
+│ - security               │ - code-review             │ - typescript              │
+│ - code-review             │ - boot-orchestrator       │ - versioning             │
+│ - refactorer             │ - security               │ - test-auto-creation      │
+│ - testing-lead           │ - enforcer                │ - codex-validation       │
+│ - bug-triage             │ - etc.                   │ - console-log-guard     │
+└─────────────────────────────┴─────────────────────────────┴────────────────────────��────┘
+                  │                        │                        │
+                  ▼                        ▼                        ▼
+┌─────────────────────────────┬─────────────────────────────┬─────────────────────────────┐
+│       DELEGATION            │        INTEGRATIONS         │        ENFORCEMENT          │
+│                             │                             │                             │
+│ - agent-delegator           │ - OpenClaw                  │ - rule-enforcer            │
+│ - voting-coordinator        │ - Hermes                   │ - validators              │
+│ - complexity-analyzer     │ - plugins                  │ - code-quality           │
+│ - task-skill-router       │ - cross-language           │ - session-security       │
+└─────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
 ```
 
-## How Community Skills/MCPs Fit
+## Module Summary
+
+| Module | Count | Files |
+|--------|-------|-------|
+| Core | 20 | boot-orchestrator, kernel, codex, context... |
+| Agents | 28 | architect, researcher, security... |
+| Skills | 44 | api-design, boot-orchestrator... |
+| MCPs | 15 | framework-help, lint, test... |
+| Processors | 16 | processor-manager, typescript... |
+
+## How Community Extensions Fit
 
 ```
 ┌─────────────────────────────────────────┐
@@ -50,6 +89,10 @@
 4. **Community Skills** - Installable from registry (antigravity, superpowers...)
 5. **Community MCPs** - Installable from registry (xmcp, github-mcp...)
 
+**Removed in v1.22:**
+- @enforcer (deprecated)  
+- @orchestrator (deprecated)
+
 **Flow:**
 
 ```
@@ -59,11 +102,11 @@ User → OpenCode/Hermes/OpenClaw
     → Community Skills + MCPs (optional install)
 ```
 
-**To add community MCP:**
+**MCP Commands:**
 ```bash
-npx strray-ai mcp:install xmcp      # X API tools
-npx strray-ai mcp:install github    # GitHub tools
-npx strray-ai skill:install antigrav  # 1300+ skills
+npx strray-ai mcp-list           # List community MCPs
+npx strray-ai mcp-install xmcp   # Install X API MCP
+npx strray-ai mcp-install github # Install GitHub MCP
+npx strray-ai mcp-status        # Show installed
+npx strray-ai mcp-remove xmcp   # Remove MCP
 ```
-
-That clear?
