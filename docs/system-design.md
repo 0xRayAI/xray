@@ -2,7 +2,38 @@
 
 **Version**: 1.22.14
 
+---
+
 ## What is 0xRay?
+
+A self-healing AI governance OS - an orchestration framework that:
+
+1. **Intercepts prompts (Plugin)** → Injects Codex rules before AI responds
+2. **Routes tasks** to specialized agents based on complexity
+3. **Enforces compliance** via 60 codex rules
+4. **Coordinates multi-agent** workflows with voting/delegation
+5. **Processes code** via pre/post pipeline hooks
+
+### What It Actually Does
+
+| Hook | Function |
+|------|----------|
+| Plugin | Captures every prompt → validates against Codex → injects rules |
+| MCP | Provides tools (lint, test, build, security) to Hermes |
+| Processors | Run before/after commands → auto-fix, validate, version |
+| Agents | 26 specialized AI workers (research, code, security, etc.) |
+
+### Honest Assessment
+
+It's a **belt-and-suspenders** system with:
+- Multiple layers of validation (codex, validators, processors)
+- Multiple agent types doing similar things
+- Lots of guardsrails against bad AI outputs
+- Self-repairing where it catches its own mistakes
+
+**The core truth:** It exists because AI code often needs fixing, so we built a system that tries to catch and fix issues before they ship.
+
+### How It Relates to Other Tools
 
 ```
 ┌──────────┬──────────────────────────────────────────────┬──────────────────────────────────────────────┐
@@ -26,28 +57,7 @@
       (plugin)       (MCP)         (WS)
 ```
 
-**What 0xRay adds:**
-- Codex (60 rules) - compliance enforcement
-- Multi-agent coordination - voting, delegation
-- Processors - pre/post command hooks
-- Security - audit, scanning
-
-**The honest take:**
-- Without hosts (OpenCode/Hermes/OpenClaw), 0xRay is just code
-- 0xRay makes any AI agent governed and compliance-aware
-- It's middleware, not the main thing
-
----
-
-## What is 0xRay?
-
-A self-healing AI governance OS - an orchestration framework that:
-
-1. **Intercepts prompts (Plugin)** → Injects Codex rules before AI responds
-2. **Routes tasks** to specialized agents based on complexity
-3. **Enforces compliance** via 60 codex rules
-4. **Coordinates multi-agent** workflows with voting/delegation
-5. **Processes code** via pre/post pipeline hooks
+Without hosts (OpenCode/Hermes/OpenClaw), 0xRay is just code. It's middleware, not the main thing.
 
 ## What's It Actually Do?
 
