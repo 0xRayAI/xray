@@ -39,6 +39,37 @@
 
 ---
 
+## What is 0xRay?
+
+A self-healing AI governance OS - an orchestration framework that:
+
+1. **Intercepts prompts (Plugin)** → Injects Codex rules before AI responds
+2. **Routes tasks** to specialized agents based on complexity
+3. **Enforces compliance** via 60 codex rules
+4. **Coordinates multi-agent** workflows with voting/delegation
+5. **Processes code** via pre/post pipeline hooks
+
+## What's It Actually Do?
+
+| Hook | Function |
+|------|----------|
+| Plugin | Captures every prompt → validates against Codex → injects rules |
+| MCP | Provides tools (lint, test, build, security) to Hermes |
+| Processors | Run before/after commands → auto-fix, validate, version |
+| Agents | 26 specialized AI workers (research, code, security, etc.) |
+
+## Honest Assessment
+
+It's a **belt-and-suspenders** system with:
+- Multiple layers of validation (codex, validators, processors)
+- Multiple agent types doing similar things
+- Lots of guardsrails against bad AI outputs
+- Self-repairing where it catches its own mistakes
+
+**The core truth:** It exists because AI code often needs fixing, so we built a system that tries to catch and fix issues before they ship.
+
+---
+
 ## Architecture Diagram
 
 ```
