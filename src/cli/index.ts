@@ -921,7 +921,40 @@ program
     await storytellerCommand(type, options);
   });
 
-// Dashboard command - Real-time monitoring dashboard (temporarily disabled)
+// MCP install commands - use hyphen for compatibility
+program
+  .command('mcp-list')
+  .description('List available community MCP servers')
+  .action(async () => {
+    const { listMCPsCommand } = await import('./commands/mcp-install.js');
+    listMCPsCommand();
+  });
+
+program
+  .command('mcp-status')
+  .description('Show installed MCP servers')
+  .action(async () => {
+    const { showMCPStatusCommand } = await import('./commands/mcp-install.js');
+    showMCPStatusCommand();
+  });
+
+program
+  .command('mcp-install <name>')
+  .description('Install an MCP server from the registry')
+  .action(async (name) => {
+    const { installMCPCommand } = await import('./commands/mcp-install.js');
+    await installMCPCommand(name);
+  });
+
+program
+  .command('mcp-remove <name>')
+  .description('Remove an installed MCP server')
+  .action(async (name) => {
+    const { removeMCPCommand } = await import('./commands/mcp-install.js');
+    removeMCPCommand(name);
+  });
+
+// Analytics enable command
 // TODO: Re-enable after fixing dashboard module
 // program
 //   .command('dashboard')
@@ -1060,4 +1093,5 @@ For more information, visit: https://github.com/htafolla/stringray
 );
 
 // Parse command line arguments
+program.exitOverride();
 program.parse();

@@ -1,0 +1,280 @@
+import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from "fs";
+import { join, dirname } from "path";
+import { execSync } from "child_process";
+import { getConfigDir } from "../../core/config-paths.js";
+
+interface MCPSource {
+  name: string;
+  url: string;
+  description?: string;
+  license?: string;
+  category?: string;
+  env?: string[];
+}
+
+interface MCPConfig {
+  sources: MCPSource[];
+}
+
+function getMCPConfigPath(): string {
+  return join(process.cwd(), ".opencode", "strray", "mcp-registry.json");
+}
+
+function getBundledMCPRegistry(): MCPConfig | null {
+  const paths = [
+    join(process.cwd(), "src", "mcps", "registry.json"),
+    join(process.cwd(), "node_modules", "strray-ai", "dist", "mcps", "registry.json"),
+  ];
+  for (const p of paths) {
+    if (existsSync(p)) {
+      return JSON.parse(readFileSync(p, "utf-8"));
+    }
+  }
+  return null;
+}
+
+function getMCPRegistry(): MCPConfig {
+  const bundled = getBundledMCPRegistry();
+  const localPath = getMCPConfigPath();
+
+  if (existsSync(localPath)) {
+    const local = JSON.parse(readFileSync(localPath, "utf-8")) as MCPConfig;
+    if (bundled) {
+      const names = new Set(bundled.sources.map((s) => s.name));
+      for (const s of local.sources) {
+        if (!names.has(s.name)) bundled.sources.push(s);
+      }
+      return bundled;
+    }
+    return local;
+  }
+
+  return bundled ?? { sources: [] };
+}
+
+function findMCPSource(name: string): MCPSource | undefined {
+  return getMCPRegistry().sources.find(
+    (s) => s.name === name || s.url.includes(name)
+  );
+}
+
+function getInstalledMCPsPath(): string {
+  const configDir = getConfigDir();
+  return join(configDir, "installed-mcps.json");
+}
+
+function getInstalledMCPs(): Record<string, MCPSource> {
+  const path = getInstalledMCPsPath();
+  if (!existsSync(path)) return {};
+  try {
+    return JSON.parse(readFileSync(path, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveInstalledMCPs(mcps: Record<string, MCPSource>): void {
+  const path = getInstalledMCPsPath();
+  const configDir = dirname(path);
+  if (!existsSync(configDir)) {
+    mkdirSync(configDir, { recursive: true });
+  }
+  writeFileSync(path, JSON.stringify(mcps, null, 2), "utf-8");
+}
+
+function showHelp(): void {
+  console.log(`
+0xRay MCP Installer
+
+Usage:
+  npx strray-ai mcp:install <name>   Install an MCP server from registry
+  npx strray-ai mcp:list           List available MCP servers
+  npx strray-ai mcp:status        Show installed MCPs
+  npx strray-ai mcp:remove <name> Remove an installed MCP
+
+Examples:
+  npx strray-ai mcp:install xmcp              # Install X (Twitter) MCP
+  npx strray-ai mcp:install github-mcp      # Install GitHub MCP
+  npx strray-ai mcp:list             # See all available
+  npx strray-ai mcp:remove xmcp      # Remove X MCP
+
+Environment Variables:
+  Each MCP requires specific env vars. Check documentation at:
+  https://github.com/0xRay-community/<name>
+`);
+}
+
+function listMCPs(): void {
+  const registry = getMCPRegistry();
+  console.log("\n📦 Available Community MCPs:\n");
+  console.log("| Name            | Category           | Description |");
+  console.log("|----------------|-------------------|-------------|");
+  for (const mcp of registry.sources) {
+    const cat = mcp.category || "other";
+    const desc = mcp.description?.slice(0, 30) || "-";
+    console.log(`| ${mcp.name.padEnd(15)} | ${cat.padEnd(16)} | ${desc} |`);
+  }
+  console.log(`\nTotal: ${registry.sources.length} MCPs`);
+  console.log("\nInstall: npx strray-ai mcp:install <name>");
+}
+
+function showStatus(): void {
+  const installed = getInstalledMCPs();
+  const keys = Object.keys(installed);
+  
+  if (keys.length === 0) {
+    console.log("\n❌ No MCPs installed.\n");
+    console.log("Run: npx strray-ai mcp:list to see available MCPs\n");
+    return;
+  }
+
+  console.log("\n✅ Installed MCPs:\n");
+  for (const [name, mcp] of Object.entries(installed)) {
+    console.log(`  - ${name}: ${mcp.description || mcp.url}`);
+  }
+}
+
+async function installMCP(name: string): Promise<void> {
+  const source = findMCPSource(name);
+  if (!source) {
+    console.error(`\n❌ MCP "${name}" not found in registry.`);
+    console.log("\nRun: npx strray-ai mcp:list to see available MCPs");
+    process.exit(1);
+  }
+
+  const installed = getInstalledMCPs();
+  
+  if (installed[source.name]) {
+    console.log(`\n⚠️  ${source.name} is already installed.`);
+    console.log(`Run: npx strray-ai mcp:remove ${source.name} first`);
+    process.exit(1);
+  }
+
+  console.log(`\n📦 Installing ${source.name}...`);
+  console.log(`   Source: ${source.url}`);
+
+  try {
+    const installDir = join(process.cwd(), ".opencode", "mcps", source.name);
+    
+    if (!existsSync(dirname(installDir))) {
+      mkdirSync(dirname(installDir), { recursive: true });
+    }
+    if (!existsSync(installDir)) {
+      mkdirSync(installDir, { recursive: true });
+    }
+
+    execSync(`git clone ${source.url} "${installDir}"`, {
+      stdio: "inherit",
+    });
+
+    installed[source.name] = source;
+    saveInstalledMCPs(installed);
+
+    console.log(`\n✅ ${source.name} installed successfully!`);
+    console.log(`\n📝 Environment variables needed:`);
+    if (source.env) {
+      for (const env of source.env) {
+        console.log(`   - ${env}`);
+      }
+    }
+    console.log(`\n📁 Location: ${installDir}`);
+    console.log(`\nNext: Configure env vars and add to your MCP client.`);
+
+  } catch (error) {
+    console.error(`\n❌ Failed to install ${source.name}:`, error);
+    process.exit(1);
+  }
+}
+
+function removeMCP(name: string): void {
+  const installed = getInstalledMCPs();
+  
+  if (!installed[name]) {
+    console.error(`\n❌ ${name} is not installed.`);
+    process.exit(1);
+  }
+
+  const installDir = join(process.cwd(), ".opencode", "mcps", name);
+
+  if (existsSync(installDir)) {
+    rmSync(installDir, { recursive: true, force: true });
+  }
+
+  delete installed[name];
+  saveInstalledMCPs(installed);
+
+  console.log(`\n✅ Removed ${name}`);
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const command = args[0];
+
+  switch (command) {
+    case "list":
+      listMCPs();
+      break;
+    case "status":
+    case undefined:
+      showStatus();
+      break;
+    case "install":
+    case undefined:
+      const name = args[1];
+      if (!name) {
+        console.error("\nUsage: npx strray-ai mcp:install <name>");
+        console.log("Run: npx strray-ai mcp:list to see available MCPs");
+        process.exit(1);
+      }
+      await installMCP(name);
+      break;
+    case "remove":
+      const removeName = args[1];
+      if (!removeName) {
+        console.error("\nUsage: npx strray-ai mcp:remove <name>");
+        process.exit(1);
+      }
+      removeMCP(removeName);
+      break;
+    case "help":
+    case "--help":
+    case "-h":
+      showHelp();
+      break;
+    default:
+      console.error(`\nUnknown command: ${command}`);
+      showHelp();
+      process.exit(1);
+  }
+}
+
+main().catch((error) => {
+  console.error("Error:", error);
+  process.exit(1);
+});
+
+// Export CLI entry points
+export function listMCPsCommand(): void {
+  listMCPs();
+}
+
+export function showMCPStatusCommand(): void {
+  showStatus();
+}
+
+export async function installMCPCommand(name: string): Promise<void> {
+  if (!name) {
+    console.error("\nUsage: npx strray-ai mcp:install <name>");
+    console.log("Run: npx strray-ai mcp:list to see available MCPs");
+    process.exit(1);
+  }
+  await installMCP(name);
+}
+
+export function removeMCPCommand(name: string): void {
+  if (!name) {
+    console.error("\nUsage: npx strray-ai mcp:remove <name>");
+    process.exit(1);
+  }
+  removeMCP(name);
+}
