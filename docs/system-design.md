@@ -2,14 +2,52 @@
 
 **Version**: 1.22.14
 
+## What is 0xRay?
+
+```
+┌──────────┬──────────────────────────────────────────────┬──────────────────────────────────────────────┐
+│ Tool     │ What It Is                                   │ What 0xRay Does                              │
+├──────────┼──────────────────────────────────────────────┼──────────────────────────────────────────────┤
+│ OpenCode │ AI coding assistant (Electron app)           │ 0xRay runs AS plugin inside it               │
+│ Hermes   │ Another AI agent                             │ 0xRay provides MCP tools TO it               │
+│ OpenClaw │ Messaging gateway (WhatsApp, Telegram)   │ 0xRay connects TO it via WebSocket          │
+└──────────┴──────────────────────────────────────────────┴──────────────────────────────────────────────┘
+```
+
+**0xRay is NOT a competitor — it's a layer on top:**
+
+```
+              0xRay = Governance + Orchestration + Compliance
+
+                          ↓
+             ┌────────────┼────────────┐
+             ▼            ▼            ▼
+       OpenCode      Hermes       OpenClaw
+      (plugin)       (MCP)         (WS)
+```
+
+**What 0xRay adds:**
+- Codex (60 rules) - compliance enforcement
+- Multi-agent coordination - voting, delegation
+- Processors - pre/post command hooks
+- Security - audit, scanning
+
+**The honest take:**
+- Without hosts (OpenCode/Hermes/OpenClaw), 0xRay is just code
+- 0xRay makes any AI agent governed and compliance-aware
+- It's middleware, not the main thing
+
+---
+
+## Architecture Diagram
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │                                 ENTRY POINTS                                 │
 ├──────────────────────┬──────────────────────────────┬───────────────────────┤
-│ CLI (src/cli/)       │ Plugin                       │ MCP Servers           │
-│ - commands           │ stray-codex-                 │ 14+ servers           │
-│ - index.ts           │ injection                    │ for agents            │
-│ - server.ts          │                              │                       │
+│ CLI (src/cli/)       │ Plugin (OpenCode)            │ MCP (Hermes)          │
+│ - commands           │ strray-codex-injection       │ 14+ servers           │
+│ - index.ts           │                             │ for agents            │
 └──────────────────────┴──────────────────────────────┴───────────────────────┘
                                       │
                                       ▼
@@ -18,30 +56,30 @@
 │                                                                              │
 │ boot-orchestrator  →  kernel Patterns  →  Codex                              │
 │ context-loader     →  config-loader    →  Injector                           │
-│ activity-logger    →  framework-logger →  Model router                       │
+│ activity-logger   →  framework-logger  →  Model router                      │
 └──────────────────────────────────────────────────────────────────────────────┘
                   │                        │                        │
                   ▼                        ▼                        ▼
 ┌─────────────────────────────┬─────────────────────────────┬─────────────────────────────┐
 │         AGENTS              │          SKILLS             │        PROCESSORS           │
-│       (26 agents)           │        (43 skills)          │        (16 procs)           │
+│       (26 agents)           │        (43 skills)          │        (16 procs)          │
 │                             │                             │                             │
-│ - architect                │ - api-design                │ - processor-               │
+│ - architect                │ - api-design                │ - processor-              │
 │ - researcher              │ - researcher              │   manager                 │
-│ - security               │ - code-review             │ - typescript              │
-│ - code-review             │ - boot-orchestrator       │ - versioning             │
-│ - refactorer             │ - security               │ - test-auto-creation      │
+│ - security                │ - code-review              │ - typescript              │
+│ - code-review             │ - boot-orchestrator        │ - versioning             │
+│ - refactorer             │ - security                │ - test-auto-creation     │
 │ - testing-lead           │ - enforcer                │ - codex-validation       │
-│ - bug-triage             │ - etc.                   │ - console-log-guard     │
-└─────────────────────────────┴─────────────────────────────┴────────────────────────��────┘
+│ - bug-triage              │ - etc.                    │ - console-log-guard      │
+└─────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
                   │                        │                        │
                   ▼                        ▼                        ▼
 ┌─────────────────────────────┬─────────────────────────────┬─────────────────────────────┐
 │       DELEGATION            │        INTEGRATIONS         │        ENFORCEMENT          │
 │                             │                             │                             │
-│ - agent-delegator           │ - OpenClaw                  │ - rule-enforcer            │
-│ - voting-coordinator        │ - Hermes                   │ - validators              │
-│ - complexity-analyzer     │ - plugins                  │ - code-quality           │
+│ - agent-delegator           │ - OpenClaw                 │ - rule-enforcer           │
+│ - voting-coordinator        │ - Hermes                  │ - validators             │
+│ - complexity-analyzer     │ - plugins                 │ - code-quality            │
 │ - task-skill-router       │ - cross-language           │ - session-security       │
 └─────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
 ```
@@ -81,32 +119,17 @@
     └─────────┘       └─────────┘
 ```
 
-**The hierarchy:**
+## Commands
 
-1. **0xRay Core** - Codex rules, enforcement, orchestration
-2. **Built-in Skills (43)** - Framework skills (api-design, researcher...)
-3. **Built-in MCPs (14)** - Framework tools (lint, test, build...)
-4. **Community Skills** - Installable from registry (antigravity, superpowers...)
-5. **Community MCPs** - Installable from registry (xmcp, github-mcp...)
-
-**Removed in v1.22:**
-- @enforcer (deprecated)  
-- @orchestrator (deprecated)
-
-**Flow:**
-
-```
-User → OpenCode/Hermes/OpenClaw
-    → 0xRay plugin/MCP (governance)
-    → Built-in Skills + MCPs
-    → Community Skills + MCPs (optional install)
-```
-
-**MCP Commands:**
 ```bash
+# MCP commands
 npx strray-ai mcp-list           # List community MCPs
 npx strray-ai mcp-install xmcp   # Install X API MCP
 npx strray-ai mcp-install github # Install GitHub MCP
 npx strray-ai mcp-status        # Show installed
-npx strray-ai mcp-remove xmcp   # Remove MCP
+npx strray-ai mcp-remove xmcp    # Remove MCP
+
+# Skill commands
+npx strray-ai skill:install agency-agents  # Install 170+ skills
+npx strray-ai skill:install superpowers      # Install 14 skills
 ```
