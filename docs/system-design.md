@@ -59,25 +59,6 @@ It's a **belt-and-suspenders** system with:
 
 Without hosts (OpenCode/Hermes/OpenClaw), 0xRay is just code. It's middleware, not the main thing.
 
-## What's It Actually Do?
-
-| Hook | Function |
-|------|----------|
-| Plugin | Captures every prompt → validates against Codex → injects rules |
-| MCP | Provides tools (lint, test, build, security) to Hermes |
-| Processors | Run before/after commands → auto-fix, validate, version |
-| Agents | 26 specialized AI workers (research, code, security, etc.) |
-
-## Honest Assessment
-
-It's a **belt-and-suspenders** system with:
-- Multiple layers of validation (codex, validators, processors)
-- Multiple agent types doing similar things
-- Lots of guardsrails against bad AI outputs
-- Self-repairing where it catches its own mistakes
-
-**The core truth:** It exists because AI code often needs fixing, so we built a system that tries to catch and fix issues before they ship.
-
 ---
 
 ## Architecture Diagram
