@@ -1,20 +1,20 @@
-# 0xRay Agents
+# StringRay Agents
 
-Quick reference for 0xRay AI orchestration framework.
+Quick reference for StringRay AI orchestration framework.
 
-## What is 0xRay?
+## What is StringRay?
 
-0xRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation. Agents operate via OpenCode plugin injection - no manual setup needed.
+StringRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation. Agents operate via OpenCode plugin injection - no manual setup needed.
 
-## How 0xRay Works
+## How StringRay Works
 
-0xRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation. Agents operate via OpenCode plugin injection - no manual setup needed.
+StringRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation. Agents operate via OpenCode plugin injection - no manual setup needed.
 
 ### Basic Operation
 
 1. **Install**: Run `npx strray-ai install` to configure agents in your project
 2. **Invoke**: Use `@agent-name` syntax in prompts or code comments (e.g., `@architect design this API`)
-3. **Automatic Routing**: 0xRay automatically routes tasks to the appropriate agent based on complexity
+3. **Automatic Routing**: StringRay automatically routes tasks to the appropriate agent based on complexity
 4. **Agent Modes**: Agents can be `primary` (main coordinator) or `subagent` (specialized helper)
 
 ### Where to Find Reflections
@@ -69,7 +69,7 @@ frameworkLogger.log("my-module", "process-start", "info", { message: "Starting p
 
 Reflection Template Paths
 
-0xRay uses **two reflection folders** for different purposes:
+StringRay uses **two reflection folders** for different purposes:
 
 #### Option 1: Standard Reflections (`docs/reflections/`)
 **When to use:** Single-session work, specific bug fixes, targeted implementations
@@ -120,41 +120,22 @@ The storyteller is now a **skill** (not an agent) so it runs with full session c
 
 ## Available Agents
 
-| Agent | Purpose | Invoke | Status |
-|-------|---------|--------|--------|
-| `@architect` | System design & technical decisions | `@architect design API` | Active |
-| `@strategist` | Strategic planning | `@strategist plan roadmap` | Active |
-| `@security-auditor` | Vulnerability detection | `@security-auditor scan` | Active |
-| `@code-reviewer` | Quality assessment | `@code-reviewer review PR` | Active |
-| `@refactorer` | Technical debt elimination | `@refactorer optimize code` | Active |
-| `@testing-lead` | Testing strategy | `@testing-lead plan tests` | Active |
-| `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` | Active |
-| `@researcher` | Codebase exploration | `@researcher find implementation` | Active |
-| `@code-analyzer` | Deep code analysis & metrics | `@code-analyzer analyze codebase` | Active |
-| `@tech-writer` | Technical documentation | `@tech-writer write docs` | Active |
-| `@frontend-engineer` | Frontend development | `@frontend-engineer build UI` | Active |
-| `@frontend-ui-ux-engineer` | UI/UX design | `@frontend-ui-ux-engineer design interface` | Active |
-| `@backend-engineer` | Backend development | `@backend-engineer build API` | Active |
-| `@database-engineer` | Database design & optimization | `@database-engineer design schema` | Active |
-| `@devops-engineer` | CI/CD & infrastructure | `@devops-engineer setup pipeline` | Active |
-| `@performance-engineer` | Performance optimization | `@performance-engineer optimize` | Active |
-| `@mobile-developer` | Mobile development | `@mobile-developer build app` | Active |
-| `@content-creator` | Content creation | `@content-creator write content` | Active |
-| `@growth-strategist` | Growth strategies | `@growth-strategist plan growth` | Active |
-| `@seo-consultant` | SEO optimization | `@seo-consultant optimize SEO` | Active |
-| `@log-monitor` | Log analysis & monitoring | `@log-monitor analyze logs` | Active |
-| `@multimodal-looker` | Visual content analysis | `@multimodal-looker analyze image` | Active |
-| ~~`@enforcer`~~ | ~~Codex compliance & error prevention~~ | ~~`@enforcer analyze this code`~~ | **DEPRECATED** |
-| ~~`@orchestrator`~~ | ~~Complex multi-step task coordination~~ | ~~`@orchestrator implement feature`~~ | **DEPRECATED** |
-
-> **Architecture Note (2026-04-17)**: `@enforcer` and `@orchestrator` are deprecated. 
-> - Enforcement is now handled by the **plugin-level preValidate processor** and **MCP servers**
-> - Orchestration is now handled by **agent-delegator** based on **complexity analysis** (≥50 triggers multi-agent)
+| Agent | Purpose | Invoke |
+|-------|---------|--------|
+| `@enforcer` | Codex compliance & error prevention | `@enforcer analyze this code` |
+| `@orchestrator` | Complex multi-step task coordination | `@orchestrator implement feature` |
+| `@architect` | System design & technical decisions | `@architect design API` |
+| `@security-auditor` | Vulnerability detection | `@security-auditor scan` |
+| `@code-reviewer` | Quality assessment | `@code-reviewer review PR` |
+| `@refactorer` | Technical debt elimination | `@refactorer optimize code` |
+| `@testing-lead` | Testing strategy | `@testing-lead plan tests` |
+| `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
+| `@researcher` | Codebase exploration | `@researcher find implementation` |
 
 
 ## Available Skills
 
-0xRay ships with 44 framework skills and provides a registry of 10 curated community sources.
+StringRay ships with 30 framework skills and provides a registry of 10 curated community sources.
 
 **Manage skills:**
 ```bash
@@ -168,7 +149,7 @@ npx strray-ai antigravity status         # Show installed skills
 
 ## Complexity Routing
 
-0xRay automatically routes tasks based on complexity:
+StringRay automatically routes tasks based on complexity:
 
 - **Simple (≤15)**: Single agent
 - **Moderate (≤25)**: Single agent with tools
@@ -191,7 +172,7 @@ npm run test:pipelines     # Pipeline integration tests
 
 ## Features.json Configuration
 
-0xRay uses `.opencode/strray/features.json` for feature flags and settings:
+StringRay uses `.opencode/strray/features.json` for feature flags and settings:
 
 ### Location
 - **Path**: `.opencode/strray/features.json`
@@ -259,10 +240,9 @@ When agents are first spawned:
 3. Configuration: `.opencode/strray/features.json`
 
 **Spawn Authorization**:
-- Orchestration is plugin-level via agent-delegator (complexity-based)
-- Subagents cannot spawn other agents - they are invoked by the delegation system
+- Only main orchestrator can spawn agents
+- Subagents cannot spawn other agents
 - Workers cannot spawn agents directly
-- Enforcement is plugin-level via preValidate processor
 
 ## Activity Log & Reporting
 
@@ -316,11 +296,11 @@ module.exports = async (context, tool) => {
 
 ## Codex
 
-0xRay enforces Universal Development Codex (60 terms) for systematic error prevention. See [.opencode/strray/codex.json](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) for full reference.
+StringRay enforces Universal Development Codex (60 terms) for systematic error prevention. See [.opencode/strray/codex.json](https://github.com/htafolla/stringray/blob/master/.opencode/strray/codex.json) for full reference.
 
 ## Configuration Files Reference
 
-0xRay uses multiple configuration files to control behavior:
+StringRay uses multiple configuration files to control behavior:
 
 ### Main Configuration Files
 
@@ -353,7 +333,7 @@ STRRAY_NO_TELEMETRY=1              # Disable analytics
 
 ### Git Hooks Integration
 
-0xRay integrates with Git hooks for automated validation:
+StringRay integrates with Git hooks for automated validation:
 
 ```bash
 # Install Git hooks
@@ -380,7 +360,7 @@ npx strray-ai report --auto
 
 **GitHub Actions Example**:
 ```yaml
-- name: 0xRay Validation
+- name: StringRay Validation
   run: |
     npx strray-ai validate
     npx strray-ai report --ci
@@ -425,7 +405,7 @@ npx strray-ai marketplace list
 
 ### Complexity Calibration
 
-0xRay uses complexity scoring to route tasks to appropriate agents:
+StringRay uses complexity scoring to route tasks to appropriate agents:
 
 ```bash
 # Calibrate complexity scoring
@@ -682,4 +662,4 @@ npx strray-ai --version
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.22.13 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.15.0 | [GitHub](https://github.com/htafolla/stringray)

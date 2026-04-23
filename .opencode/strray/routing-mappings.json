@@ -259,21 +259,23 @@
     "agent": "devops-engineer",
     "confidence": 0.94
   },
-  {
+{
     "keywords": [
-      "database",
-      "db",
-      "sql",
-      "schema",
-      "migration",
-      "query",
-      "postgres",
-      "mysql",
-      "mongodb"
+      "orchestrate",
+      "orchestration",
+      "coordinate",
+      "multi-step",
+      "multi-agent-orchestration",
+      "workflow-management",
+      "task-delegation",
+      "conflict-resolution",
+      "session-management"
     ],
-    "skill": "database-design",
-    "agent": "database-engineer",
-    "confidence": 0.95
+    "skill": "orchestrator",
+    "agent": "orchestrator",
+    "confidence": 0.0,
+    "deprecated": true,
+    "note": "DEPRECATED - orchestration is now handled by agent-delegator at plugin level"
   },
   {
     "keywords": [
@@ -460,23 +462,25 @@
     "agent": "enforcer",
     "confidence": 0.95
   },
-  {
+{
     "keywords": [
-      "orchestrate",
-      "coordinate",
-      "delegate",
-      "workflow",
-      "manage",
-      "multi-step",
-      "multi-agent-orchestration",
-      "workflow-management",
-      "task-delegation",
-      "conflict-resolution",
-      "session-management"
+      "validate",
+      "validate",
+      "enforce",
+      "codex",
+      "compliance",
+      "convention",
+      "jscpd",
+      "syntax-error",
+      "error-handling",
+      "convention",
+      "framework-compliance"
     ],
-    "skill": "orchestrator",
-    "agent": "orchestrator",
-    "confidence": 0.94
+    "skill": "enforcer",
+    "agent": "enforcer",
+    "confidence": 0.0,
+    "deprecated": true,
+    "note": "DEPRECATED - enforcement is now handled by preValidate processor and MCP servers"
   },
   {
     "keywords": [

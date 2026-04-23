@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.13] - 2026-04-22
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: deprecate enforcer/orchestrator, add voting/metrics/security systems (0a73bcda7)
+- feat: production-ready MCPs, complete documentation, fixed pipeline tests (6f62a5cda)
+
+### 🐛 Bug Fixes
+- fix: memory leaks, ES6 imports, production readiness (f0f87937a)
+- fix: kernel-routing pipeline test inputs, complete all 22 pipelines (6d0a7ced5)
+- fix: pipeline runner cwd, ESM require, missing processors, version config (44754822c)
+
+### ♻️ Refactoring
+- refactor: cleanup dead modules, archive unused docs, update all docs to match code (3bb55c65e)
+- refactor: eliminate any types, add proper TypeScript interfaces (d88c37e10)
+
+### 📚 Documentation
+- docs: clarify plugin execution path in code comments (b87c2a483)
+
+### 🔧 Maintenance
+- chore: update .gitignore with temp files (9435b17e1)
+- chore: cleanup dead code and temp files (a3471683e)
+
+---
+
 ## [1.22.2] - 2026-04-07
 
 ### 🔄 Changes

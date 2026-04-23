@@ -741,9 +741,10 @@ program
     const { storytellerCommand } = await import('./commands/storyteller.js');
     await storytellerCommand(type, options);
 });
-// MCP install commands - use hyphen for compatibility
+// MCP install commands - support both hyphen and colon formats
 program
     .command('mcp-list')
+    .alias('mcp:list')
     .description('List available community MCP servers')
     .action(async () => {
     const { listMCPsCommand } = await import('./commands/mcp-install.js');
@@ -751,6 +752,7 @@ program
 });
 program
     .command('mcp-status')
+    .alias('mcp:status')
     .description('Show installed MCP servers')
     .action(async () => {
     const { showMCPStatusCommand } = await import('./commands/mcp-install.js');
@@ -758,6 +760,7 @@ program
 });
 program
     .command('mcp-install <name>')
+    .alias('mcp:install')
     .description('Install an MCP server from the registry')
     .action(async (name) => {
     const { installMCPCommand } = await import('./commands/mcp-install.js');
@@ -765,6 +768,7 @@ program
 });
 program
     .command('mcp-remove <name>')
+    .alias('mcp:remove')
     .description('Remove an installed MCP server')
     .action(async (name) => {
     const { removeMCPCommand } = await import('./commands/mcp-install.js');

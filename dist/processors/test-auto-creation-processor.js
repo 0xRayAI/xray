@@ -187,9 +187,11 @@ export const testAutoCreationProcessor = {
             // Get language config for this extension
             const langConfig = LANGUAGE_CONFIGS.find((c) => c.extensions.includes(ext));
             // Resolve directory with fallback
-            const resolvedDirectory = directory || process.cwd();
+            // Extract directory from filePath if not provided (handles absolute paths from OpenCode)
+            const resolvedDirectory = directory || (filePath.includes("/") ? path.dirname(filePath) : process.cwd());
             const testFilePath = getTestFilePath(filePath, langConfig?.language || "TypeScript");
-            const fullTestPath = path.join(resolvedDirectory, testFilePath);
+            // getTestFilePath returns full path, no need to join
+            const fullTestPath = testFilePath;
             if (fs.existsSync(fullTestPath)) {
                 await frameworkLogger.log("test-auto-creation", "test-exists", "info", {
                     message: `Test file already exists: ${testFilePath}`,

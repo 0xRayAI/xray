@@ -143,15 +143,42 @@ Without hosts (OpenCode/Hermes/OpenClaw), 0xRay is just code. It's middleware, n
 
 ## Commands
 
-```bash
-# MCP commands
-npx strray-ai mcp-list           # List community MCPs
-npx strray-ai mcp-install xmcp   # Install X API MCP
-npx strray-ai mcp-install github # Install GitHub MCP
-npx strray-ai mcp-status        # Show installed
-npx strray-ai mcp-remove xmcp    # Remove MCP
+### MCP Commands (Community MCPs)
 
-# Skill commands
-npx strray-ai skill:install agency-agents  # Install 170+ skills
-npx strray-ai skill:install superpowers      # Install 14 skills
+```bash
+# List available MCPs
+npx strray-ai mcp-list
+
+# Install an MCP
+npx strray-ai mcp-install xmcp
+
+# Show installed MCPs
+npx strray-ai mcp-status
+
+# Remove an MCP
+npx strray-ai mcp-remove xmcp
 ```
+
+**Note:** If colon commands (`mcp:list`) don't work on your setup, use hyphen format (`mcp-list`).
+
+### Setup After Install
+
+1. **Configure env vars:**
+   ```bash
+   export X_BEARER_TOKEN=your_token
+   # or
+   export GITHUB_TOKEN=ghp_xxx
+   ```
+
+2. **Add to your MCP client** (Claude Desktop, Cursor, etc.)
+
+3. **Start the MCP:**
+   ```bash
+   cd .opencode/mcps/xmcp
+   npm install
+   npm start
+   ```
+
+4. **Restart your MCP client** to load the new server
+
+### Skill Commands

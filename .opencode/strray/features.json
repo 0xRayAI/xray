@@ -157,6 +157,14 @@
         "remind_user": true
       }
     },
+    "context_window_reflection": {
+      "enabled": true,
+      "threshold_percent": 95,
+      "check_interval_commands": 5,
+      "story_type": "reflection",
+      "max_reflections_per_session": 3,
+      "cooldown_minutes": 10
+    },
     "story_types": {
       "reflection": {
         "location": "docs/reflections/",
@@ -192,7 +200,7 @@
     }
   },
   "auto_reflection": {
-    "mode": "full", 
+    "mode": "full",
     "description": "Controls auto-reflection aggressiveness. 'full' = generate stubs on all triggers, 'minimal' = only prompts, 'off' = disabled",
     "triggers": {
       "ci_failure": {
@@ -303,7 +311,10 @@
         "color_coding": true,
         "compact_summary": true
       },
-      "notification_channels": ["console", "log"]
+      "notification_channels": [
+        "console",
+        "log"
+      ]
     },
     "storage": {
       "output_dir": ".ci-reports",
@@ -360,11 +371,19 @@
     "enabled": true,
     "pre_processors": {
       "enabled": true,
-      "priority_order": ["preValidate", "codexCompliance"]
+      "priority_order": [
+        "preValidate",
+        "codexCompliance"
+      ]
     },
     "post_processors": {
       "enabled": true,
-      "priority_order": ["storytellingTrigger", "sessionSummary", "testExecution", "regressionTesting"]
+      "priority_order": [
+        "storytellingTrigger",
+        "sessionSummary",
+        "testExecution",
+        "regressionTesting"
+      ]
     }
   },
   "enforcement": {

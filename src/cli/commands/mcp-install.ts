@@ -178,7 +178,25 @@ async function installMCP(name: string): Promise<void> {
       }
     }
     console.log(`\n📁 Location: ${installDir}`);
-    console.log(`\nNext: Configure env vars and add to your MCP client.`);
+    console.log(`\n─── SETUP INSTRUCTIONS ───`);
+    console.log(`\n1. Configure environment variables:`);
+    console.log(`   export ${source.env?.[0] || 'API_KEY'}=your_key_here`);
+    console.log(`\n2. Add to your MCP client:\n`);
+    
+    if (source.name === 'xmcp') {
+      console.log(`   Claude Desktop: Add to claude_desktop_config.json`);
+      console.log(`   {"mcpServers":{"xmcp":{"command":"node","args":["${installDir}/dist/index.js"],"env":{"X_BEARER_TOKEN":"your_token"}}}`);
+    } else if (source.name === 'github-mcp') {
+      console.log(`   Add: {"mcpServers":{"github-mcp":{"command":"npx","args":["-y","@divyanshvn/github-mcp-server"],"env":{"GITHUB_TOKEN":"ghp_..."}}}`);
+    } else if (source.name === 'discord-mcp') {
+      console.log(`   Add: {"mcpServers":{"discord-mcp":{"command":"docker","args":["run","--rm","-i","-e","DISCORD_TOKEN=your_token","pasympa/discord-mcp"]}}`);
+    } else {
+      console.log(`   Claude Desktop: Edit ~/Library/Application\\ Support/Claude/claude_desktop_config.json`);
+      console.log(`   Cursor: Edit ~/.cursor/mcp.json`);
+    }
+    console.log(`\n3. Start the MCP server:`);
+    console.log(`   cd ${installDir} && npm install && npm start`);
+    console.log(`\n4. Restart your MCP client to load the new server.`);
 
   } catch (error) {
     console.error(`\n❌ Failed to install ${source.name}:`, error);
