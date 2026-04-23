@@ -61,7 +61,7 @@ program
         console.log("📋 Next steps:");
         console.log("1. Restart OpenCode to load the plugin");
         console.log('2. Run "opencode agent list" to see 0xRay agents');
-        console.log('3. Try "@architect analyze this code" or "@enforcer validate this code" to test the plugin');
+        console.log('3. Try "@architect analyze this code" or "@security-auditor scan" to test the plugin');
     }
     catch (error) {
         console.error("❌ Installation failed:", error instanceof Error ? error.message : String(error));
@@ -99,19 +99,20 @@ program
         const fs = await import("fs");
         const path = await import("path");
         const checks = [
-            { file: "opencode.json", description: "OpenCode configuration" },
+            { file: "opencode.json", description: "OpenCode configuration", optional: true },
             {
                 file: ".opencode/enforcer-config.json",
                 description: "Framework configuration",
+                optional: false,
             },
-            // { file: '.mcp.json', description: 'MCP server configuration' }, // COMMENTED OUT: No longer checking .mcp.json
         ];
         let allGood = true;
         for (const check of checks) {
             const exists = fs.existsSync(path.join(process.cwd(), check.file));
-            const status = exists ? "✅" : "❌";
-            console.log(`${status} ${check.description}: ${check.file}`);
-            if (!exists)
+            const status = exists ? "✅" : check.optional ? "⚠️ " : "❌";
+            const label = check.optional ? `${check.description} (optional)` : check.description;
+            console.log(`${status} ${label}: ${check.file}`);
+            if (!exists && !check.optional)
                 allGood = false;
         }
         if (allGood) {
@@ -170,9 +171,8 @@ program
     console.log("=====================================");
     console.log("");
     console.log("🤖 Available Agent Commands:");
-    console.log("  @enforcer           - Codex compliance & error prevention");
-    console.log("  @architect          - System design & technical decisions");
-    console.log("  @orchestrator       - Multi-agent workflow coordination");
+    console.log("  @security-auditor   - Codex compliance & error prevention");
+    console.log("  @architect          - System design & delegation decisions");
     console.log("  @bug-triage-specialist - Error investigation & surgical fixes");
     console.log("  @code-reviewer      - Quality assessment & standards validation");
     console.log("  @security-auditor   - Vulnerability detection & compliance");
@@ -210,8 +210,8 @@ program
     console.log("  • Real-time activity monitoring and reporting");
     console.log("");
     console.log("🎯 Getting Started:");
-    console.log("  1. Use @enforcer for code quality validation");
-    console.log("  2. Use @orchestrator for complex development tasks");
+    console.log("  1. Use @security-auditor for code quality validation");
+    console.log("  2. Use @architect for complex development tasks");
     console.log("  3. Access skills for specialized capabilities");
     console.log("  4. Check framework-reporting-system for activity reports");
     console.log('  5. Run "npx strray-ai capabilities" anytime for this overview');
@@ -237,11 +237,10 @@ program
             },
             {
                 name: "Configuration Files",
-                check: () => fs.existsSync(
-                // Check for opencode.json at root (OpenCode integration standard)
-                path.join(process.cwd(), "opencode.json")),
+                check: () => fs.existsSync(path.join(process.cwd(), "opencode.json")) ||
+                    fs.existsSync(path.join(process.cwd(), ".opencode", "enforcer-config.json")),
                 success: "✅ opencode configuration found",
-                error: "⚠️ opencode config missing (run install first)",
+                error: "⚠️ opencode config optional for consumers",
             },
             {
                 name: "Agent System",
@@ -277,8 +276,8 @@ program
             console.log("🎉 Framework is healthy and ready to use!");
             console.log("");
             console.log("💡 Quick commands:");
-            console.log("  • @enforcer analyze this code");
-            console.log("  • @orchestrator coordinate task");
+            console.log("  • @security-auditor scan this project");
+            console.log("  • @architect analyze this project");
             console.log("  • framework-reporting-system");
         }
         else {
@@ -386,7 +385,7 @@ program
         console.log("💡 Next steps:");
         console.log("  • Restart OpenCode to load the restored configuration");
         console.log("  • Run: npx strray-ai health (to verify everything works)");
-        console.log("  • Try: @enforcer analyze this code");
+        console.log("  • Try: @security-auditor scan this project");
     }
     catch (error) {
         console.error("❌ Fix command failed:", error instanceof Error ? error.message : String(error));
@@ -514,7 +513,7 @@ program
             console.log("🎉 No issues found! Framework is healthy.");
             console.log("");
             console.log("💡 Pro tips:");
-            console.log("  • Use @enforcer for code quality checks");
+            console.log("  • Use @security-auditor for code quality checks");
             console.log("  • Run reports regularly: npx strray-ai report");
             console.log("  • Check health anytime: npx strray-ai health");
         }
@@ -742,7 +741,36 @@ program
     const { storytellerCommand } = await import('./commands/storyteller.js');
     await storytellerCommand(type, options);
 });
-// Dashboard command - Real-time monitoring dashboard (temporarily disabled)
+// MCP install commands - use hyphen for compatibility
+program
+    .command('mcp-list')
+    .description('List available community MCP servers')
+    .action(async () => {
+    const { listMCPsCommand } = await import('./commands/mcp-install.js');
+    listMCPsCommand();
+});
+program
+    .command('mcp-status')
+    .description('Show installed MCP servers')
+    .action(async () => {
+    const { showMCPStatusCommand } = await import('./commands/mcp-install.js');
+    showMCPStatusCommand();
+});
+program
+    .command('mcp-install <name>')
+    .description('Install an MCP server from the registry')
+    .action(async (name) => {
+    const { installMCPCommand } = await import('./commands/mcp-install.js');
+    await installMCPCommand(name);
+});
+program
+    .command('mcp-remove <name>')
+    .description('Remove an installed MCP server')
+    .action(async (name) => {
+    const { removeMCPCommand } = await import('./commands/mcp-install.js');
+    removeMCPCommand(name);
+});
+// Analytics enable command
 // TODO: Re-enable after fixing dashboard module
 // program
 //   .command('dashboard')
@@ -857,7 +885,7 @@ Examples:
 Quick Start:
    1. Install: npx strray-ai install
    2. Check health: npx strray-ai health
-   3. Use agents: @enforcer analyze this code
+   3. Use agents: @security-auditor scan
    4. Generate reports: npx strray-ai report
    5. Monitor: npx strray-ai dashboard
    6. Fix issues: npx strray-ai fix
@@ -868,5 +896,6 @@ Quick Start:
 For more information, visit: https://github.com/htafolla/stringray
 `);
 // Parse command line arguments
+program.exitOverride();
 program.parse();
 //# sourceMappingURL=index.js.map
