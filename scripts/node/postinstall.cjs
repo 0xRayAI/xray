@@ -42,8 +42,12 @@ const configFiles = [
 // Files that should be MERGED (not overwritten) - user customizations
 const MERGE_FILES = [
   'strray/features.json',
-  'enforcer-config.json'
+  'enforcer-config.json',
+  'opencode.json'  // Smart merge to add new agents while preserving user overrides
 ];
+
+// Special handling for root-level opencode.json
+const ROOT_OPENCODE_JSON = path.join(packageRoot, 'opencode.json');
 
 // Detect if Hermes Agent is present (Rust binary in consumer's home directory)
 // Hermes consumers don't need .opencode/ - they use .strray/ natively
@@ -231,6 +235,26 @@ if (fs.existsSync(opencodeSource)) {
   }
 } // end existsSync(opencodeSource)
 } // end hasHermes guard for .opencode dir
+
+// Handle root-level opencode.json with smart merge (OpenCode consumers only)
+if (!hasHermes) {
+  const userOpencodeJson = path.join(targetDir, 'opencode.json');
+  
+  if (fs.existsSync(ROOT_OPENCODE_JSON)) {
+    try {
+      if (fs.existsSync(userOpencodeJson)) {
+        // Both exist - smart merge (preserve user agents, add new ones)
+        mergeJsonFile(ROOT_OPENCODE_JSON, userOpencodeJson, 'opencode.json');
+      } else {
+        // Only package has it - copy it
+        fs.copyFileSync(ROOT_OPENCODE_JSON, userOpencodeJson);
+        console.log(`✅ Installed opencode.json (no user config exists)`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Could not handle opencode.json:`, error.message);
+    }
+  }
+}
 
 // Copy plugin from dist/plugin/ to .opencode/plugin/ (OpenCode consumers only)
 if (!hasHermes) {
