@@ -42,8 +42,8 @@ const configFiles = [
 // Files that should be MERGED (not overwritten) - user customizations
 const MERGE_FILES = [
   'strray/features.json',
-  'enforcer-config.json',
-  'opencode.json'  // Smart merge to add new agents while preserving user overrides
+  'enforcer-config.json'
+  // Note: opencode.json handled separately with replace strategy
 ];
 
 // Special handling for root-level opencode.json
@@ -243,12 +243,34 @@ if (!hasHermes) {
   if (fs.existsSync(ROOT_OPENCODE_JSON)) {
     try {
       if (fs.existsSync(userOpencodeJson)) {
-        // Both exist - smart merge (preserve user agents, add new ones)
-        mergeJsonFile(ROOT_OPENCODE_JSON, userOpencodeJson, 'opencode.json');
+        // Both exist - replace 0xRay agents, keep other entries
+        const srcData = JSON.parse(fs.readFileSync(ROOT_OPENCODE_JSON, 'utf8'));
+        const destData = JSON.parse(fs.readFileSync(userOpencodeJson, 'utf8'));
+        
+        // Replace all agent entries with framework version, preserve non-agent settings
+        const merged = { ...destData };
+        if (srcData.agent) {
+          merged.agent = srcData.agent;
+        }
+        if (srcData.mcp) {
+          merged.mcp = srcData.mcp;
+        }
+        if (srcData.compaction) {
+          merged.compaction = srcData.compaction;
+        }
+        // Preserve any top-level non-agent keys from user config
+        for (const key of Object.keys(destData)) {
+          if (key !== 'agent' && key !== 'mcp' && key !== 'compaction') {
+            merged[key] = destData[key];
+          }
+        }
+        
+        fs.writeFileSync(userOpencodeJson, JSON.stringify(merged, null, 2), 'utf8');
+        console.log(`🔄 Updated opencode.json (replaced 0xRay agents, preserved your settings)`);
       } else {
         // Only package has it - copy it
         fs.copyFileSync(ROOT_OPENCODE_JSON, userOpencodeJson);
-        console.log(`✅ Installed opencode.json (no user config exists)`);
+        console.log(`✅ Installed opencode.json`);
       }
     } catch (error) {
       console.warn(`⚠️ Could not handle opencode.json:`, error.message);
