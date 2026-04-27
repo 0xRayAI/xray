@@ -614,12 +614,55 @@ npx strray-ai status
 ### Common Issues
 
 | Issue | Symptom | Solution |
-|-------|---------|----------|
+|-------|--------|----------|
 | Agents not spawning | Timeout on @invoke | Run `npx strray-ai health` |
 | Validation failures | Pre-commit blocks | Run `npx strray-ai validate --fix` |
 | Memory issues | Slow performance | `npx strray-ai session clear-cache` |
 | Config not loading | Settings ignored | Check `.opencode/opencode.json` syntax |
 | MCP servers unavailable | Tools missing | `npx strray-ai capabilities --mcp` |
+
+### Nudge Watchdog
+
+The Nudge Watchdog detects and breaks stuck AI patterns that prevent progress. It monitors agent actions in real-time and injects corrective nudges when patterns are detected.
+
+**Stuck Patterns Detected:**
+
+| Pattern | Detection | Nudge Action |
+|---------|-----------|-------------|
+| **think-loop** | >3 thinking tags without code changes | "STOP THINKING. Write code now." |
+| **syntax-loop** | >3 fix attempts on same error | "git checkout HEAD -- file && re-apply" |
+| **death-spiral** | >3 explanations without fixes | "Delegate to different agent" |
+| **tool-loop** | >5 same tool calls with similar args | "Try alternative tool" |
+| **repair-failure** | Fix indicated but error persists | "Trigger different processor" |
+
+**Configuration (features.json):**
+```json
+{
+  "nudge_watchdog": {
+    "enabled": true,
+    "think_loop_threshold": 3,
+    "syntax_loop_threshold": 3,
+    "tool_loop_threshold": 5,
+    "death_spiral_threshold": 3,
+    "cooldown_ms": 120000
+  }
+}
+```
+
+**Commands:**
+```bash
+# Check nudge stats
+npx strray-ai status | grep nudge
+
+# Disable nudge watchdog
+npx strray-ai config set --feature nudge_watchdog.enabled --value false
+```
+
+**Integration:**
+- Runs as post-processor via `nudge-processor.ts`
+- Logs to framework logger
+- Non-blocking: only suggests, never forces
+- 2-minute cooldown between nudges
 
 ### Getting Help
 
