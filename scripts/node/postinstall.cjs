@@ -49,12 +49,11 @@ const MERGE_FILES = [
 // Special handling for root-level opencode.json
 const ROOT_OPENCODE_JSON = path.join(packageRoot, 'opencode.json');
 
-// Detect if Hermes Agent is present (Rust binary in consumer's home directory)
-// Hermes consumers don't need .opencode/ - they use .strray/ natively
-// Check consumer's HOME - if Hermes exists, skip .opencode/ setup
-const consumerHomeDir = process.env.HOME || process.env.USERPROFILE;
-const hasHermes = consumerHomeDir && fs.existsSync(path.join(consumerHomeDir, '.hermes')) && 
-                  fs.lstatSync(path.join(consumerHomeDir, '.hermes')).isDirectory();
+// Detect if Hermes Agent is present in the TARGET directory
+// Hermes consumers don't need .opencode/ - they use .strray/ natively  
+// NOTE: We check targetDir NOT HOME (HOME might have .hermes globally)
+const hasHermes = fs.existsSync(path.join(targetDir, '.hermes')) && 
+              fs.lstatSync(path.join(targetDir, '.hermes')).isDirectory();
 
 if (hasHermes) {
   console.log('🔍 Hermes Agent present — using .strray/ (skipping .opencode/ setup)');

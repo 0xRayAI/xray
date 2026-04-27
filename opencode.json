@@ -5,241 +5,259 @@
     "prune": true
   },
   "mcp": {
-    "context7": { "enabled": false },
-    "global-everything": { "enabled": false },
-    "global-filesystem": { "enabled": false },
-    "global-git": { "enabled": false }
+    "context7": {
+      "enabled": false
+    },
+    "global-everything": {
+      "enabled": false
+    },
+    "global-filesystem": {
+      "enabled": false
+    },
+    "global-git": {
+      "enabled": false
+    }
   },
   "agent": {
     "architect": {
       "description": "Architect agent for system design - PRIMARY for design decisions",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "primary"
     },
     "strategist": {
-      "description": "Expert in system design, architecture decisions, and technical roadmaps - PRIMARY for planning",
-      "temperature": 1.0,
+      "description": "Expert in system design, architecture decisions, and technical roadmaps",
+      "temperature": 1,
       "mode": "subagent"
     },
     "testing-lead": {
       "description": "Testing lead for testing strategy",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "bug-triage-specialist": {
       "description": "Bug triage specialist",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "code-reviewer": {
       "description": "Code reviewer for quality",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "security-auditor": {
       "description": "Security auditor",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "refactorer": {
       "description": "Refactorer for code improvement",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "researcher": {
       "description": "Researcher for codebase exploration",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "log-monitor": {
       "description": "Log monitor for diagnostics",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "explore": {
       "description": "Codebase exploration agent",
-      "temperature": 1.0,
-      "mode": "subagent"
-    },
-    "strategist": {
-      "description": "Expert in system design, architecture decisions, and technical roadmaps",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "backend-engineer": {
       "description": "Expert in REST/GraphQL APIs, microservices, authentication, server architecture, and backend performance",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "frontend-engineer": {
       "description": "Expert in React, Vue, Angular, responsive design, and frontend performance",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "frontend-ui-ux-engineer": {
       "description": "Expert in visual design, CSS systems, accessibility, and user experience",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "database-engineer": {
       "description": "Expert in SQL/NoSQL databases, query optimization, data modeling, and database performance",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "devops-engineer": {
       "description": "Expert in CI/CD pipelines, infrastructure as code, containerization, and deployment automation",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "mobile-developer": {
       "description": "Expert in iOS, Android, React Native, and Flutter development",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "performance-engineer": {
       "description": "Expert in profiling, benchmarking, load testing, and optimization",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "content-creator": {
       "description": "Expert in creating marketing copy, technical documentation, blog posts, and social media content",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "growth-strategist": {
       "description": "Expert in growth hacking, user acquisition, conversion optimization, and analytics",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "seo-consultant": {
       "description": "Expert in search engine optimization, keyword research, and organic traffic growth",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "tech-writer": {
       "description": "Expert in API documentation, README files, guides, and developer experience",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "librarian-agents-updater": {
       "description": "Agent for updating and synchronizing agent definitions",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "multimodal-looker": {
       "description": "Media file analysis and interpretation specialist for images, diagrams, PDFs, and visual content",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "code-analyzer": {
       "description": "Code analyzer for metrics",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "hermes-agent": {
       "description": "Hermes Agent native plugin for 0xRay CLI integration",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "inference-improve": {
       "description": "Autonomous inference improvement through collaborative agent analysis",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "session-management": {
       "description": "Manage user sessions and persistent state",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "storyteller": {
       "description": "Write deep narrative reflections, sagas, journeys, and technical stories",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "auto-format": {
       "description": "Automated code formatting and style consistency",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "boot-orchestrator": {
       "description": "Framework initialization and boot orchestration",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "framework-compliance-audit": {
       "description": "Framework compliance auditing and validation",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "lint": {
       "description": "Code linting and static analysis",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "performance-analysis": {
       "description": "System performance analysis and optimization",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "security-scan": {
       "description": "Security vulnerability scanning and assessment",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "state-manager": {
       "description": "Application state management and persistence",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "processor-pipeline": {
       "description": "Data processing pipeline management",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "model-health-check": {
       "description": "AI model health monitoring and diagnostics",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "estimation": {
       "description": "Effort estimation and project sizing",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "api-design": {
       "description": "RESTful API design and validation",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "architecture-patterns": {
       "description": "Software architecture patterns and best practices",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "git-workflow": {
       "description": "Git workflow management and collaboration tools",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "performance-optimization": {
       "description": "Application performance optimization and tuning",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "project-analysis": {
       "description": "Analyze project structure, complexity, and health metrics",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
     "ui-ux-design": {
       "description": "User interface and user experience design with mobile-first approach, cognitive simplicity, and accessibility-first principles",
-      "temperature": 1.0,
+      "temperature": 1,
       "mode": "subagent"
     },
-    "sisyphus": { "description": "Sisyphus task agent", "disable": true },
-    "Planner-Sisyphus": { "description": "Planner Sisyphus", "disable": true },
-    "OpenCode-Builder": { "description": "OpenCode Builder", "disable": true },
-    "build": { "description": "Build agent", "disable": true },
-    "plan": { "description": "Plan agent", "disable": true }
+    "sisyphus": {
+      "description": "Sisyphus task agent",
+      "disable": true
+    },
+    "Planner-Sisyphus": {
+      "description": "Planner Sisyphus",
+      "disable": true
+    },
+    "OpenCode-Builder": {
+      "description": "OpenCode Builder",
+      "disable": true
+    },
+    "build": {
+      "description": "Build agent",
+      "disable": true
+    },
+    "plan": {
+      "description": "Plan agent",
+      "disable": true
+    }
   }
 }
