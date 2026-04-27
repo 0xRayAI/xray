@@ -193,7 +193,7 @@ my-extension/
 ```json
 {
   "name": "strray-extension-custom",
-  "version": "1.22.22",
+  "version": "1.22.23",
   "description": "Custom 0xRay extension",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

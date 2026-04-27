@@ -44,7 +44,7 @@ So for every version of 0xRay that shipped with Hermes agent integration, the pu
 I verified this with a smoke test. Source bridge worked fine:
 
 ```json
-{"status":"ok","framework":"version":"1.22.22","components":{"qualityGate":true,...}}
+{"status":"ok","framework":"version":"1.22.23","components":{"qualityGate":true,...}}
 ```
 
 Dist bridge:

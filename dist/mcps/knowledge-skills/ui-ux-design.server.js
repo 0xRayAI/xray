@@ -12,7 +12,7 @@ class StringRayUIUXDesignServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "ui-ux-design", version: "1.22.22",
+            name: "ui-ux-design", version: "1.22.23",
         }, {
             capabilities: {
                 tools: {},

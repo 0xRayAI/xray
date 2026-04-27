@@ -618,7 +618,7 @@ Get all available facades and their status.
   "facades": [
     {
       "name": "rule-enforcer",
-      "version": "1.22.22",
+      "version": "1.22.23",
       "status": "healthy",
       "modules": 6,
       "metrics": {
@@ -628,7 +628,7 @@ Get all available facades and their status.
     },
     {
       "name": "task-skill-router",
-      "version": "1.22.22",
+      "version": "1.22.23",
       "status": "healthy",
       "modules": 14,
       "metrics": {
