@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.15] - 2026-04-27
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: add Nudge Watchdog for stuck AI pattern detection (f923265a1)
+- feat: add community MCP registry and mcp:install command (d0f45a86b)
+- feat: comprehensive validation + context-aware reflection hook (194a0e6e9)
+
+### 🐛 Bug Fixes
+- fix: opencode.json now replaces 0xRay agents, keeps other settings (d9a969423)
+- fix: add smart merge for opencode.json on npm install (0f73ead02)
+
+### 📚 Documentation
+- docs: update MCP commands with setup instructions (2b362d390)
+- docs: remove duplicate sections from system-design (b548bdf4d)
+- docs: consolidate duplicate 'What is 0xRay' sections (4afb17c32)
+- docs: add honest 'what is 0xRay' assessment (00c1fd4a8)
+- docs: add honest differentiation section to system-design (174afe0b3)
+- docs: update system-design with full diagram v1.22.14 (7ea1d3598)
+
+### 🔧 Maintenance
+- chore: add mcp commands to CLI (3db119fbf)
+
+---
+
 ## [1.22.13] - 2026-04-22
 
 ### 🔄 Changes
