@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.23] - 2026-04-27
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- release: v1.22.22 - OpenClaw TypeScript compilation fix, integration test scripts (3bcbb8969)
+
+---
+
+## [1.22.22] - 2026-04-27
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
 ## [1.22.20] - 2026-04-27
 
 ### 🔄 Changes

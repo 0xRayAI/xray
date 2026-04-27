@@ -12,7 +12,7 @@ class StringRayFrameworkComplianceAuditServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "framework-compliance-audit", version: "1.22.13",
+            name: "framework-compliance-audit", version: "1.22.22",
         }, {
             capabilities: {
                 tools: {},

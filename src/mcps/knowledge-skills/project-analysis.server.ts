@@ -142,7 +142,7 @@ class StringRayProjectAnalysisServer {
   constructor() {
     this.server = new Server(
       {
-        name: "project-analysis", version: "1.22.13",
+        name: "project-analysis", version: "1.22.22",
       },
       {
         capabilities: {

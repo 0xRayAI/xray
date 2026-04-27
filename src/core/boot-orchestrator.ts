@@ -1093,7 +1093,7 @@ export class BootOrchestrator {
     try {
       // Load 0xRay configuration directly (no Python dependency)
       const stringRayConfig = {
-        version: "1.22.13",
+        version: "1.22.22",
         codex_enabled: true,
         codex_version: "v1.7.5",
         codex_terms: [
