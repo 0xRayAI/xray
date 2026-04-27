@@ -8,7 +8,9 @@ function getMCPConfigPath() {
 function getBundledMCPRegistry() {
     const paths = [
         join(process.cwd(), "src", "mcps", "registry.json"),
+        join(process.cwd(), "dist", "mcps", "registry.json"),
         join(process.cwd(), "node_modules", "strray-ai", "dist", "mcps", "registry.json"),
+        join(process.cwd(), "node_modules", "strray-ai", "src", "mcps", "registry.json"),
     ];
     for (const p of paths) {
         if (existsSync(p)) {
