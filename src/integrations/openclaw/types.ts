@@ -117,12 +117,12 @@ export interface PendingRequest {
  */
 export interface OpenClawClientConfig {
   gatewayUrl: string;
-  authToken?: string;
-  deviceId?: string;
+  authToken?: string | undefined;
+  deviceId?: string | undefined;
   deviceKeyPair?: {
     publicKey: string;
     privateKey: string;
-  };
+  } | undefined;
   reconnect?: boolean;
   reconnectAttempts?: number;
   reconnectDelay?: number;

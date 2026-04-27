@@ -173,14 +173,14 @@ export class OpenClawConfigLoader {
         let current: Record<string, unknown> = result as unknown as Record<string, unknown>;
         
         for (let i = 0; i < keys.length - 1; i++) {
-          const key = keys[i];
+          const key = keys[i]!;
           if (!current[key]) {
             current[key] = {};
           }
           current = current[key] as Record<string, unknown>;
         }
         
-        current[keys[keys.length - 1]] = parsedValue;
+        current[keys[keys.length - 1]!] = parsedValue;
       }
     }
 
@@ -194,14 +194,11 @@ export class OpenClawConfigLoader {
     userConfig: Partial<OpenClawIntegrationConfig>
   ): OpenClawIntegrationConfig {
     // Handle nested defaults
-    const apiServerDefaults = DEFAULT_CONFIG.apiServer || {};
-    const hooksDefaults = DEFAULT_CONFIG.hooks || {};
+    const apiServerDefaults: OpenClawIntegrationConfig['apiServer'] = DEFAULT_CONFIG.apiServer || { enabled: true, port: 18431, host: '127.0.0.1' };
+    const hooksDefaults: OpenClawIntegrationConfig['hooks'] = DEFAULT_CONFIG.hooks || { enabled: true, toolBefore: true, toolAfter: true, includeArgs: true, includeResult: true };
 
-    return {
+    const result: OpenClawIntegrationConfig = {
       gatewayUrl: userConfig.gatewayUrl || DEFAULT_CONFIG.gatewayUrl || 'ws://127.0.0.1:18789',
-      authToken: userConfig.authToken,
-      deviceId: userConfig.deviceId,
-      deviceKeyPair: userConfig.deviceKeyPair,
       autoReconnect: userConfig.autoReconnect ?? DEFAULT_CONFIG.autoReconnect ?? true,
       maxReconnectAttempts: userConfig.maxReconnectAttempts ?? DEFAULT_CONFIG.maxReconnectAttempts ?? 5,
       reconnectDelay: userConfig.reconnectDelay ?? DEFAULT_CONFIG.reconnectDelay ?? 1000,
@@ -209,7 +206,7 @@ export class OpenClawConfigLoader {
         enabled: userConfig.apiServer?.enabled ?? apiServerDefaults.enabled ?? true,
         port: userConfig.apiServer?.port ?? apiServerDefaults.port ?? 18431,
         host: userConfig.apiServer?.host ?? apiServerDefaults.host ?? '127.0.0.1',
-        apiKey: userConfig.apiServer?.apiKey,
+        ...(userConfig.apiServer?.apiKey !== undefined ? { apiKey: userConfig.apiServer.apiKey } : {}),
       },
       hooks: {
         enabled: userConfig.hooks?.enabled ?? hooksDefaults.enabled ?? true,
@@ -222,6 +219,12 @@ export class OpenClawConfigLoader {
       debug: userConfig.debug ?? DEFAULT_CONFIG.debug ?? false,
       logLevel: userConfig.logLevel ?? DEFAULT_CONFIG.logLevel ?? 'info',
     };
+
+    if (userConfig.authToken !== undefined) result.authToken = userConfig.authToken;
+    if (userConfig.deviceId !== undefined) result.deviceId = userConfig.deviceId;
+    if (userConfig.deviceKeyPair !== undefined) result.deviceKeyPair = userConfig.deviceKeyPair;
+
+    return result;
   }
 
   /**
@@ -363,9 +366,7 @@ export class OpenClawConfigLoader {
         enabled: true,
         port: 18431,
         host: '127.0.0.1',
-        // SECURITY: apiKey defaults to undefined — auth is skipped when absent.
-        // Set OPENCLAW_API_KEY env var before enabling the API server in production.
-        apiKey: process.env.OPENCLAW_API_KEY || undefined,
+        ...(process.env.OPENCLAW_API_KEY ? { apiKey: process.env.OPENCLAW_API_KEY } : {}),
       },
       hooks: {
         enabled: true,

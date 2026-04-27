@@ -90,24 +90,24 @@ export class OpenClawClient {
           resolve();
         });
 
-        this.ws!.on('message', (data: Buffer | string) => {
-          const message = typeof data === 'string' ? data : data.toString();
+        this.ws!.on('message', (data: unknown) => {
+          const message = typeof data === 'string' ? data : String(data);
           this.handleMessage(message);
         });
 
-        this.ws!.on('close', (code: number, reason: Buffer) => {
-          this.logger.info(`[OpenClawClient] Connection closed: ${code} ${reason.toString()}`);
-          this.handleDisconnect(code, reason.toString());
+        this.ws!.on('close', (code: unknown, reason: unknown) => {
+          this.logger.info(`[OpenClawClient] Connection closed: ${code} ${String(reason)}`);
+          this.handleDisconnect(Number(code), String(reason));
         });
 
-        this.ws!.on('error', (error: Error) => {
-          this.logger.error('[OpenClawClient] WebSocket error:', error.message);
+        this.ws!.on('error', (error: unknown) => {
+          this.logger.error('[OpenClawClient] WebSocket error:', error instanceof Error ? error.message : String(error));
           this.stats.errors++;
           
           if (this.state === 'connecting') {
             reject(new OpenClawConnectionError(
-              `Failed to connect to ${this.config.gatewayUrl}: ${error.message}`,
-              error
+              `Failed to connect to ${this.config.gatewayUrl}: ${error instanceof Error ? error.message : String(error)}`,
+              error instanceof Error ? error : undefined
             ));
           }
         });

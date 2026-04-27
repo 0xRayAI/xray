@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2026-04-27T18:43:55.557Z",
+  "logFile": "/Users/blaze/dev/stringray/logs/framework/activity.log",
+  "totalLogLines": 1718,
+  "agent": {
+    "totalSpawns": 0,
+    "byType": {},
+    "completed": 0,
+    "failures": 0,
+    "successes": 0,
+    "failureRate": "N/A",
+    "breakdown": {
+      "withResult": {
+        "completed": 0,
+        "failures": 0,
+        "successes": 0
+      },
+      "governance": {
+        "completed": 0
+      }
+    }
+  },
+  "processor": {
+    "preProcessors": {
+      "count": 33,
+      "byName": {
+        "codexCompliance": 7,
+        "versionCompliance": 7,
+        "errorBoundary": 7,
+        "logProtection": 6,
+        "preValidate": 6
+      },
+      "avgDuration": {
+        "codexCompliance": "6.3ms",
+        "versionCompliance": "481.9ms",
+        "errorBoundary": "0.0ms",
+        "logProtection": "0.2ms",
+        "preValidate": "0.0ms"
+      }
+    },
+    "postProcessors": {
+      "count": 17,
+      "byName": {
+        "refactoringLogging": 2,
+        "stateValidation": 2,
+        "agentsMdValidation": 2,
+        "regressionTesting": 2,
+        "testAutoCreation": 3,
+        "coverageAnalysis": 4,
+        "testExecution": 2
+      }
+    },
+    "failures": 0,
+    "successRate": "100.0%"
+  },
+  "error": {
+    "totalErrors": 10,
+    "bySource": {},
+    "recentErrors": [
+      {
+        "timestamp": "2026-04-27T18:42:01.436Z",
+        "message": "Failed to run initial security audit"
+      },
+      {
+        "timestamp": "2026-04-27T18:41:59.303Z",
+        "message": "Tests completed: 136 passed, 0 failed"
+      }
+    ]
+  },
+  "tool": {
+    "totalToolCalls": 33,
+    "byTool": {
+      "edit": 28,
+      "read": 5
+    }
+  }
+}

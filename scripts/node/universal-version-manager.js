@@ -95,9 +95,9 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.22.13",
-    displayName: "0xRay: Self-Healing AI Governance OS",
-    lastUpdated: "2026-04-15",
+    version: "1.22.22",
+      displayName: "0xRay: Self-Healing AI Governance OS",
+      lastUpdated: "2026-04-27",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },

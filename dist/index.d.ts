@@ -11,6 +11,8 @@ export { frameworkLogger } from "./core/framework-logger.js";
 export { BUILTIN_CODEX } from "./core/codex-formatter.js";
 import { defaultStringRayConfig } from "./core/index.js";
 export { defaultStringRayConfig };
+export { OpenClawIntegration, initializeOpenClawIntegration, getOpenClawIntegration, shutdownOpenClawIntegration } from "./integrations/openclaw/index.js";
+export type { OpenClawIntegrationConfig } from "./integrations/openclaw/types.js";
 export declare function initializeStringRay(config?: {}): {
     success: boolean;
     config: {

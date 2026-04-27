@@ -17,7 +17,7 @@ import type {
 import { OpenClawConfigLoader } from './config.js';
 import { OpenClawClient } from './client.js';
 import { StringRayAPIServer } from './api-server.js';
-import { OpenClawHooksManager } from './hooks/strray-hooks.js';
+import { OpenClawHooksManager, StringRayToolEvent } from './hooks/strray-hooks.js';
 import { mcpClientManager, ToolBeforeEvent, ToolAfterEvent } from '../../mcps/mcp-client.js';
 import type { AgentInvoker } from './api-server.js';
 
@@ -147,7 +147,6 @@ export class OpenClawIntegration extends BaseIntegration {
           args: toolEvent.args as Record<string, unknown>,
           duration: 0,
           timestamp: toolEvent.timestamp,
-          sessionId: undefined,
           agent: toolEvent.serverName,
         });
       } catch (error) {
@@ -159,17 +158,17 @@ export class OpenClawIntegration extends BaseIntegration {
     this.mcpToolAfterUnsubscribe = await mcpClientManager.onToolEvent('tool.after', async (event) => {
       const toolEvent = event as ToolAfterEvent;
       try {
-        await this.hooksManager!.onToolAfter({
+        const afterEvent: StringRayToolEvent = {
           toolName: toolEvent.toolName,
           toolId: `${toolEvent.serverName}:${toolEvent.toolName}`,
           args: toolEvent.args as Record<string, unknown>,
-          result: toolEvent.result,
-          error: toolEvent.error,
           duration: toolEvent.duration,
           timestamp: toolEvent.timestamp,
-          sessionId: undefined,
           agent: toolEvent.serverName,
-        });
+        };
+        if (toolEvent.result !== undefined) afterEvent.result = toolEvent.result;
+        if (toolEvent.error !== undefined) afterEvent.error = toolEvent.error;
+        await this.hooksManager!.onToolAfter(afterEvent);
       } catch (error) {
         await this.log('error', `Error in tool.after handler: ${error}`);
       }

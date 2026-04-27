@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.20] - 2026-04-27
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [1.22.19] - 2026-04-27
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [1.22.18] - 2026-04-27
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: add validate script and hooks to dist/scripts, include mcps registry in build (fc059458e)
+- fix: add mcps directory to build, fix MCP registry path resolution (c17ca67e9)
+
+---
+
 ## [1.22.18] - 2026-04-27
 
 ### 🔄 Changes

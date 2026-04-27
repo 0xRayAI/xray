@@ -14,6 +14,9 @@ export { BUILTIN_CODEX } from "./core/codex-formatter.js";
 import { defaultStringRayConfig } from "./core/index.js";
 export { defaultStringRayConfig };
 
+export { OpenClawIntegration, initializeOpenClawIntegration, getOpenClawIntegration, shutdownOpenClawIntegration } from "./integrations/openclaw/index.js";
+export type { OpenClawIntegrationConfig } from "./integrations/openclaw/types.js";
+
 // Main initialization function
 export function initializeStringRay(config = {}) {
   const mergedConfig = { ...defaultStringRayConfig, ...config };

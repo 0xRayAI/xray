@@ -69,7 +69,7 @@ export class OpenClawHooksManager {
       toolAfter: config.toolAfter ?? true,
       includeArgs: config.includeArgs ?? true,
       includeResult: config.includeResult ?? true,
-      toolFilter: config.toolFilter,
+      ...(config.toolFilter ? { toolFilter: config.toolFilter } : {}),
     };
     this.logger = console;
   }
@@ -156,8 +156,8 @@ export class OpenClawHooksManager {
         args: this.config.includeArgs ? event.args : {},
         duration: event.duration,
         timestamp: event.timestamp,
-        sessionId: event.sessionId,
-        agent: event.agent,
+        ...(event.sessionId !== undefined ? { sessionId: event.sessionId } : {}),
+        ...(event.agent !== undefined ? { agent: event.agent } : {}),
       };
 
       // Send to OpenClaw if connected, otherwise queue
@@ -205,12 +205,12 @@ export class OpenClawHooksManager {
         toolId: event.toolId,
         args: this.config.includeArgs ? event.args : {},
         result: this.config.includeResult ? event.result : undefined,
-        error: event.error,
+        ...(event.error ? { error: event.error } : {}),
         success: !event.error,
         duration: event.duration,
         timestamp: event.timestamp,
-        sessionId: event.sessionId,
-        agent: event.agent,
+        ...(event.sessionId !== undefined ? { sessionId: event.sessionId } : {}),
+        ...(event.agent !== undefined ? { agent: event.agent } : {}),
       };
 
       // Send to OpenClaw if connected, otherwise queue
