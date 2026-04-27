@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "1.22.17",
+  "version": "1.22.18",
   "description": "⚡ 0xRay: Self-Healing AI Governance OS - Enterprise AI orchestration for OpenCode and Hermes",
   "readme": "README.md",
   "license": "MIT",
@@ -43,7 +43,7 @@
   "scripts": {
     "version:bump": "node scripts/node/version-manager.mjs",
     "version": "node scripts/node/version-manager.mjs",
-    "build": "tsc && mkdir -p dist/public && cp -r public/* dist/public/ && cp README.md AGENTS.md CHANGELOG.md LICENSE dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done",
+    "build": "tsc && mkdir -p dist/public dist/scripts && cp -r public/* dist/public/ && cp scripts/validate-stringray-comprehensive.js dist/scripts/ && cp scripts/hooks/pre-command dist/scripts/ && cp scripts/hooks/pre-command.mjs dist/scripts/ && cp README.md AGENTS.md CHANGELOG.md LICENSE dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done",
     "build:all": "npm run build",
     "ci-install": "npm ci",
     "clean": "rm -rf dist",
@@ -105,6 +105,10 @@
     "scripts/node/",
     "scripts/mjs/",
     "scripts/integrations/",
+    "scripts/test/",
+    "scripts/helpers/",
+    "scripts/hooks/",
+    "scripts/validate-stringray-comprehensive.js",
     ".strray/",
     ".opencode/agents/",
     ".opencode/commands/",
