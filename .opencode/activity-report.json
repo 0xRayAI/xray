@@ -420,15 +420,27 @@
       "details": {
         "duration": 609
       }
+    },
+    {
+      "timestamp": "2026-04-28T00:51:59.103Z",
+      "id": "act-1777337519103-55bnyz",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777337517307-1ljnhp",
+      "details": {
+        "duration": 1796
+      }
     }
   ],
   "stats": {
-    "total": 35,
+    "total": 36,
     "byCategory": {
-      "session": 35
+      "session": 36
     },
     "byLevel": {
-      "info": 35
+      "info": 36
     }
   }
 }
