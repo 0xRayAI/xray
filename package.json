@@ -1,7 +1,7 @@
 {
   "name": "strray-ai",
-  "version": "1.22.27",
-  "description": "⚡ 0xRay: Self-Healing AI Governance OS - Enterprise AI orchestration for OpenCode and Hermes",
+  "version": "1.22.28",
+  "description": "⚡ 0xRay: Self-Healing AI Governance OS - Enterprise AI orchestration for OpenCode, Hermes, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
   "repository": {
@@ -16,18 +16,20 @@
     "ai",
     "claude",
     "opencode",
+    "hermes",
+    "openclaw",
     "mcp",
     "agent",
     "orchestration",
     "codex",
     "error-prevention",
-    "seo",
     "multi-agent",
     "framework",
     "development",
     "automation",
     "testing",
-    "security"
+    "security",
+    "governance"
   ],
   "type": "module",
   "main": "./dist/plugin/strray-codex-injection.js",
