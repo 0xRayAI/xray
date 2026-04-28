@@ -329,10 +329,10 @@ The rules and validators we built are trust infrastructure. They make it harder 
 
 In the end, we can point to metrics:
 
-- **2533 tests** covering all 11 processor implementations
+- **2569 tests** covering all 11 processor implementations
 - **1 circular dependency** resolved (ProcessorResult and ProcessorContext extracted to their own file)
 - **3 switch statements** eliminated (plus the legacy anti-pattern they embodied)
-- **~2533 tests** passing in the full suite (up from 2477)
+- **~2569 tests** passing in the full suite (up from 2477)
 - **1 pre-existing failure** fixed (the routing analytics singleton issue)
 
 But numbers don't capture what happened.

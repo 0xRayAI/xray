@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.31] - 2026-04-28
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: update activity logs and test results (dcb5bf018)
+
+---
+
+## [1.22.30] - 2026-04-28
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: update activity logs and test results (dcb5bf018)
+
+---
+
 ## [1.22.25] - 2026-04-28
 
 ### 🔄 Changes

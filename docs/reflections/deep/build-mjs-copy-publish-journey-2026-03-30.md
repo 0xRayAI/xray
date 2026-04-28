@@ -16,7 +16,7 @@ It wasn't.
 
 I loaded the review skill and fired off thirteen parallel checks. Version sync, build, tests, source-vs-dist gap, .mjs presence, npm pack, console bleed, symlink integrity, CHANGELOG freshness, root artifacts, bridge smoke tests, duplicate plugins, static imports, barrel exports. Thirteen probes into the guts of the framework, all running at the same time like a diagnostic panel lighting up on startup.
 
-The results came back in waves. Most of them green. Version sync clean — npm at 1.15.26, local at 1.15.26. Build compiled clean, zero errors. 127 test files, 2,2533 tests, all passing. Symlink healthy, not self-referencing. CHANGELOG current. No duplicate plugins. No hidden directories with leading spaces. No static relative imports in the plugin that would break in consumer environments. Barrel exports solid. Console bleed audit clean — every hit was in JSDoc comments, test fixtures, CLI output, or demo scripts. Zero production bleed.
+The results came back in waves. Most of them green. Version sync clean — npm at 1.15.26, local at 1.15.26. Build compiled clean, zero errors. 127 test files, 2,2569 tests, all passing. Symlink healthy, not self-referencing. CHANGELOG current. No duplicate plugins. No hidden directories with leading spaces. No static relative imports in the plugin that would break in consumer environments. Barrel exports solid. Console bleed audit clean — every hit was in JSDoc comments, test fixtures, CLI output, or demo scripts. Zero production bleed.
 
 And then the .mjs check came back.
 
@@ -143,7 +143,7 @@ I've updated the review skill to include this check prominently. The `.mjs` sect
 
 ## The Bigger Picture
 
-0xRay is at 1.15.27 now. 336 source files, 2533 tests, 1467 files in the published package. The framework has been through 27 patch versions, multiple major architectural shifts, and probably a hundred small fixes like this one. Each one individually is trivial — copy two files in the build script. But the *discovery* of each one requires systematic review, and the *prevention* of future ones requires carrying that knowledge forward.
+0xRay is at 1.15.27 now. 336 source files, 2569 tests, 1467 files in the published package. The framework has been through 27 patch versions, multiple major architectural shifts, and probably a hundred small fixes like this one. Each one individually is trivial — copy two files in the build script. But the *discovery* of each one requires systematic review, and the *prevention* of future ones requires carrying that knowledge forward.
 
 The review checklist exists because of exactly this class of bug. Not because anyone expected `.mjs` files to be missing specifically, but because the checklist was designed to find *any* gap between what's in source and what ships. Source count vs dist count. `.mjs` presence. `.cjs` presence. Static imports that break in consumer contexts. Symlink integrity. Root artifacts. Console bleed. Each check is a scar from a prior discovery.
 
@@ -159,7 +159,7 @@ The framework is healthy. Tests green, build clean, no bleed, no duplicates, no 
 - 1 version bump (1.15.26 → 1.15.27)
 - 1 npm publish
 - 2 UVM bumps (1.15.26→1.15.27 for version patch, 1.15.27→1.15.28 for cleanup commit)
-- 127 test files, 2,2533 tests, all green throughout
+- 127 test files, 2,2569 tests, all green throughout
 - Total session time: ~25 minutes from "run through paces" to "1.15.27 live on npm"
 
 Two words in. Two words to merge. A clean, methodical session that caught a shipping bug nobody had noticed because it only manifests in consumer installs, never in development.

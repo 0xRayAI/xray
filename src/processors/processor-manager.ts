@@ -61,14 +61,115 @@ export interface ProcessorMetrics {
   healthStatus: ProcessorHealth["status"];
 }
 
+type ProcessorFactory = {
+  execute: (context: Record<string, unknown>) => Promise<unknown>;
+  init?: () => Promise<void>;
+};
+
 export class ProcessorManager {
   private processors = new Map<string, ProcessorConfig>();
   private metrics = new Map<string, ProcessorMetrics>();
   private stateManager: StringRayStateManager;
   private activeProcessors = new Set<string>();
+  private factories = new Map<string, ProcessorFactory>();
 
   constructor(stateManager: StringRayStateManager) {
     this.stateManager = stateManager;
+    this.registerBuiltInFactories();
+  }
+
+  private registerBuiltInFactories(): void {
+    const f = this.factories;
+
+    f.set("preValidate", {
+      execute: (ctx) => this.executePreValidate(ctx),
+      init: () => this.initializePreValidateProcessor(),
+    });
+    f.set("codexCompliance", {
+      execute: (ctx) => this.executeCodexCompliance(ctx),
+      init: () => this.initializeCodexComplianceProcessor(),
+    });
+    f.set("logProtection", {
+      execute: (ctx) => this.executeLogProtection(ctx),
+    });
+    f.set("versionCompliance", {
+      execute: (ctx) => this.executeVersionCompliance(ctx),
+      init: () => this.initializeVersionComplianceProcessor(),
+    });
+    f.set("errorBoundary", {
+      execute: (ctx) => this.executeErrorBoundary(ctx),
+      init: () => this.initializeErrorBoundaryProcessor(),
+    });
+    f.set("testExecution", {
+      execute: (ctx) => this.executeTestExecution(ctx),
+      init: () => this.initializeTestExecutionProcessor(),
+    });
+    f.set("regressionTesting", {
+      execute: (ctx) => this.executeRegressionTesting(ctx),
+      init: () => this.initializeRegressionTestingProcessor(),
+    });
+    f.set("stateValidation", {
+      execute: (ctx) => this.executeStateValidation(ctx),
+      init: () => this.initializeStateValidationProcessor(),
+    });
+    f.set("refactoringLogging", {
+      execute: (ctx) => this.executeRefactoringLogging(ctx),
+    });
+    f.set("testAutoCreation", {
+      execute: (ctx) => this.executeTestAutoCreation(ctx),
+      init: () => this.initializeTestAutoCreationProcessor(),
+    });
+    f.set("coverageAnalysis", {
+      execute: (ctx) => this.executeCoverageAnalysis(ctx),
+    });
+    f.set("agentsMdValidation", {
+      execute: (ctx) => this.executeAgentsMdValidation(ctx),
+      init: () => this.initializeAgentsMdValidationProcessor(),
+    });
+    f.set("typescriptCompilation", {
+      execute: (ctx) => this.executeTypeScriptCompilation(ctx),
+      init: () => this.initializeTypeScriptCompilationProcessor(),
+    });
+    f.set("spawnGovernance", {
+      execute: (ctx) => this.executeSpawnGovernance(ctx),
+      init: () => this.initializeSpawnGovernanceProcessor(),
+    });
+    f.set("performanceBudget", {
+      execute: (ctx) => this.executePerformanceBudget(ctx as unknown as PreValidateContext),
+      init: () => this.initializePerformanceBudgetProcessor(),
+    });
+    f.set("asyncPattern", {
+      execute: (ctx) => this.executeAsyncPattern(ctx as unknown as PreValidateContext),
+      init: () => this.initializeAsyncPatternProcessor(),
+    });
+    f.set("consoleLogGuard", {
+      execute: (ctx) => this.executeConsoleLogGuard(ctx as unknown as PreValidateContext),
+      init: () => this.initializeConsoleLogGuardProcessor(),
+    });
+    f.set("consoleLogGuardPost", {
+      execute: (ctx) => this.executeConsoleLogGuard(ctx as unknown as PostValidateContext),
+    });
+    f.set("postProcessorChain", {
+      execute: (ctx) => this.executePostProcessorChain(ctx as unknown as PostValidateContext),
+      init: () => this.initializePostProcessorChainProcessor(),
+    });
+    f.set("publishPreflight", {
+      execute: (ctx) => this.executePublishPreflight(ctx as unknown as PostValidateContext),
+      init: () => this.initializePublishPreflightProcessor(),
+    });
+    f.set("storytellingTrigger", {
+      execute: (ctx) => this.executeStorytellingTrigger(ctx as unknown as PostValidateContext),
+    });
+    f.set("inferenceImprovement", {
+      execute: (ctx) => this.executeInferenceImprovement(ctx as unknown as PostValidateContext),
+    });
+    f.set("sessionSummary", {
+      execute: (ctx) => this.executeSessionSummary(ctx as unknown as PostValidateContext),
+    });
+  }
+
+  registerFactory(name: string, factory: ProcessorFactory): void {
+    this.factories.set(name, factory);
   }
 
   /**
@@ -254,59 +355,9 @@ export class ProcessorManager {
       throw new Error(`Processor ${name} not found`);
     }
 
-    // Initialize processor-specific setup
-    switch (name) {
-      case "preValidate":
-        await this.initializePreValidateProcessor();
-        break;
-      case "codexCompliance":
-        await this.initializeCodexComplianceProcessor();
-        break;
-      case "versionCompliance":
-        await this.initializeVersionComplianceProcessor();
-        break;
-      case "errorBoundary":
-        await this.initializeErrorBoundaryProcessor();
-        break;
-      case "testExecution":
-        await this.initializeTestExecutionProcessor();
-        break;
-      case "regressionTesting":
-        await this.initializeRegressionTestingProcessor();
-        break;
-      case "stateValidation":
-        await this.initializeStateValidationProcessor();
-        break;
-      case "agentsMdValidation":
-        await this.initializeAgentsMdValidationProcessor();
-        break;
-      case "testAutoCreation":
-        await this.initializeTestAutoCreationProcessor();
-        break;
-      case "typescriptCompilation":
-        await this.initializeTypeScriptCompilationProcessor();
-        break;
-      case "spawnGovernance":
-        await this.initializeSpawnGovernanceProcessor();
-        break;
-      case "performanceBudget":
-        await this.initializePerformanceBudgetProcessor();
-        break;
-      case "asyncPattern":
-        await this.initializeAsyncPatternProcessor();
-        break;
-      case "consoleLogGuard":
-        await this.initializeConsoleLogGuardProcessor();
-        break;
-      case "postProcessorChain":
-        await this.initializePostProcessorChainProcessor();
-        break;
-      case "publishPreflight":
-        await this.initializePublishPreflightProcessor();
-        break;
-      default:
-        // Generic initialization
-        break;
+    const factory = this.factories.get(name);
+    if (factory?.init) {
+      await factory.init();
     }
 
     this.activeProcessors.add(name);
@@ -539,81 +590,11 @@ export class ProcessorManager {
      const metrics = this.metrics.get(name)!;
 
     try {
-      let result: unknown;
-
-      switch (name) {
-        case "preValidate":
-          result = await this.executePreValidate(safeContext);
-          break;
-        case "codexCompliance":
-          result = await this.executeCodexCompliance(safeContext);
-          break;
-        case "logProtection":
-          result = await this.executeLogProtection(safeContext);
-          break;
-        case "versionCompliance":
-          result = await this.executeVersionCompliance(safeContext);
-          break;
-        case "errorBoundary":
-          result = await this.executeErrorBoundary(safeContext);
-          break;
-        case "testExecution":
-          result = await this.executeTestExecution(safeContext);
-          break;
-        case "regressionTesting":
-          result = await this.executeRegressionTesting(safeContext);
-          break;
-        case "stateValidation":
-          result = await this.executeStateValidation(safeContext);
-          break;
-        case "refactoringLogging":
-          result = await this.executeRefactoringLogging(safeContext);
-          break;
-        case "testAutoCreation":
-          result = await this.executeTestAutoCreation(safeContext);
-          break;
-        case "coverageAnalysis":
-          result = await this.executeCoverageAnalysis(safeContext);
-          break;
-        case "agentsMdValidation":
-          result = await this.executeAgentsMdValidation(safeContext);
-          break;
-        case "typescriptCompilation":
-          result = await this.executeTypeScriptCompilation(safeContext);
-          break;
-        case "spawnGovernance":
-          result = await this.executeSpawnGovernance(safeContext);
-          break;
-        case "performanceBudget":
-          result = await this.executePerformanceBudget(safeContext as unknown as PreValidateContext);
-          break;
-        case "asyncPattern":
-          result = await this.executeAsyncPattern(safeContext as unknown as PreValidateContext);
-          break;
-        case "consoleLogGuard":
-          result = await this.executeConsoleLogGuard(safeContext as unknown as PreValidateContext);
-          break;
-        case "postProcessorChain":
-          result = await this.executePostProcessorChain(safeContext as unknown as PostValidateContext);
-          break;
-        case "consoleLogGuardPost":
-          result = await this.executeConsoleLogGuard(safeContext as unknown as PostValidateContext);
-          break;
-        case "publishPreflight":
-          result = await this.executePublishPreflight(safeContext as unknown as PostValidateContext);
-          break;
-        case "storytellingTrigger":
-          result = await this.executeStorytellingTrigger(safeContext as unknown as PostValidateContext);
-          break;
-        case "inferenceImprovement":
-          result = await this.executeInferenceImprovement(safeContext as unknown as PostValidateContext);
-          break;
-        case "sessionSummary":
-          result = await this.executeSessionSummary(safeContext as unknown as PostValidateContext);
-          break;
-        default:
-          throw new Error(`Unknown processor: ${name}`);
+      const factory = this.factories.get(name);
+      if (!factory) {
+        throw new Error(`Unknown processor: ${name}`);
       }
+      const result = await factory.execute(safeContext);
 
       const duration = Date.now() - startTime;
       this.updateMetrics(name, true, duration);

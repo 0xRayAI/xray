@@ -101,7 +101,7 @@ docs/
 
 | Component | Count |
 |-----------|-------|
-| Pipeline tests | 6 (2,2533 tests) |
+| Pipeline tests | 6 (2,2569 tests) |
 | Unit tests | 2,521 |
 | Processors | 13 (5 pre + 8 post) |
 | Agents | 23+ |

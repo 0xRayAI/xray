@@ -4,7 +4,7 @@
 
 [![Version](https://img.shields.io/badge/version---silent-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-2533%20passed-brightgreen?style=flat-square)](src/__tests__)
+[![Tests](https://img.shields.io/badge/tests-2569%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
 
 > **Intelligent Multi-Agent Coordination with 99.6% Systematic Error Prevention**
@@ -71,7 +71,7 @@ This installs only the MCP servers - no OpenCode dependency.
 - **📦 Skills Registry** - Browse and install community skills from GitHub repos
 - **🔄 Complexity-Based Routing** - Intelligent task delegation
 - **🔌 Webhook Integration** - GitHub, GitLab, Bitbucket, Stripe
-- **✅ 2533 Tests** - Production-ready with comprehensive test coverage
+- **✅ 2569 Tests** - Production-ready with comprehensive test coverage
 - **🧩 Standalone MCP Servers** - Works with Hermes Agent without OpenCode
 - **🌐 OpenClaw Integration** - WebSocket bridge to OpenClaw gateway for chat orchestration
 

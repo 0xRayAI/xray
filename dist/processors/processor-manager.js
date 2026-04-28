@@ -19,8 +19,101 @@ export class ProcessorManager {
     metrics = new Map();
     stateManager;
     activeProcessors = new Set();
+    factories = new Map();
     constructor(stateManager) {
         this.stateManager = stateManager;
+        this.registerBuiltInFactories();
+    }
+    registerBuiltInFactories() {
+        const f = this.factories;
+        f.set("preValidate", {
+            execute: (ctx) => this.executePreValidate(ctx),
+            init: () => this.initializePreValidateProcessor(),
+        });
+        f.set("codexCompliance", {
+            execute: (ctx) => this.executeCodexCompliance(ctx),
+            init: () => this.initializeCodexComplianceProcessor(),
+        });
+        f.set("logProtection", {
+            execute: (ctx) => this.executeLogProtection(ctx),
+        });
+        f.set("versionCompliance", {
+            execute: (ctx) => this.executeVersionCompliance(ctx),
+            init: () => this.initializeVersionComplianceProcessor(),
+        });
+        f.set("errorBoundary", {
+            execute: (ctx) => this.executeErrorBoundary(ctx),
+            init: () => this.initializeErrorBoundaryProcessor(),
+        });
+        f.set("testExecution", {
+            execute: (ctx) => this.executeTestExecution(ctx),
+            init: () => this.initializeTestExecutionProcessor(),
+        });
+        f.set("regressionTesting", {
+            execute: (ctx) => this.executeRegressionTesting(ctx),
+            init: () => this.initializeRegressionTestingProcessor(),
+        });
+        f.set("stateValidation", {
+            execute: (ctx) => this.executeStateValidation(ctx),
+            init: () => this.initializeStateValidationProcessor(),
+        });
+        f.set("refactoringLogging", {
+            execute: (ctx) => this.executeRefactoringLogging(ctx),
+        });
+        f.set("testAutoCreation", {
+            execute: (ctx) => this.executeTestAutoCreation(ctx),
+            init: () => this.initializeTestAutoCreationProcessor(),
+        });
+        f.set("coverageAnalysis", {
+            execute: (ctx) => this.executeCoverageAnalysis(ctx),
+        });
+        f.set("agentsMdValidation", {
+            execute: (ctx) => this.executeAgentsMdValidation(ctx),
+            init: () => this.initializeAgentsMdValidationProcessor(),
+        });
+        f.set("typescriptCompilation", {
+            execute: (ctx) => this.executeTypeScriptCompilation(ctx),
+            init: () => this.initializeTypeScriptCompilationProcessor(),
+        });
+        f.set("spawnGovernance", {
+            execute: (ctx) => this.executeSpawnGovernance(ctx),
+            init: () => this.initializeSpawnGovernanceProcessor(),
+        });
+        f.set("performanceBudget", {
+            execute: (ctx) => this.executePerformanceBudget(ctx),
+            init: () => this.initializePerformanceBudgetProcessor(),
+        });
+        f.set("asyncPattern", {
+            execute: (ctx) => this.executeAsyncPattern(ctx),
+            init: () => this.initializeAsyncPatternProcessor(),
+        });
+        f.set("consoleLogGuard", {
+            execute: (ctx) => this.executeConsoleLogGuard(ctx),
+            init: () => this.initializeConsoleLogGuardProcessor(),
+        });
+        f.set("consoleLogGuardPost", {
+            execute: (ctx) => this.executeConsoleLogGuard(ctx),
+        });
+        f.set("postProcessorChain", {
+            execute: (ctx) => this.executePostProcessorChain(ctx),
+            init: () => this.initializePostProcessorChainProcessor(),
+        });
+        f.set("publishPreflight", {
+            execute: (ctx) => this.executePublishPreflight(ctx),
+            init: () => this.initializePublishPreflightProcessor(),
+        });
+        f.set("storytellingTrigger", {
+            execute: (ctx) => this.executeStorytellingTrigger(ctx),
+        });
+        f.set("inferenceImprovement", {
+            execute: (ctx) => this.executeInferenceImprovement(ctx),
+        });
+        f.set("sessionSummary", {
+            execute: (ctx) => this.executeSessionSummary(ctx),
+        });
+    }
+    registerFactory(name, factory) {
+        this.factories.set(name, factory);
     }
     /**
      * Register a processor with the manager
@@ -151,59 +244,9 @@ export class ProcessorManager {
         if (!config) {
             throw new Error(`Processor ${name} not found`);
         }
-        // Initialize processor-specific setup
-        switch (name) {
-            case "preValidate":
-                await this.initializePreValidateProcessor();
-                break;
-            case "codexCompliance":
-                await this.initializeCodexComplianceProcessor();
-                break;
-            case "versionCompliance":
-                await this.initializeVersionComplianceProcessor();
-                break;
-            case "errorBoundary":
-                await this.initializeErrorBoundaryProcessor();
-                break;
-            case "testExecution":
-                await this.initializeTestExecutionProcessor();
-                break;
-            case "regressionTesting":
-                await this.initializeRegressionTestingProcessor();
-                break;
-            case "stateValidation":
-                await this.initializeStateValidationProcessor();
-                break;
-            case "agentsMdValidation":
-                await this.initializeAgentsMdValidationProcessor();
-                break;
-            case "testAutoCreation":
-                await this.initializeTestAutoCreationProcessor();
-                break;
-            case "typescriptCompilation":
-                await this.initializeTypeScriptCompilationProcessor();
-                break;
-            case "spawnGovernance":
-                await this.initializeSpawnGovernanceProcessor();
-                break;
-            case "performanceBudget":
-                await this.initializePerformanceBudgetProcessor();
-                break;
-            case "asyncPattern":
-                await this.initializeAsyncPatternProcessor();
-                break;
-            case "consoleLogGuard":
-                await this.initializeConsoleLogGuardProcessor();
-                break;
-            case "postProcessorChain":
-                await this.initializePostProcessorChainProcessor();
-                break;
-            case "publishPreflight":
-                await this.initializePublishPreflightProcessor();
-                break;
-            default:
-                // Generic initialization
-                break;
+        const factory = this.factories.get(name);
+        if (factory?.init) {
+            await factory.init();
         }
         this.activeProcessors.add(name);
     }
@@ -355,80 +398,11 @@ export class ProcessorManager {
         const startTime = Date.now();
         const metrics = this.metrics.get(name);
         try {
-            let result;
-            switch (name) {
-                case "preValidate":
-                    result = await this.executePreValidate(safeContext);
-                    break;
-                case "codexCompliance":
-                    result = await this.executeCodexCompliance(safeContext);
-                    break;
-                case "logProtection":
-                    result = await this.executeLogProtection(safeContext);
-                    break;
-                case "versionCompliance":
-                    result = await this.executeVersionCompliance(safeContext);
-                    break;
-                case "errorBoundary":
-                    result = await this.executeErrorBoundary(safeContext);
-                    break;
-                case "testExecution":
-                    result = await this.executeTestExecution(safeContext);
-                    break;
-                case "regressionTesting":
-                    result = await this.executeRegressionTesting(safeContext);
-                    break;
-                case "stateValidation":
-                    result = await this.executeStateValidation(safeContext);
-                    break;
-                case "refactoringLogging":
-                    result = await this.executeRefactoringLogging(safeContext);
-                    break;
-                case "testAutoCreation":
-                    result = await this.executeTestAutoCreation(safeContext);
-                    break;
-                case "coverageAnalysis":
-                    result = await this.executeCoverageAnalysis(safeContext);
-                    break;
-                case "agentsMdValidation":
-                    result = await this.executeAgentsMdValidation(safeContext);
-                    break;
-                case "typescriptCompilation":
-                    result = await this.executeTypeScriptCompilation(safeContext);
-                    break;
-                case "spawnGovernance":
-                    result = await this.executeSpawnGovernance(safeContext);
-                    break;
-                case "performanceBudget":
-                    result = await this.executePerformanceBudget(safeContext);
-                    break;
-                case "asyncPattern":
-                    result = await this.executeAsyncPattern(safeContext);
-                    break;
-                case "consoleLogGuard":
-                    result = await this.executeConsoleLogGuard(safeContext);
-                    break;
-                case "postProcessorChain":
-                    result = await this.executePostProcessorChain(safeContext);
-                    break;
-                case "consoleLogGuardPost":
-                    result = await this.executeConsoleLogGuard(safeContext);
-                    break;
-                case "publishPreflight":
-                    result = await this.executePublishPreflight(safeContext);
-                    break;
-                case "storytellingTrigger":
-                    result = await this.executeStorytellingTrigger(safeContext);
-                    break;
-                case "inferenceImprovement":
-                    result = await this.executeInferenceImprovement(safeContext);
-                    break;
-                case "sessionSummary":
-                    result = await this.executeSessionSummary(safeContext);
-                    break;
-                default:
-                    throw new Error(`Unknown processor: ${name}`);
+            const factory = this.factories.get(name);
+            if (!factory) {
+                throw new Error(`Unknown processor: ${name}`);
             }
+            const result = await factory.execute(safeContext);
             const duration = Date.now() - startTime;
             this.updateMetrics(name, true, duration);
             return {

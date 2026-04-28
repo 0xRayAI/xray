@@ -62,7 +62,7 @@ Most AI coding tools fall into the same traps:
 - **Code Rot** → Modular, maintainable components with automated refactoring
 - **Concurrency & State Chaos** → Safe patterns + disciplined flow
 
-**99.6% error prevention. 2,2533 tests. Ship immediately.**
+**99.6% error prevention. 2,2569 tests. Ship immediately.**
 
 **Clean. Tested. Modular. Done.**
 
@@ -132,7 +132,7 @@ This is why the copy works — it's not trying to entertain or dazzle. It's spea
 
 **For New Users:**
 - Modern facade pattern architecture from day one
-- 25 specialized agents, 40 MCP servers, 2,2533 tests
+- 25 specialized agents, 40 MCP servers, 2,2569 tests
 - 99.6% error prevention, 100% backward compatibility
 
 **Technical Credibility:**

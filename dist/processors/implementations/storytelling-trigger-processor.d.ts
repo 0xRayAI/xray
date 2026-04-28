@@ -30,6 +30,7 @@ export declare class StorytellingTriggerProcessor extends PostProcessor {
     private checkPublishTrigger;
     private checkComplexChangesTrigger;
     private checkSessionDurationTrigger;
+    private generateReflections;
     private getCommitCountSinceLastReflection;
     private getCommitCount;
     private getMostRecentDocument;

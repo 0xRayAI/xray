@@ -136,9 +136,9 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.22.28",
+    version: "1.22.31",
       displayName: "0xRay: Self-Healing AI Governance OS",
-      lastUpdated: "2026-04-27",
+      lastUpdated: "2026-04-28",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },
@@ -336,29 +336,29 @@ const UPDATE_PATTERNS = [
     },
 
     // === BADGE AND COUNT PATTERNS ===
-    // Test count in docs badge (e.g., tests-2533-brightgreen)
+    // Test count in docs badge (e.g., tests-2569-brightgreen)
     {
       pattern: /tests-[0-9]+(?=-brightgreen)/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}`,
     },
-    // Test count in npm badge (e.g., tests-2533%20passed-brightgreen)
+    // Test count in npm badge (e.g., tests-2569%20passed-brightgreen)
     {
       pattern: /tests-[0-9,]+%20passed/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}%20passed`,
     },
-    // Test count in prose (e.g., "2,2533 Tests" or "2533 Tests" but NOT in badge URLs)
+    // Test count in prose (e.g., "2,2569 Tests" or "2569 Tests" but NOT in badge URLs)
     {
       pattern: /(\*\s*✅\s*)([0-9]{1,3},?[0-9]{3})(\s*Tests)/g,
       replacement: (match, p1, p2, p3) => {
         return `${p1}${OFFICIAL_VERSIONS.framework.tests}${p3}`;
       },
     },
-    // Test count in feature bullets (e.g., "✅ 2533 Tests")
+    // Test count in feature bullets (e.g., "✅ 2569 Tests")
     {
       pattern: /[0-9]+ Tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} Tests`,
     },
-    // Test count in config tree (e.g., "2533 tests")
+    // Test count in config tree (e.g., "2569 tests")
     {
       pattern: /[0-9]+ tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} tests`,

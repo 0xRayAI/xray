@@ -41,12 +41,19 @@ export interface ProcessorMetrics {
     lastExecutionTime: number;
     healthStatus: ProcessorHealth["status"];
 }
+type ProcessorFactory = {
+    execute: (context: Record<string, unknown>) => Promise<unknown>;
+    init?: () => Promise<void>;
+};
 export declare class ProcessorManager {
     private processors;
     private metrics;
     private stateManager;
     private activeProcessors;
+    private factories;
     constructor(stateManager: StringRayStateManager);
+    private registerBuiltInFactories;
+    registerFactory(name: string, factory: ProcessorFactory): void;
     /**
      * Register a processor with the manager
      */
@@ -245,4 +252,5 @@ export declare class ProcessorManager {
      */
     private executeSessionSummary;
 }
+export {};
 //# sourceMappingURL=processor-manager.d.ts.map

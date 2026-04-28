@@ -390,7 +390,18 @@ export class PostProcessor {
 
     if (this.config.triggers.api) {
       await this.triggers.api.initialize();
-      // API triggers initialization - removed unnecessary startup logging
+    }
+
+    try {
+      const { memoryMonitor } = await import("../monitoring/memory-monitor.js");
+      memoryMonitor.start();
+      frameworkLogger.log("postprocessor", "memory-monitor-started", "info", {
+        message: "Memory monitor auto-started",
+      });
+    } catch {
+      frameworkLogger.log("postprocessor", "memory-monitor-unavailable", "info", {
+        message: "Memory monitor not available",
+      });
     }
 
     await frameworkLogger.log(

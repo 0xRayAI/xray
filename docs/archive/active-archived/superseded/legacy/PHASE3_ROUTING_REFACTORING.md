@@ -42,11 +42,11 @@ Successfully extracted keyword matching, history matching, and complexity routin
 6. **src/delegation/routing/index.ts** (32 lines)
    - Barrel exports for all routing components
 
-### Test Files (2,2533 tests total)
-1. **src/delegation/routing/__tests__/keyword-matcher.test.ts** (2,2533 tests)
-2. **src/delegation/routing/__tests__/history-matcher.test.ts** (2,2533 tests)
-3. **src/delegation/routing/__tests__/complexity-router.test.ts** (2,2533 tests)
-4. **src/delegation/routing/__tests__/router-core.test.ts** (2,2533 tests)
+### Test Files (2,2569 tests total)
+1. **src/delegation/routing/__tests__/keyword-matcher.test.ts** (2,2569 tests)
+2. **src/delegation/routing/__tests__/history-matcher.test.ts** (2,2569 tests)
+3. **src/delegation/routing/__tests__/complexity-router.test.ts** (2,2569 tests)
+4. **src/delegation/routing/__tests__/router-core.test.ts** (2,2569 tests)
 
 ## Files Modified
 
