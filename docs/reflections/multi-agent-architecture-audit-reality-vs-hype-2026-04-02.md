@@ -29,7 +29,7 @@ A 4-agent audit of 0xRay's multi-agent capabilities revealed significant gaps be
 | "consensus" resolution | Returns undefined - silent failure | ❌ Bug |
 | "MCP shared state" | Process-local Maps, not shared | ❌ Overstated |
 | "Event broadcasts" | Emitters exist, no subscribers | ❌ Broken |
-| "60 Codex terms enforced" | Only 9 terms validated (~15%) | ❌ Gap |
+| "60 codex terms enforced" | Only 9 terms validated (~15%) | ❌ Gap |
 | "99.6% error prevention" | Aspirational target, not measured | ⚠️ Marketing |
 
 ## What Actually Works
@@ -83,7 +83,7 @@ Events are emitted (`tool.before`, `tool.after`) but nothing subscribes to react
 - Conflict resolution strategies mostly broken except majority_vote
 - MCP "shared state" is process-local - needs inter-process sync
 - Event system is one-way (emit only, no consume)
-- 9/60 Codex terms enforced - significant expansion opportunity
+- 9/60 codex terms enforced - significant expansion opportunity
 
 ## What's Next
 

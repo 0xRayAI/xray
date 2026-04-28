@@ -179,7 +179,7 @@ MCP Client had been transformed from a fragile gateway into a robust, testable, 
 
 *But the story does not end with the extraction of modules. For The Refactorer knew that the true measure of success was not cleaner code—it was working code. And to ensure that their refactoring had not broken anything, they convened the Council of Tests.*
 
-The council was formidable: 164 test files, containing 2,368 individual tests. These tests were the guardians of 0xRay's functionality—their passing meant that the framework worked as expected, and their failure would signal disaster.
+The council was formidable: 164 test files, containing 104 individual tests. These tests were the guardians of 0xRay's functionality—their passing meant that the framework worked as expected, and their failure would signal disaster.
 
 When The Refactorer first ran the council after their refactoring, the results were... mixed.
 

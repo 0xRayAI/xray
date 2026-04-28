@@ -22,7 +22,7 @@ Then there are the **25 agents**. Twenty-five distinct personalities, if you can
 
 The **MCP servers**—those are the hands and eyes, the things that can actually touch the filesystem and run commands.
 
-And today—because I was there for part of it—we fixed routing for seven previously orphaned agents. Storyteller, log-monitor, multimodal-looker, code-analyzer, seo-consultant, content-creator, growth-strategist. They existed, they had configurations, but the routing logic didn't know how to find them. We also removed the dead plugin infrastructure, the src/plugins/ directory that was never actually used, and the duplicate .opencode/plugins/ directory. Two thousand lines of tests for code that didn't exist got deleted. We're down to 2478 passing tests, and every one of them tests something real.
+And today—because I was there for part of it—we fixed routing for seven previously orphaned agents. Storyteller, log-monitor, multimodal-looker, code-analyzer, seo-consultant, content-creator, growth-strategist. They existed, they had configurations, but the routing logic didn't know how to find them. We also removed the dead plugin infrastructure, the src/plugins/ directory that was never actually used, and the duplicate .opencode/plugins/ directory. Two thousand lines of tests for code that didn't exist got deleted. We're down to 104 passing tests, and every one of them tests something real.
 
 ---
 
@@ -50,7 +50,7 @@ The boot sequence works. It's boring and reliable and that's exactly what you wa
 
 The CLI commands work. Install, health, capabilities, calibrate, report, analytics. They're not fancy, but they do what they say and they don't break.
 
-The tests work. 2478 of them passing, and they're testing real code now that we've cleaned out the dead plugin infrastructure.
+The tests work. 104 of them passing, and they're testing real code now that we've cleaned out the dead plugin infrastructure.
 
 **What's aspirational:**
 

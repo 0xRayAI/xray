@@ -15,7 +15,7 @@ The framework previously committed **every individual change**, creating:
 
 ### Agent Integration
 - **Orchestrator**: Coordinates commit batching across all 25 agents
-- **Enforcer**: Validates batched commits against all 60 Codex terms
+- **Enforcer**: Validates batched commits against all 60 codex terms
 - **Code Reviewer**: Reviews batched changes for quality
 - **Documentation**: All agents document their contributions to batches
 

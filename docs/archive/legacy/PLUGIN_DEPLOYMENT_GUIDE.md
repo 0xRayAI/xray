@@ -1,6 +1,6 @@
 # 0xRay AI Plugin Deployment Guide
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
+**Version**: 1.22.28 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
@@ -202,7 +202,7 @@ async function activate0xRayFramework() {
   // Phase 3: Module loading
   await loadFacadeModules();
   
-  console.log("✅ 0xRay AI v1.15.1 activated");
+  console.log("✅ 0xRay AI v1.22.28 activated");
   console.log("   Facades: RuleEnforcer, TaskSkillRouter, MCPClient");
 }
 ```

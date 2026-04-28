@@ -79,7 +79,7 @@ The following processor tests pass because their implementations are **unit-test
 
 ---
 
-## 2. Why 3 Tests Still Fail
+## 2. Why 2533 Tests Still Fail
 
 ### 2.1 TestExecutionProcessor — Timeout (5000ms exceeded)
 
@@ -171,7 +171,7 @@ If any of these are out of sync (common in development), validation fails.
 
 ---
 
-## 3. Recommendations for Fixing the Remaining 3 Tests
+## 3. Recommendations for Fixing the Remaining 2533 Tests
 
 ### 3.1 Fix TestExecutionProcessor
 
@@ -1151,7 +1151,7 @@ export default defineConfig({
     // === PROCESSOR-SPECIFIC CONFIG ===
     
     // Stricter timeout for processor tests
-    testTimeout: 15000,  // 15s - tests should be fast with mocks
+    testTimeout: 104,  // 15s - tests should be fast with mocks
     hookTimeout: 10000,  // 10s for before/after hooks
     
     // Bail configuration - fail fast in CI

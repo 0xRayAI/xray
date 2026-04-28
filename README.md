@@ -1,15 +1,15 @@
 # ⚡ 0xRay: Self-Healing AI Governance OS
 
-**Enterprise AI Orchestration Framework For OpenCode and Hermes** — by [0xRayAI](https://github.com/0xrayai)
+**Enterprise AI Orchestration Framework for OpenCode, Hermes, and OpenClaw** — by [0xRayAI](https://github.com/0xrayai)
 
 [![Version](https://img.shields.io/badge/version---silent-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-2311%20passed-brightgreen?style=flat-square)](src/__tests__)
+[![Tests](https://img.shields.io/badge/tests-2533%20passed-brightgreen?style=flat-square)](src/__tests__)
 [![GitHub stars](https://img.shields.io/github/stars/htafolla/stringray?style=social)](https://github.com/htafolla/stringray)
 
 > **Intelligent Multi-Agent Coordination with 99.6% Systematic Error Prevention**
 
-0xRay extends OpenCode and Hermes with intelligent multi-agent orchestration, Codex compliance validation, and enterprise-grade security. It automatically routes tasks to specialized agents based on complexity and provides systematic error prevention.
+0xRay extends [OpenCode](https://opencode.ai), [Hermes Agent](https://github.com/nilslice/hermes), and [OpenClaw](https://github.com/openclaw/openclaw) with intelligent multi-agent orchestration, Codex compliance validation, and enterprise-grade security. It automatically routes tasks to specialized agents based on complexity and provides systematic error prevention across all three runtimes.
 
 ## What is 0xRay?
 
@@ -47,7 +47,7 @@ npm install strray-ai
 
 **What happens during install?**
 - Copies OpenCode configuration files to your project
-- Configures 25 agents with proper capabilities
+- Configures 26 agents with proper capabilities
 - Sets up Codex enforcement rules
 - Enables webhook triggers for CI/CD integration
 - Ready to use with Hermes immediately
@@ -64,15 +64,16 @@ This installs only the MCP servers - no OpenCode dependency.
 
 ## ✨ Features
 
-- **🤖 25 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
+- **🤖 26 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
 - **⚡ 44 Framework Skills** + 10 curated community sources (170+ additional skills available)
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
 - **📦 Skills Registry** - Browse and install community skills from GitHub repos
 - **🔄 Complexity-Based Routing** - Intelligent task delegation
 - **🔌 Webhook Integration** - GitHub, GitLab, Bitbucket, Stripe
-- **✅ 2311 Tests** - Production-ready with comprehensive test coverage
+- **✅ 2533 Tests** - Production-ready with comprehensive test coverage
 - **🧩 Standalone MCP Servers** - Works with Hermes Agent without OpenCode
+- **🌐 OpenClaw Integration** - WebSocket bridge to OpenClaw gateway for chat orchestration
 
 ## 🤖 Available Agents
 
@@ -94,7 +95,7 @@ This installs only the MCP servers - no OpenCode dependency.
 
 > **Note:** 0xRay auto-configures all agents during installation. To customize agent settings, see the [Agent Configuration Guide](https://github.com/htafolla/stringray/blob/master/docs/AGENT_CONFIG.md).
 
-[View all 25 agents →](https://github.com/htafolla/stringray/blob/master/AGENTS.md)
+[View all 26 agents →](https://github.com/htafolla/stringray/blob/master/AGENTS.md)
 
 ## 📦 OpenClaw Integration
 
@@ -284,7 +285,7 @@ npx strray-ai antigravity status       # Show installed skills with licenses
 
 ```
 .opencode/
-├── agents/         # 25 agent configurations
+├── agents/         # 26 agent configurations
 ├── skills/         # Framework skills
 ├── strray/
 │   ├── codex.json      # Codex rules
@@ -340,7 +341,7 @@ See [Configuration Reference](https://github.com/htafolla/stringray/blob/master/
 ```json
 {
   "version_pinning": {
-    "strray_ai": "^1.15.0",
+    "strray_ai": "^1.22.0",
     "opencode": "^2.14.0",
     "skills": {
       "antigravity": "latest",
@@ -384,7 +385,7 @@ stringray/
 │   ├── validation/            # Agent config & estimation validators
 │   └── jobs/                  # Background job management
 ├── .opencode/                 # OpenCode configuration
-│   ├── agents/               # Agent configs (25 agents)
+│   ├── agents/               # Agent configs (26 agents)
 │   ├── strray/               # 0xRay config
 │   │   ├── codex.json        # 60-term development codex
 │   │   ├── features.json     # Feature flags
@@ -542,6 +543,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 ---
 
 *Built with precision for enterprise-grade AI orchestration*
-# Test
-# Auto-report test Sat Apr  4 12:14:12 CDT 2026
-# Test session summary

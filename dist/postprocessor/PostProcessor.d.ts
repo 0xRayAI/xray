@@ -19,6 +19,7 @@ export declare class PostProcessor {
     private autoFixEngine;
     private fixValidator;
     private reportValidator;
+    private regressionAnalysisService;
     private redeployCoordinator;
     private escalationEngine;
     private successHandler;

@@ -25,17 +25,11 @@ import { mcpClientManager } from "../mcps/mcp-client.js";
 import { RedeployCoordinator } from "./redeploy/RedeployCoordinator.js";
 import { EscalationEngine } from "./escalation/EscalationEngine.js";
 import { SuccessHandler } from "./success/SuccessHandler.js";
-import {
-  PostProcessorConfig,
-  PostProcessorResult,
-  PostProcessorContext,
-  MonitoringResult,
-  FixResult,
-  FailureAnalysis,
-} from "./types.js";
+import { PostProcessorConfig, PostProcessorResult, PostProcessorContext, MonitoringResult, FixResult, FailureAnalysis } from "./types.js";
 import { defaultConfig } from "./config.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
 import { ReportContentValidator } from "../validation/report-content-validator.js";
+import { RegressionAnalysisService } from "./services/RegressionAnalysisService.js";
 
 export class PostProcessor {
   private config: PostProcessorConfig;
@@ -44,6 +38,7 @@ export class PostProcessor {
   private autoFixEngine: AutoFixEngine;
   private fixValidator: FixValidator;
   private reportValidator: ReportContentValidator;
+  private regressionAnalysisService: RegressionAnalysisService;
   private redeployCoordinator: RedeployCoordinator;
   private escalationEngine: EscalationEngine;
   private successHandler: SuccessHandler;
@@ -73,6 +68,7 @@ export class PostProcessor {
     );
     this.fixValidator = new FixValidator();
     this.reportValidator = new ReportContentValidator();
+    this.regressionAnalysisService = new RegressionAnalysisService();
 
     // Initialize redeploy coordinator
     this.redeployCoordinator = new RedeployCoordinator(this.config.redeploy);
@@ -339,6 +335,12 @@ export class PostProcessor {
     errorBoundary?: { enabled?: boolean };
     agentsMdValidation?: { enabled?: boolean };
     stateValidation?: { enabled?: boolean };
+    post_processors?: { enabled?: boolean; priority_order?: string[] };
+    storytellingTrigger?: { enabled?: boolean };
+    sessionSummary?: { enabled?: boolean };
+    testExecution?: { enabled?: boolean };
+    regressionTesting?: { enabled?: boolean };
+    inferenceImprovement?: { enabled?: boolean };
   }> {
     const fs = await import("fs");
     const path = await import("path");
@@ -350,15 +352,11 @@ export class PostProcessor {
         return config.processors || {};
       }
     } catch (error) {
-      await frameworkLogger.log(
-        "-post-processor",
-        "-processor-config-load-failed",
-        "info",
-        { message: `Could not load processor config: ${error}` },
-      );
+      frameworkLogger.log("postprocessor", "processor-config-load-failed", "info", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
     
-    // Return default configuration if no config found
     return {};
   }
 
@@ -866,54 +864,53 @@ All path violations will be automatically detected and blocked.
         "processors/processor-manager",
       );
 
-      const processorManager = new ProcessorManager();
+      const processorManager = new ProcessorManager(this.stateManager);
 
-      // IMPROVED: Register processors with configuration from features.json
       const processorConfig = await this.loadProcessorConfig();
       
-      // Register processors needed for post-processing (now configurable)
-      processorManager.registerProcessor({
-        name: "preValidate",
-        type: "pre",
-        priority: 10,
-        enabled: processorConfig.preValidate?.enabled ?? true,
-      });
-      processorManager.registerProcessor({
-        name: "codexCompliance",
-        type: "pre",
-        priority: 20,
-        enabled: processorConfig.codexCompliance?.enabled ?? true,
-      });
-      processorManager.registerProcessor({
-        name: "testAutoCreation",
-        type: "pre",
-        priority: 22,
-        enabled: processorConfig.testAutoCreation?.enabled ?? true,
-      });
-      processorManager.registerProcessor({
-        name: "versionCompliance",
-        type: "pre",
-        priority: 25,
-        enabled: processorConfig.versionCompliance?.enabled ?? true,
-      });
-      processorManager.registerProcessor({
-        name: "errorBoundary",
-        type: "pre",
-        priority: 30,
-        enabled: processorConfig.errorBoundary?.enabled ?? true,
-      });
-      processorManager.registerProcessor({
-        name: "agentsMdValidation",
-        type: "pre",
-        priority: 35,
-        enabled: true,
-      });
-      processorManager.registerProcessor({
-        name: "stateValidation",
-        type: "post",
-        priority: 130,
-        enabled: true,
-      });
+      const PRE_PROCESSOR_DEFAULTS: Record<string, { type: "pre"; priority: number }> = {
+        preValidate: { type: "pre", priority: 10 },
+        codexCompliance: { type: "pre", priority: 20 },
+        testAutoCreation: { type: "pre", priority: 22 },
+        versionCompliance: { type: "pre", priority: 25 },
+        errorBoundary: { type: "pre", priority: 30 },
+        agentsMdValidation: { type: "pre", priority: 35 },
+      };
+
+      for (const [name, def] of Object.entries(PRE_PROCESSOR_DEFAULTS)) {
+        const enabled = (processorConfig as any)[name]?.enabled ?? true;
+        processorManager.registerProcessor({ name, type: def.type, priority: def.priority, enabled });
+      }
+
+      processorManager.registerProcessor({ name: "stateValidation", type: "post", priority: 130, enabled: true });
+
+      const POST_PROCESSOR_MAP: Record<string, { type: "post"; priority: number }> = {
+        storytellingTrigger: { type: "post", priority: 5 },
+        sessionSummary: { type: "post", priority: 15 },
+        testExecution: { type: "post", priority: 40 },
+        regressionTesting: { type: "post", priority: 50 },
+        inferenceImprovement: { type: "post", priority: 60 },
+      };
+
+      const postConfig = processorConfig.post_processors;
+      const postEnabled = postConfig?.enabled !== false;
+      const postOrder = postConfig?.priority_order || Object.keys(POST_PROCESSOR_MAP);
+
+      if (postEnabled) {
+        for (let i = 0; i < postOrder.length; i++) {
+          const name = postOrder[i]!;
+          const def = POST_PROCESSOR_MAP[name];
+          if (def) {
+            const cfg = processorConfig as Record<string, { enabled?: boolean }>;
+            processorManager.registerProcessor({
+              name,
+              type: def.type,
+              priority: 100 + (i * 10),
+              enabled: cfg[name]?.enabled ?? true,
+            });
+          }
+        }
+      }
 
       // Initialize all registered processors
       await processorManager.initializeProcessors();
@@ -1159,6 +1156,72 @@ All path violations will be automatically detected and blocked.
               { message: `AGENTS.md auto-update failed: ${error}` },
             );
           }
+        }
+
+        // Regression analysis check
+        try {
+          const regressionDecision = await this.regressionAnalysisService.shouldAnalyze(context);
+          if (regressionDecision.required) {
+            await frameworkLogger.log("postprocessor", "regression-analysis-required", "info", {
+              reason: regressionDecision.reason,
+              agents: regressionDecision.agents,
+              depth: regressionDecision.depth,
+            });
+            await this.regressionAnalysisService.invokeAnalysis(context, regressionDecision);
+          }
+        } catch (regressionError) {
+          await frameworkLogger.log("postprocessor", "regression-analysis-failed", "warning", {
+            error: String(regressionError),
+          });
+        }
+
+        // Execute post-processors (storytelling, session summary, test execution, regression testing)
+        try {
+          const { importResolver: resolver } = await import("../utils/import-resolver.js");
+          const { ProcessorManager: PM } = await resolver.importModule("processors/processor-manager");
+          const pm = new PM(this.stateManager);
+
+          const postProcessorConfig = await this.loadProcessorConfig();
+          const POST_MAP: Record<string, { type: "post"; priority: number }> = {
+            storytellingTrigger: { type: "post", priority: 5 },
+            sessionSummary: { type: "post", priority: 15 },
+            testExecution: { type: "post", priority: 40 },
+            regressionTesting: { type: "post", priority: 50 },
+            inferenceImprovement: { type: "post", priority: 60 },
+          };
+
+          const postCfg = postProcessorConfig.post_processors;
+          const postOrder = postCfg?.priority_order || Object.keys(POST_MAP);
+          
+          for (let i = 0; i < postOrder.length; i++) {
+            const name = postOrder[i]!;
+            const def = POST_MAP[name];
+            if (def && (postCfg?.enabled !== false)) {
+              pm.registerProcessor({ name, type: def.type, priority: 100 + i * 10, enabled: true });
+            }
+          }
+
+          await pm.initializeProcessors();
+
+          const postResults = await pm.executePostProcessors("commit", {
+            files: context.files,
+            commitSha: context.commitSha,
+            operation: context.operation,
+            sessionDurationMinutes: (Date.now() - (context as any).startTime) / 60000,
+          }, []);
+
+          const triggeredStorytelling = postResults.find(
+            (r: any) => r.processorName === "storytellingTrigger" && r.success
+          );
+          if (triggeredStorytelling) {
+            await frameworkLogger.log("postprocessor", "storytelling-trigger-activated", "info", {
+              result: triggeredStorytelling.data,
+            });
+          }
+        } catch (postError) {
+          await frameworkLogger.log("postprocessor", "post-processors-failed", "warning", {
+            error: String(postError),
+          });
         }
 
         // Generate automated framework report if threshold met

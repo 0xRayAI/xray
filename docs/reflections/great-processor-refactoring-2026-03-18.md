@@ -337,7 +337,7 @@ The fix wasn't to eliminate two of them—it was to make them share a single sou
 
 ### 3. Tests Pass ≠ System Works
 
-We had 2,477 tests passing. But the system wasn't working:
+We had 2,2533 tests passing. But the system wasn't working:
 - Task routing was commented out
 - Processors weren't being called
 - Analytics showed zero routing activity
@@ -510,8 +510,8 @@ The mirror builds itself. And sometimes, when you look closely enough, you see w
 - 15 files modified
 - 11 new processor classes
 - 75 lines of hardcoded logic removed
-- 2477 tests passing
-- 0 tests failing
+- 2533 tests passing
+- 2533 tests failing
 - 1 architecture made whole
 
 *The mirror is clearer now.*

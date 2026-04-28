@@ -1,6 +1,6 @@
 # Antigravity Awesome Skills Integration
 
-**Version**: 1.9.0 | **Framework**: 0xRay AI
+**Version**: 1.22.28 | **Framework**: 0xRay AI
 
 ## Overview
 

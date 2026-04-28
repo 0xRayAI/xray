@@ -33,12 +33,31 @@ import { execSync } from "child_process";
  * Auto-calculate framework counts from filesystem
  * This ensures counts are always accurate
  */
+/**
+ * Count test files in a directory recursively
+ */
+function findTestFiles(dir) {
+  let count = 0;
+  try {
+    for (const entry of fs.readdirSync(dir)) {
+      const full = path.join(dir, entry);
+      const stat = fs.statSync(full);
+      if (stat.isDirectory()) {
+        count += findTestFiles(full);
+      } else if (entry.endsWith(".test.ts") || entry.endsWith(".spec.ts")) {
+        count++;
+      }
+    }
+  } catch {}
+  return count;
+}
+
 function calculateCounts() {
   const counts = {
     agents: 0,
     skills: 0,
     mcpServers: 0,
-    tests: 1608, // Default, or could parse from test output
+    tests: 0,
   };
 
   try {
@@ -77,6 +96,28 @@ function calculateCounts() {
       }
       
       counts.mcpServers = rootServers + ksServers;
+    }
+
+    // Count tests: prefer stored vitest count, then grep as fallback
+    try {
+      const vitestStatePath = ".opencode/strray/test-count.json";
+      if (fs.existsSync(vitestStatePath)) {
+        const state = JSON.parse(fs.readFileSync(vitestStatePath, "utf8"));
+        if (state.totalTests && state.totalTests > 100) {
+          counts.tests = state.totalTests;
+        }
+      }
+    } catch {}
+
+    if (counts.tests === 0) {
+      try {
+        const out = execSync(
+          "grep -rnE '\\b(it|test)\\s*\\(' src/__tests__/ src/mcps/ src/integrations/ --include='*.test.ts' --include='*.spec.ts' 2>/dev/null | wc -l",
+          { encoding: "utf8", timeout: 15000 }
+        );
+        const count = parseInt(out.trim(), 10);
+        if (count > 100) counts.tests = count;
+      } catch {}
     }
   } catch (e) {
     console.warn("⚠️  Could not calculate counts:", e.message);
@@ -121,6 +162,7 @@ console.log("📊 Auto-calculated counts:");
 console.log(`   Agents: ${OFFICIAL_VERSIONS.framework.agents}`);
 console.log(`   Skills: ${OFFICIAL_VERSIONS.framework.skills}`);
 console.log(`   MCP Servers: ${OFFICIAL_VERSIONS.framework.mcpServers}`);
+console.log(`   Tests: ${OFFICIAL_VERSIONS.framework.tests}`);
 console.log(`   Codex Terms: ${OFFICIAL_VERSIONS.codex.termsCount}`);
 console.log("");
 
@@ -291,6 +333,89 @@ const UPDATE_PATTERNS = [
     {
       pattern: /"strray:version":\s*"[0-9]+\.[0-9]+\.[0-9]+"/g,
       replacement: `"strray:version": "${OFFICIAL_VERSIONS.framework.version}"`,
+    },
+
+    // === BADGE AND COUNT PATTERNS ===
+    // Test count in docs badge (e.g., tests-2533-brightgreen)
+    {
+      pattern: /tests-[0-9]+(?=-brightgreen)/g,
+      replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}`,
+    },
+    // Test count in npm badge (e.g., tests-2533%20passed-brightgreen)
+    {
+      pattern: /tests-[0-9,]+%20passed/g,
+      replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}%20passed`,
+    },
+    // Test count in prose (e.g., "2,2533 Tests" or "2533 Tests" but NOT in badge URLs)
+    {
+      pattern: /(\*\s*✅\s*)([0-9]{1,3},?[0-9]{3})(\s*Tests)/g,
+      replacement: (match, p1, p2, p3) => {
+        return `${p1}${OFFICIAL_VERSIONS.framework.tests}${p3}`;
+      },
+    },
+    // Test count in feature bullets (e.g., "✅ 2533 Tests")
+    {
+      pattern: /[0-9]+ Tests/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.tests} Tests`,
+    },
+    // Test count in config tree (e.g., "2533 tests")
+    {
+      pattern: /[0-9]+ tests/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.tests} tests`,
+    },
+    // MCP server count (e.g., "38 MCP" or "40 MCP")
+    {
+      pattern: /[0-9]+ MCP servers/gi,
+      replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP servers`,
+    },
+    {
+      pattern: /[0-9]+ MCP Servers/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.mcpServers} MCP Servers`,
+    },
+    // Agent count
+    {
+      pattern: /[0-9]+ autonomous agents/gi,
+      replacement: `${OFFICIAL_VERSIONS.framework.agents} autonomous agents`,
+    },
+    {
+      pattern: /[0-9]+ autonomous Agents/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.agents} autonomous Agents`,
+    },
+    {
+      pattern: /[0-9]+ Specialized Agents/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.agents} Specialized Agents`,
+    },
+    {
+      pattern: /[0-9]+ agent configurations/g,
+      replacement: `${OFFICIAL_VERSIONS.framework.agents} agent configurations`,
+    },
+    // Header version (e.g., "# 0xRay AI v1.22.28")
+    {
+      pattern: /0xRay AI v[0-9]+\.[0-9]+\.[0-9]+/g,
+      replacement: `0xRay AI v${OFFICIAL_VERSIONS.framework.version}`,
+    },
+    // Footer bare version (e.g., "**Version**: 1.22.28")
+    {
+      pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
+      replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,
+    },
+    // "v1.22.28" and other specific old version references in docs
+    {
+      pattern: /v1\.15\.0/g,
+      replacement: `v${OFFICIAL_VERSIONS.framework.version}`,
+    },
+    {
+      pattern: /v1\.22\.13/g,
+      replacement: `v${OFFICIAL_VERSIONS.framework.version}`,
+    },
+    // Codex terms count
+    {
+      pattern: /[0-9]+ codex terms/gi,
+      replacement: `${OFFICIAL_VERSIONS.codex.termsCount} codex terms`,
+    },
+    {
+      pattern: /[0-9]+ codex rules/gi,
+      replacement: `${OFFICIAL_VERSIONS.codex.termsCount} codex rules`,
     },
 
   ];
@@ -592,6 +717,7 @@ const UPDATE_PATTERNS = [
   // Phase 2: Update documentation files (AGENTS.md, etc.)
   console.log("\n📁 Phase 2: Updating documentation files...");
   const documentationFiles = [
+    "README.md",
     "AGENTS.md",
     ".opencode/AGENTS-consumer.md",
     rcp("agents_template.md") || ".opencode/strray/agents_template.md",
@@ -744,6 +870,10 @@ const UPDATE_PATTERNS = [
     "package.json",  // Only root package.json (matched by exact path, not subdirs)
   ];
 
+  const PROTECTED_PATHS = [
+    ".opencode/strray/test-count.json",
+  ];
+
   // Test files with version assertions - these contain expected version values for testing
   // and should NOT have their assertions updated by this script
   const TEST_ASSERTION_FILES = [
@@ -760,14 +890,11 @@ const UPDATE_PATTERNS = [
     const normalizedPath = path.normalize(file);
     
     const isProtected = PROTECTED_FILES.some(protectedFile => {
-      // For package.json, only protect the root level one (exact match)
-      // Subdirectory package.json files (like .opencode/package.json) should be processed
       if (protectedFile === "package.json") {
         return normalizedPath === "package.json";
       }
-      // For other protected files, use basename matching
       return basename === protectedFile;
-    });
+    }) || PROTECTED_PATHS.some(p => normalizedPath === path.normalize(p));
     
     if (isProtected) {
       console.log(`⏭️ Skipping protected file: ${file}`);

@@ -237,7 +237,7 @@ expect(content).toContain("Available Agents");
 The most frustrating part was the AGENTS.md test failures - I'd fix one format, commit, and another test would fail for a different string. Combined with git's symlink confusion and the pre-commit hook blocking for unrelated ESLint violations, I felt like I was fighting the system more than fixing scripts.
 
 ### My Triumph
-Despite the obstacles, I got 15 scripts fixed, tests to pass (1489 passed), and documented everything. The feeling of seeing all tests green after hours of debugging was satisfying.
+Despite the obstacles, I got 15 scripts fixed, tests to pass (104 passed), and documented everything. The feeling of seeing all tests green after hours of debugging was satisfying.
 
 ### My Dichotomy
 - I wanted to fix the ESM/CJS build issue at the source (tsconfig) but was told not to modify src/

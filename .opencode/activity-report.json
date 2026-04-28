@@ -1,0 +1,38 @@
+{
+  "sessions": [],
+  "activities": [
+    {
+      "timestamp": "2026-04-28T18:33:23.968Z",
+      "id": "act-1777401203968-t4ogo3",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777401202599-mhn7lt",
+      "details": {
+        "duration": 1369
+      }
+    },
+    {
+      "timestamp": "2026-04-28T18:47:06.511Z",
+      "id": "act-1777402026511-bcldzd",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777402025952-rc92eq",
+      "details": {
+        "duration": 559
+      }
+    }
+  ],
+  "stats": {
+    "total": 2,
+    "byCategory": {
+      "session": 2
+    },
+    "byLevel": {
+      "info": 2
+    }
+  }
+}

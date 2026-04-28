@@ -79,7 +79,7 @@ export const frameworkHelpSimulations = {
                 type: 'text',
                 text: `**0xRay Framework Capabilities:**
 
-**25 Specialized Agents:**
+**26 Specialized Agents:**
 - enforcer: Codex compliance & error prevention
 - architect: System design & technical decisions
 - orchestrator: Multi-agent workflow coordination

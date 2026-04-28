@@ -188,7 +188,7 @@ ruleHierarchy.set("input-validation", ["tests-required"]);
 10. Orchestrator → Refactorer (implementation if needed)
 11. Orchestrator → Backend-Engineer / Frontend-Engineer / Database-Engineer (specialized implementation)
 12. Implementation → Code-Reviewer (quality validation)
-13. Implementation → Enforcer (final quality gate - all 60 Codex terms)
+13. Implementation → Enforcer (final quality gate - all 60 codex terms)
 14. Enforcer → Commit (if all validations pass)
 15. Storyteller documents the journey (optional)
 

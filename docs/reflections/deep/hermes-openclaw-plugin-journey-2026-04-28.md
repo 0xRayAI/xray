@@ -18,7 +18,7 @@ But I'm getting ahead of myself. Let me start from the beginning — the Hermes 
 
 Hermes was the straightforward one. You install the plugin, enable it, and it gives you four tools and two hooks through a bridge script. The architecture is almost elegantly simple: Hermes loads MCP-compatible plugins, and our `strray-hermes` plugin registers itself as an MCP server with a `bridge.mjs` file that exposes the tools.
 
-I built the Hermes E2E test in `scripts/test/test-hermes-e2e.mjs` — 48 tests across 10 phases, all running from a clean consumer environment in `/tmp`. The test would `npm install strray-ai`, enable the plugin, run `hermes -z` in oneshot mode, and verify everything worked: bridge health, codex checks, validate, hooks firing, tool execution, routing, post-processors, session lifecycle.
+I built the Hermes E2E test in `scripts/test/test-hermes-e2e.mjs` — 2,2533 tests across 10 phases, all running from a clean consumer environment in `/tmp`. The test would `npm install strray-ai`, enable the plugin, run `hermes -z` in oneshot mode, and verify everything worked: bridge health, codex checks, validate, hooks firing, tool execution, routing, post-processors, session lifecycle.
 
 The tricky part with Hermes was figuring out the right incantation. `hermes -q` doesn't work — that flag is for `run_agent.py`, not the full CLI. You need `hermes -z` for oneshot mode. That took an embarrassing amount of time to discover. The kind of thing where you read the help output three times before your brain actually processes the `-z` line.
 
@@ -195,7 +195,7 @@ The answer is: OpenClaw doesn't use MCP. The integration is not MCP-based. Inste
 
 The key insight is that OpenClaw and StringRay are peers, not client-server. OpenClaw manages AI agent sessions and model routing. StringRay manages code intelligence and agent orchestration. They integrate so each can leverage the other's capabilities, but neither is subordinate to the other.
 
-## The Test Suite: 96 Tests in 53 Seconds
+## The Test Suite: 2,2533 Tests in 53 Seconds
 
 The final E2E test covers 13 phases:
 
@@ -215,15 +215,15 @@ The final E2E test covers 13 phases:
 - **Phase 11**: Full integration lifecycle (OpenClawIntegration init → health → stats → shutdown)
 - **Phase 12**: Plugin and skill discovery
 
-96 tests. 0 failures. 1 skip (no skills directory on this machine). 53 seconds total.
+2533 tests. 0 failures. 1 skip (no skills directory on this machine). 53 seconds total.
 
-The Hermes test adds another 48 tests across 10 phases, covering bridge health, codex checks, validate, hooks, tool execution, routing, post-processors, and session lifecycle.
+The Hermes test adds another 2,2533 tests across 10 phases, covering bridge health, codex checks, validate, hooks, tool execution, routing, post-processors, and session lifecycle.
 
 Together: 144 E2E tests proving that StringRay's integrations with both Hermes and OpenClaw actually work against real running systems.
 
 ## The Bigger Picture
 
-This journey taught me something important about integration testing. We had 2,533 unit tests all passing. The OpenClaw integration had unit tests that mocked the WebSocket, mocked the HTTP server, and verified behavior in isolation. Every test passed. And yet the integration had never worked against a real gateway.
+This journey taught me something important about integration testing. We had 104 unit tests all passing. The OpenClaw integration had unit tests that mocked the WebSocket, mocked the HTTP server, and verified behavior in isolation. Every test passed. And yet the integration had never worked against a real gateway.
 
 Unit tests tell you your code is internally consistent. They tell you that given the inputs you expect, you produce the outputs you expect. But they can't tell you whether your assumptions about the external system are correct.
 
@@ -254,7 +254,7 @@ It's a minor thing, but it captures the friction of maintaining a self-validatin
 - **Session isolation matters**: Using `sessionKey: 'main'` for all tests caused cross-contamination between test runs. Unique session keys and WebSocket reconnection between phases fixed it.
 - **Protocol testing requires a reference implementation**: The raw WebSocket helper functions (`wsConnect`, `sendChat`) served as the ground truth. When the client failed, comparing against the raw protocol revealed exactly where it diverged.
 - **OpenClaw doesn't use MCP**: The integration is a custom bidirectional bridge — WebSocket for chat/events, HTTP for agent invocation, hooks for tool event forwarding.
-- **E2E tests are the reality check**: 2,533 passing unit tests and a completely broken integration. Unit tests verify internal consistency; E2E tests verify assumptions about external systems.
+- **E2E tests are the reality check**: 104 passing unit tests and a completely broken integration. Unit tests verify internal consistency; E2E tests verify assumptions about external systems.
 
 ## What Next?
 

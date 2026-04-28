@@ -132,7 +132,7 @@ local expected="$3"
 
 test_compatibility "claude-sonnet-4-5" "enforcer" "compatible" || compatibility_tests_passed=false
 test_compatibility "gpt-5.2" "code-reviewer" "compatible" || compatibility_tests_passed=false
-test_compatibility "openrouter/xai-grok-2-1212-fast-1" "enforcer" "compatible" || compatibility_tests_passed=false
+test_compatibility "openrouter/xai-grok-2-104-fast-1" "enforcer" "compatible" || compatibility_tests_passed=false
 test_compatibility "claude-opus-4.5" "enforcer" "incompatible" || compatibility_tests_passed=false
 
 if [ "$compatibility_tests_passed" = true ]; then

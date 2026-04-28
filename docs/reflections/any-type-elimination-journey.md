@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-This reflection documents the systematic elimination of 370+ `any` types across 82+ source files in the StringRay codebase. What began as a straightforward refactoring task revealed deep structural patterns in the codebase - particularly around dependency injection, type casting in processor pipelines, and the tension between "lazy" fixes (swapping `any` → `unknown`) vs proper interface design. The journey produced cleaner TypeScript (clean compile, 2405 tests passing), fixed 3 broken pipeline tests, and created 2 new processor implementations.
+This reflection documents the systematic elimination of 370+ `any` types across 82+ source files in the StringRay codebase. What began as a straightforward refactoring task revealed deep structural patterns in the codebase - particularly around dependency injection, type casting in processor pipelines, and the tension between "lazy" fixes (swapping `any` → `unknown`) vs proper interface design. The journey produced cleaner TypeScript (clean compile, 2533 tests passing), fixed 3 broken pipeline tests, and created 2 new processor implementations.
 
 ---
 
@@ -138,7 +138,7 @@ I expected this to be a straightforward find-and-replace task. The goal seemed s
 
 - **Files touched:** 82+ source files
 - **Types eliminated:** ~370+ `any` → proper interfaces
-- **Tests:** 2405 unit tests passing
+- **Tests:** 104 unit tests passing
 - **Pipelines:** 21/22 passing (kernel-routing has pre-existing failures)
 - **New files:** 6 created (processors, reporting modules)
 - **Commits:** 2 (d88c37e10, 44754822c)

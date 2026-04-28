@@ -98,7 +98,7 @@ These agents focus on analysis, design, coordination, and strategic planning. Th
 **Primary Role**: Monitors framework compliance, enforces thresholds, and prevents architectural violations through automated auditing.
 
 **Integration Requirements**:
-- Validates all 60 Codex terms
+- Validates all 60 codex terms
 - Cross-references with all other agents for compliance
 - Generates compliance reports for every operation
 - Blocks operations violating Codex terms

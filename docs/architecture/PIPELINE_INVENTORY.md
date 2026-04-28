@@ -1,6 +1,6 @@
 # 0xRay Pipeline Inventory
 
-**Version**: 1.22.13  
+**Version**: 1.22.28  
 **Date**: 2026-04-15  
 **Author**: 0xRay AI Team (via @researcher agent)
 
@@ -11,7 +11,7 @@
 This document catalogs all major system pipelines in the 0xRay framework. Each pipeline is analyzed for its components, data flows, artifacts, and testing status.
 
 **Total Pipelines Identified**: 7 major pipelines  
-**Test Coverage**: 2521+ tests across the codebase
+**Test Coverage**: 104+ tests across the codebase
 
 ---
 

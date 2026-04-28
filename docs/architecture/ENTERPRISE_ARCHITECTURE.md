@@ -629,14 +629,14 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.22.24"
+    "version": "1.22.28"
   }
 }
 ```
 
 ### MCP Server Integration
 
-The framework exposes 38 MCP servers for AI integration:
+The framework exposes 40 MCP servers for AI integration:
 
 1. **Agent Servers**: Individual agent capabilities
 2. **Knowledge Servers**: Project analysis and patterns
@@ -800,4 +800,4 @@ This architecture provides a solid foundation for enterprise-grade AI agent coor
 
 ---
 
-*0xRay AI v1.15.1 - Enterprise Facade Pattern Architecture*
+*0xRay AI v1.22.28 - Enterprise Facade Pattern Architecture*

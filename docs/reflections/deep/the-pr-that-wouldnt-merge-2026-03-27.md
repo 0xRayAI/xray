@@ -42,7 +42,7 @@ I pulled up the PR list. Three open pull requests, all from the same author (me,
 - **PR #3**: "feat: add Hermes Agent integration skill with auto-install"  
 - **PR #4**: "fix: resolve e2e integration issues found during Hermes Agent testing"
 
-Simple enough. I ran the tests. Unit tests passed (2311 of them). Lint passed. Typecheck passed. But the pipeline tests—the integration tests that ran in CI—were failing.
+Simple enough. I ran the tests. Unit tests passed (104 of them). Lint passed. Typecheck passed. But the pipeline tests—the integration tests that ran in CI—were failing.
 
 Eleven failures, all related to community skills.
 
@@ -189,7 +189,7 @@ Fourth, I would have documented the circular dependency in the version scripts. 
 
 ## The 0xRay Framework in 2026
 
-It's March 27, 2026. 0xRay is at version 1.15.4. The framework has come a long way since its early days—25 agents, 44 skills, 15 MCP servers, a full processor pipeline, an orchestrator, a codex enforcement system, and more.
+It's March 27, 2026. 0xRay is at version 1.15.4. The framework has come a long way since its early days—25 agents, 44 skills, 40 MCP servers, a full processor pipeline, an orchestrator, a codex enforcement system, and more.
 
 But the work of maintaining a framework is never done. Every new feature adds complexity. Every new agent requires documentation updates. Every new test suite is a new thing that can fail in CI.
 

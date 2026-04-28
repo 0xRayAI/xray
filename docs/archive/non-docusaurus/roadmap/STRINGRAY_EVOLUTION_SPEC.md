@@ -87,7 +87,7 @@ Implement new commands:
 - [x] Update README with new "one-command level-up" story
 - [x] Add version pinning for OpenCode + skills
 - [x] Test on fresh machines (no OpenCode installed)
-- [x] Release as **v1.15.0**
+- [x] Release as **v1.22.28**
 
 ---
 
@@ -144,7 +144,7 @@ async function install(options = {}) {
 | Version | Focus | Target |
 |---------|-------|--------|
 | v1.15.1 | **Complete stack** (maintenance mode entered) | March 23, 2026 ✅ |
-| v1.15.0 | One-command installer + Phases 0-3 | March 24, 2026 ✅ |
+| v1.22.28 | One-command installer + Phases 0-3 | March 24, 2026 ✅ |
 | v1.16.0 | Fresh machine testing + refinements | TBD |
 | v1.17.0 | Pod infrastructure + credible init full | TBD |
 

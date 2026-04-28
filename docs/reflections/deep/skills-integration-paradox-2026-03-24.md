@@ -1,12 +1,12 @@
 # The Skills Integration Paradox
 
-**Deep Reflection | March 24, 2026 | 0xRay v1.15.1-v1.15.0 Evolution**
+**Deep Reflection | March 24, 2026 | 0xRay v1.15.1-v1.22.28 Evolution**
 
 ---
 
 ## 1. EXECUTIVE SUMMARY
 
-This reflection documents the 0xRay v1.15.0 evolution journey - a seemingly straightforward feature release that revealed fundamental architectural misunderstandings about how skills should integrate with the framework. We added Impeccable, OpenViking, and Antigravity skills, but discovered through rigorous testing that "installed" skills were merely documentation, not executable infrastructure. The journey to fix this led through multi-agent collaboration, deep architectural analysis, and a critical bug fix for context preservation that now enables proper skill routing based on original user intent.
+This reflection documents the 0xRay v1.22.28 evolution journey - a seemingly straightforward feature release that revealed fundamental architectural misunderstandings about how skills should integrate with the framework. We added Impeccable, OpenViking, and Antigravity skills, but discovered through rigorous testing that "installed" skills were merely documentation, not executable infrastructure. The journey to fix this led through multi-agent collaboration, deep architectural analysis, and a critical bug fix for context preservation that now enables proper skill routing based on original user intent.
 
 **Key Lesson:** Skills are not packages to install - they are living infrastructure that must be wired into the execution pipeline.
 
@@ -79,7 +79,7 @@ This reflection documents the 0xRay v1.15.0 evolution journey - a seemingly stra
 
 If we had not discovered the skills integration problem:
 
-**Step 1:** Ship v1.15.0 with "skills installed"
+**Step 1:** Ship v1.22.28 with "skills installed"
 **Step 2:** Users try `@impeccable design a landing page`
 **Step 3:** AI reads SKILL.md, follows instructions manually (unreliable)
 **Step 4:** Some users get good results, most get nothing
@@ -95,7 +95,7 @@ If we had not discovered the skills integration problem:
 
 ### The False Victory
 
-I would have "shipped v1.15.0 with skills integration" but the real cost would have been:
+I would have "shipped v1.22.28 with skills integration" but the real cost would have been:
 - Users discovering skills don't work
 - Having to break the API in v1.16.0 to fix the architecture
 - Years of "it says it has skills but..." reputation damage
@@ -206,7 +206,7 @@ const originalMessage = (globalThis as any).__strRayOriginalMessage;
 
 **Root Cause:** `processor-pipeline.server.js` has hardcoded 60 codex terms instead of loading from `.opencode/strray/codex.json`.
 
-**Why I Thought I Was Right:** AGENTS.md says "60 Codex Terms" so I assumed they were being used.
+**Why I Thought I Was Right:** AGENTS.md says "60 codex terms" so I assumed they were being used.
 
 **Why It Was Wrong:** The number was in documentation but not implemented.
 
@@ -336,7 +336,7 @@ The triumph isn't the code - it's the understanding. I now know what "skill inte
 
 ### My Dichotomy
 
-- I wanted to ship v1.15.0 with "skills working" but the skills weren't working
+- I wanted to ship v1.22.28 with "skills working" but the skills weren't working
 - I was confident in my implementation but the user had valid criticism
 - I synthesized prompts for clarity but this broke routing
 - I thought documentation was integration but it's just description

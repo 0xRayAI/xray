@@ -436,7 +436,7 @@ Generated: 2026-04-27T18:43:16.296Z
 
 
 /**
- * Pattern extracted from reflection: deep-code-review-v1.22.13.md
+ * Pattern extracted from reflection: deep-code-review-v1.22.28.md
  * Date: 2026-04-23
  * 
  * Executive Summary: 
@@ -832,7 +832,7 @@ Generated: 2026-04-27T18:43:16.296Z
 
 
 /**
- * Pattern extracted from reflection: pragmatic-code-review-v1.22.13.md
+ * Pattern extracted from reflection: pragmatic-code-review-v1.22.28.md
  * Date: 2026-04-23
  * 
  * Executive Summary: 

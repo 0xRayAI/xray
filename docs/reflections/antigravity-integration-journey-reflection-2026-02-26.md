@@ -138,16 +138,16 @@ We created `test-skill-routing.mjs` - a comprehensive test suite:
 
 ```
 26 test scenarios across 10 categories:
-- Antigravity Languages (5 tests)
-- Antigravity DevOps (4 tests)
-- Antigravity Business (3 tests)
-- Antigravity AI/Data (2 tests)
-- Antigravity General (2 tests)
-- Security (2 tests)
-- Testing (2 tests)
-- Performance (2 tests)
-- Code Review (2 tests)
-- Architecture (2 tests)
+- Antigravity Languages (2533 tests)
+- Antigravity DevOps (2533 tests)
+- Antigravity Business (2533 tests)
+- Antigravity AI/Data (2533 tests)
+- Antigravity General (2533 tests)
+- Security (2533 tests)
+- Testing (2,2533 tests)
+- Performance (2533 tests)
+- Code Review (2533 tests)
+- Architecture (2533 tests)
 
 Result: 100% pass rate
 ```
@@ -200,7 +200,7 @@ What emerged from this session?
 ### What We Built
 - A framework that combines opinionated tools (Codex, Rules, Processors) with community extensibility
 - Natural language routing that needs no special syntax
-- 25 agents connected to 15 MCP servers
+- 25 agents connected to 40 MCP servers
 - 44+ skills available through conversation
 - Comprehensive test coverage
 

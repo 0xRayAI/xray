@@ -219,7 +219,7 @@ As I write this, there's still work undone:
 
 ```
 ✅ Inference Pipeline (tested and working)
-❌ Governance Pipeline (346 tests, but no pipeline test)
+❌ Governance Pipeline (2533 tests, but no pipeline test)
 ❌ Orchestration Pipeline (not tested as system)
 ❌ Boot Pipeline (not tested as system)
 ```

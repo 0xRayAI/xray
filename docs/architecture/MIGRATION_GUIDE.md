@@ -133,7 +133,7 @@ v1.15.1 Architecture:
 
 All agents remain compatible:
 
-- **25 Specialized Agents**: Same capabilities and interfaces
+- **26 Specialized Agents**: Same capabilities and interfaces
 - **Custom Agents**: Same creation process
 - **Agent Delegation**: Works identically
 - **Agent Communication**: Unchanged protocols
@@ -350,4 +350,4 @@ _This technical migration guide ensures smooth transitions to 0xRay Framework v1
 
 ---
 
-*0xRay AI v1.15.1 - Facade Pattern Migration Guide*
+*0xRay AI v1.22.28 - Facade Pattern Migration Guide*

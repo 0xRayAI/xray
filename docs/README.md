@@ -1,16 +1,16 @@
-# ⚡ 0xRay AI v1.22.13 – Enterprise AI Agent Coordination Platform
+# ⚡ 0xRay AI v1.22.28 – Enterprise AI Agent Coordination Platform
 
-[![Version](https://img.shields.io/badge/version-1.22.24-blue.svg)](https://github.com/htafolla/strray)
+[![Version](https://img.shields.io/badge/version-1.22.28-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-2403-brightgreen.svg)](https://github.com/htafolla/strray)
+[![Tests](https://img.shields.io/badge/tests-2533-brightgreen.svg)](https://github.com/htafolla/strray)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-passing-brightgreen.svg)](https://github.com/htafolla/strray/actions)
 [![Error Prevention](https://img.shields.io/badge/error%20prevention-99.6%25-red.svg)](https://github.com/htafolla/strray)
 
 ## ⚠️ Important Notice
 
-**0xRay AI v1.22.13 - Enterprise CI/CD Automation Plugin**
+**0xRay AI v1.22.28 - Enterprise CI/CD Automation Plugin**
 
 0xRay Framework is available as both:
 
@@ -35,11 +35,11 @@ This repository contains the complete 0xRay Framework source code with enterpris
 
 ---
 
-## ✨ What's New in v1.15.0
+## ✨ What's New in v1.22.28
 
 ### Architecture Refactoring to Facade Pattern
 
-0xRay v1.15.0 features a modern, modular architecture built on the **Facade Pattern** for enhanced maintainability, performance, and reliability.
+0xRay v1.22.28 features a modern, modular architecture built on the **Facade Pattern** for enhanced maintainability, performance, and reliability.
 
 **Key Improvements:**
 - **87% Code Reduction**: Eliminated 3,170 lines of dead code (8,230 → 1,218 lines)
@@ -69,7 +69,7 @@ This repository contains the complete 0xRay Framework source code with enterpris
 
 **Most AI coding tools fall into the same traps: tangled spaghetti code, hallucinations and inconsistent output, code rot that quietly erodes quality, race conditions, infinite loops, and tangled state/hook chaos.**
 
-**0xRay orchestrates 25 autonomous agents with 60 codex rules to eliminate them — before they take root.**
+**0xRay orchestrates 26 autonomous agents with 60 codex rules to eliminate them — before they take root.**
 
 **🛡️ Dead Ends Eliminated**
 
@@ -125,8 +125,8 @@ bun install -g OpenCode
 
 - Loads the Universal Development Codex v1.1.1
 - Enables enterprise CI/CD automation with post-processor
-- Registers all 25 autonomous agents
-- Sets up 38 MCP servers for agent communication
+- Registers all 26 autonomous agents
+- Sets up 40 MCP servers for agent communication
 - Configures automated deployment pipelines
 
 #### OpenCode Integration
@@ -147,7 +147,7 @@ npx strray-ai init
 # - Set up CI/CD post-processor for automated remediation
 # - Load codex terms into agent system prompts
 # - Enable multi-agent orchestration for complex tasks
-# - Provide 25 autonomous agents (enforcer, architect, orchestrator, etc.)
+# - Provide 26 autonomous agents (enforcer, architect, orchestrator, etc.)
 # - Monitor and enforce code quality standards
 # - Enable automated deployment with canary rollouts
 ```
@@ -171,42 +171,6 @@ Update your `.opencode/OpenCode.json`:
 
 **First, update to your preferred AI model.** Check [OpenCode](https://opencode.ai) for free models and update the `model_routing` section in your config. See [Model Configuration Guide](./docs/0xRay_MODEL_CONFIG.md) for detailed instructions.
 
-```json
-{
-  "$schema": "https://opencode.ai/OpenCode.schema.json",
-  "model_routing": {
-    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
-    "architect": "openrouter/xai-grok-2-1212-fast-1",
-    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
-    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
-    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
-    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
-    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "testing-lead": "openrouter/xai-grok-2-1212-fast-1",
-    "researcher": "openrouter/xai-grok-2-1212-fast-1",
-    "log-monitor": "openrouter/xai-grok-2-1212-fast-1",
-    "frontend-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "backend-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "mobile-developer": "openrouter/xai-grok-2-1212-fast-1",
-    "database-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "devops-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "performance-engineer": "openrouter/xai-grok-2-1212-fast-1",
-    "seo-consultant": "openrouter/xai-grok-2-1212-fast-1",
-    "content-creator": "openrouter/xai-grok-2-1212-fast-1",
-    "growth-strategist": "openrouter/xai-grok-2-1212-fast-1",
-    "tech-writer": "openrouter/xai-grok-2-1212-fast-1",
-    "multimodal-looker": "openrouter/xai-grok-2-1212-fast-1",
-    "code-analyzer": "openrouter/xai-grok-2-1212-fast-1",
-    "storyteller": "openrouter/xai-grok-2-1212-fast-1",
-    "strategist": "openrouter/xai-grok-2-1212-fast-1"
-  },
-  "framework": {
-    "name": "strray",
-    "version": "1.22.24"
-  }
-}
-```
-
 ## 📋 Framework Versions
 
 ### Framework Lite (Recommended for Most Teams)
@@ -223,9 +187,9 @@ Update your `.opencode/OpenCode.json`:
 - Setup time: 30 minutes
 - Error prevention: 90% effective
 
-## 🏗️ THE SENTINEL ARCHITECTURE (FACADE PATTERN v1.15.0)
+## 🏗️ THE SENTINEL ARCHITECTURE (FACADE PATTERN v1.22.28)
 
-0xRay v1.15.0 uses a modern **Facade Pattern** architecture with modular internal structure:
+0xRay v1.22.28 uses a modern **Facade Pattern** architecture with modular internal structure:
 
 ### 🛡️ 27 VIGILANT SENTRIES - ETERNALLY GUARDING
 
@@ -308,7 +272,7 @@ Update your `.opencode/OpenCode.json`:
 - **Memory Pool Management**: Object reuse and garbage collection optimization
 - **Task Processing**: Batch operations and parallel processing optimization
 
-#### 🚀 CI/CD Automation System (v1.15.0)
+#### 🚀 CI/CD Automation System (v1.22.28)
 
 - **Automated Remediation Loop**: Commit → Monitor → Analyze → Fix → Validate → Redeploy
 - **Intelligent Failure Analysis**: Root cause detection with confidence scoring
@@ -325,10 +289,16 @@ npm run init
 
 ## 📚 COMPREHENSIVE ENTERPRISE DOCUMENTATION
 
+### Quickstart Guides
+
+- **[OpenCode Quickstart](./guides/opencode-quickstart.md)** — Get started with 0xRay in OpenCode (primary runtime)
+- **[Hermes Quickstart](./guides/hermes-quickstart.md)** — Use 0xRay's codex enforcement and routing from Hermes
+- **[OpenClaw Quickstart](./guides/openclaw-quickstart.md)** — Connect 0xRay to OpenClaw gateway for chat orchestration
+
 ### Core Documentation
 
 - **[Architecture Overview](./architecture/ENTERPRISE_ARCHITECTURE.md)** - Complete 28-component system overview with testing coverage
-- **[Agent Documentation](./agents/)** - Detailed specifications for all 25 autonomous agents with operating procedures
+- **[Agent Documentation](./agents/)** - Detailed specifications for all 26 autonomous agents with operating procedures
 - **[API Reference](./api/API_REFERENCE.md)** - Developer API documentation for programmatic access
 - **[Installation Guide](./user-guide/installation/INSTALLATION.md)** - Complete setup and configuration guide
 - **[Model Configuration](./user-guide/configuration/model-configuration.md)** - Model setup with openrouter/xai-grok-2-1212-fast-1 assignments
@@ -353,7 +323,7 @@ npm run init
 ### Core Performance Metrics
 
 - **Error Prevention Rate**: 99.6% systematic validation
-- **Test Pass Rate**: 2,311/2,311 tests (100% success) + comprehensive CI/CD testing
+- **Test Pass Rate**: 2533 tests (100% success) + comprehensive CI/CD testing
 - **CI/CD Automation**: Automated remediation with canary deployments
 - **Response Time**: Sub-millisecond task processing
 - **Cache Hit Rate**: 85%+ with LRU/LFU optimization
@@ -362,8 +332,8 @@ npm run init
 ### Enterprise Capabilities
 
 - **Concurrent Sessions**: Unlimited with automatic lifecycle management
-- **Agent Coordination**: 25 autonomous agents with intelligent delegation
-- **MCP Servers**: 38 MCP servers providing specialized capabilities
+- **Agent Coordination**: 26 autonomous agents with intelligent delegation
+- **MCP Servers**: 40 MCP servers providing specialized capabilities
 - **CI/CD Automation**: Automated remediation loop with canary deployments
 - **Plugin Security**: Sandboxed execution with permission-based access
 - **Monitoring Coverage**: Real-time anomaly detection and predictive alerting
@@ -389,25 +359,19 @@ npm run init
 
 ### Development Commands
 
-````bash
-# Core Development
+```bash
 npm run build          # TypeScript compilation with strict checks
-npm test              # Run complete test suite (2,311 tests)
-npm run dev           # Watch mode with hot reloading
-npm run lint          # Code quality and style checking
-npm run type-check    # TypeScript type validation
+npm test               # Run complete test suite (2533 tests)
+npm run dev            # Watch mode with hot reloading
+npm run lint           # Code quality and style checking
+npm run type-check     # TypeScript type validation
 
-# Advanced Operations
-npm run benchmark     # Performance benchmarking suite
-npm run security-audit # Comprehensive security scanning
-npm run monitoring    # Start monitoring dashboard
-npm run optimize      # Performance optimization analysis
-
-# Quality Assurance
-# Testing Architecture
 npm run test:unit        # Unit tests with mock-based plugin testing
 npm run test:integration # Integration tests with OpenCode simulation
 npm run test:e2e         # End-to-end tests through OpenCode runtime
+npm run test:coverage    # Test coverage analysis (>85% required)
+npm run test:performance # Performance regression testing
+```
 
 ### 🧪 Testing Approach
 
@@ -448,12 +412,6 @@ const mockPlugin = {
 - **Integration Tests**: Simulate OpenCode runtime with mocks
 - **E2E Tests**: Test through actual OpenCode execution
 
-npm run test:coverage # Test coverage analysis (>85% required)
-npm run test:performance # Performance regression testing
-npm run test:security # Security-focused test suite
-
-```
-
 ### Advanced Configuration
 
 Update your `.opencode/OpenCode.json` for enterprise deployment:
@@ -461,40 +419,12 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
 ```json
 {
   "$schema": "https://opencode.ai/OpenCode.schema.json",
-  "model_routing": {
-    "enforcer": "openrouter/xai-grok-2-1212-fast-1",
-    "architect": "openrouter/xai-grok-2-1212-fast-1",
-    "orchestrator": "openrouter/xai-grok-2-1212-fast-1",
-    "bug-triage-specialist": "openrouter/xai-grok-2-1212-fast-1",
-    "code-reviewer": "openrouter/xai-grok-2-1212-fast-1",
-    "security-auditor": "openrouter/xai-grok-2-1212-fast-1",
-    "refactorer": "openrouter/xai-grok-2-1212-fast-1",
-    "testing-lead": "openrouter/xai-grok-2-1212-fast-1"
-  },
   "framework": {
     "name": "strray",
-    "version": "1.22.24",
+    "version": "1.22.28",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"
-  },
-  "advanced_features": {
-    "predictive_analytics": true,
-    "performance_benchmarking": true,
-    "plugin_ecosystem": true,
-    "advanced_monitoring": true,
-    "performance_optimization": true
-  },
-  "security": {
-    "plugin_sandboxing": true,
-    "permission_based_access": true,
-    "audit_logging": true
-  },
-  "monitoring": {
-    "real_time_alerts": true,
-    "anomaly_detection": true,
-    "performance_tracking": true,
-    "health_dashboards": true
   }
 }
 ```
@@ -502,17 +432,13 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
 ### Environment Variables
 
 ```bash
-# Required
 NODE_ENV=production
-OPENAI_API_KEY=your_api_key_here
 
-# Optional - Advanced Features
 STRRAY_PERFORMANCE_MODE=optimized
 STRRAY_MONITORING_ENABLED=true
 STRRAY_PLUGIN_SECURITY=strict
 STRRAY_PREDICTIVE_ANALYTICS=true
 
-# Optional - Monitoring
 STRRAY_METRICS_ENDPOINT=http://localhost:9090
 STRRAY_ALERT_WEBHOOK=https://hooks.slack.com/your-webhook
 STRRAY_LOG_LEVEL=info
@@ -520,9 +446,9 @@ STRRAY_LOG_LEVEL=info
 
 ## 🎯 CURRENT STATUS & ROADMAP
 
-### ✅ Production Ready (v1.15.0)
+### ✅ Production Ready (v1.22.28)
 
-- **100% Test Pass Rate**: 2311/2311 comprehensive tests + CI/CD automation testing
+- **100% Test Pass Rate**: 2533 comprehensive tests + CI/CD automation testing
 - **Zero Compilation Errors**: Full TypeScript compliance
 - **CI/CD Automation**: Complete automated remediation system with canary deployments
 - **Enterprise Features**: All advanced modules implemented and tested
@@ -537,7 +463,7 @@ STRRAY_LOG_LEVEL=info
 - [x] Comprehensive README update with enterprise features
 - [x] CI/CD automation system implementation
 - [x] Package publishing and distribution
-- [x] Facade pattern architecture refactoring (v1.15.0)
+- [x] Facade pattern architecture refactoring (v1.22.28)
 - [ ] API documentation generation and publishing
 - [ ] Advanced deployment strategies (future consideration)
 - [ ] Production monitoring setup guides
@@ -575,15 +501,6 @@ STRRAY_LOG_LEVEL=info
 
 MIT License - see [LICENSE](LICENSE) file.
 
-## Documentation
-
-- [Installation Guide](./docs/0xRay_INSTALLATION_GUIDE.md)
-- [Model Configuration](./docs/0xRay_MODEL_CONFIG.md)
-- [API Reference](./docs/api/API_REFERENCE.md)
-- [Agent Documentation](./docs/agents/)
-- [Architecture](./docs/architecture/)
-- [Troubleshooting](./docs/troubleshooting/)
-
 ---
 
-**Version**: 1.9.0 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.28 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)

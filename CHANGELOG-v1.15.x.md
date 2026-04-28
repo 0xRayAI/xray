@@ -59,7 +59,7 @@
 | MCP Servers | N/A | 15 |
 | Tests | 2,368 | 2,311 |
 
-**Total commits since v1.15.0:** 20+
+**Total commits since v1.22.28:** 20+
 
 ---
 

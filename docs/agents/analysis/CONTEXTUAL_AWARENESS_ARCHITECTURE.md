@@ -126,7 +126,7 @@ const validation = await contextAnalysisValidation(files, operation);
 const compliance = await codexEnforcement(operation, files, newCode);
 const quality = await qualityGateCheck(operation, context);
 
-// Validates all 60 Codex terms (v1.7.5)
+// Validates all 60 codex terms (v1.7.5)
 // Ensures contextual analysis components integrate properly
 // Coordinates with Orchestrator to validate all 25 agents
 ```

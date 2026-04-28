@@ -1,6 +1,6 @@
 # 0xRay MCP Integration Analysis
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
+**Version**: 1.22.28 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
@@ -16,7 +16,7 @@ This document analyzes the MCP (Model Context Protocol) integration architecture
 - Contextual awareness was **purely agent-side**
 - **No real MCP integration** - just JavaScript functions
 - Knowledge skills listed in config but **never implemented as MCP servers**
-- Documentation claimed 15 MCP servers, but only 10 infrastructure servers existed
+- Documentation claimed 40 MCP servers, but only 10 infrastructure servers existed
 - Agent tools could not be shared across instances
 
 ```typescript

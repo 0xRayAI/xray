@@ -39,7 +39,7 @@ export class RegressionAnalysisService {
     
      // Check for fatal assumptions that require analysis
     const fatalAssumptions = kernelAnalysis.fatalAssumptions;
-    if (fatalAssumptions && fatalAssumptions.length > 0) {
+    if (fatalAssumptions && fatalAssumptions.length > 0 && fatalAssumptions[0]) {
       return {
         required: true,
         reason: `Fatal assumption detected: ${fatalAssumptions[0].reason}`,
@@ -51,7 +51,7 @@ export class RegressionAnalysisService {
     
     // Check for cascade patterns that require analysis
     const cascadePatterns = kernelAnalysis.cascadePatterns;
-    if (cascadePatterns && cascadePatterns.length > 0) {
+    if (cascadePatterns && cascadePatterns.length > 0 && cascadePatterns[0]) {
       return {
         required: true,
         reason: `Cascade pattern detected: ${cascadePatterns[0].pattern}`,

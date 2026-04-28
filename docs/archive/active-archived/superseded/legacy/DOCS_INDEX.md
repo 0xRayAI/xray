@@ -1,6 +1,6 @@
 # 0xRay Documentation Index
 
-**Version**: 1.14.0 | **Last Updated**: 2026-03-22
+**Version**: 1.22.28 | **Last Updated**: 2026-03-22
 
 ---
 
@@ -101,7 +101,7 @@ docs/
 
 | Component | Count |
 |-----------|-------|
-| Pipeline tests | 6 (107 tests) |
+| Pipeline tests | 6 (2,2533 tests) |
 | Unit tests | 2,521 |
 | Processors | 13 (5 pre + 8 post) |
 | Agents | 23+ |
@@ -122,6 +122,6 @@ These are preserved in [`archive/`](archive/) for reference:
 
 When adding docs:
 1. Place in appropriate folder (see structure above)
-2. Add version banner: `**Version**: 1.14.0`
+2. Add version banner: `**Version**: 1.22.28`
 3. Update this index
 4. Archive outdated docs instead of deleting
