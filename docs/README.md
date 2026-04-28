@@ -1,6 +1,6 @@
-# ⚡ 0xRay AI v1.22.28 – Enterprise AI Agent Coordination Platform
+# ⚡ 0xRay AI v1.22.31 – Enterprise AI Agent Coordination Platform
 
-[![Version](https://img.shields.io/badge/version-1.22.28-blue.svg)](https://github.com/htafolla/strray)
+[![Version](https://img.shields.io/badge/version-1.22.31-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
@@ -10,7 +10,7 @@
 
 ## ⚠️ Important Notice
 
-**0xRay AI v1.22.28 - Enterprise CI/CD Automation Plugin**
+**0xRay AI v1.22.31 - Enterprise CI/CD Automation Plugin**
 
 0xRay Framework is available as both:
 
@@ -421,7 +421,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   "$schema": "https://opencode.ai/OpenCode.schema.json",
   "framework": {
     "name": "strray",
-    "version": "1.22.28",
+    "version": "1.22.31",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"
@@ -503,4 +503,4 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
-**Version**: 1.22.28 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.31 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)

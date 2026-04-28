@@ -24,15 +24,27 @@
       "details": {
         "duration": 541
       }
+    },
+    {
+      "timestamp": "2026-04-28T20:12:30.081Z",
+      "id": "act-1777407150081-yh51pn",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777407148680-kv1gc3",
+      "details": {
+        "duration": 1401
+      }
     }
   ],
   "stats": {
-    "total": 2,
+    "total": 3,
     "byCategory": {
-      "session": 2
+      "session": 3
     },
     "byLevel": {
-      "info": 2
+      "info": 3
     }
   }
 }

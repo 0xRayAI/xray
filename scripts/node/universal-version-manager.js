@@ -136,7 +136,7 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.22.31",
+    version: "1.22.32",
       displayName: "0xRay: Self-Healing AI Governance OS",
       lastUpdated: "2026-04-28",
     // Counts (auto-calculated, but can be overridden)
@@ -389,12 +389,12 @@ const UPDATE_PATTERNS = [
       pattern: /[0-9]+ agent configurations/g,
       replacement: `${OFFICIAL_VERSIONS.framework.agents} agent configurations`,
     },
-    // Header version (e.g., "# 0xRay AI v1.22.28")
+    // Header version (e.g., "# 0xRay AI v1.22.31")
     {
       pattern: /0xRay AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `0xRay AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 1.22.28")
+    // Footer bare version (e.g., "**Version**: 1.22.31")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,

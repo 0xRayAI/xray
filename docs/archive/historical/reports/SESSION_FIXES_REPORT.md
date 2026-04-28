@@ -74,7 +74,7 @@
 
 ### Framework Status: PRODUCTION READY 🚀
 
-**0xRay AI v1.22.28** is fully operational with:
+**0xRay AI v1.22.31** is fully operational with:
 
 - ✅ Complete agent-MCP integration
 - ✅ Architectural integrity validation

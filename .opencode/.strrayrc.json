@@ -1,7 +1,7 @@
 {
   "framework": {
     "name": "0xRay Framework",
-    "version": "1.22.28",
+    "version": "1.22.31",
     "buildMode": "production",
     "logLevel": "info"
   },

@@ -282,7 +282,7 @@ export class AgentsMdValidationProcessor {
       const now = new Date().toISOString().split("T")[0];
       template = template
         .replace(/\*\*Updated\*\*:\s*\d{4}-\d{2}-\d{2}/, `**Updated**: ${now}`)
-        .replace(/\*\*Version\*\*:\s*\d+\.\d+\.\d+/, `**Version**: 1.22.28`);
+        .replace(/\*\*Version\*\*:\s*\d+\.\d+\.\d+/, `**Version**: 1.22.31`);
 
       fs.writeFileSync(this.agentsPath, template, "utf-8");
 

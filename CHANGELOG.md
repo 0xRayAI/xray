@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.32] - 2026-04-28
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: update activity logs and test results (dcb5bf018)
+
+### 🔎 Other Changes
+- v1.22.31: processor registry pattern, auto-reflection generation, report formatter fixes, 36 new tests (2569 total) (2d71dbf67)
+
+---
+
 ## [1.22.31] - 2026-04-28
 
 ### 🔄 Changes
