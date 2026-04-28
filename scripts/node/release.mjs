@@ -136,19 +136,48 @@ async function main() {
   runCommand('npm publish --access public', 'npm publish failed');
   console.log(`✅ Published strray-ai@${newVersion} to npm`);
 
-  // Step 6: Publish to npm
-  console.log('\n📦 Step 6: Publishing to npm...');
-  runCommand('npm publish --access public', 'npm publish failed');
-  console.log(`✅ Published strray-ai@${newVersion} to npm`);
-
   console.log('\n╔════════════════════════════════════════════════════════╗');
   console.log('║        ✅ Release Complete!                            ║');
   console.log('╚════════════════════════════════════════════════════════╝');
   console.log(`\n📦 Package: strray-ai@${newVersion}`);
   console.log(`🏷  Tag: v${newVersion}`);
-  console.log('\n💡 Want a tweet? Ask: "give me a tweet succinct with 5 tidy');
-  console.log('   bullets with emojis. a quip before or after and hashtags');
-  console.log('   based on the commits in this session. should be consumer focused."');
+
+  // Generate tweet
+  const tweetPath = path.join(rootDir, 'tweets', `v${newVersion}.md`);
+  const tweetDir = path.join(rootDir, 'tweets');
+  if (!fs.existsSync(tweetDir)) fs.mkdirSync(tweetDir, { recursive: true });
+
+  const recentCommits = (() => {
+    try {
+      const prevTag = execSync('git describe --tags --abbrev=0 HEAD~5 2>/dev/null || echo "HEAD~10"', { cwd: rootDir, encoding: 'utf-8' }).trim();
+      return execSync(`git log ${prevTag}..HEAD --oneline`, { cwd: rootDir, encoding: 'utf-8' }).trim();
+    } catch {
+      try { return execSync('git log -10 --oneline', { cwd: rootDir, encoding: 'utf-8' }).trim(); }
+      catch { return '(could not read commits)'; }
+    }
+  })();
+
+  const tweet = `🎉 0xRay v${newVersion} is LIVE - {THEME}!
+{EMOJI} {feature - consumer benefit}
+{EMOJI} {feature - consumer benefit}
+{EMOJI} {feature - consumer benefit}
+{EMOJI} {feature - consumer benefit}
+{EMOJI} {feature - consumer benefit}
+\`\`\`
+npm install strray-ai@latest
+\`\`\`
+What 0xRay is: {one sentence positioning}
+#0xRay #AIOps #DevTools #SelfHealing #NPM`;
+
+  if (!fs.existsSync(tweetPath)) {
+    fs.writeFileSync(tweetPath, tweet);
+    console.log(`\n📝 Tweet template saved to tweets/v${newVersion}.md — FILL IN THE BLANKS`);
+  } else {
+    console.log(`\n📝 Tweet already exists at tweets/v${newVersion}.md`);
+  }
+
+  console.log(`\n📋 Recent commits for tweet bullets:\n${recentCommits.split('\n').map(l => '   ' + l).join('\n')}`);
+  console.log('\n📖 Tweet format guide: tweets/FORMAT.md');
   console.log('\n🎉 All done!\n');
 }
 

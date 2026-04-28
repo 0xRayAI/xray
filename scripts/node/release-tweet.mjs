@@ -1,42 +1,39 @@
 #!/usr/bin/env node
 
 /**
- * Tweet Template Reference
- * 
- * When user says "release" or "give me a tweet", generate:
- * 
- * "give me a tweet succinct with 5 tidy bullets with emojis. 
- *  a quip before or after and hashtags based on the commits in this session. 
- *  should be consumer focused."
- * 
- * This is a guide, not enforcement - let the AI be creative and punchy.
+ * Release Tweet Template Reference
+ *
+ * Format guide: tweets/FORMAT.md
+ * Tweet output: tweets/v{VERSION}.md
+ *
+ * The release script (scripts/node/release.mjs) auto-generates
+ * a tweet template after publishing. Fill in the blanks using
+ * the format guide in tweets/FORMAT.md.
+ *
+ * Quick format:
+ *   🎉 0xRay v{VERSION} is LIVE - {THEME}!
+ *   {EMOJI} {5 consumer-facing bullets}
+ *   npm install strray-ai@latest
+ *   What 0xRay is: {positioning}
+ *   #0xRay #AIOps #DevTools #SelfHealing #NPM
  */
 
 console.log(`
-🐦 Tweet Generator - Usage Guide
-=================================
+🐦 Tweet Reference
+=================
 
-When asked for a release tweet, generate:
+Format guide: tweets/FORMAT.md
+Output:       tweets/v{VERSION}.md
 
-"give me a tweet succinct with 5 tidy bullets with emojis. 
- a quip before or after and hashtags based on the commits in this session. 
- should be consumer focused."
+After release, the script creates a template. Fill in:
+  1. {THEME} - 2-4 word summary of this release
+  2. {EMOJI} {feature} - 5 bullets with role markers
+  3. {positioning} - one sentence: what it does for the user
 
-Example output:
----
-🚀 v1.18.7 dropped
+Emoji role markers:
+  ✅ verified    🔧 fix         ✨ feature
+  🛡️ guardrail   📦 package     🧪 testing
+  📚 docs
 
-✨ add real validator tests for new codex terms
-⚖️  connect enforcement system - plugin now uses RuleEnforcer
-✅ wired MCP processor-pipeline to CodexLoader
-📦 added 5 new codex validators (#12, #19, #16, #3, #13)
-🔧 fixed orchestrator config loading & conflict resolution
-
-Your dev workflow just got an upgrade. 🚀
-
-#StringRay #AI #DevTools #OpenSource
----
-
-Format: Punchy title • 5 tidy bullets with emojis • quip before/after • hashtags
-Tone: Consumer-focused, creative, punchy - not boxed with guardrails
+Full examples in tweets/FORMAT.md
 `);
