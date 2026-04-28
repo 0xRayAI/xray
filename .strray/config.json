@@ -1,8 +1,7 @@
 {
   "$schema": "./config.schema.json",
-  "version": "1.22.22",
+  "version": "1.22.25",
   "description": "0xRay Framework - Token Management & Performance Configuration",
-  
   "token_management": {
     "maxPromptTokens": 20000,
     "warningThreshold": 15000,
@@ -13,14 +12,12 @@
       "preserveCriticalContext": true
     }
   },
-
   "cache_settings": {
     "enabled": true,
     "max_size_mb": 25,
     "ttl_seconds": 120,
     "auto_cleanup_interval_seconds": 60
   },
-
   "memory_management": {
     "max_heap_mb": 512,
     "gc_interval_ms": 30000,

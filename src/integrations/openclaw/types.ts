@@ -22,7 +22,7 @@ export interface OpenClawConnectParams {
     id: string;
     version: string;
     platform: string;
-    mode: 'operator' | 'node';
+    mode: 'operator' | 'node' | 'local' | 'cli';
   };
   role: 'operator' | 'node';
   scopes: string[];

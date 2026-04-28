@@ -27,6 +27,9 @@ export declare class OpenClawClient {
     /**
      * Connect to OpenClaw Gateway
      */
+    private handshakeResolve;
+    private handshakeReject;
+    private _handshakeTimeout;
     connect(): Promise<void>;
     /**
      * Disconnect from OpenClaw Gateway

@@ -72,6 +72,10 @@ export class OpenClawClient {
   /**
    * Connect to OpenClaw Gateway
    */
+  private handshakeResolve: ((value: void) => void) | null = null;
+  private handshakeReject: ((reason: Error) => void) | null = null;
+  private _handshakeTimeout: NodeJS.Timeout | null = null;
+
   async connect(): Promise<void> {
     if (this.state === 'connected' || this.state === 'authenticating') {
       this.logger.warn('[OpenClawClient] Already connected or connecting');
@@ -80,14 +84,22 @@ export class OpenClawClient {
 
     this.setState('connecting');
 
+    this._handshakeTimeout = setTimeout(() => {
+      if (this.handshakeReject) {
+        this.handshakeReject(new OpenClawConnectionError('Handshake timeout — gateway never sent connect.challenge'));
+        this.handshakeResolve = null;
+        this.handshakeReject = null;
+      }
+    }, 10000);
+
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.config.gatewayUrl);
 
         this.ws!.on('open', () => {
-          this.logger.info('[OpenClawClient] WebSocket connected, sending handshake...');
-          this.sendHandshake();
-          resolve();
+          this.logger.info('[OpenClawClient] WebSocket connected, waiting for challenge...');
+          this.handshakeResolve = resolve;
+          this.handshakeReject = reject;
         });
 
         this.ws!.on('message', (data: unknown) => {
@@ -135,6 +147,11 @@ export class OpenClawClient {
   disconnect(): void {
     this.logger.info('[OpenClawClient] Disconnecting...');
     
+    if (this._handshakeTimeout) {
+      clearTimeout(this._handshakeTimeout);
+      this._handshakeTimeout = null;
+    }
+
     // Clear reconnection
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -294,16 +311,16 @@ export class OpenClawClient {
       minProtocol: 3,
       maxProtocol: 3,
       client: {
-        id: 'strray-integration',
+        id: 'openclaw-tui',
         version: '1.0.0',
         platform: process.platform,
-        mode: 'operator',
+        mode: 'cli',
       },
       role: 'operator',
-      scopes: ['operator.read', 'operator.write'],
+      scopes: ['operator.read', 'operator.write', 'operator.admin'],
       caps: [],
       commands: [],
-      userAgent: `0xRay-OpenClaw-Integration/1.0.0`,
+      userAgent: `OpenClaw-TUI/2026.4.25`,
     };
 
     // Add auth if provided
@@ -322,10 +339,28 @@ export class OpenClawClient {
       };
     }
 
-    // Send connect request
-    this.sendRequest('connect', params as unknown as Record<string, unknown>).catch((error) => {
+    // Send connect request — gateway may send `authorized` event OR just a response
+    this.sendRequest('connect', params as unknown as Record<string, unknown>).then(() => {
+      if (this._handshakeTimeout) {
+        clearTimeout(this._handshakeTimeout);
+        this._handshakeTimeout = null;
+      }
+      this.setState('authorized');
+      this.startPingInterval();
+      if (this.handshakeResolve) {
+        this.logger.info('[OpenClawClient] Handshake complete (connect response ok)');
+        this.handshakeResolve();
+        this.handshakeResolve = null;
+        this.handshakeReject = null;
+      }
+    }).catch((error) => {
       this.logger.error('[OpenClawClient] Handshake failed:', error);
       this.setState('error');
+      if (this.handshakeReject) {
+        this.handshakeReject(error);
+        this.handshakeResolve = null;
+        this.handshakeReject = null;
+      }
     });
   }
 
@@ -379,9 +414,24 @@ export class OpenClawClient {
     this.logger.debug('[OpenClawClient] Event:', frame.event);
 
     // Handle specific events
+    if (frame.event === 'connect.challenge') {
+      this.logger.info('[OpenClawClient] Received challenge, sending handshake...');
+      this.sendHandshake();
+      return;
+    }
+
     if (frame.event === 'authorized') {
+      if (this._handshakeTimeout) {
+        clearTimeout(this._handshakeTimeout);
+        this._handshakeTimeout = null;
+      }
       this.setState('authorized');
       this.startPingInterval();
+      if (this.handshakeResolve) {
+        this.handshakeResolve();
+        this.handshakeResolve = null;
+        this.handshakeReject = null;
+      }
     }
 
     // Notify listeners
