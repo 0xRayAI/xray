@@ -1,6 +1,6 @@
-# ⚡ 0xRay AI v1.22.42 – Enterprise AI Agent Coordination Platform
+# ⚡ 0xRay AI v1.22.43 – Enterprise AI Agent Coordination Platform
 
-[![Version](https://img.shields.io/badge/version-1.22.42-blue.svg)](https://github.com/htafolla/strray)
+[![Version](https://img.shields.io/badge/version-1.22.43-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
@@ -10,7 +10,7 @@
 
 ## ⚠️ Important Notice
 
-**0xRay AI v1.22.42 - Enterprise CI/CD Automation Plugin**
+**0xRay AI v1.22.43 - Enterprise CI/CD Automation Plugin**
 
 0xRay Framework is available as both:
 
@@ -35,29 +35,29 @@ This repository contains the complete 0xRay Framework source code with enterpris
 
 ---
 
-## ✨ What's New in v1.22.28
+## ✨ What's New in v1.22.43
 
-### Architecture Refactoring to Facade Pattern
+### Processor Pipeline Refactoring & Auto-Discovery
 
-0xRay v1.22.28 features a modern, modular architecture built on the **Facade Pattern** for enhanced maintainability, performance, and reliability.
+0xRay v1.22.43 features a refactored processor pipeline with modular implementations, auto-discovery, and automated release tooling.
 
 **Key Improvements:**
-- **87% Code Reduction**: Eliminated 3,170 lines of dead code (8,230 → 1,218 lines)
-- **Modular Internal Structure**: Each facade provides clean APIs with focused internal modules
-- **Better Performance**: Faster agent spawning and task routing
-- **Enhanced Reliability**: More robust error handling
-- **100% Backward Compatibility**: All public APIs remain unchanged
+- **55% Code Reduction in processor-manager.ts**: Extracted 24 inline execute methods into standalone processor files (1,836 → 823 lines)
+- **Auto-Discovery**: Drop-in processors — add a file to `implementations/` and it's automatically registered
+- **Factory Registry**: Map-based factory pattern replaces switch statements, preventing orphaned processors
+- **Single-Command Release**: `npm run release` — tests, bump, build, commit, publish, push in one command
+- **Reflection Cadences**: Two cadences (commit-since-reflection, release-since-tag) generate real content from git history
+- **Version Sync Automation**: `sync-versions.mjs` keeps all config and doc files in version lockstep
+- **Append-Only Doc Updates**: Processors append missing sections instead of overwriting entire docs
 
 **Architecture Changes:**
 
 | Component | Before | After | Reduction |
 |-----------|--------|-------|-----------|
-| RuleEnforcer | 2,714 lines | 416 lines (facade + 6 modules) | 85% |
-| TaskSkillRouter | 1,933 lines | 490 lines (facade + 12 mapping + analytics + routing) | 75% |
-| MCP Client | 1,413 lines | 312 lines (facade + 8 modules) | 78% |
-| **Total** | **8,230 lines** | **1,218 lines** | **87%** |
-
-**Migration Note**: No migration needed! All `@agent-name` syntax, CLI commands, and configuration files work exactly as before. The improvements are purely internal.
+| processor-manager.ts | 1,836 lines | 823 lines | 55% |
+| Inline execute methods | 24 methods in one file | 14 standalone files | Modular |
+| Factory registration | Switch statement | Map + auto-discovery | Extensible |
+| Release process | 12 manual steps | `npm run release` | 1 command |
 
 ---
 
@@ -123,7 +123,7 @@ bun install -g OpenCode
 
 #### Standalone Configuration
 
-- Loads the Universal Development Codex v1.1.1
+- Loads the Universal Development Codex v1.22.43
 - Enables enterprise CI/CD automation with post-processor
 - Registers all 26 autonomous agents
 - Sets up 40 MCP servers for agent communication
@@ -187,9 +187,9 @@ Update your `.opencode/OpenCode.json`:
 - Setup time: 30 minutes
 - Error prevention: 90% effective
 
-## 🏗️ THE SENTINEL ARCHITECTURE (FACADE PATTERN v1.22.28)
+## 🏗️ THE SENTINEL ARCHITECTURE (FACADE PATTERN v1.22.43)
 
-0xRay v1.22.28 uses a modern **Facade Pattern** architecture with modular internal structure:
+0xRay v1.22.43 uses a modern **Facade Pattern** architecture with modular internal structure:
 
 ### 🛡️ 27 VIGILANT SENTRIES - ETERNALLY GUARDING
 
@@ -272,7 +272,7 @@ Update your `.opencode/OpenCode.json`:
 - **Memory Pool Management**: Object reuse and garbage collection optimization
 - **Task Processing**: Batch operations and parallel processing optimization
 
-#### 🚀 CI/CD Automation System (v1.22.28)
+#### 🚀 CI/CD Automation System (v1.22.43)
 
 - **Automated Remediation Loop**: Commit → Monitor → Analyze → Fix → Validate → Redeploy
 - **Intelligent Failure Analysis**: Root cause detection with confidence scoring
@@ -371,6 +371,12 @@ npm run test:integration # Integration tests with OpenCode simulation
 npm run test:e2e         # End-to-end tests through OpenCode runtime
 npm run test:coverage    # Test coverage analysis (>85% required)
 npm run test:performance # Performance regression testing
+
+# Release pipeline (single command)
+npm run release          # patch: tests → bump → build → commit → publish → push
+npm run release:minor    # minor version release
+npm run release:major    # major version release
+npm run release:dry      # dry run (no actual changes)
 ```
 
 ### 🧪 Testing Approach
@@ -421,7 +427,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   "$schema": "https://opencode.ai/OpenCode.schema.json",
   "framework": {
     "name": "strray",
-    "version": "1.22.42",
+    "version": "1.22.43",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"
@@ -446,9 +452,9 @@ STRRAY_LOG_LEVEL=info
 
 ## 🎯 CURRENT STATUS & ROADMAP
 
-### ✅ Production Ready (v1.22.28)
+### ✅ Production Ready (v1.22.43)
 
-- **100% Test Pass Rate**: 2533 comprehensive tests + CI/CD automation testing
+- **100% Test Pass Rate**: 2579 comprehensive tests + CI/CD automation testing
 - **Zero Compilation Errors**: Full TypeScript compliance
 - **CI/CD Automation**: Complete automated remediation system with canary deployments
 - **Enterprise Features**: All advanced modules implemented and tested
@@ -463,7 +469,7 @@ STRRAY_LOG_LEVEL=info
 - [x] Comprehensive README update with enterprise features
 - [x] CI/CD automation system implementation
 - [x] Package publishing and distribution
-- [x] Facade pattern architecture refactoring (v1.22.28)
+- [x] Facade pattern architecture refactoring (v1.22.43)
 - [ ] API documentation generation and publishing
 - [ ] Advanced deployment strategies (future consideration)
 - [ ] Production monitoring setup guides
@@ -503,4 +509,4 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
-**Version**: 1.22.42 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.43 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)

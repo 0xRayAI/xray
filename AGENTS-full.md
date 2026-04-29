@@ -1,9 +1,9 @@
 # 0xRay Framework - Complete System Architecture & Technical Reference
 
-**Version**: 1.22.42
+**Version**: 1.22.43
 **Purpose**: Enterprise AI orchestration with systematic error prevention and modular architecture
-**Last Updated**: 2026-03-12
-**System Complexity**: 75+ modular files, 25 specialized agents, 11 active MCP servers, 60 codex terms
+**Last Updated**: 2026-04-29
+**System Complexity**: 75+ modular files, 9 core agents, 43 framework skills, 11 active MCP servers, 60 codex terms
 
 ---
 
@@ -14,7 +14,7 @@
   - [2.1 Modular Architecture Transformation](#21-modular-architecture-transformation)
   - [2.2 Facade Pattern Design](#22-facade-pattern-design)
   - [2.3 Component Interaction](#23-component-interaction)
-- [3. Agent Reference - Complete (27 Agents)](#3-agent-reference---complete-27-agents)
+- [3. Agent Reference - Core (9 Agents)](#3-agent-reference---core-9-agents)
   - [3.1 Core Agents (9)](#31-core-agents-9)
   - [3.2 Specialized Engineering Agents (9)](#32-specialized-engineering-agents-9)
   - [3.3 Strategy & Content Agents (9)](#33-strategy--content-agents-9)
@@ -81,11 +81,11 @@ npx strray-ai capabilities
 
 ### 2.1 Modular Architecture Transformation
 
-0xRay v1.15.1 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
+0xRay v1.22.43 represents a **major architectural transformation** from monolithic to modular design. This refactoring improves maintainability, testability, and extensibility while maintaining 100% backward compatibility.
 
 #### Before vs After Comparison
 
-| Aspect | Before (v1.7.x) | After (v1.15.1) | Improvement |
+| Aspect | Before (v1.7.x) | After (v1.22.43) | Improvement |
 |--------|-----------------|----------------|-------------|
 | **RuleEnforcer** | 2,714 lines, 58 methods | 416-line facade + 6 modules | **87% size reduction** |
 | **TaskSkillRouter** | 1,933 lines, monolithic | 490-line facade + 12 modules | **75% size reduction** |
@@ -239,9 +239,9 @@ interface IRoutingModule extends IModule {
 
 ---
 
-## 3. Agent Reference - Complete (27 Agents)
+## 3. Agent Reference - Core (9 Agents)
 
-0xRay provides **13 autonomous AI agents** (plus 43 framework skills) organized into core and specialized categories.
+0xRay provides **9 core autonomous AI agents** (plus 43 framework skills) organized into core and specialized categories.
 
 ### 3.1 Core Agents (9)
 
@@ -250,7 +250,7 @@ These are the primary agents that form the foundation of the 0xRay framework.
 ---
 
 #### @enforcer
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Codex compliance & error prevention  
 **Complexity Threshold**: All operations  
 **Primary Pipeline**: Rule Enforcement
@@ -312,7 +312,7 @@ The enforcer serves as the **central coordinator** for all codex compliance and 
 ---
 
 #### @architect
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: System design & technical decisions  
 **Complexity Threshold**: High complexity (>25)  
 **Primary Pipeline**: Agent Delegation
@@ -376,7 +376,7 @@ The architect agent specializes in system design, API architecture, and technica
 ---
 
 #### @orchestrator
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Multi-agent workflow coordination  
 **Complexity Threshold**: Enterprise (>95)  
 **Primary Pipeline**: Agent Delegation
@@ -440,7 +440,7 @@ The orchestrator manages complex, multi-agent workflows for enterprise-level tas
 ---
 
 #### @bug-triage-specialist
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Error investigation & fixes  
 **Complexity Threshold**: Debug operations  
 **Primary Pipeline**: Agent Delegation
@@ -500,7 +500,7 @@ Specializes in debugging, error analysis, and root cause investigation. Triages 
 ---
 
 #### @code-reviewer
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Quality assessment & standards  
 **Complexity Threshold**: All code changes  
 **Primary Pipeline**: Rule Enforcement
@@ -563,7 +563,7 @@ Provides comprehensive code review services, assessing code quality, maintainabi
 ---
 
 #### @security-auditor
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Vulnerability detection  
 **Complexity Threshold**: Security operations  
 **Primary Pipeline**: Security & Monitoring
@@ -623,7 +623,7 @@ Performs comprehensive security audits, vulnerability scanning, and compliance v
 ---
 
 #### @refactorer
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Technical debt elimination  
 **Complexity Threshold**: Refactor operations  
 **Primary Pipeline**: Agent Delegation
@@ -683,7 +683,7 @@ Specializes in code refactoring, technical debt elimination, and code modernizat
 ---
 
 #### @testing-lead
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Testing strategy & coverage  
 **Complexity Threshold**: Test operations  
 **Primary Pipeline**: Rule Enforcement
@@ -743,7 +743,7 @@ Designs comprehensive testing strategies, ensures test coverage targets are met,
 ---
 
 #### @researcher
-**Version**: 1.22.42  
+**Version**: 1.22.43  
 **Role**: Codebase exploration & documentation  
 **Complexity Threshold**: Analysis operations  
 **Primary Pipeline**: Agent Delegation

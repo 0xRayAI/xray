@@ -52,13 +52,12 @@ export declare class AgentsMdValidationProcessor {
      * Calculate days since date
      */
     private calculateDaysOld;
-    /**
-     * Auto-generate AGENTS.md from template
-     */
-    autoGenerate(): Promise<{
+    private getPackageVersion;
+    private getSectionTemplate;
+    appendMissing(): Promise<{
         success: boolean;
         message: string;
-        path?: string;
+        added: string[];
     }>;
 }
 export declare const agentsMdValidationProcessor: AgentsMdValidationProcessor;

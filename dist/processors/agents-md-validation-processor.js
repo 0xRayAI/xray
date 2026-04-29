@@ -178,37 +178,107 @@ export class AgentsMdValidationProcessor {
         const now = new Date();
         return Math.ceil((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     }
-    /**
-     * Auto-generate AGENTS.md from template
-     */
-    async autoGenerate() {
+    getPackageVersion() {
         try {
-            const templatePath = path.join(this.projectRoot, "docs", "AGENTS_TEMPLATE.md");
-            if (!fs.existsSync(templatePath)) {
+            const pkgPath = path.join(this.projectRoot, "package.json");
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+            return pkg.version || "0.0.0";
+        }
+        catch {
+            return "0.0.0";
+        }
+    }
+    getSectionTemplate(section) {
+        const version = this.getPackageVersion();
+        const now = new Date().toISOString().split("T")[0];
+        const templates = {
+            "## Available Agents": [
+                "",
+                "## Available Agents",
+                "",
+                "| Agent | Purpose | Invoke |",
+                "|-------|---------|--------|",
+                "| `@enforcer` | Codex compliance & error prevention | `@enforcer analyze this code` |",
+                "| `@orchestrator` | Complex multi-step task coordination | `@orchestrator implement feature` |",
+                "| `@architect` | System design & technical decisions | `@architect design API` |",
+                "| `@security-auditor` | Vulnerability detection | `@security-auditor scan` |",
+                "| `@code-reviewer` | Quality assessment | `@code-reviewer review PR` |",
+                "| `@refactorer` | Technical debt elimination | `@refactorer optimize code` |",
+                "| `@testing-lead` | Testing strategy | `@testing-lead plan tests` |",
+                "| `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |",
+                "| `@researcher` | Codebase exploration | `@researcher find implementation` |",
+                "",
+            ].join("\n"),
+            "## Available Skills": [
+                "",
+                "## Available Skills",
+                "",
+                "StringRay ships with 30 framework skills and provides a registry of 10 curated community sources.",
+                "",
+                "```bash",
+                "npx strray-ai skill:install              # Show starter packs + available sources",
+                "npx strray-ai skill:install <name>       # Install from registry",
+                "npx strray-ai skill:registry list        # Show all registry sources",
+                "```",
+                "",
+            ].join("\n"),
+            "## Codex": [
+                "",
+                "## Codex",
+                "",
+                `StringRay enforces Universal Development Codex (60 terms) for systematic error prevention.`,
+                "",
+            ].join("\n"),
+            "## CLI Commands": [
+                "",
+                "## CLI Commands",
+                "",
+                "```bash",
+                "npx strray-ai install       # Install and configure",
+                "npx strray-ai status       # Check configuration",
+                "npx strray-ai health        # Health check",
+                "npx strray-ai validate      # Validate installation",
+                "```",
+                "",
+            ].join("\n"),
+        };
+        return templates[section] || `\n\n${section}\n\n*(Section added by agents-md-validation-processor — ${now})*\n`;
+    }
+    async appendMissing() {
+        try {
+            if (!fs.existsSync(this.agentsPath)) {
                 return {
                     success: false,
-                    message: "AGENTS_TEMPLATE.md not found in docs/",
+                    message: "AGENTS.md not found — cannot append to nonexistent file",
+                    added: [],
                 };
             }
-            let template = fs.readFileSync(templatePath, "utf-8");
-            // Update date and version
-            const now = new Date().toISOString().split("T")[0];
-            template = template
-                .replace(/\*\*Updated\*\*:\s*\d{4}-\d{2}-\d{2}/, `**Updated**: ${now}`)
-                .replace(/\*\*Version\*\*:\s*\d+\.\d+\.\d+/, `**Version**: 1.22.42`);
-            fs.writeFileSync(this.agentsPath, template, "utf-8");
-            await frameworkLogger.log("agents-md-validation-processor", "-agents-md-auto-generated-", "info", { path: this.agentsPath });
+            const content = fs.readFileSync(this.agentsPath, "utf-8");
+            const missingSections = this.REQUIRED_SECTIONS.filter((s) => !content.includes(s));
+            if (missingSections.length === 0) {
+                return {
+                    success: true,
+                    message: "All required sections present",
+                    added: [],
+                };
+            }
+            const additions = missingSections
+                .map((section) => this.getSectionTemplate(section))
+                .join("\n");
+            fs.appendFileSync(this.agentsPath, additions);
+            await frameworkLogger.log("agents-md-validation-processor", "-agents-md-sections-appended-", "info", { added: missingSections, path: this.agentsPath });
             return {
                 success: true,
-                message: "AGENTS.md auto-generated successfully",
-                path: this.agentsPath,
+                message: `Appended ${missingSections.length} missing sections: ${missingSections.join(", ")}`,
+                added: missingSections,
             };
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             return {
                 success: false,
-                message: `Auto-generation failed: ${errorMessage}`,
+                message: `Append failed: ${errorMessage}`,
+                added: [],
             };
         }
     }

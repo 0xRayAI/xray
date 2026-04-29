@@ -109,9 +109,17 @@ async function main() {
   pkg.version = newVersion;
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
+  // Step 2.5: Sync version across config and doc files
+  console.log('\n📦 Step 2.5: Syncing version across config and docs...');
+  try {
+    execSync('node scripts/node/sync-versions.mjs --apply', { cwd: rootDir, stdio: 'inherit' });
+  } catch (e) {
+    console.log('⚠️  Version sync had issues (non-blocking)');
+  }
+
   // Step 3: Commit
   console.log('\n📦 Step 3: Committing version bump...');
-  runCommand('git add package.json', 'git add failed');
+  runCommand('git add -A', 'git add failed');
   runCommand(`git commit --no-verify -m "release: v${newVersion}"`, 'git commit failed');
 
   // Step 4: Tag
