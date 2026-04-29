@@ -12,7 +12,7 @@ import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 class SEOSpecialistServer {
     server;
     constructor() {
-        this.server = new Server({ name: "seo-consultant", version: "1.22.36" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "seo-consultant", version: "1.22.37" }, { capabilities: { tools: {} } });
         this.setupToolHandlers();
     }
     setupToolHandlers() {

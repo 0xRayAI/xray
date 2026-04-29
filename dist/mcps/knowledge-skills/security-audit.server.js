@@ -14,7 +14,7 @@ class StringRaySecurityAuditServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "security-audit", version: "1.22.36",
+            name: "security-audit", version: "1.22.37",
         }, {
             capabilities: {
                 tools: {},

@@ -286,7 +286,7 @@ export class FeaturesConfigLoader {
      */
     getDefaultConfig() {
         return {
-            version: "1.22.36",
+            version: "1.22.37",
             description: "0xRay Framework - Unified Feature Configuration",
             token_optimization: {
                 enabled: true,

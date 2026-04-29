@@ -73,7 +73,7 @@ class StringRayCodeReviewServer {
   constructor() {
     this.server = new Server(
       {
-        name: "code-review", version: "1.22.36",
+        name: "code-review", version: "1.22.37",
       },
       {
         capabilities: {

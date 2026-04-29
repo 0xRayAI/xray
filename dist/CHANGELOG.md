@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.38] - 2026-04-29
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: rebuild dist v1.22.37 (4d1035b7a)
+- chore: update activity logs and test results (dcb5bf018)
+
+---
+
 ## [1.22.37] - 2026-04-29
 
 ### 🔄 Changes

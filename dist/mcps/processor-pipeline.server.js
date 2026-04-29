@@ -26,7 +26,7 @@ class StringRayProcessorPipelineServer {
     constructor() {
         this.codexLoader = new CodexLoader();
         this.server = new Server({
-            name: "processor-pipeline", version: "1.22.36",
+            name: "processor-pipeline", version: "1.22.37",
         }, {
             capabilities: {
                 tools: {},
