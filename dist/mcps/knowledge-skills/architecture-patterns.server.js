@@ -12,7 +12,7 @@ class StringRayArchitecturePatternsServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "architecture-patterns", version: "1.22.35",
+            name: "architecture-patterns", version: "1.22.36",
         }, {
             capabilities: {
                 tools: {},
