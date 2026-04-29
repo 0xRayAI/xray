@@ -1,92 +1,29 @@
 [
   {
-    "taskId": "test-0",
-    "taskDescription": "test task 0",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.685Z"
+    "taskId": "task-1",
+    "taskDescription": "Initialize",
+    "routedAgent": "architect",
+    "routedSkill": "architect_skill",
+    "confidence": 0.8,
+    "success": true,
+    "timestamp": "2026-04-29T11:16:25.176Z"
   },
   {
-    "taskId": "test-1",
-    "taskDescription": "test task 1",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.686Z"
+    "taskId": "task-2",
+    "taskDescription": "Process",
+    "routedAgent": "researcher",
+    "routedSkill": "researcher_skill",
+    "confidence": 0.8,
+    "success": true,
+    "timestamp": "2026-04-29T11:16:25.180Z"
   },
   {
-    "taskId": "test-2",
-    "taskDescription": "test task 2",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.686Z"
-  },
-  {
-    "taskId": "test-3",
-    "taskDescription": "test task 3",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.686Z"
-  },
-  {
-    "taskId": "test-4",
-    "taskDescription": "test task 4",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.686Z"
-  },
-  {
-    "taskId": "test-5",
-    "taskDescription": "test task 5",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.686Z"
-  },
-  {
-    "taskId": "test-6",
-    "taskDescription": "test task 6",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.686Z"
-  },
-  {
-    "taskId": "test-7",
-    "taskDescription": "test task 7",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.686Z"
-  },
-  {
-    "taskId": "test-8",
-    "taskDescription": "test task 8",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.687Z"
-  },
-  {
-    "taskId": "test-9",
-    "taskDescription": "test task 9",
-    "routedAgent": "testing-lead",
-    "routedSkill": "testing-strategy",
-    "confidence": 0.95,
-    "success": false,
-    "timestamp": "2026-04-29T11:15:00.687Z"
+    "taskId": "task-3",
+    "taskDescription": "Validate",
+    "routedAgent": "enforcer",
+    "routedSkill": "enforcer_skill",
+    "confidence": 0.8,
+    "success": true,
+    "timestamp": "2026-04-29T11:16:25.180Z"
   }
 ]

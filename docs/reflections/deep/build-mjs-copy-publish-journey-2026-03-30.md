@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-30
 **PR**: [#19](https://github.com/htafolla/0xRay/pull/19) — `fix: copy .mjs files to dist in build script`
-**Version**: 1.22.33 → 1.15.27
+**Version**: 1.22.34 → 1.15.27
 
 ---
 
@@ -44,7 +44,7 @@ So for every version of 0xRay that shipped with Hermes agent integration, the pu
 I verified this with a smoke test. Source bridge worked fine:
 
 ```json
-{"status":"ok","framework":"version":"1.22.33","components":{"qualityGate":true,...}}
+{"status":"ok","framework":"version":"1.22.34","components":{"qualityGate":true,...}}
 ```
 
 Dist bridge:

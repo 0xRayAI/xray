@@ -24,7 +24,7 @@ class EstimationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "estimation-validator", version: "1.22.33",
+        name: "estimation-validator", version: "1.22.34",
       },
       {
         capabilities: { tools: {} },

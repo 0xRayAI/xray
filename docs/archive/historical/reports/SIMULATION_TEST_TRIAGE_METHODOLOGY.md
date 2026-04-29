@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive triage methodology implemented to systematically identify, analyze, and resolve all failing simulation tests in the 0xRay AI v1.22.33. The triage process was initiated following the detection of widespread test failures across the codex rule simulation suite, affecting 45+ codex terms and multiple agent personas.
+This document outlines the comprehensive triage methodology implemented to systematically identify, analyze, and resolve all failing simulation tests in the 0xRay AI v1.22.34. The triage process was initiated following the detection of widespread test failures across the codex rule simulation suite, affecting 45+ codex terms and multiple agent personas.
 
 ## Executive Summary
 

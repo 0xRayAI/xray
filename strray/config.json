@@ -1,6 +1,6 @@
 {
   "$schema": "./config.schema.json",
-  "version": "1.22.33",
+  "version": "1.22.34",
   "description": "0xRay Framework - Token Management & Performance Configuration",
   "token_management": {
     "maxPromptTokens": 20000,

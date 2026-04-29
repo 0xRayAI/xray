@@ -107,7 +107,7 @@ MCP Client (312 lines)
 ```json
 {
   "strray_framework": {
-    "version": "1.22.33",
+    "version": "1.22.34",
     "enabled_agents": ["enforcer", "architect"],
     "agent_capabilities": {
       "enforcer": ["compliance-monitoring"]
@@ -120,7 +120,7 @@ MCP Client (312 lines)
 
 ```json
 {
-  "framework": "0xRay AI v1.22.33",
+  "framework": "0xRay AI v1.22.34",
   "agents": {
     "enforcer": {
       "enabled": true,

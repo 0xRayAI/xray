@@ -14,7 +14,7 @@ class StringRayProjectAnalysisServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "project-analysis", version: "1.22.32",
+            name: "project-analysis", version: "1.22.33",
         }, {
             capabilities: {
                 tools: {},
