@@ -16,7 +16,7 @@ class StringRayPerformanceAnalysisServer {
     startTime;
     constructor() {
         this.server = new Server({
-            name: "performance-analysis", version: "1.22.28",
+            name: "performance-analysis", version: "1.22.32",
         }, {
             capabilities: {
                 tools: {},

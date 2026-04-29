@@ -662,4 +662,4 @@ npx strray-ai --version
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.22.31 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.33 | [GitHub](https://github.com/htafolla/stringray)

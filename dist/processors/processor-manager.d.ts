@@ -1,12 +1,3 @@
-/**
- * Processor Manager
- *
- * Centralized processor management for pre/post processing operations.
- * Implements lifecycle management, performance monitoring, and conflict resolution.
- *
- * @version 1.0.0
- * @since 2026-01-07
- */
 import { StringRayStateManager } from "../state/state-manager.js";
 import { ProcessorRegistration, ProcessorHook } from "./processor-types.js";
 export interface ProcessorConfig {
@@ -54,30 +45,12 @@ export declare class ProcessorManager {
     constructor(stateManager: StringRayStateManager);
     private registerBuiltInFactories;
     registerFactory(name: string, factory: ProcessorFactory): void;
-    /**
-     * Register a processor with the manager
-     */
     registerProcessorWithHook(registration: ProcessorRegistration): void;
     registerProcessor(config: ProcessorConfig): void;
-    /**
-     * Unregister a processor
-     */
     unregisterProcessor(name: string): void;
-    /**
-     * Get all registered processors
-     */
     getProcessors(): Map<string, ProcessorConfig>;
-    /**
-     * Initialize all registered processors
-     */
     initializeProcessors(): Promise<boolean>;
-    /**
-     * Initialize a specific processor
-     */
     private initializeProcessor;
-    /**
-     * Execute pre-processors for a given operation
-     */
     executePreProcessors(input: {
         tool: string;
         args?: Record<string, unknown>;
@@ -86,171 +59,14 @@ export declare class ProcessorManager {
         success: boolean;
         results: ProcessorResult[];
     }>;
-    /**
-     * Execute post-processors for a given operation
-     */
     executePostProcessors(operation: string, data: any, preResults: ProcessorResult[]): Promise<ProcessorResult[]>;
-    /**
-     * Execute a specific processor
-     * FIX: Issue #4 - Add context validation before execution
-     */
     private executeProcessor;
-    /**
-     * Update processor metrics
-     */
     private updateMetrics;
-    /**
-     * Get processor health status
-     */
     getProcessorHealth(): ProcessorHealth[];
-    /**
-     * Validate processor context before execution
-     * FIX: Issue #4 - Add context validation
-     */
     private validateProcessorContext;
-    /**
-     * Resolve processor conflicts
-     */
     resolveProcessorConflicts(conflicts: ProcessorResult[]): ProcessorResult;
-    /**
-     * Cleanup all processors
-     */
     cleanupProcessors(): Promise<void>;
-    /**
-     * Cleanup a specific processor
-     */
     private cleanupProcessor;
-    private initializePreValidateProcessor;
-    private initializeCodexComplianceProcessor;
-    private initializeErrorBoundaryProcessor;
-    private initializeTestExecutionProcessor;
-    private initializeRegressionTestingProcessor;
-    private initializeStateValidationProcessor;
-    private initializeAgentsMdValidationProcessor;
-    private initializeVersionComplianceProcessor;
-    private executePreValidate;
-    private executeVersionCompliance;
-    private executeCodexCompliance;
-    private executeErrorBoundary;
-    private executeLogProtection;
-    private executeAgentsMdValidation;
-    private executeTestExecution;
-    /**
-     * Execute TypeScript/JavaScript tests using Vitest
-     */
-    private executeTypeScriptTests;
-    /**
-     * Execute tests for any language using their native test framework
-     */
-    private executeGenericTests;
-    /**
-     * Run a test command and parse results
-     */
-    private runTestCommand;
-    /**
-     * Parse test output for pass/fail counts (language-agnostic)
-     */
-    private parseTestOutput;
-    private executeRegressionTesting;
-    private executeStateValidation;
-    private executeRefactoringLogging;
-    /**
-     * Attempt to fix rule violations by calling appropriate agents/skills
-     */
-    private attemptRuleViolationFixes;
-    /**
-     * Get the appropriate agent/skill for a rule violation
-     */
-    private getAgentForRule;
-    /**
-     * Initialize test auto-creation processor
-     */
-    private initializeTestAutoCreationProcessor;
-    /**
-     * Execute test auto-creation processor
-     */
-    private executeTestAutoCreation;
-    /**
-     * Execute coverage analysis processor
-     */
-    private executeCoverageAnalysis;
-    /**
-     * Initialize TypeScript compilation processor
-     */
-    private initializeTypeScriptCompilationProcessor;
-    /**
-     * Execute TypeScript compilation processor
-     */
-    private executeTypeScriptCompilation;
-    private spawnGovernanceProcessor;
-    private performanceBudgetProcessor;
-    private asyncPatternProcessor;
-    private consoleLogGuardProcessor;
-    /**
-     * Initialize spawn governance processor (Codex #52-57)
-     * Enforces agent spawn limits, rate limiting, and infinite spawn detection
-     */
-    private initializeSpawnGovernanceProcessor;
-    /**
-     * Execute spawn governance processor
-     */
-    private executeSpawnGovernance;
-    /**
-     * Initialize performance budget processor (Codex #28)
-     * Enforces file size, function length, nesting depth, and parameter count budgets
-     */
-    private initializePerformanceBudgetProcessor;
-    /**
-     * Initialize async pattern processor (Codex #31)
-     * Enforces proper async/await usage
-     */
-    private initializeAsyncPatternProcessor;
-    /**
-     * Initialize console log guard processor
-     * Blocks console.log in production code
-     */
-    private initializeConsoleLogGuardProcessor;
-    /**
-     * Execute performance budget processor
-     */
-    private executePerformanceBudget;
-    /**
-     * Execute async pattern processor
-     */
-    private executeAsyncPattern;
-    /**
-     * Execute console log guard processor
-     */
-    private executeConsoleLogGuard;
-    /**
-     * Initialize postprocessor chain validator (Codex #58)
-     */
-    private initializePostProcessorChainProcessor;
-    /**
-     * Execute postprocessor chain validator
-     */
-    private executePostProcessorChain;
-    /**
-     * Initialize publish preflight processor
-     * Validates documentation completeness before publishing
-     */
-    private initializePublishPreflightProcessor;
-    /**
-     * Execute publish preflight processor
-     */
-    private executePublishPreflight;
-    /**
-     * Execute storytelling trigger processor
-     */
-    private executeStorytellingTrigger;
-    /**
-     * Execute inference improvement processor
-     */
-    private executeInferenceImprovement;
-    /**
-     * Execute session summary processor
-     */
-    private executeSessionSummary;
 }
 export {};
 //# sourceMappingURL=processor-manager.d.ts.map

@@ -132,7 +132,7 @@ class SessionManagementServer {
         },
     ];
     constructor() {
-        this.server = new Server({ name: "session-management", version: "1.22.28" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "session-management", version: "1.22.32" }, { capabilities: { tools: {} } });
         this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
             tools: this.tools,
         }));
