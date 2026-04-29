@@ -12,7 +12,7 @@ class StringRayApiDesignServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "api-design", version: "1.22.43",
+            name: "api-design", version: "1.22.44",
         }, {
             capabilities: {
                 tools: {},

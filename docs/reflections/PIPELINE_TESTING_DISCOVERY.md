@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-21  
 **Author**: 0xRay AI  
-**Version**: 1.22.43
+**Version**: 1.22.44
 
 ---
 

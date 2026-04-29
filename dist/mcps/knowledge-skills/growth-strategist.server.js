@@ -91,7 +91,7 @@ class MarketingExpertServer {
         },
     ];
     constructor() {
-        this.server = new Server({ name: "growth-strategist", version: "1.22.43" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "growth-strategist", version: "1.22.44" }, { capabilities: { tools: {} } });
         this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
             tools: this.tools,
         }));

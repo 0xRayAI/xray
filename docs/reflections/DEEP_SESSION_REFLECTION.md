@@ -3,7 +3,7 @@
 **Date**: 2026-03-21  
 **Session Duration**: Several hours  
 **Context Window**: Nearing limits  
-**Version**: 1.22.43
+**Version**: 1.22.44
 
 ---
 

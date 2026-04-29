@@ -2,7 +2,7 @@
 
 ## Session Summary
 **Date**: 2026-02-26  
-**Version**: 1.22.43  
+**Version**: 1.22.44  
 **Commit**: 65ac0cb
 
 ---
