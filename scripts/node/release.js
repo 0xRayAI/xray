@@ -125,13 +125,23 @@ function main() {
       execSync("npm publish --access public", { cwd: rootDir, stdio: "inherit" });
       console.log(`${GREEN}  ✓ Published strray-ai@${nextVersion}${RESET}`);
     } catch (e) {
-      console.log(`${RED}  ✗ Publish failed. Trying with --ignore-scripts...${RESET}`);
-      try {
-        execSync("npm publish --access public --ignore-scripts", { cwd: rootDir, stdio: "inherit" });
-        console.log(`${GREEN}  ✓ Published strray-ai@${nextVersion} (ignore-scripts)${RESET}`);
-      } catch (e2) {
-        console.log(`${RED}  ✗ Publish failed${RESET}`);
-        process.exit(1);
+      const errMsg = e.stderr?.toString() || e.message || "";
+      if (errMsg.includes("previously published")) {
+        console.log(`${GREEN}  ✓ Already published strray-ai@${nextVersion}${RESET}`);
+      } else {
+        console.log(`${RED}  ✗ Publish failed. Trying with --ignore-scripts...${RESET}`);
+        try {
+          execSync("npm publish --access public --ignore-scripts", { cwd: rootDir, stdio: "inherit" });
+          console.log(`${GREEN}  ✓ Published strray-ai@${nextVersion} (ignore-scripts)${RESET}`);
+        } catch (e2) {
+          const errMsg2 = e2.stderr?.toString() || e2.message || "";
+          if (errMsg2.includes("previously published")) {
+            console.log(`${GREEN}  ✓ Already published strray-ai@${nextVersion}${RESET}`);
+          } else {
+            console.log(`${RED}  ✗ Publish failed${RESET}`);
+            process.exit(1);
+          }
+        }
       }
     }
   }

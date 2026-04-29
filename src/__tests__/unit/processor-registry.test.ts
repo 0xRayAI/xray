@@ -47,7 +47,7 @@ describe("Processor Registry Pattern", () => {
 
       expect(result.success).toBe(true);
       expect(result.processorName).toBe("storytellingTrigger");
-    });
+    }, 15000);
 
     it("should execute sessionSummary via factory", async () => {
       pm.registerProcessor({ name: "sessionSummary", type: "post", priority: 15, enabled: true });

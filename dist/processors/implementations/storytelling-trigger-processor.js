@@ -1,26 +1,10 @@
-/**
- * Storytelling Trigger Processor
- *
- * Detects when stories (reflections, sagas, journeys) should be written
- * and prompts users to invoke the storyteller skill.
- *
- * Triggers:
- * - Commit count threshold (default: 10 commits without reflection)
- * - Publish events (require saga)
- * - Complex changes (15+ files changed)
- * - Session duration (60+ minutes)
- *
- * @version 1.0.0
- * @since 2026-04-01
- */
 import * as fs from "fs";
 import * as path from "path";
-import { execSync as nodeExecSync } from "child_process";
+import { execSync } from "child_process";
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 export class StorytellingTriggerProcessor extends PostProcessor {
     name = "storytelling-trigger";
-    type = "post";
     priority = 5;
     config = null;
     reflectionsDir = "docs/reflections";
@@ -42,7 +26,7 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         }
         catch (error) {
             frameworkLogger.log("storytelling-trigger", "config-load-failed", "warning", {
-                error: error instanceof Error ? error.message : String(error)
+                error: error instanceof Error ? error.message : String(error),
             });
         }
     }
@@ -52,9 +36,8 @@ export class StorytellingTriggerProcessor extends PostProcessor {
             path.join(process.cwd(), ".opencode", "strray", filename),
         ];
         for (const candidate of candidates) {
-            if (fs.existsSync(candidate)) {
+            if (fs.existsSync(candidate))
                 return candidate;
-            }
         }
         return null;
     }
@@ -62,215 +45,378 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         if (!this.config?.enabled) {
             return { message: "Storytelling triggers disabled", triggers: [] };
         }
-        const triggers = [];
-        const commitTrigger = this.checkCommitTrigger(context);
-        if (commitTrigger.triggered) {
-            triggers.push(commitTrigger);
+        const generated = [];
+        const commitReflection = this.reflectOnCommits();
+        if (commitReflection) {
+            generated.push(commitReflection);
+            frameworkLogger.log("storytelling-trigger", "commit-reflection-generated", "info", {
+                file: commitReflection,
+            });
         }
-        const publishTrigger = this.checkPublishTrigger(context);
-        if (publishTrigger.triggered) {
-            triggers.push(publishTrigger);
+        const releaseReflection = this.reflectOnRelease();
+        if (releaseReflection) {
+            generated.push(releaseReflection);
+            frameworkLogger.log("storytelling-trigger", "release-reflection-generated", "info", {
+                file: releaseReflection,
+            });
         }
-        const complexTrigger = this.checkComplexChangesTrigger(context);
-        if (complexTrigger.triggered) {
-            triggers.push(complexTrigger);
-        }
-        const sessionTrigger = this.checkSessionDurationTrigger(context);
-        if (sessionTrigger.triggered) {
-            triggers.push(sessionTrigger);
-        }
-        if (triggers.length === 0) {
-            return { message: "No storytelling triggers activated", triggers: [] };
-        }
-        const recommendations = triggers.map(t => ({
-            type: t.trigger_type,
-            story_type: t.story_type,
-            message: t.message,
-            suggestion: t.suggestion,
-        }));
-        const generated = this.generateReflections(triggers);
         return {
-            message: `Storytelling triggers activated: ${triggers.length}`,
-            triggers: recommendations,
+            message: generated.length > 0
+                ? `Generated ${generated.length} reflection(s)`
+                : "No reflection triggers fired",
+            triggers: generated.map(f => path.basename(f)),
             generated,
-            shouldPrompt: triggers.some(t => t.trigger_type !== "publish"),
-            shouldBlock: triggers.some(t => t.trigger_type === "publish" && this.config?.reflection_triggers.publish?.block_without_story),
         };
     }
-    checkCommitTrigger(context) {
-        const config = this.config?.reflection_triggers.commit_count;
-        if (!config?.enabled) {
-            return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
-        }
-        const threshold = config.threshold ?? 10;
-        const commitCount = this.getCommitCountSinceLastReflection();
-        if (commitCount >= threshold) {
-            return {
-                triggered: true,
-                trigger_type: "commit_count",
-                story_type: config.story_type || "reflection",
-                message: `${commitCount} commits since last reflection (threshold: ${threshold})`,
-                suggestion: `Consider writing a ${config.story_type || "reflection"} to document recent changes. Run: npx strray-ai reflection`,
-            };
-        }
-        return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
+    reflectOnCommits() {
+        const lastReflection = this.getMostRecentReflectionFile();
+        const sinceRef = lastReflection
+            ? this.getFileCommitHash(lastReflection)
+            : null;
+        const commits = sinceRef
+            ? this.getCommitsBetween(sinceRef, "HEAD")
+            : this.getRecentCommits(25);
+        if (commits.length === 0)
+            return null;
+        const threshold = this.config?.reflection_triggers.commit_count?.threshold ?? 10;
+        if (commits.length < threshold)
+            return null;
+        const diff = this.summarizeCommits(commits);
+        const slug = `commit-cadence`;
+        const dateStr = new Date().toISOString().slice(0, 10);
+        const dir = path.join(process.cwd(), this.reflectionsDir);
+        const filename = `auto-${slug}-${dateStr}.md`;
+        const filePath = path.join(dir, filename);
+        if (fs.existsSync(filePath))
+            return null;
+        const content = this.synthesizeReflection({
+            cadence: "commit",
+            commits,
+            diff,
+            sinceRef: sinceRef || "start of history",
+            untilRef: "HEAD",
+        });
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(filePath, content);
+        return filePath;
     }
-    checkPublishTrigger(context) {
-        const config = this.config?.reflection_triggers.publish;
-        if (!config?.enabled) {
-            return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
+    reflectOnRelease() {
+        const lastTag = this.getLastTag();
+        if (!lastTag)
+            return null;
+        const commits = this.getCommitsBetween(lastTag, "HEAD");
+        if (commits.length === 0)
+            return null;
+        const diff = this.summarizeCommits(commits);
+        const version = lastTag.replace(/^v/, "");
+        const dateStr = new Date().toISOString().slice(0, 10);
+        const dir = path.join(process.cwd(), this.deepReflectionsDir);
+        const filename = `release-v${version}-to-head-${dateStr}.md`;
+        const filePath = path.join(dir, filename);
+        if (fs.existsSync(filePath))
+            return null;
+        const content = this.synthesizeReflection({
+            cadence: "release",
+            commits,
+            diff,
+            sinceRef: lastTag,
+            untilRef: "HEAD",
+            version,
+        });
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(filePath, content);
+        return filePath;
+    }
+    synthesizeReflection(data) {
+        const { cadence, commits, diff, sinceRef, untilRef, version } = data;
+        const now = new Date().toISOString();
+        const lines = [];
+        if (cadence === "release") {
+            lines.push(`# Release Reflection: ${version} → HEAD`);
+            lines.push("");
+            lines.push(`**Generated:** ${now}`);
+            lines.push(`**Cadence:** release (since tag ${sinceRef})`);
+            lines.push(`**Commits examined:** ${commits.length}`);
+            lines.push(`**Span:** ${sinceRef}..${untilRef}`);
         }
-        // Access metadata from context.data (how processor-manager passes it) or context directly
-        const ctx = context;
-        const metadata = ctx.data?.metadata || ctx.metadata;
-        const operation = ctx.data?.operation || ctx.operation;
-        const hook = ctx.data?.hook || ctx.hook;
-        const isPublishing = metadata?.isPublishing ?? false;
-        if (isPublishing || hook?.includes("publish") || operation?.includes("publish")) {
-            const recentSaga = this.getMostRecentDocument("saga");
-            const daysSinceSaga = recentSaga ? this.getDaysSinceFile(recentSaga) : Infinity;
-            if (daysSinceSaga > 7 || !recentSaga) {
-                return {
-                    triggered: true,
-                    trigger_type: "publish",
-                    story_type: config.story_type || "saga",
-                    message: `Publishing detected without recent saga documentation`,
-                    suggestion: `Write a saga documenting this release journey. Run: npx strray-ai saga "${this.getSuggestedSagaTitle()}"`,
-                };
+        else {
+            lines.push(`# Commit Cadence Reflection`);
+            lines.push("");
+            lines.push(`**Generated:** ${now}`);
+            lines.push(`**Cadence:** commit (since last reflection)`);
+            lines.push(`**Commits examined:** ${commits.length}`);
+            lines.push(`**Span:** ${sinceRef}..${untilRef}`);
+        }
+        lines.push("");
+        lines.push("## Scope");
+        lines.push("");
+        lines.push(`- **${diff.totalCommits} commits** with **${diff.totalFilesChanged} file changes**`);
+        lines.push(`- **+${diff.totalInsertions} insertions / -${diff.totalDeletions} deletions**`);
+        lines.push(`- **${diff.filesAdded.length} files added, ${diff.filesModified.length} modified, ${diff.filesDeleted.length} deleted**`);
+        lines.push("");
+        if (diff.uniqueDirs.length > 0) {
+            lines.push("## Areas Touched");
+            lines.push("");
+            for (const dir of diff.uniqueDirs.slice(0, 15)) {
+                const count = [...diff.filesAdded, ...diff.filesModified].filter(f => f.startsWith(dir)).length;
+                lines.push(`- \`${dir}\` (${count} files)`);
+            }
+            lines.push("");
+        }
+        lines.push("## Commit Chronicle");
+        lines.push("");
+        for (const commit of commits) {
+            const files = commit.fileNames.length > 5
+                ? commit.fileNames.slice(0, 5).join(", ") + ` +${commit.fileNames.length - 5} more`
+                : commit.fileNames.join(", ");
+            lines.push(`- **${commit.message}** (${commit.hash})`);
+            lines.push(`  ${commit.filesChanged} files: ${files}`);
+            lines.push("");
+        }
+        lines.push("## Files Added");
+        lines.push("");
+        if (diff.filesAdded.length === 0) {
+            lines.push("*(none)*");
+        }
+        else {
+            for (const f of diff.filesAdded) {
+                lines.push(`- \`${f}\``);
             }
         }
-        return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
+        lines.push("");
+        lines.push("## Files Modified");
+        lines.push("");
+        if (diff.filesModified.length > 20) {
+            for (const f of diff.filesModified.slice(0, 20)) {
+                lines.push(`- \`${f}\``);
+            }
+            lines.push(`- ... and ${diff.filesModified.length - 20} more`);
+        }
+        else if (diff.filesModified.length === 0) {
+            lines.push("*(none)*");
+        }
+        else {
+            for (const f of diff.filesModified) {
+                lines.push(`- \`${f}\``);
+            }
+        }
+        lines.push("");
+        if (diff.filesDeleted.length > 0) {
+            lines.push("## Files Deleted");
+            lines.push("");
+            for (const f of diff.filesDeleted) {
+                lines.push(`- \`${f}\``);
+            }
+            lines.push("");
+        }
+        lines.push("## Patterns Observed");
+        lines.push("");
+        const patterns = this.detectPatterns(commits, diff);
+        for (const pattern of patterns) {
+            lines.push(`- ${pattern}`);
+        }
+        lines.push("");
+        lines.push("## Key Decisions");
+        lines.push("");
+        const decisions = this.extractDecisions(commits);
+        if (decisions.length === 0) {
+            lines.push("*(extracted from commit messages — add detail in follow-up)*");
+        }
+        for (const d of decisions) {
+            lines.push(`- ${d}`);
+        }
+        lines.push("");
+        lines.push("## Inference Notes");
+        lines.push("");
+        lines.push("*(This section captures what an AI agent would infer from the above changes.)");
+        lines.push("Run the storyteller skill against this file to synthesize deeper analysis.)*");
+        lines.push("");
+        lines.push("---");
+        lines.push(`*Generated by StorytellingTriggerProcessor — ${cadence} cadence — ${now}*`);
+        return lines.join("\n");
     }
-    checkComplexChangesTrigger(context) {
-        const config = this.config?.reflection_triggers.complex_changes;
-        if (!config?.enabled) {
-            return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
+    detectPatterns(commits, diff) {
+        const patterns = [];
+        if (diff.filesAdded.some(f => f.includes("implementations/"))) {
+            patterns.push("New processor implementations added — system extensibility increasing");
         }
-        const ctx = context;
-        const threshold = config.file_count_threshold ?? 15;
-        const fileCount = ctx.metadata?.filesChanged ?? 0;
-        if (fileCount >= threshold) {
-            return {
-                triggered: true,
-                trigger_type: "complex_changes",
-                story_type: config.story_type || "journey",
-                message: `${fileCount} files changed in complex changes`,
-                suggestion: `Complex changes detected. Consider writing a ${config.story_type || "journey"} to document the investigation.`,
-            };
+        if (diff.filesAdded.some(f => f.includes("__tests__/"))) {
+            patterns.push("New test files created — test coverage expanding");
         }
-        return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
+        if (diff.filesDeleted.length > 0) {
+            patterns.push(`${diff.filesDeleted.length} files deleted — dead code removal or refactoring`);
+        }
+        if (diff.totalDeletions > diff.totalInsertions * 1.5) {
+            patterns.push(`Net code reduction: ${diff.totalDeletions - diff.totalInsertions} lines removed — simplification effort`);
+        }
+        if (diff.uniqueDirs.some(d => d.includes("processors"))) {
+            patterns.push("Processor system modified — pipeline architecture evolving");
+        }
+        if (diff.uniqueDirs.some(d => d.includes("reporting"))) {
+            patterns.push("Reporting system modified — output quality being addressed");
+        }
+        if (diff.uniqueDirs.some(d => d.includes("security"))) {
+            patterns.push("Security-related changes detected");
+        }
+        if (commits.some(c => c.message.toLowerCase().includes("fix"))) {
+            patterns.push("Bug fixes present — stability improvement");
+        }
+        if (commits.some(c => c.message.toLowerCase().includes("refactor"))) {
+            patterns.push("Refactoring detected — architectural debt being addressed");
+        }
+        if (commits.some(c => c.message.includes("v1.") || c.message.includes("release"))) {
+            patterns.push("Version bumps/releases present — release cadence active");
+        }
+        if (diff.filesModified.some(f => f.includes("processor-manager"))) {
+            patterns.push("Processor manager core modified — orchestration layer changing");
+        }
+        if (diff.filesModified.some(f => f.includes("AGENTS.md"))) {
+            patterns.push("AGENTS.md updated — agent documentation evolving");
+        }
+        if (diff.uniqueDirs.some(d => d.includes("integrations"))) {
+            patterns.push("Integration layer modified — external system interfaces changing");
+        }
+        if (patterns.length === 0) {
+            patterns.push("Standard development activity — no strong architectural patterns detected");
+        }
+        return patterns;
     }
-    checkSessionDurationTrigger(context) {
-        const config = this.config?.reflection_triggers.session_duration;
-        if (!config?.enabled) {
-            return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
+    extractDecisions(commits) {
+        const decisions = [];
+        for (const commit of commits) {
+            const msg = commit.message;
+            if (msg.includes("extract")) {
+                decisions.push(`Extraction: ${msg}`);
+            }
+            else if (msg.includes("replace") || msg.includes("refactor")) {
+                decisions.push(`Structural change: ${msg}`);
+            }
+            else if (msg.includes("→")) {
+                decisions.push(`Transition: ${msg}`);
+            }
+            else if (msg.includes("fix")) {
+                decisions.push(`Fix: ${msg}`);
+            }
+            else if (msg.includes("delete") || msg.includes("remove")) {
+                decisions.push(`Removal: ${msg}`);
+            }
         }
-        const ctx = context;
-        const threshold = config.duration_minutes_threshold ?? 60;
-        const sessionDuration = ctx.metadata?.sessionDurationMinutes ?? 0;
-        if (sessionDuration >= threshold) {
-            return {
-                triggered: true,
-                trigger_type: "session_duration",
-                story_type: config.story_type || "reflection",
-                message: `Session has been active for ${sessionDuration} minutes`,
-                suggestion: `Long session detected. Consider writing a ${config.story_type || "reflection"} to capture learnings.`,
-            };
-        }
-        return { triggered: false, trigger_type: "", story_type: "", message: "", suggestion: "" };
+        return decisions;
     }
-    generateReflections(triggers) {
-        const generated = [];
-        const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10);
-        const timeStr = now.toTimeString().slice(0, 5).replace(":", "-");
-        for (const trigger of triggers) {
-            try {
-                const meta = StorytellingTriggerProcessor.getStoryTypeMeta(trigger.story_type || "reflection");
-                const dir = path.join(process.cwd(), meta.location);
-                if (!fs.existsSync(dir)) {
-                    fs.mkdirSync(dir, { recursive: true });
+    getCommitsBetween(from, to) {
+        try {
+            const log = this.git(`git log ${from}..${to} --format="%H||%s||%an||%aI" --shortstat --no-merges`);
+            if (!log)
+                return [];
+            const commitBlocks = log.split(/\n{2,}/).filter((b) => b.trim().length > 0 && b.includes("||"));
+            return commitBlocks.map((block) => {
+                const lines = block.trim().split("\n");
+                const headerLine = lines.find((l) => l.includes("||")) || "";
+                const [hash, message, author, date] = headerLine.split("||");
+                const statsLine = lines.find((l) => l.includes("file") && (l.includes("insertion") || l.includes("deletion") || l.includes("changed"))) || "";
+                const filesChanged = parseInt(statsLine.match(/(\d+) files? changed/)?.[1] || "0", 10);
+                const insertions = parseInt(statsLine.match(/(\d+) insertion/)?.[1] || "0", 10);
+                const deletions = parseInt(statsLine.match(/(\d+) deletion/)?.[1] || "0", 10);
+                let fileNames = [];
+                try {
+                    const shortHash = (hash || "").slice(0, 7);
+                    const namesOutput = this.git(`git diff --name-only ${shortHash}~1 ${shortHash} 2>/dev/null`);
+                    fileNames = namesOutput ? namesOutput.split("\n").filter(Boolean) : [];
                 }
-                const slug = trigger.trigger_type.replace(/_/g, "-");
-                const filename = `auto-${slug}-${dateStr}-${timeStr}.md`;
-                const filePath = path.join(dir, filename);
-                if (fs.existsSync(filePath))
-                    continue;
-                const content = [
-                    `# Auto-Generated ${trigger.story_type || "reflection"}: ${trigger.trigger_type}`,
-                    "",
-                    `**Generated:** ${now.toISOString()}`,
-                    `**Trigger:** ${trigger.trigger_type}`,
-                    `**Story Type:** ${trigger.story_type || "reflection"}`,
-                    `**Message:** ${trigger.message}`,
-                    "",
-                    "## Context",
-                    "",
-                    `This reflection was auto-generated by the StorytellingTriggerProcessor.`,
-                    `Trigger reason: ${trigger.message}`,
-                    "",
-                    "## What Happened",
-                    "",
-                    `*(Fill in: what was the situation before this trigger fired?)*`,
-                    "",
-                    "## Key Decisions",
-                    "",
-                    `*(Fill in: what choices were made and why?)*`,
-                    "",
-                    "## Lessons Learned",
-                    "",
-                    `*(Fill in: what would you do differently?)*`,
-                    "",
-                    "## What's Next",
-                    "",
-                    `*(Fill in: what follows from this?)*`,
-                    "",
-                ].join("\n");
-                fs.writeFileSync(filePath, content);
-                generated.push(filePath);
-            }
-            catch (error) {
-                // Non-blocking: failure to write reflection should not break the pipeline
-            }
-        }
-        return generated;
-    }
-    getCommitCountSinceLastReflection() {
-        try {
-            // Get most recent reflection file
-            const recentReflection = this.getMostRecentDocument("reflection");
-            if (!recentReflection) {
-                // No reflections exist, count all commits
-                return this.getCommitCount();
-            }
-            // Get commits since that file was modified
-            const result = this.execSync(`git log --oneline --since="${fs.statSync(recentReflection).mtime.toISOString()}" 2>/dev/null | wc -l`, { silent: true });
-            return parseInt(result?.toString().trim() || "0", 10);
+                catch { /* empty */ }
+                return {
+                    hash: (hash || "").slice(0, 7),
+                    message: message || "",
+                    author: author || "",
+                    date: date || "",
+                    filesChanged,
+                    insertions,
+                    deletions,
+                    fileNames,
+                };
+            });
         }
         catch {
-            return 0;
+            return [];
         }
     }
-    getCommitCount() {
+    getRecentCommits(count) {
         try {
-            const result = this.execSync("git rev-list --count HEAD 2>/dev/null", { silent: true });
-            return parseInt(result?.toString().trim() || "0", 10);
+            const hash = this.git("git rev-list --max-parents=0 HEAD");
+            if (!hash)
+                return [];
+            const firstCommit = hash.split("\n")[0].trim();
+            return this.getCommitsBetween(firstCommit, "HEAD").slice(0, count);
         }
         catch {
-            return 0;
+            return [];
         }
     }
-    getMostRecentDocument(storyType) {
-        const dirs = storyType === "saga" || storyType === "journey"
-            ? [this.deepReflectionsDir]
-            : [this.reflectionsDir, this.deepReflectionsDir];
+    summarizeCommits(commits) {
+        const allFiles = new Map();
+        for (const commit of commits) {
+            for (const file of commit.fileNames) {
+                if (!allFiles.has(file)) {
+                    allFiles.set(file, "modified");
+                }
+            }
+        }
+        const filesAdded = [];
+        const filesModified = [];
+        const filesDeleted = [];
+        try {
+            const from = commits.length > 0 ? `${commits[commits.length - 1].hash}~1` : "HEAD~1";
+            const diffNames = this.git(`git diff --name-status ${from} HEAD`);
+            if (diffNames) {
+                for (const line of diffNames.split("\n").filter(Boolean)) {
+                    const [status, filePath] = line.split("\t");
+                    if (status === "A")
+                        filesAdded.push(filePath);
+                    else if (status === "D")
+                        filesDeleted.push(filePath);
+                    else if (status === "M")
+                        filesModified.push(filePath);
+                    else
+                        filesModified.push(filePath);
+                }
+            }
+        }
+        catch {
+            for (const [file] of allFiles) {
+                filesModified.push(file);
+            }
+        }
+        const uniqueDirs = [...new Set([...filesAdded, ...filesModified, ...filesDeleted]
+                .map((f) => {
+                const parts = f.split("/");
+                return parts.length > 1 ? parts.slice(0, -1).join("/") : ".";
+            }))].sort();
+        return {
+            totalCommits: commits.length,
+            totalFilesChanged: allFiles.size,
+            totalInsertions: commits.reduce((sum, c) => sum + c.insertions, 0),
+            totalDeletions: commits.reduce((sum, c) => sum + c.deletions, 0),
+            filesAdded,
+            filesModified,
+            filesDeleted,
+            uniqueDirs,
+            commitSubjects: commits.map((c) => c.message),
+        };
+    }
+    getLastTag() {
+        return this.git("git describe --tags --abbrev=0 2>/dev/null");
+    }
+    getFileCommitHash(filePath) {
+        return this.git(`git log -1 --format="%H" -- ${filePath}`);
+    }
+    getMostRecentReflectionFile() {
         let mostRecent = null;
         let mostRecentTime = 0;
-        for (const dir of dirs) {
+        for (const dir of [this.reflectionsDir, this.deepReflectionsDir]) {
             const fullPath = path.join(process.cwd(), dir);
             if (!fs.existsSync(fullPath))
                 continue;
-            const files = fs.readdirSync(fullPath).filter(f => f.endsWith(".md"));
+            const files = fs.readdirSync(fullPath).filter((f) => f.endsWith(".md"));
             for (const file of files) {
                 const filePath = path.join(fullPath, file);
                 const stat = fs.statSync(filePath);
@@ -282,33 +428,18 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         }
         return mostRecent;
     }
-    getDaysSinceFile(filePath) {
-        const stat = fs.statSync(filePath);
-        const daysSince = (Date.now() - stat.mtime.getTime()) / (1000 * 60 * 60 * 24);
-        return Math.floor(daysSince);
-    }
-    getSuggestedSagaTitle() {
-        // Try to get version from package.json
+    git(command) {
         try {
-            const pkgPath = path.join(process.cwd(), "package.json");
-            const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-            return `v${pkg.version} Release Journey`;
-        }
-        catch {
-            return "Recent Release Journey";
-        }
-    }
-    execSync(command, options) {
-        try {
-            return nodeExecSync(command, { encoding: "utf-8", stdio: options.silent ? "pipe" : "inherit" });
+            return execSync(command, {
+                encoding: "utf-8",
+                stdio: "pipe",
+                timeout: 5000,
+            }).trim() || null;
         }
         catch {
             return null;
         }
     }
-    /**
-     * Get suggested story type based on context
-     */
     static suggestStoryType(context) {
         if (context.isPublishing)
             return "saga";
@@ -318,9 +449,6 @@ export class StorytellingTriggerProcessor extends PostProcessor {
             return "reflection";
         return "reflection";
     }
-    /**
-     * Get story type metadata
-     */
     static getStoryTypeMeta(storyType) {
         const defaults = {
             reflection: {

@@ -3,7 +3,7 @@
 ## Brand Overview
 
 **Brand Name**: 0xRay (0xRay) – The AI Agent  
-**Version**: 1.22.40  
+**Version**: 1.22.41  
 **Architecture**: Facade Pattern with Modular Internal Structure  
 **Positioning**: Production-Ready Code. No Dead Ends.  
 **Core Value**: Delivers clean architecture, single sources of truth, modular components, and auto-generated tests — production-grade, every time.

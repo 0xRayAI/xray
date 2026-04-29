@@ -39,7 +39,7 @@ class StringRayLintServer {
   constructor() {
     this.server = new Server(
       {
-        name: "lint", version: "1.22.40",
+        name: "lint", version: "1.22.41",
       },
       {
         capabilities: {

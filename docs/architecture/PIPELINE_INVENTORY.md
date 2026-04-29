@@ -1,6 +1,6 @@
 # 0xRay Pipeline Inventory
 
-**Version**: 1.22.40  
+**Version**: 1.22.41  
 **Date**: 2026-04-15  
 **Author**: 0xRay AI Team (via @researcher agent)
 

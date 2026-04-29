@@ -3,185 +3,130 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
-describe("Auto-Reflection Generation", () => {
+describe("Storytelling Trigger Processor — Two Cadences", () => {
   let tmpDir: string;
-  let originalCwd: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-reflection-test-"));
-    originalCwd = process.cwd();
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-storytelling-test-"));
+    const origCwd = process.cwd;
+    process.cwd = () => tmpDir;
+    fs.mkdirSync(path.join(tmpDir, "docs", "reflections", "deep"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".git"), { recursive: true });
   });
 
   afterEach(() => {
-    process.chdir(originalCwd);
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("should generate reflection file when triggers activate", async () => {
-    process.chdir(tmpDir);
-    fs.mkdirSync(path.join(tmpDir, "docs", "reflections", "deep"), { recursive: true });
-
+  it("should return disabled message when config disabled", async () => {
     const { StorytellingTriggerProcessor } = await import(
       "../../processors/implementations/storytelling-trigger-processor.js"
     );
 
-    vi.spyOn(StorytellingTriggerProcessor.prototype, "loadConfig" as any).mockImplementation(function (this: any) {
-      this.config = {
-        enabled: true,
-        reflection_triggers: {
-          commit_count: { enabled: true, threshold: 1, story_type: "reflection" },
-          publish: { enabled: false, story_type: "saga" },
-          complex_changes: {
-            enabled: true,
-            file_count_threshold: 5,
-            story_type: "journey",
-          },
-          session_duration: {
-            enabled: true,
-            duration_minutes_threshold: 30,
-            story_type: "reflection",
-          },
-        },
-        story_types: {
-          reflection: { location: "docs/reflections/", min_words: 2000, ideal_words: 5000, framework: "three_act_structure" },
-          journey: { location: "docs/reflections/deep/", min_words: 1500, ideal_words: 4000, framework: "three_act_structure" },
-        },
-        quality_requirements: {
-          require_frontmatter: true,
-          require_key_takeaways: true,
-        },
-      };
-    });
+    const p = new StorytellingTriggerProcessor();
+    (p as any).config = { enabled: false };
 
-    const processor = new StorytellingTriggerProcessor();
-    const result = await processor.run({
-      operation: "commit",
-      filePath: "src/test.ts",
-      metadata: {
-        filesChanged: 10,
-        sessionDurationMinutes: 45,
+    const result = await p.run({ operation: "commit" } as any);
+
+    expect((result as any).message).toBe("Storytelling triggers disabled");
+    expect((result as any).triggers).toEqual([]);
+  });
+
+  it("should detect patterns from commit subjects", async () => {
+    const { StorytellingTriggerProcessor } = await import(
+      "../../processors/implementations/storytelling-trigger-processor.js"
+    );
+
+    const p = new StorytellingTriggerProcessor();
+    const patterns = (p as any).detectPatterns(
+      [
+        { message: "refactor: extract methods", fileNames: ["src/processors/foo.ts"], hash: "abc1234" },
+        { message: "fix: null pointer crash", fileNames: ["src/bar.ts"], hash: "def5678" },
+      ],
+      {
+        totalCommits: 2,
+        totalFilesChanged: 2,
+        totalInsertions: 100,
+        totalDeletions: 50,
+        filesAdded: ["src/__tests__/new.test.ts"],
+        filesModified: ["src/processors/foo.ts"],
+        filesDeleted: [],
+        uniqueDirs: ["src/processors"],
+        commitSubjects: ["refactor: extract methods", "fix: null pointer crash"],
       },
-    } as any);
+    );
 
-    expect(result).toBeDefined();
-    expect((result as any).triggers).toBeDefined();
-    expect((result as any).triggers.length).toBeGreaterThanOrEqual(1);
-
-    if ((result as any).generated?.length > 0) {
-      const generated = (result as any).generated as string[];
-      for (const filePath of generated) {
-        expect(fs.existsSync(filePath)).toBe(true);
-        const content = fs.readFileSync(filePath, "utf-8");
-        expect(content).toContain("# Auto-Generated");
-        expect(content).toContain("## Context");
-        expect(content).toContain("## Key Decisions");
-        expect(content).toContain("## Lessons Learned");
-      }
-    }
+    expect(patterns.some((pat: string) => pat.includes("Refactoring"))).toBe(true);
+    expect(patterns.some((pat: string) => pat.includes("Bug fixes"))).toBe(true);
+    expect(patterns.some((pat: string) => pat.includes("test coverage"))).toBe(true);
   });
 
-  it("should write to correct location based on story type", async () => {
-    process.chdir(tmpDir);
-    fs.mkdirSync(path.join(tmpDir, "docs", "reflections"), { recursive: true });
-
+  it("should extract decisions from commit messages", async () => {
     const { StorytellingTriggerProcessor } = await import(
       "../../processors/implementations/storytelling-trigger-processor.js"
     );
 
-    vi.spyOn(StorytellingTriggerProcessor.prototype, "loadConfig" as any).mockImplementation(function (this: any) {
-      this.config = {
-        enabled: true,
-        reflection_triggers: {
-          commit_count: { enabled: true, threshold: 1, story_type: "reflection" },
-          publish: { enabled: false },
-          complex_changes: { enabled: false },
-          session_duration: { enabled: false },
-        },
-        story_types: {
-          reflection: { location: "docs/reflections/", min_words: 2000, ideal_words: 5000, framework: "three_act_structure" },
-        },
-      };
-    });
+    const p = new StorytellingTriggerProcessor();
+    const decisions = (p as any).extractDecisions([
+      { message: "extract 24 inline methods into standalone files (1836→823 lines)" },
+      { message: "refactor: replace switch with Map registry" },
+      { message: "fix: report formatter hardcoded metrics" },
+    ]);
 
-    const processor = new StorytellingTriggerProcessor();
-    const result = await processor.run({
-      operation: "commit",
-    } as any);
-
-    if ((result as any).generated?.length > 0) {
-      const filePath = (result as any).generated[0] as string;
-      expect(filePath).toContain("docs/reflections");
-      expect(filePath).not.toContain("docs/reflections/deep");
-    }
+    expect(decisions.length).toBeGreaterThanOrEqual(3);
+    expect(decisions.some((d: string) => d.includes("Extraction"))).toBe(true);
+    expect(decisions.some((d: string) => d.includes("Structural change"))).toBe(true);
+    expect(decisions.some((d: string) => d.includes("Fix"))).toBe(true);
   });
 
-  it("should create directory if it does not exist", async () => {
-    process.chdir(tmpDir);
-
+  it("should produce non-empty reflection content", async () => {
     const { StorytellingTriggerProcessor } = await import(
       "../../processors/implementations/storytelling-trigger-processor.js"
     );
 
-    vi.spyOn(StorytellingTriggerProcessor.prototype, "loadConfig" as any).mockImplementation(function (this: any) {
-      this.config = {
-        enabled: true,
-        reflection_triggers: {
-          commit_count: { enabled: true, threshold: 1, story_type: "reflection" },
-          publish: { enabled: false },
-          complex_changes: { enabled: false },
-          session_duration: { enabled: false },
+    const p = new StorytellingTriggerProcessor();
+    const content = (p as any).synthesizeReflection({
+      cadence: "release",
+      commits: [
+        {
+          hash: "abc1234",
+          message: "feat: add auto-discovery",
+          author: "test",
+          date: "2026-04-29",
+          filesChanged: 5,
+          insertions: 200,
+          deletions: 50,
+          fileNames: ["src/processors/implementations/disco.ts", "src/__tests__/disco.test.ts"],
         },
-        story_types: {
-          reflection: { location: "docs/reflections/", min_words: 2000, ideal_words: 5000, framework: "three_act_structure" },
-        },
-      };
+      ],
+      diff: {
+        totalCommits: 1,
+        totalFilesChanged: 2,
+        totalInsertions: 200,
+        totalDeletions: 50,
+        filesAdded: ["src/processors/implementations/disco.ts"],
+        filesModified: [],
+        filesDeleted: [],
+        uniqueDirs: ["src/processors/implementations"],
+        commitSubjects: ["feat: add auto-discovery"],
+      },
+      sinceRef: "v1.22.29",
+      untilRef: "HEAD",
+      version: "1.22.41",
     });
 
-    expect(fs.existsSync(path.join(tmpDir, "docs", "reflections"))).toBe(false);
-
-    const processor = new StorytellingTriggerProcessor();
-    const result = await processor.run({ operation: "commit" } as any);
-
-    if ((result as any).generated?.length > 0) {
-      expect(fs.existsSync(path.join(tmpDir, "docs", "reflections"))).toBe(true);
-    }
+    expect(content).toContain("Release Reflection");
+    expect(content).toContain("1.22.29");
+    expect(content).toContain("feat: add auto-discovery");
+    expect(content).toContain("src/processors/implementations/disco.ts");
+    expect(content).toContain("Areas Touched");
+    expect(content).toContain("Patterns Observed");
+    expect(content).toContain("Key Decisions");
+    expect(content).toContain("Inference Notes");
+    expect(content).not.toContain("*(Fill in");
   });
 
-  it("should not overwrite existing reflection file", async () => {
-    process.chdir(tmpDir);
-    fs.mkdirSync(path.join(tmpDir, "docs", "reflections"), { recursive: true });
-
-    const { StorytellingTriggerProcessor } = await import(
-      "../../processors/implementations/storytelling-trigger-processor.js"
-    );
-
-    vi.spyOn(StorytellingTriggerProcessor.prototype, "loadConfig" as any).mockImplementation(function (this: any) {
-      this.config = {
-        enabled: true,
-        reflection_triggers: {
-          commit_count: { enabled: true, threshold: 1, story_type: "reflection" },
-          publish: { enabled: false },
-          complex_changes: { enabled: false },
-          session_duration: { enabled: false },
-        },
-        story_types: {
-          reflection: { location: "docs/reflections/", min_words: 2000, ideal_words: 5000, framework: "three_act_structure" },
-        },
-      };
-    });
-
-    const processor = new StorytellingTriggerProcessor();
-
-    const result1 = await processor.run({ operation: "commit" } as any);
-    const firstGenerated = (result1 as any).generated || [];
-
-    const result2 = await processor.run({ operation: "commit" } as any);
-    const secondGenerated = (result2 as any).generated || [];
-
-    expect(secondGenerated.length).toBeLessThanOrEqual(firstGenerated.length);
-  });
-
-  it("should suggest correct story type for different contexts", async () => {
+  it("should suggest correct story types", async () => {
     const { StorytellingTriggerProcessor } = await import(
       "../../processors/implementations/storytelling-trigger-processor.js"
     );
@@ -192,29 +137,44 @@ describe("Auto-Reflection Generation", () => {
     expect(StorytellingTriggerProcessor.suggestStoryType({})).toBe("reflection");
   });
 
-  it("should return empty generated array when no triggers fire", async () => {
-    process.chdir(tmpDir);
-
+  it("commit cadence reflection should not contain fill-in placeholders", async () => {
     const { StorytellingTriggerProcessor } = await import(
       "../../processors/implementations/storytelling-trigger-processor.js"
     );
 
-    vi.spyOn(StorytellingTriggerProcessor.prototype, "loadConfig" as any).mockImplementation(function (this: any) {
-      this.config = {
-        enabled: true,
-        reflection_triggers: {
-          commit_count: { enabled: false },
-          publish: { enabled: false },
-          complex_changes: { enabled: false },
-          session_duration: { enabled: false },
+    const p = new StorytellingTriggerProcessor();
+    const content = (p as any).synthesizeReflection({
+      cadence: "commit",
+      commits: [
+        {
+          hash: "deadbeef",
+          message: "fix: version compliance loop",
+          author: "agent",
+          date: "2026-04-29",
+          filesChanged: 3,
+          insertions: 100,
+          deletions: 200,
+          fileNames: ["scripts/node/release.js", "scripts/node/pre-publish-guard.js"],
         },
-      };
+      ],
+      diff: {
+        totalCommits: 1,
+        totalFilesChanged: 2,
+        totalInsertions: 100,
+        totalDeletions: 200,
+        filesAdded: [],
+        filesModified: ["scripts/node/release.js"],
+        filesDeleted: [],
+        uniqueDirs: ["scripts/node"],
+        commitSubjects: ["fix: version compliance loop"],
+      },
+      sinceRef: "last-reflection-hash",
+      untilRef: "HEAD",
     });
 
-    const processor = new StorytellingTriggerProcessor();
-    const result = await processor.run({ operation: "commit" } as any);
-
-    expect((result as any).generated).toBeUndefined();
-    expect((result as any).triggers).toEqual([]);
+    expect(content).toContain("Commit Cadence Reflection");
+    expect(content).toContain("fix: version compliance loop");
+    expect(content).toContain("scripts/node/release.js");
+    expect(content).not.toContain("*(Fill in");
   });
 });
