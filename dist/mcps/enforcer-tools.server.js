@@ -654,7 +654,7 @@ class StringRayEnforcerToolsServer {
                 if (fix.action === "createTestFile" && files.length > 0) {
                     // Import and run test auto-creation processor
                     try {
-                        const { testAutoCreationProcessor } = await import("../processors/test-auto-creation-processor.js");
+                        const { testAutoCreationProcessor } = await import("../processors/implementations/test-auto-creation-processor.js");
                         const result = await testAutoCreationProcessor.execute({
                             tool: "write",
                             args: { filePath: files[0] },

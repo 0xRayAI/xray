@@ -13,7 +13,7 @@
  * @since 2026-03-28
  */
 
-import { frameworkLogger } from "../core/framework-logger.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 // ---------------------------------------------------------------------------
 // Config

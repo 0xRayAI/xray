@@ -9,7 +9,7 @@ import {
   SpawnGovernanceProcessor,
   runSpawnGovernance,
   type SpawnGovernanceConfig,
-} from "../../processors/spawn-governance-processor.js";
+} from "../../processors/implementations/spawn-governance-processor.js";
 
 // ---------------------------------------------------------------------------
 // Mock process.memoryUsage so we can control memory thresholds

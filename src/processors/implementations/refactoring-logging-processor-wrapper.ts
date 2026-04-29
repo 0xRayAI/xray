@@ -8,7 +8,7 @@ export class RefactoringLoggingProcessorWrapper extends PreProcessor {
 
   protected async run(context: ProcessorContext): Promise<Record<string, unknown>> {
     try {
-      const { RefactoringLoggingProcessor } = await import("../refactoring-logging-processor.js");
+      const { RefactoringLoggingProcessor } = await import("./refactoring-logging-processor.js");
       const processor = new RefactoringLoggingProcessor();
 
       if (

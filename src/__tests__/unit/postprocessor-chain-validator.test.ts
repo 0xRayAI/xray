@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { PostProcessorChainValidator } from "../../processors/postprocessor-chain-validator.js";
+import { PostProcessorChainValidator } from "../../processors/implementations/postprocessor-chain-validator.js";
 
 describe("postprocessor-chain-validator", () => {
   describe("PostProcessorChainValidator", () => {

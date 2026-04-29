@@ -9,7 +9,7 @@ import {
   AsyncPatternProcessor,
   runAsyncPatternCheck,
   type AsyncViolation,
-} from "../../processors/async-pattern-processor.js";
+} from "../../processors/implementations/async-pattern-processor.js";
 
 describe("async-pattern-processor", () => {
   let processor: AsyncPatternProcessor;

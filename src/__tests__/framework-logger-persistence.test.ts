@@ -73,7 +73,7 @@ describe("Framework Logging File Persistence", () => {
   beforeEach(() => {
     // Use unique test ID to avoid conflicts between parallel tests
     testId = `test-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    logDir = path.join(process.cwd(), ".opencode", "logs");
+    logDir = path.join(process.cwd(), ".opencode", "logs", "test-isolated", testId);
     logFile = path.join(logDir, `framework-activity-${testId}.log`);
 
     // Create test-specific logger
@@ -90,8 +90,12 @@ describe("Framework Logging File Persistence", () => {
   });
 
   afterEach(() => {
-    if (fs.existsSync(logFile)) {
-      fs.unlinkSync(logFile);
+    try {
+      if (fs.existsSync(logDir)) {
+        fs.rmSync(logDir, { recursive: true, force: true });
+      }
+    } catch {
+      // ignore cleanup errors
     }
   });
 
@@ -144,13 +148,19 @@ describe("Framework Logging File Persistence", () => {
   });
 
   it("should create log directory if it doesn't exist", async () => {
-    if (fs.existsSync(logDir)) {
-      fs.rmSync(logDir, { recursive: true, force: true });
+    const isolatedDir = path.join(process.cwd(), ".opencode", "logs", "test-isolated", `mkdir-${testId}`);
+    const isolatedFile = path.join(isolatedDir, "test.log");
+    const isolatedLogger = new TestFrameworkLogger(isolatedFile);
+
+    await isolatedLogger.log("test-dir", "directory creation test", "success");
+
+    expect(fs.existsSync(isolatedDir)).toBe(true);
+    expect(fs.existsSync(isolatedFile)).toBe(true);
+
+    try {
+      fs.rmSync(path.join(process.cwd(), ".opencode", "logs", "test-isolated", `mkdir-${testId}`), { recursive: true, force: true });
+    } catch {
+      // ignore cleanup
     }
-
-    await testLogger.log("test-dir", "directory creation test", "success");
-
-    expect(fs.existsSync(logDir)).toBe(true);
-    expect(fs.existsSync(logFile)).toBe(true);
   });
 });

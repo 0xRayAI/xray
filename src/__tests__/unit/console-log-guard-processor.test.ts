@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { ConsoleLogGuardProcessor } from "../../processors/console-log-guard-processor.js";
+import { ConsoleLogGuardProcessor } from "../../processors/implementations/console-log-guard-processor.js";
 
 describe("console-log-guard-processor", () => {
   describe("ConsoleLogGuardProcessor", () => {

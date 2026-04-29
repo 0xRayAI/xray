@@ -311,8 +311,14 @@ export class StorytellingTriggerProcessor extends PostProcessor {
 
     lines.push("## Inference Notes");
     lines.push("");
-    lines.push("*(This section captures what an AI agent would infer from the above changes.)");
-    lines.push("Run the storyteller skill against this file to synthesize deeper analysis.)*");
+    const inferences = this.synthesizeInferences(commits, diff);
+    if (inferences.length > 0) {
+      for (const inf of inferences) {
+        lines.push(`- ${inf}`);
+      }
+    } else {
+      lines.push("*(No strong inference signals detected from commit patterns.)*");
+    }
     lines.push("");
 
     lines.push("---");
@@ -390,6 +396,61 @@ export class StorytellingTriggerProcessor extends PostProcessor {
     }
 
     return decisions;
+  }
+
+  private synthesizeInferences(commits: CommitInfo[], diff: DiffSummary): string[] {
+    const inferences: string[] = [];
+
+    if (diff.filesAdded.some(f => f.includes("implementations/") && f.endsWith(".ts"))) {
+      const count = diff.filesAdded.filter(f => f.includes("implementations/") && f.endsWith(".ts")).length;
+      inferences.push(`Extract Method pattern: ${count} new processor files suggest methods extracted from a monolithic module`);
+    }
+
+    if (diff.filesModified.some(f => f.includes("processor-manager"))) {
+      const deletions = diff.totalDeletions;
+      const insertions = diff.totalInsertions;
+      if (deletions > insertions * 1.5) {
+        inferences.push(`Code reduction effort: processor-manager had ${deletions} deletions vs ${insertions} insertions — simplification in progress`);
+      }
+    }
+
+    if (diff.filesModified.some(f => f.includes("factory") || f.includes("registry"))) {
+      inferences.push("Registry Pattern: factory/registry changes suggest switch-to-Map refactoring");
+    }
+
+    if (diff.filesAdded.some(f => f.includes("implementations/")) && diff.filesModified.some(f => f.includes("discover") || f.includes("auto"))) {
+      inferences.push("Convention over Configuration: new implementations + discovery code suggest auto-registration pattern");
+    }
+
+    if (diff.filesModified.some(f => f.includes("release") || f.includes("publish"))) {
+      inferences.push("Release pipeline investment: changes to release/publish scripts suggest automation of manual process");
+    }
+
+    if (diff.filesModified.some(f => f.includes("reflection") || f.includes("storytelling"))) {
+      inferences.push("Self-awareness layer: reflection/storytelling changes suggest the system is learning to observe itself");
+    }
+
+    const fixCommits = commits.filter(c => c.message.toLowerCase().includes("fix"));
+    if (fixCommits.length > commits.length * 0.4) {
+      inferences.push(`Stability sprint: ${fixCommits.length}/${commits.length} commits are fixes — addressing accumulated issues`);
+    }
+
+    if (diff.totalDeletions > diff.totalInsertions * 2) {
+      inferences.push(`Net code reduction: ${diff.totalDeletions - diff.totalInsertions} lines removed — technical debt being paid down`);
+    }
+
+    if (diff.filesAdded.some(f => f.includes("__tests__/"))) {
+      const testCount = diff.filesAdded.filter(f => f.includes("__tests__/")).length;
+      inferences.push(`Test coverage expansion: ${testCount} new test files added`);
+    }
+
+    if (inferences.length === 0) {
+      if (diff.totalCommits > 5) {
+        inferences.push(`Active development session: ${diff.totalCommits} commits across ${diff.uniqueDirs.length} areas`);
+      }
+    }
+
+    return inferences;
   }
 
   private getCommitsBetween(from: string, to: string): CommitInfo[] {

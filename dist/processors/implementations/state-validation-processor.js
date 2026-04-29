@@ -2,6 +2,7 @@ import { PostProcessor } from "../processor-interfaces.js";
 export class StateValidationProcessor extends PostProcessor {
     name = "stateValidation";
     priority = 12;
+    static dependencies = ["stateManager"];
     stateManager;
     constructor(stateManager) {
         super();

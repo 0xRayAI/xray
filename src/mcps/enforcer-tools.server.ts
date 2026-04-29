@@ -970,7 +970,7 @@ class StringRayEnforcerToolsServer {
           // Import and run test auto-creation processor
           try {
             const { testAutoCreationProcessor } =
-              await import("../processors/test-auto-creation-processor.js");
+              await import("../processors/implementations/test-auto-creation-processor.js");
             const result = await testAutoCreationProcessor.execute({
               tool: "write",
               args: { filePath: files[0] },

@@ -11,7 +11,7 @@ import {
   DEFAULT_PERFORMANCE_BUDGET,
   type PerformanceBudgetConfig,
   type PerformanceViolation,
-} from "../../processors/performance-budget-processor.js";
+} from "../../processors/implementations/performance-budget-processor.js";
 
 describe("performance-budget-processor", () => {
   let processor: PerformanceBudgetProcessor;

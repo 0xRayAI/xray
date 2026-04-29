@@ -22,7 +22,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { spawn, exec as execSync } from "child_process";
 import { promisify } from "util";
-import { frameworkLogger } from "../core/framework-logger.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 const exec = promisify(execSync);
 

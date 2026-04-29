@@ -11,13 +11,13 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../core/framework-logger.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import {
   detectProjectLanguage,
   getTestFilePath,
   LANGUAGE_CONFIGS,
-} from "../utils/language-detector.js";
-import { testAutoGenerationMonitor } from "../monitoring/test-auto-generation-monitor.js";
+} from "../../utils/language-detector.js";
+import { testAutoGenerationMonitor } from "../../monitoring/test-auto-generation-monitor.js";
 
 /**
  * Find the most recently modified TypeScript file in a directory

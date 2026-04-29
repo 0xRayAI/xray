@@ -5,7 +5,7 @@ export class RefactoringLoggingProcessorWrapper extends PreProcessor {
     priority = 8;
     async run(context) {
         try {
-            const { RefactoringLoggingProcessor } = await import("../refactoring-logging-processor.js");
+            const { RefactoringLoggingProcessor } = await import("./refactoring-logging-processor.js");
             const processor = new RefactoringLoggingProcessor();
             if (context.agentName &&
                 context.task &&

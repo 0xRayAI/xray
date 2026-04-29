@@ -31,7 +31,7 @@ import {
   parseTypeScriptErrors,
   typescriptCompilationProcessor,
   TypeScriptCompilationResult,
-} from "../../processors/typescript-compilation-processor.js";
+} from "../../processors/implementations/typescript-compilation-processor.js";
 
 describe("typescript-compilation-processor", () => {
   beforeEach(() => {

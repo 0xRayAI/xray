@@ -513,7 +513,7 @@ async function runPreCommitValidationWithAutoFix(
   try {
     // Dynamically import to avoid circular dependencies
     const { testAutoCreationProcessor } = await import(
-      "../processors/test-auto-creation-processor.js"
+      "../processors/implementations/test-auto-creation-processor.js"
     );
 
     let fixesApplied = 0;

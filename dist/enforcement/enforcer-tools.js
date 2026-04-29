@@ -401,7 +401,7 @@ async function ruleValidationSelf(operation, context, jobId) {
 async function runPreCommitValidationWithAutoFix(files, operation = "commit") {
     try {
         // Dynamically import to avoid circular dependencies
-        const { testAutoCreationProcessor } = await import("../processors/test-auto-creation-processor.js");
+        const { testAutoCreationProcessor } = await import("../processors/implementations/test-auto-creation-processor.js");
         let fixesApplied = 0;
         // Process each file
         for (const filePath of files) {

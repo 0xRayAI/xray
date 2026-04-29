@@ -46,6 +46,7 @@ export declare class ProcessorManager {
     constructor(stateManager: StringRayStateManager);
     registerProcessorInstance(processor: IProcessor): boolean;
     discoverProcessors(directory?: string): Promise<string[]>;
+    private instantiateWithDeps;
     private registerBuiltInFactories;
     registerFactory(name: string, factory: ProcessorFactory): void;
     registerProcessorWithHook(registration: ProcessorRegistration): void;

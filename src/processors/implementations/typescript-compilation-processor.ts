@@ -11,7 +11,7 @@
 
 import { execSync } from "child_process";
 import { existsSync } from "fs";
-import { frameworkLogger } from "../core/framework-logger.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 export interface TypeScriptCompilationResult {
   success: boolean;

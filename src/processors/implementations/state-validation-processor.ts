@@ -1,14 +1,16 @@
 import { PostProcessor } from "../processor-interfaces.js";
 import type { ProcessorContext } from "../processor-types.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import type { ProcessorDependency } from "../processor-interfaces.js";
 
 export class StateValidationProcessor extends PostProcessor {
   readonly name = "stateValidation";
   readonly priority = 12;
 
-  private stateManager: StringRayStateManager;
+  static readonly dependencies: ProcessorDependency[] = ["stateManager"];
 
-  constructor(stateManager: StringRayStateManager) {
+  private stateManager: any;
+
+  constructor(stateManager?: any) {
     super();
     this.stateManager = stateManager;
   }

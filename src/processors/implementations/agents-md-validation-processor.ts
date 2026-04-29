@@ -14,7 +14,8 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../core/framework-logger.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import { DocWriteGuard } from "../doc-write-guard.js";
 
 export interface AgentsMdValidationResult {
   valid: boolean;
@@ -353,7 +354,7 @@ export class AgentsMdValidationProcessor {
         .map((section) => this.getSectionTemplate(section))
         .join("\n");
 
-      fs.appendFileSync(this.agentsPath, additions);
+      DocWriteGuard.append(this.agentsPath, additions);
 
       await frameworkLogger.log(
         "agents-md-validation-processor",

@@ -58,11 +58,21 @@ export interface IProcessor {
 /**
  * Base processor class with common functionality
  */
+export type ProcessorDependency = "stateManager" | "config" | "logger";
+
+export interface ProcessorDependencies {
+  stateManager?: unknown;
+  config?: unknown;
+  logger?: unknown;
+}
+
 export abstract class BaseProcessor implements IProcessor {
   abstract readonly name: string;
   abstract readonly type: "pre" | "post";
   abstract readonly priority: number;
   enabled = true;
+
+  static readonly dependencies?: ProcessorDependency[];
 
   /**
    * Execute the processor with error handling and metrics

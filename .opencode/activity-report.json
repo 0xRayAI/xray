@@ -2,25 +2,85 @@
   "sessions": [],
   "activities": [
     {
-      "timestamp": "2026-04-29T12:24:06.277Z",
-      "id": "act-1777465446277-qlkm7o",
+      "timestamp": "2026-04-29T15:05:12.423Z",
+      "id": "act-1777475112423-iw5yap",
       "category": "session",
       "level": "info",
       "action": "session-ended",
       "message": "Activity logging session ended",
-      "sessionId": "session-1777465445724-rhuazj",
+      "sessionId": "session-1777475111159-h6a0zx",
       "details": {
-        "duration": 553
+        "duration": 1264
+      }
+    },
+    {
+      "timestamp": "2026-04-29T15:05:12.693Z",
+      "id": "act-1777475112693-96kolp",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777475112124-f9mi9r",
+      "details": {
+        "duration": 569
+      }
+    },
+    {
+      "timestamp": "2026-04-29T15:06:05.764Z",
+      "id": "act-1777475165764-lxcg8n",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777475164245-ry7l10",
+      "details": {
+        "duration": 1519
+      }
+    },
+    {
+      "timestamp": "2026-04-29T15:08:03.352Z",
+      "id": "act-1777475283352-jnooog",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777475282796-6pb348",
+      "details": {
+        "duration": 556
+      }
+    },
+    {
+      "timestamp": "2026-04-29T15:09:38.834Z",
+      "id": "act-1777475378834-xms4x2",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777475378263-y0ogia",
+      "details": {
+        "duration": 571
+      }
+    },
+    {
+      "timestamp": "2026-04-29T15:10:17.249Z",
+      "id": "act-1777475417249-q3877s",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777475415914-kz8hds",
+      "details": {
+        "duration": 1335
       }
     }
   ],
   "stats": {
-    "total": 1,
+    "total": 6,
     "byCategory": {
-      "session": 1
+      "session": 6
     },
     "byLevel": {
-      "info": 1
+      "info": 6
     }
   }
 }

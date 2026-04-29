@@ -15,6 +15,7 @@ export declare class StorytellingTriggerProcessor extends PostProcessor {
     private synthesizeReflection;
     private detectPatterns;
     private extractDecisions;
+    private synthesizeInferences;
     private getCommitsBetween;
     private getRecentCommits;
     private summarizeCommits;
