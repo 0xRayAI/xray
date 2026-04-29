@@ -17,3 +17,7 @@ strray-ai-*.tgz
 
 
 .strray/profiles/
+.opencode/**/*.d.ts
+.opencode/**/*.d.ts.map
+.strray/**/*.d.ts
+.strray/**/*.d.ts.map
