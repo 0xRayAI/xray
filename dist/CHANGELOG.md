@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.48] - 2026-04-29
+
+### 🔄 Changes
+
+### 📚 Documentation
+- docs: the engine that built the engine — deep reflection on the meta-system, consumer tweet, release reflection (522c28b9a)
+
+### 🔧 Maintenance
+- chore: v1.22.47, add .npmignore to strip .d.ts and source maps from package (e2f722523)
+- chore: remove 92 build artifacts (.d.ts, .d.ts.map) from .opencode git tracking, add to .gitignore (22f9ddfd9)
+- chore: rebuild dist after path fix (4453c41c7)
+
+---
+
 ## [1.22.47] - 2026-04-29
 
 ### 🔄 Changes

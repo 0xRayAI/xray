@@ -21,7 +21,7 @@ StringRay provides intelligent multi-agent orchestration with automatic delegati
 
 Deep reflection documents capture development journeys and lessons learned:
 - **Location**: `docs/reflections/` (main) and `docs/reflections/deep/` (detailed)
-- **Examples**: `kernel-v2.0-skill-system-fix-journey.md`, `typescript-build-fix-journey-2026-03-09.md`, `stringray-framework-deep-reflection-v1.22.47.md`
+- **Examples**: `kernel-v2.0-skill-system-fix-journey.md`, `typescript-build-fix-journey-2026-03-09.md`, `stringray-framework-deep-reflection-v1.22.48.md`
 
 These documents capture:
 - Technical challenges encountered and solved
@@ -639,7 +639,7 @@ npx strray-ai --version
 ### Consumer Environment Limitations
 
 - **Features.json**: Automatically loaded from package, not project root
-- **Codex Version**: Frozen at v1.22.47 in consumer mode (stable)
+- **Codex Version**: Frozen at v1.22.48 in consumer mode (stable)
 - **Plugin Behavior**: Reduced functionality in consumer mode:
   - No dynamic codex term enrichment
   - Fixed codex version
@@ -651,7 +651,7 @@ npx strray-ai --version
 | Aspect | Development | Consumer |
 |--------|-----------|----------|
 | Features | Full (latest) | Optimized (stable) |
-| Codex | Latest terms | v1.22.47 fallback |
+| Codex | Latest terms | v1.22.48 fallback |
 | Discovery | Dynamic (MCP) | Static only |
 | Hot Reload | Yes | No |
 
@@ -662,4 +662,4 @@ npx strray-ai --version
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.22.47 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.48 | [GitHub](https://github.com/htafolla/stringray)

@@ -1,6 +1,6 @@
 # 0xRay System Design
 
-**Version**: 1.22.44
+**Version**: 1.22.47
 
 ---
 

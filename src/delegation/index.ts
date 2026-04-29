@@ -1,5 +1,5 @@
 /**
- * 0xRay AI v1.22.44 - Delegation System
+ * 0xRay AI v1.22.47 - Delegation System
  *
  * Complete automatic multi-agent delegation system with complexity assessment
  * and session-based coordination.

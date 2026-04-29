@@ -161,7 +161,7 @@ class SessionManagementServer {
 
   constructor() {
     this.server = new Server(
-      { name: "session-management", version: "1.22.44" },
+      { name: "session-management", version: "1.22.47" },
       { capabilities: { tools: {} } },
     );
 

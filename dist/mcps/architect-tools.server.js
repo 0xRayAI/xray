@@ -14,7 +14,7 @@ class StringRayArchitectToolsServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "architect-tools", version: "1.22.44",
+            name: "architect-tools", version: "1.22.47",
         }, {
             capabilities: {
                 tools: {},
