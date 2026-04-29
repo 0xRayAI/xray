@@ -180,7 +180,9 @@ export class InferenceImprovementProcessor extends PostProcessor {
   }
 
   private async saveWorkflowContext(directory: string, context: InferenceWorkflowContext): Promise<void> {
-    const workflowPath = path.join(directory, this.workflowDir);
+    const workflowPath = path.isAbsolute(this.workflowDir)
+      ? this.workflowDir
+      : path.join(directory, this.workflowDir);
     if (!fs.existsSync(workflowPath)) {
       fs.mkdirSync(workflowPath, { recursive: true });
     }
@@ -200,7 +202,8 @@ export class InferenceImprovementProcessor extends PostProcessor {
   }
 
   private async generateAgentPrompts(directory: string, context: InferenceWorkflowContext): Promise<void> {
-    const promptsDir = path.join(directory, this.workflowDir, "prompts");
+    const workflowBase = path.isAbsolute(this.workflowDir) ? this.workflowDir : path.join(directory, this.workflowDir);
+    const promptsDir = path.join(workflowBase, "prompts");
     if (!fs.existsSync(promptsDir)) {
       fs.mkdirSync(promptsDir, { recursive: true });
     }
@@ -341,7 +344,8 @@ Final validation and application of approved changes:
       }
     );
 
-    const outputPath = path.join(process.cwd(), this.workflowDir, "workflow-status.json");
+    const workflowBase = path.isAbsolute(this.workflowDir) ? this.workflowDir : path.join(process.cwd(), this.workflowDir);
+    const outputPath = path.join(workflowBase, "workflow-status.json");
     fs.writeFileSync(outputPath, JSON.stringify({
       status: "in_progress",
       phase: "data_gathering",

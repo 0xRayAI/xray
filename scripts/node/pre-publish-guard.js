@@ -89,7 +89,13 @@ function checkGitStatus() {
       'src/__tests__/',
       'src/skills/registry.json',
       'CHANGELOG.md',
+      'AGENTS.md',
+      'AGENTS-full.md',
+      'AGENTS-consumer.md',
+      'README.md',
+      'logs/',
       'backups/',
+      'Users/',
     ];
     
     const realChanges = lines.filter(l => {

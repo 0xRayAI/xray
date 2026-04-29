@@ -216,15 +216,87 @@
       "details": {
         "duration": 549
       }
+    },
+    {
+      "timestamp": "2026-04-29T20:03:37.417Z",
+      "id": "act-1777493017417-lb6b32",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777493016863-582b8z",
+      "details": {
+        "duration": 554
+      }
+    },
+    {
+      "timestamp": "2026-04-29T20:03:37.473Z",
+      "id": "act-1777493017473-1cveyw",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777493016128-rrzm4e",
+      "details": {
+        "duration": 1345
+      }
+    },
+    {
+      "timestamp": "2026-04-29T20:03:57.366Z",
+      "id": "act-1777493037366-2shwye",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777493036742-bysdql",
+      "details": {
+        "duration": 624
+      }
+    },
+    {
+      "timestamp": "2026-04-29T20:06:11.921Z",
+      "id": "act-1777493171921-a19v80",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777493170685-st5tpf",
+      "details": {
+        "duration": 1236
+      }
+    },
+    {
+      "timestamp": "2026-04-29T20:06:24.328Z",
+      "id": "act-1777493184328-ezvyod",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777493183048-e4wv3i",
+      "details": {
+        "duration": 1280
+      }
+    },
+    {
+      "timestamp": "2026-04-29T20:07:31.567Z",
+      "id": "act-1777493251567-npafme",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777493250961-01sm0s",
+      "details": {
+        "duration": 606
+      }
     }
   ],
   "stats": {
-    "total": 18,
+    "total": 24,
     "byCategory": {
-      "session": 18
+      "session": 24
     },
     "byLevel": {
-      "info": 18
+      "info": 24
     }
   }
 }
