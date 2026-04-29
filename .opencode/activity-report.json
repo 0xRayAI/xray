@@ -72,15 +72,27 @@
       "details": {
         "duration": 1335
       }
+    },
+    {
+      "timestamp": "2026-04-29T15:12:16.766Z",
+      "id": "act-1777475536766-znvnxd",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777475536205-gwni1d",
+      "details": {
+        "duration": 561
+      }
     }
   ],
   "stats": {
-    "total": 6,
+    "total": 7,
     "byCategory": {
-      "session": 6
+      "session": 7
     },
     "byLevel": {
-      "info": 6
+      "info": 7
     }
   }
 }

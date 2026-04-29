@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.44] - 2026-04-29
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: fortress build — 96 processor tests, DI auto-discovery, DocWriteGuard, structural inference, processor consolidation (6fc30f8ca)
+
+### 🐛 Bug Fixes
+- fix: remove circular self-dep, delete 375 lines dead code, append-only docs, version sync script, upgrade stubs (69ce59696)
+
+### 📚 Documentation
+- docs: deep reflection — the day 0xray learned to talk (5400 words) (75e1a9389)
+
+### 🔧 Maintenance
+- chore: sync .strray (1b32155c2)
+- chore: rebuild dist v1.22.37 (4d1035b7a)
+- chore: update activity logs and test results (dcb5bf018)
+
+---
+
 ## [1.22.43] - 2026-04-29
 
 ### 🔄 Changes

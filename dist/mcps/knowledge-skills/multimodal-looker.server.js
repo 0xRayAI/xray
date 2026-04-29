@@ -16,7 +16,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 class MultimodalLookerServer {
     server;
     constructor() {
-        this.server = new Server({ name: "multimodal-looker", version: "1.22.42" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "multimodal-looker", version: "1.22.43" }, { capabilities: { tools: {} } });
         this.setupToolHandlers();
     }
     /* --------------------------------------------------------------------------

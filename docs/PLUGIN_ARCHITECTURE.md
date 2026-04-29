@@ -113,12 +113,12 @@ config:
 
 ```json
 {
-  "version": "1.22.42",
+  "version": "1.22.43",
   "plugins": [
     {
       "name": "mcp-image-recognition",
       "type": "mcp-server",
-      "version": "1.22.42",
+      "version": "1.22.43",
       "path": "plugins/mcp-image-recognition",
       "enabled": true,
       "autoStart": true,
