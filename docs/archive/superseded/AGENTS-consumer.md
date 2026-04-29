@@ -456,4 +456,4 @@ A: Yes, set `STRRAY_NO_TELEMETRY=1` environment variable.
 
 ---
 
-**Version**: 1.22.37 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.38 | [GitHub](https://github.com/htafolla/stringray)

@@ -242,7 +242,7 @@ class CodeAnalyzerServer {
         },
     ];
     constructor() {
-        this.server = new Server({ name: "code-analyzer", version: "1.22.37" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "code-analyzer", version: "1.22.38" }, { capabilities: { tools: {} } });
         this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
             tools: this.tools,
         }));

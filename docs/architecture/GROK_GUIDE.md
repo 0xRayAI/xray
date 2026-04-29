@@ -1,4 +1,4 @@
-# 0xRay AI v1.22.37 - Complete Guide for Grok Users
+# 0xRay AI v1.22.38 - Complete Guide for Grok Users
 
 ## 🚀 Welcome to 0xRay v1.15.1
 
@@ -98,7 +98,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.22.37"
+    "version": "1.22.38"
   }
 }
 ```
@@ -403,4 +403,4 @@ _Eliminate dead ends. Ship production-ready code. Every time._
 
 ---
 
-*0xRay AI v1.22.37 - Facade Pattern Architecture Guide*
+*0xRay AI v1.22.38 - Facade Pattern Architecture Guide*

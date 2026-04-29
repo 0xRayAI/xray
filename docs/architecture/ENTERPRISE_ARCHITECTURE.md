@@ -629,7 +629,7 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.22.37"
+    "version": "1.22.38"
   }
 }
 ```
@@ -800,4 +800,4 @@ This architecture provides a solid foundation for enterprise-grade AI agent coor
 
 ---
 
-*0xRay AI v1.22.37 - Enterprise Facade Pattern Architecture*
+*0xRay AI v1.22.38 - Enterprise Facade Pattern Architecture*
