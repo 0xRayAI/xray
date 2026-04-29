@@ -115,7 +115,7 @@ class LogMonitorServer {
 
   constructor() {
     this.server = new Server(
-      { name: "log-monitor", version: "1.22.39" },
+      { name: "log-monitor", version: "1.22.40" },
       { capabilities: { tools: {} } },
     );
     this.setupToolHandlers();

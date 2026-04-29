@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "1.22.40",
+  "version": "1.22.41",
   "description": "⚡ 0xRay: Self-Healing AI Governance OS - Enterprise AI orchestration for OpenCode, Hermes, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -95,12 +95,14 @@
     "enforce:versions": "bash scripts/node/enforce-version-compliance.sh",
     "version:sync": "node scripts/node/universal-version-manager.js",
     "preversion": "npm run version:sync",
+    "release": "node scripts/node/release.js",
+    "release:minor": "node scripts/node/release.mjs minor",
+    "release:major": "node scripts/node/release.mjs major",
+    "release:dry": "node scripts/node/release.js --dry-run",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
     "publish": "npm run pre-publish-guard && npm run safe-publish",
-    "release:patch": "node scripts/node/release.mjs patch",
-    "release:minor": "node scripts/node/release.mjs minor",
-    "release:major": "node scripts/node/release.mjs major"
+    "release:patch": "node scripts/node/release.mjs patch"
   },
   "files": [
     "dist/",

@@ -1,6 +1,6 @@
 # 0xRay: The Long Road to Agent Runtime - A Deep Reflection
 
-**Version**: 1.22.39  
+**Version**: 1.22.40  
 **Date**: April 2026  
 **Author**: 0xRay Development Team
 

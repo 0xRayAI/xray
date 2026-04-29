@@ -13,7 +13,7 @@ class StringRayAutoFormatServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "auto-format", version: "1.22.39",
+            name: "auto-format", version: "1.22.40",
         }, {
             capabilities: {
                 tools: {},

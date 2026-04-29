@@ -12,7 +12,7 @@ class StringRayGitWorkflowServer {
     server;
     constructor() {
         this.server = new Server({
-            name: "git-workflow", version: "1.22.39",
+            name: "git-workflow", version: "1.22.40",
         }, {
             capabilities: {
                 tools: {},

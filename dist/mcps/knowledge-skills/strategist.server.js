@@ -76,7 +76,7 @@ class StrategistServer {
     ];
     constructor() {
         this.server = new Server({
-            name: "strray/strategist", version: "1.22.39",
+            name: "strray/strategist", version: "1.22.40",
         }, {
             capabilities: {
                 tools: {},

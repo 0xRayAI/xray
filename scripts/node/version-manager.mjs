@@ -401,6 +401,22 @@ function updateVersion(newVersion, changeDescription = '') {
     fs.writeFileSync(docsReadmePath, readme);
     console.log(`✅ Updated docs/README.md (version: ${newVersion})`);
   }
+
+  // Update UVM's own version string
+  const uvmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');
+  if (fs.existsSync(uvmPath)) {
+    let uvmContent = fs.readFileSync(uvmPath, 'utf-8');
+    uvmContent = uvmContent.replace(
+      /version:\s*"[0-9]+\.[0-9]+\.[0-9]+"/,
+      `version: "${newVersion}"`
+    );
+    uvmContent = uvmContent.replace(
+      /lastUpdated:\s*"[0-9]{4}-[0-9]{2}-[0-9]{2}"/,
+      `lastUpdated: "${new Date().toISOString().split('T')[0]}"`
+    );
+    fs.writeFileSync(uvmPath, uvmContent);
+    console.log(`✅ Updated UVM version: ${newVersion}`);
+  }
   
   // Update CHANGELOG.md
   updateChangelog(newVersion, changeDescription);
@@ -471,6 +487,23 @@ function main() {
     updateChangelog(current, '');
     updateReadme(counts, current);
     updateAgentsMd(counts);
+
+    // Update UVM's own version string to match package.json
+    const uvmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');
+    if (fs.existsSync(uvmPath)) {
+      let uvmContent = fs.readFileSync(uvmPath, 'utf-8');
+      uvmContent = uvmContent.replace(
+        /version:\s*"[0-9]+\.[0-9]+\.[0-9]+"/,
+        `version: "${current}"`
+      );
+      uvmContent = uvmContent.replace(
+        /lastUpdated:\s*"[0-9]{4}-[0-9]{2}-[0-9]{2}"/,
+        `lastUpdated: "${new Date().toISOString().split('T')[0]}"`
+      );
+      fs.writeFileSync(uvmPath, uvmContent);
+      console.log(`✅ Updated UVM version: ${current}`);
+    }
+
     console.log(`\n🎉 Version propagated: ${current}\n`);
     return;
   }

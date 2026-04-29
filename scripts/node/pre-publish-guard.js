@@ -78,6 +78,7 @@ function checkGitStatus() {
       '.opencode/enforcer-config.json',
       '.opencode/package.json',
       '.opencode/command/',
+      '.opencode/activity-report.json',
       'strray/',
       'command/',
       'enforcer-config.json',
@@ -88,6 +89,7 @@ function checkGitStatus() {
       'src/__tests__/',
       'src/skills/registry.json',
       'CHANGELOG.md',
+      'backups/',
     ];
     
     const realChanges = lines.filter(l => {
