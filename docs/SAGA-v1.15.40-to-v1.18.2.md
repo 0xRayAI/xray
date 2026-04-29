@@ -142,7 +142,7 @@ The culprit: **Missing `"readme": "README.md"` field in package.json**
 ```json
 {
   "name": "strray-ai",
-  "version": "1.22.34",
+  "version": "1.22.35",
   "readme": "README.md",  // <-- The hero we needed
   ...
 }

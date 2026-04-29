@@ -59,7 +59,7 @@ const createTestServer = () => {
   app.get("/api/status", (req, res) => {
     res.json({
       framework: "0xRay",
-      version: "1.22.34",
+      version: "1.22.35",
       status: "active",
       agents: 8,
       timestamp: new Date().toISOString(),

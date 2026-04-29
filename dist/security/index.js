@@ -1,5 +1,5 @@
 /**
- * 0xRay AI v1.22.33 - Security Module Index
+ * 0xRay AI v1.22.35 - Security Module Index
  * Unified exports for the comprehensive security system
  */
 export { SecurityScanner, securityScanner } from "./security-scanner.js";

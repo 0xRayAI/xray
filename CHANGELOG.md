@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.36] - 2026-04-29
+
+### 🔄 Changes
+
+### 🔧 Maintenance
+- chore: update activity logs and test results (dcb5bf018)
+
+### 🔎 Other Changes
+- v1.22.35: rebuild dist, version sync (615b16d0b)
+- v1.22.34: extract 24 inline execute methods from processor-manager into standalone BaseProcessor files (1836→823 lines) (ce3893a40)
+- v1.22.32: sync version for next development cycle (b90315d47)
+- v1.22.31: processor registry pattern, auto-reflection generation, report formatter fixes, 36 new tests (2569 total) (2d71dbf67)
+
+---
+
 ## [1.22.35] - 2026-04-29
 
 ### 🔄 Changes
