@@ -9003,28 +9003,325 @@
         "pid": 39295,
         "nodeVersion": "v20.19.6"
       }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:48.473Z",
+      "id": "act-1777465488473-kbavhy",
+      "category": "session",
+      "level": "info",
+      "action": "session-started",
+      "message": "Activity logging session started",
+      "sessionId": "session-1777465488473-0bs4gw",
+      "details": {
+        "sessionId": "session-1777465488473-0bs4gw",
+        "cwd": "/Users/blaze/dev/stringray",
+        "pid": 40503,
+        "nodeVersion": "v20.19.6"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.261Z",
+      "id": "act-1777465489261-co4cr6",
+      "category": "session",
+      "level": "info",
+      "action": "session-started",
+      "message": "Activity logging session started",
+      "sessionId": "session-1777465489261-m7ug0z",
+      "details": {
+        "sessionId": "session-1777465489261-m7ug0z",
+        "cwd": "/Users/blaze/dev/stringray",
+        "pid": 40544,
+        "nodeVersion": "v20.19.6"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.303Z",
+      "id": "act-1777465489303-7f6ifp",
+      "category": "session",
+      "level": "info",
+      "action": "session-started",
+      "message": "Activity logging session started",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "sessionId": "session-1777465489303-tz5yig",
+        "cwd": "/Users/blaze/dev/stringray",
+        "pid": 40560,
+        "nodeVersion": "v20.19.6"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.315Z",
+      "id": "act-1777465489315-ejnvmw",
+      "category": "development",
+      "level": "info",
+      "action": "test-action",
+      "message": "Test message",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "key": "value"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.318Z",
+      "id": "act-1777465489318-vijd6t",
+      "category": "framework",
+      "level": "debug",
+      "action": "debug-action",
+      "message": "Debug message",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.321Z",
+      "id": "act-1777465489321-wk1lvx",
+      "category": "framework",
+      "level": "info",
+      "action": "info-action",
+      "message": "Info message",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.324Z",
+      "id": "act-1777465489324-nrj3w2",
+      "category": "framework",
+      "level": "warn",
+      "action": "warn-action",
+      "message": "Warn message",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.327Z",
+      "id": "act-1777465489327-3tujd1",
+      "category": "framework",
+      "level": "error",
+      "action": "error-action",
+      "message": "Error message",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.328Z",
+      "id": "act-1777465489328-oiirfg",
+      "category": "framework",
+      "level": "success",
+      "action": "success-action",
+      "message": "Success message",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.331Z",
+      "id": "act-1777465489331-jzoyuc",
+      "category": "framework",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.332Z",
+      "id": "act-1777465489332-11d48w",
+      "category": "development",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.335Z",
+      "id": "act-1777465489335-cfbwft",
+      "category": "script",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.337Z",
+      "id": "act-1777465489337-hec3d0",
+      "category": "file",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.339Z",
+      "id": "act-1777465489339-qdofho",
+      "category": "test",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.341Z",
+      "id": "act-1777465489341-x17ljb",
+      "category": "commit",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.343Z",
+      "id": "act-1777465489343-s0n19w",
+      "category": "session",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.345Z",
+      "id": "act-1777465489345-et505o",
+      "category": "agent",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.347Z",
+      "id": "act-1777465489347-cdr1k5",
+      "category": "processor",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.348Z",
+      "id": "act-1777465489348-k0691p",
+      "category": "config",
+      "level": "info",
+      "action": "test",
+      "message": "Test",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.352Z",
+      "id": "act-1777465489353-p7rwss",
+      "category": "development",
+      "level": "info",
+      "action": "feature-created",
+      "message": "Created new feature",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "feature": "test"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.356Z",
+      "id": "act-1777465489356-w1zw05",
+      "category": "script",
+      "level": "info",
+      "action": "script-run",
+      "message": "Ran build",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "command": "npm run build"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.357Z",
+      "id": "act-1777465489357-sawbgz",
+      "category": "file",
+      "level": "info",
+      "action": "file-created",
+      "message": "Created file",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "path": "test.ts"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.360Z",
+      "id": "act-1777465489360-am2556",
+      "category": "test",
+      "level": "info",
+      "action": "test-passed",
+      "message": "Tests passed",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "count": 100
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.362Z",
+      "id": "act-1777465489362-9ukemt",
+      "category": "commit",
+      "level": "info",
+      "action": "commit-made",
+      "message": "Committed changes",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "commit": "abc123"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.363Z",
+      "id": "act-1777465489363-9wgopm",
+      "category": "development",
+      "level": "success",
+      "action": "feature-complete",
+      "message": "Feature completed",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.366Z",
+      "id": "act-1777465489366-bnrtqd",
+      "category": "framework",
+      "level": "error",
+      "action": "operation-failed",
+      "message": "Operation failed",
+      "sessionId": "session-1777465489303-tz5yig",
+      "details": {
+        "error": "test"
+      }
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.369Z",
+      "id": "act-1777465489369-ivbavz",
+      "category": "framework",
+      "level": "warn",
+      "action": "operation-slow",
+      "message": "Operation is slow",
+      "sessionId": "session-1777465489303-tz5yig"
+    },
+    {
+      "timestamp": "2026-04-29T12:24:49.534Z",
+      "id": "act-1777465489535-t4pcz8",
+      "category": "session",
+      "level": "info",
+      "action": "session-started",
+      "message": "Activity logging session started",
+      "sessionId": "session-1777465489534-54swoq",
+      "details": {
+        "sessionId": "session-1777465489534-54swoq",
+        "cwd": "/Users/blaze/dev/stringray",
+        "pid": 40622,
+        "nodeVersion": "v20.19.6"
+      }
     }
   ],
   "stats": {
-    "total": 849,
+    "total": 877,
     "byCategory": {
-      "session": 150,
-      "agent": 30,
-      "processor": 31,
-      "config": 31,
-      "development": 122,
-      "script": 61,
-      "file": 61,
-      "test": 61,
-      "commit": 61,
-      "framework": 241
+      "session": 155,
+      "agent": 31,
+      "processor": 32,
+      "config": 32,
+      "development": 126,
+      "script": 63,
+      "file": 63,
+      "test": 63,
+      "commit": 63,
+      "framework": 249
     },
     "byLevel": {
-      "info": 637,
-      "success": 61,
-      "error": 61,
-      "warn": 60,
-      "debug": 30
+      "info": 658,
+      "success": 63,
+      "error": 63,
+      "warn": 62,
+      "debug": 31
     }
   }
 }

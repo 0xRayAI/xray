@@ -92,7 +92,7 @@ version: 1.0.0
   describe("validatePluginManifest", () => {
     test("validates valid manifest", () => {
       const manifest = {
-        name: "test-plugin", version: "1.22.41",
+        name: "test-plugin", version: "1.22.42",
         type: PluginType.MCP_SERVER,
         description: "Test plugin",
       };
@@ -103,7 +103,7 @@ version: 1.0.0
 
     test("rejects missing name", () => {
       const manifest = {
-        version: "1.22.41",
+        version: "1.22.42",
         type: PluginType.MCP_SERVER,
       };
       const result = validatePluginManifest(manifest as any);
@@ -124,7 +124,7 @@ version: 1.0.0
 
     test("rejects missing type", () => {
       const manifest = {
-        name: "test-plugin", version: "1.22.41",
+        name: "test-plugin", version: "1.22.42",
       };
       const result = validatePluginManifest(manifest as any);
       expect(result.valid).toBe(false);

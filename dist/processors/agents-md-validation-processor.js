@@ -195,7 +195,7 @@ export class AgentsMdValidationProcessor {
             const now = new Date().toISOString().split("T")[0];
             template = template
                 .replace(/\*\*Updated\*\*:\s*\d{4}-\d{2}-\d{2}/, `**Updated**: ${now}`)
-                .replace(/\*\*Version\*\*:\s*\d+\.\d+\.\d+/, `**Version**: 1.22.41`);
+                .replace(/\*\*Version\*\*:\s*\d+\.\d+\.\d+/, `**Version**: 1.22.42`);
             fs.writeFileSync(this.agentsPath, template, "utf-8");
             await frameworkLogger.log("agents-md-validation-processor", "-agents-md-auto-generated-", "info", { path: this.agentsPath });
             return {

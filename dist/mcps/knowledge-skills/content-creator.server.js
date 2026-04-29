@@ -84,7 +84,7 @@ class SEOCopywriterServer {
         },
     ];
     constructor() {
-        this.server = new Server({ name: "content-creator", version: "1.22.41" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "content-creator", version: "1.22.42" }, { capabilities: { tools: {} } });
         this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
             tools: this.tools,
         }));
