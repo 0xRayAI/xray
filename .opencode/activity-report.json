@@ -36,15 +36,63 @@
       "details": {
         "duration": 1151
       }
+    },
+    {
+      "timestamp": "2026-04-29T11:33:34.213Z",
+      "id": "act-1777462414213-b6gonn",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777462413642-qtsflo",
+      "details": {
+        "duration": 571
+      }
+    },
+    {
+      "timestamp": "2026-04-29T11:35:00.143Z",
+      "id": "act-1777462500143-kf6j5t",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777462499553-5o0v7e",
+      "details": {
+        "duration": 590
+      }
+    },
+    {
+      "timestamp": "2026-04-29T11:35:00.433Z",
+      "id": "act-1777462500433-5hfi41",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777462498813-nfjo35",
+      "details": {
+        "duration": 1620
+      }
+    },
+    {
+      "timestamp": "2026-04-29T11:37:13.648Z",
+      "id": "act-1777462633649-c9cwk1",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1777462631779-7e0jqv",
+      "details": {
+        "duration": 1869
+      }
     }
   ],
   "stats": {
-    "total": 3,
+    "total": 7,
     "byCategory": {
-      "session": 3
+      "session": 7
     },
     "byLevel": {
-      "info": 3
+      "info": 7
     }
   }
 }

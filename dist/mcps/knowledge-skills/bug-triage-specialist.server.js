@@ -11,7 +11,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextpro
 class BugTriageSpecialistServer {
     server;
     constructor() {
-        this.server = new Server({ name: "bug-triage-specialist", version: "1.22.38" }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: "bug-triage-specialist", version: "1.22.39" }, { capabilities: { tools: {} } });
         this.setupToolHandlers();
     }
     setupToolHandlers() {

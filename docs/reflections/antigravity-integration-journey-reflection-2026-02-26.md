@@ -138,16 +138,16 @@ We created `test-skill-routing.mjs` - a comprehensive test suite:
 
 ```
 26 test scenarios across 10 categories:
-- Antigravity Languages (2569 tests)
-- Antigravity DevOps (2569 tests)
-- Antigravity Business (2569 tests)
-- Antigravity AI/Data (2569 tests)
-- Antigravity General (2569 tests)
-- Security (2569 tests)
-- Testing (2,2569 tests)
-- Performance (2569 tests)
-- Code Review (2569 tests)
-- Architecture (2569 tests)
+- Antigravity Languages (2579 tests)
+- Antigravity DevOps (2579 tests)
+- Antigravity Business (2579 tests)
+- Antigravity AI/Data (2579 tests)
+- Antigravity General (2579 tests)
+- Security (2579 tests)
+- Testing (2,2579 tests)
+- Performance (2579 tests)
+- Code Review (2579 tests)
+- Architecture (2579 tests)
 
 Result: 100% pass rate
 ```

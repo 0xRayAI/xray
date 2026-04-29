@@ -16,7 +16,7 @@ class StringRayPerformanceOptimizationServer {
     startTime;
     constructor() {
         this.server = new Server({
-            name: "performance-optimization", version: "1.22.38",
+            name: "performance-optimization", version: "1.22.39",
         }, {
             capabilities: {
                 tools: {},

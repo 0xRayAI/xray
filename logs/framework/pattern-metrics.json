@@ -1,19 +1,25 @@
 {
   "architect:architect_skill": {
     "patternId": "architect:architect_skill",
-    "totalUsages": 1,
-    "successfulUsages": 1,
+    "totalUsages": 2,
+    "successfulUsages": 2,
     "failedUsages": 0,
     "successRate": 1,
-    "avgConfidence": 0.8,
+    "avgConfidence": 0.7999999999999999,
     "avgResponseTime": 0,
-    "lastUpdated": "2026-04-29T11:16:25.179Z",
+    "lastUpdated": "2026-04-29T11:37:15.362Z",
     "timeSeries": [
       {
-        "timestamp": "2026-04-29T11:16:25.179Z",
+        "timestamp": "2026-04-29T11:37:15.361Z",
         "successRate": 1,
         "avgConfidence": 0.8,
         "usageCount": 1
+      },
+      {
+        "timestamp": "2026-04-29T11:37:15.362Z",
+        "successRate": 1,
+        "avgConfidence": 0.7999999999999999,
+        "usageCount": 2
       }
     ]
   },
@@ -25,10 +31,10 @@
     "successRate": 1,
     "avgConfidence": 0.8,
     "avgResponseTime": 0,
-    "lastUpdated": "2026-04-29T11:16:25.180Z",
+    "lastUpdated": "2026-04-29T11:37:15.363Z",
     "timeSeries": [
       {
-        "timestamp": "2026-04-29T11:16:25.180Z",
+        "timestamp": "2026-04-29T11:37:15.363Z",
         "successRate": 1,
         "avgConfidence": 0.8,
         "usageCount": 1
@@ -43,10 +49,10 @@
     "successRate": 1,
     "avgConfidence": 0.8,
     "avgResponseTime": 0,
-    "lastUpdated": "2026-04-29T11:16:25.181Z",
+    "lastUpdated": "2026-04-29T11:37:15.363Z",
     "timeSeries": [
       {
-        "timestamp": "2026-04-29T11:16:25.181Z",
+        "timestamp": "2026-04-29T11:37:15.363Z",
         "successRate": 1,
         "avgConfidence": 0.8,
         "usageCount": 1

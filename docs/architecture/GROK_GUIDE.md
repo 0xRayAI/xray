@@ -1,4 +1,4 @@
-# 0xRay AI v1.22.38 - Complete Guide for Grok Users
+# 0xRay AI v1.22.39 - Complete Guide for Grok Users
 
 ## 🚀 Welcome to 0xRay v1.15.1
 
@@ -98,7 +98,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "strray",
-    "version": "1.22.38"
+    "version": "1.22.39"
   }
 }
 ```
@@ -226,7 +226,7 @@ npm run dev
 | **Bundle Size** | 8,230 lines | 1,218 lines | 87% smaller |
 | **Agent Spawning** | Slower | Faster | Better performance |
 | **Memory Usage** | Higher | Lower | More efficient |
-| **Test Coverage** | ~104 | 104 | +2,2569 tests |
+| **Test Coverage** | ~104 | 104 | +2,2579 tests |
 
 ## 🔧 Advanced Configuration for Grok
 
@@ -403,4 +403,4 @@ _Eliminate dead ends. Ship production-ready code. Every time._
 
 ---
 
-*0xRay AI v1.22.38 - Facade Pattern Architecture Guide*
+*0xRay AI v1.22.39 - Facade Pattern Architecture Guide*

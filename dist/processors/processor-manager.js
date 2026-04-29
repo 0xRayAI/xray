@@ -1,4 +1,6 @@
 import { frameworkLogger } from "../core/framework-logger.js";
+import { readdir } from "fs/promises";
+import { join, basename } from "path";
 export class ProcessorManager {
     processors = new Map();
     metrics = new Map();
@@ -8,6 +10,77 @@ export class ProcessorManager {
     constructor(stateManager) {
         this.stateManager = stateManager;
         this.registerBuiltInFactories();
+    }
+    registerProcessorInstance(processor) {
+        if (this.factories.has(processor.name)) {
+            return false;
+        }
+        this.factories.set(processor.name, {
+            execute: async (ctx) => {
+                const result = await processor.execute(ctx);
+                return result.data;
+            },
+        });
+        frameworkLogger.log("processor-manager", "auto-discovered-processor", "info", {
+            name: processor.name,
+            type: processor.type,
+            priority: processor.priority,
+        });
+        return true;
+    }
+    async discoverProcessors(directory) {
+        const dir = directory || join(__dirname, "implementations");
+        const discovered = [];
+        let files;
+        try {
+            files = await readdir(dir);
+        }
+        catch {
+            return discovered;
+        }
+        for (const file of files) {
+            const isJs = file.endsWith(".js");
+            const isTs = file.endsWith(".ts");
+            if ((!isJs && !isTs) || file.includes(".test.") || file.includes(".spec.") || file.includes(".d.ts")) {
+                continue;
+            }
+            try {
+                const baseName = basename(file, isJs ? ".js" : ".ts");
+                const modulePath = `./implementations/${baseName}.js`;
+                const mod = await import(modulePath);
+                for (const exportValue of Object.values(mod)) {
+                    if (typeof exportValue === "function" && exportValue.prototype) {
+                        try {
+                            const instance = new exportValue();
+                            if (instance &&
+                                typeof instance.name === "string" &&
+                                instance.name.length > 0 &&
+                                (instance.type === "pre" || instance.type === "post") &&
+                                typeof instance.priority === "number" &&
+                                typeof instance.execute === "function") {
+                                this.registerProcessorInstance(instance);
+                                discovered.push(instance.name);
+                            }
+                        }
+                        catch {
+                            // Constructor may require arguments — skip
+                        }
+                    }
+                }
+            }
+            catch (error) {
+                frameworkLogger.log("processor-manager", "discovery-import-failed", "warning", {
+                    file,
+                    error: error instanceof Error ? error.message : String(error),
+                });
+            }
+        }
+        frameworkLogger.log("processor-manager", "processor-discovery-complete", "info", {
+            scanned: files.length,
+            discovered: discovered.length,
+            names: discovered,
+        });
+        return discovered;
     }
     registerBuiltInFactories() {
         const f = this.factories;

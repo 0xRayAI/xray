@@ -1,5 +1,6 @@
 import { StringRayStateManager } from "../state/state-manager.js";
 import { ProcessorRegistration, ProcessorHook } from "./processor-types.js";
+import { IProcessor } from "./processor-interfaces.js";
 export interface ProcessorConfig {
     name: string;
     type: "pre" | "post";
@@ -43,6 +44,8 @@ export declare class ProcessorManager {
     private activeProcessors;
     private factories;
     constructor(stateManager: StringRayStateManager);
+    registerProcessorInstance(processor: IProcessor): boolean;
+    discoverProcessors(directory?: string): Promise<string[]>;
     private registerBuiltInFactories;
     registerFactory(name: string, factory: ProcessorFactory): void;
     registerProcessorWithHook(registration: ProcessorRegistration): void;
