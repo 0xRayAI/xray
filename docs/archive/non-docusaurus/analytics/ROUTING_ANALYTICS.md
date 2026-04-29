@@ -245,6 +245,6 @@ Potential improvements for future versions:
 
 ## Version
 
-- **Version**: 1.22.35
+- **Version**: 1.22.36
 - **Date**: 2026-03-05
 - **0xRay Framework Version**: 1.7.2

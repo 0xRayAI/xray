@@ -1,6 +1,6 @@
 # 0xRay Documentation Index
 
-**Version**: 1.22.35 | **Last Updated**: 2026-03-22
+**Version**: 1.22.36 | **Last Updated**: 2026-03-22
 
 ---
 
@@ -122,6 +122,6 @@ These are preserved in [`archive/`](archive/) for reference:
 
 When adding docs:
 1. Place in appropriate folder (see structure above)
-2. Add version banner: `**Version**: 1.22.35`
+2. Add version banner: `**Version**: 1.22.36`
 3. Update this index
 4. Archive outdated docs instead of deleting
