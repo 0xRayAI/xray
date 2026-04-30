@@ -678,6 +678,101 @@ program
     console.log('  --run-once  Run a single tuning cycle');
     console.log('  --status    Show tuner status');
 });
+// Inference cycle run command
+program
+    .command('inference:run')
+    .description('Run a self-improvement inference cycle: collect → propose → govern → verify')
+    .option('-f, --force', 'Force cycle even if threshold not met')
+    .option('--no-verify', 'Skip deploy verification step')
+    .option('--json', 'Output raw JSON result')
+    .action(async (options) => {
+    const { InferenceCycle } = await import('../inference/inference-cycle.js');
+    const { shouldTriggerCycle } = await import('../inference/inference-accumulator.js');
+    const { accumulateCorpus } = await import('../inference/inference-accumulator.js');
+    const { featuresConfigLoader } = await import('../core/features-config.js');
+    const features = featuresConfigLoader.loadConfig();
+    const inferenceConfig = features?.inference;
+    if (!inferenceConfig?.enabled) {
+        if (options.json) {
+            console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
+        }
+        else {
+            console.log('Inference feature is disabled in features.json.');
+            console.log('Enable it by setting inference.enabled = true in .opencode/strray/features.json');
+        }
+        return;
+    }
+    const projectRoot = process.cwd();
+    const inferenceDir = `${projectRoot}/docs/inference`;
+    const stateDir = `${projectRoot}/.strray/inference`;
+    const stateFile = `${stateDir}/inference-cycle-state.json`;
+    if (!options.json) {
+        console.log('0xRay Inference Cycle');
+        console.log('====================');
+    }
+    if (!options.force) {
+        const threshold = shouldTriggerCycle(inferenceDir, stateFile);
+        if (!threshold.trigger) {
+            if (options.json) {
+                console.log(JSON.stringify({ triggered: false, reason: threshold.reason }));
+            }
+            else {
+                console.log(`Not triggered: ${threshold.reason}`);
+                console.log('Use --force to override.');
+            }
+            return;
+        }
+        if (!options.json) {
+            console.log(`Triggered: ${threshold.reason}`);
+        }
+    }
+    else if (!options.json) {
+        console.log('Force mode — skipping threshold check');
+    }
+    if (!options.json) {
+        const corpus = accumulateCorpus(inferenceDir);
+        console.log(`\nCorpus: ${corpus.sessions.length} sessions, ${corpus.totalCommits} commits`);
+        console.log(`  Recurring problems: ${corpus.recurringProblems.length}`);
+        console.log(`  Recurring patterns: ${corpus.recurringPatterns.length}`);
+    }
+    const cycle = new InferenceCycle(projectRoot, undefined, { skipDeployVerify: options.noVerify ?? false });
+    const result = await cycle.maybeRunCycle();
+    if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+    }
+    console.log(`\nCycle: ${result.cycleId}`);
+    console.log(`Phase: ${result.phase}`);
+    console.log(`Duration: ${(result.duration / 1000).toFixed(1)}s`);
+    if (result.proposals.length > 0) {
+        console.log(`\nProposals (${result.proposals.length}):`);
+        for (const p of result.proposals) {
+            const icon = p.status === 'approved' || p.status === 'applied' ? 'APPROVED' : p.status === 'rejected' ? 'REJECTED' : p.status === 'failed' ? 'FAILED' : 'PENDING';
+            console.log(`  [${icon}] ${p.type}: ${p.title} (${(p.confidence * 100).toFixed(0)}%)`);
+        }
+    }
+    else {
+        console.log('\nNo proposals generated.');
+    }
+    if (result.votes.length > 0) {
+        console.log(`\nGovernance votes (${result.votes.length}):`);
+        for (const v of result.votes) {
+            console.log(`  ${v.proposalId}: ${v.decision} (${(v.confidence * 100).toFixed(0)}%)`);
+            for (const d of v.details) {
+                console.log(`    ${d}`);
+            }
+        }
+    }
+    if (result.deployVerification) {
+        console.log(`\nDeploy verification: ${result.deployVerification.success ? 'PASSED' : 'FAILED'}`);
+        const failedChecks = result.deployVerification.checks.filter((c) => !c.passed);
+        if (failedChecks.length > 0) {
+            for (const c of failedChecks) {
+                console.log(`  Failed: ${c.name} — ${c.output?.substring(0, 200)}`);
+            }
+        }
+    }
+});
 // Publish agent command
 program
     .command('publish-agent')

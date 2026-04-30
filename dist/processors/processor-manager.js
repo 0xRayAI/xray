@@ -405,6 +405,13 @@ export class ProcessorManager {
                 return p.execute(ctx);
             },
         });
+        f.set("sessionCapture", {
+            execute: async (ctx) => {
+                const { SessionCaptureProcessor } = await import("./implementations/session-capture-processor.js");
+                const p = new SessionCaptureProcessor();
+                return p.execute(ctx);
+            },
+        });
     }
     registerFactory(name, factory) {
         this.factories.set(name, factory);

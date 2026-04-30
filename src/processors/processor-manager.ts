@@ -483,6 +483,14 @@ export class ProcessorManager {
         return p.execute(ctx as unknown as ProcessorContext);
       },
     });
+
+    f.set("sessionCapture", {
+      execute: async (ctx) => {
+        const { SessionCaptureProcessor } = await import("./implementations/session-capture-processor.js");
+        const p = new SessionCaptureProcessor();
+        return p.execute(ctx as unknown as ProcessorContext);
+      },
+    });
   }
 
   registerFactory(name: string, factory: ProcessorFactory): void {

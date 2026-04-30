@@ -32,16 +32,27 @@ export interface InferenceCycleResult {
     duration: number;
 }
 export type CyclePhase = "idle" | "collecting" | "proposing" | "governing" | "deploying" | "verifying" | "complete" | "failed";
+export type AgentInvoker = (agentName: string, prompt: string) => Promise<string>;
+export interface InferenceCycleOptions {
+    skipDeployVerify?: boolean;
+}
 export declare class InferenceCycle {
     private inferenceDir;
     private stateDir;
     private projectRoot;
     private phase;
-    constructor(projectRoot?: string);
+    private opencodeAvailable;
+    private agentInvoker;
+    private options;
+    constructor(projectRoot?: string, agentInvoker?: AgentInvoker, options?: InferenceCycleOptions);
     maybeRunCycle(): Promise<InferenceCycleResult>;
     private generateProposals;
+    private adjustFromHistory;
     private governProposals;
-    private simulateAgentVote;
+    private getAgentVote;
+    private invokeAgent;
+    private parseAgentResponse;
+    private heuristicFallbackVote;
     private classifyProposalType;
     private patternToProposalType;
     private generateTitle;
@@ -49,6 +60,8 @@ export declare class InferenceCycle {
     getPhase(): CyclePhase;
     private saveCycleState;
     private appendHistory;
+    private loadHistory;
+    private adjustConfidenceFromHistory;
     private buildResult;
 }
 //# sourceMappingURL=inference-cycle.d.ts.map

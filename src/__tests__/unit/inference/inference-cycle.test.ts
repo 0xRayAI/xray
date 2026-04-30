@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { InferenceCycle, InferenceProposal } from "../../../inference/inference-cycle.js";
 import { SessionInference } from "../../../inference/session-capture.js";
+
+const mockAgentInvoker = vi.fn().mockRejectedValue(new Error("opencode not available in test"));
 
 function makeSession(id: string, commits: number, problem: string): SessionInference {
   return {
@@ -47,7 +49,7 @@ describe("Inference Cycle", () => {
   });
 
   it("should not trigger when insufficient data collected", async () => {
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.triggered).toBe(false);
@@ -67,7 +69,7 @@ describe("Inference Cycle", () => {
       );
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.triggered).toBe(true);
@@ -89,7 +91,7 @@ describe("Inference Cycle", () => {
       );
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.proposals.length).toBeGreaterThan(0);
@@ -112,7 +114,7 @@ describe("Inference Cycle", () => {
       );
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.votes.length).toBeGreaterThan(0);
@@ -139,7 +141,7 @@ describe("Inference Cycle", () => {
       );
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.proposals.length).toBeLessThanOrEqual(5);
@@ -156,7 +158,7 @@ describe("Inference Cycle", () => {
       );
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.duration).toBeGreaterThan(0);
@@ -164,7 +166,7 @@ describe("Inference Cycle", () => {
   }, 15000);
 
   it("should track phase transitions", async () => {
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     expect(cycle.getPhase()).toBe("idle");
 
     const result = await cycle.maybeRunCycle();
@@ -182,7 +184,7 @@ describe("Inference Cycle", () => {
       );
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     const json = JSON.stringify(result);

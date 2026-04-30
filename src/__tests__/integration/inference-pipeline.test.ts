@@ -1,10 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { saveSessionInference, SessionInference } from "../../inference/session-capture.js";
 import { shouldTriggerCycle, accumulateCorpus } from "../../inference/inference-accumulator.js";
 import { InferenceCycle } from "../../inference/inference-cycle.js";
+
+const mockAgentInvoker = vi.fn().mockRejectedValue(new Error("opencode not available in test"));
 
 function makeTestSession(id: string, commits: number, pattern: string, problem: string): SessionInference {
   return {
@@ -77,7 +79,7 @@ describe("Inference Pipeline Integration", () => {
     expect(pathProblem).toBeDefined();
     expect(pathProblem!.occurrences).toBe(3);
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.triggered).toBe(true);
@@ -100,7 +102,7 @@ describe("Inference Pipeline Integration", () => {
       saveSessionInference(makeTestSession(`c${i}`, 15, "Extract Method", `Bug: test bug ${i}`), inferenceDir);
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const first = await cycle.maybeRunCycle();
     expect(first.triggered).toBe(true);
 
@@ -114,7 +116,7 @@ describe("Inference Pipeline Integration", () => {
       saveSessionInference(makeTestSession(`m${i}`, 10, "Registry Pattern", `Bug: same recurring bug`), inferenceDir);
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     for (const proposal of result.proposals) {
@@ -134,7 +136,7 @@ describe("Inference Pipeline Integration", () => {
       saveSessionInference(makeTestSession(`v${i}`, 10, "Facade Pattern", "Bug: vote test bug"), inferenceDir);
     }
 
-    const cycle = new InferenceCycle(tmpDir);
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
     const result = await cycle.maybeRunCycle();
 
     expect(result.votes.length).toBe(result.proposals.length);

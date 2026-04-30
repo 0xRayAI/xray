@@ -1,0 +1,28 @@
+{
+  "voting:history": [
+    {
+      "id": "vote_1777568577721_b192cb31",
+      "sessionId": "inference-governance-1777568577721",
+      "topic": "Fix recurring bug pattern (7x across 5 sessions)",
+      "voteCount": 2,
+      "strategy": "majority_vote",
+      "decision": "approve",
+      "confidence": 1,
+      "participantCount": 2,
+      "timestamp": 1777568577721,
+      "resolvedAt": 1777568607696
+    },
+    {
+      "id": "vote_1777568607696_c29e5d57",
+      "sessionId": "inference-governance-1777568577721",
+      "topic": "Remove accumulated dead code (2x across 2 sessions)",
+      "voteCount": 2,
+      "strategy": "consensus",
+      "decision": "approve",
+      "confidence": 0.5831111111111112,
+      "participantCount": 2,
+      "timestamp": 1777568607696,
+      "resolvedAt": 1777568635576
+    }
+  ]
+}

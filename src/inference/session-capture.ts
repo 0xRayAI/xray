@@ -299,7 +299,7 @@ function extractWrongTurns(
   const allMessages = commits.map((c) => c.message.toLowerCase());
   const hasPathFix = allMessages.filter((m) => m.includes("path") && (m.includes("fix") || m.includes("bogus"))).length;
   if (hasPathFix > 0) {
-    wrongTurns.push(`Path handling bug: absolute vs relative path confusion (${hasPathFix} commits affected)`);
+    wrongTurns.push("Path handling bug: absolute vs relative path confusion");
   }
 
   const hasFlakyFix = allMessages.filter((m) => m.includes("timeout") || m.includes("flaky")).length;

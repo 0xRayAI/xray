@@ -81,6 +81,7 @@ export function accumulateCorpus(inferenceDir: string): InferenceCorpus {
   }
 
   const recurringPatterns: RecurringPattern[] = [...patternMap.entries()]
+    .filter(([, data]) => data.count >= 2)
     .map(([name, data]) => ({
       name,
       occurrences: data.count,
@@ -154,6 +155,10 @@ function normalizeProblem(problem: string): string {
     .replace(/\([a-f0-9]{7}\)/g, "")
     .replace(/\d+ commits affected/g, "N commits affected")
     .replace(/\d+ files?/g, "N files")
+    .replace(/^Bug: fix:.*$/i, "Bug fix")
+    .replace(/^Code health:.*$/i, "Code health cleanup")
+    .replace(/^Incomplete implementation:.*$/i, "Incomplete implementation")
+    .replace(/^Accumulated dead code:.*$/i, "Accumulated dead code")
     .trim();
 }
 
