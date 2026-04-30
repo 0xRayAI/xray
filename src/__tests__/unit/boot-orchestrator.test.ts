@@ -82,7 +82,6 @@ describe("BootOrchestrator", () => {
   });
 
   test("should execute boot sequence successfully", async () => {
-    // Mock all the dependencies that would be created during boot
     const mockProcessorManager = {
       initialize: vi.fn().mockResolvedValue(true),
       registerProcessor: vi.fn(),
@@ -145,7 +144,7 @@ describe("BootOrchestrator", () => {
     expect(typeof result.success).toBe("boolean");
     expect(Array.isArray(result.errors)).toBe(true);
     expect(Array.isArray(result.agentsLoaded)).toBe(true);
-  });
+  }, 10000);
 
   test("should handle boot sequence with disabled codex validation", async () => {
     // Create orchestrator with codex validation disabled

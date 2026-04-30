@@ -1,0 +1,1 @@
+{"version":3,"file":"semantic-patterns.d.ts","sourceRoot":"","sources":["../../src/inference/semantic-patterns.ts"],"names":[],"mappings":"AAEA,MAAM,WAAW,iBAAiB;IAChC,IAAI,EAAE,MAAM,CAAC;IACb,UAAU,EAAE,MAAM,CAAC;IACnB,QAAQ,EAAE,MAAM,EAAE,CAAC;IACnB,WAAW,EAAE,MAAM,CAAC;CACrB;AAWD,wBAAgB,yBAAyB,CACvC,OAAO,EAAE,MAAM,EACf,KAAK,EAAE,MAAM,GACZ,iBAAiB,EAAE,CA+BrB"}

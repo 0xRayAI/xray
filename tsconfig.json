@@ -24,7 +24,8 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "allowImportingTsExtensions": false,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "incremental": true
   },
   "include": ["src/**/*"],
   "exclude": [

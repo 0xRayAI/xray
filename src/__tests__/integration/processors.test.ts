@@ -108,7 +108,7 @@ describe("Processor Implementations Integration Tests", () => {
       expect(result.results.some((r) => r.processorName === "versionCompliance")).toBe(true);
       expect(result.results.some((r) => r.processorName === "errorBoundary")).toBe(true);
       expect(result.results.some((r) => r.processorName === "logProtection")).toBe(true);
-    });
+    }, 15000);
 
     it("should execute pre-processors and return results with processorName", async () => {
       const result = await processorManager.executePreProcessors({
@@ -123,7 +123,7 @@ describe("Processor Implementations Integration Tests", () => {
         expect(procResult).toHaveProperty("duration");
         expect(typeof procResult.duration).toBe("number");
       }
-    });
+    }, 15000);
   });
 
   describe("Log Protection Processor", () => {
@@ -140,7 +140,7 @@ describe("Processor Implementations Integration Tests", () => {
       expect(logProtectionResult).toBeDefined();
       expect(logProtectionResult?.success).toBe(true);
       expect(logProtectionResult?.data).toHaveProperty("allowed", true);
-    });
+    }, 15000);
 
     it("should allow non-delete operations", async () => {
       const result = await processorManager.executePreProcessors({
@@ -153,7 +153,7 @@ describe("Processor Implementations Integration Tests", () => {
         (r) => r.processorName === "logProtection"
       );
       expect(logProtectionResult?.data).toHaveProperty("allowed", true);
-    });
+    }, 15000);
 
     it("should return allowed: true for non-delete operation", async () => {
       const result = await processorManager.executePreProcessors({
@@ -167,7 +167,7 @@ describe("Processor Implementations Integration Tests", () => {
       );
       expect(logProtectionResult?.data).toHaveProperty("allowed", true);
       expect(logProtectionResult?.data).toHaveProperty("reason");
-    });
+    }, 15000);
   });
 
   describe("Post-Processors Execution", () => {
@@ -244,7 +244,7 @@ describe("Processor Implementations Integration Tests", () => {
       const health = processorManager.getProcessorHealth();
       expect(health).toBeDefined();
       expect(Array.isArray(health)).toBe(true);
-    });
+    }, 15000);
   });
 
   describe("Processor Execution Order", () => {
@@ -262,7 +262,7 @@ describe("Processor Implementations Integration Tests", () => {
 
       const sortedPriorities = [...priorities].sort((a, b) => a - b);
       expect(priorities).toEqual(sortedPriorities);
-    });
+    }, 15000);
   });
 
   describe("Error Handling", () => {
@@ -274,7 +274,7 @@ describe("Processor Implementations Integration Tests", () => {
       });
 
       expect(result.results.length).toBeGreaterThan(0);
-    });
+    }, 15000);
   });
 
   describe("Registry Integration", () => {

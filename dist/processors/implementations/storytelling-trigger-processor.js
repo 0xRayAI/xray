@@ -3,6 +3,9 @@ import * as path from "path";
 import { execSync } from "child_process";
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { analyzeStructuralPatterns, } from "../../inference/semantic-patterns.js";
+import { captureSessionInference, saveSessionInference, } from "../../inference/session-capture.js";
+import { InferenceCycle } from "../../inference/inference-cycle.js";
 export class StorytellingTriggerProcessor extends PostProcessor {
     name = "storytelling-trigger";
     priority = 5;
@@ -60,13 +63,34 @@ export class StorytellingTriggerProcessor extends PostProcessor {
                 file: releaseReflection,
             });
         }
+        let cycleResult = null;
+        if (generated.length > 0) {
+            cycleResult = await this.runInferenceCycle();
+            if (cycleResult && cycleResult.triggered) {
+                frameworkLogger.log("storytelling-trigger", "inference-cycle-completed", "info", {
+                    cycleId: cycleResult.cycleId,
+                    proposals: cycleResult.proposals.length,
+                    phase: cycleResult.phase,
+                });
+            }
+        }
         return {
             message: generated.length > 0
-                ? `Generated ${generated.length} reflection(s)`
+                ? `Generated ${generated.length} reflection(s)${cycleResult?.triggered ? `, inference cycle ${cycleResult.cycleId}` : ""}`
                 : "No reflection triggers fired",
             triggers: generated.map(f => path.basename(f)),
             generated,
+            inferenceCycle: cycleResult,
         };
+    }
+    async runInferenceCycle() {
+        try {
+            const cycle = new InferenceCycle(process.cwd());
+            return cycle.maybeRunCycle();
+        }
+        catch {
+            return null;
+        }
     }
     reflectOnCommits() {
         const lastReflection = this.getMostRecentReflectionFile();
@@ -228,7 +252,7 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         lines.push("");
         lines.push("## Inference Notes");
         lines.push("");
-        const inferences = this.synthesizeInferences(commits, diff);
+        const inferences = this.synthesizeInferences(commits, diff, sinceRef, untilRef);
         if (inferences.length > 0) {
             for (const inf of inferences) {
                 lines.push(`- ${inf}`);
@@ -288,6 +312,14 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         }
         return patterns;
     }
+    detectSemanticPatterns(sinceRef, untilRef) {
+        try {
+            return analyzeStructuralPatterns(sinceRef, untilRef);
+        }
+        catch {
+            return [];
+        }
+    }
     extractDecisions(commits) {
         const decisions = [];
         for (const commit of commits) {
@@ -310,8 +342,27 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         }
         return decisions;
     }
-    synthesizeInferences(commits, diff) {
+    synthesizeInferences(commits, diff, sinceRef, untilRef) {
         const inferences = [];
+        if (sinceRef && untilRef) {
+            const semanticPatterns = this.detectSemanticPatterns(sinceRef, untilRef);
+            for (const p of semanticPatterns) {
+                const evidence = p.evidence.length > 0 ? ` (${p.evidence[0]})` : "";
+                inferences.push(`${p.name} pattern detected [${Math.round(p.confidence * 100)}%]: ${p.description}${evidence}`);
+            }
+            if (semanticPatterns.length > 0) {
+                try {
+                    const session = captureSessionInference(sinceRef, untilRef);
+                    if (session) {
+                        const savedPath = saveSessionInference(session);
+                        inferences.push(`Structured inference captured → ${path.basename(savedPath)}`);
+                    }
+                }
+                catch {
+                    // session capture is best-effort
+                }
+            }
+        }
         if (diff.filesAdded.some(f => f.includes("implementations/") && f.endsWith(".ts"))) {
             const count = diff.filesAdded.filter(f => f.includes("implementations/") && f.endsWith(".ts")).length;
             inferences.push(`Extract Method pattern: ${count} new processor files suggest methods extracted from a monolithic module`);

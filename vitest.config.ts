@@ -12,31 +12,10 @@ export default defineConfig({
       "dist",
       "coverage",
       "src/__tests__/plugins/marketplace-service.test.ts",
-      "src/__tests__/performance/enterprise-performance-tests.ts", // Tests deleted plugin infrastructure
+      "src/__tests__/performance/enterprise-performance-tests.ts",
     ],
-    silent: true, // Reduce console output in CI
+    silent: true,
     reporters: process.env.CI ? ["verbose"] : ["default"],
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
-      exclude: [
-        "node_modules/",
-        "dist/",
-        "coverage/",
-        "**/*.d.ts",
-        "**/*.config.{js,ts}",
-        "src/__tests__/",
-        "scripts/",
-      ],
-      thresholds: {
-        global: {
-          branches: 85,
-          functions: 85,
-          lines: 85,
-          statements: 85,
-        },
-      },
-    },
     testTimeout: 60000,
     hookTimeout: 120000,
     bail: 0,

@@ -124,7 +124,8 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
     expect(content).toContain("Key Decisions");
     expect(content).toContain("Inference Notes");
     expect(content).not.toContain("*(Fill in");
-  });
+    expect(content).not.toContain("No strong inference signals");
+  }, 60000);
 
   it("should suggest correct story types", async () => {
     const { StorytellingTriggerProcessor } = await import(

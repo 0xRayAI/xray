@@ -10,10 +10,12 @@ export declare class StorytellingTriggerProcessor extends PostProcessor {
     private loadConfig;
     private resolveConfigPath;
     protected run(context: ProcessorContext): Promise<unknown>;
+    private runInferenceCycle;
     private reflectOnCommits;
     private reflectOnRelease;
     private synthesizeReflection;
     private detectPatterns;
+    private detectSemanticPatterns;
     private extractDecisions;
     private synthesizeInferences;
     private getCommitsBetween;
