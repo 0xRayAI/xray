@@ -53,7 +53,13 @@ export type CyclePhase =
 
 const CYCLE_STATE_FILE = "inference-cycle-state.json";
 const CYCLE_HISTORY_FILE = "inference-cycle-history.json";
-const GOVERNANCE_AGENTS = ["code-reviewer", "architect"];
+const GOVERNANCE_AGENTS: Record<string, string[]> = {
+  fix: ["code-reviewer", "architect"],
+  refactor: ["code-reviewer", "architect"],
+  guard: ["code-reviewer", "security-auditor"],
+  automate: ["architect", "strategist"],
+  codify: ["architect", "code-reviewer"],
+};
 
 export type AgentInvoker = (agentName: string, prompt: string) => Promise<string>;
 
@@ -240,27 +246,32 @@ export class InferenceCycle {
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
-    const stateManager = new StringRayStateManager();
+    const stateManager = this.getGovernanceStateManager();
     const coordinator = new VotingCoordinator(stateManager);
     const sessionId = `inference-governance-${Date.now()}`;
     const results: InferenceCycleResult["votes"] = [];
 
     for (const proposal of proposals) {
+      const agents = GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer", "architect"];
+      const complexity = Math.min(50, 10 + proposal.evidence.length * 5 + (proposal.confidence > 0.8 ? 10 : 0));
+      const hasSecurity = proposal.type === "guard" || proposal.type === "fix";
+      const hasArchitectural = proposal.type === "codify" || proposal.type === "automate";
+
       const voteId = await coordinator.initiateVoting(
         sessionId,
         proposal.title,
         proposal.description,
-        GOVERNANCE_AGENTS,
+        agents,
         {
-          complexity: 25,
-          riskLevel: proposal.type === "fix" ? "low" : "medium",
-          hasSecurityConcerns: false,
-          hasArchitecturalImpact: proposal.type === "codify",
-          participantCount: GOVERNANCE_AGENTS.length,
+          complexity,
+          riskLevel: proposal.type === "fix" ? "low" : proposal.type === "guard" ? "high" : "medium",
+          hasSecurityConcerns: hasSecurity,
+          hasArchitecturalImpact: hasArchitectural,
+          participantCount: agents.length,
         },
       );
 
-      for (const agentName of GOVERNANCE_AGENTS) {
+      for (const agentName of agents) {
         const agentVote = await this.getAgentVote(agentName, proposal);
         coordinator.submitVote(voteId, agentName, agentVote.decision, agentVote.confidence, agentVote.reasoning);
       }
@@ -278,7 +289,33 @@ export class InferenceCycle {
       }
     }
 
+    const metrics = coordinator.getMetrics();
+    frameworkLogger.log("inference-cycle", "governance-metrics", "info", {
+      totalVotes: metrics.totalVotes,
+      avgConfidence: metrics.averageConfidence.toFixed(2),
+      strategyUsage: metrics.strategyUsage,
+    });
+
     return results;
+  }
+
+  private getGovernanceStateManager(): StringRayStateManager {
+    if (!fs.existsSync(this.stateDir)) {
+      fs.mkdirSync(this.stateDir, { recursive: true });
+    }
+    const stateManager = new StringRayStateManager();
+    const historyPath = path.join(this.stateDir, "governance-state.json");
+    if (fs.existsSync(historyPath)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
+        for (const [key, value] of Object.entries(data)) {
+          stateManager.set(key, value);
+        }
+      } catch {
+        frameworkLogger.log("inference-cycle", "governance-state-load-failed", "warning", {});
+      }
+    }
+    return stateManager;
   }
 
   private async getAgentVote(

@@ -26,6 +26,7 @@ export declare class VotingCoordinator {
     private votingHistory;
     private metrics;
     private config;
+    private aggregator;
     constructor(stateManager: StringRayStateManager, sessionCoordinator?: SessionCoordinator, config?: Partial<VotingCoordinatorConfig>);
     initiateVoting(sessionId: string, topic: string, description: string, participants: string[], context?: StrategySelectionContext): Promise<string>;
     submitVote(voteId: string, agentName: string, vote: string, confidence: number, reasoning?: string): boolean;

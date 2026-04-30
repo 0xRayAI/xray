@@ -64,6 +64,7 @@ export declare class StringRayOrchestrator {
     private config;
     private activeTasks;
     private taskToAgentMap;
+    private votingCoordinator;
     constructor(config?: Partial<OrchestratorConfig>);
     /**
      * Load orchestrator config from features.json

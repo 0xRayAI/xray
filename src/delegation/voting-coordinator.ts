@@ -27,6 +27,7 @@ import type {
 import { getAgentExpertiseLevel, getVotingWeight } from "./agent-expertise.js";
 import { selectVotingStrategy, adaptiveStrategySelector } from "./strategy-selector.js";
 import { SessionCoordinator } from "./session-coordinator.js";
+import { WeightedVotingAggregator } from "./weighted-voting-aggregator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
@@ -54,6 +55,7 @@ export class VotingCoordinator {
   private votingHistory: VotingHistoryEntry[] = [];
   private metrics: VotingMetrics;
   private config: VotingCoordinatorConfig;
+  private aggregator: WeightedVotingAggregator;
 
   constructor(
     stateManager: StringRayStateManager,
@@ -63,6 +65,7 @@ export class VotingCoordinator {
     this.stateManager = stateManager;
     this.sessionCoordinator = sessionCoordinator ?? undefined;
     this.config = { ...DEFAULT_CONFIG, ...config };
+    this.aggregator = new WeightedVotingAggregator();
     this.metrics = this.initializeMetrics();
     this.loadHistory();
   }
@@ -303,139 +306,97 @@ export class VotingCoordinator {
   }
 
   private resolveMajorityVote(session: VotingSession): VotingResult {
-    const voteCounts = new Map<string, { weight: number; details: VotingResultDetail[] }>();
+    const aggregated = this.aggregator.aggregateVotes(session.votes);
 
-    for (const vote of session.votes) {
-      const expertiseLevel = getAgentExpertiseLevel(vote.agentName);
-      const weight = getVotingWeight(vote.agentName);
-      const weightedConfidence = vote.confidence * (expertiseLevel / 10);
-
-      const existing = voteCounts.get(vote.vote);
-      if (existing) {
-        existing.weight += weight * weightedConfidence;
-        existing.details.push({
-          agentName: vote.agentName,
-          expertiseLevel,
-          vote: vote.vote,
-          weight,
-          contributed: true,
-        });
-      } else {
-        voteCounts.set(vote.vote, {
-          weight: weight * weightedConfidence,
-          details: [
-            {
-              agentName: vote.agentName,
-              expertiseLevel,
-              vote: vote.vote,
-              weight,
-              contributed: true,
-            },
-          ],
-        });
-      }
+    if (aggregated.length === 0) {
+      return {
+        decision: "",
+        confidence: 0,
+        strategy: "majority_vote",
+        voteCount: 0,
+        winningVotes: 0,
+        totalVoters: session.participants.length,
+        tied: false,
+        details: [],
+      };
     }
 
-    const sortedVotes = Array.from(voteCounts.entries()).sort(
-      (a, b) => b[1].weight - a[1].weight,
-    );
+    const winner = aggregated[0]!;
+    const second = aggregated[1];
+    const tied = Boolean(second && Math.abs(winner.totalWeight - second.totalWeight) < 0.01);
 
-    const totalWeight = sortedVotes.reduce((sum, [_, data]) => sum + data.weight, 0);
-    const winningVote = sortedVotes[0];
-    const winningWeight = winningVote?.[1]?.weight ?? 0;
-    const secondWeight = sortedVotes[1]?.[1]?.weight ?? 0;
+    const totalWeight = aggregated.reduce((sum, agg) => sum + agg.totalWeight, 0);
+    const confidence = totalWeight > 0 ? winner.totalWeight / totalWeight : 0;
 
-    const tied = Boolean(
-      sortedVotes.length > 1 &&
-      sortedVotes[1] &&
-      Math.abs(winningWeight - secondWeight) < 0.01,
-    );
-
-    const confidence = totalWeight > 0 ? winningWeight / totalWeight : 0;
+    const details: VotingResultDetail[] = session.votes.map((vote) => ({
+      agentName: vote.agentName,
+      expertiseLevel: getAgentExpertiseLevel(vote.agentName),
+      vote: vote.vote,
+      weight: this.aggregator.calculateTotalVoteWeight(vote.agentName, vote.confidence),
+      contributed: vote.vote === winner.option,
+    }));
 
     return {
-      decision: winningVote?.[0] ?? "",
+      decision: winner.option,
       confidence,
       strategy: "majority_vote",
       voteCount: session.votes.length,
-      winningVotes: winningVote?.[1]?.details.length ?? 0,
+      winningVotes: winner.contributingAgents.length,
       totalVoters: session.participants.length,
       tied,
-      details: winningVote?.[1]?.details ?? [],
+      details,
     };
   }
 
   private resolveConsensus(session: VotingSession): VotingResult {
-    const voteGroups = new Map<string, VoteChoice[]>();
-
-    for (const vote of session.votes) {
-      const existing = voteGroups.get(vote.vote);
-      if (existing) {
-        existing.push(vote);
-      } else {
-        voteGroups.set(vote.vote, [vote]);
-      }
+    const aggregated = this.aggregator.aggregateVotes(session.votes);
+    if (aggregated.length === 0) {
+      return {
+        decision: "", confidence: 0, strategy: "consensus",
+        voteCount: 0, winningVotes: 0, totalVoters: session.participants.length,
+        tied: false, details: [],
+      };
     }
 
-    const votesByGroup = Array.from(voteGroups.entries()).sort(
-      (a, b) => b[1].length - a[1].length,
-    );
-
-    const topGroup = votesByGroup[0];
-    const secondGroup = votesByGroup[1];
-
+    const winner = aggregated[0]!;
     const requiredVotes = Math.ceil(session.participants.length * this.config.consensusThreshold);
-    const hasConsensus = topGroup && topGroup[1].length >= requiredVotes;
+    const hasConsensus = winner.contributingAgents.length >= requiredVotes;
 
     if (hasConsensus) {
-      const avgConfidence =
-        topGroup[1].reduce((sum, v) => sum + v.confidence, 0) / topGroup[1].length;
-      const totalWeight = topGroup[1].reduce(
-        (sum, v) => sum + getVotingWeight(v.agentName),
-        0,
+      const winnerVotes = session.votes.filter((v) => v.vote === winner.option);
+      const avgConfidence = winnerVotes.reduce((s, v) => s + v.confidence, 0) / winnerVotes.length;
+      const expertiseSum = winnerVotes.reduce(
+        (s, v) => s + this.aggregator.calculateTotalVoteWeight(v.agentName, v.confidence), 0,
       );
-      const expertiseSum = topGroup[1].reduce(
-        (sum, v) => sum + getAgentExpertiseLevel(v.agentName) * getVotingWeight(v.agentName),
-        0,
-      );
+      const totalWeight = winnerVotes.reduce((s, v) => s + getVotingWeight(v.agentName), 0);
       const confidence = totalWeight > 0 ? avgConfidence * (expertiseSum / (totalWeight * 10)) : avgConfidence;
 
       return {
-        decision: topGroup[0],
-        confidence,
-        strategy: "consensus",
-        voteCount: session.votes.length,
-        winningVotes: topGroup[1].length,
-        totalVoters: session.participants.length,
-        tied: false,
-        details: topGroup[1].map((v) => ({
-          agentName: v.agentName,
-          expertiseLevel: getAgentExpertiseLevel(v.agentName),
-          vote: v.vote,
-          weight: getVotingWeight(v.agentName),
+        decision: winner.option, confidence, strategy: "consensus",
+        voteCount: session.votes.length, winningVotes: winnerVotes.length,
+        totalVoters: session.participants.length, tied: false,
+        details: winnerVotes.map((v) => ({
+          agentName: v.agentName, expertiseLevel: getAgentExpertiseLevel(v.agentName),
+          vote: v.vote, weight: this.aggregator.calculateTotalVoteWeight(v.agentName, v.confidence),
           contributed: true,
         })),
       };
     }
 
-    const tied = Boolean(secondGroup && topGroup && topGroup[1].length === secondGroup[1].length);
-    const avgConfidence = topGroup ? topGroup[1].reduce((sum, v) => sum + v.confidence, 0) / topGroup[1].length : 0;
+    const second = aggregated[1];
+    const tied = Boolean(second && Math.abs(winner.totalWeight - second.totalWeight) < 0.01);
+    const winnerVotes = session.votes.filter((v) => v.vote === winner.option);
+    const avgConfidence = winnerVotes.length > 0 ? winnerVotes.reduce((s, v) => s + v.confidence, 0) / winnerVotes.length : 0;
 
     return {
-      decision: topGroup?.[0] ?? "",
-      confidence: avgConfidence * 0.5,
-      strategy: "consensus",
-      voteCount: session.votes.length,
-      winningVotes: topGroup?.[1]?.length ?? 0,
-      totalVoters: session.participants.length,
-      tied,
-      details: topGroup?.[1]?.map((v) => ({
-        agentName: v.agentName,
-        expertiseLevel: getAgentExpertiseLevel(v.agentName),
-        vote: v.vote,
-        weight: getVotingWeight(v.agentName),
+      decision: winner.option, confidence: avgConfidence * 0.5, strategy: "consensus",
+      voteCount: session.votes.length, winningVotes: winnerVotes.length,
+      totalVoters: session.participants.length, tied,
+      details: winnerVotes.map((v) => ({
+        agentName: v.agentName, expertiseLevel: getAgentExpertiseLevel(v.agentName),
+        vote: v.vote, weight: this.aggregator.calculateTotalVoteWeight(v.agentName, v.confidence),
         contributed: true,
-      })) ?? [],
+      })),
     };
   }
 

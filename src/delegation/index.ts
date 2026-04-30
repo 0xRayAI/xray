@@ -29,6 +29,13 @@ export {
   createVotingCoordinator,
 } from "./voting-coordinator.js";
 export {
+  WeightedVotingAggregator,
+  createWeightedVotingAggregator,
+  createDetailedVotingResult,
+  DEFAULT_HISTORICAL_CONFIG,
+  DEFAULT_CONFIDENCE_CONFIG,
+} from "./weighted-voting-aggregator.js";
+export {
   AdaptiveStrategySelector,
   adaptiveStrategySelector,
   selectVotingStrategy,

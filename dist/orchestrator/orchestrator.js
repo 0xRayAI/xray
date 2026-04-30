@@ -11,21 +11,24 @@ import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestra
 import { frameworkLogger } from "../core/framework-logger.js";
 import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
+import { VotingCoordinator } from "../delegation/voting-coordinator.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import fs from "fs";
 const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 export class StringRayOrchestrator {
     config;
     activeTasks = new Map();
-    taskToAgentMap = new Map(); // taskId -> agentId
+    taskToAgentMap = new Map();
+    votingCoordinator;
     constructor(config = {}) {
-        // Load config from features.json if not explicitly provided
         const loadedConfig = this.loadOrchestratorConfig();
         this.config = {
             maxConcurrentTasks: loadedConfig?.maxConcurrentTasks ?? 5,
-            taskTimeout: 300000, // 5 minutes
+            taskTimeout: 300000,
             conflictResolutionStrategy: loadedConfig?.conflictResolutionStrategy ?? "majority_vote",
             ...config,
         };
+        this.votingCoordinator = new VotingCoordinator(new StringRayStateManager());
     }
     /**
      * Load orchestrator config from features.json
@@ -501,16 +504,33 @@ export class StringRayOrchestrator {
      * Resolve conflicts between subagent responses
      */
     resolveConflicts(conflicts) {
-        switch (this.config.conflictResolutionStrategy) {
-            case "majority_vote":
-                return this.resolveByMajorityVote(conflicts);
-            case "expert_priority":
-                return this.resolveByExpertPriority(conflicts);
-            case "consensus":
-                return this.resolveByConsensus(conflicts);
-            default:
-                return conflicts[0];
-        }
+        if (conflicts.length === 0)
+            return undefined;
+        if (conflicts.length === 1)
+            return conflicts[0];
+        const agents = conflicts
+            .map((c) => c.agentType)
+            .filter((a) => typeof a === "string");
+        if (agents.length < 2)
+            return conflicts[0];
+        const voteId = this.votingCoordinator.initiateVoting(`orchestrator-conflict-${Date.now()}`, "conflict-resolution", "Resolve conflicting agent responses", agents, {
+            complexity: 30,
+            riskLevel: "medium",
+            hasSecurityConcerns: false,
+            hasArchitecturalImpact: false,
+            participantCount: agents.length,
+        });
+        void voteId.then((id) => {
+            for (const conflict of conflicts) {
+                if (conflict.agentType) {
+                    const vote = conflict.response ? "approve" : "reject";
+                    const confidence = (conflict.expertiseScore ?? 5) / 10;
+                    this.votingCoordinator.submitVote(id, conflict.agentType, vote, confidence);
+                }
+            }
+            this.votingCoordinator.resolveVoting(id);
+        });
+        return this.resolveByExpertPriority(conflicts);
     }
     resolveByMajorityVote(conflicts) {
         // Find the response that appears most frequently

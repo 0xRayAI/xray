@@ -49,6 +49,7 @@ export declare class InferenceCycle {
     private generateProposals;
     private adjustFromHistory;
     private governProposals;
+    private getGovernanceStateManager;
     private getAgentVote;
     private invokeAgent;
     private parseAgentResponse;

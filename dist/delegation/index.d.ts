@@ -14,6 +14,7 @@ export { RoutingOutcomeTracker, routingOutcomeTracker, } from "./analytics/index
 export { RoutingAnalytics } from "./analytics/index.js";
 export { LearningEngine, learningEngine } from "./analytics/index.js";
 export { VotingCoordinator, createVotingCoordinator, } from "./voting-coordinator.js";
+export { WeightedVotingAggregator, createWeightedVotingAggregator, createDetailedVotingResult, DEFAULT_HISTORICAL_CONFIG, DEFAULT_CONFIDENCE_CONFIG, } from "./weighted-voting-aggregator.js";
 export { AdaptiveStrategySelector, adaptiveStrategySelector, selectVotingStrategy, } from "./strategy-selector.js";
 export { getAgentExpertise, getAgentExpertiseLevel, getVotingWeight, getAgentsWithExpertiseDomain, getTopExpertsForDomain, } from "./agent-expertise.js";
 export type { VotingSession, VotingStrategy, VoteChoice, VotingResult, VotingResultDetail, AgentExpertise, StrategySelectionContext, VotingHistoryEntry, AdaptiveStrategyConfig, VotingMetrics, ConflictResolutionRequest, ConflictResolutionResponse, } from "./voting-types.js";
