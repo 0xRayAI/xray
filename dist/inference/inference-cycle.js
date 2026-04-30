@@ -95,12 +95,32 @@ export class InferenceCycle {
                 id: `prop-${Date.now()}-${proposals.length}`,
                 type: this.classifyProposalType(problem.pattern),
                 title: this.generateTitle(problem),
-                description: `Recurring problem detected across ${problem.occurrences} sessions: ${problem.pattern}`,
-                evidence: [`Occurred in ${problem.occurrences} sessions: ${problem.sessions.join(", ")}`],
+                description: `Recurring across ${problem.occurrences} sessions: ${problem.pattern}`,
+                evidence: problem.sessions.map((s) => `Seen in session ${s}`),
                 confidence: Math.min(0.95, 0.5 + problem.occurrences * 0.15),
                 source: "recurring_problem",
                 status: "pending",
             });
+        }
+        const seenPatterns = new Set(corpus.recurringProblems.map((p) => p.pattern));
+        const allProblems = corpus.sessions.flatMap((s) => s.problems.map((p) => ({ problem: p, session: s.sessionId })));
+        for (const { problem, session } of allProblems) {
+            const normalized = problem.replace(/\([a-f0-9]{7}\)/g, "").trim();
+            if (seenPatterns.has(normalized))
+                continue;
+            if (proposals.length >= 5)
+                break;
+            proposals.push({
+                id: `prop-${Date.now()}-${proposals.length}`,
+                type: this.classifyProposalType(problem),
+                title: `Investigate: ${problem.substring(0, 80)}`,
+                description: `Observed in session ${session}: ${problem}`,
+                evidence: [problem],
+                confidence: 0.4,
+                source: "recurring_problem",
+                status: "pending",
+            });
+            seenPatterns.add(normalized);
         }
         for (const pattern of corpus.recurringPatterns) {
             if (pattern.occurrences < 2)
@@ -131,7 +151,7 @@ export class InferenceCycle {
                 status: "pending",
             });
         }
-        return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 5);
+        return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
     }
     adjustFromHistory(proposals) {
         this.adjustConfidenceFromHistory(proposals);
@@ -234,10 +254,10 @@ export class InferenceCycle {
             const timer = setTimeout(() => {
                 if (!settled) {
                     settled = true;
-                    child.kill("SIGTERM");
+                    child.kill("SIGKILL");
                     reject(new Error(`opencode --agent ${agentName} timed out`));
                 }
-            }, 30000);
+            }, 15000);
             child.stdin?.write(prompt);
             child.stdin?.end();
             let stdout = "";
@@ -331,8 +351,8 @@ export class InferenceCycle {
                 return `${title} (${problem.occurrences}x across ${problem.sessions.length} sessions)`;
             }
         }
-        if (pattern.length > 60) {
-            return `Address recurring issue: ${pattern.substring(0, 50)}... (${problem.occurrences}x)`;
+        if (pattern.length > 80) {
+            return `Address: ${pattern.substring(0, 77)}... (${problem.occurrences}x)`;
         }
         return `Address: ${pattern} (${problem.occurrences}x)`;
     }

@@ -2,17 +2,17 @@ import * as fs from "fs";
 import * as path from "path";
 export function shouldTriggerCycle(inferenceDir, lastCycleFile) {
     const sessions = loadSessionInferences(inferenceDir);
-    if (sessions.length < 3) {
-        return { trigger: false, reason: `${sessions.length}/3 session files collected` };
+    if (sessions.length < 1) {
+        return { trigger: false, reason: `no session files collected` };
     }
     const lastCycle = loadLastCycleDate(lastCycleFile);
     const daysSince = lastCycle ? daysBetween(new Date(lastCycle), new Date()) : Infinity;
-    if (daysSince < 3) {
-        return { trigger: false, reason: `Only ${daysSince.toFixed(1)} days since last cycle (minimum 3)` };
+    if (daysSince < 1) {
+        return { trigger: false, reason: `${daysSince.toFixed(1)} days since last cycle (minimum 1)` };
     }
     const totalCommits = sessions.reduce((sum, s) => sum + s.metrics.commits, 0);
-    if (totalCommits < 30 && daysSince < 7) {
-        return { trigger: false, reason: `${totalCommits}/30 total commits, ${daysSince.toFixed(1)}/7 days` };
+    if (totalCommits < 5 && daysSince < 3) {
+        return { trigger: false, reason: `${totalCommits}/5 total commits, ${daysSince.toFixed(1)}/3 days` };
     }
     return {
         trigger: true,
@@ -119,10 +119,6 @@ function normalizeProblem(problem) {
         .replace(/\([a-f0-9]{7}\)/g, "")
         .replace(/\d+ commits affected/g, "N commits affected")
         .replace(/\d+ files?/g, "N files")
-        .replace(/^Bug: fix:.*$/i, "Bug fix")
-        .replace(/^Code health:.*$/i, "Code health cleanup")
-        .replace(/^Incomplete implementation:.*$/i, "Incomplete implementation")
-        .replace(/^Accumulated dead code:.*$/i, "Accumulated dead code")
         .trim();
 }
 function daysBetween(a, b) {

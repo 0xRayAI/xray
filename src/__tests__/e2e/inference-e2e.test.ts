@@ -57,7 +57,7 @@ describe("Inference Layer E2E", () => {
 
     if (threshold.trigger) {
       const corpus = accumulateCorpus(inferenceDir);
-      expect(corpus.sessions.length).toBeGreaterThanOrEqual(3);
+      expect(corpus.sessions.length).toBeGreaterThanOrEqual(1);
       expect(corpus.totalCommits).toBeGreaterThan(0);
       expect(corpus.collectedAt).toBeTruthy();
 
@@ -96,7 +96,7 @@ describe("Inference Layer E2E", () => {
 
       expect(result.triggered).toBe(true);
       expect(result.phase).toBe("complete");
-      expect(result.corpusSummary.sessions).toBeGreaterThanOrEqual(3);
+      expect(result.corpusSummary.sessions).toBeGreaterThanOrEqual(1);
       expect(result.proposals.length).toBeGreaterThan(0);
       expect(result.votes.length).toBeGreaterThan(0);
       expect(result.duration).toBeGreaterThan(0);

@@ -62,26 +62,20 @@ describe("Inference Accumulator", () => {
     );
   }
 
-  it("should not trigger with fewer than 3 sessions", () => {
-    writeSession("a", 10);
-    writeSession("b", 10);
+  it("should not trigger with zero sessions", () => {
     const result = shouldTriggerCycle(inferenceDir, path.join(stateDir, "cycle.json"));
     expect(result.trigger).toBe(false);
-    expect(result.reason).toContain("2/3");
+    expect(result.reason).toContain("no session");
   });
 
-  it("should trigger with 3+ sessions and no previous cycle", () => {
+  it("should trigger with 1+ session and no previous cycle", () => {
     writeSession("a", 15);
-    writeSession("b", 10);
-    writeSession("c", 10);
     const result = shouldTriggerCycle(inferenceDir, path.join(stateDir, "cycle.json"));
     expect(result.trigger).toBe(true);
   });
 
-  it("should not trigger within 3 days of last cycle", () => {
+  it("should not trigger within 1 day of last cycle", () => {
     writeSession("a", 15);
-    writeSession("b", 10);
-    writeSession("c", 10);
     fs.writeFileSync(
       path.join(stateDir, "cycle.json"),
       JSON.stringify({ completedAt: new Date().toISOString() }),
@@ -91,11 +85,9 @@ describe("Inference Accumulator", () => {
     expect(result.reason).toContain("days since last");
   });
 
-  it("should trigger after 7 days even with few commits", () => {
+  it("should trigger after 3 days even with few commits", () => {
     writeSession("a", 5);
-    writeSession("b", 5);
-    writeSession("c", 5);
-    const oldDate = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+    const oldDate = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
     fs.writeFileSync(
       path.join(stateDir, "cycle.json"),
       JSON.stringify({ completedAt: oldDate }),
@@ -117,10 +109,7 @@ describe("Inference Accumulator", () => {
     const extractMethod = corpus.recurringPatterns.find((p) => p.name === "Extract Method");
     expect(extractMethod).toBeDefined();
     expect(extractMethod!.occurrences).toBe(3);
-
-    const registry = corpus.recurringPatterns.find((p) => p.name === "Registry Pattern");
-    expect(registry).toBeDefined();
-    expect(registry!.occurrences).toBe(1);
+    expect(corpus.recurringPatterns.length).toBe(1);
   });
 
   it("should find recurring problems across sessions", () => {
