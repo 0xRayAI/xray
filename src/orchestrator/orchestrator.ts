@@ -18,6 +18,7 @@ import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.j
 import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
 import type { ProcessorManager } from "../processors/processor-manager.js";
 import { VotingCoordinator } from "../delegation/voting-coordinator.js";
+import { getAgentExpertiseLevel } from "../delegation/agent-expertise.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import fs from "fs";
 
@@ -816,14 +817,6 @@ export class StringRayOrchestrator {
     return conflicts[0];
   }
 
-  private resolveByExpertPriority(conflicts: Array<{ response?: unknown; agentType?: string; expertiseScore?: number }>): unknown {
-    // Populate expertise scores based on agent type before resolving
-    const scoredConflicts = this.populateExpertiseScore(conflicts);
-    return scoredConflicts.sort(
-      (a, b) => (b.expertiseScore || 0) - (a.expertiseScore || 0),
-    )[0];
-  }
-
   private resolveByConsensus(conflicts: Array<{ response?: unknown }>): unknown {
     // Return the response if all are identical, otherwise fall back to majority_vote
     const firstResponse = conflicts[0]?.response;
@@ -926,32 +919,19 @@ export class StringRayOrchestrator {
    * Populate expertiseScore based on agent type for expert_priority resolution.
    * This maps agent types to expertise levels for conflict resolution.
    */
-  private populateExpertiseScore(conflicts: Array<{ response?: unknown; agentType?: string; expertiseScore?: number }>): Array<{ response?: unknown; agentType?: string; expertiseScore?: number }> {
-    const agentExpertiseLevels: Record<string, number> = {
-      architect: 10,
-      orchestrator: 10,
-      security: 10,
-      strategist: 9,
-      refactorer: 7,
-      enforcer: 7,
-      codeReviewer: 7,
-      testingLead: 7,
-      researcher: 5,
-      analyzer: 5,
-      bugTriage: 5,
-      default: 3,
-    };
-
-    return conflicts.map((conflict) => {
-      const agentType = conflict.agentType ?? 'default';
-      const score = agentExpertiseLevels[agentType];
-      const expertiseScore = score !== undefined ? score : agentExpertiseLevels.default;
+  private resolveByExpertPriority(conflicts: Array<{ response?: unknown; agentType?: string; expertiseScore?: number }>): unknown {
+    // Use centralized agent expertise from agent-expertise.ts
+    const scoredConflicts = conflicts.map((conflict) => {
+      const agentName = conflict.agentType ?? "default";
+      const expertiseLevel = getAgentExpertiseLevel(agentName);
       return {
-        response: conflict.response,
-        agentType: agentType,
-        expertiseScore: expertiseScore,
-      } as { response?: unknown; agentType?: string; expertiseScore?: number };
+        ...conflict,
+        expertiseScore: expertiseLevel,
+      };
     });
+    return scoredConflicts.sort(
+      (a, b) => (b.expertiseScore || 0) - (a.expertiseScore || 0),
+    )[0];
   }
 
   /**

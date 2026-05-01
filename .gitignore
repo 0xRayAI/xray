@@ -15,9 +15,17 @@ logs/framework/routing-outcomes.json
 strray-ai-*.tgz
 *.tmp
 
-
+# StringRay runtime artifacts
 .strray/profiles/
+.strray/inference/
 .opencode/**/*.d.ts
 .opencode/**/*.d.ts.map
 .strray/**/*.d.ts
 .strray/**/*.d.ts.map
+
+# Build artifacts
+dist/
+tsconfig.tsbuildinfo
+
+# Docs inference (generated at runtime)
+docs/inference/

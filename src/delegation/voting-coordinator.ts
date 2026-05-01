@@ -279,6 +279,10 @@ export class VotingCoordinator {
     return response;
   }
 
+   getAggregator(): WeightedVotingAggregator {
+    return this.aggregator;
+  }
+
   getVotingSession(voteId: string): VotingSession | undefined {
     return this.activeVotingSessions.get(voteId);
   }

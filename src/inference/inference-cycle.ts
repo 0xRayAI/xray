@@ -156,6 +156,7 @@ export class InferenceCycle {
 
       this.setPhase("complete");
       this.saveCycleState(cycleId);
+      this.saveGovernanceState(this.getCoordinator());
       this.appendHistory(this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult));
 
       return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult);
@@ -245,9 +246,16 @@ export class InferenceCycle {
     proposals.sort((a, b) => b.confidence - a.confidence);
   }
 
+  private getCoordinator(): VotingCoordinator {
+    if (!this.votingCoordinator) {
+      const stateManager = this.getGovernanceStateManager();
+      this.votingCoordinator = new VotingCoordinator(stateManager);
+    }
+    return this.votingCoordinator;
+  }
+
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
-    const stateManager = this.getGovernanceStateManager();
-    const coordinator = new VotingCoordinator(stateManager);
+    const coordinator = this.getCoordinator();
     const sessionId = `inference-governance-${Date.now()}`;
     const results: InferenceCycleResult["votes"] = [];
 
@@ -284,6 +292,21 @@ export class InferenceCycle {
           confidence: resolved.confidence,
           details: resolved.details?.map((d) => `${d.agentName}: vote=${d.vote}, weight=${d.weight.toFixed(2)}`) || [],
         });
+
+        // Update agent performance for historical weighting
+        if (resolved.details) {
+          for (const detail of resolved.details) {
+            const wasCorrect = detail.vote === resolved.decision;
+            const confidence = proposal.evidence.length > 0 ? proposal.confidence : 0.5;
+            this.getCoordinator().getAggregator().updateAgentPerformance(
+              detail.agentName,
+              resolved.decision,
+              detail.vote,
+              wasCorrect,
+              confidence,
+            );
+          }
+        }
       } else {
         results.push(this.heuristicFallbackVote(proposal));
       }
@@ -299,15 +322,16 @@ export class InferenceCycle {
     return results;
   }
 
+  private votingCoordinator: VotingCoordinator | null = null;
   private getGovernanceStateManager(): StringRayStateManager {
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
     }
+    const stateFile = path.join(this.stateDir, "governance-state.json");
     const stateManager = new StringRayStateManager();
-    const historyPath = path.join(this.stateDir, "governance-state.json");
-    if (fs.existsSync(historyPath)) {
+    if (fs.existsSync(stateFile)) {
       try {
-        const data = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
+        const data = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
         for (const [key, value] of Object.entries(data)) {
           stateManager.set(key, value);
         }
@@ -316,6 +340,26 @@ export class InferenceCycle {
       }
     }
     return stateManager;
+  }
+
+  private saveGovernanceState(coordinator: VotingCoordinator): void {
+    const stateFile = path.join(this.stateDir, "governance-state.json");
+    try {
+      // Export the coordinator's internal state (voting history, metrics, etc.)
+      const history = coordinator.getVotingHistory();
+      const metrics = coordinator.getMetrics();
+      const exportData = {
+        votingHistory: history,
+        metrics,
+        exportedAt: new Date().toISOString(),
+      };
+      if (!fs.existsSync(this.stateDir)) {
+        fs.mkdirSync(this.stateDir, { recursive: true });
+      }
+      fs.writeFileSync(stateFile, JSON.stringify(exportData, null, 2));
+    } catch (error) {
+      frameworkLogger.log("inference-cycle", "governance-state-save-failed", "warning", { error: String(error) });
+    }
   }
 
   private async getAgentVote(
