@@ -912,7 +912,7 @@ program
       console.log(`  Recurring patterns: ${corpus.recurringPatterns.length}`);
     }
 
-    const cycle = new InferenceCycle(projectRoot, undefined, { skipDeployVerify: options.noVerify ?? false });
+    const cycle = new InferenceCycle(projectRoot, undefined, { skipDeployVerify: options.noVerify ?? true, force: options.force ?? false });
     const result = await cycle.maybeRunCycle();
 
     if (options.json) {

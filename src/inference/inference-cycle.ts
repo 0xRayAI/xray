@@ -65,6 +65,7 @@ export type AgentInvoker = (agentName: string, prompt: string) => Promise<string
 
 export interface InferenceCycleOptions {
   skipDeployVerify?: boolean;
+  force?: boolean;
 }
 
 export class InferenceCycle {
@@ -91,7 +92,7 @@ export class InferenceCycle {
     this.setPhase("collecting");
 
     const lastCycleFile = path.join(this.stateDir, CYCLE_STATE_FILE);
-    const threshold = shouldTriggerCycle(this.inferenceDir, lastCycleFile);
+    const threshold = this.options.force ? { trigger: true, reason: "force flag set" } : shouldTriggerCycle(this.inferenceDir, lastCycleFile);
 
     if (!threshold.trigger) {
       this.setPhase("idle");
@@ -144,9 +145,15 @@ export class InferenceCycle {
             p.status = "applied";
           }
         } else {
-          for (const p of approved) {
-            p.status = "failed";
-          }
+          // Deploy failed — keep as approved (not applied), not "failed"
+          const failureReasons = deployResult.checks
+            .filter((c) => !c.passed)
+            .map((c) => c.output)
+            .join("; ");
+          frameworkLogger.log("inference-cycle", "deploy-failed", "warning", {
+            checks: deployResult.checks.map((c) => ({ name: c.name, passed: c.passed })),
+            failureReasons,
+          });
         }
       } else {
         for (const p of approved) {
