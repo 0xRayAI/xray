@@ -861,14 +861,34 @@ program
   .option('--no-apply', 'Skip applying approved proposals (create PRs)')
   .option('--no-researcher-review', 'Skip downstream researcher review of PRs')
   .option('--json', 'Output raw JSON result')
-  .action(async (options) => {
-    const { InferenceCycle } = await import('../inference/inference-cycle.js');
-    const { shouldTriggerCycle } = await import('../inference/inference-accumulator.js');
-    const { accumulateCorpus } = await import('../inference/inference-accumulator.js');
-    const { featuresConfigLoader } = await import('../core/features-config.js');
+   .action(async (options) => {
+     const { InferenceCycle } = await import('../inference/inference-cycle.js');
+     const { shouldTriggerCycle } = await import('../inference/inference-accumulator.js');
+     const { accumulateCorpus } = await import('../inference/inference-accumulator.js');
+     const { featuresConfigLoader } = await import('../core/features-config.js');
 
-    const features = featuresConfigLoader.loadConfig();
-    const inferenceConfig = (features as any)?.inference;
+     // Guard: inference:run is internal to StringRay development only
+     const isStringRayRepo = (() => {
+       try {
+         const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
+         return pkg.name === 'strray-ai' && process.env.NODE_ENV !== 'consumer';
+       } catch {
+         return false;
+       }
+     })();
+
+     if (!isStringRayRepo) {
+       if (options.json) {
+         console.log(JSON.stringify({ triggered: false, reason: 'inference:run is for StringRay development only (internal tool)' }));
+       } else {
+         console.log('The inference:run command is for StringRay framework development only.');
+         console.log('It is not intended for consumer projects.');
+       }
+       return;
+     }
+
+     const features = featuresConfigLoader.loadConfig();
+     const inferenceConfig = (features as any)?.inference;
     if (!inferenceConfig?.enabled) {
       if (options.json) {
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
