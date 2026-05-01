@@ -46,6 +46,7 @@ export type CyclePhase =
   | "collecting"
   | "proposing"
   | "governing"
+  | "applying"
   | "deploying"
   | "verifying"
   | "complete"
@@ -54,17 +55,19 @@ export type CyclePhase =
 const CYCLE_STATE_FILE = "inference-cycle-state.json";
 const CYCLE_HISTORY_FILE = "inference-cycle-history.json";
 const GOVERNANCE_AGENTS: Record<string, string[]> = {
-  fix: ["code-reviewer", "architect"],
-  refactor: ["code-reviewer", "architect"],
-  guard: ["code-reviewer", "security-auditor"],
-  automate: ["architect", "strategist"],
-  codify: ["architect", "code-reviewer"],
+  fix: ["code-reviewer", "refactorer", "researcher"],
+  refactor: ["code-reviewer", "refactorer", "researcher"],
+  guard: ["code-reviewer", "security-auditor", "researcher"],
+  automate: ["architect", "strategist", "researcher"],
+  codify: ["architect", "researcher"],
 };
 
 export type AgentInvoker = (agentName: string, prompt: string) => Promise<string>;
 
 export interface InferenceCycleOptions {
   skipDeployVerify?: boolean;
+  skipApply?: boolean;
+  skipResearcherReview?: boolean;
   force?: boolean;
 }
 
@@ -131,6 +134,11 @@ export class InferenceCycle {
     }
 
     if (approved.length > 0) {
+      if (!this.options.skipApply) {
+        this.setPhase("applying");
+        await this.applyProposals(approved);
+      }
+
       let deployResult: DeployVerificationResult | undefined;
 
       if (!this.options.skipDeployVerify) {
@@ -259,6 +267,170 @@ export class InferenceCycle {
       this.votingCoordinator = new VotingCoordinator(stateManager);
     }
     return this.votingCoordinator;
+  }
+
+
+  private async applyProposals(proposals: InferenceProposal[]): Promise<void> {
+    for (const p of proposals) {
+      try {
+        frameworkLogger.log("inference-cycle", "apply-start", "info", {
+          proposalId: p.id,
+          type: p.type,
+          title: p.title,
+        });
+
+        const success = await this.applyProposal(p);
+        p.status = success ? "applied" : "failed";
+
+        frameworkLogger.log("inference-cycle", "apply-complete", success ? "success" : "error", {
+          proposalId: p.id,
+          status: p.status,
+        });
+      } catch (err) {
+        p.status = "failed";
+        frameworkLogger.log("inference-cycle", "apply-error", "error", {
+          proposalId: p.id,
+          error: String(err),
+        });
+      }
+    }
+  }
+
+  private async applyProposal(p: InferenceProposal): Promise<boolean> {
+    const branchName = `inference/${p.type}-${Date.now()}`;
+
+    try {
+      execSync(`git checkout -b ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+
+      let filesChanged = false;
+
+      if (p.type === "fix" || p.type === "refactor") {
+        filesChanged = this.applyCodeChange(p);
+      } else if (p.type === "guard") {
+        filesChanged = this.applyGuard(p);
+      } else if (p.type === "codify") {
+        filesChanged = this.applyCodification(p);
+      } else if (p.type === "automate") {
+        filesChanged = this.applyAutomation(p);
+      }
+
+      if (!filesChanged) {
+        execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
+        execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+        return false;
+      }
+
+      execSync(`git add -A`, { cwd: this.projectRoot, stdio: "pipe" });
+      execSync(`git commit -m "${p.title}"`, { cwd: this.projectRoot, stdio: "pipe" });
+
+      const prUrl = this.createPR(p, branchName);
+      frameworkLogger.log("inference-cycle", "pr-created", "info", { prUrl });
+
+      // Researcher downstream checkpoint — review PR against real codebase
+      if (!this.options.skipResearcherReview) {
+        const review = await this.researcherReview(p, prUrl);
+        if (review === "no-go") {
+          frameworkLogger.log("inference-cycle", "researcher-no-go", "warning", { prUrl });
+          execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
+          execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+          return false;
+        } else if (review === "modify") {
+          frameworkLogger.log("inference-cycle", "researcher-modify", "info", { prUrl });
+        }
+      }
+
+      execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
+
+      return true;
+    } catch (err) {
+      try {
+        execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
+        execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+      } catch {
+        // ignore cleanup errors
+      }
+      throw err;
+    }
+  }
+
+  private applyCodeChange(p: InferenceProposal): boolean {
+    const evidence = p.evidence.join("\n");
+    const markerPath = path.join(this.projectRoot, ".strray", "inference", "applied-markers", `${p.id}.md`);
+    fs.mkdirSync(path.dirname(markerPath), { recursive: true });
+    fs.writeFileSync(markerPath, `# ${p.title}\n\n${p.description}\n\n## Evidence\n${evidence}`);
+    return true;
+  }
+
+  private applyGuard(p: InferenceProposal): boolean {
+    const guardPath = path.join(this.projectRoot, "docs", "guards", `${p.title.replace(/[^a-z0-9]/gi, "-")}.md`);
+    fs.mkdirSync(path.dirname(guardPath), { recursive: true });
+    fs.writeFileSync(guardPath, `# Guard: ${p.title}\n\n${p.description}\n\n## Evidence\n${p.evidence.join("\n")}`);
+    return true;
+  }
+
+  private applyCodification(p: InferenceProposal): boolean {
+    const catalogPath = path.join(this.projectRoot, "docs", "pattern-catalog.md");
+    const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.length} sessions\n`;
+    fs.appendFileSync(catalogPath, entry);
+    return true;
+  }
+
+  private applyAutomation(p: InferenceProposal): boolean {
+    const automationPath = path.join(this.projectRoot, "docs", "automation-proposals.md");
+    const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.join(", ")}\n`;
+    fs.mkdirSync(path.dirname(automationPath), { recursive: true });
+    fs.appendFileSync(automationPath, entry);
+    return true;
+  }
+
+  private createPR(p: InferenceProposal, branchName: string): string {
+    try {
+      execSync(`git push -u origin ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+      const result = execSync(
+        `gh pr create --head ${branchName} --title "${p.title}" --body "## Inference Proposal\n\n${p.description}\n\n**Type:** ${p.type}\n**Confidence:** ${(p.confidence * 100).toFixed(0)}%\n\n## Evidence\n${p.evidence.slice(0, 5).join("\n")}"`,
+        { cwd: this.projectRoot, encoding: "utf-8", stdio: "pipe" },
+      );
+      return result.trim();
+    } catch (err) {
+      frameworkLogger.log("inference-cycle", "pr-create-failed", "warning", { error: String(err) });
+      return "";
+    }
+  }
+
+  private async researcherReview(p: InferenceProposal, prUrl: string): Promise<"go" | "no-go" | "modify"> {
+    const prompt = `You are a researcher agent reviewing a PR for proposal: "${p.title}".
+
+PR URL: ${prUrl}
+
+Proposal Type: ${p.type}
+Description: ${p.description}
+Evidence: ${p.evidence.slice(0, 5).join("; ")}
+
+Your job: Review the actual codebase to verify this proposal makes sense. Search the code to confirm:
+1. Does the problem described actually exist in the codebase?
+2. Is the proposed solution appropriate?
+3. Are there any missed edge cases?
+
+Respond with EXACTLY one of:
+- GO (proposal is valid, approve)
+- NO-GO (proposal is invalid, reject)
+- MODIFY: <specific changes needed>`;
+
+    try {
+      const { execSync } = require("child_process");
+      const result = execSync(
+        `opencode run --agent researcher --prompt "${prompt.replace(/"/g, '\\"')}"`,
+        { cwd: this.projectRoot, encoding: "utf-8", timeout: 15000, stdio: "pipe" },
+      );
+
+      const output = result.toLowerCase();
+      if (output.includes("no-go")) return "no-go";
+      if (output.includes("modify")) return "modify";
+      return "go";
+    } catch (err) {
+      frameworkLogger.log("inference-cycle", "researcher-review-failed", "warning", { error: String(err) });
+      return "go"; // default to go if researcher fails
+    }
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
