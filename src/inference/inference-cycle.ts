@@ -419,7 +419,7 @@ Respond with EXACTLY one of:
     try {
       const { execSync } = require("child_process");
       const result = execSync(
-        `opencode run --agent researcher --prompt "${prompt.replace(/"/g, '\\"')}"`,
+        `opencode run --agent researcher --message "${prompt.replace(/"/g, '\\"')}"`,
         { cwd: this.projectRoot, encoding: "utf-8", timeout: 15000, stdio: "pipe" },
       );
 
@@ -603,7 +603,8 @@ Respond with EXACTLY one of:
 
       const child = spawn(
         "opencode",
-        ["run", "-", "--agent", agentName],
+        ["run", "--agent", agentName, "--message", prompt,
+         "--format", "json"],
         {
           cwd: this.projectRoot,
           env: {
@@ -611,7 +612,7 @@ Respond with EXACTLY one of:
             NODE_ENV: "production",
             OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json",
           },
-          stdio: ["pipe", "pipe", "pipe"],
+          stdio: ["ignore", "pipe", "pipe"],
         },
       );
 
@@ -622,9 +623,6 @@ Respond with EXACTLY one of:
           reject(new Error(`opencode --agent ${agentName} timed out`));
         }
       }, 15000);
-
-      child.stdin?.write(prompt);
-      child.stdin?.end();
 
       let stdout = "";
       let stderr = "";
