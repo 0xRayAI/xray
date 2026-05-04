@@ -1,12 +1,12 @@
 import { AgentConfig } from "./types.js";
 
 /**
- * SEO Specialist Agent
+ * SEO Consultant Agent
  *
  * Technical SEO optimization specialist for code, content, and technical infrastructure.
  * Focuses on technical SEO, schema markup, robots.txt, Core Web Vitals, and AI search optimization.
  */
-export const seoSpecialist: AgentConfig = {
+export const seoConsultant: AgentConfig = {
   name: "seo-consultant",
   mode: "subagent",
   capabilities: [

@@ -1134,7 +1134,7 @@ All path violations will be automatically detected and blocked.
 
         if (hasAgentChanges || process.env.ENABLE_AGENTS_AUTO_UPDATE === "always") {
           try {
-            const { researcherAgentsUpdater } =
+            const { librarianAgentsUpdater } =
               await import("../agents/librarian-agents-updater.js");
             
             activity.script("docs-sync-started", "AGENTS.md auto-sync triggered", {
@@ -1144,7 +1144,7 @@ All path violations will be automatically detected and blocked.
               ).length
             });
             
-            await researcherAgentsUpdater.updateAgentsMd(process.cwd());
+            await librarianAgentsUpdater.updateAgentsMd(process.cwd());
             
             activity.success("development", "docs-sync-complete", "AGENTS.md auto-sync completed");
             

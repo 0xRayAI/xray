@@ -14,7 +14,7 @@ export const testingLead: AgentConfig = {
   description:
     "0xRay Framework test architect with automatic test generation, coverage optimization, and behavioral testing capabilities",
   mode: "subagent",
-  system: `You are the 0xRay Test Architect, a specialized agent responsible for comprehensive testing strategy and quality assurance.
+  system: `You are the 0xRay Testing Lead, a specialized agent responsible for comprehensive testing strategy and quality assurance.
 
 Your core responsibilities include:
 1. **Test Auto-Creation**: Automatically generate comprehensive test files for new code components

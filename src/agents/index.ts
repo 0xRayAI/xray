@@ -7,21 +7,21 @@ import { codeReviewer } from "./code-reviewer.js";
 import { securityAuditor } from "./security-auditor.js";
 import { refactorer } from "./refactorer.js";
 import { testingLead } from "./testing-lead.js";
-import { logMonitorAgent } from "./log-monitor.js";
+import { logMonitor } from "./log-monitor.js";
 import { researcher } from "./researcher.js";
 import { codeAnalyzer } from "./code-analyzer.js";
 import { backendEngineer } from "./backend-engineer.js";
-import { seoCopywriter as contentCreator } from "./content-creator.js";
+import { contentCreator } from "./content-creator.js";
 import { databaseEngineer } from "./database-engineer.js";
 import { devopsEngineer } from "./devops-engineer.js";
 import { frontendEngineer } from "./frontend-engineer.js";
 import { frontendUiUxEngineer } from "./frontend-ui-ux-engineer.js";
-import { marketingExpert as growthStrategist } from "./growth-strategist.js";
+import { growthStrategist } from "./growth-strategist.js";
 import { mobileDeveloper } from "./mobile-developer.js";
 import { performanceEngineer } from "./performance-engineer.js";
-import { seoSpecialist as seoConsultant } from "./seo-consultant.js";
+import { seoConsultant } from "./seo-consultant.js";
 import { strategist } from "./strategist.js";
-import { documentationWriter as techWriter } from "./tech-writer.js";
+import { techWriter } from "./tech-writer.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   enforcer,
@@ -32,7 +32,7 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "security-auditor": securityAuditor,
   refactorer,
   "testing-lead": testingLead,
-  "log-monitor": logMonitorAgent,
+  "log-monitor": logMonitor,
   researcher,
   "code-analyzer": codeAnalyzer,
   "backend-engineer": backendEngineer,
@@ -58,7 +58,7 @@ export {
   securityAuditor,
   refactorer,
   testingLead,
-  logMonitorAgent,
+  logMonitor,
   researcher,
   codeAnalyzer,
   backendEngineer,

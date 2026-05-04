@@ -1,12 +1,12 @@
 import { AgentConfig } from "./types.js";
 
 /**
- * Marketing Expert Agent
+ * Growth Strategist Agent
  *
  * Strategic marketing specialist for product positioning, campaign strategy,
  * market analysis, and integrated marketing communications.
  */
-export const marketingExpert: AgentConfig = {
+export const growthStrategist: AgentConfig = {
   name: "growth-strategist",
   mode: "subagent",
   capabilities: [

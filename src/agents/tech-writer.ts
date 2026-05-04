@@ -1,12 +1,12 @@
 import type { AgentConfig } from "./types.js";
 
 /**
- * Documentation Writer Agent
+ * Tech Writer Agent
  *
  * Specialist in technical documentation, API docs, README files,
  * architectural decision records, and developer experience.
  */
-export const documentationWriter: AgentConfig = {
+export const techWriter: AgentConfig = {
   name: "tech-writer",
   mode: "subagent",
   capabilities: [
@@ -25,7 +25,7 @@ export const documentationWriter: AgentConfig = {
   description:
     "Documentation writer. Expert in API docs, README files, architectural decision records, and developer experience.",
 
-  system: `You are a Documentation Writer specializing in developer experience and technical documentation.
+  system: `You are a Tech Writer specializing in developer experience and technical documentation.
 
 ## Core Expertise
 - API documentation (OpenAPI/Swagger)

@@ -34,7 +34,7 @@ describe("Testing Lead Agent Configuration", () => {
 
     it("should have comprehensive test architect system prompt", () => {
       const system = testingLead.system;
-      expect(system).toContain("0xRay Test Architect");
+      expect(system).toContain("0xRay Testing Lead");
       expect(system).toContain("comprehensive testing strategy");
       expect(system).toContain("quality assurance");
     });

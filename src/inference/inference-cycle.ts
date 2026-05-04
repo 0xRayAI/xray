@@ -438,55 +438,87 @@ Respond with EXACTLY one of:
     const sessionId = `inference-governance-${Date.now()}`;
     const results: InferenceCycleResult["votes"] = [];
 
-    for (const proposal of proposals) {
-      const agents = GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer", "architect"];
-      const complexity = Math.min(50, 10 + proposal.evidence.length * 5 + (proposal.confidence > 0.8 ? 10 : 0));
-      const hasSecurity = proposal.type === "guard" || proposal.type === "fix";
-      const hasArchitectural = proposal.type === "codify" || proposal.type === "automate";
+    // Build TODO prompt asking architect to spawn subagents for all proposals
+    const todoPrompt = [
+      `TODO: Governance Vote on ${proposals.length} Inference Proposals`,
+      ``,
+      `You are the architect. For each proposal below, use the task tool to spawn the relevant subagents.`,
+      ``,
+      `INSTRUCTIONS:`,
+      `- Spawn these subagents: ${Array.from(new Set(proposals.flatMap((p) => GOVERNANCE_AGENTS[p.type] ?? ["code-reviewer"]))).join(", ")}`,
+      `- Each subagent should vote on proposals matching their expertise.`,
+      `- Output each vote in exact format:`,
+      `  PROPOSAL: <number>`,
+      `  AGENT: <agent-name>`,
+      `  DECISION: approve|reject|abstain`,
+      `  CONFIDENCE: 0.XX`,
+      `  REASONING: <brief>`,
+      ``,
+      `PROPOSALS:`,
+    ];
 
-      const voteId = await coordinator.initiateVoting(
-        sessionId,
-        proposal.title,
-        proposal.description,
-        agents,
-        {
-          complexity,
-          riskLevel: proposal.type === "fix" ? "low" : proposal.type === "guard" ? "high" : "medium",
-          hasSecurityConcerns: hasSecurity,
-          hasArchitecturalImpact: hasArchitectural,
-          participantCount: agents.length,
-        },
-      );
+    for (let i = 0; i < proposals.length; i++) {
+      const p = proposals[i]!;
+      const agents = GOVERNANCE_AGENTS[p.type] ?? ["code-reviewer"];
+      todoPrompt.push(`${i + 1}. [${p.type}] "${p.title}" → Agents: ${agents.join(", ")}`);
+    }
 
-      for (const agentName of agents) {
-        const agentVote = await this.getAgentVote(agentName, proposal);
-        coordinator.submitVote(voteId, agentName, agentVote.decision, agentVote.confidence, agentVote.reasoning);
-      }
+    try {
+      // Single architect call — spawns subagents via task tool
+      const jsonOutput = await this.invokeArchitect(todoPrompt.join("\n"));
 
-      const resolved = coordinator.resolveVoting(voteId);
-      if (resolved) {
-        results.push({
-          proposalId: proposal.id,
-          decision: resolved.decision === "approve" ? "approve" : "reject",
-          confidence: resolved.confidence,
-          details: resolved.details?.map((d) => `${d.agentName}: vote=${d.vote}, weight=${d.weight.toFixed(2)}`) || [],
-        });
+      // Parse subagent votes from JSON stream
+      const allVotes = this.parseSubagentVotes(jsonOutput, proposals);
 
-        // Update agent performance for historical weighting
-        if (resolved.details) {
-          for (const detail of resolved.details) {
-            const wasCorrect = detail.vote === resolved.decision;
-            const confidence = proposal.evidence.length > 0 ? proposal.confidence : 0.5;
-            this.getCoordinator().getAggregator().updateAgentPerformance(
-              detail.agentName,
-              resolved.decision,
-              detail.vote,
-              wasCorrect,
-              confidence,
-            );
-          }
+      // Feed votes into VotingCoordinator
+      for (const proposal of proposals) {
+        const voteId = await coordinator.initiateVoting(
+          sessionId,
+          proposal.title,
+          proposal.description,
+          GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer"],
+          {
+            complexity: Math.min(50, 10 + proposal.evidence.length * 5 + (proposal.confidence > 0.8 ? 10 : 0)),
+            riskLevel: proposal.type === "fix" ? "low" : proposal.type === "guard" ? "high" : "medium",
+            hasSecurityConcerns: proposal.type === "guard" || proposal.type === "fix",
+            hasArchitecturalImpact: proposal.type === "codify" || proposal.type === "automate",
+            participantCount: (GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer"]).length,
+          },
+        );
+
+        const proposalVotes = allVotes.filter((v: { proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }) => v.proposalId === proposal.id);
+        for (const v of proposalVotes) {
+          coordinator.submitVote(voteId, v.agentName, v.decision, v.confidence, v.reasoning);
         }
-      } else {
+
+        const resolved = coordinator.resolveVoting(voteId);
+        if (resolved) {
+          results.push({
+            proposalId: proposal.id,
+            decision: resolved.decision === "approve" ? "approve" : "reject",
+            confidence: resolved.confidence,
+            details: resolved.details?.map((d) => `${d.agentName}: vote=${d.vote}, weight=${d.weight.toFixed(2)}`) || [],
+          });
+
+          // Update agent performance
+          if (resolved.details) {
+            for (const detail of resolved.details) {
+              this.getCoordinator().getAggregator().updateAgentPerformance(
+                detail.agentName,
+                resolved.decision,
+                detail.vote,
+                detail.vote === resolved.decision,
+                proposal.confidence,
+              );
+            }
+          }
+        } else {
+          results.push(this.heuristicFallbackVote(proposal));
+        }
+      }
+    } catch (error) {
+      frameworkLogger.log("inference-cycle", "architect-governance-failed", "error", { error: String(error) });
+      for (const proposal of proposals) {
         results.push(this.heuristicFallbackVote(proposal));
       }
     }
@@ -499,6 +531,121 @@ Respond with EXACTLY one of:
     });
 
     return results;
+  }
+
+  // Removed: buildOrchestratorGovernancePrompt (replaced by inline TODO prompt in governProposals)
+
+  private async invokeArchitect(prompt: string): Promise<string> {
+    if (this.agentInvoker) {
+      return this.agentInvoker("architect", prompt);
+    }
+
+    if (this.opencodeAvailable === null) {
+      try {
+        execSync("which opencode", { stdio: "pipe", timeout: 3000 });
+        this.opencodeAvailable = true;
+      } catch {
+        this.opencodeAvailable = false;
+      }
+    }
+
+    if (!this.opencodeAvailable) {
+      throw new Error("opencode CLI not available");
+    }
+
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          child.kill("SIGKILL");
+          reject(new Error("opencode architect timed out"));
+        }
+      }, 60000); // 60s for multi-agent spawn
+
+      const child = spawn(
+        "opencode",
+        ["run", "--agent", "architect", "--message", prompt, "--format", "json"],
+        {
+          cwd: this.projectRoot,
+          env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json" },
+          stdio: ["ignore", "pipe", "pipe"],
+        },
+      );
+
+      let stdout = "";
+      child.stdout?.on("data", (d: Buffer) => { stdout += d.toString(); });
+      child.stderr?.on("data", (d: Buffer) => { /* ignore */ });
+
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        if (settled) return;
+        settled = true;
+        if (code === 0 && stdout.trim()) {
+          resolve(stdout.trim());
+        } else {
+          reject(new Error(`architect exited ${code}`));
+        }
+      });
+
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        if (!settled) {
+          settled = true;
+          reject(err);
+        }
+      });
+    });
+  }
+
+  private parseSubagentVotes(
+    jsonOutput: string,
+    proposals: InferenceProposal[],
+  ): Array<{ proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }> {
+    const votes: Array<{ proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }> = [];
+
+    const lines = jsonOutput.split("\n").filter((l) => l.trim());
+
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        if (obj.type === "tool_use" && obj.part?.type === "tool" && obj.part.tool === "task") {
+          const agentName = obj.part.state?.input?.subagent_type || "";
+          const output = obj.part.state?.output || "";
+
+          // Each task output may contain multiple PROPOSAL blocks
+          const blocks = output.split(/PROPOSAL:\s*/).filter((b: string) => b.trim().length > 0);
+
+          for (const block of blocks) {
+            const numMatch = block.match(/^(\d+)/);
+            if (!numMatch) continue;
+            const proposalIdx = parseInt(numMatch[1], 10) - 1;
+            if (proposalIdx < 0 || proposalIdx >= proposals.length) continue;
+
+            const decisionMatch = block.match(/DECISION:\s*(\w+)/i);
+            const confMatch = block.match(/CONFIDENCE:\s*(0?\.\d+|1\.0|1|0)/i);
+            const reasonMatch = block.match(/REASONING:\s*(.+)/i);
+
+            if (decisionMatch) {
+              const proposal = proposals[proposalIdx];
+              if (proposal) {
+                votes.push({
+                  proposalId: proposal.id,
+                  agentName,
+                  decision: decisionMatch[1]!.toLowerCase(),
+                  confidence: confMatch ? Math.min(1, Math.max(0, parseFloat(confMatch[1]!))) : 0.5,
+                  reasoning: reasonMatch ? reasonMatch[1]!.trim() : "",
+                });
+              }
+            }
+          }
+        }
+      } catch {
+        // Not JSON, skip
+      }
+    }
+
+    return votes;
   }
 
   private votingCoordinator: VotingCoordinator | null = null;
@@ -539,137 +686,6 @@ Respond with EXACTLY one of:
     } catch (error) {
       frameworkLogger.log("inference-cycle", "governance-state-save-failed", "warning", { error: String(error) });
     }
-  }
-
-  private async getAgentVote(
-    agentName: string,
-    proposal: InferenceProposal,
-  ): Promise<{ decision: string; confidence: number; reasoning: string }> {
-    const prompt = [
-      `Review this inference proposal from 0xRay's self-improvement cycle.`,
-      ``,
-      `Title: ${proposal.title}`,
-      `Type: ${proposal.type}`,
-      `Source: ${proposal.source}`,
-      `Confidence: ${(proposal.confidence * 100).toFixed(0)}%`,
-      `Evidence: ${proposal.evidence.join("; ")}`,
-      `Description: ${proposal.description}`,
-      ``,
-      `Cast your vote. Respond with exactly this format:`,
-      `DECISION: approve|reject`,
-      `CONFIDENCE: 0.XX`,
-      `REASONING: <one sentence>`,
-    ].join("\n");
-
-    try {
-      const response = await this.invokeAgent(agentName, prompt);
-      return this.parseAgentResponse(response, proposal);
-    } catch (error) {
-      frameworkLogger.log("inference-cycle", "agent-invocation-fallback", "info", {
-        agent: agentName,
-        error: String(error),
-      });
-      return {
-        decision: proposal.confidence >= 0.7 ? "approve" : "reject",
-        confidence: proposal.confidence * 0.8,
-        reasoning: `fallback: opencode unavailable for ${agentName}`,
-      };
-    }
-  }
-
-  private async invokeAgent(agentName: string, prompt: string): Promise<string> {
-    if (this.agentInvoker) {
-      return this.agentInvoker(agentName, prompt);
-    }
-
-    if (this.opencodeAvailable === null) {
-      try {
-        execSync("which opencode", { stdio: "pipe", timeout: 3000 });
-        this.opencodeAvailable = true;
-      } catch {
-        this.opencodeAvailable = false;
-        frameworkLogger.log("inference-cycle", "opencode-not-found", "info", {
-          message: "opencode CLI not found — governance will use heuristic fallback",
-        });
-      }
-    }
-
-    if (!this.opencodeAvailable) {
-      throw new Error("opencode CLI not available");
-    }
-
-    return new Promise((resolve, reject) => {
-      let settled = false;
-
-      const child = spawn(
-        "opencode",
-        ["run", "--agent", agentName, "--message", prompt,
-         "--format", "json"],
-        {
-          cwd: this.projectRoot,
-          env: {
-            ...process.env,
-            NODE_ENV: "production",
-            OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json",
-          },
-          stdio: ["ignore", "pipe", "pipe"],
-        },
-      );
-
-      const timer = setTimeout(() => {
-        if (!settled) {
-          settled = true;
-          child.kill("SIGKILL");
-          reject(new Error(`opencode --agent ${agentName} timed out`));
-        }
-      }, 15000);
-
-      let stdout = "";
-      let stderr = "";
-
-      child.stdout?.on("data", (data: Buffer) => { stdout += data.toString(); });
-      child.stderr?.on("data", (data: Buffer) => { stderr += data.toString(); });
-
-      child.on("close", (code) => {
-        clearTimeout(timer);
-        if (settled) return;
-        settled = true;
-        if (code === 0 && stdout.trim()) {
-          resolve(stdout.trim());
-        } else {
-          reject(new Error(`opencode --agent ${agentName} exited ${code}: ${stderr.substring(0, 200)}`));
-        }
-      });
-
-      child.on("error", (err) => {
-        clearTimeout(timer);
-        if (!settled) {
-          settled = true;
-          reject(err);
-        }
-      });
-    });
-  }
-
-  private parseAgentResponse(
-    response: string,
-    proposal: InferenceProposal,
-  ): { decision: string; confidence: number; reasoning: string } {
-    const lower = response.toLowerCase();
-
-    const decision = lower.includes("approve") || lower.includes("accept")
-      ? "approve"
-      : lower.includes("reject") || lower.includes("deny")
-        ? "reject"
-        : proposal.confidence >= 0.7 ? "approve" : "reject";
-
-    const confMatch = response.match(/confidence[:\s]*(0?\.\d+|1\.0|1|0)/i);
-    const confidence = confMatch ? Math.min(1, Math.max(0, parseFloat(confMatch[1]!))) : proposal.confidence;
-
-    const reasonMatch = response.match(/reasoning[:\s]*(.+)/i);
-    const reasoning = reasonMatch ? reasonMatch[1]!.trim() : response.substring(0, 200);
-
-    return { decision, confidence, reasoning };
   }
 
   private heuristicFallbackVote(proposal: InferenceProposal): InferenceCycleResult["votes"][0] {

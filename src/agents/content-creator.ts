@@ -1,13 +1,13 @@
 import { AgentConfig } from "./types.js";
 
 /**
- * SEO Copywriter Agent
+ * Content Creator Agent
  *
  * Content specialist focused on SEO-optimized copywriting for both
  * human readers and AI search engines. Expert in brand voice adaptation
  * and conversion-focused content.
  */
-export const seoCopywriter: AgentConfig = {
+export const contentCreator: AgentConfig = {
   name: "content-creator",
   mode: "subagent",
   capabilities: [

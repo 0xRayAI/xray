@@ -173,7 +173,7 @@ describe("Inference Cycle", () => {
     expect(result.phase).toBeDefined();
   });
 
-  it("should produce valid JSON-serializable result", async () => {
+  it("should parse subagent votes from JSON stream", async () => {
     const inferenceDir = path.join(tmpDir, "docs", "inference");
     fs.mkdirSync(inferenceDir, { recursive: true });
 
@@ -181,6 +181,34 @@ describe("Inference Cycle", () => {
       fs.writeFileSync(
         path.join(inferenceDir, `session-j${i}.json`),
         JSON.stringify(makeSession(`j${i}`, 10, "Bug: json test")),
+      );
+    }
+
+    const architectInvoker = vi.fn().mockResolvedValue(
+      [
+        JSON.stringify({ type: "tool_use", part: { type: "tool", tool: "task", state: { input: { subagent_type: "code-reviewer" }, output: "PROPOSAL: 1\nAGENT: code-reviewer\nDECISION: approve\nCONFIDENCE: 0.82\nREASONING: Fix justified\n\nPROPOSAL: 2\nAGENT: code-reviewer\nDECISION: approve\nCONFIDENCE: 0.72\nREASONING: Consolidation warranted" } } }),
+        JSON.stringify({ type: "tool_use", part: { type: "tool", tool: "task", state: { input: { subagent_type: "refactorer" }, output: "PROPOSAL: 1\nAGENT: refactorer\nDECISION: reject\nCONFIDENCE: 0.78\nREASONING: Band-aid fix\n\nPROPOSAL: 2\nAGENT: refactorer\nDECISION: abstain\nCONFIDENCE: 0.55\nREASONING: Insufficient scope" } } }),
+      ].join("\n"),
+    );
+
+    const cycle = new InferenceCycle(tmpDir, architectInvoker);
+    const result = await cycle.maybeRunCycle();
+
+    expect(result.votes.length).toBeGreaterThan(0);
+
+    const approved = result.votes.filter((v) => v.decision === "approve");
+    const rejected = result.votes.filter((v) => v.decision === "reject");
+    expect(approved.length + rejected.length).toBeGreaterThan(0);
+  }, 15000);
+
+  it("should produce valid JSON-serializable result", async () => {
+    const inferenceDir = path.join(tmpDir, "docs", "inference");
+    fs.mkdirSync(inferenceDir, { recursive: true });
+
+    for (let i = 0; i < 4; i++) {
+      fs.writeFileSync(
+        path.join(inferenceDir, `session-serial-${i}.json`),
+        JSON.stringify(makeSession(`serial${i}`, 10, "Bug: serial test")),
       );
     }
 

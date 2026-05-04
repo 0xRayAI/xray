@@ -444,4 +444,4 @@ export class LibrarianAgentsUpdater {
 }
 
 // Export singleton instance
-export const researcherAgentsUpdater = new LibrarianAgentsUpdater();
+export const librarianAgentsUpdater = new LibrarianAgentsUpdater();

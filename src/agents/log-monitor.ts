@@ -1,6 +1,6 @@
 import type { AgentConfig } from "./types.js";
 
-export const logMonitorAgent: AgentConfig = {
+export const logMonitor: AgentConfig = {
   name: "log-monitor",
   capabilities: [
     "real-time-monitoring",
