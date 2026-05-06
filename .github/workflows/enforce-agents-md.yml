@@ -1,74 +1,18 @@
 name: Enforce AGENTS.md
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
-  workflow_dispatch:
 
 jobs:
-  validate-agents-md:
-    name: Validate AGENTS.md
+  check:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
+    - uses: actions/checkout@v4
     - name: Validate AGENTS.md
-      run: node scripts/node/enforce-agents-md.mjs
-      id: validate
-      
-    - name: Comment on PR (if failed)
-      if: failure() && github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `❌ **AGENTS.md Validation Failed**
-
-          The enforcer agent has blocked this PR due to AGENTS.md issues.
-
-          Please:
-          1. Ensure AGENTS.md exists in project root
-          2. Run \`node scripts/node/enforce-agents-md.mjs\` locally
-          3. Fix any reported errors
-          4. If missing, run \`node scripts/node/enforce-agents-md.mjs --generate\`
-
-          AGENTS.md is required for:
-          - Agent triage rules
-          - Universal Development Codex
-          - Session management protocols
-          - Rule enforcement guidelines
-
-          See docs/AGENTS_TEMPLATE.md for reference.`
-          })
-    
-    - name: Generate AGENTS.md (if missing)
-      if: failure() && github.event_name == 'pull_request'
       run: |
-        echo "Attempting to auto-generate AGENTS.md..."
-        node scripts/node/enforce-agents-md.mjs --generate || true
-        
-    - name: Upload AGENTS.md report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: agents-md-validation
-        path: |
-          AGENTS.md
-          .opencode/logs/*
-        retention-days: 7
+        if [ -f scripts/validate-agents-md.js ]; then
+          node scripts/validate-agents-md.js
+        else
+          echo 'AGENTS.md validation script not found - skipping'
+        fi

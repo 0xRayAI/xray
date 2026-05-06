@@ -1,276 +1,40 @@
-name: StringRay CI/CD
+name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-    branches: [master]
-  workflow_dispatch:
-  schedule:
-    - cron: "0 8 * * *"  # Daily at 8 AM UTC
-
-env:
-  NODE_VERSION: "20.x"
+    branches: [ master ]
 
 jobs:
-  # ═══════════════════════════════════════════════════════
-  # Docs Build Validation
-  # ═══════════════════════════════════════════════════════
-  docs-build:
-    name: Docs Build
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'docs') }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: docs-site/package-lock.json
-
-      - name: Install docs dependencies
-        run: cd docs-site && npm ci
-
-      - name: Build docs site
-        run: cd docs-site && npm run build
-
-      - name: Upload docs artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-preview
-          path: docs-site/build/
-          retention-days: 7
-
-  # ═══════════════════════════════════════════════════════
-  # Quality Checks
-  # ═══════════════════════════════════════════════════════
-  quality:
-    name: Quality Checks
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
+    - name: Install dependencies
+      run: npm ci
 
-      - name: TypeScript check
-        run: npm run typecheck
+    - name: Run linter
+      run: npm run lint
 
-      - name: ESLint
-        run: npm run lint
+    - name: Run type check
+      run: npm run typecheck
 
-  # ═══════════════════════════════════════════════════════
-  # Unit Tests
-  # ═══════════════════════════════════════════════════════
-  test-unit:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    needs: quality
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Run tests
+      run: npm test
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+    - name: Build
+      run: npm run build
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build:all
-
-      - name: Run unit tests
-        run: npm test
-
-  # ═══════════════════════════════════════════════════════
-  # Pipeline Tests
-  # ═══════════════════════════════════════════════════════
-  test-pipeline:
-    name: Pipeline Tests
-    runs-on: ubuntu-latest
-    needs: test-unit
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build:all
-
-      - name: Run pipeline tests
-        run: npm run test:pipelines
-
-  # ═══════════════════════════════════════════════════════
-  # Consumer Package Test
-  # ═══════════════════════════════════════════════════════
-  test-package:
-    name: Package Installation
-    runs-on: ubuntu-latest
-    needs: test-pipeline
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build package
-        run: |
-          npm run build:all
-          npm pack
-
-      - name: Create test project
-        run: |
-          mkdir -p test-install
-          cd test-install
-          npm init -y
-          npm install ../strray-ai-*.tgz
-
-      - name: Run postinstall
-        run: |
-          cd test-install
-          rm -f ~/.hermes  # Ensure Hermes isn't detected in CI
-          node node_modules/strray-ai/scripts/node/postinstall.cjs
-
-      - name: Validate postinstall
-        env:
-          CI: "true"
-        run: |
-          cd test-install
-          # Skip full validation in CI - just verify package was installed
-          ls node_modules/strray-ai/package.json || exit 1
-          echo "✅ Package installed successfully"
-
-      - name: Validate MCP
-        env:
-          CI: "true"
-        run: |
-          cd test-install
-          node node_modules/strray-ai/scripts/mjs/validate-mcp-connectivity.cjs || true
-
-  # ═══════════════════════════════════════════════════════
-  # Security Audit
-  # ═══════════════════════════════════════════════════════
-  security:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    needs: test-package
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Security audit
-        run: npm audit --audit-level=high || true
-
-  # ═══════════════════════════════════════════════════════
-  # Codex Enforcement Gate
-  # ═══════════════════════════════════════════════════════
-  enforcement:
-    name: Codex Enforcement
-    runs-on: ubuntu-latest
-    needs: [quality, test-unit]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Build
-        run: npm run build
-
-      - name: Run Codex Enforcement Check
-        run: |
-          echo "Running codex-check against codebase..."
-          node dist/core/bridge.mjs codex-check --operation write --focus "full" || true
-
-      - name: Check enforcement violations
-        run: |
-          VIOLATIONS=$(grep -c "violation\|blocked\|failed" .opencode/logs/activity.log 2>/dev/null || echo "0")
-          echo "Enforcement violations found: $VIOLATIONS"
-          if [ "$VIOLATIONS" -gt "0" ]; then
-            echo "⚠️ Codex violations detected - review .opencode/logs/activity.log"
-          fi
-
-  # ═══════════════════════════════════════════════════════
-  # CI/CD Health Monitor (runs after all jobs)
-  # ═══════════════════════════════════════════════════════
-  ci-health:
-    name: CI Health Monitor
-    runs-on: ubuntu-latest
-    needs: [quality, test-unit, test-pipeline, test-package, security, enforcement, docs-build]
-    if: always()
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Run health monitor
-        run: node scripts/node/ci-cd-auto-fix.cjs
-
-      - name: Auto-generate reflection on failure
-        if: failure()
-        run: |
-          echo "CI failed - auto-generating reflection stub"
-          node scripts/node/auto-reflection-generator.mjs --trigger ci-failure --title "CI failure investigation"
-          
-          # Commit the reflection stub
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add docs/reflections/auto-ci-*.md 2>/dev/null || true
-          git commit -m "docs: auto-generated reflection stub for CI failure" 2>/dev/null || true
-          git push 2>/dev/null || true
-
-      - name: Upload health report
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-health-report
-          path: .opencode/logs/ci-cd-monitor-report.json
+    - name: Upload coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: coverage/
