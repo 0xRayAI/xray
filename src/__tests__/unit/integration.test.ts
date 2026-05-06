@@ -22,8 +22,8 @@ vi.mock("child_process", () => ({
 
 vi.mock("../mcps/agent-resolver.js", () => ({
   resolveAgent: vi.fn().mockResolvedValue({
-    name: "enforcer",
-    system: "You are a code quality enforcer...",
+    name: "code-reviewer",
+    system: "You are a code quality reviewer...",
     tools: { include: ["read", "grep"] },
   }),
 }));
@@ -59,12 +59,12 @@ describe("0xRay Integration Script", () => {
   describe("AgentConfig Interface", () => {
     it("should define valid agent config", () => {
       const config: import("../../scripts/integration.js").AgentConfig = {
-        name: "enforcer",
-        system: "You are a code quality enforcer...",
+        name: "code-reviewer",
+        system: "You are a code quality reviewer...",
         tools: { include: ["read", "grep", "edit"] },
       };
 
-      expect(config.name).toBe("enforcer");
+      expect(config.name).toBe("code-reviewer");
       expect(config.tools?.include).toContain("edit");
     });
 
@@ -82,7 +82,7 @@ describe("0xRay Integration Script", () => {
     it("should define successful result", () => {
       const result: import("../../scripts/integration.js").IntegrationResult = {
         success: true,
-        agent: "enforcer",
+        agent: "code-reviewer",
         task: "Check code quality",
         result: { issues: 0 },
         timestamp: new Date().toISOString(),
@@ -95,7 +95,7 @@ describe("0xRay Integration Script", () => {
     it("should define error result", () => {
       const result: import("../../scripts/integration.js").IntegrationResult = {
         success: false,
-        agent: "enforcer",
+        agent: "code-reviewer",
         error: "Agent not found",
         timestamp: new Date().toISOString(),
       };
@@ -106,11 +106,11 @@ describe("0xRay Integration Script", () => {
   });
 
   describe("resolveAgent function", () => {
-    it("should resolve enforcer agent", async () => {
+    it("should resolve code-reviewer agent", async () => {
       const { resolveAgent } = await import("../../mcps/agent-resolver.js");
-      const config = await resolveAgent("enforcer");
+      const config = await resolveAgent("code-reviewer");
 
-      expect(config.name).toBe("enforcer");
+      expect(config.name).toBe("code-reviewer");
       expect(config.system).toBeDefined();
     });
 
