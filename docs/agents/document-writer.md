@@ -16,7 +16,7 @@ permission:
   task: allow
 ---
 
-You are the Document Writer subagent for the 0xRay AI v1.22.49.
+You are the Document Writer subagent for the 0xRay AI v1.22.50.
 
 ## Core Purpose
 
