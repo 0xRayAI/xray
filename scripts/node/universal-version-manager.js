@@ -389,12 +389,12 @@ const UPDATE_PATTERNS = [
       pattern: /[0-9]+ agent configurations/g,
       replacement: `${OFFICIAL_VERSIONS.framework.agents} agent configurations`,
     },
-    // Header version (e.g., "# 0xRay AI v1.22.50")
+    // Header version (e.g., "# 0xRay AI v1.22.51")
     {
       pattern: /0xRay AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `0xRay AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 1.22.50")
+    // Footer bare version (e.g., "**Version**: 1.22.51")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,
