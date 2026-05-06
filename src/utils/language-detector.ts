@@ -365,9 +365,21 @@ export function getTestFilePath(
   switch (projectLanguage.language) {
     case "TypeScript":
     case "JavaScript":
-      // src/utils/helper.ts -> src/__tests__/utils/helper.test.ts
+      if (dir.includes("/src/")) {
+        return path.join(
+          dir.replace("/src/", "/src/__tests__/"),
+          `${nameWithoutExt}.test${ext}`,
+        );
+      }
+      if (dir.startsWith("src/") || dir.startsWith("src\\")) {
+        return path.join(
+          dir.replace(/^src[\\/]/, "src/__tests__/"),
+          `${nameWithoutExt}.test${ext}`,
+        );
+      }
       return path.join(
-        dir.replace("/src/", "/src/__tests__/"),
+        dir,
+        "__tests__",
         `${nameWithoutExt}.test${ext}`,
       );
 

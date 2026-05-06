@@ -31,33 +31,25 @@ describe("H-001: Broken Encryption Fix", () => {
     const originalData = "Hello, 0xRay!";
     const encrypted = securitySystem.encryptData(originalData);
 
-    // Decode Base64 to get the buffer
     const encryptedBuffer = Buffer.from(encrypted, "base64");
 
-    // Tamper with the encrypted data by changing a byte in the middle
-    // This will corrupt the ciphertext and cause auth tag verification to fail
-    encryptedBuffer[20] = encryptedBuffer[20] ^ 0xFF; // Flip all bits in byte 20
+    encryptedBuffer[20] = encryptedBuffer[20] ^ 0xFF;
 
-    // Re-encode as Base64
     const tamperedData = encryptedBuffer.toString("base64");
 
-    // Should throw error when decrypting tampered data
-    expect(() => {
-      securitySystem.decryptData(tamperedData);
-    }).toThrow("Decryption failed");
+    const result = securitySystem.decryptData(tamperedData);
+    expect(result).toBeNull();
   });
 
   it("should reject decryption with wrong key", () => {
     const originalData = "Hello, 0xRay!";
     const encrypted = securitySystem.encryptData(originalData);
 
-    // Try to decrypt with different key
     const wrongKeySystem = new SecurityHardeningSystem("different-key-67890");
     wrongKeySystem.start();
 
-    expect(() => {
-      wrongKeySystem.decryptData(encrypted);
-    }).toThrow("Decryption failed");
+    const result = wrongKeySystem.decryptData(encrypted);
+    expect(result).toBeNull();
   });
 
   it("should handle empty string", () => {

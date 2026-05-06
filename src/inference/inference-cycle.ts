@@ -331,6 +331,11 @@ export class InferenceCycle {
   }
 
   private async applyProposal(p: InferenceProposal): Promise<boolean> {
+    if (p.type === "codify") {
+      this.applyCodification(p);
+      return true;
+    }
+
     const branchName = `inference/${p.type}-${Date.now()}`;
 
     try {
@@ -342,8 +347,6 @@ export class InferenceCycle {
         filesChanged = this.applyCodeChange(p);
       } else if (p.type === "guard") {
         filesChanged = this.applyGuard(p);
-      } else if (p.type === "codify") {
-        filesChanged = this.applyCodification(p);
       } else if (p.type === "automate") {
         filesChanged = this.applyAutomation(p);
       }

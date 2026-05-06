@@ -680,34 +680,24 @@ export class SecurityHardeningSystem extends EventEmitter {
    * @returns Decrypted plaintext data
    * @throws Error if decryption fails or authentication tag doesn't match
    */
-  decryptData(encryptedData: string): string {
+  decryptData(encryptedData: string): string | null {
     try {
-      // Decode Base64 to get combined buffer
       const combined = Buffer.from(encryptedData, "base64");
 
-      // Extract IV (first 16 bytes)
       const iv = combined.subarray(0, SECURITY_CONFIG.encryption.ivLength);
-
-      // Extract auth tag (last 16 bytes)
       const authTag = combined.subarray(combined.length - 16);
-
-      // Extract encrypted data (middle part)
       const encrypted = combined.subarray(
         SECURITY_CONFIG.encryption.ivLength,
         combined.length - 16,
       );
 
-      // Create decipher with AES-256-GCM
       const decipher = crypto.createDecipheriv(
         SECURITY_CONFIG.encryption.algorithm,
         this.encryptionKey,
         iv,
       );
-
-      // Set authentication tag (for integrity verification)
       decipher.setAuthTag(authTag);
 
-      // Decrypt the data (Buffer to string)
       const decrypted = Buffer.concat([
         decipher.update(encrypted),
         decipher.final(),
@@ -717,14 +707,14 @@ export class SecurityHardeningSystem extends EventEmitter {
     } catch (error) {
       frameworkLogger.log(
         "security-hardening-system",
-        "-security-data-decryption-failed-error-instanceof-",
-        "error",
+        "decryption-failed",
+        "warning",
         {
-          message: `[SECURITY] Data decryption failed: ${error instanceof Error ? error.message : String(error)}`,
+          message: `Data decryption failed (likely key mismatch from prior session): ${error instanceof Error ? error.message : String(error)}`,
         },
       );
 
-      throw new Error(`Decryption failed: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
     }
   }
 

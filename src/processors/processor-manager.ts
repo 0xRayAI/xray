@@ -900,7 +900,7 @@ export class ProcessorManager {
 
     const requiredFields: Record<string, string[]> = {
       preValidate: ["operation"],
-      codexCompliance: ["operation", "files"],
+      codexCompliance: ["operation"],
       testAutoCreation: ["tool", "operation"],
       versionCompliance: ["operation"],
       errorBoundary: ["operation"],

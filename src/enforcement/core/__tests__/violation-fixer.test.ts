@@ -137,7 +137,7 @@ describe('ViolationFixer', () => {
       expect(fixes[1].attempted).toBe(true);
     });
 
-    it('should mark fix as not attempted when no strategy found', async () => {
+    it('should use fallback strategy when no specific strategy found', async () => {
       const violations: Violation[] = [
         { rule: 'unknown-rule', message: 'Unknown violation' },
       ];
@@ -146,8 +146,8 @@ describe('ViolationFixer', () => {
 
       expect(fixes).toHaveLength(1);
       expect(fixes[0].ruleId).toBe('unknown-rule');
-      expect(fixes[0].attempted).toBe(false);
-      expect(fixes[0].error).toBe('No agent/skill mapping found');
+      expect(fixes[0].agent).toBe('code-reviewer');
+      expect(fixes[0].skill).toBe('code-review');
     });
 
     it('should include violation suggestions in fix context', async () => {

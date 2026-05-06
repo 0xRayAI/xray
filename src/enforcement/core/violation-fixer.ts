@@ -109,19 +109,24 @@ export class ViolationFixer implements IViolationFixer {
           await frameworkLogger.log(
             'violation-fixer',
             'no-strategy-found',
-            'error',
+            'info',
             {
               rule: violation.rule,
-              message: `No fix strategy found for rule: ${violation.rule}`,
+              message: `No specific strategy for rule: ${violation.rule}, falling back to code-reviewer`,
             },
           );
+          const fallback = this.getFixStrategy('unknown') || {
+            agent: 'code-reviewer',
+            skill: 'code-review',
+            tool: 'analyze_code_quality',
+            priority: 5,
+          };
           fixes.push({
             ruleId: violation.rule,
-            agent: '',
-            skill: '',
+            agent: fallback.agent,
+            skill: fallback.skill,
             context,
             attempted: false,
-            error: 'No agent/skill mapping found',
           });
           continue;
         }
@@ -690,6 +695,12 @@ export class ViolationFixer implements IViolationFixer {
         skill: 'project-analysis',
         tool: 'analyze-project-health',
         priority: 1,
+      },
+      'unknown': {
+        agent: 'code-reviewer',
+        skill: 'code-review',
+        tool: 'analyze_code_quality',
+        priority: 5,
       },
     };
 
