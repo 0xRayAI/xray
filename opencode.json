@@ -64,11 +64,6 @@
       "temperature": 1,
       "mode": "subagent"
     },
-    "explore": {
-      "description": "Codebase exploration agent",
-      "temperature": 1,
-      "mode": "subagent"
-    },
     "backend-engineer": {
       "description": "Expert in REST/GraphQL APIs, microservices, authentication, server architecture, and backend performance",
       "temperature": 1,
@@ -124,11 +119,6 @@
       "temperature": 1,
       "mode": "subagent"
     },
-    "librarian-agents-updater": {
-      "description": "Agent for updating and synchronizing agent definitions",
-      "temperature": 1,
-      "mode": "subagent"
-    },
     "multimodal-looker": {
       "description": "Media file analysis and interpretation specialist for images, diagrams, PDFs, and visual content",
       "temperature": 1,
@@ -136,106 +126,6 @@
     },
     "code-analyzer": {
       "description": "Code analyzer for metrics",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "hermes-agent": {
-      "description": "Hermes Agent native plugin for 0xRay CLI integration",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "inference-improve": {
-      "description": "Autonomous inference improvement through collaborative agent analysis",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "session-management": {
-      "description": "Manage user sessions and persistent state",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "storyteller": {
-      "description": "Write deep narrative reflections, sagas, journeys, and technical stories",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "auto-format": {
-      "description": "Automated code formatting and style consistency",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "boot-orchestrator": {
-      "description": "Framework initialization and boot orchestration",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "framework-compliance-audit": {
-      "description": "Framework compliance auditing and validation",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "lint": {
-      "description": "Code linting and static analysis",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "performance-analysis": {
-      "description": "System performance analysis and optimization",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "security-scan": {
-      "description": "Security vulnerability scanning and assessment",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "state-manager": {
-      "description": "Application state management and persistence",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "processor-pipeline": {
-      "description": "Data processing pipeline management",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "model-health-check": {
-      "description": "AI model health monitoring and diagnostics",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "estimation": {
-      "description": "Effort estimation and project sizing",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "api-design": {
-      "description": "RESTful API design and validation",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "architecture-patterns": {
-      "description": "Software architecture patterns and best practices",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "git-workflow": {
-      "description": "Git workflow management and collaboration tools",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "performance-optimization": {
-      "description": "Application performance optimization and tuning",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "project-analysis": {
-      "description": "Analyze project structure, complexity, and health metrics",
-      "temperature": 1,
-      "mode": "subagent"
-    },
-    "ui-ux-design": {
-      "description": "User interface and user experience design with mobile-first approach, cognitive simplicity, and accessibility-first principles",
       "temperature": 1,
       "mode": "subagent"
     },

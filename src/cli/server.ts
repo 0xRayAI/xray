@@ -99,11 +99,9 @@ app.get("/api/status", requireAuth, (req: Request, res: Response) => {
 app.get("/api/agents", requireAuth, (req: Request, res: Response) => {
   // Return agent configurations
   res.json({
-    agents: [
-      "enforcer",
-      "architect",
-      "orchestrator",
-      "bug-triage-specialist",
+     agents: [
+       "architect",
+       "bug-triage-specialist",
       "code-reviewer",
       "security-auditor",
       "refactorer",

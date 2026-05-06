@@ -85,7 +85,7 @@ class SkillInvocationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray/skill-invocation", version: "1.22.48",
+        name: "strray/skill-invocation", version: "1.22.49",
       },
       {
         capabilities: {
@@ -458,9 +458,9 @@ class SkillInvocationServer {
       "testing-strategy", "researcher", "framework-help",
     ];
     const registrySkills = [
-      "enforcer", "orchestrator", "architect", "refactorer",
+      "code-reviewer", "architect", "refactorer",
       "security-auditor", "code-reviewer", "testing-lead",
-      "estimation-validator", "skill-invocation",
+      "strategist", "skill-invocation",
     ];
     const knowledgeSkills = [
       "architecture-patterns", "strategist", "tech-writer",
@@ -521,7 +521,7 @@ class SkillInvocationServer {
       "code-review", "security-audit", "performance-optimization",
       "testing-strategy", "researcher", "skill-invocation",
       "framework-help", "session-management", "code-analyzer",
-      "enforcer", "orchestrator", "estimation-validator",
+      "code-reviewer", "architect", "researcher",
       "architect", "bug-triage-specialist", "log-monitor",
       "code-reviewer", "security-auditor", "refactorer",
       "growth-strategist", "strategist", "devops-deployment",

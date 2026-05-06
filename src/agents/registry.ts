@@ -27,19 +27,6 @@ export interface AgentRegistryEntry {
 }
 
 export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
-  enforcer: {
-    name: "enforcer",
-    description: "DEPRECATED - enforcement handled by preValidate processor & MCP servers",
-    capabilities: ["code-quality", "validation"],
-    capacity: 0,
-    specialties: ["validation", "compliance"],
-    mode: "subagent",
-    maxComplexity: 0,
-    concurrentTasks: 0,
-    status: "inactive", // DEPRECATED - enforcement is plugin-level
-    performance: 0,
-    expertise: "enforcement via preValidate processor and codex-injection plugin",
-  },
   architect: {
     name: "architect",
     description: "System design & technical decisions",
@@ -52,19 +39,6 @@ export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
     status: "active",
     performance: 85,
     expertise: "system architecture",
-  },
-  orchestrator: {
-    name: "orchestrator",
-    description: "DEPRECATED - orchestration handled by agent-delegator at plugin level",
-    capabilities: ["task-coordination", "multi-agent-management", "workflow-orchestration"],
-    capacity: 0,
-    specialties: ["coordination", "delegation", "workflow"],
-    mode: "subagent",
-    maxComplexity: 0,
-    concurrentTasks: 0,
-    status: "inactive", // DEPRECATED - orchestration is plugin-level
-    performance: 0,
-    expertise: "orchestration handled by agent-delegator complexity analysis",
   },
   "bug-triage-specialist": {
     name: "bug-triage-specialist",

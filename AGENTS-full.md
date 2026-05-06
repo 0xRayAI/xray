@@ -420,7 +420,7 @@ The orchestrator manages complex, multi-agent workflows for enterprise-level tas
 ```
 
 **Integration Points:**
-- **26 autonomous agents**: Coordinates multi-agent teams
+- **24 autonomous agents**: Coordinates multi-agent teams
 - **TaskSkillRouter**: Manages agent routing
 - **MCP Client**: Parallel tool execution
 - **Enforcer**: Validates coordination against governance rules

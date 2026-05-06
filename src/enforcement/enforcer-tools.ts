@@ -20,7 +20,7 @@ import * as path from "path";
 const DELEGATION_CONFIDENCE_THRESHOLD = 0.50;
 
 // Agents that enforcer should NOT delegate to (enforcer handles these itself)
-const ENFORCER_HANDLES = new Set(["enforcer", "code-reviewer"]);
+const ENFORCER_HANDLES = new Set(["code-reviewer"]);
 
 // Community skills are OPTIONAL - they may not be installed
 // These mappings have lower confidence (0.55-0.7) since skills may not be available
@@ -41,7 +41,7 @@ const ROUTING_MAPPINGS = [
   { keywords: ["database", "db", "sql", "schema", "migration", "query"], skill: "database-design", agent: "database-engineer", confidence: 0.95 },
   { keywords: ["deploy", "ci/cd", "pipeline", "docker", "kubernetes", "infrastructure"], skill: "devops-deployment", agent: "devops-engineer", confidence: 0.94 },
   { keywords: ["mobile", "ios", "android", "react-native", "flutter"], skill: "mobile-development", agent: "mobile-developer", confidence: 0.95 },
-  { keywords: ["enforce", "compliance", "rule", "standard", "codex", "block", "prevent"], skill: "enforcer", agent: "enforcer", confidence: 0.95 },
+  { keywords: ["enforce", "compliance", "rule", "standard", "codex", "block", "prevent"], skill: "code-review", agent: "code-reviewer", confidence: 0.95 },
   { keywords: ["design", "architect", "plan", "system", "model", "pattern", "architecture"], skill: "architecture-patterns", agent: "architect", confidence: 0.95 },
   { keywords: ["codebase", "explore", "research", "discover", "implementation"], skill: "git-workflow", agent: "researcher", confidence: 0.88 },
   // Additional built-in skill mappings
@@ -54,16 +54,16 @@ const ROUTING_MAPPINGS = [
   { keywords: ["content", "copy", "blog", "marketing", "social"], skill: "content-creator", agent: "content-creator", confidence: 0.88 },
   { keywords: ["format", "lint", "prettier", "eslint", "style", "formatting"], skill: "auto-format", agent: "code-reviewer", confidence: 0.85 },
   { keywords: ["project", "structure", "health", "dependencies", "architecture"], skill: "project-analysis", agent: "architect", confidence: 0.88 },
-  { keywords: ["compliance", "audit", "standards", "framework", "validation"], skill: "framework-compliance-audit", agent: "enforcer", confidence: 0.9 },
+  { keywords: ["compliance", "audit", "standards", "framework", "validation"], skill: "framework-compliance-audit", agent: "code-reviewer", confidence: 0.9 },
   { keywords: ["session", "state", "persistence", "storage", "cache"], skill: "session-management", agent: "backend-engineer", confidence: 0.85 },
   { keywords: ["image", "visual", "pdf", "diagram", "multimedia", "media"], skill: "multimodal-looker", agent: "multimodal-looker", confidence: 0.92 },
   { keywords: ["testing", "strategy", "coverage", "test-plan"], skill: "testing-strategy", agent: "testing-lead", confidence: 0.92 },
   { keywords: ["inference", "model", "llm", "tuning", "optimization"], skill: "inference-improve", agent: "performance-engineer", confidence: 0.88 },
-  { keywords: ["orchestrate", "boot", "initialize", "startup", "bootstrap"], skill: "boot-orchestrator", agent: "orchestrator", confidence: 0.9 },
+  { keywords: ["orchestrate", "boot", "initialize", "startup", "bootstrap"], skill: "boot-orchestrator", agent: "architect", confidence: 0.9 },
   // Additional unmapped skills
   { keywords: ["tool", "utility", "helper", "instrument"], skill: "architect-tools", agent: "architect", confidence: 0.85 },
   { keywords: ["design", "visual", "style", "theme", "css", "accessibility"], skill: "ui-ux-design", agent: "frontend-ui-ux-engineer", confidence: 0.9 },
-  { keywords: ["agent", "multi-agent", "coordination", "hermes", "communication"], skill: "hermes-agent", agent: "orchestrator", confidence: 0.88 },
+  { keywords: ["agent", "multi-agent", "coordination", "hermes", "communication"], skill: "hermes-agent", agent: "architect", confidence: 0.88 },
   { keywords: ["log", "diagnostic", "trace", "monitor", "watch"], skill: "log-monitor", agent: "log-monitor", confidence: 0.9 },
   { keywords: ["health", "diagnostic", "model-health", "validate-llm"], skill: "model-health-check", agent: "performance-engineer", confidence: 0.88 },
   { keywords: ["analyze", "profiling", "memory", "cpu", "latency"], skill: "performance-analysis", agent: "performance-engineer", confidence: 0.9 },
@@ -131,7 +131,7 @@ const ROUTING_MAPPINGS = [
 
   // AI/ML (antigravity)
   { keywords: ["local llm", "ollama", "llama", "local model"], skill: "antigravity--local-llm-expert", agent: "performance-engineer", confidence: 0.65 },
-  { keywords: ["agent", "mcp", "model context protocol"], skill: "antigravity--agent-memory-mcp", agent: "orchestrator", confidence: 0.65 },
+  { keywords: ["agent", "mcp", "model context protocol"], skill: "antigravity--agent-memory-mcp", agent: "architect", confidence: 0.65 },
   { keywords: ["agent evaluation", "agent testing"], skill: "antigravity--agent-evaluation", agent: "testing-lead", confidence: 0.65 },
   { keywords: ["ai agent", "autonomous agent"], skill: "antigravity--ai-agent-development", agent: "backend-engineer", confidence: 0.65 },
 
@@ -190,8 +190,8 @@ export function getTaskRoutingRecommendation(
   }
   
   return {
-    suggestedAgent: "enforcer",
-    suggestedSkill: "enforcer",
+    suggestedAgent: "code-reviewer",
+    suggestedSkill: "code-review",
     confidence: 0.5,
     matchedKeyword: "none",
   };
@@ -585,11 +585,11 @@ export async function ruleValidation(
     routingConfidence: routing.confidence,
   });
 
-  // DELEGATION LOGIC: If high confidence and recommended agent is not enforcer, delegate!
+  // DELEGATION LOGIC: If high confidence and recommended agent is not self-handled, delegate!
   const shouldDelegate = 
     routing.confidence >= DELEGATION_CONFIDENCE_THRESHOLD &&
     !ENFORCER_HANDLES.has(routing.suggestedAgent) &&
-    routing.suggestedAgent !== "enforcer";
+    routing.suggestedAgent !== "code-reviewer";
 
   // SPECIAL CASE: Release workflow - execute full release process
   if (routing.matchedKeyword === "release-workflow") {

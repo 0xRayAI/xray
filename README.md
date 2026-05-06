@@ -64,7 +64,7 @@ This installs only the MCP servers - no OpenCode dependency.
 
 ## ✨ Features
 
-- **🤖 26 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
+- **🤖 24 Specialized Agents** - Autonomous agents that read/write code, run commands, and enforce compliance
 - **📏 99.6% Error Prevention** - Universal Development Codex (60 terms)
 - **⚡ 44 Framework Skills** + 10 curated community sources (170+ additional skills available)
 - **🛡️ Enterprise Security** - Comprehensive validation and scanning
@@ -285,7 +285,7 @@ npx strray-ai antigravity status       # Show installed skills with licenses
 
 ```
 .opencode/
-├── agents/         # 26 agent configurations
+├── agents/         # 24 agent configurations
 ├── skills/         # Framework skills
 ├── strray/
 │   ├── codex.json      # Codex rules

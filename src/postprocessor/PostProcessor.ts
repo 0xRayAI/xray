@@ -729,14 +729,14 @@ const { RuleEnforcer } = await importResolver.importModule('enforcement/rule-enf
 ❌ Directory structure assumptions that break across environments:
 \`\`\`typescript
 // WRONG - Assumes specific deployment structure
-import { Agent } from "../agents/enforcer.js"; // May break if directories move
+import { AgentConfig } from "../agents/code-reviewer.js"; // May break if directories move
 import { Utils } from "../../../shared/utils.js"; // Fragile deep navigation
 \`\`\`
 
 ✅ CORRECT - Use stable relative imports within modules:
 \`\`\`typescript
 // Stable within src/ directory structure
-import { Agent } from "../agents/enforcer.js"; // OK within same project
+import { AgentConfig } from "../agents/code-reviewer.js"; // OK within same project
 import { Utils } from "../../shared/utils.js"; // Prefer shallower paths
 \`\`\`
 
@@ -768,7 +768,7 @@ import { Config } from "./config/config.js";
 **Solution A: Environment Variables (Simple)**
 \`\`\`typescript
 const AGENTS_PATH = process.env.STRRAY_AGENTS_PATH || '../agents';
-import { Agent } from \`\${AGENTS_PATH}/enforcer.js\`;
+import { AgentConfig } from \`\${AGENTS_PATH}/code-reviewer.js\`;
 \`\`\`
 
 **Solution B: Directory Structure Alignment (Architectural)**

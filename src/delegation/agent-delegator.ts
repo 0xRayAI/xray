@@ -289,7 +289,7 @@ export class AgentDelegator {
     return {
       operation: description,
       context: {},
-      suggestedAgent: DEFAULT_AGENTS[0]?.name || "enforcer",
+      suggestedAgent: DEFAULT_AGENTS[0]?.name || "code-reviewer",
       suggestedSkill: "",
       confidence: 0.5,
     };
@@ -515,7 +515,7 @@ export class AgentDelegator {
         agents.push({ name: "code-reviewer", confidence: 0.8, role: "review" });
       }
       if (agents.length === 1) {
-        agents.push({ name: "enforcer", confidence: 0.75, role: "validation" });
+        agents.push({ name: "code-reviewer", confidence: 0.75, role: "validation" });
       }
     } else {
       if (metrics.operationType === "debug") {
@@ -539,7 +539,6 @@ export class AgentDelegator {
       } else if (metrics.operationType === "create" && operation !== "design") {
         agents.push({ name: "architect", confidence: 0.85, role: "design" });
       } else if (operation === "review" && agents.length === 0) {
-        // Add code-reviewer for review tasks if not already added
         agents.push({ name: "code-reviewer", confidence: 0.8, role: "review" });
       } else if (
         complexityScore.level === "moderate" ||
@@ -547,13 +546,13 @@ export class AgentDelegator {
       ) {
         agents.push({ name: "code-reviewer", confidence: 0.8, role: "review" });
       } else if (agents.length === 0) {
-        agents.push({ name: "enforcer", confidence: 0.75, role: "validation" });
+        agents.push({ name: "code-reviewer", confidence: 0.75, role: "validation" });
       }
     }
 
     if (complexityScore.recommendedStrategy === "orchestrator-led") {
       agents.push({
-        name: "orchestrator",
+        name: "architect",
         confidence: 0.9,
         role: "coordination",
       });
@@ -561,7 +560,7 @@ export class AgentDelegator {
 
     const finalAgents = agents.length > 0
       ? agents
-      : [{ name: "enforcer", confidence: 0.75, role: "validation" }];
+      : [{ name: "code-reviewer", confidence: 0.75, role: "validation" }];
     
     // Log complete agent selection for analytics
     frameworkLogger.log(

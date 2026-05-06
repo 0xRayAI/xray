@@ -354,7 +354,7 @@ function getFrameworkIdentity(): string {
   const version = getFrameworkVersion();
   return `0xRay Framework v${version} - AI Orchestration
 
-🔧 Core: enforcer, architect, orchestrator, code-reviewer, refactorer, testing-lead
+🔧 Core: architect, code-reviewer, refactorer, testing-lead, strategist
 📚 Codex: 5 Essential Terms (99.6% Error Prevention Target)
 🎯 Goal: Progressive, production-ready development workflow
 
@@ -663,7 +663,7 @@ function resolveAgentName(input: { agentType?: string } | undefined): string {
   if (globalAgent?.agentType) return globalAgent.agentType;
   if (globalAgent?.type) return globalAgent.type;
   if (input?.agentType) return input.agentType;
-  return "orchestrator";
+  return "architect";
 }
 
 function registerAllProcessors(pm: ProcessorManagerLike): void {
@@ -1032,6 +1032,8 @@ export default async function strrayCodexPlugin(input: {
         "strategist": "strategist",
         "testing-lead": "testing-lead",
         "bug-triage-specialist": "bug-triage-specialist",
+        "architect": "architect",
+        "strategist": "strategist",
         "code-reviewer": "code-reviewer",
         "security-auditor": "security-auditor",
         "refactorer": "refactorer",

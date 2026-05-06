@@ -92,7 +92,7 @@ export const frameworkHelpSimulations: Record<string, SimulatorFunction> = {
         type: 'text',
         text: `**0xRay Framework Capabilities:**
 
-**26 Specialized Agents:**
+**24 Specialized Agents:**
 - enforcer: Codex compliance & error prevention
 - architect: System design & technical decisions
 - orchestrator: Multi-agent workflow coordination

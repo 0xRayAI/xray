@@ -43,7 +43,7 @@ export class RegressionAnalysisService {
       return {
         required: true,
         reason: `Fatal assumption detected: ${fatalAssumptions[0].reason}`,
-        agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
+        agents: ['bug-triage-specialist', 'code-analyzer', 'code-reviewer'],
         depth: 'comprehensive',
         confidence: 0.95
       };
@@ -55,7 +55,7 @@ export class RegressionAnalysisService {
       return {
         required: true,
         reason: `Cascade pattern detected: ${cascadePatterns[0].pattern}`,
-        agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
+        agents: ['bug-triage-specialist', 'code-analyzer', 'code-reviewer'],
         depth: 'comprehensive',
         confidence: 0.9
       };
@@ -66,7 +66,7 @@ export class RegressionAnalysisService {
       return {
         required: true,
         reason: 'Code removal attempt detected - systematic analysis required',
-        agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
+        agents: ['bug-triage-specialist', 'code-analyzer', 'code-reviewer'],
         depth: 'comprehensive',
         confidence: 0.95
       };
@@ -78,7 +78,7 @@ export class RegressionAnalysisService {
       return {
         required: true,
         reason: 'AI degradation pattern detected - quality check required',
-        agents: ['bug-triage-specialist', 'code-analyzer', 'enforcer'],
+        agents: ['bug-triage-specialist', 'code-analyzer', 'code-reviewer'],
         depth: 'comprehensive',
         confidence: 0.9
       };

@@ -464,7 +464,7 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "strray",
-    "version": "1.22.48"
+    "version": "1.22.49"
   }
 }
 ```

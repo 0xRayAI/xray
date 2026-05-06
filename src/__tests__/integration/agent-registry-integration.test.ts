@@ -142,7 +142,7 @@ describe("Agent Registry Integration", () => {
     };
     const delegator = new AgentDelegator(mockStateManager, mockConfigLoader);
     const agents = delegator.getAvailableAgents();
-    expect(agents).toHaveLength(23);
+    expect(agents).toHaveLength(21);
     expect(agents[0].name).toBeDefined();
     expect(agents[0].capabilities).toBeDefined();
   });

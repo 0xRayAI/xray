@@ -29,18 +29,6 @@ export const AGENT_EXPERTISE_LEVELS: Record<string, AgentExpertise> = {
     domain: "strategy",
     specialties: ["planning", "roadmap", "decision-making"],
   },
-  orchestrator: {
-    name: "orchestrator",
-    expertiseLevel: 9,
-    domain: "coordination",
-    specialties: ["delegation", "workflow", "multi-agent"],
-  },
-  enforcer: {
-    name: "enforcer",
-    expertiseLevel: 9,
-    domain: "compliance",
-    specialties: ["validation", "quality", "codex"],
-  },
   refactorer: {
     name: "refactorer",
     expertiseLevel: 8,

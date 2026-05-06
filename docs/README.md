@@ -69,7 +69,7 @@ This repository contains the complete 0xRay Framework source code with enterpris
 
 **Most AI coding tools fall into the same traps: tangled spaghetti code, hallucinations and inconsistent output, code rot that quietly erodes quality, race conditions, infinite loops, and tangled state/hook chaos.**
 
-**0xRay orchestrates 26 autonomous agents with 60 codex rules to eliminate them — before they take root.**
+**0xRay orchestrates 24 autonomous agents with 60 codex rules to eliminate them — before they take root.**
 
 **🛡️ Dead Ends Eliminated**
 
@@ -125,7 +125,7 @@ bun install -g OpenCode
 
 - Loads the Universal Development Codex v1.22.49
 - Enables enterprise CI/CD automation with post-processor
-- Registers all 26 autonomous agents
+- Registers all 24 autonomous agents
 - Sets up 40 MCP servers for agent communication
 - Configures automated deployment pipelines
 
@@ -147,7 +147,7 @@ npx strray-ai init
 # - Set up CI/CD post-processor for automated remediation
 # - Load codex terms into agent system prompts
 # - Enable multi-agent orchestration for complex tasks
-# - Provide 26 autonomous agents (enforcer, architect, orchestrator, etc.)
+# - Provide 24 autonomous agents (enforcer, architect, orchestrator, etc.)
 # - Monitor and enforce code quality standards
 # - Enable automated deployment with canary rollouts
 ```
@@ -298,7 +298,7 @@ npm run init
 ### Core Documentation
 
 - **[Architecture Overview](./architecture/ENTERPRISE_ARCHITECTURE.md)** - Complete 28-component system overview with testing coverage
-- **[Agent Documentation](./agents/)** - Detailed specifications for all 26 autonomous agents with operating procedures
+- **[Agent Documentation](./agents/)** - Detailed specifications for all 24 autonomous agents with operating procedures
 - **[API Reference](./api/API_REFERENCE.md)** - Developer API documentation for programmatic access
 - **[Installation Guide](./user-guide/installation/INSTALLATION.md)** - Complete setup and configuration guide
 - **[Model Configuration](./user-guide/configuration/model-configuration.md)** - Model setup with openrouter/xai-grok-2-1212-fast-1 assignments
@@ -332,7 +332,7 @@ npm run init
 ### Enterprise Capabilities
 
 - **Concurrent Sessions**: Unlimited with automatic lifecycle management
-- **Agent Coordination**: 26 autonomous agents with intelligent delegation
+- **Agent Coordination**: 24 autonomous agents with intelligent delegation
 - **MCP Servers**: 40 MCP servers providing specialized capabilities
 - **CI/CD Automation**: Automated remediation loop with canary deployments
 - **Plugin Security**: Sandboxed execution with permission-based access

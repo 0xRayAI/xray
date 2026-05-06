@@ -120,7 +120,7 @@ class RoutingRefiner {
     const warnings = this.generateWarnings(newMappings, optimizations);
 
     return {
-      version: "1.22.48",
+      version: "1.22.49",
       generatedAt: new Date(),
       summary: {
         newMappings: newMappings.length,
@@ -519,7 +519,7 @@ class RoutingRefiner {
       return scoreB - scoreA;
     });
 
-    return sortedAgents[0] ?? "enforcer";
+    return sortedAgents[0] ?? "code-reviewer";
   }
 
   private deduplicateSuggestions(

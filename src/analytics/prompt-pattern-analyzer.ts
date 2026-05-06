@@ -127,7 +127,7 @@ class PromptPatternAnalyzer {
             gapType: this.classifyGapType(prompt, outcome),
             userRequest: prompt.userRequest || '',
             generatedPrompt: prompt.generatedPrompt || '',
-            suggestedAgent: outcome?.routedAgent ?? "enforcer",
+            suggestedAgent: outcome?.routedAgent ?? "code-reviewer",
             suggestedSkill: outcome?.routedSkill ?? "code-review",
             frequency: 1,
             lastSeen: prompt.timestamp,
@@ -324,7 +324,7 @@ class PromptPatternAnalyzer {
         suggestions.push({
           suggestionType: "add_template",
           keywords: this.extractKeywords(gap.userRequest),
-          targetAgent: gap.suggestedAgent || "enforcer",
+          targetAgent: gap.suggestedAgent || "code-reviewer",
           targetSkill: gap.suggestedSkill || "code-review",
           confidence: gap.confidence,
           expectedImpact: `Fill template gap for ${gap.frequency} similar requests`,
@@ -484,8 +484,8 @@ class PromptPatternAnalyzer {
     if (agents.length === 1) return agents[0]!;
 
     const priorityOrder = [
-      "enforcer",
-      "orchestrator",
+      "code-reviewer",
+      "architect",
       "architect",
       "code-reviewer",
       "testing-lead",
@@ -498,7 +498,7 @@ class PromptPatternAnalyzer {
       }
     }
 
-    return agents[0] ?? "enforcer";
+    return agents[0] ?? "code-reviewer";
   }
 
   private emptyComparisonResult(): PromptComparisonResult {

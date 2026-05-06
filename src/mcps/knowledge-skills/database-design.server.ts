@@ -117,7 +117,7 @@ class StringRayDatabaseDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "database-design", version: "1.22.48",
+        name: "database-design", version: "1.22.49",
       },
       {
         capabilities: {

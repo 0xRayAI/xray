@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   builtinAgents,
-  enforcer,
   architect,
-  orchestrator,
   bugTriageSpecialist,
   codeReviewer,
   securityAuditor,
@@ -22,9 +20,7 @@ describe("Agent Index Registry", () => {
 
     it("should contain expected specialized agents", () => {
       const expectedAgents = [
-        "enforcer",
         "architect",
-        "orchestrator",
         "bug-triage-specialist",
         "code-reviewer",
         "security-auditor",
@@ -36,7 +32,7 @@ describe("Agent Index Registry", () => {
         expect(builtinAgents).toHaveProperty(agentName);
       });
 
-      expect(Object.keys(builtinAgents).length).toBeGreaterThanOrEqual(8);
+      expect(Object.keys(builtinAgents).length).toBeGreaterThanOrEqual(6);
     });
 
     it("should have all agents as valid AgentConfig objects", () => {
@@ -82,9 +78,7 @@ describe("Agent Index Registry", () => {
 
   describe("Individual Agent Exports", () => {
     it("should export all individual agents", () => {
-      expect(enforcer).toBeDefined();
       expect(architect).toBeDefined();
-      expect(orchestrator).toBeDefined();
       expect(bugTriageSpecialist).toBeDefined();
       expect(codeReviewer).toBeDefined();
       expect(securityAuditor).toBeDefined();
@@ -93,16 +87,12 @@ describe("Agent Index Registry", () => {
     });
 
     it("should have individual exports match registry entries", () => {
-      expect(enforcer).toBe(builtinAgents.enforcer);
       expect(architect).toBe(builtinAgents.architect);
-      expect(orchestrator).toBe(builtinAgents.orchestrator);
     });
 
     it("should have all individual exports as valid AgentConfig objects", () => {
       const agents = [
-        enforcer,
         architect,
-        orchestrator,
         bugTriageSpecialist,
         codeReviewer,
         securityAuditor,

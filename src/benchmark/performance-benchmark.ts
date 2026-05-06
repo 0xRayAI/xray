@@ -320,7 +320,7 @@ export class StringRayPerformanceBenchmark {
         {
           id: "task_b",
           description: "Task B",
-          subagentType: "enforcer",
+          subagentType: "code-reviewer",
           dependencies: ["task_a"],
         },
         {

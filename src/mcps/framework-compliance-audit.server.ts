@@ -39,7 +39,7 @@ class StringRayFrameworkComplianceAuditServer {
   constructor() {
     this.server = new Server(
       {
-        name: "framework-compliance-audit", version: "1.22.48",
+        name: "framework-compliance-audit", version: "1.22.49",
       },
       {
         capabilities: {
@@ -347,9 +347,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
 
     try {
       const requiredAgents = [
-        "enforcer",
         "architect",
-        "orchestrator",
         "bug-triage-specialist",
         "code-reviewer",
         "security-auditor",
@@ -403,10 +401,9 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     try {
       // Check if codex terms are referenced in agent configurations
       const agentFiles = [
-        "src/agents/enforcer.ts",
         "src/agents/architect.ts",
         "src/agents/code-reviewer.ts",
-        "src/agents/orchestrator.ts",
+        "src/agents/refactorer.ts",
       ];
 
       let totalTerms = 0;
@@ -533,10 +530,9 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
 
       // Read agent configurations to check for term implementations
       const agentFiles = [
-        "src/agents/enforcer.ts",
         "src/agents/architect.ts",
         "src/agents/code-reviewer.ts",
-        "src/agents/orchestrator.ts",
+        "src/agents/refactorer.ts",
       ];
 
       for (const term of termsToValidate) {

@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.50] - 2026-05-06
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: wire apply phase + researcher double-check for PRs (7bfa4ca6e)
+- feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (fca44e6ef)
+- feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (191536d9f)
+- feat: lower inference thresholds to trigger on real data, keep raw problem text (c7c09a4d7)
+- feat: production-ready inference governance — CLI, real agents, DI, learning loop (501eb8d65)
+- feat: inference layer — semantic patterns, session capture, accumulator, governance cycle, deploy verifier (5963ce170)
+
+### 🐛 Bug Fixes
+- fix: agent export naming + single-architect governance (b5c6100ec)
+- fix: complete inference-cycle.ts — all fixes applied. (cef1ecd12)
+- fix: guard inference:run for StringRay internal use only (beefefb94)
+- fix: governance pipeline — force flag, skipDeployVerify default, deploy failure handling (40ae8ae4f)
+- fix: increase timeout for processor auto-discovery tests to prevent flaky failures (baae75541)
+- fix: inference processor double-joining absolute path created bogus Users/ dir (a795635f9)
+
+### 📚 Documentation
+- docs: deep reflection — inference apply phase journey (honest assessment) (1a05086af)
+- docs: governance unification saga — deep reflection on wiring four systems into one loop (9cd5b8bc1)
+- docs: the engine that built the engine — deep reflection on the meta-system, consumer tweet, release reflection (522c28b9a)
+
+### 🔧 Maintenance
+- chore: v1.22.48, add prepublishOnly to strip source maps and declarations (112ef8977)
+- chore: v1.22.47, add .npmignore to strip .d.ts and source maps from package (e2f722523)
+- chore: remove 92 build artifacts (.d.ts, .d.ts.map) from .opencode git tracking, add to .gitignore (22f9ddfd9)
+- chore: rebuild dist after path fix (4453c41c7)
+
+---
+
 ## [1.22.49] - 2026-04-29
 
 ### 🔄 Changes

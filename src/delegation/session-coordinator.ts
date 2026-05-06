@@ -134,9 +134,7 @@ export class SessionCoordinator {
 
     // Initialize with default agents
     const defaultAgents = [
-      "enforcer",
       "architect",
-      "orchestrator",
       "bug-triage-specialist",
       "code-reviewer",
       "security-auditor",

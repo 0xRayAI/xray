@@ -1,20 +1,25 @@
 {
-  "sessionId": "session-2026-04-30",
-  "timestamp": "2026-04-30T17:58:41.561Z",
+  "sessionId": "session-2026-05-06",
+  "timestamp": "2026-05-06T10:32:10.872Z",
   "span": {
     "from": "v1.22.46",
     "to": "HEAD"
   },
   "problems": [
+    "Bug: fix: agent export naming + single-architect governance (b5c6100)",
+    "Bug: fix: complete inference-cycle.ts — all fixes applied. (cef1ecd)",
+    "Bug: fix: guard inference:run for StringRay internal use only (beefefb)",
+    "Bug: fix: governance pipeline — force flag, skipDeployVerify default, deploy failure handling (40ae8ae)",
     "Bug: fix: increase timeout for processor auto-discovery tests to prevent flaky failures (baae755)",
     "Bug: fix: inference processor double-joining absolute path created bogus Users/ dir (a795635)",
-    "Accumulated dead code: - .opencode/core/activity-logger.d.ts.map",
+    "Accumulated dead code: - .opencode/activity-report.json",
     "Technical debt requiring stability focus"
   ],
   "approaches": [
     "Extract methods into dedicated files to reduce monolith size",
     "Add tests alongside new implementations",
-    "Delete unused code to reduce maintenance burden"
+    "Delete unused code to reduce maintenance burden",
+    "Structural guard to enforce invariants"
   ],
   "wrongTurns": [
     "Path handling bug: absolute vs relative path confusion",
@@ -25,6 +30,9 @@
     "Applied Test Coverage Expansion pattern (confidence: 95%)",
     "Applied Dead Code Removal pattern (confidence: 90%)",
     "Applied Stability Sprint pattern (confidence: 75%)",
+    "Integration: feat: wire apply phase + researcher double-check for PRs (7bfa4ca)",
+    "Integration: feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (fca44e6)",
+    "Integration: feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (191536d)",
     "New tooling: fix: inference processor double-joining absolute path created bogus Users/ dir (a795635)"
   ],
   "reasoningChain": [
@@ -45,6 +53,11 @@
     },
     {
       "from": "approach",
+      "to": "solution",
+      "reasoning": "Structural guard to enforce invariants → Applied Stability Sprint pattern (confidence: 75%)"
+    },
+    {
+      "from": "approach",
       "to": "wrong_turn",
       "reasoning": "Path handling bug: absolute vs relative path confusion"
     },
@@ -59,23 +72,14 @@
       "name": "Extract Method",
       "confidence": 0.95,
       "evidence": [
-        "1 new files + 7 modified in dist/processors/implementations/",
-        "  + session-capture-processor.d.ts",
-        "  ~ inference-improvement-processor.d.ts.map (-1 lines)",
-        "  ~ inference-improvement-processor.js (-3 lines)",
-        "  ~ inference-improvement-processor.js.map (-1 lines)",
         "1 new files + 3 modified in src/__tests__/integration/",
         "  + inference-pipeline.test.ts",
         "  ~ codex-enforcement.test.ts (-3 lines)",
         "  ~ processors.test.ts (-8 lines)",
         "  ~ server.test.ts (-1 lines)",
-        "1 new files + 2 modified in src/processors/implementations/",
-        "  + session-capture-processor.ts",
-        "  ~ inference-improvement-processor.ts (-3 lines)",
-        "  ~ storytelling-trigger-processor.ts (-3 lines)",
         "1 new files + 11 modified in ./",
         "  + vitest.config.ts",
-        "  ~ .gitignore (-0 lines)",
+        "  ~ .gitignore (-1 lines)",
         "  ~ .npmignore (-4 lines)",
         "  ~ AGENTS-consumer.md (-1 lines)"
       ],
@@ -97,33 +101,33 @@
       "name": "Dead Code Removal",
       "confidence": 0.9,
       "evidence": [
+        "- .opencode/activity-report.json",
         "- .opencode/core/activity-logger.d.ts.map",
         "- .opencode/core/adaptive-kernel.d.ts.map",
         "- .opencode/core/boot-orchestrator.d.ts.map",
         "- .opencode/core/boot-phases.d.ts.map",
-        "- .opencode/core/codex-formatter.d.ts.map",
-        "... and 457 more"
+        "... and 1745 more"
       ],
-      "description": "462 files deleted — unused code eliminated. Reduces maintenance burden, removes misleading signals for new readers."
+      "description": "1750 files deleted — unused code eliminated. Reduces maintenance burden, removes misleading signals for new readers."
     },
     {
       "name": "Stability Sprint",
       "confidence": 0.75,
       "evidence": [
-        "462 files deleted",
-        "Net 39552 lines removed",
-        "7 fix-related changes"
+        "1750 files deleted",
+        "Net 169676 lines removed",
+        "19 fix-related changes"
       ],
       "description": "Focus on removal and fixing over feature addition. Technical debt being paid down — a sign of mature development practice."
     }
   ],
   "metrics": {
-    "commits": 9,
-    "filesChanged": 798,
-    "insertions": 16587,
-    "deletions": 56139,
-    "filesAdded": 68,
-    "filesDeleted": 462,
-    "uniqueDirs": 96
+    "commits": 19,
+    "filesChanged": 2004,
+    "insertions": 7587,
+    "deletions": 177263,
+    "filesAdded": 40,
+    "filesDeleted": 1750,
+    "uniqueDirs": 189
   }
 }

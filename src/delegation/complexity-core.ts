@@ -204,8 +204,8 @@ export function getAgentForTier(tier: ComplexityTier): string {
   const agents: Record<ComplexityTier, string> = {
     low: "code-reviewer",
     medium: "architect",
-    high: "orchestrator",
-    enterprise: "orchestrator",
+    high: "architect",
+    enterprise: "architect",
   };
   return agents[tier];
 }
@@ -217,8 +217,8 @@ export function getSkillForTier(tier: ComplexityTier): string {
   const skills: Record<ComplexityTier, string> = {
     low: "code-review",
     medium: "architecture-patterns",
-    high: "orchestrator",
-    enterprise: "enterprise-coordination",
+    high: "architect-tools",
+    enterprise: "architect-tools",
   };
   return skills[tier];
 }

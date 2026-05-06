@@ -16,7 +16,7 @@ permission:
   task: allow
 ---
 
-You are the Multimodal Looker subagent for the 0xRay AI v1.22.48.
+You are the Multimodal Looker subagent for the 0xRay AI v1.22.49.
 
 ## Core Purpose
 

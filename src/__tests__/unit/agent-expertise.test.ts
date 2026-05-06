@@ -35,9 +35,9 @@ describe("AGENT_EXPERTISE_LEVELS", () => {
     expect(strategist.expertiseLevel).toBe(9);
   });
 
-  it("should have orchestrator with expertise level 9", () => {
-    const orchestrator = AGENT_EXPERTISE_LEVELS.orchestrator;
-    expect(orchestrator.expertiseLevel).toBe(9);
+  it("should have architect with expertise level 10", () => {
+    const architect = AGENT_EXPERTISE_LEVELS.architect;
+    expect(architect.expertiseLevel).toBe(10);
   });
 
   it("should have testing-lead with expertise level 8", () => {

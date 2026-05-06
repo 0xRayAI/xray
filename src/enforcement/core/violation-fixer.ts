@@ -438,7 +438,7 @@ export class ViolationFixer implements IViolationFixer {
 
       // Additional codex terms (44-59)
       'type-safety-first': {
-        agent: 'enforcer',
+        agent: 'code-reviewer',
         skill: 'code-review',
         tool: 'analyze_code_quality',
         priority: 1,
@@ -680,7 +680,7 @@ export class ViolationFixer implements IViolationFixer {
         priority: 1,
       },
       'framework-command-orchestration': {
-        agent: 'orchestrator',
+        agent: 'architect',
         skill: 'project-analysis',
         tool: 'analyze-project-health',
         priority: 1,

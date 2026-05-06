@@ -35,8 +35,6 @@ export class AgentsMdValidationProcessor {
   ];
 
   private readonly REQUIRED_AGENTS = [
-    "@enforcer",
-    "@orchestrator",
     "@architect",
     "@security-auditor",
     "@code-reviewer",
@@ -275,8 +273,8 @@ export class AgentsMdValidationProcessor {
         "",
         "| Agent | Purpose | Invoke |",
         "|-------|---------|--------|",
-        "| `@enforcer` | Codex compliance & error prevention | `@enforcer analyze this code` |",
-        "| `@orchestrator` | Complex multi-step task coordination | `@orchestrator implement feature` |",
+        "| `@architect` | System design & technical decisions | `@architect design this API` |",
+        "| `@code-reviewer` | Code quality & compliance review | `@code-reviewer review this code` |",
         "| `@architect` | System design & technical decisions | `@architect design API` |",
         "| `@security-auditor` | Vulnerability detection | `@security-auditor scan` |",
         "| `@code-reviewer` | Quality assessment | `@code-reviewer review PR` |",

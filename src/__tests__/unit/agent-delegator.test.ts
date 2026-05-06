@@ -27,7 +27,7 @@ describe("AgentDelegator", () => {
     agentDelegator = createAgentDelegator(stateManager, strRayConfigLoader);
 
     // Set up default agents for all tests to avoid "agent not found" errors
-    stateManager.set("agent:enforcer", {
+    stateManager.set("agent:code-reviewer", {
       execute: vi
         .fn()
         .mockResolvedValue({ success: true, result: "enforcer completed" }),
@@ -75,10 +75,10 @@ describe("AgentDelegator", () => {
 
     it("should initialize default agent capabilities", () => {
       const agents = agentDelegator.getAvailableAgents();
-      expect(agents).toHaveLength(23);
-      expect(agents.some((a) => a.name === "enforcer")).toBe(true);
+      expect(agents).toHaveLength(21);
+      expect(agents.some((a) => a.name === "code-reviewer")).toBe(true);
       expect(agents.some((a) => a.name === "architect")).toBe(true);
-      expect(agents.some((a) => a.name === "orchestrator")).toBe(true);
+      expect(agents.some((a) => a.name === "architect")).toBe(true);
       expect(agents.some((a) => a.name === "researcher")).toBe(true);
     });
   });
@@ -203,7 +203,7 @@ describe("AgentDelegator", () => {
       };
 
       stateManager.set("agent:security-auditor", mockAgent1);
-      stateManager.set("agent:enforcer", mockAgent2);
+      stateManager.set("agent:code-reviewer", mockAgent2);
 
       const request: DelegationRequest = {
         operation: "complex",
@@ -280,12 +280,12 @@ describe("AgentDelegator", () => {
   describe("updateAgentCapability", () => {
     it("should update existing agent capability", () => {
       const initialAgents = agentDelegator.getAvailableAgents();
-      const enforcerBefore = initialAgents.find((a) => a.name === "enforcer");
+      const enforcerBefore = initialAgents.find((a) => a.name === "code-reviewer");
 
-      agentDelegator.updateAgentCapability("enforcer", { performance: 100 });
+      agentDelegator.updateAgentCapability("code-reviewer", { performance: 100 });
 
       const updatedAgents = agentDelegator.getAvailableAgents();
-      const enforcerAfter = updatedAgents.find((a) => a.name === "enforcer");
+      const enforcerAfter = updatedAgents.find((a) => a.name === "code-reviewer");
 
       expect(enforcerAfter?.performance).toBe(100);
     });
@@ -397,7 +397,7 @@ describe("AgentDelegator", () => {
       };
 
       stateManager.set("agent:security-auditor", mockAgent1);
-      stateManager.set("agent:enforcer", mockAgent2);
+      stateManager.set("agent:code-reviewer", mockAgent2);
 
       const delegation = await agentDelegator.analyzeDelegation(request);
       expect(delegation).toBeDefined();
@@ -438,7 +438,7 @@ describe("AgentDelegator", () => {
           { success: false, result: "failed", duration: 50 },
         ]),
       };
-      stateManager.set("orchestrator", mockOrchestrator);
+      stateManager.set("architect", mockOrchestrator);
 
       // Mock the agents that will be selected for orchestrator-led execution
       const mockAgent1 = {
@@ -452,7 +452,7 @@ describe("AgentDelegator", () => {
           .mockResolvedValue({ success: true, result: "agent2 done" }),
       };
       stateManager.set("agent:security-auditor", mockAgent1);
-      stateManager.set("agent:enforcer", mockAgent2);
+      stateManager.set("agent:code-reviewer", mockAgent2);
 
       const delegation = await agentDelegator.analyzeDelegation(request);
       const result = await agentDelegator.executeDelegation(
@@ -565,7 +565,7 @@ describe("AgentDelegator", () => {
       const mockAgent = {
         execute: vi.fn().mockRejectedValue(new Error("Test failure")),
       };
-      stateManager.set("agent:enforcer", mockAgent);
+      stateManager.set("agent:code-reviewer", mockAgent);
 
       const request: DelegationRequest = {
         operation: "compliance",
@@ -633,7 +633,7 @@ describe("AgentDelegator", () => {
 
       const delegation = await agentDelegator.analyzeDelegation(request);
       expect(delegation.agents).toContain("architect");
-      expect(delegation.agents).not.toContain("enforcer");
+      expect(delegation.agents).not.toContain("code-reviewer");
     });
 
     it("should escalate to multi-agent for high-risk operations", async () => {
@@ -708,7 +708,7 @@ describe("AgentDelegator", () => {
       };
 
       const delegation = await agentDelegator.analyzeDelegation(request);
-      expect(delegation.agents).toContain("enforcer");
+      expect(delegation.agents).toContain("code-reviewer");
     });
 
     it("should match agents based on specialty areas", async () => {
@@ -743,17 +743,17 @@ describe("AgentDelegator", () => {
     it("should handle agent capability updates dynamically", () => {
       const initialCapabilities = agentDelegator.getAvailableAgents();
       const enforcerBefore = initialCapabilities.find(
-        (a) => a.name === "enforcer",
+        (a) => a.name === "code-reviewer",
       );
 
-      agentDelegator.updateAgentCapability("enforcer", {
+      agentDelegator.updateAgentCapability("code-reviewer", {
         performance: 95,
         capacity: 5,
       });
 
       const updatedCapabilities = agentDelegator.getAvailableAgents();
       const enforcerAfter = updatedCapabilities.find(
-        (a) => a.name === "enforcer",
+        (a) => a.name === "code-reviewer",
       );
 
       expect(enforcerAfter?.performance).toBe(95);
@@ -803,7 +803,7 @@ describe("AgentDelegator", () => {
           .mockResolvedValue({ success: true, result: "agent2 done" }),
       };
       stateManager.set("agent:security-auditor", mockAgent1);
-      stateManager.set("agent:enforcer", mockAgent2);
+      stateManager.set("agent:code-reviewer", mockAgent2);
 
       const result = await agentDelegator.executeDelegation(
         delegation,
@@ -820,7 +820,7 @@ describe("AgentDelegator", () => {
 
   describe("performance-based selection validation", () => {
     it("should select agents based on historical performance", async () => {
-      agentDelegator.updateAgentCapability("enforcer", { performance: 90 });
+      agentDelegator.updateAgentCapability("code-reviewer", { performance: 90 });
       agentDelegator.updateAgentCapability("architect", { performance: 95 });
 
       const request: DelegationRequest = {
@@ -880,7 +880,7 @@ describe("AgentDelegator", () => {
     });
 
     it("should handle performance degradation gracefully", async () => {
-      agentDelegator.updateAgentCapability("enforcer", { performance: 50 });
+      agentDelegator.updateAgentCapability("code-reviewer", { performance: 50 });
 
       const request: DelegationRequest = {
         operation: "compliance",
@@ -912,7 +912,7 @@ describe("AgentDelegator", () => {
           confidence: 0.9,
         }),
       };
-      stateManager.set("agent:enforcer", mockEnforcer);
+      stateManager.set("agent:code-reviewer", mockEnforcer);
 
       const requests = Array(3)
         .fill(null)
@@ -970,7 +970,7 @@ describe("AgentDelegator", () => {
       );
 
       expect(result.operation).toBe("write unit tests for the new feature");
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -981,7 +981,7 @@ describe("AgentDelegator", () => {
       );
 
       expect(result.operation).toBe("scan for security vulnerabilities");
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -992,7 +992,7 @@ describe("AgentDelegator", () => {
       );
 
       expect(result.operation).toBe("refactor the messy code");
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
     });
 
@@ -1001,7 +1001,7 @@ describe("AgentDelegator", () => {
         "benchmark slow queries and reduce latency",
       );
 
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -1011,7 +1011,7 @@ describe("AgentDelegator", () => {
         "design the system structure",
       );
 
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -1021,7 +1021,7 @@ describe("AgentDelegator", () => {
         "design the backend API structure",
       );
 
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -1030,7 +1030,7 @@ describe("AgentDelegator", () => {
       const result =
         agentDelegator.preprocessTaskDescription("fix the login bug");
 
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
     });
 
@@ -1040,7 +1040,7 @@ describe("AgentDelegator", () => {
       );
 
       expect(result.operation).toBe("update README file");
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -1052,7 +1052,7 @@ describe("AgentDelegator", () => {
       );
 
       expect(result.operation).toBe("deploy application to staging");
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.confidence).toBe(0.5);
     });
 
@@ -1079,7 +1079,7 @@ describe("AgentDelegator", () => {
         "do something random",
       );
 
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.confidence).toBeGreaterThan(0.4);
     });
 
@@ -1109,7 +1109,7 @@ describe("AgentDelegator", () => {
       );
 
       expect(result.operation).toBe("create sql migration for users table");
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -1119,7 +1119,7 @@ describe("AgentDelegator", () => {
         "setup docker pipeline",
       );
 
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
       expect(result.confidence).toBe(0.5);
     });
@@ -1129,7 +1129,7 @@ describe("AgentDelegator", () => {
         "resolve merge conflict",
       );
 
-      expect(result.suggestedAgent).toBe("enforcer");
+      expect(result.suggestedAgent).toBe("architect");
       expect(result.suggestedSkill).toBe("");
     });
   });

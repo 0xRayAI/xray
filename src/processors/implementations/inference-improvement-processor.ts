@@ -340,7 +340,7 @@ Final validation and application of approved changes:
       "info",
       {
         message: "Inference improvement workflow initiated. Next: @researcher analyze data",
-        phases: ["researcher", "code-analyzer", "architect", "code-reviewer", "enforcer"]
+        phases: ["researcher", "code-analyzer", "architect", "code-reviewer"]
       }
     );
 

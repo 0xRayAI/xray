@@ -34,9 +34,7 @@ export interface AgentInvocation {
 }
 
 export type AgentType =
-  | "orchestrator"
   | "architect"
-  | "enforcer"
   | "code-analyzer"
   | "code-reviewer"
   | "researcher"

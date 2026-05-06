@@ -259,7 +259,7 @@
     "agent": "devops-engineer",
     "confidence": 0.94
   },
-{
+  {
     "keywords": [
       "orchestrate",
       "orchestration",
@@ -271,8 +271,8 @@
       "conflict-resolution",
       "session-management"
     ],
-    "skill": "orchestrator",
-    "agent": "orchestrator",
+    "skill": "architect-tools",
+    "agent": "architect",
     "confidence": 0.0,
     "deprecated": true,
     "note": "DEPRECATED - orchestration is now handled by agent-delegator at plugin level"
@@ -458,11 +458,11 @@
       "convention",
       "framework-compliance"
     ],
-    "skill": "enforcer",
-    "agent": "enforcer",
+    "skill": "code-review",
+    "agent": "code-reviewer",
     "confidence": 0.95
   },
-{
+  {
     "keywords": [
       "validate",
       "validate",
@@ -476,8 +476,8 @@
       "convention",
       "framework-compliance"
     ],
-    "skill": "enforcer",
-    "agent": "enforcer",
+    "skill": "code-review",
+    "agent": "code-reviewer",
     "confidence": 0.0,
     "deprecated": true,
     "note": "DEPRECATED - enforcement is now handled by preValidate processor and MCP servers"
@@ -507,7 +507,7 @@
       "code-style"
     ],
     "skill": "auto-format",
-    "agent": "enforcer",
+    "agent": "code-reviewer",
     "confidence": 0.9
   },
   {
@@ -519,7 +519,7 @@
       "backup"
     ],
     "skill": "session-management",
-    "agent": "orchestrator",
+    "agent": "architect",
     "confidence": 0.85
   },
   {

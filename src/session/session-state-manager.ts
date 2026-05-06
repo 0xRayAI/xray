@@ -584,7 +584,7 @@ export class SessionStateManager {
             await this.sessionCoordinator.sendMessage(
               plan.sessionId,
               "system",
-              "orchestrator",
+              "architect",
               `Session migrated to coordinator: ${plan.targetCoordinator}`,
               "high",
             );
