@@ -303,7 +303,7 @@ class CodeAnalyzerServer {
 
   constructor() {
     this.server = new Server(
-      { name: "code-analyzer", version: "1.22.51" },
+      { name: "code-analyzer", version: "1.22.52" },
       { capabilities: { tools: {} } },
     );
 

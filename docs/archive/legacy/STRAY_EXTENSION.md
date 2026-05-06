@@ -1,6 +1,6 @@
 # 0xRay Extension Ecosystem
 
-**Version**: 1.22.51 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
+**Version**: 1.22.52 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
@@ -193,7 +193,7 @@ my-extension/
 ```json
 {
   "name": "strray-extension-custom",
-  "version": "1.22.51",
+  "version": "1.22.52",
   "description": "Custom 0xRay extension",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

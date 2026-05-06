@@ -235,7 +235,7 @@ class 0xRay<SkillName>Server {
 
   constructor() {
     this.server = new Server(
-      { name: "<skill-name>", version: "1.22.51" },
+      { name: "<skill-name>", version: "1.22.52" },
       { capabilities: { tools: {} } }
     );
     this.setupToolHandlers();

@@ -1,6 +1,6 @@
 # 0xRay Inference Pipeline Implementation Document
 
-**Version**: 1.22.51  
+**Version**: 1.22.52  
 **Date**: 2026-03-20  
 **Author**: 0xRay AI Team
 
