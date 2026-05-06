@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// scripts/node/govern-reflection.mjs
 // Reflection Governance Pipeline
 
 import { ValidatorRegistry } from '../../src/enforcement/validators/validator-registry.js';
@@ -15,32 +14,15 @@ export async function validateReflectionGovernance(reflectionContent, metadata =
   const result = await validatorRegistry.validate({
     type: 'reflection-governance',
     content: reflectionContent,
-    metadata: {
-      ...metadata,
-      traceId: trace.traceId,
-      timestamp: new Date().toISOString()
-    },
+    metadata: { ...metadata, traceId: trace.traceId, timestamp: new Date().toISOString() },
     codexContext
   });
 
   if (!result.valid) {
     endTrace(false);
-    throw new Error(`Reflection governance violation: ${result.violations.map(v => v.message).join(', ')}`);
+    throw new Error(`Reflection governance violation: ${result.violations?.map(v => v.message).join(', ') || 'unknown'}`);
   }
 
   endTrace(true);
-  return {
-    approved: true,
-    traceId: trace.traceId,
-    validatedAt: new Date().toISOString()
-  };
-}
-
-export async function governReflectionWrite(reflectionPath, content) {
-  const approval = await validateReflectionGovernance(content, {
-    filePath: reflectionPath,
-    operation: 'reflection-write'
-  });
-  console.log(`[GOVERN] Reflection approved with trace ${approval.traceId}`);
-  return approval;
+  return { approved: true, traceId: trace.traceId, validatedAt: new Date().toISOString() };
 }

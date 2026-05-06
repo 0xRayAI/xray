@@ -1,5 +1,5 @@
 // src/core/trace-context.ts
-// Centralized trace propagation for governance and observability
+// Centralized trace propagation
 
 export interface TraceContext {
   traceId: string;
@@ -12,9 +12,16 @@ export interface TraceContext {
 
 let currentTrace: TraceContext | null = null;
 
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
 export function startTrace(operation: string, metadata?: Record<string, any>): TraceContext {
   const trace: TraceContext = {
-    traceId: crypto.randomUUID(),
+    traceId: generateId(),
     operation,
     governanceApproved: false,
     startTime: Date.now(),
@@ -29,33 +36,11 @@ export function getCurrentTrace(): TraceContext | null {
 }
 
 export function endTrace(approved: boolean = true): void {
-  if (currentTrace) {
-    currentTrace.governanceApproved = approved;
-  }
+  if (currentTrace) currentTrace.governanceApproved = approved;
   currentTrace = null;
 }
 
 export function propagateTrace(childOperation: string): TraceContext | null {
   if (!currentTrace) return null;
-  return {
-    ...currentTrace,
-    parentId: currentTrace.traceId,
-    operation: childOperation,
-    startTime: Date.now()
-  };
-}
-
-export function withTrace<T>(operation: string, fn: (trace: TraceContext) => Promise<T> | T): Promise<T> {
-  const trace = startTrace(operation);
-  try {
-    const result = fn(trace);
-    if (result instanceof Promise) {
-      return result.finally(() => endTrace(true));
-    }
-    endTrace(true);
-    return Promise.resolve(result);
-  } catch (error) {
-    endTrace(false);
-    throw error;
-  }
+  return { ...currentTrace, parentId: currentTrace.traceId, operation: childOperation, startTime: Date.now() };
 }
