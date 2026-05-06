@@ -1,9 +1,12 @@
-# Workflow disabled - run manually after CI passes
 name: Release
 
 on:
-  # Disable automatic triggers - run manually
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. v1.22.55)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -26,7 +29,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: npm run ci-install
+        run: npm ci
 
       - name: Run type checking
         run: npm run typecheck
@@ -38,53 +41,25 @@ jobs:
         run: npm run build:all
 
       - name: Create GitHub release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ inputs.version }}
+          name: Release ${{ inputs.version }}
           body: |
-            ## StringRay Framework v${{ github.ref_name }}
+            ## StringRay Framework ${{ inputs.version }}
 
-            ### 🚀 Enterprise Production Release
-
-            **Enterprise AI agent coordination with systematic error prevention. Zero dead ends. Ship clean, tested, optimized code — every time.**
-
-            ### 📦 Installation
+            ### Installation
 
             ```bash
             npm install strray-ai@latest
             npx strray-ai install
             ```
 
-            ### 🎯 Key Features
-
-            - 🤖 Intelligent Agent Orchestration (8 specialized agents)
-            - 📏 Codex Compliance (99.6% systematic error prevention)
-            - 🔄 Multi-Agent Coordination (Complexity-based routing)
-            - ⚡⚡ Performance Optimization (87% faster test execution)
-            - 🛡️ Enterprise Security (Comprehensive validation)
-            - 📊 Real-time Monitoring (Performance tracking)
-
-            ### 📋 Release Notes
-
-            - ✅ 989 comprehensive tests (100% pass rate)
-            - ✅ Enterprise-grade error prevention
-            - ✅ Clean OpenCode CLI experience
-            - ✅ MCP server ecosystem (20 tools)
-            - ✅ Zero-configuration installation
-
-            ### 🔧 Requirements
-
-            - Node.js 18+
-            - OpenCode (for plugin integration)
-
-            ---
-            *Built on the Universal Development Codex v1.2.24*
+            See [CHANGELOG.md](./CHANGELOG.md) for details.
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to npm
         run: npm publish --tag latest

@@ -1,8 +1,6 @@
-# Workflow disabled - run manually after CI passes
-# name: Publish to NPM
+name: Publish to NPM
 
 on:
-  # Disable automatic triggers
   workflow_dispatch:
 
 jobs:

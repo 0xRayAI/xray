@@ -239,7 +239,6 @@ async function main(): Promise<void> {
       showStatus();
       break;
     case "install":
-    case undefined:
       const name = args[1];
       if (!name) {
         console.error("\nUsage: npx strray-ai mcp:install <name>");

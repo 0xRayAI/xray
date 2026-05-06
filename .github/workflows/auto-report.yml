@@ -56,8 +56,7 @@ jobs:
 
       - name: Generate session summary
         run: |
-          # Run autonomous report generator for session summary
-          node scripts/node/generate-autonomous-report.cjs || true
+          node scripts/node/ci-report-generator.mjs --report session_summary || true
 
       - name: Display recent reports
         run: |

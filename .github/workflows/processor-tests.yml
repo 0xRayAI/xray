@@ -47,21 +47,8 @@ jobs:
 
       - name: Run processor tests
         run: |
-          npx vitest run \
-            src/processors/implementations/implementations.test.ts \
-            --reporter=verbose \
-            --coverage \
-            --outputFile=./vitest-report.json
-
-      - name: Analyze test timing
-        run: npx ts-node tests/validators/test-timing-validator.ts ./vitest-report.json
-        continue-on-error: true
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: processor-coverage
-          path: coverage/
+          npx vitest run src/__tests__/unit/processor-activation.test.ts \
+            --reporter=verbose
 
       - name: Upload test report
         if: failure()
@@ -69,17 +56,6 @@ jobs:
         with:
           name: processor-test-report
           path: vitest-report.json
-
-      - name: Check test execution time
-        run: |
-          # Get total test time from report
-          TIME=$(cat vitest-report.json | jq '[.testResults[].assertions[]?.duration // 0] | add')
-          echo "Total test execution time: ${TIME}ms"
-          
-          if (( $(echo "$TIME > 60000" | bc -l) )); then
-            echo "Warning: Tests took longer than 60 seconds"
-            echo "This may indicate missing mocks or performance issues"
-          fi
 
   lint-processor-tests:
     name: Lint Processor Tests
