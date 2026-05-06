@@ -18,6 +18,65 @@ export function generateJobId(prefix: string = "job"): string {
 // Global job context for correlation across all framework operations
 let currentJobContext: JobContext | null = null;
 
+let currentTraceId: string | null = null;
+let currentSpanId: string | null = null;
+let currentParentSpanId: string | null = null;
+
+export function generateTraceId(): string {
+  return `trace-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+}
+
+export function generateSpanId(): string {
+  return `span-${Math.random().toString(36).substring(2, 10)}`;
+}
+
+export function setTraceContext(traceId: string, parentSpanId?: string): string {
+  currentTraceId = traceId;
+  currentSpanId = generateSpanId();
+  currentParentSpanId = parentSpanId ?? null;
+  return currentSpanId;
+}
+
+export function getTraceContext(): { traceId: string | null; spanId: string | null; parentSpanId: string | null } {
+  return { traceId: currentTraceId, spanId: currentSpanId, parentSpanId: currentParentSpanId };
+}
+
+export function clearTraceContext(): void {
+  currentTraceId = null;
+  currentSpanId = null;
+  currentParentSpanId = null;
+}
+
+export function withTraceContext<T>(
+  traceId: string,
+  operation: (spanId: string) => Promise<T> | T,
+  parentSpanId?: string,
+): Promise<T> {
+  const prevTrace = currentTraceId;
+  const prevSpan = currentSpanId;
+  const prevParent = currentParentSpanId;
+  const spanId = setTraceContext(traceId, parentSpanId);
+  try {
+    const result = operation(spanId);
+    if (result instanceof Promise) {
+      return result.finally(() => {
+        currentTraceId = prevTrace;
+        currentSpanId = prevSpan;
+        currentParentSpanId = prevParent;
+      });
+    }
+    currentTraceId = prevTrace;
+    currentSpanId = prevSpan;
+    currentParentSpanId = prevParent;
+    return Promise.resolve(result);
+  } catch (err) {
+    currentTraceId = prevTrace;
+    currentSpanId = prevSpan;
+    currentParentSpanId = prevParent;
+    throw err;
+  }
+}
+
 export function getCurrentJobId(): string | null {
   return currentJobContext?.jobId || null;
 }
@@ -169,6 +228,9 @@ export interface FrameworkLogEntry {
   agent: string;
   sessionId?: string;
   jobId?: string;
+  traceId?: string;
+  spanId?: string;
+  parentSpanId?: string;
   details?: any;
 }
 
@@ -211,6 +273,9 @@ export class FrameworkUsageLogger {
       agent: "orchestrator",
       ...(sessionId && { sessionId }),
       jobId: actualJobId,
+      ...(currentTraceId && { traceId: currentTraceId }),
+      ...(currentSpanId && { spanId: currentSpanId }),
+      ...(currentParentSpanId && { parentSpanId: currentParentSpanId }),
       details,
     };
 
@@ -225,10 +290,11 @@ export class FrameworkUsageLogger {
 
   private bufferEntry(entry: FrameworkLogEntry): void {
     const jobIdPart = entry.jobId ? `[${entry.jobId}] ` : "";
+    const tracePart = entry.traceId ? `[${entry.traceId}.${entry.spanId}] ` : "";
     const detailsPart = entry.details
       ? ` | ${JSON.stringify(entry.details)}`
       : "";
-    const line = `${new Date(entry.timestamp).toISOString()} ${jobIdPart}[${entry.component}] ${entry.action} - ${entry.status.toUpperCase()}${detailsPart}\n`;
+    const line = `${new Date(entry.timestamp).toISOString()} ${jobIdPart}${tracePart}[${entry.component}] ${entry.action} - ${entry.status.toUpperCase()}${detailsPart}\n`;
     this.buffer.push(line);
 
     if (this.buffer.length >= this.MAX_BUFFER_SIZE) {

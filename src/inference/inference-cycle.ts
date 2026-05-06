@@ -88,6 +88,40 @@ export class InferenceCycle {
     this.options = options ?? {};
   }
 
+  async governExternalProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult> {
+    const startTime = Date.now();
+    const cycleId = `external-${Date.now()}`;
+
+    frameworkLogger.log("inference-cycle", "external-governance-start", "info", {
+      cycleId,
+      proposalCount: proposals.length,
+    });
+
+    this.setPhase("governing");
+    const votes = await this.governProposals(proposals);
+
+    const approved = proposals.filter(
+      (p) => votes.find((v) => v.proposalId === p.id && v.decision === "approve"),
+    );
+    for (const p of approved) p.status = "approved";
+    for (const p of proposals.filter((p) => p.status !== "approved")) p.status = "rejected";
+
+    this.setPhase("complete");
+    this.saveCycleState(cycleId);
+    this.saveGovernanceState(this.getCoordinator());
+
+    const result = this.buildResult(cycleId, true, "external proposals", startTime, undefined, proposals, votes);
+    this.appendHistory(result);
+
+    frameworkLogger.log("inference-cycle", "external-governance-complete", "info", {
+      cycleId,
+      approved: approved.length,
+      rejected: proposals.length - approved.length,
+    });
+
+    return result;
+  }
+
   async maybeRunCycle(): Promise<InferenceCycleResult> {
     const startTime = Date.now();
     const cycleId = `cycle-${Date.now()}`;

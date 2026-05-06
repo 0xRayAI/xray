@@ -5,6 +5,10 @@ import { IProcessor, BaseProcessor } from "./processor-interfaces.js";
 import { readdir } from "fs/promises";
 import { join, basename } from "path";
 
+export interface StaggerPolicy {
+  minIntervalMs: number;
+}
+
 export interface ProcessorConfig {
   name: string;
   type: "pre" | "post";
@@ -13,6 +17,7 @@ export interface ProcessorConfig {
   timeout?: number;
   retryAttempts?: number;
   hook?: ProcessorHook;
+  stagger?: StaggerPolicy;
 }
 
 export interface ProcessorResult {
@@ -52,6 +57,7 @@ export class ProcessorManager {
   private stateManager: StringRayStateManager;
   private activeProcessors = new Set<string>();
   private factories = new Map<string, ProcessorFactory>();
+  private lastExecutionTime = new Map<string, number>();
 
   constructor(stateManager: StringRayStateManager) {
     this.stateManager = stateManager;
@@ -673,8 +679,23 @@ export class ProcessorManager {
     const results: ProcessorResult[] = [];
 
     for (const config of preProcessors) {
+      if (config.stagger?.minIntervalMs) {
+        const lastExec = this.lastExecutionTime.get(config.name) ?? 0;
+        const elapsed = Date.now() - lastExec;
+        const remaining = config.stagger.minIntervalMs - elapsed;
+        if (remaining > 0) {
+          frameworkLogger.log("processor-manager", "stagger-wait", "debug", {
+            processor: config.name,
+            waitMs: remaining,
+            minIntervalMs: config.stagger.minIntervalMs,
+          });
+          await new Promise((r) => setTimeout(r, remaining));
+        }
+      }
+
       const result = await this.executeProcessor(config.name, context);
       results.push(result);
+      this.lastExecutionTime.set(config.name, Date.now());
 
       if (!result.success) {
         frameworkLogger.log("processor-manager", "pre-processor failed", "info", {
@@ -729,6 +750,20 @@ export class ProcessorManager {
     const results: ProcessorResult[] = [];
 
     for (const config of postProcessors) {
+      if (config.stagger?.minIntervalMs) {
+        const lastExec = this.lastExecutionTime.get(config.name) ?? 0;
+        const elapsed = Date.now() - lastExec;
+        const remaining = config.stagger.minIntervalMs - elapsed;
+        if (remaining > 0) {
+          frameworkLogger.log("processor-manager", "stagger-wait", "debug", {
+            processor: config.name,
+            waitMs: remaining,
+            minIntervalMs: config.stagger.minIntervalMs,
+          });
+          await new Promise((r) => setTimeout(r, remaining));
+        }
+      }
+
       const result = await this.executeProcessor(config.name, {
         operation,
         data,
