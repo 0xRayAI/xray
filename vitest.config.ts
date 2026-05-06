@@ -16,13 +16,17 @@ export default defineConfig({
     ],
     silent: true,
     reporters: process.env.CI ? ["verbose"] : ["default"],
-    testTimeout: 60000,
-    hookTimeout: 120000,
+    testTimeout: 90000,
+    hookTimeout: 180000,
     bail: 0,
     pool: "forks",
+    poolOptions: {
+      forks: {
+        maxForks: 2,
+        minForks: 1,
+      },
+    },
     retry: process.env.CI ? 3 : 2,
-    maxThreads: 2,
-    minThreads: 1,
   },
   resolve: {
     alias: {

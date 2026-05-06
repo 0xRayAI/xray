@@ -192,15 +192,39 @@
       "details": {
         "duration": 603
       }
+    },
+    {
+      "timestamp": "2026-05-06T15:30:25.111Z",
+      "id": "act-1778081425111-g2rs2n",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778081424543-ja4mpo",
+      "details": {
+        "duration": 568
+      }
+    },
+    {
+      "timestamp": "2026-05-06T15:53:38.390Z",
+      "id": "act-1778082818390-u08ifb",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778082816927-ed0xxx",
+      "details": {
+        "duration": 1463
+      }
     }
   ],
   "stats": {
-    "total": 16,
+    "total": 18,
     "byCategory": {
-      "session": 16
+      "session": 18
     },
     "byLevel": {
-      "info": 16
+      "info": 18
     }
   }
 }

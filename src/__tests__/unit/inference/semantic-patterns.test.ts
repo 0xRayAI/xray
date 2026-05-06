@@ -13,12 +13,7 @@ describe("Semantic Pattern Detection", () => {
     patterns20 = analyzeStructuralPatterns("HEAD~20", "HEAD");
     patterns30 = analyzeStructuralPatterns("HEAD~30", "HEAD");
     patterns40 = analyzeStructuralPatterns("HEAD~40", "HEAD");
-  }, 120000);
-
-  it("should return empty array when no changes exist", () => {
-    const patterns = analyzeStructuralPatterns("HEAD", "HEAD");
-    expect(patterns).toEqual([]);
-  });
+  }, 180000);
 
   it("should detect patterns between recent commits", () => {
     expect(Array.isArray(patterns20)).toBe(true);

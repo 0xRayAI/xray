@@ -307,6 +307,8 @@ export class LearningEngine {
       impact: 'low' | 'medium' | 'high';
     }> = [];
 
+    if (!this.enabled) return suggestions;
+
     try {
       const metrics = patternPerformanceTracker.getAllPatternMetrics();
 
