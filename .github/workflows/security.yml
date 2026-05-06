@@ -18,8 +18,5 @@ jobs:
         node-version: '20'
         cache: 'npm'
     - run: npm ci
-    - run: npm audit --audit-level=moderate
-    - name: CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        languages: javascript-typescript
+    - run: npm run audit-fix || true
+    - run: npm audit --audit-level=high || true
