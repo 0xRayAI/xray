@@ -391,33 +391,181 @@ export class InferenceCycle {
   }
 
   private applyCodeChange(p: InferenceProposal): boolean {
-    const evidence = p.evidence.join("\n");
-    const markerPath = path.join(this.projectRoot, ".strray", "inference", "applied-markers", `${p.id}.md`);
-    fs.mkdirSync(path.dirname(markerPath), { recursive: true });
-    fs.writeFileSync(markerPath, `# ${p.title}\n\n${p.description}\n\n## Evidence\n${evidence}`);
+    const targetFiles = this.extractTargetFiles(p.evidence);
+    if (targetFiles.length === 0) {
+      frameworkLogger.log("inference-cycle", "apply-fix-no-targets", "warning", {
+        proposalId: p.id,
+        title: p.title,
+      });
+      return false;
+    }
+
+    const applyDir = path.join(this.projectRoot, ".strray", "inference", "pending-fixes");
+    fs.mkdirSync(applyDir, { recursive: true });
+
+    const fixPlan = {
+      proposalId: p.id,
+      type: p.type,
+      title: p.title,
+      description: p.description,
+      targetFiles,
+      confidence: p.confidence,
+      generatedAt: new Date().toISOString(),
+      status: "pending-review",
+    };
+
+    const planPath = path.join(applyDir, `${p.id}.json`);
+    fs.writeFileSync(planPath, JSON.stringify(fixPlan, null, 2));
+
+    for (const filePath of targetFiles) {
+      const fullPath = path.join(this.projectRoot, filePath);
+      if (!fs.existsSync(fullPath)) continue;
+
+      try {
+        const content = fs.readFileSync(fullPath, "utf-8");
+        const marker = `// INFERENCE: ${p.type} — ${p.title} [${p.id}]`;
+        if (content.includes(marker)) continue;
+
+        const annotated = `${marker}\n${content}`;
+        fs.writeFileSync(fullPath, annotated);
+
+        frameworkLogger.log("inference-cycle", "apply-fix-annotated", "info", {
+          proposalId: p.id,
+          file: filePath,
+        });
+      } catch (err) {
+        frameworkLogger.log("inference-cycle", "apply-fix-annotation-failed", "warning", {
+          proposalId: p.id,
+          file: filePath,
+          error: String(err),
+        });
+      }
+    }
+
     return true;
   }
 
   private applyGuard(p: InferenceProposal): boolean {
-    const guardPath = path.join(this.projectRoot, "docs", "guards", `${p.title.replace(/[^a-z0-9]/gi, "-")}.md`);
-    fs.mkdirSync(path.dirname(guardPath), { recursive: true });
-    fs.writeFileSync(guardPath, `# Guard: ${p.title}\n\n${p.description}\n\n## Evidence\n${p.evidence.join("\n")}`);
-    return true;
+    const codexPath = path.join(this.projectRoot, ".opencode", "strray", "codex.json");
+    if (!fs.existsSync(codexPath)) {
+      frameworkLogger.log("inference-cycle", "apply-guard-no-codex", "warning", {
+        proposalId: p.id,
+      });
+      return false;
+    }
+
+    try {
+      const codex = JSON.parse(fs.readFileSync(codexPath, "utf-8"));
+      const nextNum = Math.max(...Object.keys(codex.terms).map(Number)) + 1;
+      const termKey = String(nextNum);
+
+      codex.terms[termKey] = {
+        number: nextNum,
+        title: p.title,
+        description: p.description,
+        category: "inference-generated",
+        zeroTolerance: false,
+        enforcementLevel: "medium",
+        source: p.source,
+        proposalId: p.id,
+      };
+
+      fs.writeFileSync(codexPath, JSON.stringify(codex, null, 2));
+
+      frameworkLogger.log("inference-cycle", "apply-guard-codex-added", "info", {
+        proposalId: p.id,
+        termNumber: nextNum,
+        title: p.title,
+      });
+
+      const fixerStrategiesPath = path.join(this.projectRoot, ".strray", "inference", "guard-strategies.json");
+      fs.mkdirSync(path.dirname(fixerStrategiesPath), { recursive: true });
+
+      let strategies: any[] = [];
+      if (fs.existsSync(fixerStrategiesPath)) {
+        try { strategies = JSON.parse(fs.readFileSync(fixerStrategiesPath, "utf-8")); } catch { strategies = []; }
+      }
+      strategies.push({
+        termNumber: nextNum,
+        title: p.title,
+        proposalId: p.id,
+        agent: "code-reviewer",
+        skill: "code-review",
+        tool: "analyze_code_quality",
+        priority: 5,
+      });
+      fs.writeFileSync(fixerStrategiesPath, JSON.stringify(strategies, null, 2));
+
+      return true;
+    } catch (err) {
+      frameworkLogger.log("inference-cycle", "apply-guard-failed", "error", {
+        proposalId: p.id,
+        error: String(err),
+      });
+      return false;
+    }
   }
 
   private applyCodification(p: InferenceProposal): boolean {
     const catalogPath = path.join(this.projectRoot, "docs", "pattern-catalog.md");
-    const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.length} sessions\n`;
+    const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.length} sessions\n**Confidence:** ${(p.confidence * 100).toFixed(0)}%\n**Proposal ID:** ${p.id}\n`;
+    fs.mkdirSync(path.dirname(catalogPath), { recursive: true });
     fs.appendFileSync(catalogPath, entry);
     return true;
   }
 
   private applyAutomation(p: InferenceProposal): boolean {
-    const automationPath = path.join(this.projectRoot, "docs", "automation-proposals.md");
-    const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.join(", ")}\n`;
-    fs.mkdirSync(path.dirname(automationPath), { recursive: true });
-    fs.appendFileSync(automationPath, entry);
+    const processorsDir = path.join(this.projectRoot, ".strray", "inference", "pending-automations");
+    fs.mkdirSync(processorsDir, { recursive: true });
+
+    const slug = p.title.replace(/[^a-z0-9]/gi, "-").toLowerCase();
+    const automationPlan = {
+      proposalId: p.id,
+      type: "automate",
+      title: p.title,
+      description: p.description,
+      evidence: p.evidence,
+      confidence: p.confidence,
+      suggestedConfig: {
+        name: slug,
+        type: "post" as const,
+        priority: 50,
+        enabled: false,
+      },
+      generatedAt: new Date().toISOString(),
+      status: "pending-review",
+    };
+
+    const planPath = path.join(processorsDir, `${p.id}.json`);
+    fs.writeFileSync(planPath, JSON.stringify(automationPlan, null, 2));
+
+    const stubPath = path.join(processorsDir, `${slug}-processor.ts`);
+    const stub = `import { PostProcessor } from "../../processors/processor-interfaces.js";\nimport type { ProcessorContext } from "../../processors/processor-types.js";\nimport { frameworkLogger } from "../../core/framework-logger.js";\n\nexport class ${slug.replace(/-([a-z])/g, (_, c) => c.toUpperCase())}Processor extends PostProcessor {\n  readonly name = "${slug}";\n  readonly priority = 50;\n\n  protected async run(context: ProcessorContext): Promise<Record<string, unknown>> {\n    frameworkLogger.log("${slug}", "executed", "info", {\n      operation: context.operation,\n      proposalId: "${p.id}",\n    });\n    return { success: true, proposalId: "${p.id}" };\n  }\n}\n`;
+    fs.writeFileSync(stubPath, stub);
+
+    frameworkLogger.log("inference-cycle", "apply-automation-stub-created", "info", {
+      proposalId: p.id,
+      stubFile: stubPath,
+    });
+
     return true;
+  }
+
+  private extractTargetFiles(evidence: string[]): string[] {
+    const filePattern = /[a-zA-Z0-9/_-]+\.(ts|js|mjs|json|yml|yaml)/g;
+    const files = new Set<string>();
+
+    for (const item of evidence) {
+      const matches = item.matchAll(filePattern);
+      for (const match of matches) {
+        const f = match[0];
+        if (f.startsWith("src/") || f.startsWith("dist/") || f.startsWith(".opencode/")) {
+          files.add(f);
+        }
+      }
+    }
+
+    return [...files];
   }
 
   private createPR(p: InferenceProposal, branchName: string): string {
