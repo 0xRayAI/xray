@@ -438,6 +438,17 @@ export class ProcessorManager {
       },
     });
 
+    f.set("nudge", {
+      execute: async (ctx) => {
+        const { executeNudgeProcessor } = await import("./implementations/nudge-processor.js");
+        const result = await executeNudgeProcessor(ctx as ProcessorContext);
+        return result.data;
+      },
+      init: async () => {
+        frameworkLogger.log("processor-manager", "initializing nudge processor", "info");
+      },
+    });
+
     f.set("consoleLogGuardPost", {
       execute: async (ctx) => {
         const { runConsoleLogGuard } = await import("./implementations/console-log-guard-processor.js");
@@ -452,6 +463,17 @@ export class ProcessorManager {
       },
       init: async () => {
         frameworkLogger.log("processor-manager", "postprocessor-chain-initialized", "success");
+      },
+    });
+
+    f.set("commitBatcher", {
+      execute: async (ctx) => {
+        const { executeCommitBatcherProcessor } = await import("./implementations/commit-batcher-processor.js");
+        const result = await executeCommitBatcherProcessor(ctx as ProcessorContext);
+        return result.data;
+      },
+      init: async () => {
+        frameworkLogger.log("processor-manager", "initializing commit batcher processor", "info");
       },
     });
 

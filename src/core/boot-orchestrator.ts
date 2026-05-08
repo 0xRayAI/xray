@@ -404,11 +404,13 @@ export class BootOrchestrator {
         { name: "regressionTesting", type: "post", priority: postPriorityMap["regressionTesting"] || 65, enabled: true },
         { name: "coverageAnalysis", type: "post", priority: postPriorityMap["coverageAnalysis"] || 70, enabled: true },
         { name: "inferenceImprovement", type: "post", priority: postPriorityMap["inferenceImprovement"] || 75, enabled: true },
+        { name: "nudge", type: "post", priority: postPriorityMap["nudge"] || 78, enabled: true },
         { name: "refactoringLogging", type: "post", priority: postPriorityMap["refactoringLogging"] || 80, enabled: true },
         { name: "postProcessorChain", type: "post", priority: postPriorityMap["postProcessorChain"] || 140, enabled: true },
         { name: "publishPreflight", type: "post", priority: postPriorityMap["publishPreflight"] || 125, enabled: true },
         { name: "storytellingTrigger", type: "post", priority: postPriorityMap["storytellingTrigger"] || 5, enabled: true },
         { name: "sessionSummary", type: "post", priority: postPriorityMap["sessionSummary"] || 10, enabled: true },
+        { name: "commitBatcher", type: "post", priority: postPriorityMap["commitBatcher"] || 85, enabled: true },
       ];
 
       for (const def of PROCESSOR_DEFS) {
