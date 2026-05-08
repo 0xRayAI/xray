@@ -35,8 +35,10 @@ Analyze the following data sources to gather insights for inference improvement:
 - /Users/blaze/dev/stringray/docs/reflections/agent-registry-architecture-analysis-2026-04-11.md
 - /Users/blaze/dev/stringray/docs/reflections/antigravity-integration-journey-reflection-2026-02-26.md
 - /Users/blaze/dev/stringray/docs/reflections/any-type-elimination-journey.md
+- /Users/blaze/dev/stringray/docs/reflections/apply-phase-real-code-changes-via-mcp-routing.md
 - /Users/blaze/dev/stringray/docs/reflections/architectural-threshold-75-efficiency-reflection.md
 - /Users/blaze/dev/stringray/docs/reflections/auto-commit-cadence-2026-04-29.md
+- /Users/blaze/dev/stringray/docs/reflections/auto-commit-cadence-2026-05-06.md
 - /Users/blaze/dev/stringray/docs/reflections/automated-version-compliance-system.md
 - /Users/blaze/dev/stringray/docs/reflections/bug-triage-specialist-unsung-hero-2026-03-10.md
 - /Users/blaze/dev/stringray/docs/reflections/ci-cd-autonomous-recovery-implementation-reflection.md

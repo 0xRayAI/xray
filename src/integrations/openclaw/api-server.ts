@@ -222,6 +222,24 @@ export class StringRayAPIServer {
           this.sendResponse(res, 200, result);
           break;
 
+        case '/api/govern':
+          if (method !== 'POST') {
+            this.sendResponse(res, 405, { error: 'Method not allowed - Use POST' });
+            return;
+          }
+          result = await this.handleGovern(JSON.parse(body));
+          this.sendResponse(res, 200, result);
+          break;
+
+        case '/api/apply':
+          if (method !== 'POST') {
+            this.sendResponse(res, 405, { error: 'Method not allowed - Use POST' });
+            return;
+          }
+          result = await this.handleApply(JSON.parse(body));
+          this.sendResponse(res, 200, result);
+          break;
+
         default:
           this.sendResponse(res, 404, { error: 'Not found' });
       }
@@ -325,6 +343,41 @@ export class StringRayAPIServer {
       healthy: true,
       message: 'Agent invoker configured',
     };
+  }
+
+  private async handleGovern(body: { proposals?: unknown[] }): Promise<Record<string, unknown>> {
+    try {
+      const { InferenceCycle } = await import('../../inference/inference-cycle.js');
+      const cycle = new InferenceCycle(process.cwd(), undefined, { skipApply: true });
+      const result = await cycle.governExternalProposals((body.proposals || []) as any);
+      return {
+        cycleId: result.cycleId,
+        approved: result.votes.filter((v) => v.decision === 'approve').length,
+        rejected: result.votes.filter((v) => v.decision !== 'approve').length,
+        votes: result.votes,
+        proposals: result.proposals.map((p) => ({ id: p.id, title: p.title, type: p.type, status: p.status })),
+        duration: result.duration,
+      };
+    } catch (error) {
+      return { error: `Governance failed: ${error instanceof Error ? error.message : String(error)}` };
+    }
+  }
+
+  private async handleApply(body: { proposals?: unknown[] }): Promise<Record<string, unknown>> {
+    try {
+      const { InferenceCycle } = await import('../../inference/inference-cycle.js');
+      const cycle = new InferenceCycle(process.cwd());
+      const result = await cycle.governExternalProposals((body.proposals || []) as any);
+      return {
+        cycleId: result.cycleId,
+        applied: result.proposals.filter((p) => p.status === 'applied').length,
+        approved: result.votes.filter((v) => v.decision === 'approve').length,
+        proposals: result.proposals.map((p) => ({ id: p.id, title: p.title, type: p.type, status: p.status })),
+        duration: result.duration,
+      };
+    } catch (error) {
+      return { error: `Apply failed: ${error instanceof Error ? error.message : String(error)}` };
+    }
   }
 
   /**

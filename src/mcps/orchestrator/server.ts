@@ -189,6 +189,36 @@ export class OrchestratorServer {
               },
             },
           },
+          {
+            name: 'govern-and-apply',
+            description:
+              'Govern inference proposals through weighted voting, then apply approved ones via agent delegation',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                proposals: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      title: { type: 'string' },
+                      description: { type: 'string' },
+                      type: {
+                        type: 'string',
+                        enum: ['fix', 'refactor', 'guard', 'automate', 'codify'],
+                      },
+                      confidence: { type: 'number', minimum: 0, maximum: 1 },
+                      evidence: { type: 'array', items: { type: 'string' } },
+                    },
+                    required: ['id', 'title', 'description', 'type', 'confidence', 'evidence'],
+                  },
+                },
+                skipApply: { type: 'boolean', default: false },
+              },
+              required: ['proposals'],
+            },
+          },
         ],
       };
     });
@@ -235,6 +265,19 @@ export class OrchestratorServer {
               history?: boolean;
               recommendations?: boolean;
             });
+          
+          case 'govern-and-apply':
+            return await this.handleGovernAndApply(args as {
+              proposals: Array<{
+                id: string;
+                title: string;
+                description: string;
+                type: 'fix' | 'refactor' | 'guard' | 'automate' | 'codify';
+                confidence: number;
+                evidence: string[];
+              }>;
+              skipApply?: boolean;
+            });
             
           default:
             throw new Error(`Unknown tool: ${name}`);
@@ -248,6 +291,56 @@ export class OrchestratorServer {
         };
       }
     });
+  }
+
+  private async handleGovernAndApply(args: {
+    proposals: Array<{
+      id: string;
+      title: string;
+      description: string;
+      type: 'fix' | 'refactor' | 'guard' | 'automate' | 'codify';
+      confidence: number;
+      evidence: string[];
+    }>;
+    skipApply?: boolean;
+  }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+    try {
+      const { InferenceCycle } = await import('../../inference/inference-cycle.js');
+      const cycle = new InferenceCycle(process.cwd(), undefined, {
+        skipApply: args.skipApply ?? false,
+      });
+
+      const result = await cycle.governExternalProposals(args.proposals as any);
+
+      const approved = result.votes.filter((v) => v.decision === 'approve').length;
+      const rejected = result.votes.length - approved;
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({
+            cycleId: result.cycleId,
+            approved,
+            rejected,
+            votes: result.votes,
+            proposals: result.proposals.map((p) => ({
+              id: p.id,
+              title: p.title,
+              type: p.type,
+              status: p.status,
+            })),
+            duration: result.duration,
+          }, null, 2),
+        }],
+      };
+    } catch (error) {
+      return {
+        content: [{
+          type: 'text' as const,
+          text: `Govern-and-apply failed: ${error instanceof Error ? error.message : String(error)}`,
+        }],
+      };
+    }
   }
 
   /**

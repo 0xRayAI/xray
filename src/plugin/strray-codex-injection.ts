@@ -1004,6 +1004,29 @@ export default async function strrayCodexPlugin(input: {
         } catch {
           // Tuner not available in this environment — skip silently
         }
+
+        try {
+          const { InferenceCycle } = await import(
+            "../inference/inference-cycle.js"
+          );
+          const cycle = new InferenceCycle(directory);
+          cycle.maybeRunCycle()
+            .then((result) => {
+              if (result.triggered && result.proposals.length > 0) {
+                const approved = result.votes.filter((v) => v.decision === "approve").length;
+                logger.log(
+                  `🔄 Inference cycle: ${result.proposals.length} proposals, ${approved} approved`,
+                );
+              }
+            })
+            .catch((err: unknown) => {
+              logger.log(
+                `⚠️ Inference cycle skipped: ${err instanceof Error ? err.message : String(err)}`,
+              );
+            });
+        } catch {
+          // Inference cycle not available — skip silently
+        }
       }
     },
 

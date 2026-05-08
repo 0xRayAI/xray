@@ -97,12 +97,30 @@ export class InferenceCycle {
       proposalCount: proposals.length,
     });
 
-    this.setPhase("governing");
-    const votes = await this.governProposals(proposals);
+     this.setPhase("governing");
+     let votes: InferenceCycleResult["votes"] = [];
+     try {
+       votes = await this.governProposals(proposals);
+     } catch (e) {
+       frameworkLogger.log("inference-cycle", "govern-proposals-error", "error", {
+         error: (e as Error).message,
+         stack: (e as Error).stack?.substring(0, 500),
+       });
+       // If governProposals fails, use heuristic fallback for each proposal
+       for (const proposal of proposals) {
+         const fallbackVote = this.heuristicFallbackVote(proposal);
+         votes.push({
+           proposalId: proposal.id,
+           decision: fallbackVote.decision,
+           confidence: fallbackVote.confidence,
+           details: [`Fallback due to error: ${(e as Error).message}`],
+         });
+       }
+     }
 
-    const approved = proposals.filter(
-      (p) => votes.find((v) => v.proposalId === p.id && v.decision === "approve"),
-    );
+     const approved = proposals.filter(
+       (p) => votes.find((v) => v.proposalId === p.id && v.decision === "approve"),
+     );
     for (const p of approved) p.status = "approved";
     for (const p of proposals.filter((p) => p.status !== "approved")) p.status = "rejected";
 
@@ -344,11 +362,11 @@ export class InferenceCycle {
       let filesChanged = false;
 
       if (p.type === "fix" || p.type === "refactor") {
-        filesChanged = this.applyCodeChange(p);
+        filesChanged = await this.applyCodeChange(p);
       } else if (p.type === "guard") {
-        filesChanged = this.applyGuard(p);
+        filesChanged = await this.applyGuard(p);
       } else if (p.type === "automate") {
-        filesChanged = this.applyAutomation(p);
+        filesChanged = await this.applyAutomation(p);
       }
 
       if (!filesChanged) {
@@ -390,19 +408,72 @@ export class InferenceCycle {
     }
   }
 
-  private applyCodeChange(p: InferenceProposal): boolean {
-    const evidence = p.evidence.join("\n");
-    const markerPath = path.join(this.projectRoot, ".strray", "inference", "applied-markers", `${p.id}.md`);
-    fs.mkdirSync(path.dirname(markerPath), { recursive: true });
-    fs.writeFileSync(markerPath, `# ${p.title}\n\n${p.description}\n\n## Evidence\n${evidence}`);
-    return true;
+  private async applyCodeChange(p: InferenceProposal): Promise<boolean> {
+    const targetFiles = this.extractTargetFiles(p.evidence);
+
+    const prompt = [
+      `Apply approved inference proposal`,
+      ``,
+      `Type: ${p.type}`,
+      `Title: ${p.title}`,
+      `Description: ${p.description}`,
+      targetFiles.length > 0 ? `Target files: ${targetFiles.join(", ")}` : "No specific target files identified",
+      `Evidence: ${p.evidence.slice(0, 5).join("; ")}`,
+      `Confidence: ${(p.confidence * 100).toFixed(0)}%`,
+      ``,
+      `1. Read the relevant source files`,
+      `2. Apply the ${p.type} described above`,
+      `3. Make minimal, surgical changes`,
+      `4. If the change is unsafe or unclear, skip and explain`,
+    ].join("\n");
+
+    frameworkLogger.log("inference-cycle", "apply-invoking-agent", "info", {
+      proposalId: p.id,
+      proposalType: p.type,
+      targetFiles,
+    });
+
+    try {
+      const agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
+      await this.invokeAgentInternal(agentName, prompt);
+      return true;
+    } catch (err) {
+      frameworkLogger.log("inference-cycle", "apply-agent-failed", "warning", {
+        proposalId: p.id,
+        error: String(err),
+      });
+      return false;
+    }
   }
 
-  private applyGuard(p: InferenceProposal): boolean {
-    const guardPath = path.join(this.projectRoot, "docs", "guards", `${p.title.replace(/[^a-z0-9]/gi, "-")}.md`);
-    fs.mkdirSync(path.dirname(guardPath), { recursive: true });
-    fs.writeFileSync(guardPath, `# Guard: ${p.title}\n\n${p.description}\n\n## Evidence\n${p.evidence.join("\n")}`);
-    return true;
+  private async applyGuard(p: InferenceProposal): Promise<boolean> {
+    const prompt = [
+      `Add guard/validation for the following issue:`,
+      ``,
+      `Title: ${p.title}`,
+      `Description: ${p.description}`,
+      `Evidence: ${p.evidence.join("; ")}`,
+      `Confidence: ${(p.confidence * 100).toFixed(0)}%`,
+      ``,
+      `1. Read the relevant source files`,
+      `2. Add the missing guard, validation, or edge case handling`,
+      `3. If this is a codex rule, add the term to .opencode/strray/codex.json`,
+      `4. Make minimal, surgical changes`,
+    ].join("\n");
+
+    try {
+      await this.invokeAgentInternal("code-reviewer", prompt);
+      return true;
+    } catch (err) {
+      frameworkLogger.log("inference-cycle", "apply-guard-failed", "warning", {
+        proposalId: p.id,
+        error: String(err),
+      });
+      const guardPath = path.join(this.projectRoot, "docs", "guards", `${p.title.replace(/[^a-z0-9]/gi, "-")}.md`);
+      fs.mkdirSync(path.dirname(guardPath), { recursive: true });
+      fs.writeFileSync(guardPath, `# Guard: ${p.title}\n\n${p.description}\n\n## Evidence\n${p.evidence.join("\n")}`);
+      return true;
+    }
   }
 
   private applyCodification(p: InferenceProposal): boolean {
@@ -412,12 +483,51 @@ export class InferenceCycle {
     return true;
   }
 
-  private applyAutomation(p: InferenceProposal): boolean {
-    const automationPath = path.join(this.projectRoot, "docs", "automation-proposals.md");
-    const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.join(", ")}\n`;
-    fs.mkdirSync(path.dirname(automationPath), { recursive: true });
-    fs.appendFileSync(automationPath, entry);
-    return true;
+  private async applyAutomation(p: InferenceProposal): Promise<boolean> {
+    const prompt = [
+      `Design automation for the following manual process:`,
+      ``,
+      `Title: ${p.title}`,
+      `Description: ${p.description}`,
+      `Evidence: ${p.evidence.join("; ")}`,
+      `Confidence: ${(p.confidence * 100).toFixed(0)}%`,
+      ``,
+      `1. Read the relevant source files`,
+      `2. Design the automation (script, processor, or config change)`,
+      `3. Implement it if straightforward, otherwise describe the design`,
+    ].join("\n");
+
+    try {
+      await this.invokeAgentInternal("architect", prompt);
+      return true;
+    } catch (err) {
+      frameworkLogger.log("inference-cycle", "apply-automation-failed", "warning", {
+        proposalId: p.id,
+        error: String(err),
+      });
+      const automationPath = path.join(this.projectRoot, "docs", "automation-proposals.md");
+      const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.join(", ")}\n`;
+      fs.mkdirSync(path.dirname(automationPath), { recursive: true });
+      fs.appendFileSync(automationPath, entry);
+      return true;
+    }
+  }
+
+  private extractTargetFiles(evidence: string[]): string[] {
+    const filePattern = /[a-zA-Z0-9/_-]+\.(ts|js|mjs|json|yml|yaml)/g;
+    const files = new Set<string>();
+
+    for (const item of evidence) {
+      const matches = item.matchAll(filePattern);
+      for (const match of matches) {
+        const f = match[0];
+        if (f.startsWith("src/") || f.startsWith("dist/") || f.startsWith(".opencode/")) {
+          files.add(f);
+        }
+      }
+    }
+
+    return [...files];
   }
 
   private createPR(p: InferenceProposal, branchName: string): string {
@@ -454,11 +564,7 @@ Respond with EXACTLY one of:
 - MODIFY: <specific changes needed>`;
 
     try {
-      const { execSync } = require("child_process");
-      const result = execSync(
-        `opencode run --agent researcher --message "${prompt.replace(/"/g, '\\"')}"`,
-        { cwd: this.projectRoot, encoding: "utf-8", timeout: 15000, stdio: "pipe" },
-      );
+      const result = await this.invokeAgentInternal("researcher", prompt);
 
       const output = result.toLowerCase();
       if (output.includes("no-go")) return "no-go";
@@ -466,7 +572,7 @@ Respond with EXACTLY one of:
       return "go";
     } catch (err) {
       frameworkLogger.log("inference-cycle", "researcher-review-failed", "warning", { error: String(err) });
-      return "go"; // default to go if researcher fails
+      return "go";
     }
   }
 
@@ -501,8 +607,7 @@ Respond with EXACTLY one of:
     }
 
     try {
-      // Single architect call — spawns subagents via task tool
-      const jsonOutput = await this.invokeArchitect(todoPrompt.join("\n"));
+      const jsonOutput = await this.invokeAgentInternal("architect", todoPrompt.join("\n"));
 
       // Parse subagent votes from JSON stream
       const allVotes = this.parseSubagentVotes(jsonOutput, proposals);
@@ -572,11 +677,45 @@ Respond with EXACTLY one of:
 
   // Removed: buildOrchestratorGovernancePrompt (replaced by inline TODO prompt in governProposals)
 
-  private async invokeArchitect(prompt: string): Promise<string> {
-    if (this.agentInvoker) {
-      return this.agentInvoker("architect", prompt);
+  private async invokeAgentInternal(agentName: string, prompt: string): Promise<string> {
+    frameworkLogger.log("inference-cycle", "invoke-agent-internal", "info", {
+      agentName,
+      promptLength: prompt.length,
+    });
+
+    try {
+      const { mcpClientManager } = await import("../mcps/mcp-client.js");
+      const result = await mcpClientManager.callServerTool("orchestrator", "orchestrate-task", {
+        description: prompt,
+        tasks: [{
+          id: `task-${Date.now()}`,
+          description: prompt,
+          type: agentName,
+          priority: "high",
+        }],
+        executionMode: "sequential",
+      });
+      const content = (result as { content?: Array<{ text?: string }> }).content;
+      if (content && Array.isArray(content)) {
+        return content.map((c: { text?: string }) => c.text ?? "").join("");
+      }
+      return JSON.stringify(result);
+    } catch (mcpError) {
+      frameworkLogger.log("inference-cycle", "mcp-invocation-failed", "info", {
+        agentName,
+        error: String(mcpError),
+      });
     }
 
+    if (this.agentInvoker) {
+      frameworkLogger.log("inference-cycle", "invoke-via-callback", "info", { agentName });
+      return this.agentInvoker(agentName, prompt);
+    }
+
+    return this.invokeViaOpencode(agentName, prompt);
+  }
+
+  private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
     if (this.opencodeAvailable === null) {
       try {
         execSync("which opencode", { stdio: "pipe", timeout: 3000 });
@@ -587,22 +726,23 @@ Respond with EXACTLY one of:
     }
 
     if (!this.opencodeAvailable) {
-      throw new Error("opencode CLI not available");
+      throw new Error(`opencode CLI not available for ${agentName}`);
     }
 
     return new Promise((resolve, reject) => {
+      const timeout = agentName === "architect" ? 60000 : 30000;
       let settled = false;
       const timer = setTimeout(() => {
         if (!settled) {
           settled = true;
           child.kill("SIGKILL");
-          reject(new Error("opencode architect timed out"));
+          reject(new Error(`opencode ${agentName} timed out`));
         }
-      }, 60000); // 60s for multi-agent spawn
+      }, timeout);
 
       const child = spawn(
         "opencode",
-        ["run", "--agent", "architect", "--message", prompt, "--format", "json"],
+        ["run", "--agent", agentName, "--message", prompt, "--format", "json"],
         {
           cwd: this.projectRoot,
           env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json" },
@@ -612,7 +752,7 @@ Respond with EXACTLY one of:
 
       let stdout = "";
       child.stdout?.on("data", (d: Buffer) => { stdout += d.toString(); });
-      child.stderr?.on("data", (d: Buffer) => { /* ignore */ });
+      child.stderr?.on("data", () => { /* ignore */ });
 
       child.on("close", (code) => {
         clearTimeout(timer);
@@ -621,7 +761,7 @@ Respond with EXACTLY one of:
         if (code === 0 && stdout.trim()) {
           resolve(stdout.trim());
         } else {
-          reject(new Error(`architect exited ${code}`));
+          reject(new Error(`${agentName} exited ${code}`));
         }
       });
 
