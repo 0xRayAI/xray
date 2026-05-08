@@ -1,5 +1,5 @@
 /**
- * 0xRay AI v1.22.52 - Security Module Index
+ * 0xRay AI v1.22.53 - Security Module Index
  * Unified exports for the comprehensive security system
  */
 

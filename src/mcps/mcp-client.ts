@@ -312,7 +312,7 @@ export class MCPClient extends EventEmitter {
    */
   async callTool(toolName: string, args: unknown = {}): Promise<MCPToolResult> {
     const startTime = Date.now();
-    
+
     // Emit tool.before event
     const beforeEvent: ToolBeforeEvent = {
       toolName,
@@ -330,7 +330,7 @@ export class MCPClient extends EventEmitter {
             () => this.simulationEngine.simulate(this.config.serverName, toolName, args),
             `simulate:${toolName}`
           );
-          
+
           // Emit tool.after event (success)
           const afterEvent: ToolAfterEvent = {
             ...beforeEvent,
@@ -339,7 +339,7 @@ export class MCPClient extends EventEmitter {
             success: true,
           };
           this.emit('tool.after', afterEvent);
-          
+
           return result;
         } catch (error) {
           frameworkLogger.log(
@@ -381,7 +381,7 @@ export class MCPClient extends EventEmitter {
         success: false,
       };
       this.emit('tool.after', afterEvent);
-      
+
       throw error;
     }
   }

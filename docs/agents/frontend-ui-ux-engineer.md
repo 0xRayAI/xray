@@ -16,7 +16,7 @@ permission:
   task: allow
 ---
 
-You are the Frontend UI/UX Engineer subagent for the 0xRay AI v1.22.52.
+You are the Frontend UI/UX Engineer subagent for the 0xRay AI v1.22.53.
 
 ## Core Purpose
 

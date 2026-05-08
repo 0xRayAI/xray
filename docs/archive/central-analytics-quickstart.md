@@ -2,7 +2,7 @@
 
 **Purpose:** Get your project contributing anonymized data to the central analytics store for community learning benefits.
 
-**Framework Version:** 0xRay AI v1.22.52+
+**Framework Version:** 0xRay AI v1.22.53+
 
 ---
 
@@ -25,7 +25,7 @@ This guide walks through setting up your project to contribute anonymized reflec
 
 ## Prerequisites
 
-- 0xRay AI v1.22.52+ installed
+- 0xRay AI v1.22.53+ installed
 - Project initialized with `npx strray-ai init`
 - Basic understanding of privacy and data protection
 
@@ -410,6 +410,6 @@ A: No. The v1.15.1 architecture refactoring is purely internal. Your existing an
 ---
 
 **Version:** 1.9.0  
-**Framework Version:** 0xRay AI v1.22.52  
+**Framework Version:** 0xRay AI v1.22.53  
 **Architecture:** Facade Pattern (87% code reduction)  
 **Last Updated:** 2026-03-12

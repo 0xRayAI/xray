@@ -118,35 +118,44 @@ async function runTests() {
     }
   }
 
-  // Test 4: hermes-agent-integration.js can be instantiated (if it exists in dist)
-  console.log('\nTest 4: HermesAgentIntegration class can be instantiated');
-  const integrationJsPath = path.join(DIST_HERMES, 'hermes-agent-integration.js');
-  const integrationSrcPath = path.join(ROOT, 'src', 'integrations', 'hermes-agent', 'hermes-agent-integration.ts');
+  // Test 4: bridge.mjs responds to commands (real Hermes client pattern)
+  console.log('\nTest 4: bridge.mjs responds to commands (Hermes client pattern)');
+  if (fs.existsSync(bridgePath)) {
+    for (const cmd of ['health', 'stats']) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const child = spawn('node', [bridgePath, cmd, '--cwd', ROOT], { stdio: ['pipe', 'pipe', 'pipe'], timeout: 10000 });
+          let stdout = '';
+          let stderr = '';
+          child.stdout.on('data', (data) => { stdout += data.toString(); });
+          child.stderr.on('data', (data) => { stderr += data.toString(); });
+          child.on('close', (code) => {
+            resolve({ code, stdout, stderr });
+          });
+          child.on('error', reject);
+        });
 
-  if (fs.existsSync(integrationJsPath)) {
-    try {
-      const mod = require(integrationJsPath);
-      if (mod.HermesAgentIntegration) {
-        const instance = new mod.HermesAgentIntegration();
-        if (instance) {
-          pass('HermesAgentIntegration can be instantiated');
+        if (result.code === 0) {
+          pass(`bridge.mjs "${cmd}" exited 0`);
+          try {
+            const parsed = JSON.parse(result.stdout);
+            if (parsed.status === 'ok' || parsed.frameworkReady) {
+              pass(`bridge.mjs "${cmd}" returned valid JSON with expected fields`);
+            } else {
+              fail(`bridge.mjs "${cmd}" response has expected fields`, `Missing status/ok/frameworkReady in: ${Object.keys(parsed).join(',')}`);
+            }
+          } catch {
+            fail(`bridge.mjs "${cmd}" output is valid JSON`, result.stdout.slice(0, 100));
+          }
         } else {
-          fail('HermesAgentIntegration can be instantiated', 'Constructor returned null/undefined');
+          fail(`bridge.mjs "${cmd}" exited 0`, `Exit code ${result.code}: ${result.stderr.slice(0, 200)}`);
         }
-      } else {
-        fail('HermesAgentIntegration is exported', 'Module does not export HermesAgentIntegration');
-      }
-    } catch (err) {
-      if (err.code === 'ERR_REQUIRE_ESM' || err.message?.includes('ES Module')) {
-        skip('HermesAgentIntegration instantiation (ESM module - needs dynamic import)', err.message);
-      } else {
-        fail('HermesAgentIntegration can be instantiated', err.message);
+      } catch (err) {
+        fail(`bridge.mjs "${cmd}" execution`, err.message);
       }
     }
-  } else if (fs.existsSync(integrationSrcPath)) {
-    skip('HermesAgentIntegration class instantiation', 'Compiled JS not in dist yet; source TS exists');
   } else {
-    skip('HermesAgentIntegration class instantiation', 'Integration class not built to dist (Python/MJS bridge)');
+    skip('bridge.mjs command execution', 'bridge.mjs not found');
   }
 
   // Test 5: Python modules exist and are valid (syntax check via python3)
