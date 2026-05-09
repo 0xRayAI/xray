@@ -18,7 +18,10 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import * as zlib from "zlib";
 import { frameworkLogger } from "./framework-logger.js";
+
+const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024; // 5MB before rotation
 
 // Activity types
 export type ActivityCategory = 
@@ -134,9 +137,33 @@ function generateActivityId(): string {
 }
 
 /**
+ * Rotate log file if it exceeds max size
+ */
+function rotateIfNeeded(): void {
+  try {
+    if (!fs.existsSync(activityLogPath)) return;
+    const stat = fs.statSync(activityLogPath);
+    if (stat.size < MAX_LOG_SIZE_BYTES) return;
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const archivePath = activityLogPath.replace(/\.log$/, `-${timestamp}.log.gz`);
+    const content = fs.readFileSync(activityLogPath);
+    fs.writeFileSync(archivePath, zlib.gzipSync(content));
+    fs.writeFileSync(activityLogPath, "");
+    frameworkLogger.log("activity-logger", "log-rotated", "info", {
+      archivePath,
+      sizeBytes: stat.size,
+    });
+  } catch (error) {
+    frameworkLogger.log("activity-logger", "log-rotate-failed", "error", { error });
+  }
+}
+
+/**
  * Initialize activity log file
  */
 function initializeLogFile(): void {
+  rotateIfNeeded();
   if (!fs.existsSync(activityLogPath)) {
     fs.writeFileSync(activityLogPath, "");
   }
@@ -230,6 +257,7 @@ export function logActivity(
  */
 function writeToLogFile(record: ActivityRecord): void {
   try {
+    rotateIfNeeded();
     const detailsPart = record.details 
       ? ` | ${JSON.stringify(record.details)}` 
       : "";
