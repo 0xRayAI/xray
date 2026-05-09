@@ -133,6 +133,12 @@ Analyze the following data sources to gather insights for inference improvement:
 - /Users/blaze/dev/stringray/docs/reflections/tuning-engines-inventory.md
 - /Users/blaze/dev/stringray/docs/reflections/what-i-feel.md
 - /Users/blaze/dev/stringray/docs/reflections/why-this-is-critical.md
+- /Users/blaze/dev/stringray/logs/framework/activity-2026-04-27T14-43-00-000Z.log.gz
+- /Users/blaze/dev/stringray/logs/framework/activity-2026-05-09T00-11-25-377Z.log.gz
+- /Users/blaze/dev/stringray/logs/framework/activity-2026-05-09T00-16-56-110Z.log.gz
+- /Users/blaze/dev/stringray/logs/framework/activity-2026-05-09T00-21-52-446Z.log.gz
+- /Users/blaze/dev/stringray/logs/framework/activity-2026-05-09T00-23-10-994Z.log.gz
+- /Users/blaze/dev/stringray/logs/framework/activity-2026-05-09T00-40-04-090Z.log.gz
 - /Users/blaze/dev/stringray/logs/framework/activity-report.json
 - /Users/blaze/dev/stringray/logs/framework/activity.log
 - /Users/blaze/dev/stringray/logs/framework/activity.log.orig

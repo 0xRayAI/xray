@@ -138,6 +138,7 @@
     "commander": "^11.1.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "strray-ai": "^1.22.55",
     "ws": "^8.16.0"
   },
   "devDependencies": {
