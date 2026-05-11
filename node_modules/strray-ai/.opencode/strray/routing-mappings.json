@@ -535,24 +535,5 @@
     "skill": "api-design",
     "agent": "backend-engineer",
     "confidence": 0.92
-  },
-  {
-    "keywords": [
-      "governance",
-      "vote",
-      "proposal",
-      "decision",
-      "chrono",
-      "warp",
-      "dynamo",
-      "isotope",
-      "vortex",
-      "resonance",
-      "external-mcp",
-      "inference-check"
-    ],
-    "skill": "governance",
-    "agent": "architect",
-    "confidence": 0.9
   }
 ]

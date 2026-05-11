@@ -45,6 +45,7 @@ import { advancedProfiler } from "../monitoring/advanced-profiler.js";
 import { strRayConfigLoader } from "./config-loader.js";
 import { PluginRegistry } from "../integrations/plugins/index.js";
 import { PluginServerConfigRegistry } from "../mcps/config/index.js";
+import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
 
 /**
  * Set up graceful interruption handling to prevent JSON parsing errors
@@ -1075,6 +1076,10 @@ export class BootOrchestrator {
 
       // Finalize security integration
       await this.finalizeSecurityIntegration();
+
+      // Initialize inference governance integration
+      // DISABLED: Auto-spawning of agents is disabled
+      // await this.initializeInferenceGovernance();
 
       result.success = true;
     } catch (error) {

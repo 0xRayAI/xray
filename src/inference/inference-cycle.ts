@@ -784,18 +784,24 @@ Respond with EXACTLY one of:
   }
 
   private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
-    if (this.opencodeAvailable === null) {
-      try {
-        execSync("which opencode", { stdio: "pipe", timeout: 3000 });
-        this.opencodeAvailable = true;
-      } catch {
-        this.opencodeAvailable = false;
-      }
-    }
+    // DISABLED: Auto-spawning of OpenCode agents is disabled to prevent runaway
+    // recursive process spawning. See: agent_spawn.enabled in features.json
+    throw new Error(
+      `Auto-spawning of OpenCode agents is disabled. ` +
+      `Agent "${agentName}" cannot be spawned automatically. ` +
+      `Set agent_spawn.enabled=true in features.json to re-enable (not recommended).`
+    );
 
-    if (!this.opencodeAvailable) {
-      throw new Error(`opencode CLI not available for ${agentName}`);
-    }
+    // Dead code preserved for reference:
+    // if (this.opencodeAvailable === null) {
+    //   try {
+    //     execSync("which opencode", { stdio: "pipe", timeout: 3000 });
+    //     this.opencodeAvailable = true;
+    //   } catch {
+    //     this.opencodeAvailable = false;
+    //   }
+    // }
+    // ...
 
     return new Promise((resolve, reject) => {
       const timeout = agentName === "architect" ? 60000 : 30000;

@@ -101,6 +101,7 @@
     "max_cache_size_mb": 25
   },
   "agent_spawn": {
+    "enabled": false,
     "max_concurrent": 8,
     "max_per_type": 3,
     "spawn_cooldown_ms": 500,

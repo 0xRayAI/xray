@@ -154,12 +154,16 @@ export class StorytellingTriggerProcessor extends PostProcessor {
   }
 
   private async runInferenceCycle(): Promise<import("../../inference/inference-cycle.js").InferenceCycleResult | null> {
-    try {
-      const cycle = new InferenceCycle(process.cwd());
-      return cycle.maybeRunCycle();
-    } catch {
-      return null;
-    }
+    // DISABLED: Auto governance proposal voting causes runaway token consumption
+    // See bug fix: inference cycle auto-trigger disabled to prevent recursive
+    // opencode process spawning via invokeViaOpencode() → architect → task subagents
+    return null;
+    // try {
+    //   const cycle = new InferenceCycle(process.cwd());
+    //   return cycle.maybeRunCycle();
+    // } catch {
+    //   return null;
+    // }
   }
 
   private reflectOnCommits(): string | null {
