@@ -1,6 +1,6 @@
 {
   "$schema": "./config.schema.json",
-  "version": "1.22.53",
+  "version": "1.22.58",
   "description": "0xRay Framework - Token Management & Performance Configuration",
   
   "token_management": {

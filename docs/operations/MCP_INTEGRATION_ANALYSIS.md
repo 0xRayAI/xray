@@ -1,6 +1,6 @@
 # 0xRay MCP Integration Analysis
 
-**Version**: 1.22.57 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
+**Version**: 1.22.58 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 

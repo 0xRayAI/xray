@@ -109,7 +109,7 @@ class MarketingExpertServer {
 
   constructor() {
     this.server = new Server(
-      { name: "growth-strategist", version: "1.22.57" },
+      { name: "growth-strategist", version: "1.22.58" },
       { capabilities: { tools: {} } },
     );
 
