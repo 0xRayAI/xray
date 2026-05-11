@@ -18,6 +18,16 @@
       "type": "framework-adapter",
       "version": "1.22.53",
       "config": {}
+    },
+    "inference-governance": {
+      "enabled": false,
+      "type": "external-service",
+      "version": "1.22.53",
+      "config": {
+        "endpoint_url": "https://mcp-production-80e2.up.railway.app/governance",
+        "request_timeout_ms": 10000,
+        "min_confidence_threshold": 0.5
+      }
     }
   }
 }

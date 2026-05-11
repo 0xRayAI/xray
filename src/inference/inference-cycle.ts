@@ -6,6 +6,7 @@ import { DeployVerifier, DeployVerificationResult } from "./deploy-verifier.js";
 import { VotingCoordinator } from "../delegation/voting-coordinator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { getGovernanceIntegration, type GovernanceVoteResult } from "../integrations/governance/index.js";
 
 export interface InferenceProposal {
   id: string;
@@ -577,6 +578,16 @@ Respond with EXACTLY one of:
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
+    // Check if external governance is enabled and available
+    const governanceIntegration = getGovernanceIntegration();
+    if (governanceIntegration?.isAvailable()) {
+      frameworkLogger.log("inference-cycle", "using-external-governance", "info", {
+        proposalCount: proposals.length,
+      });
+      return this.governProposalsExternal(proposals);
+    }
+
+    // Fall back to internal voting coordinator
     const coordinator = this.getCoordinator();
     const sessionId = `inference-governance-${Date.now()}`;
     const results: InferenceCycleResult["votes"] = [];
@@ -676,6 +687,63 @@ Respond with EXACTLY one of:
   }
 
   // Removed: buildOrchestratorGovernancePrompt (replaced by inline TODO prompt in governProposals)
+
+  /**
+   * Govern proposals using external chrono-warp-drive Dynamo endpoint
+   */
+  private async governProposalsExternal(
+    proposals: InferenceProposal[],
+  ): Promise<InferenceCycleResult["votes"]> {
+    const governanceIntegration = getGovernanceIntegration();
+    if (!governanceIntegration) {
+      throw new Error("Governance integration not available");
+    }
+
+    // Build agent reviews from proposal evidence
+    const agentReviews = proposals.flatMap((p) =>
+      p.evidence.slice(0, 2).map((e) => `[${p.type}] ${e}`),
+    );
+
+    try {
+      const batchResult = await governanceIntegration.checkProposals(
+        proposals,
+        agentReviews,
+        [], // historicalIds - could be loaded from previous cycles
+      );
+
+      const votes: InferenceCycleResult["votes"] = batchResult.results.map(
+        (result: GovernanceVoteResult) => ({
+          proposalId: result.governanceResponse.proposalId,
+          decision: result.vote.toLowerCase() === "yes" ? "approve" : "reject",
+          confidence: result.governanceResponse.confidence,
+          details: [
+            `Governance: ${result.governanceResponse.recommendation}`,
+            `Isotope: ${result.governanceResponse.governanceIsotopeId}`,
+            ...result.governanceResponse.reasons.slice(0, 2),
+          ],
+        }),
+      );
+
+      frameworkLogger.log("inference-cycle", "external-governance-complete", "info", {
+        proposalCount: proposals.length,
+        passedCount: batchResult.results.filter((r) => r.passed).length,
+      });
+
+      return votes;
+    } catch (error) {
+      frameworkLogger.log(
+        "inference-cycle",
+        "external-governance-failed",
+        "error",
+        {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+
+      // Fallback to heuristic votes
+      return proposals.map((p) => this.heuristicFallbackVote(p));
+    }
+  }
 
   private async invokeAgentInternal(agentName: string, prompt: string): Promise<string> {
     frameworkLogger.log("inference-cycle", "invoke-agent-internal", "info", {
