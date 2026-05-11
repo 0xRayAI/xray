@@ -15,6 +15,7 @@ import {
 } from "../delegation/agent-delegator.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
 import { agentSpawnGovernor } from "./agent-spawn-governor.js";
+import { spawnGate } from "../core/opencode-spawn-gate.js";
 
 export interface AgentSpawnRequest {
   agentType: string;
@@ -138,6 +139,22 @@ export class EnhancedMultiAgentOrchestrator {
   async   spawnAgent(request: AgentSpawnRequest): Promise<SpawnedAgent> {
     const jobId = `spawn-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     let spawnTrackingId: string | undefined;
+
+    // 🚨 GATE: Check global spawn gate before any spawn attempt
+    try {
+      spawnGate.assertAllowed("enhanced-multi-agent-orchestrator");
+    } catch (gateError) {
+      const error = new Error(
+        `SPAWN GATE BLOCKED: ${gateError instanceof Error ? gateError.message : String(gateError)}`,
+      );
+      await frameworkLogger.log(
+        "enhanced-multi-agent-orchestrator",
+        "spawn-gate-blocked",
+        "error",
+        { message: error.message, agentType: request.agentType },
+      );
+      throw error;
+    }
 
     // 🚨 SECURITY: Prevent subagents from spawning other subagents
     // This prevents infinite loops, resource exhaustion, and uncontrolled agent spawning

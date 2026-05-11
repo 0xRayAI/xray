@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
+import { EnhancedMultiAgentOrchestrator, enhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import {
   universalLibrarianConsultation,
@@ -21,8 +21,6 @@ import { VotingCoordinator } from "../delegation/voting-coordinator.js";
 import { getAgentExpertiseLevel } from "../delegation/agent-expertise.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import fs from "fs";
-
-const enhancedMultiAgentOrchestrator = new EnhancedMultiAgentOrchestrator();
 
 export interface OrchestratorConfig {
   maxConcurrentTasks: number;

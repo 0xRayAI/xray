@@ -14,6 +14,7 @@ function bridgeExec(args: string[], input?: string, timeout = 10000): Promise<st
     const child = spawn("node", args, {
       cwd: PROJECT_ROOT,
       stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, NODE_ENV: "test" },
     });
 
     let stdout = "";

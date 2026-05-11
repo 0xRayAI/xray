@@ -96,15 +96,147 @@
       "details": {
         "duration": 711
       }
+    },
+    {
+      "timestamp": "2026-05-11T16:42:12.870Z",
+      "id": "act-1778517732870-remry7",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778517732059-283g4a",
+      "details": {
+        "duration": 811
+      }
+    },
+    {
+      "timestamp": "2026-05-11T16:51:00.490Z",
+      "id": "act-1778518260490-hoily5",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778518259558-6v1udr",
+      "details": {
+        "duration": 932
+      }
+    },
+    {
+      "timestamp": "2026-05-11T16:55:53.978Z",
+      "id": "act-1778518553978-5uai6c",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778518553250-b9qide",
+      "details": {
+        "duration": 728
+      }
+    },
+    {
+      "timestamp": "2026-05-11T16:58:49.452Z",
+      "id": "act-1778518729452-5x2h9i",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778518726029-gqq24t",
+      "details": {
+        "duration": 3423
+      }
+    },
+    {
+      "timestamp": "2026-05-11T17:00:46.657Z",
+      "id": "act-1778518846657-lnrjrz",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778518845937-8gcrgp",
+      "details": {
+        "duration": 720
+      }
+    },
+    {
+      "timestamp": "2026-05-11T17:05:22.491Z",
+      "id": "act-1778519122491-hcl1o8",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778519121275-6vj6ci",
+      "details": {
+        "duration": 1216
+      }
+    },
+    {
+      "timestamp": "2026-05-11T17:29:06.422Z",
+      "id": "act-1778520546422-uckznl",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778520531236-gtsrm7",
+      "details": {
+        "duration": 15185
+      }
+    },
+    {
+      "timestamp": "2026-05-11T17:31:30.838Z",
+      "id": "act-1778520690838-1mucze",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778520686849-h31skg",
+      "details": {
+        "duration": 3989
+      }
+    },
+    {
+      "timestamp": "2026-05-11T17:40:14.532Z",
+      "id": "act-1778521214532-e51g7u",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778521203060-h92au3",
+      "details": {
+        "duration": 11472
+      }
+    },
+    {
+      "timestamp": "2026-05-11T17:46:40.829Z",
+      "id": "act-1778521600831-ssq47s",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778521591561-p7kcce",
+      "details": {
+        "duration": 9262
+      }
+    },
+    {
+      "timestamp": "2026-05-11T18:15:20.128Z",
+      "id": "act-1778523320128-yab4mt",
+      "category": "session",
+      "level": "info",
+      "action": "session-ended",
+      "message": "Activity logging session ended",
+      "sessionId": "session-1778523316690-ipfk12",
+      "details": {
+        "duration": 3438
+      }
     }
   ],
   "stats": {
-    "total": 8,
+    "total": 19,
     "byCategory": {
-      "session": 8
+      "session": 19
     },
     "byLevel": {
-      "info": 8
+      "info": 19
     }
   }
 }

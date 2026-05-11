@@ -7,6 +7,9 @@ import { VotingCoordinator } from "../delegation/voting-coordinator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getGovernanceIntegration, type GovernanceVoteResult } from "../integrations/governance/index.js";
+import { getAgentSpawn } from "../core/features-config.js";
+import { agentSpawnGovernor } from "../orchestrator/agent-spawn-governor.js";
+import { spawnGate } from "../core/opencode-spawn-gate.js";
 
 export interface InferenceProposal {
   id: string;
@@ -784,24 +787,59 @@ Respond with EXACTLY one of:
   }
 
   private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
-    // DISABLED: Auto-spawning of OpenCode agents is disabled to prevent runaway
-    // recursive process spawning. See: agent_spawn.enabled in features.json
-    throw new Error(
-      `Auto-spawning of OpenCode agents is disabled. ` +
-      `Agent "${agentName}" cannot be spawned automatically. ` +
-      `Set agent_spawn.enabled=true in features.json to re-enable (not recommended).`
-    );
+    // GATE: Centralized spawn gate — blocks all opencode spawning by default
+    spawnGate.assertAllowed("inference-cycle");
 
-    // Dead code preserved for reference:
-    // if (this.opencodeAvailable === null) {
-    //   try {
-    //     execSync("which opencode", { stdio: "pipe", timeout: 3000 });
-    //     this.opencodeAvailable = true;
-    //   } catch {
-    //     this.opencodeAvailable = false;
-    //   }
-    // }
-    // ...
+    // BLOCKED: Never spawn real opencode processes during tests — causes
+    // runaway agent processes and non-deterministic test behavior.
+    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
+      throw new Error(
+        `Agent spawning is disabled in test environment. ` +
+        `Agent "${agentName}" cannot be spawned during tests.`
+      );
+    }
+
+    // GOVERNED: Auto-spawning of OpenCode agents is now protected by the
+    // AgentSpawnGovernor singleton and the agent_spawn feature flag.
+    const spawnConfig = getAgentSpawn();
+    if (!spawnConfig?.enabled) {
+      throw new Error(
+        `Auto-spawning of OpenCode agents is disabled. ` +
+        `Agent "${agentName}" cannot be spawned automatically. ` +
+        `Set agent_spawn.enabled=true in features.json to re-enable.`
+      );
+    }
+
+    // Authorize spawn via the singleton governor
+    const auth = await agentSpawnGovernor.authorizeSpawn({
+      agentType: agentName,
+      operation: "inference-cycle-invoke",
+    });
+    if (!auth.authorized) {
+      throw new Error(
+        `Spawn denied by governance for "${agentName}": ${auth.reason}`
+      );
+    }
+    const trackingId = auth.trackingId;
+
+    if (this.opencodeAvailable === null) {
+      try {
+        execSync("which opencode", { stdio: "pipe", timeout: 3000 });
+        this.opencodeAvailable = true;
+      } catch {
+        this.opencodeAvailable = false;
+      }
+    }
+
+    if (!this.opencodeAvailable) {
+      if (trackingId) await agentSpawnGovernor.failSpawn(trackingId, new Error("opencode CLI not available"));
+      throw new Error("opencode CLI is not available in PATH");
+    }
+
+    frameworkLogger.log("inference-cycle", "opencode-spawn-start", "info", {
+      agentName,
+      trackingId,
+    });
 
     return new Promise((resolve, reject) => {
       const timeout = agentName === "architect" ? 60000 : 30000;
@@ -810,6 +848,9 @@ Respond with EXACTLY one of:
         if (!settled) {
           settled = true;
           child.kill("SIGKILL");
+          if (trackingId) {
+            agentSpawnGovernor.failSpawn(trackingId, new Error(`opencode ${agentName} timed out`)).catch(() => {});
+          }
           reject(new Error(`opencode ${agentName} timed out`));
         }
       }, timeout);
@@ -828,21 +869,34 @@ Respond with EXACTLY one of:
       child.stdout?.on("data", (d: Buffer) => { stdout += d.toString(); });
       child.stderr?.on("data", () => { /* ignore */ });
 
-      child.on("close", (code) => {
+      child.on("close", async (code) => {
         clearTimeout(timer);
         if (settled) return;
         settled = true;
         if (code === 0 && stdout.trim()) {
+          if (trackingId) {
+            await agentSpawnGovernor.completeSpawn(trackingId, true).catch(() => {});
+          }
+          frameworkLogger.log("inference-cycle", "opencode-spawn-success", "info", { agentName, trackingId });
           resolve(stdout.trim());
         } else {
-          reject(new Error(`${agentName} exited ${code}`));
+          const error = new Error(`${agentName} exited ${code}`);
+          if (trackingId) {
+            await agentSpawnGovernor.failSpawn(trackingId, error).catch(() => {});
+          }
+          frameworkLogger.log("inference-cycle", "opencode-spawn-failed", "error", { agentName, trackingId, code });
+          reject(error);
         }
       });
 
-      child.on("error", (err) => {
+      child.on("error", async (err) => {
         clearTimeout(timer);
         if (!settled) {
           settled = true;
+          if (trackingId) {
+            await agentSpawnGovernor.failSpawn(trackingId, err).catch(() => {});
+          }
+          frameworkLogger.log("inference-cycle", "opencode-spawn-error", "error", { agentName, trackingId, error: err.message });
           reject(err);
         }
       });

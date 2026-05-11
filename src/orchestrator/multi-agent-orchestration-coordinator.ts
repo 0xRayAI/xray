@@ -10,7 +10,7 @@
 
 import { KernelOrchestrator, OrchestrationResult as KernelOrchestrationResult } from "../core/orchestrator.js";
 import { TaskDefinition } from "../agents/types.js";
-import { EnhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
+import { EnhancedMultiAgentOrchestrator, enhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
 import { createAgentDelegator, AgentDelegator, AgentCapability } from "../delegation/agent-delegator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -92,7 +92,7 @@ export class MultiAgentOrchestrationCoordinator {
   constructor(stateManager?: StringRayStateManager) {
     this.stateManager = stateManager || new StringRayStateManager();
     this.strRayOrchestrator = new KernelOrchestrator();
-    this.enhancedOrchestrator = new EnhancedMultiAgentOrchestrator();
+    this.enhancedOrchestrator = enhancedMultiAgentOrchestrator;
     this.agentDelegator = createAgentDelegator(
       this.stateManager,
       strRayConfigLoader,
