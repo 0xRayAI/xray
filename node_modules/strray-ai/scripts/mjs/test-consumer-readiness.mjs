@@ -208,14 +208,22 @@ async function runPathVerification() {
                         process.cwd().includes('tmp') ||
                         fs.existsSync('node_modules/strray-ai');
   
-    if (isConsumerEnv) {
+  if (isConsumerEnv) {
     console.log("\n🔍 Running plugin path verification...");
+    
+    const verifyScriptPath = fs.existsSync('scripts/_archive/one-time/verify-plugin-paths.mjs')
+      ? 'scripts/_archive/one-time/verify-plugin-paths.mjs'
+      : null;
+    
+    if (!verifyScriptPath) {
+      console.warn("⚠️ Path verification script not found in source, skipping (normal for npm package)");
+      return true;
+    }
+    
     try {
       const { spawn } = await import('child_process');
       const result = await new Promise((resolve) => {
-        const child = spawn('node', [
-          'scripts/mjs/verify-plugin-paths.mjs'
-        ], {
+        const child = spawn('node', [verifyScriptPath], {
           stdio: ['pipe', 'pipe', 'pipe'],
           cwd: process.cwd()
         });
@@ -241,7 +249,7 @@ async function runPathVerification() {
       return result;
     } catch (error) {
       console.warn("⚠️ Path verification could not run:", error.message);
-      return true; // Don't fail if verification script missing
+      return true;
     }
   }
   return true;

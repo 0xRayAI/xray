@@ -5,6 +5,7 @@
  * to ensure consistent test coverage and structure.
  */
 import { frameworkLogger } from "../core/framework-logger.js";
+import fs from "fs";
 /**
  * Generate a test template based on file type and structure
  */
@@ -144,7 +145,6 @@ function generateFunctionTestTemplate(functionName) {
  */
 export function analyzeSourceFile(filePath) {
     try {
-        const fs = require("fs");
         const content = fs.readFileSync(filePath, "utf-8");
         const exports = [];
         const isReact = /\b(React|jsx?|tsx?)\b/.test(content) ||

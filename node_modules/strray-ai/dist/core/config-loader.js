@@ -48,14 +48,15 @@ export class StringRayConfigLoader {
      */
     parseConfig(configData) {
         // Handle null/undefined config data
-        if (!configData) {
+        if (!configData || typeof configData !== 'object') {
             return this.getDefaultConfig();
         }
+        const data = configData;
         return {
-            multi_agent_orchestration: this.parseMultiAgentConfig(configData.multi_agent_orchestration),
-            autonomous_reporting: this.parseAutonomousReportingConfig(configData.autonomous_reporting),
-            disabled_agents: Array.isArray(configData.disabled_agents)
-                ? configData.disabled_agents
+            multi_agent_orchestration: this.parseMultiAgentConfig(data.multi_agent_orchestration),
+            autonomous_reporting: this.parseAutonomousReportingConfig(data.autonomous_reporting),
+            disabled_agents: Array.isArray(data.disabled_agents)
+                ? data.disabled_agents
                 : [],
         };
     }
@@ -63,32 +64,40 @@ export class StringRayConfigLoader {
      * Parse multi-agent orchestration configuration
      */
     parseMultiAgentConfig(config) {
+        if (!config || typeof config !== 'object') {
+            return this.getDefaultConfig().multi_agent_orchestration;
+        }
+        const cfg = config;
         return {
-            enabled: config?.enabled ?? true,
-            coordination_model: this.validateEnum(config?.coordination_model, ["async-multi-agent", "sync-multi-agent"], "async-multi-agent"),
-            max_concurrent_agents: Math.max(1, Math.min(10, config?.max_concurrent_agents ?? 3)),
-            task_distribution_strategy: this.validateEnum(config?.task_distribution_strategy, ["capability-based", "load-balanced", "round-robin"], "capability-based"),
-            conflict_resolution: this.validateEnum(config?.conflict_resolution, ["expert-priority", "majority-vote", "consensus"], "expert-priority"),
-            progress_tracking: config?.progress_tracking ?? true,
-            session_persistence: config?.session_persistence ?? true,
+            enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : true,
+            coordination_model: this.validateEnum(cfg.coordination_model, ["async-multi-agent", "sync-multi-agent"], "async-multi-agent"),
+            max_concurrent_agents: Math.max(1, Math.min(10, typeof cfg.max_concurrent_agents === 'number' ? cfg.max_concurrent_agents : 3)),
+            task_distribution_strategy: this.validateEnum(cfg.task_distribution_strategy, ["capability-based", "load-balanced", "round-robin"], "capability-based"),
+            conflict_resolution: this.validateEnum(cfg.conflict_resolution, ["expert-priority", "majority-vote", "consensus"], "expert-priority"),
+            progress_tracking: typeof cfg.progress_tracking === 'boolean' ? cfg.progress_tracking : true,
+            session_persistence: typeof cfg.session_persistence === 'boolean' ? cfg.session_persistence : true,
         };
     }
     /**
      * Parse autonomous reporting configuration
      */
     parseAutonomousReportingConfig(config) {
+        if (!config || typeof config !== 'object') {
+            return this.getDefaultConfig().autonomous_reporting;
+        }
+        const cfg = config;
         return {
-            enabled: config?.enabled ?? false,
-            interval_minutes: Math.max(5, Math.min(1440, config?.interval_minutes ?? 60)), // 5min to 24hrs
-            auto_schedule: config?.auto_schedule ?? false,
-            include_health_assessment: config?.include_health_assessment ?? true,
-            include_agent_activities: config?.include_agent_activities ?? true,
-            include_pipeline_operations: config?.include_pipeline_operations ?? true,
-            include_critical_issues: config?.include_critical_issues ?? true,
-            include_recommendations: config?.include_recommendations ?? true,
-            report_retention_days: Math.max(1, Math.min(365, config?.report_retention_days ?? 30)),
-            notification_channels: Array.isArray(config?.notification_channels)
-                ? config.notification_channels.filter((ch) => ["console", "file", "webhook"].includes(ch))
+            enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : false,
+            interval_minutes: Math.max(5, Math.min(1440, typeof cfg.interval_minutes === 'number' ? cfg.interval_minutes : 60)), // 5min to 24hrs
+            auto_schedule: typeof cfg.auto_schedule === 'boolean' ? cfg.auto_schedule : false,
+            include_health_assessment: typeof cfg.include_health_assessment === 'boolean' ? cfg.include_health_assessment : true,
+            include_agent_activities: typeof cfg.include_agent_activities === 'boolean' ? cfg.include_agent_activities : true,
+            include_pipeline_operations: typeof cfg.include_pipeline_operations === 'boolean' ? cfg.include_pipeline_operations : true,
+            include_critical_issues: typeof cfg.include_critical_issues === 'boolean' ? cfg.include_critical_issues : true,
+            include_recommendations: typeof cfg.include_recommendations === 'boolean' ? cfg.include_recommendations : true,
+            report_retention_days: Math.max(1, Math.min(365, typeof cfg.report_retention_days === 'number' ? cfg.report_retention_days : 30)),
+            notification_channels: Array.isArray(cfg.notification_channels)
+                ? cfg.notification_channels.filter((ch) => ["console", "file", "webhook"].includes(ch))
                 : ["console"],
         };
     }

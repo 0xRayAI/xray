@@ -8,11 +8,9 @@
  * @module processors/interfaces
  * @version 1.0.0
  */
-/**
- * Base processor class with common functionality
- */
 export class BaseProcessor {
     enabled = true;
+    static dependencies;
     /**
      * Execute the processor with error handling and metrics
      * @param context Processor execution context

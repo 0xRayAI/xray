@@ -1,13 +1,4 @@
-/**
- * 0xRay AI v1.3.4 - Session Management Module
- *
- * Comprehensive session management system with cleanup, monitoring,
- * and cross-session coordination capabilities.
- *
- * @version 1.0.0
- * @since 2026-01-07
- */
-export * from "./session-cleanup-manager.js";
-export * from "./session-monitor.js";
-export * from "./session-state-manager.js";
+export { SessionCleanupManager, createSessionCleanupManager } from "./session-cleanup-manager.js";
+export { SessionMonitor, createSessionMonitor } from "./session-monitor.js";
+export { SessionStateManager, createSessionStateManager } from "./session-state-manager.js";
 //# sourceMappingURL=index.js.map

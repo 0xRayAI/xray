@@ -23,7 +23,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, statSync, readdirSy
 import { join, dirname } from "path";
 import { execSync } from "child_process";
 
-const ARG_TYPES = ["ci-failure", "test-failure", "deployment", "manual", "commit-threshold"];
+const ARG_TYPES = ["ci-failure", "test-failure", "deployment", "manual", "commit-threshold", "context-warning"];
 const STORY_TYPES = ["reflection", "saga", "journey"];
 
 function parseArgs() {
@@ -271,6 +271,7 @@ function generateFilename(trigger, title, recentCommits = []) {
     "test-failure": "auto-test",
     "deployment": "auto-deployment",
     "manual": "manual",
+    "context-warning": "context-warning",
   }[trigger] || "auto";
   
   const uniqueSuffix = timestamp;
@@ -342,6 +343,16 @@ function generateReflectionStub(options, check = null) {
       counterfactual: "If we wrote reflections more often, we'd capture more insights for future iterations.",
       personalJourney: "Documenting the journey through this cycle of commits and learning.",
       futureAI: "Maintain regular reflection cadence to ensure continuous learning.",
+    },
+    "context-warning": {
+      executiveSummary: `Context window warning: ${title || "Approaching context limit"}`,
+      whatWas: "Session was operating with available context headroom.",
+      whatIs: `Context window is at ${title || "95%+"} capacity. Reflection captured before context compaction.`,
+      whatShouldBe: "Reflections captured before context compaction to preserve learnings.",
+      innerDialogue: "What critical learnings need to be preserved before context is compacted? What patterns am I seeing in this session?",
+      counterfactual: "If we didn't capture this reflection now, what would be lost when context is compacted?",
+      personalJourney: "Navigating the constraints of finite context windows while maximizing learning capture.",
+      futureAI: "Implement earlier reflection triggers to ensure no learnings are lost to context compaction.",
     },
   };
   

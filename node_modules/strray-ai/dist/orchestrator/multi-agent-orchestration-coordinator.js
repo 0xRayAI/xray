@@ -140,8 +140,8 @@ export class MultiAgentOrchestrationCoordinator {
         const availableAgents = this.agentDelegator.getAvailableAgents();
         // Allocate agents based on workflow requirements
         workflow.tasks.forEach((task) => {
-            const matchingAgent = availableAgents.find((agent) => agent.expertise.some((exp) => task.subagentType.includes(exp)) ||
-                agent.specialties.some((spec) => task.subagentType.includes(spec.split("-")[0])));
+            const matchingAgent = availableAgents.find((agent) => (agent.expertise?.some((exp) => task.subagentType?.includes(exp)) ?? false) ||
+                (agent.specialties?.some((spec) => task.subagentType?.includes(spec.split("-")[0] ?? "")) ?? false));
             if (matchingAgent && !allocatedAgents.includes(matchingAgent.name)) {
                 allocatedAgents.push(matchingAgent.name);
                 resourceAvailability[matchingAgent.name] = true;
@@ -150,7 +150,7 @@ export class MultiAgentOrchestrationCoordinator {
         return {
             allocatedAgents,
             resourceAvailability,
-            coordinationCapacity: allocatedAgents.length * 2, // Rough coordination capacity estimate
+            coordinationCapacity: allocatedAgents.length * 2,
         };
     }
     /**
@@ -176,7 +176,15 @@ export class MultiAgentOrchestrationCoordinator {
                 subagentType: "orchestrator",
             };
             const result = await this.strRayOrchestrator.executeComplexTask(task.description, [task]);
-            taskResults.push(result);
+            result.forEach((r) => {
+                taskResults.push({
+                    success: r.success,
+                    taskId: r.taskId,
+                    result: r.result,
+                    error: r.error,
+                    duration: r.duration,
+                });
+            });
             coordinationEvents += 1;
             agentsUsed.push(...resourceAllocation.allocatedAgents);
         }
@@ -246,7 +254,7 @@ export class MultiAgentOrchestrationCoordinator {
                 else {
                     taskResults.push({
                         success: false,
-                        error: result.reason,
+                        error: result.reason instanceof Error ? result.reason.message : String(result.reason),
                         duration: 0,
                     });
                 }

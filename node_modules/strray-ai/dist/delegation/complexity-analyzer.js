@@ -4,8 +4,13 @@
  * Assesses operation complexity to determine optimal agent delegation strategy.
  * Implements metrics-based complexity scoring for intelligent task distribution.
  *
- * REFACTORED: Now uses complexity-core.ts for shared logic
- * @version 1.1.0
+ * CALIBRATED: Thresholds lowered to enable multi-agent orchestration with voting
+ * - simple: 15 - single agent tasks
+ * - moderate: 25 - multi-agent preparation
+ * - complex: 50+ - multi-agent orchestration with voting
+ * - enterprise: 75+ - maximum orchestration
+ *
+ * @version 1.2.0
  * @since 2026-01-07
  */
 import { DEFAULT_THRESHOLDS, OPERATION_WEIGHTS, RISK_MULTIPLIERS, getLevelFromScore, getStrategyForLevel, getAgentCountForLevel, generateReasoning, } from "./complexity-core.js";
@@ -17,10 +22,10 @@ export class ComplexityAnalyzer {
     static MAX_CALIBRATION_HISTORY = 1000;
     /**
      * CALIBRATED: Adjusted thresholds for balanced orchestration utilization
-     * - simple: 15 - most tasks trigger single-agent
-     * - moderate: 25 - tasks start triggering additional agents
-     * - complex: 50 - complex tasks get multi-agent coordination
-     * - enterprise: 100 - maximum complexity (only extreme cases)
+     * - simple: 15 - single agent tasks
+     * - moderate: 25 - multi-agent preparation
+     * - complex: 50 - complex tasks get multi-agent coordination with voting
+     * - enterprise: 75 - maximum orchestration (only extreme cases)
      */
     thresholds = { ...DEFAULT_THRESHOLDS };
     operationWeights = { ...OPERATION_WEIGHTS };

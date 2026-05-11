@@ -15,6 +15,8 @@
  *   codex-check   - Check code against codex rules
  *   stats         - Return bridge/framework statistics
  *   hooks         - Manage git hooks (install, uninstall, list, status)
+ *   govern        - Govern inference proposals through weighted voting
+ *   apply         - Govern + apply approved inference proposals
  *
  * Usage:
  *   echo '{"command":"health"}' | node bridge.mjs [--cwd /path]   # stdin mode
@@ -697,9 +699,50 @@ function handleStats() {
   };
 }
 
+async function handleGovern(input, projectRoot, logDir) {
+  const proposals = input.proposals || [];
+  logToActivity(logDir, `govern: ${proposals.length} proposals`);
+
+  try {
+    const { InferenceCycle } = await import("../../inference/inference-cycle.js");
+    const cycle = new InferenceCycle(projectRoot, undefined, { skipApply: true });
+    const result = await cycle.governExternalProposals(proposals);
+    return {
+      cycleId: result.cycleId,
+      approved: result.votes.filter((v) => v.decision === "approve").length,
+      rejected: result.votes.filter((v) => v.decision !== "approve").length,
+      votes: result.votes,
+      proposals: result.proposals.map((p) => ({ id: p.id, title: p.title, type: p.type, status: p.status })),
+      duration: result.duration,
+    };
+  } catch (error) {
+    return { error: `Governance failed: ${error.message || error}` };
+  }
+}
+
+async function handleApply(input, projectRoot, logDir) {
+  const proposals = input.proposals || [];
+  logToActivity(logDir, `apply: ${proposals.length} proposals`);
+
+  try {
+    const { InferenceCycle } = await import("../../inference/inference-cycle.js");
+    const cycle = new InferenceCycle(projectRoot);
+    const result = await cycle.governExternalProposals(proposals);
+    return {
+      cycleId: result.cycleId,
+      applied: result.proposals.filter((p) => p.status === "applied").length,
+      approved: result.votes.filter((v) => v.decision === "approve").length,
+      proposals: result.proposals.map((p) => ({ id: p.id, title: p.title, type: p.type, status: p.status })),
+      duration: result.duration,
+    };
+  } catch (error) {
+    return { error: `Apply failed: ${error.message || error}` };
+  }
+}
+
 // ── Known commands for positional-arg mode ──────────────────
 const KNOWN_COMMANDS = new Set([
-  "health", "stats", "pre-process", "post-process", "validate", "codex-check", "hooks",
+  "health", "stats", "pre-process", "post-process", "validate", "codex-check", "hooks", "govern", "apply",
 ]);
 
 // ── Main ─────────────────────────────────────────────────────
@@ -786,6 +829,12 @@ async function main() {
       break;
     case "hooks":
       response = handleHooks(command, projectRoot);
+      break;
+    case "govern":
+      response = await handleGovern(command, projectRoot, logDir);
+      break;
+    case "apply":
+      response = await handleApply(command, projectRoot, logDir);
       break;
     default:
       response = { error: `Unknown command: ${cmd}` };

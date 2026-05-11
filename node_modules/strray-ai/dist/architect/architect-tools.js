@@ -2,9 +2,9 @@
  * Architect Tools - Integration layer between architect agent and contextual analysis system
  * Provides tools for codebase intelligence, architectural assessment, and design planning
  */
-import { createCodebaseContextAnalyzer } from "../delegation/codebase-context-analyzer.js";
+import { createCodebaseContextAnalyzer, } from "../delegation/codebase-context-analyzer.js";
 import { ASTCodeParser } from "../delegation/ast-code-parser.js";
-import { DependencyGraphBuilder } from "../delegation/dependency-graph-builder.js";
+import { DependencyGraphBuilder, } from "../delegation/dependency-graph-builder.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 /**
  * Context Analysis Tool - Comprehensive codebase intelligence gathering
@@ -52,7 +52,12 @@ export async function contextAnalysis(projectRoot, files, depth = "detailed") {
                 recommendations: ["Detailed analysis recommended"],
             };
             maintainabilityIndex = 75;
-            complexityAnalysis = { overview: true };
+            complexityAnalysis = {
+                averageComplexity: 0,
+                highComplexityFiles: [],
+                complexityDistribution: "low",
+                recommendations: ["Detailed analysis recommended"],
+            };
         }
         const result = {
             codebaseStructure: analysis.structure,
@@ -279,7 +284,7 @@ function analyzeComplexityPatterns(codebaseAnalysis) {
     return {
         averageComplexity: codebaseAnalysis.metrics.complexity || 0,
         highComplexityFiles: [], // Would be populated with actual analysis
-        complexityDistribution: "analyzed", // Placeholder
+        complexityDistribution: "low",
         recommendations: generateComplexityRecommendations(codebaseAnalysis),
     };
 }
@@ -295,8 +300,7 @@ function hasRepositoryPattern(analysis) {
     return files.some((f) => typeof f === "string" && f.includes("repository"));
 }
 function hasObserverPattern(analysis) {
-    // Would require AST analysis for pattern detection
-    return false; // Placeholder
+    return false;
 }
 function hasFactoryPattern(analysis) {
     const files = Array.from(analysis.structure.fileGraph?.keys() || []);
@@ -308,8 +312,7 @@ function hasMicroservicesIndicators(analysis) {
         (f.includes("docker") || f.includes("kubernetes")));
 }
 function hasLayeredArchitecture(dependencyAnalysis) {
-    // Would analyze dependency graph for layered structure
-    return false; // Placeholder
+    return false;
 }
 function groupByFileType(fileGraph) {
     const types = {};
@@ -320,11 +323,9 @@ function groupByFileType(fileGraph) {
     return types;
 }
 function identifyTightlyCoupledModules(graph) {
-    // Placeholder - would analyze dependency graph for tightly coupled modules
     return [];
 }
 function identifyOrphanModules(graph) {
-    // Placeholder - would identify modules with no dependencies
     return [];
 }
 function calculateDependencyHealthScore(analysis) {

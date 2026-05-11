@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync } from "fs";
+import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync, statSync, unlinkSync } from "fs";
 import { join, basename, dirname } from "path";
 import { execSync } from "child_process";
 function getLocalRegistryPath() {
@@ -108,14 +108,14 @@ function cloneRepo(url, targetDir) {
         const archiveUrl = `https://codeload.github.com/${slug.owner}/${slug.repo}/tar.gz/${branch}`;
         try {
             execSync(`curl -fsSL "${archiveUrl}" -o "${tarPath}"`, { stdio: "pipe", timeout: 30000 });
-            if (!existsSync(tarPath) || require("fs").statSync(tarPath).size < 100) {
+            if (!existsSync(tarPath) || statSync(tarPath).size < 100) {
                 if (existsSync(tarPath))
-                    require("fs").unlinkSync(tarPath);
+                    unlinkSync(tarPath);
                 errors.push(`  ${branch}: downloaded empty file (repo may not exist)`);
                 continue;
             }
             execSync(`tar -xzf "${tarPath}" -C "${targetDir}"`, { stdio: "pipe" });
-            require("fs").unlinkSync(tarPath);
+            unlinkSync(tarPath);
             const dirName = `${slug.repo}-${branch}`;
             const repoDir = join(targetDir, dirName);
             if (existsSync(repoDir))
@@ -128,11 +128,19 @@ function cloneRepo(url, targetDir) {
         catch (tarErr) {
             if (existsSync(tarPath)) {
                 try {
-                    require("fs").unlinkSync(tarPath);
+                    unlinkSync(tarPath);
                 }
                 catch { /* ignore */ }
             }
             errors.push(`  tarball (${branch}): ${tarErr.message.split("\n")[0]}`);
+        }
+        finally {
+            if (existsSync(tarPath)) {
+                try {
+                    unlinkSync(tarPath);
+                }
+                catch { /* ignore */ }
+            }
         }
     }
     // Last resort: git clone (HTTPS then SSH)

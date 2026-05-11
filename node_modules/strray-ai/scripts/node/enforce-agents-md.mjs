@@ -43,9 +43,7 @@ const REQUIRED_SECTIONS = [
 
 // Required agent definitions
 const REQUIRED_AGENTS = [
-  '@enforcer',
-  '@architect', 
-  '@orchestrator',
+  '@architect',
   '@security-auditor',
   '@code-reviewer',
   '@testing-lead',

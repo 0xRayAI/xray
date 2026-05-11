@@ -96,7 +96,7 @@ export class TestAutoHealingSystem {
             });
         }
         // Analyze performance issues
-        if (testResults.executionTime > 300000) {
+        if ((testResults.executionTime ?? 0) > 300000) {
             // 5 minutes
             analyses.push({
                 testFile: testResults.file || "unknown",
