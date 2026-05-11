@@ -85,7 +85,7 @@ class SkillInvocationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "strray/skill-invocation", version: "1.22.56",
+        name: "strray/skill-invocation", version: "1.22.57",
       },
       {
         capabilities: {
