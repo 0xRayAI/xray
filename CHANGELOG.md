@@ -4,6 +4,144 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [1.22.57] - 2026-05-11
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: integrate chrono-warp-drive governance MCP for inference checking (a61cd6f02)
+- feat: add auto-rotation to activity logger at 5MB threshold (ee6a4da4c)
+- feat: wire 3 orphaned features + add tests + remove empty api-gateway (077b8dc33)
+- feat: wire apply phase via MCP routing + fix e2e tests (41/41 PASS) (db8abef39)
+- feat: wire apply phase for real code changes instead of markdown markers (f1903187f)
+- feat: add centralized TraceContext + integrate Reflection Governance with ValidatorRegistry (1a79c8818)
+- feat: implement governance-approved stagger + trace propagation, add reflection governance pipeline (27d6e29e3)
+- feat: wire apply phase + researcher double-check for PRs (7bfa4ca6e)
+- feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (fca44e6ef)
+- feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (191536d9f)
+- feat: lower inference thresholds to trigger on real data, keep raw problem text (c7c09a4d7)
+- feat: production-ready inference governance — CLI, real agents, DI, learning loop (501eb8d65)
+- feat: inference layer — semantic patterns, session capture, accumulator, governance cycle, deploy verifier (5963ce170)
+
+### 🐛 Bug Fixes
+- fix: remove unused imports and any type from processor-manager.interfaces.test.ts (processor-test-rules ESLint) (529d3d228)
+- fix: address all open bugs (#29-32, #34) and prevent noise PRs from inference cycle (c32d711c3)
+- fix: remove enforcer references from integration test, add fetch-depth:0 for e2e git tests (deb49f4dd)
+- fix: triage and fix all GitHub workflow pipelines (097b48c7c)
+- fix: restore package.json, mcp-install.ts, workflows, and govern-reflection.mjs gutted by 84dae31b1 (7417fd63c)
+- fix: add npm audit fix to main CI workflow (84dae31b1)
+- fix: run npm audit fix to resolve moderate vulnerabilities (314cc0619)
+- fix: remove duplicate case undefined in mcp-install.ts (lint error) (9b713b93e)
+- fix: make trace-context more robust + fix ESM issues in govern-reflection (e665442f4)
+- fix: agent registry cleanup — remove skill-only entries, delete deprecated agents (1cafc3a68)
+- fix: agent export naming + single-architect governance (b5c6100ec)
+- fix: complete inference-cycle.ts — all fixes applied. (cef1ecd12)
+- fix: guard inference:run for StringRay internal use only (beefefb94)
+- fix: governance pipeline — force flag, skipDeployVerify default, deploy failure handling (40ae8ae4f)
+- fix: increase timeout for processor auto-discovery tests to prevent flaky failures (baae75541)
+- fix: inference processor double-joining absolute path created bogus Users/ dir (a795635f9)
+
+### 📚 Documentation
+- docs: add apply phase design — real code changes via MCP routing (8eab05057)
+- docs: deep reflection — inference apply phase journey (honest assessment) (1a05086af)
+- docs: governance unification saga — deep reflection on wiring four systems into one loop (9cd5b8bc1)
+- docs: the engine that built the engine — deep reflection on the meta-system, consumer tweet, release reflection (522c28b9a)
+
+### 👷 CI/CD
+- ci: improve ci-cd-monitor.yml - better error handling + governance integration (a095f1701)
+- ci: improve all workflows - add caching, coverage, security hardening, and new governance test step (05a8c08d4)
+
+### 🔧 Maintenance
+- chore: update strray-ai to v1.22.55, add vote scripts and reflection (13280fd4c)
+- chore: trigger ci-cd-monitor with force_fix=true (b36970ff1)
+- chore: trigger monitoring script (0dddd302d)
+- chore: UVM sync v1.22.52 — all version references updated (ce3b70eba)
+- chore: UVM sync to v1.22.51 (b53a5ac10)
+- chore: v1.22.48, add prepublishOnly to strip source maps and declarations (112ef8977)
+- chore: v1.22.47, add .npmignore to strip .d.ts and source maps from package (e2f722523)
+- chore: remove 92 build artifacts (.d.ts, .d.ts.map) from .opencode git tracking, add to .gitignore (22f9ddfd9)
+- chore: rebuild dist after path fix (4453c41c7)
+
+### ⏪ Reverts
+- revert: roll back apply phase marker system — needs real agent invocation via plugin/MCP routing (10309b23a)
+
+### 🔎 Other Changes
+- Address: Bug: fix: increase timeout for processor auto-discovery tests to prevent flak... (112x) (02d8fa97f)
+- v1.22.55 (c34376720)
+- v1.22.53 (6ddf31de5)
+- v1.22.51 (3d96823ff)
+
+---
+
+## [1.22.56] - 2026-05-11
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: integrate chrono-warp-drive governance MCP for inference checking (a61cd6f02)
+- feat: add auto-rotation to activity logger at 5MB threshold (ee6a4da4c)
+- feat: wire 3 orphaned features + add tests + remove empty api-gateway (077b8dc33)
+- feat: wire apply phase via MCP routing + fix e2e tests (41/41 PASS) (db8abef39)
+- feat: wire apply phase for real code changes instead of markdown markers (f1903187f)
+- feat: add centralized TraceContext + integrate Reflection Governance with ValidatorRegistry (1a79c8818)
+- feat: implement governance-approved stagger + trace propagation, add reflection governance pipeline (27d6e29e3)
+- feat: wire apply phase + researcher double-check for PRs (7bfa4ca6e)
+- feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (fca44e6ef)
+- feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator (191536d9f)
+- feat: lower inference thresholds to trigger on real data, keep raw problem text (c7c09a4d7)
+- feat: production-ready inference governance — CLI, real agents, DI, learning loop (501eb8d65)
+- feat: inference layer — semantic patterns, session capture, accumulator, governance cycle, deploy verifier (5963ce170)
+
+### 🐛 Bug Fixes
+- fix: remove unused imports and any type from processor-manager.interfaces.test.ts (processor-test-rules ESLint) (529d3d228)
+- fix: address all open bugs (#29-32, #34) and prevent noise PRs from inference cycle (c32d711c3)
+- fix: remove enforcer references from integration test, add fetch-depth:0 for e2e git tests (deb49f4dd)
+- fix: triage and fix all GitHub workflow pipelines (097b48c7c)
+- fix: restore package.json, mcp-install.ts, workflows, and govern-reflection.mjs gutted by 84dae31b1 (7417fd63c)
+- fix: add npm audit fix to main CI workflow (84dae31b1)
+- fix: run npm audit fix to resolve moderate vulnerabilities (314cc0619)
+- fix: remove duplicate case undefined in mcp-install.ts (lint error) (9b713b93e)
+- fix: make trace-context more robust + fix ESM issues in govern-reflection (e665442f4)
+- fix: agent registry cleanup — remove skill-only entries, delete deprecated agents (1cafc3a68)
+- fix: agent export naming + single-architect governance (b5c6100ec)
+- fix: complete inference-cycle.ts — all fixes applied. (cef1ecd12)
+- fix: guard inference:run for StringRay internal use only (beefefb94)
+- fix: governance pipeline — force flag, skipDeployVerify default, deploy failure handling (40ae8ae4f)
+- fix: increase timeout for processor auto-discovery tests to prevent flaky failures (baae75541)
+- fix: inference processor double-joining absolute path created bogus Users/ dir (a795635f9)
+
+### 📚 Documentation
+- docs: add apply phase design — real code changes via MCP routing (8eab05057)
+- docs: deep reflection — inference apply phase journey (honest assessment) (1a05086af)
+- docs: governance unification saga — deep reflection on wiring four systems into one loop (9cd5b8bc1)
+- docs: the engine that built the engine — deep reflection on the meta-system, consumer tweet, release reflection (522c28b9a)
+
+### 👷 CI/CD
+- ci: improve ci-cd-monitor.yml - better error handling + governance integration (a095f1701)
+- ci: improve all workflows - add caching, coverage, security hardening, and new governance test step (05a8c08d4)
+
+### 🔧 Maintenance
+- chore: update strray-ai to v1.22.55, add vote scripts and reflection (13280fd4c)
+- chore: trigger ci-cd-monitor with force_fix=true (b36970ff1)
+- chore: trigger monitoring script (0dddd302d)
+- chore: UVM sync v1.22.52 — all version references updated (ce3b70eba)
+- chore: UVM sync to v1.22.51 (b53a5ac10)
+- chore: v1.22.48, add prepublishOnly to strip source maps and declarations (112ef8977)
+- chore: v1.22.47, add .npmignore to strip .d.ts and source maps from package (e2f722523)
+- chore: remove 92 build artifacts (.d.ts, .d.ts.map) from .opencode git tracking, add to .gitignore (22f9ddfd9)
+- chore: rebuild dist after path fix (4453c41c7)
+
+### ⏪ Reverts
+- revert: roll back apply phase marker system — needs real agent invocation via plugin/MCP routing (10309b23a)
+
+### 🔎 Other Changes
+- Address: Bug: fix: increase timeout for processor auto-discovery tests to prevent flak... (112x) (02d8fa97f)
+- v1.22.55 (c34376720)
+- v1.22.53 (6ddf31de5)
+- v1.22.51 (3d96823ff)
+
+---
+
 ## [1.22.55] - 2026-05-08
 
 ### 🔄 Changes

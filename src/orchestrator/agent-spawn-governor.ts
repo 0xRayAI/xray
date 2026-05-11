@@ -766,4 +766,4 @@ export class AgentSpawnGovernor {
   }
 }
 
-export const agentSpawnGovernor = new AgentSpawnGovernor(undefined, false);
+export const agentSpawnGovernor = new AgentSpawnGovernor(undefined, true);

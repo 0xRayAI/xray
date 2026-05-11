@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   SpawnGovernanceProcessor,
   runSpawnGovernance,
+  resetGovernanceProcessor,
   type SpawnGovernanceConfig,
 } from "../../processors/implementations/spawn-governance-processor.js";
 
@@ -42,6 +43,7 @@ describe("spawn-governance-processor", () => {
       arrayBuffers: 2_000_000,
     });
     processor = new SpawnGovernanceProcessor();
+    resetGovernanceProcessor();
   });
 
   afterEach(() => {
@@ -371,5 +373,110 @@ describe("spawn-governance-processor", () => {
       expect(SpawnGovernanceProcessor.DEFAULT_MAX_SPAWNS_PER_WINDOW).toBe(10);
       expect(SpawnGovernanceProcessor.DEFAULT_MEMORY_THRESHOLD).toBe(0.8);
     });
+  });
+
+  // -----------------------------------------------------------------------
+  // Singleton persistence (Bug fix validation)
+  // -----------------------------------------------------------------------
+
+  describe("singleton state persistence in runSpawnGovernance", () => {
+    beforeEach(() => {
+      resetGovernanceProcessor();
+    });
+
+    it("should track concurrent agents across multiple calls", async () => {
+      // Fill concurrent slots via repeated runSpawnGovernance calls
+      for (let i = 0; i < SpawnGovernanceProcessor.DEFAULT_MAX_CONCURRENT; i++) {
+        const result = await runSpawnGovernance({ agentName: `agent-${i}` });
+        expect(result.allowed).toBe(true);
+        expect(result.metrics.activeSpawns).toBe(i + 1);
+      }
+
+      // Next call should be blocked by concurrent limit
+      const blocked = await runSpawnGovernance({ agentName: "agent-extra" });
+      expect(blocked.allowed).toBe(false);
+      expect(blocked.reason).toContain("Concurrent agent limit exceeded");
+    });
+
+    it("should track rate limits across multiple calls", async () => {
+      const p = new SpawnGovernanceProcessor({
+        maxConcurrent: 100,
+        maxSpawnsPerWindow: 3,
+        rateLimitWindowMs: 10000,
+      });
+      // Re-initialize singleton with stricter rate limit
+      // Use the singleton processor via runSpawnGovernance with config
+      for (let i = 0; i < 3; i++) {
+        const result = await runSpawnGovernance({
+          agentName: `rate-agent-${i}`,
+          config: {
+            maxConcurrent: 100,
+            maxSpawnsPerWindow: 3,
+            rateLimitWindowMs: 10000,
+          },
+        });
+        expect(result.allowed).toBe(true);
+      }
+
+      // 4th spawn should exceed rate limit
+      const blocked = await runSpawnGovernance({
+        agentName: "rate-agent-3",
+        config: {
+          maxConcurrent: 100,
+          maxSpawnsPerWindow: 3,
+          rateLimitWindowMs: 10000,
+        },
+      });
+      expect(blocked.allowed).toBe(false);
+      expect(blocked.reason).toContain("Spawn rate limit exceeded");
+    });
+
+    it("should detect infinite spawn patterns across calls", async () => {
+      // Rapid-fire same agent type 3 times
+      for (let i = 0; i < 3; i++) {
+        const result = await runSpawnGovernance({
+          agentName: "loop-agent",
+          config: { infiniteSpawnThreshold: 3, infiniteSpawnWindowMs: 10000 },
+        });
+        expect(result.allowed).toBe(true);
+      }
+
+      // 4th attempt within the window should be blocked
+      const blocked = await runSpawnGovernance({
+        agentName: "loop-agent",
+        config: { infiniteSpawnThreshold: 3, infiniteSpawnWindowMs: 10000 },
+      });
+      expect(blocked.allowed).toBe(false);
+      expect(blocked.reason).toContain("Infinite spawn pattern detected");
+    });
+
+    it("should allow spawns after rate window expires (time-based recovery)", async () => {
+      const config = {
+        maxConcurrent: 100,
+        maxSpawnsPerWindow: 2,
+        rateLimitWindowMs: 10000,
+        infiniteSpawnThreshold: 10,
+        infiniteSpawnWindowMs: 10000,
+        memoryThreshold: 1.0,
+      };
+
+      // Fill the rate window
+      await runSpawnGovernance({ agentName: "agent-a", config });
+      await runSpawnGovernance({ agentName: "agent-b", config });
+
+      // 3rd spawn should be blocked
+      const blocked = await runSpawnGovernance({ agentName: "agent-c", config });
+      expect(blocked.allowed).toBe(false);
+      expect(blocked.reason).toContain("Spawn rate limit exceeded");
+
+      // Advance past the rate window
+      vi.advanceTimersByTime(11_000);
+
+      // Should be allowed again
+      const allowed = await runSpawnGovernance({ agentName: "agent-c", config });
+      expect(allowed.allowed).toBe(true);
+    });
+
+
   });
 });

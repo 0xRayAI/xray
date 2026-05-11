@@ -1,6 +1,6 @@
 # 0xRay Framework - Direct OpenCode Integration
 
-**Version**: 1.22.53 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
+**Version**: 1.22.56 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
 
 ## Overview
 
@@ -180,7 +180,7 @@ STRRAY_MCP_CLIENT_MODULES=all
 ```json
 {
   "strray": {
-    "version": "1.22.53",
+    "version": "1.22.56",
     "architecture": "facade-pattern",
     "components": {
       "orchestrator": true,

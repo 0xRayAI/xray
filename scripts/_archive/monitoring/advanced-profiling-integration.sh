@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 0xRay AI v1.22.53 - Advanced Profiling Integration Demo
+# 0xRay AI v1.22.56 - Advanced Profiling Integration Demo
 # Demonstrates comprehensive agent performance profiling and monitoring
 
 set -e

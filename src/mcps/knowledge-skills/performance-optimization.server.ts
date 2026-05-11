@@ -224,7 +224,7 @@ class StringRayPerformanceOptimizationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "performance-optimization", version: "1.22.53",
+        name: "performance-optimization", version: "1.22.56",
       },
       {
         capabilities: {

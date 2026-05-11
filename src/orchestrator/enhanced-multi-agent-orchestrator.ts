@@ -14,6 +14,7 @@ import {
   AgentDelegator,
 } from "../delegation/agent-delegator.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
+import { agentSpawnGovernor } from "./agent-spawn-governor.js";
 
 export interface AgentSpawnRequest {
   agentType: string;
@@ -47,6 +48,7 @@ export interface SpawnedAgent {
   clickable: boolean;
   monitorable: boolean;
   cleanupRequired: boolean;
+  spawnTrackingId: string | undefined;
 }
 
 export interface AgentOrchestrationState {
@@ -133,8 +135,9 @@ export class EnhancedMultiAgentOrchestrator {
   /**
    * Enhanced agent spawning with clickable monitoring integration
    */
-  async spawnAgent(request: AgentSpawnRequest): Promise<SpawnedAgent> {
+  async   spawnAgent(request: AgentSpawnRequest): Promise<SpawnedAgent> {
     const jobId = `spawn-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    let spawnTrackingId: string | undefined;
 
     // 🚨 SECURITY: Prevent subagents from spawning other subagents
     // This prevents infinite loops, resource exhaustion, and uncontrolled agent spawning
@@ -153,6 +156,27 @@ export class EnhancedMultiAgentOrchestrator {
       throw error;
     }
 
+    // 🚨 Governance: Authorize spawn via AgentSpawnGovernor
+    const auth = await agentSpawnGovernor.authorizeSpawn({
+      agentType: request.agentType,
+      operation: request.task,
+      sessionId: jobId,
+    });
+    if (!auth.authorized) {
+      const error = new Error(
+        `Spawn denied by governance: ${auth.reason}. ` +
+          `Warnings: ${(auth.warnings || []).join(", ")}`,
+      );
+      await frameworkLogger.log(
+        "enhanced-multi-agent-orchestrator",
+        "spawn-denied-by-governance",
+        "error",
+        { agentType: request.agentType, reason: auth.reason, trackingId: auth.trackingId },
+      );
+      throw error;
+    }
+    spawnTrackingId = auth.trackingId;
+
     const agentId = `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const spawnedAgent: SpawnedAgent = {
@@ -165,6 +189,7 @@ export class EnhancedMultiAgentOrchestrator {
       clickable: true, // Enable clickable monitoring
       monitorable: true, // Enable real-time monitoring
       cleanupRequired: true,
+      spawnTrackingId,
     };
 
     // Register agent in active pool
@@ -263,6 +288,11 @@ export class EnhancedMultiAgentOrchestrator {
       this.state.activeAgents.delete(agent.id);
       this.state.completedAgents.set(agent.id, agent);
 
+      // Notify governor
+      if (agent.spawnTrackingId) {
+        agentSpawnGovernor.completeSpawn(agent.spawnTrackingId);
+      }
+
       frameworkLogger.log(
         "orchestrator",
         `✅ COMPLETED: ${agent.agentType} agent (${agent.id})`,
@@ -286,6 +316,11 @@ export class EnhancedMultiAgentOrchestrator {
       // Move to failed pool
       this.state.activeAgents.delete(agent.id);
       this.state.failedAgents.set(agent.id, agent);
+
+      // Notify governor
+      if (agent.spawnTrackingId) {
+        agentSpawnGovernor.failSpawn(agent.spawnTrackingId, error instanceof Error ? error : new Error(String(error)));
+      }
 
       frameworkLogger.log(
         "orchestrator",

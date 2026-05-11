@@ -277,6 +277,23 @@ export class SpawnGovernanceProcessor {
 }
 
 // ---------------------------------------------------------------------------
+// Singleton instance for persistent governance state across processor calls
+// ---------------------------------------------------------------------------
+
+let governanceProcessor: SpawnGovernanceProcessor | null = null;
+
+function getGovernanceProcessor(config?: Partial<SpawnGovernanceConfig>): SpawnGovernanceProcessor {
+  if (!governanceProcessor) {
+    governanceProcessor = new SpawnGovernanceProcessor(config);
+  }
+  return governanceProcessor;
+}
+
+export function resetGovernanceProcessor(): void {
+  governanceProcessor = null;
+}
+
+// ---------------------------------------------------------------------------
 // Standalone runner for processor-manager integration
 // ---------------------------------------------------------------------------
 
@@ -286,7 +303,7 @@ export async function runSpawnGovernance(context: any): Promise<{
   reason?: string;
   metrics: ReturnType<SpawnGovernanceProcessor["getMetrics"]>;
 }> {
-  const processor = new SpawnGovernanceProcessor(
+  const processor = getGovernanceProcessor(
     context.config as Partial<SpawnGovernanceConfig> | undefined,
   );
 

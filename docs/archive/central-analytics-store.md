@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document outlines a privacy-first, opt-in central analytics architecture for 0xRay AI v1.22.53 that enables collective learning while maintaining strict data privacy and consent control. The v1.15.1 release implements the **Facade Pattern** with improved modularity for analytics components.
+This document outlines a privacy-first, opt-in central analytics architecture for 0xRay AI v1.22.56 that enables collective learning while maintaining strict data privacy and consent control. The v1.15.1 release implements the **Facade Pattern** with improved modularity for analytics components.
 
 ## Architecture Overview
 
