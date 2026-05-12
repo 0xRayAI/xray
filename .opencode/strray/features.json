@@ -410,11 +410,11 @@
   },
   "inference_governance": {
     "description": "External governance MCP integration for inference-driven proposals via chrono-warp-drive Dynamo endpoint",
-    "enabled": false,
+    "enabled": true,
     "endpoint_url": "https://mcp-production-80e2.up.railway.app/governance",
     "request_timeout_ms": 10000,
     "min_confidence_threshold": 0.5,
-    "use_solar_enhancement": false,
+    "use_solar_enhancement": true,
     "decision_logic": {
       "pass_confidence_min": 0.9,
       "revision_confidence_max": 0.89,
