@@ -48,7 +48,7 @@ class OpenCodeSpawnGate {
 
   private constructor() {
     this.state = {
-      enabled: false, // DEFAULT: disabled — must be explicitly enabled
+      enabled: true, // MONITORING: enabled for observation — disable immediately if runaway detected
       reason: undefined,
       disabledAt: undefined,
       activeProcesses: new Map(),
