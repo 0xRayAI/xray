@@ -934,7 +934,7 @@ program
       console.log(`  Recurring patterns: ${corpus.recurringPatterns.length}`);
     }
 
-    const cycle = new InferenceCycle(projectRoot, undefined, { skipDeployVerify: options.noVerify ?? true, skipApply: options.noApply ?? false, skipResearcherReview: options.noResearcherReview ?? false, force: options.force ?? false });
+    const cycle = InferenceCycle.getInstance(projectRoot, { skipDeployVerify: options.noVerify ?? true, skipApply: options.noApply ?? false, skipResearcherReview: options.noResearcherReview ?? false, force: options.force ?? false });
     const result = await cycle.maybeRunCycle();
 
     if (options.json) {

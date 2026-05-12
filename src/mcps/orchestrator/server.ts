@@ -306,7 +306,7 @@ export class OrchestratorServer {
   }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
     try {
       const { InferenceCycle } = await import('../../inference/inference-cycle.js');
-      const cycle = new InferenceCycle(process.cwd(), undefined, {
+      const cycle = InferenceCycle.getInstance(process.cwd(), {
         skipApply: args.skipApply ?? false,
       });
 

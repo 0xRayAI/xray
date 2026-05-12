@@ -348,7 +348,7 @@ export class StringRayAPIServer {
   private async handleGovern(body: { proposals?: unknown[] }): Promise<Record<string, unknown>> {
     try {
       const { InferenceCycle } = await import('../../inference/inference-cycle.js');
-      const cycle = new InferenceCycle(process.cwd(), undefined, { skipApply: true });
+      const cycle = InferenceCycle.getInstance(process.cwd(), { skipApply: true });
       const result = await cycle.governExternalProposals((body.proposals || []) as any);
       return {
         cycleId: result.cycleId,
@@ -366,7 +366,7 @@ export class StringRayAPIServer {
   private async handleApply(body: { proposals?: unknown[] }): Promise<Record<string, unknown>> {
     try {
       const { InferenceCycle } = await import('../../inference/inference-cycle.js');
-      const cycle = new InferenceCycle(process.cwd());
+      const cycle = InferenceCycle.getInstance(process.cwd());
       const result = await cycle.governExternalProposals((body.proposals || []) as any);
       return {
         cycleId: result.cycleId,

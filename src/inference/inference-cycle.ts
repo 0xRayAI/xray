@@ -76,6 +76,27 @@ export interface InferenceCycleOptions {
 }
 
 export class InferenceCycle {
+  // Singleton registry + state management to prevent recursive agent spawning
+  private static instances = new Map<string, InferenceCycle>();
+  private static reEntryLock = false;
+  private static governedProposalIds = new Set<string>();
+  private static votingCoordinator: VotingCoordinator | null = null;
+
+  static getInstance(projectRoot?: string, options?: InferenceCycleOptions): InferenceCycle {
+    const root = path.resolve(projectRoot || process.cwd());
+    if (!InferenceCycle.instances.has(root)) {
+      InferenceCycle.instances.set(root, new InferenceCycle(root, undefined, options));
+    }
+    return InferenceCycle.instances.get(root)!;
+  }
+
+  static resetInstance(): void {
+    InferenceCycle.instances.clear();
+    InferenceCycle.reEntryLock = false;
+    InferenceCycle.governedProposalIds.clear();
+    InferenceCycle.votingCoordinator = null;
+  }
+
   private inferenceDir: string;
   private stateDir: string;
   private projectRoot: string;
@@ -93,151 +114,179 @@ export class InferenceCycle {
   }
 
   async governExternalProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult> {
+    // GATE: prevent re-entry — same as maybeRunCycle
+    if (InferenceCycle.reEntryLock) {
+      const blockedId = `blocked-${Date.now()}`;
+      frameworkLogger.log("inference-cycle", "external-re-entry-blocked", "warning", {});
+      return this.buildBlockedResult(blockedId, "Cycle in progress — external governance blocked");
+    }
+    InferenceCycle.reEntryLock = true;
+
     const startTime = Date.now();
     const cycleId = `external-${Date.now()}`;
 
-    frameworkLogger.log("inference-cycle", "external-governance-start", "info", {
-      cycleId,
-      proposalCount: proposals.length,
-    });
+    try {
+      frameworkLogger.log("inference-cycle", "external-governance-start", "info", {
+        cycleId,
+        proposalCount: proposals.length,
+      });
 
-     this.setPhase("governing");
-     let votes: InferenceCycleResult["votes"] = [];
-     try {
-       votes = await this.governProposals(proposals);
-     } catch (e) {
-       frameworkLogger.log("inference-cycle", "govern-proposals-error", "error", {
-         error: (e as Error).message,
-         stack: (e as Error).stack?.substring(0, 500),
-       });
-       // If governProposals fails, use heuristic fallback for each proposal
-       for (const proposal of proposals) {
-         const fallbackVote = this.heuristicFallbackVote(proposal);
-         votes.push({
-           proposalId: proposal.id,
-           decision: fallbackVote.decision,
-           confidence: fallbackVote.confidence,
-           details: [`Fallback due to error: ${(e as Error).message}`],
-         });
-       }
-     }
-
-     const approved = proposals.filter(
-       (p) => votes.find((v) => v.proposalId === p.id && v.decision === "approve"),
-     );
-    for (const p of approved) p.status = "approved";
-    for (const p of proposals.filter((p) => p.status !== "approved")) p.status = "rejected";
-
-    this.setPhase("complete");
-    this.saveCycleState(cycleId);
-    this.saveGovernanceState(this.getCoordinator());
-
-    const result = this.buildResult(cycleId, true, "external proposals", startTime, undefined, proposals, votes);
-    this.appendHistory(result);
-
-    frameworkLogger.log("inference-cycle", "external-governance-complete", "info", {
-      cycleId,
-      approved: approved.length,
-      rejected: proposals.length - approved.length,
-    });
-
-    return result;
-  }
-
-  async maybeRunCycle(): Promise<InferenceCycleResult> {
-    const startTime = Date.now();
-    const cycleId = `cycle-${Date.now()}`;
-
-    this.setPhase("collecting");
-
-    const lastCycleFile = path.join(this.stateDir, CYCLE_STATE_FILE);
-    const threshold = this.options.force ? { trigger: true, reason: "force flag set" } : shouldTriggerCycle(this.inferenceDir, lastCycleFile);
-
-    if (!threshold.trigger) {
-      this.setPhase("idle");
-      return this.buildResult(cycleId, false, threshold.reason, startTime);
-    }
-
-    frameworkLogger.log("inference-cycle", "cycle-triggered", "info", {
-      cycleId,
-      reason: threshold.reason,
-    });
-
-    const corpus = accumulateCorpus(this.inferenceDir);
-
-    this.setPhase("proposing");
-    const proposals = this.generateProposals(corpus);
-    this.adjustFromHistory(proposals);
-
-    if (proposals.length === 0) {
-      this.setPhase("complete");
-      return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals);
-    }
-
-    this.setPhase("governing");
-    const votes = await this.governProposals(proposals);
-
-    const approved = proposals.filter(
-      (p) => votes.find((v) => v.proposalId === p.id && v.decision === "approve"),
-    );
-
-    for (const p of approved) {
-      p.status = "approved";
-    }
-
-    for (const p of proposals.filter((p) => p.status !== "approved")) {
-      p.status = "rejected";
-    }
-
-    if (approved.length > 0) {
-      if (!this.options.skipApply) {
-        this.setPhase("applying");
-        await this.applyProposals(approved);
-      }
-
-      let deployResult: DeployVerificationResult | undefined;
-
-      if (!this.options.skipDeployVerify) {
-        this.setPhase("deploying");
-        const verifier = new DeployVerifier(this.projectRoot);
-        deployResult = verifier.quickVerify();
-
-        this.setPhase("verifying");
-
-        if (deployResult.success) {
-          for (const p of approved) {
-            p.status = "applied";
-          }
-        } else {
-          // Deploy failed — keep as approved (not applied), not "failed"
-          const failureReasons = deployResult.checks
-            .filter((c) => !c.passed)
-            .map((c) => c.output)
-            .join("; ");
-          frameworkLogger.log("inference-cycle", "deploy-failed", "warning", {
-            checks: deployResult.checks.map((c) => ({ name: c.name, passed: c.passed })),
-            failureReasons,
+      this.setPhase("governing");
+      let votes: InferenceCycleResult["votes"] = [];
+      try {
+        votes = await this.governProposals(proposals);
+      } catch (e) {
+        frameworkLogger.log("inference-cycle", "govern-proposals-error", "error", {
+          error: (e as Error).message,
+          stack: (e as Error).stack?.substring(0, 500),
+        });
+        for (const proposal of proposals) {
+          const fallbackVote = this.heuristicFallbackVote(proposal);
+          votes.push({
+            proposalId: proposal.id,
+            decision: fallbackVote.decision,
+            confidence: fallbackVote.confidence,
+            details: [`Fallback due to error: ${(e as Error).message}`],
           });
         }
-      } else {
-        for (const p of approved) {
-          p.status = "approved";
-        }
       }
+
+      const approved = proposals.filter(
+        (p) => votes.find((v) => v.proposalId === p.id && v.decision === "approve"),
+      );
+      for (const p of approved) p.status = "approved";
+      for (const p of proposals.filter((p) => p.status !== "approved")) p.status = "rejected";
+
+      // Track governed proposals for dedup across cycles
+      for (const p of proposals) InferenceCycle.governedProposalIds.add(p.id);
 
       this.setPhase("complete");
       this.saveCycleState(cycleId);
       this.saveGovernanceState(this.getCoordinator());
-      this.appendHistory(this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult));
 
-      return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult);
+      const result = this.buildResult(cycleId, true, "external proposals", startTime, undefined, proposals, votes);
+      this.appendHistory(result);
+
+      frameworkLogger.log("inference-cycle", "external-governance-complete", "info", {
+        cycleId,
+        approved: approved.length,
+        rejected: proposals.length - approved.length,
+      });
+
+      return result;
+    } finally {
+      InferenceCycle.reEntryLock = false;
     }
+  }
 
-    this.setPhase("complete");
-    this.saveCycleState(cycleId);
-    this.appendHistory(this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes));
+  async maybeRunCycle(): Promise<InferenceCycleResult> {
+    // GATE: prevent recursive re-entry while a cycle is in progress
+    if (InferenceCycle.reEntryLock) {
+      const blockedId = `blocked-${Date.now()}`;
+      frameworkLogger.log("inference-cycle", "re-entry-blocked", "warning", {});
+      return this.buildBlockedResult(blockedId, "Cycle already in progress — re-entry blocked");
+    }
+    InferenceCycle.reEntryLock = true;
 
-    return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes);
+    const startTime = Date.now();
+    const cycleId = `cycle-${Date.now()}`;
+
+    try {
+      this.setPhase("collecting");
+
+      const lastCycleFile = path.join(this.stateDir, CYCLE_STATE_FILE);
+      const threshold = this.options.force ? { trigger: true, reason: "force flag set" } : shouldTriggerCycle(this.inferenceDir, lastCycleFile);
+
+      if (!threshold.trigger) {
+        this.setPhase("idle");
+        return this.buildResult(cycleId, false, threshold.reason, startTime);
+      }
+
+      frameworkLogger.log("inference-cycle", "cycle-triggered", "info", {
+        cycleId,
+        reason: threshold.reason,
+      });
+
+      const corpus = accumulateCorpus(this.inferenceDir);
+
+      this.setPhase("proposing");
+      const proposals = this.generateProposals(corpus);
+      this.adjustFromHistory(proposals);
+
+      if (proposals.length === 0) {
+        this.setPhase("complete");
+        return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals);
+      }
+
+      this.setPhase("governing");
+      const votes = await this.governProposals(proposals);
+
+      // Track governed proposals for dedup across cycles
+      for (const p of proposals) InferenceCycle.governedProposalIds.add(p.id);
+
+      const approved = proposals.filter(
+        (p) => votes.find((v) => v.proposalId === p.id && v.decision === "approve"),
+      );
+
+      for (const p of approved) {
+        p.status = "approved";
+      }
+
+      for (const p of proposals.filter((p) => p.status !== "approved")) {
+        p.status = "rejected";
+      }
+
+      if (approved.length > 0) {
+        if (!this.options.skipApply) {
+          this.setPhase("applying");
+          await this.applyProposals(approved);
+        }
+
+        let deployResult: DeployVerificationResult | undefined;
+
+        if (!this.options.skipDeployVerify) {
+          this.setPhase("deploying");
+          const verifier = new DeployVerifier(this.projectRoot);
+          deployResult = verifier.quickVerify();
+
+          this.setPhase("verifying");
+
+          if (deployResult.success) {
+            for (const p of approved) {
+              p.status = "applied";
+            }
+          } else {
+            const failureReasons = deployResult.checks
+              .filter((c) => !c.passed)
+              .map((c) => c.output)
+              .join("; ");
+            frameworkLogger.log("inference-cycle", "deploy-failed", "warning", {
+              checks: deployResult.checks.map((c) => ({ name: c.name, passed: c.passed })),
+              failureReasons,
+            });
+          }
+        } else {
+          for (const p of approved) {
+            p.status = "approved";
+          }
+        }
+
+        this.setPhase("complete");
+        this.saveCycleState(cycleId);
+        this.saveGovernanceState(this.getCoordinator());
+        this.appendHistory(this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult));
+
+        return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult);
+      }
+
+      this.setPhase("complete");
+      this.saveCycleState(cycleId);
+      this.appendHistory(this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes));
+
+      return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes);
+    } finally {
+      InferenceCycle.reEntryLock = false;
+    }
   }
 
   private generateProposals(corpus: InferenceCorpus): InferenceProposal[] {
@@ -318,11 +367,11 @@ export class InferenceCycle {
   }
 
   private getCoordinator(): VotingCoordinator {
-    if (!this.votingCoordinator) {
+    if (!InferenceCycle.votingCoordinator) {
       const stateManager = this.getGovernanceStateManager();
-      this.votingCoordinator = new VotingCoordinator(stateManager);
+      InferenceCycle.votingCoordinator = new VotingCoordinator(stateManager);
     }
-    return this.votingCoordinator;
+    return InferenceCycle.votingCoordinator;
   }
 
 
@@ -711,7 +760,7 @@ Respond with EXACTLY one of:
       const batchResult = await governanceIntegration.checkProposals(
         proposals,
         agentReviews,
-        [], // historicalIds - could be loaded from previous cycles
+        [],
       );
 
       const votes: InferenceCycleResult["votes"] = batchResult.results.map(
@@ -743,7 +792,6 @@ Respond with EXACTLY one of:
         },
       );
 
-      // Fallback to heuristic votes
       return proposals.map((p) => this.heuristicFallbackVote(p));
     }
   }
@@ -953,7 +1001,6 @@ Respond with EXACTLY one of:
     return votes;
   }
 
-  private votingCoordinator: VotingCoordinator | null = null;
   private getGovernanceStateManager(): StringRayStateManager {
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
@@ -1137,6 +1184,20 @@ Respond with EXACTLY one of:
         }
       }
     }
+  }
+
+  private buildBlockedResult(cycleId: string, reason: string): InferenceCycleResult {
+    return {
+      cycleId,
+      triggered: false,
+      triggerReason: reason,
+      corpusSummary: { sessions: 0, totalCommits: 0, recurringPatterns: 0, recurringProblems: 0 },
+      proposals: [],
+      votes: [],
+      phase: "idle",
+      completedAt: new Date().toISOString(),
+      duration: 0,
+    };
   }
 
   private buildResult(
