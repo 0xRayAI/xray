@@ -51,6 +51,7 @@ function parseArgs(): PublishOptions {
 
 function getAgentConfig(agentName: string, cwd: string) {
   const configPaths = [
+    join(cwd, "src", "opencode", "agents", `${agentName}.yml`),
     join(cwd, "agents", `${agentName}.yml`),
     join(cwd, ".opencode", "agents", `${agentName}.yml`),
     join(cwd, "agents", `${agentName}.yaml`),
@@ -168,6 +169,7 @@ export async function publishAgentCommand(): Promise<void> {
     console.error(`❌ Error: Agent '${options.agent}' not found`);
     console.log("");
     console.log("Searched locations:");
+    console.log(`  • src/opencode/agents/${options.agent}.yml`);
     console.log(`  • agents/${options.agent}.yml`);
     console.log(`  • .opencode/agents/${options.agent}.yml`);
     console.log("");

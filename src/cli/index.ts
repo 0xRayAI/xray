@@ -56,66 +56,44 @@ program
   )
   .version(version);
 
+function runSetup() {
+  const setupScript = join(packageRoot, "scripts", "node", "setup.cjs");
+  validateScriptPath(setupScript, "setup script");
+  execSync(`node "${setupScript}"`, { stdio: "inherit", cwd: process.cwd() });
+}
+
 program
   .command("install")
   .description("Install 0xRay framework in the current project")
   .action(async () => {
     console.log("🔧 0xRay CLI: Installing framework...");
-
     try {
-      // Run the postinstaller script
-      const postinstallScript = join(
-        packageRoot,
-        "scripts",
-        "node",
-        "postinstall.cjs",
-      );
-
-      // SECURITY: Validate script path before execution
+      const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
       validateScriptPath(postinstallScript, "postinstall script");
-
-      execSync(`node "${postinstallScript}"`, {
-        stdio: "inherit",
-        cwd: process.cwd(),
-      });
-
-      console.log("✅ 0xRay framework installed successfully!");
-      console.log("");
-      console.log("📋 Next steps:");
-      console.log("1. Restart OpenCode to load the plugin");
-      console.log('2. Run "opencode agent list" to see 0xRay agents');
-      console.log('3. Try "@architect analyze this code" or "@security-auditor scan" to test the plugin');
+      execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
+      console.log("✅ 0xRay framework installed!");
+      console.log("💡 Run 'npx strray-ai setup' for full configuration (hooks, Hermes, symlinks)");
     } catch (error) {
-      console.error(
-        "❌ Installation failed:",
-        error instanceof Error ? error.message : String(error),
-      );
+      console.error("❌ Installation failed:", error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
   });
+
+program
+  .command("setup")
+  .description("Full framework setup: hooks, Hermes integration, symlinks, MCP paths")
+  .action(runSetup);
 
 program
   .command("init")
   .description("Initialize 0xRay configuration in the current project")
   .action(async () => {
     console.log("🚀 0xRay CLI: Initializing configuration...");
-
     try {
-      // Run the postinstaller script (same as install)
-      const postinstallScript = join(
-        packageRoot,
-        "scripts",
-        "node",
-        "postinstall.cjs",
-      );
-
-      // SECURITY: Validate script path before execution
+      const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
       validateScriptPath(postinstallScript, "postinstall script");
-
-      execSync(`node "${postinstallScript}"`, {
-        stdio: "inherit",
-        cwd: process.cwd(),
-      });
+      execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
+      runSetup();
 
       console.log("✅ 0xRay configuration initialized!");
     } catch (error) {

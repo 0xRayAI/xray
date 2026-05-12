@@ -95,12 +95,12 @@ function main() {
 
   const results = [];
 
-  // Config JSON files
+  // Config JSON files (source of truth in src/opencode/)
   const configFiles = [
-    ".opencode/strray/config.json",
-    ".opencode/strray/features.json",
-    ".opencode/strray/codex.json",
-    ".opencode/strray/integrations.json",
+    "src/opencode/strray/config.json",
+    "src/opencode/strray/features.json",
+    "src/opencode/strray/codex.json",
+    "src/opencode/strray/integrations.json",
   ];
 
   for (const file of configFiles) {

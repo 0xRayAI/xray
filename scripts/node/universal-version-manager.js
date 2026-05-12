@@ -61,11 +61,11 @@ function calculateCounts() {
   };
 
   try {
-    // Count agents from src/agents (source of truth for all agents)
-    const srcAgentsDir = "src/agents";
+    // Count agents from src/opencode/agents/ (source of truth for agent YAMLs)
+    const srcAgentsDir = "src/opencode/agents";
     if (fs.existsSync(srcAgentsDir)) {
       counts.agents = fs.readdirSync(srcAgentsDir).filter(f => 
-        f.endsWith(".ts") && !f.includes(".test.") && f !== "index.ts" && f !== "types.ts"
+        f.endsWith(".yml")
       ).length;
     }
 
@@ -311,7 +311,7 @@ const UPDATE_PATTERNS = [
       replacement: `🔬 ${OFFICIAL_VERSIONS.framework.displayName} - Pre-commit Introspection`,
     },
 
-    // Codex version patterns (for .opencode/strray/codex.json and .opencode/codex.codex)
+    // Codex version patterns (for src/opencode/strray/codex.json and src/opencode/codex.codex)
     {
       pattern: /"version":"[0-9]+\.[0-9]+\.[0-9]+"/g,
       replacement: `"version":"${OFFICIAL_VERSIONS.framework.version}"`,
@@ -505,7 +505,7 @@ const UPDATE_PATTERNS = [
 
     // 1. Check codex.json has exactly 60 terms
     const { resolveConfigPath } = require("../helpers/resolve-config-path.cjs");
-    const codexJsonPath = resolveConfigPath("codex.json") || ".opencode/strray/codex.json";
+    const codexJsonPath = resolveConfigPath("codex.json") || "src/opencode/strray/codex.json";
     if (fs.existsSync(codexJsonPath)) {
       try {
         const codexContent = JSON.parse(fs.readFileSync(codexJsonPath, "utf8"));
@@ -522,7 +522,7 @@ const UPDATE_PATTERNS = [
     }
 
     // 2. Check codex.codex has correct terms count
-    const codexCodexPath = ".opencode/codex.codex";
+    const codexCodexPath = "src/opencode/codex.codex";
     if (fs.existsSync(codexCodexPath)) {
       try {
         const codexContent = JSON.parse(fs.readFileSync(codexCodexPath, "utf8"));
@@ -585,7 +585,7 @@ const UPDATE_PATTERNS = [
           const reportedCount = parseInt(match[1]);
           if (reportedCount !== CALCULATED_COUNTS.agents) {
             validationErrors.push(
-              `${mcpFile} reports ${reportedCount} agents but src/agents/ has ${CALCULATED_COUNTS.agents}`
+              `${mcpFile} reports ${reportedCount} agents but src/opencode/agents/ has ${CALCULATED_COUNTS.agents}`
             );
           }
         }
@@ -667,16 +667,16 @@ const UPDATE_PATTERNS = [
   console.log("\n💾 Phase 0: Creating backup of all modified files...");
   await createBackup();
 
-  // Phase 1: Explicitly update critical .opencode config files
-  console.log("\n📁 Phase 1: Updating .opencode configuration files...");
+  // Phase 1: Update critical config files (source in src/opencode/)
+  console.log("\n📁 Phase 1: Updating configuration files...");
   const { resolveConfigPath: rcp } = require("../helpers/resolve-config-path.cjs");
-  const codexPath = rcp("codex.json") || ".opencode/strray/codex.json";
-  const featuresPath = rcp("features.json") || ".opencode/strray/features.json";
+  const codexPath = rcp("codex.json") || "src/opencode/strray/codex.json";
+  const featuresPath = rcp("features.json") || "src/opencode/strray/features.json";
   const criticalConfigFiles = [
-    codexPath,                           // Codex config
-    ".opencode/codex.codex",             // Main codex (17 terms)
-    ".opencode/package.json",            // OpenCode package.json
-    featuresPath,                        // Feature flags
+    codexPath,                           // Codex config (source)
+    "src/opencode/codex.codex",          // Main codex (source)
+    "src/opencode/strray/config.json",   // Framework config (source)
+    featuresPath,                        // Feature flags (source)
   ];
 
   let configFilesUpdated = 0;
@@ -719,8 +719,8 @@ const UPDATE_PATTERNS = [
   const documentationFiles = [
     "README.md",
     "AGENTS.md",
-    ".opencode/AGENTS-consumer.md",
-    rcp("agents_template.md") || ".opencode/strray/agents_template.md",
+    "src/opencode/AGENTS-consumer.md",
+    rcp("agents_template.md") || "src/opencode/strray/agents_template.md",
     "docs/reference/templates/agents_template.md",
     "docs/reference/templates/master-agent-template.md",
     "docs/reference/templates/agent-template-dev.md",
@@ -1014,7 +1014,7 @@ const UPDATE_PATTERNS = [
  * - Parallel processing for large file sets
  *
  * 📋 FILE CATEGORIES:
- * - Critical: .opencode/strray/codex.json, .opencode/codex.codex, etc.
+ * - Critical: src/opencode/strray/codex.json, src/opencode/codex.codex, etc.
  * - Documentation: AGENTS.md, AGENTS-consumer.md, docs/*.md
  * - Historical: docs/reflections/, docs/archive/
  * - Test Assertions: context-loader.test.ts, codex-parser.test.ts
