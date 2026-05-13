@@ -145,8 +145,9 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       baseVoteWeight: this.configData.decisionLogic.voteWeightMultiplier,
     });
 
-    // Determine recommendation from solar conditions
-    const recommendation = this.solarToRecommendation(solarResponse.solarContext.solarActivityLevel);
+    // Derive recommendation from the pipeline's numeric confidenceAdjustment
+    const adjustment = solarResponse.confidenceAdjustment;
+    const recommendation = adjustment <= -0.10 ? 'NEEDS_REVISION' : 'PASS';
 
     // Map solar response to standard governance response structure
     const mappedResponse: GovernanceCheckResponse = {
@@ -158,11 +159,11 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       vortexVolume: 0,
       historicalCoherence: 0,
       recommendation,
-      confidence: Math.max(0, Math.min(1, proposal.confidence + solarResponse.confidenceAdjustment)),
+      confidence: Math.max(0, Math.min(1, proposal.confidence + adjustment)),
       voteWeight: solarResponse.adjustedVoteWeight,
       reasons: [
         solarResponse.solarContext.recommendation,
-        `Solar activity: ${solarResponse.solarContext.solarActivityLevel} (resonance: ${solarResponse.solarContext.solarResonance.toFixed(4)})`,
+        `Solar activity: ${solarResponse.solarContext.solarActivityLevel} (adjustment: ${(adjustment * 100).toFixed(0)}%, resonance: ${solarResponse.solarContext.solarResonance.toFixed(4)})`,
       ],
     };
 
@@ -186,22 +187,6 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
     );
 
     return result;
-  }
-
-  /**
-   * Map solar activity level to a governance recommendation
-   */
-  private solarToRecommendation(level: string): 'PASS' | 'NEEDS_REVISION' | 'REJECT' {
-    switch (level) {
-      case 'storm':
-        return 'NEEDS_REVISION';
-      case 'active':
-        return 'PASS';
-      case 'moderate':
-      case 'quiet':
-      default:
-        return 'PASS';
-    }
   }
 
   /**
