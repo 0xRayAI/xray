@@ -954,7 +954,7 @@ Respond with EXACTLY one of:
     });
 
     return new Promise((resolve, reject) => {
-      const timeout = agentName === "architect" ? 60000 : 30000;
+      const timeout = agentName === "architect" ? 300000 : 120000;
       let settled = false;
       const timer = setTimeout(() => {
         if (!settled) {
