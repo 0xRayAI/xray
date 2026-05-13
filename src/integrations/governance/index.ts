@@ -290,13 +290,8 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
 
     switch (response.recommendation) {
       case 'PASS':
-        if (response.confidence >= decisionLogic.passConfidenceMin) {
-          vote = 'YES';
-          passed = true;
-        } else {
-          vote = 'ABSTAIN';
-          passed = false;
-        }
+        vote = 'YES';
+        passed = true;
         break;
       
       case 'REJECT':

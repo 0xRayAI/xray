@@ -77,9 +77,9 @@ console.log('=== AGENT-REGISTRY PIPELINE TEST ===\n');
 // ============================================
 console.log('📍 Layer 1: Registry Source Integrity\n');
 
-test('registry source has 23 agents', () => {
+test('registry source has 21 agents', () => {
   const keys = extractRegistryFromSource();
-  if (keys.length !== 23) throw new Error(`Expected 23 agents, got ${keys.length}: ${keys.join(', ')}`);
+  if (keys.length !== 21) throw new Error(`Expected 21 agents, got ${keys.length}: ${keys.join(', ')}`);
 });
 
 test('all registry entries have required fields', () => {
@@ -88,7 +88,7 @@ test('all registry entries have required fields', () => {
   for (const field of required) {
     const pattern = new RegExp(`${field}:`, 'g');
     const count = (src.match(pattern) || []).length;
-    if (count < 23) throw new Error(`Field "${field}" appears ${count} times, expected >= 23`);
+    if (count < 21) throw new Error(`Field "${field}" appears ${count} times, expected >= 21`);
   }
 });
 

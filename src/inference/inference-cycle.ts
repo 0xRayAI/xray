@@ -141,12 +141,11 @@ export class InferenceCycle {
           stack: (e as Error).stack?.substring(0, 500),
         });
         for (const proposal of proposals) {
-          const fallbackVote = this.heuristicFallbackVote(proposal);
           votes.push({
             proposalId: proposal.id,
-            decision: fallbackVote.decision,
-            confidence: fallbackVote.confidence,
-            details: [`Fallback due to error: ${(e as Error).message}`],
+            decision: "reject",
+            confidence: 0,
+            details: [`rejected: external governance error: ${(e as Error).message}`],
           });
         }
       }
@@ -630,64 +629,76 @@ Respond with EXACTLY one of:
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
-    // Check if external governance is enabled and available
+    // OSCILLATOR 1: Internal VotingCoordinator — always runs
+    const internalVotes = await this.governProposalsInternal(proposals);
+
+    // OSCILLATOR 2: External governance check — runs in addition if available
     const governanceIntegration = getGovernanceIntegration();
     if (governanceIntegration?.isAvailable()) {
       frameworkLogger.log("inference-cycle", "using-external-governance", "info", {
         proposalCount: proposals.length,
       });
-      return this.governProposalsExternal(proposals);
+      const externalVotes = await this.governProposalsExternal(proposals);
+      return this.mergeGovernanceVotes(internalVotes, externalVotes, proposals);
     }
 
-    // Fall back to internal voting coordinator
+    return internalVotes;
+  }
+
+  /**
+   * Oscillator 1: Internal VotingCoordinator-based governance
+   */
+  private async governProposalsInternal(
+    proposals: InferenceProposal[],
+  ): Promise<InferenceCycleResult["votes"]> {
     const coordinator = this.getCoordinator();
     const sessionId = `inference-governance-${Date.now()}`;
     const results: InferenceCycleResult["votes"] = [];
 
-    // Build TODO prompt asking architect to spawn subagents for all proposals
     const todoPrompt = [
-      `TODO: Governance Vote on ${proposals.length} Inference Proposals`,
+      `Vote on ${proposals.length} inference proposals. Output EXACTLY one PROPOSAL block per proposal.`,
       ``,
-      `You are the architect. For each proposal below, use the task tool to spawn the relevant subagents.`,
-      ``,
-      `INSTRUCTIONS:`,
-      `- Spawn these subagents: ${Array.from(new Set(proposals.flatMap((p) => GOVERNANCE_AGENTS[p.type] ?? ["code-reviewer"]))).join(", ")}`,
-      `- Each subagent should vote on proposals matching their expertise.`,
-      `- Output each vote in exact format:`,
-      `  PROPOSAL: <number>`,
-      `  AGENT: <agent-name>`,
+      `FORMAT (exact, no extra text, no markdown):`,
+      `PROPOSAL: <number>`,
+      `  AGENT: architect`,
       `  DECISION: approve|reject|abstain`,
       `  CONFIDENCE: 0.XX`,
-      `  REASONING: <brief>`,
+      `  REASONING: <brief reason>`,
+      ``,
+      `Example:`,
+      `PROPOSAL: 1`,
+      `  AGENT: architect`,
+      `  DECISION: approve`,
+      `  CONFIDENCE: 0.85`,
+      `  REASONING: Cleanup reduces maintenance burden`,
       ``,
       `PROPOSALS:`,
     ];
 
     for (let i = 0; i < proposals.length; i++) {
       const p = proposals[i]!;
-      const agents = GOVERNANCE_AGENTS[p.type] ?? ["code-reviewer"];
-      todoPrompt.push(`${i + 1}. [${p.type}] "${p.title}" → Agents: ${agents.join(", ")}`);
+      todoPrompt.push(`${i + 1}. [${p.type}] "${p.title}"`);
     }
 
     try {
       const jsonOutput = await this.invokeAgentInternal("architect", todoPrompt.join("\n"));
 
-      // Parse subagent votes from JSON stream
       const allVotes = this.parseSubagentVotes(jsonOutput, proposals);
 
-      // Feed votes into VotingCoordinator
       for (const proposal of proposals) {
+        const agents = GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer"];
+        const participants = ["architect", ...agents];
         const voteId = await coordinator.initiateVoting(
           sessionId,
           proposal.title,
           proposal.description,
-          GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer"],
+          participants,
           {
             complexity: Math.min(50, 10 + proposal.evidence.length * 5 + (proposal.confidence > 0.8 ? 10 : 0)),
             riskLevel: proposal.type === "fix" ? "low" : proposal.type === "guard" ? "high" : "medium",
             hasSecurityConcerns: proposal.type === "guard" || proposal.type === "fix",
             hasArchitecturalImpact: proposal.type === "codify" || proposal.type === "automate",
-            participantCount: (GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer"]).length,
+            participantCount: participants.length,
           },
         );
 
@@ -705,7 +716,6 @@ Respond with EXACTLY one of:
             details: resolved.details?.map((d) => `${d.agentName}: vote=${d.vote}, weight=${d.weight.toFixed(2)}`) || [],
           });
 
-          // Update agent performance
           if (resolved.details) {
             for (const detail of resolved.details) {
               this.getCoordinator().getAggregator().updateAgentPerformance(
@@ -718,13 +728,13 @@ Respond with EXACTLY one of:
             }
           }
         } else {
-          results.push(this.heuristicFallbackVote(proposal));
+          results.push(this.rejectNoQuorum(proposal, "agents did not vote (no quorum)"));
         }
       }
     } catch (error) {
       frameworkLogger.log("inference-cycle", "architect-governance-failed", "error", { error: String(error) });
       for (const proposal of proposals) {
-        results.push(this.heuristicFallbackVote(proposal));
+        results.push(this.rejectNoQuorum(proposal, `agent invocation failed: ${error instanceof Error ? error.message : String(error)}`));
       }
     }
 
@@ -736,6 +746,45 @@ Respond with EXACTLY one of:
     });
 
     return results;
+  }
+
+  /**
+   * Merge internal and external governance votes.
+   * A proposal passes both oscillators — must be approved by internal AND external.
+   */
+  private mergeGovernanceVotes(
+    internalVotes: InferenceCycleResult["votes"],
+    externalVotes: InferenceCycleResult["votes"],
+    proposals: InferenceProposal[],
+  ): InferenceCycleResult["votes"] {
+    const merged: InferenceCycleResult["votes"] = [];
+
+    for (const proposal of proposals) {
+      const internal = internalVotes.find((v) => v.proposalId === proposal.id);
+      const external = externalVotes.find((v) => v.proposalId === proposal.id);
+
+      if (!internal) {
+        merged.push(this.rejectNoQuorum(proposal, "internal governance vote missing"));
+        continue;
+      }
+
+      const internalApproved = internal.decision === "approve";
+      const externalApproved = external?.decision === "approve";
+
+      const bothApproved = internalApproved && (!external || externalApproved);
+
+      merged.push({
+        proposalId: proposal.id,
+        decision: bothApproved ? "approve" : "reject",
+        confidence: internal.confidence * (external ? external.confidence : 1.0),
+        details: [
+          ...internal.details,
+          ...(external ? [`External governance: ${external.decision} (conf: ${external.confidence.toFixed(2)})`] : []),
+        ],
+      });
+    }
+
+    return merged;
   }
 
   // Removed: buildOrchestratorGovernancePrompt (replaced by inline TODO prompt in governProposals)
@@ -792,7 +841,7 @@ Respond with EXACTLY one of:
         },
       );
 
-      return proposals.map((p) => this.heuristicFallbackVote(p));
+      return proposals.map((p) => this.rejectNoQuorum(p, "external governance endpoint failed"));
     }
   }
 
@@ -815,10 +864,21 @@ Respond with EXACTLY one of:
         executionMode: "sequential",
       });
       const content = (result as { content?: Array<{ text?: string }> }).content;
+      let responseText = "";
       if (content && Array.isArray(content)) {
-        return content.map((c: { text?: string }) => c.text ?? "").join("");
+        responseText = content.map((c: { text?: string }) => c.text ?? "").join("");
+      } else {
+        responseText = JSON.stringify(result);
       }
-      return JSON.stringify(result);
+      // Only return if the response contains actual vote data (PROPOSAL blocks).
+      // Generic orchestration ACKs like "Tool orchestrate-task executed..." have no votes.
+      if (/PROPOSAL:\s*\d+/i.test(responseText)) {
+        return responseText;
+      }
+      frameworkLogger.log("inference-cycle", "mcp-no-votes", "info", {
+        agentName,
+        responsePreview: responseText.substring(0, 200),
+      });
     } catch (mcpError) {
       frameworkLogger.log("inference-cycle", "mcp-invocation-failed", "info", {
         agentName,
@@ -884,9 +944,13 @@ Respond with EXACTLY one of:
       throw new Error("opencode CLI is not available in PATH");
     }
 
+    // Resolve the actual opencode project root (where .opencode/ config lives)
+    const opencodeRoot = this.resolveOpencodeRoot();
+
     frameworkLogger.log("inference-cycle", "opencode-spawn-start", "info", {
       agentName,
       trackingId,
+      opencodeRoot,
     });
 
     return new Promise((resolve, reject) => {
@@ -907,7 +971,7 @@ Respond with EXACTLY one of:
         "opencode",
         ["run", "--agent", agentName, "--message", prompt, "--format", "json"],
         {
-          cwd: this.projectRoot,
+          cwd: opencodeRoot,
           env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json" },
           stdio: ["ignore", "pipe", "pipe"],
         },
@@ -926,7 +990,12 @@ Respond with EXACTLY one of:
             await agentSpawnGovernor.completeSpawn(trackingId, true).catch(() => {});
           }
           frameworkLogger.log("inference-cycle", "opencode-spawn-success", "info", { agentName, trackingId });
-          resolve(stdout.trim());
+          const textResponse = this.extractTextFromNdjson(stdout.trim());
+          if (textResponse) {
+            resolve(textResponse);
+          } else {
+            resolve(stdout.trim());
+          }
         } else {
           const error = new Error(`${agentName} exited ${code}`);
           if (trackingId) {
@@ -998,6 +1067,41 @@ Respond with EXACTLY one of:
       }
     }
 
+    // Fallback: if no votes found from JSON format, try parsing plain-text
+    // PROPOSAL/DECISION blocks directly (e.g. from opencode CLI fallback path)
+    if (votes.length === 0 && /PROPOSAL:\s*\d+/i.test(jsonOutput)) {
+      const blocks = jsonOutput.split(/PROPOSAL:\s*/).filter((b: string) => b.trim().length > 0);
+      for (const block of blocks) {
+        const numMatch = block.match(/^(\d+)/);
+        if (!numMatch) continue;
+        const numStr = numMatch[1];
+        if (!numStr) continue;
+        const proposalIdx = parseInt(numStr, 10) - 1;
+        if (proposalIdx < 0 || proposalIdx >= proposals.length) continue;
+
+        const agentMatch = block.match(/AGENT:\s*(\w[\w-]*)/i);
+        const decisionMatch = block.match(/DECISION:\s*(\w+)/i);
+        const confMatch = block.match(/CONFIDENCE:\s*(0?\.\d+|1\.0|1|0)/i);
+        const reasonMatch = block.match(/REASONING:\s*(.+)/i);
+
+        if (decisionMatch) {
+          const proposal = proposals[proposalIdx];
+          if (proposal) {
+            let decision = decisionMatch[1]!.toLowerCase();
+            if (decision === "yes") decision = "approve";
+            if (decision === "no") decision = "reject";
+            votes.push({
+              proposalId: proposal.id,
+              agentName: agentMatch?.[1] ?? "architect",
+              decision,
+              confidence: confMatch ? Math.min(1, Math.max(0, parseFloat(confMatch[1]!))) : 0.5,
+              reasoning: reasonMatch ? reasonMatch[1]!.trim() : "",
+            });
+          }
+        }
+      }
+    }
+
     return votes;
   }
 
@@ -1040,16 +1144,42 @@ Respond with EXACTLY one of:
     }
   }
 
-  private heuristicFallbackVote(proposal: InferenceProposal): InferenceCycleResult["votes"][0] {
-    const evidenceCount = proposal.evidence.length;
-    const conf = proposal.confidence * (0.8 + Math.min(evidenceCount * 0.05, 0.15));
-    const decision = conf >= 0.5 ? "approve" : "reject";
+  private extractTextFromNdjson(output: string): string {
+    const texts: string[] = [];
+    for (const line of output.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const obj = JSON.parse(trimmed);
+        if (obj.type === "text" && obj.part?.text) {
+          texts.push(obj.part.text);
+        }
+      } catch {
+        // skip non-JSON lines
+      }
+    }
+    return texts.join("\n").trim();
+  }
 
+  private resolveOpencodeRoot(): string {
+    let dir = this.projectRoot;
+    for (let i = 0; i < 10; i++) {
+      if (fs.existsSync(path.join(dir, ".opencode"))) return dir;
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+    const cwd = process.cwd();
+    if (fs.existsSync(path.join(cwd, ".opencode"))) return cwd;
+    return this.projectRoot;
+  }
+
+  private rejectNoQuorum(proposal: InferenceProposal, reason: string): InferenceCycleResult["votes"][0] {
     return {
       proposalId: proposal.id,
-      decision,
-      confidence: conf,
-      details: ["fallback: heuristic (opencode unavailable)"],
+      decision: "reject",
+      confidence: 0,
+      details: [`rejected: ${reason}`],
     };
   }
 

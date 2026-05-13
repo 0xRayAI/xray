@@ -28,9 +28,17 @@ else
     FRAMEWORK_ROOT="$PROJECT_ROOT"
 fi
 
-# 0xRay Framework Version - read from FRAMEWORK_ROOT (already resolved above)
-# FRAMEWORK_ROOT correctly picks source in dev mode, node_modules in consumer mode
-STRRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)" 2>/dev/null || echo "unknown")
+# 0xRay Framework Version — check source name first (dev), then node_modules (consumer)
+STRRAY_VERSION="unknown"
+if [ -f "$SOURCE_PACKAGE_JSON" ]; then
+    PKG_NAME=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').name || '')" 2>/dev/null)
+    if [ "$PKG_NAME" = "strray-ai" ]; then
+        STRRAY_VERSION=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
+    fi
+fi
+if [ "$STRRAY_VERSION" = "unknown" ] && [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
+    STRRAY_VERSION=$(node -e "console.log(require('$NODE_MODULES_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
+fi
 
 # Dedup guard — prevent duplicate runs during startup
 # Uses a TTL lockfile (10s window) since OpenCode may trigger config hook
