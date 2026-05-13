@@ -9,7 +9,6 @@
  */
 
 import type {
-  GovernanceCheckRequest,
   GovernanceCheckResponse,
   SolarGovernanceCheckRequest,
   SolarGovernanceCheckResponse,
@@ -49,111 +48,14 @@ export class GovernanceClient {
   }
 
   /**
-   * Check a single proposal with the governance endpoint
+   * Call any Dynamo MCP tool via call_connected_tool proxy
    */
-  async checkProposal(
-    request: GovernanceCheckRequest,
-  ): Promise<GovernanceCheckResponse> {
-    const startTime = Date.now();
-    this.stats.requestsTotal++;
-
-    const url = `${this.config.baseUrl}/governance`;
-
-    frameworkLogger.log(
-      'governance-client',
-      'check-proposal-start',
-      'info',
-      {
-        proposalId: request.proposalId,
-        url,
-      },
-    );
-
-    try {
-      const response = await this.makeRequest(url, request);
-      
-      const duration = Date.now() - startTime;
-      this.updateResponseTime(duration);
-      this.stats.requestsSucceeded++;
-      this.stats.lastRequestAt = Date.now();
-
-      frameworkLogger.log(
-        'governance-client',
-        'check-proposal-success',
-        'info',
-        {
-          proposalId: request.proposalId,
-          recommendation: response.recommendation,
-          confidence: response.confidence,
-          durationMs: duration,
-        },
-      );
-
-      return response;
-    } catch (error) {
-      this.stats.requestsFailed++;
-      this.stats.errors++;
-
-      frameworkLogger.log(
-        'governance-client',
-        'check-proposal-error',
-        'error',
-        {
-          proposalId: request.proposalId,
-          error: error instanceof Error ? error.message : String(error),
-        },
-      );
-
-      throw error;
-    }
-  }
-
-  /**
-   * Check multiple proposals in batch
-   */
-  async checkProposals(
-    requests: GovernanceCheckRequest[],
-  ): Promise<GovernanceCheckResponse[]> {
-    frameworkLogger.log(
-      'governance-client',
-      'batch-check-start',
-      'info',
-      { count: requests.length },
-    );
-
-    const results: GovernanceCheckResponse[] = [];
-    
-    // Process sequentially to avoid overwhelming the endpoint
-    for (const request of requests) {
-      try {
-        const result = await this.checkProposal(request);
-        results.push(result);
-      } catch (error) {
-        frameworkLogger.log(
-          'governance-client',
-          'batch-check-item-error',
-          'warning',
-          {
-            proposalId: request.proposalId,
-            error: error instanceof Error ? error.message : String(error),
-          },
-        );
-        // Continue with other proposals even if one fails
-      }
-    }
-
-    frameworkLogger.log(
-      'governance-client',
-      'batch-check-complete',
-      'info',
-      {
-        requested: requests.length,
-        succeeded: results.length,
-        failed: requests.length - results.length,
-      },
-    );
-
-    return results;
+  private async callTool(
+    toolName: string,
+    params: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const url = `${this.config.baseUrl}/call_connected_tool`;
+    return this.makeJsonRequest(url, { tool_name: toolName, params });
   }
 
   /**
@@ -169,8 +71,6 @@ export class GovernanceClient {
     const startTime = Date.now();
     this.stats.requestsTotal++;
 
-    const url = `${this.config.baseUrl}/govern_with_solar`;
-
     frameworkLogger.log(
       'governance-client',
       'solar-check-start',
@@ -182,7 +82,28 @@ export class GovernanceClient {
     );
 
     try {
-      const response = await this.makeSolarRequest(url, request);
+      const raw = await this.callTool('govern_with_solar', {
+        proposal: request.proposal,
+        baseVoteWeight: request.baseVoteWeight ?? 1.0,
+      });
+      const result = raw.result as Record<string, unknown>;
+
+      const response: SolarGovernanceCheckResponse = {
+        originalRecommendation: result.originalRecommendation as string,
+        solarContext: result.solarContext as SolarGovernanceCheckResponse['solarContext'],
+        adjustedVoteWeight: result.adjustedVoteWeight as number,
+        finalRecommendation: result.finalRecommendation as string,
+        confidenceAdjustment: result.confidenceAdjustment as number,
+      };
+
+      if (!this.isValidSolarResponse(response)) {
+        throw new GovernanceError(
+          'Invalid solar governance response structure',
+          GovernanceErrorCode.INVALID_RESPONSE,
+          false,
+          { response },
+        );
+      }
 
       const duration = Date.now() - startTime;
       this.updateResponseTime(duration);
@@ -220,145 +141,139 @@ export class GovernanceClient {
   }
 
   /**
-   * Make HTTP request with retries
+   * Evaluate a proposal with standard governance (evaluate_governance tool)
+   *
+   * For purely technical or low-level protocol decisions where external
+   * solar modifiers are undesired.
    */
-  private async makeRequest(
-    url: string,
-    body: GovernanceCheckRequest,
+  async evaluateGovernance(
+    params: {
+      proposalId: string;
+      proposalText: string;
+      agentReviews: string[];
+      codeDiff?: string;
+      historicalSignalIds?: string[];
+    },
   ): Promise<GovernanceCheckResponse> {
-    let lastError: Error | undefined;
+    const startTime = Date.now();
+    this.stats.requestsTotal++;
 
-    for (let attempt = 0; attempt < (this.config.retryAttempts || 1); attempt++) {
-      try {
-        return await this.doRequest(url, body);
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        
-        // Don't retry on client errors (4xx)
-        if (error instanceof GovernanceError && !error.recoverable) {
-          throw error;
-        }
-
-        // Wait before retry
-        if (attempt < (this.config.retryAttempts || 1) - 1) {
-          await this.delay(this.config.retryDelayMs || 1000);
-        }
-      }
-    }
-
-    throw lastError || new GovernanceError(
-      'All retry attempts failed',
-      GovernanceErrorCode.REQUEST_FAILED,
-      false,
+    frameworkLogger.log(
+      'governance-client',
+      'evaluate-start',
+      'info',
+      {
+        proposalId: params.proposalId,
+        proposalPreview: params.proposalText.slice(0, 80),
+        agentReviewCount: params.agentReviews.length,
+      },
     );
-  }
-
-  /**
-   * Make solar governance HTTP request with retries
-   */
-  private async makeSolarRequest(
-    url: string,
-    body: SolarGovernanceCheckRequest,
-  ): Promise<SolarGovernanceCheckResponse> {
-    let lastError: Error | undefined;
-
-    for (let attempt = 0; attempt < (this.config.retryAttempts || 1); attempt++) {
-      try {
-        return await this.doSolarRequest(url, body);
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-
-        // Don't retry on client errors (4xx)
-        if (error instanceof GovernanceError && !error.recoverable) {
-          throw error;
-        }
-
-        // Wait before retry
-        if (attempt < (this.config.retryAttempts || 1) - 1) {
-          await this.delay(this.config.retryDelayMs || 1000);
-        }
-      }
-    }
-
-    throw lastError || new GovernanceError(
-      'All solar governance retry attempts failed',
-      GovernanceErrorCode.REQUEST_FAILED,
-      false,
-    );
-  }
-
-  /**
-   * Perform single solar governance HTTP request
-   */
-  private async doSolarRequest(
-    url: string,
-    body: SolarGovernanceCheckRequest,
-  ): Promise<SolarGovernanceCheckResponse> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, this.config.timeoutMs);
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
+      const raw = await this.callTool('evaluate_governance', {
+        proposalId: params.proposalId,
+        proposalText: params.proposalText,
+        agentReviews: params.agentReviews,
+        ...(params.codeDiff ? { codeDiff: params.codeDiff } : {}),
+        ...(params.historicalSignalIds ? { historicalSignalIds: params.historicalSignalIds } : {}),
       });
+      const result = raw.result as Record<string, unknown>;
 
-      clearTimeout(timeoutId);
+      const response: GovernanceCheckResponse = {
+        success: true,
+        proposalId: (result.proposalId as string) || '',
+        governanceIsotopeId: (result.governanceIsotopeId as string) || `evaluate-${Date.now()}`,
+        resonanceScore: (result.resonanceScore as number) ?? 0,
+        isotopicRatio: (result.isotopicRatio as number) ?? 0,
+        vortexVolume: (result.vortexVolume as number) ?? 0,
+        historicalCoherence: (result.historicalCoherence as number) ?? 0,
+        recommendation: result.recommendation as 'PASS' | 'NEEDS_REVISION' | 'REJECT',
+        confidence: result.confidence as number,
+        voteWeight: result.voteWeight as number,
+        reasons: Array.isArray(result.reasoning)
+          ? (result.reasoning as string[])
+          : [result.reasoning as string],
+      };
 
-      if (!response.ok) {
+      if (!this.isValidResponse(response)) {
         throw new GovernanceError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          GovernanceErrorCode.REQUEST_FAILED,
-          response.status >= 500, // Retry on server errors
-          { status: response.status, statusText: response.statusText },
-        );
-      }
-
-      const data = await response.json() as SolarGovernanceCheckResponse;
-
-      // Validate solar response structure
-      if (!this.isValidSolarResponse(data)) {
-        throw new GovernanceError(
-          'Invalid solar governance response structure',
+          'Invalid evaluate governance response structure',
           GovernanceErrorCode.INVALID_RESPONSE,
           false,
-          { response: data },
+          { response },
         );
       }
 
-      return data;
-    } catch (error) {
-      clearTimeout(timeoutId);
+      const duration = Date.now() - startTime;
+      this.updateResponseTime(duration);
+      this.stats.requestsSucceeded++;
+      this.stats.lastRequestAt = Date.now();
 
-      if (error instanceof GovernanceError) {
-        throw error;
-      }
-
-      // Handle fetch-specific errors
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new GovernanceTimeoutError(this.config.timeoutMs);
-        }
-        throw new GovernanceNetworkError(url, error);
-      }
-
-      throw new GovernanceError(
-        String(error),
-        GovernanceErrorCode.REQUEST_FAILED,
-        true,
+      frameworkLogger.log(
+        'governance-client',
+        'evaluate-success',
+        'info',
+        {
+          recommendation: response.recommendation,
+          confidence: response.confidence,
+          voteWeight: response.voteWeight,
+          durationMs: duration,
+        },
       );
+
+      return response;
+    } catch (error) {
+      this.stats.requestsFailed++;
+      this.stats.errors++;
+
+      frameworkLogger.log(
+        'governance-client',
+        'evaluate-error',
+        'error',
+        {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+
+      throw error;
     }
   }
 
   /**
-   * Validate solar governance response structure
+   * Make HTTP request with retries and exponential backoff
+   */
+  private async makeJsonRequest(
+    url: string,
+    body: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 0; attempt < (this.config.retryAttempts || 1); attempt++) {
+      try {
+        return await this.doJsonRequest(url, body);
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        if (error instanceof GovernanceError && !error.recoverable) {
+          throw error;
+        }
+
+        if (attempt < (this.config.retryAttempts || 1) - 1) {
+          const delay = (this.config.retryDelayMs || 1000) * Math.pow(2, attempt);
+          await this.delay(delay);
+        }
+      }
+    }
+
+    throw lastError || new GovernanceError(
+      'All request attempts failed',
+      GovernanceErrorCode.REQUEST_FAILED,
+      false,
+    );
+  }
+
+  /**
+   * Validate solar governance response structure with range checks
    */
   private isValidSolarResponse(response: unknown): boolean {
     if (typeof response !== 'object' || response === null) return false;
@@ -376,25 +291,26 @@ export class GovernanceClient {
       typeof sc.solarActivityLevel === 'string' &&
       validLevels.includes(sc.solarActivityLevel) &&
       typeof sc.solarResonance === 'number' &&
+      sc.solarResonance >= 0 &&
+      sc.solarResonance <= 1 &&
       typeof sc.solarActivityModifier === 'number' &&
+      sc.solarActivityModifier >= -1 &&
+      sc.solarActivityModifier <= 1 &&
       typeof sc.recommendation === 'string' &&
       typeof r.adjustedVoteWeight === 'number' &&
+      r.adjustedVoteWeight >= 0.5 &&
+      r.adjustedVoteWeight <= 1.5 &&
       typeof r.finalRecommendation === 'string' &&
       typeof r.confidenceAdjustment === 'number'
     );
   }
 
-  /**
-   * Perform single HTTP request
-   */
-  private async doRequest(
+  private async doJsonRequest(
     url: string,
-    body: GovernanceCheckRequest,
-  ): Promise<GovernanceCheckResponse> {
+    body: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, this.config.timeoutMs);
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeoutMs);
 
     try {
       const response = await fetch(url, {
@@ -413,32 +329,17 @@ export class GovernanceClient {
         throw new GovernanceError(
           `HTTP ${response.status}: ${response.statusText}`,
           GovernanceErrorCode.REQUEST_FAILED,
-          response.status >= 500, // Retry on server errors
+          response.status >= 500,
           { status: response.status, statusText: response.statusText },
         );
       }
 
-      const data = await response.json() as GovernanceCheckResponse;
-      
-      // Validate response structure
-      if (!this.isValidResponse(data)) {
-        throw new GovernanceError(
-          'Invalid governance response structure',
-          GovernanceErrorCode.INVALID_RESPONSE,
-          false,
-          { response: data },
-        );
-      }
-
-      return data;
+      return await response.json() as Record<string, unknown>;
     } catch (error) {
       clearTimeout(timeoutId);
 
-      if (error instanceof GovernanceError) {
-        throw error;
-      }
+      if (error instanceof GovernanceError) throw error;
 
-      // Handle fetch-specific errors
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           throw new GovernanceTimeoutError(this.config.timeoutMs);
@@ -522,10 +423,4 @@ export class GovernanceClient {
   }
 }
 
-/**
- * Create governance client with config from features.json
- */
-export function createGovernanceClientFromConfig(): GovernanceClient {
-  // Config will be loaded by the integration, this is a factory
-  return new GovernanceClient();
-}
+

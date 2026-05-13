@@ -54,7 +54,7 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
     await this.log('info', 'Initializing governance client...');
 
     this.client = new GovernanceClient({
-      baseUrl: this.configData.endpointUrl.replace('/governance', ''),
+      baseUrl: this.configData.endpointUrl.replace(/\/governance$/, ''),
       timeoutMs: this.configData.requestTimeoutMs,
     });
 
@@ -115,11 +115,10 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
   }
 
   /**
-   * Check a single inference proposal via govern_with_solar
+   * Check a single inference proposal via the appropriate governance tool
    *
-   * Uses the dynamo MCP tool that brings real-time NOAA GOES solar context
-   * into the governance decision, adjusting vote weight and adding warnings
-   * based on current solar activity (quiet/moderate/active/storm).
+   * Routes to govern_with_solar (strategic proposals) or evaluate_governance
+   * (technical proposals) based on proposal type.
    */
   async checkProposal(
     proposal: InferenceProposal,
@@ -130,6 +129,39 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       throw new Error('Governance integration not available');
     }
 
+    const isTechnical = proposal.type === 'fix' || proposal.type === 'guard';
+    if (isTechnical) {
+      return this.evaluateProposal(proposal, agentReviews, historicalIds);
+    }
+    return this.governWithSolarProposal(proposal);
+  }
+
+  /**
+   * Route: evaluate_governance — for purely technical proposals (fix, guard)
+   */
+  private async evaluateProposal(
+    proposal: InferenceProposal,
+    agentReviews: string[],
+    historicalIds: string[],
+  ): Promise<GovernanceVoteResult> {
+    const response = await this.client!.evaluateGovernance({
+      proposalId: proposal.id,
+      proposalText: `${proposal.title}\n\n${proposal.description}`,
+      agentReviews,
+      historicalSignalIds: historicalIds,
+    });
+    return this.applyDecisionLogic(response);
+  }
+
+  /**
+   * Route: govern_with_solar — for strategic proposals (refactor, codify, automate)
+   *
+   * Brings real-time NOAA GOES solar context into the decision, adjusting
+   * vote weight and adding warnings based on current solar activity.
+   */
+  private async governWithSolarProposal(
+    proposal: InferenceProposal,
+  ): Promise<GovernanceVoteResult> {
     frameworkLogger.log(
       'inference-governance',
       'solar-check-start',
@@ -145,11 +177,17 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       baseVoteWeight: this.configData.decisionLogic.voteWeightMultiplier,
     });
 
-    // Derive recommendation from the pipeline's numeric confidenceAdjustment
     const adjustment = solarResponse.confidenceAdjustment;
     const recommendation = adjustment <= -0.10 ? 'NEEDS_REVISION' : 'PASS';
 
-    // Map solar response to standard governance response structure
+    const reasons: string[] = [
+      solarResponse.solarContext.recommendation,
+      `Solar activity: ${solarResponse.solarContext.solarActivityLevel} (adjustment: ${(adjustment * 100).toFixed(0)}%, resonance: ${solarResponse.solarContext.solarResonance.toFixed(4)})`,
+    ];
+    if (solarResponse.finalRecommendation && solarResponse.finalRecommendation !== solarResponse.originalRecommendation) {
+      reasons.push(solarResponse.finalRecommendation);
+    }
+
     const mappedResponse: GovernanceCheckResponse = {
       success: true,
       proposalId: proposal.id,
@@ -161,10 +199,7 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       recommendation,
       confidence: Math.max(0, Math.min(1, proposal.confidence + adjustment)),
       voteWeight: solarResponse.adjustedVoteWeight,
-      reasons: [
-        solarResponse.solarContext.recommendation,
-        `Solar activity: ${solarResponse.solarContext.solarActivityLevel} (adjustment: ${(adjustment * 100).toFixed(0)}%, resonance: ${solarResponse.solarContext.solarResonance.toFixed(4)})`,
-      ],
+      reasons,
     };
 
     const baseResult = this.applyDecisionLogic(mappedResponse);
