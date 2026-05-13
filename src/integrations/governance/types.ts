@@ -68,8 +68,6 @@ export interface GovernanceIntegrationConfig {
     /** Multiplier for vote weight from governance */
     voteWeightMultiplier: number;
   };
-  /** Whether to use solar-enhanced governance when available */
-  useSolarEnhancement: boolean;
 }
 
 /**
@@ -85,7 +83,6 @@ export const DEFAULT_GOVERNANCE_CONFIG: GovernanceIntegrationConfig = {
     revisionConfidenceMax: 0.89,
     voteWeightMultiplier: 1.0,
   },
-  useSolarEnhancement: false,
 };
 
 // ============================================================================

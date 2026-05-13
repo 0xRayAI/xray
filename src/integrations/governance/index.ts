@@ -11,12 +11,9 @@
 import { BaseIntegration } from '../base/index.js';
 import type {
   GovernanceIntegrationConfig,
-  GovernanceCheckRequest,
   GovernanceCheckResponse,
   GovernanceVoteResult,
   BatchGovernanceCheck,
-  SolarGovernanceVoteResult,
-  SolarContext,
 } from './types.js';
 import { DEFAULT_GOVERNANCE_CONFIG } from './types.js';
 import { GovernanceClient } from './governance-client.js';
@@ -118,43 +115,17 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
   }
 
   /**
-   * Check a single inference proposal with external governance
+   * Check a single inference proposal via govern_with_solar
+   *
+   * Uses the dynamo MCP tool that brings real-time NOAA GOES solar context
+   * into the governance decision, adjusting vote weight and adding warnings
+   * based on current solar activity (quiet/moderate/active/storm).
    */
   async checkProposal(
     proposal: InferenceProposal,
     agentReviews: string[] = [],
     historicalIds: string[] = [],
   ): Promise<GovernanceVoteResult> {
-    if (!this.isAvailable()) {
-      throw new Error('Governance integration not available');
-    }
-
-    // Use solar-enhanced governance if enabled
-    if (this.configData.useSolarEnhancement) {
-      return this.checkProposalWithSolar(proposal);
-    }
-
-    const request: GovernanceCheckRequest = {
-      proposalId: proposal.id,
-      proposalText: `${proposal.title}\n\n${proposal.description}`,
-      agentReviews,
-      historicalSignalIds: historicalIds,
-    };
-
-    const response = await this.client!.checkProposal(request);
-    return this.applyDecisionLogic(response);
-  }
-
-  /**
-   * Check a proposal with solar-enhanced governance (govern_with_solar tool)
-   *
-   * Brings real-time solar context from NOAA GOES into the decision,
-   * automatically adjusting vote weight and adding warnings based on
-   * current solar activity.
-   */
-  async checkProposalWithSolar(
-    proposal: InferenceProposal,
-  ): Promise<SolarGovernanceVoteResult> {
     if (!this.isAvailable()) {
       throw new Error('Governance integration not available');
     }
@@ -174,6 +145,9 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       baseVoteWeight: this.configData.decisionLogic.voteWeightMultiplier,
     });
 
+    // Determine recommendation from solar conditions
+    const recommendation = this.solarToRecommendation(solarResponse.solarContext.solarActivityLevel);
+
     // Map solar response to standard governance response structure
     const mappedResponse: GovernanceCheckResponse = {
       success: true,
@@ -183,7 +157,7 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       isotopicRatio: 0,
       vortexVolume: 0,
       historicalCoherence: 0,
-      recommendation: solarResponse.confidenceAdjustment < -0.1 ? 'NEEDS_REVISION' : 'PASS',
+      recommendation,
       confidence: Math.max(0, Math.min(1, proposal.confidence + solarResponse.confidenceAdjustment)),
       voteWeight: solarResponse.adjustedVoteWeight,
       reasons: [
@@ -194,10 +168,8 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
 
     const baseResult = this.applyDecisionLogic(mappedResponse);
 
-    const result: SolarGovernanceVoteResult = {
+    const result: GovernanceVoteResult = {
       ...baseResult,
-      solarContext: solarResponse.solarContext,
-      solarConfidenceAdjustment: solarResponse.confidenceAdjustment,
     };
 
     frameworkLogger.log(
@@ -214,6 +186,22 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
     );
 
     return result;
+  }
+
+  /**
+   * Map solar activity level to a governance recommendation
+   */
+  private solarToRecommendation(level: string): 'PASS' | 'NEEDS_REVISION' | 'REJECT' {
+    switch (level) {
+      case 'storm':
+        return 'NEEDS_REVISION';
+      case 'active':
+        return 'PASS';
+      case 'moderate':
+      case 'quiet':
+      default:
+        return 'PASS';
+    }
   }
 
   /**
@@ -376,7 +364,6 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
             revisionConfidenceMax: features.inference_governance.decision_logic?.revision_confidence_max ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.revisionConfidenceMax,
             voteWeightMultiplier: features.inference_governance.decision_logic?.vote_weight_multiplier ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.voteWeightMultiplier,
           },
-          useSolarEnhancement: features.inference_governance.use_solar_enhancement ?? false,
         };
       }
 
