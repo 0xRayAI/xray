@@ -88,6 +88,13 @@ export class GovernanceClient {
       });
       const result = raw.result as Record<string, unknown>;
 
+      frameworkLogger.log(
+        'governance-client',
+        'solar-governance-raw',
+        'debug',
+        { rawResponse: JSON.stringify(raw) },
+      );
+
       const response: SolarGovernanceCheckResponse = {
         originalRecommendation: result.originalRecommendation as string,
         solarContext: result.solarContext as SolarGovernanceCheckResponse['solarContext'],

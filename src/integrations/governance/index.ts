@@ -13,6 +13,7 @@ import type {
   GovernanceIntegrationConfig,
   GovernanceCheckResponse,
   GovernanceVoteResult,
+  SolarGovernanceVoteResult,
   BatchGovernanceCheck,
 } from './types.js';
 import { DEFAULT_GOVERNANCE_CONFIG } from './types.js';
@@ -161,7 +162,7 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
    */
   private async governWithSolarProposal(
     proposal: InferenceProposal,
-  ): Promise<GovernanceVoteResult> {
+  ): Promise<SolarGovernanceVoteResult> {
     frameworkLogger.log(
       'inference-governance',
       'solar-check-start',
@@ -204,8 +205,10 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
 
     const baseResult = this.applyDecisionLogic(mappedResponse);
 
-    const result: GovernanceVoteResult = {
+    const solarResult: SolarGovernanceVoteResult = {
       ...baseResult,
+      solarContext: solarResponse.solarContext,
+      solarConfidenceAdjustment: solarResponse.confidenceAdjustment,
     };
 
     frameworkLogger.log(
@@ -217,11 +220,11 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
         solarActivityLevel: solarResponse.solarContext.solarActivityLevel,
         adjustedVoteWeight: solarResponse.adjustedVoteWeight,
         confidenceAdjustment: solarResponse.confidenceAdjustment,
-        passed: result.passed,
+        passed: solarResult.passed,
       },
     );
 
-    return result;
+    return solarResult;
   }
 
   /**

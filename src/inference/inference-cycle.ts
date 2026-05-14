@@ -779,7 +779,7 @@ Respond with EXACTLY one of:
         confidence: internal.confidence * (external ? external.confidence : 1.0),
         details: [
           ...internal.details,
-          ...(external ? [`External governance: ${external.decision} (conf: ${external.confidence.toFixed(2)})`] : []),
+          ...(external ? [`External governance: ${external.decision} (conf: ${external.confidence.toFixed(2)})`, ...external.details] : []),
         ],
       });
     }
