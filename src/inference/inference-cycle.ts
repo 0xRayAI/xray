@@ -518,7 +518,7 @@ export class InferenceCycle {
       ``,
       `1. Read the relevant source files`,
       `2. Add the missing guard, validation, or edge case handling`,
-      `3. If this is a codex rule, add the term to .opencode/strray/codex.json`,
+      `3. If this is a codex rule, add the term to the appropriate codex file (e.g. .strray/codex.json or .opencode/strray/codex.json)`,
       `4. Make minimal, surgical changes`,
     ].join("\n");
 
@@ -588,7 +588,7 @@ export class InferenceCycle {
       const matches = item.matchAll(filePattern);
       for (const match of matches) {
         const f = match[0];
-        if (f.startsWith("src/") || f.startsWith("dist/") || f.startsWith(".opencode/")) {
+        if (f.startsWith("src/") || f.startsWith("dist/") || f.startsWith(".strray/") || f.startsWith(".opencode/")) {
           files.add(f);
         }
       }
@@ -1025,22 +1025,14 @@ Respond with EXACTLY one of:
       return this.agentInvoker(agentName, prompt);
     }
 
-    // Only fall back to OpenCode if not in forced pure MCP mode
-    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
-      throw new Error(`[PURE MCP] Orchestrator returned no usable response for agent "${agentName}" and OpenCode fallback is disabled`);
-    }
-
-    return this.invokeViaOpencode(agentName, prompt);
+    // Legacy OpenCode fallback has been removed.
+    // In pure MCP mode this should never be reached.
+    throw new Error(
+      `Agent invocation fallback removed. ` +
+      `Agent "${agentName}" could not be resolved via MCP orchestrator or agentInvoker. ` +
+      `This path is no longer supported.`
+    );
   }
-
-  private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
-    // In pure MCP mode we must never reach here
-    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
-      throw new Error(`[PURE MCP] invokeViaOpencode called for "${agentName}" — this path is forbidden.`);
-    }
-
-    // GATE: Centralized spawn gate — blocks all agent spawning by default
-    spawnGate.assertAllowed("inference-cycle");
 
     // BLOCKED: Never spawn real opencode processes during tests — causes
     // runaway agent processes and non-deterministic test behavior.
