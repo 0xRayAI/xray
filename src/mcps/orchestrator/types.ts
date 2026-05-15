@@ -33,6 +33,7 @@ export interface OrchestrationResult {
   failedTasks: number;
   duration: number;
   agentUtilization: Record<string, number>;
+  agentOutputs?: Record<string, string>;
   bottlenecks: string[];
   recommendations: string[];
 }
@@ -68,4 +69,13 @@ export interface TaskExecutionContext {
   task: OrchestrationTask;
   assignedAgent: string;
   startTime: number;
+}
+
+/** Result of actually executing one task via an agent/MCP server */
+export interface TaskExecutionResult {
+  taskId: string;
+  agent: string;
+  success: boolean;
+  output: string;
+  durationMs: number;
 }

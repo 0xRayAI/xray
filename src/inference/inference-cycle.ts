@@ -871,9 +871,12 @@ Respond with EXACTLY one of:
       } else {
         responseText = JSON.stringify(result);
       }
-      // Only return if the response contains actual vote data (PROPOSAL blocks).
-      // Generic orchestration ACKs like "Tool orchestrate-task executed..." have no votes.
-      if (/PROPOSAL:\s*\d+/i.test(responseText)) {
+      // Accept real responses from the orchestrator when it performed actual work
+      // (either old PROPOSAL format or new structured output from individual skills).
+      const hasRealContent = /PROPOSAL:\s*\d+/i.test(responseText) ||
+                             /DECISION:\s*(approve|reject|abstain)/i.test(responseText);
+
+      if (hasRealContent) {
         return responseText;
       }
       frameworkLogger.log("inference-cycle", "mcp-no-votes", "info", {

@@ -6,7 +6,8 @@
 
 import { frameworkLogger } from '../../../core/framework-logger.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
-import type { OrchestrationResult, OrchestrationTask } from '../types.js';
+import { mcpClientManager } from '../../../mcps/mcp-client.js';
+import type { OrchestrationResult, OrchestrationTask, TaskExecutionResult } from '../types.js';
 
 export interface TaskHandlerDeps {
   taskHistory: OrchestrationHistoryItem[];
@@ -83,6 +84,9 @@ export class TaskHandler {
       orchestrationResult.agentUtilization = results.agentUtilization;
       orchestrationResult.bottlenecks = results.bottlenecks;
       orchestrationResult.recommendations = results.recommendations;
+      if (results.agentOutputs) {
+        orchestrationResult.agentOutputs = results.agentOutputs;
+      }
 
       // Store in history
       deps.taskHistory.push({
@@ -109,7 +113,9 @@ export class TaskHandler {
   }
 
   /**
-   * Execute the orchestration plan (simulated for MCP)
+   * Execute the orchestration plan.
+   * For known MCP skill servers (code-review, security-audit, researcher, etc.),
+   * we actually call the target tool. For other agents we record the assignment.
    */
   private async executePlan(
     plan: { agentAssignments: Map<string, OrchestrationTask[]> },
@@ -122,25 +128,56 @@ export class TaskHandler {
     agentUtilization: Record<string, number>;
     bottlenecks: string[];
     recommendations: string[];
+    agentOutputs?: Record<string, string>;
   }> {
-    // Simulated execution for MCP server
     const agentUtilization: Record<string, number> = {};
     let completedTasks = 0;
-    const failedTasks = 0;
+    let failedTasks = 0;
+    const agentOutputs: Record<string, string> = {};
+
+    const skillServers = new Set([
+      'code-review', 'security-audit', 'researcher', 'performance-optimization',
+      'testing-strategy', 'bug-triage-specialist', 'refactorer', 'architect'
+    ]);
 
     for (const [agent, tasks] of plan.agentAssignments) {
       agentUtilization[agent] = tasks.length;
-      completedTasks += tasks.length;
+
+      if (skillServers.has(agent)) {
+        for (const task of tasks) {
+          try {
+            const toolName = this.mapAgentToTool(agent);
+            const result = await mcpClientManager.callServerTool(agent, toolName, {
+              description: task.description,
+              type: task.type,
+              priority: task.priority,
+            });
+
+            const outputText = this.extractTextFromMcpResult(result);
+            agentOutputs[`${agent}:${task.id}`] = outputText;
+            completedTasks++;
+          } catch (err) {
+            failedTasks++;
+            agentOutputs[`${agent}:${task.id}`] = `Error: ${err instanceof Error ? err.message : String(err)}`;
+            frameworkLogger.log('orchestrator.task-handler', 'task-execution-failed', 'warning', {
+              agent,
+              taskId: task.id,
+              error: String(err),
+            });
+          }
+        }
+      } else {
+        // For non-MCP agents we still count them as "assigned" (they will be handled by the caller or legacy path)
+        completedTasks += tasks.length;
+      }
     }
 
-    // Generate recommendations based on assignments
     const recommendations: string[] = [];
     const bottlenecks: string[] = [];
 
     if (plan.agentAssignments.size > 5) {
       recommendations.push('Consider reducing the number of agents for better coordination');
     }
-
     for (const [agent, tasks] of plan.agentAssignments) {
       if (tasks.length > 3) {
         bottlenecks.push(`${agent} is handling ${tasks.length} tasks - may be overloaded`);
@@ -148,13 +185,34 @@ export class TaskHandler {
     }
 
     return {
-      success: true,
+      success: failedTasks === 0,
       completedTasks,
       failedTasks,
       agentUtilization,
       bottlenecks,
       recommendations,
+      agentOutputs,
     };
+  }
+
+  private mapAgentToTool(agent: string): string {
+    const map: Record<string, string> = {
+      'code-review': 'analyze_proposal',
+      'security-audit': 'analyze_proposal',
+      'researcher': 'analyze_proposal',
+      'bug-triage-specialist': 'analyze_proposal',
+      'refactorer': 'analyze_proposal',
+      'architect': 'analyze_proposal',
+    };
+    return map[agent] || 'analyze_proposal';
+  }
+
+  private extractTextFromMcpResult(result: unknown): string {
+    const content = (result as any)?.content;
+    if (Array.isArray(content)) {
+      return content.map((c: any) => c.text ?? '').join('\n');
+    }
+    return JSON.stringify(result);
   }
 
   /**
@@ -184,6 +242,10 @@ ${result.bottlenecks.length > 0 ? `**Bottlenecks Detected:**\n${result.bottlenec
 ${result.recommendations.length > 0 ? result.recommendations.map((r) => `• 💡 ${r}`).join('\n') : 'No recommendations'}
 
 **Execution Mode:** ${executionMode}
-**Status:** ${result.success ? '🟢 SUCCESS' : '🔴 ISSUES DETECTED'}`;
+**Status:** ${result.success ? '🟢 SUCCESS' : '🔴 ISSUES DETECTED'}
+
+${result.agentOutputs && Object.keys(result.agentOutputs).length > 0 
+  ? `**Agent Outputs (real MCP responses):**\n${Object.entries(result.agentOutputs).map(([k, v]) => `• ${k}: ${v.substring(0, 200)}${v.length > 200 ? '...' : ''}`).join('\n')}\n`
+  : ''}`;
   }
 }
