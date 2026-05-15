@@ -16,7 +16,7 @@
 
 import { spawn } from "child_process";
 import { resolveAgent } from "../mcps/agent-resolver.js";
-import { spawnGate } from "../core/opencode-spawn-gate.js";
+import { spawnGate } from "../core/agent-spawn-gate.js";
 
 export interface TaskContext {
   taskDescription: string;

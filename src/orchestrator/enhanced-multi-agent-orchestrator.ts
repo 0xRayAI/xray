@@ -15,7 +15,7 @@ import {
 } from "../delegation/agent-delegator.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
 import { agentSpawnGovernor } from "./agent-spawn-governor.js";
-import { spawnGate } from "../core/opencode-spawn-gate.js";
+import { spawnGate } from "../core/agent-spawn-gate.js";
 
 export interface AgentSpawnRequest {
   agentType: string;

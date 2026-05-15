@@ -14,7 +14,7 @@
  *   - Gates every spawn path: inference, orchestrator, scripts, tests
  *
  * Usage:
- *   import { spawnGate } from "./opencode-spawn-gate.js";
+ *   import { spawnGate } from "./agent-spawn-gate.js";
  *
  *   // Before spawning
  *   spawnGate.assertAllowed("inference-cycle");
