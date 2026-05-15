@@ -18,6 +18,7 @@ import {
   MCPClientConfig,
   MCPTool,
   MCPToolResult,
+  IServerConfig,
 } from './types/index.js';
 import { defaultServerRegistry } from './config/index.js';
 import {
@@ -30,6 +31,7 @@ import {
   SimulationEngine,
   getAllServerSimulations,
 } from './simulation/index.js';
+import { ConnectionPool } from './connection/connection-pool.js';
 
 /**
  * Retry configuration for MCP tool execution
@@ -40,6 +42,9 @@ const DEFAULT_RETRY_CONFIG = {
   maxDelayMs: 5000,
   backoffMultiplier: 2,
 };
+
+// Shared pool for real MCP subprocess connections (critical for pure governance)
+const sharedConnectionPool = new ConnectionPool({ maxPoolSize: 4, maxIdleTimeMs: 180000 });
 
 interface RetryConfig {
   maxRetries: number;
@@ -78,6 +83,7 @@ export class MCPClient extends EventEmitter {
   private toolCache: ToolCache;
   private simulationEngine: SimulationEngine;
   private retryConfig: RetryConfig;
+  private connectionPool: ConnectionPool | null = null;
 
   constructor(config: MCPClientConfig, retryConfig?: Partial<RetryConfig>) {
     super();
@@ -131,6 +137,16 @@ export class MCPClient extends EventEmitter {
     for (const [serverName, serverSimulations] of Object.entries(simulations)) {
       this.simulationEngine.registerServerSimulators(serverName, serverSimulations);
     }
+  }
+
+  /**
+   * Get or lazily create the shared ConnectionPool for real MCP transport.
+   */
+  private getConnectionPool(): ConnectionPool {
+    if (!this.connectionPool) {
+      this.connectionPool = sharedConnectionPool;
+    }
+    return this.connectionPool;
   }
 
   /**
@@ -323,15 +339,17 @@ export class MCPClient extends EventEmitter {
     this.emit('tool.before', beforeEvent);
 
     try {
-      // Wrap with retry for simulation (and future real connections)
-      if (this.simulationEngine.canSimulate(this.config.serverName, toolName)) {
+      // In pure MCP governance mode, never use simulation.
+      const isPureMcp = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true';
+
+      // Wrap with retry for simulation (skipped in pure mode)
+      if (!isPureMcp && this.simulationEngine.canSimulate(this.config.serverName, toolName)) {
         try {
           const result = await this.executeWithRetry(
             () => this.simulationEngine.simulate(this.config.serverName, toolName, args),
             `simulate:${toolName}`
           );
 
-          // Emit tool.after event (success)
           const afterEvent: ToolAfterEvent = {
             ...beforeEvent,
             result,
@@ -351,7 +369,43 @@ export class MCPClient extends EventEmitter {
         }
       }
 
-      // Return generic fallback result
+      // === REAL MCP TRANSPORT (ConnectionPool + ToolExecutor) ===
+      try {
+        const serverConfig: IServerConfig | undefined = defaultServerRegistry.get(this.config.serverName);
+        if (serverConfig) {
+          const pool = this.getConnectionPool();
+          const connection = await pool.acquire(this.config.serverName, serverConfig);
+          try {
+            const realResult = await this.toolExecutor.executeTool(connection, toolName, args);
+
+            const afterEvent: ToolAfterEvent = {
+              ...beforeEvent,
+              result: realResult,
+              duration: Date.now() - startTime,
+              success: true,
+            };
+            this.emit('tool.after', afterEvent);
+
+            return realResult;
+          } finally {
+            pool.release(connection);
+          }
+        }
+      } catch (realMcpError) {
+        frameworkLogger.log('mcp-client', 'real-mcp-call-failed', 'warning', {
+          serverName: this.config.serverName,
+          toolName,
+          error: String(realMcpError),
+        });
+
+        if (isPureMcp) {
+          throw new Error(
+            `[PURE MCP] Real transport failed for "${toolName}" on "${this.config.serverName}": ${realMcpError}`
+          );
+        }
+      }
+
+      // Legacy generic fallback (only for non-pure-MCP mode)
       const fallbackResult = {
         content: [
           {
@@ -361,7 +415,6 @@ export class MCPClient extends EventEmitter {
         ],
       };
 
-      // Emit tool.after event (fallback success)
       const afterEvent: ToolAfterEvent = {
         ...beforeEvent,
         result: fallbackResult,

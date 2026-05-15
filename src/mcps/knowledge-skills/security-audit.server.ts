@@ -10,6 +10,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -215,7 +216,7 @@ class StringRaySecurityAuditServer {
         case "generate_security_report":
           return await this.generateSecurityReport(args as unknown as GenerateSecurityReportArgs);
         case "analyze_proposal":
-          return await this.analyzeProposal(args as any);
+          return await this.analyzeProposal(args as any) as CallToolResult;
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
