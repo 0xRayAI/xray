@@ -82,6 +82,7 @@
     "test:e2e": "node scripts/node/validate-mcp-connectivity.js && node scripts/node/validate-external-processes.js",
     "validate": "node scripts/validate-stringray-comprehensive.js",
     "validate:quick": "node scripts/validate-stringray-comprehensive.js --quick",
+    "debug:inference:force": "STRRAY_FORCE_MCP_GOVERNANCE=true STRRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
     "validate:full": "node scripts/validate-stringray-comprehensive.js --full",
     "test:unified": "node scripts/test/test-unified-framework.mjs",
     "test:consumer": "node scripts/test/test-consumer-readiness.cjs",

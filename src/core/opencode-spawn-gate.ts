@@ -1,12 +1,11 @@
 /**
- * OpenCode Spawn Gate — Singleton
+ * Agent Spawn Gate — Singleton (provider-agnostic)
  *
- * CENTRALIZED CONTROL for all OpenCode process spawning across StringRay.
+ * CENTRALIZED CONTROL for all agent process spawning across StringRay
+ * (OpenCode, Hermes, or any other MCP-compatible host).
  *
  * Purpose:
- *   Prevent runaway recursive agent spawning that caused the v1.22.56-58
- *   incident where inference cycles triggered opencode CLI processes,
- *   which triggered more tool calls, which triggered more inference cycles.
+ *   Prevent runaway recursive agent spawning.
  *
  * Design:
  *   - Singleton instance shared across all modules
@@ -15,17 +14,10 @@
  *   - Gates every spawn path: inference, orchestrator, scripts, tests
  *
  * Usage:
- *   import { spawnGate } from "./spawn-gate.js";
+ *   import { spawnGate } from "./opencode-spawn-gate.js";
  *
  *   // Before spawning
  *   spawnGate.assertAllowed("inference-cycle");
- *
- *   // Or check
- *   if (!spawnGate.isAllowed()) { return; }
- *
- *   // Track spawned process
- *   const pid = spawn("opencode", ...);
- *   spawnGate.trackProcess(pid);
  *
  *   // Global disable (emergency brake)
  *   spawnGate.disable("emergency: runaway processes detected");
@@ -42,8 +34,8 @@ interface SpawnGateState {
   totalBlocked: number;
 }
 
-class OpenCodeSpawnGate {
-  private static instance: OpenCodeSpawnGate;
+class AgentSpawnGate {
+  private static instance: AgentSpawnGate;
   private state: SpawnGateState;
 
   private constructor() {
@@ -57,11 +49,11 @@ class OpenCodeSpawnGate {
     };
   }
 
-  static getInstance(): OpenCodeSpawnGate {
-    if (!OpenCodeSpawnGate.instance) {
-      OpenCodeSpawnGate.instance = new OpenCodeSpawnGate();
+  static getInstance(): AgentSpawnGate {
+    if (!AgentSpawnGate.instance) {
+      AgentSpawnGate.instance = new AgentSpawnGate();
     }
-    return OpenCodeSpawnGate.instance;
+    return AgentSpawnGate.instance;
   }
 
   /** Check if spawning is globally allowed */
@@ -90,8 +82,8 @@ class OpenCodeSpawnGate {
     if (!this.state.enabled) {
       this.state.totalBlocked++;
       const msg =
-        `OpenCode agent spawning is DISABLED. ` +
-        `Module "${module}" attempted to spawn an agent. ` +
+        `Agent spawning is DISABLED. ` +
+        `Module "${module}" attempted to spawn an agent process. ` +
         `Reason: ${this.state.reason || "spawn gate is closed by default"}. ` +
         `Call spawnGate.enable() to allow (not recommended for production).`;
       frameworkLogger.log("spawn-gate", "blocked", "error", { module, reason: this.state.reason });
@@ -145,6 +137,6 @@ class OpenCodeSpawnGate {
   }
 }
 
-/** Singleton export — use this everywhere */
-export const spawnGate = OpenCodeSpawnGate.getInstance();
+/** Singleton export — use this everywhere (provider-agnostic) */
+export const spawnGate = AgentSpawnGate.getInstance();
 export default spawnGate;

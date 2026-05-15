@@ -10,6 +10,8 @@ import { getGovernanceIntegration, type GovernanceVoteResult } from "../integrat
 import { getAgentSpawn } from "../core/features-config.js";
 import { agentSpawnGovernor } from "../orchestrator/agent-spawn-governor.js";
 import { spawnGate } from "../core/opencode-spawn-gate.js";
+import { mcpClientManager } from "../mcps/mcp-client.js";
+import { getConfigDir } from "../core/config-paths.js";
 
 export interface InferenceProposal {
   id: string;
@@ -487,7 +489,13 @@ export class InferenceCycle {
     });
 
     try {
-      const agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
+      let agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
+
+      // In pure MCP mode, use real skill server names so the orchestrator dispatches to actual MCP tools
+      if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+        agentName = p.type === "refactor" ? "refactoring-strategies" : "code-review";
+      }
+
       await this.invokeAgentInternal(agentName, prompt);
       return true;
     } catch (err) {
@@ -515,7 +523,10 @@ export class InferenceCycle {
     ].join("\n");
 
     try {
-      await this.invokeAgentInternal("code-reviewer", prompt);
+      const agentName = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' 
+        ? "code-review" 
+        : "code-reviewer";
+      await this.invokeAgentInternal(agentName, prompt);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-guard-failed", "warning", {
@@ -551,7 +562,10 @@ export class InferenceCycle {
     ].join("\n");
 
     try {
-      await this.invokeAgentInternal("architect", prompt);
+      const agentName = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' 
+        ? "architecture-patterns" 
+        : "architect";
+      await this.invokeAgentInternal(agentName, prompt);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-automation-failed", "warning", {
@@ -630,10 +644,28 @@ Respond with EXACTLY one of:
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
-    // OSCILLATOR 1: Internal VotingCoordinator — always runs
+    // Pure MCP mode: use individual knowledge-skill MCP servers for the internal vote
+    // (code-review, security-audit, researcher via analyze_proposal)
+    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+      const skillVotes = await this.governProposalsWithIndividualSkills(proposals);
+
+      // Still merge with external Dynamo governance if available (best of both worlds)
+      const governanceIntegration = getGovernanceIntegration();
+      if (governanceIntegration?.isAvailable()) {
+        frameworkLogger.log("inference-cycle", "using-external-governance", "info", {
+          proposalCount: proposals.length,
+          mode: "pure-mcp-skills",
+        });
+        const externalVotes = await this.governProposalsExternal(proposals);
+        return this.mergeGovernanceVotes(skillVotes, externalVotes, proposals);
+      }
+
+      return skillVotes;
+    }
+
+    // Legacy path (VotingCoordinator + architect)
     const internalVotes = await this.governProposalsInternal(proposals);
 
-    // OSCILLATOR 2: External governance check — runs in addition if available
     const governanceIntegration = getGovernanceIntegration();
     if (governanceIntegration?.isAvailable()) {
       frameworkLogger.log("inference-cycle", "using-external-governance", "info", {
@@ -652,6 +684,11 @@ Respond with EXACTLY one of:
   private async governProposalsInternal(
     proposals: InferenceProposal[],
   ): Promise<InferenceCycleResult["votes"]> {
+    // Defensive: if pure MCP mode is forced, use individual skill servers only
+    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+      return this.governProposalsWithIndividualSkills(proposals);
+    }
+
     const coordinator = this.getCoordinator();
     const sessionId = `inference-governance-${Date.now()}`;
     const results: InferenceCycleResult["votes"] = [];
@@ -745,6 +782,90 @@ Respond with EXACTLY one of:
       avgConfidence: metrics.averageConfidence.toFixed(2),
       strategyUsage: metrics.strategyUsage,
     });
+
+    return results;
+  }
+
+  /**
+   * Pure individual knowledge-skill MCP path for governance.
+   * Used when STRRAY_FORCE_MCP_GOVERNANCE=true.
+   * Each proposal is evaluated directly by the relevant skill servers using analyze_proposal.
+   */
+  private async governProposalsWithIndividualSkills(
+    proposals: InferenceProposal[],
+  ): Promise<InferenceCycleResult["votes"]> {
+    const results: InferenceCycleResult["votes"] = [];
+
+    const GOVERNANCE_AGENTS: Record<string, string[]> = {
+      fix: ["code-review", "security-audit", "researcher"],
+      refactor: ["code-review", "security-audit", "researcher"],
+      guard: ["code-review", "security-audit", "researcher"],
+      automate: ["code-review", "security-audit", "researcher"],
+      codify: ["code-review", "security-audit", "researcher"],
+    };
+
+    for (const proposal of proposals) {
+      const agents = GOVERNANCE_AGENTS[proposal.type] ?? ["code-review", "security-audit"];
+      const skillVotes: any[] = [];
+
+      for (const agent of agents) {
+        try {
+          const skillResult = await mcpClientManager.callServerTool(agent, "analyze_proposal", {
+            proposalTitle: proposal.title,
+            proposalDescription: proposal.description,
+            evidence: proposal.evidence,
+            proposalType: proposal.type,
+          });
+
+          let structured = "";
+          const contents = (skillResult as any)?.content || [];
+          for (const c of contents) {
+            if (c?.text && c.text.includes("DECISION:")) {
+              structured = c.text.trim();
+              break;
+            }
+          }
+          if (!structured) {
+            const full = JSON.stringify(skillResult);
+            const m = full.match(/DECISION:\s*(approve|reject|abstain)[\s\S]{0,300}?REASONING:[^\n"]*/i);
+            if (m) structured = m[0].trim();
+          }
+
+          skillVotes.push({
+            agent,
+            toolUsed: "analyze_proposal",
+            rawResponse: structured || JSON.stringify(skillResult),
+            structuredVote: structured || null,
+          });
+        } catch (err) {
+          skillVotes.push({
+            agent,
+            toolUsed: "analyze_proposal",
+            rawResponse: `error: ${err}`,
+            structuredVote: null,
+          });
+        }
+      }
+
+      const approves = skillVotes.filter((v: any) => v.structuredVote && v.structuredVote.includes("DECISION: approve")).length;
+      const rejects = skillVotes.filter((v: any) => v.structuredVote && v.structuredVote.includes("DECISION: reject")).length;
+      const decision = approves > rejects ? "approve" : (rejects > approves ? "reject" : "abstain");
+
+      let avgConf = 0.75;
+      const confMatches = skillVotes.map((v: any) => {
+        if (!v.structuredVote) return 0.75;
+        const m = v.structuredVote.match(/CONFIDENCE:\s*([0-9.]+)/);
+        return m ? parseFloat(m[1]) : 0.75;
+      });
+      if (confMatches.length > 0) avgConf = confMatches.reduce((a, b) => a + b, 0) / confMatches.length;
+
+      results.push({
+        proposalId: proposal.id,
+        decision: decision as any,
+        confidence: Math.round(avgConf * 100) / 100,
+        details: skillVotes.map((v: any) => `${v.agent}: ${v.structuredVote?.split('\n')[0] || 'no structured vote'}`),
+      });
+    }
 
     return results;
   }
@@ -871,15 +992,24 @@ Respond with EXACTLY one of:
       } else {
         responseText = JSON.stringify(result);
       }
-      // Accept real responses from the orchestrator when it performed actual work
-      // (either old PROPOSAL format or new structured output from individual skills).
-      const hasRealContent = /PROPOSAL:\s*\d+/i.test(responseText) ||
-                             /DECISION:\s*(approve|reject|abstain)/i.test(responseText);
+      // In pure MCP governance mode, trust the orchestrator response (it now does real work)
+      const isPureMcp = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true';
 
-      if (hasRealContent) {
+      const hasRealContent = /PROPOSAL:\s*\d+/i.test(responseText) ||
+                             /DECISION:\s*(approve|reject|abstain)/i.test(responseText) ||
+                             /Agent Outputs \(real MCP responses\):/i.test(responseText);
+
+      if (hasRealContent || isPureMcp) {
+        if (isPureMcp && !hasRealContent) {
+          frameworkLogger.log("inference-cycle", "pure-mcp-orchestrator-response", "info", {
+            agentName,
+            responsePreview: responseText.substring(0, 300),
+          });
+        }
         return responseText;
       }
-      frameworkLogger.log("inference-cycle", "mcp-no-votes", "info", {
+
+      frameworkLogger.log("inference-cycle", "mcp-no-useful-content", "info", {
         agentName,
         responsePreview: responseText.substring(0, 200),
       });
@@ -895,11 +1025,21 @@ Respond with EXACTLY one of:
       return this.agentInvoker(agentName, prompt);
     }
 
+    // Only fall back to OpenCode if not in forced pure MCP mode
+    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+      throw new Error(`[PURE MCP] Orchestrator returned no usable response for agent "${agentName}" and OpenCode fallback is disabled`);
+    }
+
     return this.invokeViaOpencode(agentName, prompt);
   }
 
   private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
-    // GATE: Centralized spawn gate — blocks all opencode spawning by default
+    // In pure MCP mode we must never reach here
+    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+      throw new Error(`[PURE MCP] invokeViaOpencode called for "${agentName}" — this path is forbidden.`);
+    }
+
+    // GATE: Centralized spawn gate — blocks all agent spawning by default
     spawnGate.assertAllowed("inference-cycle");
 
     // BLOCKED: Never spawn real opencode processes during tests — causes
@@ -1166,6 +1306,13 @@ Respond with EXACTLY one of:
   }
 
   private resolveOpencodeRoot(): string {
+    // Use the provider-agnostic config path resolver (prefers .strray/, falls back to .opencode/strray/)
+    const configDir = getConfigDir(this.projectRoot);
+    // If we resolved to a .strray or custom dir, use its parent as the "root"
+    if (configDir.includes(".strray") || configDir.includes("strray")) {
+      return path.dirname(configDir);
+    }
+    // Legacy fallback
     let dir = this.projectRoot;
     for (let i = 0; i < 10; i++) {
       if (fs.existsSync(path.join(dir, ".opencode"))) return dir;
