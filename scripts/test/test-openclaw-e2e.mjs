@@ -25,7 +25,8 @@
  *
  * Usage:
  *   node scripts/test/test-openclaw-e2e.mjs
- *   node scripts/test/test-openclaw-e2e.mjs --keep   (don't clean up temp dirs)
+ *   node scripts/test/test-openclaw-e2e.mjs --keep          (don't clean up temp dirs)
+ *   node scripts/test/test-openclaw-e2e.mjs --dir /path     (run against an already-installed consumer dir)
  */
 
 import { execSync } from 'child_process';
@@ -38,6 +39,10 @@ import { createRequire } from 'module';
 import crypto from 'crypto';
 
 const require = createRequire(import.meta.url);
+
+const DIR_FLAG = process.argv.indexOf('--dir');
+const CUSTOM_DIR = DIR_FLAG !== -1 && process.argv[DIR_FLAG + 1] ? process.argv[DIR_FLAG + 1] : null;
+const KEEP = process.argv.includes('--keep');
 const KEEP = process.argv.includes('--keep');
 
 let passed = 0;
@@ -82,8 +87,16 @@ function getOpenClawConfig() {
   return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 }
 
-const rootDir = path.resolve(path.dirname(import.meta.url.replace('file://', '')), '..', '..');
-const distDir = path.join(rootDir, 'dist', 'integrations', 'openclaw');
+let distDir;
+
+if (CUSTOM_DIR) {
+  // Running inside a consumer install (from unified runner)
+  distDir = path.join(CUSTOM_DIR, 'node_modules', 'strray-ai', 'dist', 'integrations', 'openclaw');
+} else {
+  // Running from monorepo (standalone)
+  const rootDir = path.resolve(path.dirname(import.meta.url.replace('file://', '')), '..', '..');
+  distDir = path.join(rootDir, 'dist', 'integrations', 'openclaw');
+}
 
 // ── Raw WebSocket helpers ──────────────────────────────────
 
