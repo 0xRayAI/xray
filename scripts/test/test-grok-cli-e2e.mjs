@@ -118,7 +118,9 @@ async function main() {
   // ── Phase 1: Verify Grok Plugin Installation ────────────
   section('Phase 1: Verify Grok Plugin Installation');
 
-  const grokPluginDir = path.join(nodeModulesStrray, '.grok', 'plugins', 'strray-ai');
+  // Grok plugin is copied to the consumer *project root* .grok/plugins/strray-ai/
+  // (exactly like .opencode/ for OpenCode parity). Not inside node_modules.
+  const grokPluginDir = path.join(testDir, '.grok', 'plugins', 'strray-ai');
 
   const hooksJson = path.join(grokPluginDir, 'hooks', 'hooks.json');
   const mcpJson = path.join(grokPluginDir, '.mcp.json');
