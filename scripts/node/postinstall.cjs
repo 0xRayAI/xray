@@ -95,6 +95,31 @@ if (fs.existsSync(strraySource)) {
   }
 }
 
+// Copy Grok plugin for Grok CLI (first-class citizen, same level as OpenCode)
+const grokPluginSource = path.join(packageRoot, "src/integrations/grok/plugin/strray-ai");
+const grokPluginSourceBuilt = path.join(packageRoot, ".grok/plugins/strray-ai"); // if we copy during build later
+const grokPluginDest = path.join(targetDir, ".grok/plugins/strray-ai");
+
+const actualGrokSource = fs.existsSync(grokPluginSource) ? grokPluginSource : grokPluginSourceBuilt;
+
+if (fs.existsSync(actualGrokSource) && resolvedPackage !== resolvedTarget) {
+  function copyGrokPlugin(src, dest) {
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+      if (SKIP_DIRS.has(entry.name)) continue;
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      if (entry.isDirectory()) {
+        copyGrokPlugin(srcPath, destPath);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+  }
+  copyGrokPlugin(actualGrokSource, grokPluginDest);
+  console.log('[postinstall] Copied Grok plugin for strray-ai');
+}
+
 // Copy AGENTS-consumer.md → AGENTS.md
 const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
 const agentsDest = path.join(targetDir, "AGENTS.md");

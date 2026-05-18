@@ -123,6 +123,16 @@ async function main() {
     console.log('\x1b[31m✗ OpenClaw E2E failed\x1b[0m');
   }
 
+  // Grok CLI
+  try {
+    run(`node "${path.join(scriptsDir, 'test-grok-cli-e2e.mjs')}" --dir "${consumerDir}" --tarball "${tarball}"`, { cwd: consumerDir });
+    passedPlatforms++;
+    console.log('\x1b[32m✓ Grok CLI E2E passed\x1b[0m');
+  } catch (e) {
+    failedPlatforms++;
+    console.log('\x1b[31m✗ Grok CLI E2E failed\x1b[0m');
+  }
+
   section('Summary');
 
   console.log(`Platforms passed: ${passedPlatforms}/3`);

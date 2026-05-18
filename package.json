@@ -115,6 +115,7 @@
     "scripts/hooks/",
     "scripts/validate-stringray-comprehensive.js",
     "src/opencode/",
+    "src/integrations/grok/plugin/strray-ai/",
     ".strray/",
     ".opencode/agents/",
     ".opencode/commands/",
