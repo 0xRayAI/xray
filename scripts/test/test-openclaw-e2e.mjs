@@ -43,7 +43,6 @@ const require = createRequire(import.meta.url);
 const DIR_FLAG = process.argv.indexOf('--dir');
 const CUSTOM_DIR = DIR_FLAG !== -1 && process.argv[DIR_FLAG + 1] ? process.argv[DIR_FLAG + 1] : null;
 const KEEP = process.argv.includes('--keep');
-const KEEP = process.argv.includes('--keep');
 
 let passed = 0;
 let failed = 0;

@@ -50,7 +50,7 @@ async function main() {
 
   section('Phase 0: Pack the package');
 
-  const packOutput = run(`cd "${projectRoot}" && npm pack`, { timeout: 60000 });
+  const packOutput = execSync(`cd "${projectRoot}" && npm pack`, { encoding: 'utf-8', timeout: 60000 });
   const tarballMatch = packOutput.match(/strray-ai-(\d+\.\d+\.\d+)\.tgz/);
   if (!tarballMatch) {
     // Fallback: find the newest .tgz in the project root
