@@ -525,8 +525,9 @@ fi
         try {
           // Use dynamic import that works in both dev and consumer
           const basePath = process.env.STRRAY_BASE_PATH || '.';
+          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
           // First archive logs (compress and rotate) before cleanup
-          const { archiveLogFiles } = await import(basePath + '/dist/postprocessor/triggers/GitHookTrigger.js');
+          const { archiveLogFiles } = await import(basePath + '/' + distPath + '/postprocessor/triggers/GitHookTrigger.js');
           const archiveResult = await archiveLogFiles({
             archiveDirectory: 'logs/framework',
             maxFileSizeMB: 10,  // Archive if > 10MB
@@ -541,7 +542,7 @@ fi
           }
 
           // Then cleanup old files
-          const { cleanupLogFiles } = await import(basePath + '/dist/postprocessor/triggers/GitHookTrigger.js');
+          const { cleanupLogFiles } = await import(basePath + '/' + distPath + '/postprocessor/triggers/GitHookTrigger.js');
           const result = await cleanupLogFiles({
             maxAgeHours: 24,
             excludePatterns: [

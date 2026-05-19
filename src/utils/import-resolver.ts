@@ -112,17 +112,13 @@ export class ImportResolver {
     const fullModuleName = subPath ? `${subPath}/${moduleName}` : moduleName;
 
     if (this.isTesting) {
-      // In tests, prefer built versions to avoid import issues
-      return `../dist/${fullModuleName}.js`;
+      return join(this.currentDir, "..", `${fullModuleName}.js`);
     } else if (this.isDevelopment) {
-      // In development, use source files
-      return `../src/${fullModuleName}.ts`;
+      return join(this.currentDir, "..", `${fullModuleName}.ts`);
     } else if (this.isBuilt || this.isInstalled) {
-      // In built/deployed environments, use compiled files
-      return `../dist/${fullModuleName}.js`;
+      return join(this.currentDir, "..", `${fullModuleName}.js`);
     } else {
-      // Fallback - try built first, then source
-      return `../dist/${fullModuleName}.js`;
+      return join(this.currentDir, "..", `${fullModuleName}.js`);
     }
   }
 
@@ -190,20 +186,16 @@ export class ImportResolver {
     const paths: string[] = [];
 
     if (this.isDevelopment) {
-      // Development alternatives
       paths.push(
-        `../dist/${fullModuleName}.js`,
-        `../src/${fullModuleName}.ts`,
+        join(this.currentDir, "..", `${fullModuleName}.js`),
+        join(this.currentDir, "..", `${fullModuleName}.ts`),
         `./${fullModuleName}.ts`,
-        `../dist/${fullModuleName}.js`,
       );
     } else {
-      // Built/deployed alternatives
       paths.push(
-        `../src/${fullModuleName}.ts`,
-        `../dist/${fullModuleName}.js`,
+        join(this.currentDir, "..", `${fullModuleName}.ts`),
+        join(this.currentDir, "..", `${fullModuleName}.js`),
         `./${fullModuleName}.js`,
-        `../dist/${fullModuleName}.js`,
       );
     }
 

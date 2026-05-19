@@ -136,7 +136,6 @@ async function loadFrameworkLogger(): Promise<FrameworkLoggerLike> {
   if (_frameworkLogger) return _frameworkLogger;
   const candidates = [
     "../core/framework-logger.js",
-    "../../dist/core/framework-logger.js",
     "../../node_modules/strray-ai/dist/core/framework-logger.js",
   ];
   for (const p of candidates) {
@@ -158,7 +157,6 @@ async function loadConfigPaths(): Promise<void> {
   if (_resolveCodexPath && _resolveStateDir) return;
   const candidates = [
     "../core/config-paths.js",
-    "../../dist/core/config-paths.js",
     "../../node_modules/strray-ai/dist/core/config-paths.js",
   ];
   for (const p of candidates) {
@@ -192,7 +190,6 @@ async function importSystemPromptGenerator(): Promise<void> {
 
   const candidates = [
     "../core/system-prompt-generator.js",
-    "../../dist/core/system-prompt-generator.js",
     "../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
   ];
   for (const p of candidates) {
