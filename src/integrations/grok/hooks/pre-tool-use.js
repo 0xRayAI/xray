@@ -14,20 +14,52 @@ const log = (msg) => { try { console.error(`[0xRay:GrokHook] ${msg}`); } catch {
 
 function findGovernanceCore() {
   const here = path.dirname(new URL(import.meta.url).pathname);
+
+  // Priority: explicit dev root
+  const devRoot = process.env.STRRAY_ROOT;
+  if (devRoot) {
+    const devCandidate = path.resolve(devRoot, 'dist/governance/governance-core.js');
+    if (fs.existsSync(devCandidate)) return devCandidate;
+  }
+
   const candidates = [
-    // When hook lives inside the published package dist/
+    // Published package layout
     path.resolve(here, '../../../governance/governance-core.js'),
     path.resolve(here, '../../../../governance/governance-core.js'),
-    // When executed from project node_modules/strray-ai/...
+    // node_modules installed layout
     path.resolve(process.cwd(), 'node_modules/strray-ai/dist/governance/governance-core.js'),
-    path.resolve(here, '../../../../../dist/governance/governance-core.js'),
-    // Fallbacks
+    // Dev layout fallbacks (no extra dist/)
     path.resolve(here, '../../../../../governance/governance-core.js'),
+    path.resolve(process.cwd(), 'dist/governance/governance-core.js'),
+    // Strong dev fallback: walk up looking for package.json
+    ...walkUpForCore(here),
   ];
+
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
   }
   return null;
+}
+
+function walkUpForCore(startDir, maxLevels = 8) {
+  const results = [];
+  let current = startDir;
+  for (let i = 0; i < maxLevels; i++) {
+    const pkgPath = path.resolve(current, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        if (pkg.name === 'strray-ai' || pkg.name === 'stringray') {
+          results.push(path.resolve(current, 'dist/governance/governance-core.js'));
+          results.push(path.resolve(current, 'governance/governance-core.js'));
+        }
+      } catch {}
+    }
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return results;
 }
 
 function deriveResonance(toolName, extra = '') {

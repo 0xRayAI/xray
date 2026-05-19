@@ -712,7 +712,7 @@ MANDATORY COMPLIANCE REQUIRED - VIOLATIONS WILL BLOCK COMMITS
 \`\`\`typescript
 // WRONG - Breaks across environments (actual violations found)
 import { RuleEnforcer } from "../enforcement/rule-enforcer.js";
-import { ProcessorManager } from "./dist/processors/processor-manager.js";
+// FIXED: Removed hardcoded dist/ path (was causing dist/dist corruption in builds)
 \`\`\`
 
 ✅ CORRECT - Use import resolver for environment awareness:
