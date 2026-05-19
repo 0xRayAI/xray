@@ -80,7 +80,7 @@ OpenCode status
   },
   "framework": {
     "name": "strray",
-    "version": "1.22.59",
+    "version": "1.22.60",
     "codex_terms": [
       "1",
       "2",

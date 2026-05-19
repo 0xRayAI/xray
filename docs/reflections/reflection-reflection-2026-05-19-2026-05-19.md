@@ -96,7 +96,7 @@ docs/archive/active-archived/advanced/plugin-loading-mechanism.md
 docs/archive/active-archived/commands/COMMANDS.md
 docs/archive/active-archived/superseded/legacy/ANTIGRAVITY_INTEGRATION.md
 docs/archive/active-archived/superseded/legacy/DOCS_INDEX.md
-docs/archive/active-archived/superseded/legacy/DOCUMENTATION_UPDATE_SUMMARY_v1.9.0.md
+docs/archive/active-archived/superseded/legacy/DOCUMENTATION_UPDATE_SUMMARY_v1.22.60.md
 docs/archive/active-archived/superseded/legacy/IMPLEMENTATION_INFERENCE_PIPELINE.md
 docs/archive/active-archived/superseded/legacy/INTEGRATION_LESSONS.md
 docs/archive/active-archived/superseded/legacy/regression-analysis-implementation-guide.md

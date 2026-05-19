@@ -1,6 +1,6 @@
 {
   "framework": "0xRay 1.15.17",
-  "version": "1.22.59",
+  "version": "1.22.60",
   "description": "Codex-compliant framework configuration for Credible UI project",
   "thresholds": {
     "bundleSize": {
@@ -220,7 +220,7 @@
       }
     },
     "codex": {
-      "version": "1.22.59",
+      "version": "1.22.60",
       "terms": [
         1,
         2,
