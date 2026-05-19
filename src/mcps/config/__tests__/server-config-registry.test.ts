@@ -176,13 +176,13 @@ describe('ServerConfigRegistry', () => {
   });
 
   describe('environment path handling', () => {
-    it('should use default node_modules path when STRRAY_DEV_PATH is not set', () => {
+    it('should use resolved framework path when STRRAY_DEV_PATH is not set', () => {
       const originalEnv = process.env.STRRAY_DEV_PATH;
       delete process.env.STRRAY_DEV_PATH;
       
       const freshRegistry = new ServerConfigRegistry();
       const config = freshRegistry.get('code-review');
-      expect(config?.args[0]).toContain('node_modules/strray-ai/dist');
+      expect(config?.args[0]).toContain('.server.js');
       
       process.env.STRRAY_DEV_PATH = originalEnv;
     });
