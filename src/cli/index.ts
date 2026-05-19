@@ -7,7 +7,7 @@
  */
 
 import { Command } from "commander";
-import { execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import { join, resolve } from "path";
 
 import { readFileSync, existsSync } from "fs";
@@ -1067,6 +1067,34 @@ program
   .action(async (name) => {
     const { removeMCPCommand } = await import('./commands/mcp-install.js');
     removeMCPCommand(name);
+  });
+
+// MCP server subprocess launchers (used by Grok plugin .mcp.json via npx)
+program
+  .command('mcp')
+  .description('Run an MCP server subprocess (used by Grok/OpenCode .mcp.json)')
+  .argument('<server>', 'Server name: governance or skills')
+  .action(async (server: string) => {
+    const serverMap: Record<string, string> = {
+      governance: 'dist/mcps/governance.server.js',
+      skills: 'dist/mcps/knowledge-skills/skill-invocation.server.js',
+    };
+    const relPath = serverMap[server];
+    if (!relPath) {
+      console.error(`Unknown MCP server: ${server}. Use: governance, skills`);
+      process.exit(1);
+    }
+    const serverPath = resolve(join(packageRoot, relPath));
+    if (!existsSync(serverPath)) {
+      console.error(`MCP server not found at ${serverPath}. Is strray-ai installed correctly?`);
+      process.exit(1);
+    }
+    const env: Record<string, string> = { ...process.env as Record<string, string> };
+    if (server === 'governance') {
+      env.STRRAY_FORCE_MCP_GOVERNANCE = 'true';
+    }
+    const child = spawn(process.execPath, [serverPath], { stdio: 'inherit', env });
+    child.on('exit', (code) => process.exit(code ?? 0));
   });
 
 // Grok CLI integration

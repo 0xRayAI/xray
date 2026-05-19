@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 
 const packageRoot = path.join(__dirname, "..", "..");
 
@@ -125,6 +126,30 @@ const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
 const agentsDest = path.join(targetDir, "AGENTS.md");
 if (fs.existsSync(agentsConsumer) && resolvedPackage !== resolvedTarget) {
   fs.copyFileSync(agentsConsumer, agentsDest);
+}
+
+// Register MCP servers with Grok CLI (if available) using absolute paths to installed dist
+if (resolvedPackage !== resolvedTarget) {
+  try {
+    execSync('which grok', { stdio: 'ignore' });
+    const govServer = path.join(packageRoot, 'dist/mcps/governance.server.js');
+    const skillsServer = path.join(packageRoot, 'dist/mcps/knowledge-skills/skill-invocation.server.js');
+    const strrayRoot = targetDir;
+
+    execSync(
+      `grok mcp add strray-governance --command node --args "${govServer}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "STRRAY_ROOT=${strrayRoot}"`,
+      { stdio: 'pipe' }
+    );
+    console.log('[postinstall] Registered strray-governance with Grok CLI');
+
+    execSync(
+      `grok mcp add strray-skills --command node --args "${skillsServer}" --env "STRRAY_ROOT=${strrayRoot}"`,
+      { stdio: 'pipe' }
+    );
+    console.log('[postinstall] Registered strray-skills with Grok CLI');
+  } catch (_e) {
+    // grok not on PATH or registration failed — skip gracefully
+  }
 }
 
 if (resolvedPackage !== resolvedTarget) {

@@ -73,6 +73,25 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
       console.log(`  grok plugins trust "${targetPluginDir}"`);
     }
 
+    // Register MCP servers via grok mcp add (most reliable mechanism)
+    const govMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/governance.server.js');
+    const skillsMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/knowledge-skills/skill-invocation.server.js');
+    try {
+      execSync(
+        `grok mcp add strray-governance --command node --args "${govMcpPath}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "STRRAY_ROOT=${process.cwd()}"`,
+        { stdio: 'pipe' }
+      );
+      execSync(
+        `grok mcp add strray-skills --command node --args "${skillsMcpPath}" --env "STRRAY_ROOT=${process.cwd()}"`,
+        { stdio: 'pipe' }
+      );
+      console.log('\x1b[32m✓ Registered strray MCP servers with Grok CLI\x1b[0m');
+    } catch {
+      console.log('\nCould not auto-register MCP servers. Run manually:');
+      console.log(`  grok mcp add strray-governance --command node --args "${govMcpPath}"`);
+      console.log(`  grok mcp add strray-skills --command node --args "${skillsMcpPath}"`);
+    }
+
     console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');
     console.log('Restart Grok or run `grok` to load the new hooks and MCP servers.');
 
