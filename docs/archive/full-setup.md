@@ -80,7 +80,7 @@ OpenCode status
   },
   "framework": {
     "name": "strray",
-    "version": "1.22.58",
+    "version": "1.22.59",
     "codex_terms": [
       "1",
       "2",
@@ -324,8 +324,8 @@ export STRRAY_ENV=production
 Once installed and configured, 0xRay provides:
 
 - **60 codex terms**: Systematic error prevention
-- **24 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
-- **40 MCP servers**: Project analysis, testing strategy, etc.
+- **42 Specialized Agents**: Enforcer, Architect, Orchestrator, etc.
+- **41 MCP servers**: Project analysis, testing strategy, etc.
 - **4 Automation Hooks**: Pre-commit checks, formatting, etc.
 - **Real-time Compliance**: Bundle size, test coverage monitoring
 

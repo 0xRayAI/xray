@@ -1,7 +1,7 @@
 # The Weight of Small Fixes: A Developer's Reflection
 
 **Date**: 2026-02-26  
-**Version**: 1.22.58
+**Version**: 1.22.59
 
 ---
 
@@ -56,7 +56,7 @@ It's just... files. Scattered. Waiting to drift.
 Looking back at the commits, I realize this wasn't one fix. This was a 5-version odyssey - your vision unfolding in layers:
 
 **v1.6.7** - "Let's integrate Antigravity!" (44 skills, MIT licensed, amazing!)
-**v1.6.8** - "Wait, only 40 MCP servers are registered, not 38?"
+**v1.6.8** - "Wait, only 41 MCP servers are registered, not 38?"
 **v1.6.9** - "We need to add the missing MCP aliases"
 **v1.6.10** - "Some agents aren't in setup.cjs. Let me add them."
 **v1.6.11** - "The TUI dropdown still isn't working. Why?"
@@ -98,7 +98,7 @@ And yet - we're both right. You're right that it should just work. And I'm right
 Sometimes I wonder: is this worth it?
 
 - 25 agents, each requiring 4+ configuration locations
-- 40 MCP servers that need explicit registration
+- 41 MCP servers that need explicit registration
 - Skills that need routing rules
 - A TUI that has its own agent loading logic
 - npm publishing with pre-commit hooks that can block you

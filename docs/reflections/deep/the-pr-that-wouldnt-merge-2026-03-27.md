@@ -189,7 +189,7 @@ Fourth, I would have documented the circular dependency in the version scripts. 
 
 ## The 0xRay Framework in 2026
 
-It's March 27, 2026. 0xRay is at version 1.15.4. The framework has come a long way since its early days—25 agents, 44 skills, 40 MCP servers, a full processor pipeline, an orchestrator, a codex enforcement system, and more.
+It's March 27, 2026. 0xRay is at version 1.15.4. The framework has come a long way since its early days—25 agents, 44 skills, 41 MCP servers, a full processor pipeline, an orchestrator, a codex enforcement system, and more.
 
 But the work of maintaining a framework is never done. Every new feature adds complexity. Every new agent requires documentation updates. Every new test suite is a new thing that can fail in CI.
 

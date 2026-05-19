@@ -143,7 +143,7 @@ class StringRayEnforcerToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "enforcer", version: "1.22.58",
+        name: "enforcer", version: "1.22.59",
       },
       {
         capabilities: {

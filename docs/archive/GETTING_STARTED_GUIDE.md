@@ -32,7 +32,7 @@ node node_modules/strray-ai/scripts/node/postinstall.cjs
 
 ### What is 0xRay?
 0xRay is an AI-powered development framework that provides:
-- **24 Specialized Agents** for different development tasks
+- **42 Specialized Agents** for different development tasks
 - **99.6% Error Prevention** through systematic validation
 - **Automatic Task Routing** based on complexity analysis
 - **Enterprise-Grade Quality** with production-ready code generation

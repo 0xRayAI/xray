@@ -1,5 +1,14 @@
 # ⚡ 0xRay: Self-Healing AI Governance OS
 
+**0xRay (StringRay) is now a first-class citizen inside the official Grok CLI** — full plugin with real PreToolUse governance hooks, researcher + governance MCP servers, and the complete Dynamo Solar SSOT decision engine.
+
+Install the plugin in one command:
+```bash
+npx strray-ai grok install
+```
+
+Then just use Grok normally. The full power of 0xRay (researcher, governance, skills) is available natively.
+
 **Enterprise AI Orchestration Framework for OpenCode, Hermes, and OpenClaw** — by [0xRayAI](https://github.com/0xrayai)
 
 [![Version](https://img.shields.io/badge/version---silent-blue?style=flat-square)](https://npmjs.com/package/strray-ai)
@@ -92,6 +101,35 @@ This installs only the MCP servers - no OpenCode dependency.
 [View all 42 agents →](https://github.com/htafolla/stringray/blob/master/AGENTS.md)
 
 ## 📦 OpenClaw Integration
+
+## 🤖 Grok CLI Integration (First-Class)
+
+0xRay is now a **first-class citizen inside the official Grok CLI** (same depth as OpenCode).
+
+- Full plugin with hooks (`PreToolUse` for governance enforcement)
+- `.mcp.json` registration for `strray-governance` + `strray-skills` (researcher, etc.)
+- `npx strray-ai grok install` (auto-trust + project seeding)
+- Real Dynamo Solar SSOT governance running inside your Grok sessions
+
+Install the plugin:
+```bash
+npx strray-ai grok install
+```
+
+Then just use Grok — the researcher and full governance system are now available natively.
+
+## 🛡️ Governance System (Dynamo Solar SSOT)
+
+0xRay ships a production-grade governance engine:
+
+- **Dynamo Solar SSOT**: Multi-factor decision matrix (resonance, isotopic ratio, vortex volume, historical coherence, solar activity)
+- Pure MCP transport (no simulation in modern paths)
+- Real proposal voting + apply with researcher deliberation
+- PreToolUse hooks that can enforce Codex before code changes
+
+Governance is the heart of self-healing AI development.
+
+See `docs/governance/` and the governance-core.ts for the full matrix.
 
 0xRay integrates with **OpenClaw** - a self-hosted AI gateway that connects messaging platforms (WhatsApp, Telegram, Discord, Slack) to AI coding agents.
 

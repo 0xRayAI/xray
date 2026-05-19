@@ -1,4 +1,4 @@
-# 0xRay AI v1.22.58 Release Notes
+# 0xRay AI v1.22.59 Release Notes
 
 **Release Date**: 2026-01-31  
 **Codename**: "Multi-AI Orchestration"  
@@ -87,7 +87,7 @@ Production-Ready Code
 - Updated `.github/workflows/ci.yml` - Automated CI job
 
 ### 4. Complete MCP Infrastructure
-**40 MCP servers** now fully mapped and operational:
+**41 MCP servers** now fully mapped and operational:
 
 **Core Orchestration (14)**:
 - architect-tools, boot-orchestrator, enforcer-tools
@@ -160,7 +160,7 @@ Production-Ready Code
 | Process Management | Agent spawning, lifecycle, cleanup |
 | Memory Management | Session state, persistence |
 | Resource Allocation | Complexity-based routing |
-| Hardware Abstraction | 40 MCP servers |
+| Hardware Abstraction | 41 MCP servers |
 | Security/Isolation | Enforcer, codex rules, sandbox |
 | Scheduling | Task queues, concurrent limits |
 | System Calls | Delegation API, orchestrator |
@@ -279,7 +279,7 @@ The missing piece that enables autonomous CI/CD recovery:
 **No breaking changes.** This is a validation and bugfix release.
 
 **Recommended steps**:
-1. Update version in package.json: `"version": "1.22.58"`
+1. Update version in package.json: `"version": "1.22.59"`
 2. Run `npm install` to refresh dependencies
 3. Run `npm run test:core-framework` to verify
 4. Deploy with confidence
@@ -296,7 +296,7 @@ The missing piece that enables autonomous CI/CD recovery:
 
 After 1.2.0, major new features will be part of the paid commercial tier. This release represents:
 - Complete AI OS foundation
-- 40 MCP servers with deep domain expertise
+- 41 MCP servers with deep domain expertise
 - Multi-AI collaboration pattern (proven)
 - 99.6% error prevention system
 - 1000+ test suite

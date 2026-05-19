@@ -1,6 +1,6 @@
-# ⚡ 0xRay AI v1.22.58 – Enterprise AI Agent Coordination Platform
+# ⚡ 0xRay AI v1.22.59 – Enterprise AI Agent Coordination Platform
 
-[![Version](https://img.shields.io/badge/version-1.22.58-blue.svg)](https://github.com/htafolla/strray)
+[![Version](https://img.shields.io/badge/version-1.22.59-blue.svg)](https://github.com/htafolla/strray)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
@@ -10,7 +10,7 @@
 
 ## ⚠️ Important Notice
 
-**0xRay AI v1.22.58 - Enterprise CI/CD Automation Plugin**
+**0xRay AI v1.22.59 - Enterprise CI/CD Automation Plugin**
 
 0xRay Framework is available as both:
 
@@ -69,7 +69,7 @@ This repository contains the complete 0xRay Framework source code with enterpris
 
 **Most AI coding tools fall into the same traps: tangled spaghetti code, hallucinations and inconsistent output, code rot that quietly erodes quality, race conditions, infinite loops, and tangled state/hook chaos.**
 
-**0xRay orchestrates 24 autonomous agents with 60 codex rules to eliminate them — before they take root.**
+**0xRay orchestrates 42 autonomous agents with 60 codex rules to eliminate them — before they take root.**
 
 **🛡️ Dead Ends Eliminated**
 
@@ -125,8 +125,8 @@ bun install -g OpenCode
 
 - Loads the Universal Development Codex v1.22.49
 - Enables enterprise CI/CD automation with post-processor
-- Registers all 24 autonomous agents
-- Sets up 40 MCP servers for agent communication
+- Registers all 42 autonomous agents
+- Sets up 41 MCP servers for agent communication
 - Configures automated deployment pipelines
 
 #### OpenCode Integration
@@ -147,7 +147,7 @@ npx strray-ai init
 # - Set up CI/CD post-processor for automated remediation
 # - Load codex terms into agent system prompts
 # - Enable multi-agent orchestration for complex tasks
-# - Provide 24 autonomous agents (enforcer, architect, orchestrator, etc.)
+# - Provide 42 autonomous agents (enforcer, architect, orchestrator, etc.)
 # - Monitor and enforce code quality standards
 # - Enable automated deployment with canary rollouts
 ```
@@ -298,7 +298,7 @@ npm run init
 ### Core Documentation
 
 - **[Architecture Overview](./architecture/ENTERPRISE_ARCHITECTURE.md)** - Complete 28-component system overview with testing coverage
-- **[Agent Documentation](./agents/)** - Detailed specifications for all 24 autonomous agents with operating procedures
+- **[Agent Documentation](./agents/)** - Detailed specifications for all 42 autonomous agents with operating procedures
 - **[API Reference](./api/API_REFERENCE.md)** - Developer API documentation for programmatic access
 - **[Installation Guide](./user-guide/installation/INSTALLATION.md)** - Complete setup and configuration guide
 - **[Model Configuration](./user-guide/configuration/model-configuration.md)** - Model setup with openrouter/xai-grok-2-1212-fast-1 assignments
@@ -332,8 +332,8 @@ npm run init
 ### Enterprise Capabilities
 
 - **Concurrent Sessions**: Unlimited with automatic lifecycle management
-- **Agent Coordination**: 24 autonomous agents with intelligent delegation
-- **MCP Servers**: 40 MCP servers providing specialized capabilities
+- **Agent Coordination**: 42 autonomous agents with intelligent delegation
+- **MCP Servers**: 41 MCP servers providing specialized capabilities
 - **CI/CD Automation**: Automated remediation loop with canary deployments
 - **Plugin Security**: Sandboxed execution with permission-based access
 - **Monitoring Coverage**: Real-time anomaly detection and predictive alerting
@@ -427,7 +427,7 @@ Update your `.opencode/OpenCode.json` for enterprise deployment:
   "$schema": "https://opencode.ai/OpenCode.schema.json",
   "framework": {
     "name": "strray",
-    "version": "1.22.58",
+    "version": "1.22.59",
     "performance_mode": "optimized",
     "monitoring_enabled": true,
     "plugin_security": "strict"
@@ -509,4 +509,4 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
-**Version**: 1.22.58 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.59 | Architecture: Facade Pattern (3 facades, 26+ modules) | [GitHub](https://github.com/htafolla/stringray)

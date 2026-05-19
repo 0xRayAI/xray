@@ -1,6 +1,6 @@
 # 0xRay: The Long Road to Agent Runtime - A Deep Reflection
 
-**Version**: 1.22.58  
+**Version**: 1.22.59  
 **Date**: April 2026  
 **Author**: 0xRay Development Team
 
@@ -68,7 +68,7 @@ Then came the agents. Not just enforcer — 26 of them.
 - backend-engineer, frontend-engineer, database-engineer
 - And 14 more...
 
-Plus 1,351 skills. Plus 40 MCP servers.
+Plus 1,351 skills. Plus 41 MCP servers.
 
 We had built an ecosystem.
 
@@ -179,7 +179,7 @@ Here's what 0xRay has become:
 ┌─────────────────────────────────────────────────────┐
 │                 0xRay (Agent Runtime)           │
 ├─────────────────────────────────────────────────────┤
-│ 26 Agents │ 1351 Skills │ 40 MCP servers │ 15+ Proc│
+│ 26 Agents │ 1351 Skills │ 41 MCP servers │ 15+ Proc│
 ├─────────────────────────────────────────────────────┤
 │ Pre-Processors (15) │ Post-Processors (5+)          │
 ├─────────────────────────────────────────────────────┤

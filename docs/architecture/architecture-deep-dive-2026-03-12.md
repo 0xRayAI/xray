@@ -10,7 +10,7 @@
 - **490 TypeScript source files**
 - **99 test files with 85%+ coverage**
 - **25 specialized agents**
-- **40 MCP servers**
+- **41 MCP servers**
 - **60-term Universal Development Codex**
 - **99.6% systematic error prevention**
 
@@ -20,7 +20,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           0xRay AI v1.22.58+                      │
+│                           0xRay AI v1.22.59+                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Interface Layer                                                            │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
@@ -228,7 +228,7 @@ Key Differentiators:
 - ✅ 60-term codex with 99.6% error prevention
 - ✅ Comprehensive governance (spawn limits, rate limiting, memory monitoring)
 - ✅ N specialized agents with intelligent routing
-- ✅ 40 MCP servers for tool integration
+- ✅ 41 MCP servers for tool integration
 - ✅ Deep reflections and narrative documentation
 - ✅ Production-ready with 85%+ test coverage
 

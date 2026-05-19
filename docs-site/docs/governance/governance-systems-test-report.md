@@ -17,6 +17,20 @@ Both governance systems are functional independently but have **limited integrat
 
 ---
 
+## Grok CLI Integration (v1.22+)
+
+Governance now runs natively inside the official Grok CLI via the strray-ai plugin:
+
+- PreToolUse hooks call the full Solar decision matrix before tool execution.
+- `.mcp.json` exposes `strray-governance` and researcher skills.
+- `npx strray-ai grok install` seeds the plugin with auto-trust.
+
+This makes 0xRay governance available directly in Grok sessions without needing a separate agent runtime.
+
+See the Grok integration docs and `src/integrations/grok/` for implementation.
+
+---
+
 ## Test Results
 
 ### System 1: AgentSpawnGovernor - ✅ ALL TESTS PASSED (8/8 - 100%)

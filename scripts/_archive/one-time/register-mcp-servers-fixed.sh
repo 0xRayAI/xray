@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 0xRay Framework MCP Server Registration Script
-# Registers all 40 MCP servers with OpenCode skill registry
+# Registers all 41 MCP servers with OpenCode skill registry
 
 set -e
 

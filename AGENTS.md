@@ -1,6 +1,8 @@
 # StringRay Agents
 
-Quick reference for StringRay AI orchestration framework.
+**Quick reference for StringRay AI orchestration framework (now with first-class Grok CLI support).**
+
+0xRay is a self-healing AI governance OS. It is now deeply integrated into the official Grok CLI (same depth as OpenCode) via the `strray-ai` plugin. This lets you run the full researcher + Dynamo Solar SSOT governance system natively inside Grok sessions.
 
 ## What is StringRay?
 
@@ -341,6 +343,30 @@ STRRAY_NO_TELEMETRY=1              # Disable analytics
 
 ## Integration Points
 
+### Grok CLI Integration (New in v1.22+)
+
+StringRay is now a first-class plugin for the official Grok CLI:
+
+- Plugin payload in `.grok/plugins/strray-ai/`
+- Full hooks support (PreToolUse for governance)
+- MCP servers registered via `.mcp.json` (governance + skills/researcher)
+- `npx strray-ai grok install` for easy setup + auto-trust
+
+This lets you run the full 0xRay researcher + governance system natively inside Grok conversations.
+
+### Governance (Dynamo Solar SSOT)
+
+The governance engine is the core "self-healing" brain:
+
+- `applyDecisionMatrix` with multi-factor Solar scoring
+- Pure MCP path for real deliberation (researcher + skill agents)
+- PreToolUse hooks that can block bad operations
+- Works across OpenCode, Grok, Hermes, and custom integrations
+
+See `src/governance/` and the decision matrix logic for details.
+
+## Integration Points (continued)
+
 ### Git Hooks Integration
 
 StringRay integrates with Git hooks for automated validation:
@@ -673,4 +699,4 @@ npx strray-ai --version
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.22.58 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.59 | [GitHub](https://github.com/htafolla/stringray)

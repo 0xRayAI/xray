@@ -200,7 +200,7 @@ What emerged from this session?
 ### What We Built
 - A framework that combines opinionated tools (Codex, Rules, Processors) with community extensibility
 - Natural language routing that needs no special syntax
-- 25 agents connected to 40 MCP servers
+- 25 agents connected to 41 MCP servers
 - 44+ skills available through conversation
 - Comprehensive test coverage
 

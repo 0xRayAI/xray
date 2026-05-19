@@ -92,11 +92,29 @@ async function main() {
   console.log('╚════════════════════════════════════════════════════════╝');
   
   const currentVersion = getCurrentVersion();
-  console.log(`\n📌 Current version: ${currentVersion}`);
-  
-  const newVersion = bumpVersion(currentVersion, releaseType);
-  console.log(`📌 New version: ${newVersion}`);
+  console.log(`\n📌 Current version (local): ${currentVersion}`);
+
+  // Better design: always compute target from the *published* version on npm
+  // This removes the brittle "must be exactly one ahead" problem.
+  let publishedVersion;
+  try {
+    publishedVersion = execSync('npm view strray-ai version', { encoding: 'utf-8' }).trim();
+    console.log(`📌 Latest published on npm: ${publishedVersion}`);
+  } catch {
+    publishedVersion = '0.0.0';
+    console.log('⚠️  Could not fetch published version from npm (using 0.0.0)');
+  }
+
+  const targetVersion = bumpVersion(publishedVersion, releaseType);
+  console.log(`📌 Target version (computed from registry): ${targetVersion}`);
   console.log(`📌 Release type: ${releaseType}`);
+
+  // Safety: if local is somehow ahead of what we computed, warn but continue
+  if (currentVersion !== targetVersion) {
+    console.log(`⚠️  Local version (${currentVersion}) differs from computed target. Using computed target ${targetVersion}.`);
+  }
+
+  const newVersion = targetVersion;
 
   // Step 1: Build
   console.log('\n📦 Step 1: Building...');

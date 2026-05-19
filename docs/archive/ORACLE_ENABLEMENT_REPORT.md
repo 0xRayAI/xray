@@ -111,7 +111,7 @@ All major domains now covered:
 ### **Files Modified**
 - ✅ `.opencode/OpenCode.json` - Oracle enabled
 - ✅ `archive/` directory created with 2 legacy configs
-- ✅ 24 agent configurations archived safely
+- ✅ 42 agent configurations archived safely
 
 ### **Git Status Ready**
 - 🔄 **Ready for commit**: All changes staged and ready for version control
