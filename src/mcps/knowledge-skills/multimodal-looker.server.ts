@@ -14,6 +14,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 /* ============================================================================
  * Type Definitions
@@ -1489,5 +1491,10 @@ class MultimodalLookerServer {
   }
 }
 
-const server = new MultimodalLookerServer();
-server.run().catch(console.error);
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+  const server = new MultimodalLookerServer();
+  server.run().catch(console.error);
+}
+
+export { MultimodalLookerServer };

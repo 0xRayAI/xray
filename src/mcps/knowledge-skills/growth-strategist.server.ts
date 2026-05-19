@@ -11,6 +11,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 interface Tool {
   name: string;
@@ -402,5 +404,10 @@ class MarketingExpertServer {
   }
 }
 
-const server = new MarketingExpertServer();
-server.run();
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+  const server = new MarketingExpertServer();
+  server.run();
+}
+
+export { MarketingExpertServer };

@@ -11,6 +11,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 interface IOSBlueprint {
   projectName: string;
@@ -661,6 +663,10 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// Start server if run directly
-const server = new StringRayMobileDevelopmentServer();
-server.start().catch(() => {});
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+  const server = new StringRayMobileDevelopmentServer();
+  server.start().catch(() => {});
+}
+
+export { StringRayMobileDevelopmentServer };

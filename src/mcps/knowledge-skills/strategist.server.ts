@@ -11,6 +11,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as path from "path";
+import { fileURLToPath } from "url";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface Tool {
@@ -256,5 +258,10 @@ class StrategistServer {
   }
 }
 
-const server = new StrategistServer();
-server.start().catch((error) => frameworkLogger.log("mcps/strategist", "run", "error", { error: String(error) }));
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+  const server = new StrategistServer();
+  server.start().catch((error) => frameworkLogger.log("mcps/strategist", "run", "error", { error: String(error) }));
+}
+
+export { StrategistServer };

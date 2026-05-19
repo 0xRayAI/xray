@@ -14,6 +14,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 
 interface BugReport {
   id: string;
@@ -614,5 +615,10 @@ class BugTriageSpecialistServer {
   }
 }
 
-const server = new BugTriageSpecialistServer();
-server.run();
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+  const server = new BugTriageSpecialistServer();
+  server.run();
+}
+
+export { BugTriageSpecialistServer };

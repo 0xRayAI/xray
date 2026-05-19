@@ -12,6 +12,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 interface LogEntry {
   timestamp: string;
@@ -608,5 +610,10 @@ ${analysis.recommendations.map((r) => `- ${r}`).join("\n")}
   }
 }
 
-const server = new LogMonitorServer();
-server.run();
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+  const server = new LogMonitorServer();
+  server.run();
+}
+
+export { LogMonitorServer };
