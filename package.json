@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "1.22.64",
+  "version": "1.22.65",
   "description": "⚡ 0xRay: Self-Healing AI Governance OS - Enterprise AI orchestration for OpenCode, Hermes, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -160,5 +160,13 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.30.1"
+  },
+  "strray": {
+    "dist": "dist",
+    "mcpServersPath": "dist/mcps",
+    "frameworkRoot": ".",
+    "cliEntry": "dist/cli/index.js",
+    "version": "1.22.64",
+    "notes": "Used by server-config-registry and MCP client to resolve correct built artifacts in both dev and installed consumer scenarios. Prevents accidental use of stale node_modules/strray-ai/dist builds."
   }
 }

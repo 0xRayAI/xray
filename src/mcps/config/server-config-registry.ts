@@ -9,10 +9,71 @@
 
 import { IServerConfig } from '../types/index.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
+import { fileURLToPath } from 'url';
+import { dirname, join, resolve } from 'path';
+import fs from 'fs';
 
 /**
  * Registry for managing MCP server configurations
  */
+
+/**
+ * Resolve the correct framework root and MCP servers path.
+ * Priority:
+ *   1. STRRAY_DEV_PATH env var (explicit dev override)
+ *   2. The "strray" field in the nearest package.json that declares it (works in both source tree and installed package)
+ *   3. Safe fallback to node_modules/strray-ai/dist
+ */
+function resolveFrameworkPaths(): { frameworkRoot: string; mcpServersPath: string } {
+  // Highest priority: explicit environment override
+  if (process.env.STRRAY_DEV_PATH) {
+    const devPath = process.env.STRRAY_DEV_PATH;
+    return {
+      frameworkRoot: devPath,
+      mcpServersPath: join(devPath, 'mcps'),
+    };
+  }
+
+  // Walk upward from this module to find the package that owns the "strray" config
+  let currentDir = dirname(fileURLToPath(import.meta.url));
+
+  // Safety limit to avoid walking the entire filesystem
+  const MAX_LEVELS = 12;
+  for (let i = 0; i < MAX_LEVELS; i++) {
+    const pkgPath = join(currentDir, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        if (pkg.name === 'strray-ai' && pkg.strray) {
+          const strrayCfg = pkg.strray as Record<string, string>;
+          const frameworkRoot = currentDir;
+          const declaredMcp = strrayCfg.mcpServersPath || (strrayCfg.dist ? join(strrayCfg.dist, 'mcps') : 'dist/mcps');
+          return {
+            frameworkRoot,
+            mcpServersPath: join(frameworkRoot, declaredMcp),
+          };
+        }
+      } catch {
+        // ignore corrupt package.json
+      }
+    }
+    const parent = dirname(currentDir);
+    if (parent === currentDir) break;
+    currentDir = parent;
+  }
+
+  // Final fallback (should almost never be reached)
+  const fallback = 'node_modules/strray-ai/dist';
+  frameworkLogger.log('server-config-registry', 'using-fallback-path', 'warning', {
+    reason: 'Could not locate strray package.json with "strray" field',
+    fallback,
+  });
+  return {
+    frameworkRoot: fallback,
+    mcpServersPath: join(fallback, 'mcps'),
+  };
+}
+
 export class ServerConfigRegistry {
   private configs: Map<string, IServerConfig> = new Map();
 
@@ -24,17 +85,14 @@ export class ServerConfigRegistry {
    * Register all default server configurations
    */
   private registerDefaultConfigs(): void {
-    // For consumer projects: default to node_modules/strray-ai/dist/
-    // For local dev: use STRRAY_DEV_PATH env var (e.g., "dist")
-    const basePath = process.env.STRRAY_DEV_PATH
-      ? process.env.STRRAY_DEV_PATH
-      : 'node_modules/strray-ai/dist';
+    const { mcpServersPath } = resolveFrameworkPaths();
+    const basePath = mcpServersPath;
 
     // Code Review Server
     this.register({
       serverName: 'code-review',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/code-review.server.js`],
+      args: [`${basePath}/knowledge-skills/code-review.server.js`],
       timeout: 30000,
     });
 
@@ -42,7 +100,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'security-audit',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/security-audit.server.js`],
+      args: [`${basePath}/knowledge-skills/security-audit.server.js`],
       timeout: 45000,
     });
 
@@ -50,7 +108,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'performance-optimization',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/performance-optimization.server.js`],
+      args: [`${basePath}/knowledge-skills/performance-optimization.server.js`],
       timeout: 30000,
     });
 
@@ -58,7 +116,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'testing-strategy',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
+      args: [`${basePath}/knowledge-skills/testing-strategy.server.js`],
       timeout: 25000,
     });
 
@@ -66,7 +124,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'researcher',
       command: 'node',
-      args: [`${basePath}/mcps/researcher.server.js`],
+      args: [`${basePath}/researcher.server.js`],
       timeout: 60000,
     });
 
@@ -74,7 +132,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'governance',
       command: 'node',
-      args: [`${basePath}/mcps/governance.server.js`],
+      args: [`${basePath}/governance.server.js`],
       timeout: 120000, // Governance can take longer because it calls multiple servers + external
     });
 
@@ -82,7 +140,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'framework-help',
       command: 'node',
-      args: [`${basePath}/mcps/framework-help.server.js`],
+      args: [`${basePath}/framework-help.server.js`],
       timeout: 15000,
     });
 
@@ -90,7 +148,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'skill-invocation',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/skill-invocation.server.js`],
+      args: [`${basePath}/knowledge-skills/skill-invocation.server.js`],
       timeout: 30000,
     });
 
@@ -98,7 +156,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'session-management',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/session-management.server.js`],
+      args: [`${basePath}/knowledge-skills/session-management.server.js`],
       timeout: 30000,
     });
 
@@ -106,7 +164,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'code-analyzer',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/code-analyzer.server.js`],
+      args: [`${basePath}/knowledge-skills/code-analyzer.server.js`],
       timeout: 45000,
     });
 
@@ -114,7 +172,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'enforcer',
       command: 'node',
-      args: [`${basePath}/mcps/enforcer-tools.server.js`],
+      args: [`${basePath}/enforcer-tools.server.js`],
       timeout: 30000,
     });
 
@@ -122,7 +180,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'orchestrator',
       command: 'node',
-      args: [`${basePath}/mcps/orchestrator.server.js`],
+      args: [`${basePath}/orchestrator.server.js`],
       timeout: 60000,
     });
 
@@ -130,7 +188,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'estimation-validator',
       command: 'node',
-      args: [`${basePath}/mcps/estimation.server.js`],
+      args: [`${basePath}/estimation.server.js`],
       timeout: 30000,
     });
 
@@ -138,7 +196,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'architect',
       command: 'node',
-      args: [`${basePath}/mcps/architect-tools.server.js`],
+      args: [`${basePath}/architect-tools.server.js`],
       timeout: 45000,
     });
 
@@ -146,7 +204,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'bug-triage-specialist',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/bug-triage-specialist.server.js`],
+      args: [`${basePath}/knowledge-skills/bug-triage-specialist.server.js`],
       timeout: 30000,
     });
 
@@ -154,7 +212,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'log-monitor',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/log-monitor.server.js`],
+      args: [`${basePath}/knowledge-skills/log-monitor.server.js`],
       timeout: 30000,
     });
 
@@ -163,7 +221,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'code-reviewer',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/code-review.server.js`],
+      args: [`${basePath}/knowledge-skills/code-review.server.js`],
       timeout: 30000,
     });
 
@@ -171,7 +229,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'security-auditor',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/security-audit.server.js`],
+      args: [`${basePath}/knowledge-skills/security-audit.server.js`],
       timeout: 45000,
     });
 
@@ -179,7 +237,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'refactorer',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/refactoring-strategies.server.js`],
+      args: [`${basePath}/knowledge-skills/refactoring-strategies.server.js`],
       timeout: 40000,
     });
 
@@ -187,7 +245,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'testing-lead',
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/testing-strategy.server.js`],
+      args: [`${basePath}/knowledge-skills/testing-strategy.server.js`],
       timeout: 30000,
     });
 
@@ -195,7 +253,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'auto-format',
       command: 'node',
-      args: [`${basePath}/mcps/auto-format.server.js`],
+      args: [`${basePath}/auto-format.server.js`],
       timeout: 30000,
     });
 
@@ -203,7 +261,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'boot-orchestrator',
       command: 'node',
-      args: [`${basePath}/mcps/boot-orchestrator.server.js`],
+      args: [`${basePath}/boot-orchestrator.server.js`],
       timeout: 60000,
     });
 
@@ -211,7 +269,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'framework-compliance-audit',
       command: 'node',
-      args: [`${basePath}/mcps/framework-compliance-audit.server.js`],
+      args: [`${basePath}/framework-compliance-audit.server.js`],
       timeout: 45000,
     });
 
@@ -219,7 +277,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'lint',
       command: 'node',
-      args: [`${basePath}/mcps/lint.server.js`],
+      args: [`${basePath}/lint.server.js`],
       timeout: 30000,
     });
 
@@ -227,7 +285,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'performance-analysis',
       command: 'node',
-      args: [`${basePath}/mcps/performance-analysis.server.js`],
+      args: [`${basePath}/performance-analysis.server.js`],
       timeout: 30000,
     });
 
@@ -235,7 +293,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'security-scan',
       command: 'node',
-      args: [`${basePath}/mcps/security-scan.server.js`],
+      args: [`${basePath}/security-scan.server.js`],
       timeout: 45000,
     });
 
@@ -243,7 +301,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'state-manager',
       command: 'node',
-      args: [`${basePath}/mcps/state-manager.server.js`],
+      args: [`${basePath}/state-manager.server.js`],
       timeout: 30000,
     });
 
@@ -251,7 +309,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'processor-pipeline',
       command: 'node',
-      args: [`${basePath}/mcps/processor-pipeline.server.js`],
+      args: [`${basePath}/processor-pipeline.server.js`],
       timeout: 30000,
     });
 
@@ -259,7 +317,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'model-health-check',
       command: 'node',
-      args: [`${basePath}/mcps/model-health-check.server.js`],
+      args: [`${basePath}/model-health-check.server.js`],
       timeout: 30000,
     });
   }
@@ -308,7 +366,8 @@ export class ServerConfigRegistry {
 
   /**
    * Create a dynamic configuration for an unknown server
-   * Uses the knowledge-skills directory as default location
+   * Uses the knowledge-skills directory as default location.
+   * Now respects the "strray" field declared in package.json.
    */
   createDynamicConfig(serverName: string): IServerConfig {
     // Validate serverName against path traversal attacks
@@ -318,14 +377,13 @@ export class ServerConfigRegistry {
       throw new Error(errorMsg);
     }
 
-    const basePath = process.env.STRRAY_DEV_PATH
-      ? process.env.STRRAY_DEV_PATH
-      : 'node_modules/strray-ai/dist';
+    const { mcpServersPath } = resolveFrameworkPaths();
+    const basePath = mcpServersPath;
 
     return {
       serverName,
       command: 'node',
-      args: [`${basePath}/mcps/knowledge-skills/${serverName}.server.js`],
+      args: [`${basePath}/knowledge-skills/${serverName}.server.js`],
       timeout: 30000,
     };
   }
