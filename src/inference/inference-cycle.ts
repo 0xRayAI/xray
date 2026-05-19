@@ -651,19 +651,24 @@ Respond with EXACTLY one of:
 
     if (useGovernanceMcp) {
       try {
-        const result = await mcpClientManager.callServerTool("governance", "govern_proposals", {
-          proposals: proposals.map(p => ({
-            id: p.id,
-            type: p.type,
-            title: p.title,
-            description: p.description,
-            evidence: p.evidence || [],
-            source: p.source || "inference",
-            confidence: p.confidence || 0.8,
-          })),
-          context: { source: "inference-cycle" },
-          options: { require_external: true },
-        });
+        const result = await Promise.race([
+          mcpClientManager.callServerTool("governance", "govern_proposals", {
+            proposals: proposals.map(p => ({
+              id: p.id,
+              type: p.type,
+              title: p.title,
+              description: p.description,
+              evidence: p.evidence || [],
+              source: p.source || "inference",
+              confidence: p.confidence || 0.8,
+            })),
+            context: { source: "inference-cycle" },
+            options: { require_external: true },
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Governance MCP timed out after 8s")), 8000)
+          ),
+        ]);
 
         const text = (result as any)?.content?.[0]?.text || "";
         const parsed = this.parseGovernanceMcpResponse(text, proposals);
@@ -1040,16 +1045,22 @@ Respond with EXACTLY one of:
 
     try {
       const { mcpClientManager } = await import("../mcps/mcp-client.js");
-      const result = await mcpClientManager.callServerTool("orchestrator", "orchestrate-task", {
-        description: prompt,
-        tasks: [{
-          id: `task-${Date.now()}`,
+      const MCP_TIMEOUT_MS = 8000;
+      const result = await Promise.race([
+        mcpClientManager.callServerTool("orchestrator", "orchestrate-task", {
           description: prompt,
-          type: agentName,
-          priority: "high",
-        }],
-        executionMode: "sequential",
-      });
+          tasks: [{
+            id: `task-${Date.now()}`,
+            description: prompt,
+            type: agentName,
+            priority: "high",
+          }],
+          executionMode: "sequential",
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Orchestrator MCP timed out after ${MCP_TIMEOUT_MS}ms`)), MCP_TIMEOUT_MS)
+        ),
+      ]);
       const content = (result as { content?: Array<{ text?: string }> }).content;
       let responseText = "";
       if (content && Array.isArray(content)) {

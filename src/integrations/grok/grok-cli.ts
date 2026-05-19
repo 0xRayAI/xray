@@ -20,6 +20,9 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
+// ESM-compatible __dirname (this file is compiled to ESM)
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+
 export interface GrokInstallOptions {
   force?: boolean;
   dryRun?: boolean;
@@ -33,8 +36,8 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
 
   // Try to find the plugin source from the installed package
   const possibleSources = [
-    path.join(__dirname, '..', '..', '..', '..', 'src/integrations/grok/plugin/strray-ai'), // dev
-    path.join(__dirname, '..', '..', '..', '..', '.grok/plugins/strray-ai'), // after build
+    path.join(__dirname, '..', '..', '..', 'src/integrations/grok/plugin/strray-ai'), // dev
+    path.join(__dirname, '..', '..', '..', '.grok/plugins/strray-ai'), // after build
   ];
 
   let sourceDir = possibleSources.find(p => fs.existsSync(p));
