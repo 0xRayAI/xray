@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "strray-governance": {
+      "command": "npx",
+      "args": ["-y", "strray-ai", "mcp", "governance"],
+      "env": {
+        "STRRAY_FORCE_MCP_GOVERNANCE": "true"
+      }
+    },
+    "strray-skills": {
+      "command": "npx",
+      "args": ["-y", "strray-ai", "mcp", "skills"]
+    }
+  }
+}

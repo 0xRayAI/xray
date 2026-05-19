@@ -60,6 +60,9 @@ strray-ai-*.tgz
 .opencode/agents/.gitkeep
 .opencode/commands/tree
 
+# Dependencies
+node_modules/
+
 # Build artifacts
 dist/
 tsconfig.tsbuildinfo

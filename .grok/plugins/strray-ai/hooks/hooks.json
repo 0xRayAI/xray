@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${STRRAY_AI_PATH:-node_modules/strray-ai}/dist/integrations/grok/hooks/pre-tool-use.js"
+            ],
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo",
+            "args": ["[0xRay] Grok session started with StringRay governance enabled"]
+          }
+        ]
+      }
+    ]
+  }
+}

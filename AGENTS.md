@@ -1,8 +1,6 @@
 # StringRay Agents
 
-**Quick reference for StringRay AI orchestration framework (now with first-class Grok CLI support).**
-
-0xRay is a self-healing AI governance OS. It is now deeply integrated into the official Grok CLI (same depth as OpenCode) via the `strray-ai` plugin. This lets you run the full researcher + Dynamo Solar SSOT governance system natively inside Grok sessions.
+Quick reference for StringRay AI orchestration framework.
 
 ## What is StringRay?
 
@@ -23,7 +21,7 @@ StringRay provides intelligent multi-agent orchestration with automatic delegati
 
 Deep reflection documents capture development journeys and lessons learned:
 - **Location**: `docs/reflections/` (main) and `docs/reflections/deep/` (detailed)
-- **Examples**: `kernel-v2.0-skill-system-fix-journey.md`, `typescript-build-fix-journey-2026-03-09.md`, `stringray-framework-deep-reflection-v1.22.64.md`
+- **Examples**: `kernel-v2.0-skill-system-fix-journey.md`, `typescript-build-fix-journey-2026-03-09.md`, `stringray-framework-deep-reflection-v1.4.21.md`
 
 These documents capture:
 - Technical challenges encountered and solved
@@ -122,14 +120,10 @@ The storyteller is now a **skill** (not an agent) so it runs with full session c
 
 ## Available Agents
 
-**42 OpenCode agents** defined by YAML configs in `src/opencode/agents/` (copied to `.opencode/agents/` during build). These are the agents OpenCode reads and routes to.
-
-**22 internal routing modules** in `src/agents/*.ts` — TypeScript implementations that handle delegation, spawning, and orchestration logic. These are framework internals, not OpenCode agents.
-
-### Primary Agents (7)
-
 | Agent | Purpose | Invoke |
 |-------|---------|--------|
+| `@enforcer` | Codex compliance & error prevention | `@enforcer analyze this code` |
+| `@orchestrator` | Complex multi-step task coordination | `@orchestrator implement feature` |
 | `@architect` | System design & technical decisions | `@architect design API` |
 | `@security-auditor` | Vulnerability detection | `@security-auditor scan` |
 | `@code-reviewer` | Quality assessment | `@code-reviewer review PR` |
@@ -137,12 +131,6 @@ The storyteller is now a **skill** (not an agent) so it runs with full session c
 | `@testing-lead` | Testing strategy | `@testing-lead plan tests` |
 | `@bug-triage-specialist` | Error investigation | `@bug-triage-specialist debug error` |
 | `@researcher` | Codebase exploration | `@researcher find implementation` |
-
-### Subagent / Skill-Based Agents (35)
-
-The remaining 35 agents are specialized subagents mapped to specific skills. They are invoked automatically by the routing system based on keywords and complexity analysis. See `src/opencode/strray/routing-mappings.json` for the full keyword-to-agent mapping.
-
-> **Architecture Note**: Agents are defined by YAML configs (`src/opencode/agents/*.yml`), not by TypeScript files. The TypeScript files in `src/agents/` are internal routing implementations used by the delegation system. When you invoke `@architect`, OpenCode reads `.opencode/agents/architect.yml` — not `src/agents/architect.ts`.
 
 
 ## Available Skills
@@ -343,30 +331,6 @@ STRRAY_NO_TELEMETRY=1              # Disable analytics
 
 ## Integration Points
 
-### Grok CLI Integration (New in v1.22+)
-
-StringRay is now a first-class plugin for the official Grok CLI:
-
-- Plugin payload in `.grok/plugins/strray-ai/`
-- Full hooks support (PreToolUse for governance)
-- MCP servers registered via `.mcp.json` (governance + skills/researcher)
-- `npx strray-ai grok install` for easy setup + auto-trust
-
-This lets you run the full 0xRay researcher + governance system natively inside Grok conversations.
-
-### Governance (Dynamo Solar SSOT)
-
-The governance engine is the core "self-healing" brain:
-
-- `applyDecisionMatrix` with multi-factor Solar scoring
-- Pure MCP path for real deliberation (researcher + skill agents)
-- PreToolUse hooks that can block bad operations
-- Works across OpenCode, Grok, Hermes, and custom integrations
-
-See `src/governance/` and the decision matrix logic for details.
-
-## Integration Points (continued)
-
 ### Git Hooks Integration
 
 StringRay integrates with Git hooks for automated validation:
@@ -554,35 +518,34 @@ npx strray-ai report --ci --output json
 # In code comment or prompt
 @architect design a REST API for user management
 
-@code-reviewer review this pull request
+@enforcer analyze this code for security issues
 
 @testing-lead create tests for authentication module
 ```
 
 **Chaining Agents**:
 ```
-@architect design feature:user-authentication
-  → Spawns @testing-lead → @code-reviewer
+@orchestrator implement feature:user-authentication
+  → Spawns @architect → @testing-lead → @code-reviewer
 ```
 
 ### Agent Selection Guide
 
 | Task Type | Primary Agent | Supporting Agents |
 |-----------|---------------|-------------------|
-| New feature | @architect | @testing-lead, @code-reviewer |
-| Bug fix | @bug-triage-specialist | @code-reviewer |
+| New feature | @orchestrator | @architect, @testing-lead |
+| Bug fix | @bug-triage-specialist | @enforcer, @code-reviewer |
 | Refactor | @refactorer | @architect, @testing-lead |
-| Security audit | @security-auditor | @code-reviewer |
-| Code review | @code-reviewer | @architect |
+| Security audit | @security-auditor | @enforcer |
+| Code review | @code-reviewer | @enforcer |
 | Research | @researcher | @architect |
-```
 
 ### Session Management
 
 **Start a Session**:
 ```bash
 # Sessions are automatic - invoke agent to start
-@architect design login feature
+@orchestrator implement login feature
 ```
 
 **View Active Sessions**:
@@ -676,7 +639,7 @@ npx strray-ai --version
 ### Consumer Environment Limitations
 
 - **Features.json**: Automatically loaded from package, not project root
-- **Codex Version**: Frozen at v1.22.64 in consumer mode (stable)
+- **Codex Version**: Frozen at v1.7.5 in consumer mode (stable)
 - **Plugin Behavior**: Reduced functionality in consumer mode:
   - No dynamic codex term enrichment
   - Fixed codex version
@@ -688,7 +651,7 @@ npx strray-ai --version
 | Aspect | Development | Consumer |
 |--------|-----------|----------|
 | Features | Full (latest) | Optimized (stable) |
-| Codex | Latest terms | v1.22.64 fallback |
+| Codex | Latest terms | v1.7.5 fallback |
 | Discovery | Dynamic (MCP) | Static only |
 | Hot Reload | Yes | No |
 
@@ -699,4 +662,4 @@ npx strray-ai --version
 - [Troubleshooting](https://github.com/htafolla/stringray/blob/master/docs/TROUBLESHOOTING.md)
 
 ---
-**Version**: 1.22.64 | [GitHub](https://github.com/htafolla/stringray)
+**Version**: 1.22.60 | [GitHub](https://github.com/htafolla/stringray)
