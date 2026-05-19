@@ -24,7 +24,7 @@ import { mcpClientManager } from "./mcp-client.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
-import { createGracefulShutdown } from "../utils/shutdown-handler.js";
+import { fileURLToPath } from "url";
 import { getGovernanceService } from "../governance/governance-service.js";
 import type { GovernanceRequest } from "../governance/governance-types.js";
 
@@ -345,12 +345,60 @@ class GovernanceServer {
     return terms;
   }
 
-  async run() {
+  async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    createGracefulShutdown({
-      serverName: "governance.server",
-      server: this.server,
+
+    let parentCheckTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = async (signal: string) => {
+      if (parentCheckTimer !== null) {
+        clearTimeout(parentCheckTimer);
+        parentCheckTimer = null;
+      }
+
+      const timeout = setTimeout(() => {
+        frameworkLogger.log("mcps/governance", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
+        process.exit(1);
+      }, 5000);
+
+      try {
+        if (this.server && typeof this.server.close === "function") {
+          await this.server.close();
+        }
+        clearTimeout(timeout);
+        process.exit(0);
+      } catch (error) {
+        clearTimeout(timeout);
+        frameworkLogger.log("mcps/governance", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
+        process.exit(1);
+      }
+    };
+
+    process.on("SIGINT", () => cleanup("SIGINT"));
+    process.on("SIGTERM", () => cleanup("SIGTERM"));
+    process.on("SIGHUP", () => cleanup("SIGHUP"));
+
+    const checkParent = () => {
+      try {
+        process.kill(process.ppid, 0);
+        parentCheckTimer = setTimeout(checkParent, 1000);
+      } catch (error) {
+        parentCheckTimer = null;
+        cleanup("parent-process-death");
+      }
+    };
+
+    parentCheckTimer = setTimeout(checkParent, 2000);
+
+    process.on("uncaughtException", (error) => {
+      frameworkLogger.log("mcps/governance", "uncaughtException", "error", { message: `Uncaught Exception: ${String(error)}` });
+      cleanup("uncaughtException");
+    });
+
+    process.on("unhandledRejection", (reason) => {
+      frameworkLogger.log("mcps/governance", "unhandledRejection", "error", { message: `Unhandled Rejection: ${String(reason)}` });
+      cleanup("unhandledRejection");
     });
   }
 
@@ -360,10 +408,11 @@ class GovernanceServer {
 }
 
 // Start the server if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new GovernanceServer();
   server.run().catch((error) => {
-    frameworkLogger.log("governance-mcp", "startup-error", "error", { error: String(error) });
+    process.stderr.write(`[governance.server] Fatal startup error: ${error}\n`);
     process.exit(1);
   });
 }
