@@ -197,9 +197,9 @@ export class GovernanceClient {
         recommendation: result.recommendation as 'PASS' | 'NEEDS_REVISION' | 'REJECT',
         confidence: result.confidence as number,
         voteWeight: result.voteWeight as number,
-        reasons: Array.isArray(result.reasoning)
-          ? (result.reasoning as string[])
-          : [result.reasoning as string],
+        reasons: Array.isArray(result.reasons)
+          ? (result.reasons as string[])
+          : [result.reasoning as string].filter(Boolean),
       };
 
       if (!this.isValidResponse(response)) {

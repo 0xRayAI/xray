@@ -30,7 +30,6 @@ async function loadFrameworkLogger() {
         return _frameworkLogger;
     const candidates = [
         "../core/framework-logger.js",
-        "../../dist/core/framework-logger.js",
         "../../node_modules/strray-ai/dist/core/framework-logger.js",
     ];
     for (const p of candidates) {
@@ -53,7 +52,6 @@ async function loadConfigPaths() {
         return;
     const candidates = [
         "../core/config-paths.js",
-        "../../dist/core/config-paths.js",
         "../../node_modules/strray-ai/dist/core/config-paths.js",
     ];
     for (const p of candidates) {
@@ -87,7 +85,6 @@ async function importSystemPromptGenerator() {
         return;
     const candidates = [
         "../core/system-prompt-generator.js",
-        "../../dist/core/system-prompt-generator.js",
         "../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
     ];
     for (const p of candidates) {
@@ -107,39 +104,40 @@ async function loadStringRayComponents() {
     if (_ProcessorManager && _StrRayStateManager && _featuresConfigLoader)
         return;
     const logger = await getOrCreateLogger(process.cwd());
+    const root = process.cwd();
     try {
-        logger.log(`🔄 Attempting to load from ../../dist/`);
-        const procModule = await import("../../dist/processors/processor-manager.js");
-        const stateModule = await import("../../dist/state/state-manager.js");
-        const featuresModule = await import("../../dist/core/features-config.js");
+        logger.log(`🔄 Attempting to load from cwd/dist/`);
+        const procModule = await import(`${root}/dist/processors/processor-manager.js`);
+        const stateModule = await import(`${root}/dist/state/state-manager.js`);
+        const featuresModule = await import(`${root}/dist/core/features-config.js`);
         _ProcessorManager = procModule.ProcessorManager;
         _StrRayStateManager = stateModule.StrRayStateManager;
         _featuresConfigLoader = featuresModule.featuresConfigLoader;
         _detectTaskType = featuresModule.detectTaskType;
-        logger.log(`✅ Loaded from ../../dist/`);
+        logger.log(`✅ Loaded from cwd/dist/`);
         return;
     }
     catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        logger.log(`❌ Failed to load from ../../dist/: ${message}`);
+        logger.log(`❌ Failed to load from cwd/dist/: ${message}`);
     }
     const pluginPaths = ["strray-ai", "strray-framework"];
     for (const pluginPath of pluginPaths) {
         try {
-            logger.log(`🔄 Attempting to load from ../../node_modules/${pluginPath}/dist/`);
-            const pm = await import(`../../node_modules/${pluginPath}/dist/processors/processor-manager.js`);
-            const sm = await import(`../../node_modules/${pluginPath}/dist/state/state-manager.js`);
-            const fm = await import(`../../node_modules/${pluginPath}/dist/core/features-config.js`);
+            logger.log(`🔄 Attempting to load from node_modules/${pluginPath}/dist/`);
+            const pm = await import(`${root}/node_modules/${pluginPath}/dist/processors/processor-manager.js`);
+            const sm = await import(`${root}/node_modules/${pluginPath}/dist/state/state-manager.js`);
+            const fm = await import(`${root}/node_modules/${pluginPath}/dist/core/features-config.js`);
             _ProcessorManager = pm.ProcessorManager;
             _StrRayStateManager = sm.StrRayStateManager;
             _featuresConfigLoader = fm.featuresConfigLoader;
             _detectTaskType = fm.detectTaskType;
-            logger.log(`✅ Loaded from ../../node_modules/${pluginPath}/dist/`);
+            logger.log(`✅ Loaded from node_modules/${pluginPath}/dist/`);
             return;
         }
         catch (e) {
             const message = e instanceof Error ? e.message : String(e);
-            logger.log(`❌ Failed to load from ../../node_modules/${pluginPath}/dist/: ${message}`);
+            logger.log(`❌ Failed to load from node_modules/${pluginPath}/dist/: ${message}`);
         }
     }
 }
@@ -837,4 +835,3 @@ export default async function strrayCodexPlugin(input) {
         },
     };
 }
-//# sourceMappingURL=strray-codex-injection.js.map

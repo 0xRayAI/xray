@@ -31,6 +31,9 @@ const KEEP = process.argv.includes('--keep');
 const DIR_FLAG = process.argv.indexOf('--dir');
 const CUSTOM_DIR = DIR_FLAG !== -1 && process.argv[DIR_FLAG + 1] ? process.argv[DIR_FLAG + 1] : null;
 
+const TARBALL_FLAG = process.argv.indexOf('--tarball');
+const TARBALL_PATH = TARBALL_FLAG !== -1 && process.argv[TARBALL_FLAG + 1] ? process.argv[TARBALL_FLAG + 1] : null;
+
 let passed = 0;
 let failed = 0;
 let skipped = 0;
@@ -168,7 +171,14 @@ async function main() {
 
     run('npm init -y', { cwd: testDir, timeout: 15000 });
 
-    const installOut = run('npm install strray-ai', { cwd: testDir, timeout: 120000 });
+    let installOut;
+    if (TARBALL_PATH) {
+      installOut = run(`npm install "${TARBALL_PATH}"`, { cwd: testDir, timeout: 120000 });
+      pass(`Installed from local tarball: ${TARBALL_PATH}`);
+    } else {
+      installOut = run('npm install strray-ai', { cwd: testDir, timeout: 120000 });
+    }
+
     if (fs.existsSync(path.join(testDir, 'node_modules', 'strray-ai', 'package.json'))) {
       const pkg = JSON.parse(fs.readFileSync(path.join(testDir, 'node_modules', 'strray-ai', 'package.json'), 'utf-8'));
       pass(`strray-ai installed: v${pkg.version}`);

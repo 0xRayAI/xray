@@ -346,26 +346,28 @@ class StringRayValidator {
 
     this.checkFile(path.join(PROJECT_DIR, 'scripts', 'node', 'postinstall.cjs'), 'Postinstall script');
     this.checkFile(path.join(PROJECT_DIR, 'opencode.json'), 'OpenCode configuration');
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode'), 'OpenCode directory');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'codex.json'), 'Codex configuration');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'features.json'), 'Features configuration');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'config.json'), 'Strray config');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'routing-mappings.json'), 'Routing mappings');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'workflow_state.json'), 'Workflow state');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'integrations.json'), 'Integrations config');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'strray', 'agents_template.md'), 'Agents template');
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'strray'), 'Strray config directory');
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'commands'), 'OpenCode commands');
+    this.checkDirectory(path.join(PROJECT_DIR, 'src', 'opencode'), 'OpenCode source directory');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode'), 'OpenCode generated directory');
+    // Source-of-truth configs (in src/opencode/)
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'strray', 'codex.json'), 'Codex configuration (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'strray', 'features.json'), 'Features configuration (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'strray', 'config.json'), 'Strray config (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'strray', 'routing-mappings.json'), 'Routing mappings (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'strray', 'integrations.json'), 'Integrations config (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'strray', 'agents_template.md'), 'Agents template (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'codex.codex'), 'Codex file (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'enforcer-config.json'), 'Enforcer config (source)');
+    this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', '.strrayrc.json'), 'Strray RC config (source)');
+    // Generated/runtime configs (in .opencode/)
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'strray'), 'Strray config directory (generated)');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'commands'), 'OpenCode commands (generated)');
     this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'hooks'), 'OpenCode hooks');
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'workflows'), 'OpenCode workflows');
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'agents'), 'OpenCode agents');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'workflows'), 'OpenCode workflows (generated)');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'agents'), 'OpenCode agents (generated)');
     this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'skills'), 'OpenCode skills');
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'core'), 'OpenCode core');
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'enforcement'), 'OpenCode enforcement');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'core'), 'OpenCode core (compiled)');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'enforcement'), 'OpenCode enforcement (compiled)');
     this.checkFile(path.join(PROJECT_DIR, '.opencode', 'init.sh'), 'Init script');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'codex.codex'), 'Codex file');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', 'enforcer-config.json'), 'Enforcer config');
-    this.checkFile(path.join(PROJECT_DIR, '.opencode', '.strrayrc.json'), 'Strray RC config');
 
     const consumerTestPath = path.join(PROJECT_DIR, 'scripts', 'mjs', 'test-consumer-readiness.mjs');
     if (this.checkFile(consumerTestPath, 'Consumer readiness test')) {

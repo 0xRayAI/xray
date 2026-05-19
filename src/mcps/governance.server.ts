@@ -29,6 +29,8 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { getGovernanceService } from "../governance/governance-service.js";
+import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
+import { featuresConfigLoader } from "../core/features-config.js";
 import type { GovernanceRequest } from "../governance/governance-types.js";
 
 interface GovernanceProposalInput {
@@ -348,7 +350,30 @@ class GovernanceServer {
     return terms;
   }
 
+  private async initializeGovernance(): Promise<void> {
+    try {
+      const config = featuresConfigLoader.loadConfig() as any;
+      const govConfig = config?.inference_governance;
+      if (govConfig?.enabled) {
+        await initializeGovernanceIntegration();
+        frameworkLogger.log("governance-server", "dynamo-solar-ssot-initialized", "info", {
+          endpoint: govConfig.endpoint_url || "default",
+        });
+      } else {
+        frameworkLogger.log("governance-server", "dynamo-solar-ssot-disabled", "info", {
+          message: "Dynamo Solar SSOT disabled in features config, external governance will abstain",
+        });
+      }
+    } catch (err) {
+      frameworkLogger.log("governance-server", "dynamo-solar-ssot-init-error", "error", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   async run(): Promise<void> {
+    await this.initializeGovernance();
+
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
@@ -413,6 +438,8 @@ class GovernanceServer {
    * Run as HTTP server using Streamable HTTP transport (for Grok CLI compatibility).
    */
   async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3100", 10)): Promise<void> {
+    await this.initializeGovernance();
+
     const app = createMcpExpressApp();
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),

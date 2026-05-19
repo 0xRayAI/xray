@@ -170,8 +170,8 @@ function getFrameworkCounts() {
     skills: 0
   };
   
-  // Count agents (.yml files in .opencode/agents/)
-  const agentsDir = path.join(rootDir, '.opencode/agents');
+  // Count agents (.yml files in src/opencode/agents/ — source of truth)
+  const agentsDir = path.join(rootDir, 'src/opencode/agents');
   if (fs.existsSync(agentsDir)) {
     counts.agents = fs.readdirSync(agentsDir)
       .filter(f => f.endsWith('.yml'))

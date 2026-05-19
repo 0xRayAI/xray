@@ -355,7 +355,7 @@ export class MCPClient extends EventEmitter {
     this.emit('tool.before', beforeEvent);
 
     const serverName = this.config.serverName;
-    const isGovernanceServer = ['code-review', 'security-audit', 'researcher'].includes(serverName);
+    const isGovernanceServer = ['code-review', 'security-audit', 'researcher', 'governance'].includes(serverName);
     const isGovernanceTool = toolName === 'analyze_proposal';
     const preferReal = this.isPureMcpMode || isGovernanceServer || isGovernanceTool;
 
