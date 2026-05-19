@@ -1,5 +1,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import {
   CallToolRequestSchema,
   ErrorCode,
@@ -8,6 +10,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { randomUUID } from "crypto";
 import { mcpClientManager } from "../mcp-client.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
@@ -877,16 +880,62 @@ class SkillInvocationServer {
       cleanup("unhandledRejection");
     });
   }
+
+  /**
+   * Run as HTTP server using Streamable HTTP transport (for Grok CLI compatibility).
+   */
+  async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3200", 10)): Promise<void> {
+    const app = createMcpExpressApp();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+    });
+
+    await this.server.connect(transport as any);
+
+    app.post("/mcp", async (req: any, res: any) => {
+      try {
+        await transport.handleRequest(req, res, req.body);
+      } catch (error) {
+        process.stderr.write(`[skill-invocation.server] HTTP handler error: ${error}\n`);
+        if (!res.headersSent) {
+          res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
+        }
+      }
+    });
+
+    app.get("/health", (_req: any, res: any) => {
+      res.json({ status: "ok", server: "skill-invocation" });
+    });
+
+    app.listen(port, () => {
+      process.stderr.write(`[skill-invocation.server] HTTP MCP listening on port ${port}\n`);
+    });
+
+    process.on("SIGINT", () => { transport.close(); process.exit(0); });
+    process.on("SIGTERM", () => { transport.close(); process.exit(0); });
+  }
 }
 
 // Start the server if this file is run directly
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
-  const server = new SkillInvocationServer();
-  server.run().catch((error) => {
-    process.stderr.write(`[skill-invocation.server] Fatal startup error: ${error}\n`);
-    process.exit(1);
-  });
+  // If --port or MCP_PORT is set, use HTTP transport (for Grok CLI compatibility)
+  const cliPort = process.argv.find((a) => a.startsWith("--port="))?.split("=")[1];
+  const port = parseInt(cliPort ?? process.env.MCP_PORT ?? "", 10);
+
+  if (!isNaN(port)) {
+    const server = new SkillInvocationServer();
+    server.runHttp(port).catch((error) => {
+      process.stderr.write(`[skill-invocation.server] HTTP startup error: ${error}\n`);
+      process.exit(1);
+    });
+  } else {
+    const server = new SkillInvocationServer();
+    server.run().catch((error) => {
+      process.stderr.write(`[skill-invocation.server] Fatal startup error: ${error}\n`);
+      process.exit(1);
+    });
+  }
 }
 
 export { SkillInvocationServer };

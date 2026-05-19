@@ -14,6 +14,8 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   CallToolRequestSchema,
@@ -25,6 +27,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { randomUUID } from "crypto";
 import { getGovernanceService } from "../governance/governance-service.js";
 import type { GovernanceRequest } from "../governance/governance-types.js";
 
@@ -402,19 +405,65 @@ class GovernanceServer {
     });
   }
 
-  async connect(transport: Transport) {
-    await this.server.connect(transport);
+  async connect(transport: Transport): Promise<void> {
+    await this.server.connect(transport as any);
+  }
+
+  /**
+   * Run as HTTP server using Streamable HTTP transport (for Grok CLI compatibility).
+   */
+  async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3100", 10)): Promise<void> {
+    const app = createMcpExpressApp();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+    });
+
+    await this.server.connect(transport as any);
+
+    app.post("/mcp", async (req: any, res: any) => {
+      try {
+        await transport.handleRequest(req, res, req.body);
+      } catch (error) {
+        process.stderr.write(`[governance.server] HTTP handler error: ${error}\n`);
+        if (!res.headersSent) {
+          res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
+        }
+      }
+    });
+
+    app.get("/health", (_req: any, res: any) => {
+      res.json({ status: "ok", server: "governance" });
+    });
+
+    app.listen(port, () => {
+      process.stderr.write(`[governance.server] HTTP MCP listening on port ${port}\n`);
+    });
+
+    process.on("SIGINT", () => { transport.close(); process.exit(0); });
+    process.on("SIGTERM", () => { transport.close(); process.exit(0); });
   }
 }
 
 // Start the server if this file is run directly
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
-  const server = new GovernanceServer();
-  server.run().catch((error) => {
-    process.stderr.write(`[governance.server] Fatal startup error: ${error}\n`);
-    process.exit(1);
-  });
+  // If --port or MCP_PORT is set, use HTTP transport (for Grok CLI compatibility)
+  const cliPort = process.argv.find((a) => a.startsWith("--port="))?.split("=")[1];
+  const port = parseInt(cliPort ?? process.env.MCP_PORT ?? "", 10);
+
+  if (!isNaN(port)) {
+    const server = new GovernanceServer();
+    server.runHttp(port).catch((error) => {
+      process.stderr.write(`[governance.server] HTTP startup error: ${error}\n`);
+      process.exit(1);
+    });
+  } else {
+    const server = new GovernanceServer();
+    server.run().catch((error) => {
+      process.stderr.write(`[governance.server] Fatal startup error: ${error}\n`);
+      process.exit(1);
+    });
+  }
 }
 
 export { GovernanceServer };
