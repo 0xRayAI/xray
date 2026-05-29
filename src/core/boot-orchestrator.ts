@@ -1,23 +1,5 @@
 /**
- * Boot Orchestrator
- *
- * Implements orchestrator-first boot sequence with automatic enforcement activation.
- * Coordinates the initialization of all framework components in the correct order.
- *
- * EXECUTION PATHS:
- * - PRIMARY: .opencode/plugin/strray-codex-injection.js - Intercepts prompts in OpenCode
- * - FALLBACK: This boot-orchestrator runs when plugin is not loaded
- *
- * The framework is designed to work through OpenCode's plugin system where:
- *   1. StringRay plugin intercepts prompts via hooks
- *   2. Routes to agents via .opencode/agents/*.yml configs
- *   3. OpenCode spawns actual agent processes
- *   4. Hermes Agent handles MCP server execution
- *
- * This orchestrator provides fallback initialization when the plugin isn't available.
- *
- * @version 1.1.2
- * @since 2026-01-07
+ * Boot Orchestrator (min documented consumer runtime compat shim from prior StringRay releases; primary Xray* paths + XRAY_||STRRAY_ env + .strray fallbacks only; 1-line per Scope Rule).
  */
 
 import { StringRayContextLoader } from "./context-loader.js";
@@ -849,15 +831,15 @@ export class BootOrchestrator {
     try {
       frameworkLogger.log(
         "boot-orchestrator",
-        "loading 0xRay configuration",
+        "loading xray configuration",
         "info",
         { jobId },
       );
-      // Phase 0: Load 0xRay configuration from Python ConfigManager
+      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
       await this.loadStringRayConfiguration(jobId);
       frameworkLogger.log(
         "boot-orchestrator",
-        "0xRay configuration loaded",
+        "xray configuration loaded",
         "success",
         { jobId },
       );
@@ -1107,12 +1089,10 @@ export class BootOrchestrator {
     return result;
   }
 
-  /**
-   * Load 0xRay configuration from Python ConfigManager
-   */
+  // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
   private async loadStringRayConfiguration(jobId: string): Promise<void> {
     try {
-      // Load 0xRay configuration directly (no Python dependency)
+      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
       const stringRayConfig = {
         version: "1.22.60",
         codex_enabled: true,
@@ -1203,7 +1183,7 @@ export class BootOrchestrator {
         { jobId },
       );
     } catch (error) {
-      frameworkLogger.log("boot-orchestrator", "config-load-warning", "warning", { error, message: "Failed to load 0xRay configuration" });
+      frameworkLogger.log("boot-orchestrator", "config-load-warning", "warning", { error, message: "Failed to load xray configuration" });
       // Continue with defaults if loading fails
     }
   }

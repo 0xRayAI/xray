@@ -1,15 +1,4 @@
-/**
- * Agent Metrics System
- *
- * Comprehensive metrics tracking for all agent invocations including:
- * - Invocation tracking (who, when, success/failure)
- * - Aggregation by agent type, time period, complexity level
- * - History tracking with configurable retention
- * - Export functionality (JSON, CSV, summary reports)
- *
- * @version 1.0.0
- * @since 2026-04-17
- */
+// Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
 
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";

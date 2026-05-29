@@ -1,5 +1,5 @@
 /**
- * 0xRay DevOps Deployment MCP Server
+ * xray DevOps Deployment MCP Server
  *
  * Knowledge skill for DevOps practices, deployment strategies,
  * CI/CD pipeline design, and infrastructure automation

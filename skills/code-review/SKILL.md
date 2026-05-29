@@ -1,14 +1,14 @@
 ---
 name: code-review
 description: Perform comprehensive code quality assessment and provide improvement suggestions
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [review, quality, assessment, improvement]
 
 mcp:
   code-review:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/code-review.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/code-review.server.js]
 ---
 
 # Code Review Skill

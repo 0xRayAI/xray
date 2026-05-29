@@ -1,14 +1,14 @@
 ---
 name: git-workflow
 description: Git workflow management and collaboration tools
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [collaboration, git, workflow]
 
 mcp:
   git-workflow:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/git-workflow.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/git-workflow.server.js]
 ---
 
 # Git Workflow Skill

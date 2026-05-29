@@ -107,13 +107,15 @@ function getChangedFiles(count = 20) {
 }
 
 function loadConfig() {
-  const configPath = join(process.cwd(), ".opencode", "strray", "features.json");
-  const fallbackPath = join(process.cwd(), ".strray", "features.json");
+  // Primary: .opencode/xray/ YML SSOT. Min legacy fallbacks for .opencode/strray/ + .strray/ (transitional consumer compat; documented per Term 61)
+  const configPath = join(process.cwd(), ".opencode", "xray", "features.json");
+  const fallbackPath = join(process.cwd(), ".opencode", "strray", "features.json");
+  const legacyPath = join(process.cwd(), ".strray", "features.json");
   
-  for (const path of [configPath, fallbackPath]) {
-    if (existsSync(path)) {
+  for (const p of [configPath, fallbackPath, legacyPath]) {
+    if (existsSync(p)) {
       try {
-        const content = readFileSync(path, "utf-8");
+        const content = readFileSync(p, "utf-8");
         const parsed = JSON.parse(content);
         if (parsed.auto_reflection) {
           return parsed.auto_reflection;

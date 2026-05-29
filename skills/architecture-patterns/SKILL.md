@@ -1,14 +1,14 @@
 ---
 name: architecture-patterns
 description: Software architecture patterns and best practices
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [design, architecture, patterns]
 
 mcp:
   architecture-patterns:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/architecture-patterns.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/architecture-patterns.server.js]
 ---
 
 # Architecture Patterns Skill

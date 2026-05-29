@@ -119,7 +119,7 @@ class ConsumerReadinessCheck {
       if (!config) {
         const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS;
         this.checks.push({
-          name: "StringRay plugin registration",
+          name: "xray plugin registration",
           passed: isCIEnvironment ? true : false,
           details: "No config file found",
         });
@@ -128,20 +128,20 @@ class ConsumerReadinessCheck {
       }
 
       const pluginArray = config.plugin || config.plugins || [];
-      const hasStringRayPlugin =
+      const hasXrayPlugin =
         Array.isArray(pluginArray) &&
         pluginArray.some(
-          (plugin) => typeof plugin === "string" && plugin.includes("stringray"),
+          (plugin) => typeof plugin === "string" && plugin.includes("xray"),
         );
 
       // In CI/development environments, plugin registration is optional
       // The plugin requires OpenCode to be running to register
       const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS || !this.isConsumerEnvironment;
 
-      if (isCIEnvironment && !hasStringRayPlugin) {
+      if (isCIEnvironment && !hasXrayPlugin) {
         // Mark as warning (passed=true) in CI since plugin needs active OpenCode
         this.checks.push({
-          name: "StringRay plugin registration",
+          name: "xray plugin registration",
           passed: true,
           details: "Optional in CI environment",
         });
@@ -150,19 +150,19 @@ class ConsumerReadinessCheck {
         );
       } else {
         this.checks.push({
-          name: "StringRay plugin registration",
-          passed: hasStringRayPlugin,
-          details: hasStringRayPlugin ? "Plugin registered" : "Plugin not found",
+          name: "xray plugin registration",
+          passed: hasXrayPlugin,
+          details: hasXrayPlugin ? "Plugin registered" : "Plugin not found",
         });
         console.log(
-          `${hasStringRayPlugin ? "✅" : "❌"} Plugin registration: ${hasStringRayPlugin ? "Registered" : "Missing"}`,
+          `${hasXrayPlugin ? "✅" : "❌"} Plugin registration: ${hasXrayPlugin ? "Registered" : "Missing"}`,
         );
       }
     } catch (error) {
       // In CI, don't fail for configuration errors either
       const isCIEnvironment = process.env.CI || process.env.GITHUB_ACTIONS;
       this.checks.push({
-        name: "StringRay plugin registration",
+        name: "xray plugin registration",
         passed: isCIEnvironment ? true : false, // Don't fail CI
         details: isCIEnvironment ? "Optional in CI environment" : "Configuration error",
       });
@@ -206,7 +206,7 @@ class ConsumerReadinessCheck {
 async function runPathVerification() {
   const isConsumerEnv = process.cwd().includes('test-') || 
                         process.cwd().includes('tmp') ||
-                        fs.existsSync('node_modules/strray-ai');
+                        fs.existsSync('node_modules/xray');
   
   if (isConsumerEnv) {
     console.log("\n🔍 Running plugin path verification...");

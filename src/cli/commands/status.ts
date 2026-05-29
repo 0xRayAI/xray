@@ -210,7 +210,7 @@ export function printStatus(report: StatusReport): void {
 
   console.log("");
   console.log("╔══════════════════════════════════════════════════╗");
-  console.log("║           0xRay Status                      ║");
+  console.log("║           xray Status                       ║");
   console.log("╚══════════════════════════════════════════════════╝");
   console.log("");
   console.log(`✅ OpenCode: ${opencodeStatus}`);

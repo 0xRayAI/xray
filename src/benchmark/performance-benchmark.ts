@@ -1,12 +1,4 @@
-/**
- * Performance Benchmarking System
- *
- * Comprehensive performance measurement and analysis system for framework operations.
- * Measures boot sequence, orchestrator tasks, session management, and agent operations.
- *
- * @version 1.0.0
- * @since 2026-01-07
- */
+// Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
 
 import { frameworkLogger } from "../core/framework-logger.js";
 import crypto from "crypto";

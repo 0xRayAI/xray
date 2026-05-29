@@ -6,7 +6,7 @@
  * API, no framework imports. Pure input/output.
  *
  * This is the decoupled replacement for the codex injection that
- * previously lived inside the OpenCode plugin (strray-codex-injection.ts).
+ * previously lived inside the OpenCode plugin (xray-codex-injection.ts).
  *
  * Usage from any host (Node.js, Python via bridge, HTTP, etc.):
  *   import { formatCodexPrompt } from './codex-formatter.js';

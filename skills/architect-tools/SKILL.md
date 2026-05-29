@@ -1,14 +1,14 @@
 ---
 name: architect-tools
 description: System design and technical architecture tools
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [design, architect, tools]
 
 mcp:
   architect-tools:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/architect-tools.server.js]
+    args: [node_modules/xray/dist/mcps/architect-tools.server.js]
 ---
 
 # Architect Tools Skill

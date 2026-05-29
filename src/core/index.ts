@@ -1,5 +1,5 @@
 export { KernelOrchestrator } from "./orchestrator.js";
-export { defaultStringRayConfig } from "./strray-activation.js";
+export { defaultStringRayConfig } from "./xray-activation.js"; // consumer runtime compat from prior StringRay releases (1-line min per Scope Rule)
 
 // Decoupled config path resolution (Layer 1)
 export {

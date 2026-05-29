@@ -1,5 +1,5 @@
 /**
- * 0xRay Project Analysis MCP Server
+ * xray Project Analysis MCP Server
  *
  * Knowledge skill for project structure analysis, complexity assessment,
  * and pattern recognition - provides deep project intelligence
@@ -136,7 +136,7 @@ interface McpToolResponse {
   content: Array<{ type: "text"; text: string }>;
 }
 
-class StringRayProjectAnalysisServer {
+class ProjectAnalysisServer {
   private server: Server;
 
   constructor() {

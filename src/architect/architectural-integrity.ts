@@ -40,7 +40,7 @@ export async function verifyArchitecturalIntegrity(): Promise<{
   if (!postProcessor) {
     issues.push("Post-processor not activated");
     recommendations.push(
-      "Add post-processor activation to strray-activation.ts",
+      "Add post-processor activation to xray-activation.ts",
     );
   }
 

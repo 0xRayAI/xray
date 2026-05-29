@@ -1,5 +1,5 @@
 /**
- * 0xRay Performance Optimization MCP Server
+ * xray Performance Optimization MCP Server
  *
  * Knowledge skill for performance analysis, optimization recommendations,
  * profiling, benchmarking, memory analysis, and Core Web Vitals measurement

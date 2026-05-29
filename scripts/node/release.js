@@ -63,7 +63,7 @@ function main() {
   if (bumpType === "major" || bumpType === "minor") parts[2] = 0;
   const nextVersion = parts.join(".");
 
-  console.log(`\n${BOLD}${BLUE}🚀 StringRay Release${RESET}`);
+  console.log(`\n${BOLD}${BLUE}🚀 xray Release${RESET}`);
   console.log(`${BOLD}  ${currentVersion} → ${nextVersion} (${bumpType})${RESET}\n`);
 
   if (dryRun) {
@@ -123,20 +123,20 @@ function main() {
     console.log(`${BLUE}▸ Publishing to npm${RESET}`);
     try {
       execSync("npm publish --access public", { cwd: rootDir, stdio: "inherit" });
-      console.log(`${GREEN}  ✓ Published strray-ai@${nextVersion}${RESET}`);
+      console.log(`${GREEN}  ✓ Published xray@${nextVersion}${RESET}`);
     } catch (e) {
       const errMsg = (e.stderr?.toString() || "") + (e.message || "");
       if (errMsg.includes("previously published")) {
-        console.log(`${GREEN}  ✓ Already published strray-ai@${nextVersion}${RESET}`);
+        console.log(`${GREEN}  ✓ Already published xray@${nextVersion}${RESET}`);
       } else {
         console.log(`${RED}  ✗ Publish failed. Trying with --ignore-scripts...${RESET}`);
         try {
           execSync("npm publish --access public --ignore-scripts", { cwd: rootDir, stdio: "pipe", encoding: "utf-8" });
-          console.log(`${GREEN}  ✓ Published strray-ai@${nextVersion} (ignore-scripts)${RESET}`);
+          console.log(`${GREEN}  ✓ Published xray@${nextVersion} (ignore-scripts)${RESET}`);
         } catch (e2) {
           const errMsg2 = (e2.stderr?.toString() || "") + (e2.message || "");
           if (errMsg2.includes("previously published")) {
-            console.log(`${GREEN}  ✓ Already published strray-ai@${nextVersion}${RESET}`);
+            console.log(`${GREEN}  ✓ Already published xray@${nextVersion}${RESET}`);
           } else {
             console.log(`${RED}  ✗ Publish failed: ${errMsg2.slice(0, 200)}${RESET}`);
             process.exit(1);
@@ -153,7 +153,7 @@ function main() {
     }
   }
 
-  console.log(`\n${BOLD}${GREEN}✅ Released strray-ai@${nextVersion}${RESET}\n`);
+  console.log(`\n${BOLD}${GREEN}✅ Released xray@${nextVersion}${RESET}\n`);
 }
 
 main();

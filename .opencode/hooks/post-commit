@@ -1,5 +1,5 @@
 #!/bin/bash
-# StringRay Post-Commit Hook
+# 0xRay Post-Commit Hook
 # Runs activity logging, analytics, log cleanup, and auto-reflection after commit
 # Does NOT block — runs in background
 

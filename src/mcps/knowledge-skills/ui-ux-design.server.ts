@@ -1,5 +1,5 @@
 /**
- * 0xRay UI/UX Design MCP Server
+ * xray UI/UX Design MCP Server
  *
  * Knowledge skill for user interface and user experience design,
  * component patterns, accessibility compliance, and design system guidance
@@ -1987,7 +1987,7 @@ Available: ${Object.keys(system.components).length} component types
       "ui-ux-design.server",
       "-strray-ui-ux-design-mcp-server-running-",
       "info",
-      { message: "0xRay UI/UX Design MCP Server running..." },
+      { message: "xray UI/UX Design MCP Server running..." },
     );
 
     const cleanup = async (signal: string) => {
@@ -2013,7 +2013,7 @@ Available: ${Object.keys(system.components).length} component types
           "ui-ux-design.server",
           "-strray-mcp-server-shut-down-gracefully-",
           "info",
-          { message: "0xRay MCP Server shut down gracefully" },
+          { message: "xray MCP Server shut down gracefully" },
         );
         process.exit(0);
       } catch (error) {

@@ -1,14 +1,14 @@
 ---
 name: security-audit
 description: Security auditing and compliance validation
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [security, security, audit]
 
 mcp:
   security-audit:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/security-audit.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/security-audit.server.js]
 ---
 
 # Security Audit Skill

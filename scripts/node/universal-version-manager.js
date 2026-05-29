@@ -3,7 +3,7 @@
 /**
  * Universal Version Management Script
  *
- * Automatically updates all version references across the StringRay Framework
+ * Automatically updates all version references across the xray v2 Framework
  * including framework versions, codex versions, and documentation consistency.
  * Ensures single source of truth for all version information.
  *
@@ -100,7 +100,7 @@ function calculateCounts() {
 
     // Count tests: prefer stored vitest count, then grep as fallback
     try {
-      const vitestStatePath = ".opencode/strray/test-count.json";
+      const vitestStatePath = ".opencode/test-count.json";
       if (fs.existsSync(vitestStatePath)) {
         const state = JSON.parse(fs.readFileSync(vitestStatePath, "utf8"));
         if (state.totalTests && state.totalTests > 100) {
@@ -137,7 +137,7 @@ const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
     version: "1.22.61",
-      displayName: "0xRay: Self-Healing AI Governance OS",
+      displayName: "xray: Self-Healing AI Governance OS",
       lastUpdated: "2026-05-19",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
@@ -178,7 +178,7 @@ function findFiles(
     "docs-site", "scripts/mjs", "scripts/test", "scripts/integrations",
     ".opencode/state",  // Runtime state data
     "logs", "reports",  // Generated logs/reports
-    ".strray",  // Circular symlink
+
   ],
    ignoreFiles = [
      // npm/package files
@@ -260,17 +260,12 @@ const UPDATE_PATTERNS = [
       replacement: `version: "${OFFICIAL_VERSIONS.framework.version}",`,
     },
     {
-      pattern: /StringRay Framework v[0-9]+\.[0-9]+\.[0-9]+/g,
+      pattern: /xray Framework v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: OFFICIAL_VERSIONS.framework.displayName,
     },
-    // NOTE: README has a version badge that needs updating
     {
       pattern: /!\[Version\]\(https:\/\/img\.shields\.io\/badge\/version-[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `![Version](https://img.shields.io/badge/version-${OFFICIAL_VERSIONS.framework.version}`,
-    },
-    {
-      pattern: /- Framework Version: StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
-      replacement: `- Framework Version: ${OFFICIAL_VERSIONS.framework.displayName}`,
     },
     {
       pattern: /- Framework Version: [0-9]+\.[0-9]+\.[0-9]+/g,
@@ -282,13 +277,13 @@ const UPDATE_PATTERNS = [
       replacement: `.version("${OFFICIAL_VERSIONS.framework.version}")`,
    },
     {
-      pattern: /Framework Version: StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
+      pattern: /Framework Version: xray v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `Framework Version: ${OFFICIAL_VERSIONS.framework.displayName}`,
     },
 
     // Simple version patterns
     {
-      pattern: /StrRay v[0-9]+\.[0-9]+\.[0-9]+/g,
+      pattern: /xray v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: OFFICIAL_VERSIONS.framework.displayName,
     },
     // Standalone version in docs (v1.15.6, v1.15.6 patterns)
@@ -303,15 +298,15 @@ const UPDATE_PATTERNS = [
 
     // Pre-commit introspection patterns
     {
-      pattern: /StringRay [0-9]+\.[0-9]+\.[0-9]+ - Pre-commit Introspection/g,
+      pattern: /xray [0-9]+\.[0-9]+\.[0-9]+ - Pre-commit Introspection/g,
       replacement: `${OFFICIAL_VERSIONS.framework.displayName} - Pre-commit Introspection`,
     },
     {
-      pattern: /🔬 StringRay [0-9]+\.[0-9]+\.[0-9]+ - Pre-commit Introspection/g,
+      pattern: /🔬 xray [0-9]+\.[0-9]+\.[0-9]+ - Pre-commit Introspection/g,
       replacement: `🔬 ${OFFICIAL_VERSIONS.framework.displayName} - Pre-commit Introspection`,
     },
 
-    // Codex version patterns (for src/opencode/strray/codex.json and src/opencode/codex.codex)
+    // Codex version patterns
     {
       pattern: /"version":"[0-9]+\.[0-9]+\.[0-9]+"/g,
       replacement: `"version":"${OFFICIAL_VERSIONS.framework.version}"`,
@@ -325,14 +320,10 @@ const UPDATE_PATTERNS = [
       pattern: /version:\s*"v[0-9]+\.[0-9]+\.[0-9]+"/g,
       replacement: `version: "${OFFICIAL_VERSIONS.codex.version}"`,
     },
-    // Legacy codex_version field
+    // codex_version field
     {
       pattern: /"codex_version":\s*"v[0-9]+\.[0-9]+\.[0-9]+"/g,
       replacement: `"codex_version": "${OFFICIAL_VERSIONS.codex.version}"`,
-    },
-    {
-      pattern: /"strray:version":\s*"[0-9]+\.[0-9]+\.[0-9]+"/g,
-      replacement: `"strray:version": "${OFFICIAL_VERSIONS.framework.version}"`,
     },
 
     // === BADGE AND COUNT PATTERNS ===
@@ -389,10 +380,9 @@ const UPDATE_PATTERNS = [
       pattern: /[0-9]+ agent configurations/g,
       replacement: `${OFFICIAL_VERSIONS.framework.agents} agent configurations`,
     },
-    // Header version (e.g., "# 0xRay AI v1.22.60")
     {
-      pattern: /0xRay AI v[0-9]+\.[0-9]+\.[0-9]+/g,
-      replacement: `0xRay AI v${OFFICIAL_VERSIONS.framework.version}`,
+      pattern: /xray AI v[0-9]+\.[0-9]+\.[0-9]+/g,
+      replacement: `xray AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
     // Footer bare version (e.g., "**Version**: 1.22.60")
     {
@@ -420,13 +410,7 @@ const UPDATE_PATTERNS = [
 
   ];
 
-  // Additional patterns for bash scripts (STRRAY_VERSION)
-  const BASH_VERSION_PATTERNS = [
-    {
-      pattern: /STRRAY_VERSION="[0-9]+\.[0-9]+\.[0-9]+"/g,
-      replacement: `STRRAY_VERSION="${OFFICIAL_VERSIONS.framework.version}"`,
-    },
-  ];
+  const BASH_VERSION_PATTERNS = [];
 
   // Backup management
   let backupCreated = false;
@@ -505,7 +489,7 @@ const UPDATE_PATTERNS = [
 
     // 1. Check codex.json has exactly 60 terms
     const { resolveConfigPath } = require("../helpers/resolve-config-path.cjs");
-    const codexJsonPath = resolveConfigPath("codex.json") || "src/opencode/strray/codex.json";
+    const codexJsonPath = resolveConfigPath("codex.json") || "src/opencode/codex.codex";
     if (fs.existsSync(codexJsonPath)) {
       try {
         const codexContent = JSON.parse(fs.readFileSync(codexJsonPath, "utf8"));
@@ -670,12 +654,12 @@ const UPDATE_PATTERNS = [
   // Phase 1: Update critical config files (source in src/opencode/)
   console.log("\n📁 Phase 1: Updating configuration files...");
   const { resolveConfigPath: rcp } = require("../helpers/resolve-config-path.cjs");
-  const codexPath = rcp("codex.json") || "src/opencode/strray/codex.json";
-  const featuresPath = rcp("features.json") || "src/opencode/strray/features.json";
+  const codexPath = rcp("codex.json") || "src/opencode/codex.codex";
+  const featuresPath = rcp("features.json") || "src/opencode/features.json";
   const criticalConfigFiles = [
     codexPath,                           // Codex config (source)
     "src/opencode/codex.codex",          // Main codex (source)
-    "src/opencode/strray/config.json",   // Framework config (source)
+    "src/opencode/config.json",   // Framework config (source)
     featuresPath,                        // Feature flags (source)
   ];
 
@@ -720,7 +704,7 @@ const UPDATE_PATTERNS = [
     "README.md",
     "AGENTS.md",
     "src/opencode/AGENTS-consumer.md",
-    rcp("agents_template.md") || "src/opencode/strray/agents_template.md",
+    rcp("agents_template.md") || "src/opencode/agents_template.md",
     "docs/reference/templates/agents_template.md",
     "docs/reference/templates/master-agent-template.md",
     "docs/reference/templates/agent-template-dev.md",
@@ -871,7 +855,7 @@ const UPDATE_PATTERNS = [
   ];
 
   const PROTECTED_PATHS = [
-    ".opencode/strray/test-count.json",
+    ".opencode/test-count.json",
   ];
 
   // Test files with version assertions - these contain expected version values for testing
@@ -1014,7 +998,7 @@ const UPDATE_PATTERNS = [
  * - Parallel processing for large file sets
  *
  * 📋 FILE CATEGORIES:
- * - Critical: src/opencode/strray/codex.json, src/opencode/codex.codex, etc.
+ * - Critical: src/opencode/codex.codex, etc.
  * - Documentation: AGENTS.md, AGENTS-consumer.md, docs/*.md
  * - Historical: docs/reflections/, docs/archive/
  * - Test Assertions: context-loader.test.ts, codex-parser.test.ts

@@ -1,5 +1,5 @@
 /**
- * 0xRay Code Review MCP Server
+ * xray Code Review MCP Server
  *
  * Knowledge skill for automated code review, quality assessment,
  * and best practices validation - provides comprehensive code quality analysis

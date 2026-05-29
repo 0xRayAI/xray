@@ -1,14 +1,14 @@
 ---
 name: boot-orchestrator
 description: Framework initialization and boot orchestration
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [infrastructure, boot, orchestrator]
 
 mcp:
   boot-orchestrator:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/boot-orchestrator.server.js]
+    args: [node_modules/xray/dist/mcps/boot-orchestrator.server.js]
 ---
 
 # Boot Orchestrator Skill

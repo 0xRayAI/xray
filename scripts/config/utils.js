@@ -1,31 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Framework Configuration Manager
- * Centralized configuration and setup utilities
- * 
- * Purpose: Manages StringRay framework configuration and development environment setup
- * 
- * Features:
- * - Create default configuration files
- * - Validate existing configuration
- * - Setup development environment
- * - Run setup commands with timeout handling
- * 
- * Usage:
- *   node scripts/config/utils.js <command>
- * 
- * Commands:
- *   init       - Create default configuration
- *   setup-dev  - Setup development environment
- *   validate   - Validate configuration
- * 
- * Examples:
- *   node scripts/config/utils.js init
- *   node scripts/config/utils.js validate
- * 
- * Author: StringRay Enforcer Agent
- * Version: 1.9.0
+ * xray Framework Configuration Manager
+ * Utilities for init, setup-dev, validate. Structured logs only to logs/framework/activity.log.
+ * Identity: xray (plain)
  */
 
 import fs from 'fs';
@@ -36,67 +14,61 @@ import { spawn } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function ensureLogDir(projectDir) {
+  const logDir = path.join(projectDir, 'logs', 'framework');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+  return logDir;
+}
+
+function structuredLog(projectDir, message, level = 'info') {
+  try {
+    const logDir = ensureLogDir(projectDir);
+    const timestamp = new Date().toISOString();
+    const entry = `${timestamp} [config-utils] [${level}] ${message}\n`;
+    fs.appendFileSync(path.join(logDir, 'activity.log'), entry, 'utf-8');
+  } catch {
+    // Never crash on logging
+  }
+}
+
 class ConfigManager {
   constructor() {
     this.projectDir = process.cwd();
   }
 
   log(message, type = 'info') {
-    const timestamp = new Date().toISOString();
-    const prefix = {
-      'info': '⚙️',
-      'success': '✅',
-      'error': '❌',
-      'warning': '⚠️',
-      'config': '🔧'
-    }[type] || '⚙️';
-    
-    console.log(`${prefix} [${timestamp}] ${message}`);
+    const prefix = { 'info': '⚙️', 'success': '✅', 'error': '❌', 'warning': '⚠️', 'config': '🔧' }[type] || '⚙️';
+    structuredLog(this.projectDir, `${prefix} ${message}`, type);
   }
 
   createDefaultConfig() {
-    this.log('Creating default StringRay configuration...', 'config');
+    this.log('Creating default xray configuration...', 'config');
     
     const defaultConfig = {
       framework: {
-        name: 'StringRay Framework',
-        version: '1.9.0',
+        name: 'xray Framework',
+        version: '2.0.0',
         buildMode: 'production',
         logLevel: 'info'
       },
       agents: {
-        orchestrator: {
-          enabled: true,
-          maxComplexity: 100,
-          timeout: 30000
-        },
-        enforcer: {
-          enabled: true,
-          strictMode: true,
-          todoSystem: 'file-based'
-        },
-        testing: {
-          parallelExecution: true,
-          timeout: 120000,
-          coverageThreshold: 85
-        }
+        orchestrator: { enabled: true, maxComplexity: 100, timeout: 30000 },
+        enforcer: { enabled: true, strictMode: true, todoSystem: 'file-based' },
+        testing: { parallelExecution: true, timeout: 120000, coverageThreshold: 85 }
       },
-      monitoring: {
-        enabled: true,
-        logRetention: '7d',
-        healthChecks: true
-      }
+      monitoring: { enabled: true, logRetention: '7d', healthChecks: true }
     };
     
-    const configPath = path.join(this.projectDir, '.strrayrc.json');
+    const configPath = path.join(this.projectDir, '.xrayrc.json');
     fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
-    this.log(`✅ Configuration saved to: ${configPath}`, 'success');
-    
+    this.log(`Configuration saved to: ${configPath}`, 'success');
     return configPath;
   }
 
   validateConfig() {
-    const configPath = path.join(this.projectDir, '.strrayrc.json');
+    const configPath = path.join(this.projectDir, '.xrayrc.json');
     
     if (!fs.existsSync(configPath)) {
       this.log('Configuration file not found, creating default...', 'warning');
@@ -105,16 +77,16 @@ class ConfigManager {
     
     try {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      this.log('✅ Configuration loaded successfully', 'success');
+      this.log('Configuration loaded successfully', 'success');
       return config;
     } catch (error) {
-      this.log(`❌ Failed to load configuration: ${error.message}`, 'error');
+      this.log(`Failed to load configuration: ${error.message}`, 'error');
       return null;
     }
   }
 
   async setupDevelopment() {
-    this.log('Setting up StringRay development environment...', 'config');
+    this.log('Setting up xray development environment...', 'config');
     
     const setupSteps = [
       { name: 'Install Dependencies', command: 'npm install' },
@@ -127,14 +99,14 @@ class ConfigManager {
       try {
         this.log(`Running: ${step.name}`);
         await this.runCommand(step.command);
-        this.log(`✅ ${step.name}: Completed`);
+        this.log(`${step.name}: Completed`, 'success');
       } catch (error) {
-        this.log(`❌ ${step.name}: Failed - ${error.message}`, 'error');
+        this.log(`${step.name}: Failed - ${error.message}`, 'error');
         return false;
       }
     }
     
-    this.log('🎉 Development setup completed successfully!', 'success');
+    this.log('Development setup completed successfully!', 'success');
     return true;
   }
 
@@ -149,13 +121,8 @@ class ConfigManager {
       let stdout = '';
       let stderr = '';
 
-      child.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
+      child.stdout.on('data', (data) => { stdout += data.toString(); });
+      child.stderr.on('data', (data) => { stderr += data.toString(); });
 
       const timer = setTimeout(() => {
         child.kill('SIGTERM');
@@ -195,22 +162,15 @@ switch (command) {
   case 'validate':
     const config = configManager.validateConfig();
     if (config) {
-      console.log('✅ Configuration is valid');
+      structuredLog(configManager.projectDir, 'Configuration is valid', 'success');
       process.exit(0);
     } else {
-      console.log('❌ Configuration is invalid');
+      structuredLog(configManager.projectDir, 'Configuration is invalid', 'error');
       process.exit(1);
     }
     break;
     
   default:
-    console.log('StringRay Configuration Manager');
-    console.log('====================================');
-    console.log('Available commands:');
-    console.log('  init       - Create default configuration');
-    console.log('  setup-dev  - Setup development environment');
-    console.log('  validate   - Validate configuration');
-    console.log('');
-    console.log('Usage: node scripts/config/utils.js <command>');
+    structuredLog(configManager.projectDir, 'xray Configuration Manager | Commands: init | setup-dev | validate', 'info');
     process.exit(1);
 }

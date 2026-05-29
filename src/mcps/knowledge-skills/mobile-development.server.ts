@@ -1,5 +1,5 @@
 /**
- * 0xRay Mobile Development MCP Server
+ * xray Mobile Development MCP Server
  *
  * Knowledge skill for mobile app development including iOS, Android,
  * React Native, Flutter, and mobile performance optimization
@@ -635,7 +635,7 @@ class HomePage extends StatelessWidget {
       description:
         features.length > 0
           ? `Features include: ${features.slice(0, 5).join(", ")}. Download now!`
-          : "A mobile app built with 0xRay.",
+          : "A mobile app built with xray.",
       keywords: features.join(", "),
       screenshots: {
         ios: ["screenshot1.png", "screenshot2.png"],

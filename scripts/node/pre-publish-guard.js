@@ -71,15 +71,11 @@ function checkGitStatus() {
     // Filter out files modified by prepare-consumer and version:sync (build artifacts)
     // These are generated from source and don't need separate commits
     const artifactPrefixes = [
-      '.strray/',
-      '.opencode/strray/',
       '.opencode/codex.codex',
-      '.opencode/.strrayrc.json',
       '.opencode/enforcer-config.json',
       '.opencode/package.json',
       '.opencode/command/',
       '.opencode/activity-report.json',
-      'strray/',
       'command/',
       'enforcer-config.json',
       'docs/',
@@ -173,8 +169,8 @@ function checkVersionManagerRan() {
   const featuresPath = resolveConfigPath('features.json', rootDir);
   const features = JSON.parse(fs.readFileSync(featuresPath, 'utf-8'));
   
-  // Version manager should have updated strray_version
-  if (!features.strray_version) {
+  // Version manager should have updated version fields
+  if (!features.version && !features.xray_version) {
     warnings.push('features.json may not have been synced by version manager');
     log('features.json may need version sync', 'warn');
   } else {

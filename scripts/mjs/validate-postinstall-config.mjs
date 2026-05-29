@@ -112,16 +112,16 @@ class PostinstallConfigValidator {
     // Leftover code from old implementation - to be removed
     // Check for plugin registration
     if (config.plugin && Array.isArray(config.plugin)) {
-      const hasStringRayPlugin = config.plugin.some((p) =>
-        p.toLowerCase().includes("strray"),
+      const hasXrayPlugin = config.plugin.some((p) =>
+        p.toLowerCase().includes("xray"),
       );
-      if (hasStringRayPlugin) {
-        console.log("  ✅ StringRay plugin registered");
+      if (hasXrayPlugin) {
+        console.log("  ✅ xray plugin registered");
       } else {
-        console.log("  ❌ StringRay plugin not registered");
+        console.log("  ❌ xray plugin not registered");
         this.results.failed.push({
           test: "OpenCode Configuration",
-          error: "StringRay plugin not registered",
+          error: "xray plugin not registered",
         });
         return;
       }
@@ -220,7 +220,7 @@ class PostinstallConfigValidator {
           `  ✅ MCP config valid (${serverCount} servers configured)`,
         );
 
-        // Check for required StringRay servers
+        // Check for required xray servers (plain xray branding alignment)
         const requiredServers = [
           "researcher",
           "session-management",
@@ -247,7 +247,7 @@ class PostinstallConfigValidator {
         }
 
         if (missingServers.length === 0) {
-          console.log("  ✅ All required StringRay MCP servers configured");
+          console.log("  ✅ All required xray MCP servers configured");
           this.results.passed.push("MCP Server Configuration");
         } else {
           console.log(`  ❌ Missing MCP servers: ${missingServers.join(", ")}`);

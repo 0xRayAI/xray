@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 class MCPFunctionalityTest {
   constructor() {
     this.results = { passed: [], failed: [] };
-    this.isConsumerEnvironment = __dirname.includes("node_modules/strray-ai");
+    this.isConsumerEnvironment = __dirname.includes("node_modules/xray");
   }
 
   async testMCPFunctionality() {
@@ -95,9 +95,9 @@ class MCPFunctionalityTest {
       // Determine environment: dev vs consumer vs CI
       // - Dev: running from project root with src/ directory
       // - CI: running from project root but building first (has dist/)
-      // - Consumer: running from node_modules/strray-ai/
+      // - Consumer: running from node_modules/xray/
       const cwd = process.cwd();
-      const isConsumerEnv = cwd.includes("node_modules/strray-ai");
+      const isConsumerEnv = cwd.includes("node_modules/xray");
       const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
       const hasDistDir = fs.existsSync(path.join(cwd, "dist"));
       
@@ -155,15 +155,15 @@ class MCPFunctionalityTest {
         if (serverPath) {
           // Handle various path formats:
           // - ./dist/mcps/xxx.js (local dev)
-          // - node_modules/strray-ai/dist/mcps/xxx.js (consumer)
+          // - node_modules/xray/dist/mcps/xxx.js (consumer)
           // - dist/mcps/xxx.js (after stripping ./)
           let normalizedPath = serverPath.startsWith("./") 
             ? serverPath.slice(2) 
             : serverPath;
             
-          // If path contains node_modules/strray-ai/, extract just the relative part
-          if (normalizedPath.includes("node_modules/strray-ai/")) {
-            normalizedPath = normalizedPath.replace("node_modules/strray-ai/", "");
+          // If path contains node_modules/xray/, extract just the relative part
+          if (normalizedPath.includes("node_modules/xray/")) {
+            normalizedPath = normalizedPath.replace("node_modules/xray/", "");
           }
             
           // In CI/build environment, files are in cwd/dist/, not in node_modules
@@ -172,7 +172,7 @@ class MCPFunctionalityTest {
             path.join(cwd, "dist", path.basename(normalizedPath)), // dist/xxx.js (always check this first in CI)
             path.join(cwd, normalizedPath), // as-is (./dist/xxx)
             path.join(cwd, serverPath), // with ./
-            path.join(cwd, "node_modules", "strray-ai", normalizedPath), // consumer fallback
+            path.join(cwd, "node_modules", "xray", normalizedPath), // consumer fallback
           ];
           
           let found = false;
@@ -249,7 +249,7 @@ class MCPFunctionalityTest {
     try {
       // Determine environment - reuse same logic
       const cwd = process.cwd();
-      const isConsumerEnv = cwd.includes("node_modules/strray-ai");
+      const isConsumerEnv = cwd.includes("node_modules/xray");
       const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
       const isDevOrCi = hasPackageJson && !isConsumerEnv;
       
@@ -323,7 +323,7 @@ class MCPFunctionalityTest {
               }
             } else {
               // Consumer environment: look in node_modules
-              resolvedPath = path.join(cwd, "node_modules", "strray-ai", normalizedPath);
+              resolvedPath = path.join(cwd, "node_modules", "xray", normalizedPath);
             }
             
             if (fs.existsSync(resolvedPath)) {

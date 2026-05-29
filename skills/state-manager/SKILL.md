@@ -1,14 +1,14 @@
 ---
 name: state-manager
 description: Application state management and persistence
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [infrastructure, state, manager]
 
 mcp:
   state-manager:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/state-manager.server.js]
+    args: [node_modules/xray/dist/mcps/state-manager.server.js]
 ---
 
 # State Manager Skill

@@ -1,14 +1,14 @@
 ---
 name: code-analyzer
 description: Deep code analysis, metrics extraction, and pattern detection (CONSOLIDATED - combines analyzer, explore, and original code-analyzer)
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [analysis, metrics, code-quality, patterns]
 
 mcp:
   code-analyzer:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/code-analyzer.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/code-analyzer.server.js]
 ---
 
 # Code Analyzer Skill

@@ -1,4 +1,4 @@
-# StrRay Framework - Summary Logger
+# xray 2.0 - Summary Logger
 
 # Automatically logs AI-generated summaries and analysis to REFACTORING_LOG.md
 
@@ -38,7 +38,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "📝 StrRay Framework - Summary Logger" >&2
+echo "📝 xray 2.0 - Summary Logger" >&2
 echo "====================================" >&2
 
 # Get script directory and project root
@@ -47,18 +47,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 REFACTORING_LOG="${PROJECT_ROOT}/docs/REFACTORING_LOG.md"
 
-# Check if summary content is provided via environment variable or stdin
+# Check if summary content is provided via environment variable or stdin (XRAY_ primary + STRRAY_ min compat fallback per Scope Rule)
 
-if [ -n "$STRRAY_SUMMARY_CONTENT" ]; then
+if [ -n "$XRAY_SUMMARY_CONTENT" ]; then
+SUMMARY_CONTENT="$XRAY_SUMMARY_CONTENT"
+elif [ -n "$STRRAY_SUMMARY_CONTENT" ]; then
 SUMMARY_CONTENT="$STRRAY_SUMMARY_CONTENT"
 elif [ ! -t 0 ]; then
     # Read from stdin
     SUMMARY_CONTENT=$(cat)
 else
-echo "❌ No summary content provided. Use STRRAY_SUMMARY_CONTENT environment variable or pipe content."
+echo "❌ No summary content provided. Use XRAY_SUMMARY_CONTENT (or STRRAY_ compat) environment variable or pipe content."
 echo "Usage:"
-echo " export STRRAY_SUMMARY_CONTENT='summary content' && bash strray/commands/summary-logger.md"
-echo " echo 'summary content' | bash strray/commands/summary-logger.md"
+echo " export XRAY_SUMMARY_CONTENT='summary content' && bash .opencode/commands/summary-logger.md"
+echo " echo 'summary content' | bash .opencode/commands/summary-logger.md"
 exit 1
 fi
 

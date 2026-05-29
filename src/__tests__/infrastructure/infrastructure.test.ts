@@ -147,13 +147,13 @@ describe("0xRay Infrastructure Tests", () => {
 
   describe("Plugin Infrastructure", () => {
     it("should have plugin source configuration", () => {
-      const pluginSource = "src/plugin/strray-codex-injection.ts";
+      const pluginSource = "src/plugin/xray-codex-injection.ts";
       expect(fs.existsSync(pluginSource)).toBe(true);
     });
 
     it("should have buildable plugin output", () => {
       // Verify the plugin can be built (source exists and has exports)
-      const pluginSource = "src/plugin/strray-codex-injection.ts";
+      const pluginSource = "src/plugin/xray-codex-injection.ts";
       const content = fs.readFileSync(pluginSource, "utf8");
       expect(content).toContain("export");
     });

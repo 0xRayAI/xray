@@ -1,5 +1,5 @@
 /**
- * 0xRay Testing Best Practices MCP Server
+ * xray Testing Best Practices MCP Server
  *
  * Knowledge skill for comprehensive testing strategies, TDD/BDD implementation,
  * test coverage optimization, and automated testing workflows

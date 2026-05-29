@@ -1,5 +1,5 @@
 /**
- * 0xRay Refactoring Strategies MCP Server
+ * xray Refactoring Strategies MCP Server
  *
  * Knowledge skill for code refactoring, technical debt elimination,
  * modernization, and code improvement patterns

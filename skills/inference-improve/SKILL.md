@@ -1,7 +1,7 @@
 ---
 name: inference-improve
 description: Autonomous inference improvement through collaborative agent analysis
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [inference, improvement, autonomous, learning]
 ---

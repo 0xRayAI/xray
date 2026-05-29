@@ -1,14 +1,14 @@
 ---
 name: security-scan
 description: Security vulnerability scanning and assessment
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [security, security, scan]
 
 mcp:
   security-scan:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/security-scan.server.js]
+    args: [node_modules/xray/dist/mcps/security-scan.server.js]
 ---
 
 # Security Scan Skill

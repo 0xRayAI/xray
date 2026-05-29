@@ -3,13 +3,13 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: '0xRay',
-  tagline: 'Enterprise AI Orchestration Framework',
+  title: 'xray',
+  tagline: 'The clean v2 three-subsystem AI Governance OS',
   favicon: 'img/favicon.ico',
-  url: 'https://htafolla.github.io',
-  baseUrl: '/StringRay/',
-  organizationName: 'htafolla',
-  projectName: 'StringRay',
+  url: 'https://xray.github.io',
+  baseUrl: '/xray/',
+  organizationName: 'xray',
+  projectName: 'xray',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   presets: [
@@ -18,7 +18,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/htafolla/StringRay/tree/master/',
+          editUrl: 'https://github.com/xray/xray/tree/main/',
           routeBasePath: 'docs',
           exclude: [
             'archive/**',
@@ -26,11 +26,6 @@ const config: Config = {
             '**/*.yml',
             'README.md',
             'BRAND.md',
-            'HOOK_PROTOCOL.md',
-            'PLAN-storyteller-enforcement.md',
-            'PLUGIN_ARCHITECTURE.md',
-            'SAGA-v1.15.40-to-v1.18.2.md',
-            'MIGRATION-REPORT.json',
           ],
         },
         blog: false,
@@ -51,34 +46,34 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: '0xRay',
+      title: 'xray',
       logo: {
-        alt: '0xRay Logo',
+        alt: 'xray Logo',
         src: 'img/logo.svg',
       },
       items: [
         {
-          to: '/StringRay/docs/guides/getting-started',
+          to: '/docs/guides/getting-started',
           label: 'Getting Started',
           position: 'left',
         },
         {
-          to: '/StringRay/docs/architecture',
+          to: '/docs/architecture',
           label: 'Architecture',
           position: 'left',
         },
         {
-          to: '/StringRay/docs/agents',
+          to: '/docs/agents',
           label: 'Agents',
           position: 'left',
         },
         {
-          href: 'https://github.com/htafolla/StringRay',
+          href: 'https://github.com/xray/xray',
           label: 'GitHub',
           position: 'right',
         },
         {
-          href: 'https://npmjs.com/package/strray-ai',
+          href: 'https://npmjs.com/package/xray',
           label: 'npm',
           position: 'right',
         },
@@ -99,12 +94,12 @@ const config: Config = {
         {
           title: 'Community',
           items: [
-            { label: 'GitHub', href: 'https://github.com/htafolla/StringRay' },
-            { label: 'npm', href: 'https://npmjs.com/package/strray-ai' },
+            { label: 'GitHub', href: 'https://github.com/xray/xray' },
+            { label: 'npm', href: 'https://npmjs.com/package/xray' },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} 0xRay. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} xray. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

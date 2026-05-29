@@ -1,14 +1,14 @@
 ---
 name: testing-strategy
 description: Design comprehensive testing strategies and optimize test coverage
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [testing, strategy, coverage, quality]
 
 mcp:
   testing-strategy:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/testing-strategy.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/testing-strategy.server.js]
 ---
 
 # Testing Strategy Skill

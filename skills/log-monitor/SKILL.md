@@ -1,14 +1,14 @@
 ---
 name: log-monitor
 description: Log analysis, pattern detection, and alerting
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [monitoring, logging, alerting, observability]
 
 mcp:
   log-monitor:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/log-monitor.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/log-monitor.server.js]
 ---
 
 # Log Monitor Skill

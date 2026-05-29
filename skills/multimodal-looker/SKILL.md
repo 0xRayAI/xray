@@ -1,14 +1,14 @@
 ---
 name: multimodal-looker
 description: Visual content analysis for diagrams, screenshots, and UI mockups
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [visual, diagrams, screenshots, accessibility, ui-analysis]
 
 mcp:
   multimodal-looker:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/multimodal-looker.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/multimodal-looker.server.js]
 ---
 
 # Multimodal Looker Skill

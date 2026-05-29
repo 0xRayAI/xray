@@ -1,14 +1,14 @@
 ---
 name: enforcer
 description: Codex compliance validation and error prevention
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [quality, enforcer]
 
 mcp:
   enforcer:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/enforcer-tools.server.js]
+    args: [node_modules/xray/dist/mcps/enforcer-tools.server.js]
 ---
 
 # Enforcer Skill

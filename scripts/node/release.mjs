@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Proper Release Script for StringRay
+ * Proper Release Script for xray
  * 
  * Safe release process that:
  * 1. Bumps version
@@ -88,7 +88,7 @@ async function main() {
   }
 
   console.log('╔════════════════════════════════════════════════════════╗');
-  console.log('║        🚀 StringRay Release Script                     ║');
+  console.log('║        🚀 xray Release Script                          ║');
   console.log('╚════════════════════════════════════════════════════════╝');
   
   const currentVersion = getCurrentVersion();
@@ -98,7 +98,7 @@ async function main() {
   // This removes the brittle "must be exactly one ahead" problem.
   let publishedVersion;
   try {
-    publishedVersion = execSync('npm view strray-ai version', { encoding: 'utf-8' }).trim();
+    publishedVersion = execSync('npm view xray version', { encoding: 'utf-8' }).trim();
     console.log(`📌 Latest published on npm: ${publishedVersion}`);
   } catch {
     publishedVersion = '0.0.0';
@@ -160,12 +160,12 @@ async function main() {
   // Step 6: Publish to npm
   console.log('\n📦 Step 6: Publishing to npm...');
   runCommand('npm publish --access public', 'npm publish failed');
-  console.log(`✅ Published strray-ai@${newVersion} to npm`);
+  console.log(`✅ Published xray@${newVersion} to npm`);
 
   console.log('\n╔════════════════════════════════════════════════════════╗');
   console.log('║        ✅ Release Complete!                            ║');
   console.log('╚════════════════════════════════════════════════════════╝');
-  console.log(`\n📦 Package: strray-ai@${newVersion}`);
+  console.log(`\n📦 Package: xray@${newVersion}`);
   console.log(`🏷  Tag: v${newVersion}`);
 
   // Generate tweet
@@ -183,17 +183,17 @@ async function main() {
     }
   })();
 
-  const tweet = `🎉 0xRay v${newVersion} is LIVE - {THEME}!
+  const tweet = `🎉 xray v${newVersion} is LIVE - {THEME}!
 {EMOJI} {feature - consumer benefit}
 {EMOJI} {feature - consumer benefit}
 {EMOJI} {feature - consumer benefit}
 {EMOJI} {feature - consumer benefit}
 {EMOJI} {feature - consumer benefit}
 \`\`\`
-npm install strray-ai@latest
+npm install xray@latest
 \`\`\`
-What 0xRay is: {one sentence positioning}
-#0xRay #AIOps #DevTools #SelfHealing #NPM`;
+What xray is: {one sentence positioning}
+#xray #AIOps #DevTools #SelfHealing #NPM`;
 
   if (!fs.existsSync(tweetPath)) {
     fs.writeFileSync(tweetPath, tweet);

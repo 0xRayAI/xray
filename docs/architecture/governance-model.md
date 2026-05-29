@@ -2,7 +2,7 @@
 
 ## Overview
 
-0xRay's governance system follows a strict two-layer model designed for reliability and separation of concerns.
+xray 2.0 governance system operates as the External Governance subsystem within the pure v2 three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in the MCP orchestrator). YML SSOT. It provides a strict required filter layer for reliability and separation of concerns, with internal deliberation hosted under Inference.
 
 ### 1. Internal Deliberation Layer
 - Performed by three specialized skill MCP servers:
@@ -37,10 +37,10 @@ Final Decision (approve / needs_revision / reject)
 
 ## Key Components
 
-- **`GovernanceService`** (`src/governance/governance-service.ts`): Central orchestrator. Calls internal MCPs in parallel, then the external Dynamo filter.
-- **`InferenceGovernanceIntegration`**: Manages the Dynamo client, feature flags, retries, and lifecycle.
-- **`governance-core.ts`**: Contains pure logic (`mergeVotes`, `applyDecisionMatrix` using PHI/TAU constants).
-- **Governance MCP Server** (`src/mcps/governance.server.ts`): Exposes `govern_proposals` and `govern_reflection` tools.
+- Governance service: Central orchestrator. Calls internal skill MCPs in parallel, then the external Dynamo filter.
+- InferenceGovernanceIntegration: Manages the Dynamo client, feature flags, retries, and lifecycle.
+- governance core: Contains pure logic (mergeVotes, applyDecisionMatrix).
+- Governance MCP Server: Exposes govern_proposals and govern_reflection tools.
 
 ## Feature Flag
 
@@ -54,20 +54,12 @@ Governance behavior is controlled via `features.json`:
 }
 ```
 
-When disabled, the system can fall back to lighter internal governance (legacy path, being deprecated).
+When disabled, governance reduces to internal deliberation paths only (not recommended for production deployments).
 
 ## Strict Requirement Model
 
 - Dynamo Solar SSOT is a **hard requirement** by default.
-- If the integration is not initialized or unavailable when required, `GovernanceService` throws a clear error.
+- If the integration is not initialized or unavailable when required, governance throws a clear error.
 - This design prevents silent degradation of governance quality.
 
-## Deprecation Note
-
-The legacy internal voting path (in `InferenceCycle.governProposalsInternal`) is deprecated. All new development should route through the `GovernanceService` + Dynamo Solar SSOT model.
-
-## Related
-
-- `src/governance/` — New core governance implementation
-- `src/integrations/governance/` — Dynamo integration layer
-- `api/mcp.ts` — Vercel / serverless governance endpoint
+xray 2.0 three-subsystem (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in the MCP orchestrator). YML SSOT. MCP orchestrator bridges for governance verdicts in thinDispatch flows.

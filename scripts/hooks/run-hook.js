@@ -265,7 +265,7 @@ async function runLogMaintenance() {
   try {
     const distDirs = [
       join(projectRoot, "dist"),
-      join(projectRoot, "node_modules", "strray-ai", "dist"),
+      join(projectRoot, "node_modules", "xray", "dist"),
     ];
 
     for (const distDir of distDirs) {
@@ -300,7 +300,7 @@ async function runLogMaintenance() {
             excludePatterns: [
               "activity.log",
               "framework-activity-",
-              "strray-plugin-",
+              "xray-plugin-",
               "kernel-",
               "reflection-",
               ".md",
@@ -414,7 +414,7 @@ async function handlePreCommit() {
     console.error("\n❌ Codex validation failed:");
     codexResult.errors.slice(0, 10).forEach((e) => console.error(`   ${e}`));
     console.error("\nFix Codex violations before committing.");
-    console.error("Run: npx strray-ai validate\n");
+    console.error("Run: npx xray validate\n");
     process.exit(1);
   }
 
@@ -480,7 +480,7 @@ async function handlePrePush() {
     }
 
     console.error("Fix all errors before pushing.");
-    console.error("Run: npx tsc --noEmit && npx strray-ai validate\n");
+    console.error("Run: npx tsc --noEmit && npx xray validate\n");
     process.exit(1);
   }
 

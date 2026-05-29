@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * 0xRay CLI - Command Line Interface
+ * xray CLI - Command Line Interface
  *
- * Provides commands for installing and managing 0xRay framework
+ * Provides commands for installing and managing xray framework
  */
 
 import { Command } from "commander";
@@ -12,6 +12,7 @@ import { join, resolve } from "path";
 
 import { readFileSync, existsSync } from "fs";
 import { getConfigDir } from "../core/config-paths.js";
+import { frameworkLogger } from "../core/framework-logger.js";
 
 // Get package root relative to this script location
 const packageRoot = resolve(join(new URL(".", import.meta.url).pathname, "..", ".."));
@@ -50,9 +51,9 @@ function validateScriptPath(scriptPath: string, scriptName: string): void {
 const program = new Command();
 
 program
-  .name("strray-ai")
+  .name("xray")
   .description(
-    "0xRay: Bulletproof AI orchestration with systematic error prevention",
+    "xray: Bulletproof AI orchestration with systematic error prevention",
   )
   .version(version);
 
@@ -64,16 +65,19 @@ function runSetup() {
 
 program
   .command("install")
-  .description("Install 0xRay framework in the current project")
+  .description("Install xray framework in the current project")
   .action(async () => {
-    console.log("🔧 0xRay CLI: Installing framework...");
+    frameworkLogger.log('cli', 'install-start', 'info', { message: 'Installing xray framework...' });
     try {
       const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
       validateScriptPath(postinstallScript, "postinstall script");
       execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
-      console.log("✅ 0xRay framework installed!");
-      console.log("💡 Run 'npx strray-ai setup' for full configuration (hooks, Hermes, symlinks)");
+      frameworkLogger.log('cli', 'install-success', 'info', { message: 'xray framework installed' });
+      // UX banner kept for user visibility post-install (non-removable per exception)
+      console.log("✅ xray framework installed!");
+      console.log("💡 Run 'npx xray setup' for full configuration (hooks, Hermes, symlinks)");
     } catch (error) {
+      frameworkLogger.log('cli', 'install-error', 'error', { error: error instanceof Error ? error.message : String(error) });
       console.error("❌ Installation failed:", error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
@@ -86,16 +90,16 @@ program
 
 program
   .command("init")
-  .description("Initialize 0xRay configuration in the current project")
+  .description("Initialize xray configuration in the current project")
   .action(async () => {
-    console.log("🚀 0xRay CLI: Initializing configuration...");
+    console.log("🚀 xray CLI: Initializing configuration...");
     try {
       const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
       validateScriptPath(postinstallScript, "postinstall script");
       execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
       runSetup();
 
-      console.log("✅ 0xRay configuration initialized!");
+      console.log("✅ xray configuration initialized!");
     } catch (error) {
       console.error(
         "❌ Initialization failed:",
@@ -107,9 +111,9 @@ program
 
 program
   .command("status")
-  .description("Check 0xRay framework status")
+  .description("Check xray framework status")
   .action(async () => {
-    console.log("🔍 0xRay CLI: Checking framework status...");
+    frameworkLogger.log('cli', 'status-check-start', 'info', { message: 'Checking xray framework status...' });
 
     try {
       // Check if required files exist
@@ -137,11 +141,11 @@ program
 
       if (allGood) {
         console.log("");
-        console.log("🎉 0xRay framework is properly configured!");
+        console.log("🎉 xray framework is properly configured!");
       } else {
         console.log("");
         console.log(
-          '⚠️ Some components are missing. Run "strray-ai install" to fix.',
+          '⚠️ Some components are missing. Run "xray install" to fix.',
         );
       }
     } catch (error) {
@@ -155,9 +159,9 @@ program
 
 program
   .command("validate")
-  .description("Validate 0xRay framework installation")
+  .description("Validate xray framework installation")
   .action(async () => {
-    console.log("🔬 0xRay CLI: Validating installation...");
+    console.log("🔬 xray CLI: Validating installation...");
 
     try {
       // Run the init.sh script to validate
@@ -192,7 +196,7 @@ program
   .command("debug")
   .description("Debug command")
   .action(async () => {
-    console.log("📍 0xRay CLI Debug Info");
+    console.log("📍 xray CLI Debug Info");
     console.log("   packageRoot:", packageRoot);
     console.log("   cwd:", process.cwd());
   });
@@ -200,9 +204,9 @@ program
 program
   .command("capabilities")
   .alias("caps")
-  .description("Show all available 0xRay framework capabilities")
+  .description("Show all available xray framework capabilities")
   .action(async () => {
-    console.log("🚀 0xRay Framework Capabilities");
+    console.log("🚀 xray Framework Capabilities");
     console.log("=====================================");
     console.log("");
 
@@ -253,9 +257,9 @@ program
     console.log(
       "  Use the framework-help MCP server for detailed information:",
     );
-    console.log("  - strray_get_capabilities: Complete capabilities overview");
-    console.log("  - strray_get_commands: Command usage examples");
-    console.log("  - strray_explain_capability: Detailed feature explanations");
+    console.log("  - xray_get_capabilities: Complete capabilities overview");
+    console.log("  - xray_get_commands: Command usage examples");
+    console.log("  - xray_explain_capability: Detailed feature explanations");
     console.log("");
 
     console.log("📊 Core Features:");
@@ -272,7 +276,7 @@ program
     console.log("  3. Access skills for specialized capabilities");
     console.log("  4. Check framework-reporting-system for activity reports");
     console.log(
-      '  5. Run "npx strray-ai capabilities" anytime for this overview',
+      '  5. Run "npx xray capabilities" anytime for this overview',
     );
   });
 
@@ -281,7 +285,7 @@ program
   .alias("check")
   .description("Check framework health and system status")
   .action(async () => {
-    console.log("🏥 0xRay Framework Health Check");
+    console.log("🏥 xray Framework Health Check");
     console.log("====================================");
     console.log("");
 
@@ -346,7 +350,7 @@ console.log("  • @security-auditor scan this project");
         console.log("  • framework-reporting-system");
       } else {
         console.log(
-          '⚠️ Some components need attention. Run "npx strray-ai install" to fix.',
+          '⚠️ Some components need attention. Run "npx xray install" to fix.',
         );
       }
     } catch (error) {
@@ -410,7 +414,7 @@ program
               ? "session"
               : reportType;
 
-    console.log(`📊 0xRay Framework Report: ${label}`);
+    console.log(`📊 xray Framework Report: ${label}`);
     console.log("==========================================");
     console.log("");
 
@@ -440,7 +444,7 @@ program
       console.log("");
       console.log("💡 Troubleshooting:");
       console.log("  • Make sure OpenCode is running");
-      console.log("  • Check framework installation: npx strray-ai status");
+      console.log("  • Check framework installation: npx xray status");
       console.log(
         "  • Try manual report: framework-reporting-system generate-report",
       );
@@ -454,7 +458,7 @@ program
     "Automatically fix common framework issues by running the postinstall setup",
   )
   .action(async () => {
-    console.log("🔧 0xRay Framework Fix");
+    console.log("🔧 xray Framework Fix");
     console.log("===========================");
     console.log("");
 
@@ -482,7 +486,7 @@ program
       console.log("");
       console.log("💡 Next steps:");
       console.log("  • Restart OpenCode to load the restored configuration");
-      console.log("  • Run: npx strray-ai health (to verify everything works)");
+      console.log("  • Run: npx xray health (to verify everything works)");
       console.log("  • Try: @security-auditor scan this project");
     } catch (error) {
       console.error(
@@ -491,8 +495,8 @@ program
       );
       console.log("");
       console.log("💡 Manual fix options:");
-      console.log("  • Delete .opencode/ and .stringray/ directories");
-      console.log("  • Run: npx strray-ai install");
+      console.log("  • Delete .opencode/ and .xray/ directories");
+      console.log("  • Run: npx xray install");
       console.log("  • Or manually restore missing configuration files");
       process.exit(1);
     }
@@ -501,14 +505,14 @@ program
 // Analytics command - pattern analysis, insights, and consent management
 program
   .command("analytics")
-  .description("0xRay Central Analytics - Pattern analysis, insights, and consent management\n" +
+  .description("xray Central Analytics - Pattern analysis, insights, and consent management\n" +
                "  In v1.7.2+: Includes consent management with granular control\n" +
-               "  Use 'npx strray-ai analytics enable' to opt-in to data sharing\n" +
+               "  Use 'npx xray analytics enable' to opt-in to data sharing\n" +
                "  Core classes: ConsentManager, AnonymizationEngine available programmatically")
   .option("-l, --limit <number>", "Limit analysis to last N task completions")
   .option("-o, --output <file>", "Save report to file")
   .action(async (opts) => {
-    console.log("📊 0xRay Pattern Analytics");
+    console.log("📊 xray Pattern Analytics");
     console.log("==============================");
     console.log("");
 
@@ -522,7 +526,7 @@ program
       const path = await import("path");
       let defaultLimit = 500;
       try {
-        const featuresPath = path.join(process.cwd(), ".opencode", "strray", "features.json");
+        const featuresPath = path.join(process.cwd(), ".opencode", "plugins", "features.json"); // plain xray primary (min compat .strray/ handled in getConfigDir per Scope Rule)
         if (fs.existsSync(featuresPath)) {
           const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
           defaultLimit = features.analytics?.default_limit || 500;
@@ -574,7 +578,7 @@ program
   .command("doctor")
   .description("Diagnose framework issues (does not fix them)")
   .action(async () => {
-    console.log("🩺 0xRay Framework Doctor");
+    console.log("🩺 xray Framework Doctor");
     console.log("===============================");
     console.log("");
 
@@ -598,16 +602,16 @@ program
 
       // Check package installation
       const packageExists = fs.existsSync(
-        path.join(process.cwd(), "node_modules", "strray-ai"),
+        path.join(process.cwd(), "node_modules", "xray"),
       );
       if (!packageExists) {
-        issues.push("0xRay package not installed");
-        fixes.push("Run: npm install strray-ai");
+        issues.push("xray package not installed");
+        fixes.push("Run: npm install xray");
       } else {
-        console.log("✅ 0xRay package installed");
+        console.log("✅ xray package installed");
       }
 
-      // Check configuration - check for opencode.json or .strray/ (headless mode)
+      // Check configuration - check for opencode.json or .strray/ (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule; plain xray primary)
       const cwd = process.cwd();
       const opencodeConfigPath = path.join(cwd, "opencode.json");
       const strrayDir = getConfigDir(cwd);
@@ -618,7 +622,7 @@ program
       } else if (strrayDirExists) {
         console.log(`✅ Configuration directory found: ${strrayDir}`);
       } else {
-        console.log("ℹ️  No opencode.json or config directory found (run: npx strray-ai fix to create)");
+        console.log("ℹ️  No opencode.json or config directory found (run: npx xray fix to create)");
       }
 
       // Check for common issues
@@ -639,8 +643,8 @@ program
         console.log("");
         console.log("💡 Pro tips:");
         console.log("  • Use @security-auditor for code quality checks");
-        console.log("  • Run reports regularly: npx strray-ai report");
-        console.log("  • Check health anytime: npx strray-ai health");
+        console.log("  • Run reports regularly: npx xray report");
+        console.log("  • Check health anytime: npx xray health");
       } else {
         console.log("⚠️ Issues found:");
         issues.forEach((issue, i) => {
@@ -649,7 +653,7 @@ program
 
         console.log("");
         console.log(
-          '🔧 Run "npx strray-ai fix" to automatically fix these issues',
+          '🔧 Run "npx xray fix" to automatically fix these issues',
         );
       }
     } catch (error) {
@@ -668,7 +672,7 @@ program
   .option("--dry-run", "Show what would be archived without making changes")
   .option("-v, --verbose", "Verbose output")
   .action(async (opts) => {
-    console.log("📦 0xRay Log Archive");
+    console.log("📦 xray Log Archive");
     console.log("========================");
     
     if (opts.dryRun) {
@@ -708,7 +712,7 @@ program
   .option('--dry-run', 'Show what would change without applying')
   .option('-v, --verbose', 'Verbose output')
   .action(async (options) => {
-    console.log('🚀 0xRay Inference Improvement');
+    console.log('🚀 xray Inference Improvement');
     console.log('=================================');
     console.log('');
 
@@ -823,7 +827,7 @@ program
       return;
     }
     
-    console.log('Usage: npx strray-ai inference:tuner [options]');
+    console.log('Usage: npx xray inference:tuner [options]');
     console.log('  --start     Start the tuner service');
     console.log('  --stop      Stop the tuner service');
     console.log('  --run-once  Run a single tuning cycle');
@@ -846,21 +850,21 @@ program
       const { featuresConfigLoader } = await import('../core/features-config.js');
       const { initializeGovernanceIntegration, shutdownGovernanceIntegration } = await import('../integrations/governance/index.js');
 
-      // Guard: inference:run is internal to StringRay development only
-     const isStringRayRepo = (() => {
+      // Guard: inference:run is internal to xray development only
+     const isxrayRepo = (() => {
        try {
          const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
-         return pkg.name === 'strray-ai' && process.env.NODE_ENV !== 'consumer';
+         return pkg.name === 'xray' && process.env.NODE_ENV !== 'consumer';
        } catch {
          return false;
        }
      })();
 
-     if (!isStringRayRepo) {
+     if (!isxrayRepo) {
        if (options.json) {
-         console.log(JSON.stringify({ triggered: false, reason: 'inference:run is for StringRay development only (internal tool)' }));
+         console.log(JSON.stringify({ triggered: false, reason: 'inference:run is for xray development only (internal tool)' }));
        } else {
-         console.log('The inference:run command is for StringRay framework development only.');
+         console.log('The inference:run command is for xray framework development only.');
          console.log('It is not intended for consumer projects.');
        }
        return;
@@ -873,7 +877,7 @@ program
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
       } else {
         console.log('Inference feature is disabled in features.json.');
-        console.log('Enable it by setting inference.enabled = true in .opencode/strray/features.json');
+        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule)');
       }
       return;
     }
@@ -884,7 +888,7 @@ program
     const stateFile = `${stateDir}/inference-cycle-state.json`;
 
     if (!options.json) {
-      console.log('0xRay Inference Cycle');
+      console.log('xray Inference Cycle');
       console.log('====================');
     }
 
@@ -1086,7 +1090,7 @@ program
     }
     const serverPath = resolve(join(packageRoot, relPath));
     if (!existsSync(serverPath)) {
-      console.error(`MCP server not found at ${serverPath}. Is strray-ai installed correctly?`);
+      console.error(`MCP server not found at ${serverPath}. Is xray installed correctly?`);
       process.exit(1);
     }
     const env: Record<string, string> = { ...process.env as Record<string, string> };
@@ -1126,12 +1130,12 @@ registerGrokCommands(grokCmd);
 // Plugin management command
 program
   .command('plugin')
-  .description('Manage 0xRay plugins')
+  .description('Manage xray plugins')
   .action(async () => {
     console.log(`
-📦 0xRay Plugin Management
+📦 xray Plugin Management
 
-Usage: npx strray-ai plugin <command>
+Usage: npx xray plugin <command>
 
 Commands:
   list                 List all installed plugins
@@ -1142,11 +1146,11 @@ Commands:
   uninstall <name>     Remove a plugin
 
 Examples:
-  npx strray-ai plugin list
-  npx strray-ai plugin status my-plugin
-  npx strray-ai plugin uninstall old-plugin
+  npx xray plugin list
+  npx xray plugin status my-plugin
+  npx xray plugin uninstall old-plugin
 
-Plugins are loaded from: .strray/plugins/
+Plugins are loaded from: .opencode/plugins/ (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule)
 `);
   });
 
@@ -1207,36 +1211,36 @@ program.addHelpText(
   `
 
 Examples:
-    $ npx strray-ai install       # Install 0xRay in current project
-    $ npx strray-ai init          # Initialize configuration
-    $ npx strray-ai status        # Check installation status
-    $ npx strray-ai validate      # Validate framework setup
-    $ npx strray-ai capabilities  # Show all available capabilities
-    $ npx strray-ai health        # Check framework health and status
-    $ npx strray-ai report        # Generate activity and health reports
-    $ npx strray-ai dashboard     # Real-time orchestration monitoring dashboard
-    $ npx strray-ai fix           # Automatically restore missing config files
-    $ npx strray-ai doctor        # Diagnose issues (does not fix them)
-    $ npx strray-ai analytics     # Pattern analytics and insights
-    $ npx strray-ai inference:improve  # Run autonomous inference improvement
-    $ npx strray-ai skill:install agency-agents  # Install 170+ agency agent skills
-    $ npx strray-ai skill:install superpowers      # Install 14 agentic workflow skills
-    $ npx strray-ai skill:install <github-url>     # Install from any repo
-    $ npx strray-ai storyteller saga "v1.18.0 Journey"  # Write a saga
-    $ npx strray-ai storyteller reflection "API Fix"     # Write a reflection
+    $ npx xray install       # Install xray in current project
+    $ npx xray init          # Initialize configuration
+    $ npx xray status        # Check installation status
+    $ npx xray validate      # Validate framework setup
+    $ npx xray capabilities  # Show all available capabilities
+    $ npx xray health        # Check framework health and status
+    $ npx xray report        # Generate activity and health reports
+    $ npx xray dashboard     # Real-time orchestration monitoring dashboard
+    $ npx xray fix           # Automatically restore missing config files
+    $ npx xray doctor        # Diagnose issues (does not fix them)
+    $ npx xray analytics     # Pattern analytics and insights
+    $ npx xray inference:improve  # Run autonomous inference improvement
+    $ npx xray skill:install agency-agents  # Install 170+ agency agent skills
+    $ npx xray skill:install superpowers      # Install 14 agentic workflow skills
+    $ npx xray skill:install <github-url>     # Install from any repo
+    $ npx xray storyteller saga "v1.18.0 Journey"  # Write a saga
+    $ npx xray storyteller reflection "API Fix"     # Write a reflection
 
 Quick Start:
-   1. Install: npx strray-ai install
-   2. Check health: npx strray-ai health
+   1. Install: npx xray install
+   2. Check health: npx xray health
    3. Use agents: @security-auditor scan
-   4. Generate reports: npx strray-ai report
-   5. Monitor: npx strray-ai dashboard
-   6. Fix issues: npx strray-ai fix
-   7. View analytics: npx strray-ai analytics
-   8. Add skills: npx strray-ai skill:install agency-agents
-   9. Write stories: npx strray-ai storyteller saga "Release Journey"
+   4. Generate reports: npx xray report
+   5. Monitor: npx xray dashboard
+   6. Fix issues: npx xray fix
+   7. View analytics: npx xray analytics
+   8. Add skills: npx xray skill:install agency-agents
+   9. Write stories: npx xray storyteller saga "Release Journey"
 
-For more information, visit: https://github.com/htafolla/stringray
+For more information, visit: https://github.com/htafolla/xray
 `,
 );
 

@@ -1,14 +1,14 @@
 ---
 name: lint
 description: Code linting and static analysis
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [quality, lint]
 
 mcp:
   lint:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/lint.server.js]
+    args: [node_modules/xray/dist/mcps/lint.server.js]
 ---
 
 # Lint Skill

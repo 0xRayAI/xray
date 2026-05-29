@@ -1,14 +1,14 @@
 ---
 name: orchestrator
 description: Multi-agent workflow coordination and task delegation
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [orchestration, orchestrator]
 
 mcp:
   orchestrator:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/orchestrator.server.js]
+    args: [node_modules/xray/dist/mcps/orchestrator.server.js]
 ---
 
 # Orchestrator Skill

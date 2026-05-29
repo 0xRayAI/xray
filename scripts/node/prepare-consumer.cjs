@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 
 /**
- * StrRay Consumer Preparation Script
+ * xray Consumer Preparation Script (technical)
  * Transforms development paths back to consumer paths before publishing
+ * Part of xray v2 shipping package (plain identity).
  */
 
 const fs = require("fs");
 const path = require("path");
 
-console.log('🔧 StrRay Consumer Preparation: Transforming development paths back to consumer paths...');
+// Structured logging shim (fwLogger discipline for script context)
+function structuredLog(component, action, status, details) {
+  const ts = new Date().toISOString();
+  const detailsPart = details ? ` | ${JSON.stringify(details)}` : '';
+  console.log(`${ts} [${component}] ${action} - ${String(status).toUpperCase()}${detailsPart}`);
+}
+
+structuredLog('prepare-consumer', 'Transforming development paths back to consumer paths', 'info');
 
 // Get the package root (where this script is located)
 // Script is in scripts/node/, so package root is two levels up
@@ -18,19 +26,19 @@ const packageRoot = path.join(__dirname, "..", "..");
 function updatePathsInFile(filePath) {
   try {
     if (!fs.existsSync(filePath)) {
-      console.warn(`⚠️ File not found: ${filePath}`);
+      structuredLog('prepare-consumer', `File not found: ${filePath}`, 'warning');
       return;
     }
 
     let content = fs.readFileSync(filePath, 'utf-8');
     let updated = false;
 
-    // Transform development paths back to consumer paths
+    // Transform development paths back to consumer paths (plain xray; legacy @0xray/xray removed)
     // Only transform if it's not already a consumer path
-    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/strray-ai/dist/plugin/mcps/')) {
+    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/xray/dist/plugin/mcps/')) {
       content = content.replace(
         /dist\/plugin\/mcps\//g,
-        'node_modules/strray-ai/dist/plugin/mcps/'
+        'node_modules/xray/dist/plugin/mcps/'
       );
       updated = true;
     }
@@ -39,16 +47,16 @@ function updatePathsInFile(filePath) {
     if (content.includes('../../../dist/plugin/')) {
       content = content.replace(
         /\.\.\/\.\.\/\.\.\/dist\/plugin\//g,
-        'node_modules/strray-ai/dist/plugin/'
+        'node_modules/xray/dist/plugin/'
       );
       updated = true;
     }
 
     if (updated) {
       fs.writeFileSync(filePath, content);
-      console.log(`✅ Updated paths in ${path.relative(packageRoot, filePath)}`);
+      structuredLog('prepare-consumer', `Updated paths in ${path.relative(packageRoot, filePath)}`, 'success');
     } else {
-      console.log(`ℹ️ No development paths found in ${path.relative(packageRoot, filePath)}`);
+      structuredLog('prepare-consumer', `No development paths found in ${path.relative(packageRoot, filePath)}`, 'info');
     }
   } catch (error) {
     console.warn(`⚠️ Could not update paths in ${filePath}:`, error.message);
@@ -61,60 +69,24 @@ const filesToUpdate = [
   "opencode.json"
 ];
 
-// Sync .strray/ from .opencode/strray/ so headless consumers get framework defaults
-function syncStrrayDir() {
-  console.log("🔧 Syncing .strray/ from .opencode/strray/...");
-  const strrayDir = path.join(packageRoot, ".strray");
-  const sourceDir = path.join(packageRoot, ".opencode", "strray");
-
-  if (!fs.existsSync(sourceDir)) {
-    console.warn("⚠️ .opencode/strray/ not found — skipping .strray/ sync");
-    return;
-  }
-
-  fs.mkdirSync(strrayDir, { recursive: true });
-
-  const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
-  let synced = 0;
-  for (const entry of entries) {
-    if (entry.isFile()) {
-      const src = path.join(sourceDir, entry.name);
-      const dst = path.join(strrayDir, entry.name);
-      fs.copyFileSync(src, dst);
-      synced++;
-    }
-  }
-
-  // Also copy routing-mappings.json if it exists in strray/
-  const routingMappings = path.join(packageRoot, "strray", "routing-mappings.json");
-  if (fs.existsSync(routingMappings)) {
-    fs.copyFileSync(routingMappings, path.join(strrayDir, "routing-mappings.json"));
-    synced++;
-  }
-
-  console.log(`✅ Synced ${synced} files → .strray/`);
-}
-
-syncStrrayDir();
-
-console.log("🔧 StrRay Consumer Preparation: Processing configuration files...");
+structuredLog('prepare-consumer', 'Processing configuration files', 'info');
 filesToUpdate.forEach(filePath => {
   const fullPath = path.join(packageRoot, filePath);
   if (fs.existsSync(fullPath)) {
     updatePathsInFile(fullPath);
   } else {
-    console.log(`ℹ️ Skipping ${filePath} (not found)`);
+    structuredLog('prepare-consumer', `Skipping ${filePath} (not found)`, 'info');
   }
 });
 
 // Add .js extensions to dist/ folder imports for ES module compatibility
 function addJsExtensionsToDist() {
-  console.log("🔧 Adding .js extensions to dist/ folder imports...");
+  structuredLog('prepare-consumer', 'Adding .js extensions to dist/ folder imports', 'info');
   
   const distPath = path.join(packageRoot, "dist");
   
   if (!fs.existsSync(distPath)) {
-    console.warn("⚠️ dist/ folder not found. Run npm run build first.");
+    structuredLog('prepare-consumer', 'dist/ folder not found. Run npm run build first.', 'warning');
     return;
   }
   
@@ -139,10 +111,10 @@ function addJsExtensionsToDist() {
       if (content !== originalContent) {
         fs.writeFileSync(filePath, content);
         modifiedCount++;
-        console.log(`✅ Fixed: ${path.relative(distPath, filePath)}`);
+        structuredLog('prepare-consumer', `Fixed: ${path.relative(distPath, filePath)}`, 'success');
       }
     } catch (error) {
-      console.error(`❌ Error processing ${filePath}:`, error.message);
+      structuredLog('prepare-consumer', `Error processing ${filePath}: ${error.message}`, 'error');
     }
   }
   
@@ -161,11 +133,11 @@ function addJsExtensionsToDist() {
   }
   
   walkDir(distPath);
-  console.log(`🎉 Added .js extensions to ${modifiedCount} files in dist/`);
+  structuredLog('prepare-consumer', `Added .js extensions to ${modifiedCount} files in dist/`, 'success');
 }
 
 // Run the dist transformation
 addJsExtensionsToDist();
 
-console.log("🎉 StrRay Consumer Preparation: Complete!");
-console.log("📦 Package is now ready for consumer installation.");
+structuredLog('prepare-consumer', 'xray v2 Consumer Preparation: Complete!', 'success');
+structuredLog('prepare-consumer', 'Package is now ready for consumer installation (plain xray technical identity).', 'info');

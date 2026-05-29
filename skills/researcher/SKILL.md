@@ -1,14 +1,14 @@
 ---
 name: researcher
 description: Multi-repo analysis, documentation lookup, and implementation examples
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [research, researcher]
 
 mcp:
   researcher:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/project-analysis.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/project-analysis.server.js]
 ---
 
 # Researcher Skill

@@ -42,7 +42,7 @@ describe("ProcessorManager Reuse (Critical Regression)", () => {
     // Store in state (like boot-orchestrator does)
     stateManager.set("processor:manager", bootProcessorManager);
 
-    // Simulate plugin getting processor manager (like strray-codex-injection.ts does)
+    // Simulate plugin getting processor manager (like xray-codex-injection.ts does)
     const retrievedProcessorManager = stateManager.get("processor:manager");
 
     // CRITICAL: Must be the SAME instance

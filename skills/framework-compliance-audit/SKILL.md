@@ -1,14 +1,14 @@
 ---
 name: framework-compliance-audit
 description: Framework compliance auditing and validation
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [compliance, framework, compliance, audit]
 
 mcp:
   framework-compliance-audit:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/framework-compliance-audit.server.js]
+    args: [node_modules/xray/dist/mcps/framework-compliance-audit.server.js]
 ---
 
 # Framework Compliance Audit Skill

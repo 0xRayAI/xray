@@ -11,11 +11,11 @@
  * the format guide in tweets/FORMAT.md.
  *
  * Quick format:
- *   🎉 0xRay v{VERSION} is LIVE - {THEME}!
+ *   🎉 xray v{VERSION} is LIVE - {THEME}!
  *   {EMOJI} {5 consumer-facing bullets}
- *   npm install strray-ai@latest
- *   What 0xRay is: {positioning}
- *   #0xRay #AIOps #DevTools #SelfHealing #NPM
+ *   npm install xray@latest
+ *   What xray is: {positioning}
+ *   #xray #AIOps #DevTools #SelfHealing #NPM
  */
 
 console.log(`

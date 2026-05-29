@@ -1,14 +1,14 @@
 ---
 name: model-health-check
 description: AI model health monitoring and diagnostics
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [monitoring, model, health, check]
 
 mcp:
   model-health-check:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/model-health-check.server.js]
+    args: [node_modules/xray/dist/mcps/model-health-check.server.js]
 ---
 
 # Model Health Check Skill

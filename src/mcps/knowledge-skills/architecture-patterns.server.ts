@@ -1,5 +1,5 @@
 /**
- * 0xRay Architecture Patterns MCP Server
+ * xray Architecture Patterns MCP Server
  *
  * Knowledge skill for architectural pattern recognition,
  * design pattern recommendations, and system architecture guidance

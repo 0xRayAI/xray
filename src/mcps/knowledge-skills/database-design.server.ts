@@ -1,5 +1,5 @@
 /**
- * 0xRay Database Design MCP Server
+ * xray Database Design MCP Server
  *
  * Knowledge skill for database architecture, schema optimization,
  * query performance analysis, and data modeling best practices

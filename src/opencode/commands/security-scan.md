@@ -5,11 +5,11 @@ description: Automated security vulnerability scanning with dependency and code 
 
 #!/bin/bash
 
-# StringRay 1.0.0 - Security Scan Hook
+# xray 2.0 - Security Scan Hook
 
 # Comprehensive security analysis for vulnerabilities and threats
 
-echo "🔒 StringRay 1.0.0 - Security Scan"
+echo "🔒 xray 2.0 - Security Scan"
 echo "================================================="
 
 # Initialize security status
@@ -153,5 +153,5 @@ exit 1
 fi
 
 echo ""
-echo "🛡️ StringRay 1.0.0 Status: SECURE"
+echo "🛡️ xray 2.0 Status: SECURE"
 echo "Next security scan: Pre-commit and daily"

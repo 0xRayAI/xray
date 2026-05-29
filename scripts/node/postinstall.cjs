@@ -4,10 +4,18 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
+// Structured logging shim (fwLogger discipline for script context; mirrors FrameworkUsageLogger format to logs/framework/activity.log in full runs)
+function structuredLog(component, action, status, details) {
+  const ts = new Date().toISOString();
+  const detailsPart = details ? ` | ${JSON.stringify(details)}` : '';
+  console.log(`${ts} [${component}] ${action} - ${String(status).toUpperCase()}${detailsPart}`);
+}
+
 const packageRoot = path.join(__dirname, "..", "..");
 
 let targetDir;
-if (__dirname.includes("node_modules/strray-ai")) {
+if (__dirname.includes("node_modules/xray")) {
+  // plain xray (final identity)
   targetDir = path.join(__dirname, "..", "..", "..", "..");
 } else {
   targetDir = process.env.PWD || process.cwd();
@@ -16,7 +24,7 @@ if (__dirname.includes("node_modules/strray-ai")) {
 const resolvedPackage = path.resolve(packageRoot);
 const resolvedTarget = path.resolve(targetDir);
 
-const MERGE_FILES = new Set(["strray/features.json", "enforcer-config.json"]);
+const MERGE_FILES = new Set(["enforcer-config.json"]);
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]); // agent configs, commands, workflows
 
@@ -72,55 +80,6 @@ if (fs.existsSync(opencodeSource) && resolvedPackage !== resolvedTarget) {
   copyDir(opencodeSource, opencodeDest);
 }
 
-// Copy .strray/ to consumer project (incremental: only new files)
-const strraySource = path.join(packageRoot, ".strray");
-const strrayDest = path.join(targetDir, ".strray");
-
-if (fs.existsSync(strraySource)) {
-  const resolvedStrraySource = path.resolve(strraySource);
-  const resolvedStrrayDest = path.resolve(strrayDest);
-  if (resolvedStrraySource !== resolvedStrrayDest) {
-    function copyNewFiles(s, d) {
-      if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-      for (const entry of fs.readdirSync(s, { withFileTypes: true })) {
-        const srcPath = path.join(s, entry.name);
-        const destPath = path.join(d, entry.name);
-        if (entry.isDirectory()) {
-          copyNewFiles(srcPath, destPath);
-        } else if (!fs.existsSync(destPath)) {
-          fs.copyFileSync(srcPath, destPath);
-        }
-      }
-    }
-    copyNewFiles(strraySource, strrayDest);
-  }
-}
-
-// Copy Grok plugin for Grok CLI (first-class citizen, same level as OpenCode)
-const grokPluginSource = path.join(packageRoot, "src/integrations/grok/plugin/strray-ai");
-const grokPluginSourceBuilt = path.join(packageRoot, ".grok/plugins/strray-ai"); // if we copy during build later
-const grokPluginDest = path.join(targetDir, ".grok/plugins/strray-ai");
-
-const actualGrokSource = fs.existsSync(grokPluginSource) ? grokPluginSource : grokPluginSourceBuilt;
-
-if (fs.existsSync(actualGrokSource) && resolvedPackage !== resolvedTarget) {
-  function copyGrokPlugin(src, dest) {
-    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
-    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-      if (SKIP_DIRS.has(entry.name)) continue;
-      const srcPath = path.join(src, entry.name);
-      const destPath = path.join(dest, entry.name);
-      if (entry.isDirectory()) {
-        copyGrokPlugin(srcPath, destPath);
-      } else {
-        fs.copyFileSync(srcPath, destPath);
-      }
-    }
-  }
-  copyGrokPlugin(actualGrokSource, grokPluginDest);
-  console.log('[postinstall] Copied Grok plugin for strray-ai');
-}
-
 // Copy AGENTS-consumer.md → AGENTS.md
 const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
 const agentsDest = path.join(targetDir, "AGENTS.md");
@@ -129,29 +88,44 @@ if (fs.existsSync(agentsConsumer) && resolvedPackage !== resolvedTarget) {
 }
 
 // Register MCP servers with Grok CLI (if available) using absolute paths to installed dist
+// Full v2 surface: governance + skills + orchestrator + enforcer (additive, preserves prior behavior)
 if (resolvedPackage !== resolvedTarget) {
   try {
     execSync('which grok', { stdio: 'ignore' });
     const govServer = path.join(packageRoot, 'dist/mcps/governance.server.js');
     const skillsServer = path.join(packageRoot, 'dist/mcps/knowledge-skills/skill-invocation.server.js');
-    const strrayRoot = targetDir;
+    const orchServer = path.join(packageRoot, 'dist/mcps/orchestrator/server.js');
+    const enforcerServer = path.join(packageRoot, 'dist/mcps/enforcer-tools.server.js');
+    const xrayRoot = targetDir;
 
     execSync(
-      `grok mcp add strray-governance --command node --args "${govServer}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "STRRAY_ROOT=${strrayRoot}"`,
+      `grok mcp add xray-governance --command node --args "${govServer}" --env "XRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${xrayRoot}"`,
       { stdio: 'pipe' }
     );
-    console.log('[postinstall] Registered strray-governance with Grok CLI');
+    structuredLog('postinstall', 'Registered xray-governance with Grok CLI', 'info');
 
     execSync(
-      `grok mcp add strray-skills --command node --args "${skillsServer}" --env "STRRAY_ROOT=${strrayRoot}"`,
+      `grok mcp add xray-skills --command node --args "${skillsServer}" --env "XRAY_ROOT=${xrayRoot}"`,
       { stdio: 'pipe' }
     );
-    console.log('[postinstall] Registered strray-skills with Grok CLI');
+    structuredLog('postinstall', 'Registered xray-skills with Grok CLI', 'info');
+
+    execSync(
+      `grok mcp add xray-orchestrator --command node --args "${orchServer}" --env "XRAY_ROOT=${xrayRoot}"`,
+      { stdio: 'pipe' }
+    );
+    structuredLog('postinstall', 'Registered xray-orchestrator with Grok CLI', 'info');
+
+    execSync(
+      `grok mcp add xray-enforcer --command node --args "${enforcerServer}" --env "XRAY_ROOT=${xrayRoot}"`,
+      { stdio: 'pipe' }
+    );
+    structuredLog('postinstall', 'Registered xray-enforcer with Grok CLI', 'info');
   } catch (_e) {
     // grok not on PATH or registration failed — skip gracefully
   }
 }
 
 if (resolvedPackage !== resolvedTarget) {
-  console.log("✅ 0xRay framework installed. Run `npx strray-ai setup` for full configuration (hooks, Hermes, symlinks).");
+  structuredLog('postinstall', 'xray v2 framework installed. Run `npx xray setup` for full configuration (hooks, Hermes, symlinks).', 'success');
 }

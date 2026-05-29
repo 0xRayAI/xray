@@ -922,7 +922,7 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
       case "mcp-servers":
         return fs.existsSync("src/mcps");
       case "framework-hooks":
-        return fs.existsSync("src/strray-activation.ts");
+        return fs.existsSync("src/core/xray-activation.ts");
       default:
         return false;
     }

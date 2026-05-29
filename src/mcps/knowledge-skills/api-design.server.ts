@@ -1,5 +1,5 @@
 /**
- * 0xRay API Design MCP Server
+ * xray API Design MCP Server
  *
  * Knowledge skill for API design patterns, RESTful conventions,
  * GraphQL schema design, and API documentation standards

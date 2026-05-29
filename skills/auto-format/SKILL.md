@@ -1,14 +1,14 @@
 ---
 name: auto-format
 description: Automated code formatting and style consistency
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [formatting, auto, format]
 
 mcp:
   auto-format:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/auto-format.server.js]
+    args: [node_modules/xray/dist/mcps/auto-format.server.js]
 ---
 
 # Auto Format Skill

@@ -12,7 +12,7 @@
  *   - Real MCP/tool reachability checks
  *   - Deep payload + runtime validation after npm pack + tarball install
  *
- * Validates the complete first-class Grok CLI integration (hooks + MCP + governance/researcher).
+ * Validates the complete first-class Grok CLI integration (hooks + full governed MCP surface: governance + skills + orchestrator + enforcer).
  */
 
 import { execSync, spawn } from 'child_process';
@@ -131,7 +131,7 @@ function printGrokIntegrationTree() {
 │  .grok/plugins/strray-ai/          (Grok discovers at project+user) │
 │   ├── hooks/hooks.json             PreToolUse + SessionStart        │
 │   │    └── command → pre-tool-use.js                               │
-│   └── .mcp.json                    strray-governance + strray-skills │
+│   └── .mcp.json                    strray-governance + skills + orchestrator + enforcer (full v2) │
 │                                                                     │
 │  dist/integrations/grok/hooks/pre-tool-use.js   (real hook)         │
 │       └── robust resolver → applyDecisionMatrix()                    │
@@ -140,7 +140,7 @@ function printGrokIntegrationTree() {
 │   ├── governance-core.js            Dynamo Solar SSOT matrix        │
 │   └── governance-service.js         full proposal pipeline          │
 │                                                                     │
-│  dist/mcps/ (governance.server, researcher, skill-invocation...)    │
+│  dist/mcps/ (governance.server, orchestrator/server.js, enforcer-tools.server.js, skill-invocation...) │
 │                                                                     │
 │  CLI:  npx strray-ai grok install   (postinstall also seeds it)     │
 │                                                                     │
@@ -155,7 +155,7 @@ function printGrokIntegrationTree() {
 │          ▼                                                          │
 │    (currently non-blocking; future: exit 1 on strong REJECT)        │
 │                                                                     │
-│  MCP Tools inside Grok chat: researcher.*, governance.*, skills.*   │
+│  MCP Tools inside Grok chat: governance.*, orchestrator.*, enforcer.*, skills.* (full governed surface) │
 └─────────────────────────────────────────────────────────────────────┘
 `;
   console.log(tree);
@@ -260,6 +260,26 @@ async function main() {
     }
     if (servers['strray-skills']) {
       pass('strray-skills MCP server declared (researcher + all skills)');
+    } else {
+      fail('strray-skills', 'missing from .mcp.json');
+    }
+    if (servers['strray-orchestrator']) {
+      pass('strray-orchestrator MCP server declared');
+      const orch = servers['strray-orchestrator'];
+      if (orch.command === 'npx' && orch.args?.includes('mcp') && orch.args?.includes('orchestrator')) {
+        pass('strray-orchestrator uses correct npx strray-ai mcp orchestrator');
+      }
+    } else {
+      fail('strray-orchestrator', 'missing from .mcp.json');
+    }
+    if (servers['strray-enforcer']) {
+      pass('strray-enforcer MCP server declared');
+      const enf = servers['strray-enforcer'];
+      if (enf.command === 'npx' && enf.args?.includes('mcp') && enf.args?.includes('enforcer')) {
+        pass('strray-enforcer uses correct npx strray-ai mcp enforcer');
+      }
+    } else {
+      fail('strray-enforcer', 'missing from .mcp.json');
     }
   } catch (e) {
     fail('.mcp.json deep validation', e.message);
@@ -374,9 +394,9 @@ async function main() {
   }
 
   // ── Phase 7: MCP Server Reachability ───────────────────────
-  section('Phase 7: MCP Server Reachability (governance + skills)');
+  section('Phase 7: MCP Server Reachability (full governed surface: governance + skills + orchestrator + enforcer)');
 
-  // Try the exact commands declared in .mcp.json
+  // Try the exact commands declared in .mcp.json (verifies CLI launcher for all 4 canonical registrations)
   const govList = run(`node "${path.join(distDir, 'cli', 'index.js')}" mcp governance --help`, { ignoreError: true, cwd: testDir, timeout: 15000 });
   if (govList.includes('governance') || govList.length > 10) {
     pass('strray-ai mcp governance entrypoint responds');
@@ -385,6 +405,16 @@ async function main() {
   const skillsList = run(`node "${path.join(distDir, 'cli', 'index.js')}" mcp skills --help`, { ignoreError: true, cwd: testDir, timeout: 15000 });
   if (skillsList.includes('skills') || skillsList.length > 10) {
     pass('strray-ai mcp skills entrypoint responds');
+  }
+
+  const orchList = run(`node "${path.join(distDir, 'cli', 'index.js')}" mcp orchestrator --help`, { ignoreError: true, cwd: testDir, timeout: 15000 });
+  if (orchList.includes('orchestrator') || orchList.length > 10) {
+    pass('strray-ai mcp orchestrator entrypoint responds');
+  }
+
+  const enforcerList = run(`node "${path.join(distDir, 'cli', 'index.js')}" mcp enforcer --help`, { ignoreError: true, cwd: testDir, timeout: 15000 });
+  if (enforcerList.includes('enforcer') || enforcerList.length > 10) {
+    pass('strray-ai mcp enforcer entrypoint responds');
   }
 
   // Real MCP client usage from the installed package (parity with OpenCode mcpClientManager tests)
@@ -438,6 +468,20 @@ async function main() {
   const skillInv = path.join(distDir, 'mcps', 'knowledge-skills', 'skill-invocation.server.js');
   if (fs.existsSync(skillInv)) {
     pass('skill-invocation MCP server present (powers generic skill calls)');
+  }
+
+  // S04 extension: verify full governed MCP surface server targets (post-build packaging)
+  const orchServer = path.join(distDir, 'mcps', 'orchestrator', 'server.js');
+  if (fs.existsSync(orchServer)) {
+    pass('orchestrator/server.js MCP target present (for grok mcp + .mcp.json launcher)');
+  } else {
+    fail('orchestrator/server.js', 'missing from packaged dist');
+  }
+  const enforcerServer = path.join(distDir, 'mcps', 'enforcer-tools.server.js');
+  if (fs.existsSync(enforcerServer)) {
+    pass('enforcer-tools.server.js MCP target present (full enforcement surface)');
+  } else {
+    fail('enforcer-tools.server.js', 'missing from packaged dist');
   }
 
   // ── Phase 10: Postinstall + Project vs User Level ──────────

@@ -1,5 +1,5 @@
 /**
- * 0xRay Git Workflow MCP Server
+ * xray Git Workflow MCP Server
  *
  * Knowledge skill for version control strategies, branching models,
  * and collaborative development workflows

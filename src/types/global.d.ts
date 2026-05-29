@@ -1,12 +1,4 @@
-/**
- * 0xRay Framework — Global This Extensions
- *
- * Typed declarations for framework singletons stored on globalThis.
- * Eliminates `as any` casts across the codebase.
- *
- * @version 1.0.0
- * @since 2026-04-11
- */
+// Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
 
 import type { StringRayStateManager } from "../state/state-manager.js";
 import type { ProcessorManager } from "../processors/processor-manager.js";

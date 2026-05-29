@@ -1,14 +1,14 @@
 ---
 name: performance-analysis
 description: System performance analysis and optimization
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [performance, performance, analysis]
 
 mcp:
   performance-analysis:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/performance-analysis.server.js]
+    args: [node_modules/xray/dist/mcps/performance-analysis.server.js]
 ---
 
 # Performance Analysis Skill

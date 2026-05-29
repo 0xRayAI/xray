@@ -1,7 +1,7 @@
 # GitHub Pages compatible redirects (use 301 for permanent redirect)
-/docs/introduction /StringRay/docs/introduction 301
-/docs/guides/getting-started /StringRay/docs/guides/getting-started 301
-/docs/architecture /StringRay/docs/architecture 301
-/docs/agents /StringRay/docs/agents 301
-/docs/ /StringRay/docs/ 301
-/docs/* /StringRay/docs/:splat 301
+/docs/introduction /xray/docs/introduction 301
+/docs/guides/getting-started /xray/docs/guides/getting-started 301
+/docs/architecture /xray/docs/architecture 301
+/docs/agents /xray/docs/agents 301
+/docs/ /xray/docs/ 301
+/docs/* /xray/docs/:splat 301

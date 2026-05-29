@@ -1,14 +1,14 @@
 ---
 name: processor-pipeline
 description: Data processing pipeline management
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [processing, processor, pipeline]
 
 mcp:
   processor-pipeline:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/processor-pipeline.server.js]
+    args: [node_modules/xray/dist/mcps/processor-pipeline.server.js]
 ---
 
 # Processor Pipeline Skill

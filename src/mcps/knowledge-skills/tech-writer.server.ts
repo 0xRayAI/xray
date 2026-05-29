@@ -1,5 +1,5 @@
 /**
- * 0xRay Documentation Generation MCP Server
+ * xray Documentation Generation MCP Server
  *
  * Knowledge skill for automated documentation creation, API docs generation,
  * code documentation maintenance, and technical writing assistance

@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Framework Build Utilities
+ * xray Framework Build Utilities
  * Consolidated build and deployment utilities
- * Author: StringRay Enforcer Agent
- * Version: 1.1.1
+ * Version: 2.0.0
  */
 
 const { spawn, execSync } = require('child_process');
@@ -29,7 +28,7 @@ class BuildUtils {
   }
 
   async runBuild(options = {}) {
-    this.log('Starting StringRay Framework Build...', 'info');
+    this.log('Starting xray Framework Build...', 'info');
     
     const buildSteps = [
       { name: 'TypeScript Compilation', command: 'npm run typecheck' },
@@ -100,7 +99,7 @@ class BuildUtils {
     
     const requiredFiles = [
       'dist/cli/index.js',
-      'dist/plugin/strray-codex-injection.js',
+      'dist/plugin/xray-codex-injection.js',
       'dist/mcps/orchestrator.server.js'
     ];
 

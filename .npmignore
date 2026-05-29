@@ -15,3 +15,8 @@ docs/reflections/
 logs/
 backups/
 tmp/
+.strray/
+strray/
+.opencode/strray/
+dist/core/strray-activation.*
+dist/integrations/openclaw/hooks/strray-hooks.*

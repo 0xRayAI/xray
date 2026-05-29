@@ -1,14 +1,14 @@
 ---
 name: ui-ux-design
 description: User interface and user experience design with mobile-first approach, cognitive simplicity, and accessibility-first principles
-author: StrRay Framework
+author: xray
 version: 2.1.0
 tags: [design, ui, ux, accessibility, mobile-first, visual-hierarchy, wcag, contrast, color-theory, dont-make-me-think]
 
 mcp:
   ui-ux-design:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/ui-ux-design.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/ui-ux-design.server.js]
 ---
 
 # UI/UX Design Skill v2.1.0

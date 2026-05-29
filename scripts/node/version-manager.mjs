@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Version Manager for StringRay
+ * Version Manager for xray
  * 
  * Updates version in:
  * - package.json
- * - init.sh
  * - CHANGELOG.md (auto-generates from git commits since last tag)
  * - README.md (updates agent/MCP/skill counts)
  * - AGENTS.md (updates agent/MCP/skill counts)
@@ -27,8 +26,7 @@ const rootDir = path.resolve(__dirname, '../..');
 
 // Files to update with version
 const VERSION_FILES = [
-  { file: 'package.json', field: 'version', pattern: /"version":\s*"[^"]+"/ },
-  { file: 'init.sh', field: 'STRRAY_VERSION', pattern: /STRRAY_VERSION="[^"]+"/ }
+  { file: 'package.json', field: 'version', pattern: /"version":\s*"[^"]+"/ }
 ];
 
 // Commit types for changelog grouping
@@ -186,7 +184,7 @@ function getFrameworkCounts() {
       .length;
   } else {
     // Try node_modules path for published package
-    const nodeModulesMcps = path.join(rootDir, 'node_modules/strray-ai/dist/mcps');
+    const nodeModulesMcps = path.join(rootDir, 'node_modules/xray/dist/mcps');
     if (fs.existsSync(nodeModulesMcps)) {
       counts.mcps = fs.readdirSync(nodeModulesMcps)
         .filter(f => f.endsWith('.server.js'))
@@ -308,10 +306,10 @@ function updateAgentsMd(counts) {
   
   let agentsMd = fs.readFileSync(agentsPath, 'utf-8');
   
-  // Update header counts like "StringRay - 23 Agents, 39 MCPs, 52 Skills"
+  // Legacy header count update (min compat for old consumer AGENTS.md files only; xray v2 YML SSOT primary)
   agentsMd = agentsMd.replace(
-    /StringRay\s*-\s*\d+\s+Agents/,
-    `StringRay - ${counts.agents} Agents`
+    /0xRay\s*2\.0\s*-\s*\d+\s+Agents|StringRay\s*-\s*\d+\s+Agents/,
+    `xray v2 - ${counts.agents} Agents`
   );
   
   agentsMd = agentsMd.replace(
@@ -376,19 +374,7 @@ function updateVersion(newVersion, changeDescription = '') {
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
   console.log(`✅ Updated package.json`);
   
-  // Update init.sh if it exists
-  const initPath = path.join(rootDir, 'init.sh');
-  if (fs.existsSync(initPath)) {
-    let initContent = fs.readFileSync(initPath, 'utf-8');
-    initContent = initContent.replace(
-      /STRRAY_VERSION="[^"]+"/,
-      `STRRAY_VERSION="${newVersion}"`
-    );
-    fs.writeFileSync(initPath, initContent);
-    console.log(`✅ Updated init.sh`);
-  } else {
-    console.log(`⚠️  init.sh not found, skipping`);
-  }
+  // init.sh legacy version key no longer updated (final xray cutover - no historical scaffolding)
   
   // Update docs/README.md version badge
   const docsReadmePath = path.join(rootDir, 'docs/README.md');

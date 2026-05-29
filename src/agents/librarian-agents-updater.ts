@@ -96,7 +96,7 @@ export class LibrarianAgentsUpdater {
     sections.push("");
     sections.push("### OpenCode Plugin (`.opencode/plugin/`)");
     sections.push("**Purpose:** Injects 0xRay into OpenCode framework");
-    sections.push("- Location: `.opencode/plugin/strray-codex-injection.js`");
+    sections.push("- Location: `.opencode/plugin/xray-codex-injection.js`");
     sections.push("- What it does: Injects Universal Development Codex into OpenCode's AI agents");
     sections.push("- For: OpenCode integration");
     sections.push("");
@@ -426,7 +426,7 @@ export class LibrarianAgentsUpdater {
     sections.push("");
     sections.push("### OpenCode Plugin (`.opencode/plugin/`)");
     sections.push("**Purpose:** Injects 0xRay into OpenCode framework");
-    sections.push("- Location: `.opencode/plugin/strray-codex-injection.js`");
+    sections.push("- Location: `.opencode/plugin/xray-codex-injection.js`");
     sections.push(
       "- What it does: Injects Universal Development Codex into OpenCode's AI agents",
     );

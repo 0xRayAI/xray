@@ -1,14 +1,14 @@
 ---
 name: api-design
 description: RESTful API design and validation
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [design, api, design]
 
 mcp:
   api-design:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/api-design.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/api-design.server.js]
 ---
 
 # Api Design Skill

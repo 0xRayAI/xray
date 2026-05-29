@@ -3,7 +3,7 @@
 /**
  * MCP Server Connectivity Validator
  *
- * Tests all StringRay MCP servers for proper startup and protocol compliance
+ * Tests all xray v2 MCP servers for proper startup and protocol compliance
  * Validates external integration points that internal tests miss
  * 
  * FIXED: Converted to ES module syntax
@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Detect if running in consumer environment (node_modules)
-const isConsumerEnvironment = __dirname.includes("node_modules/strray-ai");
+const isConsumerEnvironment = __dirname.includes("node_modules/xray");
 const pathPrefix = isConsumerEnvironment ? "" : "";
 
 const MCP_SERVERS = [
@@ -88,7 +88,7 @@ class MCPServerValidator {
   async validateAllServers() {
     console.log("🔍 MCP SERVER CONNECTIVITY VALIDATOR");
     console.log("=====================================");
-    console.log(`Testing ${MCP_SERVERS.length} StringRay MCP servers...\n`);
+    console.log(`Testing ${MCP_SERVERS.length} xray MCP servers...\n`);
 
     for (const server of MCP_SERVERS) {
       await this.validateServer(server);

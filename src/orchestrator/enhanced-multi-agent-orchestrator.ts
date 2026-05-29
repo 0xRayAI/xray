@@ -411,7 +411,7 @@ export class EnhancedMultiAgentOrchestrator {
    * Simulate agent execution (FALLBACK - used when plugin not loaded)
    * 
    * NOTE: The primary execution path is through the OpenCode plugin:
-   * - .opencode/plugin/strray-codex-injection.js intercepts prompts
+   * - .opencode/plugin/xray-codex-injection.js intercepts prompts
    * - Routes to agents via .opencode/agents/*.yml configs
    * - OpenCode spawns actual agent processes
    * - Hermes Agent handles MCP server execution

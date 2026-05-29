@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StrRay Framework Basic Security Audit
+ * xray Basic Security Audit
  *
  * Performs basic security checks on the framework codebase.
  */
@@ -77,7 +77,7 @@ class BasicSecurityAuditor {
           line.includes("alert_") ||
           line.includes("conn_") ||
           line.includes("dash_") ||
-          line.includes("strray-"))) ||
+          line.includes("xray-"))) ||
       line.includes("test") ||
       line.includes("benchmark") ||
       line.includes("mock") ||
@@ -86,7 +86,7 @@ class BasicSecurityAuditor {
   }
 
   auditProject(projectPath = ".") {
-    console.log("🔒 StrRay Framework Basic Security Audit");
+    console.log("🔒 xray Basic Security Audit");
     console.log("=========================================\n");
 
     const files = this.getAllFiles(projectPath);
@@ -117,7 +117,7 @@ class BasicSecurityAuditor {
 
     if (
       stat.isDirectory() &&
-      !["node_modules", ".git", "dist", ".opencode", ".strray", "coverage", "docs-site", "ci-test-env", "test-install", "docs", "scripts"].includes(item)
+      !["node_modules", ".git", "dist", ".opencode", "coverage", "docs-site", "ci-test-env", "test-install", "docs", "scripts"].includes(item)
     ) {
       traverse(fullPath);
     } else if (stat.isFile()) {

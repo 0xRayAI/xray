@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 0xRay AI v1.22.60 - Pre-commit Introspection
+# xray 2.0 - Pre-commit Introspection
 # Comprehensive code quality and architecture validation
 
-echo "🔬 0xRay AI v1.22.60 - Pre-commit Introspection"
+echo "🔬 xray 2.0 - Pre-commit Introspection"
 echo "============================================================"
 
 # Initialize analysis status

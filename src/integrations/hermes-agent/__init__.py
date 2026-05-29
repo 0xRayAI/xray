@@ -1,6 +1,6 @@
 """StringRay Hermes Plugin — full framework pipeline integration.
 
-Mirrors the OpenCode strray-codex-injection.ts behavior:
+Mirrors the OpenCode xray-codex-injection.ts behavior:
   1. Captures ALL tool calls and logs to disk
   2. Runs quality gates on code-producing tools
   3. Runs pre/post processors via Node.js bridge

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Shared config path resolver for StringRay scripts (.mjs/.cjs/.js).
+ * Shared config path resolver for xray scripts (.mjs/.cjs/.js).
  *
  * Mirrors the logic in src/core/config-paths.ts so scripts don't need to
- * import compiled TypeScript. Supports STRRAY_CONFIG_DIR env var.
+ * import compiled TypeScript. Supports XRAY_CONFIG_DIR env var.
  *
  * Usage:
  *   import { getConfigDir, resolveConfigPath } from "../helpers/resolve-config-path.mjs";
@@ -15,28 +15,27 @@
 import { existsSync } from "fs";
 import { join, resolve } from "path";
 
-const STRRAY_CONFIG_DIR_ENV = "STRRAY_CONFIG_DIR";
+const XRAY_CONFIG_DIR_ENV = "XRAY_CONFIG_DIR";
 
 /** Cache of resolved config dirs per project root */
 const _cache = new Map();
 
 /**
  * Detect the best available config directory.
- * Priority: STRRAY_CONFIG_DIR > .strray > .opencode/strray
+ * Priority: XRAY_CONFIG_DIR > .opencode
  */
 export function getConfigDir(projectRoot) {
   const root = projectRoot || process.cwd();
   const cached = _cache.get(root);
   if (cached) return cached;
 
-  const envDir = process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
   const candidates = [];
 
   if (envDir) {
     candidates.push(resolve(root, envDir));
   }
-  candidates.push(join(root, ".strray"));
-  candidates.push(join(root, ".opencode", "strray"));
+  candidates.push(join(root, ".opencode"));
 
   for (const dir of candidates) {
     if (existsSync(dir)) {
@@ -45,7 +44,7 @@ export function getConfigDir(projectRoot) {
     }
   }
 
-  // Default: highest priority (env > .strray > .opencode/strray)
+  // Default: highest priority (env > .opencode)
   _cache.set(root, candidates[0]);
   return candidates[0];
 }
@@ -56,14 +55,13 @@ export function getConfigDir(projectRoot) {
  */
 export function resolveConfigPath(relativePath, projectRoot) {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates = [];
   if (envDir) {
     candidates.push(resolve(root, envDir, relativePath));
   }
-  candidates.push(join(root, ".strray", relativePath));
-  candidates.push(join(root, ".opencode", "strray", relativePath));
+  candidates.push(join(root, ".opencode", relativePath));
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {

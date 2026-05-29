@@ -1,14 +1,14 @@
 ---
 name: performance-optimization
 description: Application performance optimization and tuning
-author: StrRay Framework
+author: xray
 version: 1.0.0
 tags: [performance, performance, optimization]
 
 mcp:
   performance-optimization:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/performance-optimization.server.js]
+    args: [node_modules/xray/dist/mcps/knowledge-skills/performance-optimization.server.js]
 ---
 
 # Performance Optimization Skill

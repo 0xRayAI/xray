@@ -6,7 +6,7 @@
  * This script should be run in CI/CD, pre-commit hooks, and local validation.
  * 
  * @version 1.0.0
- * @framework StringRay 1.3.5
+ * @framework xray v2
  */
 
 import fs from 'fs';

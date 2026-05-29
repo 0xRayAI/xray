@@ -3,7 +3,7 @@
 /**
  * External Process Communication Validator
  *
- * Tests StringRay's ability to spawn and communicate with external processes
+ * Tests xray v2's ability to spawn and communicate with external processes
  * Validates the orchestration system's external integration capabilities
  */
 

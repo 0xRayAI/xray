@@ -12,7 +12,7 @@ const RUN_HERMES_BRIDGE = process.env.RUN_HERMES_BRIDGE_TESTS === "true";
 const PROJECT_ROOT = path.resolve(process.cwd());
 const BRIDGE_PATH = path.join(PROJECT_ROOT, "dist", "integrations", "hermes-agent", "bridge.mjs");
 const API_SERVER_PATH = path.join(PROJECT_ROOT, "dist", "integrations", "openclaw", "api-server.js");
-const PLUGIN_PATH = path.join(PROJECT_ROOT, "dist", "plugin", "strray-codex-injection.js");
+const PLUGIN_PATH = path.join(PROJECT_ROOT, "dist", "plugin", "xray-codex-injection.js");
 
 function bridgeExec(args: string[], input?: string, timeout = 10000): Promise<string> {
   return new Promise((resolve, reject) => {

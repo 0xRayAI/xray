@@ -39,9 +39,8 @@ function error(msg) {
 
 function loadConfig() {
   const configPaths = [
-    join(PROJECT_ROOT, ".opencode", "strray", "features.json"),
-    join(PROJECT_ROOT, ".strray", "features.json"),
-    join(PROJECT_ROOT, "node_modules", "strray-ai", ".opencode", "strray", "features.json"),
+    join(PROJECT_ROOT, ".opencode", "features.json"),
+    join(PROJECT_ROOT, "node_modules", "xray", ".opencode", "features.json"),
   ];
 
   for (const configPath of configPaths) {
@@ -124,7 +123,7 @@ function getContextThreshold(config) {
   let maxTokens = 20000;
 
   try {
-    const configPath = join(PROJECT_ROOT, ".opencode", "strray", "features.json");
+    const configPath = join(PROJECT_ROOT, ".opencode", "features.json");
     if (existsSync(configPath)) {
       const content = readFileSync(configPath, "utf-8");
       const config = JSON.parse(content);

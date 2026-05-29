@@ -1,5 +1,5 @@
 /**
- * 0xRay Security Audit MCP Server
+ * xray Security Audit MCP Server
  *
  * Knowledge skill for comprehensive security analysis, vulnerability assessment,
  * and compliance validation - ensures production-ready security posture

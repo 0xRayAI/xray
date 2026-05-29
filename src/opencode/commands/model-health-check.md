@@ -5,11 +5,11 @@ description: Verify dynamic model loading system health and compatibility
 
 #!/bin/bash
 
-# StrRay Framework - Dynamic Model Health Check
+# xray 2.0 - Dynamic Model Health Check
 
 # Validates the dynamic model loading system functionality
 
-echo "🏥 StrRay Framework - Dynamic Model Health Check"
+echo "🏥 xray 2.0 - Dynamic Model Health Check"
 echo "================================================"
 
 # Check if dynamic loader exists
