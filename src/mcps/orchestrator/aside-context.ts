@@ -7,7 +7,6 @@
  */
 
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { getExecutionCoordinator } from "./execution/execution-planner.js";
 
 export interface AsideContextOptions {
   description: string;
@@ -108,16 +107,6 @@ export async function spawnAside(
     parentAsideId: options.parentAsideId,
     activeAsideCount: activeAsides.size,
     note: "Phase 3: aside subcontext spawned with inherited context — available for depth exploration",
-  });
-
-  const coord = getExecutionCoordinator();
-  coord.thinDispatch("aside-context", {
-    asideId,
-    description: options.description,
-    sessionId: options.sessionId,
-    parentAsideId: options.parentAsideId,
-    inheritedContext: options.inheritedContext,
-    priorVerdictContext: options.priorVerdictContext,
   });
 
   if (options.priorVerdictContext) {

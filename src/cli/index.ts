@@ -51,7 +51,7 @@ function validateScriptPath(scriptPath: string, scriptName: string): void {
 const program = new Command();
 
 program
-  .name("xray")
+  .name("strray-ai")
   .description(
     "xray: Bulletproof AI orchestration with systematic error prevention",
   )
@@ -602,7 +602,7 @@ program
 
       // Check package installation
       const packageExists = fs.existsSync(
-        path.join(process.cwd(), "node_modules", "xray"),
+        path.join(process.cwd(), "node_modules", "strray-ai"),
       );
       if (!packageExists) {
         issues.push("xray package not installed");
@@ -854,7 +854,7 @@ program
      const isxrayRepo = (() => {
        try {
          const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
-         return pkg.name === 'xray' && process.env.NODE_ENV !== 'consumer';
+         return pkg.name === 'strray-ai' && process.env.NODE_ENV !== 'consumer';
        } catch {
          return false;
        }
