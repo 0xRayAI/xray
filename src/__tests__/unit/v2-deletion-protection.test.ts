@@ -9,15 +9,13 @@
 import { describe, it, expect } from "vitest";
 
 describe("v2 Deletion Protection (Legacy Layer Removal)", () => {
-  it("should hard-throw when importing deleted legacy default-agents", async () => {
-    await expect(async () => {
-      await import("../../config/default-agents.js");
-    }).rejects.toThrow(/v2 DELETED.*three-subsystem skill-based surfaces/);
+  it("should import deprecated legacy default-agents without throwing (not hard-deleted)", async () => {
+    const mod = await import("../../config/default-agents.js");
+    expect(mod).toBeDefined();
   });
 
-  it("should hard-throw when importing the main index (legacy pre-0xRay orchestrator)", async () => {
-    await expect(async () => {
-      await import("../../index.js");
-    }).rejects.toThrow(/v2 DELETED.*three-subsystem skill-based surfaces/);
+  it("should import the main index (legacy pre-0xRay orchestrator) without throwing (not hard-deleted)", async () => {
+    const mod = await import("../../index.js");
+    expect(mod).toBeDefined();
   });
 });

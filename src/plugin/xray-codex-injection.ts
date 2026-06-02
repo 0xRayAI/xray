@@ -1036,8 +1036,6 @@ export default async function strrayCodexPlugin(input: {
         "strategist": "strategist",
         "testing-lead": "testing-lead",
         "bug-triage-specialist": "bug-triage-specialist",
-        "architect": "architect",
-        "strategist": "strategist",
         "code-reviewer": "code-reviewer",
         "security-auditor": "security-auditor",
         "refactorer": "refactorer",
@@ -1059,7 +1057,7 @@ export default async function strrayCodexPlugin(input: {
       };
 
       while ((match = agentMentionRegex.exec(textContent)) !== null) {
-        const agentName = match[1].toLowerCase().replace(/-/g, "");
+        const agentName = match[1]!.toLowerCase().replace(/-/g, "");
         const taskPart = match[2]?.trim() ?? "";
 
         if (knownAgents[agentName]) {

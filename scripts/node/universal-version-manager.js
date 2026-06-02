@@ -136,7 +136,7 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.22.61",
+    version: "1.22.67",
       displayName: "xray: Self-Healing AI Governance OS",
       lastUpdated: "2026-05-19",
     // Counts (auto-calculated, but can be overridden)
@@ -327,29 +327,29 @@ const UPDATE_PATTERNS = [
     },
 
     // === BADGE AND COUNT PATTERNS ===
-    // Test count in docs badge (e.g., tests-2579-brightgreen)
+    // Test count in docs badge (e.g., tests-2229-brightgreen)
     {
       pattern: /tests-[0-9]+(?=-brightgreen)/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}`,
     },
-    // Test count in npm badge (e.g., tests-2579%20passed-brightgreen)
+    // Test count in npm badge (e.g., tests-2229%20passed-brightgreen)
     {
       pattern: /tests-[0-9,]+%20passed/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}%20passed`,
     },
-    // Test count in prose (e.g., "2,2579 Tests" or "2579 Tests" but NOT in badge URLs)
+    // Test count in prose (e.g., "2,2229 Tests" or "2229 Tests" but NOT in badge URLs)
     {
       pattern: /(\*\s*✅\s*)([0-9]{1,3},?[0-9]{3})(\s*Tests)/g,
       replacement: (match, p1, p2, p3) => {
         return `${p1}${OFFICIAL_VERSIONS.framework.tests}${p3}`;
       },
     },
-    // Test count in feature bullets (e.g., "✅ 2579 Tests")
+    // Test count in feature bullets (e.g., "✅ 2229 Tests")
     {
       pattern: /[0-9]+ Tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} Tests`,
     },
-    // Test count in config tree (e.g., "2579 tests")
+    // Test count in config tree (e.g., "2229 tests")
     {
       pattern: /[0-9]+ tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} tests`,
@@ -384,7 +384,7 @@ const UPDATE_PATTERNS = [
       pattern: /xray AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `xray AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 1.22.60")
+    // Footer bare version (e.g., "**Version**: 1.22.67")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,

@@ -18,32 +18,6 @@ import { getConfigDir } from "../core/config-paths.js";
 // Module-level cache for opencode availability check
 let opencodeAvailable: boolean | null = null;
 
-// thinDispatch + governance gate registration for 'opencode-invocation' flow (SSOT)
-try {
-  import('../mcps/orchestrator/execution/execution-planner.js')
-    .then(({ getExecutionCoordinator }) => {
-      const coord = getExecutionCoordinator();
-      coord.registerExecutionFlow({
-        name: 'opencode-invocation',
-        type: 'engine-execution',
-        ownerModule: 'src/execution',
-        capabilities: ['legacy-opencode-spawn', 'agent-invocation', 'fallback-execution'],
-        metadata: { note: 'Opencode invocation flow under orchestrator SSOT funnel' },
-      });
-    })
-    .catch(() => {
-      // Silent safe degradation
-      frameworkLogger.log('execution', 'coordinator-registration-skipped', 'warning', {
-        reason: 'dynamic import failed (safe; opencode invocation unchanged)',
-      });
-    });
-} catch {
-  // Sync outer guard (defensive)
-  frameworkLogger.log('execution', 'coordinator-registration-error', 'warning', {
-    reason: 'outer guard (opencode invocation unaffected)',
-  });
-}
-
 export async function invokeViaOpencode(
   agentName: string,
   prompt: string,
@@ -101,62 +75,11 @@ export async function invokeViaOpencode(
     opencodeRoot,
   });
 
-  // thinDispatch mediation for 'opencode-invocation' flow (SSOT)
-  try {
-    import('../mcps/orchestrator/execution/execution-planner.js')
-      .then(({ getExecutionCoordinator }) => {
-        const coord = getExecutionCoordinator();
-        const _dispatchAck = coord.thinDispatch('opencode-invocation', {
-          handoff: 'legacy-opencode-execution',
-          agentName,
-        });
-      })
-      .catch(() => {
-        frameworkLogger.log('execution', 'coordinator-dispatch-skipped', 'warning', {
-          reason: 'dynamic import failed (safe)',
-        });
-      });
-  } catch {
-    frameworkLogger.log('execution', 'coordinator-dispatch-error', 'warning', {
-      reason: 'outer guard',
-    });
-  }
-
-  try {
-    const { getExecutionCoordinator } = await import('../mcps/orchestrator/execution/execution-planner.js');
-    const coord = getExecutionCoordinator();
-    const govVerdict = await coord.requestGovernanceDecisionBeforeDispatch(
-      'opencode-invocation',
-      `opencode-invocation continuation (legacy OpenCode CLI for agent "${agentName}"). Current dispatch state (Gauge via centralized helper) requires explicit Governance approval before actual CLI invocation / spawn of governed work via the legacy OpenCode path.`
-    );
-    await frameworkLogger.log('execution', 'governance-execution-verdict-received', 'info', {
-      agentName,
-      decision: govVerdict.decision,
-      reasoningPreview: (govVerdict.reasoning || '').slice(0, 160),
-      governanceCallId: govVerdict.governanceCallId,
-      note: 'centralized governance gate exercised at opencode-invocation',
-    });
-
-    if (govVerdict.decision !== 'continue') {
-      // Respect the non-bypassable verdict: block before any CLI invocation work.
-      // No spawn, no opencode process launched.
-      throw new Error(`GOVERNANCE_VERDICT: ${govVerdict.decision} — ${govVerdict.reasoning} (governanceCallId: ${govVerdict.governanceCallId || 'n/a'})`);
-    }
-    // 'continue' only — proceed with the now-governed opencode CLI invocation below.
-  } catch (gateErr) {
-    const msg = gateErr instanceof Error ? gateErr.message : String(gateErr);
-
-    if (msg.includes('GOVERNANCE_VERDICT')) {
-      throw gateErr; // propagate exact block from verdict check
-    }
-    // Setup or unexpected error in gate path: fail-closed to pause (consistent with hook tolerance)
-    await frameworkLogger.log('execution', 'governance-execution-gate-error', 'error', {
-      error: msg,
-      decision: 'pause (fail-closed at wire site)',
-      note: 'governance gate path error treated as non-continue (no opencode CLI invocation performed)',
-    });
-    throw new Error(`GOVERNANCE_VERDICT: pause — Gate error at opencode-invocation wire: ${msg}`);
-  }
+  // getExecutionCoordinator/execution-planner removed per v2 cleanup — warning log only
+  frameworkLogger.log('execution', 'opencode-invocation-mediation-skipped', 'warning', {
+    reason: 'execution-planner removed (opencode invocation continues via fallback)',
+    agentName,
+  });
 
   return new Promise((resolve, reject) => {
     const timeout = agentName === "architect" ? 300000 : 120000;

@@ -1,6 +1,6 @@
 # xray Agents — Complete Technical Reference
 
-**Version**: 2.0.0  
+**Version**: 1.22.67  
 **Last Updated**: 2026-05-28  
 **Architecture**: Pure v2 three-subsystem model (Inference + External Governance via Dynamo Solar SSOT + Autonomous Engine via thinDispatch 7-flow in MCP orchestrator)  
 **Status**: Pure v2 three-subsystem launch. YML SSOT only. No manual setup.
@@ -187,7 +187,7 @@ Example (`.opencode/agents/researcher.yml`):
 name: researcher
 skill: researcher
 description: "researcher specialist"
-version: "1.0.0"
+version: "1.22.67"
 mode: subagent
 
 capabilities:

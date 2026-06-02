@@ -142,7 +142,7 @@ class ProjectAnalysisServer {
   constructor() {
     this.server = new Server(
       {
-        name: "project-analysis", version: "1.22.60",
+        name: "project-analysis", version: "1.22.67",
       },
       {
         capabilities: {
@@ -1104,8 +1104,8 @@ class ProjectAnalysisServer {
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayProjectAnalysisServer();
-  server.run().catch((error) => frameworkLogger.log("mcps/project-analysis", "run", "error", { error: String(error) }));
+  const server = new ProjectAnalysisServer();
+  server.run().catch((error: unknown) => frameworkLogger.log("mcps/project-analysis", "run", "error", { error: String(error) }));
 }
 
-export default StringRayProjectAnalysisServer;
+export default ProjectAnalysisServer;

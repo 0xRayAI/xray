@@ -71,11 +71,11 @@ function main() {
   }
 
   // Step 1: Tests
-  if (!runInherit("npx vitest run --pool=forks", "Tests")) {
+  if (!runInherit("npm run test:comprehensive", "Tests")) {
     process.exit(1);
   }
 
-  // Step 2: Version bump (runs version:sync and version-manager automatically)
+  // Step 2: Version bump (version:sync runs automatically via preversion hook)
   if (!dryRun) {
     if (!run(`npm version ${bumpType} --no-git-tag-version`, `Bump to ${nextVersion}`)) {
       process.exit(1);

@@ -74,7 +74,7 @@ Create the declarative agent YAML:
 ```yaml
 name: my-agent
 description: "What this agent does"
-version: "2.0.0"
+version: "1.22.67"
 mode: subagent
 ```
 

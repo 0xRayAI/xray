@@ -72,3 +72,21 @@ export interface GovernanceResponse {
     rejected: number;
   };
 }
+
+export interface ActiveCodexSnapshot {
+  source: string | null;
+  loaded_at: string;
+  term_count: number;
+  version: string;
+  last_updated?: string;
+  governance_ssot: boolean;
+  is_fallback: boolean;
+  note: string;
+  dynamo_required: boolean;
+  codex?: any;
+}
+
+export interface ICodexPolicyProvider {
+  getCurrentCodex(includeRaw?: boolean): Promise<ActiveCodexSnapshot>;
+  getTermCount(): Promise<number>;
+}

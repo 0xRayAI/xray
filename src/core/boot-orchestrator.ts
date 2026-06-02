@@ -1094,7 +1094,7 @@ export class BootOrchestrator {
     try {
       // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
       const stringRayConfig = {
-        version: "1.22.60",
+        version: "1.22.67",
         codex_enabled: true,
         codex_version: "v1.7.5",
         codex_terms: [

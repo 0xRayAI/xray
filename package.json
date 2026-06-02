@@ -1,6 +1,6 @@
 {
   "name": "strray-ai",
-  "version": "2.0.0",
+  "version": "1.22.67",
   "description": "⚡ xray: Self-Healing AI Governance OS — The clean v2 three-subsystem architecture (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in the MCP orchestrator). YML agent surfaces as SSOT. Zero legacy.",
   "readme": "README.md",
   "license": "MIT",
