@@ -1,17 +1,16 @@
 import * as fs from "fs";
 import * as path from "path";
-import { execSync, spawn } from "child_process";
 import { shouldTriggerCycle, accumulateCorpus, InferenceCorpus, RecurringPattern, RecurringProblem } from "./inference-accumulator.js";
 import { DeployVerifier, DeployVerificationResult } from "./deploy-verifier.js";
 import { VotingCoordinator } from "../delegation/voting-coordinator.js";
 import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getGovernanceIntegration, type GovernanceVoteResult } from "../integrations/governance/index.js";
-import { getAgentSpawn, featuresConfigLoader } from "../core/features-config.js";
-import { agentSpawnGovernor } from "../orchestrator/agent-spawn-governor.js";
-import { spawnGate } from "../core/agent-spawn-gate.js";
+import { featuresConfigLoader } from "../core/features-config.js";
 import { mcpClientManager } from "../mcps/mcp-client.js";
 import { getConfigDir } from "../core/config-paths.js";
+import { invokeViaOpencode as invokeOpencodeFromEngine } from "../execution/opencode-cli-invoker.js";
+import { ProposalApplier } from "../execution/proposal-applier.js";
 
 export interface InferenceProposal {
   id: string;
@@ -378,89 +377,33 @@ export class InferenceCycle {
 
 
   private async applyProposals(proposals: InferenceProposal[]): Promise<void> {
-    for (const p of proposals) {
-      try {
-        frameworkLogger.log("inference-cycle", "apply-start", "info", {
-          proposalId: p.id,
-          type: p.type,
-          title: p.title,
-        });
-
-        const success = await this.applyProposal(p);
-        p.status = success ? "applied" : "failed";
-
-        frameworkLogger.log("inference-cycle", "apply-complete", success ? "success" : "error", {
-          proposalId: p.id,
-          status: p.status,
-        });
-      } catch (err) {
-        p.status = "failed";
-        frameworkLogger.log("inference-cycle", "apply-error", "error", {
-          proposalId: p.id,
-          error: String(err),
-        });
-      }
+    const applier = new ProposalApplier(
+      this.projectRoot,
+      async (p) => this.applyProposalWork(p),
+      async (p, prUrl) => {
+        if (this.options.skipResearcherReview) return "go";
+        return this.researcherReview(p, prUrl);
+      },
+    );
+    const results = await applier.applyProposals(proposals);
+    for (const r of results) {
+      const p = proposals.find(pr => pr.id === r.proposalId);
+      if (p) p.status = r.success ? "applied" : "failed";
     }
   }
 
-  private async applyProposal(p: InferenceProposal): Promise<boolean> {
-    if (p.type === "codify") {
-      this.applyCodification(p);
-      return true;
+  private async applyProposalWork(p: InferenceProposal): Promise<boolean> {
+    let filesChanged = false;
+
+    if (p.type === "fix" || p.type === "refactor") {
+      filesChanged = await this.applyCodeChange(p);
+    } else if (p.type === "guard") {
+      filesChanged = await this.applyGuard(p);
+    } else if (p.type === "automate") {
+      filesChanged = await this.applyAutomation(p);
     }
 
-    const branchName = `inference/${p.type}-${Date.now()}`;
-
-    try {
-      execSync(`git checkout -b ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
-
-      let filesChanged = false;
-
-      if (p.type === "fix" || p.type === "refactor") {
-        filesChanged = await this.applyCodeChange(p);
-      } else if (p.type === "guard") {
-        filesChanged = await this.applyGuard(p);
-      } else if (p.type === "automate") {
-        filesChanged = await this.applyAutomation(p);
-      }
-
-      if (!filesChanged) {
-        execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
-        execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
-        return false;
-      }
-
-      execSync(`git add -A`, { cwd: this.projectRoot, stdio: "pipe" });
-      execSync(`git commit -m "${p.title}"`, { cwd: this.projectRoot, stdio: "pipe" });
-
-      const prUrl = this.createPR(p, branchName);
-      frameworkLogger.log("inference-cycle", "pr-created", "info", { prUrl });
-
-      // Researcher downstream checkpoint — review PR against real codebase
-      if (!this.options.skipResearcherReview) {
-        const review = await this.researcherReview(p, prUrl);
-        if (review === "no-go") {
-          frameworkLogger.log("inference-cycle", "researcher-no-go", "warning", { prUrl });
-          execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
-          execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
-          return false;
-        } else if (review === "modify") {
-          frameworkLogger.log("inference-cycle", "researcher-modify", "info", { prUrl });
-        }
-      }
-
-      execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
-
-      return true;
-    } catch (err) {
-      try {
-        execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
-        execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
-      } catch {
-        // ignore cleanup errors
-      }
-      throw err;
-    }
+    return filesChanged;
   }
 
   private async applyCodeChange(p: InferenceProposal): Promise<boolean> {
@@ -540,13 +483,6 @@ export class InferenceCycle {
     }
   }
 
-  private applyCodification(p: InferenceProposal): boolean {
-    const catalogPath = path.join(this.projectRoot, "docs", "pattern-catalog.md");
-    const entry = `\n## ${p.title}\n\n${p.description}\n\n**Evidence:** ${p.evidence.length} sessions\n`;
-    fs.appendFileSync(catalogPath, entry);
-    return true;
-  }
-
   private async applyAutomation(p: InferenceProposal): Promise<boolean> {
     const prompt = [
       `Design automation for the following manual process:`,
@@ -595,20 +531,6 @@ export class InferenceCycle {
     }
 
     return [...files];
-  }
-
-  private createPR(p: InferenceProposal, branchName: string): string {
-    try {
-      execSync(`git push -u origin ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
-      const result = execSync(
-        `gh pr create --head ${branchName} --title "${p.title}" --body "## Inference Proposal\n\n${p.description}\n\n**Type:** ${p.type}\n**Confidence:** ${(p.confidence * 100).toFixed(0)}%\n\n## Evidence\n${p.evidence.slice(0, 5).join("\n")}"`,
-        { cwd: this.projectRoot, encoding: "utf-8", stdio: "pipe" },
-      );
-      return result.trim();
-    } catch (err) {
-      frameworkLogger.log("inference-cycle", "pr-create-failed", "warning", { error: String(err) });
-      return "";
-    }
   }
 
   private async researcherReview(p: InferenceProposal, prUrl: string): Promise<"go" | "no-go" | "modify"> {
@@ -1110,134 +1032,7 @@ Respond with EXACTLY one of:
   }
 
   private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
-    // In pure MCP mode we must never reach here
-    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
-      throw new Error(`[PURE MCP] invokeViaOpencode called for "${agentName}" — this path is forbidden.`);
-    }
-
-    // GATE: Centralized spawn gate — blocks all agent spawning by default
-    spawnGate.assertAllowed("inference-cycle");
-
-    // BLOCKED: Never spawn real opencode processes during tests — causes
-    // runaway agent processes and non-deterministic test behavior.
-    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
-      throw new Error(
-        `Agent spawning is disabled in test environment. ` +
-        `Agent "${agentName}" cannot be spawned during tests.`
-      );
-    }
-
-    // GOVERNED: Auto-spawning of OpenCode agents is now protected by the
-    // AgentSpawnGovernor singleton and the agent_spawn feature flag.
-    const spawnConfig = getAgentSpawn();
-    if (!spawnConfig?.enabled) {
-      throw new Error(
-        `Auto-spawning of OpenCode agents is disabled. ` +
-        `Agent "${agentName}" cannot be spawned automatically. ` +
-        `Set agent_spawn.enabled=true in features.json to re-enable.`
-      );
-    }
-
-    // Authorize spawn via the singleton governor
-    const auth = await agentSpawnGovernor.authorizeSpawn({
-      agentType: agentName,
-      operation: "inference-cycle-invoke",
-    });
-    if (!auth.authorized) {
-      throw new Error(
-        `Spawn denied by governance for "${agentName}": ${auth.reason}`
-      );
-    }
-    const trackingId = auth.trackingId;
-
-    if (this.opencodeAvailable === null) {
-      try {
-        execSync("which opencode", { stdio: "pipe", timeout: 3000 });
-        this.opencodeAvailable = true;
-      } catch {
-        this.opencodeAvailable = false;
-      }
-    }
-
-    if (!this.opencodeAvailable) {
-      if (trackingId) await agentSpawnGovernor.failSpawn(trackingId, new Error("opencode CLI not available"));
-      throw new Error("opencode CLI is not available in PATH");
-    }
-
-    // Resolve the actual opencode project root (where .opencode/ config lives)
-    const opencodeRoot = this.resolveOpencodeRoot();
-
-    frameworkLogger.log("inference-cycle", "opencode-spawn-start", "info", {
-      agentName,
-      trackingId,
-      opencodeRoot,
-    });
-
-    return new Promise((resolve, reject) => {
-      const timeout = agentName === "architect" ? 300000 : 120000;
-      let settled = false;
-      const timer = setTimeout(() => {
-        if (!settled) {
-          settled = true;
-          child.kill("SIGKILL");
-          if (trackingId) {
-            agentSpawnGovernor.failSpawn(trackingId, new Error(`opencode ${agentName} timed out`)).catch(() => {});
-          }
-          reject(new Error(`opencode ${agentName} timed out`));
-        }
-      }, timeout);
-
-      const child = spawn(
-        "opencode",
-        ["run", "--agent", agentName, "--message", prompt, "--format", "json"],
-        {
-          cwd: opencodeRoot,
-          env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json" },
-          stdio: ["ignore", "pipe", "pipe"],
-        },
-      );
-
-      let stdout = "";
-      child.stdout?.on("data", (d: Buffer) => { stdout += d.toString(); });
-      child.stderr?.on("data", () => { /* ignore */ });
-
-      child.on("close", async (code) => {
-        clearTimeout(timer);
-        if (settled) return;
-        settled = true;
-        if (code === 0 && stdout.trim()) {
-          if (trackingId) {
-            await agentSpawnGovernor.completeSpawn(trackingId, true).catch(() => {});
-          }
-          frameworkLogger.log("inference-cycle", "opencode-spawn-success", "info", { agentName, trackingId });
-          const textResponse = this.extractTextFromNdjson(stdout.trim());
-          if (textResponse) {
-            resolve(textResponse);
-          } else {
-            resolve(stdout.trim());
-          }
-        } else {
-          const error = new Error(`${agentName} exited ${code}`);
-          if (trackingId) {
-            await agentSpawnGovernor.failSpawn(trackingId, error).catch(() => {});
-          }
-          frameworkLogger.log("inference-cycle", "opencode-spawn-failed", "error", { agentName, trackingId, code });
-          reject(error);
-        }
-      });
-
-      child.on("error", async (err) => {
-        clearTimeout(timer);
-        if (!settled) {
-          settled = true;
-          if (trackingId) {
-            await agentSpawnGovernor.failSpawn(trackingId, err).catch(() => {});
-          }
-          frameworkLogger.log("inference-cycle", "opencode-spawn-error", "error", { agentName, trackingId, error: err.message });
-          reject(err);
-        }
-      });
-    });
+    return invokeOpencodeFromEngine(agentName, prompt, this.projectRoot);
   }
 
   private parseSubagentVotes(

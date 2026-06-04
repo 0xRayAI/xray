@@ -13,6 +13,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { getAgentSpawn } from "../core/features-config.js";
 
 import { spawnGate } from "../core/agent-spawn-gate.js";
+import { agentSpawnGovernor } from "../orchestrator/agent-spawn-governor.js";
 import { getConfigDir } from "../core/config-paths.js";
 
 // Module-level cache for opencode availability check
@@ -24,7 +25,7 @@ export async function invokeViaOpencode(
   projectRoot: string = process.cwd(),
 ): Promise<string> {
   // In pure MCP mode we must never reach here
-  if (process.env.XRAY_FORCE_MCP_GOVERNANCE === "true") {
+  if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === "true") {
     throw new Error(`[PURE MCP] invokeViaOpencode called for "${agentName}" — this path is forbidden.`);
   }
 
@@ -51,7 +52,15 @@ export async function invokeViaOpencode(
     );
   }
 
-  const trackingId: string | undefined = undefined;
+  // Authorize spawn via the singleton governor
+  const auth = await agentSpawnGovernor.authorizeSpawn({
+    agentType: agentName,
+    operation: "inference-cycle-invoke",
+  });
+  if (!auth.authorized) {
+    throw new Error(`Spawn denied by governance for "${agentName}": ${auth.reason}`);
+  }
+  const trackingId = auth.trackingId;
 
   if (opencodeAvailable === null) {
     try {
@@ -63,6 +72,7 @@ export async function invokeViaOpencode(
   }
 
   if (!opencodeAvailable) {
+    if (trackingId) await agentSpawnGovernor.failSpawn(trackingId, new Error("opencode CLI not available"));
     throw new Error("opencode CLI is not available in PATH");
   }
 
@@ -89,6 +99,7 @@ export async function invokeViaOpencode(
         settled = true;
         child.kill("SIGKILL");
         if (trackingId) {
+          agentSpawnGovernor.failSpawn(trackingId, new Error(`opencode ${agentName} timed out`)).catch(() => {});
         }
         reject(new Error(`opencode ${agentName} timed out`));
       }
@@ -99,7 +110,7 @@ export async function invokeViaOpencode(
       ["run", "--agent", agentName, "--message", prompt, "--format", "json"],
       {
         cwd: opencodeRoot,
-        env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/xray/opencode.json" },
+          env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json" },
         stdio: ["ignore", "pipe", "pipe"],
       },
     );
@@ -118,6 +129,7 @@ export async function invokeViaOpencode(
       settled = true;
       if (code === 0 && stdout.trim()) {
         if (trackingId) {
+          await agentSpawnGovernor.completeSpawn(trackingId, true).catch(() => {});
         }
         frameworkLogger.log("inference-cycle", "opencode-spawn-success", "info", { agentName, trackingId });
         const textResponse = extractTextFromNdjson(stdout.trim());
@@ -129,6 +141,7 @@ export async function invokeViaOpencode(
       } else {
         const error = new Error(`${agentName} exited ${code}`);
         if (trackingId) {
+          await agentSpawnGovernor.failSpawn(trackingId, error).catch(() => {});
         }
         frameworkLogger.log("inference-cycle", "opencode-spawn-failed", "error", { agentName, trackingId, code });
         reject(error);
@@ -140,6 +153,7 @@ export async function invokeViaOpencode(
       if (!settled) {
         settled = true;
         if (trackingId) {
+          await agentSpawnGovernor.failSpawn(trackingId, err).catch(() => {});
         }
         frameworkLogger.log("inference-cycle", "opencode-spawn-error", "error", { agentName, trackingId, error: err.message });
         reject(err);

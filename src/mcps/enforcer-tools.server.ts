@@ -14,6 +14,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 
 // Import actual enforcer-tools functions
 import { ruleValidation as runRuleValidation, getTaskRoutingRecommendation, EnforcementResult } from "../enforcement/enforcer-tools.js";
@@ -474,7 +475,7 @@ class StringRayEnforcerToolsServer {
             {
               operation,
               codexCheck,
-              termsValidated: this.getCodexTermCount(), // All Universal Development Codex terms
+              termsValidated: await this.getCodexTermCount(), // All Universal Development Codex terms
               complianceScore: codexCheck.score,
               violations: codexCheck.violations.length,
               timestamp: new Date().toISOString(),
@@ -636,19 +637,12 @@ class StringRayEnforcerToolsServer {
     };
   }
 
-  private getCodexTermCount(): number {
+  private async getCodexTermCount(): Promise<number> {
     try {
-      const codexPath = path.join(process.cwd(), ".opencode", "strray", "codex.json");
-      if (fs.existsSync(codexPath)) {
-        const codex = JSON.parse(fs.readFileSync(codexPath, "utf8"));
-        if (codex.terms && Array.isArray(codex.terms)) {
-          return codex.terms.length;
-        }
-      }
+      return await getCodexPolicyService().getTermCount();
     } catch {
-      // Fall back to default if unable to read
+      return 60; // Default fallback
     }
-    return 60; // Default fallback
   }
 
   // Simulation methods (would integrate with actual enforcer-tools logic)
@@ -753,7 +747,7 @@ class StringRayEnforcerToolsServer {
       }
     }
 
-    const totalTerms = this.getCodexTermCount();
+    const totalTerms = await this.getCodexTermCount();
     const violationsCount = violations.length;
     const warningsCount = warnings.length;
 

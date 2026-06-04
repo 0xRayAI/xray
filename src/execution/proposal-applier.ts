@@ -12,18 +12,19 @@ export interface ApplyResult {
   error?: string;
 }
 
+export type CodeChangeCallback = (proposal: InferenceProposal) => Promise<boolean>;
+export type ReviewCallback = (proposal: InferenceProposal, prUrl: string) => Promise<"go" | "no-go" | "modify">;
+
 export class ProposalApplier {
-  constructor(private projectRoot: string = process.cwd()) {
+  constructor(
+    private projectRoot: string = process.cwd(),
+    private codeChangeCallback?: CodeChangeCallback,
+    private reviewCallback?: ReviewCallback,
+  ) {
   }
 
   async applyProposals(proposals: InferenceProposal[]): Promise<ApplyResult[]> {
     frameworkLogger.log("execution", "proposal-applier-start", "info", {
-      count: proposals.length,
-    });
-
-    // getExecutionCoordinator/execution-planner removed per v2 cleanup — warning log only
-    frameworkLogger.log('execution', 'proposal-application-mediation-skipped', 'warning', {
-      reason: 'execution-planner removed (proposal application continues via direct apply loop)',
       count: proposals.length,
     });
 
@@ -42,7 +43,6 @@ export class ProposalApplier {
     frameworkLogger.log("execution", "apply-proposal", "info", {
       proposalId: p.id,
       type: p.type,
-      module: "v2-refactor",
     });
 
     if (p.type === "codify") {
@@ -54,13 +54,30 @@ export class ProposalApplier {
 
     try {
       this.recordAppliedProposal(p);
-
       const changedFiles: string[] = [
         path.relative(this.projectRoot, this.getAppliedMarkerPath(p)),
       ];
 
       if (isGit) {
         execSync(`git checkout -b ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+      }
+
+      if (this.codeChangeCallback) {
+        const changed = await this.codeChangeCallback(p);
+        if (!changed) {
+          if (isGit) {
+            execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
+            execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+          }
+          return {
+            proposalId: p.id,
+            success: false,
+            error: "Code change returned false (no changes applied)",
+          };
+        }
+      }
+
+      if (isGit) {
         execSync(`git add -A`, { cwd: this.projectRoot, stdio: "pipe" });
         const safeTitle = p.title.replace(/["`]/g, "'");
         execSync(`git commit -m "${safeTitle}"`, { cwd: this.projectRoot, stdio: "pipe" });
@@ -70,8 +87,24 @@ export class ProposalApplier {
           frameworkLogger.log("execution", "pr-created", "info", {
             prUrl,
             proposalId: p.id,
-            module: "v2-refactor",
           });
+        }
+
+        if (this.reviewCallback && prUrl) {
+          const review = await this.reviewCallback(p, prUrl);
+          if (review === "no-go") {
+            frameworkLogger.log("execution", "review-no-go", "warning", {
+              proposalId: p.id,
+              prUrl,
+            });
+            execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
+            execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+            return {
+              proposalId: p.id,
+              success: false,
+              error: "Researcher review rejected proposal",
+            };
+          }
         }
 
         execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
@@ -92,7 +125,6 @@ export class ProposalApplier {
       frameworkLogger.log("execution", "apply-proposal-error", "error", {
         proposalId: p.id,
         error: errorMsg,
-        module: "v2-refactor",
       });
 
       if (isGit) {
@@ -230,8 +262,6 @@ export class ProposalApplier {
     }
   }
 
-  // All proposal apply/execution logic now owned exclusively by Autonomous Engine.
-  // InferenceCycle is purified of apply ownership.
 }
 
 export const proposalApplier = new ProposalApplier();

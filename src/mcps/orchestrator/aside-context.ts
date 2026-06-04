@@ -60,19 +60,19 @@ export function getAsideState(asideId: string): ActiveAside | undefined {
 
 function extractObservations(ctx: Record<string, unknown>): AsideObservation[] {
   const obs: AsideObservation[] = [];
-  const recSummary = (ctx as any)?.reclamationPressureSummary;
+  const recSummary = ctx["reclamationPressureSummary"];
   if (recSummary) {
     obs.push({ key: "reclamationPressureSummary", value: String(recSummary).substring(0, 120), source: "dispatchStats.dispatchStats" });
   }
-  const codexBoost = (ctx as any)?.codexBoostActive;
+  const codexBoost = ctx["codexBoostActive"];
   if (codexBoost) {
     obs.push({ key: "codexBoostActive", value: String(codexBoost), source: "dispatchStats.dispatchStats" });
   }
-  const decision = (ctx as any)?.decision;
+  const decision = ctx["decision"];
   if (decision) {
     obs.push({ key: "governanceDecision", value: String(decision), source: "governanceService" });
   }
-  const perProcPreferred = (ctx as any)?.perProcPreferredForTheseFlows;
+  const perProcPreferred = ctx["perProcPreferredForTheseFlows"];
   if (perProcPreferred) {
     obs.push({ key: "perProcPreferredForTheseFlows", value: String(perProcPreferred), source: "planner" });
   }

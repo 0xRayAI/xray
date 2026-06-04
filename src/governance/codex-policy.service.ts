@@ -46,7 +46,7 @@ export class CodexPolicyService implements ICodexPolicyProvider {
    * Internal loader: resolves candidates, picks first existing, reads + parses.
    * Always logs via frameworkLogger (success, error, fallback).
    */
-  private async loadRaw(): Promise<{ path: string | null; data: any; isFallback: boolean }> {
+  private async loadRaw(): Promise<{ path: string | null; data: Record<string, unknown>; isFallback: boolean }> {
     const candidates = resolveCodexPath();
     const resolvedPath = Array.isArray(candidates)
       ? candidates.find((p) => existsSync(p)) || candidates[0] || null
@@ -86,7 +86,7 @@ export class CodexPolicyService implements ICodexPolicyProvider {
     }
   }
 
-  private computeTermCount(data: any): number {
+  private computeTermCount(data: Record<string, unknown>): number {
     if (!data) return 0;
     const terms = data.terms;
     if (Array.isArray(terms)) return terms.length;
@@ -95,7 +95,7 @@ export class CodexPolicyService implements ICodexPolicyProvider {
     return 0;
   }
 
-  private getBuiltinFallback(): any {
+  private getBuiltinFallback(): Record<string, unknown> {
     // Minimal structural fallback matching historical default (60 terms expectation)
     // In real usage this should rarely be hit; the canonical files always exist in dev.
     return {
@@ -114,8 +114,10 @@ export class CodexPolicyService implements ICodexPolicyProvider {
     const { path, data, isFallback } = await this.loadRaw();
 
     const termCount = this.computeTermCount(data);
-    const version = data?.version || data?.codex_version || 'unknown';
-    const lastUpdated = data?.lastUpdated || data?.last_updated;
+    const versionRaw = data?.version ?? data?.codex_version;
+    const version = typeof versionRaw === 'string' ? versionRaw : 'unknown';
+    const lastUpdatedRaw = data?.lastUpdated ?? data?.last_updated;
+    const lastUpdated = typeof lastUpdatedRaw === 'string' ? lastUpdatedRaw : '';
 
     const snapshot: ActiveCodexSnapshot = {
       source: path,
