@@ -233,7 +233,7 @@ describe("StringRayContextLoader", () => {
       const result = await loader.loadCodexContext("/test/project");
 
       expect(result.success).toBe(false);
-      expect(result.warnings).toHaveLength(5); // All codex file path candidates attempted
+      expect(result.warnings).toHaveLength(6); // All codex file path candidates attempted
       expect(result.warnings[0]).toContain("Failed to parse");
     });
 
@@ -342,7 +342,7 @@ describe("StringRayContextLoader", () => {
       const result = await loader.loadCodexContext("/test/project");
 
       expect(result.success).toBe(false);
-      expect(result.warnings).toHaveLength(5); // All codex file path candidates attempted
+      expect(result.warnings).toHaveLength(6); // All codex file path candidates attempted
       expect(result.warnings[0]).toContain("Failed to parse");
     });
   });

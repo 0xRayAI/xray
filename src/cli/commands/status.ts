@@ -8,7 +8,7 @@
  * - Health metrics
  * - Inference engine status
  *
- * Usage: npx strray-ai status
+ * Usage: npx 0xray status
  */
 
 import { readdirSync, existsSync, readFileSync } from "fs";
@@ -179,7 +179,7 @@ export function getStatusReport(cwd: string = process.cwd()): StatusReport {
 
   return {
     opencode: {
-      installed: existsSync(join(cwd, "node_modules", "strray-ai")),
+      installed: existsSync(join(cwd, "node_modules", "0xray")),
       configFound: existsSync(opencodeConfigPath) || existsSync(join(cwd, ".opencode", "enforcer-config.json")),
     },
     skills: cwdSkills,

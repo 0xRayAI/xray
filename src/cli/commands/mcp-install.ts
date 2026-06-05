@@ -24,8 +24,8 @@ function getBundledMCPRegistry(): MCPConfig | null {
   const paths = [
     join(process.cwd(), "src", "mcps", "registry.json"),
     join(process.cwd(), "dist", "mcps", "registry.json"),
-    join(process.cwd(), "node_modules", "strray-ai", "dist", "mcps", "registry.json"),
-    join(process.cwd(), "node_modules", "strray-ai", "src", "mcps", "registry.json"),
+    join(process.cwd(), "node_modules", "0xray", "dist", "mcps", "registry.json"),
+    join(process.cwd(), "node_modules", "0xray", "src", "mcps", "registry.json"),
   ];
   for (const p of paths) {
     if (existsSync(p)) {
@@ -89,16 +89,16 @@ function showHelp(): void {
 0xRay MCP Installer
 
 Usage:
-  npx strray-ai mcp:install <name>   Install an MCP server from registry
-  npx strray-ai mcp:list           List available MCP servers
-  npx strray-ai mcp:status        Show installed MCPs
-  npx strray-ai mcp:remove <name> Remove an installed MCP
+  npx 0xray mcp:install <name>   Install an MCP server from registry
+  npx 0xray mcp:list           List available MCP servers
+  npx 0xray mcp:status        Show installed MCPs
+  npx 0xray mcp:remove <name> Remove an installed MCP
 
 Examples:
-  npx strray-ai mcp:install xmcp              # Install X (Twitter) MCP
-  npx strray-ai mcp:install github-mcp      # Install GitHub MCP
-  npx strray-ai mcp:list             # See all available
-  npx strray-ai mcp:remove xmcp      # Remove X MCP
+  npx 0xray mcp:install xmcp              # Install X (Twitter) MCP
+  npx 0xray mcp:install github-mcp      # Install GitHub MCP
+  npx 0xray mcp:list             # See all available
+  npx 0xray mcp:remove xmcp      # Remove X MCP
 
 Environment Variables:
   Each MCP requires specific env vars. Check documentation at:
@@ -117,7 +117,7 @@ function listMCPs(): void {
     console.log(`| ${mcp.name.padEnd(15)} | ${cat.padEnd(16)} | ${desc} |`);
   }
   console.log(`\nTotal: ${registry.sources.length} MCPs`);
-  console.log("\nInstall: npx strray-ai mcp:install <name>");
+  console.log("\nInstall: npx 0xray mcp:install <name>");
 }
 
 function showStatus(): void {
@@ -126,7 +126,7 @@ function showStatus(): void {
   
   if (keys.length === 0) {
     console.log("\n❌ No MCPs installed.\n");
-    console.log("Run: npx strray-ai mcp:list to see available MCPs\n");
+    console.log("Run: npx 0xray mcp:list to see available MCPs\n");
     return;
   }
 
@@ -140,7 +140,7 @@ async function installMCP(name: string): Promise<void> {
   const source = findMCPSource(name);
   if (!source) {
     console.error(`\n❌ MCP "${name}" not found in registry.`);
-    console.log("\nRun: npx strray-ai mcp:list to see available MCPs");
+    console.log("\nRun: npx 0xray mcp:list to see available MCPs");
     process.exit(1);
   }
 
@@ -148,7 +148,7 @@ async function installMCP(name: string): Promise<void> {
   
   if (installed[source.name]) {
     console.log(`\n⚠️  ${source.name} is already installed.`);
-    console.log(`Run: npx strray-ai mcp:remove ${source.name} first`);
+    console.log(`Run: npx 0xray mcp:remove ${source.name} first`);
     process.exit(1);
   }
 
@@ -241,8 +241,8 @@ async function main(): Promise<void> {
     case "install":
       const name = args[1];
       if (!name) {
-        console.error("\nUsage: npx strray-ai mcp:install <name>");
-        console.log("Run: npx strray-ai mcp:list to see available MCPs");
+        console.error("\nUsage: npx 0xray mcp:install <name>");
+        console.log("Run: npx 0xray mcp:list to see available MCPs");
         process.exit(1);
       }
       await installMCP(name);
@@ -250,7 +250,7 @@ async function main(): Promise<void> {
     case "remove":
       const removeName = args[1];
       if (!removeName) {
-        console.error("\nUsage: npx strray-ai mcp:remove <name>");
+        console.error("\nUsage: npx 0xray mcp:remove <name>");
         process.exit(1);
       }
       removeMCP(removeName);
@@ -283,8 +283,8 @@ export function showMCPStatusCommand(): void {
 
 export async function installMCPCommand(name: string): Promise<void> {
   if (!name) {
-    console.error("\nUsage: npx strray-ai mcp:install <name>");
-    console.log("Run: npx strray-ai mcp:list to see available MCPs");
+    console.error("\nUsage: npx 0xray mcp:install <name>");
+    console.log("Run: npx 0xray mcp:list to see available MCPs");
     process.exit(1);
   }
   await installMCP(name);
@@ -292,7 +292,7 @@ export async function installMCPCommand(name: string): Promise<void> {
 
 export function removeMCPCommand(name: string): void {
   if (!name) {
-    console.error("\nUsage: npx strray-ai mcp:remove <name>");
+    console.error("\nUsage: npx 0xray mcp:remove <name>");
     process.exit(1);
   }
   removeMCP(name);

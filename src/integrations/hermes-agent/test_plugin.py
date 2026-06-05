@@ -89,7 +89,7 @@ class TestRunStrrayHelper(unittest.TestCase):
             m.return_value = MagicMock(returncode=0, stdout="all good", stderr="")
             r = json.loads(tools_mod._run_strray(["health"]))
             self.assertEqual(r["status"], "ok")
-            self.assertEqual(m.call_args[0][0], ["npx", "strray-ai", "health"])
+            self.assertEqual(m.call_args[0][0], ["npx", "0xray", "health"])
 
     def test_command_failure(self):
         with patch("subprocess.run") as m:
@@ -763,7 +763,7 @@ class TestBridgeErrorPaths(unittest.TestCase):
     def test_codex_check_cli_health_error(self):
         """strray_codex_check no-code path: bridge error + CLI also errors."""
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "no node"}):
-            with patch.object(tools_mod, "_run_strray", return_value='{"error": "strray-ai not found"}'):
+            with patch.object(tools_mod, "_run_strray", return_value='{"error": "0xray not found"}'):
                 r = json.loads(tools_mod.strray_codex_check({"operation": "create"}))
                 self.assertIn("error", r)
 

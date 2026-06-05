@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   architect-tools:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/architect-tools.server.js]
+    args: [node_modules/0xray/dist/mcps/architect-tools.server.js]
 ---
 
 # Architect Tools Skill

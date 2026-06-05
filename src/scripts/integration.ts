@@ -180,7 +180,7 @@ function spawnOpenCode(agentName: string, prompt: string): Promise<unknown> {
           env: {
             ...process.env,
             NODE_ENV: "production",
-            OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json",
+            OPENCODE_MCP_CONFIG: "./node_modules/0xray/opencode.json",
           },
           stdio: ["pipe", "pipe", "pipe"],
         },

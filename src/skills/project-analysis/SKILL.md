@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   project-analysis:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/project-analysis.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/project-analysis.server.js]
 ---
 
 # Project Analysis Skill

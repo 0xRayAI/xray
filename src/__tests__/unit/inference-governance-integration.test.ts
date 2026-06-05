@@ -28,7 +28,7 @@ describe('InferenceGovernanceIntegration (Dynamo v2)', () => {
     mockClient = { evaluateGovernance: vi.fn(), governWithSolar: vi.fn().mockResolvedValue({ solarContext: { solarIsotopicResonance: 0.8 }, recommendation: 'PASS', adjustedVoteWeight: 1.0, confidenceAdjustment: 0 }), getStats: vi.fn().mockReturnValue({ requestsSucceeded: 5 }) };
     (integration as any).client = mockClient;
     (integration as any).configData = { enabled: true, decisionLogic: { voteWeightMultiplier: 1 } };
-    (integration as any).status = 'initialized';
+    (integration as any)._status = 'initialized';
   });
 
   afterEach(async () => {

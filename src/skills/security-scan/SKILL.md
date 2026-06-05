@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   security-scan:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/security-scan.server.js]
+    args: [node_modules/0xray/dist/mcps/security-scan.server.js]
 ---
 
 # Security Scan Skill

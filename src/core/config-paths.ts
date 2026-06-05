@@ -162,6 +162,7 @@ export function resolveCodexPath(projectRoot?: string): string[] {
     candidates.push(join(root, envDir, "codex.json"));
   }
   candidates.push(join(root, ".strray", "codex.json"));
+  candidates.push(join(root, "xray", "codex.json"));
   candidates.push(join(root, ".opencode", "strray", "codex.json"));
   // Additional fallback locations (for standalone usage)
   candidates.push(join(root, "codex.json"));

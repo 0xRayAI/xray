@@ -22,7 +22,7 @@ import fs from 'fs';
  * Priority:
  *   1. STRRAY_DEV_PATH env var (explicit dev override)
  *   2. The "strray" field in the nearest package.json that declares it (works in both source tree and installed package)
- *   3. Safe fallback to node_modules/strray-ai/dist
+ *   3. Safe fallback to node_modules/0xray/dist
  */
 function resolveFrameworkPaths(): { frameworkRoot: string; mcpServersPath: string } {
   // Highest priority: explicit environment override
@@ -44,7 +44,7 @@ function resolveFrameworkPaths(): { frameworkRoot: string; mcpServersPath: strin
     if (fs.existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-        if (pkg.name === 'strray-ai' && pkg.strray) {
+        if (pkg.name === '0xray' && pkg.strray) {
           const strrayCfg = pkg.strray as Record<string, string>;
           const frameworkRoot = currentDir;
           const declaredMcp = strrayCfg.mcpServersPath || (strrayCfg.dist ? join(strrayCfg.dist, 'mcps') : 'dist/mcps');
@@ -63,7 +63,7 @@ function resolveFrameworkPaths(): { frameworkRoot: string; mcpServersPath: strin
   }
 
   // Final fallback (should almost never be reached)
-  const fallback = 'node_modules/strray-ai/dist';
+  const fallback = 'node_modules/0xray/dist';
   frameworkLogger.log('server-config-registry', 'using-fallback-path', 'warning', {
     reason: 'Could not locate strray package.json with "strray" field',
     fallback,

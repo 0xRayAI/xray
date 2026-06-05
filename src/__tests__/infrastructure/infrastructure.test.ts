@@ -33,7 +33,7 @@ describe("0xRay Infrastructure Tests", () => {
     it("should have required configuration files", () => {
       // Use files that actually exist in the project
       const requiredFiles = [
-        ".opencode/strray/codex.json",
+        ".opencode/xray/codex.json",
         "package.json",
         "tests/config/vitest.config.ts",
       ].map((f) => path.join(projectRoot, f));
@@ -46,7 +46,7 @@ describe("0xRay Infrastructure Tests", () => {
 
     it("should have readable configuration files", () => {
       // Use files that actually exist
-      const configFiles = [".opencode/strray/codex.json", "package.json"].map(
+      const configFiles = [".opencode/xray/codex.json", "package.json"].map(
         (f) => path.join(projectRoot, f),
       );
 

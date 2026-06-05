@@ -35,7 +35,7 @@ export type { APIConfig, APIRequest } from './triggers/APITrigger.js';
  *
  * @example
  * ```typescript
- * import { createStringRayIntegration } from 'strray-ai/integration';
+ * import { createStringRayIntegration } from '0xray/integration';
  * 
  * const postProcessor = new PostProcessor(stateManager);
  * const integration = createStringRayIntegration(postProcessor);
@@ -199,7 +199,7 @@ export class StringRayIntegration {
  * 
  * @example
  * ```typescript
- * import { createStringRayIntegration } from 'strray-ai/integration';
+ * import { createStringRayIntegration } from '0xray/integration';
  * 
  * // With default configuration
  * const integration = createStringRayIntegration(postProcessor);

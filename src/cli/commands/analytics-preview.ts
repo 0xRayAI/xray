@@ -3,7 +3,7 @@
  *
  * Shows what data would be submitted without actually submitting it
  *
- * Usage: npx strray-ai analytics preview [--type reflections|logs|metrics|patterns] [--all]
+ * Usage: npx 0xray analytics preview [--type reflections|logs|metrics|patterns] [--all]
  */
 
 import { program } from "commander";
@@ -24,8 +24,8 @@ export const analyticsPreviewCommand = program
       // Check if analytics is enabled
       if (!status.analyticsEnabled) {
         console.log("❌ Analytics is currently disabled.");
-        console.log(`\n💡 Enable analytics first: npx strray-ai analytics enable`);
-        console.log(`   Then preview what would be submitted: npx strray-ai analytics preview`);
+        console.log(`\n💡 Enable analytics first: npx 0xray analytics enable`);
+        console.log(`   Then preview what would be submitted: npx 0xray analytics preview`);
         return;
       }
 
@@ -99,14 +99,14 @@ export const analyticsPreviewCommand = program
       console.log("\n🔐 Privacy Guarantees:");
       console.log("  ✅ Your data is anonymized before leaving your machine");
       console.log("  ✅ All submissions encrypted in transit (HTTPS/TLS)");
-      console.log("  ✅ You can disable anytime: npx strray-ai analytics disable");
+      console.log("  ✅ You can disable anytime: npx 0xray analytics disable");
       console.log("  ✅ Request data deletion anytime");
       console.log("  ✅ Full transparency - see exactly what's submitted");
 
       console.log("\n💡 Next Steps:");
       console.log("  1. Review this preview carefully");
-      console.log("  2. Enable specific categories: npx strray-ai analytics enable --categories reflections,metrics");
-      console.log("  3. View current status: npx strray-ai analytics status");
+      console.log("  2. Enable specific categories: npx 0xray analytics enable --categories reflections,metrics");
+      console.log("  3. View current status: npx 0xray analytics status");
       console.log("  4. Learn more: docs/architecture/central-analytics-store.md");
 
       console.log("\n📖 Documentation:");
@@ -116,7 +116,7 @@ export const analyticsPreviewCommand = program
 
     } catch (error) {
       console.error("❌ Failed to preview analytics:", error instanceof Error ? error.message : String(error));
-      console.error("\n💡 Try: npx strray-ai analytics preview --help");
+      console.error("\n💡 Try: npx 0xray analytics preview --help");
       process.exit(1);
     }
   });

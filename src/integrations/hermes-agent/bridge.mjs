@@ -67,7 +67,7 @@ function findProjectRoot() {
       const pkgPath = join(dir, "package.json");
       if (existsSync(pkgPath)) {
         const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-        if (pkg.name === "strray-ai" || pkg.dependencies?.["strray-ai"]) {
+        if (pkg.name === "strray-ai" || pkg.dependencies?.["strray-ai"] || pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
           return dir;
         }
       }
@@ -126,7 +126,7 @@ async function loadFramework(projectRoot) {
 
   const distDirs = [
     join(projectRoot, "dist"),
-    join(projectRoot, "node_modules", "strray-ai", "dist"),
+    join(projectRoot, "node_modules", "0xray", "dist"),
   ];
 
   for (const distDir of distDirs) {

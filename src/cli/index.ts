@@ -51,7 +51,7 @@ function validateScriptPath(scriptPath: string, scriptName: string): void {
 const program = new Command();
 
 program
-  .name("strray-ai")
+  .name("0xray")
   .description(
     "xray: Bulletproof AI orchestration with systematic error prevention",
   )
@@ -111,50 +111,10 @@ program
 
 program
   .command("status")
-  .description("Check xray framework status")
+  .description("Show comprehensive xray framework status")
   .action(async () => {
-    frameworkLogger.log('cli', 'status-check-start', 'info', { message: 'Checking xray framework status...' });
-
-    try {
-      // Check if required files exist
-      const fs = await import("fs");
-      const path = await import("path");
-
-      const checks = [
-        { file: "opencode.json", description: "OpenCode configuration", optional: true },
-        {
-          file: ".opencode/enforcer-config.json",
-          description: "Framework configuration",
-          optional: false,
-        },
-      ];
-
-      let allGood = true;
-
-      for (const check of checks) {
-        const exists = fs.existsSync(path.join(process.cwd(), check.file));
-        const status = exists ? "✅" : check.optional ? "⚠️ " : "❌";
-        const label = check.optional ? `${check.description} (optional)` : check.description;
-        console.log(`${status} ${label}: ${check.file}`);
-        if (!exists && !check.optional) allGood = false;
-      }
-
-      if (allGood) {
-        console.log("");
-        console.log("🎉 xray framework is properly configured!");
-      } else {
-        console.log("");
-        console.log(
-          '⚠️ Some components are missing. Run "xray install" to fix.',
-        );
-      }
-    } catch (error) {
-      console.error(
-        "❌ Status check failed:",
-        error instanceof Error ? error.message : String(error),
-      );
-      process.exit(1);
-    }
+    const { statusCommand } = await import("./commands/status.js");
+    await statusCommand();
   });
 
 program
@@ -602,7 +562,7 @@ program
 
       // Check package installation
       const packageExists = fs.existsSync(
-        path.join(process.cwd(), "node_modules", "strray-ai"),
+        path.join(process.cwd(), "node_modules", "0xray"),
       );
       if (!packageExists) {
         issues.push("xray package not installed");
@@ -854,7 +814,7 @@ program
      const isxrayRepo = (() => {
        try {
          const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
-         return pkg.name === 'strray-ai' && process.env.NODE_ENV !== 'consumer';
+         return pkg.name === '0xray' && process.env.NODE_ENV !== 'consumer';
        } catch {
          return false;
        }
@@ -1122,25 +1082,7 @@ const { registerOpencodeCommands } = await import('./commands/opencode-install.j
 registerOpencodeCommands(opencodeCmd);
 
 // Analytics enable command
-// TODO: Re-enable after fixing dashboard module
-// program
-//   .command('dashboard')
-//   .description('Real-time monitoring dashboard for orchestration metrics')
-//   .option('--refresh <ms>', 'Refresh interval in milliseconds', '5000')
-//   .option('--theme <theme>', 'Dashboard theme (dark|light)', 'dark')
-//   .option('--no-watch', 'Run in snapshot mode (no live updates)')
-//   .option('--no-trends', 'Hide historical trends')
-//   .option('--no-alerts', 'Hide alerts panel')
-//   .action(async (options) => {
-//     const { dashboardCommand } = await import('./commands/dashboard.js');
-//     await dashboardCommand({
-//       refreshInterval: parseInt(options.refresh) || 5000,
-//       theme: (options.theme as 'dark' | 'light') || 'dark',
-//       watch: options.watch !== false,
-//       showTrends: options.trends !== false,
-//       showAlerts: options.alerts !== false,
-//     });
-//   });
+
 
 // Plugin management command
 program
@@ -1226,36 +1168,34 @@ program.addHelpText(
   `
 
 Examples:
-    $ npx xray install       # Install xray in current project
-    $ npx xray init          # Initialize configuration
-    $ npx xray status        # Check installation status
-    $ npx xray validate      # Validate framework setup
-    $ npx xray capabilities  # Show all available capabilities
-    $ npx xray health        # Check framework health and status
-    $ npx xray report        # Generate activity and health reports
-    $ npx xray dashboard     # Real-time orchestration monitoring dashboard
-    $ npx xray fix           # Automatically restore missing config files
-    $ npx xray doctor        # Diagnose issues (does not fix them)
-    $ npx xray analytics     # Pattern analytics and insights
-    $ npx xray inference:improve  # Run autonomous inference improvement
-    $ npx xray skill:install agency-agents  # Install 170+ agency agent skills
-    $ npx xray skill:install superpowers      # Install 14 agentic workflow skills
-    $ npx xray skill:install <github-url>     # Install from any repo
-    $ npx xray storyteller saga "v1.18.0 Journey"  # Write a saga
-    $ npx xray storyteller reflection "API Fix"     # Write a reflection
+    $ npx 0xray install       # Install xray in current project
+    $ npx 0xray init          # Initialize configuration
+    $ npx 0xray status        # Check installation status
+    $ npx 0xray validate      # Validate framework setup
+    $ npx 0xray capabilities  # Show all available capabilities
+    $ npx 0xray health        # Check framework health and status
+    $ npx 0xray report        # Generate activity and health reports
+    $ npx 0xray fix           # Automatically restore missing config files
+    $ npx 0xray doctor        # Diagnose issues (does not fix them)
+    $ npx 0xray analytics     # Pattern analytics and insights
+    $ npx 0xray inference:improve  # Run autonomous inference improvement
+    $ npx 0xray skill:install agency-agents  # Install 170+ agency agent skills
+    $ npx 0xray skill:install superpowers      # Install 14 agentic workflow skills
+    $ npx 0xray skill:install <github-url>     # Install from any repo
+    $ npx 0xray storyteller saga "v1.18.0 Journey"  # Write a saga
+    $ npx 0xray storyteller reflection "API Fix"     # Write a reflection
 
 Quick Start:
-   1. Install: npx xray install
-   2. Check health: npx xray health
+   1. Install: npx 0xray install
+   2. Check health: npx 0xray health
    3. Use agents: @security-auditor scan
-   4. Generate reports: npx xray report
-   5. Monitor: npx xray dashboard
-   6. Fix issues: npx xray fix
-   7. View analytics: npx xray analytics
-   8. Add skills: npx xray skill:install agency-agents
-   9. Write stories: npx xray storyteller saga "Release Journey"
+   4. Generate reports: npx 0xray report
+    5. Fix issues: npx 0xray fix
+   7. View analytics: npx 0xray analytics
+   8. Add skills: npx 0xray skill:install agency-agents
+   9. Write stories: npx 0xray storyteller saga "Release Journey"
 
-For more information, visit: https://github.com/htafolla/xray
+For more information, visit: https://github.com/0xRayAI/xray
 `,
 );
 

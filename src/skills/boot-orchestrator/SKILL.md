@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   boot-orchestrator:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/boot-orchestrator.server.js]
+    args: [node_modules/0xray/dist/mcps/boot-orchestrator.server.js]
 ---
 
 # Boot Orchestrator Skill

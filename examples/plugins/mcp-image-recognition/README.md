@@ -16,7 +16,7 @@ Image recognition plugin for StringRay using AI vision capabilities.
 cp -r examples/plugins/mcp-image-recognition .strray/plugins/
 
 # Or use the CLI
-npx strray-ai plugin install mcp-image-recognition
+npx 0xray plugin install mcp-image-recognition
 ```
 
 ## Usage

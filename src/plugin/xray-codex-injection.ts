@@ -129,7 +129,7 @@ async function loadFrameworkLogger(): Promise<FrameworkLoggerLike> {
   if (_frameworkLogger) return _frameworkLogger;
   const candidates = [
     "../core/framework-logger.js",
-    "../../node_modules/strray-ai/dist/core/framework-logger.js",
+    "../../node_modules/0xray/dist/core/framework-logger.js",
   ];
   for (const p of candidates) {
     try {
@@ -150,7 +150,7 @@ async function loadConfigPaths(): Promise<void> {
   if (_resolveCodexPath && _resolveStateDir) return;
   const candidates = [
     "../core/config-paths.js",
-    "../../node_modules/strray-ai/dist/core/config-paths.js",
+    "../../node_modules/0xray/dist/core/config-paths.js",
   ];
   for (const p of candidates) {
     try {
@@ -183,7 +183,7 @@ async function importSystemPromptGenerator(): Promise<void> {
 
   const candidates = [
     "../core/system-prompt-generator.js",
-    "../../node_modules/strray-ai/dist/core/system-prompt-generator.js",
+    "../../node_modules/0xray/dist/core/system-prompt-generator.js",
   ];
   for (const p of candidates) {
     try {
@@ -221,7 +221,7 @@ async function loadStringRayComponents(): Promise<void> {
     logger.log(`❌ Failed to load from cwd/dist/: ${message}`);
   }
 
-  const pluginPaths = ["strray-ai", "strray-framework"];
+  const pluginPaths = ["0xray", "strray-framework"];
 
   for (const pluginPath of pluginPaths) {
     try {
@@ -1101,7 +1101,7 @@ export default async function strrayCodexPlugin(input: {
       logger.log("🔧 Plugin config hook triggered - initializing 0xRay integration");
 
       let initScriptPath = path.join(directory, ".opencode", "init.sh");
-      const pkgInitPath = path.join(directory, "node_modules", "strray-ai", ".opencode", "init.sh");
+      const pkgInitPath = path.join(directory, "node_modules", "0xray", ".opencode", "init.sh");
       if (!fs.existsSync(initScriptPath) && fs.existsSync(pkgInitPath)) {
         initScriptPath = pkgInitPath;
       }

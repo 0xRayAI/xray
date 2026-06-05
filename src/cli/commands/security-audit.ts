@@ -5,11 +5,11 @@
  * compliance checking, and weighted voting for architectural decisions.
  *
  * Usage:
- *   npx strray-ai security-audit           # Quick audit
- *   npx strray-ai security-audit --deep    # Deep audit with all standards
- *   npx strray-ai security-audit --output ./reports/security.md
- *   npx strray-ai security-audit --no-remediation
- *   npx strray-ai security-audit --no-voting
+ *   npx 0xray security-audit           # Quick audit
+ *   npx 0xray security-audit --deep    # Deep audit with all standards
+ *   npx 0xray security-audit --output ./reports/security.md
+ *   npx 0xray security-audit --no-remediation
+ *   npx 0xray security-audit --no-voting
  *
  * Options:
  *   --deep           Deep scan with all compliance standards (OWASP, CWE, NIST, ISO, PCI)
@@ -96,7 +96,7 @@ Comprehensive security audit with vulnerability scanning, compliance checking,
 and weighted voting for architectural decisions.
 
 Usage:
-  npx strray-ai security-audit [options]
+  npx 0xray security-audit [options]
 
 Options:
   --deep              Deep scan with all compliance standards
@@ -108,10 +108,10 @@ Options:
   --help, -h         Show this help message
 
 Examples:
-  npx strray-ai security-audit
-  npx strray-ai security-audit --deep
-  npx strray-ai security-audit --output ./security-report.md
-  npx strray-ai security-audit --format json --output ./report.json
+  npx 0xray security-audit
+  npx 0xray security-audit --deep
+  npx 0xray security-audit --output ./security-report.md
+  npx 0xray security-audit --format json --output ./report.json
   `);
 }
 

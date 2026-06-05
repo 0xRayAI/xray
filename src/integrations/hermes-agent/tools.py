@@ -1,73 +1,9 @@
 """Tool handlers — code that runs when the LLM calls each tool.
 
 v2.0: Now uses the Node.js bridge for real framework integration.
-Falls back to CLI (npx strray-ai) when bridge is unavailable.
-"""
-
-import json
-import os
-import shutil
-import subprocess
-import sys
-from pathlib import Path
-
-# ── Lazy imports from __init__ (avoids circular dependency) ──
-
-def _get_parent():
-    """Return the parent package's _call_bridge and PROJECT_ROOT.
-
-    Tries relative import first, then falls back to scanning sys.modules
-    for a package that holds the tools module.
-    """
-    # Fast path: normal package import
-    try:
-        from . import _call_bridge, PROJECT_ROOT
-        return _call_bridge, PROJECT_ROOT
-    except (ImportError, ValueError):
-        pass
-
-    # Fallback: find any module in sys.modules that has _call_bridge
-    import importlib
-    import sys
-    for mod_name, mod in sys.modules.items():
-        if mod is not None and hasattr(mod, '_call_bridge') and mod is not sys.modules.get(__name__):
-            return mod._call_bridge, mod.PROJECT_ROOT
-
-    raise ImportError(
-        "Cannot locate parent package with _call_bridge. "
-        "Ensure the hermes-agent plugin is loaded as a package."
-    )
-
-
-def _bridge_call(command, timeout=30):
-    """Call bridge.mjs via the plugin's shared helper (with stats tracking)."""
-    _call_bridge, _ = _get_parent()
-    return _call_bridge(command, timeout)
-
-
-def _get_project_root():
-    _, PROJECT_ROOT = _get_parent()
-    return PROJECT_ROOT
-
-
-def _run_strray(args: list, timeout: int = 30) -> str:
-    """Fallback: run a StringRay CLI command and return output."""
-    try:
-        result = subprocess.run(
-            ["npx", "strray-ai"] + args,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        if result.returncode == 0:
-            return json.dumps({"status": "ok", "output": result.stdout.strip()})
-        return json.dumps({
-            "status": "error",
-            "exit_code": result.returncode,
-            "stderr": result.stderr.strip() if result.stderr else result.stdout.strip(),
-        })
-    except FileNotFoundError:
-        return json.dumps({"error": "strray-ai not found. Run: npm install -g strray-ai"})
+Falls back to CLI (npx 0xray) when bridge is unavailable.
+            ["npx", "0xray"] + args,
+        return json.dumps({"error": "0xray not found. Run: npm install -g 0xray"})
     except subprocess.TimeoutExpired:
         return json.dumps({"error": f"Command timed out after {timeout}s"})
     except Exception as e:

@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   lint:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/lint.server.js]
+    args: [node_modules/0xray/dist/mcps/lint.server.js]
 ---
 
 # Lint Skill

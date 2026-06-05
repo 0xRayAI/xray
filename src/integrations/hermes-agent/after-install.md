@@ -67,5 +67,5 @@ validation, while MCP servers offer deeper framework integration.
 ## Files
 
 The plugin lives at `~/.hermes/plugins/strray-hermes/`. It is auto-updated
-when you run `npm install` or `npm update` in a project with `strray-ai`
+when you run `npm install` or `npm update` in a project with `0xray`
 as a dependency.

@@ -41,7 +41,7 @@ Native Hermes plugin providing StringRay framework integration — quality gates
 - `dist/state/state-manager.js` — persistent state
 - `dist/core/features-config.js` — feature flags
 
-**Fallback:** When bridge is unavailable, tools fall back to `npx strray-ai` CLI commands.
+**Fallback:** When bridge is unavailable, tools fall back to `npx 0xray` CLI commands.
 
 **Config path resolution:** `STRRAY_CONFIG_DIR/` > `.strray/` > `.opencode/strray/` > built-in defaults.
 
@@ -203,10 +203,10 @@ The plugin's pre_tool_call hook nudges when an MCP alternative exists (e.g., "us
 ## Pitfalls
 
 - Plugin requires restart after install/edit: Hermes loads plugins once at session start.
-- Bridge needs `dist/` symlink: The bridge loads compiled `.js` from `dist/` → `node_modules/strray-ai/dist/`. If the symlink breaks, bridge returns `framework: "not_loaded"`.
+- Bridge needs `dist/` symlink: The bridge loads compiled `.js` from `dist/` → `node_modules/0xray/dist/`. If the symlink breaks, bridge returns `framework: "not_loaded"`.
 - `strray_codex_check` without `code` param returns health, not a codex check. Pass `code` for actual validation.
-- CLI fallback requires `npx strray-ai` in PATH. If bridge fails and CLI isn't available, tools return errors.
+- CLI fallback requires `npx 0xray` in PATH. If bridge fails and CLI isn't available, tools return errors.
 - Quality gate blocks are logged but NOT enforced (advisory). The tool returns violations; the agent decides what to do.
 - Git hooks use symlinks from `.git/hooks/` → `hooks/`. If the `hooks/` directory doesn't exist in the project, `strray_hooks(action="install")` skips those hooks.
-- Project root detection walks up from CWD looking for `node_modules/strray-ai`, `.opencode/strray/features.json`, or `package.json`. Override with `STRRAY_PROJECT_ROOT` env var.
+- Project root detection walks up from CWD looking for `node_modules/0xray`, `.opencode/strray/features.json`, or `package.json`. Override with `STRRAY_PROJECT_ROOT` env var.
 - `logs/framework/` is created automatically. Never breaks the agent if permissions fail.

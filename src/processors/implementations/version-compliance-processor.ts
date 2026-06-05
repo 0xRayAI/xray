@@ -248,7 +248,7 @@ export class VersionComplianceProcessor {
   private async getNpmVersion(): Promise<string> {
     try {
       const { stdout } = await exec(
-        'npm view strray-ai@latest version 2>/dev/null || echo "NOT_PUBLISHED"',
+        'npm view 0xray@latest version 2>/dev/null || echo "NOT_PUBLISHED"',
         {
           cwd: this.projectRoot,
           timeout: 10000,

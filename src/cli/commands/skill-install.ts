@@ -21,8 +21,8 @@ function getLocalRegistryPath(): string {
 function getBundledRegistry(): LocalRegistry | null {
   const paths = [
     join(process.cwd(), "src", "skills", "registry.json"),
-    join(process.cwd(), "node_modules", "strray-ai", "dist", "skills", "registry.json"),
-    join(process.cwd(), "node_modules", "strray-ai", "src", "skills", "registry.json"),
+    join(process.cwd(), "node_modules", "0xray", "dist", "skills", "registry.json"),
+    join(process.cwd(), "node_modules", "0xray", "src", "skills", "registry.json"),
   ];
   for (const p of paths) {
     if (existsSync(p)) {
@@ -348,31 +348,31 @@ export async function skillInstallCommand(
     console.log("\n  Recommended Starter Packs");
     console.log("  ────────────────────────\n");
     console.log("  Minimal Viable Power (3 sources):");
-    console.log("    npx strray-ai skill:install superpowers");
-    console.log("    npx strray-ai skill:install anthropic-skills");
-    console.log("    npx strray-ai skill:install ui-ux-pro-max");
+    console.log("    npx 0xray skill:install superpowers");
+    console.log("    npx 0xray skill:install anthropic-skills");
+    console.log("    npx 0xray skill:install ui-ux-pro-max");
     console.log("    → 80% of daily gains for most devs\n");
     console.log("  Full Pro Setup (5 sources):");
-    console.log("    npx strray-ai skill:install superpowers");
-    console.log("    npx strray-ai skill:install anthropic-skills");
-    console.log("    npx strray-ai skill:install antigravity");
-    console.log("    npx strray-ai skill:install impeccable");
-    console.log("    npx strray-ai skill:install ui-ux-pro-max");
+    console.log("    npx 0xray skill:install superpowers");
+    console.log("    npx 0xray skill:install anthropic-skills");
+    console.log("    npx 0xray skill:install antigravity");
+    console.log("    npx 0xray skill:install impeccable");
+    console.log("    npx 0xray skill:install ui-ux-pro-max");
     console.log("    → The current meta for power users\n");
     console.log("  Agency / Team Mode (4 sources):");
-    console.log("    npx strray-ai skill:install agency-agents");
-    console.log("    npx strray-ai skill:install superpowers");
-    console.log("    npx strray-ai skill:install antigravity");
-    console.log("    npx strray-ai skill:install ui-ux-pro-max");
+    console.log("    npx 0xray skill:install agency-agents");
+    console.log("    npx 0xray skill:install superpowers");
+    console.log("    npx 0xray skill:install antigravity");
+    console.log("    npx 0xray skill:install ui-ux-pro-max");
     console.log();
     console.log("  Add specialized sources as needed:");
-    console.log("    Web3    → npx strray-ai skill:install ai-web3-security");
-    console.log("    Vue     → npx strray-ai skill:install vuejs-nuxt");
-    console.log("    Gemini  → npx strray-ai skill:install gemini-skills");
-    console.log("    MiniMax → npx strray-ai skill:install minimax");
+    console.log("    Web3    → npx 0xray skill:install ai-web3-security");
+    console.log("    Vue     → npx 0xray skill:install vuejs-nuxt");
+    console.log("    Gemini  → npx 0xray skill:install gemini-skills");
+    console.log("    MiniMax → npx 0xray skill:install minimax");
     console.log();
     console.log("  Re-install to update community skills:");
-    console.log("    npx strray-ai skill:install <source-name>   # removes old, installs fresh");
+    console.log("    npx 0xray skill:install <source-name>   # removes old, installs fresh");
     console.log();
     console.log("  Available sources:\n");
     for (const s of registry.sources) {
@@ -383,9 +383,9 @@ export async function skillInstallCommand(
       console.log();
     }
     console.log("  Usage:");
-    console.log("    npx strray-ai skill:install <source-name>");
-    console.log("    npx strray-ai skill:install <github-url>");
-    console.log("    npx strray-ai skill:install <url> --path <subdir>");
+    console.log("    npx 0xray skill:install <source-name>");
+    console.log("    npx 0xray skill:install <github-url>");
+    console.log("    npx 0xray skill:install <url> --path <subdir>");
     console.log();
     console.log("  Community skills are namespaced (e.g., agency-agents--code-review)");
     console.log("  Framework skills are never overwritten.");
@@ -471,7 +471,7 @@ export async function skillRegistryCommand(
     const name = args?.name;
     const url = args?.url;
     if (!name || !url) {
-      console.log("\n  Usage: npx strray-ai skill:registry add --name <name> --url <url>\n");
+      console.log("\n  Usage: npx 0xray skill:registry add --name <name> --url <url>\n");
       console.log("  Options:");
       console.log("    --name <name>          Unique source name");
       console.log("    --url <github-url>     Repository URL");
@@ -511,7 +511,7 @@ export async function skillRegistryCommand(
   if (action === "remove") {
     const name = args?.name || args?.["_"]?.[0];
     if (!name) {
-      console.log("  Usage: npx strray-ai skill:registry remove --name <name>");
+      console.log("  Usage: npx 0xray skill:registry remove --name <name>");
       return;
     }
 
@@ -535,5 +535,5 @@ export async function skillRegistryCommand(
   }
 
   console.log(`  Unknown action: ${action}`);
-  console.log("  Usage: npx strray-ai skill:registry [list|add|remove]");
+  console.log("  Usage: npx 0xray skill:registry [list|add|remove]");
 }

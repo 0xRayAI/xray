@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   performance-analysis:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/performance-analysis.server.js]
+    args: [node_modules/0xray/dist/mcps/performance-analysis.server.js]
 ---
 
 # Performance Analysis Skill

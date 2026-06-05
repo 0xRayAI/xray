@@ -1,5 +1,5 @@
 /**
- * CLI command: strray-ai grok install
+ * CLI command: 0xray grok install
  *
  * Helps users register 0xRay MCP servers with the Grok CLI.
  */

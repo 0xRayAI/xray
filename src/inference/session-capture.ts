@@ -129,7 +129,8 @@ function computeMetrics(fromRef: string, toRef: string): SessionMetrics {
     const stat = execSync(`git diff --stat ${fromRef}..${toRef} --no-renames`, {
       encoding: "utf-8",
       stdio: "pipe",
-      timeout: 5000,
+      timeout: 30000,
+      maxBuffer: 50 * 1024 * 1024,
     });
 
     const finalLine = stat.trim().split("\n").pop() || "";
@@ -139,7 +140,7 @@ function computeMetrics(fromRef: string, toRef: string): SessionMetrics {
 
     const nameStatus = execSync(
       `git diff --name-status ${fromRef}..${toRef} --no-renames`,
-      { encoding: "utf-8", stdio: "pipe", timeout: 5000 },
+      { encoding: "utf-8", stdio: "pipe", timeout: 30000, maxBuffer: 50 * 1024 * 1024 },
     );
 
     const lines = nameStatus.split("\n").filter(Boolean);

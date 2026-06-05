@@ -3,7 +3,7 @@
  *
  * Enables 0xRay Central Analytics with opt-in consent
  *
- * Usage: npx strray-ai analytics enable [--categories reflections,logs,metrics,patterns]
+ * Usage: npx 0xray analytics enable [--categories reflections,logs,metrics,patterns]
  */
 
 import { ConsentManager } from "../../analytics/consent-manager.js";
@@ -45,8 +45,8 @@ export async function analyticsEnableAction(options: any) {
         if (!options.yes) {
             console.log(`\n⚠️  This will enable anonymous data submission to 0xRay Central Analytics.`);
             console.log(`   • Data is anonymized before submission`);
-            console.log(`   • You can disable anytime with: npx strray-ai analytics disable`);
-            console.log(`   • Preview what would be submitted: npx strray-ai analytics preview`);
+            console.log(`   • You can disable anytime with: npx 0xray analytics disable`);
+            console.log(`   • Preview what would be submitted: npx 0xray analytics preview`);
             console.log(`   • Learn more: docs/architecture/central-analytics-store.md\n`);
 
             const readline = await import('readline');
@@ -82,13 +82,13 @@ export async function analyticsEnableAction(options: any) {
             .join(', ')}`);
 
         console.log(`\n💡 Next steps:`);
-        console.log(`  1. Check what will be submitted: npx strray-ai analytics preview`);
-        console.log(`  2. View current status: npx strray-ai analytics status`);
-        console.log(`  3. Disable anytime: npx strray-ai analytics disable`);
+        console.log(`  1. Check what will be submitted: npx 0xray analytics preview`);
+        console.log(`  2. View current status: npx 0xray analytics status`);
+        console.log(`  3. Disable anytime: npx 0xray analytics disable`);
 
     } catch (error) {
         console.error("❌ Failed to enable analytics:", error instanceof Error ? error.message : String(error));
-        console.error("\n💡 Try: npx strray-ai analytics enable --help");
+        console.error("\n💡 Try: npx 0xray analytics enable --help");
         process.exit(1);
     }
 }

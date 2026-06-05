@@ -32,7 +32,7 @@ beforeAll(() => {
     ".opencode",
     ".opencode/agents",
     ".opencode/logs",
-    ".opencode/strray",
+    ".opencode/xray",
     "src",
     "dist/plugin/mcps",
   ];
@@ -46,7 +46,7 @@ beforeAll(() => {
 
   // Create required config files for tests
   const codexContent = global.testUtils.createMockCodexContent();
-  const codexPath = path.resolve(".opencode/strray/codex.json");
+  const codexPath = path.resolve(".opencode/xray/codex.json");
   if (!fs.existsSync(codexPath)) {
     fs.writeFileSync(codexPath, codexContent);
   }

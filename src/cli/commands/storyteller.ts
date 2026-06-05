@@ -5,10 +5,10 @@
  * Automatically determines story type based on context if not specified.
  *
  * Usage:
- *   npx strray-ai storyteller reflection
- *   npx strray-ai storyteller saga "v1.18.0 Release Journey"
- *   npx strray-ai storyteller journey --title "API Migration"
- *   npx strray-ai storyteller narrative --framework hero_journey
+ *   npx 0xray storyteller reflection
+ *   npx 0xray storyteller saga "v1.18.0 Release Journey"
+ *   npx 0xray storyteller journey --title "API Migration"
+ *   npx 0xray storyteller narrative --framework hero_journey
  */
 
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from "fs";
@@ -216,7 +216,7 @@ export async function storytellerCommand(
     console.log("📖 0xRay Storyteller");
     console.log("========================");
     console.log("");
-    console.log("Usage: npx strray-ai storyteller <type> [title]");
+    console.log("Usage: npx 0xray storyteller <type> [title]");
     console.log("");
     console.log("Story types:");
     console.log("  reflection  - Technical deep reflection (2-5k words)");
@@ -225,10 +225,10 @@ export async function storytellerCommand(
     console.log("  narrative   - Technical narrative (1-3k words)");
     console.log("");
     console.log("Examples:");
-    console.log('  npx strray-ai storyteller reflection "API Refactoring"');
-    console.log('  npx strray-ai storyteller saga "v1.18.0 Release Journey"');
-    console.log('  npx strray-ai storyteller journey --title "Bug Investigation"');
-    console.log('  npx strray-ai storyteller narrative --framework hero_journey');
+    console.log('  npx 0xray storyteller reflection "API Refactoring"');
+    console.log('  npx 0xray storyteller saga "v1.18.0 Release Journey"');
+    console.log('  npx 0xray storyteller journey --title "Bug Investigation"');
+    console.log('  npx 0xray storyteller narrative --framework hero_journey');
     return;
   }
 

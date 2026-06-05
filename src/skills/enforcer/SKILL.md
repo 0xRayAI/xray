@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   enforcer:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/enforcer-tools.server.js]
+    args: [node_modules/0xray/dist/mcps/enforcer-tools.server.js]
 ---
 
 # Enforcer Skill

@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   log-monitor:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/log-monitor.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/log-monitor.server.js]
 ---
 
 # Log Monitor Skill

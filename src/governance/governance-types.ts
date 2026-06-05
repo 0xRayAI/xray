@@ -60,6 +60,8 @@ export interface GovernOptions {
   requireExternalDynamo?: boolean; // default true
   minConfidence?: number;
   enableSolarAdjustment?: boolean;
+  timeoutMs?: number; // end-to-end timeout for govern() in ms (default: 90000)
+  maxAbstentionThreshold?: number; // fail if abstention ratio exceeds this (default: 1.0 = disabled)
 }
 
 export interface GovernanceRequest {

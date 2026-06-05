@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   processor-pipeline:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/processor-pipeline.server.js]
+    args: [node_modules/0xray/dist/mcps/processor-pipeline.server.js]
 ---
 
 # Processor Pipeline Skill

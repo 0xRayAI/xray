@@ -40,24 +40,10 @@ BRIDGE_PATH = PLUGIN_DIR / "bridge.mjs"
 # The plugin lives at ~/.hermes/plugins/ which is NOT inside any project tree,
 # so walking up from PLUGIN_DIR will never find the project. Instead:
 #   1. Check STRRAY_PROJECT_ROOT env var (explicit override)
-#   2. Walk up from cwd looking for node_modules/strray-ai (consumer install)
-#   3. Walk up from cwd looking for .opencode/strray/features.json (dev repo)
-#   4. Walk up from cwd looking for package.json (skip home dir)
-def _find_project_root():
-    env_root = os.environ.get("STRRAY_PROJECT_ROOT") or os.environ.get("HERMES_PROJECT_ROOT")
-    if env_root:
-        p = Path(env_root).resolve()
-        if p.is_dir():
-            return p
-
-    cwd = Path.cwd()
-    home = Path.home()
-
-    # Walk up from cwd
-    d = cwd
-    for _ in range(20):
-        # node_modules/strray-ai — consumer install marker
-        if (d / "node_modules" / "strray-ai" / "package.json").exists():
+#   2. Walk up from cwd looking for node_modules/0xray or strray-ai (consumer install)
+        ...
+        # node_modules/0xray — consumer install marker
+        if (d / "node_modules" / "0xray" / "package.json").exists() or (d / "node_modules" / "strray-ai" / "package.json").exists():
             return d
         # .opencode/strray — dev repo marker
         if (d / ".opencode" / "strray" / "features.json").exists():
@@ -549,12 +535,12 @@ def _run_inference_tune():
     def _tune():
         try:
             result = subprocess.run(
-                ["npx", "strray-ai", "inference:tuner", "--run-once"],
+                ["npx", "0xray", "inference:tuner", "--run-once"],
                 capture_output=True, text=True, timeout=30,
                 cwd=os.getcwd(),
             )
             if result.returncode == 0:
-                logger.info("[strray] Inference tuning cycle completed")
+                logger.info("[0xray] Inference tuning cycle completed")
                 _log_to_file("activity.log",
                     "[inference-tune] cycle completed successfully")
             else:

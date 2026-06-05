@@ -1,7 +1,6 @@
 *.d.ts
 *.d.ts.map
 *.js.map
-src/
 node_modules/
 __tests__/
 *.test.ts
@@ -15,8 +14,4 @@ docs/reflections/
 logs/
 backups/
 tmp/
-.strray/
-strray/
 .opencode/strray/
-dist/core/strray-activation.*
-dist/integrations/openclaw/hooks/strray-hooks.*

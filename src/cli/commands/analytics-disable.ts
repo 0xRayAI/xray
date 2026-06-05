@@ -3,7 +3,7 @@
  *
  * Disables 0xRay Central Analytics with immediate opt-out
  *
- * Usage: npx strray-ai analytics disable
+ * Usage: npx 0xray analytics disable
  */
 
 import { program } from "commander";
@@ -40,7 +40,7 @@ export const analyticsDisableCommand = program
         console.log(`\n⚠️  This will immediately stop all data submission.`);
         console.log(`   • Existing submission queue will be cleared`);
         console.log(`   • Your project ID will be preserved in config`);
-        console.log(`   • You can re-enable anytime: npx strray-ai analytics enable\n`);
+        console.log(`   • You can re-enable anytime: npx 0xray analytics enable\n`);
 
         const readline = await import('readline');
         const rl = readline.createInterface({
@@ -72,12 +72,12 @@ export const analyticsDisableCommand = program
       console.log(`  Analytics Enabled: ${updatedStatus.analyticsEnabled}`);
 
       console.log(`\n💡 Re-enable anytime:`);
-      console.log(`  npx strray-ai analytics enable`);
+      console.log(`  npx 0xray analytics enable`);
       console.log(`\n📖 Learn more: docs/architecture/central-analytics-store.md`);
 
     } catch (error) {
       console.error("❌ Failed to disable analytics:", error instanceof Error ? error.message : String(error));
-      console.error("\n💡 Try: npx strray-ai analytics disable --help");
+      console.error("\n💡 Try: npx 0xray analytics disable --help");
       process.exit(1);
     }
   });

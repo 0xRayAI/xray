@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   session-management:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/state-manager.server.js]
+    args: [node_modules/0xray/dist/mcps/state-manager.server.js]
 ---
 
 # Session Management Skill

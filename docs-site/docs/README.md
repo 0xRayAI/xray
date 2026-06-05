@@ -1,43 +1,100 @@
-# xray 2.0
+# xray — MCP-Centric AI Governance OS
 
-**The pure v2 three-subsystem AI Governance OS.**
+**v2.0.0** — 9 agents · 44 skills · 3 MCP governance servers · 60 codex terms · 2,822 tests
 
-xray 2.0 delivers intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in the MCP orchestrator). YML SSOT. Zero manual setup.
+xray is the pure v2 three-subsystem AI orchestration framework, now **MCP-centric** with dedicated skill servers for governance deliberation:
+
+- **Inference** — reasoning, execution, and agent intelligence
+- **External Governance** — Dynamo Solar SSOT for proposal evaluation, resonance/isotopic signals, coherence, and Codex enforcement before any action
+- **Autonomous Engine** — thinDispatch 7-flow in the MCP orchestrator for automatic delegation, routing, and end-to-end coordination
+
+3 dedicated MCP servers (`code-review`, `security-audit`, `researcher`) deliberate governance proposals. Agents are declared in `.opencode/agents/*.yml` — the YML SSOT. Zero manual setup.
+
+## Quick Start
+
+```bash
+npm install 0xray
+
+# CLI
+npx 0xray --help
+npx 0xray grok install          # Install Grok CLI plugin
+npx 0xray hermes bridge         # Hermes Agent bridge
+```
 
 ## Three-Subsystem Architecture
 
-- **Inference** — Core reasoning and task analysis.
-- **External Governance via Dynamo** — Solar-enhanced SSOT, codex enforcement, governance decisions with real-time environmental context.
-- **Autonomous Engine via thinDispatch** — 7-flow orchestration in the MCP orchestrator for reliable, governed execution.
+```
+┌─────────────────────────────────────────────────┐
+│                  Inference                       │
+│  Proposals · Reflection · Execution             │
+├─────────────────────────────────────────────────┤
+│           External Governance (Dynamo)           │
+│  Codex enforcement · Resonance/Isotopic · SSOT  │
+│  3 MCP skill servers deliberate proposals       │
+├─────────────────────────────────────────────────┤
+│          Autonomous Engine (thinDispatch)        │
+│  7-flow MCP · Delegation · Governance gate      │
+└─────────────────────────────────────────────────┘
+```
 
-## MCP Orchestrator & thinDispatch
+### Inference
+Proposal generation, reflection cycles, and execution planning. Produces structured proposals that enter the governance gate.
 
-The MCP orchestrator provides the execution backbone with thinDispatch 7-flows for deterministic, auditable agent coordination. All critical paths are explicitly governed via the three-subsystem model.
+### External Governance (Dynamo Solar SSOT)
+Mandatory governance filter powered by Dynamo — a neural net based on solar physics and temporal first principles. Evaluates proposals for Codex compliance, resonance alignment, and isotopic coherence.
 
-## Agents (YML SSOT)
+- 3 real MCP skill servers deliberate: `code-review`, `security-audit`, `researcher`
+- Weighted voting via PHI (1.666) / TAU (0.865) matrix
+- External Dynamo integration required (not optional)
+- CodexPolicyService — single source of truth for Codex loading
+
+### Autonomous Engine (thinDispatch 7-flow)
+MCP orchestrator with 7-flow dispatch for automatic delegation, routing, and coordination.
+
+## MCP Server Ecosystem
+
+**Governance Deliberation:** code-review, security-audit, researcher, enforcer-tools, governance
+
+**Core Framework:** architect-tools, boot-orchestrator, estimation, framework-compliance-audit, framework-help, lint, model-health-check, orchestrator, performance-analysis, processor-pipeline, state-manager, auto-format
+
+**Knowledge Skills:** api-design, architecture-patterns, bug-triage-specialist, code-analyzer, content-creator, database-design, devops-deployment, git-workflow, growth-strategist, log-monitor, mobile-development, multimodal-looker, performance-optimization, project-analysis, refactoring-strategies, seo-consultant, session-management, skill-invocation, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
+
+## Agents
 
 Agents are declared in `.opencode/agents/*.yml` YML surfaces. Zero manual setup required.
 
-Invoke with `@agent-name` syntax in prompts or code comments (e.g., `@architect design this API`, `@orchestrator coordinate this task`).
+| Agent | Purpose |
+|-------|---------|
+| `@enforcer` | Codex compliance & error prevention |
+| `@orchestrator` | Complex multi-step task coordination |
+| `@architect` | System design & technical decisions |
+| `@security-auditor` | Vulnerability detection |
+| `@code-reviewer` | Quality assessment |
+| `@refactorer` | Technical debt elimination |
+| `@testing-lead` | Testing strategy |
+| `@bug-triage-specialist` | Error investigation |
+| `@researcher` | Codebase exploration |
 
-Primary agents include: architect, orchestrator, enforcer, researcher, refactorer, document-writer, security-auditor, librarian, test-architect, multimodal-looker, code-reviewer, bug-triage-specialist and specialized helpers.
+## Governance & Codex
 
-## Governance & Dynamo
+- **60 terms** across categories: core, architecture, testing, performance, security, operations, governance
+- CodexPolicyService — canonical Governance-owned SSOT for Codex loading
+- Pre-governance gate blocks non-compliant proposals before execution
+- Active codex snapshot available via `get_active_codex` MCP tool
 
-External conscience via Dynamo provides solar-contextualized governance, proposal evaluation, and compliance validation. All critical decisions surface to governance.
+## CLI
 
-## Getting Started
+```bash
+0xray <command>
 
-See the sidebar sections:
-- Core Architecture
-- MCP Orchestrator & thinDispatch
-- Agents (YML SSOT)
-- Governance & Dynamo
-- Security & Codex
-
-Install via `npx xray init` or OpenCode integration (agents injected automatically via .opencode/agents/*.yml).
-
-**Pure xray 2.0. YML SSOT + MCP orchestrator + thinDispatch 7-flow + Dynamo. Zero visible history.**
+Commands:
+  install         Install xray framework
+  grok            Grok CLI plugin management
+  hermes          Hermes Agent bridge
+  integration     Integration management
+  validate        Validate installation
+  version         Show version
+```
 
 ## License
 
@@ -45,4 +102,4 @@ MIT
 
 ---
 
-**xray 2.0 — the pure three-subsystem AI Governance OS.**
+*xray — MCP-centric, governed, autonomous. Pure v2 three-subsystem.*

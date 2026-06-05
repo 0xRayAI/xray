@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   architecture-patterns:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/architecture-patterns.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/architecture-patterns.server.js]
 ---
 
 # Architecture Patterns Skill

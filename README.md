@@ -1,24 +1,24 @@
-# xray — Self-Healing AI Governance OS
+# xray — MCP-Centric AI Governance OS
 
-**v1.22.67** — 42 agents · 44 skills · 41 MCP servers · 60 codex terms · 2,229 tests
+**v2.0.0** — 9 agents · 44 skills · 3 MCP governance servers · 60 codex terms · 2,822 tests
 
-xray is the pure v2 three-subsystem AI orchestration framework:
+xray is the pure v2 three-subsystem AI orchestration framework, now **MCP-centric** with dedicated skill servers for governance deliberation:
 
 - **Inference** — reasoning, execution, and agent intelligence
 - **External Governance** — Dynamo Solar SSOT for proposal evaluation, resonance/isotopic signals, coherence, and Codex enforcement before any action
 - **Autonomous Engine** — thinDispatch 7-flow in the MCP orchestrator for automatic delegation, routing, and end-to-end coordination
 
-Agents are declared in `.opencode/agents/*.yml` — the YML SSOT. Zero manual setup. Automatic discovery and activation.
+3 dedicated MCP servers (`code-review`, `security-audit`, `researcher`) deliberate governance proposals. Agents are declared in `.opencode/agents/*.yml` — the YML SSOT. Zero manual setup. Automatic discovery and activation.
 
 ## Quick Start
 
 ```bash
-npm install strray-ai
+npm install 0xray
 
 # CLI
-npx strray-ai --help
-npx strray-ai grok install          # Install Grok CLI plugin
-npx strray-ai hermes bridge         # Hermes Agent bridge
+npx 0xray --help
+npx 0xray grok install          # Install Grok CLI plugin
+npx 0xray hermes bridge         # Hermes Agent bridge
 ```
 
 The installation seeds YML surfaces and MCP servers. Place agent definitions in `.opencode/agents/` — they are live immediately.
@@ -32,6 +32,7 @@ The installation seeds YML surfaces and MCP servers. Place agent definitions in 
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Resonance/Isotopic · SSOT  │
+│  3 MCP skill servers deliberate proposals       │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  7-flow MCP · Delegation · Governance gate      │
@@ -44,10 +45,11 @@ Proposal generation, reflection cycles, and execution planning. Produces structu
 ### External Governance (Dynamo Solar SSOT)
 Mandatory governance filter powered by Dynamo — a neural net based on solar physics and temporal first principles. Evaluates proposals for Codex compliance, resonance alignment, and isotopic coherence before any action is taken.
 
+- 3 real MCP skill servers deliberate: `code-review`, `security-audit`, `researcher`
 - Weighted voting via PHI (1.666) / TAU (0.865) matrix
-- 3 real MCP skills deliberate (code-review, security-audit, researcher)
 - External Dynamo integration required (not optional)
 - CodexPolicyService — single source of truth for Codex loading
+- Active codex snapshot available via `get_active_codex` MCP tool
 
 ### Autonomous Engine (thinDispatch 7-flow)
 MCP orchestrator with 7-flow dispatch for automatic delegation, routing, and coordination. Handles complex multi-step tasks with automatic complexity-based routing.
@@ -55,7 +57,7 @@ MCP orchestrator with 7-flow dispatch for automatic delegation, routing, and coo
 ## CLI
 
 ```bash
-strray-ai <command>
+0xray <command>
 
 Commands:
   install         Install xray framework
@@ -72,18 +74,18 @@ Commands:
 |----------|--------|-------------|
 | **OpenClaw** | ✅ | API server, client, config, hooks — full integration |
 | **Hermes Agent** | ✅ | Python bridge, plugin YAML, tools, schemas |
-| **Grok CLI** | ✅ | Plugin install via `strray-ai grok install --force`, user-level plugin hooks |
+| **Grok CLI** | ✅ | Plugin install via `0xray grok install --force`, user-level plugin hooks |
 | **OpenCode** | ✅ | Native YML agent surfaces, E2E 42/42 solo, 34/34 orchestrator |
 
-## MCP Server Ecosystem (41 servers)
+## MCP Server Ecosystem
 
-xray ships 41 MCP servers covering all skills and framework capabilities:
+xray ships MCP servers for all governance deliberation and framework capabilities:
 
-**Core Framework:** architect-tools, boot-orchestrator, enforcer-tools, estimation, framework-compliance-audit, framework-help, governance, lint, model-health-check, orchestrator, performance-analysis, processor-pipeline, researcher, security-scan, state-manager, auto-format
+**Governance Deliberation:** code-review, security-audit, researcher, enforcer-tools, governance
 
-**Knowledge Skills:** api-design, architecture-patterns, bug-triage-specialist, code-analyzer, code-review, content-creator, database-design, devops-deployment, git-workflow, growth-strategist, log-monitor, mobile-development, multimodal-looker, performance-optimization, project-analysis, refactoring-strategies, security-audit, seo-consultant, session-management, skill-invocation, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
+**Core Framework:** architect-tools, boot-orchestrator, estimation, framework-compliance-audit, framework-help, lint, model-health-check, orchestrator, performance-analysis, processor-pipeline, state-manager, auto-format
 
-**Skills Directory (44):** api-design, architect-tools, auto-format, backend-engineer, boot-orchestrator, bug-triage, code-analyzer, code-review, content-creator, database-engineer, devops-engineer, enforcer, frontend-engineer, frontend-ui-ux-engineer, git-workflow, growth-strategist, hermes-agent, inference-improve, lint, log-monitor, mobile-developer, model-health-check, multimodal-looker, orchestrator, performance-analysis, performance-engineer, performance-optimization, processor-pipeline, project-analysis, refactoring-strategies, researcher, security-audit, security-scan, seo-consultant, session-management, state-manager, storyteller, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design, architecture-patterns, framework-compliance-audit
+**Knowledge Skills:** api-design, architecture-patterns, bug-triage-specialist, code-analyzer, content-creator, database-design, devops-deployment, git-workflow, growth-strategist, log-monitor, mobile-development, multimodal-looker, performance-optimization, project-analysis, refactoring-strategies, seo-consultant, session-management, skill-invocation, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
 
 ## Governance & Codex
 
@@ -92,14 +94,15 @@ Codex enforcement is integrated at every level:
 - **60 terms** across categories: core, architecture, testing, performance, security, operations, governance
 - CodexPolicyService — canonical Governance-owned SSOT for Codex loading
 - Pre-governance gate blocks non-compliant proposals before execution
+- 3 MCP skill servers deliberate each proposal
 - frameworkLogger structured logging throughout (never console.*)
 - Active codex snapshot available via `get_active_codex` MCP tool
 
-## Testing (2,229 tests)
+## Testing (2,822 tests)
 
 | Suite | Status |
 |-------|--------|
-| Unit / Integration | 157 tests, all pass |
+| Unit / Integration | 158 files, all pass |
 | Performance | 14 tests, all pass |
 | Infrastructure | 19 tests, all pass |
 | Consumer E2E | 4 platforms, all pass |
@@ -125,4 +128,4 @@ MIT — see [LICENSE](LICENSE)
 
 ---
 
-*xray — lean, governed, autonomous. Pure v2 three-subsystem.*
+*xray — MCP-centric, governed, autonomous. Pure v2 three-subsystem.*

@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   multimodal-looker:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/multimodal-looker.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/multimodal-looker.server.js]
 ---
 
 # Multimodal Looker Skill

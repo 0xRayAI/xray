@@ -1216,7 +1216,7 @@ export const ${design.componentType.charAt(0).toUpperCase() + design.componentTy
 
   private generateAngularComponent(design: ComponentDesign): string {
     return `import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { frameworkLogger } from "../framework-logger.js";
+// frameworkLogger imported above — single import at line 15
 
 @Component({
   selector: 'app-${design.componentType}',

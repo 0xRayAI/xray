@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [2.0.0] - 2026-06-05
+
+### 🚀 Major Release — Pure v2 Three-Subsystem Architecture
+
+#### 🧠 Three-Subsystem Architecture (Wired & Complete)
+- feat: extract and wire CodexPolicyService as Governance SSOT for codex reads (enforcer-tools.server.ts, governance.server.ts)
+- feat: wire opencode-cli-invoker into inference-cycle as Autonomous Engine process spawner
+- feat: wire ProposalApplier via callback pattern into inference-cycle (git/PR execution)
+- feat: add handleGetActiveCodex MCP tool to governance server (delegates to CodexPolicyService)
+- feat: add strray/codex.json to resolveCodexPath() fallback candidates
+
+#### 🛡️ Governance Pipeline Hardening
+- feat: add end-to-end timeout (default 90s) to govern() with AbortController
+- feat: add configurable timeoutMs and maxAbstentionThreshold to GovernOptions
+- feat: add 30s timeout wrapper for callInProcessSkill() (Vercel/serverless path)
+
+#### 🧹 Cleanup
+- chore: remove aside-context.ts (160 lines, zero consumers — dead code)
+- chore: update repo URLs to github.com/0xRayAI/xray
+- chore: bump version to 2.0.0
+
+#### ✅ Test Coverage
+- 158 test files passing, 2822 tests, 0 failures
+- 20 new tests for three-subsystem wiring (enforcer-tools, cli-invoker, proposal-applier)
+- Fixed 9 failing test files (codex-validators, governance-client, mcp-servers-integration, inference-governance-integration, session-capture, integrations-e2e, context-loader)
+
+#### 📦 Breaking Changes
+- Version 2.0.0 under 0xRay org (not a merge to master)
+- aside-context.ts removed (was unused)
+- GovernOptions extended with timeoutMs and maxAbstentionThreshold
+
 ## [1.22.61] - 2026-05-19
 
 ### 🔄 Changes

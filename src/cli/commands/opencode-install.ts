@@ -21,7 +21,7 @@ interface OpencodeInstallOptions {
   dryRun?: boolean;
 }
 
-const MERGE_FILES = new Set(["strray/features.json", "enforcer-config.json"]);
+const MERGE_FILES = new Set(["xray/features.json", "enforcer-config.json"]);
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]);
 

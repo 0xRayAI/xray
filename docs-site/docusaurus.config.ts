@@ -6,9 +6,9 @@ const config: Config = {
   title: 'xray',
   tagline: 'The clean v2 three-subsystem AI Governance OS',
   favicon: 'img/favicon.ico',
-  url: 'https://xray.github.io',
+  url: 'https://0xray.github.io',
   baseUrl: '/xray/',
-  organizationName: 'xray',
+  organizationName: '0xray',
   projectName: 'xray',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
@@ -18,13 +18,12 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/xray/xray/tree/main/',
+          editUrl: 'https://github.com/0xRayAI/xray/tree/main/',
           routeBasePath: 'docs',
           exclude: [
             'archive/**',
             '**/*.json',
             '**/*.yml',
-            'README.md',
             'BRAND.md',
           ],
         },
@@ -53,27 +52,17 @@ const config: Config = {
       },
       items: [
         {
-          to: '/docs/guides/getting-started',
-          label: 'Getting Started',
+          to: '/docs/',
+          label: 'Docs',
           position: 'left',
         },
         {
-          to: '/docs/architecture',
-          label: 'Architecture',
-          position: 'left',
-        },
-        {
-          to: '/docs/agents',
-          label: 'Agents',
-          position: 'left',
-        },
-        {
-          href: 'https://github.com/xray/xray',
+          href: 'https://github.com/0xRayAI/xray',
           label: 'GitHub',
           position: 'right',
         },
         {
-          href: 'https://npmjs.com/package/xray',
+          href: 'https://npmjs.com/package/0xray',
           label: 'npm',
           position: 'right',
         },
@@ -85,17 +74,15 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Getting Started', to: '/docs/guides/getting-started' },
-            { label: 'Architecture', to: '/docs/architecture' },
-            { label: 'Agents', to: '/docs/agents' },
-            { label: 'Releases', to: '/docs/releases' },
+            { label: 'Documentation', to: '/docs/' },
+            { label: 'GitHub', href: 'https://github.com/0xRayAI/xray' },
           ],
         },
         {
           title: 'Community',
           items: [
-            { label: 'GitHub', href: 'https://github.com/xray/xray' },
-            { label: 'npm', href: 'https://npmjs.com/package/xray' },
+            { label: 'GitHub', href: 'https://github.com/0xRayAI/xray' },
+            { label: 'npm', href: 'https://npmjs.com/package/0xray' },
           ],
         },
       ],

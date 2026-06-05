@@ -416,11 +416,11 @@ class StringRayTestingStrategyServer {
     const { sourceFile, sourceContent, exports, testFilePath, directory } =
       args;
 
-    await frameworkLogger.log('testing-strategy.server', '-testing-strategy-generatetestfile-called-', 'info', { message: `[testing-strategy] generateTestFile called:` });
-    await frameworkLogger.log('testing-strategy.server', '-sourcefile-sourcefile-', 'info', { message: `  sourceFile: ${sourceFile}` });
-    await frameworkLogger.log('testing-strategy.server', '-testfilepath-testfilepath-', 'info', { message: `  testFilePath: ${testFilePath}` });
-    await frameworkLogger.log('testing-strategy.server', '-directory-directory-', 'info', { message: `  directory: ${directory}` });
-    await frameworkLogger.log('testing-strategy.server', '-exports-json-stringify-exports-', 'info', { message: `  exports: ${JSON.stringify(exports)}` });
+    await frameworkLogger.log('testing-strategy.server', 'generate-test-file-called', 'info', { message: `[testing-strategy] generateTestFile called:` });
+    await frameworkLogger.log('testing-strategy.server', 'source-file', 'info', { sourceFile });
+    await frameworkLogger.log('testing-strategy.server', 'test-file-path', 'info', { testFilePath });
+    await frameworkLogger.log('testing-strategy.server', 'directory', 'info', { directory });
+    await frameworkLogger.log('testing-strategy.server', 'exports', 'info', { exports: JSON.stringify(exports) });
 
     // Use dynamic import for ESM compatibility
     const fs = await import("fs");
@@ -432,7 +432,7 @@ class StringRayTestingStrategyServer {
       ? testFilePath
       : pathModule.join(projectDir, testFilePath);
 
-    await frameworkLogger.log('testing-strategy.server', '-testing-strategy-resolved-test-path-resolvedtestp', 'info', { message: `[testing-strategy] resolved test path: ${resolvedTestPath}` });
+    await frameworkLogger.log('testing-strategy.server', 'resolved-test-path', 'info', { resolvedTestPath });
 
     const testDir = pathModule.dirname(resolvedTestPath);
 
@@ -501,10 +501,8 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     // Write the test file
     fs.writeFileSync(resolvedTestPath, testContent, "utf8");
 
-    await frameworkLogger.log('testing-strategy.server', '-testing-strategy-test-file-written-to-resolvedtes', 'info', { message: `[testing-strategy] Test file written to: ${resolvedTestPath}` });
-    await frameworkLogger.log('testing-strategy.server', '-testing-strategy-file-exists-fs-existssync-resolv', 'info', { message: 
-      `[testing-strategy] File exists: ${fs.existsSync(resolvedTestPath)}`,
-     });
+    await frameworkLogger.log('testing-strategy.server', 'test-file-written', 'info', { resolvedTestPath });
+    await frameworkLogger.log('testing-strategy.server', 'file-exists', 'info', { resolvedTestPath, exists: fs.existsSync(resolvedTestPath) });
 
     return {
       content: [

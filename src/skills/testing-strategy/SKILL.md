@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   testing-strategy:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/testing-strategy.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/testing-strategy.server.js]
 ---
 
 # Testing Strategy Skill

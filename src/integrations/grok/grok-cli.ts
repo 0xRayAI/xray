@@ -8,7 +8,7 @@
  * users get access to Governance, skills, and other capabilities directly inside Grok conversations.
  *
  * Recommended registration (via npx or Grok's tooling):
- *   npx strray-ai grok install
+ *   npx 0xray grok install
  *
  * This will help configure the user's Grok CLI to include the following MCP servers:
  * - governance (Dynamo Solar SSOT + real skill deliberation)
@@ -32,18 +32,18 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
   frameworkLogger.log('grok-integration', 'install-start', 'info', { options });
 
   const home = process.env.HOME || process.env.USERPROFILE || '';
-  const targetPluginDir = path.join(home, '.grok/plugins/strray-ai');
+  const targetPluginDir = path.join(home, '.grok/plugins/0xray');
 
   // Try to find the plugin source from the installed package
   const possibleSources = [
-    path.join(__dirname, '..', '..', '..', 'src/integrations/grok/plugin/strray-ai'), // dev
-    path.join(__dirname, '..', '..', '..', '.grok/plugins/strray-ai'), // after build
+    path.join(__dirname, '..', '..', '..', 'src/integrations/grok/plugin/0xray'), // dev
+    path.join(__dirname, '..', '..', '..', '.grok/plugins/0xray'), // after build
   ];
 
   let sourceDir = possibleSources.find(p => fs.existsSync(p));
 
   if (!sourceDir) {
-    console.error('[Grok] Could not locate the strray-ai Grok plugin inside the package.');
+    console.error('[Grok] Could not locate the 0xray Grok plugin inside the package.');
     return;
   }
 
@@ -54,7 +54,7 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
 
   try {
     if (fs.existsSync(targetPluginDir) && !options.force) {
-      console.log('[Grok] strray-ai Grok plugin is already installed.');
+      console.log('[Grok] 0xray Grok plugin is already installed.');
       console.log('Use --force to reinstall.');
       return;
     }
@@ -67,7 +67,7 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     // Attempt auto-trust (best effort)
     try {
       execSync(`grok plugins trust "${targetPluginDir}"`, { stdio: 'ignore' });
-      console.log('\x1b[32m✓ Auto-trusted the strray-ai plugin with Grok CLI\x1b[0m');
+      console.log('\x1b[32m✓ Auto-trusted the 0xray plugin with Grok CLI\x1b[0m');
     } catch {
       console.log('\nPlease run this command to fully trust the plugin:');
       console.log(`  grok plugins trust "${targetPluginDir}"`);

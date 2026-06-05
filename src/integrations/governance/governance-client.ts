@@ -85,6 +85,8 @@ export class GovernanceClient {
       const raw = await this.callTool('govern_with_solar', {
         proposal: request.proposal,
         baseVoteWeight: request.baseVoteWeight ?? 1.0,
+        ...(request.sharePublicly !== undefined && { sharePublicly: request.sharePublicly }),
+        ...(request.spectralQuality !== undefined && { spectralQuality: request.spectralQuality }),
       });
       const result = raw.result as Record<string, unknown>;
 
@@ -106,6 +108,18 @@ export class GovernanceClient {
         trinitariumGematriaFusion: result.trinitariumGematriaFusion as number | undefined,
         detectedVirtues: Array.isArray(result.trinitariumDetectedVirtues) ? result.trinitariumDetectedVirtues as string[] : undefined,
         detectedConcerns: Array.isArray(result.trinitariumDetectedConcerns) ? result.trinitariumDetectedConcerns as string[] : undefined,
+        ...(result.recommendation !== undefined && { recommendation: result.recommendation as string }),
+        ...(result.confidence !== undefined && { confidence: result.confidence as number }),
+        ...(result.resonanceScore !== undefined && { resonanceScore: result.resonanceScore as number }),
+        ...(result.structuralResonance !== undefined && { structuralResonance: result.structuralResonance as number }),
+        ...(result.proximity !== undefined && { proximity: result.proximity as number }),
+        ...(result.phaseAlignment !== undefined && { phaseAlignment: result.phaseAlignment as number }),
+        ...(result.vortexAlignment !== undefined && { vortexAlignment: result.vortexAlignment as number }),
+        ...(result.synchronization !== undefined && { synchronization: result.synchronization as number }),
+        ...(result.signalTiming !== undefined && { signalTiming: result.signalTiming as string }),
+        ...(result.hammerReason !== undefined && { hammerReason: result.hammerReason as string }),
+        ...(result.neuralContextUsed !== undefined && { neuralContextUsed: result.neuralContextUsed as boolean }),
+        ...(result.spectralQuality !== undefined && { spectralQuality: result.spectralQuality as number }),
       };
 
       if (!this.isValidSolarResponse(response)) {
@@ -190,21 +204,22 @@ export class GovernanceClient {
         ...(params.historicalSignalIds ? { historicalSignalIds: params.historicalSignalIds } : {}),
       });
       const result = raw.result as Record<string, unknown>;
+      const diagnostics = result.diagnostics as Record<string, unknown> | undefined;
 
       const response: GovernanceCheckResponse = {
         success: true,
         proposalId: (result.proposalId as string) || '',
         governanceIsotopeId: (result.governanceIsotopeId as string) || `evaluate-${Date.now()}`,
         resonanceScore: (result.resonanceScore as number) ?? 0,
-        isotopicRatio: (result.isotopicRatio as number) ?? 0,
-        vortexVolume: (result.vortexVolume as number) ?? 0,
-        historicalCoherence: (result.historicalCoherence as number) ?? 0,
+        isotopicRatio: (diagnostics?.isotopicRatio as number) ?? (result.isotopicRatio as number) ?? 0,
+        vortexVolume: (diagnostics?.vortexVolume as number) ?? (result.vortexVolume as number) ?? 0,
+        historicalCoherence: (diagnostics?.historicalCoherence as number) ?? (result.historicalCoherence as number) ?? 0,
         recommendation: result.recommendation as 'PASS' | 'NEEDS_REVISION' | 'REJECT',
         confidence: result.confidence as number,
         voteWeight: result.voteWeight as number,
         reasons: Array.isArray(result.reasons)
           ? (result.reasons as string[])
-          : [result.reasoning as string].filter(Boolean),
+          : [result.reason as string, result.reasoning as string].filter(Boolean),
       };
 
       if (!this.isValidResponse(response)) {
@@ -302,7 +317,9 @@ export class GovernanceClient {
       typeof r.originalRecommendation === 'string' &&
       typeof sc.solarActivityLevel === 'string' &&
       validLevels.includes(sc.solarActivityLevel) &&
-      (typeof sc.solarIsotopicResonance === 'number' ||
+      ((typeof sc.solarIsotopicResonance === 'number' &&
+        sc.solarIsotopicResonance >= 0 &&
+        sc.solarIsotopicResonance <= 1) ||
        typeof sc.solarResonance === 'number') &&
       typeof sc.solarActivityModifier === 'number' &&
       sc.solarActivityModifier >= -1 &&

@@ -59,9 +59,9 @@ describe("Antigravity Skills Integration", () => {
     expect(fs.existsSync(scriptPath)).toBe(false);
   });
 
-  it("should have Antigravity documentation", () => {
+  it("should have removed Antigravity documentation (cleaned up with v2 rebrand)", () => {
     const docPath = path.join(process.cwd(), "docs/archive/active-archived/superseded/legacy/ANTIGRAVITY_INTEGRATION.md");
-    expect(fs.existsSync(docPath)).toBe(true);
+    expect(fs.existsSync(docPath)).toBe(false);
   });
 
   it("should have Antigravity license file", () => {
@@ -69,15 +69,12 @@ describe("Antigravity Skills Integration", () => {
     expect(fs.existsSync(licensePath)).toBe(true);
   });
 
-  it("should list curated skills in documentation", () => {
-    const docPath = path.join(process.cwd(), "docs/archive/active-archived/superseded/legacy/ANTIGRAVITY_INTEGRATION.md");
-    const content = fs.readFileSync(docPath, "utf-8");
+  it("should list Antigravity in skills registry", () => {
+    const registryPath = path.join(process.cwd(), ".opencode/skills/registry.json");
+    const content = fs.readFileSync(registryPath, "utf-8");
 
-    expect(content).toContain("typescript-expert");
-    expect(content).toContain("python-patterns");
-    expect(content).toContain("docker-expert");
-    expect(content).toContain("copywriting");
-    expect(content).toContain("brainstorming");
+    expect(content).toContain("antigravity");
+    expect(content).toContain("sickn33/antigravity-awesome-skills");
   });
 });
 
@@ -87,9 +84,9 @@ describe("Agent Configuration", () => {
     expect(fs.existsSync(agentsPath)).toBe(true);
     const content = fs.readFileSync(agentsPath, "utf-8");
     // Check for essential AGENTS.md content
-    expect(content).toContain("StringRay");
+    expect(content).toContain("xray");
     expect(content).toContain("Agents");
-    expect(content).toContain("invocation");
+    expect(content).toContain("Invoke");
   });
 });
 

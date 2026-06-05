@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   git-workflow:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/git-workflow.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/git-workflow.server.js]
 ---
 
 # Git Workflow Skill

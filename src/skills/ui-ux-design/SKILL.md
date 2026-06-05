@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   ui-ux-design:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/ui-ux-design.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/ui-ux-design.server.js]
 ---
 
 # UI/UX Design Skill v2.1.0

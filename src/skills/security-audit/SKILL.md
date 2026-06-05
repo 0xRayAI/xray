@@ -15,11 +15,12 @@ dependencies: []
 mcp:
   security-audit:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/security-audit.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/security-audit.server.js]
   tools:
-    - scan_security
-    - audit_compliance
-    - check_vulnerabilities
+    - audit_security
+    - check_vulnerability
+    - generate_security_report
+    - analyze_proposal
 
 agent_binding:
   primary: security-auditor

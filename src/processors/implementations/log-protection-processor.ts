@@ -93,7 +93,7 @@ export class LogProtectionProcessor extends PreProcessor {
       return {
         allowed: false,
         reason: `Deletion of active log file '${activeFile}' is prohibited. These files are essential for the inference engine and pattern learning system.`,
-        suggestion: "Use 'npx strray-ai archive-logs' to safely archive and rotate logs.",
+        suggestion: "Use 'npx 0xray archive-logs' to safely archive and rotate logs.",
         protectedFiles: [
           "routing-outcomes.json - routing analytics data (NEVER delete)",
           "activity.log - framework activity tracking (NEVER delete)",

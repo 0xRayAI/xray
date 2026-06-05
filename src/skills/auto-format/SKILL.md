@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   auto-format:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/auto-format.server.js]
+    args: [node_modules/0xray/dist/mcps/auto-format.server.js]
 ---
 
 # Auto Format Skill

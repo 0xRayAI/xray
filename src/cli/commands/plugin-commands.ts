@@ -25,7 +25,7 @@ export async function pluginListCommand(): Promise<void> {
 
   if (!fs.existsSync(PLUGINS_DIR)) {
     console.log("No plugins installed.");
-    console.log("Install a plugin: npx strray-ai plugin install <name>");
+    console.log("Install a plugin: npx 0xray plugin install <name>");
     return;
   }
 
@@ -58,8 +58,8 @@ export async function pluginListCommand(): Promise<void> {
 
   console.log("\n" + "═".repeat(60));
   console.log(`\nTotal: ${plugins.length} plugin(s)`);
-  console.log("\nInstall: npx strray-ai plugin install <name>");
-  console.log("Details: npx strray-ai plugin status <name>\n");
+  console.log("\nInstall: npx 0xray plugin install <name>");
+  console.log("Details: npx 0xray plugin status <name>\n");
 }
 
 export async function pluginInstallCommand(pluginName: string): Promise<void> {
@@ -124,7 +124,7 @@ export async function pluginInstallCommand(pluginName: string): Promise<void> {
   console.log("⚠️  Manual installation required.");
   console.log(`   1. Clone/create plugin to: ${pluginPath}`);
   console.log("   2. Add plugin.yaml manifest");
-  console.log("   3. Run: npx strray-ai plugin enable " + pluginName + "\n");
+  console.log("   3. Run: npx 0xray plugin enable " + pluginName + "\n");
 }
 
 export async function pluginEnableCommand(pluginName: string): Promise<void> {
@@ -135,7 +135,7 @@ export async function pluginEnableCommand(pluginName: string): Promise<void> {
 
   if (!fs.existsSync(manifestPath)) {
     console.log(`❌ Plugin not found: ${pluginName}`);
-    console.log(`   Install first: npx strray-ai plugin install ${pluginName}`);
+    console.log(`   Install first: npx 0xray plugin install ${pluginName}`);
     return;
   }
 

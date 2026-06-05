@@ -58,7 +58,7 @@ export class DeployVerifier {
 
     const packCheck = this.runCheck("npm-pack", () => {
       const output = this.exec("npm pack --pack-destination /tmp", this.projectRoot, 30000);
-      const match = output.match(/strray-ai-[\d.]+\.tgz/);
+      const match = output.match(/0xray-[\d.]+\.tgz/);
       if (!match) throw new Error("No tarball produced");
       tarballPath = `/tmp/${match[0]}`;
       return `Packed ${match[0]}`;
@@ -83,7 +83,7 @@ export class DeployVerifier {
     }
 
     const cliCheck = this.runCheck("cli-health", () => {
-      const cliPath = path.join(installDir, "node_modules", ".bin", "strray-ai");
+      const cliPath = path.join(installDir, "node_modules", ".bin", "0xray");
       if (!fs.existsSync(cliPath)) throw new Error("CLI not found in installed package");
       const output = this.exec(`${cliPath} health`, installDir, 15000);
       return `CLI health: ${output.substring(0, 100)}`;

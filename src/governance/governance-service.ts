@@ -56,11 +56,14 @@ export class GovernanceService {
   async govern(request: GovernanceRequest): Promise<GovernanceResponse> {
     const { proposals, context, options } = request;
     const requireExternal = options?.requireExternalDynamo ?? true;
+    const timeoutMs = options?.timeoutMs ?? 90000;
+    const maxAbstentionThreshold = options?.maxAbstentionThreshold ?? 1.0;
 
     frameworkLogger.log('governance-service', 'govern-start', 'info', {
       proposalCount: proposals.length,
       context,
       requireExternalDynamo: requireExternal,
+      timeoutMs,
     });
 
     // Early validation: Dynamo Solar SSOT is a hard requirement
@@ -76,43 +79,39 @@ export class GovernanceService {
       }
     }
 
-    // 1. Call the three real skill MCPs (one call per server, returns array of votes, one per proposal)
-    const [codeReviewVotes, securityVotes, researcherVotes] = await Promise.all([
-      this.callSkillServer("code-review", proposals, context),
-      this.callSkillServer("security-audit", proposals, context),
-      this.callSkillServer("researcher", proposals, context),
-    ]);
+    // Run governance with end-to-end timeout
+    const result = await this.runGovernanceWithTimeout(
+      proposals, context, requireExternal, timeoutMs,
+    );
 
-    // 2. Always call external Dynamo (required) - returns array of arrays (one inner array per proposal)
-    const externalVotes = await this.callExternalDynamo(proposals, requireExternal);
+    // Check abstention threshold
+    if (result.results.length > 0 && maxAbstentionThreshold < 1.0) {
+      const totalVotes = result.results.reduce((sum, r) => sum + r.votes.length, 0);
+      const abstentions = result.results.reduce(
+        (sum, r) => sum + r.votes.filter(v => v.decision === 'abstain').length, 0,
+      );
+      const abstentionRatio = totalVotes > 0 ? abstentions / totalVotes : 0;
+      if (abstentionRatio > maxAbstentionThreshold) {
+        const message =
+          `Abstention ratio ${abstentionRatio.toFixed(2)} exceeds threshold ${maxAbstentionThreshold} — ` +
+          'too many governance servers unavailable';
+        frameworkLogger.log('governance-service', 'abstention-threshold-exceeded', 'error', {
+          abstentionRatio,
+          maxAbstentionThreshold,
+        });
+        throw new Error(message);
+      }
+    }
 
-    // 3. Merge everything
-    const results: GovernanceResult[] = proposals.map((proposal, index) => {
-      const votes: GovernanceVote[] = [
-        codeReviewVotes[index] || { server: "code-review", decision: "abstain", confidence: 0.3, reasoning: "missing" },
-        securityVotes[index] || { server: "security-audit", decision: "abstain", confidence: 0.3, reasoning: "missing" },
-        researcherVotes[index] || { server: "researcher", decision: "abstain", confidence: 0.3, reasoning: "missing" },
-        ...(externalVotes[index] || []),
-      ];
-
-      const merged = mergeVotes(votes);
-
-      return {
-        proposalId: proposal.id,
-        finalDecision: merged.finalDecision,
-        averageConfidence: merged.averageConfidence,
-        votes,
-        reasoningSummary: merged.reasoningSummary,
-      };
-    });
-
-    const approved = results.filter(r => r.finalDecision === 'approve').length;
-    const needsRevision = results.filter(r => r.finalDecision === 'needs_revision').length;
-    const rejected = results.filter(r => r.finalDecision === 'reject').length;
+    const approved = result.results.filter(r => r.finalDecision === 'approve').length;
+    const needsRevision = result.results.filter(r => r.finalDecision === 'needs_revision').length;
+    const rejected = result.results.filter(r => r.finalDecision === 'reject').length;
 
     return {
-      results,
-      overallDecision: approved > proposals.length * 0.6 ? 'approve' : 'needs_revision',
+      results: result.results,
+      overallDecision: approved > proposals.length * 0.6
+        ? 'approve'
+        : rejected > approved ? 'reject' : 'needs_revision',
       summary: {
         total: proposals.length,
         approved,
@@ -120,6 +119,52 @@ export class GovernanceService {
         rejected,
       },
     };
+  }
+
+  private async runGovernanceWithTimeout(
+    proposals: GovernanceProposal[],
+    context: GovernanceContext | undefined,
+    requireExternal: boolean,
+    timeoutMs: number,
+  ): Promise<{ results: GovernanceResult[] }> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      // 1. Call the three real skill MCPs (one call per server, returns array of votes, one per proposal)
+      const [codeReviewVotes, securityVotes, researcherVotes] = await Promise.all([
+        this.callSkillServer("code-review", proposals, context),
+        this.callSkillServer("security-audit", proposals, context),
+        this.callSkillServer("researcher", proposals, context),
+      ]);
+
+      // 2. Always call external Dynamo (required) - returns array of arrays (one inner array per proposal)
+      const externalVotes = await this.callExternalDynamo(proposals, requireExternal);
+
+      // 3. Merge everything
+      const results: GovernanceResult[] = proposals.map((proposal, index) => {
+        const votes: GovernanceVote[] = [
+          codeReviewVotes[index] || { server: "code-review", decision: "abstain", confidence: 0.3, reasoning: "missing" },
+          securityVotes[index] || { server: "security-audit", decision: "abstain", confidence: 0.3, reasoning: "missing" },
+          researcherVotes[index] || { server: "researcher", decision: "abstain", confidence: 0.3, reasoning: "missing" },
+          ...(externalVotes[index] || []),
+        ];
+
+        const merged = mergeVotes(votes);
+
+        return {
+          proposalId: proposal.id,
+          finalDecision: merged.finalDecision,
+          averageConfidence: merged.averageConfidence,
+          votes,
+          reasoningSummary: merged.reasoningSummary,
+        };
+      });
+
+      return { results };
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   private async callSkillServer(
@@ -136,7 +181,7 @@ export class GovernanceService {
 
         if (useInProcess) {
           // Vercel / serverless path — use in-process skill instances (no child processes)
-          const result = await callInProcessSkill(serverName, 'analyze_proposal', {
+          const result = await this.callInProcessSkillWithTimeout(serverName, {
             proposalTitle: proposal.title,
             proposalDescription: proposal.description,
             evidence: proposal.evidence || [],
@@ -216,9 +261,14 @@ export class GovernanceService {
     // Integration is available — use it exclusively (no fallback)
     for (const proposal of proposals) {
       try {
+        const inferenceType = (
+          proposal.type === 'strategic' || proposal.type === 'compliance'
+            ? 'refactor'
+            : proposal.type
+        ) as InferenceProposal['type'];
         const inferenceProposal: InferenceProposal = {
           id: proposal.id,
-          type: proposal.type as any,
+          type: inferenceType,
           title: proposal.title,
           description: proposal.description,
           evidence: proposal.evidence || [],
@@ -259,6 +309,20 @@ export class GovernanceService {
     }
 
     return results;
+  }
+
+  private async callInProcessSkillWithTimeout(
+    serverName: string,
+    args: Record<string, unknown>,
+    timeoutMs = 30000,
+  ): Promise<unknown> {
+    const result = await Promise.race([
+      callInProcessSkill(serverName, 'analyze_proposal', args),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`In-process skill ${serverName} timed out after ${timeoutMs}ms`)), timeoutMs),
+      ),
+    ]);
+    return result;
   }
 
   private parseVoteFromText(server: string, text: string): GovernanceVote {

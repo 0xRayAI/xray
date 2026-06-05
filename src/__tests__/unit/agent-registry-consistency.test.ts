@@ -11,7 +11,7 @@ const ACTIVE_NAMES = getActiveAgents();
 
 const ROUTING_MAPPINGS_PATH = path.resolve(
   process.cwd(),
-  ".opencode/strray/routing-mappings.json",
+  ".opencode/xray/routing-mappings.json",
 );
 
 const OPENCODE_JSON_PATH = path.resolve(process.cwd(), "opencode.json");

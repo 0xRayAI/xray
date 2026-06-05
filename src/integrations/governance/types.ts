@@ -118,6 +118,10 @@ export interface SolarGovernanceCheckRequest {
   proposal: string;
   /** Starting vote weight (0.5 - 1.5) */
   baseVoteWeight?: number;
+  /** Whether to share the governance result publicly */
+  sharePublicly?: boolean;
+  /** Spectral quality score for resonance analysis */
+  spectralQuality?: number;
 }
 
 /**
@@ -140,6 +144,30 @@ trinitariumMoralScore?: number | undefined;
   trinitariumGematriaFusion?: number | undefined;
   detectedVirtues?: string[] | undefined;
   detectedConcerns?: string[] | undefined;
+  /** Server-side authoritative recommendation */
+  recommendation?: string;
+  /** Confidence score from governance */
+  confidence?: number;
+  /** Resonance score */
+  resonanceScore?: number;
+  /** Structural resonance metric */
+  structuralResonance?: number;
+  /** Proximity metric */
+  proximity?: number;
+  /** Phase alignment metric */
+  phaseAlignment?: number;
+  /** Vortex alignment metric */
+  vortexAlignment?: number;
+  /** Synchronization metric */
+  synchronization?: number;
+  /** Signal timing indicator */
+  signalTiming?: string;
+  /** Human-readable hammer reason */
+  hammerReason?: string;
+  /** Whether neural context was used */
+  neuralContextUsed?: boolean;
+  /** Spectral quality score */
+  spectralQuality?: number;
 }
 
 /**

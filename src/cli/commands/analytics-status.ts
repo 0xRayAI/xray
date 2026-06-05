@@ -3,7 +3,7 @@
  *
  * Shows current consent and analytics status
  *
- * Usage: npx strray-ai analytics status
+ * Usage: npx 0xray analytics status
  */
 
 import { program } from "commander";
@@ -58,19 +58,19 @@ export const analyticsStatusCommand = program
 
         if (status.analyticsEnabled) {
           console.log(`\n💡 Your project is contributing to community learning!`);
-          console.log(`   • View what's being submitted: npx strray-ai analytics preview`);
-          console.log(`   • Get community insights: npx strray-ai analytics recommendations`);
-          console.log(`   • Check performance: npx strray-ai analytics`);
+          console.log(`   • View what's being submitted: npx 0xray analytics preview`);
+          console.log(`   • Get community insights: npx 0xray analytics recommendations`);
+          console.log(`   • Check performance: npx 0xray analytics`);
         } else {
           console.log(`\n💡 Analytics is currently disabled.`);
-          console.log(`   • Enable anytime: npx strray-ai analytics enable`);
+          console.log(`   • Enable anytime: npx 0xray analytics enable`);
           console.log(`   • Learn more: docs/architecture/central-analytics-store.md`);
         }
       }
 
     } catch (error) {
       console.error("❌ Failed to get analytics status:", error instanceof Error ? error.message : String(error));
-      console.error("\n💡 Try: npx strray-ai analytics status --help");
+      console.error("\n💡 Try: npx 0xray analytics status --help");
       process.exit(1);
     }
   });

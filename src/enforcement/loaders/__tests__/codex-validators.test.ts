@@ -22,6 +22,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-12");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "function f(){\nif(a){\nif(b){\nif(c){\nif(d){\nif(e){\nif(f){\nreturn 1;}}}}}}}",
@@ -35,6 +36,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-12");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "function f() { if (!x) return error; return work(); }",
@@ -50,6 +52,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-19");
+      expect(rule).toBeDefined();
       const longCode = "function f() {\n" + "  const x = 1;\n".repeat(35) + "}";
       
       const result = await rule!.validator({
@@ -64,6 +67,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-19");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "function f() { return 1; }",
@@ -79,6 +83,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-16");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "const a = 1;\nconst b = 2;\nconst a = 1;\nconst b = 2;",
@@ -92,6 +97,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-16");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "const a = 1; const b = 2;",
@@ -107,6 +113,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-3");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "interface A{}\ninterface B{}\ninterface C{}\ninterface D{}\ninterface E{}\ninterface F{}\nexport function f() {}",
@@ -120,6 +127,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-3");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "function f() {}",
@@ -135,6 +143,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-13");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "async function f() { return fetch('/').then(r => r.json()); }",
@@ -148,6 +157,7 @@ describe("CodexLoader Validators - Real Tests", () => {
       const loader = new CodexLoader();
       const rules = await loader.load();
       const rule = rules.find(r => r.id === "codex-13");
+      expect(rule).toBeDefined();
       
       const result = await rule!.validator({
         newCode: "async function f() { try { return await x(); } catch(e) {} }",

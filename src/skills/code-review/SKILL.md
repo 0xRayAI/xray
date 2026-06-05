@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   code-review:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/code-review.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/code-review.server.js]
   tools:
     - analyze_code_quality
     - review_pull_request

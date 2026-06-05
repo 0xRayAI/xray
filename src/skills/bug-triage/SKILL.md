@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   bug-triage-specialist:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/bug-triage-specialist.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/bug-triage-specialist.server.js]
 ---
 
 # Bug Triage Skill

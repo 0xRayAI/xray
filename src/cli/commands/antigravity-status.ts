@@ -3,7 +3,7 @@
  *
  * Shows status of all installed skills.
  *
- * Usage: npx strray-ai antigravity status
+ * Usage: npx 0xray antigravity status
  */
 
 import { existsSync, readdirSync, readFileSync } from "fs";

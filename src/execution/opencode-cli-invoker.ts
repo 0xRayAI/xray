@@ -110,7 +110,7 @@ export async function invokeViaOpencode(
       ["run", "--agent", agentName, "--message", prompt, "--format", "json"],
       {
         cwd: opencodeRoot,
-          env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/strray-ai/opencode.json" },
+          env: { ...process.env, NODE_ENV: "production", OPENCODE_MCP_CONFIG: "./node_modules/0xray/opencode.json" },
         stdio: ["ignore", "pipe", "pipe"],
       },
     );

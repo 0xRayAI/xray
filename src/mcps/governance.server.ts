@@ -29,6 +29,7 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { getGovernanceService } from "../governance/governance-service.js";
+import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
 import { featuresConfigLoader } from "../core/features-config.js";
 import type { GovernanceRequest } from "../governance/governance-types.js";
@@ -67,7 +68,7 @@ class GovernanceServer {
   constructor() {
     this.server = new Server(
       {
-        name: "governance", version: "1.22.67",
+        name: "governance", version: "2.0.0",
       },
       {
         capabilities: {
@@ -186,6 +187,24 @@ class GovernanceServer {
               required: [],
             },
           },
+          {
+            name: "get_active_codex",
+            description:
+              "Get the currently active Codex (SSOT) — returns metadata about the loaded codex terms, " +
+              "including version, term count, source path, and governance status. " +
+              "Optionally include the full raw codex data with includeRaw=true.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                includeRaw: {
+                  type: "boolean",
+                  description: "Whether to include the full raw codex data in the response",
+                  default: false,
+                },
+              },
+              required: [],
+            },
+          },
         ],
       };
     });
@@ -199,6 +218,8 @@ class GovernanceServer {
             return await this.handleGovernProposals(this.validateGovernProposalsArgs(args));
           case "govern_reflection":
             return await this.handleGovernReflection(this.validateGovernReflectionArgs(args));
+          case "get_active_codex":
+            return await this.handleGetActiveCodex(args as { includeRaw?: boolean });
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -297,6 +318,20 @@ class GovernanceServer {
       context: { ...(context || {}), source: "reflection" },
       options: { require_external: true },
     });
+  }
+
+  private async handleGetActiveCodex(args: { includeRaw?: boolean }): Promise<CallToolResult> {
+    const includeRaw = args?.includeRaw === true;
+    const snapshot = await getCodexPolicyService().getCurrentCodex(includeRaw);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(snapshot, null, 2),
+        },
+      ],
+    };
   }
 
   private parseCodexTermsFromReflection(content: string): GovernanceProposalInput[] {
@@ -451,7 +486,7 @@ class GovernanceServer {
       try {
         await transport.handleRequest(req, res, req.body);
       } catch (error) {
-        process.stderr.write(`[governance.server] HTTP handler error: ${error}\n`);
+        frameworkLogger.log("governance-mcp", "http-handler-error", "error", { error: String(error) });
         if (!res.headersSent) {
           res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
         }
@@ -463,7 +498,7 @@ class GovernanceServer {
     });
 
     app.listen(port, () => {
-      process.stderr.write(`[governance.server] HTTP MCP listening on port ${port}\n`);
+      frameworkLogger.log("governance-mcp", "http-listening", "info", { port });
     });
 
     process.on("SIGINT", () => { transport.close(); process.exit(0); });

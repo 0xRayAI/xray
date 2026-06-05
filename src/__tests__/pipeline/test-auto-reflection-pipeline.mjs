@@ -119,7 +119,7 @@ describe("Auto-Reflection Pipeline", () => {
   
   describe("Features.json Integration", () => {
     it("should load auto_reflection mode from features.json", () => {
-      const featuresPath = join(process.cwd(), "src/opencode/strray/features.json");
+      const featuresPath = join(process.cwd(), "src/opencode/xray/features.json");
       
       if (existsSync(featuresPath)) {
         const content = readFileSync(featuresPath, "utf-8");
@@ -131,7 +131,7 @@ describe("Auto-Reflection Pipeline", () => {
     });
     
     it("should load processors config from features.json", () => {
-      const featuresPath = join(process.cwd(), "src/opencode/strray/features.json");
+      const featuresPath = join(process.cwd(), "src/opencode/xray/features.json");
       
       if (existsSync(featuresPath)) {
         const content = readFileSync(featuresPath, "utf-8");
@@ -144,7 +144,7 @@ describe("Auto-Reflection Pipeline", () => {
     });
     
     it("should load inference config from features.json", () => {
-      const featuresPath = join(process.cwd(), "src/opencode/strray/features.json");
+      const featuresPath = join(process.cwd(), "src/opencode/xray/features.json");
       
       if (existsSync(featuresPath)) {
         const content = readFileSync(featuresPath, "utf-8");

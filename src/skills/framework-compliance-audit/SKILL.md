@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   framework-compliance-audit:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/framework-compliance-audit.server.js]
+    args: [node_modules/0xray/dist/mcps/framework-compliance-audit.server.js]
 ---
 
 # Framework Compliance Audit Skill

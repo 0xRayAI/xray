@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   api-design:
     command: node
-    args: [node_modules/strray-ai/dist/mcps/knowledge-skills/api-design.server.js]
+    args: [node_modules/0xray/dist/mcps/knowledge-skills/api-design.server.js]
 ---
 
 # Api Design Skill

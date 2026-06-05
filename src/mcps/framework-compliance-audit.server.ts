@@ -51,7 +51,7 @@ class StringRayFrameworkComplianceAuditServer {
     this.setupToolHandlers();
     void frameworkLogger.log(
       "framework-compliance-audit.server",
-      "-strray-framework-compliance-audit-mcp-server-init",
+      "compliance-audit-init",
       "info",
       { message: "0xRay Framework Compliance Audit MCP Server initialized" },
     );
@@ -301,7 +301,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     try {
       // Check for required configuration files
       const requiredFiles = [
-        "src/strray/config/manager.py",
+        "src/xray/config/manager.py",
         "src/agents/types.ts",
       ];
 
@@ -447,7 +447,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
       }
 
       // Check for codex validation files
-      if (!fs.existsSync("src/strray/core/codex_loader.py")) {
+      if (!fs.existsSync("src/xray/core/codex_loader.py")) {
         results.warnings.push("Missing codex loader implementation");
         results.recommendations.push(
           "Implement codex_loader.py for runtime validation",
@@ -496,7 +496,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
       }
 
       // Check for performance monitoring
-      if (!fs.existsSync("src/strray/performance/monitor.py")) {
+      if (!fs.existsSync("src/xray/performance/monitor.py")) {
         results.warnings.push("Missing performance monitoring implementation");
         results.recommendations.push(
           "Implement performance monitoring for runtime metrics",
@@ -630,7 +630,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
     await this.server.connect(transport);
     void frameworkLogger.log(
       "framework-compliance-audit.server",
-      "-strray-framework-compliance-audit-mcp-server-star",
+      "compliance-audit-startup",
       "info",
       { message: "0xRay Framework Compliance Audit MCP Server started" },
     );

@@ -47,7 +47,7 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
     console.log('Edit the config file to set your gateway URL, auth token, and device ID.');
     console.log('');
     console.log('To initialize the integration in code:');
-    console.log('  import { initializeOpenClawIntegration } from "strray-ai";');
+    console.log('  import { initializeOpenClawIntegration } from "0xray";');
     console.log('  const integration = await initializeOpenClawIntegration();');
 
   } catch (err: any) {

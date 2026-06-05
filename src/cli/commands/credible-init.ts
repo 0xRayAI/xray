@@ -3,7 +3,7 @@
  *
  * Initializes a Credible Pod - a self-contained agent environment.
  *
- * Usage: npx strray-ai credible init [options]
+ * Usage: npx 0xray credible init [options]
  *
  * Status: PLANNED - Not yet implemented
  */
@@ -83,14 +83,14 @@ export async function credibleInitCommand(): Promise<void> {
 
   showNotImplemented();
 
-  console.log("Usage: npx strray-ai credible init [options]");
+  console.log("Usage: npx 0xray credible init [options]");
   console.log("");
   console.log("Options:");
   console.log("  --name <name>      Pod name (required)");
   console.log("  --template <type>  Pod template (dev|prod|minimal)");
   console.log("  --force, -f        Overwrite existing pod");
   console.log("");
-  console.log("Example: npx strray-ai credible init --name my-pod --template dev");
+  console.log("Example: npx 0xray credible init --name my-pod --template dev");
   console.log("");
 }
 

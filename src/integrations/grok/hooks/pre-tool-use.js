@@ -27,7 +27,7 @@ function findGovernanceCore() {
     path.resolve(here, '../../../governance/governance-core.js'),
     path.resolve(here, '../../../../governance/governance-core.js'),
     // node_modules installed layout
-    path.resolve(process.cwd(), 'node_modules/strray-ai/dist/governance/governance-core.js'),
+    path.resolve(process.cwd(), 'node_modules/0xray/dist/governance/governance-core.js'),
     // Dev layout fallbacks (no extra dist/)
     path.resolve(here, '../../../../../governance/governance-core.js'),
     path.resolve(process.cwd(), 'dist/governance/governance-core.js'),
@@ -49,7 +49,7 @@ function walkUpForCore(startDir, maxLevels = 8) {
     if (fs.existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-        if (pkg.name === 'strray-ai' || pkg.name === 'stringray') {
+        if (pkg.name === 'strray-ai' || pkg.name === 'stringray' || pkg.name === '0xray') {
           results.push(path.resolve(current, 'dist/governance/governance-core.js'));
           results.push(path.resolve(current, 'governance/governance-core.js'));
         }
@@ -120,7 +120,7 @@ async function main() {
       solar_recommendation: recommendation,
       gov: govDetails,
       timestamp: new Date().toISOString(),
-      source: 'strray-ai/grok-pre-tool-use',
+      source: '0xray/grok-pre-tool-use',
     };
 
     console.log(JSON.stringify(decision));

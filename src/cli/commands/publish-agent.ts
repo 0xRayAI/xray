@@ -3,13 +3,13 @@
  *
  * Packages and publishes agents to AgentStore for sharing.
  *
- * Usage: npx strray-ai publish-agent [options]
+ * Usage: npx 0xray publish-agent [options]
  * Options:
  *   --agent <name>    Agent name to publish (required)
  *   --version <ver>   Version (optional, auto-detected)
  *   --dry-run         Preview package without publishing
  *
- * Example: npx strray-ai publish-agent --agent orchestrator --dry-run
+ * Example: npx 0xray publish-agent --agent orchestrator --dry-run
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from "fs";
@@ -152,14 +152,14 @@ export async function publishAgentCommand(): Promise<void> {
   if (!options.agent) {
     console.error("❌ Error: Agent name is required");
     console.log("");
-    console.log("Usage: npx strray-ai publish-agent --agent <name> [options]");
+    console.log("Usage: npx 0xray publish-agent --agent <name> [options]");
     console.log("");
     console.log("Options:");
     console.log("  --agent <name>    Agent name to publish (required)");
     console.log("  --version <ver>   Version (optional, auto-detected)");
     console.log("  --dry-run         Preview package without publishing");
     console.log("");
-    console.log("Example: npx strray-ai publish-agent --agent orchestrator");
+    console.log("Example: npx 0xray publish-agent --agent orchestrator");
     process.exit(1);
   }
 
