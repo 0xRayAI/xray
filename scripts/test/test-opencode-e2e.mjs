@@ -78,7 +78,7 @@ async function opencodeRun(agent, prompt, cwd, timeout = 60000) {
     const child = spawn('opencode', ['run', '--agent', agent, '--model', 'opencode/big-pickle', '--message', prompt, '--format', 'json'], {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, NODE_ENV: 'production', OPENCODE_MCP_CONFIG: './node_modules/strray-ai/opencode.json' },
+      env: { ...process.env, NODE_ENV: 'production', OPENCODE_MCP_CONFIG: './node_modules/0xray/opencode.json' },
     });
 
     let stdout = '';
@@ -146,7 +146,7 @@ async function main() {
 
   const projectRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
   const packageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf-8'));
-  pass(`strray-ai project: v${packageJson.version}`);
+  pass(`0xray project: v${packageJson.version}`);
 
   // ── Phase 1: npm pack + install into temp dir ─────────
   section('Phase 1: npm pack + install into temp dir');
@@ -154,7 +154,7 @@ async function main() {
   const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `opencode-strray-e2e-${Date.now()}`);
   console.log(`  Test directory: ${testDir}`);
 
-  if (!CUSTOM_DIR || !fs.existsSync(path.join(testDir, 'node_modules', 'strray-ai'))) {
+  if (!CUSTOM_DIR || !fs.existsSync(path.join(testDir, 'node_modules', '0xray'))) {
     if (CUSTOM_DIR && fs.existsSync(testDir)) {
       pass('Using existing test directory');
     } else {
@@ -163,7 +163,7 @@ async function main() {
     }
 
     const packResult = run(`cd "${projectRoot}" && npm pack`, { timeout: 30000 });
-    const tarballMatch = packResult.match(/(strray-ai-\d+\.\d+\.\d+\.tgz)/);
+    const tarballMatch = packResult.match(/((?:strray-ai|0xray)-\d+\.\d+\.\d+\.tgz)/);
     if (!tarballMatch) {
       fail('npm pack', `could not find tarball in: ${packResult.substring(0, 200)}`);
       process.exit(1);
@@ -181,22 +181,22 @@ async function main() {
 
     const installOut = run(`npm install "${tarball}"`, { cwd: testDir, timeout: 120000 });
     if (installOut.includes('added') || installOut.includes('up to date')) {
-      pass('strray-ai installed from tarball');
+      pass('0xray installed from tarball');
     } else {
-      fail('strray-ai installed', `unexpected output: ${installOut.substring(0, 100)}`);
+      fail('0xray installed', `unexpected output: ${installOut.substring(0, 100)}`);
     }
 
-    const installedPkg = JSON.parse(fs.readFileSync(path.join(testDir, 'node_modules', 'strray-ai', 'package.json'), 'utf-8'));
+    const installedPkg = JSON.parse(fs.readFileSync(path.join(testDir, 'node_modules', '0xray', 'package.json'), 'utf-8'));
     pass(`Installed version: v${installedPkg.version}`);
 
-    const opencodeJson = path.join(testDir, 'node_modules', 'strray-ai', 'opencode.json');
+    const opencodeJson = path.join(testDir, 'node_modules', '0xray', 'opencode.json');
     if (fs.existsSync(opencodeJson)) {
       pass('opencode.json exists in installed package');
     } else {
       fail('opencode.json', 'not found in installed package');
     }
 
-    const pluginPath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'plugin', 'xray-codex-injection.js');
+    const pluginPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'plugin', 'xray-codex-injection.js');
     if (fs.existsSync(pluginPath)) {
       pass('xray-codex-injection.js exists in dist');
     } else {
@@ -204,7 +204,7 @@ async function main() {
     }
 
     // Copy opencode.json to test dir root so opencode finds agent definitions
-    const pkgOpenCodeJson = path.join(testDir, 'node_modules', 'strray-ai', 'opencode.json');
+    const pkgOpenCodeJson = path.join(testDir, 'node_modules', '0xray', 'opencode.json');
     if (fs.existsSync(pkgOpenCodeJson)) {
       fs.copyFileSync(pkgOpenCodeJson, path.join(testDir, 'opencode.json'));
       pass('opencode.json copied to test directory');
@@ -213,10 +213,10 @@ async function main() {
     }
 
   } else {
-    pass('Using existing strray-ai installation');
+    pass('Using existing 0xray installation');
   }
 
-  const pluginPath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'plugin', 'xray-codex-injection.js');
+  const pluginPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'plugin', 'xray-codex-injection.js');
 
   // ── Phase 2: Plugin Loads + Hooks ──────────────────────
   section('Phase 2: Plugin Loads + Exports Hooks');
@@ -292,7 +292,7 @@ async function main() {
   section('Phase 4: Internal MCP Routing (mcpClientManager)');
 
   try {
-    const mcpClientPath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'mcps', 'mcp-client.js');
+    const mcpClientPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'mcps', 'mcp-client.js');
     if (fs.existsSync(mcpClientPath)) {
       pass('mcp-client.js exists in dist');
 
@@ -340,11 +340,11 @@ async function main() {
   }
 
   // ── Phase 6: CLI Commands ───────────────────────────
-  section('Phase 6: strray-ai CLI Commands');
+  section('Phase 6: 0xray CLI Commands');
 
-  const cliPath = path.join(testDir, 'node_modules', '.bin', 'strray-ai');
+  const cliPath = path.join(testDir, 'node_modules', '.bin', '0xray');
   if (!fs.existsSync(cliPath)) {
-    skip('strray-ai CLI', 'not found at node_modules/.bin/strray-ai');
+    skip('0xray CLI', 'not found at node_modules/.bin/0xray');
   } else {
     const versionResult = run(`"${cliPath}" --version`, { cwd: testDir });
     if (versionResult.includes('.')) {
@@ -372,7 +372,7 @@ async function main() {
   section('Phase 7: Inference Cycle (governExternalProposals)');
 
   try {
-    const cyclePath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'inference', 'inference-cycle.js');
+    const cyclePath = path.join(testDir, 'node_modules', '0xray', 'dist', 'inference', 'inference-cycle.js');
     const { InferenceCycle } = await import(`file://${cyclePath}`);
 
     let invokedAgent = null;
@@ -407,7 +407,7 @@ async function main() {
   section('Phase 8: mcpClientManager (in-process routing)');
 
   try {
-    const mcpClientPath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'mcps', 'mcp-client.js');
+    const mcpClientPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'mcps', 'mcp-client.js');
     const mcpModule = await import(`file://${mcpClientPath}`);
 
     if (mcpModule.mcpClientManager) {
@@ -437,7 +437,7 @@ async function main() {
   section('Phase 9: Orchestrator MCP Tool (govern-and-apply)');
 
   try {
-    const orchServerPath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'mcps', 'orchestrator', 'server.js');
+    const orchServerPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'mcps', 'orchestrator', 'server.js');
     const orchModule = await import(`file://${orchServerPath}`);
 
     if (orchModule.OrchestratorServer) {
@@ -460,7 +460,7 @@ async function main() {
   section('Phase 10: End-to-End Flow (capture → govern → apply)');
 
   try {
-    const cyclePath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'inference', 'inference-cycle.js');
+    const cyclePath = path.join(testDir, 'node_modules', '0xray', 'dist', 'inference', 'inference-cycle.js');
     const { InferenceCycle } = await import(`file://${cyclePath}`);
 
     // Test that governExternalProposals exists and doesn't throw with empty proposals

@@ -94,7 +94,7 @@ let distDir;
 
 if (CUSTOM_DIR) {
   // Running inside a consumer install (from unified runner)
-  distDir = path.join(CUSTOM_DIR, 'node_modules', 'strray-ai', 'dist', 'integrations', 'openclaw');
+  distDir = path.join(CUSTOM_DIR, 'node_modules', '0xray', 'dist', 'integrations', 'openclaw');
 } else {
   // Running from monorepo (standalone)
   const rootDir = path.resolve(path.dirname(import.meta.url.replace('file://', '')), '..', '..');

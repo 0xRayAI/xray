@@ -290,12 +290,12 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
       });
     }
 
-    let results;
+    let rawResults;
     if (phase === "pre") {
       if (typeof processorManager.executePreProcessors !== "function") {
         return { ran: false, reason: "executePreProcessors not available" };
       }
-      results = await processorManager.executePreProcessors({
+      rawResults = await processorManager.executePreProcessors({
         tool,
         args: args || {},
         context: {
@@ -308,7 +308,7 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
       if (typeof processorManager.executePostProcessors !== "function") {
         return { ran: false, reason: "executePostProcessors not available" };
       }
-      results = await processorManager.executePostProcessors(tool, {
+      rawResults = await processorManager.executePostProcessors(tool, {
         directory: projectRoot,
         operation: tool,
         filePath: args?.filePath || args?.path,
@@ -321,17 +321,23 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
       }, []);
     }
 
-    const allSuccess = Array.isArray(results)
-      ? results.every((r) => r.success)
-      : results.success;
+    // Normalize: executePreProcessors returns { success, results: [...] }
+    // executePostProcessors returns [...] directly
+    const results = Array.isArray(rawResults) ? rawResults : (rawResults.results || []);
+    const allSuccess = Array.isArray(rawResults) ? results.every((r) => r.success) : rawResults.success;
 
-    const details = Array.isArray(results)
-      ? results.map((r) => ({
-          name: r.processorName || r.name,
-          success: r.success,
-          error: r.error,
-        }))
-      : [];
+    const details = results.map((r) => ({
+      name: r.processorName || r.name,
+      success: r.success,
+      error: r.error,
+    }));
+
+    // Log individual processor results
+    const phaseTag = phase === "pre" ? "pre-processor" : "post-processor";
+    for (const d of details) {
+      const status = d.success ? "ok" : `FAILED${d.error ? `: ${d.error}` : ""}`;
+      logToActivity(logDir, `[${phaseTag}] ${d.name} — ${status}`);
+    }
 
     return {
       ran: true,
@@ -398,7 +404,10 @@ async function handlePreProcess(input, projectRoot, logDir) {
 
   const duration = Date.now() - startTime;
 
-  logToActivity(logDir, `pre-process: complete duration=${duration}ms quality=${qualityResult.passed}`);
+  logToActivity(logDir, `pre-process: complete duration=${duration}ms quality=${qualityResult.passed} processors=${processorResult.processorCount || 0}`);
+  if (processorResult.ran) {
+    logToActivity(logDir, `[pre-processors] ${processorResult.processorCount} processor(s)`);
+  }
 
   return {
     passed: qualityResult.passed,
@@ -429,6 +438,9 @@ async function handlePostProcess(input, projectRoot, logDir) {
   });
 
   logToActivity(logDir, `post-process: complete duration=${duration}ms processors=${processorResult.success}`);
+  if (processorResult.ran) {
+    logToActivity(logDir, `[post-processors] ${processorResult.processorCount} processor(s)`);
+  }
 
   return {
     duration,

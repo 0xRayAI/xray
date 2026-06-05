@@ -158,7 +158,7 @@ async function main() {
   const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `hermes-strray-e2e-${Date.now()}`);
   console.log(`  Test directory: ${testDir}`);
 
-  if (!CUSTOM_DIR || !fs.existsSync(path.join(testDir, 'node_modules', 'strray-ai'))) {
+  if (!CUSTOM_DIR || !fs.existsSync(path.join(testDir, 'node_modules', '0xray'))) {
     if (CUSTOM_DIR && fs.existsSync(testDir)) {
       pass('Using existing test directory');
     } else {
@@ -176,22 +176,22 @@ async function main() {
       installOut = run(`npm install "${TARBALL_PATH}"`, { cwd: testDir, timeout: 120000 });
       pass(`Installed from local tarball: ${TARBALL_PATH}`);
     } else {
-      installOut = run('npm install strray-ai', { cwd: testDir, timeout: 120000 });
+      installOut = run('npm install 0xray', { cwd: testDir, timeout: 120000 });
     }
 
-    if (fs.existsSync(path.join(testDir, 'node_modules', 'strray-ai', 'package.json'))) {
-      const pkg = JSON.parse(fs.readFileSync(path.join(testDir, 'node_modules', 'strray-ai', 'package.json'), 'utf-8'));
-      pass(`strray-ai installed: v${pkg.version}`);
+    if (fs.existsSync(path.join(testDir, 'node_modules', '0xray', 'package.json'))) {
+      const pkg = JSON.parse(fs.readFileSync(path.join(testDir, 'node_modules', '0xray', 'package.json'), 'utf-8'));
+      pass(`0xray installed: v${pkg.version}`);
     } else {
-      fail('strray-ai installed', 'npm install failed');
+      fail('0xray installed', 'npm install failed');
       console.log(`\n\x1b[31mABORT: npm install failed.\x1b[0m`);
       process.exit(1);
     }
   } else {
-    pass('Using existing strray-ai installation');
+    pass('Using existing 0xray installation');
   }
 
-  const bridgePath = path.join(testDir, 'node_modules', 'strray-ai', 'dist', 'integrations', 'hermes-agent', 'bridge.mjs');
+  const bridgePath = path.join(testDir, 'node_modules', '0xray', 'dist', 'integrations', 'hermes-agent', 'bridge.mjs');
   assertFileExists(bridgePath, 'bridge.mjs');
 
   const srcDir = path.join(testDir, 'src');

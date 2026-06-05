@@ -51,7 +51,7 @@ async function main() {
   section('Phase 0: Pack the package');
 
   const packOutput = execSync(`cd "${projectRoot}" && npm pack`, { encoding: 'utf-8', timeout: 60000 });
-  const tarballMatch = packOutput.match(/strray-ai-(\d+\.\d+\.\d+)\.tgz/);
+  const tarballMatch = packOutput.match(/(?:strray-ai|0xray)-(\d+\.\d+\.\d+)\.tgz/);
   if (!tarballMatch) {
     // Fallback: find the newest .tgz in the project root
     const files = fs.readdirSync(projectRoot).filter(f => f.endsWith('.tgz'));
@@ -82,7 +82,7 @@ async function main() {
   console.log('Package installed from local tarball');
 
   // Verify
-  const pkgPath = path.join(consumerDir, 'node_modules', 'strray-ai', 'package.json');
+  const pkgPath = path.join(consumerDir, 'node_modules', '0xray', 'package.json');
   if (!fs.existsSync(pkgPath)) {
     console.error('Installation verification failed');
     process.exit(1);
