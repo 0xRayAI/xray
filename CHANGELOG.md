@@ -6,7 +6,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [2.0.0] - 2026-06-05
 
-### 🚀 Major Release — Pure v2 Three-Subsystem Architecture
+### 🚀 Major Release — Pure v2 MCP-Centric Three-Subsystem Architecture
+
+Published as `0xray` on npm — first release under the 0xRayAI org. 2,863 tests, 0 unit failures, 0 npm vulns.
 
 #### 🧠 Three-Subsystem Architecture (Wired & Complete)
 - feat: extract and wire CodexPolicyService as Governance SSOT for codex reads (enforcer-tools.server.ts, governance.server.ts)
@@ -14,24 +16,73 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - feat: wire ProposalApplier via callback pattern into inference-cycle (git/PR execution)
 - feat: add handleGetActiveCodex MCP tool to governance server (delegates to CodexPolicyService)
 - feat: add strray/codex.json to resolveCodexPath() fallback candidates
+- feat: 3 dedicated governance MCP servers (code-review, security-audit, researcher) deliberate proposals
+
+#### 🏷️ Package Rename: strray-ai → 0xray
+- feat: rename package `strray-ai` → `0xray` across 60+ source files, CLI help text, grok plugin, hermes-agent bridge (Python + JS), docusaurus config, package.json
+- feat: rename root config dir `strray/` → `xray/` — 19 files updated, MCP server names, build script, .opencode paths
+- feat: backward compat maintained — all bridge files check both `strray-ai` (old) and `0xray` (new)
+- feat: `.npmignore` fixed (removed `src/` entry that conflicted with `files` field)
+- feat: `.gitignore` cleaned — stale `.strray/` entries, `strray-ai-*.tgz` → `0xray-*.tgz`
+- feat: `package.json` files field expanded — added `src/skills/` and `src/mcps/` directories
 
 #### 🛡️ Governance Pipeline Hardening
 - feat: add end-to-end timeout (default 90s) to govern() with AbortController
 - feat: add configurable timeoutMs and maxAbstentionThreshold to GovernOptions
 - feat: add 30s timeout wrapper for callInProcessSkill() (Vercel/serverless path)
+- feat: Dynamo governance endpoint configurable via `GOVERNANCE_ENDPOINT` env var (no longer hardcoded)
+- feat: governance MCP HTTP auth — `x-api-key` header against `GOVERNANCE_API_KEY` env var
+- fix: governance-service `overallDecision` now returns `'reject'` when appropriate; ProposalType mapping fixed
+- fix: governance-service `as any` → `MCPToolResult` type
 
-#### 🧹 Cleanup
-- chore: remove aside-context.ts (160 lines, zero consumers — dead code)
-- chore: update repo URLs to github.com/0xRayAI/xray
-- chore: bump version to 2.0.0
+#### 🔒 Security Hardening (3 Critical, 6 High)
+- C1: `proposal-applier.ts` — `execSync()` → `spawnSync()` with args arrays, `sanitizeGitArgument()` strict regex
+- C2: `plugin-commands.ts` — plugin name validation, `execSync` → `spawnSync`, `validateManifest()` shell metacharacter rejection
+- C3: `governance-client.ts` + `types.ts` — hardcoded URL → `GOVERNANCE_ENDPOINT` env var
+- H1: `process-spawner.ts` — env whitelist (PATH, HOME, NODE_PATH, TMPDIR, etc.) prevents secret leakage
+- fix: npm audit: 11 vulns → 0
+
+#### 📄 Documentation Rewrite
+- feat: AGENTS.md rewritten v2 MCP-centric, updated codex path, session summary appended
+- feat: README.md v2.0.0 rewrite with MCP hero, GitHub `0xRayAI/xray`, npm `0xray`
+- feat: Docusaurus updated — org URL `0xRayAI/xray`, npm `0xray`, edit URL fixed
+- feat: CLAUDE.md created for both master and v2, references 68 codex terms
+- chore: 12 stale docs git-rm'd: AGENTS-consumer.md, AGENTS-full.md, CHANGELOG-v1.15.x.md, 7 docs/ files
+
+#### 📏 Codex Expansion (61→68)
+- feat: codex rules 61-68 added to both `xray/codex.json` (v2) and `.strray/codex.json` (v1)
+  - 61: Do One Thing, 62: Triage-Fix-Loop, 63: Watch Errors, 64: Always Add .gitignore
+  - 65: Write Tests, 66: Modular E2E Tests, 67: Use Best Subagents, 68: Lead Dev Mindset
+- feat: CodexPolicyService — 13 new tests (getTermCount, getCurrentCodex, fallbacks)
+
+#### 🐛 Hermes Bridge Processor Logging Fix
+- fix: root cause — `executePreProcessors()` returns `{ success, results: [...] }` while `executePostProcessors()` returns `[...]`; `Array.isArray` check failed for pre-processors → processorCount always 0
+- fix: normalized return format with `Array.isArray(rawResults) ? rawResults : (rawResults.results || [])`
+- fix: added `[pre-processors]`, `[post-processors]`, `[pre-processor]`, `[post-processor]` log entries
+- fix: deployed updated bridge.mjs/__init__.py/schemas.py/tools.py to `~/.hermes/plugins/strray-hermes/`
+
+#### 🧹 Code Quality
+- fix: removed duplicate `program.command('plugin')` — CLI was broken, now works
+- fix: removed dead Python path checks from boot-orchestrator.server.ts and framework-compliance-audit.server.ts
+- fix: `process.stderr.write` → `frameworkLogger` in 3 files (governance.server.ts, skill-invocation.server.ts, shutdown-handler.ts)
+- fix: 58 `substr()` → `substring()` across codebase
+- fix: removed 4 dead dynamic imports in CLI index.ts
+- fix: renumbered help text steps consecutively
+- fix: JSON.stringify wrapped in try/catch in framework-logger.ts
+- fix: `any` type in governance-types.ts → proper CodexSnapshot interface
+- fix: MCP server deep review — researcher SKILL.md path, security-audit SKILL.md tool list, governance.server.ts logging, duplicate imports, 9 malformed log keys fixed
 
 #### ✅ Test Coverage
-- 158 test files passing, 2822 tests, 0 failures
-- 20 new tests for three-subsystem wiring (enforcer-tools, cli-invoker, proposal-applier)
-- Fixed 9 failing test files (codex-validators, governance-client, mcp-servers-integration, inference-governance-integration, session-capture, integrations-e2e, context-loader)
+- 161 test files, 2,863 tests, 0 unit failures, build passes, 0 npm vulns
+- 41 new tests: codex-validators dynamic read (68 terms), governance-service (22), codex-policy.service (13), mcp-server-smoke (5), mcp-servers-integration (16 behavioral)
+- Full consumer E2E gate: Hermes 46/0/0, OpenCode 34/0/0, OpenClaw 96/0/0, Grok CLI 55/0/2 — 0 failures across 231 tests
 
 #### 📦 Breaking Changes
-- Version 2.0.0 under 0xRay org (not a merge to master)
+- Package renamed `strray-ai` → `0xray` (npm: `npm install 0xray`, `npx 0xray --help`)
+- GitHub org: `0xRayAI/xray` (was `htafolla/StringRay`)
+- Root config dir: `xray/` (was `strray/`)
+- Version 2.0.0 under 0xRay org (not a merge to master; master remains v1.22)
+- Dynamo governance endpoint: removed hardcoded production URL, now requires `GOVERNANCE_ENDPOINT` env var
 - aside-context.ts removed (was unused)
 - GovernOptions extended with timeoutMs and maxAbstentionThreshold
 
