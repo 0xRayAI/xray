@@ -32,7 +32,7 @@ export class GovernanceClient {
 
   constructor(config: Partial<GovernanceClientConfig> = {}) {
     this.config = {
-      baseUrl: 'https://mcp-production-80e2.up.railway.app',
+      baseUrl: process.env.GOVERNANCE_ENDPOINT || '',
       timeoutMs: 10000,
       retryAttempts: 3,
       retryDelayMs: 1000,
@@ -274,6 +274,15 @@ export class GovernanceClient {
     body: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     let lastError: Error | undefined;
+
+    if (!this.config.baseUrl) {
+      throw new GovernanceError(
+        'Governance endpoint not configured. Set GOVERNANCE_ENDPOINT environment variable.',
+        GovernanceErrorCode.CONFIG_INVALID,
+        false,
+        { hint: 'export GOVERNANCE_ENDPOINT=https://your-governance-endpoint.com' },
+      );
+    }
 
     for (let attempt = 0; attempt < (this.config.retryAttempts || 1); attempt++) {
       try {

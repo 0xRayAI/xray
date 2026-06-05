@@ -46,7 +46,7 @@ if (resolvedPackage !== resolvedTarget) {
     const xrayRoot = targetDir;
 
     execSync(
-      `grok mcp add xray-governance --command node --args "${govServer}" --env "XRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${xrayRoot}"`,
+      `grok mcp add xray-governance --command node --args "${govServer}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${xrayRoot}"`,
       { stdio: 'pipe' }
     );
     structuredLog('postinstall', 'Registered xray-governance with Grok CLI', 'info');

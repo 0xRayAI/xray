@@ -292,7 +292,7 @@ export class FrameworkUsageLogger {
     const jobIdPart = entry.jobId ? `[${entry.jobId}] ` : "";
     const tracePart = entry.traceId ? `[${entry.traceId}.${entry.spanId}] ` : "";
     const detailsPart = entry.details
-      ? ` | ${JSON.stringify(entry.details)}`
+      ? ` | ${(() => { try { return JSON.stringify(entry.details); } catch { return String(entry.details); } })()}`
       : "";
     const line = `${new Date(entry.timestamp).toISOString()} ${jobIdPart}${tracePart}[${entry.component}] ${entry.action} - ${entry.status.toUpperCase()}${detailsPart}\n`;
     this.buffer.push(line);
@@ -346,9 +346,9 @@ export class FrameworkUsageLogger {
     return this.logs.filter((log) => log.component === component);
   }
 
+  // TODO: Implement or remove — currently a no-op placeholder
   printRundown() {
-    // Framework usage analytics - available for debugging but should not output to console
-    // Use getRecentLogs() directly instead of printing
+    // Framework usage analytics placeholder
   }
 }
 

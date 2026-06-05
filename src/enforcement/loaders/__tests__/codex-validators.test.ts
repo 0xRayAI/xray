@@ -8,13 +8,20 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { readFileSync, existsSync } from "fs";
+import { resolveCodexPath } from "../../../core/config-paths.js";
 import { CodexLoader } from "../codex-loader.js";
 
 describe("CodexLoader Validators - Real Tests", () => {
-  it("should load 60 codex rules from real codex.json", async () => {
+  it("should load all codex rules from real codex.json", async () => {
+    const candidates = resolveCodexPath();
+    const codexFile = candidates.find(p => existsSync(p)) || candidates[0];
+    const raw = JSON.parse(readFileSync(codexFile, "utf-8"));
+    const expectedCount = Object.keys(raw.terms).length;
+
     const loader = new CodexLoader();
     const rules = await loader.load();
-    expect(rules.length).toBe(60);
+    expect(rules.length).toBe(expectedCount);
   });
 
   describe("Term 12: Early Returns and Guard Clauses", () => {

@@ -1,8 +1,15 @@
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
 import { frameworkLogger } from "../core/framework-logger.js";
 import type { InferenceProposal } from "../inference/inference-cycle.js";
+
+function sanitizeGitArgument(s: string): string {
+  if (!/^[a-zA-Z0-9 \-_.\/@]+$/.test(s)) {
+    throw new Error("Invalid git argument: contains disallowed characters");
+  }
+  return s;
+}
 
 export interface ApplyResult {
   proposalId: string;
@@ -59,15 +66,18 @@ export class ProposalApplier {
       ];
 
       if (isGit) {
-        execSync(`git checkout -b ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+        const branchR = spawnSync('git', ['checkout', '-b', branchName], { cwd: this.projectRoot, stdio: 'pipe' });
+        if (branchR.status !== 0) {
+          throw new Error(`git checkout -b failed: ${(branchR.stderr || '').toString().trim()}`);
+        }
       }
 
       if (this.codeChangeCallback) {
         const changed = await this.codeChangeCallback(p);
         if (!changed) {
           if (isGit) {
-            execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
-            execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+            spawnSync('git', ['checkout', 'master'], { cwd: this.projectRoot, stdio: 'pipe' });
+            spawnSync('git', ['branch', '-D', branchName], { cwd: this.projectRoot, stdio: 'pipe' });
           }
           return {
             proposalId: p.id,
@@ -78,9 +88,14 @@ export class ProposalApplier {
       }
 
       if (isGit) {
-        execSync(`git add -A`, { cwd: this.projectRoot, stdio: "pipe" });
-        const safeTitle = p.title.replace(/["`]/g, "'");
-        execSync(`git commit -m "${safeTitle}"`, { cwd: this.projectRoot, stdio: "pipe" });
+        const addR = spawnSync('git', ['add', '-A'], { cwd: this.projectRoot, stdio: 'pipe' });
+        if (addR.status !== 0) {
+          throw new Error(`git add failed: ${(addR.stderr || '').toString().trim()}`);
+        }
+        const commitR = spawnSync('git', ['commit', '-m', p.title], { cwd: this.projectRoot, stdio: 'pipe' });
+        if (commitR.status !== 0) {
+          throw new Error(`git commit failed: ${(commitR.stderr || '').toString().trim()}`);
+        }
 
         const prUrl = this.createPR(p, branchName);
         if (prUrl) {
@@ -97,8 +112,8 @@ export class ProposalApplier {
               proposalId: p.id,
               prUrl,
             });
-            execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
-            execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+            spawnSync('git', ['checkout', 'master'], { cwd: this.projectRoot, stdio: 'pipe' });
+            spawnSync('git', ['branch', '-D', branchName], { cwd: this.projectRoot, stdio: 'pipe' });
             return {
               proposalId: p.id,
               success: false,
@@ -107,7 +122,7 @@ export class ProposalApplier {
           }
         }
 
-        execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
+        spawnSync('git', ['checkout', 'master'], { cwd: this.projectRoot, stdio: 'pipe' });
       }
 
       return {
@@ -129,8 +144,8 @@ export class ProposalApplier {
 
       if (isGit) {
         try {
-          execSync(`git checkout master`, { cwd: this.projectRoot, stdio: "pipe" });
-          execSync(`git branch -D ${branchName}`, { cwd: this.projectRoot, stdio: "pipe" });
+          spawnSync('git', ['checkout', 'master'], { cwd: this.projectRoot, stdio: 'pipe' });
+          spawnSync('git', ['branch', '-D', branchName], { cwd: this.projectRoot, stdio: 'pipe' });
         } catch {
           // ignore cleanup
         }
@@ -176,12 +191,12 @@ export class ProposalApplier {
 
   private isInsideGitRepo(): boolean {
     try {
-      execSync("git rev-parse --is-inside-work-tree", {
+      const r = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], {
         cwd: this.projectRoot,
-        stdio: "pipe",
+        stdio: 'pipe',
         timeout: 2000,
       });
-      return true;
+      return r.status === 0;
     } catch {
       return false;
     }
@@ -227,13 +242,18 @@ export class ProposalApplier {
 
   private createPR(p: InferenceProposal, branchName: string): string {
     try {
-      execSync(`git push -u origin ${branchName}`, {
+      sanitizeGitArgument(p.title);
+      sanitizeGitArgument(branchName);
+
+      const pushR = spawnSync('git', ['push', '-u', 'origin', branchName], {
         cwd: this.projectRoot,
-        stdio: "pipe",
+        stdio: 'pipe',
         timeout: 30000,
       });
+      if (pushR.status !== 0) {
+        throw new Error(`git push failed: ${(pushR.stderr || '').toString().trim()}`);
+      }
 
-      const safeTitle = p.title.replace(/["`]/g, "'");
       const body = [
         "## Inference Proposal (Autonomous Engine)",
         "",
@@ -247,11 +267,16 @@ export class ProposalApplier {
         "Executed by ProposalApplier (Engine-owned) — V2 Phase 1.",
       ].join("\n");
 
-      const result = execSync(
-        `gh pr create --head ${branchName} --title "${safeTitle}" --body "${body.replace(/"/g, "'")}"`,
-        { cwd: this.projectRoot, encoding: "utf-8", stdio: "pipe", timeout: 30000 },
-      );
-      return result.trim();
+      const ghR = spawnSync('gh', ['pr', 'create', '--head', branchName, '--title', p.title, '--body', body], {
+        cwd: this.projectRoot,
+        encoding: 'utf-8',
+        stdio: 'pipe',
+        timeout: 30000,
+      });
+      if (ghR.status !== 0) {
+        throw new Error(`gh pr create failed: ${ghR.stderr || 'unknown error'}`);
+      }
+      return (ghR.stdout || '').trim();
     } catch (err) {
       frameworkLogger.log("execution", "pr-create-failed", "warning", {
         error: String(err),

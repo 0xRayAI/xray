@@ -529,10 +529,6 @@ program
     }
   });
 
-import("./commands/analytics-disable.js");
-import("./commands/analytics-enable-action.js");
-import("./commands/analytics-status.js");
-import("./commands/analytics-preview.js");
 
 program
   .command("doctor")
@@ -1084,33 +1080,6 @@ registerOpencodeCommands(opencodeCmd);
 // Analytics enable command
 
 
-// Plugin management command
-program
-  .command('plugin')
-  .description('Manage xray plugins')
-  .action(async () => {
-    console.log(`
-📦 xray Plugin Management
-
-Usage: npx xray plugin <command>
-
-Commands:
-  list                 List all installed plugins
-  install <name>       Install a new plugin
-  enable <name>        Enable a plugin
-  disable <name>       Disable a plugin
-  status <name>        Show plugin details
-  uninstall <name>     Remove a plugin
-
-Examples:
-  npx xray plugin list
-  npx xray plugin status my-plugin
-  npx xray plugin uninstall old-plugin
-
-Plugins are loaded from: .opencode/plugins/ (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule)
-`);
-  });
-
 // Plugin subcommands
 const pluginCmd = program.command('plugin').description('Manage plugins');
 
@@ -1190,10 +1159,9 @@ Quick Start:
    2. Check health: npx 0xray health
    3. Use agents: @security-auditor scan
    4. Generate reports: npx 0xray report
-    5. Fix issues: npx 0xray fix
-   7. View analytics: npx 0xray analytics
-   8. Add skills: npx 0xray skill:install agency-agents
-   9. Write stories: npx 0xray storyteller saga "Release Journey"
+   5. Fix issues: npx 0xray fix
+   6. View analytics: npx 0xray analytics
+   7. Add skills: npx 0xray skill:install agency-agents
 
 For more information, visit: https://github.com/0xRayAI/xray
 `,

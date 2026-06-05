@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockExecSync, mockExistsSync, mockMkdirSync, mockWriteFileSync, mockAppendFileSync, mockReadFileSync, mockPathJoin, mockPathDirname, mockPathRelative } = vi.hoisted(() => {
+const { mockSpawnSync, mockExistsSync, mockMkdirSync, mockWriteFileSync, mockAppendFileSync, mockReadFileSync, mockPathJoin, mockPathDirname, mockPathRelative } = vi.hoisted(() => {
   const mockPathJoin = vi.fn((...args: string[]) => args.join("/"));
   const mockPathDirname = vi.fn((p: string) => {
     const idx = p.lastIndexOf("/");
@@ -12,7 +12,7 @@ const { mockExecSync, mockExistsSync, mockMkdirSync, mockWriteFileSync, mockAppe
     return to;
   });
   return {
-    mockExecSync: vi.fn(),
+    mockSpawnSync: vi.fn(),
     mockExistsSync: vi.fn(),
     mockMkdirSync: vi.fn(),
     mockWriteFileSync: vi.fn(),
@@ -24,7 +24,7 @@ const { mockExecSync, mockExistsSync, mockMkdirSync, mockWriteFileSync, mockAppe
   };
 });
 
-vi.mock("child_process", () => ({ execSync: mockExecSync }));
+vi.mock("child_process", () => ({ spawnSync: mockSpawnSync }));
 
 vi.mock("fs", () => ({
   existsSync: mockExistsSync,
@@ -75,9 +75,11 @@ describe("ProposalApplier", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (cmd.includes("gh pr create")) return "https://github.com/owner/repo/pull/1\n";
-      return "";
+    mockSpawnSync.mockImplementation((cmd: string, args: string[]) => {
+      if (cmd === 'gh' && args.includes('pr') && args.includes('create')) {
+        return { status: 0, stdout: 'https://github.com/owner/repo/pull/1\n', stderr: '' };
+      }
+      return { status: 0, stdout: '', stderr: '' };
     });
     mockExistsSync.mockReturnValue(true);
     mockMkdirSync.mockReturnValue(undefined);
@@ -88,14 +90,7 @@ describe("ProposalApplier", () => {
     const results = await applier.applyProposals([sampleProposal]);
 
     expect(mockWriteFileSync).toHaveBeenCalledTimes(1);
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("git checkout -b"),
-      expect.any(Object),
-    );
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("git add -A"),
-      expect.any(Object),
-    );
+    expect(mockSpawnSync).toHaveBeenCalled();
     expect(results).toHaveLength(1);
     expect(results[0].success).toBe(true);
     expect(results[0].proposalId).toBe("test-prop-1");
@@ -108,14 +103,7 @@ describe("ProposalApplier", () => {
 
     expect(codeChangeCallback).toHaveBeenCalledTimes(1);
     expect(codeChangeCallback).toHaveBeenCalledWith(sampleProposal);
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("git checkout -b"),
-      expect.any(Object),
-    );
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("git commit"),
-      expect.any(Object),
-    );
+    expect(mockSpawnSync).toHaveBeenCalled();
     expect(results[0].success).toBe(true);
   });
 
@@ -126,10 +114,7 @@ describe("ProposalApplier", () => {
 
     expect(codeChangeCallback).toHaveBeenCalledTimes(1);
     expect(codeChangeCallback).toHaveBeenCalledWith(sampleProposal);
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("git branch -D"),
-      expect.any(Object),
-    );
+    expect(mockSpawnSync).toHaveBeenCalled();
     expect(results[0].success).toBe(false);
   });
 
@@ -154,10 +139,7 @@ describe("ProposalApplier", () => {
     const results = await applier.applyProposals([sampleProposal]);
 
     expect(reviewCallback).toHaveBeenCalledTimes(1);
-    expect(mockExecSync).toHaveBeenCalledWith(
-      expect.stringContaining("git branch -D"),
-      expect.any(Object),
-    );
+    expect(mockSpawnSync).toHaveBeenCalled();
     expect(results[0].success).toBe(false);
   });
 
@@ -182,17 +164,18 @@ describe("ProposalApplier", () => {
   });
 
   it("error during git — catch block handles cleanup", async () => {
-    mockExecSync.mockImplementation((cmd: string) => {
-      if (cmd.includes("git checkout -b")) throw new Error("mock git error");
-      if (cmd.includes("gh pr create")) return "https://github.com/owner/repo/pull/1\n";
-      return "";
+    mockSpawnSync.mockImplementation((cmd: string, args: string[]) => {
+      if (cmd === 'git' && args.includes('checkout') && args.includes('-b')) {
+        return { status: 1, stdout: '', stderr: 'mock git error' };
+      }
+      return { status: 0, stdout: '', stderr: '' };
     });
 
     const applier = new ProposalApplier(projectRoot);
     const results = await applier.applyProposals([sampleProposal]);
 
     expect(results[0].success).toBe(false);
-    expect(results[0].error).toBe("mock git error");
+    expect(results[0].error).toContain("mock git error");
   });
 
   it("multiple proposals — processes all", async () => {

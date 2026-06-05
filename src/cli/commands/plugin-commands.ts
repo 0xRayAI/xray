@@ -14,7 +14,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
 
 const PLUGINS_DIR = ".strray/plugins";
 const CONFIG_PATH = ".strray/config/plugin-config.json";
@@ -38,6 +38,7 @@ export async function pluginListCommand(): Promise<void> {
     const manifestPath = path.join(PLUGINS_DIR, entry.name, "plugin.yaml");
     if (fs.existsSync(manifestPath)) {
       const manifest = parseYaml(fs.readFileSync(manifestPath, "utf-8"));
+      validateManifest(manifest);
       plugins.push({
         name: entry.name,
         type: (manifest as { type?: string }).type || "unknown",
@@ -72,15 +73,22 @@ export async function pluginInstallCommand(pluginName: string): Promise<void> {
     return;
   }
 
+  if (!/^[a-zA-Z0-9@\/_.-]+$/.test(pluginName)) {
+    console.log(`❌ Invalid plugin name: ${pluginName}`);
+    return;
+  }
+
   // Try npm install first
   try {
     console.log(`🔍 Checking npm for: ${pluginName}`);
     
     // Check if package exists
-    execSync(`npm view ${pluginName} name`, { stdio: "pipe" });
+    const viewR = spawnSync('npm', ['view', pluginName, 'name'], { stdio: 'pipe' });
+    if (viewR.status !== 0) throw new Error('npm view failed');
     
     console.log(`📥 Installing from npm: ${pluginName}`);
-    execSync(`npm install --prefix "${PLUGINS_DIR}" ${pluginName}`, { stdio: "inherit" });
+    const installR = spawnSync('npm', ['install', '--prefix', PLUGINS_DIR, pluginName], { stdio: 'inherit' });
+    if (installR.status !== 0) throw new Error('npm install failed');
     
     const installedPath = path.join(PLUGINS_DIR, "node_modules", pluginName);
     if (fs.existsSync(installedPath)) {
@@ -163,6 +171,7 @@ export async function pluginStatusCommand(pluginName: string): Promise<void> {
   }
 
   const manifest = parseYaml(fs.readFileSync(manifestPath, "utf-8"));
+  validateManifest(manifest);
   const m = manifest as Record<string, unknown>;
 
   console.log(`  Name:        ${m.name}`);
@@ -209,6 +218,18 @@ export async function pluginUninstallCommand(pluginName: string): Promise<void> 
 
   fs.rmSync(pluginPath, { recursive: true, force: true });
   console.log(`✅ Plugin removed: ${pluginName}\n`);
+}
+
+function validateManifest(manifest: Record<string, unknown>): void {
+  const runtime = manifest.runtime as Record<string, unknown> | undefined;
+  if (runtime?.command && typeof runtime.command === 'string') {
+    if (/[;&|`$(){}!<>]/.test(runtime.command)) {
+      throw new Error(`Invalid runtime.command: contains shell metacharacters`);
+    }
+    if (runtime.command.includes('..')) {
+      throw new Error(`Invalid runtime.command: path traversal detected`);
+    }
+  }
 }
 
 function parseYaml(content: string): Record<string, unknown> {

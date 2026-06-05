@@ -23,8 +23,16 @@ export class ProcessSpawner {
    * @returns SpawnResult with process and stdio streams
    */
   spawn(config: IServerConfig): SpawnResult {
+    const ALLOWED_ENV_KEYS = new Set([
+      'PATH', 'HOME', 'NODE_PATH', 'TMPDIR', 'TEMP', 'TMP',
+      'LANG', 'LC_ALL',
+    ]);
+    const safeEnv: Record<string, string> = {};
+    for (const key of ALLOWED_ENV_KEYS) {
+      if (process.env[key]) safeEnv[key] = process.env[key]!;
+    }
     const proc = spawn(config.command, config.args, {
-      env: { ...process.env, ...config.env },
+      env: { ...safeEnv, ...config.env },
       cwd: config.basePath,
       stdio: ['pipe', 'pipe', 'pipe'],
     });

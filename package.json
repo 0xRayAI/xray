@@ -86,7 +86,7 @@
     "test:e2e": "node scripts/node/validate-mcp-connectivity.js && node scripts/node/validate-external-processes.js",
     "validate": "echo \"[xray] Use 'npm test' or 'npm run test:comprehensive'.\"",
     "validate:quick": "npm run validate",
-    "debug:inference:force": "XRAY_FORCE_MCP_GOVERNANCE=true XRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
+    "debug:inference:force": "STRRAY_FORCE_MCP_GOVERNANCE=true XRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
     "validate:full": "npm run validate",
     "test:unified": "node scripts/test/test-unified-framework.mjs",
     "test:consumer": "node scripts/test/test-consumer-readiness.cjs",
@@ -161,10 +161,10 @@
     "@types/ws": "^8.5.13",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^9.17.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.8"
   }
 }

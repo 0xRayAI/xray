@@ -27,6 +27,9 @@ import {
 } from '../../integrations/governance/types.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 
+// Set default governance endpoint for tests that rely on HTTP calls
+process.env.GOVERNANCE_ENDPOINT = 'https://test-gov.example.com';
+
 // Mock frameworkLogger — ALL tests must use this, never console
 vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: {

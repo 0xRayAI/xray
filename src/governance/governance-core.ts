@@ -7,7 +7,7 @@
  * and any HTTP deployment (Vercel) can use.
  */
 
-import type { GovernanceProposal, GovernanceVote, GovernanceResult } from './governance-types.js';
+import type { GovernanceVote, GovernanceResult } from './governance-types.js';
 
 // Blurrn constants (from chrono-warp-drive)
 const PHI = 1.666;

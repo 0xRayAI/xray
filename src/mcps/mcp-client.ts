@@ -170,7 +170,7 @@ export class MCPClient extends EventEmitter {
    * Initialize MCP client by discovering and caching tools
    */
   async initialize(): Promise<void> {
-    const jobId = `mcp-init-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const jobId = `mcp-init-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
     try {
       frameworkLogger.log(
@@ -236,6 +236,21 @@ export class MCPClient extends EventEmitter {
             required: ['code'],
           },
         },
+        {
+          name: 'analyze_proposal',
+          description: 'Analyze a governance proposal for code quality concerns',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              proposalTitle: { type: 'string' },
+              proposalDescription: { type: 'string' },
+              evidence: { type: 'array', items: { type: 'string' } },
+              proposalType: { type: 'string' },
+              context: { type: 'object' },
+            },
+            required: ['proposalTitle', 'proposalDescription'],
+          },
+        },
       ],
       'security-audit': [
         {
@@ -251,6 +266,21 @@ export class MCPClient extends EventEmitter {
               },
             },
             required: ['files'],
+          },
+        },
+        {
+          name: 'analyze_proposal',
+          description: 'Analyze a governance proposal for security implications',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              proposalTitle: { type: 'string' },
+              proposalDescription: { type: 'string' },
+              evidence: { type: 'array', items: { type: 'string' } },
+              proposalType: { type: 'string' },
+              context: { type: 'object' },
+            },
+            required: ['proposalTitle', 'proposalDescription'],
           },
         },
       ],
@@ -294,6 +324,21 @@ export class MCPClient extends EventEmitter {
               scope: { type: 'string', enum: ['full', 'directory', 'file'] },
               analysis: { type: 'array', items: { type: 'string' } },
             },
+          },
+        },
+        {
+          name: 'analyze_proposal',
+          description: 'Analyze a governance proposal using codebase research',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              proposalTitle: { type: 'string' },
+              proposalDescription: { type: 'string' },
+              evidence: { type: 'array', items: { type: 'string' } },
+              proposalType: { type: 'string' },
+              context: { type: 'object' },
+            },
+            required: ['proposalTitle', 'proposalDescription'],
           },
         },
       ],
@@ -620,7 +665,7 @@ export class MCPClientManager {
    * Get all available MCP server tools
    */
   async getAllAvailableTools(): Promise<Record<string, MCPTool[]>> {
-    const jobId = `mcp-tools-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const jobId = `mcp-tools-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     const result: Record<string, MCPTool[]> = {};
 
     const serverNames = [

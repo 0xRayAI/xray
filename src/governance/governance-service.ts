@@ -17,7 +17,7 @@
  */
 
 import { mcpClientManager } from '../mcps/mcp-client.js';
-import { callInProcessSkill } from '../mcps/in-process-skill-registry.js';
+import { callInProcessSkill, type MCPToolResult } from '../mcps/in-process-skill-registry.js';
 import {
   getGovernanceIntegration,
   type InferenceGovernanceIntegration,
@@ -188,7 +188,7 @@ export class GovernanceService {
             proposalType: proposal.type,
             context,
           });
-          text = (result as any)?.content?.[0]?.text || '';
+          text = (result as MCPToolResult)?.content?.[0]?.text || '';
         } else {
           // Normal path — real MCP transport
           const result = await mcpClientManager.callServerTool(serverName, 'analyze_proposal', {
@@ -198,7 +198,7 @@ export class GovernanceService {
             proposalType: proposal.type,
             context,
           });
-          text = (result as any)?.content?.[0]?.text || '';
+          text = (result as MCPToolResult)?.content?.[0]?.text || '';
         }
 
         const vote = this.parseVoteFromText(serverName, text);
@@ -332,7 +332,7 @@ export class GovernanceService {
 
     return {
       server,
-      decision: (decisionMatch?.[1]?.toLowerCase() as any) || 'abstain',
+      decision: (decisionMatch?.[1]?.toLowerCase() as GovernanceVote['decision']) || 'abstain',
       confidence: parseFloat(confidenceMatch?.[1] || '0.5'),
       reasoning: reasoningMatch?.[1]?.trim() || 'No reasoning provided',
     };

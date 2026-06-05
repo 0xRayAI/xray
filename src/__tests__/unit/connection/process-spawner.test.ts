@@ -45,7 +45,6 @@ describe('ProcessSpawner', () => {
         ['server.js'],
         {
           env: expect.objectContaining({
-            ...process.env,
             TEST_VAR: 'value',
           }),
           cwd: '/test/path',

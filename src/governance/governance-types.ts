@@ -91,7 +91,7 @@ export interface ActiveCodexSnapshot {
   is_fallback: boolean;
   note: string;
   dynamo_required: boolean;
-  codex?: any;
+  codex?: Record<string, unknown>;
 }
 
 export interface ICodexPolicyProvider {

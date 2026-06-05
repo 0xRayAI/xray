@@ -198,6 +198,16 @@ async function importSystemPromptGenerator(): Promise<void> {
   logger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
 }
 
+function validateModulePath(resolvedPath: string, allowedPrefix: string): void {
+  const normalized = path.resolve(resolvedPath);
+  const allowed = path.resolve(allowedPrefix);
+  if (!normalized.startsWith(allowed)) {
+    throw new Error(
+      `Module path validation failed: ${normalized} is outside allowed path ${allowed}`,
+    );
+  }
+}
+
 async function loadStringRayComponents(): Promise<void> {
   if (_ProcessorManager && _StrRayStateManager && _featuresConfigLoader) return;
 
@@ -207,6 +217,10 @@ async function loadStringRayComponents(): Promise<void> {
     // FIXED: Removed hardcoded ../../dist/ paths (source of dist/dist build corruption)
     // Using dynamic resolution instead
     const root = process.cwd();
+    const distPrefix = path.join(root, 'dist');
+    validateModulePath(`${root}/dist/processors/processor-manager.js`, distPrefix);
+    validateModulePath(`${root}/dist/state/state-manager.js`, distPrefix);
+    validateModulePath(`${root}/dist/core/features-config.js`, distPrefix);
     const procModule = await import(`${root}/dist/processors/processor-manager.js`);
     const stateModule = await import(`${root}/dist/state/state-manager.js`);
     const featuresModule = await import(`${root}/dist/core/features-config.js`);
@@ -226,6 +240,10 @@ async function loadStringRayComponents(): Promise<void> {
   for (const pluginPath of pluginPaths) {
     try {
       // FIXED: Avoided hardcoded /dist/ in node_modules paths to prevent build corruption
+      const nodeModulesPrefix = path.join(process.cwd(), 'node_modules');
+      validateModulePath(`${process.cwd()}/node_modules/${pluginPath}/dist/processors/processor-manager.js`, nodeModulesPrefix);
+      validateModulePath(`${process.cwd()}/node_modules/${pluginPath}/dist/state/state-manager.js`, nodeModulesPrefix);
+      validateModulePath(`${process.cwd()}/node_modules/${pluginPath}/dist/core/features-config.js`, nodeModulesPrefix);
       const pm = await import(`${process.cwd()}/node_modules/${pluginPath}/dist/processors/processor-manager.js`);
       const sm = await import(`${process.cwd()}/node_modules/${pluginPath}/dist/state/state-manager.js`);
       const fm = await import(`${process.cwd()}/node_modules/${pluginPath}/dist/core/features-config.js`);

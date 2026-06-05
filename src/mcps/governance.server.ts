@@ -482,6 +482,26 @@ class GovernanceServer {
 
     await this.server.connect(transport as any);
 
+    const apiKey = process.env.GOVERNANCE_API_KEY;
+    if (apiKey) {
+      frameworkLogger.log("governance-mcp", "api-key-auth-enabled", "info", {});
+    } else {
+      frameworkLogger.log("governance-mcp", "api-key-auth-disabled", "warning", {
+        message: "GOVERNANCE_API_KEY not set - HTTP server has no authentication",
+      });
+    }
+
+    app.use((req: any, res: any, next: any) => {
+      if (apiKey && req.path !== "/health") {
+        const providedKey = req.headers["x-api-key"];
+        if (!providedKey || providedKey !== apiKey) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+      }
+      next();
+    });
+
     app.post("/mcp", async (req: any, res: any) => {
       try {
         await transport.handleRequest(req, res, req.body);
@@ -516,13 +536,13 @@ if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   if (!isNaN(port)) {
     const server = new GovernanceServer();
     server.runHttp(port).catch((error) => {
-      process.stderr.write(`[governance.server] HTTP startup error: ${error}\n`);
+      frameworkLogger.log('governance-mcp', 'http-startup-error', 'error', { error: String(error) });
       process.exit(1);
     });
   } else {
     const server = new GovernanceServer();
     server.run().catch((error) => {
-      process.stderr.write(`[governance.server] Fatal startup error: ${error}\n`);
+      frameworkLogger.log('governance-mcp', 'fatal-startup-error', 'error', { error: String(error) });
       process.exit(1);
     });
   }

@@ -9,6 +9,10 @@ interface AnalyzeProposalArgs {
   proposalType?: string;
 }
 
+export interface MCPToolResult {
+  content?: Array<{ type: string; text: string }>;
+}
+
 interface AnalyzeProposalResult {
   content: Array<{ type: string; text: string }>;
 }
@@ -65,7 +69,8 @@ export async function callInProcessSkill(
     throw new Error(`No in-process handler registered for server: ${serverName}`);
   }
   if (toolName !== "analyze_proposal") {
-    throw new Error(`In-process skill registry only supports "analyze_proposal", got "${toolName}"`);
+    const supported = Object.keys(registry).join(", ");
+    throw new Error(`In-process skill registry only supports "analyze_proposal" for servers: ${supported}. Got "${toolName}"`);
   }
   const handler = factory();
   return handler.analyzeProposal(args as AnalyzeProposalArgs);
