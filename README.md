@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-**v2.0.0** — 9 agents · 44 skills · 3 MCP governance servers · 60 codex terms · 2,822 tests
+**v2.0.0** — 9 agents · 44 skills · 3 MCP governance servers · 66 codex terms · 2,822 tests
 
 xray is the pure v2 three-subsystem AI orchestration framework, now **MCP-centric** with dedicated skill servers for governance deliberation:
 
