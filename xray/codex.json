@@ -525,9 +525,25 @@
     },
     "66": {
       "number": 66,
-      "title": "Integration and E2E Tests Use Real UI, Not Stubs",
-      "description": "Integration and end-to-end tests must use real UI components and real rendering, not stubs or mocks. Stubs hide real behavior and regressions. Use real component instances, real browser/page rendering, and real user interactions.",
+      "title": "Modular Integration and E2E Tests",
+      "description": "Write integration and end-to-end tests in a modular, independently-runnable fashion so each test can be individually triaged and fixed. Run the full battery of integration/E2E tests only after major subsystem development, builds, commits, or releases. During active development, run only the relevant subset for fast feedback.",
       "category": "testing",
+      "zeroTolerance": false,
+      "enforcementLevel": "high"
+    },
+    "67": {
+      "number": 67,
+      "title": "Use Best Subagents, Reuse Session Context",
+      "description": "Delegate work to the best-suited subagent for each task. Stay responsive to user inquiries, additional todos, and course corrections. Reuse the same subagent via session ID to preserve context and avoid restarting from zero. Do not spawn fresh agents when an existing one has the relevant context.",
+      "category": "process",
+      "zeroTolerance": false,
+      "enforcementLevel": "high"
+    },
+    "68": {
+      "number": 68,
+      "title": "Lead Dev Mindset — Ownership to Completion",
+      "description": "Act as the lead developer. Take ownership. Implement production-ready code without asking for permission or confirmation. Loop, iterate, and test until fully functional. Do not ask questions — make decisions and execute. Deliver complete, tested solutions.",
+      "category": "process",
       "zeroTolerance": false,
       "enforcementLevel": "high"
     }
@@ -566,7 +582,9 @@
     "Edge cases are covered": true,
     "TypeScript compilation succeeds": true,
     "Tests pass (unit, integration, E2E)": true,
-    "Integration and E2E tests use real UI, not stubs": true,
+    "Integration and E2E tests are modular and individually triageable": true,
+    "Subagent selection uses best fit with context reuse": true,
+    "Lead dev ownership drives code to completion": true,
     "No security vulnerabilities": true,
     "No type errors or any usage": true,
     "Agent spawns go through governor": true,
