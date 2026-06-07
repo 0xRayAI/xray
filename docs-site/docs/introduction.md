@@ -50,5 +50,6 @@ Every code change is checked against a **68-term Codex** (coding constitution), 
 ## Next Steps
 
 - [Full Reference](README) — Complete documentation, CLI reference, configuration
+- [Docs](https://0xrayai.github.io/xray/) — Full documentation site (you are here)
 - [GitHub](https://github.com/0xRayAI/xray) — Source code, issues, discussions
 - [npm](https://www.npmjs.com/package/0xray) — Package registry

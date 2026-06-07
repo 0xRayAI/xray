@@ -2,6 +2,8 @@
 
 **v2.0.0** — 42 agents · 44 skills · 41 MCP servers · 68 codex terms · 2,822 tests
 
+[![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
+
 0xRay prevents AI coding mistakes before they happen. It's an intelligent governance layer that sits between you and your AI coding tools — intercepting bad proposals, enforcing code quality rules, and orchestrating multi-agent workflows automatically.
 
 Every code change is checked against a **68-term Codex** (coding constitution), deliberated by specialized AI agents, and either approved, revised, or blocked before it ever touches your codebase.
@@ -307,6 +309,12 @@ npx 0xray health
 ```
 
 ---
+
+## Resources
+
+- **[Docs](https://0xrayai.github.io/xray/)** — Full documentation site
+- **[GitHub](https://github.com/0xRayAI/xray)** — Source code, issues, discussions
+- **[npm](https://www.npmjs.com/package/0xray)** — Package registry
 
 ## License
 
