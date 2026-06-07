@@ -9,7 +9,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'doc',
-      id: 'README',
+      id: 'full-reference',
       label: 'Full Reference',
     },
     {
