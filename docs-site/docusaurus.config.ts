@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: '0xRay',
   tagline: 'Self-Healing AI Governance OS — Catch AI mistakes before they ship',
-  favicon: 'img/favicon.jpg',
+  favicon: 'img/favicon.png',
   url: 'https://0xrayai.github.io',
   baseUrl: '/xray/',
   organizationName: '0xRayAI',
