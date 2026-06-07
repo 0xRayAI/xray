@@ -746,7 +746,7 @@ app.get("/user/:id", async (req, res) => {
 2. **[Security Architecture](../security/SECURITY_ARCHITECTURE.md)**
    - Deep dive into framework security components
 
-3. **[0xRay Framework README](../../README.md)**
+3. **[0xRay Framework README](https://github.com/0xRayAI/xray#readme)**
    - Understand the broader framework context
 
 ### Useful Tools & Commands

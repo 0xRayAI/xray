@@ -690,7 +690,7 @@ ReportData { generatedAt, timeRange, metrics, insights, recommendations, summary
 ## Pipeline Testing Status
 
 > **Important Discovery (v2.0.0)**: Unit tests passing ≠ Pipeline working.
-> See [Pipeline Testing Methodology](../PIPELINE_TESTING_METHODOLOGY.md) for details.
+> See [Pipeline Testing Methodology](../testing/PIPELINE_TESTING_METHODOLOGY) for details.
 
 ## Complete Sub-Pipeline Inventory (v1.15.41)
 

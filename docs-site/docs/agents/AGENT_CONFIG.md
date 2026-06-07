@@ -308,9 +308,9 @@ All facades expose clean configuration interfaces that work seamlessly with your
 
 ## Next Steps
 
-- [View Agent Documentation](AGENTS.md) - Detailed agent capabilities
-- [Configuration Reference](CONFIGURATION.md) - Full features.json settings
-- [Universal Codex](.opencode/0xray/codex.json) - 60-term codex reference
+- [Agent Documentation](../agents/) - Detailed agent capabilities
+- [Configuration Reference](../full-reference) - Full features.json settings
+- [Universal Codex](https://github.com/0xRayAI/xray/blob/main/.opencode/xray/codex.json) - 68-term codex reference
 
 ---
 

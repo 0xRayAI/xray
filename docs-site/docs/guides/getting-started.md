@@ -45,10 +45,10 @@ Every code change is reviewed by 3 specialized AI servers before it executes. Ba
 
 ## Next Steps
 
-- [Architecture Overview](../architecture/ARCHITECTURE) — Understand the system design
-- [Agent Documentation](../agents/architect) — See all available agents
-- [MCP Servers](../mcp/README) — Explore server capabilities
-- [Full Reference](../README) — Complete documentation
+- [Architecture Overview](../architecture/) — Understand the system design
+- [Agent Documentation](../agents/) — See all available agents
+- [MCP Servers](../mcp/) — Explore server capabilities
+- [Full Reference](../full-reference) — Complete documentation
 
 ## Version Info
 

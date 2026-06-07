@@ -620,7 +620,7 @@ async function runSecurityAudit() {
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Web application security risks
 - [CWE Top 25](https://cwe.mitre.org/top25/) - Common weakness enumeration
-- [0xRay Security Architecture](./security/SECURITY_ARCHITECTURE.md) - Framework security details
-- [Security Audit Report](./security/SECURITY_AUDIT_REPORT.md) - Current security status
+- [0xRay Security Architecture](SECURITY_ARCHITECTURE.md) - Framework security details
+- [Security Audit Report](SECURITY_AUDIT_REPORT.md) - Current security status
 
 Remember: Security is an ongoing process, not a one-time implementation. Stay vigilant, keep learning, and regularly review and update your security practices.
