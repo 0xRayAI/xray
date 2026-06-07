@@ -4,8 +4,13 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     {
       type: 'doc',
+      id: 'introduction',
+      label: 'Introduction',
+    },
+    {
+      type: 'doc',
       id: 'README',
-      label: 'xray — MCP-Centric AI Governance OS',
+      label: 'Full Reference',
     },
   ],
 };

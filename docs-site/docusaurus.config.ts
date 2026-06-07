@@ -3,8 +3,8 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'xray',
-  tagline: 'The clean v2 three-subsystem AI Governance OS',
+  title: '0xRay',
+  tagline: 'Self-Healing AI Governance OS — Catch AI mistakes before they ship',
   favicon: 'img/favicon.ico',
   url: 'https://0xray.github.io',
   baseUrl: '/xray/',
@@ -45,9 +45,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'xray',
+      title: '0xRay',
       logo: {
-        alt: 'xray Logo',
+        alt: '0xRay Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -86,7 +86,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} xray. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} 0xRay. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
