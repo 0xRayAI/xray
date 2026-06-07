@@ -310,7 +310,7 @@ npx 0xray health
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT
 
 ---
 
