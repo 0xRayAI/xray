@@ -524,7 +524,7 @@ def _record_tool_outcome(tool_name: str, args: dict, success: bool):
 # ── Inference tuning (auto-calibration) ────────────────────────
 
 def _run_inference_tune():
-    """Shell out to strray-ai inference:tuner --run-once.
+    """Shell out to 0xray inference:tuner --run-once.
 
     Runs in a background thread so it doesn't block the tool call pipeline.
     The tuner reads routing outcomes, runs the analytics pipeline, and
