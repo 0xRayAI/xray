@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [2.0.1] - 2026-06-08
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: purge stale strray refs in plugin — logger names, lock file, log path, codex IDs, fallback paths (8eed78b97)
+- fix: rename strrayCodexPlugin→xrayCodexPlugin in source (8f7bba7ca)
+- fix: plugin status in init.sh — check dist/plugin/ for dev mode, not just .opencode/plugin/ (81a50096d)
+- fix: update init.sh for v2.0.0 — fix version detection (0xray not strray-ai), update paths, stats, naming (f73840e94)
+- fix: add prepare script for auto-build on git install, fix console.error→frameworkLogger in multimodal-looker (9f159fcea)
+- fix: resolve all broken docs links — README→full-reference, case mismatches, nesting errors, missing docs/index.md (32b2de880)
+- fix: replace favicon.jpg with proper PNG favicon (64x64) (ed34aa2b2)
+- fix: add real 0xRay logo and favicon for Docusaurus navbar + static landing page (cae124470)
+- fix: landing page 404s — rename README.md→full-reference.md, create agents/README.md, fix 3 broken links in static/index.html (README, mcp/overview, agents), update sidebar id (1e3d9ec93)
+- fix: docusaurus internal links — relative paths missing /xray/ base, broken LICENSE ref (5caeb107b)
+- fix: deploy-docs trigger branch master → main (167542f03)
+- fix: docusaurus org URL — 0xray → 0xRayAI (07d7d0dc4)
+
+### 📚 Documentation
+- docs: add Dynamo Governance link (https://dynamo.rippel.ai/vortex) to README, introduction, and full-reference (c3d9846b7)
+- docs: add link to docs site (https://0xrayai.github.io/xray/) in README, introduction, and full-reference (3919376ec)
+
+### 🔎 Other Changes
+- v2.0.0: port full docusaurus doc tree from stringray — architecture, agents, MCP, security, testing, guides, operations; batch branding update (strray-ai → 0xray, StringRay → 0xRay); update versions/counts; rebuild sidebar (10c9e7bb7)
+- v2.0.0: rewrite README for end users — value proposition, platform install, full CLI reference, features.json, governance config, 42-agent inventory, docusaurus alignment (fb01855e1)
+- v2.0.0: expand CHANGELOG with full release scope (e1fd84ceb)
+- v2.0.0: hermes bridge processor logging fix, E2E script updates (strray-ai → 0xray) (149ea06c6)
+
+---
+
 ## [2.0.0] - 2026-06-05
 
 ### 🚀 Major Release — Pure v2 MCP-Centric Three-Subsystem Architecture

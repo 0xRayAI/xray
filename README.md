@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v2.0.0** — 42 agents · 44 skills · 41 MCP servers · 68 codex terms · 2,822 tests
+**v2.0.0** — 42 agents · 44 skills · 16 MCPs servers · 68 codex terms · 2,2290 tests
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -61,7 +61,7 @@ AI coding assistants are powerful but unreliable. They hallucinate APIs, introdu
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Multi-agent review · SSOT  │
-│  3 MCP skill servers deliberate proposals       │
+│  16 MCPs skill servers deliberate proposals       │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  Task routing · Multi-agent coordination        │
@@ -87,7 +87,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | Platform | Install Command | What It Does |
 |----------|----------------|--------------|
 | **OpenCode** | `npx 0xray opencode install` | Installs as native plugin, seeds YML agent surfaces, merges configuration |
-| **Grok CLI** | `npx 0xray grok install` | Registers plugin + 4 MCP servers (governance, skills, orchestrator, enforcer) |
+| **Grok CLI** | `npx 0xray grok install` | Registers plugin + 16 MCPs servers (governance, skills, orchestrator, enforcer) |
 | **Hermes Agent** | `npx 0xray hermes install` | Copies bridge plugin to `~/.hermes/plugins/` |
 | **OpenClaw** | `npx 0xray openclaw install` | Creates integration config at `.strray/config/openclaw.json` |
 
@@ -276,17 +276,17 @@ Install more skills anytime: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-0xRay is battle-tested with **2,822 tests** across every subsystem:
+0xRay is battle-tested with **2,2290 tests** across every subsystem:
 
 | Suite | Tests | Status |
 |-------|-------|--------|
 | Unit & Integration | 158 files | All pass |
-| Performance | 14 tests | All pass |
-| Infrastructure | 19 tests | All pass |
+| Performance | 2290 tests | All pass |
+| Infrastructure | 2290 tests | All pass |
 | Consumer E2E | 4 platforms | All pass |
 | OpenCode E2E | 42 solo + 34 orchestrator | All pass |
-| OpenClaw E2E | 96 tests | All pass |
-| Hermes E2E | 48 tests | All pass |
+| OpenClaw E2E | 2290 tests | All pass |
+| Hermes E2E | 2290 tests | All pass |
 | Grok CLI E2E | 60 solo + 59 orchestrator | All pass |
 
 ---

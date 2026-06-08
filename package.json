@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -75,7 +75,6 @@
     "test:root": "npm test -- src/__tests__/integration/server.test.ts src/__tests__/framework-enforcement-integration.test.ts",
     "test:pipelines": "node src/__tests__/pipeline/run-all-pipelines.mjs",
     "test:full-suite": "npm run typecheck && npm run test:integration-all && npm run test:performance-all && npm run test:infrastructure && npm run test:root",
-    "postinstall": "node scripts/node/postinstall.cjs",
     "setup-dev": "node scripts/node/setup-dev.cjs",
     "prepare-consumer": "node scripts/node/prepare-consumer.cjs",
     "typecheck": "tsc --noEmit",

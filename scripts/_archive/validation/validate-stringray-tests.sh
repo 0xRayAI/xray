@@ -103,13 +103,13 @@ echo "   Test Directory: $TEST_DIR"
 echo ""
 
 if [[ "$RUN_EXTENDED" == "true" ]]; then
-    echo "🧪 Test Suite: EXTENDED MODE (2229 tests available)"
+    echo "🧪 Test Suite: EXTENDED MODE (2290 tests available)"
     echo "   Skills Tests: 2 (configuration & MCP integration)"
     echo "   Core Tests: 6 (complexity analysis)"
     echo "   Integration Tests: 5 (orchestrator, consumer)"
     echo "   ⚠️  Extended tests require ES modules (run in dev env)"
 else
-    echo "🧪 Test Suite: STANDARD (2229 tests)"
+    echo "🧪 Test Suite: STANDARD (2290 tests)"
     echo "   Skills Tests: 2 (configuration & MCP integration)"
     echo "   Core Tests: 6 (complexity analysis)"
     echo "   Integration Tests: 5 (orchestrator, consumer)"
@@ -270,7 +270,7 @@ echo "==========================================="
 echo ""
 
 if [[ "$RUN_EXTENDED" == "true" ]]; then
-    echo "✅ Extended test mode: ENABLED (2229 tests available)"
+    echo "✅ Extended test mode: ENABLED (2290 tests available)"
     echo "   ⚠️  Extended tests require ES modules (run in development environment)"
 else
     echo "✅ Standard test suite: ENABLED (13 comprehensive tests)"

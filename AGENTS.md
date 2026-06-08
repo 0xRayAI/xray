@@ -1,12 +1,12 @@
 # xray Agents
 
-Quick reference for xray AI orchestration framework (v2 MCP-centric three-subsystem).
+Quick reference for xray AI orchestration framework (v16 MCPs-centric three-subsystem).
 
 ## What is xray?
 
 xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in MCP orchestrator). Agents operate via `.opencode/agents/*.yml` YML surfaces and 3 dedicated MCP skill servers — no manual setup needed.
 
-## v2 MCP-Centric Architecture
+## v16 MCPs-Centric Architecture
 
 The v2 release centers on **MCP (Model Context Protocol)** as the primary surface for agent skills. Three agent MCP servers handle governance deliberation:
 
@@ -84,14 +84,14 @@ The Autonomous Engine routes via complexity:
 
 xray enforces the Universal Development Codex (60 terms) via Dynamo governance. The codex lives in `.opencode/xray/codex.json`.
 
-Pure v2 MCP. Clean. Complete.
+Pure v16 MCPs. Clean. Complete.
 
 ## Session: v2.0.0 Release Polish
 
 - Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `2.0.0`.
 - Renamed `strray-ai` → `0xray` across 60+ source files, CLI help text, grok plugin, hermes-agent bridge (Python + JS), docusaurus config.
 - **12 stale docs git-rm'd**: AGENTS-consumer.md, AGENTS-full.md, CHANGELOG-v1.15.x.md, 7 docs/ files.
-- **AGENTS.md + README.md**: Rewritten v2 MCP-centric.
+- **AGENTS.md + README.md**: Rewritten v16 MCPs-centric.
 - **CLI help text**: `npx 0xray` — removed dead `dashboard` command, stale examples.
 - `.npmignore`: removed `src/` (conflicted with `files` field — was silently dropping published sources).
 - `.gitignore`: cleaned stale `.strray/` entries, `strray-ai-*.tgz` → `0xray-*.tgz`.
@@ -107,4 +107,4 @@ Pure v2 MCP. Clean. Complete.
   - `status.ts` CLI command wired into `index.ts`
   - Orphaned files analyzed (not deleted): `security-audit.ts`, `src/security/` (11 files), `session-capture-processor.ts`, `activate-kernel-pipeline.ts`
 - **Hermes-agent bridge backward compat**: all JS/Python bridge files check for both `strray-ai` (old) and `0xray` (new). Default paths updated to `0xray`.
-- **Test suite**: 158 files, 2822 tests, 0 failures. Build passes clean.
+- **Test suite**: 158 files, 2290 tests, 0 failures. Build passes clean.
