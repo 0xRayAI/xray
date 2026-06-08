@@ -110,7 +110,7 @@ export class InferenceCycle {
   constructor(projectRoot?: string, agentInvoker?: AgentInvoker, options?: InferenceCycleOptions) {
     this.projectRoot = projectRoot || process.cwd();
     this.inferenceDir = path.join(this.projectRoot, "docs", "inference");
-    this.stateDir = path.join(this.projectRoot, ".strray", "inference");
+    this.stateDir = path.join(this.projectRoot, ".xray", "inference");
     this.agentInvoker = agentInvoker ?? null;
     this.options = options ?? {};
   }
@@ -1177,10 +1177,10 @@ Respond with EXACTLY one of:
   }
 
   private resolveOpencodeRoot(): string {
-    // Use the provider-agnostic config path resolver (prefers .strray/, falls back to .opencode/xray/)
+    // Use the provider-agnostic config path resolver (prefers .xray/, falls back to .opencode/xray/)
     const configDir = getConfigDir(this.projectRoot);
-    // If we resolved to a .strray or custom dir, use its parent as the "root"
-    if (configDir.includes(".strray") || configDir.includes("xray")) {
+    // If we resolved to a .xray or custom dir, use its parent as the "root"
+    if (configDir.includes(".xray") || configDir.includes("xray")) {
       return path.dirname(configDir);
     }
     // Legacy fallback

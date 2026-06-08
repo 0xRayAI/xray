@@ -131,8 +131,8 @@ export class PluginRegistry extends EventEmitter {
 
   constructor(config: Partial<PluginRegistryConfig & { enableHotReload?: boolean }> = {}) {
     super();
-    this.pluginsDir = config.pluginsDir || ".strray/plugins";
-    this.configPath = config.configPath || ".strray/config/plugin-config.json";
+    this.pluginsDir = config.pluginsDir || ".xray/plugins";
+    this.configPath = config.configPath || ".xray/config/plugin-config.json";
     this.autoStart = config.autoStart ?? true;
     this.enableMetrics = config.enableMetrics ?? true;
     this.enableHotReload = config.enableHotReload ?? false;

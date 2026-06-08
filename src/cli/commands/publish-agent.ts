@@ -122,7 +122,7 @@ function packageAgent(
   version: string,
   cwd: string
 ): string {
-  const outputDir = join(cwd, ".strray", "publish", agentName);
+  const outputDir = join(cwd, ".xray", "publish", agentName);
   mkdirSync(outputDir, { recursive: true });
 
   const manifest = createAgentManifest(agentName, configPath, version, cwd);

@@ -486,7 +486,7 @@ program
       const path = await import("path");
       let defaultLimit = 500;
       try {
-        const featuresPath = path.join(process.cwd(), ".opencode", "plugins", "features.json"); // plain xray primary (min compat .strray/ handled in getConfigDir per Scope Rule)
+        const featuresPath = path.join(process.cwd(), ".opencode", "plugins", "features.json"); // plain xray primary (min compat .xray/ handled in getConfigDir per Scope Rule)
         if (fs.existsSync(featuresPath)) {
           const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
           defaultLimit = features.analytics?.default_limit || 500;
@@ -567,7 +567,7 @@ program
         console.log("✅ xray package installed");
       }
 
-      // Check configuration - check for opencode.json or .strray/ (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule; plain xray primary)
+      // Check configuration - check for opencode.json or .xray/ (min compat .xray/ fallback for prior StringRay consumer runtime per Scope Rule; plain xray primary)
       const cwd = process.cwd();
       const opencodeConfigPath = path.join(cwd, "opencode.json");
       const xrayDir = getConfigDir(cwd);
@@ -833,14 +833,14 @@ program
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
       } else {
         console.log('Inference feature is disabled in features.json.');
-        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule)');
+        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .xray/ fallback for prior StringRay consumer runtime per Scope Rule)');
       }
       return;
     }
 
     const projectRoot = process.cwd();
     const inferenceDir = `${projectRoot}/docs/inference`;
-    const stateDir = `${projectRoot}/.strray/inference`;
+    const stateDir = `${projectRoot}/.xray/inference`;
     const stateFile = `${stateDir}/inference-cycle-state.json`;
 
     if (!options.json) {

@@ -21,7 +21,7 @@ export class TokenManager {
   constructor(
     configPath: string = resolveConfigPath("config.json") || path.join(
       process.cwd(),
-      ".strray",
+      ".xray",
       "config.json",
     ),
   ) {

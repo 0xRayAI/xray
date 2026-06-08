@@ -1,5 +1,5 @@
 /**
- * Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; xray codex injection + XRAY_||STRRAY_ env + .strray fallbacks).
+ * Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; xray codex injection + XRAY_||STRRAY_ env + .xray fallbacks).
  */
 
 import * as fs from "fs";
@@ -505,7 +505,7 @@ async function getCodexFileLocations(directory?: string): Promise<string[]> {
   const resolved = await resolveCodexPath(root);
   resolved.push(
     path.join(root, ".opencode", "codex.codex"),
-    path.join(root, ".strray", "agents_template.md"),
+    path.join(root, ".xray", "agents_template.md"),
     path.join(root, ".opencode", "xray", "agents_template.md"),
     path.join(root, "AGENTS.md"),
   );

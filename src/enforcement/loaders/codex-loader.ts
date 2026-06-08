@@ -42,7 +42,7 @@ export class CodexLoader extends BaseLoader {
 
   /**
    * Path to the codex.json file.
-    * Uses the standard config-paths resolver which checks .strray/, .opencode/xray/, etc.
+    * Uses the standard config-paths resolver which checks .xray/, .opencode/xray/, etc.
    */
   private get codexPath(): string {
     const candidates = resolveCodexPath();

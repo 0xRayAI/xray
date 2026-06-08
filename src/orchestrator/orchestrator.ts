@@ -107,7 +107,7 @@ export class XrayOrchestrator {
   private loadOrchestratorConfig(): Partial<OrchestratorConfig> | null {
     try {
       const configPaths = [
-        ".strray/features.json",
+        ".xray/features.json",
         ".opencode/xray/features.json",
       ];
       

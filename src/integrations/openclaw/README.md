@@ -37,7 +37,7 @@ npm install ws
 
 ### 2. Configure OpenClaw
 
-Create `.strray/config/openclaw.json`:
+Create `.xray/config/openclaw.json`:
 
 ```json
 {

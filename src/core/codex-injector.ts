@@ -57,7 +57,7 @@ const codexCache = new Map<string, CodexContextEntry[]>();
 
 /**
  * Codex file locations resolved through the standard priority chain.
- * Uses config-paths.ts resolver so STRRAY_CONFIG_DIR and .strray/ work.
+ * Uses config-paths.ts resolver so XRAY_CONFIG_DIR and .xray/ work.
  */
 function getCodexFileLocations(projectRoot?: string): string[] {
   const root = projectRoot || process.cwd();

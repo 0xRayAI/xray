@@ -237,7 +237,7 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
   const logger = new BridgeLogger(logDir);
 
   try {
-    const stateDir = join(projectRoot, ".strray", "state");
+    const stateDir = join(projectRoot, ".xray", "state");
     const stateManager = new StrRayStateManager(stateDir);
     const processorManager = new ProcessorManager(stateManager);
 
@@ -639,7 +639,7 @@ function handleHooks(input, projectRoot) {
         if (existsSync(dst)) {
           const content = readFileSync(dst, "utf-8");
           if (!content.includes("StringRay") && !content.includes("strray") && !content.includes("run-hook.js")) {
-            renameSync(dst, `${dst}.strray-backup`);
+            renameSync(dst, `${dst}.xray-backup`);
           } else {
             unlinkSync(dst);
           }
@@ -671,7 +671,7 @@ function handleHooks(input, projectRoot) {
 
     for (const hookName of hookTypes) {
       const dst = join(gitHooksDir, hookName);
-      const backup = `${dst}.strray-backup`;
+      const backup = `${dst}.xray-backup`;
 
       if (!existsSync(dst)) continue;
 

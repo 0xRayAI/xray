@@ -61,7 +61,7 @@ describe("XrayConfigLoader", () => {
   describe("constructor", () => {
     it("should use default path when no configPath provided", () => {
       const loader = new XrayConfigLoader();
-      expect((loader as any).configPath).toContain(".strray/config.json");
+      expect((loader as any).configPath).toContain(".xray/config.json");
     });
 
     it("should use provided configPath", () => {

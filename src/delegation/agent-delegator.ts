@@ -165,7 +165,7 @@ export class AgentDelegator {
    */
   private loadRoutingMappings(): RoutingMapping[] {
     const candidates = [
-      path.resolve(process.cwd(), ".strray/routing-mappings.json"),
+      path.resolve(process.cwd(), ".xray/routing-mappings.json"),
       path.resolve(process.cwd(), "xray/routing-mappings.json"),
       path.resolve(process.cwd(), ".opencode/xray/routing-mappings.json"),
       path.resolve(process.cwd(), "routing-mappings.json"),

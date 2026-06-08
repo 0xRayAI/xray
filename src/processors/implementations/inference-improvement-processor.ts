@@ -66,7 +66,7 @@ export class InferenceImprovementProcessor extends PostProcessor {
   private loadInferenceConfig(): { enabled?: boolean; workflow_dir?: string; reports_dir?: string; pattern_matching?: { enabled?: boolean; confidence_threshold?: number } } | null {
     try {
       const configPaths = [
-        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".xray", "features.json"),
         path.join(process.cwd(), ".opencode", "xray", "features.json"),
       ];
       for (const configPath of configPaths) {

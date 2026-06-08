@@ -146,7 +146,7 @@ export function findCodexPath(projectRoot?: string): string | null {
   if (envDir) {
     candidates.push(resolve(root, envDir, "codex.json"));
   }
-  candidates.push(join(root, ".strray", "codex.json"));
+  candidates.push(join(root, ".xray", "codex.json"));
   candidates.push(join(root, ".opencode", "xray", "codex.json"));
   // Additional fallback locations (for standalone usage)
   candidates.push(join(root, "codex.json"));

@@ -1,5 +1,5 @@
 /**
- * Boot Orchestrator (min documented consumer runtime compat shim from prior StringRay releases; primary Xray* paths + XRAY_||STRRAY_ env + .strray fallbacks only; 1-line per Scope Rule).
+ * Boot Orchestrator (min documented consumer runtime compat shim from prior StringRay releases; primary Xray* paths + XRAY_||STRRAY_ env + .xray fallbacks only; 1-line per Scope Rule).
  */
 
 import { XrayContextLoader } from "./context-loader.js";
@@ -187,7 +187,7 @@ export class BootOrchestrator {
   private loadProcessorsConfig(): { pre_processors?: { priority_order?: string[] }; post_processors?: { priority_order?: string[] } } | null {
     try {
       const configPaths = [
-        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".xray", "features.json"),
         path.join(process.cwd(), ".opencode", "xray", "features.json"),
       ];
       for (const configPath of configPaths) {
@@ -214,7 +214,7 @@ export class BootOrchestrator {
         { jobId },
       );
 
-      const pluginsDir = path.join(process.cwd(), ".strray", "plugins");
+      const pluginsDir = path.join(process.cwd(), ".xray", "plugins");
 
       this.pluginRegistry = new PluginRegistry({
         pluginsDir,
@@ -835,7 +835,7 @@ export class BootOrchestrator {
         "info",
         { jobId },
       );
-      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
+      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .xray fallbacks)
       await this.loadXrayConfiguration(jobId);
       frameworkLogger.log(
         "boot-orchestrator",
@@ -1089,10 +1089,10 @@ export class BootOrchestrator {
     return result;
   }
 
-  // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
+  // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .xray fallbacks)
   private async loadXrayConfiguration(jobId: string): Promise<void> {
     try {
-      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
+      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .xray fallbacks)
       const xrayConfig = {
         version: "2.0.0",
         codex_enabled: true,

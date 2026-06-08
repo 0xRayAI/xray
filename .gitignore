@@ -12,7 +12,7 @@ logs/framework/routing-outcomes.json
 *.tgz
 
 # Runtime state
-.strray/
+.xray/
 .opencode/.strrayrc.json
 xray/inference/
 
@@ -77,6 +77,7 @@ docs/inference/
 
 # CI test environment (generated)
 ci-test-env/
+.ci-reports/
 
 # Python cache
 __pycache__/

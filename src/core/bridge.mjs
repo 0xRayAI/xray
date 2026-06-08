@@ -219,10 +219,10 @@ async function handleHealth(input) {
  */
 /** Codex candidate paths — single source of truth for both loadCodexFromFs and handleGetConfig */
 function getCodexCandidates(projectRoot) {
-  const envDir = process.env.STRRAY_CONFIG_DIR;
+  const envDir = process.env.XRAY_CONFIG_DIR || process.env.STRRAY_CONFIG_DIR;
   const candidates = [];
   if (envDir) candidates.push(join(projectRoot, envDir, "codex.json"));
-  candidates.push(join(projectRoot, ".strray", "codex.json"));
+  candidates.push(join(projectRoot, ".xray", "codex.json"));
   candidates.push(join(projectRoot, ".opencode", "xray", "codex.json"));
   candidates.push(join(projectRoot, "codex.json"));
   return candidates;
@@ -348,7 +348,7 @@ async function handleGetConfig(input, projectRoot, logDir) {
   // Load features.json
   const featurePaths = [];
   if (envDir) featurePaths.push(join(projectRoot, envDir, "features.json"));
-  featurePaths.push(join(projectRoot, ".strray", "features.json"));
+  featurePaths.push(join(projectRoot, ".xray", "features.json"));
   featurePaths.push(join(projectRoot, ".opencode", "xray", "features.json"));
 
   let featurePath = null;
@@ -668,7 +668,7 @@ function handleHooks(input, projectRoot) {
         if (existsSync(dst)) {
           const content = readFileSync(dst, "utf-8");
           if (!content.includes("Xray") && !content.includes("StringRay") && !content.includes("xray") && !content.includes("strray") && !content.includes("run-hook.js")) {
-            renameSync(dst, `${dst}.strray-backup`);
+            renameSync(dst, `${dst}.xray-backup`);
           } else {
             unlinkSync(dst);
           }
@@ -699,7 +699,7 @@ function handleHooks(input, projectRoot) {
 
     for (const hookName of hookTypes) {
       const dst = join(gitHooksDir, hookName);
-      const backup = `${dst}.strray-backup`;
+      const backup = `${dst}.xray-backup`;
 
       if (!existsSync(dst)) continue;
 

@@ -80,7 +80,7 @@ describe("JSON Codex Integration", () => {
     contextLoader = XrayContextLoader.getInstance();
     contextLoader.clearCache(); // Clear cached context
     // Override codexFilePaths to use simple relative paths for mocking
-    (contextLoader as any).codexFilePaths = [".strray/codex.json"];
+    (contextLoader as any).codexFilePaths = [".xray/codex.json"];
     vi.clearAllMocks();
   });
 

@@ -41,7 +41,7 @@ test('should verify SpawnGovernanceProcessor is registered in processor-manager'
 });
 
 test('should verify agent_spawn config exists in features.json', () => {
-  const configPath = process.cwd() + '/.strray/features.json';
+  const configPath = process.cwd() + '/.xray/features.json';
   if (!existsSync(configPath)) {
     throw new Error('features.json not found');
   }
@@ -63,7 +63,7 @@ test('should verify spawnGovernance pre-processor in BootOrchestrator', () => {
 });
 
 test('should verify agent spawn limits from features.json', () => {
-  const configPath = process.cwd() + '/.strray/features.json';
+  const configPath = process.cwd() + '/.xray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.agent_spawn?.max_concurrent) {
@@ -73,7 +73,7 @@ test('should verify agent spawn limits from features.json', () => {
 });
 
 test('should verify rate limiting config from features.json', () => {
-  const configPath = process.cwd() + '/.strray/features.json';
+  const configPath = process.cwd() + '/.xray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.agent_spawn?.rate_limit_per_minute) {

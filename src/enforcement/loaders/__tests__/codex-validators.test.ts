@@ -2,7 +2,7 @@
  * Codex Loader Validator Tests
  * 
  * Tests the actual codex term validators with real codex.json
- * These tests require the real .strray/codex.json to exist
+ * These tests require the real .xray/codex.json to exist
  * 
  * @module enforcement/loaders/__tests__/codex-validators.test
  */

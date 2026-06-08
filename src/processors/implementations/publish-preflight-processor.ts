@@ -5,7 +5,7 @@
  * Ensures README.md, AGENTS.md, and reflection documents are up-to-date
  * before allowing npm publish.
  *
- * Configuration is read from .strray/features.json
+ * Configuration is read from .xray/features.json
  *
  * @processor_type post
  * @priority 10 (runs early after post-processing starts)
@@ -65,7 +65,7 @@ export class PublishPreflightProcessor extends PostProcessor {
   private loadConfig(): void {
     try {
       const configPaths = [
-        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".xray", "features.json"),
         path.join(process.cwd(), ".opencode", "xray", "features.json"),
       ];
 

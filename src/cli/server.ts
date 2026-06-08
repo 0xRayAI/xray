@@ -128,7 +128,7 @@ app.get("/", (req: Request, res: Response) => {
 
 // Add route for refactoring logs
 app.get("/logs", requireAuth, async (req: Request, res: Response) => {
-  const logPath = resolveConfigPath("REFACTORING_LOG.md") || join(__dirname, "..", ".strray", "REFACTORING_LOG.md");
+  const logPath = resolveConfigPath("REFACTORING_LOG.md") || join(__dirname, "..", ".xray", "REFACTORING_LOG.md");
   // Server debug logging - remove for production
 
   try {

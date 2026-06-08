@@ -43,7 +43,7 @@ Native Hermes plugin providing 0xRay framework integration — quality gates, co
 
 **Fallback:** When bridge is unavailable, tools fall back to `npx 0xray` CLI commands.
 
-**Config path resolution:** `STRRAY_CONFIG_DIR/` > `.strray/` > `.opencode/xray/` > built-in defaults.
+**Config path resolution:** `STRRAY_CONFIG_DIR/` > `.xray/` > `.opencode/xray/` > built-in defaults.
 
 ## 4 Tools
 
