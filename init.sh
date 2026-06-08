@@ -107,15 +107,18 @@ if [ "$SKILLS_COUNT" -eq 0 ]; then
     SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/node_modules/0xray/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Plugin status (check both dev and consumer paths)
-PLUGIN_DEV="$PROJECT_ROOT/.opencode/plugin/xray-codex-injection.js"
-PLUGIN_DEV_PLURAL="$PROJECT_ROOT/.opencode/plugins/xray-codex-injection.js"
+# Plugin status (check dev dist, then .opencode, then consumer)
+PLUGIN_DEV_DIST="$PROJECT_ROOT/dist/plugin/xray-codex-injection.js"
+PLUGIN_DEV_OPENCODE="$PROJECT_ROOT/.opencode/plugin/xray-codex-injection.js"
+PLUGIN_DEV_OPENCODE_PLURAL="$PROJECT_ROOT/.opencode/plugins/xray-codex-injection.js"
 PLUGIN_CONSUMER="$PROJECT_ROOT/node_modules/0xray/.opencode/plugin/xray-codex-injection.js"
 PLUGIN_CONSUMER_PLURAL="$PROJECT_ROOT/node_modules/0xray/.opencode/plugins/xray-codex-injection.js"
 
-if [ -f "$PLUGIN_DEV" ]; then
+if [ -f "$PLUGIN_DEV_DIST" ]; then
     PLUGIN_STATUS="✅"
-elif [ -f "$PLUGIN_DEV_PLURAL" ]; then
+elif [ -f "$PLUGIN_DEV_OPENCODE" ]; then
+    PLUGIN_STATUS="✅"
+elif [ -f "$PLUGIN_DEV_OPENCODE_PLURAL" ]; then
     PLUGIN_STATUS="✅"
 elif [ -f "$PLUGIN_CONSUMER" ]; then
     PLUGIN_STATUS="✅"
