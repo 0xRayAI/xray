@@ -1142,6 +1142,118 @@ async function main() {
     skip('skills directory', `not found at ${skillsDir}`);
   }
 
+  // ── Phase 13: Framework Activity Log via Agent Tool Event ──
+  section('Phase 13: Framework Activity Log');
+
+  const xrayRoot = CUSTOM_DIR
+    ? path.join(CUSTOM_DIR, 'node_modules', '0xray')
+    : path.resolve(path.dirname(import.meta.url.replace('file://', '')), '..', '..');
+
+  const distIndex = path.join(xrayRoot, 'dist', 'index.js');
+  const hooksModPath = path.join(xrayRoot, 'dist', 'integrations', 'openclaw', 'hooks', 'xray-hooks.js');
+
+  if (!fs.existsSync(distIndex)) {
+    skip('framework activity log', `xray dist not found at ${distIndex}`);
+  } else {
+    try {
+      const xrayFramework = await import(`file://${distIndex}`);
+      const logger = xrayFramework.frameworkLogger;
+      if (!logger || typeof logger.log !== 'function') {
+        fail('frameworkLogger', 'log method not available');
+      } else {
+        pass('frameworkLogger.log() available');
+
+        // Wire OpenClawHooksManager to forward tool events to frameworkLogger
+        let hooksMgr;
+        try {
+          const hooksMod = await import(`file://${hooksModPath}`);
+          const HooksMgrCtor = hooksMod.OpenClawHooksManager;
+          if (HooksMgrCtor) {
+            hooksMgr = new HooksMgrCtor({
+              enabled: true, toolBefore: true, toolAfter: true,
+              includeArgs: true, includeResult: true,
+            });
+            await hooksMgr.initialize();
+
+            const marker = `agent-write-${Date.now()}`;
+            let capturedEvent = null;
+
+            hooksMgr.registerToolBefore(async (evt) => {
+              capturedEvent = evt;
+              await logger.log('openclaw-hooks', 'tool-before-write', 'info', {
+                tool: evt.toolName,
+                agent: evt.agent,
+                args: evt.args,
+                marker,
+              });
+            });
+
+            hooksMgr.registerToolAfter(async (evt) => {
+              await logger.log('openclaw-hooks', 'tool-after-write', 'success', {
+                tool: evt.toolName,
+                marker,
+              });
+            });
+
+            // Simulate an AI agent's write_file tool event via the gateway
+            await hooksMgr.onToolBefore({
+              toolName: 'write_file',
+              toolId: 'fs:write_file',
+              args: { path: '/test-output.txt', content: 'openclaw agent output' },
+              duration: 0,
+              timestamp: Date.now(),
+              agent: 'architect',
+            });
+
+            await hooksMgr.onToolAfter({
+              toolName: 'write_file',
+              toolId: 'fs:write_file',
+              args: { path: '/test-output.txt', content: 'openclaw agent output' },
+              result: { success: true, path: '/test-output.txt' },
+              duration: 1200,
+              timestamp: Date.now(),
+              agent: 'architect',
+            });
+
+            if (capturedEvent && capturedEvent.toolName === 'write_file') {
+              pass('hooks manager captured write_file tool event');
+            } else {
+              fail('tool event capture', `got: ${JSON.stringify(capturedEvent).substring(0, 100)}`);
+            }
+
+            // Fill buffer past MAX_BUFFER_SIZE to flush immediately
+            for (let i = 0; i < 100; i++) {
+              await logger.log('e2e-test', 'flush', 'info', { i });
+            }
+            await new Promise((r) => setTimeout(r, 200));
+
+            const logFile = path.join(process.cwd(), 'logs', 'framework', 'activity.log');
+            if (fs.existsSync(logFile)) {
+              const content = fs.readFileSync(logFile, 'utf-8');
+              if (content.includes(marker)) {
+                const lineCount = content.split('\n').filter(Boolean).length;
+                const writeLines = (content.match(/tool-before-write|tool-after-write/g) || []).length;
+                pass(`activity.log: "${marker}" found (${lineCount} lines, ${writeLines} write_file entries)`);
+              } else {
+                fail('activity.log content', `marker "${marker}" not found`);
+              }
+            } else {
+              fail('activity.log', `file not found at ${logFile}`);
+            }
+
+            await hooksMgr.shutdown();
+          } else {
+            fail('hooks import', 'OpenClawHooksManager not exported');
+          }
+        } catch (e) {
+          fail('hooks setup', e.message);
+        }
+      }
+    } catch (e) {
+      fail('framework import', e.message);
+    }
+  }
+
   // ── Summary ─────────────────────────────────────────────
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\n\x1b[1m${'='.repeat(60)}\n  SUMMARY\n${'='.repeat(60)}\x1b[0m`);
