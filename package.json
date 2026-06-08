@@ -49,6 +49,8 @@
     "prepublishOnly": "npm run prepare-consumer && npm run build:all && find dist -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' | xargs rm -f",
     "version:bump": "node scripts/node/version-manager.mjs",
     "version": "node scripts/node/version-manager.mjs",
+    "postinstall": "node scripts/node/postinstall.cjs",
+    "prepare": "npm run build",
     "prebuild": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",
     "build": "tsc && mkdir -p dist/public dist/scripts && cp -r public/* dist/public/ && cp scripts/hooks/pre-command dist/scripts/ && cp scripts/hooks/pre-command.mjs dist/scripts/ && cp README.md AGENTS.md CHANGELOG.md LICENSE dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done && mkdir -p dist/plugin && (find dist/plugin -name '*codex-injection*.js' -exec cp {} dist/plugin/xray-codex-injection.js \\; 2>/dev/null || true) && cp -r src/opencode/ .opencode/ && rm -rf .opencode/xray 2>/dev/null; mkdir -p .opencode/xray && cp xray/codex.json .opencode/xray/codex.json 2>/dev/null || true",
     "build:all": "npm run build",

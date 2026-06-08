@@ -16,6 +16,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 /* ============================================================================
  * Type Definitions
@@ -1494,7 +1495,7 @@ class MultimodalLookerServer {
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new MultimodalLookerServer();
-  server.run().catch(console.error);
+  server.run().catch((error) => frameworkLogger.log("mcps/multimodal-looker", "run", "error", { error: String(error) }));
 }
 
 export { MultimodalLookerServer };
