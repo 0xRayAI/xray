@@ -20,6 +20,7 @@ xray/inference/
 *.log
 0xray-*.tgz
 *.tmp
+.tmp/
 
 # StringRay runtime artifacts
 .opencode/**/*.d.ts
@@ -83,6 +84,19 @@ src/integrations/hermes-agent/logs/
 
 # Accidental macOS temp/resolved paths
 var/
+
+# Generated runtime data at root (not part of package source)
+state
+performance-baselines.json
+
+# Stale root duplicates (canonical copy lives in src/)
+command/
+skills/
+
+# Stray test artifacts
+test-debug.mjs
+test-edit-tracking.ts
+test-skill.json
 
 # Version-manager auto-backups
 backups/
