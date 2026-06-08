@@ -159,7 +159,7 @@ async function main() {
 
   // Step 6: Publish to npm
   console.log('\n📦 Step 6: Publishing to npm...');
-  runCommand('npm publish --access public', 'npm publish failed');
+  runCommand('npm publish --access public --ignore-scripts', 'npm publish failed');
   console.log(`✅ Published 0xray@${newVersion} to npm`);
 
   console.log('\n╔════════════════════════════════════════════════════════╗');
