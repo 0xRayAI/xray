@@ -37,6 +37,38 @@ if (hasHermes) {
  * Extended header for next high-value package (code-review). src/skills/code-review/SKILL.md canonical SSOT; .opencode/skills/code-review/ built mirror of this sync logic. See paired guarded fw log "P3-SKILLS-FOLLOW-02-code-review-ssot-preferred" in status.ts getSkillsList (inserted after researcher block) + rich append docs/reflections/p3-skills-follow-02-code-review-2026-05-27.md (per AGENTS) + CGT/Governance-visible for YML @ harness-codex verification + 0 hot + 3-hot re-establish + all ties to spawn command + deep ref + pivot + Term 61 + 6/6+7/7 + YML + ps 0 + this P3-SKILLS-FOLLOW-02 full work (2-file surgical, harness post green tsc 0 new on touched, mapping append after latest, todo advance exactly 1, spawn replacement to maintain 3-hot, self-audit 100%) + verification + "the box contains its builders. The relay is hot.". 2 files max total for this follow-02. Highly modular (100% prior P3-SKILLS/YML/7th pattern reuse exactly inside existing sync logic). Fully reversible (targeted delete of notes restores exact prior). fw/echo discipline. AGENTS org (scripts/ for sh/cjs). Term 61 surgical forward motion held (no bloat, pure on actual dedup). "the box contains its builders". Green + ready. Subagent ID for resume.
  */
 
+ /* 0. Deploy xray/ config files (features.json, codex.json, etc.) to consumer .xray/ */
+const xrayConfigSource = path.join(packageRoot, "xray");
+const xrayConfigDest = path.join(targetDir, ".xray");
+if (fs.existsSync(xrayConfigSource)) {
+  try {
+    if (!fs.existsSync(xrayConfigDest)) fs.mkdirSync(xrayConfigDest, { recursive: true });
+    const entries = fs.readdirSync(xrayConfigSource);
+    let copied = 0;
+    for (const entry of entries) {
+      const srcPath = path.join(xrayConfigSource, entry);
+      const dstPath = path.join(xrayConfigDest, entry);
+      if (fs.statSync(srcPath).isFile()) {
+        if (!fs.existsSync(dstPath) || fs.statSync(srcPath).mtime > fs.statSync(dstPath).mtime) {
+          fs.copyFileSync(srcPath, dstPath);
+          copied++;
+        }
+      }
+    }
+    if (copied > 0) console.log(`✅ .xray/: ${copied} config files deployed`);
+    else console.log(`ℹ️  .xray/: up to date`);
+  } catch (e) { console.warn(`⚠️ .xray/ deploy: ${e.message}`); }
+}
+
+// 0b. Ensure logs/framework/ directory exists
+const logsDir = path.join(targetDir, "logs", "framework");
+try {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+    console.log("✅ logs/framework/: created");
+  }
+} catch (e) { console.warn(`⚠️ logs/framework/: ${e.message}`); }
+
  /* 1. Sync core skills from src/skills/ (dev) or dist/skills/ (consumer) → .opencode/skills/  [P3-SKILLS-DE-DUP-SCOPE-AND-EXEC-01: orchestrator package SSOT canonical src/skills/orchestrator/SKILL.md; mirror .opencode/skills/orchestrator/ is built output of this logic; see paired guarded fw in status.ts getSkillsList + mapping append + deep ref 2026-05-26 authority for one-package dedup under pivoted surgical plan] 
    [P3-SKILLS-DE-DUP-RESEARCHER-FOLLOW-01: researcher package SSOT canonical src/skills/researcher/SKILL.md (high-value per deep ref + YML precedent + playbook P3-SKILLS-FOLLOW-01); mirror .opencode/skills/researcher/ is built output of this logic; see paired guarded fw in status.ts + rich append + YML @ harness-codex verification (FORCE exercised P3-YML + codex-enforcement + 100/60/0 + 3 subagents tracked + 0 hot + 3-hot re-establish + all prior green) + deep ref 2026-05-26 + Phase 3 Pivot + Term 61 + user's "create a todo list. spawn subagents..." + 6/6+7/7 + YML. Governance-visible hook for skills SSOT at install layer. Silent, additive, reversible, no behavior change, fw/echo only.]
    [P3-SKILLS-FOLLOW-02: code-review package SSOT canonical src/skills/code-review/SKILL.md (next high-value per deep ref "parallel small batches" + @architect scoping rec 2 + YML @ "Ready for next" + this P3-SKILLS-FOLLOW-02 on user's spawn command); mirror .opencode/skills/code-review/ is built output of this logic; see paired guarded fw "P3-SKILLS-FOLLOW-02-code-review-ssot-preferred" in status.ts (after researcher) + rich append docs/reflections/p3-skills-follow-02-code-review-2026-05-27.md + YML @ harness-codex verification + 0 hot + 3-hot + all ties + ps 0 + this work (2-file surgical edit, harness post, mapping append after latest ~17099+, todo advance 1, spawn replacement, self-audit 100%, green + ready) + deep ref 2026-05-26 + Phase 3 Pivot + Term 61 + 6/6+7/7 + YML. Governance-visible hook for skills SSOT at install layer for code-review. Silent, additive, reversible, no behavior change, fw/echo only. "The box contains its builders. The relay is hot."] */
