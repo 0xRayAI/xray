@@ -217,7 +217,7 @@ interface McpToolResponse {
   data?: Record<string, unknown>;
 }
 
-class StringRayPerformanceOptimizationServer {
+class XrayPerformanceOptimizationServer {
   private server: Server;
   private startTime: number;
 
@@ -2056,10 +2056,10 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayPerformanceOptimizationServer();
+  const server = new XrayPerformanceOptimizationServer();
   server.run().catch((error) => {
     frameworkLogger.log("mcp/performance-optimization", "run", "error", { error: String(error) });
   });
 }
 
-export { StringRayPerformanceOptimizationServer };
+export { XrayPerformanceOptimizationServer };

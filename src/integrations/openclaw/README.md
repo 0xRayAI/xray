@@ -1,12 +1,12 @@
 # OpenClaw Integration
 
-StringRay integration for OpenClaw - a self-hosted AI gateway that connects messaging platforms to AI coding agents.
+Xray integration for OpenClaw - a self-hosted AI gateway that connects messaging platforms to AI coding agents.
 
 ## Overview
 
-This integration allows StringRay to:
+This integration allows Xray to:
 - Connect to OpenClaw Gateway via WebSocket
-- Expose StringRay capabilities through OpenClaw skills
+- Expose Xray capabilities through OpenClaw skills
 - Send tool execution events to OpenClaw for real-time tracking
 - Receive commands from OpenClaw channels (WhatsApp, Telegram, Discord, etc.)
 
@@ -14,7 +14,7 @@ This integration allows StringRay to:
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   User       │────▶│  OpenClaw    │────▶│   StringRay   │
+│   User       │────▶│  OpenClaw    │────▶│   Xray   │
 │  (WhatsApp,  │     │   Gateway    │     │    Skills    │
 │  Discord,    │     │              │     │              │
 │  Telegram)   │◀────│              │◀────│              │
@@ -82,11 +82,11 @@ const integration = await initializeOpenClawIntegration('/path/to/config.json', 
 
 After installation, use these commands in any OpenClaw channel:
 
-- `/strray` - Show status
-- `/strray-analyze <file>` - Analyze code
-- `/strray-code <file>` - Code review
-- `/strray-file <file>` - Read file
-- `/strray-exec <command>` - Execute command
+- `/xray` - Show status
+- `/xray-analyze <file>` - Analyze code
+- `/xray-code <file>` - Code review
+- `/xray-file <file>` - Read file
+- `/xray-exec <command>` - Execute command
 
 ## Configuration
 
@@ -115,14 +115,14 @@ The integration exposes a local HTTP API on port 18431:
 
 ### stringray-orchestrator
 
-Main skill providing StringRay commands:
+Main skill providing Xray commands:
 
 ```markdown
-/strray                    - Show status
-/strray-analyze <file>    - Analyze code
-/strray-code <file>       - Code review
-/strray-file <file>       - Read file
-/strray-exec <command>    - Execute command
+/xray                    - Show status
+/xray-analyze <file>    - Analyze code
+/xray-code <file>       - Code review
+/xray-file <file>       - Read file
+/xray-exec <command>    - Execute command
 ```
 
 ## Documentation

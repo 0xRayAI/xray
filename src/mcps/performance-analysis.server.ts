@@ -57,7 +57,7 @@ interface ResourceMetrics {
   recommendations: string[];
 }
 
-class StringRayPerformanceAnalysisServer {
+class XrayPerformanceAnalysisServer {
   private server: Server;
   private startTime: number;
 
@@ -708,8 +708,8 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayPerformanceAnalysisServer();
+  const server = new XrayPerformanceAnalysisServer();
   server.run().catch((error) => frameworkLogger.log("mcps/performance-analysis", "run", "error", { error: String(error) }));
 }
 
-export { StringRayPerformanceAnalysisServer };
+export { XrayPerformanceAnalysisServer };

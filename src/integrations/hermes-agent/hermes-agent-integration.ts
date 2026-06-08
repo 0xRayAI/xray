@@ -80,7 +80,7 @@ export class HermesAgentIntegration extends BaseIntegration {
 
     this.bridgePath = config?.bridgePath || join(__dirname, "bridge.mjs");
     this.pluginDir =
-      config?.pluginDir || join(homedir(), ".hermes", "plugins", "strray-hermes");
+      config?.pluginDir || join(homedir(), ".hermes", "plugins", "xray-hermes");
     this.projectRoot = config?.projectRoot || process.cwd();
     this.bridgeTimeout = config?.bridgeTimeout || 15_000;
     this.hooksEnabled = config?.hooksEnabled ?? true;
@@ -310,7 +310,7 @@ export class HermesAgentIntegration extends BaseIntegration {
 
     // 0xRay MCP tools — skip bridge entirely
     if (this.isStrrayMcp(tool)) {
-      this.hermesStats.strrayMcpCalls++;
+      this.hermesStats.xrayMcpCalls++;
       return { allowed: true };
     }
 
@@ -424,8 +424,8 @@ export class HermesAgentIntegration extends BaseIntegration {
   // Tool Methods (mirrors Python plugin tools)
   // ==========================================================================
 
-  /**
-   * Run strray_validate — validate files against quality gate
+   /**
+    * Run xray_validate — validate files against quality gate
    */
   async validate(
     files: string[],
@@ -438,8 +438,8 @@ export class HermesAgentIntegration extends BaseIntegration {
     });
   }
 
-  /**
-   * Run strray_codex_check — check code against codex rules
+   /**
+    * Run xray_codex_check — check code against codex rules
    */
   async codexCheck(
     code: string | undefined,
@@ -463,8 +463,8 @@ export class HermesAgentIntegration extends BaseIntegration {
     });
   }
 
-  /**
-   * Run strray_health — framework health check
+   /**
+    * Run xray_health — framework health check
    */
   async health(): Promise<BridgeHealthResponse> {
     return this.checkBridgeHealth();
@@ -478,7 +478,7 @@ export class HermesAgentIntegration extends BaseIntegration {
    * Check if a tool name belongs to a 0xRay MCP server
    */
   isStrrayMcp(tool: string): boolean {
-    return tool.startsWith("mcp_strray_");
+    return tool.startsWith("mcp_xray_");
   }
 
   /**
@@ -505,7 +505,7 @@ export class HermesAgentIntegration extends BaseIntegration {
       qualityGateBlocks: 0,
       preProcessorRuns: 0,
       postProcessorRuns: 0,
-      strrayMcpCalls: 0,
+      xrayMcpCalls: 0,
       nativeToolCalls: 0,
       bridgeErrors: 0,
       sessionId: generateJobId("hermes-agent"),

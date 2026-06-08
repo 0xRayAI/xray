@@ -84,7 +84,7 @@ interface AnalyzeProposalArgs {
   proposalType?: string;
 }
 
-class StringRaySecurityAuditServer {
+class XraySecurityAuditServer {
   private server: Server;
 
   constructor() {
@@ -1186,8 +1186,8 @@ class StringRaySecurityAuditServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRaySecurityAuditServer();
+  const server = new XraySecurityAuditServer();
   server.run().catch(() => {});
 }
 
-export { StringRaySecurityAuditServer };
+export { XraySecurityAuditServer };

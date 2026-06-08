@@ -14,7 +14,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveCodexPath } from "./config-paths.js";
 // Dynamic imports for cross-environment compatibility
 let extractCodexMetadata: ((content: string) => { version: string; termCount: number }) | undefined;
-let StringRayContextLoader: new () => unknown;
+let XrayContextLoader: new () => unknown;
 let importsInitialized = false;
 
 async function initializeImports() {
@@ -24,12 +24,12 @@ async function initializeImports() {
     const codexParser = await import("../utils/codex-parser.js");
     const contextLoaderModule = await import("./context-loader.js");
     extractCodexMetadata = codexParser.extractCodexMetadata;
-    StringRayContextLoader = contextLoaderModule.StringRayContextLoader as unknown as new () => unknown;
+    XrayContextLoader = contextLoaderModule.XrayContextLoader as unknown as new () => unknown;
   } catch {
     const codexParser = await import("../utils/codex-parser");
     const contextLoaderModule = await import("./context-loader");
     extractCodexMetadata = codexParser.extractCodexMetadata;
-    StringRayContextLoader = contextLoaderModule.StringRayContextLoader as unknown as new () => unknown;
+    XrayContextLoader = contextLoaderModule.XrayContextLoader as unknown as new () => unknown;
   }
 
   importsInitialized = true;
@@ -92,7 +92,7 @@ async function createCodexContextEntry(
   const metadata = extractCodexMetadata(content);
 
   return {
-    id: `strray-codex-${path.basename(filePath)}`,
+    id: `xray-codex-${path.basename(filePath)}`,
     source: filePath,
     content,
     priority: "critical",
@@ -160,15 +160,15 @@ function formatCodexContext(
 }
 
 /**
- * Create strray-codex-injector hook
+ * Create xray-codex-injector hook
  *
  * This hook injects codex context into tool outputs and displays
  * a welcome message on agent startup, following the production-tested
  * pattern from OpenCode's rules-injector.
  */
-export function createStringRayCodexInjectorHook() {
+export function createXrayCodexInjectorHook() {
   return {
-    name: "strray-codex-injector" as const,
+    name: "xray-codex-injector" as const,
     hooks: {
       "agent.start": async (sessionId: string) => {
         const jobId = `agent-start-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -202,7 +202,7 @@ export function createStringRayCodexInjectorHook() {
           } else {
             await frameworkLogger.log(
               "codex-injector",
-              "-no-codex-files-found-checked-strray-codex-json-co",
+              "-no-codex-files-found-checked-xray-codex-json-co",
               "info",
               {
                 message:
@@ -317,7 +317,7 @@ export function createStringRayCodexInjectorHook() {
 
           // Use the initialized context loader
           await initializeImports();
-          const ContextLoaderClass = StringRayContextLoader as new () => {
+          const ContextLoaderClass = XrayContextLoader as new () => {
             loadCodexContext: (sessionId: string) => Promise<{ success: boolean; context?: unknown }>;
             validateAgainstCodex: (
               context: unknown,
@@ -706,3 +706,5 @@ export class CodexInjector {
     return { guidance, concerns };
   }
 }
+
+export { createXrayCodexInjectorHook as createStringRayCodexInjectorHook };

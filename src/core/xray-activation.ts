@@ -6,7 +6,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { ensureCriticalComponents } from "../architect/architectural-integrity.js";
 import { validateRegistryConsistency } from "../agents/registry.js";
 
-export interface StringRayActivationConfig {
+export interface XrayActivationConfig {
   enableOrchestrator: boolean;
   enableBootOrchestrator: boolean;
   enableStateManagement: boolean;
@@ -16,7 +16,7 @@ export interface StringRayActivationConfig {
   enablePostProcessor: boolean;
 }
 
-export const defaultStringRayConfig: StringRayActivationConfig = {
+export const defaultXrayConfig: XrayActivationConfig = {
   enableOrchestrator: true,
   enableBootOrchestrator: true,
   enableStateManagement: true,
@@ -26,11 +26,11 @@ export const defaultStringRayConfig: StringRayActivationConfig = {
   enablePostProcessor: true,
 };
 
-export async function activateStringRayFramework(
-  config: Partial<StringRayActivationConfig> = {},
+export async function activateXrayFramework(
+  config: Partial<XrayActivationConfig> = {},
 ): Promise<void> {
   const jobId = `activation-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-  const activationConfig = { ...defaultStringRayConfig, ...config };
+  const activationConfig = { ...defaultXrayConfig, ...config };
 
   // Banner display moved to init.sh execution in plugin
   // Framework activation proceeds quietly
@@ -111,11 +111,11 @@ async function activateCodexInjection(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { createStringRayCodexInjectorHook } = await import("./codex-injector.js");
-  const hook = createStringRayCodexInjectorHook();
+  const { createXrayCodexInjectorHook } = await import("./codex-injector.js");
+  const hook = createXrayCodexInjectorHook();
 
-  globalThis.strRayHooks = globalThis.strRayHooks || [];
-  globalThis.strRayHooks.push(hook);
+  globalThis.xrayHooks = globalThis.xrayHooks || [];
+  globalThis.xrayHooks.push(hook);
 
   frameworkLogger.log(
     "stringray-activation",
@@ -135,12 +135,12 @@ async function activateHooks(jobId: string): Promise<void> {
     );
 
     // Create and register the Codex injector hook
-    const { createStringRayCodexInjectorHook } = await import("./codex-injector");
-    const hook = createStringRayCodexInjectorHook();
+    const { createXrayCodexInjectorHook } = await import("./codex-injector");
+    const hook = createXrayCodexInjectorHook();
     
     // Store hook globally for OpenCode to pick up
-    globalThis.strRayHooks = globalThis.strRayHooks || [];
-    (globalThis.strRayHooks as Array<import("../types/global.js").StringRayHook>).push(hook);
+    globalThis.xrayHooks = globalThis.xrayHooks || [];
+    (globalThis.xrayHooks as Array<import("../types/global.js").XrayHook>).push(hook);
 
     frameworkLogger.log(
       "stringray-activation",
@@ -149,7 +149,7 @@ async function activateHooks(jobId: string): Promise<void> {
       { 
         jobId, 
         hookName: hook.name,
-        hooksRegistered: globalThis.strRayHooks!.length 
+        hooksRegistered: globalThis.xrayHooks!.length 
       },
     );
   } catch (error) {
@@ -190,11 +190,12 @@ async function activateStateManagement(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { StringRayStateManager } = await import("../state/state-manager");
-  const stateManager = new StringRayStateManager();
+  const { XrayStateManager } = await import("../state/state-manager");
+  const stateManager = new XrayStateManager();
 
   // Store the state manager instance globally for framework use
-  globalThis.strRayStateManager = stateManager;
+  globalThis.xrayStateManager = stateManager;
+  globalThis.strRayStateManager = stateManager; // backward compat
 
   frameworkLogger.log(
     "stringray-activation",
@@ -212,7 +213,7 @@ async function activateOrchestrator(jobId: string): Promise<void> {
     { jobId },
   );
 
-  const { strRayOrchestrator } = await import("./orchestrator");
+  const { xrayOrchestrator } = await import("./orchestrator");
 
   // Also activate the multi-agent orchestration coordinator
   const { multiAgentOrchestrationCoordinator } =
@@ -235,13 +236,14 @@ async function activateProcessors(jobId: string): Promise<void> {
   );
 
   const { ProcessorManager } = await import("../processors/processor-manager");
-  const { StringRayStateManager } = await import("../state/state-manager");
+  const { XrayStateManager } = await import("../state/state-manager");
 
-  const stateManager = new StringRayStateManager();
+  const stateManager = new XrayStateManager();
   const processorManager = new ProcessorManager(stateManager);
 
   // Store the processor manager instance globally for framework use
-  globalThis.strRayProcessorManager = processorManager;
+  globalThis.xrayProcessorManager = processorManager;
+  globalThis.strRayProcessorManager = processorManager; // backward compat
 
   frameworkLogger.log(
     "stringray-activation",
@@ -262,7 +264,7 @@ async function activatePostProcessor(jobId: string): Promise<void> {
   const { PostProcessor } = await import("../postprocessor/PostProcessor");
 
   // Get existing state manager (should be initialized by boot orchestrator)
-  const stateManager = globalThis.strRayStateManager;
+  const stateManager = globalThis.xrayStateManager;
   if (!stateManager) {
     throw new Error(
       "State manager not initialized - boot orchestrator must run first",
@@ -271,7 +273,8 @@ async function activatePostProcessor(jobId: string): Promise<void> {
 
   const postProcessor = new PostProcessor(stateManager, null, {});
 
-  globalThis.strRayPostProcessor = postProcessor;
+  globalThis.xrayPostProcessor = postProcessor;
+  globalThis.strRayPostProcessor = postProcessor; // backward compat
 
   frameworkLogger.log(
     "stringray-activation",
@@ -281,7 +284,8 @@ async function activatePostProcessor(jobId: string): Promise<void> {
   );
 
   const { pathResolver } = await import("../utils/path-resolver.js");
-  globalThis.strRayPathResolver = pathResolver;
+  globalThis.xrayPathResolver = pathResolver;
+  globalThis.strRayPathResolver = pathResolver; // backward compat
 
   frameworkLogger.log(
     "stringray-activation",
@@ -292,7 +296,8 @@ async function activatePostProcessor(jobId: string): Promise<void> {
 
   const { CodexInjector } = await import("./codex-injector.js");
   const codexInjector = new CodexInjector();
-  globalThis.strRayCodexInjector = codexInjector;
+  globalThis.xrayCodexInjector = codexInjector;
+  globalThis.strRayCodexInjector = codexInjector; // backward compat
 
   frameworkLogger.log(
     "stringray-activation",

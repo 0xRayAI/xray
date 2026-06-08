@@ -12,7 +12,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 
 describe("0xRay Infrastructure Tests", () => {
   // Get project root (two levels up from this test file)
@@ -20,7 +20,7 @@ describe("0xRay Infrastructure Tests", () => {
 
   describe("Core File System", () => {
     it("should have required directories", () => {
-      const requiredDirs = ["src", ".opencode", ".opencode/strray"].map((d) =>
+      const requiredDirs = ["src", ".opencode", ".opencode/xray"].map((d) =>
         path.join(projectRoot, d),
       );
 
@@ -61,10 +61,10 @@ describe("0xRay Infrastructure Tests", () => {
   });
 
   describe("State Management Infrastructure", () => {
-    let stateManager: StringRayStateManager;
+    let stateManager: XrayStateManager;
 
     beforeAll(() => {
-      stateManager = new StringRayStateManager();
+      stateManager = new XrayStateManager();
     });
 
     it("should initialize state manager", () => {

@@ -74,7 +74,7 @@ interface StandardsViolation {
   severity: "high" | "medium" | "low";
 }
 
-class StringRayCodeReviewServer {
+class XrayCodeReviewServer {
   private server: Server;
 
   constructor() {
@@ -1125,8 +1125,8 @@ class StringRayCodeReviewServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayCodeReviewServer();
+  const server = new XrayCodeReviewServer();
   server.run().catch(() => {});
 }
 
-export { StringRayCodeReviewServer };
+export { XrayCodeReviewServer };

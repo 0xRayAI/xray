@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - Auto Summary Capture
+# 0xRay Framework - Auto Summary Capture
 
 # Monitors for 'job done print summary' signal and automatically logs summaries
 
@@ -40,7 +40,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "🤖 StrRay Auto-Summary Capture Active"
+echo "🤖 0xRay Auto-Summary Capture Active"
 echo "======================================"
 echo "Monitoring for 'job done print summary' signals..."
 echo "All AI-generated summaries will be automatically logged to REFACTORING_LOG.md"

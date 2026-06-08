@@ -2,7 +2,50 @@
 
 v2.0: Now uses the Node.js bridge for real framework integration.
 Falls back to CLI (npx 0xray) when bridge is unavailable.
+"""
+
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+
+# ── Paths ─────────────────────────────────────────────────────
+
+PLUGIN_DIR = Path(__file__).resolve().parent
+BRIDGE_PATH = PLUGIN_DIR / "bridge.mjs"
+
+
+def _get_project_root():
+    """Find the project root by walking up from cwd."""
+    cwd = os.getcwd()
+    home = Path.home()
+    d = Path(cwd).resolve()
+    while True:
+        if (d / "node_modules" / "0xray" / "package.json").exists():
+            return str(d)
+        if (d / ".opencode" / "xray" / "features.json").exists():
+            return str(d)
+        if d != home and (d / "package.json").exists():
+            return str(d)
+        d = d.parent
+        if d == d.parent:
+            break
+    return cwd
+
+
+def _run_xray(args, timeout=30):
+    """Run 0xray CLI command, return JSON string result."""
+    try:
+        result = subprocess.run(
             ["npx", "0xray"] + args,
+            capture_output=True, text=True, timeout=timeout,
+        )
+        if result.returncode == 0:
+            return json.dumps({"status": "ok", "output": result.stdout})
+        return json.dumps({"status": "error", "error": result.stderr[:500]})
+    except FileNotFoundError:
         return json.dumps({"error": "0xray not found. Run: npm install -g 0xray"})
     except subprocess.TimeoutExpired:
         return json.dumps({"error": f"Command timed out after {timeout}s"})
@@ -10,9 +53,28 @@ Falls back to CLI (npx 0xray) when bridge is unavailable.
         return json.dumps({"error": str(e)})
 
 
-# ── Tool: strray_validate ─────────────────────────────────────
+def _bridge_call(command, timeout=30):
+    """Call bridge.mjs with a JSON command, return parsed dict."""
+    try:
+        result = subprocess.run(
+            ["node", str(BRIDGE_PATH), "--cwd", _get_project_root()],
+            input=json.dumps(command),
+            capture_output=True, text=True, timeout=timeout,
+        )
+        if result.returncode != 0:
+            return {"error": result.stderr[:300] if result.stderr else "bridge failed"}
+        return json.loads(result.stdout)
+    except FileNotFoundError:
+        return {"error": "node not found"}
+    except subprocess.TimeoutExpired:
+        return {"error": f"bridge timed out after {timeout}s"}
+    except (json.JSONDecodeError, OSError) as e:
+        return {"error": str(e)}
 
-def strray_validate(args: dict, **kwargs) -> str:
+
+# ── Tool: xray_validate ─────────────────────────────────────
+
+def xray_validate(args: dict, **kwargs) -> str:
     """Run pre-commit validation on files using the framework.
 
     Uses bridge for real quality gate + processor pipeline.
@@ -41,7 +103,7 @@ def strray_validate(args: dict, **kwargs) -> str:
         })
 
     # Fallback to CLI
-    result = json.loads(_run_strray(["validate"], timeout=30))
+    result = json.loads(_run_xray(["validate"], timeout=30))
     if "error" in result:
         return json.dumps(result)
 
@@ -54,10 +116,10 @@ def strray_validate(args: dict, **kwargs) -> str:
     })
 
 
-# ── Tool: strray_codex_check ──────────────────────────────────
+# ── Tool: xray_codex_check ──────────────────────────────────
 
-def strray_codex_check(args: dict, **kwargs) -> str:
-    """Check code against StringRay codex rules.
+def xray_codex_check(args: dict, **kwargs) -> str:
+    """Check code against Xray codex rules.
 
     Uses bridge for real quality gate codex checks.
     Falls back to CLI if bridge unavailable.
@@ -93,7 +155,7 @@ def strray_codex_check(args: dict, **kwargs) -> str:
             "focus_areas": focus_areas or "all",
             "code_length": len(code),
             "note": "Bridge unavailable — basic analysis only. "
-                   "Full codex validation available via MCP: mcp_strray_enforcer_codex_enforcement",
+                   "Full codex validation available via MCP: mcp_xray_enforcer_codex_enforcement",
             "via": "static",
         })
 
@@ -109,7 +171,7 @@ def strray_codex_check(args: dict, **kwargs) -> str:
             "via": "bridge",
         })
 
-    result = json.loads(_run_strray(["health"], timeout=15))
+    result = json.loads(_run_xray(["health"], timeout=15))
     if "error" in result:
         return json.dumps(result)
 
@@ -121,10 +183,10 @@ def strray_codex_check(args: dict, **kwargs) -> str:
     })
 
 
-# ── Tool: strray_health ───────────────────────────────────────
+# ── Tool: xray_health ───────────────────────────────────────
 
-def strray_health(args: dict, **kwargs) -> str:
-    """Check StringRay framework health via bridge.
+def xray_health(args: dict, **kwargs) -> str:
+    """Check Xray framework health via bridge.
 
     Returns framework status, loaded components, version.
     """
@@ -141,13 +203,13 @@ def strray_health(args: dict, **kwargs) -> str:
         })
 
     # Fallback to CLI
-    return _run_strray(["health"], timeout=15)
+    return _run_xray(["health"], timeout=15)
 
 
-# ── Tool: strray_hooks ───────────────────────────────────────
+# ── Tool: xray_hooks ───────────────────────────────────────
 
-def strray_hooks(args: dict, **kwargs) -> str:
-    """Manage StringRay git hooks.
+def xray_hooks(args: dict, **kwargs) -> str:
+    """Manage Xray git hooks.
 
     Actions: install, uninstall, list, status
     Uses bridge for hook management when available.
@@ -174,7 +236,7 @@ def strray_hooks(args: dict, **kwargs) -> str:
 
     # Fallback: direct file-based hook management
     git_hooks_dir = Path(_get_project_root()) / ".git" / "hooks"
-    strray_hooks_dir = Path(_get_project_root()) / "hooks"
+    xray_hooks_dir = Path(_get_project_root()) / "hooks"
 
     if not git_hooks_dir.exists():
         return json.dumps({"error": "Not a git repository", "via": "fallback"})
@@ -183,19 +245,19 @@ def strray_hooks(args: dict, **kwargs) -> str:
         result = {"managed": [], "missing": [], "external": [], "stale": []}
         for hook_name in hooks:
             git_hook = git_hooks_dir / hook_name
-            strray_hook = strray_hooks_dir / hook_name
+            xray_hook = xray_hooks_dir / hook_name
             if not git_hook.exists():
                 result["missing"].append(hook_name)
             else:
                 try:
                     content = git_hook.read_text()[:500]
-                    if "StringRay" in content or "strray" in content or "run-hook.js" in content:
+                    if "Xray" in content or "StringRay" in content or "xray" in content or "strray" in content or "run-hook.js" in content:
                         result["managed"].append(hook_name)
                     else:
                         result["external"].append(hook_name)
                 except OSError:
                     result["external"].append(hook_name)
-            if not strray_hook.exists():
+            if not xray_hook.exists():
                 result["stale"].append(hook_name)
         return json.dumps({"status": "ok", "action": action, **result, "via": "fallback"})
 
@@ -203,7 +265,7 @@ def strray_hooks(args: dict, **kwargs) -> str:
         installed = []
         skipped = []
         for hook_name in hooks:
-            src = strray_hooks_dir / hook_name
+            src = xray_hooks_dir / hook_name
             dst = git_hooks_dir / hook_name
             if not src.exists():
                 skipped.append(hook_name)
@@ -212,7 +274,7 @@ def strray_hooks(args: dict, **kwargs) -> str:
                 if dst.exists():
                     try:
                         content = dst.read_text()[:500]
-                        if "StringRay" not in content and "strray" not in content:
+                        if "Xray" not in content and "StringRay" not in content and "xray" not in content and "strray" not in content:
                             dst.rename(dst.with_suffix(".strray-backup"))
                         else:
                             dst.unlink()
@@ -238,8 +300,8 @@ def strray_hooks(args: dict, **kwargs) -> str:
                 continue
             try:
                 content = dst.read_text()[:500]
-                is_strray = "StringRay" in content or "strray" in content or "run-hook.js" in content
-                if is_strray or dst.is_symlink():
+                is_xray = "Xray" in content or "StringRay" in content or "xray" in content or "strray" in content or "run-hook.js" in content
+                if is_xray or dst.is_symlink():
                     dst.unlink()
                     if backup.exists():
                         shutil.move(str(backup), str(dst))

@@ -3,14 +3,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { ProcessorManager } from "../../processors/processor-manager.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 
 describe("Processor Auto-Discovery", () => {
   let tmpDir: string;
   let implementationsDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-discovery-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-discovery-test-"));
     implementationsDir = path.join(tmpDir, "implementations");
     fs.mkdirSync(implementationsDir, { recursive: true });
   });
@@ -23,7 +23,7 @@ describe("Processor Auto-Discovery", () => {
     fs.writeFileSync(path.join(implementationsDir, "something.test.js"), "// test file");
     fs.writeFileSync(path.join(implementationsDir, "other.spec.js"), "// spec file");
 
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const discovered = await manager.discoverProcessors(tmpDir);
@@ -32,7 +32,7 @@ describe("Processor Auto-Discovery", () => {
   });
 
   it("should not overwrite hardcoded factories", async () => {
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const factoriesBefore = (manager as any).factories.size;
@@ -43,7 +43,7 @@ describe("Processor Auto-Discovery", () => {
   });
 
   it("should handle missing implementations directory gracefully", async () => {
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const discovered = await manager.discoverProcessors("/nonexistent/path");
@@ -54,7 +54,7 @@ describe("Processor Auto-Discovery", () => {
   it("should handle malformed files gracefully", async () => {
     fs.writeFileSync(path.join(implementationsDir, "broken.js"), "this is not valid JS {{{");
 
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const discovered = await manager.discoverProcessors(tmpDir);
@@ -63,7 +63,7 @@ describe("Processor Auto-Discovery", () => {
   });
 
   it("should discover processors from default implementations directory", async () => {
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const discovered = await manager.discoverProcessors();
@@ -92,7 +92,7 @@ export class NeedsArgsProcessor {
 `;
     fs.writeFileSync(path.join(implementationsDir, "needs-args.js"), processorCode);
 
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const discovered = await manager.discoverProcessors(tmpDir);
@@ -101,7 +101,7 @@ export class NeedsArgsProcessor {
   });
 
   it("should register discovered processor as a factory", async () => {
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     await manager.discoverProcessors();
@@ -112,7 +112,7 @@ export class NeedsArgsProcessor {
   }, 60000);
 
   it("should discover PostProcessor subclasses", async () => {
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const discovered = await manager.discoverProcessors();
@@ -122,7 +122,7 @@ export class NeedsArgsProcessor {
   }, 60000);
 
   it("should registerProcessorInstance create factory from IProcessor", async () => {
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const mockProcessor = {
@@ -150,7 +150,7 @@ export class NeedsArgsProcessor {
   });
 
   it("should not overwrite existing factory via registerProcessorInstance", async () => {
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const manager = new ProcessorManager(stateManager);
 
     const factoriesBefore = (manager as any).factories.size;

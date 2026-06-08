@@ -203,7 +203,7 @@ interface McpToolResponse {
   data?: Record<string, unknown>;
 }
 
-class StringRayTestingBestPracticesServer {
+class XrayTestingBestPracticesServer {
   private server: Server;
 
   constructor() {
@@ -1225,8 +1225,8 @@ class StringRayTestingBestPracticesServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayTestingBestPracticesServer();
+  const server = new XrayTestingBestPracticesServer();
   server.run().catch(() => {});
 }
 
-export { StringRayTestingBestPracticesServer };
+export { XrayTestingBestPracticesServer };

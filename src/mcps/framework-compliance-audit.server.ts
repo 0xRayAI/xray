@@ -33,7 +33,7 @@ interface AuditResults {
   summary: string;
 }
 
-class StringRayFrameworkComplianceAuditServer {
+class XrayFrameworkComplianceAuditServer {
   private server: Server;
 
   constructor() {
@@ -628,8 +628,8 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayFrameworkComplianceAuditServer();
+  const server = new XrayFrameworkComplianceAuditServer();
   server.run().catch((error) => frameworkLogger.log("mcps/framework-compliance-audit", "run", "error", { error: String(error) }));
 }
 
-export { StringRayFrameworkComplianceAuditServer };
+export { XrayFrameworkComplianceAuditServer };

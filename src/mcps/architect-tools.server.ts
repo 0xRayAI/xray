@@ -35,7 +35,7 @@ interface FileNode {
   extension: string;
 }
 
-class StringRayArchitectToolsServer {
+class XrayArchitectToolsServer {
   private server: Server;
 
   constructor() {
@@ -336,8 +336,8 @@ class StringRayArchitectToolsServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayArchitectToolsServer();
+  const server = new XrayArchitectToolsServer();
   server.run().catch((error) => frameworkLogger.log("mcps/architect-tools", "run", "error", { error: String(error) }));
 }
 
-export default StringRayArchitectToolsServer;
+export default XrayArchitectToolsServer;

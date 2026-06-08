@@ -6,4 +6,5 @@ export * from "./context-providers.js";
 export * from "./state-types.js";
 
 // Re-export commonly used state utilities
-export { StringRayStateManager } from "./state-manager.js";
+export { XrayStateManager } from "./state-manager.js";
+export { XrayStateManager as StringRayStateManager } from "./state-manager.js";

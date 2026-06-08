@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Hermes Agent MCP Plugin Integration Tests
+ * 0xRay Hermes Agent MCP Plugin Integration Tests
  *
  * Tests that the Hermes integration can be loaded, instantiated,
  * and exports the correct MCP tools and bridge configuration.
@@ -105,7 +105,7 @@ async function runTests() {
   if (fs.existsSync(pluginYamlPath)) {
     try {
       const content = fs.readFileSync(pluginYamlPath, 'utf-8');
-      const expectedTools = ['strray_validate', 'strray_codex_check', 'strray_health', 'strray_hooks'];
+      const expectedTools = ['xray_validate', 'xray_codex_check', 'xray_health', 'xray_hooks'];
       for (const tool of expectedTools) {
         if (content.includes(tool)) {
           pass(`plugin.yaml lists tool "${tool}"`);

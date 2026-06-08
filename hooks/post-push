@@ -1,5 +1,5 @@
 #!/bin/bash
-# StringRay Post-Push Hook
+# 0xRay Post-Push Hook
 # Runs comprehensive monitoring and reporting after push
 # Does NOT block — runs in background
 

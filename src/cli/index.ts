@@ -570,13 +570,13 @@ program
       // Check configuration - check for opencode.json or .strray/ (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule; plain xray primary)
       const cwd = process.cwd();
       const opencodeConfigPath = path.join(cwd, "opencode.json");
-      const strrayDir = getConfigDir(cwd);
+      const xrayDir = getConfigDir(cwd);
       const opencodeExists = fs.existsSync(opencodeConfigPath);
-      const strrayDirExists = fs.existsSync(strrayDir);
+      const xrayDirExists = fs.existsSync(xrayDir);
       if (opencodeExists) {
         console.log("✅ opencode configuration found");
-      } else if (strrayDirExists) {
-        console.log(`✅ Configuration directory found: ${strrayDir}`);
+      } else if (xrayDirExists) {
+        console.log(`✅ Configuration directory found: ${xrayDir}`);
       } else {
         console.log("ℹ️  No opencode.json or config directory found (run: npx xray fix to create)");
       }

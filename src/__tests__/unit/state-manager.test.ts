@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  StringRayStateManager,
+  XrayStateManager,
   StateManager,
 } from "../../state/state-manager.js";
 import { setupStandardMocks, waitForDebounce } from "../utils/test-utils.js";
 
-describe("StringRayStateManager", () => {
+describe("XrayStateManager", () => {
   let stateManager: StateManager;
 
   beforeEach(async () => {
     setupStandardMocks();
-    stateManager = new StringRayStateManager(
+    stateManager = new XrayStateManager(
       `/test/state-manager-${Date.now()}.json`,
     );
     await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for initialization
@@ -125,8 +125,8 @@ describe("StringRayStateManager", () => {
 
   describe("isolation between instances", () => {
     it("should maintain separate state between instances", () => {
-      const manager1 = new StringRayStateManager();
-      const manager2 = new StringRayStateManager();
+      const manager1 = new XrayStateManager();
+      const manager2 = new XrayStateManager();
 
       manager1.set("shared", "manager1");
       manager2.set("shared", "manager2");

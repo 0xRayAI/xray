@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { StringRayStateManager } from '../../../dist/state/state-manager.js';
+import { XrayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== PERFORMANCE PIPELINE TEST ===\n');
 

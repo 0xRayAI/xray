@@ -29,7 +29,7 @@ export interface OpenClawHooksConfig {
 /**
  * 0xRay tool event
  */
-export interface StringRayToolEvent {
+export interface XrayToolEvent {
   toolName: string;
   toolId: string;
   args: Record<string, unknown>;
@@ -44,7 +44,7 @@ export interface StringRayToolEvent {
 /**
  * Hook event callback type
  */
-export type ToolEventCallback = (event: StringRayToolEvent) => void | Promise<void>;
+export type ToolEventCallback = (event: XrayToolEvent) => void | Promise<void>;
 
 /**
  * OpenClaw Hooks Manager
@@ -138,7 +138,7 @@ export class OpenClawHooksManager {
   /**
    * Handle tool.before event from 0xRay
    */
-  async onToolBefore(event: StringRayToolEvent): Promise<void> {
+  async onToolBefore(event: XrayToolEvent): Promise<void> {
     if (!this.config.enabled || !this.config.toolBefore) {
       return;
     }
@@ -188,7 +188,7 @@ export class OpenClawHooksManager {
   /**
    * Handle tool.after event from 0xRay
    */
-  async onToolAfter(event: StringRayToolEvent): Promise<void> {
+  async onToolAfter(event: XrayToolEvent): Promise<void> {
     if (!this.config.enabled || !this.config.toolAfter) {
       return;
     }

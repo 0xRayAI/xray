@@ -1,5 +1,5 @@
 """
-StrRay Framework - BaseAgent Codex Integration Test Suite
+0xRay Framework - BaseAgent Codex Integration Test Suite
 
 Comprehensive integration tests for BaseAgent codex methods including:
 - Codex loading and term extraction from configuration
@@ -18,9 +18,9 @@ from concurrent.futures import ThreadPoolExecutor
 import psutil
 import json
 
-from strray.core.agent import BaseAgent, AgentContext
-from strray.core.codex_loader import CodexLoader
-from strray.config.manager import ConfigManager
+from xray.core.agent import BaseAgent, AgentContext
+from xray.core.codex_loader import CodexLoader
+from xray.config.manager import ConfigManager
 
 
 class TestBaseAgentCodexIntegration:
@@ -363,7 +363,7 @@ class TestBaseAgentCodexIntegration:
         assert len(results) == 2  # Should return results for both loaded terms
         # Some may fail but shouldn't crash the entire validation
 
-    @patch("strray.core.codex_loader.logger")
+    @patch("xray.core.codex_loader.logger")
     def test_agent_codex_logging_integration(self, mock_logger):
         """Test codex operations integrate with agent logging."""
         codex_loader = CodexLoader(config_manager=self.config_manager)

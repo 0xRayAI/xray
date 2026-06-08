@@ -1,6 +1,6 @@
-import { StringRayCodeReviewServer } from "./knowledge-skills/code-review.server.js";
-import { StringRaySecurityAuditServer } from "./knowledge-skills/security-audit.server.js";
-import { StringRayLibrarianServer } from "./researcher.server.js";
+import { XrayCodeReviewServer } from "./knowledge-skills/code-review.server.js";
+import { XraySecurityAuditServer } from "./knowledge-skills/security-audit.server.js";
+import { XrayLibrarianServer } from "./researcher.server.js";
 
 interface AnalyzeProposalArgs {
   proposalTitle?: string;
@@ -25,7 +25,7 @@ const instances = new Map<string, InProcessSkillHandler>();
 
 function getCodeReview(): InProcessSkillHandler {
   if (!instances.has("code-review")) {
-    const server = new StringRayCodeReviewServer();
+    const server = new XrayCodeReviewServer();
     instances.set("code-review", {
       analyzeProposal: (args) => server.analyzeProposal(args) as Promise<AnalyzeProposalResult>,
     });
@@ -35,7 +35,7 @@ function getCodeReview(): InProcessSkillHandler {
 
 function getSecurityAudit(): InProcessSkillHandler {
   if (!instances.has("security-audit")) {
-    const server = new StringRaySecurityAuditServer();
+    const server = new XraySecurityAuditServer();
     instances.set("security-audit", {
       analyzeProposal: (args) => server.analyzeProposal(args) as Promise<AnalyzeProposalResult>,
     });
@@ -45,7 +45,7 @@ function getSecurityAudit(): InProcessSkillHandler {
 
 function getResearcher(): InProcessSkillHandler {
   if (!instances.has("researcher")) {
-    const server = new StringRayLibrarianServer();
+    const server = new XrayLibrarianServer();
     instances.set("researcher", {
       analyzeProposal: (args) => server.analyzeProposal(args) as Promise<AnalyzeProposalResult>,
     });

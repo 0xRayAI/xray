@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Hermes Agent E2E Integration Test
+ * 0xRay Hermes Agent E2E Integration Test
  *
  * Full end-to-end test that:
  *   1. Creates a temp consumer directory
- *   2. Installs strray-ai from npm
- *   3. Enables the strray-hermes plugin in Hermes
+ *   2. Installs 0xray from npm
+ *   3. Enables the xray-hermes plugin in Hermes
  *   4. Runs Hermes with queries that exercise all plugin paths
  *   5. Verifies logs, hooks, routing, bridge calls, and tool events
  *
  * Prerequisites:
  *   - Node.js >= 18
  *   - Hermes Agent CLI (`hermes`) installed and configured
- *   - `hermes plugins enable strray-hermes` run at least once
+ *   - `hermes plugins enable xray-hermes` run at least once
  *   - Working API key in ~/.hermes/.env
  *
  * Usage:
@@ -120,7 +120,7 @@ function assertFileExists(filePath, label) {
 
 async function main() {
   const startTime = Date.now();
-  console.log('\n\x1b[1mStringRay Hermes E2E Integration Test\x1b[0m');
+  console.log('\n\x1b[1m0xRay Hermes E2E Integration Test\x1b[0m');
   console.log(`Started: ${new Date().toISOString()}\n`);
 
   // ── Phase 0: Prerequisites ────────────────────────────────
@@ -140,22 +140,22 @@ async function main() {
   pass(`Hermes version: ${hermesVersion}`);
 
   const pluginStatus = run('hermes plugins list');
-  if (pluginStatus.includes('strray-hermes')) {
-    pass('strray-hermes plugin visible to Hermes');
+  if (pluginStatus.includes('0xray-hermes')) {
+    pass('0xray-hermes plugin visible to Hermes');
     if (pluginStatus.includes('not enabled')) {
-      run('hermes plugins enable strray-hermes');
-      pass('strray-hermes plugin enabled');
+      run('hermes plugins enable 0xray-hermes');
+      pass('0xray-hermes plugin enabled');
     } else {
-      pass('strray-hermes plugin already enabled');
+      pass('0xray-hermes plugin already enabled');
     }
   } else {
-    fail('strray-hermes plugin visible', 'not found in hermes plugins list');
+    fail('0xray-hermes plugin visible', 'not found in hermes plugins list');
   }
 
   // ── Phase 1: Environment Setup ────────────────────────────
   section('Phase 1: Environment Setup');
 
-  const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `hermes-strray-e2e-${Date.now()}`);
+  const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `hermes-xray-e2e-${Date.now()}`);
   console.log(`  Test directory: ${testDir}`);
 
   if (!CUSTOM_DIR || !fs.existsSync(path.join(testDir, 'node_modules', '0xray'))) {
@@ -309,36 +309,36 @@ async function main() {
   // ── Phase 3: Hermes Plugin Tool Tests ─────────────────────
   section('Phase 3: Hermes Plugin Tool Tests');
 
-  console.log('  Running hermes with strray_health...');
-  let result = await hermesQuery('Use the strray_health tool to check the StringRay framework status. Report what it says.', testDir);
+  console.log('  Running hermes with xray_health...');
+  let result = await hermesQuery('Use the xray_health tool to check the 0xRay framework status. Report what it says.', testDir);
   if (result.stdout.includes('loaded') || result.stdout.includes('ok') || result.stdout.includes('framework')) {
-    pass('hermes strray_health: tool responded');
+    pass('hermes xray_health: tool responded');
   } else {
-    fail('hermes strray_health', `no response: ${result.stdout.substring(0, 100)}`);
+    fail('hermes xray_health', `no response: ${result.stdout.substring(0, 100)}`);
   }
 
-  console.log('  Running hermes with strray_codex_check...');
-  result = await hermesQuery('Use strray_codex_check to validate this code for a create operation: const x: any = eval(input); console.log(x);', testDir);
+  console.log('  Running hermes with xray_codex_check...');
+  result = await hermesQuery('Use xray_codex_check to validate this code for a create operation: const x: any = eval(input); console.log(x);', testDir);
   if (result.stdout.toLowerCase().includes('violation') || result.stdout.toLowerCase().includes('error') || result.stdout.toLowerCase().includes('console.log') || result.stdout.toLowerCase().includes('clean-debug')) {
-    pass('hermes strray_codex_check: violations detected');
+    pass('hermes xray_codex_check: violations detected');
   } else {
-    fail('hermes strray_codex_check', `no violations reported: ${result.stdout.substring(0, 150)}`);
+    fail('hermes xray_codex_check', `no violations reported: ${result.stdout.substring(0, 150)}`);
   }
 
-  console.log('  Running hermes with strray_validate...');
-  result = await hermesQuery('Use strray_validate to validate src/calculator.ts for a commit operation.', testDir);
+  console.log('  Running hermes with xray_validate...');
+  result = await hermesQuery('Use xray_validate to validate src/calculator.ts for a commit operation.', testDir);
   if (result.stdout.toLowerCase().includes('pass') || result.stdout.toLowerCase().includes('valid')) {
-    pass('hermes strray_validate: responded');
+    pass('hermes xray_validate: responded');
   } else {
-    fail('hermes strray_validate', `unexpected: ${result.stdout.substring(0, 100)}`);
+    fail('hermes xray_validate', `unexpected: ${result.stdout.substring(0, 100)}`);
   }
 
-  console.log('  Running hermes with strray_hooks...');
-  result = await hermesQuery('Use strray_hooks to check the status of git hooks.', testDir);
+  console.log('  Running hermes with xray_hooks...');
+  result = await hermesQuery('Use xray_hooks to check the status of git hooks.', testDir);
   if (result.stdout.toLowerCase().includes('hook') || result.stdout.toLowerCase().includes('managed') || result.stdout.toLowerCase().includes('commit')) {
-    pass('hermes strray_hooks: responded');
+    pass('hermes xray_hooks: responded');
   } else {
-    fail('hermes strray_hooks', `unexpected: ${result.stdout.substring(0, 100)}`);
+    fail('hermes xray_hooks', `unexpected: ${result.stdout.substring(0, 100)}`);
   }
 
   // ── Phase 4: Pre/Post Hook Pipeline ───────────────────────
@@ -444,11 +444,11 @@ async function main() {
       const toolNames = [...new Set(events.map((l) => l.match(/"tool":"([^"]+)"/)?.[1]).filter(Boolean))];
       console.log(`    Tools: ${toolNames.join(', ')}`);
 
-      const strrayTools = toolNames.filter((t) => t.startsWith('strray_'));
-      if (strrayTools.length > 0) {
-        pass(`plugin tools used: ${strrayTools.join(', ')}`);
+      const xrayTools = toolNames.filter((t) => t.startsWith('xray_'));
+      if (xrayTools.length > 0) {
+        pass(`plugin tools used: ${xrayTools.join(', ')}`);
       } else {
-        fail('plugin tools used', 'no strray_* tool events');
+        fail('plugin tools used', 'no xray_* tool events');
       }
 
       const codeTools = ['write_file', 'patch', 'execute_code', 'write', 'edit'];

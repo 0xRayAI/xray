@@ -1,1 +1,0 @@
-npx tsc --project tsconfig.json 2>&1 | head -50

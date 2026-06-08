@@ -11,7 +11,7 @@
 import * as crypto from 'crypto';
 import * as http from 'http';
 import {
-  StringRayAPIServerConfig,
+  XrayAPIServerConfig,
   AgentInvokeRequest,
   AgentInvokeResponse,
   HealthCheckResponse,
@@ -29,9 +29,9 @@ export interface AgentInvoker {
 /**
  * 0xRay API Server
  */
-export class StringRayAPIServer {
+export class XrayAPIServer {
   private server: http.Server | null = null;
-  private config: Required<StringRayAPIServerConfig>;
+  private config: Required<XrayAPIServerConfig>;
   private agentInvoker: AgentInvoker | null = null;
   private apiKey: string = '';
   private stats: APIServerStatistics = {
@@ -45,7 +45,7 @@ export class StringRayAPIServer {
   private responseTimes: number[] = [];
   private logger: Console;
 
-  constructor(config: StringRayAPIServerConfig) {
+  constructor(config: XrayAPIServerConfig) {
     this.config = {
       port: config.port || 18431,
       host: config.host || '127.0.0.1',
@@ -72,7 +72,7 @@ export class StringRayAPIServer {
    */
   async start(): Promise<void> {
     if (this.server) {
-      this.logger.warn('[StringRayAPIServer] Server already running');
+      this.logger.warn('[XrayAPIServer] Server already running');
       return;
     }
 
@@ -82,14 +82,14 @@ export class StringRayAPIServer {
       });
 
       this.server.on('error', (error: Error) => {
-        this.logger.error('[StringRayAPIServer] Server error:', error);
+        this.logger.error('[XrayAPIServer] Server error:', error);
         this.stats.errors++;
         reject(error);
       });
 
       this.server.listen(this.config.port, this.config.host, () => {
         this.stats.startedAt = Date.now();
-        this.logger.info(`[StringRayAPIServer] Listening on http://${this.config.host}:${this.config.port}`);
+        this.logger.info(`[XrayAPIServer] Listening on http://${this.config.host}:${this.config.port}`);
         resolve();
       });
     });
@@ -102,7 +102,7 @@ export class StringRayAPIServer {
     return new Promise((resolve) => {
       if (this.server) {
         this.server.close(() => {
-          this.logger.info('[StringRayAPIServer] Server stopped');
+          this.logger.info('[XrayAPIServer] Server stopped');
           this.server = null;
           resolve();
         });
@@ -154,7 +154,7 @@ export class StringRayAPIServer {
       // authenticated requests using the API key from a victim's browser.
       if (this.config.apiKey) {
         this.logger.warn(
-          '[StringRayAPIServer] Security: API key is set with CORS enabled. ' +
+          '[XrayAPIServer] Security: API key is set with CORS enabled. ' +
           'Restricting Access-Control-Allow-Origin to localhost only. ' +
           'Configure explicit allowed origins if cross-origin access is needed.'
         );
@@ -244,7 +244,7 @@ export class StringRayAPIServer {
           this.sendResponse(res, 404, { error: 'Not found' });
       }
     } catch (error) {
-      this.logger.error(`[StringRayAPIServer] Error handling request:`, error);
+      this.logger.error(`[XrayAPIServer] Error handling request:`, error);
       this.stats.errors++;
       
       const errorMessage = error instanceof Error ? error.message : 'Internal server error';
@@ -442,6 +442,6 @@ export class StringRayAPIServer {
 /**
  * Factory function to create API server
  */
-export function createStringRayAPIServer(config: StringRayAPIServerConfig): StringRayAPIServer {
-  return new StringRayAPIServer(config);
+export function createXrayAPIServer(config: XrayAPIServerConfig): XrayAPIServer {
+  return new XrayAPIServer(config);
 }

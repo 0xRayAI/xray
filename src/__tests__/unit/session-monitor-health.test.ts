@@ -5,10 +5,10 @@
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
 import { SessionMonitor } from "../../session/session-monitor.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 
 describe("Session Monitor Health Monitoring", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
   let sessionMonitor: SessionMonitor;
 
   const createMockCoordinator = () => ({
@@ -38,7 +38,7 @@ describe("Session Monitor Health Monitoring", () => {
   });
 
   beforeEach(async () => {
-    stateManager = new StringRayStateManager();
+    stateManager = new XrayStateManager();
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     sessionMonitor = new SessionMonitor(

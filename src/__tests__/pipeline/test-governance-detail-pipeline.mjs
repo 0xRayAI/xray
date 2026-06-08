@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { StringRayStateManager } from '../../../dist/state/state-manager.js';
+import { XrayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== GOVERNANCE DETAIL PIPELINE TEST ===\n');
 
@@ -35,9 +35,9 @@ function test(name, fn) {
 console.log('Testing Governance Detail Pipeline\n');
 
 test('should verify SpawnGovernanceProcessor is registered in processor-manager', () => {
-  const stateManager = new StringRayStateManager();
+  const stateManager = new XrayStateManager();
   if (!stateManager) throw new Error('StateManager not created');
-  console.log('   (StringRayStateManager created)');
+  console.log('   (XrayStateManager created)');
 });
 
 test('should verify agent_spawn config exists in features.json', () => {

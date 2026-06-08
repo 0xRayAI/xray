@@ -7,7 +7,7 @@ export interface StateManager {
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveStateFilePath } from "../core/config-paths.js";
 
-export class StringRayStateManager implements StateManager {
+export class XrayStateManager implements StateManager {
   private store = new Map<string, unknown>();
   private persistencePath: string;
   private persistenceEnabled: boolean;
@@ -259,7 +259,7 @@ export class StringRayStateManager implements StateManager {
 
   // Enterprise features for advanced state management
   getStateVersion(): string {
-    return StringRayStateManager.VERSION || "1.1.1";
+    return XrayStateManager.VERSION || "1.1.1";
   }
 
   getAuditLog(): Array<{ timestamp: Date; operation: string; key: string }> {
@@ -280,5 +280,6 @@ export class StringRayStateManager implements StateManager {
   }
 }
 
-// Export alias for scripts expecting StrRayStateManager (backward compatibility)
-export { StringRayStateManager as StrRayStateManager };
+// Export alias for scripts expecting XrayStateManager
+// Backward compat: StringRayStateManager and StrRayStateManager aliases
+export { XrayStateManager as StringRayStateManager, XrayStateManager as StrRayStateManager };

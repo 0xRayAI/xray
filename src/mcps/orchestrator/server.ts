@@ -12,7 +12,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
-import { StringRayStateManager } from '../../state/state-manager.js';
+import { XrayStateManager } from '../../state/state-manager.js';
 import { MultiAgentOrchestrationCoordinator } from '../../orchestrator/multi-agent-orchestration-coordinator.js';
 
 import { TaskHandler } from './handlers/task-handler.js';
@@ -45,7 +45,7 @@ export class OrchestratorServer {
 
   constructor() {
     // Initialize actual coordinator
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     this.coordinator = new MultiAgentOrchestrationCoordinator(stateManager);
     
     // Initialize handlers

@@ -128,24 +128,24 @@ describe("Agent Registry Consistency", () => {
   });
 
   describe("opencode.json agent parity", () => {
-    function getStrrayAgentNames(): string[] {
+    function getXrayAgentNames(): string[] {
       if (!fs.existsSync(OPENCODE_JSON_PATH)) return [];
       const config = JSON.parse(fs.readFileSync(OPENCODE_JSON_PATH, "utf-8"));
       const allAgents = config.agent || {};
       return Object.entries(allAgents)
         .filter(([name, def]: [string, any]) =>
           !def.disable &&
-          !name.startsWith("strray-") &&
+          !name.startsWith("xray-") &&
           AGENT_REGISTRY[name],
         )
         .map(([name]) => name);
     }
 
-    it("should have every active strray agent in opencode.json present in registry", () => {
-      const strrayAgents = getStrrayAgentNames();
-      if (strrayAgents.length === 0) return;
+    it("should have every active xray agent in opencode.json present in registry", () => {
+      const xrayAgents = getXrayAgentNames();
+      if (xrayAgents.length === 0) return;
 
-      for (const name of strrayAgents) {
+      for (const name of xrayAgents) {
         expect(AGENT_REGISTRY[name]).toBeDefined();
       }
     });

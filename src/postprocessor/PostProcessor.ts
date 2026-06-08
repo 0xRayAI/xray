@@ -11,7 +11,7 @@
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveConfigPath } from "../core/config-paths.js";
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { SessionMonitor } from "../session/session-monitor.js";
 import { GitHookTrigger } from "./triggers/GitHookTrigger.js";
 import { WebhookTrigger } from "./triggers/WebhookTrigger.js";
@@ -49,7 +49,7 @@ export class PostProcessor {
   };
 
   constructor(
-    private stateManager: StringRayStateManager,
+    private stateManager: XrayStateManager,
     private sessionMonitor: SessionMonitor | null = null,
     config: Partial<PostProcessorConfig> = {},
   ) {
@@ -346,7 +346,7 @@ export class PostProcessor {
     const path = await import("path");
     
     try {
-      const configPath = resolveConfigPath("features.json") ?? path.join(process.cwd(), ".opencode", "strray", "features.json");
+      const configPath = resolveConfigPath("features.json") ?? path.join(process.cwd(), ".opencode", "xray", "features.json");
       if (fs.existsSync(configPath)) {
         const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
         return config.processors || {};

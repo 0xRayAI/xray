@@ -27,7 +27,7 @@ interface RecommendPatternsArgs {
   scale?: string;
 }
 
-class StringRayArchitecturePatternsServer {
+class XrayArchitecturePatternsServer {
   private server: Server;
 
   constructor() {
@@ -145,8 +145,8 @@ class StringRayArchitecturePatternsServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayArchitecturePatternsServer();
+  const server = new XrayArchitecturePatternsServer();
   server.run().catch(() => {});
 }
 
-export default StringRayArchitecturePatternsServer;
+export default XrayArchitecturePatternsServer;

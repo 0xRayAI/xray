@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { SessionCoordinator } from "../delegation/session-coordinator.js";
 import { SessionMonitor } from "./session-monitor.js";
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -40,7 +40,7 @@ export interface CleanupResult {
 }
 
 export class SessionCleanupManager {
-  private stateManager: StringRayStateManager;
+  private stateManager: XrayStateManager;
   private config: CleanupConfig;
   private cleanupInterval?: NodeJS.Timeout | undefined;
   private _sessionMetadata?: Map<string, SessionMetadata>;
@@ -48,7 +48,7 @@ export class SessionCleanupManager {
   private sessionMonitor: SessionMonitor | undefined;
 
   constructor(
-    stateManager: StringRayStateManager,
+    stateManager: XrayStateManager,
     config: Partial<CleanupConfig> = {},
     sessionMonitor?: SessionMonitor,
   ) {
@@ -454,7 +454,7 @@ export class SessionCleanupManager {
 }
 
 export const createSessionCleanupManager = (
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   config?: Partial<CleanupConfig>,
   sessionMonitor?: SessionMonitor,
 ): SessionCleanupManager => {

@@ -119,7 +119,7 @@ echo "⚙️ Framework Activation Validation:"
 LOG_FILE="logs/framework/activity.log"
 if [ -f "$LOG_FILE" ]; then
     # Check for activation success within last activation
-    if grep -q "strray-activation.*activation completed successfully" "$LOG_FILE" 2>/dev/null; then
+    if grep -q "xray-activation.*activation completed successfully" "$LOG_FILE" 2>/dev/null; then
         echo -e "${GREEN}✅ Framework activation: Completed successfully${NC}"
 
         # Check specific components
@@ -182,7 +182,7 @@ fi
 echo ""
 echo "🔬 Framework Activation Test:"
 if node -e "
-import('./dist/strray-activation.js').then(m => m.activate0xRayFramework()).then(() => {
+import('./dist/xray-activation.js').then(m => m.activate0xRayFramework()).then(() => {
   console.log('✅ Framework activation: Operational');
   process.exit(0);
 }).catch(e => {

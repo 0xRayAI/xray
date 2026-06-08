@@ -1,5 +1,5 @@
 /**
- * Grok CLI Integration for StringRay / 0xRay
+ * Grok CLI Integration for 0xRay
  *
  * This module provides the integration points for using 0xRay with the official Grok CLI.
  *
@@ -78,18 +78,18 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     const skillsMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/knowledge-skills/skill-invocation.server.js');
     try {
       execSync(
-        `grok mcp add strray-governance --command node --args "${govMcpPath}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "STRRAY_ROOT=${process.cwd()}"`,
+        `grok mcp add xray-governance --command node --args "${govMcpPath}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "STRRAY_ROOT=${process.cwd()}"`,
         { stdio: 'pipe' }
       );
       execSync(
-        `grok mcp add strray-skills --command node --args "${skillsMcpPath}" --env "STRRAY_ROOT=${process.cwd()}"`,
+        `grok mcp add xray-skills --command node --args "${skillsMcpPath}" --env "STRRAY_ROOT=${process.cwd()}"`,
         { stdio: 'pipe' }
       );
-      console.log('\x1b[32m✓ Registered strray MCP servers with Grok CLI\x1b[0m');
+      console.log('\x1b[32m✓ Registered xray MCP servers with Grok CLI\x1b[0m');
     } catch {
       console.log('\nCould not auto-register MCP servers. Run manually:');
-      console.log(`  grok mcp add strray-governance --command node --args "${govMcpPath}"`);
-      console.log(`  grok mcp add strray-skills --command node --args "${skillsMcpPath}"`);
+      console.log(`  grok mcp add xray-governance --command node --args "${govMcpPath}"`);
+      console.log(`  grok mcp add xray-skills --command node --args "${skillsMcpPath}"`);
     }
 
     console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');

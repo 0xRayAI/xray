@@ -94,7 +94,7 @@ function architectVote() {
     AGENT: 'architect',
     DECISION: 'approve',
     CONFIDENCE: 0.85,
-    REASONING: `Codification is warranted: (1) Current E2E tests lack a consistent architectural pattern — Vitest E2E files use dynamic imports and real child processes while standalone scripts use raw Node.js execSync/spawn. A formalized pattern (e.g., "all E2E tests MUST use Vitest with realistic mocks, NOT raw child_process for E2E") would reduce fragmentation. (2) The 3 standalone scripts each reinvent the same test harness (pass/fail counters, temp dir setup, run helper, cleanup) — codify a shared @strray-ai/e2e-harness module. (3) Codify the governance flow pattern: capture → govern → apply as the canonical E2E test blueprint. (4) Define clear boundary between unit tests (src/__tests__/unit/), integration (src/__tests__/integration/), and E2E (src/__tests__/e2e/ + scripts/test/).`,
+    REASONING: `Codification is warranted: (1) Current E2E tests lack a consistent architectural pattern — Vitest E2E files use dynamic imports and real child processes while standalone scripts use raw Node.js execSync/spawn. A formalized pattern (e.g., "all E2E tests MUST use Vitest with realistic mocks, NOT raw child_process for E2E") would reduce fragmentation. (2) The 3 standalone scripts each reinvent the same test harness (pass/fail counters, temp dir setup, run helper, cleanup) — codify a shared @0xray/e2e-harness module. (3) Codify the governance flow pattern: capture → govern → apply as the canonical E2E test blueprint. (4) Define clear boundary between unit tests (src/__tests__/unit/), integration (src/__tests__/integration/), and E2E (src/__tests__/e2e/ + scripts/test/).`,
   };
   return VOTE;
 }

@@ -11,14 +11,14 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { ProcessorManager } from "../../processors/processor-manager.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 
 describe("Processor Implementations Integration Tests", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
   let processorManager: ProcessorManager;
 
   beforeEach(() => {
-    stateManager = new StringRayStateManager("/tmp/test-processor-integration");
+    stateManager = new XrayStateManager("/tmp/test-processor-integration");
     processorManager = new ProcessorManager(stateManager);
 
     processorManager.registerProcessor({

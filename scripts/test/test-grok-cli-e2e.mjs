@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Grok CLI E2E Integration Test (Consumer Validation)
+ * 0xRay Grok CLI E2E Integration Test (Consumer Validation)
  *
  * Full parity with test-opencode-e2e.mjs (12 phases/48 passes), test-hermes-e2e.mjs (12/46),
  * and test-openclaw-e2e.mjs (16/108).
@@ -125,13 +125,13 @@ async function runHookScript(hookPath, envOverrides = {}) {
 function printGrokIntegrationTree() {
   const tree = `
 ┌─────────────────────────────────────────────────────────────────────┐
-│  GROK CLI — FIRST CLASS CITIZEN (StringRay / 0xRay)                 │
+│  GROK CLI — FIRST CLASS CITIZEN (0xRay)                           │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  .grok/plugins/0xray/          (Grok discovers at project+user) │
 │   ├── hooks/hooks.json             PreToolUse + SessionStart        │
 │   │    └── command → pre-tool-use.js                               │
-│   └── .mcp.json                    strray-governance + skills + orchestrator + enforcer (full v2) │
+│   └── .mcp.json                    xray-governance + skills + orchestrator + enforcer (full v2) │
 │                                                                     │
 │  dist/integrations/grok/hooks/pre-tool-use.js   (real hook)         │
 │       └── robust resolver → applyDecisionMatrix()                    │
@@ -163,7 +163,7 @@ function printGrokIntegrationTree() {
 
 async function main() {
   printGrokIntegrationTree();
-  console.log('\x1b[1mStringRay Grok CLI E2E Test (Full Consumer Parity — First Class)\x1b[0m\n');
+  console.log('\x1b[1m0xRay Grok CLI E2E Test (Full Consumer Parity — First Class)\x1b[0m\n');
 
   const projectRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 
@@ -173,7 +173,7 @@ async function main() {
     testDir = CUSTOM_DIR;
     pass('Using provided consumer directory');
   } else {
-    testDir = path.join(os.tmpdir(), `grok-strray-e2e-${Date.now()}`);
+    testDir = path.join(os.tmpdir(), `grok-xray-e2e-${Date.now()}`);
     fs.mkdirSync(testDir, { recursive: true });
     pass('Created temporary consumer directory');
 
@@ -272,38 +272,38 @@ async function main() {
     try {
       const mcp = JSON.parse(fs.readFileSync(mcpJson, 'utf8'));
       const servers = mcp.mcpServers || {};
-      if (servers['strray-governance']) {
-        pass('strray-governance MCP server declared');
-        const gov = servers['strray-governance'];
+      if (servers['xray-governance']) {
+        pass('xray-governance MCP server declared');
+        const gov = servers['xray-governance'];
         if (gov.command === 'npx' && gov.args?.includes('mcp') && gov.args?.includes('governance')) {
-          pass('strray-governance uses correct npx 0xray mcp governance');
+          pass('xray-governance uses correct npx 0xray mcp governance');
         }
-        if (gov.env?.STRRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
+        if (gov.env?.XRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
       } else {
-        fail('strray-governance', 'missing from .mcp.json');
+        fail('xray-governance', 'missing from .mcp.json');
       }
-      if (servers['strray-skills']) {
-        pass('strray-skills MCP server declared (researcher + all skills)');
+      if (servers['xray-skills']) {
+        pass('xray-skills MCP server declared (researcher + all skills)');
       } else {
-        fail('strray-skills', 'missing from .mcp.json');
+        fail('xray-skills', 'missing from .mcp.json');
       }
-      if (servers['strray-orchestrator']) {
-        pass('strray-orchestrator MCP server declared');
-        const orch = servers['strray-orchestrator'];
+      if (servers['xray-orchestrator']) {
+        pass('xray-orchestrator MCP server declared');
+        const orch = servers['xray-orchestrator'];
         if (orch.command === 'npx' && orch.args?.includes('mcp') && orch.args?.includes('orchestrator')) {
-          pass('strray-orchestrator uses correct npx 0xray mcp orchestrator');
+          pass('xray-orchestrator uses correct npx 0xray mcp orchestrator');
         }
       } else {
-        skip('strray-orchestrator', 'available via CLI but not registered in Grok plugin .mcp.json');
+        skip('xray-orchestrator', 'available via CLI but not registered in Grok plugin .mcp.json');
       }
-      if (servers['strray-enforcer']) {
-        pass('strray-enforcer MCP server declared');
-        const enf = servers['strray-enforcer'];
+      if (servers['xray-enforcer']) {
+        pass('xray-enforcer MCP server declared');
+        const enf = servers['xray-enforcer'];
         if (enf.command === 'npx' && enf.args?.includes('mcp') && enf.args?.includes('enforcer')) {
-          pass('strray-enforcer uses correct npx 0xray mcp enforcer');
+          pass('xray-enforcer uses correct npx 0xray mcp enforcer');
         }
       } else {
-        skip('strray-enforcer', 'available via CLI but not registered in Grok plugin .mcp.json');
+        skip('xray-enforcer', 'available via CLI but not registered in Grok plugin .mcp.json');
       }
     } catch (e) {
       fail('.mcp.json deep validation', e.message);

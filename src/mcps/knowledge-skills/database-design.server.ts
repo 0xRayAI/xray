@@ -111,7 +111,7 @@ interface SchemaComparison {
   hasDataLoss: boolean;
 }
 
-class StringRayDatabaseDesignServer {
+class XrayDatabaseDesignServer {
   private server: Server;
 
   constructor() {
@@ -1193,8 +1193,8 @@ class StringRayDatabaseDesignServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayDatabaseDesignServer();
+  const server = new XrayDatabaseDesignServer();
   server.run().catch(() => {});
 }
 
-export { StringRayDatabaseDesignServer };
+export { XrayDatabaseDesignServer };

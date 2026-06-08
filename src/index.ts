@@ -5,21 +5,21 @@
  * It exports the core initialization function and key components.
  */
 
-export { StringRayOrchestrator } from "./orchestrator/orchestrator.js";
-export { StringRayStateManager } from "./state/index.js";
+export { XrayOrchestrator, XrayOrchestrator as StringRayOrchestrator } from "./orchestrator/orchestrator.js";
+export { XrayStateManager, XrayStateManager as StringRayStateManager } from "./state/index.js";
 export { AgentDelegator } from "./delegation/index.js";
 export { frameworkLogger } from "./core/framework-logger.js";
 export { BUILTIN_CODEX } from "./core/codex-formatter.js";
 
-import { defaultStringRayConfig } from "./core/index.js";
-export { defaultStringRayConfig };
+import { defaultXrayConfig } from "./core/index.js";
+export { defaultXrayConfig, defaultXrayConfig as defaultStringRayConfig };
 
 export { OpenClawIntegration, initializeOpenClawIntegration, getOpenClawIntegration, shutdownOpenClawIntegration } from "./integrations/openclaw/index.js";
 export type { OpenClawIntegrationConfig } from "./integrations/openclaw/types.js";
 
 // Main initialization function
-export function initializeStringRay(config = {}) {
-  const mergedConfig = { ...defaultStringRayConfig, ...config };
+export function initializeXray(config = {}) {
+  const mergedConfig = { ...defaultXrayConfig, ...config };
 
   // Return a standardized initialization result
   return {

@@ -208,7 +208,7 @@ function validateModulePath(resolvedPath: string, allowedPrefix: string): void {
   }
 }
 
-async function loadStringRayComponents(): Promise<void> {
+async function loadXrayComponents(): Promise<void> {
   if (_ProcessorManager && _StrRayStateManager && _featuresConfigLoader) return;
 
   const logger = await getOrCreateLogger(process.cwd());
@@ -506,7 +506,7 @@ async function getCodexFileLocations(directory?: string): Promise<string[]> {
   resolved.push(
     path.join(root, ".opencode", "codex.codex"),
     path.join(root, ".strray", "agents_template.md"),
-    path.join(root, ".opencode", "strray", "agents_template.md"),
+    path.join(root, ".opencode", "xray", "agents_template.md"),
     path.join(root, "AGENTS.md"),
   );
   return resolved;
@@ -665,7 +665,7 @@ function isWriteEditOperation(tool: string): boolean {
 }
 
 function isPublishOperation(tool: string): boolean {
-  return tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+  return tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "xray-release";
 }
 
 function resolveAgentName(input: { agentType?: string } | undefined): string {
@@ -791,7 +791,7 @@ export default async function xrayCodexPlugin(input: {
       const logger = await getOrCreateLogger(directory);
       logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
       logger.log(`📥 Full input: ${JSON.stringify(input)}`);
-      await loadStringRayComponents();
+      await loadXrayComponents();
 
       if (_featuresConfigLoader && _detectTaskType) {
         try {
@@ -829,7 +829,7 @@ export default async function xrayCodexPlugin(input: {
         let stateManager: StateManagerLike;
         let processorManager: ProcessorManagerLike | null;
 
-        const globalState = globalThis.strRayStateManager;
+        const globalState = globalThis.xrayStateManager || globalThis.strRayStateManager;
         if (globalState) {
           logger.log("🔗 Connecting to booted 0xRay framework");
           stateManager = globalState as StateManagerLike;
@@ -838,6 +838,7 @@ export default async function xrayCodexPlugin(input: {
           stateManager = new _StrRayStateManager(
             await resolveStateDir(directory),
           );
+          globalThis.xrayStateManager = stateManager as typeof globalThis.xrayStateManager;
           globalThis.strRayStateManager = stateManager as typeof globalThis.strRayStateManager;
         }
 
@@ -910,7 +911,7 @@ export default async function xrayCodexPlugin(input: {
       _output: Record<string, unknown>,
     ) => {
       const logger = await getOrCreateLogger(directory);
-      await loadStringRayComponents();
+      await loadXrayComponents();
 
       const { tool, args, result } = input;
 

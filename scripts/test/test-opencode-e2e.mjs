@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * StringRay OpenCode E2E Integration Test
+ * 0xRay OpenCode E2E Integration Test
  *
  * Full end-to-end test that:
  *   1. Finds opencode CLI binary
  *   2. Creates a temp consumer directory
- *   3. npm pack + install strray-ai into temp dir
+ *   3. npm pack + install 0xray into temp dir
  *   4. Verifies opencode.json and plugin exist
  *   5. Tests opencode run --agent <name> invocation
  *   6. Tests plugin hooks (tool.execute.before/after)
  *   7. Tests Codex enforcement (violations caught)
- *   8. Tests CLI commands (strray-ai status, validate)
+ *   8. Tests CLI commands (0xray status, validate)
  *   9. Tests inference cycle (governExternalProposals)
  *  10. Tests MCP client routing (mcpClientManager)
  *  11. Tests orchestrator server (govern-and-apply tool)
@@ -125,7 +125,7 @@ async function opencodeRun(agent, prompt, cwd, timeout = 60000) {
 
 async function main() {
   const startTime = Date.now();
-  console.log('\n\x1b[1mStringRay OpenCode E2E Integration Test\x1b[0m');
+  console.log('\n\x1b[1m0xRay OpenCode E2E Integration Test\x1b[0m');
   console.log(`Started: ${new Date().toISOString()}\n`);
 
   // ── Phase 0: Prerequisites ─────────────────────────
@@ -151,7 +151,7 @@ async function main() {
   // ── Phase 1: npm pack + install into temp dir ─────────
   section('Phase 1: npm pack + install into temp dir');
 
-  const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `opencode-strray-e2e-${Date.now()}`);
+  const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `opencode-xray-e2e-${Date.now()}`);
   console.log(`  Test directory: ${testDir}`);
 
   if (!CUSTOM_DIR || !fs.existsSync(path.join(testDir, 'node_modules', '0xray'))) {
@@ -163,7 +163,7 @@ async function main() {
     }
 
     const packResult = run(`cd "${projectRoot}" && npm pack`, { timeout: 30000 });
-    const tarballMatch = packResult.match(/((?:strray-ai|0xray)-\d+\.\d+\.\d+\.tgz)/);
+    const tarballMatch = packResult.match(/((?:0xray)-\d+\.\d+\.\d+\.tgz)/);
     if (!tarballMatch) {
       fail('npm pack', `could not find tarball in: ${packResult.substring(0, 200)}`);
       process.exit(1);

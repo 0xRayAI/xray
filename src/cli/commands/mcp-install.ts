@@ -17,7 +17,7 @@ interface MCPConfig {
 }
 
 function getMCPConfigPath(): string {
-  return join(process.cwd(), ".opencode", "strray", "mcp-registry.json");
+  return join(process.cwd(), ".opencode", "xray", "mcp-registry.json");
 }
 
 function getBundledMCPRegistry(): MCPConfig | null {

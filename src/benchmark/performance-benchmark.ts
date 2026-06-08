@@ -64,7 +64,7 @@ export interface SessionBenchmarkResult {
   concurrentSessionOperations: number;
 }
 
-export class StringRayPerformanceBenchmark {
+export class XrayPerformanceBenchmark {
   private results: BenchmarkResult[] = [];
   private activeBenchmarks = new Map<
     string,
@@ -558,4 +558,4 @@ export class StringRayPerformanceBenchmark {
 }
 
 // Export singleton instance
-export const performanceBenchmark = new StringRayPerformanceBenchmark();
+export const performanceBenchmark = new XrayPerformanceBenchmark();

@@ -113,7 +113,7 @@ global.testUtils = {
     const path = require("path");
     return path.join(
       os.tmpdir(),
-      `strray-test-${crypto.randomBytes(8).toString("hex")}`,
+      `xray-test-${crypto.randomBytes(8).toString("hex")}`,
     );
   },
 

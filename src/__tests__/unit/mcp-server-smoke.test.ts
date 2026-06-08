@@ -40,8 +40,8 @@ describe('MCP Server Smoke Tests', () => {
 
   describe('researcher.server.ts', () => {
     it('constructs and registers at least one tool', async () => {
-      const { StringRayLibrarianServer } = await import('../../mcps/researcher.server.js');
-      const instance = new (StringRayLibrarianServer as any)();
+      const { XrayLibrarianServer } = await import('../../mcps/researcher.server.js');
+      const instance = new (XrayLibrarianServer as any)();
       expect(instance).toBeDefined();
 
       const handler = getListToolsHandler();
@@ -54,8 +54,8 @@ describe('MCP Server Smoke Tests', () => {
     });
 
     it('registers analyze_proposal tool via CallToolRequestSchema', async () => {
-      const { StringRayLibrarianServer } = await import('../../mcps/researcher.server.js');
-      new (StringRayLibrarianServer as any)();
+      const { XrayLibrarianServer } = await import('../../mcps/researcher.server.js');
+      new (XrayLibrarianServer as any)();
 
       const handler = getCallToolHandler();
       expect(handler).not.toBeNull();
@@ -85,8 +85,8 @@ describe('MCP Server Smoke Tests', () => {
   describe('framework-compliance-audit.server.ts', () => {
     it('constructs and registers at least one tool', async () => {
       capturedHandlers.clear();
-      const { StringRayFrameworkComplianceAuditServer } = await import('../../mcps/framework-compliance-audit.server.js');
-      const instance = new (StringRayFrameworkComplianceAuditServer as any)();
+      const { XrayFrameworkComplianceAuditServer } = await import('../../mcps/framework-compliance-audit.server.js');
+      const instance = new (XrayFrameworkComplianceAuditServer as any)();
       expect(instance).toBeDefined();
 
       const handler = getListToolsHandler();
@@ -99,8 +99,8 @@ describe('MCP Server Smoke Tests', () => {
 
     it('registers framework-compliance-audit tool', async () => {
       capturedHandlers.clear();
-      const { StringRayFrameworkComplianceAuditServer } = await import('../../mcps/framework-compliance-audit.server.js');
-      new (StringRayFrameworkComplianceAuditServer as any)();
+      const { XrayFrameworkComplianceAuditServer } = await import('../../mcps/framework-compliance-audit.server.js');
+      new (XrayFrameworkComplianceAuditServer as any)();
 
       const handler = getCallToolHandler();
       expect(handler).not.toBeNull();

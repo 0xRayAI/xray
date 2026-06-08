@@ -160,7 +160,7 @@ interface ProjectStructureAnalysis {
   structure: Record<string, unknown>;
 }
 
-class StringRayDocumentationGenerationServer {
+class XrayDocumentationGenerationServer {
   private server: Server;
 
   constructor() {
@@ -1631,8 +1631,8 @@ class StringRayDocumentationGenerationServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayDocumentationGenerationServer();
+  const server = new XrayDocumentationGenerationServer();
   server.run().catch(() => {});
 }
 
-export { StringRayDocumentationGenerationServer };
+export { XrayDocumentationGenerationServer };

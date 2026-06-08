@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * StringRay OpenClaw E2E Integration Test
+ * 0xRay OpenClaw E2E Integration Test
  *
  * Architecture:
- *   StringRay ──WebSocket──▶ OpenClaw Gateway (chat.send, events)
- *   OpenClaw Skills ──HTTP──▶ StringRay API Server (agent invoke, health)
- *   StringRay MCP Tools ──Hooks──▶ OpenClaw Gateway (tool.before/tool.after)
+ *   0xRay ──WebSocket──▶ OpenClaw Gateway (chat.send, events)
+ *   OpenClaw Skills ──HTTP──▶ 0xRay API Server (agent invoke, health)
+ *   0xRay MCP Tools ──Hooks──▶ OpenClaw Gateway (tool.before/tool.after)
  *
  * Phases:
  *   0. Prerequisites (openclaw binary, config, auth token)
@@ -15,7 +15,7 @@
  *   3. chat.send Simple Q&A (model responds correctly)
  *   4. chat.send Orchestration (multi-tool / agent delegation prompt)
  *   5. chat.send Multi-turn Session (conversation continuity)
- *   6. StringRay Client Module (import, instantiate, connect with fix)
+ *   6. 0xRay Client Module (import, instantiate, connect with fix)
  *   7. API Server (HTTP /health, /api/agent/invoke, /api/agent/status, /stats, auth)
  *   8. Hooks Manager (init, callbacks, tool.before/after event flow, queue, flush)
  *   9. Config Loader (load, validate, env overrides, defaults)
@@ -220,7 +220,7 @@ function httpRequest(method, urlPath, body, port = 18431) {
 
 async function main() {
   const startTime = Date.now();
-  console.log('\n\x1b[1mStringRay OpenClaw E2E Integration Test\x1b[0m');
+  console.log('\n\x1b[1m0xRay OpenClaw E2E Integration Test\x1b[0m');
   console.log(`Started: ${new Date().toISOString()}\n`);
 
   // ── Phase 0: Prerequisites ──────────────────────────────
@@ -414,8 +414,8 @@ async function main() {
     skip('chat tests', 'no WebSocket connection');
   }
 
-  // ── Phase 6: StringRay Client Module ────────────────────
-  section('Phase 6: StringRay Client Module');
+  // ── Phase 6: 0xRay Client Module ────────────────────
+  section('Phase 6: 0xRay Client Module');
 
   const modules = {
     client: path.join(distDir, 'client.js'),
@@ -423,7 +423,7 @@ async function main() {
     types: path.join(distDir, 'types.js'),
     index: path.join(distDir, 'index.js'),
     apiServer: path.join(distDir, 'api-server.js'),
-    hooks: path.join(distDir, 'hooks', 'strray-hooks.js'),
+    hooks: path.join(distDir, 'hooks', 'xray-hooks.js'),
   };
 
   for (const [name, p] of Object.entries(modules)) {
@@ -431,7 +431,7 @@ async function main() {
     else fail(`${name}.js`, `not found: ${p}`);
   }
 
-  let OpenClawClient, OpenClawConfigLoader, StringRayAPIServer, OpenClawHooksManager, OpenClawIntegration;
+  let OpenClawClient, OpenClawConfigLoader, XrayAPIServer, OpenClawHooksManager, OpenClawIntegration;
   let typesModule;
 
   try {
@@ -450,10 +450,10 @@ async function main() {
 
   try {
     const apiMod = await import(`file://${modules.apiServer}`);
-    StringRayAPIServer = apiMod.StringRayAPIServer;
-    if (StringRayAPIServer) pass('StringRayAPIServer class imported');
-    else fail('StringRayAPIServer', 'not exported');
-  } catch (e) { fail('StringRayAPIServer import', e.message); }
+    XrayAPIServer = apiMod.XrayAPIServer;
+    if (XrayAPIServer) pass('XrayAPIServer class imported');
+    else fail('XrayAPIServer', 'not exported');
+  } catch (e) { fail('XrayAPIServer import', e.message); }
 
   try {
     const hooksMod = await import(`file://${modules.hooks}`);
@@ -475,7 +475,7 @@ async function main() {
   } catch (e) { fail('OpenClawIntegration import', e.message); }
 
   // ── Phase 6b: Client Connect (with challenge fix) ───────
-  section('Phase 6b: StringRay Client connect()');
+  section('Phase 6b: 0xRay Client connect()');
 
   if (OpenClawClient) {
     let client;
@@ -525,12 +525,12 @@ async function main() {
   // ── Phase 7: API Server ─────────────────────────────────
   section('Phase 7: API Server (HTTP)');
 
-  if (StringRayAPIServer) {
+  if (XrayAPIServer) {
     const testPort = 19876;
     let server;
 
     try {
-      server = new StringRayAPIServer({ port: testPort, host: '127.0.0.1', apiKey: 'test-key-123' });
+      server = new XrayAPIServer({ port: testPort, host: '127.0.0.1', apiKey: 'test-key-123' });
       await server.start();
       pass(`API server started on :${testPort}`);
     } catch (e) {
@@ -721,7 +721,7 @@ async function main() {
       pass('API server stopped');
     }
   } else {
-    skip('API server tests', 'StringRayAPIServer not available');
+    skip('API server tests', 'APIServer not available');
   }
 
   // ── Phase 8: Hooks Manager ──────────────────────────────
@@ -900,7 +900,7 @@ async function main() {
     else fail('isEnabled', `got ${loader.isEnabled()}`);
 
     // Create sample config
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'strray-e2e-cfg-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-e2e-cfg-'));
     const samplePath = path.join(tmpDir, 'config.json');
     const sampleLoader = new OpenClawConfigLoader(samplePath);
     sampleLoader.createSampleConfig();
@@ -1125,7 +1125,7 @@ async function main() {
     skip('installs.json', 'not found');
   }
 
-  // Check stringray skills directory (from package dist, not ~/.openclaw/skills)
+  // Check xray skills directory (from package dist, not ~/.openclaw/skills)
   const skillsDir = path.resolve(distDir, '../../skills');
   if (fs.existsSync(skillsDir)) {
     const skills = fs.readdirSync(skillsDir).filter((d) => {

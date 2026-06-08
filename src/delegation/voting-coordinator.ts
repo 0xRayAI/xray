@@ -28,7 +28,7 @@ import { getAgentExpertiseLevel, getVotingWeight } from "./agent-expertise.js";
 import { selectVotingStrategy, adaptiveStrategySelector } from "./strategy-selector.js";
 import { SessionCoordinator } from "./session-coordinator.js";
 import { WeightedVotingAggregator } from "./weighted-voting-aggregator.js";
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
 const MAX_HISTORY_ENTRIES = 500;
@@ -49,7 +49,7 @@ const DEFAULT_CONFIG: VotingCoordinatorConfig = {
 };
 
 export class VotingCoordinator {
-  private stateManager: StringRayStateManager;
+  private stateManager: XrayStateManager;
   private sessionCoordinator: SessionCoordinator | undefined;
   private activeVotingSessions = new Map<string, VotingSession>();
   private votingHistory: VotingHistoryEntry[] = [];
@@ -58,7 +58,7 @@ export class VotingCoordinator {
   private aggregator: WeightedVotingAggregator;
 
   constructor(
-    stateManager: StringRayStateManager,
+    stateManager: XrayStateManager,
     sessionCoordinator?: SessionCoordinator,
     config: Partial<VotingCoordinatorConfig> = {},
   ) {
@@ -511,7 +511,7 @@ export class VotingCoordinator {
 }
 
 export const createVotingCoordinator = (
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   sessionCoordinator?: SessionCoordinator,
 ): VotingCoordinator => {
   return new VotingCoordinator(stateManager, sessionCoordinator);

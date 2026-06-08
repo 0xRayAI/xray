@@ -86,7 +86,7 @@ export const researcherSimulations: Record<string, SimulatorFunction> = {
  * Framework Help server simulations
  */
 export const frameworkHelpSimulations: Record<string, SimulatorFunction> = {
-  strray_get_capabilities: (): MCPToolResult => ({
+  xray_get_capabilities: (): MCPToolResult => ({
     content: [
       {
         type: 'text',
@@ -118,7 +118,7 @@ export const frameworkHelpSimulations: Record<string, SimulatorFunction> = {
     ],
   }),
 
-  strray_get_commands: (): MCPToolResult => ({
+  xray_get_commands: (): MCPToolResult => ({
     content: [
       {
         type: 'text',
@@ -146,7 +146,7 @@ framework-reporting-system - Generate comprehensive framework reports
     ],
   }),
 
-  strray_explain_capability: (): MCPToolResult => ({
+  xray_explain_capability: (): MCPToolResult => ({
     content: [
       {
         type: 'text',

@@ -1,12 +1,12 @@
 // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
 
-import type { StringRayStateManager } from "../state/state-manager.js";
+import type { XrayStateManager } from "../state/state-manager.js";
 import type { ProcessorManager } from "../processors/processor-manager.js";
 import type { PostProcessor } from "../postprocessor/PostProcessor.js";
 import type { PathResolver } from "../utils/path-resolver.js";
 import type { CodexInjector } from "../core/codex-injector.js";
 
-export interface StringRayHook {
+export interface XrayHook {
   name: string;
   [key: string]: unknown;
 }
@@ -17,31 +17,45 @@ export interface CurrentAgent {
   [key: string]: unknown;
 }
 
-export interface StringRayGlobalScope {
-  strRayStateManager: StringRayStateManager;
-  strRayProcessorManager: ProcessorManager;
-  strRayPostProcessor: PostProcessor;
-  strRayPathResolver: PathResolver;
-  strRayCodexInjector: CodexInjector;
-  strRayHooks: StringRayHook[];
+export interface XrayGlobalScope {
+  xrayStateManager: XrayStateManager;
+  xrayProcessorManager: ProcessorManager;
+  xrayPostProcessor: PostProcessor;
+  xrayPathResolver: PathResolver;
+  xrayCodexInjector: CodexInjector;
+  xrayHooks: XrayHook[];
   currentAgent: CurrentAgent;
 }
 
 declare global {
   // eslint-disable-next-line no-var
-  var strRayStateManager: StringRayGlobalScope["strRayStateManager"] | undefined;
+  var xrayStateManager: XrayGlobalScope["xrayStateManager"] | undefined;
   // eslint-disable-next-line no-var
-  var strRayProcessorManager: StringRayGlobalScope["strRayProcessorManager"] | undefined;
+  var xrayProcessorManager: XrayGlobalScope["xrayProcessorManager"] | undefined;
   // eslint-disable-next-line no-var
-  var strRayPostProcessor: StringRayGlobalScope["strRayPostProcessor"] | undefined;
+  var xrayPostProcessor: XrayGlobalScope["xrayPostProcessor"] | undefined;
   // eslint-disable-next-line no-var
-  var strRayPathResolver: StringRayGlobalScope["strRayPathResolver"] | undefined;
+  var xrayPathResolver: XrayGlobalScope["xrayPathResolver"] | undefined;
   // eslint-disable-next-line no-var
-  var strRayCodexInjector: StringRayGlobalScope["strRayCodexInjector"] | undefined;
+  var xrayCodexInjector: XrayGlobalScope["xrayCodexInjector"] | undefined;
   // eslint-disable-next-line no-var
-  var strRayHooks: StringRayHook[] | undefined;
+  var xrayHooks: XrayHook[] | undefined;
   // eslint-disable-next-line no-var
-  var currentAgent: StringRayGlobalScope["currentAgent"] | undefined;
+  var currentAgent: XrayGlobalScope["currentAgent"] | undefined;
+
+  // Backward-compat strRay aliases
+  // eslint-disable-next-line no-var
+  var strRayStateManager: XrayGlobalScope["xrayStateManager"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayProcessorManager: XrayGlobalScope["xrayProcessorManager"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayPostProcessor: XrayGlobalScope["xrayPostProcessor"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayPathResolver: XrayGlobalScope["xrayPathResolver"] | undefined;
+  // eslint-disable-next-line no-var
+  var strRayCodexInjector: XrayGlobalScope["xrayCodexInjector"] | undefined;
 }
 
-export type { StringRayGlobalScope };
+export type { XrayGlobalScope };
+// Backward compat alias
+export type { XrayGlobalScope as StringRayGlobalScope, XrayHook as StringRayHook };

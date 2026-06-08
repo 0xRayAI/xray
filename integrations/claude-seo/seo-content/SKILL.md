@@ -5,7 +5,7 @@ attribution: |
   Originally from https://github.com/AgriciDaniel/claude-seo
   License: MIT (see LICENSE.claude-seo)
 converted: 2026-03-09T07:40:29.998Z
-framework: StringRay v1.7.5
+framework: 0xRay v1.7.5
 ---
 
 ---
@@ -173,5 +173,5 @@ If DataForSEO MCP tools are available, use `kw_data_google_ads_search_volume` fo
 
 ---
 
-*This skill was integrated into StringRay via the claude-seo integration script.*
+*This skill was integrated into 0xRay via the claude-seo integration script.*
 *Original source: https://github.com/AgriciDaniel/claude-seo*

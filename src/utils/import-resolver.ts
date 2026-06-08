@@ -91,7 +91,7 @@ export class ImportResolver {
     return (
       this.currentDir.includes("/node_modules/") ||
       this.currentDir.includes("\\node_modules\\") ||
-      (this.currentDir.includes("strray") &&
+      (this.currentDir.includes("xray") &&
         !this.currentDir.includes(this.projectRoot))
     );
   }

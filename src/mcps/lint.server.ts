@@ -33,7 +33,7 @@ interface LintResults {
   details: string[];
 }
 
-class StringRayLintServer {
+class XrayLintServer {
   private server: Server;
 
   constructor() {
@@ -51,7 +51,7 @@ class StringRayLintServer {
     this.setupToolHandlers();
     void frameworkLogger.log(
       "lint.server",
-      "-strray-lint-mcp-server-initialized-",
+      "-xray-lint-mcp-server-initialized-",
       "info",
       { message: "0xRay Lint MCP Server initialized" },
     );
@@ -467,7 +467,7 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
     await this.server.connect(transport);
     await frameworkLogger.log(
       "lint.server",
-      "-strray-lint-mcp-server-started-",
+      "-xray-lint-mcp-server-started-",
       "info",
       { message: "0xRay Lint MCP Server started" },
     );
@@ -476,8 +476,8 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayLintServer();
+  const server = new XrayLintServer();
   server.run().catch((error) => frameworkLogger.log("mcps/lint", "run", "error", { error: String(error) }));
 }
 
-export { StringRayLintServer };
+export { XrayLintServer };

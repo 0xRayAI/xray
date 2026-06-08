@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { StringRayContextLoader } from "../../core/context-loader.js";
+import { XrayContextLoader } from "../../core/context-loader.js";
 import {
   parseCodexContent,
   detectContentFormat,
@@ -74,10 +74,10 @@ const invalidJsonCodex = `{
 }`;
 
 describe("JSON Codex Integration", () => {
-  let contextLoader: StringRayContextLoader;
+  let contextLoader: XrayContextLoader;
 
   beforeEach(() => {
-    contextLoader = StringRayContextLoader.getInstance();
+    contextLoader = XrayContextLoader.getInstance();
     contextLoader.clearCache(); // Clear cached context
     // Override codexFilePaths to use simple relative paths for mocking
     (contextLoader as any).codexFilePaths = [".strray/codex.json"];
@@ -175,7 +175,7 @@ describe("JSON Codex Integration", () => {
 
     test("should handle missing codex files gracefully", async () => {
       // Create a temporary context loader with non-existent file paths
-      const tempContextLoader = new (StringRayContextLoader as any)();
+      const tempContextLoader = new (XrayContextLoader as any)();
       tempContextLoader.codexFilePaths = [
         "nonexistent-codex-1.json",
         "nonexistent-codex-2.json",

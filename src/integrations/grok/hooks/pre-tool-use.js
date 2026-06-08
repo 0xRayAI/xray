@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Grok CLI PreToolUse Hook Handler for StringRay (0xRay) — First Class Citizen
+ * Grok CLI PreToolUse Hook Handler for 0xRay — First Class Citizen
  *
  * Real governance enforcement hook.
  * When Grok is about to execute a tool (write_file, edit, terminal cmd, etc.),

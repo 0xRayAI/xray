@@ -206,7 +206,7 @@ interface OptimizationRoadmap {
   finalMetrics: DeploymentMetricsInput;
 }
 
-class StringRayDevOpsDeploymentServer {
+class XrayDevOpsDeploymentServer {
   private server: Server;
 
   constructor() {
@@ -1615,8 +1615,8 @@ spec:
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayDevOpsDeploymentServer();
+  const server = new XrayDevOpsDeploymentServer();
   server.run().catch(() => {});
 }
 
-export { StringRayDevOpsDeploymentServer };
+export { XrayDevOpsDeploymentServer };

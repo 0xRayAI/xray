@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StringRay CJS/MJS Scripts Loadability Tests
+ * 0xRay CJS/MJS Scripts Loadability Tests
  *
  * Tests that all .cjs and .mjs scripts that ship with the package
  * can be loaded without errors, and checks for expected exports.

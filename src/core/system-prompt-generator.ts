@@ -8,7 +8,7 @@
  * @since 2026-03-03
  */
 
-import { StringRayContextLoader, ContextLoadResult } from "./context-loader.js";
+import { XrayContextLoader, ContextLoadResult } from "./context-loader.js";
 import { 
   validateContext, 
   preventSystemPromptBloat, 
@@ -177,7 +177,7 @@ export async function generateLeanSystemPrompt(
   let finalPrompt = systemPrompt;
   if (showCodexContext && enableTokenOptimization) {
     try {
-      const contextLoader = StringRayContextLoader.getInstance();
+      const contextLoader = XrayContextLoader.getInstance();
       const loadResult: ContextLoadResult = await contextLoader.loadCodexContext(process.cwd());
       
       if (loadResult.success && loadResult.context) {

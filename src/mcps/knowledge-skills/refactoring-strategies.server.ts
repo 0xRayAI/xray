@@ -154,7 +154,7 @@ interface RollbackPlan {
   emergencyProcedures: string[];
 }
 
-class StringRayRefactoringStrategiesServer {
+class XrayRefactoringStrategiesServer {
   private server: Server;
 
   constructor() {
@@ -1085,8 +1085,8 @@ class StringRayRefactoringStrategiesServer {
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayRefactoringStrategiesServer();
+  const server = new XrayRefactoringStrategiesServer();
   server.run().catch(() => {});
 }
 
-export { StringRayRefactoringStrategiesServer };
+export { XrayRefactoringStrategiesServer };

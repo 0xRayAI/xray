@@ -220,7 +220,7 @@ describe("Features Config Interfaces", () => {
 });
 
 describe("Config Loading", () => {
-  const testDir = join(tmpdir(), `strray-test-${Date.now()}`);
+  const testDir = join(tmpdir(), `xray-test-${Date.now()}`);
   
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });

@@ -34,7 +34,7 @@
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
     "src/__tests__/**/*",
-    "src/plugin/strray-codex-injection.ts",
+
     "src/cross-language-bridge.ts",
     "src/dashboards/**/*",
     "src/distributed/**/*",

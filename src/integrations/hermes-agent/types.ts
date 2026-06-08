@@ -49,7 +49,7 @@ export interface HermesAgentStatistics {
   /** Post-processor runs */
   postProcessorRuns: number;
   /** 0xRay MCP tool calls (skipped bridge) */
-  strrayMcpCalls: number;
+  xrayMcpCalls: number;
   /** Native tool calls (non-code) */
   nativeToolCalls: number;
   /** Bridge errors */
@@ -194,7 +194,7 @@ export interface BridgeHooksResponse {
   restored?: string[];
   errors?: Array<{ hook: string; error: string }>;
   gitHooksDir?: string;
-  strrayHooksDir?: string;
+  xrayHooksDir?: string;
 }
 
 /**

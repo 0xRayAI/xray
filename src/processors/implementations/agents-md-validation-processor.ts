@@ -288,7 +288,7 @@ export class AgentsMdValidationProcessor {
         "",
         "## Available Skills",
         "",
-        "StringRay ships with 30 framework skills and provides a registry of 10 curated community sources.",
+        "Xray ships with 30 framework skills and provides a registry of 10 curated community sources.",
         "",
         "```bash",
         "npx 0xray skill:install              # Show starter packs + available sources",
@@ -301,7 +301,7 @@ export class AgentsMdValidationProcessor {
         "",
         "## Codex",
         "",
-        `StringRay enforces Universal Development Codex (60 terms) for systematic error prevention.`,
+        `Xray enforces Universal Development Codex (60 terms) for systematic error prevention.`,
         "",
       ].join("\n"),
       "## CLI Commands": [

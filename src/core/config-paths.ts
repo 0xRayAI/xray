@@ -8,7 +8,7 @@
  * Resolution order (per file type):
  *   1. STRRAY_CONFIG_DIR/<relative_path>     (if env var set)
  *   2. .strray/<relative_path>                (preferred lightweight root)
- *   3. .opencode/strray/<relative_path>       (legacy OpenCode root)
+ *   3. .opencode/xray/<relative_path>        (OpenCode root)
  *   4. null                                   (callers fall back to built-in defaults)
  *
  * For state/data directories, uses:
@@ -47,7 +47,7 @@ export function getConfigDir(projectRoot?: string): string {
   }
 
   candidates.push({ dir: join(root, ".strray"), source: "dot-strray" });
-  candidates.push({ dir: join(root, ".opencode", "strray"), source: "dot-opencode" });
+  candidates.push({ dir: join(root, ".opencode", "xray"), source: "dot-opencode" });
 
   // Return the first that exists, or the highest-priority default
   for (const c of candidates) {
@@ -80,7 +80,7 @@ export function resolveConfigPath(relativePath: string, projectRoot?: string): s
     candidates.push(resolve(root, envDir, relativePath));
   }
   candidates.push(join(root, ".strray", relativePath));
-  candidates.push(join(root, ".opencode", "strray", relativePath));
+  candidates.push(join(root, ".opencode", "xray", relativePath));
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
@@ -138,7 +138,7 @@ export function resolveProfilesDir(projectRoot?: string): string {
     candidates.push(join(root, envDir, "profiles"));
   }
   candidates.push(join(root, ".strray", "profiles"));
-  candidates.push(join(root, ".opencode", "strray", "profiles"));
+  candidates.push(join(root, ".opencode", "xray", "profiles"));
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
@@ -163,7 +163,7 @@ export function resolveCodexPath(projectRoot?: string): string[] {
   }
   candidates.push(join(root, ".strray", "codex.json"));
   candidates.push(join(root, "xray", "codex.json"));
-  candidates.push(join(root, ".opencode", "strray", "codex.json"));
+  candidates.push(join(root, ".opencode", "xray", "codex.json"));
   // Additional fallback locations (for standalone usage)
   candidates.push(join(root, "codex.json"));
   candidates.push(join(root, "src", "codex.json"));

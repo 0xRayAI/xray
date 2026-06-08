@@ -1,13 +1,13 @@
 {
   "mcpServers": {
-    "strray-governance": {
+    "xray-governance": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "governance"],
       "env": {
-        "STRRAY_FORCE_MCP_GOVERNANCE": "true"
+        "XRAY_FORCE_MCP_GOVERNANCE": "true"
       }
     },
-    "strray-skills": {
+    "xray-skills": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "skills"]
     }

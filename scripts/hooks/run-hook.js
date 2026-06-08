@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Git Hook Runner
+ * 0xRay Git Hook Runner
  *
  * Called by git hooks (pre-commit, post-commit, pre-push, post-push)
  * to perform validation, logging, and monitoring.
@@ -565,6 +565,6 @@ handler()
   })
   .catch((err) => {
     logError(`Hook crashed: ${err.message}`);
-    console.error(`StringRay hook error: ${err.message}`);
+    console.error(`0xRay hook error: ${err.message}`);
     process.exit(1);
   });

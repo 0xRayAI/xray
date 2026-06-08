@@ -12,8 +12,8 @@ import {
   OpenClawHooksManager,
   createOpenClawHooksManager,
   OpenClawHooksConfig,
-  StringRayToolEvent,
-} from './strray-hooks.js';
+  XrayToolEvent,
+} from './xray-hooks.js';
 import { OpenClawClient } from '../client.js';
 
 // Mock OpenClawClient
@@ -97,7 +97,7 @@ describe('OpenClawHooksManager', () => {
     });
 
     test('allows all tools when toolFilter is undefined', async () => {
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'any-tool',
         toolId: 'test-id',
         args: {},
@@ -123,7 +123,7 @@ describe('OpenClawHooksManager', () => {
       filteredManager.setClient(mockOpenClawClient);
       await filteredManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'read',
         toolId: 'test-id',
         args: {},
@@ -148,7 +148,7 @@ describe('OpenClawHooksManager', () => {
       filteredManager.setClient(mockOpenClawClient);
       await filteredManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'delete',
         toolId: 'test-id',
         args: {},
@@ -172,7 +172,7 @@ describe('OpenClawHooksManager', () => {
       hooksManager.setClient(disconnectedClient);
       await hooksManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test-tool',
         toolId: 'test-id',
         args: { foo: 'bar' },
@@ -191,7 +191,7 @@ describe('OpenClawHooksManager', () => {
       hooksManager.setClient(mockOpenClawClient);
       await hooksManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test-tool',
         toolId: 'test-id',
         args: {},
@@ -217,7 +217,7 @@ describe('OpenClawHooksManager', () => {
 
       // Add events until queue overflows (maxQueueSize is 100)
       for (let i = 0; i < 105; i++) {
-        const event: StringRayToolEvent = {
+        const event: XrayToolEvent = {
           toolName: `tool-${i}`,
           toolId: `test-id-${i}`,
           args: {},
@@ -242,7 +242,7 @@ describe('OpenClawHooksManager', () => {
       await hooksManager.initialize();
 
       // Queue an event
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test-tool',
         toolId: 'test-id',
         args: {},
@@ -276,7 +276,7 @@ describe('OpenClawHooksManager', () => {
     });
 
     test('sends tool.before event to OpenClaw', async () => {
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'read',
         toolId: 'read-123',
         args: { filePath: '/test/file.ts' },
@@ -312,7 +312,7 @@ describe('OpenClawHooksManager', () => {
       noArgsManager.setClient(mockOpenClawClient);
       await noArgsManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'read',
         toolId: 'test-id',
         args: { secret: 'password' },
@@ -342,7 +342,7 @@ describe('OpenClawHooksManager', () => {
       noBeforeManager.setClient(mockOpenClawClient);
       await noBeforeManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},
@@ -362,7 +362,7 @@ describe('OpenClawHooksManager', () => {
     });
 
     test('sends tool.after event on success', async () => {
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'write',
         toolId: 'write-456',
         args: { filePath: '/test/output.ts' },
@@ -386,7 +386,7 @@ describe('OpenClawHooksManager', () => {
     });
 
     test('sends tool.after event on error', async () => {
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'read',
         toolId: 'read-789',
         args: {},
@@ -420,7 +420,7 @@ describe('OpenClawHooksManager', () => {
       noResultManager.setClient(mockOpenClawClient);
       await noResultManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},
@@ -448,7 +448,7 @@ describe('OpenClawHooksManager', () => {
       hooksManager.setClient(mockOpenClawClient);
       await hooksManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},
@@ -468,7 +468,7 @@ describe('OpenClawHooksManager', () => {
       hooksManager.setClient(mockOpenClawClient);
       await hooksManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},
@@ -490,7 +490,7 @@ describe('OpenClawHooksManager', () => {
       hooksManager.setClient(mockOpenClawClient);
       await hooksManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},
@@ -511,7 +511,7 @@ describe('OpenClawHooksManager', () => {
       hooksManager.setClient(mockOpenClawClient);
       await hooksManager.initialize();
 
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},
@@ -537,7 +537,7 @@ describe('OpenClawHooksManager', () => {
       await hooksManager.initialize();
 
       // Queue some events
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},
@@ -567,7 +567,7 @@ describe('OpenClawHooksManager', () => {
       await hooksManager.shutdown();
 
       // Client should be cleared - events should be queued (not sent)
-      const event: StringRayToolEvent = {
+      const event: XrayToolEvent = {
         toolName: 'test',
         toolId: 'test-id',
         args: {},

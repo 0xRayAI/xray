@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Framework Bridge for Hermes Agent
+ * Xray Framework Bridge for Hermes Agent
  *
- * Provides direct access to StringRay framework components
+ * Provides direct access to Xray framework components
  * (ProcessorManager, QualityGate, StateManager) from Python.
  * Uses JSON stdin/stdout protocol for IPC.
  *
@@ -575,7 +575,7 @@ function handleHooks(input, projectRoot) {
   const { action, hooks } = input;
   const hookTypes = hooks || ["pre-commit", "post-commit", "pre-push", "post-push"];
   const gitHooksDir = join(projectRoot, ".git", "hooks");
-  const strrayHooksDir = join(projectRoot, "hooks");
+  const xrayHooksDir = join(projectRoot, "hooks");
 
   if (!existsSync(gitHooksDir)) {
     return { error: "Not a git repository — no .git/hooks directory" };
@@ -587,7 +587,7 @@ function handleHooks(input, projectRoot) {
   if (action === "list" || action === "status") {
     for (const hookName of hookTypes) {
       const gitHook = join(gitHooksDir, hookName);
-      const strrayHook = join(strrayHooksDir, hookName);
+      const xrayHook = join(xrayHooksDir, hookName);
 
       if (!existsSync(gitHook)) {
         result.missing.push(hookName);
@@ -604,8 +604,8 @@ function handleHooks(input, projectRoot) {
         }
       }
 
-      // Check if strray source hook exists
-      if (!existsSync(strrayHook)) {
+      // Check if xray source hook exists
+      if (!existsSync(xrayHook)) {
         result.stale.push(hookName);
       }
     }
@@ -615,7 +615,7 @@ function handleHooks(input, projectRoot) {
       action,
       hooks: result,
       gitHooksDir,
-      strrayHooksDir,
+      xrayHooksDir,
     };
   }
 
@@ -626,7 +626,7 @@ function handleHooks(input, projectRoot) {
     const errors = [];
 
     for (const hookName of hookTypes) {
-      const src = join(strrayHooksDir, hookName);
+      const src = join(xrayHooksDir, hookName);
       const dst = join(gitHooksDir, hookName);
 
       if (!existsSync(src)) {
@@ -635,7 +635,7 @@ function handleHooks(input, projectRoot) {
       }
 
       try {
-        // Backup existing non-strray hooks
+        // Backup existing non-xray hooks
         if (existsSync(dst)) {
           const content = readFileSync(dst, "utf-8");
           if (!content.includes("StringRay") && !content.includes("strray") && !content.includes("run-hook.js")) {
@@ -677,9 +677,9 @@ function handleHooks(input, projectRoot) {
 
       try {
         const content = readFileSync(dst, "utf-8");
-        const isStrray = content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js");
+        const isXray = content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js");
 
-        if (isStrray || lstatSync(dst).isSymbolicLink()) {
+        if (isXray || lstatSync(dst).isSymbolicLink()) {
           unlinkSync(dst);
 
           // Restore backup if exists

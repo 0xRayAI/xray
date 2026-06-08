@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { SessionCoordinator } from "../delegation/session-coordinator.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
@@ -47,14 +47,14 @@ export interface FailoverConfig {
 }
 
 export class SessionStateManager {
-  private stateManager: StringRayStateManager;
+  private stateManager: XrayStateManager;
   private sessionCoordinator: SessionCoordinator;
   private dependencies = new Map<string, SessionDependency>();
   private sessionGroups = new Map<string, SessionGroup>();
   private failoverConfigs = new Map<string, FailoverConfig>();
 
   constructor(
-    stateManager: StringRayStateManager,
+    stateManager: XrayStateManager,
     sessionCoordinator: SessionCoordinator,
   ) {
     this.stateManager = stateManager;
@@ -821,7 +821,7 @@ export class SessionStateManager {
 }
 
 export const createSessionStateManager = (
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   sessionCoordinator: SessionCoordinator,
 ): SessionStateManager => {
   return new SessionStateManager(stateManager, sessionCoordinator);

@@ -3,7 +3,7 @@ import * as path from "path";
 import { shouldTriggerCycle, accumulateCorpus, InferenceCorpus, RecurringPattern, RecurringProblem } from "./inference-accumulator.js";
 import { DeployVerifier, DeployVerificationResult } from "./deploy-verifier.js";
 import { VotingCoordinator } from "../delegation/voting-coordinator.js";
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getGovernanceIntegration, type GovernanceVoteResult } from "../integrations/governance/index.js";
 import { featuresConfigLoader } from "../core/features-config.js";
@@ -461,7 +461,7 @@ export class InferenceCycle {
       ``,
       `1. Read the relevant source files`,
       `2. Add the missing guard, validation, or edge case handling`,
-      `3. If this is a codex rule, add the term to .opencode/strray/codex.json`,
+       `3. If this is a codex rule, add the term to .opencode/xray/codex.json`,
       `4. Make minimal, surgical changes`,
     ].join("\n");
 
@@ -1120,12 +1120,12 @@ Respond with EXACTLY one of:
     return votes;
   }
 
-  private getGovernanceStateManager(): StringRayStateManager {
+  private getGovernanceStateManager(): XrayStateManager {
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
     }
     const stateFile = path.join(this.stateDir, "governance-state.json");
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     if (fs.existsSync(stateFile)) {
       try {
         const data = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
@@ -1177,10 +1177,10 @@ Respond with EXACTLY one of:
   }
 
   private resolveOpencodeRoot(): string {
-    // Use the provider-agnostic config path resolver (prefers .strray/, falls back to .opencode/strray/)
+    // Use the provider-agnostic config path resolver (prefers .strray/, falls back to .opencode/xray/)
     const configDir = getConfigDir(this.projectRoot);
     // If we resolved to a .strray or custom dir, use its parent as the "root"
-    if (configDir.includes(".strray") || configDir.includes("strray")) {
+    if (configDir.includes(".strray") || configDir.includes("xray")) {
       return path.dirname(configDir);
     }
     // Legacy fallback

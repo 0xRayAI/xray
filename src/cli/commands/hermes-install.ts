@@ -27,7 +27,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
   frameworkLogger.log('hermes-integration', 'install-start', 'info', { options });
 
   const home = homedir();
-  const targetPluginDir = path.join(home, '.hermes/plugins/strray-hermes');
+  const targetPluginDir = path.join(home, '.hermes/plugins/xray-hermes');
 
   const possibleSources = [
     path.join(__dirname, '..', '..', '..', 'dist/integrations/hermes-agent'),
@@ -36,7 +36,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
 
   let sourceDir = possibleSources.find(p => fs.existsSync(p));
   if (!sourceDir) {
-    console.error('[Hermes] Could not locate the strray-hermes plugin inside the package.');
+    console.error('[Hermes] Could not locate the xray-hermes plugin inside the package.');
     return;
   }
 
@@ -47,7 +47,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
 
   try {
     if (fs.existsSync(targetPluginDir) && !options.force) {
-      console.log('[Hermes] strray-hermes plugin is already installed.');
+      console.log('[Hermes] xray-hermes plugin is already installed.');
       console.log('Use --force to reinstall.');
       return;
     }
@@ -73,7 +73,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
 
     console.log('\n✅ 0xRay is now installed as a Hermes Agent plugin!');
     console.log('Restart Hermes to load the plugin and its tools.');
-    console.log('  Run: /strray status  (to verify)');
+    console.log('  Run: npx 0xray status  (to verify)');
 
   } catch (err: any) {
     frameworkLogger.log('hermes-integration', 'install-error', 'error', { error: err.message });

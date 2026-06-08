@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Universal Bridge
+ * Xray Universal Bridge
  *
- * Standalone bridge that provides StringRay framework capabilities
+ * Standalone bridge that provides Xray framework capabilities
  * to ANY consumer — no OpenCode dependency.
  *
  * Supports three transport modes:
@@ -84,7 +84,7 @@ function findProjectRoot() {
       const pkgPath = join(dir, "package.json");
       if (existsSync(pkgPath)) {
         const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-        if (pkg.name === "strray-ai" || pkg.dependencies?.["strray-ai"] || pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
+        if (pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
           return dir;
         }
       }
@@ -223,7 +223,7 @@ function getCodexCandidates(projectRoot) {
   const candidates = [];
   if (envDir) candidates.push(join(projectRoot, envDir, "codex.json"));
   candidates.push(join(projectRoot, ".strray", "codex.json"));
-  candidates.push(join(projectRoot, ".opencode", "strray", "codex.json"));
+  candidates.push(join(projectRoot, ".opencode", "xray", "codex.json"));
   candidates.push(join(projectRoot, "codex.json"));
   return candidates;
 }
@@ -281,7 +281,7 @@ async function handleGetCodexPrompt(input, projectRoot, logDir) {
     terms.sort((a, b) => (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3));
     if (maxTerms) terms = terms.slice(0, maxTerms);
 
-    const lines = [`## StringRay Universal Development Codex v${termsSource.version}`];
+    const lines = [`## Xray Universal Development Codex v${termsSource.version}`];
     const emojis = { blocking: "🔴", high: "🟡", medium: "🟢" };
     const labels = { blocking: "BLOCKING", high: "HIGH PRIORITY", medium: "MEDIUM" };
 
@@ -349,7 +349,7 @@ async function handleGetConfig(input, projectRoot, logDir) {
   const featurePaths = [];
   if (envDir) featurePaths.push(join(projectRoot, envDir, "features.json"));
   featurePaths.push(join(projectRoot, ".strray", "features.json"));
-  featurePaths.push(join(projectRoot, ".opencode", "strray", "features.json"));
+  featurePaths.push(join(projectRoot, ".opencode", "xray", "features.json"));
 
   let featurePath = null;
   for (const p of featurePaths) {
@@ -604,7 +604,7 @@ function handleHooks(input, projectRoot) {
   const { action, hooks } = input;
   const hookTypes = hooks || ["pre-commit", "post-commit", "pre-push", "post-push"];
   const gitHooksDir = join(projectRoot, ".git", "hooks");
-  const strrayHooksDir = join(projectRoot, "hooks");
+  const xrayHooksDir = join(projectRoot, "hooks");
 
   if (!existsSync(gitHooksDir)) {
     return { error: "Not a git repository — no .git/hooks directory" };
@@ -616,14 +616,14 @@ function handleHooks(input, projectRoot) {
   if (action === "list" || action === "status") {
     for (const hookName of hookTypes) {
       const gitHook = join(gitHooksDir, hookName);
-      const strrayHook = join(strrayHooksDir, hookName);
+      const xrayHook = join(xrayHooksDir, hookName);
 
       if (!existsSync(gitHook)) {
         result.missing.push(hookName);
       } else {
         try {
           const content = readFileSync(gitHook, "utf-8");
-          if (content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js")) {
+          if (content.includes("Xray") || content.includes("StringRay") || content.includes("xray") || content.includes("strray") || content.includes("run-hook.js")) {
             result.managed.push(hookName);
           } else {
             result.external.push(hookName);
@@ -633,8 +633,8 @@ function handleHooks(input, projectRoot) {
         }
       }
 
-      // Check if strray source hook exists
-      if (!existsSync(strrayHook)) {
+      // Check if xray source hook exists
+      if (!existsSync(xrayHook)) {
         result.stale.push(hookName);
       }
     }
@@ -644,7 +644,7 @@ function handleHooks(input, projectRoot) {
       action,
       hooks: result,
       gitHooksDir,
-      strrayHooksDir,
+      xrayHooksDir,
     };
   }
 
@@ -655,7 +655,7 @@ function handleHooks(input, projectRoot) {
     const errors = [];
 
     for (const hookName of hookTypes) {
-      const src = join(strrayHooksDir, hookName);
+      const src = join(xrayHooksDir, hookName);
       const dst = join(gitHooksDir, hookName);
 
       if (!existsSync(src)) {
@@ -664,10 +664,10 @@ function handleHooks(input, projectRoot) {
       }
 
       try {
-        // Backup existing non-strray hooks
+        // Backup existing non-xray hooks
         if (existsSync(dst)) {
           const content = readFileSync(dst, "utf-8");
-          if (!content.includes("StringRay") && !content.includes("strray") && !content.includes("run-hook.js")) {
+          if (!content.includes("Xray") && !content.includes("StringRay") && !content.includes("xray") && !content.includes("strray") && !content.includes("run-hook.js")) {
             renameSync(dst, `${dst}.strray-backup`);
           } else {
             unlinkSync(dst);
@@ -705,9 +705,9 @@ function handleHooks(input, projectRoot) {
 
       try {
         const content = readFileSync(dst, "utf-8");
-        const isStrray = content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js");
+        const isXray = content.includes("Xray") || content.includes("StringRay") || content.includes("xray") || content.includes("strray") || content.includes("run-hook.js");
 
-        if (isStrray || lstatSync(dst).isSymbolicLink()) {
+        if (isXray || lstatSync(dst).isSymbolicLink()) {
           unlinkSync(dst);
 
           // Restore backup if exists

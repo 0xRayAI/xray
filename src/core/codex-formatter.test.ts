@@ -16,7 +16,7 @@ import {
 } from "./codex-formatter";
 
 // Temp dir that will not contain any codex.json (for fallback tests)
-const EMPTY_ROOT = join(tmpdir(), "strray-test-empty");
+const EMPTY_ROOT = join(tmpdir(), "xray-test-empty");
 
 // Sample codex config used for filesystem tests
 const SAMPLE_CODEX = {
@@ -81,7 +81,7 @@ describe("codex-formatter", () => {
     });
 
     it("should fall back when codex.json contains invalid JSON", () => {
-      const tempDir = mkdtempSync(join(tmpdir(), "strray-badjson-"));
+      const tempDir = mkdtempSync(join(tmpdir(), "xray-badjson-"));
       mkdirSync(join(tempDir, ".strray"), { recursive: true });
       writeFileSync(join(tempDir, ".strray", "codex.json"), "not json{{{", "utf-8");
 
@@ -433,7 +433,7 @@ describe("codex-formatter", () => {
     let tempDir: string;
 
     beforeEach(() => {
-      tempDir = mkdtempSync(join(tmpdir(), "strray-codex-"));
+      tempDir = mkdtempSync(join(tmpdir(), "xray-codex-"));
     });
 
     afterEach(() => {
@@ -455,13 +455,13 @@ describe("codex-formatter", () => {
       expect(result).toBe(join(tempDir, ".strray", "codex.json"));
     });
 
-    it("should find codex.json in .opencode/strray/ directory", () => {
-      mkdirSync(join(tempDir, ".opencode", "strray"), { recursive: true });
-      writeFileSync(join(tempDir, ".opencode", "strray", "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
+    it("should find codex.json in .opencode/xray/ directory", () => {
+      mkdirSync(join(tempDir, ".opencode", "xray"), { recursive: true });
+      writeFileSync(join(tempDir, ".opencode", "xray", "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
 
       const result = findCodexPath(tempDir);
 
-      expect(result).toBe(join(tempDir, ".opencode", "strray", "codex.json"));
+      expect(result).toBe(join(tempDir, ".opencode", "xray", "codex.json"));
     });
 
     it("should find codex.json in project root", () => {
@@ -482,11 +482,11 @@ describe("codex-formatter", () => {
       expect(result).toBe(join(tempDir, ".strray", "codex.json"));
     });
 
-    it("should prefer .strray/ over .opencode/strray/", () => {
+    it("should prefer .strray/ over .opencode/xray/", () => {
       mkdirSync(join(tempDir, ".strray"), { recursive: true });
-      mkdirSync(join(tempDir, ".opencode", "strray"), { recursive: true });
+      mkdirSync(join(tempDir, ".opencode", "xray"), { recursive: true });
       writeFileSync(join(tempDir, ".strray", "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
-      writeFileSync(join(tempDir, ".opencode", "strray", "codex.json"), JSON.stringify({ version: "opencode-1.0.0", terms: [] }), "utf-8");
+      writeFileSync(join(tempDir, ".opencode", "xray", "codex.json"), JSON.stringify({ version: "opencode-1.0.0", terms: [] }), "utf-8");
 
       const result = findCodexPath(tempDir);
 
@@ -499,7 +499,7 @@ describe("codex-formatter", () => {
       writeFileSync(join(tempDir, envDir, "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
       // Also create .strray to verify env wins
       mkdirSync(join(tempDir, ".strray"), { recursive: true });
-      writeFileSync(join(tempDir, ".strray", "codex.json"), JSON.stringify({ version: "strray-1.0.0", terms: [] }), "utf-8");
+      writeFileSync(join(tempDir, ".strray", "codex.json"), JSON.stringify({ version: "xray-1.0.0", terms: [] }), "utf-8");
 
       const original = process.env.STRRAY_CONFIG_DIR;
       process.env.STRRAY_CONFIG_DIR = envDir;
@@ -540,7 +540,7 @@ describe("codex-formatter", () => {
     });
 
     it("should include config source path when loading from file", () => {
-      const tempDir = mkdtempSync(join(tmpdir(), "strray-edge-"));
+      const tempDir = mkdtempSync(join(tmpdir(), "xray-edge-"));
       mkdirSync(join(tempDir, ".strray"), { recursive: true });
       writeFileSync(join(tempDir, ".strray", "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
 
@@ -586,7 +586,7 @@ describe("codex-formatter", () => {
     });
 
     it("should load terms from a real codex.json file", () => {
-      const tempDir = mkdtempSync(join(tmpdir(), "strray-load-"));
+      const tempDir = mkdtempSync(join(tmpdir(), "xray-load-"));
       mkdirSync(join(tempDir, ".strray"), { recursive: true });
       writeFileSync(join(tempDir, ".strray", "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
 

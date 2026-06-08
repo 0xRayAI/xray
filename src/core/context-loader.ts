@@ -73,8 +73,8 @@ function isValidMatch(
  *
  * Loads and parses the Universal Development Codex v1.2.0 from codex.json
  */
-export class StringRayContextLoader {
-  private static instance: StringRayContextLoader;
+export class XrayContextLoader {
+  private static instance: XrayContextLoader;
   private cachedContext: CodexContext | null = null;
   private codexFilePaths: string[] = [];
 
@@ -85,11 +85,11 @@ export class StringRayContextLoader {
   /**
    * Get singleton instance
    */
-  public static getInstance(): StringRayContextLoader {
-    if (!StringRayContextLoader.instance) {
-      StringRayContextLoader.instance = new StringRayContextLoader();
+  public static getInstance(): XrayContextLoader {
+    if (!XrayContextLoader.instance) {
+      XrayContextLoader.instance = new XrayContextLoader();
     }
-    return StringRayContextLoader.instance;
+    return XrayContextLoader.instance;
   }
 
   /**
@@ -394,4 +394,6 @@ export class StringRayContextLoader {
 /**
  * Export singleton instance
  */
-export const strRayContextLoader = StringRayContextLoader.getInstance();
+export const xrayContextLoader = XrayContextLoader.getInstance();
+// Backward compat alias
+export { xrayContextLoader as strRayContextLoader, XrayContextLoader as StringRayContextLoader };

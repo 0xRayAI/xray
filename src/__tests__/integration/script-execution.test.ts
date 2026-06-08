@@ -19,7 +19,7 @@ describe("0xRay Script Execution Integration", () => {
 
   beforeEach(() => {
     // Create a temporary directory for test scripts
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-script-test-"));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-script-test-"));
   });
 
   afterEach(() => {

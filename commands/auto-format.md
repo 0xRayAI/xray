@@ -5,11 +5,11 @@ description: Automated code formatting hook with Prettier and framework-specific
 
 #!/bin/bash
 
-# StringRay 1.0.0 - Auto Format Hook
+# 0xRay 1.0.0 - Auto Format Hook
 
 # Ensures consistent code formatting across all files
 
-echo "🎨 StringRay 1.0.0 - Auto Format"
+echo "🎨 0xRay 1.0.0 - Auto Format"
 echo "================================================"
 
 # Initialize status
@@ -91,7 +91,7 @@ fi
 if [ "$FORMATTED" = true ]; then
 echo ""
 echo "✅ Code formatting completed successfully"
-echo "🎯 StringRay 1.0.0: FORMATTING OPERATIONAL"
+echo "🎯 0xRay 1.0.0: FORMATTING OPERATIONAL"
 else
 echo ""
 echo "⚠️ Some formatting operations failed"

@@ -1,1 +1,0 @@
-../mjs/test-stringray-plugin.mjs

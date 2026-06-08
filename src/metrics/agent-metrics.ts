@@ -1,6 +1,6 @@
 // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
 
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
 export interface AgentInvocation {
@@ -136,13 +136,13 @@ const DEFAULT_RETENTION_CONFIG: MetricsRetentionConfig = {
 const INVOCATION_STORE_KEY = "agent_invocations";
 
 export class AgentMetricsSystem {
-  private stateManager: StringRayStateManager;
+  private stateManager: XrayStateManager;
   private retentionConfig: MetricsRetentionConfig;
   private cleanupInterval: NodeJS.Timeout | undefined;
   private initialized = false;
 
   constructor(
-    stateManager: StringRayStateManager,
+    stateManager: XrayStateManager,
     retentionConfig: Partial<MetricsRetentionConfig> = {},
   ) {
     this.stateManager = stateManager;
@@ -840,14 +840,14 @@ export class AgentMetricsSystem {
 
 let globalMetricsSystem: AgentMetricsSystem | null = null;
 
-export function getAgentMetricsSystem(stateManager?: StringRayStateManager): AgentMetricsSystem {
+export function getAgentMetricsSystem(stateManager?: XrayStateManager): AgentMetricsSystem {
   if (!globalMetricsSystem && stateManager) {
     globalMetricsSystem = new AgentMetricsSystem(stateManager);
   }
   return globalMetricsSystem!;
 }
 
-export function initializeAgentMetrics(stateManager: StringRayStateManager): AgentMetricsSystem {
+export function initializeAgentMetrics(stateManager: XrayStateManager): AgentMetricsSystem {
   globalMetricsSystem = new AgentMetricsSystem(stateManager);
   return globalMetricsSystem;
 }

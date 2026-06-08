@@ -149,7 +149,7 @@ vi.mock(
 );
 
 vi.mock("../orchestrator", () => ({
-  StringRayOrchestrator: vi.fn().mockImplementation(() => ({
+  XrayOrchestrator: vi.fn().mockImplementation(() => ({
     // Mock orchestrator implementation
   })),
 }));

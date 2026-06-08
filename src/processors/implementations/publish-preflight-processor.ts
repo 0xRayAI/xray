@@ -66,7 +66,7 @@ export class PublishPreflightProcessor extends PostProcessor {
     try {
       const configPaths = [
         path.join(process.cwd(), ".strray", "features.json"),
-        path.join(process.cwd(), ".opencode", "strray", "features.json"),
+        path.join(process.cwd(), ".opencode", "xray", "features.json"),
       ];
 
       for (const configPath of configPaths) {

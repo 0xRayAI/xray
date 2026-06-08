@@ -1,6 +1,6 @@
 # MCP Image Recognition Plugin
 
-Image recognition plugin for StringRay using AI vision capabilities.
+Image recognition plugin for 0xRay using AI vision capabilities.
 
 ## Features
 
@@ -13,7 +13,7 @@ Image recognition plugin for StringRay using AI vision capabilities.
 
 ```bash
 # Copy to your plugins directory
-cp -r examples/plugins/mcp-image-recognition .strray/plugins/
+cp -r examples/plugins/mcp-image-recognition .opencode/plugins/
 
 # Or use the CLI
 npx 0xray plugin install mcp-image-recognition

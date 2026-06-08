@@ -344,17 +344,17 @@ export class MCPClient extends EventEmitter {
       ],
       'framework-help': [
         {
-          name: 'strray_get_capabilities',
+          name: 'xray_get_capabilities',
           description: 'Get 0xRay framework capabilities',
           inputSchema: { type: 'object', properties: {} },
         },
         {
-          name: 'strray_get_commands',
+          name: 'xray_get_commands',
           description: 'Get available 0xRay commands',
           inputSchema: { type: 'object', properties: {} },
         },
         {
-          name: 'strray_explain_capability',
+          name: 'xray_explain_capability',
           description: 'Explain a specific capability',
           inputSchema: {
             type: 'object',

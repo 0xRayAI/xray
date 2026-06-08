@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - AI Summary Auto-Logger
+# 0xRay Framework - AI Summary Auto-Logger
 
 # Automatically captures and logs whatever AI outputs as final summary
 
@@ -40,7 +40,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "🤖 StrRay AI Summary Auto-Logger"
+echo "🤖 0xRay AI Summary Auto-Logger"
 echo "==============================="
 
 # This script captures whatever content is piped to it and logs it automatically

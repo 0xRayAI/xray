@@ -8,7 +8,7 @@
  * @since 2026-04-16
  */
 
-import type { StringRayStateManager } from "../state/state-manager.js";
+import type { XrayStateManager } from "../state/state-manager.js";
 
 export interface DelegationMetricEntry {
   timestamp: number;
@@ -77,26 +77,26 @@ export interface MetricsExport {
 const MAX_METRICS_ENTRIES = 100;
 
 export function getDelegationMetrics(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
 ): DelegationMetricEntry[] {
   return (stateManager.get("delegation_metrics") as DelegationMetricEntry[]) || [];
 }
 
 export function getOrchestrationMetrics(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
 ): OrchestrationMetricEntry[] {
   return (stateManager.get("orchestration_metrics") as OrchestrationMetricEntry[]) || [];
 }
 
 export function aggregateDelegationMetrics(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
 ): AggregatedMetrics {
   const metrics = getDelegationMetrics(stateManager);
   return aggregateMetricsData(metrics, "delegation");
 }
 
 export function aggregateOrchestrationMetrics(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
 ): AggregatedMetrics {
   const metrics = getOrchestrationMetrics(stateManager);
   return aggregateMetricsData(metrics, "orchestration");
@@ -233,7 +233,7 @@ function getTimePeriod(timestamp: number): string {
 }
 
 export function summarizeByAgent(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   type: "delegation" | "orchestration" = "delegation",
 ): Record<string, unknown> {
   const metrics =
@@ -293,7 +293,7 @@ export function summarizeByAgent(
 }
 
 export function summarizeByComplexityLevel(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   type: "delegation" | "orchestration" = "delegation",
 ): Record<string, unknown> {
   const metrics =
@@ -345,7 +345,7 @@ export function summarizeByComplexityLevel(
 }
 
 export function summarizeByTimePeriod(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   type: "delegation" | "orchestration" = "delegation",
 ): Record<string, unknown> {
   const metrics =
@@ -383,7 +383,7 @@ export function summarizeByTimePeriod(
 }
 
 export function rotateMetrics(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   maxEntries = MAX_METRICS_ENTRIES,
 ): { delegation: number; orchestration: number } {
   const delegationMetrics = getDelegationMetrics(stateManager);
@@ -411,7 +411,7 @@ export function rotateMetrics(
 }
 
 export function cleanupOldMetrics(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   olderThan: number,
 ): { delegation: number; orchestration: number } {
   const currentDelegation = getDelegationMetrics(stateManager);
@@ -440,7 +440,7 @@ export function cleanupOldMetrics(
 }
 
 export function exportMetrics(
-  stateManager: StringRayStateManager,
+  stateManager: XrayStateManager,
   format: "json" | "csv" | "summary" = "json",
 ): MetricsExport {
   const delegation = getDelegationMetrics(stateManager);

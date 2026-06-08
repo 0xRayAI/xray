@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
-  StringRayConfigLoader,
-  strRayConfigLoader,
-  StringRayConfig,
+  XrayConfigLoader,
+  xrayConfigLoader,
+  XrayConfig,
   MultiAgentOrchestrationConfig,
 } from "../../core/config-loader.js";
 import * as fs from "fs";
@@ -20,8 +20,8 @@ vi.mock("path", () => ({
   join: vi.fn(),
 }));
 
-describe("StringRayConfigLoader", () => {
-  let loader: StringRayConfigLoader;
+describe("XrayConfigLoader", () => {
+  let loader: XrayConfigLoader;
   let mockFs: any;
   let mockPath: any;
 
@@ -41,8 +41,8 @@ describe("StringRayConfigLoader", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset singleton instance for clean test state
-    (StringRayConfigLoader as any).instance = null;
-    loader = new StringRayConfigLoader();
+    (XrayConfigLoader as any).instance = null;
+    loader = new XrayConfigLoader();
     mockFs = vi.mocked(fs);
     mockPath = vi.mocked(path);
 
@@ -60,21 +60,21 @@ describe("StringRayConfigLoader", () => {
 
   describe("constructor", () => {
     it("should use default path when no configPath provided", () => {
-      const loader = new StringRayConfigLoader();
+      const loader = new XrayConfigLoader();
       expect((loader as any).configPath).toContain(".strray/config.json");
     });
 
     it("should use provided configPath", () => {
       const customPath = "/custom/path/config.json";
-      const loader = new StringRayConfigLoader(customPath);
+      const loader = new XrayConfigLoader(customPath);
       expect((loader as any).configPath).toBe(customPath);
     });
   });
 
   describe("singleton pattern", () => {
     it("should export singleton instance", () => {
-      const instance1 = new StringRayConfigLoader();
-      expect(strRayConfigLoader).toBeInstanceOf(StringRayConfigLoader);
+      const instance1 = new XrayConfigLoader();
+      expect(xrayConfigLoader).toBeInstanceOf(XrayConfigLoader);
     });
   });
 

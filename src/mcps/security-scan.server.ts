@@ -39,7 +39,7 @@ interface SecuritySummaryResults {
   summary: string;
 }
 
-class StringRaySecurityScanServer {
+class XraySecurityScanServer {
   private server: Server;
 
   constructor() {
@@ -644,8 +644,8 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRaySecurityScanServer();
+  const server = new XraySecurityScanServer();
   server.run().catch((error) => frameworkLogger.log("mcps/security-scan", "run", "error", { error: String(error) }));
 }
 
-export { StringRaySecurityScanServer };
+export { XraySecurityScanServer };

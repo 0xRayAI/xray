@@ -3,37 +3,37 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { StringRaySecurityAuditServer } from "./security-audit.server";
+import { XraySecurityAuditServer } from "./security-audit.server";
 import * as fs from "fs";
 import * as path from "path";
 
 describe("security-audit.server integration", () => {
   describe("module exports", () => {
     it("should export server class", () => {
-      expect(StringRaySecurityAuditServer).toBeDefined();
-      expect(typeof StringRaySecurityAuditServer).toBe("function");
+      expect(XraySecurityAuditServer).toBeDefined();
+      expect(typeof XraySecurityAuditServer).toBe("function");
     });
 
     it("should be able to instantiate the server", () => {
-      const server = new StringRaySecurityAuditServer();
+      const server = new XraySecurityAuditServer();
       expect(server).toBeDefined();
     });
 
     it("should have run method", () => {
-      const server = new StringRaySecurityAuditServer();
+      const server = new XraySecurityAuditServer();
       expect(typeof server.run).toBe("function");
     });
   });
 
   describe("server structure", () => {
-    let server: StringRaySecurityAuditServer;
+    let server: XraySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StringRaySecurityAuditServer();
+      server = new XraySecurityAuditServer();
     });
 
     it("should instantiate correctly", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
 
     it("should have run async method", () => {
@@ -42,10 +42,10 @@ describe("security-audit.server integration", () => {
   });
 
   describe("security audit capabilities", () => {
-    let server: StringRaySecurityAuditServer;
+    let server: XraySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StringRaySecurityAuditServer();
+      server = new XraySecurityAuditServer();
     });
 
     it("should analyze TypeScript files", () => {
@@ -61,52 +61,52 @@ describe("security-audit.server integration", () => {
     });
 
     it("should detect multiple vulnerability categories", () => {
-      const server = new StringRaySecurityAuditServer();
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      const server = new XraySecurityAuditServer();
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
   });
 
   describe("vulnerability detection", () => {
-    let server: StringRaySecurityAuditServer;
+    let server: XraySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StringRaySecurityAuditServer();
+      server = new XraySecurityAuditServer();
     });
 
     it("should handle injection vulnerabilities", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
 
     it("should handle authentication vulnerabilities", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
 
     it("should handle cryptography issues", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
 
     it("should handle configuration issues", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
 
     it("should handle data protection issues", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
   });
 
   describe("compliance checking", () => {
-    let server: StringRaySecurityAuditServer;
+    let server: XraySecurityAuditServer;
 
     beforeEach(() => {
-      server = new StringRaySecurityAuditServer();
+      server = new XraySecurityAuditServer();
     });
 
     it("should check OWASP Top 10 compliance", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
 
     it("should support multiple compliance frameworks", () => {
-      expect(server).toBeInstanceOf(StringRaySecurityAuditServer);
+      expect(server).toBeInstanceOf(XraySecurityAuditServer);
     });
   });
 });

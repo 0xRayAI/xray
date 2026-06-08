@@ -290,7 +290,7 @@ export class InferenceTuner {
     const candidates = [
       path.resolve(process.cwd(), ".strray/routing-mappings.json"),
       path.resolve(process.cwd(), "xray/routing-mappings.json"),
-      path.resolve(process.cwd(), ".opencode/strray/routing-mappings.json"),
+      path.resolve(process.cwd(), ".opencode/xray/routing-mappings.json"),
       path.resolve(process.cwd(), "routing-mappings.json"),
     ];
     for (const p of candidates) {

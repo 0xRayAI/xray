@@ -1,4 +1,4 @@
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { ProcessorRegistration, ProcessorHook, PreValidateContext, PostValidateContext, ProcessorExecutionResult, ProcessorContext } from "./processor-types.js";
 import { IProcessor, BaseProcessor } from "./processor-interfaces.js";
@@ -54,12 +54,12 @@ type ProcessorFactory = {
 export class ProcessorManager {
   private processors = new Map<string, ProcessorConfig>();
   private metrics = new Map<string, ProcessorMetrics>();
-  private stateManager: StringRayStateManager;
+  private stateManager: XrayStateManager;
   private activeProcessors = new Set<string>();
   private factories = new Map<string, ProcessorFactory>();
   private lastExecutionTime = new Map<string, number>();
 
-  constructor(stateManager: StringRayStateManager) {
+  constructor(stateManager: XrayStateManager) {
     this.stateManager = stateManager;
     this.registerBuiltInFactories();
   }

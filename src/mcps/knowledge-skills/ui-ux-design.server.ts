@@ -186,7 +186,7 @@ interface ToolResponse {
   isError?: boolean;
 }
 
-class StringRayUIUXDesignServer {
+class XrayUIUXDesignServer {
   private server: Server;
 
   constructor() {
@@ -1985,7 +1985,7 @@ Available: ${Object.keys(system.components).length} component types
     await this.server.connect(transport);
     await frameworkLogger.log(
       "ui-ux-design.server",
-      "-strray-ui-ux-design-mcp-server-running-",
+      "-xray-ui-ux-design-mcp-server-running-",
       "info",
       { message: "xray UI/UX Design MCP Server running..." },
     );
@@ -2011,7 +2011,7 @@ Available: ${Object.keys(system.components).length} component types
         clearTimeout(timeout);
         await frameworkLogger.log(
           "ui-ux-design.server",
-          "-strray-mcp-server-shut-down-gracefully-",
+          "-xray-mcp-server-shut-down-gracefully-",
           "info",
           { message: "xray MCP Server shut down gracefully" },
         );
@@ -2069,8 +2069,8 @@ Available: ${Object.keys(system.components).length} component types
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayUIUXDesignServer();
+  const server = new XrayUIUXDesignServer();
   server.run().catch((error) => frameworkLogger.log("mcps/ui-ux-design", "run", "error", { error: String(error) }));
 }
 
-export { StringRayUIUXDesignServer };
+export { XrayUIUXDesignServer };

@@ -8,7 +8,7 @@
  * @since 2026-02-22
  */
 
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 
 /**
  * Routing result interface
@@ -32,7 +32,7 @@ export interface RoutingOptions {
   taskId?: string;
   useHistoricalData?: boolean;
   sessionId?: string;
-  stateManager?: StringRayStateManager;
+  stateManager?: XrayStateManager;
 }
 
 /**
@@ -72,12 +72,12 @@ export class TaskSkillRouter {
   /**
    * Create a new TaskSkillRouter
    */
-  constructor(stateManager?: StringRayStateManager);
+  constructor(stateManager?: XrayStateManager);
 
   /**
    * Set state manager after construction
    */
-  setStateManager(stateManager: StringRayStateManager): void;
+  setStateManager(stateManager: XrayStateManager): void;
 
   /**
    * Pre-process a task description to extract operation and context
@@ -133,7 +133,7 @@ export const taskSkillRouter: TaskSkillRouter;
  * Factory function for creating with state manager
  */
 export function createTaskSkillRouter(
-  stateManager?: StringRayStateManager,
+  stateManager?: XrayStateManager,
 ): TaskSkillRouter;
 
 /**

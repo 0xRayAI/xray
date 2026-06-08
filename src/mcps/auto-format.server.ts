@@ -34,7 +34,7 @@ interface FormatResults {
   changes: Record<string, string[]>;
 }
 
-class StringRayAutoFormatServer {
+class XrayAutoFormatServer {
   private server: Server;
 
   constructor() {
@@ -522,8 +522,8 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayAutoFormatServer();
+  const server = new XrayAutoFormatServer();
   server.run().catch((error) => frameworkLogger.log("mcps/auto-format", "run", "error", { error: String(error) }));
 }
 
-export { StringRayAutoFormatServer };
+export { XrayAutoFormatServer };

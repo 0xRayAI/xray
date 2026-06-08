@@ -99,7 +99,7 @@ describe('Antigravity Skills Integration', () => {
   });
 
   it('should list Antigravity in skills registry', () => {
-    const registryPath = path.join(process.cwd(), '.opencode/skills/registry.json');
+    const registryPath = path.join(process.cwd(), 'src/skills/registry.json');
     const content = fs.readFileSync(registryPath, 'utf-8');
     expect(content).toContain('antigravity');
     expect(content).toContain('sickn33/antigravity-awesome-skills');

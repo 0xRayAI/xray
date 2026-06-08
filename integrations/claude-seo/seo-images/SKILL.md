@@ -5,7 +5,7 @@ attribution: |
   Originally from https://github.com/AgriciDaniel/claude-seo
   License: MIT (see LICENSE.claude-seo)
 converted: 2026-03-09T07:40:30.000Z
-framework: StringRay v1.7.5
+framework: 0xRay v1.7.5
 ---
 
 ---
@@ -180,5 +180,5 @@ Sorted by file size impact (largest savings first):
 
 ---
 
-*This skill was integrated into StringRay via the claude-seo integration script.*
+*This skill was integrated into 0xRay via the claude-seo integration script.*
 *Original source: https://github.com/AgriciDaniel/claude-seo*

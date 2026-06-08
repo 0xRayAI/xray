@@ -107,7 +107,7 @@ interface AppStoreMetadataArgs {
   features?: string[];
 }
 
-class StringRayMobileDevelopmentServer {
+class XrayMobileDevelopmentServer {
   private server: Server;
 
   constructor() {
@@ -665,8 +665,8 @@ class HomePage extends StatelessWidget {
 
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
-  const server = new StringRayMobileDevelopmentServer();
+  const server = new XrayMobileDevelopmentServer();
   server.start().catch(() => {});
 }
 
-export { StringRayMobileDevelopmentServer };
+export { XrayMobileDevelopmentServer };

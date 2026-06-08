@@ -207,7 +207,7 @@ test('should show not implemented message', () => {
 // ============================================
 // SKILLS VERIFICATION (Community skills - optional install)
 // NOTE: Community skills from registry are optional. 
-// Run `npx strray-ai skill:install` to add them.
+// Run `npx 0xray skill:install` to add them.
 // ============================================
 // Community skill tests skipped - these are optional installs
 // test('typescript-expert skill should exist', () => { ... });

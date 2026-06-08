@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Consumer E2E Unified Runner
+ * 0xRay Consumer E2E Unified Runner
  *
  * Single pre-merge gate that validates the packaged artifact across all platforms.
  *
@@ -51,7 +51,7 @@ async function main() {
   section('Phase 0: Pack the package');
 
   const packOutput = execSync(`cd "${projectRoot}" && npm pack`, { encoding: 'utf-8', timeout: 60000 });
-  const tarballMatch = packOutput.match(/(?:strray-ai|0xray)-(\d+\.\d+\.\d+)\.tgz/);
+  const tarballMatch = packOutput.match(/(?:0xray)-(\d+\.\d+\.\d+)\.tgz/);
   if (!tarballMatch) {
     // Fallback: find the newest .tgz in the project root
     const files = fs.readdirSync(projectRoot).filter(f => f.endsWith('.tgz'));
@@ -69,7 +69,7 @@ async function main() {
 
   section('Phase 1: Create fresh consumer directory');
 
-  const consumerDir = path.join(os.tmpdir(), `strray-consumer-e2e-${Date.now()}`);
+  const consumerDir = path.join(os.tmpdir(), `xray-consumer-e2e-${Date.now()}`);
   fs.mkdirSync(consumerDir, { recursive: true });
   console.log(`Consumer dir: ${consumerDir}`);
 

@@ -3,37 +3,37 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { StringRayTestingBestPracticesServer } from "./testing-best-practices.server";
+import { XrayTestingBestPracticesServer } from "./testing-best-practices.server";
 import * as fs from "fs";
 import * as path from "path";
 
 describe("testing-best-practices.server integration", () => {
   describe("module exports", () => {
     it("should export server class", () => {
-      expect(StringRayTestingBestPracticesServer).toBeDefined();
-      expect(typeof StringRayTestingBestPracticesServer).toBe("function");
+      expect(XrayTestingBestPracticesServer).toBeDefined();
+      expect(typeof XrayTestingBestPracticesServer).toBe("function");
     });
 
     it("should be able to instantiate the server", () => {
-      const server = new StringRayTestingBestPracticesServer();
+      const server = new XrayTestingBestPracticesServer();
       expect(server).toBeDefined();
     });
 
     it("should have run method", () => {
-      const server = new StringRayTestingBestPracticesServer();
+      const server = new XrayTestingBestPracticesServer();
       expect(typeof server.run).toBe("function");
     });
   });
 
   describe("server structure", () => {
-    let server: StringRayTestingBestPracticesServer;
+    let server: XrayTestingBestPracticesServer;
 
     beforeEach(() => {
-      server = new StringRayTestingBestPracticesServer();
+      server = new XrayTestingBestPracticesServer();
     });
 
     it("should instantiate correctly", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should have run async method", () => {
@@ -42,82 +42,82 @@ describe("testing-best-practices.server integration", () => {
   });
 
   describe("test analysis capabilities", () => {
-    let server: StringRayTestingBestPracticesServer;
+    let server: XrayTestingBestPracticesServer;
 
     beforeEach(() => {
-      server = new StringRayTestingBestPracticesServer();
+      server = new XrayTestingBestPracticesServer();
     });
 
     it("should analyze test coverage", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should identify test gaps", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should provide recommendations", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
   });
 
   describe("test strategy types", () => {
-    let server: StringRayTestingBestPracticesServer;
+    let server: XrayTestingBestPracticesServer;
 
     beforeEach(() => {
-      server = new StringRayTestingBestPracticesServer();
+      server = new XrayTestingBestPracticesServer();
     });
 
     it("should support unit tests", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should support integration tests", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should support e2e tests", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should support performance tests", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should support security tests", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
   });
 
   describe("TDD/BDD implementation", () => {
-    let server: StringRayTestingBestPracticesServer;
+    let server: XrayTestingBestPracticesServer;
 
     beforeEach(() => {
-      server = new StringRayTestingBestPracticesServer();
+      server = new XrayTestingBestPracticesServer();
     });
 
     it("should provide TDD guidance", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should provide BDD guidance", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should suggest test frameworks", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
   });
 
   describe("automation workflows", () => {
-    let server: StringRayTestingBestPracticesServer;
+    let server: XrayTestingBestPracticesServer;
 
     beforeEach(() => {
-      server = new StringRayTestingBestPracticesServer();
+      server = new XrayTestingBestPracticesServer();
     });
 
     it("should calculate automation potential", () => {
-      expect(server).toBeInstanceOf(StringRayTestingBestPracticesServer);
+      expect(server).toBeInstanceOf(XrayTestingBestPracticesServer);
     });
 
     it("should analyze test frameworks", () => {

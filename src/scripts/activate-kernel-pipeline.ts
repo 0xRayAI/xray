@@ -6,13 +6,13 @@
  */
 
 import { AgentDelegator } from '../delegation/agent-delegator.js';
-import { StringRayStateManager } from '../state/state-manager.js';
+import { XrayStateManager } from '../state/state-manager.js';
 import { strRayConfigLoader } from '../core/config-loader.js';
 import { routingOutcomeTracker } from '../delegation/analytics/outcome-tracker.js';
 import { patternPerformanceTracker } from '../analytics/pattern-performance-tracker.js';
 import { frameworkLogger } from '../core/framework-logger.js';
 
-const stateManager = new StringRayStateManager();
+const stateManager = new XrayStateManager();
 const delegator = new AgentDelegator(stateManager, strRayConfigLoader);
 
 console.log('=== KERNEL PIPELINE ACTIVATION TEST ===\n');

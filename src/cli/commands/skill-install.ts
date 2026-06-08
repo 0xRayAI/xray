@@ -15,7 +15,7 @@ interface LocalRegistry {
 }
 
 function getLocalRegistryPath(): string {
-  return join(process.cwd(), ".opencode", "strray", "skill-registry.json");
+  return join(process.cwd(), ".opencode", "xray", "skill-registry.json");
 }
 
 function getBundledRegistry(): LocalRegistry | null {

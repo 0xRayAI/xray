@@ -13,14 +13,14 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ProcessorManager } from "../../processors/processor-manager.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 
 describe("ProcessorManager Reuse (Critical Regression)", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
 
   beforeEach(() => {
     // Create fresh state manager for each test
-    stateManager = new StringRayStateManager("/tmp/test-processor-reuse");
+    stateManager = new XrayStateManager("/tmp/test-processor-reuse");
   });
 
   it("should reuse ProcessorManager from state instead of creating new one", () => {

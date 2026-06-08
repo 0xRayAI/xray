@@ -7,7 +7,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-storytelling-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-storytelling-test-"));
     const origCwd = process.cwd;
     process.cwd = () => tmpDir;
     fs.mkdirSync(path.join(tmpDir, "docs", "reflections", "deep"), { recursive: true });

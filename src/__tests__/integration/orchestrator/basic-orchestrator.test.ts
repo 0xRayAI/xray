@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
-  StringRayOrchestrator,
+  XrayOrchestrator,
   TaskDefinition,
 } from "../../../orchestrator/orchestrator.js";
 
 describe("Basic Orchestrator Functionality", () => {
-  let orchestrator: StringRayOrchestrator;
+  let orchestrator: XrayOrchestrator;
 
   beforeEach(() => {
-    orchestrator = new StringRayOrchestrator({
+    orchestrator = new XrayOrchestrator({
       maxConcurrentTasks: 2,
       taskTimeout: 10000,
     });
