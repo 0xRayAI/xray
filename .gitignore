@@ -90,8 +90,8 @@ state
 performance-baselines.json
 
 # Stale root duplicates (canonical copy lives in src/)
-command/
-skills/
+/command/
+/skills/
 
 # Stray test artifacts
 test-debug.mjs
