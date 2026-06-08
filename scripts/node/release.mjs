@@ -98,19 +98,19 @@ async function main() {
   // This removes the brittle "must be exactly one ahead" problem.
   let publishedVersion;
   try {
-    publishedVersion = execSync('npm view xray version', { encoding: 'utf-8' }).trim();
+    publishedVersion = execSync('npm view 0xray version', { encoding: 'utf-8' }).trim();
     console.log(`📌 Latest published on npm: ${publishedVersion}`);
   } catch {
-    publishedVersion = '0.0.0';
-    console.log('⚠️  Could not fetch published version from npm (using 0.0.0)');
+    publishedVersion = null;
+    console.log('⚠️  Could not fetch published version from npm — will use local version');
   }
 
-  const targetVersion = bumpVersion(publishedVersion, releaseType);
-  console.log(`📌 Target version (computed from registry): ${targetVersion}`);
+  const baseVersion = publishedVersion || getCurrentVersion();
+  const targetVersion = bumpVersion(baseVersion, releaseType);
+  console.log(`📌 Target version (computed from ${publishedVersion ? 'registry' : 'local'}): ${targetVersion}`);
   console.log(`📌 Release type: ${releaseType}`);
 
-  // Safety: if local is somehow ahead of what we computed, warn but continue
-  if (currentVersion !== targetVersion) {
+  if (publishedVersion && currentVersion !== targetVersion) {
     console.log(`⚠️  Local version (${currentVersion}) differs from computed target. Using computed target ${targetVersion}.`);
   }
 
@@ -154,13 +154,13 @@ async function main() {
   
   // Step 5: Push
   console.log('\n📦 Step 5: Pushing to origin...');
-  runCommand('git push origin master', 'Failed to push to origin');
+  runCommand('git push origin main', 'Failed to push to origin');
   runCommand(`git push origin v${newVersion}`, 'Failed to push tag');
 
   // Step 6: Publish to npm
   console.log('\n📦 Step 6: Publishing to npm...');
   runCommand('npm publish --access public', 'npm publish failed');
-  console.log(`✅ Published xray@${newVersion} to npm`);
+  console.log(`✅ Published 0xray@${newVersion} to npm`);
 
   console.log('\n╔════════════════════════════════════════════════════════╗');
   console.log('║        ✅ Release Complete!                            ║');
@@ -190,7 +190,7 @@ async function main() {
 {EMOJI} {feature - consumer benefit}
 {EMOJI} {feature - consumer benefit}
 \`\`\`
-npm install xray@latest
+npm install 0xray@latest
 \`\`\`
 What xray is: {one sentence positioning}
 #xray #AIOps #DevTools #SelfHealing #NPM`;
