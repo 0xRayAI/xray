@@ -33,7 +33,7 @@ class XrayArchitecturePatternsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "architecture-patterns", version: "2.0.0",
+        name: "architecture-patterns", version: "2.0.1",
       },
       {
         capabilities: {

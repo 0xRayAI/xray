@@ -209,7 +209,7 @@ class XrayTestingBestPracticesServer {
   constructor() {
     this.server = new Server(
       {
-        name: "testing-best-practices", version: "2.0.0",
+        name: "testing-best-practices", version: "2.0.1",
       },
       {
         capabilities: {

@@ -144,7 +144,7 @@ class XrayEnforcerToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "enforcer", version: "2.0.0",
+        name: "enforcer", version: "2.0.1",
       },
       {
         capabilities: {

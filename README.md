@@ -178,7 +178,7 @@ Every subsystem is configurable via `features.json` (located at `.opencode/xray/
 
 ```json
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,

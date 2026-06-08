@@ -113,7 +113,7 @@ class XrayMobileDevelopmentServer {
   constructor() {
     this.server = new Server(
       {
-        name: "mobile-development", version: "2.0.0",
+        name: "mobile-development", version: "2.0.1",
       },
       {
         capabilities: {

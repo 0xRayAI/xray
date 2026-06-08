@@ -167,7 +167,7 @@ class MultimodalLookerServer {
 
   constructor() {
     this.server = new Server(
-      { name: "multimodal-looker", version: "2.0.0" },
+      { name: "multimodal-looker", version: "2.0.1" },
       { capabilities: { tools: {} } },
     );
     this.setupToolHandlers();

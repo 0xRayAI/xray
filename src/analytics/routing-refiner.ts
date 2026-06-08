@@ -120,7 +120,7 @@ class RoutingRefiner {
     const warnings = this.generateWarnings(newMappings, optimizations);
 
     return {
-      version: "2.0.0",
+      version: "2.0.1",
       generatedAt: new Date(),
       summary: {
         newMappings: newMappings.length,

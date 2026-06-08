@@ -107,7 +107,7 @@ class XrayProcessorPipelineServer {
     this.codexLoader = new CodexLoader();
     this.server = new Server(
       {
-        name: "processor-pipeline", version: "2.0.0",
+        name: "processor-pipeline", version: "2.0.1",
       },
       {
         capabilities: {

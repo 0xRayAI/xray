@@ -212,7 +212,7 @@ class XrayDevOpsDeploymentServer {
   constructor() {
     this.server = new Server(
       {
-        name: "devops-deployment", version: "2.0.0",
+        name: "devops-deployment", version: "2.0.1",
       },
       {
         capabilities: {

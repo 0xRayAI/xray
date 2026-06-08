@@ -224,7 +224,7 @@ class XrayPerformanceOptimizationServer {
   constructor() {
     this.server = new Server(
       {
-        name: "performance-optimization", version: "2.0.0",
+        name: "performance-optimization", version: "2.0.1",
       },
       {
         capabilities: {

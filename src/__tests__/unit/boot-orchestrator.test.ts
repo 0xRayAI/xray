@@ -27,7 +27,7 @@ vi.mock("../../core/context-loader.js", async (importOriginal) => {
   const mockInstance = {
     loadCodexContext: vi.fn().mockResolvedValue({
       success: true,
-      context: { terms: new Map(), version: "2.0.0" },
+      context: { terms: new Map(), version: "2.0.1" },
       warnings: [],
     }),
     clearCache: vi.fn(),
@@ -52,7 +52,7 @@ describe("BootOrchestrator", () => {
     // Mock dependencies
     mockContextLoader = {
       loadCodexContext: vi.fn().mockResolvedValue({
-        version: "2.0.0",
+        version: "2.0.1",
         terms: [],
         validationCriteria: {},
       }),

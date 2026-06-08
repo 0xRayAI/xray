@@ -135,7 +135,7 @@ class XrayTestingStrategyServer {
   constructor() {
     this.server = new Server(
       {
-        name: "testing-strategy", version: "2.0.0",
+        name: "testing-strategy", version: "2.0.1",
       },
       {
         capabilities: {

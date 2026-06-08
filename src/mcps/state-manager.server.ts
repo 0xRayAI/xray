@@ -71,7 +71,7 @@ class StrRayStateManagerServer {
   constructor() {
     this.server = new Server(
       {
-        name: "state-manager", version: "2.0.0",
+        name: "state-manager", version: "2.0.1",
       },
       {
         capabilities: {

@@ -42,7 +42,7 @@ class XrayModelHealthCheckServer {
   constructor() {
     this.server = new Server(
       {
-        name: "model-health-check", version: "2.0.0",
+        name: "model-health-check", version: "2.0.1",
       },
       {
         capabilities: {

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [2.1.1] - 2026-06-08
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: sweep remaining .strray → .xray references in source files (12b992206)
+- fix: pre-publish-guard handles missing features.json, release.mjs uses --ignore-scripts (cd65f6309)
+
+---
+
 ## [2.0.1] - 2026-06-08
 
 ### 🔄 Changes

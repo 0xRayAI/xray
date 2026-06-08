@@ -155,7 +155,7 @@ const detectedCodex = detectCodexInfo();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "2.0.1",
+    version: "2.1.1",
       displayName: "xray: Self-Healing AI Governance OS",
       lastUpdated: "2026-06-08",
     // Counts (auto-calculated, but can be overridden)
@@ -403,7 +403,7 @@ const UPDATE_PATTERNS = [
       pattern: /xray AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `xray AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 2.0.0")
+    // Footer bare version (e.g., "**Version**: 2.0.1")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,
