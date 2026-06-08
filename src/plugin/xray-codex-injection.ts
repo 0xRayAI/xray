@@ -739,7 +739,7 @@ function logTestAutoCreationResult(results: ProcessorResult[], logger: PluginLog
 // Main plugin function
 // ---------------------------------------------------------------------------
 
-export default async function strrayCodexPlugin(input: {
+export default async function xrayCodexPlugin(input: {
   client?: string;
   directory?: string;
   worktree?: string;
