@@ -1131,6 +1131,15 @@ pluginCmd
     await pluginUninstallCommand(name);
   });
 
+// Security audit command
+program
+  .command("security-audit")
+  .description("Run comprehensive security audit with vulnerability scanning, compliance checking, and architectural decisions")
+  .action(async () => {
+    const { securityAuditCommand } = await import("./commands/security-audit.js");
+    await securityAuditCommand();
+  });
+
 // Add help text
 program.addHelpText(
   "after",
@@ -1151,6 +1160,7 @@ Examples:
     $ npx 0xray skill:install agency-agents  # Install 170+ agency agent skills
     $ npx 0xray skill:install superpowers      # Install 14 agentic workflow skills
     $ npx 0xray skill:install <github-url>     # Install from any repo
+    $ npx 0xray security-audit --deep  # Run deep security audit
     $ npx 0xray storyteller saga "v1.18.0 Journey"  # Write a saga
     $ npx 0xray storyteller reflection "API Fix"     # Write a reflection
 

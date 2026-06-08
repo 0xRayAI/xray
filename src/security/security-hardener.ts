@@ -3,13 +3,30 @@
  *
  * Implements additional security measures and hardening for the framework.
  * Addresses vulnerabilities identified during security audit.
+ * Includes AES-256-GCM encryption, scrypt password hashing, and event tracking.
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2026-01-07
  */
 
 import { SecurityIssue } from "./security-auditor.js";
 import { promises as fs } from "fs";
+import * as crypto from "crypto";
+import { frameworkLogger } from "../core/framework-logger.js";
+
+const ENCRYPTION_ALGORITHM = "aes-256-gcm";
+const KEY_LENGTH = 32;
+const IV_LENGTH = 16;
+
+interface SecurityEvent {
+  id: string;
+  type: string;
+  severity: "low" | "medium" | "high" | "critical";
+  message: string;
+  source: string;
+  timestamp: number;
+  metadata?: Record<string, unknown>;
+}
 
 export interface SecurityHardeningConfig {
   enableInputValidation: boolean;
@@ -23,6 +40,9 @@ export interface SecurityHardeningConfig {
 
 export class SecurityHardener {
   private config: SecurityHardeningConfig;
+  private encryptionKey: Buffer | null = null;
+  private securityEvents: SecurityEvent[] = [];
+  private readonly maxSecurityEvents = 1000;
 
   constructor(config: Partial<SecurityHardeningConfig> = {}) {
     this.config = {
@@ -35,6 +55,131 @@ export class SecurityHardener {
       rateLimitMaxRequests: 100,
       ...config,
     };
+  }
+
+  /**
+   * Initialize encryption with an optional key.
+   * Generates a random key if none provided.
+   */
+  initEncryption(secret?: string): void {
+    if (this.encryptionKey) return;
+    this.encryptionKey = secret
+      ? crypto.scryptSync(secret, "salt", KEY_LENGTH)
+      : crypto.randomBytes(KEY_LENGTH);
+  }
+
+  /**
+   * AES-256-GCM encrypt data.
+   * Returns Base64 string with IV + ciphertext + auth tag.
+   */
+  encryptData(data: string): string {
+    this.initEncryption();
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, this.encryptionKey!, iv);
+    let encrypted = cipher.update(data, "utf8", "binary");
+    encrypted += cipher.final("binary");
+    const authTag = cipher.getAuthTag();
+    const combined = Buffer.concat([iv, Buffer.from(encrypted, "binary"), authTag]);
+    return combined.toString("base64");
+  }
+
+  /**
+   * AES-256-GCM decrypt data.
+   * Returns null on auth failure (tampered key or data).
+   */
+  decryptData(encryptedData: string): string | null {
+    this.initEncryption();
+    try {
+      const combined = Buffer.from(encryptedData, "base64");
+      const iv = combined.subarray(0, IV_LENGTH);
+      const authTag = combined.subarray(combined.length - 16);
+      const encrypted = combined.subarray(IV_LENGTH, combined.length - 16);
+      const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, this.encryptionKey!, iv);
+      decipher.setAuthTag(authTag);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Hash password with scrypt and unique salt.
+   */
+  async hashPassword(password: string): Promise<{ hash: string; salt: string }> {
+    return new Promise((resolve, reject) => {
+      const salt = crypto.randomBytes(32).toString("hex");
+      crypto.scrypt(password, salt, KEY_LENGTH, { N: 16384, r: 8, p: 1 }, (err, derivedKey) => {
+        if (err) reject(err);
+        else resolve({ hash: derivedKey.toString("hex"), salt });
+      });
+    });
+  }
+
+  /**
+   * Verify password against a scrypt hash.
+   */
+  async verifyPassword(password: string, hash: string, salt: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      crypto.scrypt(password, salt, KEY_LENGTH, { N: 16384, r: 8, p: 1 }, (err, derivedKey) => {
+        if (err) return resolve(false);
+        try {
+          resolve(crypto.timingSafeEqual(
+            Buffer.from(derivedKey.toString("hex"), "hex"),
+            Buffer.from(hash, "hex"),
+          ));
+        } catch {
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  /**
+   * Generate a cryptographically secure random hex token.
+   */
+  generateSecureToken(length: number = 32): string {
+    return crypto.randomBytes(length).toString("hex");
+  }
+
+  /**
+   * Record a security event for tracking and stats.
+   */
+  recordSecurityEvent(event: Omit<SecurityEvent, "id" | "timestamp">): void {
+    const entry: SecurityEvent = {
+      id: this.generateSecureToken(16),
+      timestamp: Date.now(),
+      ...event,
+    };
+    this.securityEvents.push(entry);
+    if (this.securityEvents.length > this.maxSecurityEvents) {
+      this.securityEvents.shift();
+    }
+    if (event.severity === "high" || event.severity === "critical") {
+      frameworkLogger.log("security-hardener", "security-event", "error", {
+        severity: event.severity,
+        type: event.type,
+        message: event.message,
+        source: event.source,
+      });
+    }
+  }
+
+  /**
+   * Get recent security events.
+   */
+  getSecurityEvents(limit: number = 100): SecurityEvent[] {
+    return this.securityEvents.slice(-limit);
+  }
+
+  /**
+   * Get security event statistics.
+   */
+  getSecurityStats(): { totalEvents: number; eventsBySeverity: Record<string, number> } {
+    const eventsBySeverity: Record<string, number> = { low: 0, medium: 0, high: 0, critical: 0 };
+    this.securityEvents.forEach((e) => {
+      eventsBySeverity[e.severity] = (eventsBySeverity[e.severity] || 0) + 1;
+    });
+    return { totalEvents: this.securityEvents.length, eventsBySeverity };
   }
 
   /**
