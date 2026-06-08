@@ -208,5 +208,5 @@ The plugin's pre_tool_call hook nudges when an MCP alternative exists (e.g., "us
 - CLI fallback requires `npx 0xray` in PATH. If bridge fails and CLI isn't available, tools return errors.
 - Quality gate blocks are logged but NOT enforced (advisory). The tool returns violations; the agent decides what to do.
 - Git hooks use symlinks from `.git/hooks/` → `hooks/`. If the `hooks/` directory doesn't exist in the project, `strray_hooks(action="install")` skips those hooks.
-- Project root detection walks up from CWD looking for `node_modules/0xray`, `.opencode/strray/features.json`, or `package.json`. Override with `STRRAY_PROJECT_ROOT` env var.
+- Project root detection walks up from CWD looking for `node_modules/0xray`, `.opencode/xray/features.json`, or `package.json`. Override with `STRRAY_PROJECT_ROOT` env var.
 - `logs/framework/` is created automatically. Never breaks the agent if permissions fail.

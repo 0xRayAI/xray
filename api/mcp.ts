@@ -230,7 +230,7 @@ async function governanceGate(c: Context, next: () => Promise<void>) {
     return c.json({
       status: 'disabled',
       reason: governanceReason,
-      doc: 'Set governance.enabled=true in .opencode/strray/features.json',
+      doc: 'Set governance.enabled=true in .opencode/xray/features.json',
     })
   }
   return next()

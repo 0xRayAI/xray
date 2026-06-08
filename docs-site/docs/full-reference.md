@@ -89,7 +89,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | **OpenCode** | `npx 0xray opencode install` | Installs as native plugin, seeds YML agent surfaces, merges configuration |
 | **Grok CLI** | `npx 0xray grok install` | Registers plugin + 4 MCP servers (governance, skills, orchestrator, enforcer) |
 | **Hermes Agent** | `npx 0xray hermes install` | Copies bridge plugin to `~/.hermes/plugins/` |
-| **OpenClaw** | `npx 0xray openclaw install` | Creates integration config at `.strray/config/openclaw.json` |
+| **OpenClaw** | `npx 0xray openclaw install` | Creates integration config at `.xray/config/openclaw.json` |
 
 Postinstall automatically registers MCP servers with Grok CLI when `grok` is available on your PATH.
 
