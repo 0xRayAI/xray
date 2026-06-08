@@ -81,5 +81,8 @@ ci-test-env/
 __pycache__/
 src/integrations/hermes-agent/logs/
 
+# Accidental macOS temp/resolved paths
+var/
+
 # Version-manager auto-backups
 backups/
