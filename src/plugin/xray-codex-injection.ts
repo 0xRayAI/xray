@@ -163,7 +163,7 @@ async function loadConfigPaths(): Promise<void> {
     }
   }
   const logger = await loadFrameworkLogger();
-  logger.log("strray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
+  logger.log("xray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
 }
 
 async function resolveCodexPath(root: string): Promise<string[]> {
@@ -195,7 +195,7 @@ async function importSystemPromptGenerator(): Promise<void> {
     }
   }
   const logger = await loadFrameworkLogger();
-  logger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
+  logger.log("xray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
 }
 
 function validateModulePath(resolvedPath: string, allowedPrefix: string): void {
@@ -235,7 +235,7 @@ async function loadStringRayComponents(): Promise<void> {
     logger.log(`❌ Failed to load from cwd/dist/: ${message}`);
   }
 
-  const pluginPaths = ["0xray", "strray-framework"];
+  const pluginPaths = ["0xray"];
 
   for (const pluginPath of pluginPaths) {
     try {
@@ -306,7 +306,7 @@ class PluginLogger {
     }
 
     const today = new Date().toISOString().split("T")[0];
-    this.logPath = path.join(logsDir, `strray-plugin-${today}.log`);
+    this.logPath = path.join(logsDir, `xray-plugin-${today}.log`);
   }
 
   async logAsync(message: string): Promise<void> {
@@ -548,7 +548,7 @@ function createCodexContextEntry(filePath: string, content: string): CodexContex
   const metadata = extractCodexMetadata(content);
 
   return {
-    id: `strray-codex-${path.basename(filePath)}`,
+    id: `xray-codex-${path.basename(filePath)}`,
     source: filePath,
     content,
     priority: "critical",
@@ -1101,7 +1101,7 @@ export default async function xrayCodexPlugin(input: {
     },
 
     config: async (_config: Record<string, unknown>) => {
-      const lockFile = path.join(directory, ".opencode", "logs", ".strray-init.lock");
+      const lockFile = path.join(directory, ".opencode", "logs", ".xray-init.lock");
       const now = Date.now();
       try {
         if (fs.existsSync(lockFile)) {
