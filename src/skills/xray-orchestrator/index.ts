@@ -10,23 +10,29 @@
 const API_BASE = process.env.XRAY_API_URL || 'http://localhost:18431';
 const API_KEY = process.env.XRAY_API_KEY;
 
-function parseArgs(input: string): { command: string; args: Record<string, unknown> } {
+interface ParsedArgs extends Record<string, unknown> {
+  _?: string[];
+}
+
+function parseArgs(input: string): { command: string; args: ParsedArgs } {
   const parts = input.trim().split(/\s+/);
   const command = parts[0] || '';
-  const args: Record<string, unknown> = {};
+  const args: ParsedArgs = {};
 
   for (const part of parts.slice(1)) {
     if (part.startsWith('--')) {
       const key = part.slice(2);
       args[key] = true;
     } else if (part.includes(':')) {
-      const [key, value] = part.split(':');
-      args[key] = value;
+      const colonIdx = part.indexOf(':');
+      const key = part.slice(0, colonIdx);
+      const value = part.slice(colonIdx + 1);
+      if (key && value) args[key] = value;
     } else if (!args._) {
       args._ = [];
-      (args._ as string[]).push(part);
+      args._.push(part);
     } else {
-      (args._ as string[]).push(part);
+      args._.push(part);
     }
   }
 
@@ -45,7 +51,7 @@ async function callAPI(endpoint: string, data?: Record<string, unknown>): Promis
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: data ? 'POST' : 'GET',
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: data ? JSON.stringify(data) : null,
   });
 
   if (!response.ok) {
@@ -142,8 +148,9 @@ async function handleCodeReview(args: Record<string, unknown>): Promise<string> 
 }
 
 async function handleFileRead(args: Record<string, unknown>): Promise<string> {
-  const filePath = (args._ as string[])?.[0];
-  const range = args._?.[1] as string | undefined;
+  const rest = args._ as string[] | undefined;
+  const filePath = rest?.[0];
+  const range = rest?.[1];
 
   if (!filePath) {
     return '❌ Usage: /xray-file <file-path> [line-start:line-end]';
@@ -151,8 +158,10 @@ async function handleFileRead(args: Record<string, unknown>): Promise<string> {
 
   let lineRange: { start?: number; end?: number } | undefined;
   if (range?.includes(':')) {
-    const [start, end] = range.split(':').map(Number);
-    lineRange = { start, end };
+    const [rawStart, rawEnd] = range.split(':');
+    lineRange = {};
+    if (rawStart) lineRange.start = Number(rawStart);
+    if (rawEnd) lineRange.end = Number(rawEnd);
   }
 
   const result = await callAPI('/api/agent/invoke', {

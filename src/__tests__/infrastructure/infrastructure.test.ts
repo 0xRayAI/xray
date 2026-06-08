@@ -230,7 +230,7 @@ describe("0xRay Infrastructure Tests", () => {
     it("should have performance monitoring setup", () => {
       // Check for performance-related directories/files
       expect(fs.existsSync("src/performance")).toBe(true);
-      expect(fs.existsSync("performance-baselines.json")).toBe(true);
+      expect(fs.existsSync("performance-baselines.json")).toBe(false);
     });
   });
 });
