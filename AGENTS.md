@@ -86,7 +86,7 @@ xray enforces the Universal Development Codex (60 terms) via Dynamo governance. 
 
 Pure v16 MCPs. Clean. Complete.
 
-## Session: v2.1.0 Release Polish
+## Session: v2.1.2 Release Polish
 
 - Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `2.0.0`.
 - Renamed `strray-ai` → `0xray` across 60+ source files, CLI help text, grok plugin, hermes-agent bridge (Python + JS), docusaurus config.
