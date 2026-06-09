@@ -11,7 +11,8 @@ export type ProposalType =
   | 'automate'
   | 'codify'
   | 'strategic'
-  | 'compliance';
+  | 'compliance'
+  | 'metamorphosis';
 
 export interface GovernanceProposal {
   id: string;
@@ -19,7 +20,7 @@ export interface GovernanceProposal {
   title: string;
   description: string;
   evidence?: string[];
-  source?: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning';
+  source?: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning' | 'metamorphosis';
   confidence?: number; // 0-1
   metadata?: Record<string, unknown>;
 }
@@ -46,6 +47,8 @@ export interface GovernanceResult {
   recommendedActions?: string[];
   externalContext?: Record<string, unknown>; // Solar activity, etc.
   moralOverride?: 'rejected_critical' | 'downgraded_significant' | 'none';
+  /** Metamorphosis resonance score: does this change increase the system's ability to govern complex future states? 0-1. Only present when proposal.type === 'metamorphosis'. */
+  metamorphosisScore?: number;
 }
 
 export interface GovernanceContext {
@@ -62,6 +65,7 @@ export interface GovernOptions {
   enableSolarAdjustment?: boolean;
   timeoutMs?: number; // end-to-end timeout for govern() in ms (default: 90000)
   maxAbstentionThreshold?: number; // fail if abstention ratio exceeds this (default: 1.0 = disabled)
+  metamorphosisThreshold?: number; // minimum metamorphosisScore for self-evolution proposals (default: 0.7)
 }
 
 export interface GovernanceRequest {

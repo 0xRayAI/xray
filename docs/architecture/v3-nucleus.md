@@ -99,7 +99,7 @@ Phase 1 ────────────────────────
   ├──────────────────────────────────────────────────────┘
   ▼
 Phase 2 ───────────────────────────────────
-  2.1 ──[ ] Metamorphosis resonance scoring
+  2.1 ──[x] Metamorphosis resonance scoring
   2.2 ──[ ] First self-proposal (activity.log → proposal)
   2.3 ──[ ] Verification substrate gate
   ├──────────────────────────────────────────────────────┘
@@ -231,6 +231,7 @@ Phase 3 ────────────────────────
   - Default plugin set loaded from config (the 25 knowledge-skill servers)
   - Skills are discoverable by the thinDispatch orchestrator without importing server constructors
 - **Done when**: A new skill can be registered post-boot, and the default set loads from a config file instead of hard-coded imports.
+- **Wiring gap**: `pluginRegistry` is not yet wired into `governance-service.ts` — the in-process fallback is functional but the registry is standalone. Wiring it into actual governance paths is Phase 2 work (when `SelfProposalEngine` implements `MetamorphosisEngine` and uses `pluginRegistry.callSkill()`).
 - **Estimate**: 3-5 days
 
 ---

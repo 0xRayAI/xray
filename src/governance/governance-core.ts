@@ -39,6 +39,54 @@ export const MORAL_OVERRIDE_LEVELS = {
   Aligned: 'none' as const,
 };
 
+/**
+ * Calculate metamorphosis resonance score for self-evolution proposals.
+ *
+ * Evaluates whether a proposal increases the system's capacity to govern
+ * complex future states. Uses the existing Dynamo resonance signal plus
+ * checks for self-improvement indicators.
+ *
+ * Scoring rubric (0-1):
+ * - Base: governance vote confidence (averageConfidence)
+ * - Boost: +0.1 if proposal adds new capacity (type=automate/codify)
+ * - Boost: +0.05 if historical coherence is strong (>0.8)
+ * - Penalty: -0.15 if proposal removes existing capacity (type=compliance-only)
+ * - Floor: 0.0, Ceiling: 1.0
+ * - Threshold for approval: ≥ 0.7 (configurable via GovernOptions.metamorphosisThreshold)
+ *
+ * Only meaningful when proposal.type === 'metamorphosis' or source === 'metamorphosis'.
+ */
+export function calculateMetamorphosisScore(input: {
+  averageConfidence: number;
+  proposalType: string;
+  historicalCoherence?: number;
+  resonanceScore?: number;
+}): number {
+  let score = input.averageConfidence;
+
+  // Self-improvement capacity: proposals that add automation or codification boost the score
+  if (input.proposalType === 'automate' || input.proposalType === 'codify') {
+    score += 0.10;
+  }
+
+  // Compliance-only proposals (guard type with no new capacity) get a penalty
+  if (input.proposalType === 'compliance') {
+    score -= 0.15;
+  }
+
+  // Strong historical coherence means the system is stable enough for self-evolution
+  if (input.historicalCoherence != null && input.historicalCoherence > 0.8) {
+    score += 0.05;
+  }
+
+  // High Dynamo resonance (Solar signal) supports self-evolution
+  if (input.resonanceScore != null && input.resonanceScore >= 0.82) {
+    score += 0.05;
+  }
+
+  return Math.min(1.0, Math.max(0.0, Math.round(score * 100) / 100));
+}
+
 export type MoralOverrideThreshold = 'Critical' | 'Significant' | 'Mild' | 'Aligned' | 'disabled';
 
 /**

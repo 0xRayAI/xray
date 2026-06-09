@@ -32,7 +32,7 @@ import {
   GovernanceRequest,
   GovernanceResponse,
 } from './governance-types.js';
-import { mergeVotes } from './governance-core.js';
+import { mergeVotes, calculateMetamorphosisScore } from './governance-core.js';
 import { frameworkLogger } from '../core/framework-logger.js';
 
 export class GovernanceService {
@@ -81,7 +81,7 @@ export class GovernanceService {
 
     // Run governance with end-to-end timeout
     const result = await this.runGovernanceWithTimeout(
-      proposals, context, requireExternal, timeoutMs,
+      proposals, context, requireExternal, timeoutMs, options?.metamorphosisThreshold,
     );
 
     // Check abstention threshold
@@ -126,6 +126,7 @@ export class GovernanceService {
     context: GovernanceContext | undefined,
     requireExternal: boolean,
     timeoutMs: number,
+    metamorphosisThreshold?: number,
   ): Promise<{ results: GovernanceResult[] }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -151,14 +152,37 @@ export class GovernanceService {
         ];
 
         const merged = mergeVotes(votes);
+        const isMetamorphosis = proposal.type === 'metamorphosis' || proposal.source === 'metamorphosis';
 
-        return {
+        const result: GovernanceResult = {
           proposalId: proposal.id,
           finalDecision: merged.finalDecision,
           averageConfidence: merged.averageConfidence,
           votes,
           reasoningSummary: merged.reasoningSummary,
         };
+
+        // Metamorphosis resonance scoring: only for self-evolution proposals
+        if (isMetamorphosis) {
+          const threshold = metamorphosisThreshold ?? 0.7;
+          const metaInput: { averageConfidence: number; proposalType: string; historicalCoherence?: number; resonanceScore?: number } = {
+            averageConfidence: merged.averageConfidence,
+            proposalType: proposal.type,
+          };
+          const externalConfidence = externalVotes[index]?.[0]?.confidence;
+          if (externalConfidence !== undefined) {
+            metaInput.historicalCoherence = externalConfidence;
+          }
+          result.metamorphosisScore = calculateMetamorphosisScore(metaInput);
+
+          // Reject metamorphosis proposals that don't meet the threshold
+          if (result.metamorphosisScore < threshold && result.finalDecision === 'approve') {
+            result.finalDecision = 'needs_revision';
+            result.reasoningSummary += ` | Metamorphosis score ${result.metamorphosisScore} below threshold ${threshold}`;
+          }
+        }
+
+        return result;
       });
 
       return { results };
