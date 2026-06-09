@@ -653,14 +653,14 @@ export class PluginRegistry extends EventEmitter {
         "hot-reload-started",
         "info",
         { pluginsDir: this.pluginsDir }
-      ).catch(() => {});
+      );
     } catch (error) {
       frameworkLogger.log(
         "plugin-registry",
         "hot-reload-failed",
         "error",
         { error: error instanceof Error ? error.message : String(error) }
-      ).catch(() => {});
+      );
     }
   }
 
@@ -681,7 +681,7 @@ export class PluginRegistry extends EventEmitter {
           "hot-reload-error",
           "error",
           { pluginName, error: error instanceof Error ? error.message : String(error) }
-        ).catch(() => {});
+        );
       });
     }, 1000);
     
@@ -718,7 +718,7 @@ export class PluginRegistry extends EventEmitter {
         "plugin-hot-reloaded",
         "info",
         { name: pluginName }
-      ).catch(() => {});
+      );
     }
   }
 
@@ -751,7 +751,7 @@ export class PluginRegistry extends EventEmitter {
           "plugin-shutdown-error",
           "error",
           { name: pluginNames[index], error: result.reason }
-        ).catch(() => {});
+        );
       }
     });
     

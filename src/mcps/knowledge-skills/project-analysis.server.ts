@@ -5,13 +5,7 @@
  * and pattern recognition - provides deep project intelligence
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
@@ -136,193 +130,86 @@ interface McpToolResponse {
   content: Array<{ type: "text"; text: string }>;
 }
 
-class ProjectAnalysisServer {
-  private server: Server;
+class ProjectAnalysisServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("project-analysis", "2.0.1");
+    this.tools = [
       {
-        name: "project-analysis", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze-project-structure",
+        description: "Analyze complete project structure including file organization, directory hierarchy, and module distribution",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string", description: "Root directory of the project to analyze" },
+            includeMetrics: { type: "boolean", default: true, description: "Include detailed metrics in analysis" },
+            maxDepth: { type: "number", default: 10, description: "Maximum directory depth to analyze" },
+          },
+          required: ["projectRoot"],
         },
       },
-    );
-
+      {
+        name: "assess-project-complexity",
+        description: "Assess overall project complexity including code metrics, maintainability, and technical debt indicators",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string", description: "Root directory of the project" },
+            includeBreakdown: { type: "boolean", default: true, description: "Include per-file complexity breakdown" },
+            focusAreas: { type: "array", items: { type: "string", enum: ["functions", "classes", "imports", "dependencies"] }, description: "Specific areas to focus complexity analysis on" },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "identify-project-patterns",
+        description: "Identify architectural patterns, code patterns, and structural patterns in the project",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string", description: "Root directory of the project" },
+            patternTypes: { type: "array", items: { type: "string", enum: ["architectural", "code", "structural", "anti-patterns"] }, description: "Types of patterns to identify" },
+            confidenceThreshold: { type: "number", default: 0.7, description: "Minimum confidence for pattern detection" },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "analyze-project-health",
+        description: "Provide comprehensive project health assessment including quality metrics and improvement recommendations",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string", description: "Root directory of the project" },
+            includeTrends: { type: "boolean", default: false, description: "Include historical trend analysis" },
+            focusMetrics: { type: "array", items: { type: "string", enum: ["complexity", "coverage", "maintainability", "dependencies", "patterns"] }, description: "Specific health metrics to focus on" },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "analyze_proposal",
+        description: "Analyze an inference proposal from a research / codebase pattern perspective and return a structured governance decision",
+        inputSchema: {
+          type: "object",
+          properties: {
+            proposalTitle: { type: "string" },
+            proposalDescription: { type: "string" },
+            evidence: { type: "array", items: { type: "string" } },
+            proposalType: { type: "string" },
+          },
+          required: ["proposalTitle", "proposalDescription"],
+        },
+      },
+    ];
+    this.handlers = {
+      "analyze-project-structure": async (args) => this.analyzeProjectStructure(args as unknown as AnalyzeProjectStructureArgs),
+      "assess-project-complexity": async (args) => this.assessProjectComplexity(args as unknown as AssessProjectComplexityArgs),
+      "identify-project-patterns": async (args) => this.identifyProjectPatterns(args as unknown as IdentifyProjectPatternsArgs),
+      "analyze-project-health": async (args) => this.analyzeProjectHealth(args as unknown as AnalyzeProjectHealthArgs),
+      "analyze_proposal": async (args) => this.analyzeProposal(args),
+    };
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze-project-structure",
-            description:
-              "Analyze complete project structure including file organization, directory hierarchy, and module distribution",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project to analyze",
-                },
-                includeMetrics: {
-                  type: "boolean",
-                  default: true,
-                  description: "Include detailed metrics in analysis",
-                },
-                maxDepth: {
-                  type: "number",
-                  default: 10,
-                  description: "Maximum directory depth to analyze",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "assess-project-complexity",
-            description:
-              "Assess overall project complexity including code metrics, maintainability, and technical debt indicators",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project",
-                },
-                includeBreakdown: {
-                  type: "boolean",
-                  default: true,
-                  description: "Include per-file complexity breakdown",
-                },
-                focusAreas: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: ["functions", "classes", "imports", "dependencies"],
-                  },
-                  description: "Specific areas to focus complexity analysis on",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "identify-project-patterns",
-            description:
-              "Identify architectural patterns, code patterns, and structural patterns in the project",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project",
-                },
-                patternTypes: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "architectural",
-                      "code",
-                      "structural",
-                      "anti-patterns",
-                    ],
-                  },
-                  description: "Types of patterns to identify",
-                },
-                confidenceThreshold: {
-                  type: "number",
-                  default: 0.7,
-                  description: "Minimum confidence for pattern detection",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "analyze-project-health",
-            description:
-              "Provide comprehensive project health assessment including quality metrics and improvement recommendations",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project",
-                },
-                includeTrends: {
-                  type: "boolean",
-                  default: false,
-                  description: "Include historical trend analysis",
-                },
-                focusMetrics: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "complexity",
-                      "coverage",
-                      "maintainability",
-                      "dependencies",
-                      "patterns",
-                    ],
-                  },
-                  description: "Specific health metrics to focus on",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "analyze_proposal",
-            description:
-              "Analyze an inference proposal from a research / codebase pattern perspective and return a structured governance decision",
-            inputSchema: {
-              type: "object",
-              properties: {
-                proposalTitle: { type: "string" },
-                proposalDescription: { type: "string" },
-                evidence: { type: "array", items: { type: "string" } },
-                proposalType: { type: "string" },
-              },
-              required: ["proposalTitle", "proposalDescription"],
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "analyze-project-structure":
-            return await this.analyzeProjectStructure(args as unknown as AnalyzeProjectStructureArgs) as CallToolResult;
-          case "assess-project-complexity":
-            return await this.assessProjectComplexity(args as unknown as AssessProjectComplexityArgs) as CallToolResult;
-          case "identify-project-patterns":
-            return await this.identifyProjectPatterns(args as unknown as IdentifyProjectPatternsArgs) as CallToolResult;
-          case "analyze-project-health":
-            return await this.analyzeProjectHealth(args as unknown as AnalyzeProjectHealthArgs) as CallToolResult;
-          case "analyze_proposal":
-            return await this.analyzeProposal(args as any) as CallToolResult;
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        frameworkLogger.log("mcps/project-analysis", "tool", "error", { tool: name, error: String(error) });
-        throw error;
-      }
-    });
   }
 
   private async analyzeProjectStructure(args: AnalyzeProjectStructureArgs): Promise<McpToolResponse> {
@@ -1037,75 +924,12 @@ class ProjectAnalysisServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    await frameworkLogger.log(
-      "mcp-project-analysis",
-      "server-started",
-      "success",
-    );
-
-    const cleanup = async (signal: string) => {
-      frameworkLogger.log("mcps/project-analysis", "shutdown", "info", { signal });
-
-      // Set a timeout to force exit if graceful shutdown fails
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/project-analysis", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000); // 5 second timeout
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/project-analysis", "shutdown", "success");
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/project-analysis", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    // Handle multiple shutdown signals
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    // Monitor parent process (opencode) and shutdown if it dies
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0); // Check if parent is alive
-        setTimeout(checkParent, 1000); // Check again in 1 second
-      } catch (error) {
-        // Parent process died, shut down gracefully
-        frameworkLogger.log("mcps/project-analysis", "parent-death", "info");
-        cleanup("parent-process-death");
-      }
-    };
-
-    // Start monitoring parent process
-    setTimeout(checkParent, 2000); // Start checking after 2 seconds
-
-    // Handle uncaught exceptions and unhandled rejections
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/project-analysis", "uncaughtException", "error", { error: String(error) });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason, promise) => {
-      frameworkLogger.log("mcps/project-analysis", "unhandledRejection", "error", { error: String(reason) });
-      cleanup("unhandledRejection");
-    });
-  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new ProjectAnalysisServer();
-  server.run().catch((error: unknown) => frameworkLogger.log("mcps/project-analysis", "run", "error", { error: String(error) }));
+  server.run("project-analysis").catch((error: unknown) => frameworkLogger.log("mcps/project-analysis", "run", "error", { error: String(error) }));
 }
 
 export default ProjectAnalysisServer;

@@ -20,14 +20,14 @@ import fs from 'fs';
 /**
  * Resolve the correct framework root and MCP servers path.
  * Priority:
- *   1. STRRAY_DEV_PATH env var (explicit dev override)
+ *   1. XRAY_DEV_PATH env var (explicit dev override)
  *   2. The "xray" field in the nearest package.json that declares it (works in both source tree and installed package)
  *   3. Safe fallback to node_modules/0xray/dist
  */
 function resolveFrameworkPaths(): { frameworkRoot: string; mcpServersPath: string } {
   // Highest priority: explicit environment override
-  if (process.env.STRRAY_DEV_PATH) {
-    const devPath = process.env.STRRAY_DEV_PATH;
+  if (process.env.XRAY_DEV_PATH || process.env.STRRAY_DEV_PATH) {
+    const devPath: string = process.env.XRAY_DEV_PATH || process.env.STRRAY_DEV_PATH || "";
     return {
       frameworkRoot: devPath,
       mcpServersPath: join(devPath, 'mcps'),

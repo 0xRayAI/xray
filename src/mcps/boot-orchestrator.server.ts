@@ -4,18 +4,12 @@
  * Advanced initialization orchestration with dependency management and health monitoring
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolRequest,
-} from "@modelcontextprotocol/sdk/types.js";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveLogDir, resolveStateDir } from "../core/config-paths.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface ComponentInitResult {
   success: boolean;
@@ -92,8 +86,7 @@ interface ShutdownFrameworkArgs {
   saveState?: boolean;
 }
 
-class XrayBootOrchestratorServer {
-  private server: Server;
+class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
   private bootStatus: {
     initialized: boolean;
     startTime: number;
@@ -118,16 +111,7 @@ class XrayBootOrchestratorServer {
   ];
 
   constructor() {
-    this.server = new Server(
-      {
-        name: "boot-orchestrator", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
+    super("boot-orchestrator", "2.0.1");
 
     this.bootStatus = {
       initialized: false,
@@ -140,6 +124,77 @@ class XrayBootOrchestratorServer {
     // Initialize dependency map
     this.initializeDependencies();
 
+    this.tools = [
+      {
+        name: "execute-boot-sequence",
+        description:
+          "Execute the complete 0xRay boot sequence with dependency resolution",
+        inputSchema: {
+          type: "object",
+          properties: {
+            config: { type: "object" },
+            skipHealthChecks: { type: "boolean", default: false },
+            parallelInit: { type: "boolean", default: true },
+          },
+        },
+      },
+      {
+        name: "get-boot-status",
+        description:
+          "Get comprehensive boot orchestrator status and health",
+        inputSchema: {
+          type: "object",
+          properties: {
+            detailed: { type: "boolean", default: false },
+            component: { type: "string" },
+          },
+        },
+      },
+      {
+        name: "initialize-component",
+        description: "Initialize a specific framework component",
+        inputSchema: {
+          type: "object",
+          properties: {
+            component: {
+              type: "string",
+              enum: this.bootSequence,
+            },
+            force: { type: "boolean", default: false },
+          },
+          required: ["component"],
+        },
+      },
+      {
+        name: "validate-boot-dependencies",
+        description: "Validate all boot dependencies and prerequisites",
+        inputSchema: {
+          type: "object",
+          properties: {
+            fix: { type: "boolean", default: false },
+            verbose: { type: "boolean", default: false },
+          },
+        },
+      },
+      {
+        name: "shutdown-framework",
+        description: "Gracefully shutdown framework components",
+        inputSchema: {
+          type: "object",
+          properties: {
+            force: { type: "boolean", default: false },
+            saveState: { type: "boolean", default: true },
+          },
+        },
+      },
+    ];
+    this.handlers = {
+      "execute-boot-sequence": async (args) => this.handleExecuteBootSequence(args as unknown as ExecuteBootSequenceArgs),
+      "get-boot-status": async (args) => this.handleGetBootStatus(args as unknown as GetBootStatusArgs),
+      "initialize-component": async (args) => this.handleInitializeComponent(args as unknown as InitializeComponentArgs),
+      "validate-boot-dependencies": async (args) => this.handleValidateBootDependencies(args as unknown as ValidateBootDependenciesArgs),
+      "shutdown-framework": async (args) => this.handleShutdownFramework(args as unknown as ShutdownFrameworkArgs),
+    };
     this.setupToolHandlers();
     void frameworkLogger.log("mcps/boot-orchestrator", "initialize", "info");
   }
@@ -183,101 +238,6 @@ class XrayBootOrchestratorServer {
       "mcp-servers",
       "orchestrator",
     ]);
-  }
-
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "execute-boot-sequence",
-            description:
-              "Execute the complete 0xRay boot sequence with dependency resolution",
-            inputSchema: {
-              type: "object",
-              properties: {
-                config: { type: "object" },
-                skipHealthChecks: { type: "boolean", default: false },
-                parallelInit: { type: "boolean", default: true },
-              },
-            },
-          },
-          {
-            name: "get-boot-status",
-            description:
-              "Get comprehensive boot orchestrator status and health",
-            inputSchema: {
-              type: "object",
-              properties: {
-                detailed: { type: "boolean", default: false },
-                component: { type: "string" },
-              },
-            },
-          },
-          {
-            name: "initialize-component",
-            description: "Initialize a specific framework component",
-            inputSchema: {
-              type: "object",
-              properties: {
-                component: {
-                  type: "string",
-                  enum: this.bootSequence,
-                },
-                force: { type: "boolean", default: false },
-              },
-              required: ["component"],
-            },
-          },
-          {
-            name: "validate-boot-dependencies",
-            description: "Validate all boot dependencies and prerequisites",
-            inputSchema: {
-              type: "object",
-              properties: {
-                fix: { type: "boolean", default: false },
-                verbose: { type: "boolean", default: false },
-              },
-            },
-          },
-          {
-            name: "shutdown-framework",
-            description: "Gracefully shutdown framework components",
-            inputSchema: {
-              type: "object",
-              properties: {
-                force: { type: "boolean", default: false },
-                saveState: { type: "boolean", default: true },
-              },
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(
-      CallToolRequestSchema,
-      async (request: CallToolRequest) => {
-        const { name, arguments: args } = request.params;
-
-        switch (name) {
-          case "execute-boot-sequence":
-            return await this.handleExecuteBootSequence(args as unknown as ExecuteBootSequenceArgs);
-          case "get-boot-status":
-            return await this.handleGetBootStatus(args as unknown as GetBootStatusArgs);
-          case "initialize-component":
-            return await this.handleInitializeComponent(args as unknown as InitializeComponentArgs);
-          case "validate-boot-dependencies":
-            return await this.handleValidateBootDependencies(args as unknown as ValidateBootDependenciesArgs);
-          case "shutdown-framework":
-            return await this.handleShutdownFramework(args as unknown as ShutdownFrameworkArgs);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      },
-    );
   }
 
   private async handleExecuteBootSequence(args: ExecuteBootSequenceArgs) {
@@ -1065,18 +1025,12 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w: strin
 
     return response;
   }
-
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    frameworkLogger.log("mcps/boot-orchestrator", "start", "success");
-  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayBootOrchestratorServer();
-  server.run().catch((error) => frameworkLogger.log("mcps/boot-orchestrator", "run", "error", { error: String(error) }));
+  server.run("boot-orchestrator").catch((error) => frameworkLogger.log("mcps/boot-orchestrator", "run", "error", { error: String(error) }));
 }
 
 export { XrayBootOrchestratorServer };

@@ -58,4 +58,3 @@ declare global {
 
 export type { XrayGlobalScope };
 // Backward compat alias
-export type { XrayGlobalScope as StringRayGlobalScope, XrayHook as StringRayHook };

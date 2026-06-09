@@ -1,10 +1,5 @@
 // 0xRay Framework State Management
-// Export all state management utilities and providers
 
-export * from "./state-manager.js";
-export * from "./context-providers.js";
-export * from "./state-types.js";
-
-// Re-export commonly used state utilities
-export { XrayStateManager } from "./state-manager.js";
-export { XrayStateManager as StringRayStateManager } from "./state-manager.js";
+export { StateManager, XrayStateManager, XrayStateManager as StrRayStateManager } from "./state-manager.js";
+export type { StateValue, StateTypes } from "./state-types.js";
+export type { ContextProviders } from "./context-providers.js";

@@ -51,6 +51,8 @@ type ProcessorFactory = {
   init?: () => Promise<void>;
 };
 
+type FactoryConfigEntry = ProcessorFactory & { name: string };
+
 export class ProcessorManager {
   private processors = new Map<string, ProcessorConfig>();
   private metrics = new Map<string, ProcessorMetrics>();
@@ -169,349 +171,356 @@ export class ProcessorManager {
   }
 
   private registerBuiltInFactories(): void {
-    const f = this.factories;
-
-    f.set("preValidate", {
-      execute: async (ctx) => {
-        const { PreValidateProcessor } = await import("./implementations/pre-validate-processor.js");
-        const p = new PreValidateProcessor();
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
+    const factoryConfigs: FactoryConfigEntry[] = [
+      {
+        name: "preValidate",
+        execute: async (ctx) => {
+          const { PreValidateProcessor } = await import("./implementations/pre-validate-processor.js");
+          const p = new PreValidateProcessor();
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing pre-validate processor", "info");
+        },
       },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing pre-validate processor", "info");
+      {
+        name: "codexCompliance",
+        execute: async (ctx) => {
+          const { CodexComplianceProcessor } = await import("./implementations/codex-compliance-processor.js");
+          const p = new CodexComplianceProcessor();
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing codex compliance processor", "info");
+        },
       },
-    });
-
-    f.set("codexCompliance", {
-      execute: async (ctx) => {
-        const { CodexComplianceProcessor } = await import("./implementations/codex-compliance-processor.js");
-        const p = new CodexComplianceProcessor();
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
+      {
+        name: "logProtection",
+        execute: async (ctx) => {
+          const { LogProtectionProcessor } = await import("./implementations/log-protection-processor.js");
+          const p = new LogProtectionProcessor();
+          const filePath = (ctx as any).filePath || (ctx as any).toolInput?.args?.filePath;
+          const operation = (ctx as any).operation || (ctx as any).toolInput?.args?.operation;
+          const result = await p.execute({ filePath, operation } as ProcessorContext);
+          return result.data;
+        },
       },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing codex compliance processor", "info");
-      },
-    });
-
-    f.set("logProtection", {
-      execute: async (ctx) => {
-        const { LogProtectionProcessor } = await import("./implementations/log-protection-processor.js");
-        const p = new LogProtectionProcessor();
-        const filePath = (ctx as any).filePath || (ctx as any).toolInput?.args?.filePath;
-        const operation = (ctx as any).operation || (ctx as any).toolInput?.args?.operation;
-        const result = await p.execute({ filePath, operation } as ProcessorContext);
-        return result.data;
-      },
-    });
-
-    f.set("versionCompliance", {
-      execute: async (ctx) => {
-        const { VersionComplianceProcessor } = await import("./implementations/version-compliance-processor.js");
-        const p = new VersionComplianceProcessor(process.cwd());
-        const result = await p.validateVersionCompliance();
-        return {
-          success: result.compliant,
-          errors: result.errors || [],
-          warnings: result.warnings || [],
-          checkedAt: new Date().toISOString(),
-        };
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing version compliance processor", "info");
-        try {
+      {
+        name: "versionCompliance",
+        execute: async (ctx) => {
           const { VersionComplianceProcessor } = await import("./implementations/version-compliance-processor.js");
           const p = new VersionComplianceProcessor(process.cwd());
           const result = await p.validateVersionCompliance();
-          if (!result.compliant) {
-            frameworkLogger.log("processor-manager", "version-compliance", "info", {
-              message: "Version compliance issues detected - commits may be blocked",
-              errors: result.errors,
-              warnings: result.warnings,
-            });
-          } else {
-            frameworkLogger.log("processor-manager", "version-compliance", "info", {
-              message: `Version compliance verified: NPM ${result.npmVersion}, UVM ${result.uvmVersion}`,
+          return {
+            success: result.compliant,
+            errors: result.errors || [],
+            warnings: result.warnings || [],
+            checkedAt: new Date().toISOString(),
+          };
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing version compliance processor", "info");
+          try {
+            const { VersionComplianceProcessor } = await import("./implementations/version-compliance-processor.js");
+            const p = new VersionComplianceProcessor(process.cwd());
+            const result = await p.validateVersionCompliance();
+            if (!result.compliant) {
+              frameworkLogger.log("processor-manager", "version-compliance", "info", {
+                message: "Version compliance issues detected - commits may be blocked",
+                errors: result.errors,
+                warnings: result.warnings,
+              });
+            } else {
+              frameworkLogger.log("processor-manager", "version-compliance", "info", {
+                message: `Version compliance verified: NPM ${result.npmVersion}, UVM ${result.uvmVersion}`,
+              });
+            }
+          } catch (error) {
+            frameworkLogger.log("processor-manager", "version-compliance-init-error", "error", {
+              error: error instanceof Error ? error.message : String(error),
             });
           }
-        } catch (error) {
-          frameworkLogger.log("processor-manager", "version-compliance-init-error", "error", {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+        },
       },
-    });
-
-    f.set("errorBoundary", {
-      execute: async (ctx) => {
-        const { ErrorBoundaryProcessor } = await import("./implementations/error-boundary-processor.js");
-        const p = new ErrorBoundaryProcessor();
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
+      {
+        name: "errorBoundary",
+        execute: async (ctx) => {
+          const { ErrorBoundaryProcessor } = await import("./implementations/error-boundary-processor.js");
+          const p = new ErrorBoundaryProcessor();
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing error boundary processor", "info");
+        },
       },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing error boundary processor", "info");
+      {
+        name: "testExecution",
+        execute: async (ctx) => {
+          const { TestExecutionProcessor } = await import("./implementations/test-execution-processor.js");
+          const p = new TestExecutionProcessor();
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing test execution processor", "info");
+        },
       },
-    });
-
-    f.set("testExecution", {
-      execute: async (ctx) => {
-        const { TestExecutionProcessor } = await import("./implementations/test-execution-processor.js");
-        const p = new TestExecutionProcessor();
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
+      {
+        name: "regressionTesting",
+        execute: async (ctx) => {
+          const { RegressionTestingProcessor } = await import("./implementations/regression-testing-processor.js");
+          const p = new RegressionTestingProcessor();
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing regression testing processor", "info");
+        },
       },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing test execution processor", "info");
+      {
+        name: "stateValidation",
+        execute: async (ctx) => {
+          const { StateValidationProcessor } = await import("./implementations/state-validation-processor.js");
+          const p = new StateValidationProcessor(this.stateManager);
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing state validation processor", "info");
+        },
       },
-    });
-
-    f.set("regressionTesting", {
-      execute: async (ctx) => {
-        const { RegressionTestingProcessor } = await import("./implementations/regression-testing-processor.js");
-        const p = new RegressionTestingProcessor();
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
+      {
+        name: "refactoringLogging",
+        execute: async (ctx) => {
+          const { RefactoringLoggingProcessorWrapper } = await import("./implementations/refactoring-logging-processor-wrapper.js");
+          const p = new RefactoringLoggingProcessorWrapper();
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
       },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing regression testing processor", "info");
+      {
+        name: "testAutoCreation",
+        execute: async (ctx) => {
+          const { testAutoCreationProcessor } = await import("./implementations/test-auto-creation-processor.js");
+          const result = await testAutoCreationProcessor.execute(ctx as any);
+          return { success: result.success, message: result.message, data: result.data };
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing test auto-creation processor", "info");
+        },
       },
-    });
-
-    f.set("stateValidation", {
-      execute: async (ctx) => {
-        const { StateValidationProcessor } = await import("./implementations/state-validation-processor.js");
-        const p = new StateValidationProcessor(this.stateManager);
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
+      {
+        name: "coverageAnalysis",
+        execute: async (ctx) => {
+          const { CoverageAnalysisProcessor } = await import("./implementations/coverage-analysis-processor.js");
+          const p = new CoverageAnalysisProcessor();
+          const r = await p.execute(ctx as ProcessorContext);
+          return r.data;
+        },
       },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing state validation processor", "info");
-      },
-    });
-
-    f.set("refactoringLogging", {
-      execute: async (ctx) => {
-        const { RefactoringLoggingProcessorWrapper } = await import("./implementations/refactoring-logging-processor-wrapper.js");
-        const p = new RefactoringLoggingProcessorWrapper();
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
-      },
-    });
-
-    f.set("testAutoCreation", {
-      execute: async (ctx) => {
-        const { testAutoCreationProcessor } = await import("./implementations/test-auto-creation-processor.js");
-        const result = await testAutoCreationProcessor.execute(ctx as any);
-        return { success: result.success, message: result.message, data: result.data };
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing test auto-creation processor", "info");
-      },
-    });
-
-    f.set("coverageAnalysis", {
-      execute: async (ctx) => {
-        const { CoverageAnalysisProcessor } = await import("./implementations/coverage-analysis-processor.js");
-        const p = new CoverageAnalysisProcessor();
-        const r = await p.execute(ctx as ProcessorContext);
-        return r.data;
-      },
-    });
-
-    f.set("agentsMdValidation", {
-      execute: async (ctx) => {
-        const { AgentsMdValidationProcessor } = await import("./implementations/agents-md-validation-processor.js");
-        const p = new AgentsMdValidationProcessor(process.cwd());
-        const result = await p.execute({
-          tool: (ctx as any).tool || "validate",
-          operation: (ctx as any).operation || "pre-commit",
-        });
-        return {
-          success: result.success,
-          blocked: result.blocked,
-          message: result.message,
-          errors: result.result?.errors || [],
-          warnings: result.result?.warnings || [],
-          checkedAt: new Date().toISOString(),
-        };
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing AGENTS.md validation processor", "info");
-        try {
+      {
+        name: "agentsMdValidation",
+        execute: async (ctx) => {
           const { AgentsMdValidationProcessor } = await import("./implementations/agents-md-validation-processor.js");
           const p = new AgentsMdValidationProcessor(process.cwd());
-          const result = await p.execute({ tool: "validate", operation: "initialization" });
-          if (!result.success && result.blocked) {
-            frameworkLogger.log("processor-manager", "agents-md-validation", "info", {
-              message: "AGENTS.md validation failed - commit operations may be blocked",
+          const result = await p.execute({
+            tool: (ctx as any).tool || "validate",
+            operation: (ctx as any).operation || "pre-commit",
+          });
+          return {
+            success: result.success,
+            blocked: result.blocked,
+            message: result.message,
+            errors: result.result?.errors || [],
+            warnings: result.result?.warnings || [],
+            checkedAt: new Date().toISOString(),
+          };
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing AGENTS.md validation processor", "info");
+          try {
+            const { AgentsMdValidationProcessor } = await import("./implementations/agents-md-validation-processor.js");
+            const p = new AgentsMdValidationProcessor(process.cwd());
+            const result = await p.execute({ tool: "validate", operation: "initialization" });
+            if (!result.success && result.blocked) {
+              frameworkLogger.log("processor-manager", "agents-md-validation", "info", {
+                message: "AGENTS.md validation failed - commit operations may be blocked",
+              });
+            }
+          } catch (error) {
+            frameworkLogger.log("processor-manager", "agents-md-validation-init-error", "error", {
+              error: error instanceof Error ? error.message : String(error),
             });
           }
-        } catch (error) {
-          frameworkLogger.log("processor-manager", "agents-md-validation-init-error", "error", {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+        },
       },
-    });
+      {
+        name: "typescriptCompilation",
+        execute: async (ctx) => {
+          const { runTypeScriptCompilation } = await import("./implementations/typescript-compilation-processor.js");
+          const cwd = (ctx as any).directory || process.cwd();
+          return runTypeScriptCompilation(cwd) as unknown as Record<string, unknown>;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing typescript compilation processor", "info");
+        },
+      },
+      {
+        name: "spawnGovernance",
+        execute: async (ctx) => {
+          const { runSpawnGovernance } = await import("./implementations/spawn-governance-processor.js");
+          return runSpawnGovernance(ctx);
+        },
+        init: async () => {
+          try {
+            const { SpawnGovernanceProcessor } = await import("./implementations/spawn-governance-processor.js");
+            frameworkLogger.log("processor-manager", "spawn-governance-processor-initialized", "success", {
+              maxConcurrent: SpawnGovernanceProcessor.DEFAULT_MAX_CONCURRENT,
+            });
+          } catch (error) {
+            frameworkLogger.log("processor-manager", "spawn-governance-init-failed", "error", {
+              error: String(error),
+            });
+          }
+        },
+      },
+      {
+        name: "performanceBudget",
+        execute: async (ctx) => {
+          const { runPerformanceBudgetCheck } = await import("./implementations/performance-budget-processor.js");
+          return runPerformanceBudgetCheck(ctx as unknown as PreValidateContext);
+        },
+        init: async () => {
+          try {
+            const { PerformanceBudgetProcessor, DEFAULT_PERFORMANCE_BUDGET } =
+              await import("./implementations/performance-budget-processor.js");
+            frameworkLogger.log("processor-manager", "performance-budget-processor-initialized", "success", {
+              config: DEFAULT_PERFORMANCE_BUDGET,
+            });
+          } catch (error) {
+            frameworkLogger.log("processor-manager", "performance-budget-init-failed", "error", {
+              error: String(error),
+            });
+          }
+        },
+      },
+      {
+        name: "asyncPattern",
+        execute: async (ctx) => {
+          const { runAsyncPatternCheck } = await import("./implementations/async-pattern-processor.js");
+          return runAsyncPatternCheck(ctx as unknown as PreValidateContext);
+        },
+        init: async () => {
+          try {
+            frameworkLogger.log("processor-manager", "async-pattern-processor-initialized", "success");
+          } catch (error) {
+            frameworkLogger.log("processor-manager", "async-pattern-init-failed", "error", {
+              error: String(error),
+            });
+          }
+        },
+      },
+      {
+        name: "consoleLogGuard",
+        execute: async (ctx) => {
+          const { runConsoleLogGuard } = await import("./implementations/console-log-guard-processor.js");
+          return runConsoleLogGuard(ctx as unknown as PreValidateContext);
+        },
+        init: async () => {
+          try {
+            frameworkLogger.log("processor-manager", "console-log-guard-processor-initialized", "success");
+          } catch (error) {
+            frameworkLogger.log("processor-manager", "console-log-guard-init-failed", "error", {
+              error: String(error),
+            });
+          }
+        },
+      },
+      {
+        name: "nudge",
+        execute: async (ctx) => {
+          const { executeNudgeProcessor } = await import("./implementations/nudge-processor.js");
+          const result = await executeNudgeProcessor(ctx as ProcessorContext);
+          return result.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing nudge processor", "info");
+        },
+      },
+      {
+        name: "consoleLogGuardPost",
+        execute: async (ctx) => {
+          const { runConsoleLogGuard } = await import("./implementations/console-log-guard-processor.js");
+          return runConsoleLogGuard(ctx as unknown as PostValidateContext);
+        },
+      },
+      {
+        name: "postProcessorChain",
+        execute: async (ctx) => {
+          const { runPostProcessorChainValidation } = await import("./implementations/postprocessor-chain-validator.js");
+          return runPostProcessorChainValidation(ctx as unknown as PostValidateContext);
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "postprocessor-chain-initialized", "success");
+        },
+      },
+      {
+        name: "commitBatcher",
+        execute: async (ctx) => {
+          const { executeCommitBatcherProcessor } = await import("./implementations/commit-batcher-processor.js");
+          const result = await executeCommitBatcherProcessor(ctx as ProcessorContext);
+          return result.data;
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "initializing commit batcher processor", "info");
+        },
+      },
+      {
+        name: "publishPreflight",
+        execute: async (ctx) => {
+          const { PublishPreflightProcessor } = await import("./implementations/publish-preflight-processor.js");
+          const p = new PublishPreflightProcessor();
+          return p.execute(ctx as unknown as ProcessorContext);
+        },
+        init: async () => {
+          frameworkLogger.log("processor-manager", "publish-preflight-initialized", "success");
+        },
+      },
+      {
+        name: "storytellingTrigger",
+        execute: async (ctx) => {
+          const { StorytellingTriggerProcessor } = await import("./implementations/storytelling-trigger-processor.js");
+          const p = new StorytellingTriggerProcessor();
+          return p.execute(ctx as unknown as ProcessorContext);
+        },
+      },
+      {
+        name: "inferenceImprovement",
+        execute: async (ctx) => {
+          const { InferenceImprovementProcessor } = await import("./implementations/inference-improvement-processor.js");
+          const p = new InferenceImprovementProcessor();
+          return p.execute(ctx as unknown as ProcessorContext);
+        },
+      },
+      {
+        name: "sessionSummary",
+        execute: async (ctx) => {
+          const { SessionSummaryProcessor } = await import("./implementations/session-summary-processor.js");
+          const p = new SessionSummaryProcessor();
+          return p.execute(ctx as unknown as ProcessorContext);
+        },
+      },
+    ];
 
-    f.set("typescriptCompilation", {
-      execute: async (ctx) => {
-        const { runTypeScriptCompilation } = await import("./implementations/typescript-compilation-processor.js");
-        const cwd = (ctx as any).directory || process.cwd();
-        return runTypeScriptCompilation(cwd) as unknown as Record<string, unknown>;
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing typescript compilation processor", "info");
-      },
-    });
-
-    f.set("spawnGovernance", {
-      execute: async (ctx) => {
-        const { runSpawnGovernance } = await import("./implementations/spawn-governance-processor.js");
-        return runSpawnGovernance(ctx);
-      },
-      init: async () => {
-        try {
-          const { SpawnGovernanceProcessor } = await import("./implementations/spawn-governance-processor.js");
-          frameworkLogger.log("processor-manager", "spawn-governance-processor-initialized", "success", {
-            maxConcurrent: SpawnGovernanceProcessor.DEFAULT_MAX_CONCURRENT,
-          });
-        } catch (error) {
-          frameworkLogger.log("processor-manager", "spawn-governance-init-failed", "error", {
-            error: String(error),
-          });
-        }
-      },
-    });
-
-    f.set("performanceBudget", {
-      execute: async (ctx) => {
-        const { runPerformanceBudgetCheck } = await import("./implementations/performance-budget-processor.js");
-        return runPerformanceBudgetCheck(ctx as unknown as PreValidateContext);
-      },
-      init: async () => {
-        try {
-          const { PerformanceBudgetProcessor, DEFAULT_PERFORMANCE_BUDGET } =
-            await import("./implementations/performance-budget-processor.js");
-          frameworkLogger.log("processor-manager", "performance-budget-processor-initialized", "success", {
-            config: DEFAULT_PERFORMANCE_BUDGET,
-          });
-        } catch (error) {
-          frameworkLogger.log("processor-manager", "performance-budget-init-failed", "error", {
-            error: String(error),
-          });
-        }
-      },
-    });
-
-    f.set("asyncPattern", {
-      execute: async (ctx) => {
-        const { runAsyncPatternCheck } = await import("./implementations/async-pattern-processor.js");
-        return runAsyncPatternCheck(ctx as unknown as PreValidateContext);
-      },
-      init: async () => {
-        try {
-          frameworkLogger.log("processor-manager", "async-pattern-processor-initialized", "success");
-        } catch (error) {
-          frameworkLogger.log("processor-manager", "async-pattern-init-failed", "error", {
-            error: String(error),
-          });
-        }
-      },
-    });
-
-    f.set("consoleLogGuard", {
-      execute: async (ctx) => {
-        const { runConsoleLogGuard } = await import("./implementations/console-log-guard-processor.js");
-        return runConsoleLogGuard(ctx as unknown as PreValidateContext);
-      },
-      init: async () => {
-        try {
-          frameworkLogger.log("processor-manager", "console-log-guard-processor-initialized", "success");
-        } catch (error) {
-          frameworkLogger.log("processor-manager", "console-log-guard-init-failed", "error", {
-            error: String(error),
-          });
-        }
-      },
-    });
-
-    f.set("nudge", {
-      execute: async (ctx) => {
-        const { executeNudgeProcessor } = await import("./implementations/nudge-processor.js");
-        const result = await executeNudgeProcessor(ctx as ProcessorContext);
-        return result.data;
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing nudge processor", "info");
-      },
-    });
-
-    f.set("consoleLogGuardPost", {
-      execute: async (ctx) => {
-        const { runConsoleLogGuard } = await import("./implementations/console-log-guard-processor.js");
-        return runConsoleLogGuard(ctx as unknown as PostValidateContext);
-      },
-    });
-
-    f.set("postProcessorChain", {
-      execute: async (ctx) => {
-        const { runPostProcessorChainValidation } = await import("./implementations/postprocessor-chain-validator.js");
-        return runPostProcessorChainValidation(ctx as unknown as PostValidateContext);
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "postprocessor-chain-initialized", "success");
-      },
-    });
-
-    f.set("commitBatcher", {
-      execute: async (ctx) => {
-        const { executeCommitBatcherProcessor } = await import("./implementations/commit-batcher-processor.js");
-        const result = await executeCommitBatcherProcessor(ctx as ProcessorContext);
-        return result.data;
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "initializing commit batcher processor", "info");
-      },
-    });
-
-    f.set("publishPreflight", {
-      execute: async (ctx) => {
-        const { PublishPreflightProcessor } = await import("./implementations/publish-preflight-processor.js");
-        const p = new PublishPreflightProcessor();
-        return p.execute(ctx as unknown as ProcessorContext);
-      },
-      init: async () => {
-        frameworkLogger.log("processor-manager", "publish-preflight-initialized", "success");
-      },
-    });
-
-    f.set("storytellingTrigger", {
-      execute: async (ctx) => {
-        const { StorytellingTriggerProcessor } = await import("./implementations/storytelling-trigger-processor.js");
-        const p = new StorytellingTriggerProcessor();
-        return p.execute(ctx as unknown as ProcessorContext);
-      },
-    });
-
-    f.set("inferenceImprovement", {
-      execute: async (ctx) => {
-        const { InferenceImprovementProcessor } = await import("./implementations/inference-improvement-processor.js");
-        const p = new InferenceImprovementProcessor();
-        return p.execute(ctx as unknown as ProcessorContext);
-      },
-    });
-
-    f.set("sessionSummary", {
-      execute: async (ctx) => {
-        const { SessionSummaryProcessor } = await import("./implementations/session-summary-processor.js");
-        const p = new SessionSummaryProcessor();
-        return p.execute(ctx as unknown as ProcessorContext);
-      },
-    });
-
+    for (const config of factoryConfigs) {
+      this.registerFactory(config.name, {
+        execute: config.execute,
+        ...(config.init ? { init: config.init } : {}),
+      });
+    }
   }
 
   registerFactory(name: string, factory: ProcessorFactory): void {
@@ -672,7 +681,7 @@ export class ProcessorManager {
         (args.input as string);
       if (promptText && typeof promptText === "string" && promptText.length > 10) {
         try {
-          const { promptSecurityValidator } = await import("../security/prompt-security-validator.js");
+          const { promptSecurityValidator } = await import("../mcps/shared/prompt-security-validator.js");
           const validation = promptSecurityValidator.validatePrompt(promptText);
           if (!validation.isSafe) {
             frameworkLogger.log("processor-manager", "prompt-security-blocked", "warning", {

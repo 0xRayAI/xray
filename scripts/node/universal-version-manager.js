@@ -438,7 +438,7 @@ const UPDATE_PATTERNS = [
   async function createBackup() {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      backupDir = `backups/version-manager-backup-${timestamp}`;
+      backupDir = `docs/reflections/backups/version-manager-${timestamp}`;
 
       // Create backup directory
       fs.mkdirSync(backupDir, { recursive: true });
@@ -1014,7 +1014,7 @@ const UPDATE_PATTERNS = [
  * - No files reference old versions
  *
  * 💾 BACKUP LOCATION:
- * - Created in 'backups/version-manager-backup-[timestamp]/'
+ * - Created in 'docs/reflections/backups/version-manager-[timestamp]/'
  * - Includes changelog.md with all changes
  *
  * 📝 TO ROLLBACK:

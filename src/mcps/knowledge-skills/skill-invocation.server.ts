@@ -1,11 +1,8 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import {
-  CallToolRequestSchema,
   ErrorCode,
-  ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
@@ -84,334 +81,187 @@ interface StorytellerArgs {
   framework?: "three_act_structure" | "hero_journey" | "spiral";
 }
 
-class SkillInvocationServer {
-  private server: Server;
+class SkillInvocationServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("xray/skill-invocation", "2.0.1");
+    this.tools = [
       {
-        name: "xray/skill-invocation", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "list-skills",
+        description: "List all available skills with descriptions",
+        inputSchema: {
+          type: "object",
+          properties: {
+            category: { type: "string", enum: ["all", "core", "registry", "knowledge"], description: "Filter by category" },
+          },
         },
       },
-    );
-
+      {
+        name: "invoke-skill",
+        description: "Generic skill invocation tool for calling any MCP skill server",
+        inputSchema: {
+          type: "object",
+          properties: {
+            skillName: { type: "string", description: "Name of the skill to invoke (use list-skills to see available)" },
+            toolName: { type: "string", description: "Name of the tool within the skill to execute" },
+            args: { type: "object", description: "Arguments to pass to the skill tool" },
+          },
+          required: ["skillName", "toolName"],
+        },
+      },
+      {
+        name: "skill-code-review",
+        description: "Invoke code review skill for comprehensive code analysis",
+        inputSchema: {
+          type: "object",
+          properties: {
+            code: { type: "string", description: "Code to analyze" },
+            language: { type: "string", description: "Programming language" },
+            context: { type: "object", description: "Additional context" },
+          },
+          required: ["code"],
+        },
+      },
+      {
+        name: "skill-security-audit",
+        description: "Invoke security audit skill for vulnerability scanning",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: { type: "array", items: { type: "string" }, description: "Files to audit" },
+            severity: { type: "string", enum: ["low", "medium", "high", "critical"], description: "Minimum severity level" },
+          },
+          required: ["files"],
+        },
+      },
+      {
+        name: "skill-performance-optimization",
+        description: "Invoke performance optimization skill for bottleneck analysis",
+        inputSchema: {
+          type: "object",
+          properties: {
+            code: { type: "string", description: "Code to analyze" },
+            language: { type: "string", description: "Programming language" },
+            metrics: { type: "array", items: { type: "string" }, description: "Performance metrics to analyze" },
+          },
+          required: ["code"],
+        },
+      },
+      {
+        name: "skill-testing-strategy",
+        description: "Invoke testing strategy skill for test planning",
+        inputSchema: {
+          type: "object",
+          properties: {
+            code: { type: "string", description: "Code to analyze for testing" },
+            existingTests: { type: "array", items: { type: "string" }, description: "Existing test files" },
+            requirements: { type: "object", description: "Testing requirements and constraints" },
+          },
+          required: ["code"],
+        },
+      },
+      {
+        name: "skill-project-analysis",
+        description: "Invoke project analysis skill for codebase insights",
+        inputSchema: {
+          type: "object",
+          properties: {
+            scope: { type: "string", enum: ["full", "directory", "file"], description: "Analysis scope" },
+            analysis: { type: "array", items: { type: "string" }, description: "Types of analysis to perform" },
+          },
+        },
+      },
+      {
+        name: "skill-database-design",
+        description: "Invoke database design skill for schema design and query optimization",
+        inputSchema: {
+          type: "object",
+          properties: {
+            schema: { type: "string", description: "Database schema or entities" },
+            databaseType: { type: "string", enum: ["postgresql", "mysql", "mongodb", "dynamodb"], description: "Target database type" },
+          },
+          required: ["schema"],
+        },
+      },
+      {
+        name: "skill-devops-deployment",
+        description: "Invoke DevOps deployment skill for CI/CD and infrastructure",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectType: { type: "string", description: "Type of project" },
+            cloudProvider: { type: "string", enum: ["aws", "gcp", "azure"], description: "Target cloud provider" },
+          },
+          required: ["projectType"],
+        },
+      },
+      {
+        name: "skill-api-design",
+        description: "Invoke API design skill for REST/GraphQL endpoints",
+        inputSchema: {
+          type: "object",
+          properties: {
+            resources: { type: "array", items: { type: "string" }, description: "API resources" },
+            style: { type: "string", enum: ["rest", "graphql"], description: "API style" },
+          },
+          required: ["resources"],
+        },
+      },
+      {
+        name: "skill-ui-ux-design",
+        description: "Invoke UI/UX design skill for component design",
+        inputSchema: {
+          type: "object",
+          properties: {
+            component: { type: "string", description: "Component to design" },
+            framework: { type: "string", enum: ["react", "vue", "angular", "svelte"], description: "Target framework" },
+          },
+          required: ["component"],
+        },
+      },
+      {
+        name: "skill-documentation-generation",
+        description: "Invoke documentation skill for API docs and README",
+        inputSchema: {
+          type: "object",
+          properties: {
+            type: { type: "string", enum: ["api", "readme", "guide"], description: "Documentation type" },
+            code: { type: "string", description: "Code to document" },
+          },
+          required: ["type"],
+        },
+      },
+      {
+        name: "skill-storyteller",
+        description: "Invoke storyteller skill for writing reflections, sagas, and journeys",
+        inputSchema: {
+          type: "object",
+          properties: {
+            storyType: { type: "string", enum: ["reflection", "saga", "journey", "narrative"], description: "Type of story to write" },
+            title: { type: "string", description: "Title for the story" },
+            context: { type: "object", description: "Context including commits, changes, metadata" },
+            framework: { type: "string", enum: ["three_act_structure", "hero_journey", "spiral"], description: "Storytelling framework to use" },
+          },
+          required: ["storyType"],
+        },
+      },
+    ];
+    this.handlers = {
+      "list-skills": async (args) => this.handleListSkills(args as unknown as ListSkillsArgs),
+      "invoke-skill": async (args) => this.handleInvokeSkill(args as unknown as InvokeSkillArgs),
+      "skill-code-review": async (args) => this.handleSkillCodeReview(args as unknown as CodeReviewArgs),
+      "skill-security-audit": async (args) => this.handleSkillSecurityAudit(args as unknown as SecurityAuditArgs),
+      "skill-performance-optimization": async (args) => this.handleSkillPerformanceOptimization(args as unknown as PerformanceOptimizationArgs),
+      "skill-testing-strategy": async (args) => this.handleSkillTestingStrategy(args as unknown as TestingStrategyArgs),
+      "skill-project-analysis": async (args) => this.handleSkillProjectAnalysis(args as unknown as ProjectAnalysisArgs),
+      "skill-database-design": async (args) => this.handleSkillDatabaseDesign(args as unknown as DatabaseDesignArgs),
+      "skill-devops-deployment": async (args) => this.handleSkillDevopsDeployment(args as unknown as DevopsDeploymentArgs),
+      "skill-api-design": async (args) => this.handleSkillApiDesign(args as unknown as ApiDesignArgs),
+      "skill-ui-ux-design": async (args) => this.handleSkillUiUxDesign(args as unknown as UiUxDesignArgs),
+      "skill-documentation-generation": async (args) => this.handleSkillDocumentationGeneration(args as unknown as DocumentationGenerationArgs),
+      "skill-storyteller": async (args) => this.handleSkillStoryteller(args as unknown as StorytellerArgs),
+    };
     this.setupToolHandlers();
-  }
-
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "list-skills",
-            description: "List all available skills with descriptions",
-            inputSchema: {
-              type: "object",
-              properties: {
-                category: {
-                  type: "string",
-                  enum: ["all", "core", "registry", "knowledge"],
-                  description: "Filter by category",
-                },
-              },
-            },
-          },
-          {
-            name: "invoke-skill",
-            description:
-              "Generic skill invocation tool for calling any MCP skill server",
-            inputSchema: {
-              type: "object",
-              properties: {
-                skillName: {
-                  type: "string",
-                  description: "Name of the skill to invoke (use list-skills to see available)",
-                },
-                toolName: {
-                  type: "string",
-                  description: "Name of the tool within the skill to execute",
-                },
-                args: {
-                  type: "object",
-                  description: "Arguments to pass to the skill tool",
-                },
-              },
-              required: ["skillName", "toolName"],
-            },
-          },
-          {
-            name: "skill-code-review",
-            description:
-              "Invoke code review skill for comprehensive code analysis",
-            inputSchema: {
-              type: "object",
-              properties: {
-                code: { type: "string", description: "Code to analyze" },
-                language: {
-                  type: "string",
-                  description: "Programming language",
-                },
-                context: { type: "object", description: "Additional context" },
-              },
-              required: ["code"],
-            },
-          },
-          {
-            name: "skill-security-audit",
-            description:
-              "Invoke security audit skill for vulnerability scanning",
-            inputSchema: {
-              type: "object",
-              properties: {
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Files to audit",
-                },
-                severity: {
-                  type: "string",
-                  enum: ["low", "medium", "high", "critical"],
-                  description: "Minimum severity level",
-                },
-              },
-              required: ["files"],
-            },
-          },
-          {
-            name: "skill-performance-optimization",
-            description:
-              "Invoke performance optimization skill for bottleneck analysis",
-            inputSchema: {
-              type: "object",
-              properties: {
-                code: { type: "string", description: "Code to analyze" },
-                language: {
-                  type: "string",
-                  description: "Programming language",
-                },
-                metrics: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Performance metrics to analyze",
-                },
-              },
-              required: ["code"],
-            },
-          },
-          {
-            name: "skill-testing-strategy",
-            description: "Invoke testing strategy skill for test planning",
-            inputSchema: {
-              type: "object",
-              properties: {
-                code: {
-                  type: "string",
-                  description: "Code to analyze for testing",
-                },
-                existingTests: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Existing test files",
-                },
-                requirements: {
-                  type: "object",
-                  description: "Testing requirements and constraints",
-                },
-              },
-              required: ["code"],
-            },
-          },
-          {
-            name: "skill-project-analysis",
-            description: "Invoke project analysis skill for codebase insights",
-            inputSchema: {
-              type: "object",
-              properties: {
-                scope: {
-                  type: "string",
-                  enum: ["full", "directory", "file"],
-                  description: "Analysis scope",
-                },
-                analysis: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Types of analysis to perform",
-                },
-              },
-            },
-          },
-          {
-            name: "skill-database-design",
-            description:
-              "Invoke database design skill for schema design and query optimization",
-            inputSchema: {
-              type: "object",
-              properties: {
-                schema: {
-                  type: "string",
-                  description: "Database schema or entities",
-                },
-                databaseType: {
-                  type: "string",
-                  enum: ["postgresql", "mysql", "mongodb", "dynamodb"],
-                  description: "Target database type",
-                },
-              },
-              required: ["schema"],
-            },
-          },
-          {
-            name: "skill-devops-deployment",
-            description:
-              "Invoke DevOps deployment skill for CI/CD and infrastructure",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectType: { type: "string", description: "Type of project" },
-                cloudProvider: {
-                  type: "string",
-                  enum: ["aws", "gcp", "azure"],
-                  description: "Target cloud provider",
-                },
-              },
-              required: ["projectType"],
-            },
-          },
-          {
-            name: "skill-api-design",
-            description: "Invoke API design skill for REST/GraphQL endpoints",
-            inputSchema: {
-              type: "object",
-              properties: {
-                resources: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "API resources",
-                },
-                style: {
-                  type: "string",
-                  enum: ["rest", "graphql"],
-                  description: "API style",
-                },
-              },
-              required: ["resources"],
-            },
-          },
-          {
-            name: "skill-ui-ux-design",
-            description: "Invoke UI/UX design skill for component design",
-            inputSchema: {
-              type: "object",
-              properties: {
-                component: {
-                  type: "string",
-                  description: "Component to design",
-                },
-                framework: {
-                  type: "string",
-                  enum: ["react", "vue", "angular", "svelte"],
-                  description: "Target framework",
-                },
-              },
-              required: ["component"],
-            },
-          },
-          {
-            name: "skill-documentation-generation",
-            description: "Invoke documentation skill for API docs and README",
-            inputSchema: {
-              type: "object",
-              properties: {
-                type: {
-                  type: "string",
-                  enum: ["api", "readme", "guide"],
-                  description: "Documentation type",
-                },
-                code: { type: "string", description: "Code to document" },
-              },
-              required: ["type"],
-            },
-          },
-          {
-            name: "skill-storyteller",
-            description:
-              "Invoke storyteller skill for writing reflections, sagas, and journeys",
-            inputSchema: {
-              type: "object",
-              properties: {
-                storyType: {
-                  type: "string",
-                  enum: ["reflection", "saga", "journey", "narrative"],
-                  description: "Type of story to write",
-                },
-                title: { type: "string", description: "Title for the story" },
-                context: {
-                  type: "object",
-                  description: "Context including commits, changes, metadata",
-                },
-                framework: {
-                  type: "string",
-                  enum: ["three_act_structure", "hero_journey", "spiral"],
-                  description: "Storytelling framework to use",
-                },
-              },
-              required: ["storyType"],
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "list-skills":
-            return await this.handleListSkills(args as unknown as ListSkillsArgs);
-          case "invoke-skill":
-            return await this.handleInvokeSkill(args as unknown as InvokeSkillArgs);
-          case "skill-code-review":
-            return await this.handleSkillCodeReview(args as unknown as CodeReviewArgs);
-          case "skill-security-audit":
-            return await this.handleSkillSecurityAudit(args as unknown as SecurityAuditArgs);
-          case "skill-performance-optimization":
-            return await this.handleSkillPerformanceOptimization(args as unknown as PerformanceOptimizationArgs);
-          case "skill-testing-strategy":
-            return await this.handleSkillTestingStrategy(args as unknown as TestingStrategyArgs);
-          case "skill-project-analysis":
-            return await this.handleSkillProjectAnalysis(args as unknown as ProjectAnalysisArgs);
-          case "skill-database-design":
-            return await this.handleSkillDatabaseDesign(args as unknown as DatabaseDesignArgs);
-          case "skill-devops-deployment":
-            return await this.handleSkillDevopsDeployment(args as unknown as DevopsDeploymentArgs);
-          case "skill-api-design":
-            return await this.handleSkillApiDesign(args as unknown as ApiDesignArgs);
-          case "skill-ui-ux-design":
-            return await this.handleSkillUiUxDesign(args as unknown as UiUxDesignArgs);
-          case "skill-documentation-generation":
-            return await this.handleSkillDocumentationGeneration(args as unknown as DocumentationGenerationArgs);
-          case "skill-storyteller":
-            return await this.handleSkillStoryteller(args as unknown as StorytellerArgs);
-          default:
-            throw new McpError(
-              ErrorCode.MethodNotFound,
-              `Unknown tool: ${name}`,
-            );
-        }
-      } catch (error) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-    });
   }
 
   private skillMetrics: Map<string, { success: number; failure: number; avgDuration: number }> = new Map();
@@ -824,63 +674,6 @@ class SkillInvocationServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-
-    let parentCheckTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const cleanup = async (signal: string) => {
-      if (parentCheckTimer !== null) {
-        clearTimeout(parentCheckTimer);
-        parentCheckTimer = null;
-      }
-
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/skill-invocation", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000);
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/skill-invocation", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0);
-        parentCheckTimer = setTimeout(checkParent, 1000);
-      } catch (error) {
-        parentCheckTimer = null;
-        cleanup("parent-process-death");
-      }
-    };
-
-    parentCheckTimer = setTimeout(checkParent, 2000);
-
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/skill-invocation", "uncaughtException", "error", { message: `Uncaught Exception: ${String(error)}` });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason) => {
-      frameworkLogger.log("mcps/skill-invocation", "unhandledRejection", "error", { message: `Unhandled Rejection: ${String(reason)}` });
-      cleanup("unhandledRejection");
-    });
-  }
-
   /**
    * Run as HTTP server using Streamable HTTP transport (for Grok CLI compatibility).
    */
@@ -931,7 +724,7 @@ if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
     });
   } else {
     const server = new SkillInvocationServer();
-    server.run().catch((error) => {
+    server.run("skill-invocation").catch((error) => {
       frameworkLogger.log("skill-invocation", "fatal-startup-error", "error", { error: String(error) });
       process.exit(1);
     });

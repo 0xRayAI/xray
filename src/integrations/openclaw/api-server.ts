@@ -8,6 +8,7 @@
  * @since 2026-03-14
  */
 
+import { frameworkLogger } from '../../core/framework-logger.js';
 import * as crypto from 'crypto';
 import * as http from 'http';
 import {
@@ -43,8 +44,6 @@ export class XrayAPIServer {
     errors: 0,
   };
   private responseTimes: number[] = [];
-  private logger: Console;
-
   constructor(config: XrayAPIServerConfig) {
     this.config = {
       port: config.port || 18431,
@@ -56,8 +55,6 @@ export class XrayAPIServer {
         maxRequests: 100,
       },
     };
-
-    this.logger = console;
   }
 
   /**
@@ -72,7 +69,7 @@ export class XrayAPIServer {
    */
   async start(): Promise<void> {
     if (this.server) {
-      this.logger.warn('[XrayAPIServer] Server already running');
+      frameworkLogger.log('openclaw-api-server', 'Server already running', 'warning', {});
       return;
     }
 
@@ -82,14 +79,14 @@ export class XrayAPIServer {
       });
 
       this.server.on('error', (error: Error) => {
-        this.logger.error('[XrayAPIServer] Server error:', error);
+        frameworkLogger.log('openclaw-api-server', 'Server error:', 'error', { error });
         this.stats.errors++;
         reject(error);
       });
 
       this.server.listen(this.config.port, this.config.host, () => {
         this.stats.startedAt = Date.now();
-        this.logger.info(`[XrayAPIServer] Listening on http://${this.config.host}:${this.config.port}`);
+        frameworkLogger.log('openclaw-api-server', `Listening on http://${this.config.host}:${this.config.port}`, 'info', {});
         resolve();
       });
     });
@@ -102,7 +99,7 @@ export class XrayAPIServer {
     return new Promise((resolve) => {
       if (this.server) {
         this.server.close(() => {
-          this.logger.info('[XrayAPIServer] Server stopped');
+          frameworkLogger.log('openclaw-api-server', 'Server stopped', 'info', {});
           this.server = null;
           resolve();
         });
@@ -153,11 +150,7 @@ export class XrayAPIServer {
       // to prevent cross-origin attacks where a malicious site could make
       // authenticated requests using the API key from a victim's browser.
       if (this.config.apiKey) {
-        this.logger.warn(
-          '[XrayAPIServer] Security: API key is set with CORS enabled. ' +
-          'Restricting Access-Control-Allow-Origin to localhost only. ' +
-          'Configure explicit allowed origins if cross-origin access is needed.'
-        );
+        frameworkLogger.log('openclaw-api-server', 'Security: API key is set with CORS enabled. Restricting Access-Control-Allow-Origin to localhost only. Configure explicit allowed origins if cross-origin access is needed.', 'warning', {});
         const origin = req.headers.origin;
         if (origin && ['http://localhost', 'http://127.0.0.1', 'http://localhost:3000',
             'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'].includes(origin)) {
@@ -244,7 +237,7 @@ export class XrayAPIServer {
           this.sendResponse(res, 404, { error: 'Not found' });
       }
     } catch (error) {
-      this.logger.error(`[XrayAPIServer] Error handling request:`, error);
+      frameworkLogger.log('openclaw-api-server', 'Error handling request:', 'error', { error });
       this.stats.errors++;
       
       const errorMessage = error instanceof Error ? error.message : 'Internal server error';

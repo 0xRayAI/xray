@@ -4,16 +4,11 @@
  * Advanced state management with persistence, synchronization, and conflict resolution
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs";
 import path from "path";
 import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface GetStateArgs {
   key: string;
@@ -62,23 +57,130 @@ interface ValidationResult {
 
 type StateValue = string | number | boolean | object | null | undefined;
 
-class StrRayStateManagerServer {
-  private server: Server;
+class StrRayStateManagerServer extends XrayKnowledgeSkillBase {
   private state: Map<string, unknown> = new Map();
   private stateFile: string;
   private backups: Map<string, unknown> = new Map();
 
   constructor() {
-    this.server = new Server(
+    super("state-manager", "2.0.1");
+
+    this.tools = [
       {
-        name: "state-manager", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "get-state",
+        description:
+          "Get state value by key with type safety and validation",
+        inputSchema: {
+          type: "object",
+          properties: {
+            key: { type: "string" },
+            defaultValue: {
+              oneOf: [
+                { type: "string" },
+                { type: "number" },
+                { type: "boolean" },
+                { type: "object" },
+                { type: "array" },
+              ],
+            },
+            validate: { type: "boolean", default: true },
+          },
+          required: ["key"],
         },
       },
-    );
+      {
+        name: "set-state",
+        description:
+          "Set state value by key with conflict resolution and persistence",
+        inputSchema: {
+          type: "object",
+          properties: {
+            key: { type: "string" },
+            value: {
+              oneOf: [
+                { type: "string" },
+                { type: "number" },
+                { type: "boolean" },
+                { type: "object" },
+                { type: "array" },
+              ],
+            },
+            persist: { type: "boolean", default: true },
+            backup: { type: "boolean", default: false },
+          },
+          required: ["key", "value"],
+        },
+      },
+      {
+        name: "delete-state",
+        description:
+          "Delete state value by key with cleanup and validation",
+        inputSchema: {
+          type: "object",
+          properties: {
+            key: { type: "string" },
+            force: { type: "boolean", default: false },
+          },
+          required: ["key"],
+        },
+      },
+      {
+        name: "list-state",
+        description: "List all state keys with filtering and metadata",
+        inputSchema: {
+          type: "object",
+          properties: {
+            prefix: { type: "string" },
+            includeValues: { type: "boolean", default: false },
+            limit: { type: "number", default: 100 },
+          },
+        },
+      },
+      {
+        name: "backup-state",
+        description: "Create backup of current state or specific keys",
+        inputSchema: {
+          type: "object",
+          properties: {
+            keys: { type: "array", items: { type: "string" } },
+            name: { type: "string" },
+          },
+        },
+      },
+      {
+        name: "restore-state",
+        description: "Restore state from backup",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            keys: { type: "array", items: { type: "string" } },
+          },
+          required: ["name"],
+        },
+      },
+      {
+        name: "validate-state",
+        description: "Validate state integrity and consistency",
+        inputSchema: {
+          type: "object",
+          properties: {
+            deep: { type: "boolean", default: false },
+            repair: { type: "boolean", default: false },
+          },
+        },
+      },
+    ];
+
+    this.handlers = {
+      "get-state": async (args) => this.handleGetState(args as unknown as GetStateArgs),
+      "set-state": async (args) => this.handleSetState(args as unknown as SetStateArgs),
+      "delete-state": async (args) => this.handleDeleteState(args as unknown as DeleteStateArgs),
+      "list-state": async (args) => this.handleListState(args as unknown as ListStateArgs),
+      "backup-state": async (args) => this.handleBackupState(args as unknown as BackupStateArgs),
+      "restore-state": async (args) => this.handleRestoreState(args as unknown as RestoreStateArgs),
+      "validate-state": async (args) => this.handleValidateState(args as unknown as ValidateStateArgs),
+    };
 
     this.stateFile = path.join(
       process.cwd(),
@@ -149,153 +251,6 @@ class StrRayStateManagerServer {
       );
       throw error;
     }
-  }
-
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "get-state",
-            description:
-              "Get state value by key with type safety and validation",
-            inputSchema: {
-              type: "object",
-              properties: {
-                key: { type: "string" },
-                defaultValue: {
-                  oneOf: [
-                    { type: "string" },
-                    { type: "number" },
-                    { type: "boolean" },
-                    { type: "object" },
-                    { type: "array" },
-                  ],
-                },
-                validate: { type: "boolean", default: true },
-              },
-              required: ["key"],
-            },
-          },
-          {
-            name: "set-state",
-            description:
-              "Set state value by key with conflict resolution and persistence",
-            inputSchema: {
-              type: "object",
-              properties: {
-                key: { type: "string" },
-                value: {
-                  oneOf: [
-                    { type: "string" },
-                    { type: "number" },
-                    { type: "boolean" },
-                    { type: "object" },
-                    { type: "array" },
-                  ],
-                },
-                persist: { type: "boolean", default: true },
-                backup: { type: "boolean", default: false },
-              },
-              required: ["key", "value"],
-            },
-          },
-          {
-            name: "delete-state",
-            description:
-              "Delete state value by key with cleanup and validation",
-            inputSchema: {
-              type: "object",
-              properties: {
-                key: { type: "string" },
-                force: { type: "boolean", default: false },
-              },
-              required: ["key"],
-            },
-          },
-          {
-            name: "list-state",
-            description: "List all state keys with filtering and metadata",
-            inputSchema: {
-              type: "object",
-              properties: {
-                prefix: { type: "string" },
-                includeValues: { type: "boolean", default: false },
-                limit: { type: "number", default: 100 },
-              },
-            },
-          },
-          {
-            name: "backup-state",
-            description: "Create backup of current state or specific keys",
-            inputSchema: {
-              type: "object",
-              properties: {
-                keys: { type: "array", items: { type: "string" } },
-                name: { type: "string" },
-              },
-            },
-          },
-          {
-            name: "restore-state",
-            description: "Restore state from backup",
-            inputSchema: {
-              type: "object",
-              properties: {
-                name: { type: "string" },
-                keys: { type: "array", items: { type: "string" } },
-              },
-              required: ["name"],
-            },
-          },
-          {
-            name: "validate-state",
-            description: "Validate state integrity and consistency",
-            inputSchema: {
-              type: "object",
-              properties: {
-                deep: { type: "boolean", default: false },
-                repair: { type: "boolean", default: false },
-              },
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-      try {
-        const { name, arguments: args } = request.params;
-
-        switch (name) {
-          case "get-state":
-            return await this.handleGetState(args as unknown as GetStateArgs);
-          case "set-state":
-            return await this.handleSetState(args as unknown as SetStateArgs);
-          case "delete-state":
-            return await this.handleDeleteState(args as unknown as DeleteStateArgs);
-          case "list-state":
-            return await this.handleListState(args as unknown as ListStateArgs);
-          case "backup-state":
-            return await this.handleBackupState(args as unknown as BackupStateArgs);
-          case "restore-state":
-            return await this.handleRestoreState(args as unknown as RestoreStateArgs);
-          case "validate-state":
-            return await this.handleValidateState(args as unknown as ValidateStateArgs);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [{
-            type: "text" as const,
-            text: `Error handling tool '${request.params.name}': ${error instanceof Error ? error.message : String(error)}`,
-          }],
-        };
-      }
-    });
   }
 
   private async handleGetState(args: GetStateArgs): Promise<CallToolResult> {
@@ -753,25 +708,12 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
     return dependents;
   }
 
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    const jobId = generateJobId("mcp-state-manager-start");
-    frameworkLogger.log(
-      "mcps/state-manager",
-      "start",
-      "success",
-      {},
-      undefined,
-      jobId,
-    );
-  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new StrRayStateManagerServer();
-  server.run().catch((error) => frameworkLogger.log("mcps/state-manager", "run", "error", { error: String(error) }));
+  server.run("state-manager").catch((error) => frameworkLogger.log("mcps/state-manager", "run", "error", { error: String(error) }));
 }
 
 export { StrRayStateManagerServer };

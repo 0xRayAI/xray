@@ -280,6 +280,5 @@ export class XrayStateManager implements StateManager {
   }
 }
 
-// Export alias for scripts expecting XrayStateManager
-// Backward compat: StringRayStateManager and StrRayStateManager aliases
-export { XrayStateManager as StringRayStateManager, XrayStateManager as StrRayStateManager };
+// Keep StrRayStateManager for internal backward compat
+export { XrayStateManager as StrRayStateManager };

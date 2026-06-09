@@ -97,19 +97,19 @@ export function withJobContext<T>(
     if (result instanceof Promise) {
       return result.finally(async () => {
         // Auto-complete job on operation finish
-        await jobContext.complete(true).catch(() => {});
+        await jobContext.complete(true);
         // Restore original context
         currentJobContext = originalContext;
       });
     } else {
       // Sync operation - complete immediately
-      jobContext.complete(true).catch(() => {});
+      jobContext.complete(true);
       currentJobContext = originalContext;
       return Promise.resolve(result);
     }
   } catch (error) {
     // Error occurred - complete job with failure
-    jobContext.complete(false, { error: String(error) }).catch(() => {});
+    jobContext.complete(false, { error: String(error) });
     currentJobContext = originalContext;
     throw error;
   }
@@ -170,7 +170,7 @@ export class JobContext {
    * Log job completion with diagnostic info
    * Enhanced with outcome and complexity accuracy tracking
    */
-  async complete(success: boolean = true, details?: any) {
+  async complete(success: boolean = true, details?: Record<string, unknown>) {
     const actualDuration = Date.now() - this.startTime;
 
     // Calculate complexity accuracy if we have both predicted and actual
@@ -231,7 +231,7 @@ export interface FrameworkLogEntry {
   traceId?: string;
   spanId?: string;
   parentSpanId?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 export class FrameworkUsageLogger {
@@ -247,7 +247,7 @@ export class FrameworkUsageLogger {
     component: string,
     action: string,
     status: LogStatus,
-    details?: any,
+    details?: Record<string, unknown>,
     sessionId?: string,
     jobId?: string,
   ) {
@@ -276,7 +276,7 @@ export class FrameworkUsageLogger {
       ...(currentTraceId && { traceId: currentTraceId }),
       ...(currentSpanId && { spanId: currentSpanId }),
       ...(currentParentSpanId && { parentSpanId: currentParentSpanId }),
-      details,
+      ...(details !== undefined && { details }),
     };
 
     this.logs.push(entry);
@@ -288,7 +288,7 @@ export class FrameworkUsageLogger {
     this.bufferEntry(entry);
   }
 
-  private bufferEntry(entry: FrameworkLogEntry): void {
+  private async bufferEntry(entry: FrameworkLogEntry): Promise<void> {
     const jobIdPart = entry.jobId ? `[${entry.jobId}] ` : "";
     const tracePart = entry.traceId ? `[${entry.traceId}.${entry.spanId}] ` : "";
     const detailsPart = entry.details
@@ -298,7 +298,7 @@ export class FrameworkUsageLogger {
     this.buffer.push(line);
 
     if (this.buffer.length >= this.MAX_BUFFER_SIZE) {
-      this.flushBuffer();
+      await this.flushBuffer();
       return;
     }
 
@@ -322,7 +322,10 @@ export class FrameworkUsageLogger {
 
     try {
       const cwd = process.cwd();
-      if (!cwd) return;
+      if (!cwd) {
+        this.flushing = false;
+        return;
+      }
 
       const logDir = join(cwd, "logs", "framework");
       const logFile = join(logDir, "activity.log");
@@ -331,9 +334,10 @@ export class FrameworkUsageLogger {
         mkdirSync(logDir, { recursive: true });
       }
 
-      await fs.appendFile(logFile, data).catch(() => {});
-      this.flushing = false;
+      await fs.appendFile(logFile, data);
     } catch {
+      // flush failure is non-fatal
+    } finally {
       this.flushing = false;
     }
   }
@@ -353,3 +357,8 @@ export class FrameworkUsageLogger {
 }
 
 export const frameworkLogger = new FrameworkUsageLogger();
+
+// Startup self-test: verify logger works
+if (typeof process !== "undefined" && process.env?.NODE_ENV !== "test") {
+  frameworkLogger.log("system", "logger initialized", "info").catch(() => {});
+}

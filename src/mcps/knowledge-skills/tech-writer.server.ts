@@ -5,16 +5,9 @@
  * code documentation maintenance, and technical writing assistance
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
 interface DocumentationAnalysis {
   completeness: number; // 0-100
@@ -160,197 +153,73 @@ interface ProjectStructureAnalysis {
   structure: Record<string, unknown>;
 }
 
-class XrayDocumentationGenerationServer {
-  private server: Server;
-
+class XrayDocumentationGenerationServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("documentation-generation", "2.0.1");
+    this.tools = [
       {
-        name: "documentation-generation", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze_documentation",
+        description: "Analyze existing documentation for completeness, quality, and gaps",
+        inputSchema: {
+          type: "object",
+          properties: {
+            docsPath: { type: "string", description: "Path to documentation directory or files" },
+            codePath: { type: "string", description: "Path to corresponding code for comparison" },
+            docTypes: { type: "array", items: { type: "string", enum: ["readme", "api", "code", "architecture", "deployment", "user-guide"] }, description: "Types of documentation to analyze" },
+          },
+          required: ["docsPath"],
         },
       },
-    );
-
+      {
+        name: "generate_api_docs",
+        description: "Generate comprehensive API documentation from code analysis",
+        inputSchema: {
+          type: "object",
+          properties: {
+            codePath: { type: "string", description: "Path to API code files" },
+            framework: { type: "string", enum: ["express", "fastify", "koa", "nestjs", "spring", "django", "flask", "fastapi"], description: "API framework being used" },
+            format: { type: "string", enum: ["openapi", "markdown", "html", "postman"], description: "Output documentation format", default: "openapi" },
+            includeExamples: { type: "boolean", description: "Include request/response examples", default: true },
+          },
+          required: ["codePath", "framework"],
+        },
+      },
+      {
+        name: "generate_code_documentation",
+        description: "Generate inline code documentation and improve existing docs",
+        inputSchema: {
+          type: "object",
+          properties: {
+            codePath: { type: "string", description: "Path to code files to document" },
+            language: { type: "string", enum: ["typescript", "javascript", "python", "java", "csharp", "go", "rust"], description: "Programming language" },
+            style: { type: "string", enum: ["jsdoc", "docstring", "xml", "markdown"], description: "Documentation comment style", default: "jsdoc" },
+            includePrivate: { type: "boolean", description: "Include documentation for private members", default: false },
+          },
+          required: ["codePath", "language"],
+        },
+      },
+      {
+        name: "generate_readme",
+        description: "Generate or improve project README documentation",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectPath: { type: "string", description: "Path to project root directory" },
+            projectType: { type: "string", enum: ["library", "application", "api", "cli", "framework"], description: "Type of project" },
+            includeSections: { type: "array", items: { type: "string" }, description: "Specific sections to include", default: ["installation", "usage", "api", "contributing", "license"] },
+            existingReadme: { type: "string", description: "Path to existing README to improve" },
+          },
+          required: ["projectPath", "projectType"],
+        },
+      },
+    ];
+    this.handlers = {
+      "analyze_documentation": async (args) => this.analyzeDocumentation(args as unknown as AnalyzeDocumentationArgs),
+      "generate_api_docs": async (args) => this.generateAPIDocs(args as unknown as GenerateAPIDocsArgs),
+      "generate_code_documentation": async (args) => this.generateCodeDocumentation(args as unknown as GenerateCodeDocumentationArgs),
+      "generate_readme": async (args) => this.generateReadme(args as unknown as GenerateReadmeArgs),
+    };
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze_documentation",
-            description:
-              "Analyze existing documentation for completeness, quality, and gaps",
-            inputSchema: {
-              type: "object",
-              properties: {
-                docsPath: {
-                  type: "string",
-                  description: "Path to documentation directory or files",
-                },
-                codePath: {
-                  type: "string",
-                  description: "Path to corresponding code for comparison",
-                },
-                docTypes: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "readme",
-                      "api",
-                      "code",
-                      "architecture",
-                      "deployment",
-                      "user-guide",
-                    ],
-                  },
-                  description: "Types of documentation to analyze",
-                },
-              },
-              required: ["docsPath"],
-            },
-          },
-          {
-            name: "generate_api_docs",
-            description:
-              "Generate comprehensive API documentation from code analysis",
-            inputSchema: {
-              type: "object",
-              properties: {
-                codePath: {
-                  type: "string",
-                  description: "Path to API code files",
-                },
-                framework: {
-                  type: "string",
-                  enum: [
-                    "express",
-                    "fastify",
-                    "koa",
-                    "nestjs",
-                    "spring",
-                    "django",
-                    "flask",
-                    "fastapi",
-                  ],
-                  description: "API framework being used",
-                },
-                format: {
-                  type: "string",
-                  enum: ["openapi", "markdown", "html", "postman"],
-                  description: "Output documentation format",
-                  default: "openapi",
-                },
-                includeExamples: {
-                  type: "boolean",
-                  description: "Include request/response examples",
-                  default: true,
-                },
-              },
-              required: ["codePath", "framework"],
-            },
-          },
-          {
-            name: "generate_code_documentation",
-            description:
-              "Generate inline code documentation and improve existing docs",
-            inputSchema: {
-              type: "object",
-              properties: {
-                codePath: {
-                  type: "string",
-                  description: "Path to code files to document",
-                },
-                language: {
-                  type: "string",
-                  enum: [
-                    "typescript",
-                    "javascript",
-                    "python",
-                    "java",
-                    "csharp",
-                    "go",
-                    "rust",
-                  ],
-                  description: "Programming language",
-                },
-                style: {
-                  type: "string",
-                  enum: ["jsdoc", "docstring", "xml", "markdown"],
-                  description: "Documentation comment style",
-                  default: "jsdoc",
-                },
-                includePrivate: {
-                  type: "boolean",
-                  description: "Include documentation for private members",
-                  default: false,
-                },
-              },
-              required: ["codePath", "language"],
-            },
-          },
-          {
-            name: "generate_readme",
-            description: "Generate or improve project README documentation",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectPath: {
-                  type: "string",
-                  description: "Path to project root directory",
-                },
-                projectType: {
-                  type: "string",
-                  enum: ["library", "application", "api", "cli", "framework"],
-                  description: "Type of project",
-                },
-                includeSections: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Specific sections to include",
-                  default: [
-                    "installation",
-                    "usage",
-                    "api",
-                    "contributing",
-                    "license",
-                  ],
-                },
-                existingReadme: {
-                  type: "string",
-                  description: "Path to existing README to improve",
-                },
-              },
-              required: ["projectPath", "projectType"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_documentation":
-          return await this.analyzeDocumentation(args as unknown as AnalyzeDocumentationArgs) as CallToolResult;
-        case "generate_api_docs":
-          return await this.generateAPIDocs(args as unknown as GenerateAPIDocsArgs) as CallToolResult;
-        case "generate_code_documentation":
-          return await this.generateCodeDocumentation(args as unknown as GenerateCodeDocumentationArgs) as CallToolResult;
-        case "generate_readme":
-          return await this.generateReadme(args as unknown as GenerateReadmeArgs) as CallToolResult;
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async analyzeDocumentation(args: AnalyzeDocumentationArgs) {
@@ -618,68 +487,24 @@ class XrayDocumentationGenerationServer {
     docsPath: string,
     docType: string,
   ): Promise<number> {
-    let coverage = 0;
-
+    const keywordMap: Record<string, string[]> = {
+      readme: ["readme"],
+      api: ["api", "swagger", "openapi"],
+      code: ["code"],
+      architecture: ["arch", "design"],
+      deployment: ["deploy"],
+      "user-guide": ["guide", "tutorial"],
+    };
+    const keywords = keywordMap[docType];
+    if (!keywords) return 0;
     try {
       const files = fs.readdirSync(docsPath, { recursive: true });
-
-      switch (docType) {
-        case "readme":
-          coverage = files.some(
-            (f) => typeof f === "string" && f.toLowerCase().includes("readme"),
-          )
-            ? 100
-            : 0;
-          break;
-        case "api":
-          coverage = files.some(
-            (f) =>
-              typeof f === "string" &&
-              (f.includes("api") ||
-                f.includes("swagger") ||
-                f.includes("openapi")),
-          )
-            ? 100
-            : 0;
-          break;
-        case "code":
-          coverage = files.some(
-            (f) => typeof f === "string" && f.includes("code"),
-          )
-            ? 100
-            : 0;
-          break;
-        case "architecture":
-          coverage = files.some(
-            (f) =>
-              typeof f === "string" &&
-              (f.includes("arch") || f.includes("design")),
-          )
-            ? 100
-            : 0;
-          break;
-        case "deployment":
-          coverage = files.some(
-            (f) => typeof f === "string" && f.includes("deploy"),
-          )
-            ? 100
-            : 0;
-          break;
-        case "user-guide":
-          coverage = files.some(
-            (f) =>
-              typeof f === "string" &&
-              (f.includes("guide") || f.includes("tutorial")),
-          )
-            ? 100
-            : 0;
-          break;
-      }
+      return files.some(
+        (f) => typeof f === "string" && keywords.some((k) => f.toLowerCase().includes(k)),
+      ) ? 100 : 0;
     } catch {
-      coverage = 0;
+      return 0;
     }
-
-    return coverage;
   }
 
   private async compareDocsWithCode(
@@ -1393,19 +1218,8 @@ class XrayDocumentationGenerationServer {
 
     // This would generate actual documentation comments based on code analysis
     // For now, return sample comments
-    comments.push(`/**
- * Sample function documentation
- * @param {string} param1 - First parameter
- * @param {number} param2 - Second parameter
- * @returns {boolean} Result of operation
- */`);
-
-    comments.push(`/**
- * Sample class documentation
- * @class
- * @description Represents a sample class
- */`);
-
+    comments.push("/** Sample function documentation */");
+    comments.push("/** Sample class documentation */");
     return comments;
   }
 
@@ -1514,97 +1328,27 @@ class XrayDocumentationGenerationServer {
   }
 
   private generateInstallationSection(projectAnalysis: ProjectStructureAnalysis): string {
-    let content = "## Installation\n\n";
-
-    if (
-      projectAnalysis.languages.includes("JavaScript") ||
-      projectAnalysis.languages.includes("TypeScript")
-    ) {
-      content += "```bash\n";
-      content += "# Clone the repository\n";
-      content += "git clone <repository-url>\n";
-      content += "cd <project-directory>\n\n";
-      content += "# Install dependencies\n";
-      content += "npm install\n";
-      content += "# or\n";
-      content += "yarn install\n";
-      content += "```\n\n";
-    }
-
+    let content = "## Installation\n\n```bash\n# Install dependencies\nnpm install\n```\n\n";
     if (projectAnalysis.languages.includes("Python")) {
-      content += "```bash\n";
-      content += "# Install with pip\n";
-      content += "pip install <package-name>\n\n";
-      content += "# Or install from source\n";
-      content += "git clone <repository-url>\n";
-      content += "cd <project-directory>\n";
-      content += "pip install -e .\n";
-      content += "```\n\n";
+      content += "```bash\npip install <package-name>\n```\n\n";
     }
-
     return content;
   }
 
   private generateUsageSection(projectAnalysis: ProjectStructureAnalysis): string {
-    let content = "## Usage\n\n";
-
-    content += "```javascript\n";
-    content += "// Basic usage example\n";
-    content += "const result = await performOperation();\n";
-    content += "console.log(result);\n";
-    content += "```\n\n";
-
-    content += "### Advanced Usage\n\n";
-    content +=
-      "For more advanced features, see the [API documentation](./docs/api.md).\n\n";
-
-    return content;
+    return "## Usage\n\n```javascript\n// Example usage\nconst result = await performOperation();\n```\n\nFor advanced usage, see [API docs](./docs/api.md).\n\n";
   }
 
   private generateAPISection(projectAnalysis: ProjectStructureAnalysis): string {
-    let content = "## API\n\n";
-
-    content += "### Core Functions\n\n";
-    content += "- `performOperation()` - Performs the main operation\n";
-    content += "- `configure(options)` - Configures the library\n";
-    content += "- `validateInput(input)` - Validates input data\n\n";
-
-    content +=
-      "For detailed API documentation, see [API Reference](./docs/api.md).\n\n";
-
-    return content;
+    return "## API\n\nSee [API Reference](./docs/api.md) for complete documentation.\n\n";
   }
 
   private generateContributingSection(): string {
-    let content = "## Contributing\n\n";
-
-    content +=
-      "We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.\n\n";
-
-    content += "### Development Setup\n\n";
-    content += "```bash\n";
-    content += "git clone <repository-url>\n";
-    content += "cd <project-directory>\n";
-    content += "npm install\n";
-    content += "npm run dev\n";
-    content += "```\n\n";
-
-    content += "### Testing\n\n";
-    content += "```bash\n";
-    content += "npm test\n";
-    content += "npm run test:coverage\n";
-    content += "```\n\n";
-
-    return content;
+    return "## Contributing\n\nSee [Contributing Guide](./CONTRIBUTING.md).\n\n";
   }
 
   private generateLicenseSection(): string {
-    let content = "## License\n\n";
-
-    content +=
-      "This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.\n\n";
-
-    return content;
+    return "## License\n\nMIT License - see [LICENSE](LICENSE).\n\n";
   }
 
   private getSeverityIcon(severity: string): string {
@@ -1617,22 +1361,12 @@ class XrayDocumentationGenerationServer {
     return icons[severity as keyof typeof icons] || "❓";
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "tech-writer.server",
-      server: this.server,
-    });
-  }
 }
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayDocumentationGenerationServer();
-  server.run().catch(() => {});
+  server.run("documentation-generation.server").catch((err) => { console.error("MCP server failed:", err); });
 }
 
 export { XrayDocumentationGenerationServer };

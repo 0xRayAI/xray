@@ -800,7 +800,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   validator
     .runCompleteValidationSuite()
     .then((results) => {
-      // Validation completion - kept as console.log for user feedback
+      frameworkLogger.log("orchestration-flow-validator", "validation-complete", "info", { totalTests: results.length });
     })
-    .catch(() => {});
+    .catch((error) => {
+      frameworkLogger.log("orchestration-flow-validator", "validation-failed", "error", { error: String(error) });
+    });
 }

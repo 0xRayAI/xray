@@ -4,16 +4,11 @@
  * Advanced model compatibility validation and dynamic health assessment
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { modelRouter } from "../core/model-router.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import { execSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface ModelHealthCheckArgs {
   models?: string[];
@@ -36,71 +31,45 @@ interface ModelHealthReportData {
   summary: { total: number; healthy: number; issues: number };
 }
 
-class XrayModelHealthCheckServer {
-  private server: Server;
-
+class XrayModelHealthCheckServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("model-health-check", "2.0.1");
+
+    this.tools = [
       {
-        name: "model-health-check", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "model-health-check",
+        description:
+          "Advanced model compatibility validation and dynamic health assessment",
+        inputSchema: {
+          type: "object",
+          properties: {
+            models: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Specific models to check (optional - checks all configured if empty)",
+            },
+            compatibility: {
+              type: "boolean",
+              default: true,
+              description: "Include compatibility matrix in results",
+            },
+            performance: {
+              type: "boolean",
+              default: true,
+              description: "Include performance metrics in results",
+            },
+          },
         },
       },
-    );
+    ];
+
+    this.handlers = {
+      "model-health-check": async (args) => this.handleModelHealthCheck((args || {}) as unknown as ModelHealthCheckArgs),
+    };
 
     this.setupToolHandlers();
     frameworkLogger.log("mcps/model-health-check", "initialize", "info");
-  }
-
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "model-health-check",
-            description:
-              "Advanced model compatibility validation and dynamic health assessment",
-            inputSchema: {
-              type: "object",
-              properties: {
-                models: {
-                  type: "array",
-                  items: { type: "string" },
-                  description:
-                    "Specific models to check (optional - checks all configured if empty)",
-                },
-                compatibility: {
-                  type: "boolean",
-                  default: true,
-                  description: "Include compatibility matrix in results",
-                },
-                performance: {
-                  type: "boolean",
-                  default: true,
-                  description: "Include performance metrics in results",
-                },
-              },
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "model-health-check":
-          return await this.handleModelHealthCheck((args || {}) as unknown as ModelHealthCheckArgs);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async handleModelHealthCheck(args: ModelHealthCheckArgs) {
@@ -275,18 +244,12 @@ class XrayModelHealthCheckServer {
 
     return report;
   }
-
-  public async start() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    frameworkLogger.log("mcps/model-health-check", "start", "info");
-  }
 }
 
 // Start the server if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayModelHealthCheckServer();
-  server.start().catch((error) => frameworkLogger.log("mcps/model-health-check", "run", "error", { error: String(error) }));
+  server.run("model-health-check").catch((error) => frameworkLogger.log("mcps/model-health-check", "run", "error", { error: String(error) }));
 }
 
 export default XrayModelHealthCheckServer;

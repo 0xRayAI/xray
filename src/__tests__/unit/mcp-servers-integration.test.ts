@@ -139,13 +139,15 @@ describe('Architect Tools MCP Server', () => {
     expect(content).toContain('architectArchitectureAssessment');
   });
 
-  it('should delegate all 4 tool handlers to library functions', () => {
-    const serverPath = path.join(process.cwd(), 'src/mcps/architect-tools.server.ts');
-    const content = fs.readFileSync(serverPath, 'utf-8');
-    expect(content).toContain('case "context-analysis":');
-    expect(content).toContain('case "codebase-structure":');
-    expect(content).toContain('case "dependency-analysis":');
-    expect(content).toContain('case "architecture-assessment":');
+  it('should delegate all 4 tool handlers to library functions', async () => {
+    const mod = await import('../../mcps/architect-tools.server.js');
+    const cls = mod.default || Object.values(mod)[0];
+    const server = new (cls as any)();
+    const handlerNames = (server as any).handlers ? Object.keys((server as any).handlers) : [];
+    expect(handlerNames).toContain('context-analysis');
+    expect(handlerNames).toContain('codebase-structure');
+    expect(handlerNames).toContain('dependency-analysis');
+    expect(handlerNames).toContain('architecture-assessment');
   });
 
     it('should register all 4 tools via ListToolsRequestSchema', async () => {

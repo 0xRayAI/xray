@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v2.0.0** — 42 agents · 44 skills · 16 MCPs servers · 68 codex terms · 2,2290 tests
+**v2.1.2** — 42 agents · 44 skills · 16 MCPs servers · 68 codex terms · ~2,900 tests
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -276,18 +276,18 @@ Install more skills anytime: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-0xRay is battle-tested with **2,2290 tests** across every subsystem:
+0xRay is battle-tested with **~2,900 tests** across every subsystem:
 
 | Suite | Tests | Status |
 |-------|-------|--------|
-| Unit & Integration | 158 files | All pass |
-| Performance | 2290 tests | All pass |
-| Infrastructure | 2290 tests | All pass |
+| Unit & Integration | 164 files | All pass |
+| Performance | 164 files | All pass |
+| Infrastructure | 164 files | All pass |
 | Consumer E2E | 4 platforms | All pass |
 | OpenCode E2E | 42 solo + 34 orchestrator | All pass |
-| OpenClaw E2E | 2290 tests | All pass |
-| Hermes E2E | 2290 tests | All pass |
-| Grok CLI E2E | 60 solo + 59 orchestrator | All pass |
+| OpenClaw E2E | 99 E2E | All pass |
+| Hermes E2E | 46 E2E | All pass |
+| Grok CLI E2E | 56 E2E (54 passed, 2 skipped) | All pass |
 
 ---
 

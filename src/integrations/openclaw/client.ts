@@ -8,6 +8,7 @@
  * @since 2026-03-14
  */
 
+import { frameworkLogger } from '../../core/framework-logger.js';
 import { WebSocket } from 'ws';
 import * as crypto from 'crypto';
 import {
@@ -50,8 +51,6 @@ export class OpenClawClient {
     reconnects: 0,
     errors: 0,
   };
-  private logger: Console;
-
   constructor(config: OpenClawClientConfig) {
     this.config = {
       gatewayUrl: config.gatewayUrl || 'ws://127.0.0.1:18789',
@@ -64,9 +63,6 @@ export class OpenClawClient {
       pingInterval: config.pingInterval ?? 30000,
       requestTimeout: config.requestTimeout ?? 30000,
     };
-
-    // Use console but can be replaced with proper logger
-    this.logger = console;
   }
 
   /**
@@ -78,7 +74,7 @@ export class OpenClawClient {
 
   async connect(): Promise<void> {
     if (this.state === 'connected' || this.state === 'authenticating') {
-      this.logger.warn('[OpenClawClient] Already connected or connecting');
+      frameworkLogger.log('openclaw-client', 'Already connected or connecting', 'warning', {});
       return;
     }
 
@@ -97,7 +93,7 @@ export class OpenClawClient {
         this.ws = new WebSocket(this.config.gatewayUrl);
 
         this.ws!.on('open', () => {
-          this.logger.info('[OpenClawClient] WebSocket connected, waiting for challenge...');
+          frameworkLogger.log('openclaw-client', 'WebSocket connected, waiting for challenge...', 'info', {});
           this.handshakeResolve = resolve;
           this.handshakeReject = reject;
         });
@@ -108,12 +104,12 @@ export class OpenClawClient {
         });
 
         this.ws!.on('close', (code: unknown, reason: unknown) => {
-          this.logger.info(`[OpenClawClient] Connection closed: ${code} ${String(reason)}`);
+          frameworkLogger.log('openclaw-client', `Connection closed: ${code} ${String(reason)}`, 'info', {});
           this.handleDisconnect(Number(code), String(reason));
         });
 
         this.ws!.on('error', (error: unknown) => {
-          this.logger.error('[OpenClawClient] WebSocket error:', error instanceof Error ? error.message : String(error));
+          frameworkLogger.log('openclaw-client', 'WebSocket error:', 'error', { error: error instanceof Error ? error.message : String(error) });
           this.stats.errors++;
           
           if (this.state === 'connecting') {
@@ -125,11 +121,11 @@ export class OpenClawClient {
         });
 
         this.ws!.on('ping', () => {
-          this.logger.debug('[OpenClawClient] Received ping');
+          frameworkLogger.log('openclaw-client', 'Received ping', 'debug', {});
         });
 
         this.ws!.on('pong', () => {
-          this.logger.debug('[OpenClawClient] Received pong');
+          frameworkLogger.log('openclaw-client', 'Received pong', 'debug', {});
         });
       } catch (error) {
         this.setState('error');
@@ -145,7 +141,7 @@ export class OpenClawClient {
    * Disconnect from OpenClaw Gateway
    */
   disconnect(): void {
-    this.logger.info('[OpenClawClient] Disconnecting...');
+    frameworkLogger.log('openclaw-client', 'Disconnecting...', 'info', {});
     
     if (this._handshakeTimeout) {
       clearTimeout(this._handshakeTimeout);
@@ -197,7 +193,7 @@ export class OpenClawClient {
       params,
     };
 
-    this.logger.debug(`[OpenClawClient] Sending request: ${method} (${id})`);
+    frameworkLogger.log('openclaw-client', `Sending request: ${method} (${id})`, 'debug', {});
     this.stats.requestsSent++;
 
     return new Promise((resolve, reject) => {
@@ -348,13 +344,13 @@ export class OpenClawClient {
       this.setState('authorized');
       this.startPingInterval();
       if (this.handshakeResolve) {
-        this.logger.info('[OpenClawClient] Handshake complete (connect response ok)');
+        frameworkLogger.log('openclaw-client', 'Handshake complete (connect response ok)', 'info', {});
         this.handshakeResolve();
         this.handshakeResolve = null;
         this.handshakeReject = null;
       }
     }).catch((error) => {
-      this.logger.error('[OpenClawClient] Handshake failed:', error);
+      frameworkLogger.log('openclaw-client', 'Handshake failed:', 'error', { error });
       this.setState('error');
       if (this.handshakeReject) {
         this.handshakeReject(error);
@@ -378,10 +374,10 @@ export class OpenClawClient {
       } else if (isOpenClawEvent(frame)) {
         this.handleEvent(frame);
       } else {
-        this.logger.warn('[OpenClawClient] Unknown frame type:', frame);
+        frameworkLogger.log('openclaw-client', 'Unknown frame type:', 'warning', { frame });
       }
     } catch (error) {
-      this.logger.error('[OpenClawClient] Failed to parse message:', error);
+      frameworkLogger.log('openclaw-client', 'Failed to parse message:', 'error', { error });
       this.stats.errors++;
     }
   }
@@ -403,7 +399,7 @@ export class OpenClawClient {
         pending.reject(error);
       }
     } else {
-      this.logger.warn('[OpenClawClient] Received response for unknown request:', frame.id);
+      frameworkLogger.log('openclaw-client', 'Received response for unknown request:', 'warning', { requestId: frame.id });
     }
   }
 
@@ -411,11 +407,11 @@ export class OpenClawClient {
    * Handle event frame
    */
   private handleEvent(frame: OpenClawFrameEvent): void {
-    this.logger.debug('[OpenClawClient] Event:', frame.event);
+    frameworkLogger.log('openclaw-client', 'Event:', 'debug', { event: frame.event });
 
     // Handle specific events
     if (frame.event === 'connect.challenge') {
-      this.logger.info('[OpenClawClient] Received challenge, sending handshake...');
+      frameworkLogger.log('openclaw-client', 'Received challenge, sending handshake...', 'info', {});
       this.sendHandshake();
       return;
     }
@@ -441,7 +437,7 @@ export class OpenClawClient {
         try {
           listener(frame.data);
         } catch (error) {
-          this.logger.error('[OpenClawClient] Event listener error:', error);
+          frameworkLogger.log('openclaw-client', 'Event listener error:', 'error', { error });
         }
       }
     }
@@ -453,7 +449,7 @@ export class OpenClawClient {
         try {
           listener(frame.event, frame.data);
         } catch (error) {
-          this.logger.error('[OpenClawClient] All-event listener error:', error);
+          frameworkLogger.log('openclaw-client', 'All-event listener error:', 'error', { error });
         }
       }
     }
@@ -495,14 +491,14 @@ export class OpenClawClient {
     const maxDelay = 30000;
     const actualDelay = Math.min(delay, maxDelay);
 
-    this.logger.info(`[OpenClawClient] Scheduling reconnect attempt ${this.reconnectAttempts}/${this.config.reconnectAttempts} in ${actualDelay}ms`);
+    frameworkLogger.log('openclaw-client', `Scheduling reconnect attempt ${this.reconnectAttempts}/${this.config.reconnectAttempts} in ${actualDelay}ms`, 'info', {});
     
     this.setState('reconnecting');
 
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectTimeout = null;
       this.connect().catch((error) => {
-        this.logger.error('[OpenClawClient] Reconnection failed:', error);
+        frameworkLogger.log('openclaw-client', 'Reconnection failed:', 'error', { error });
       });
     }, actualDelay);
   }
@@ -526,14 +522,14 @@ export class OpenClawClient {
     this.state = newState;
 
     if (previousState !== newState) {
-      this.logger.info(`[OpenClawClient] State: ${previousState} → ${newState}`);
+      frameworkLogger.log('openclaw-client', `State: ${previousState} → ${newState}`, 'info', {});
 
       // Notify state listeners
       for (const listener of this.stateListeners) {
         try {
           listener(newState, previousState);
         } catch (error) {
-          this.logger.error('[OpenClawClient] State listener error:', error);
+          frameworkLogger.log('openclaw-client', 'State listener error:', 'error', { error });
         }
       }
     }

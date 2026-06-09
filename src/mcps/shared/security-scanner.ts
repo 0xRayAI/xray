@@ -7,7 +7,7 @@
 
 import { exec } from "child_process";
 import { promises as fs } from "fs";
-import { frameworkLogger } from "../core/framework-logger.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import { promisify } from "util";
 import {
   promptSecurityValidator,

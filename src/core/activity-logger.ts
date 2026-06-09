@@ -9,8 +9,8 @@
  * - Test results
  * 
  * Enable/Disable via:
- *   STRRAY_ACTIVITY_LOGGING=true  (enable)
- *   STRRAY_ACTIVITY_LOGGING=false (disable, default)
+ *   XRAY_ACTIVITY_LOGGING=true  (enable)
+ *   XRAY_ACTIVITY_LOGGING=false (disable, default)
  * 
  * @module core/activity-logger
  * @version 1.0.0
@@ -52,7 +52,7 @@ export interface ActivityRecord {
 }
 
 // Global state
-let activityLoggerEnabled = process.env.STRRAY_ACTIVITY_LOGGING !== "false";
+let activityLoggerEnabled = (process.env.XRAY_ACTIVITY_LOGGING || process.env.STRRAY_ACTIVITY_LOGGING) !== "false";
 let activityLogPath: string;
 let sessionId: string;
 let sessionStartTime: number;
@@ -247,7 +247,7 @@ export function logActivity(
   writeToReportFile(record);
 
   // Console output for debug mode
-  if (process.env.STRRAY_ACTIVITY_CONSOLE === "true") {
+  if ((process.env.XRAY_ACTIVITY_CONSOLE || process.env.STRRAY_ACTIVITY_CONSOLE) === "true") {
     frameworkLogger.log("activity-logger", "console-output", "info", { message: `[${record.timestamp}] [${record.category}] ${level.toUpperCase()}: ${message}`, details: details || "" });
   }
 }

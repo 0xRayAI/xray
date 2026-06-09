@@ -5,12 +5,6 @@
  * Provides rule enforcement and validation capabilities via MCP protocol
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -20,8 +14,9 @@ import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { ruleValidation as runRuleValidation, getTaskRoutingRecommendation, EnforcementResult } from "../enforcement/enforcer-tools.js";
 import { RuleValidationContext, ValidationReport } from "../enforcement/rule-enforcer.js";
 import type { RuleFix } from "../enforcement/types.js";
-import type { SecurityReport } from "../security/security-scanner.js";
-import type { SecurityValidationResult } from "../security/prompt-security-validator.js";
+import type { SecurityReport } from "./shared/security-scanner.js";
+import type { SecurityValidationResult } from "./shared/prompt-security-validator.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface RuleValidationArgs {
   operation: string;
@@ -138,273 +133,236 @@ interface SecurityScanResults {
   promptValidation?: { isSafe: boolean; riskLevel: string; violations: string[] } | { error: string };
 }
 
-class XrayEnforcerToolsServer {
-  private server: Server;
+class XrayEnforcerToolsServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("enforcer", "2.0.1");
+    this.tools = [
       {
-        name: "enforcer", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "rule-validation",
+        description:
+          "Validate operations against the comprehensive rule hierarchy including duplicate code prevention, test requirements, and architectural constraints",
+        inputSchema: {
+          type: "object",
+          properties: {
+            operation: {
+              type: "string",
+              description:
+                "Operation to validate (create, modify, refactor, etc.)",
+            },
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "Files affected by the operation",
+            },
+            newCode: {
+              type: "string",
+              description: "New code being added (optional)",
+            },
+            existingCode: {
+              type: "object",
+              description: "Map of existing code for comparison (optional)",
+            },
+            dependencies: {
+              type: "array",
+              items: { type: "string" },
+              description: "Dependencies being declared (optional)",
+            },
+            tests: {
+              type: "array",
+              items: { type: "string" },
+              description: "Test files for validation (optional)",
+            },
+          },
+          required: ["operation"],
         },
       },
-    );
-
+      {
+        name: "codex-enforcement",
+        description:
+          "Enforce all Universal Development Codex terms with comprehensive compliance validation and actionable remediation",
+        inputSchema: {
+          type: "object",
+          properties: {
+            operation: {
+              type: "string",
+              description: "Operation to validate against codex",
+            },
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "Files to check for codex compliance",
+            },
+            newCode: {
+              type: "string",
+              description: "New code to validate against codex terms",
+            },
+            focusAreas: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "error-handling",
+                  "type-safety",
+                  "performance",
+                  "security",
+                  "architecture",
+                ],
+              },
+              description: "Specific codex areas to focus validation on",
+            },
+          },
+          required: ["operation"],
+        },
+      },
+      {
+        name: "context-analysis-validation",
+        description:
+          "Validate proper integration of contextual analysis components and architectural patterns",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "Files to validate for context integration",
+            },
+            operation: {
+              type: "string",
+              description: "Operation context for validation",
+            },
+            checkPatterns: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "memory-optimization",
+                  "error-handling",
+                  "type-safety",
+                  "dependency-injection",
+                ],
+              },
+              description: "Specific integration patterns to validate",
+            },
+          },
+          required: ["files", "operation"],
+        },
+      },
+      {
+        name: "quality-gate-check",
+        description:
+          "Perform comprehensive quality gate validation before commits with automated fixes and blocking decisions",
+        inputSchema: {
+          type: "object",
+          properties: {
+            operation: {
+              type: "string",
+              description: "Operation to quality-gate check",
+            },
+            context: {
+              type: "object",
+              properties: {
+                files: { type: "array", items: { type: "string" } },
+                newCode: { type: "string" },
+                dependencies: { type: "array", items: { type: "string" } },
+                tests: { type: "array", items: { type: "string" } },
+              },
+              description:
+                "Complete operation context for comprehensive validation",
+            },
+            strictMode: {
+              type: "boolean",
+              default: true,
+              description: "Enforce strict quality requirements",
+            },
+          },
+          required: ["operation", "context"],
+        },
+      },
+      {
+        name: "get-enforcement-status",
+        description:
+          "Get comprehensive enforcement statistics and rule compliance metrics",
+        inputSchema: {
+          type: "object",
+          properties: {
+            includeHistory: {
+              type: "boolean",
+              default: false,
+              description: "Include historical enforcement data",
+            },
+            focusAreas: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["rules", "codex", "quality", "performance"],
+              },
+              description: "Specific areas to focus status reporting on",
+            },
+          },
+        },
+      },
+      {
+        name: "run-pre-commit-validation",
+        description:
+          "Execute comprehensive pre-commit validation with all enforcer tools and automated remediation",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "Files to validate before commit",
+            },
+            operation: {
+              type: "string",
+              default: "commit",
+              description: "Operation type for validation context",
+            },
+            autoFix: {
+              type: "boolean",
+              default: true,
+              description: "Automatically apply safe fixes",
+            },
+            strictBlocking: {
+              type: "boolean",
+              default: true,
+              description: "Block commit on any validation error",
+            },
+          },
+          required: ["files"],
+        },
+      },
+      {
+        name: "security-scan",
+        description:
+          "Run security scan using npm audit, Trivy, ESLint security, and OWASP dependency check",
+        inputSchema: {
+          type: "object",
+          properties: {
+            includePromptValidation: {
+              type: "boolean",
+              default: false,
+              description: "Also validate prompts for injection attacks",
+            },
+            promptText: {
+              type: "string",
+              description: "Prompt text to validate for injection attacks",
+            },
+          },
+        },
+      },
+    ];
+    this.handlers = {
+      "rule-validation": async (args) => this.ruleValidation(args),
+      "codex-enforcement": async (args) => this.codexEnforcement(args),
+      "context-analysis-validation": async (args) => this.contextAnalysisValidation(args),
+      "quality-gate-check": async (args) => this.qualityGateCheck(args),
+      "get-enforcement-status": async (args) => this.getEnforcementStatus(args),
+      "run-pre-commit-validation": async (args) => this.runPreCommitValidation(args),
+      "security-scan": async (args) => this.securityScan(args),
+    };
     this.setupToolHandlers();
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "rule-validation",
-            description:
-              "Validate operations against the comprehensive rule hierarchy including duplicate code prevention, test requirements, and architectural constraints",
-            inputSchema: {
-              type: "object",
-              properties: {
-                operation: {
-                  type: "string",
-                  description:
-                    "Operation to validate (create, modify, refactor, etc.)",
-                },
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Files affected by the operation",
-                },
-                newCode: {
-                  type: "string",
-                  description: "New code being added (optional)",
-                },
-                existingCode: {
-                  type: "object",
-                  description: "Map of existing code for comparison (optional)",
-                },
-                dependencies: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Dependencies being declared (optional)",
-                },
-                tests: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Test files for validation (optional)",
-                },
-              },
-              required: ["operation"],
-            },
-          },
-          {
-            name: "codex-enforcement",
-            description:
-              "Enforce all Universal Development Codex terms with comprehensive compliance validation and actionable remediation",
-            inputSchema: {
-              type: "object",
-              properties: {
-                operation: {
-                  type: "string",
-                  description: "Operation to validate against codex",
-                },
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Files to check for codex compliance",
-                },
-                newCode: {
-                  type: "string",
-                  description: "New code to validate against codex terms",
-                },
-                focusAreas: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "error-handling",
-                      "type-safety",
-                      "performance",
-                      "security",
-                      "architecture",
-                    ],
-                  },
-                  description: "Specific codex areas to focus validation on",
-                },
-              },
-              required: ["operation"],
-            },
-          },
-          {
-            name: "context-analysis-validation",
-            description:
-              "Validate proper integration of contextual analysis components and architectural patterns",
-            inputSchema: {
-              type: "object",
-              properties: {
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Files to validate for context integration",
-                },
-                operation: {
-                  type: "string",
-                  description: "Operation context for validation",
-                },
-                checkPatterns: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "memory-optimization",
-                      "error-handling",
-                      "type-safety",
-                      "dependency-injection",
-                    ],
-                  },
-                  description: "Specific integration patterns to validate",
-                },
-              },
-              required: ["files", "operation"],
-            },
-          },
-          {
-            name: "quality-gate-check",
-            description:
-              "Perform comprehensive quality gate validation before commits with automated fixes and blocking decisions",
-            inputSchema: {
-              type: "object",
-              properties: {
-                operation: {
-                  type: "string",
-                  description: "Operation to quality-gate check",
-                },
-                context: {
-                  type: "object",
-                  properties: {
-                    files: { type: "array", items: { type: "string" } },
-                    newCode: { type: "string" },
-                    dependencies: { type: "array", items: { type: "string" } },
-                    tests: { type: "array", items: { type: "string" } },
-                  },
-                  description:
-                    "Complete operation context for comprehensive validation",
-                },
-                strictMode: {
-                  type: "boolean",
-                  default: true,
-                  description: "Enforce strict quality requirements",
-                },
-              },
-              required: ["operation", "context"],
-            },
-          },
-          {
-            name: "get-enforcement-status",
-            description:
-              "Get comprehensive enforcement statistics and rule compliance metrics",
-            inputSchema: {
-              type: "object",
-              properties: {
-                includeHistory: {
-                  type: "boolean",
-                  default: false,
-                  description: "Include historical enforcement data",
-                },
-                focusAreas: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: ["rules", "codex", "quality", "performance"],
-                  },
-                  description: "Specific areas to focus status reporting on",
-                },
-              },
-            },
-          },
-          {
-            name: "run-pre-commit-validation",
-            description:
-              "Execute comprehensive pre-commit validation with all enforcer tools and automated remediation",
-            inputSchema: {
-              type: "object",
-              properties: {
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Files to validate before commit",
-                },
-                operation: {
-                  type: "string",
-                  default: "commit",
-                  description: "Operation type for validation context",
-                },
-                autoFix: {
-                  type: "boolean",
-                  default: true,
-                  description: "Automatically apply safe fixes",
-                },
-                strictBlocking: {
-                  type: "boolean",
-                  default: true,
-                  description: "Block commit on any validation error",
-                },
-              },
-              required: ["files"],
-            },
-          },
-          {
-            name: "security-scan",
-            description:
-              "Run security scan using npm audit, Trivy, ESLint security, and OWASP dependency check",
-            inputSchema: {
-              type: "object",
-              properties: {
-                includePromptValidation: {
-                  type: "boolean",
-                  default: false,
-                  description: "Also validate prompts for injection attacks",
-                },
-                promptText: {
-                  type: "string",
-                  description: "Prompt text to validate for injection attacks",
-                },
-              },
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "rule-validation":
-            return await this.ruleValidation(args);
-          case "codex-enforcement":
-            return await this.codexEnforcement(args);
-          case "context-analysis-validation":
-            return await this.contextAnalysisValidation(args);
-          case "quality-gate-check":
-            return await this.qualityGateCheck(args);
-          case "get-enforcement-status":
-            return await this.getEnforcementStatus(args);
-          case "run-pre-commit-validation":
-            return await this.runPreCommitValidation(args);
-          case "security-scan":
-            return await this.securityScan(args);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        frameworkLogger.log("mcps/enforcer", "tool", "error", { tool: name, error: String(error) });
-        throw error;
-      }
-    });
   }
 
   // Tool implementations - wrappers around the original enforcer-tools functions
@@ -1006,68 +964,12 @@ class XrayEnforcerToolsServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    // Server started - no startup logging to console
-
-    const cleanup = async (signal: string) => {
-      // Set a timeout to force exit if graceful shutdown fails
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/enforcer", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000); // 5 second timeout
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/enforcer", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    // Handle multiple shutdown signals
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    // Monitor parent process (opencode) and shutdown if it dies
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0); // Check if parent is alive
-        setTimeout(checkParent, 1000); // Check again in 1 second
-      } catch (error) {
-        // Parent process died, shut down gracefully - no logging
-        cleanup("parent-process-death");
-      }
-    };
-
-    // Start monitoring parent process
-    setTimeout(checkParent, 2000); // Start checking after 2 seconds
-
-    // Handle uncaught exceptions and unhandled rejections
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/enforcer", "uncaughtException", "error", { error: String(error) });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason, promise) => {
-      frameworkLogger.log("mcps/enforcer", "unhandledRejection", "error", { error: String(reason) });
-      cleanup("unhandledRejection");
-    });
-  }
-
   private async securityScan(args: unknown) {
     const { includePromptValidation, promptText } = args as unknown as SecurityScanArgs;
     const results: SecurityScanResults = { tools: {} as SecurityReport["tools"], summary: {} as SecurityReport["summary"] };
 
     try {
-      const { securityScanner } = await import("../security/security-scanner.js");
+      const { securityScanner } = await import("./shared/security-scanner.js");
       const scanResult = await securityScanner.runSecurityScan();
       results.tools = scanResult.tools;
       results.summary = scanResult.summary;
@@ -1080,7 +982,7 @@ class XrayEnforcerToolsServer {
 
     if (includePromptValidation && promptText) {
       try {
-        const { promptSecurityValidator } = await import("../security/prompt-security-validator.js");
+        const { promptSecurityValidator } = await import("./shared/prompt-security-validator.js");
         const validation = promptSecurityValidator.validatePrompt(promptText);
         results.promptValidation = {
           isSafe: validation.isSafe,
@@ -1100,7 +1002,7 @@ class XrayEnforcerToolsServer {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayEnforcerToolsServer();
-  server.run().catch((error) => frameworkLogger.log("mcps/enforcer", "run", "error", { error: String(error) }));
+  server.run("enforcer").catch((error) => frameworkLogger.log("mcps/enforcer", "run", "error", { error: String(error) }));
 }
 
 export default XrayEnforcerToolsServer;

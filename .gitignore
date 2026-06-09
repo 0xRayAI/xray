@@ -100,4 +100,4 @@ test-edit-tracking.ts
 test-skill.json
 
 # Version-manager auto-backups
-backups/
+docs/reflections/backups/

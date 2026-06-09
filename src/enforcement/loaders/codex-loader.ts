@@ -48,7 +48,7 @@ export class CodexLoader extends BaseLoader {
     const candidates = resolveCodexPath();
     const found = candidates.find((p) => existsSync(p));
     // Fallback to primary path even if not found yet
-    return found ?? candidates[0] ?? this.resolvePath(".opencode/xray/codex.json");
+    return found ?? candidates[0] ?? this.resolvePath("xray/codex.json");
   }
 
   /**

@@ -6,13 +6,7 @@
  * sitemap generation, and deep technical SEO audits.
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface SEOIssue {
   priority: "critical" | "high" | "medium" | "low";
@@ -64,222 +58,96 @@ interface RobotsConfig {
 
 type ToolInputSchema = Record<string, unknown>;
 
-class SEOSpecialistServer {
-  private server: Server;
-
+class SEOSpecialistServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
-      { name: "seo-consultant", version: "2.0.1" },
-      { capabilities: { tools: {} } },
-    );
-
+    super("seo-consultant", "2.0.1");
+    this.tools = [
+      {
+        name: "audit-technical-seo",
+        description: "Perform deep technical SEO audit: schema markup, meta tags, heading structure, internal linking, performance, accessibility, mobile-friendliness",
+        inputSchema: {
+          type: "object",
+          properties: {
+            targetUrl: { type: "string", description: "Target URL to audit" },
+            focusAreas: { type: "array", items: { type: "string" }, description: "Areas to focus on (schema, performance, structure, links, accessibility)" },
+          },
+        },
+      },
+      {
+        name: "generate-schema-markup",
+        description: "Generate JSON-LD schema markup for: Organization, Product, Article, FAQPage, BreadcrumbList, LocalBusiness, WebSite, HowTo, Recipe, Video, Audio, Course, Event, Person, Book, SoftwareApplication",
+        inputSchema: {
+          type: "object",
+          properties: {
+            schemaType: { type: "string", enum: ["Organization", "Product", "Article", "FAQPage", "BreadcrumbList", "LocalBusiness", "WebSite", "HowTo", "Recipe", "VideoObject", "AudioObject", "Course", "Event", "Person", "Book", "SoftwareApplication"] },
+            data: { type: "object", description: "Data to populate schema (varies by type)" },
+            includeMicrodata: { type: "boolean", description: "Also generate HTML microdata format", default: false },
+          },
+          required: ["schemaType", "data"],
+        },
+      },
+      {
+        name: "optimize-core-web-vitals",
+        description: "Analyze and provide optimization recommendations for LCP (Largest Contentful Paint), INP (Interaction to Next Paint), CLS (Cumulative Layout Shift)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            url: { type: "string", description: "URL to analyze" },
+            pageType: { type: "string", enum: ["homepage", "article", "product", "category", "landing"], description: "Type of page for context-specific recommendations" },
+            currentMetrics: { type: "object", description: "Current Core Web Vitals values if known", properties: { LCP: { type: "number" }, INP: { type: "number" }, CLS: { type: "number" } } },
+          },
+          required: ["url"],
+        },
+      },
+      {
+        name: "analyze-ai-search",
+        description: "Optimize content for AI search engines (ChatGPT, Perplexity, Grok, Gemini, Claude). Analyze E-E-A-T signals, structure content for citation",
+        inputSchema: {
+          type: "object",
+          properties: {
+            content: { type: "string", description: "Content to optimize" },
+            targetAI: { type: "array", items: { type: "string" }, description: "Target AI engines (chatgpt, perplexity, grok, gemini, claude)" },
+            pageContext: { type: "string", description: "Page context (documentation, blog, product, api)" },
+          },
+          required: ["content"],
+        },
+      },
+      {
+        name: "generate-sitemap",
+        description: "Generate XML sitemap for SEO with proper structure, priorities, and changefreq",
+        inputSchema: {
+          type: "object",
+          properties: {
+            baseUrl: { type: "string", description: "Base URL for sitemap" },
+            pages: { type: "array", items: { type: "object", properties: { path: { type: "string" }, lastmod: { type: "string" }, changefreq: { type: "string", enum: ["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"] }, priority: { type: "number", minimum: 0, maximum: 1 } } } },
+            includeImages: { type: "boolean", default: false },
+            includeVideos: { type: "boolean", default: false },
+          },
+          required: ["baseUrl", "pages"],
+        },
+      },
+      {
+        name: "optimize-robots-txt",
+        description: "Optimize robots.txt for SEO best practices, AI crawler optimization, and proper directive structure",
+        inputSchema: {
+          type: "object",
+          properties: {
+            baseUrl: { type: "string", description: "Site base URL" },
+            options: { type: "object", properties: { allowAI: { type: "boolean", description: "Allow AI crawlers", default: true }, allowSearchBots: { type: "boolean", description: "Allow standard search bots", default: true }, blockPaths: { type: "array", items: { type: "string" }, description: "Paths to disallow" }, crawlDelay: { type: "number", description: "Crawl delay in seconds" }, generateSitemapDirective: { type: "boolean", default: true } } },
+          },
+          required: ["baseUrl"],
+        },
+      },
+    ];
+    this.handlers = {
+      "audit-technical-seo": async (args) => this.auditTechnicalSEO(args as ToolInputSchema),
+      "generate-schema-markup": async (args) => this.generateSchemaMarkup(args as ToolInputSchema),
+      "optimize-core-web-vitals": async (args) => this.optimizeCoreWebVitals(args as ToolInputSchema),
+      "analyze-ai-search": async (args) => this.analyzeAISearch(args as ToolInputSchema),
+      "generate-sitemap": async (args) => this.generateSitemap(args as ToolInputSchema),
+      "optimize-robots-txt": async (args) => this.optimizeRobotsTxt(args as ToolInputSchema),
+    };
     this.setupToolHandlers();
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        {
-          name: "audit-technical-seo",
-          description:
-            "Perform deep technical SEO audit: schema markup, meta tags, heading structure, internal linking, performance, accessibility, mobile-friendliness",
-          inputSchema: {
-            type: "object",
-            properties: {
-              targetUrl: { type: "string", description: "Target URL to audit" },
-              focusAreas: {
-                type: "array",
-                items: { type: "string" },
-                description: "Areas to focus on (schema, performance, structure, links, accessibility)",
-              },
-            },
-          },
-        },
-        {
-          name: "generate-schema-markup",
-          description:
-            "Generate JSON-LD schema markup for: Organization, Product, Article, FAQPage, BreadcrumbList, LocalBusiness, WebSite, HowTo, Recipe, Video, Audio, Course, Event, Person, Book, SoftwareApplication",
-          inputSchema: {
-            type: "object",
-            properties: {
-              schemaType: {
-                type: "string",
-                enum: [
-                  "Organization",
-                  "Product",
-                  "Article",
-                  "FAQPage",
-                  "BreadcrumbList",
-                  "LocalBusiness",
-                  "WebSite",
-                  "HowTo",
-                  "Recipe",
-                  "VideoObject",
-                  "AudioObject",
-                  "Course",
-                  "Event",
-                  "Person",
-                  "Book",
-                  "SoftwareApplication",
-                ],
-              },
-              data: {
-                type: "object",
-                description: "Data to populate schema (varies by type)",
-              },
-              includeMicrodata: {
-                type: "boolean",
-                description: "Also generate HTML microdata format",
-                default: false,
-              },
-            },
-            required: ["schemaType", "data"],
-          },
-        },
-        {
-          name: "optimize-core-web-vitals",
-          description:
-            "Analyze and provide optimization recommendations for LCP (Largest Contentful Paint), INP (Interaction to Next Paint), CLS (Cumulative Layout Shift)",
-          inputSchema: {
-            type: "object",
-            properties: {
-              url: { type: "string", description: "URL to analyze" },
-              pageType: {
-                type: "string",
-                enum: ["homepage", "article", "product", "category", "landing"],
-                description: "Type of page for context-specific recommendations",
-              },
-              currentMetrics: {
-                type: "object",
-                description: "Current Core Web Vitals values if known",
-                properties: {
-                  LCP: { type: "number" },
-                  INP: { type: "number" },
-                  CLS: { type: "number" },
-                },
-              },
-            },
-            required: ["url"],
-          },
-        },
-        {
-          name: "analyze-ai-search",
-          description:
-            "Optimize content for AI search engines (ChatGPT, Perplexity, Grok, Gemini, Claude). Analyze E-E-A-T signals, structure content for citation",
-          inputSchema: {
-            type: "object",
-            properties: {
-              content: { type: "string", description: "Content to optimize" },
-              targetAI: {
-                type: "array",
-                items: { type: "string" },
-                description: "Target AI engines (chatgpt, perplexity, grok, gemini, claude)",
-              },
-              pageContext: {
-                type: "string",
-                description: "Page context (documentation, blog, product, api)",
-              },
-            },
-            required: ["content"],
-          },
-        },
-        {
-          name: "generate-sitemap",
-          description:
-            "Generate XML sitemap for SEO with proper structure, priorities, and changefreq",
-          inputSchema: {
-            type: "object",
-            properties: {
-              baseUrl: { type: "string", description: "Base URL for sitemap" },
-              pages: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    path: { type: "string" },
-                    lastmod: { type: "string" },
-                    changefreq: {
-                      type: "string",
-                      enum: [
-                        "always",
-                        "hourly",
-                        "daily",
-                        "weekly",
-                        "monthly",
-                        "yearly",
-                        "never",
-                      ],
-                    },
-                    priority: { type: "number", minimum: 0, maximum: 1 },
-                  },
-                },
-              },
-              includeImages: { type: "boolean", default: false },
-              includeVideos: { type: "boolean", default: false },
-            },
-            required: ["baseUrl", "pages"],
-          },
-        },
-        {
-          name: "optimize-robots-txt",
-          description:
-            "Optimize robots.txt for SEO best practices, AI crawler optimization, and proper directive structure",
-          inputSchema: {
-            type: "object",
-            properties: {
-              baseUrl: { type: "string", description: "Site base URL" },
-              options: {
-                type: "object",
-                properties: {
-                  allowAI: { type: "boolean", description: "Allow AI crawlers", default: true },
-                  allowSearchBots: {
-                    type: "boolean",
-                    description: "Allow standard search bots",
-                    default: true,
-                  },
-                  blockPaths: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Paths to disallow",
-                  },
-                  crawlDelay: { type: "number", description: "Crawl delay in seconds" },
-                  generateSitemapDirective: { type: "boolean", default: true },
-                },
-              },
-            },
-            required: ["baseUrl"],
-          },
-        },
-      ],
-    }));
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args = {} } = request.params;
-
-      try {
-        switch (name) {
-          case "audit-technical-seo":
-            return this.auditTechnicalSEO(args);
-          case "generate-schema-markup":
-            return this.generateSchemaMarkup(args);
-          case "optimize-core-web-vitals":
-            return this.optimizeCoreWebVitals(args);
-          case "analyze-ai-search":
-            return this.analyzeAISearch(args);
-          case "generate-sitemap":
-            return this.generateSitemap(args);
-          case "optimize-robots-txt":
-            return this.optimizeRobotsTxt(args);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: `Error: ${error}` }],
-          isError: true,
-        };
-      }
-    });
   }
 
   private auditTechnicalSEO(args: ToolInputSchema): {
@@ -1141,20 +1009,11 @@ Sitemap: ${baseUrl}/sitemap.xml`;
     return issues.join("\n");
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-
-    createGracefulShutdown({
-      serverName: "seo-consultant.server",
-      server: this.server,
-    });
-  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new SEOSpecialistServer();
-  server.run().catch(() => {});
+  server.run("seo-consultant.server").catch((err) => { console.error("MCP server failed:", err); });
 }
 
 export { SEOSpecialistServer };

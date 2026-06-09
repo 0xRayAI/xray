@@ -257,7 +257,7 @@ class GovernanceServer {
       })),
       context: args.context || {},
       options: {
-        requireExternalDynamo: args.options?.require_external ?? true,
+        requireExternalDynamo: args.options?.require_external ?? !process.env.XRAY_LOCAL_MODE,
       },
     };
 

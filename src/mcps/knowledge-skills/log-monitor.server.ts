@@ -6,14 +6,9 @@
  * and performance issues in real-time.
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface LogEntry {
   timestamp: string;
@@ -65,8 +60,7 @@ interface LogAnomaly {
   count: number;
 }
 
-class LogMonitorServer {
-  private server: Server;
+class LogMonitorServer extends XrayKnowledgeSkillBase {
   private patternLibrary: LogPattern[] = [
     {
       id: "memory-leak",
@@ -116,204 +110,186 @@ class LogMonitorServer {
   ];
 
   constructor() {
-    this.server = new Server(
-      { name: "log-monitor", version: "2.0.1" },
-      { capabilities: { tools: {} } },
-    );
-    this.setupToolHandlers();
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        {
-          name: "analyze_logs",
-          description:
-            "Analyze log entries to identify patterns, errors, and anomalies",
-          inputSchema: {
-            type: "object",
-            properties: {
-              logs: {
-                type: "array",
-                items: { type: "string" },
-                description: "Log entries to analyze",
+    super("log-monitor", "2.0.1");
+    this.tools = [
+      {
+        name: "analyze_logs",
+        description:
+          "Analyze log entries to identify patterns, errors, and anomalies",
+        inputSchema: {
+          type: "object",
+          properties: {
+            logs: {
+              type: "array",
+              items: { type: "string" },
+              description: "Log entries to analyze",
+            },
+            options: {
+              type: "object",
+              properties: {
+                detectPatterns: { type: "boolean", default: true },
+                findAnomalies: { type: "boolean", default: true },
+                timeRange: {
+                  type: "string",
+                  description: "Time range to analyze",
+                },
               },
-              options: {
+            },
+          },
+          required: ["logs"],
+        },
+      },
+      {
+        name: "detect_patterns",
+        description:
+          "Detect specific patterns in logs using regex or predefined patterns",
+        inputSchema: {
+          type: "object",
+          properties: {
+            logs: { type: "array", items: { type: "string" } },
+            customPatterns: { type: "array", items: { type: "string" } },
+            sensitivity: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+              default: 80,
+            },
+          },
+          required: ["logs"],
+        },
+      },
+      {
+        name: "alert_on_issues",
+        description: "Generate alerts based on log analysis thresholds",
+        inputSchema: {
+          type: "object",
+          properties: {
+            analysis: {
+              type: "object",
+              description: "Results from analyze_logs",
+            },
+            thresholds: {
+              type: "object",
+              properties: {
+                errorRate: { type: "number" },
+                warnRate: { type: "number" },
+                criticalPatterns: {
+                  type: "array",
+                  items: { type: "string" },
+                },
+              },
+            },
+          },
+          required: ["analysis"],
+        },
+      },
+      {
+        name: "correlate_events",
+        description:
+          "Correlate log entries across multiple sources to find related events",
+        inputSchema: {
+          type: "object",
+          properties: {
+            logSets: {
+              type: "array",
+              items: {
                 type: "object",
                 properties: {
-                  detectPatterns: { type: "boolean", default: true },
-                  findAnomalies: { type: "boolean", default: true },
-                  timeRange: {
-                    type: "string",
-                    description: "Time range to analyze",
-                  },
+                  source: { type: "string" },
+                  logs: { type: "array", items: { type: "string" } },
                 },
               },
             },
-            required: ["logs"],
-          },
-        },
-        {
-          name: "detect_patterns",
-          description:
-            "Detect specific patterns in logs using regex or predefined patterns",
-          inputSchema: {
-            type: "object",
-            properties: {
-              logs: { type: "array", items: { type: "string" } },
-              customPatterns: { type: "array", items: { type: "string" } },
-              sensitivity: {
-                type: "number",
-                minimum: 0,
-                maximum: 100,
-                default: 80,
-              },
+            timeWindow: {
+              type: "number",
+              description: "Time window in seconds",
             },
-            required: ["logs"],
           },
+          required: ["logSets"],
         },
-        {
-          name: "alert_on_issues",
-          description: "Generate alerts based on log analysis thresholds",
-          inputSchema: {
-            type: "object",
-            properties: {
-              analysis: {
-                type: "object",
-                description: "Results from analyze_logs",
-              },
-              thresholds: {
-                type: "object",
-                properties: {
-                  errorRate: { type: "number" },
-                  warnRate: { type: "number" },
-                  criticalPatterns: {
-                    type: "array",
-                    items: { type: "string" },
-                  },
-                },
-              },
+      },
+      {
+        name: "generate_report",
+        description: "Generate a comprehensive log analysis report",
+        inputSchema: {
+          type: "object",
+          properties: {
+            analysis: { type: "object" },
+            format: {
+              type: "string",
+              enum: ["json", "markdown", "html"],
+              default: "json",
             },
-            required: ["analysis"],
           },
+          required: ["analysis"],
         },
-        {
-          name: "correlate_events",
-          description:
-            "Correlate log entries across multiple sources to find related events",
-          inputSchema: {
-            type: "object",
-            properties: {
-              logSets: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    source: { type: "string" },
-                    logs: { type: "array", items: { type: "string" } },
-                  },
-                },
-              },
-              timeWindow: {
-                type: "number",
-                description: "Time window in seconds",
-              },
-            },
-            required: ["logSets"],
-          },
-        },
-        {
-          name: "generate_report",
-          description: "Generate a comprehensive log analysis report",
-          inputSchema: {
-            type: "object",
-            properties: {
-              analysis: { type: "object" },
-              format: {
-                type: "string",
-                enum: ["json", "markdown", "html"],
-                default: "json",
-              },
-            },
-            required: ["analysis"],
-          },
-        },
-      ],
-    }));
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args = {} } = request.params;
-
-      try {
+      },
+    ];
+    this.handlers = {
+      "analyze_logs": async (args) => {
         const params = args as Record<string, unknown>;
-        switch (name) {
-          case "analyze_logs": {
-            const result = this.analyzeLogs(
-              (params.logs as string[]) || [],
-              (params.options as Record<string, unknown>) || {},
-            );
-            return {
-              content: [
-                { type: "text", text: JSON.stringify(result, null, 2) },
-              ],
-            };
-          }
-          case "detect_patterns": {
-            const result = this.detectPatterns(
-              (params.logs as string[]) || [],
-              (params.customPatterns as string[]) || [],
-              (params.sensitivity as number) || 80,
-            );
-            return {
-              content: [
-                { type: "text", text: JSON.stringify(result, null, 2) },
-              ],
-            };
-          }
-          case "alert_on_issues": {
-            const result = this.alertOnIssues(
-              params.analysis as unknown as LogAnalysis,
-              (params.thresholds as Record<string, unknown>) || {},
-            );
-            return {
-              content: [
-                { type: "text", text: JSON.stringify(result, null, 2) },
-              ],
-            };
-          }
-          case "correlate_events": {
-            const result = this.correlateEvents(
-              (params.logSets as Array<{ source: string; logs: string[] }>) ||
-                [],
-              (params.timeWindow as number) || 60,
-            );
-            return {
-              content: [
-                { type: "text", text: JSON.stringify(result, null, 2) },
-              ],
-            };
-          }
-          case "generate_report": {
-            const result = this.generateReport(
-              params.analysis as unknown as LogAnalysis,
-              (params.format as string) || "json",
-            );
-            return {
-              content: [
-                { type: "text", text: JSON.stringify(result, null, 2) },
-              ],
-            };
-          }
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
+        const result = this.analyzeLogs(
+          (params.logs as string[]) || [],
+          (params.options as Record<string, unknown>) || {},
+        );
         return {
-          content: [{ type: "text", text: `Error: ${error}` }],
-          isError: true,
+          content: [
+            { type: "text", text: JSON.stringify(result, null, 2) },
+          ],
         };
-      }
-    });
+      },
+      "detect_patterns": async (args) => {
+        const params = args as Record<string, unknown>;
+        const result = this.detectPatterns(
+          (params.logs as string[]) || [],
+          (params.customPatterns as string[]) || [],
+          (params.sensitivity as number) || 80,
+        );
+        return {
+          content: [
+            { type: "text", text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+      "alert_on_issues": async (args) => {
+        const params = args as Record<string, unknown>;
+        const result = this.alertOnIssues(
+          params.analysis as unknown as LogAnalysis,
+          (params.thresholds as Record<string, unknown>) || {},
+        );
+        return {
+          content: [
+            { type: "text", text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+      "correlate_events": async (args) => {
+        const params = args as Record<string, unknown>;
+        const result = this.correlateEvents(
+          (params.logSets as Array<{ source: string; logs: string[] }>) ||
+            [],
+          (params.timeWindow as number) || 60,
+        );
+        return {
+          content: [
+            { type: "text", text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+      "generate_report": async (args) => {
+        const params = args as Record<string, unknown>;
+        const result = this.generateReport(
+          params.analysis as unknown as LogAnalysis,
+          (params.format as string) || "json",
+        );
+        return {
+          content: [
+            { type: "text", text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    };
+    this.setupToolHandlers();
   }
 
   private analyzeLogs(logs: string[], options: Record<string, unknown>): LogAnalysis {
@@ -604,16 +580,12 @@ ${analysis.recommendations.map((r) => `- ${r}`).join("\n")}
     return recs;
   }
 
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-  }
 }
 
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new LogMonitorServer();
-  server.run();
+  server.run("log-monitor");
 }
 
 export { LogMonitorServer };

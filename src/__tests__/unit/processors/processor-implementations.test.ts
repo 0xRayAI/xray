@@ -107,16 +107,6 @@ vi.mock("../../../state/state-manager.js", () => ({
   })),
 }));
 
-vi.mock("../../../processors/implementations/refactoring-logging-processor.js", () => ({
-  RefactoringLoggingProcessor: vi.fn().mockImplementation(function() {
-    this.execute = vi.fn().mockResolvedValue({
-      logged: true,
-      success: true,
-      message: "Agent completion logged",
-    });
-  }),
-}));
-
 import { PreValidateProcessor } from "../../../processors/implementations/pre-validate-processor.js";
 import { CodexComplianceProcessor } from "../../../processors/implementations/codex-compliance-processor.js";
 import { ErrorBoundaryProcessor } from "../../../processors/implementations/error-boundary-processor.js";
@@ -1129,11 +1119,9 @@ describe("RefactoringLoggingProcessorWrapper", () => {
   });
 
   it("should handle errors from wrapped processor gracefully", async () => {
-    const { RefactoringLoggingProcessor } = await import("../../../processors/implementations/refactoring-logging-processor.js");
-    vi.mocked(RefactoringLoggingProcessor).mockImplementationOnce(
-      function() {
-        this.execute = vi.fn().mockRejectedValue(new Error("wrapped failure"));
-      } as any,
+    const { RefactoringLoggingProcessor } = await import("../../../processors/implementations/refactoring-logging-processor-wrapper.js");
+    vi.spyOn(RefactoringLoggingProcessor.prototype, "execute").mockImplementationOnce(
+      () => Promise.reject(new Error("wrapped failure")),
     );
 
     const failingProcessor = new RefactoringLoggingProcessorWrapper();

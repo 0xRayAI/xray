@@ -5,16 +5,10 @@
  * and testing methodology recommendations
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 import {
   detectProjectLanguage,
   LANGUAGE_CONFIGS,
@@ -129,159 +123,89 @@ interface BaseTestCounts {
   security: number;
 }
 
-class XrayTestingStrategyServer {
-  private server: Server;
+class XrayTestingStrategyServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("testing-strategy", "2.0.1");
+    this.tools = [
       {
-        name: "testing-strategy", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze-test-coverage",
+        description: "Analyze current test coverage and identify gaps",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string" },
+            includeBreakdown: { type: "boolean", default: true },
+            coverageThreshold: { type: "number", default: 80 },
+          },
+          required: ["projectRoot"],
         },
       },
-    );
-
+      {
+        name: "design-test-strategy",
+        description: "Design comprehensive testing strategy for the project",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string" },
+            projectType: { type: "string", enum: ["web", "api", "mobile", "desktop"] },
+            complexity: { type: "string", enum: ["simple", "medium", "complex"] },
+            timeline: { type: "string", enum: ["agile", "waterfall", "continuous"] },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "identify-test-gaps",
+        description: "Identify untested code and recommend test cases",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string" },
+            sourceFiles: { type: "array", items: { type: "string" } },
+            existingTests: { type: "array", items: { type: "string" } },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "optimize-test-coverage",
+        description: "Analyze and optimize test coverage patterns",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string" },
+            currentCoverage: { type: "number" },
+            targetCoverage: { type: "number", default: 85 },
+            focusAreas: { type: "array", items: { type: "string" } },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "generate-test-file",
+        description: "Generate test file for a source file with exports",
+        inputSchema: {
+          type: "object",
+          properties: {
+            sourceFile: { type: "string", description: "Path to source file" },
+            sourceContent: { type: "string", description: "Source file content" },
+            exports: { type: "array", items: { type: "object", properties: { name: { type: "string" }, type: { type: "string" } } }, description: "Exported functions/classes to test" },
+            testFilePath: { type: "string", description: "Path for generated test file" },
+            directory: { type: "string", description: "Project directory" },
+          },
+          required: ["sourceFile", "sourceContent", "exports", "testFilePath"],
+        },
+      },
+    ];
+    this.handlers = {
+      "analyze-test-coverage": async (args) => this.analyzeTestCoverage(args as unknown as AnalyzeTestCoverageArgs),
+      "design-test-strategy": async (args) => this.designTestStrategy(args as unknown as DesignTestStrategyArgs),
+      "identify-test-gaps": async (args) => this.identifyTestGaps(args as unknown as IdentifyTestGapsArgs),
+      "optimize-test-coverage": async (args) => this.optimizeTestCoverage(args as unknown as OptimizeTestCoverageArgs),
+      "generate-test-file": async (args) => this.generateTestFile(args as unknown as GenerateTestFileArgs),
+    };
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze-test-coverage",
-            description: "Analyze current test coverage and identify gaps",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: { type: "string" },
-                includeBreakdown: { type: "boolean", default: true },
-                coverageThreshold: { type: "number", default: 80 },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "design-test-strategy",
-            description:
-              "Design comprehensive testing strategy for the project",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: { type: "string" },
-                projectType: {
-                  type: "string",
-                  enum: ["web", "api", "mobile", "desktop"],
-                },
-                complexity: {
-                  type: "string",
-                  enum: ["simple", "medium", "complex"],
-                },
-                timeline: {
-                  type: "string",
-                  enum: ["agile", "waterfall", "continuous"],
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "identify-test-gaps",
-            description: "Identify untested code and recommend test cases",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: { type: "string" },
-                sourceFiles: { type: "array", items: { type: "string" } },
-                existingTests: { type: "array", items: { type: "string" } },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "optimize-test-coverage",
-            description: "Analyze and optimize test coverage patterns",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: { type: "string" },
-                currentCoverage: { type: "number" },
-                targetCoverage: { type: "number", default: 85 },
-                focusAreas: { type: "array", items: { type: "string" } },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "generate-test-file",
-            description: "Generate test file for a source file with exports",
-            inputSchema: {
-              type: "object",
-              properties: {
-                sourceFile: {
-                  type: "string",
-                  description: "Path to source file",
-                },
-                sourceContent: {
-                  type: "string",
-                  description: "Source file content",
-                },
-                exports: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      name: { type: "string" },
-                      type: { type: "string" },
-                    },
-                  },
-                  description: "Exported functions/classes to test",
-                },
-                testFilePath: {
-                  type: "string",
-                  description: "Path for generated test file",
-                },
-                directory: { type: "string", description: "Project directory" },
-              },
-              required: [
-                "sourceFile",
-                "sourceContent",
-                "exports",
-                "testFilePath",
-              ],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "analyze-test-coverage":
-            return await this.analyzeTestCoverage(args as unknown as AnalyzeTestCoverageArgs);
-          case "design-test-strategy":
-            return await this.designTestStrategy(args as unknown as DesignTestStrategyArgs);
-          case "identify-test-gaps":
-            return await this.identifyTestGaps(args as unknown as IdentifyTestGapsArgs);
-          case "optimize-test-coverage":
-            return await this.optimizeTestCoverage(args as unknown as OptimizeTestCoverageArgs);
-          case "generate-test-file":
-            return await this.generateTestFile(args as unknown as GenerateTestFileArgs);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        frameworkLogger.log("mcps/testing-strategy", "tool", "error", { tool: name, error: String(error) });
-        throw error;
-      }
-    });
   }
 
   private async analyzeTestCoverage(args: AnalyzeTestCoverageArgs) {
@@ -1151,22 +1075,12 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
     return ignorePatterns.some((pattern) => pattern.test(filePath));
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "testing-strategy.server",
-      server: this.server,
-    });
-  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayTestingStrategyServer();
-  server.run().catch(() => {});
+  server.run("testing-strategy").catch((err) => { console.error("MCP server failed:", err); });
 }
 
 export default XrayTestingStrategyServer;

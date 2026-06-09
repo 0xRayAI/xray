@@ -5,16 +5,9 @@
  * and best practices validation - provides comprehensive code quality analysis
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
 interface CodeReviewResult {
   file: string;
@@ -74,159 +67,128 @@ interface StandardsViolation {
   severity: "high" | "medium" | "low";
 }
 
-class XrayCodeReviewServer {
-  private server: Server;
-
+class XrayCodeReviewServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("code-review", "2.0.1");
+    this.tools = [
       {
-        name: "code-review", version: "2.0.1",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze_code_quality",
+        description:
+          "Analyze code quality metrics, identify issues, and provide improvement suggestions",
+        inputSchema: {
+          type: "object",
+          properties: {
+            filePath: {
+              type: "string",
+              description: "Path to the file to analyze",
+            },
+            includeMetrics: {
+              type: "boolean",
+              description: "Include detailed code metrics in the analysis",
+              default: true,
+            },
+            focusAreas: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "security",
+                  "performance",
+                  "maintainability",
+                  "style",
+                  "logic",
+                ],
+              },
+              description: "Specific areas to focus the review on",
+            },
+          },
+          required: ["filePath"],
         },
       },
-    );
-
+      {
+        name: "review_pull_request",
+        description:
+          "Review a pull request by analyzing changed files and providing comprehensive feedback",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "List of file paths to review",
+            },
+            baseBranch: {
+              type: "string",
+              description: "Base branch for comparison",
+              default: "main",
+            },
+            focusAreas: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "security",
+                  "performance",
+                  "maintainability",
+                  "style",
+                  "logic",
+                ],
+              },
+              description: "Specific areas to focus the review on",
+            },
+          },
+          required: ["files"],
+        },
+      },
+      {
+        name: "check_best_practices",
+        description:
+          "Check adherence to coding best practices and standards",
+        inputSchema: {
+          type: "object",
+          properties: {
+            filePath: {
+              type: "string",
+              description: "Path to the file to check",
+            },
+            language: {
+              type: "string",
+              description:
+                "Programming language (typescript, javascript, python, etc.)",
+            },
+            standards: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Specific standards to check (airbnb, google, microsoft, etc.)",
+            },
+          },
+          required: ["filePath"],
+        },
+      },
+      {
+        name: "analyze_proposal",
+        description:
+          "Analyze an inference proposal (pattern/bug/refactor) from a code-review perspective and return a structured governance decision",
+        inputSchema: {
+          type: "object",
+          properties: {
+            proposalTitle: { type: "string" },
+            proposalDescription: { type: "string" },
+            evidence: { type: "array", items: { type: "string" } },
+            proposalType: { type: "string" },
+          },
+          required: ["proposalTitle", "proposalDescription"],
+        },
+      },
+    ];
+    this.handlers = {
+      "analyze_code_quality": async (args) => this.analyzeCodeQuality(args as unknown as AnalyzeCodeQualityArgs),
+      "review_pull_request": async (args) => this.reviewPullRequest(args as unknown as ReviewPullRequestArgs),
+      "check_best_practices": async (args) => this.checkBestPractices(args as unknown as CheckBestPracticesArgs),
+      "analyze_proposal": async (args) => this.analyzeProposal(args as AnalyzeProposalArgs),
+    };
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze_code_quality",
-            description:
-              "Analyze code quality metrics, identify issues, and provide improvement suggestions",
-            inputSchema: {
-              type: "object",
-              properties: {
-                filePath: {
-                  type: "string",
-                  description: "Path to the file to analyze",
-                },
-                includeMetrics: {
-                  type: "boolean",
-                  description: "Include detailed code metrics in the analysis",
-                  default: true,
-                },
-                focusAreas: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "security",
-                      "performance",
-                      "maintainability",
-                      "style",
-                      "logic",
-                    ],
-                  },
-                  description: "Specific areas to focus the review on",
-                },
-              },
-              required: ["filePath"],
-            },
-          },
-          {
-            name: "review_pull_request",
-            description:
-              "Review a pull request by analyzing changed files and providing comprehensive feedback",
-            inputSchema: {
-              type: "object",
-              properties: {
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "List of file paths to review",
-                },
-                baseBranch: {
-                  type: "string",
-                  description: "Base branch for comparison",
-                  default: "main",
-                },
-                focusAreas: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "security",
-                      "performance",
-                      "maintainability",
-                      "style",
-                      "logic",
-                    ],
-                  },
-                  description: "Specific areas to focus the review on",
-                },
-              },
-              required: ["files"],
-            },
-          },
-          {
-            name: "check_best_practices",
-            description:
-              "Check adherence to coding best practices and standards",
-            inputSchema: {
-              type: "object",
-              properties: {
-                filePath: {
-                  type: "string",
-                  description: "Path to the file to check",
-                },
-                language: {
-                  type: "string",
-                  description:
-                    "Programming language (typescript, javascript, python, etc.)",
-                },
-                standards: {
-                  type: "array",
-                  items: { type: "string" },
-                  description:
-                    "Specific standards to check (airbnb, google, microsoft, etc.)",
-                },
-              },
-              required: ["filePath"],
-            },
-          },
-          {
-            name: "analyze_proposal",
-            description:
-              "Analyze an inference proposal (pattern/bug/refactor) from a code-review perspective and return a structured governance decision",
-            inputSchema: {
-              type: "object",
-              properties: {
-                proposalTitle: { type: "string" },
-                proposalDescription: { type: "string" },
-                evidence: { type: "array", items: { type: "string" } },
-                proposalType: { type: "string" },
-              },
-              required: ["proposalTitle", "proposalDescription"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_code_quality":
-          return await this.analyzeCodeQuality(args as unknown as AnalyzeCodeQualityArgs) as CallToolResult;
-        case "review_pull_request":
-          return await this.reviewPullRequest(args as unknown as ReviewPullRequestArgs) as CallToolResult;
-        case "check_best_practices":
-          return await this.checkBestPractices(args as unknown as CheckBestPracticesArgs) as CallToolResult;
-        case "analyze_proposal":
-          return await this.analyzeProposal(args as AnalyzeProposalArgs) as CallToolResult;
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async analyzeCodeQuality(args: AnalyzeCodeQualityArgs) {
@@ -1111,22 +1073,12 @@ class XrayCodeReviewServer {
     return Math.max(0, baseScore - deductions);
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "code-review.server",
-      server: this.server,
-    });
-  }
 }
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayCodeReviewServer();
-  server.run().catch(() => {});
+  server.run("code-review").catch((err) => { console.error("MCP server failed:", err); });
 }
 
 export { XrayCodeReviewServer };

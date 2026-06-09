@@ -4,134 +4,83 @@
  * Provides tools for tracking and validating estimates
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getEstimationValidator } from "../validation/estimation-validator.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 /**
  * Estimation MCP Server
  * Tracks estimates vs actuals and provides calibrated predictions
  */
-class EstimationServer {
-  private server: Server;
+class EstimationServer extends XrayKnowledgeSkillBase {
   private validator = getEstimationValidator();
 
   constructor() {
-    this.server = new Server(
+    super("estimation-validator", "2.0.1");
+    this.tools = [
       {
-        name: "estimation-validator", version: "2.0.1",
+        name: "validate-estimate",
+        description: "Validate an estimate against historical data",
+        inputSchema: {
+          type: "object",
+          properties: {
+            category: {
+              type: "string",
+              description: "Task category (e.g., 'refactoring', 'testing', 'documentation')",
+            },
+            estimate: {
+              type: "number",
+              description: "Estimated time in minutes",
+            },
+            description: {
+              type: "string",
+              description: "Brief description of the task",
+            },
+          },
+          required: ["category", "estimate"],
+        },
       },
       {
-        capabilities: { tools: {} },
-      }
-    );
-
+        name: "start-tracking",
+        description: "Start tracking time for a task",
+        inputSchema: {
+          type: "object",
+          properties: {
+            taskId: { type: "string" },
+            category: { type: "string" },
+            estimate: { type: "number" },
+            description: { type: "string" },
+          },
+          required: ["taskId", "category", "estimate"],
+        },
+      },
+      {
+        name: "complete-tracking",
+        description: "Complete tracking for a task",
+        inputSchema: {
+          type: "object",
+          properties: {
+            taskId: { type: "string" },
+          },
+          required: ["taskId"],
+        },
+      },
+      {
+        name: "get-accuracy-report",
+        description: "Get estimation accuracy report",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+    ];
+    this.handlers = {
+      "validate-estimate": async (args) => this.handleValidateEstimate(args as { category: string; estimate: number; description?: string }),
+      "start-tracking": async (args) => this.handleStartTracking(args as { taskId: string; category: string; estimate: number; description?: string }),
+      "complete-tracking": async (args) => this.handleCompleteTracking(args as { taskId: string }),
+      "get-accuracy-report": async (args) => this.handleGetReport(),
+    };
     this.setupToolHandlers();
-  }
-
-  private setupToolHandlers(): void {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "validate-estimate",
-            description: "Validate an estimate against historical data",
-            inputSchema: {
-              type: "object",
-              properties: {
-                category: {
-                  type: "string",
-                  description: "Task category (e.g., 'refactoring', 'testing', 'documentation')",
-                },
-                estimate: {
-                  type: "number",
-                  description: "Estimated time in minutes",
-                },
-                description: {
-                  type: "string",
-                  description: "Brief description of the task",
-                },
-              },
-              required: ["category", "estimate"],
-            },
-          },
-          {
-            name: "start-tracking",
-            description: "Start tracking time for a task",
-            inputSchema: {
-              type: "object",
-              properties: {
-                taskId: { type: "string" },
-                category: { type: "string" },
-                estimate: { type: "number" },
-                description: { type: "string" },
-              },
-              required: ["taskId", "category", "estimate"],
-            },
-          },
-          {
-            name: "complete-tracking",
-            description: "Complete tracking for a task",
-            inputSchema: {
-              type: "object",
-              properties: {
-                taskId: { type: "string" },
-              },
-              required: ["taskId"],
-            },
-          },
-          {
-            name: "get-accuracy-report",
-            description: "Get estimation accuracy report",
-            inputSchema: {
-              type: "object",
-              properties: {},
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      try {
-        const { name, arguments: args } = request.params;
-
-        if (args == null) {
-          throw new Error(`Tool '${name}' called with no arguments`);
-        }
-
-        switch (name) {
-          case "validate-estimate":
-            return this.handleValidateEstimate(args as { category: string; estimate: number; description?: string });
-          
-          case "start-tracking":
-            return this.handleStartTracking(args as { taskId: string; category: string; estimate: number; description?: string });
-          
-          case "complete-tracking":
-            return this.handleCompleteTracking(args as { taskId: string });
-          
-          case "get-accuracy-report":
-            return this.handleGetReport();
-          
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [{
-            type: "text" as const,
-            text: `Error handling tool '${request.params.name}': ${error instanceof Error ? error.message : String(error)}`,
-          }],
-        };
-      }
-    });
   }
 
   private handleValidateEstimate(args: { category: string; estimate: number; description?: string }): { content: Array<{ type: string; text: string }> } {
@@ -209,21 +158,12 @@ class EstimationServer {
 
     return { content: [{ type: "text", text: response }] };
   }
-
-  async start(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    frameworkLogger.log("estimation-server", "start", "info", {
-      message: "Estimation Validator Server started",
-    });
-  }
 }
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new EstimationServer();
-  server.start().catch((error) => frameworkLogger.log("mcps/estimation", "run", "error", { error: String(error) }));
+  server.run("estimation-validator").catch((error) => frameworkLogger.log("mcps/estimation", "run", "error", { error: String(error) }));
 }
 
 export { EstimationServer };

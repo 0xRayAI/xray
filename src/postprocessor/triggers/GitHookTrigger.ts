@@ -524,8 +524,8 @@ fi
       (async () => {
         try {
           // Use dynamic import that works in both dev and consumer
-          const basePath = process.env.STRRAY_BASE_PATH || '.';
-          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
+          const basePath = process.env.XRAY_BASE_PATH || process.env.STRRAY_BASE_PATH || '.';
+          const distPath = process.env.XRAY_DIST_PATH || process.env.STRRAY_DIST_PATH || 'dist';
           // First archive logs (compress and rotate) before cleanup
           const { archiveLogFiles } = await import(basePath + '/' + distPath + '/postprocessor/triggers/GitHookTrigger.js');
           const archiveResult = await archiveLogFiles({
@@ -611,8 +611,8 @@ fi
       node -e "
       (async () => {
         try {
-          const basePath = process.env.STRRAY_BASE_PATH || '.';
-          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
+          const basePath = process.env.XRAY_BASE_PATH || process.env.STRRAY_BASE_PATH || '.';
+          const distPath = process.env.XRAY_DIST_PATH || process.env.STRRAY_DIST_PATH || 'dist';
           const { HookMetricsCollector } = await import(basePath + '/' + distPath + '/postprocessor/validation/HookMetricsCollector.js');
           const collector = new HookMetricsCollector();
           collector.recordMetrics('post-push', \${DURATION_MS}, \${EXIT_CODE});

@@ -455,13 +455,13 @@ describe("codex-formatter", () => {
       expect(result).toBe(join(tempDir, ".xray", "codex.json"));
     });
 
-    it("should find codex.json in .opencode/xray/ directory", () => {
-      mkdirSync(join(tempDir, ".opencode", "xray"), { recursive: true });
-      writeFileSync(join(tempDir, ".opencode", "xray", "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
+    it("should find codex.json in xray/ directory", () => {
+      mkdirSync(join(tempDir, "xray"), { recursive: true });
+      writeFileSync(join(tempDir, "xray", "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
 
       const result = findCodexPath(tempDir);
 
-      expect(result).toBe(join(tempDir, ".opencode", "xray", "codex.json"));
+      expect(result).toBe(join(tempDir, "xray", "codex.json"));
     });
 
     it("should find codex.json in project root", () => {
@@ -493,7 +493,7 @@ describe("codex-formatter", () => {
       expect(result).toBe(join(tempDir, ".xray", "codex.json"));
     });
 
-    it("should prioritize STRRAY_CONFIG_DIR env variable", () => {
+    it("should prioritize XRAY_CONFIG_DIR env variable", () => {
       const envDir = "my-config";
       mkdirSync(join(tempDir, envDir), { recursive: true });
       writeFileSync(join(tempDir, envDir, "codex.json"), JSON.stringify(SAMPLE_CODEX), "utf-8");
@@ -502,12 +502,14 @@ describe("codex-formatter", () => {
       writeFileSync(join(tempDir, ".xray", "codex.json"), JSON.stringify({ version: "xray-1.0.0", terms: [] }), "utf-8");
 
       const original = process.env.STRRAY_CONFIG_DIR;
+      process.env.XRAY_CONFIG_DIR = envDir;
       process.env.STRRAY_CONFIG_DIR = envDir;
 
       try {
         const result = findCodexPath(tempDir);
         expect(result).toBe(join(tempDir, envDir, "codex.json"));
       } finally {
+        delete process.env.XRAY_CONFIG_DIR;
         if (original === undefined) {
           delete process.env.STRRAY_CONFIG_DIR;
         } else {

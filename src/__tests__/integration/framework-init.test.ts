@@ -152,7 +152,7 @@ describe("0xRay Framework Initialization Integration", () => {
 
   describe("Codex System Validation", () => {
     test("should validate codex file structure", () => {
-      const codexPath = ".opencode/xray/codex.json";
+      const codexPath = "xray/codex.json";
       expect(checkFile(codexPath)).toBe(true);
 
       const codexContent = JSON.parse(fs.readFileSync(codexPath, "utf8"));
@@ -164,7 +164,7 @@ describe("0xRay Framework Initialization Integration", () => {
 
     test("should validate codex term structure", () => {
       const codexContent = JSON.parse(
-        fs.readFileSync(".opencode/xray/codex.json", "utf8"),
+        fs.readFileSync("xray/codex.json", "utf8"),
       );
       const terms = codexContent.terms;
 
@@ -259,19 +259,19 @@ describe("0xRay Framework Initialization Integration", () => {
       // 4. Validate file system integration
       expect(checkDir(".opencode")).toBe(true);
       expect(checkDir(".opencode/xray")).toBe(true);
-      expect(checkFile(".opencode/xray/codex.json")).toBe(true);
+      expect(checkFile("xray/codex.json")).toBe(true);
     });
 
     test("should validate framework component dependencies", () => {
       // Skip in CI - .opencode populated by postinstall
-      if (!checkDir(".opencode/xray")) {
+      if (!checkDir("xray")) {
         return;
       }
       
       // Test that all required directories exist
       expect(checkDir(".opencode")).toBe(true);
-      expect(checkDir(".opencode/xray")).toBe(true);
-      expect(checkFile(".opencode/xray/codex.json")).toBe(true);
+      expect(checkDir("xray")).toBe(true);
+      expect(checkFile("xray/codex.json")).toBe(true);
       expect(checkDir("src")).toBe(true);
     });
   });

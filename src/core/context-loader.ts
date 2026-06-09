@@ -396,4 +396,4 @@ export class XrayContextLoader {
  */
 export const xrayContextLoader = XrayContextLoader.getInstance();
 // Backward compat alias
-export { xrayContextLoader as strRayContextLoader, XrayContextLoader as StringRayContextLoader };
+export { xrayContextLoader as strRayContextLoader };

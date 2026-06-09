@@ -10,7 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 const { existsSync, readFileSync } = fs;
 // Path configuration - can be overridden by environment or use path resolver
-const AGENTS_BASE_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
+const AGENTS_BASE_PATH = process.env.XRAY_AGENTS_PATH || process.env.STRRAY_AGENTS_PATH || "../agents";
 import {
   createAgentDelegator,
   createSessionCoordinator,
@@ -59,7 +59,7 @@ function setupGracefulShutdown(): void {
     } catch (error) {
       // Suppress error output in CLI mode to avoid breaking interface
       if (
-        process.env.STRRAY_CLI_MODE !== "true" &&
+        (process.env.XRAY_CLI_MODE || process.env.STRRAY_CLI_MODE) !== "true" &&
         process.env.OPENCODE_CLI !== "true"
       ) {
         frameworkLogger.log("boot-orchestrator", "shutdown-error", "error", { error, message: "Error during graceful shutdown" });
@@ -85,7 +85,7 @@ function setupGracefulShutdown(): void {
   process.on("uncaughtException", (error) => {
     // Suppress error output in CLI mode to avoid breaking interface
     if (
-      process.env.STRRAY_CLI_MODE !== "true" &&
+      (process.env.XRAY_CLI_MODE || process.env.STRRAY_CLI_MODE) !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
       frameworkLogger.log("boot-orchestrator", "uncaught-exception", "error", { error, message: "Uncaught Exception" });
@@ -98,7 +98,7 @@ function setupGracefulShutdown(): void {
   process.on("unhandledRejection", (reason, promise) => {
     // Suppress error output in CLI mode to avoid breaking interface
     if (
-      process.env.STRRAY_CLI_MODE !== "true" &&
+      (process.env.XRAY_CLI_MODE || process.env.STRRAY_CLI_MODE) !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
       frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });

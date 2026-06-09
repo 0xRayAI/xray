@@ -9,8 +9,17 @@
  * @since 2026-01-07
  */
 
-import { SecurityIssue } from "./security-auditor.js";
 import { promises as fs } from "fs";
+
+export interface SecurityIssue {
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  category: string;
+  file: string;
+  line?: number;
+  description: string;
+  recommendation: string;
+  cwe?: string;
+}
 import * as crypto from "crypto";
 import { frameworkLogger } from "../core/framework-logger.js";
 

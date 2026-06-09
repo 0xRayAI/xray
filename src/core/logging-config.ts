@@ -1,4 +1,6 @@
 // Global logging configuration for 0xRay framework
+import type { LogStatus } from "./framework-logger.js";
+
 export interface LoggingConfig {
   enabled: boolean;
   level: "debug" | "info" | "warn" | "error";
@@ -8,10 +10,10 @@ export interface LoggingConfig {
 
 // Default logging configuration
 const defaultLoggingConfig: LoggingConfig = {
-  enabled: process.env.STRRAY_LOGGING_ENABLED !== "false", // Default true, can be disabled
-  level: (process.env.STRRAY_LOG_LEVEL as any) || "info",
+  enabled: (process.env.XRAY_LOGGING_ENABLED || process.env.STRRAY_LOGGING_ENABLED) !== "false", // Default true, can be disabled
+  level: ((process.env.XRAY_LOG_LEVEL || process.env.STRRAY_LOG_LEVEL) as any) || "info",
   destinations: ["console", "file"],
-  performanceMode: process.env.STRRAY_PERFORMANCE_MODE === "true",
+  performanceMode: (process.env.XRAY_PERFORMANCE_MODE || process.env.STRRAY_PERFORMANCE_MODE) === "true",
 };
 
 // Available log levels in priority order (higher index = more verbose)
@@ -32,7 +34,7 @@ export function isLoggingEnabled(): boolean {
   return globalLoggingConfig.enabled;
 }
 
-export function shouldLog(level: string): boolean {
+export function shouldLog(level: LogStatus): boolean {
   if (!globalLoggingConfig.enabled) {
     return false;
   }
@@ -50,14 +52,14 @@ export function shouldLog(level: string): boolean {
 }
 
 // Environment variable configuration
-if (process.env.STRRAY_LOGGING_ENABLED === "false") {
+if ((process.env.XRAY_LOGGING_ENABLED || process.env.STRRAY_LOGGING_ENABLED) === "false") {
   setLoggingConfig({ enabled: false });
 }
 
-if (process.env.STRRAY_LOG_LEVEL) {
-  setLoggingConfig({ level: process.env.STRRAY_LOG_LEVEL as any });
+if (process.env.XRAY_LOG_LEVEL || process.env.STRRAY_LOG_LEVEL) {
+  setLoggingConfig({ level: (process.env.XRAY_LOG_LEVEL || process.env.STRRAY_LOG_LEVEL) as any });
 }
 
-if (process.env.STRRAY_PERFORMANCE_MODE === "true") {
+if ((process.env.XRAY_PERFORMANCE_MODE || process.env.STRRAY_PERFORMANCE_MODE) === "true") {
   setLoggingConfig({ performanceMode: true });
 }

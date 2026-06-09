@@ -435,7 +435,7 @@ export class InferenceCycle {
       let agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
 
       // In pure MCP mode, use real skill server names so the orchestrator dispatches to actual MCP tools
-      if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+      if ((process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true') {
         agentName = p.type === "refactor" ? "refactoring-strategies" : "code-review";
       }
 
@@ -461,12 +461,12 @@ export class InferenceCycle {
       ``,
       `1. Read the relevant source files`,
       `2. Add the missing guard, validation, or edge case handling`,
-       `3. If this is a codex rule, add the term to .opencode/xray/codex.json`,
+       `3. If this is a codex rule, add the term to xray/codex.json`,
       `4. Make minimal, surgical changes`,
     ].join("\n");
 
     try {
-      const agentName = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' 
+      const agentName = (process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true' 
         ? "code-review" 
         : "code-reviewer";
       await this.invokeAgentInternal(agentName, prompt);
@@ -498,7 +498,7 @@ export class InferenceCycle {
     ].join("\n");
 
     try {
-      const agentName = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' 
+      const agentName = (process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true' 
         ? "architecture-patterns" 
         : "architect";
       await this.invokeAgentInternal(agentName, prompt);
@@ -568,7 +568,7 @@ Respond with EXACTLY one of:
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
     // Primary path: Use the first-class Governance MCP (real skill servers + required Dynamo)
     // This is the clean, centralized path (governance.server.ts + GovernanceService)
-    const useGovernanceMcp = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' ||
+    const useGovernanceMcp = (process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true' ||
       this.isGovernanceMcpPreferred();
 
     if (useGovernanceMcp) {
@@ -604,7 +604,7 @@ Respond with EXACTLY one of:
           error: err instanceof Error ? err.message : String(err),
         });
         // In forced pure MCP mode we must not silently fall back
-        if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+        if ((process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true') {
           throw err;
         }
         // In normal mode, fall back to legacy path with deprecation warning.
@@ -677,7 +677,7 @@ Respond with EXACTLY one of:
     proposals: InferenceProposal[],
   ): Promise<InferenceCycleResult["votes"]> {
     // Defensive: if pure MCP mode is forced, use individual skill servers only
-    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+    if ((process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true') {
       return this.governProposalsWithIndividualSkills(proposals);
     }
 
@@ -780,7 +780,7 @@ Respond with EXACTLY one of:
 
   /**
    * Pure individual knowledge-skill MCP path for governance.
-   * Used when STRRAY_FORCE_MCP_GOVERNANCE=true.
+   * Used when XRAY_FORCE_MCP_GOVERNANCE=true.
    * Each proposal is evaluated directly by the relevant skill servers using analyze_proposal.
    */
   private async governProposalsWithIndividualSkills(
@@ -991,7 +991,7 @@ Respond with EXACTLY one of:
         responseText = JSON.stringify(result);
       }
       // In pure MCP governance mode, trust the orchestrator response (it now does real work)
-      const isPureMcp = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true';
+      const isPureMcp = (process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true';
 
       const hasRealContent = /PROPOSAL:\s*\d+/i.test(responseText) ||
                              /DECISION:\s*(approve|reject|abstain)/i.test(responseText) ||
@@ -1024,7 +1024,7 @@ Respond with EXACTLY one of:
     }
 
     // Only fall back to OpenCode if not in forced pure MCP mode
-    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+    if ((process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === 'true') {
       throw new Error(`[PURE MCP] Orchestrator returned no usable response for agent "${agentName}" and OpenCode fallback is disabled`);
     }
 

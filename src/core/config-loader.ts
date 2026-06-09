@@ -226,4 +226,4 @@ export class XrayConfigLoader {
 // Export singleton instance
 export const xrayConfigLoader = new XrayConfigLoader();
 // Backward compat alias
-export { xrayConfigLoader as strRayConfigLoader, XrayConfigLoader as StringRayConfigLoader };
+export { xrayConfigLoader as strRayConfigLoader };

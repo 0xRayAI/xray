@@ -55,7 +55,7 @@ export class GovernanceService {
    */
   async govern(request: GovernanceRequest): Promise<GovernanceResponse> {
     const { proposals, context, options } = request;
-    const requireExternal = options?.requireExternalDynamo ?? true;
+    const requireExternal = options?.requireExternalDynamo ?? !process.env.XRAY_LOCAL_MODE;
     const timeoutMs = options?.timeoutMs ?? 90000;
     const maxAbstentionThreshold = options?.maxAbstentionThreshold ?? 1.0;
 

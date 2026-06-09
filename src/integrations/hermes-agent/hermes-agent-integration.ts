@@ -196,6 +196,7 @@ export class HermesAgentIntegration extends BaseIntegration {
         maxBuffer: 1024 * 1024, // 1MB
         env: {
           ...process.env,
+          XRAY_HOME: this.projectRoot,
           STRRAY_HOME: this.projectRoot,
         },
       };

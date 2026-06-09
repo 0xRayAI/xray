@@ -82,7 +82,7 @@ export function resolveConfigPath(relativePath: string, projectRoot?: string): s
     candidates.push(resolve(root, envDir, relativePath));
   }
   candidates.push(join(root, ".xray", relativePath));
-  candidates.push(join(root, ".opencode", "xray", relativePath));
+  candidates.push(join(root, "xray", relativePath));
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
@@ -165,7 +165,6 @@ export function resolveCodexPath(projectRoot?: string): string[] {
   }
   candidates.push(join(root, ".xray", "codex.json"));
   candidates.push(join(root, "xray", "codex.json"));
-  candidates.push(join(root, ".opencode", "xray", "codex.json"));
   // Additional fallback locations (for standalone usage)
   candidates.push(join(root, "codex.json"));
   candidates.push(join(root, "src", "codex.json"));

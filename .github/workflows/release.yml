@@ -51,8 +51,8 @@ jobs:
             ### Installation
 
             ```bash
-            npm install strray-ai@latest
-            npx strray-ai install
+            npm install 0xray@latest
+            npx 0xray install
             ```
 
             See [CHANGELOG.md](./CHANGELOG.md) for details.

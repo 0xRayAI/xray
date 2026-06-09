@@ -1051,6 +1051,7 @@ program
     }
     const env: Record<string, string> = { ...process.env as Record<string, string> };
     if (server === 'governance') {
+      env.XRAY_FORCE_MCP_GOVERNANCE = 'true';
       env.STRRAY_FORCE_MCP_GOVERNANCE = 'true';
     }
     const child = spawn(process.execPath, [serverPath], { stdio: 'inherit', env });

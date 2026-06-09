@@ -949,4 +949,4 @@ export class XrayOrchestrator {
 // Export singleton instance
 export const xrayOrchestrator = new XrayOrchestrator();
 // Backward compat alias
-export { xrayOrchestrator as strRayOrchestrator, XrayOrchestrator as StringRayOrchestrator };
+export { xrayOrchestrator as strRayOrchestrator };
