@@ -6,6 +6,7 @@
  */
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 

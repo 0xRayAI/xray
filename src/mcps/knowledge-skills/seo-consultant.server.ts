@@ -7,6 +7,7 @@
  */
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface SEOIssue {
   priority: "critical" | "high" | "medium" | "low";
