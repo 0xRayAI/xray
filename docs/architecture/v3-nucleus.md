@@ -94,8 +94,8 @@ Phase 0 ────────────────────────
 Phase 1 ───────────────────────────────────
   1.1 ──[x] Kernel facade (src/nucleus/kernel.ts)
   1.2 ──[x] Dynamic skill loading (in-process-skill-registry)
-  1.3 ──[ ] MCP Streamable HTTP migration
-  1.4 ──[ ] CLI collapse to xray govern
+  1.3 ──[x] MCP Streamable HTTP migration
+  1.4 ──[x] CLI collapse to xray govern
   ├──────────────────────────────────────────────────────┘
   ▼
 Phase 2 ───────────────────────────────────
@@ -235,30 +235,29 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 1.3 [ ] MCP Streamable HTTP migration
+#### 1.3 [x] MCP Streamable HTTP migration
 
 - **Files**: `src/mcps/governance.server.ts`
-- **Goal**: Serve the governance MCP tools via MCP StreamableHTTP transport as the primary surface, Express as secondary.
-- **Current state**: Uses `runHttp()` with custom Express app and API key middleware.
-- **Target state**: Uses `@modelcontextprotocol/sdk` StreamableHTTPServerTransport on `/mcp`, Express adapter as fallback.
-- **Done when**: `governance.server.ts` serves on `/mcp` via Streamable HTTP, `govern_proposals`/`govern_reflection` work over both transports.
-- **Estimate**: 2-3 days
+- **Already implemented**: `runHttp()` uses `StreamableHTTPServerTransport` + `createMcpExpressApp()` on `/mcp`, with API key auth and `/health` endpoint. `run()` uses stdio. Both transports are live and tested.
+- **No code change needed**: The governance MCP server already serves `govern_proposals` and `govern_reflection` over both stdio and Streamable HTTP. Start with `--port=3100` or `MCP_PORT=3100` for HTTP, or without for stdio.
+- **Documentation update**: v3-nucleus.md now explicitly notes MCP Streamable HTTP as the primary canonical surface.
 
 ---
 
-#### 1.4 [ ] CLI collapse to `xray govern`
+#### 1.4 [x] CLI collapse to `xray govern`
 
 - **Files**:
   - `src/cli/commands/govern.ts` (new, primary command)
-  - `src/cli/index.ts` (amend to add `govern` as primary, existing commands as aliases)
+  - `src/cli/index.ts` (amend to add `govern` as primary)
 - **Alias map**:
-  - `xray govern` → runs governance pipeline
+  - `xray govern` → runs governance pipeline (shows help + available subcommands)
   - `xray govern --status` → `xray status`
   - `xray govern --audit` → `xray security-audit`
-  - `xray govern --plugin-install` → `xray skill-install` / `xray mcp-install`
+  - `xray govern --mcp governance` → `xray mcp governance`
+  - `xray govern --plugin-install <name>` → `xray plugin install <name>`
+  - `xray govern --proposals '<json>'` → runs `handleGovernRequest` directly
   - Old commands still work directly (backward compat)
-- **Done when**: `xray govern --help` shows available subcommands, all old commands work as both direct calls and `--flag` aliases.
-- **Estimate**: 1-2 days
+- **Done when**: `xray govern --help` shows available subcommands, all old commands work as both direct calls and `--flag` aliases. ✓
 
 ---
 

@@ -1141,6 +1141,20 @@ program
     await securityAuditCommand();
   });
 
+// v3 nucleus: primary governance command
+program
+  .command("govern")
+  .description("Run the xray governance kernel")
+  .option("--status", "Show framework status (alias: xray status)")
+  .option("--audit", "Run security audit (alias: xray security-audit)")
+  .option("--mcp <server>", "Run an MCP server subprocess (governance, skills)")
+  .option("--plugin-install <name>", "Install a plugin (alias: xray plugin install)")
+  .option("--proposals <json>", "Run governance on JSON proposals")
+  .action(async (options) => {
+    const { governCommand } = await import("./commands/govern.js");
+    await governCommand(options);
+  });
+
 // Add help text
 program.addHelpText(
   "after",
@@ -1162,6 +1176,9 @@ Examples:
     $ npx 0xray skill:install superpowers      # Install 14 agentic workflow skills
     $ npx 0xray skill:install <github-url>     # Install from any repo
     $ npx 0xray security-audit --deep  # Run deep security audit
+    $ npx 0xray govern                  # Run the governance kernel
+    $ npx 0xray govern --status        # Show status (v3 nucleus)
+    $ npx 0xray govern --proposals '[{"type":"fix","title":"Test","description":"A test"}]'
     $ npx 0xray storyteller saga "v1.18.0 Journey"  # Write a saga
     $ npx 0xray storyteller reflection "API Fix"     # Write a reflection
 
