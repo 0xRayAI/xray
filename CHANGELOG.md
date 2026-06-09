@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [2.1.4] - 2026-06-09
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: repair syntax from STRRAY_ cleanup (setup.ts, hermes bridge) so tests and release guard pass (87f3613ad)
+
+### 🔎 Other Changes
+- chore(release): strip remaining legacy STRRAY_ env fallbacks & shims so prepublish guard passes for v2.1.3 (0038993fc)
+
+---
+
 ## [2.1.3] - 2026-06-09
 
 ### 🔄 Changes

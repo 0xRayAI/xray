@@ -879,7 +879,7 @@ class XrayDocumentationGenerationServer extends XrayKnowledgeSkillBase {
       openapi: "3.0.0",
       info: {
         title: "API Documentation",
-        version: "2.1.1",
+        version: "2.1.3",
         description: "Generated API documentation",
       },
       servers: [

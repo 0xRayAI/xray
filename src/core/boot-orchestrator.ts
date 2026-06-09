@@ -1076,7 +1076,7 @@ export class BootOrchestrator {
     try {
       // Consumer runtime compat (XRAY_ env + .xray fallbacks)
       const xrayConfig = {
-        version: "2.1.1",
+        version: "2.1.3",
         codex_enabled: true,
         codex_version: "v2.1.1",
         codex_terms: [

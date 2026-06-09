@@ -58,7 +58,7 @@ beforeAll(() => {
 afterAll(() => {
   // Clean up test environment
   delete process.env.XRAY_TEST_MODE;
-  delete ;
+  // STRRAY_ legacy env cleanup removed for clean publish
 });
 
   // Reset console methods after each test
