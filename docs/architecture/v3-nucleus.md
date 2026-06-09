@@ -93,7 +93,7 @@ Phase 0 ────────────────────────
   ▼
 Phase 1 ───────────────────────────────────
   1.1 ──[x] Kernel facade (src/nucleus/kernel.ts)
-  1.2 ──[ ] Dynamic skill loading (in-process-skill-registry)
+  1.2 ──[x] Dynamic skill loading (in-process-skill-registry)
   1.3 ──[ ] MCP Streamable HTTP migration
   1.4 ──[ ] CLI collapse to xray govern
   ├──────────────────────────────────────────────────────┘
@@ -221,7 +221,7 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 1.2 [ ] Dynamic skill loading
+#### 1.2 [x] Dynamic skill loading
 
 - **Files**: `src/mcps/in-process-skill-registry.ts` (refactor), `src/nucleus/plugin-registry.ts` (new)
 - **Goal**: Skills can be registered after boot, loaded from config, or discovered at runtime.
