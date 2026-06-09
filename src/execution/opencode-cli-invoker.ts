@@ -25,7 +25,7 @@ export async function invokeViaOpencode(
   projectRoot: string = process.cwd(),
 ): Promise<string> {
   // In pure MCP mode we must never reach here
-  if ((process.env.XRAY_FORCE_MCP_GOVERNANCE || process.env.STRRAY_FORCE_MCP_GOVERNANCE) === "true") {
+  if ((process.env.XRAY_FORCE_MCP_GOVERNANCE) === "true") {
     throw new Error(`[PURE MCP] invokeViaOpencode called for "${agentName}" — this path is forbidden.`);
   }
 

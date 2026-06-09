@@ -69,7 +69,7 @@ let frameworkLoadAttempted = false;
 // ============================================================================
 
 function findProjectRoot() {
-  const envHome = process.env.STRRAY_HOME;
+  const envHome = process.env.XRAY_HOME;
   if (envHome && existsSync(join(envHome, "package.json"))) return envHome;
 
   const candidates = [
@@ -219,7 +219,7 @@ async function handleHealth(input) {
  */
 /** Codex candidate paths — single source of truth for both loadCodexFromFs and handleGetConfig */
 function getCodexCandidates(projectRoot) {
-  const envDir = process.env.XRAY_CONFIG_DIR || process.env.STRRAY_CONFIG_DIR;
+  const envDir = process.env.XRAY_CONFIG_DIR;
   const candidates = [];
   if (envDir) candidates.push(join(projectRoot, envDir, "codex.json"));
   candidates.push(join(projectRoot, ".xray", "codex.json"));
@@ -748,7 +748,7 @@ function startHttpServer(port, projectRoot) {
   return new Promise((resolve, reject) => {
     const server = createServer(async (req, res) => {
       // CORS headers (wildcard — restrict via STRRAY_HTTP_CORS_ORIGIN env var in production)
-      const corsOrigin = process.env.STRRAY_HTTP_CORS_ORIGIN || "*";
+      const corsOrigin = "*";
       res.setHeader("Content-Type", "application/json");
       res.setHeader("Access-Control-Allow-Origin", corsOrigin);
       res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");

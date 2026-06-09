@@ -501,9 +501,9 @@ describe("codex-formatter", () => {
       mkdirSync(join(tempDir, ".xray"), { recursive: true });
       writeFileSync(join(tempDir, ".xray", "codex.json"), JSON.stringify({ version: "xray-1.0.0", terms: [] }), "utf-8");
 
-      const original = process.env.STRRAY_CONFIG_DIR;
+      const original = ;
       process.env.XRAY_CONFIG_DIR = envDir;
-      process.env.STRRAY_CONFIG_DIR = envDir;
+       = envDir;
 
       try {
         const result = findCodexPath(tempDir);
@@ -511,9 +511,9 @@ describe("codex-formatter", () => {
       } finally {
         delete process.env.XRAY_CONFIG_DIR;
         if (original === undefined) {
-          delete process.env.STRRAY_CONFIG_DIR;
+          delete ;
         } else {
-          process.env.STRRAY_CONFIG_DIR = original;
+           = original;
         }
       }
     });

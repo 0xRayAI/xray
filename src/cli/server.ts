@@ -19,7 +19,7 @@ const { version } = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 const app = express();
 const PORT = 3000;
 
-const API_KEY = process.env.XRAY_API_KEY || process.env.STRRAY_API_KEY || undefined;
+const API_KEY = process.env.XRAY_API_KEY || undefined;
 
 function timingSafeCompare(a: string, b: string): boolean {
   const aBuf = Buffer.from(a, "utf-8");

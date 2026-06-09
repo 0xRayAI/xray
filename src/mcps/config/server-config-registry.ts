@@ -26,8 +26,8 @@ import fs from 'fs';
  */
 function resolveFrameworkPaths(): { frameworkRoot: string; mcpServersPath: string } {
   // Highest priority: explicit environment override
-  if (process.env.XRAY_DEV_PATH || process.env.STRRAY_DEV_PATH) {
-    const devPath: string = process.env.XRAY_DEV_PATH || process.env.STRRAY_DEV_PATH || "";
+  if (process.env.XRAY_DEV_PATH) {
+    const devPath: string = process.env.XRAY_DEV_PATH || "";
     return {
       frameworkRoot: devPath,
       mcpServersPath: join(devPath, 'mcps'),

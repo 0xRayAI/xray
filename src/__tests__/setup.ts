@@ -23,7 +23,7 @@ beforeAll(() => {
   // Set up test environment
   process.env.NODE_ENV = "test";
   process.env.XRAY_TEST_MODE = "true";
-  process.env.STRRAY_TEST_MODE = "true";
+   = "true";
 
   // Create required directories for tests
   const fs = require("fs");
@@ -59,7 +59,7 @@ beforeAll(() => {
 afterAll(() => {
   // Clean up test environment
   delete process.env.XRAY_TEST_MODE;
-  delete process.env.STRRAY_TEST_MODE;
+  delete ;
 });
 
   // Reset console methods after each test

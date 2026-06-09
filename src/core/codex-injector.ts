@@ -257,7 +257,7 @@ export function createXrayCodexInjectorHook() {
           // Skip codex enforcement during testing
           if (
             process.env.NODE_ENV === "test" ||
-            (process.env.XRAY_TEST_MODE || process.env.STRRAY_TEST_MODE) === "true"
+            process.env.XRAY_TEST_MODE === "true"
           ) {
             await frameworkLogger.log(
               "codex-injector",
@@ -458,7 +458,7 @@ export function createXrayCodexInjectorHook() {
           // Skip codex enforcement during testing
           if (
             process.env.NODE_ENV === "test" ||
-            (process.env.XRAY_TEST_MODE || process.env.STRRAY_TEST_MODE) === "true"
+            process.env.XRAY_TEST_MODE === "true"
           ) {
             frameworkLogger.log(
               "codex-injector",

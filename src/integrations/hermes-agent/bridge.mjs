@@ -53,7 +53,7 @@ let frameworkLoadAttempted = false;
 
 // ── Project root detection ───────────────────────────────────
 function findProjectRoot() {
-  const envHome = process.env.STRRAY_HOME;
+  const envHome = ;
   if (envHome && existsSync(join(envHome, "package.json"))) return envHome;
 
   const candidates = [

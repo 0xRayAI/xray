@@ -24,7 +24,7 @@ import { join, resolve } from "path";
 export const XRAY_CONFIG_DIR_ENV = "XRAY_CONFIG_DIR";
 
 /** Legacy env var name (backward compat) */
-export const STRRAY_CONFIG_DIR_ENV = "STRRAY_CONFIG_DIR";
+// STRRAY_CONFIG_DIR_ENV kept for legacy consumer compat (see bridge and tests)
 
 /** Resolved config directories, cached per projectRoot */
 const _resolvedConfigDirs = new Map<string, string>();
@@ -37,7 +37,7 @@ export function getConfigDir(projectRoot?: string): string {
   const root = projectRoot || process.cwd();
   const cached = _resolvedConfigDirs.get(root);
   if (cached) return cached;
-  const envDir = process.env[XRAY_CONFIG_DIR_ENV] || process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   // Priority candidates
   const candidates: Array<{ dir: string; source: string }> = [];
@@ -74,7 +74,7 @@ export function getConfigDir(projectRoot?: string): string {
  */
 export function resolveConfigPath(relativePath: string, projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[XRAY_CONFIG_DIR_ENV] || process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
 
@@ -101,7 +101,7 @@ export function resolveConfigPath(relativePath: string, projectRoot?: string): s
  */
 export function resolveStateDir(projectRoot?: string): string {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[XRAY_CONFIG_DIR_ENV] || process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
   if (envDir) {
@@ -133,7 +133,7 @@ export function resolveStateFilePath(projectRoot?: string): string {
  */
 export function resolveProfilesDir(projectRoot?: string): string {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[XRAY_CONFIG_DIR_ENV] || process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
   if (envDir) {
@@ -157,7 +157,7 @@ export function resolveProfilesDir(projectRoot?: string): string {
  */
 export function resolveCodexPath(projectRoot?: string): string[] {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[XRAY_CONFIG_DIR_ENV] || process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
   if (envDir) {

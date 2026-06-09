@@ -166,45 +166,45 @@ describe('ServerConfigRegistry', () => {
 
     it('should use XRAY_DEV_PATH env var in dynamic config', () => {
       const originalXrayEnv = process.env.XRAY_DEV_PATH;
-      const originalStrrayEnv = process.env.STRRAY_DEV_PATH;
+      const originalStrrayEnv = ;
       process.env.XRAY_DEV_PATH = 'custom-dist';
-      process.env.STRRAY_DEV_PATH = 'custom-dist';
+       = 'custom-dist';
       
       const config = registry.createDynamicConfig('test-server');
       expect(config.args[0]).toContain('custom-dist');
       
       process.env.XRAY_DEV_PATH = originalXrayEnv;
-      process.env.STRRAY_DEV_PATH = originalStrrayEnv;
+       = originalStrrayEnv;
     });
   });
 
   describe('environment path handling', () => {
     it('should use resolved framework path when XRAY_DEV_PATH is not set', () => {
       const originalXrayEnv = process.env.XRAY_DEV_PATH;
-      const originalStrrayEnv = process.env.STRRAY_DEV_PATH;
+      const originalStrrayEnv = ;
       delete process.env.XRAY_DEV_PATH;
-      delete process.env.STRRAY_DEV_PATH;
+      delete ;
       
       const freshRegistry = new ServerConfigRegistry();
       const config = freshRegistry.get('code-review');
       expect(config?.args[0]).toContain('.server.js');
       
       process.env.XRAY_DEV_PATH = originalXrayEnv;
-      process.env.STRRAY_DEV_PATH = originalStrrayEnv;
+       = originalStrrayEnv;
     });
 
     it('should use XRAY_DEV_PATH when set', () => {
       const originalXrayEnv = process.env.XRAY_DEV_PATH;
-      const originalStrrayEnv = process.env.STRRAY_DEV_PATH;
+      const originalStrrayEnv = ;
       process.env.XRAY_DEV_PATH = 'dist';
-      process.env.STRRAY_DEV_PATH = 'dist';
+       = 'dist';
       
       const freshRegistry = new ServerConfigRegistry();
       const config = freshRegistry.get('code-review');
       expect(config?.args[0]).toContain('dist/');
       
       process.env.XRAY_DEV_PATH = originalXrayEnv;
-      process.env.STRRAY_DEV_PATH = originalStrrayEnv;
+       = originalStrrayEnv;
     });
   });
 

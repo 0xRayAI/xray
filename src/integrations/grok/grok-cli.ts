@@ -78,11 +78,11 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     const skillsMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/knowledge-skills/skill-invocation.server.js');
     try {
       execSync(
-        `grok mcp add xray-governance --command node --args "${govMcpPath}" --env "XRAY_FORCE_MCP_GOVERNANCE=true" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${process.cwd()}" --env "STRRAY_ROOT=${process.cwd()}"`,
+        `grok mcp add xray-governance --command node --args "${govMcpPath}" --env "XRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${process.cwd()}"`,
         { stdio: 'pipe' }
       );
       execSync(
-        `grok mcp add xray-skills --command node --args "${skillsMcpPath}" --env "XRAY_ROOT=${process.cwd()}" --env "STRRAY_ROOT=${process.cwd()}"`,
+        `grok mcp add xray-skills --command node --args "${skillsMcpPath}" --env "XRAY_ROOT=${process.cwd()}"`,
         { stdio: 'pipe' }
       );
       frameworkLogger.log('grok-cli', 'Registered xray MCP servers with Grok CLI', 'info', {});

@@ -1,5 +1,5 @@
 /**
- * Boot Orchestrator (min documented consumer runtime compat shim from prior StringRay releases; primary Xray* paths + XRAY_||STRRAY_ env + .xray fallbacks only; 1-line per Scope Rule).
+ * Boot Orchestrator (consumer runtime compat; primary XRAY_ env + .xray fallbacks).
  */
 
 import { XrayContextLoader } from "./context-loader.js";
@@ -10,7 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 const { existsSync, readFileSync } = fs;
 // Path configuration - can be overridden by environment or use path resolver
-const AGENTS_BASE_PATH = process.env.XRAY_AGENTS_PATH || process.env.STRRAY_AGENTS_PATH || "../agents";
+const AGENTS_BASE_PATH = process.env.XRAY_AGENTS_PATH || "../agents";
 import {
   createAgentDelegator,
   createSessionCoordinator,
@@ -59,7 +59,7 @@ function setupGracefulShutdown(): void {
     } catch (error) {
       // Suppress error output in CLI mode to avoid breaking interface
       if (
-        (process.env.XRAY_CLI_MODE || process.env.STRRAY_CLI_MODE) !== "true" &&
+        process.env.XRAY_CLI_MODE !== "true" &&
         process.env.OPENCODE_CLI !== "true"
       ) {
         frameworkLogger.log("boot-orchestrator", "shutdown-error", "error", { error, message: "Error during graceful shutdown" });
@@ -85,7 +85,7 @@ function setupGracefulShutdown(): void {
   process.on("uncaughtException", (error) => {
     // Suppress error output in CLI mode to avoid breaking interface
     if (
-      (process.env.XRAY_CLI_MODE || process.env.STRRAY_CLI_MODE) !== "true" &&
+      (process.env.XRAY_CLI_MODE) !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
       frameworkLogger.log("boot-orchestrator", "uncaught-exception", "error", { error, message: "Uncaught Exception" });
@@ -98,7 +98,7 @@ function setupGracefulShutdown(): void {
   process.on("unhandledRejection", (reason, promise) => {
     // Suppress error output in CLI mode to avoid breaking interface
     if (
-      (process.env.XRAY_CLI_MODE || process.env.STRRAY_CLI_MODE) !== "true" &&
+      (process.env.XRAY_CLI_MODE) !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
       frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
@@ -817,7 +817,7 @@ export class BootOrchestrator {
         "info",
         { jobId },
       );
-      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .xray fallbacks)
+      // Consumer runtime compat (XRAY_ env + .xray fallbacks)
       await this.loadXrayConfiguration(jobId);
       frameworkLogger.log(
         "boot-orchestrator",
@@ -1071,10 +1071,10 @@ export class BootOrchestrator {
     return result;
   }
 
-  // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .xray fallbacks)
+  // Consumer runtime compat (XRAY_ env + .xray fallbacks)
   private async loadXrayConfiguration(jobId: string): Promise<void> {
     try {
-      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .xray fallbacks)
+      // Consumer runtime compat (XRAY_ env + .xray fallbacks)
       const xrayConfig = {
         version: "2.1.1",
         codex_enabled: true,

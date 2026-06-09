@@ -16,7 +16,7 @@ function findGovernanceCore() {
   const here = path.dirname(new URL(import.meta.url).pathname);
 
   // Priority: explicit dev root
-  const devRoot = process.env.STRRAY_ROOT;
+  const devRoot = ;
   if (devRoot) {
     const devCandidate = path.resolve(devRoot, 'dist/governance/governance-core.js');
     if (fs.existsSync(devCandidate)) return devCandidate;

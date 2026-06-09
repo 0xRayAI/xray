@@ -139,7 +139,7 @@ export const BUILTIN_CODEX: CodexConfig = {
  */
 export function findCodexPath(projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
-  const envDir = process.env.XRAY_CONFIG_DIR || process.env.STRRAY_CONFIG_DIR;
+  const envDir = process.env.XRAY_CONFIG_DIR;
 
   const candidates: string[] = [];
 

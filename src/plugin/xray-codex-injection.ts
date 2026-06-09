@@ -1,5 +1,5 @@
 /**
- * Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; xray codex injection + XRAY_||STRRAY_ env + .xray fallbacks).
+ * Consumer runtime compat (xray codex injection + XRAY_ env + .xray fallbacks).
  */
 
 import * as fs from "fs";

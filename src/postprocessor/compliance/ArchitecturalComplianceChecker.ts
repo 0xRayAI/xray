@@ -350,7 +350,7 @@ import { Config } from "./config/config.js";
 
 **Solution A: Environment Variables (Simple)**
 \`\`\`typescript
-const AGENTS_PATH = process.env.XRAY_AGENTS_PATH || process.env.STRRAY_AGENTS_PATH || '../agents';
+const AGENTS_PATH = process.env.XRAY_AGENTS_PATH || '../agents';
 import { AgentConfig } from \`\${AGENTS_PATH}/code-reviewer.js\`;
 \`\`\`
 
