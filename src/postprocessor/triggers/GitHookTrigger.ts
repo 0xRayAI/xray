@@ -495,17 +495,17 @@ fi
           const result = await validator.validate();
 
           if (result.warnings.length > 0) {
-            await frameworkLogger.log('-git-hook-trigger', '-result-warnings-length-warning-s-found-', 'info', { message: '⚠️ ' + result.warnings.length + ' warning(s) found:' });
-            result.warnings.forEach(w => await frameworkLogger.log('-git-hook-trigger', '-w-', 'info', { message: '   ' + w) });
+            await frameworkLogger.log('git-hook-trigger', 'validation-warnings', 'info', { message: '⚠️ ' + result.warnings.length + ' warning(s) found:' });
+            result.warnings.forEach(w => await frameworkLogger.log('git-hook-trigger', 'warning-detail', 'info', { message: '   ' + w) });
           }
 
           if (!result.passed) {
-            await frameworkLogger.log('-git-hook-trigger', '-result-errors-length-error-s-found-', 'error', { message: '❌ ' + result.errors.length + ' error(s) found:' });
-            result.errors.forEach(e => await frameworkLogger.log('-git-hook-trigger', '-e-', 'info', { message: '   ' + e) });
+            await frameworkLogger.log('git-hook-trigger', 'validation-errors', 'error', { message: '❌ ' + result.errors.length + ' error(s) found:' });
+            result.errors.forEach(e => await frameworkLogger.log('git-hook-trigger', 'error-detail', 'info', { message: '   ' + e) });
             process.exit(1);
           }
 
-          await frameworkLogger.log('-git-hook-trigger', '-post-commit-validation-passed-in-result-duration-', 'success', { message: '✅ Post-commit: Validation passed in ' + result.duration + 'ms' });
+          await frameworkLogger.log('git-hook-trigger', 'post-commit-validation-passed', 'success', { message: '✅ Post-commit: Validation passed in ' + result.duration + 'ms' });
         } catch (error) {
           await frameworkLogger.log('git-hook-trigger', 'post-commit-validation-failed', 'error', { error: error instanceof Error ? error.message : String(error) });
           process.exit(1);
@@ -538,7 +538,7 @@ fi
             excludePatterns: []
           });
           if (archiveResult.archived > 0) {
-            await frameworkLogger.log('-git-hook-trigger', '-archived-log-files-', 'info', { message: \`📦 Archived \${archiveResult.archived} log files\` });
+            await frameworkLogger.log('git-hook-trigger', 'archived-log-files', 'info', { message: \`📦 Archived \${archiveResult.archived} log files\` });
           }
 
           // Then cleanup old files
@@ -584,7 +584,7 @@ fi
             enabled: true
           });
           if (result.cleaned > 0) {
-            await frameworkLogger.log('-git-hook-trigger', '-cleaned-result-cleaned-old-log-files-', 'info', { message: '🧹 Cleaned ' + result.cleaned + ' old log files' });
+            await frameworkLogger.log('git-hook-trigger', 'cleaned-old-log-files', 'info', { message: '🧹 Cleaned ' + result.cleaned + ' old log files' });
           }
           if (result.errors.length > 0) {
             await frameworkLogger.log('git-hook-trigger', 'log-cleanup-errors', 'error', { errors: result.errors });

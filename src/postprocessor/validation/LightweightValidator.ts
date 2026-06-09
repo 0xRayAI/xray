@@ -282,8 +282,8 @@ class LightweightValidator {
  */
 async function main(): Promise<void> {
   await frameworkLogger.log(
-    "-lightweight-validator",
-    "-post-commit-quick-validation-initiated-",
+    "lightweight-validator",
+    "quick-validation-initiated",
     "info",
     { message: "⚡ Post-commit: Quick validation initiated" },
   );
@@ -294,13 +294,13 @@ async function main(): Promise<void> {
   // Report results
   if (result.warnings.length > 0) {
     await frameworkLogger.log(
-      "-lightweight-validator",
-      "-result-warnings-length-warning-s-found-",
+      "lightweight-validator",
+      "warnings-found",
       "info",
       { message: `⚠️ ${result.warnings.length} warning(s) found:` },
     );
     for (const warning of result.warnings) {
-      await frameworkLogger.log("-lightweight-validator", "-warning-", "info", {
+      await frameworkLogger.log("lightweight-validator", "warning-detail", "info", {
         message: `   ${warning}`,
       });
     }
@@ -308,29 +308,29 @@ async function main(): Promise<void> {
 
   if (result.errors.length > 0) {
     await frameworkLogger.log(
-      "-lightweight-validator",
-      "-result-errors-length-error-s-found-",
+      "lightweight-validator",
+      "errors-found",
       "error",
       { message: `❌ ${result.errors.length} error(s) found:` },
     );
     for (const error of result.errors) {
-      await frameworkLogger.log("-lightweight-validator", "-error-", "error", {
+      await frameworkLogger.log("lightweight-validator", "error-detail", "error", {
         message: `   ${error}`,
       });
     }
   }
 
   await frameworkLogger.log(
-    "-lightweight-validator",
-    "-post-commit-validation-completed-in-result-durati",
+    "lightweight-validator",
+    "validation-completed",
     "success",
     { message: `✅ Post-commit: Validation completed in ${result.duration}ms` },
   );
 
   if (!result.passed) {
     await frameworkLogger.log(
-      "-lightweight-validator",
-      "-fix-the-errors-above-or-use-no-verify-to-skip-val",
+      "lightweight-validator",
+      "validation-failed-instructions",
       "error",
       {
         message:

@@ -104,8 +104,8 @@ export class PostProcessor {
    */
   async initialize(): Promise<void> {
     await frameworkLogger.log(
-      "-post-processor",
-      "-initializing-stringray-post-processor-",
+      "postprocessor",
+      "initialize",
       "info",
       { message: "🚀 Initializing 0xRay Post-Processor..." },
     );
@@ -144,8 +144,8 @@ export class PostProcessor {
     }
 
     await frameworkLogger.log(
-      "-post-processor",
-      "-post-processor-initialization-complete-",
+      "postprocessor",
+      "initialize-complete",
       "info",
       { message: "🎯 Post-Processor initialization complete" },
     );
@@ -163,8 +163,8 @@ export class PostProcessor {
     const sessionId = `postprocessor-${context.commitSha}-${Date.now()}`;
 
     await frameworkLogger.log(
-      "-post-processor",
-      "-starting-post-processor-loop-for-commit-context-c",
+      "postprocessor",
+      "loop-start",
       "info",
       {
         message: `🔄 Starting post-processor loop for commit: ${context.commitSha}`,
@@ -176,8 +176,8 @@ export class PostProcessor {
         await this.complianceChecker.validateArchitecturalCompliance(context);
     if (!compliancePassed) {
       await frameworkLogger.log(
-        "-post-processor",
-        "-architectural-compliance-validation-failed-blocki",
+        "postprocessor",
+        "compliance-validation-failed",
         "error",
         {
           message:
@@ -286,8 +286,8 @@ export class PostProcessor {
             } catch (testError) {
               // Non-blocking - log but continue
               await frameworkLogger.log(
-                "-post-processor",
-                "-test-auto-creation-failed",
+                "postprocessor",
+                "test-auto-creation-failed",
                 "info",
                 {
                   message: `Test auto-creation failed for ${filePath}: ${testError}`,
@@ -313,8 +313,8 @@ export class PostProcessor {
         );
 
         await frameworkLogger.log(
-          "-post-processor",
-          "-codex-compliance-violations-detected-processor-ma",
+          "postprocessor",
+          "codex-compliance-violations-detected",
           "info",
           {
             message:
@@ -324,8 +324,8 @@ export class PostProcessor {
       }
     } catch (error) {
       await frameworkLogger.log(
-        "-post-processor",
-        "-codex-compliance-check-failed-continuing-with-com",
+        "postprocessor",
+        "codex-compliance-check-failed",
         "error",
         {
           message: "⚠️ Codex compliance check failed - continuing with commit",
@@ -357,8 +357,8 @@ export class PostProcessor {
       });
 
       await frameworkLogger.log(
-        "-post-processor",
-        "-post-processor-loop-completed-result-success-succ",
+        "postprocessor",
+        "loop-completed",
         "success",
         {
           message: `✅ Post-processor loop completed: ${result.success ? "SUCCESS" : "FAILED"}`,
@@ -409,8 +409,8 @@ export class PostProcessor {
       attempts++;
 
       await frameworkLogger.log(
-        "-post-processor",
-        "-monitoring-attempt-attempts-maxattempts-for-conte",
+        "postprocessor",
+        "monitoring-attempt",
         "info",
         {
           message: `🔍 Monitoring attempt ${attempts}/${maxAttempts} for ${context.commitSha}`,
@@ -426,8 +426,8 @@ export class PostProcessor {
 
       if (monitoringResult.overallStatus === "success") {
         await frameworkLogger.log(
-          "-post-processor",
-          "-ci-cd-pipeline-successful-post-processor-complete",
+          "postprocessor",
+          "pipeline-success",
           "success",
           { message: "✅ CI/CD pipeline successful - post-processor complete" },
         );
@@ -593,8 +593,8 @@ export class PostProcessor {
       const analysis =
         await this.failureAnalysisEngine.analyzeFailure(monitoringResult);
       await frameworkLogger.log(
-        "-post-processor",
-        "-analysis-complete-analysis-category-analysis-seve",
+        "postprocessor",
+        "analysis-complete",
         "info",
         {
           message: `🔍 Analysis complete: ${analysis.category} (${analysis.severity}) - ${analysis.rootCause}`,
@@ -605,8 +605,8 @@ export class PostProcessor {
 
       if (fixResult.success && fixResult.appliedFixes.length > 0) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-fixresult-appliedfixes-length-fix-es-applied-succ",
+          "postprocessor",
+          "fixes-applied",
           "success",
           {
             message: `🔧 ${fixResult.appliedFixes.length} fix(es) applied successfully`,
@@ -622,8 +622,8 @@ export class PostProcessor {
 
         if (validationPassed) {
           await frameworkLogger.log(
-            "-post-processor",
-            "-fix-validation-passed-redeploying-",
+            "postprocessor",
+            "fix-validation-passed",
             "success",
             { message: "✅ Fix validation passed - redeploying..." },
           );
@@ -651,14 +651,14 @@ export class PostProcessor {
 
       if (escalationResult) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-escalation-triggered-escalationresult-level-",
+          "postprocessor",
+          "escalation-triggered",
           "info",
           { message: `🚨 Escalation triggered: ${escalationResult.level}` },
         );
         await frameworkLogger.log(
-          "-post-processor",
-          "-reason-escalationresult-reason-",
+          "postprocessor",
+          "escalation-reason",
           "info",
           { message: `   Reason: ${escalationResult.reason}` },
         );
@@ -712,8 +712,8 @@ export class PostProcessor {
     jobId: string,
   ): Promise<void> {
     await frameworkLogger.log(
-      "-post-processor",
-      "-executing-redeployment-with-fixes-",
+      "postprocessor",
+      "redeploy-start",
       "info",
       { message: "🔄 Executing redeployment with fixes..." },
     );
@@ -725,8 +725,8 @@ export class PostProcessor {
 
     if (redeployResult.success) {
       await frameworkLogger.log(
-        "-post-processor",
-        "-redeployment-successful-redeployresult-deployment",
+        "postprocessor",
+        "redeploy-success",
         "success",
         {
           message: `✅ Redeployment successful: ${redeployResult.deploymentId}`,
@@ -763,8 +763,8 @@ export class PostProcessor {
     attempts: number,
   ): Promise<void> {
     await frameworkLogger.log(
-      "-post-processor",
-      "-escalating-to-manual-intervention-",
+      "postprocessor",
+      "escalate-manual",
       "info",
       { message: "🚨 Escalating to manual intervention" },
     );
@@ -788,10 +788,10 @@ export class PostProcessor {
 
     // TODO: Send notifications to development team
     await frameworkLogger.log(
-      "-post-processor",
-      "-escalation-report-created-report",
+      "postprocessor",
+      "escalation-report-created",
       "info",
-      { message: "📋 Escalation report created:", report },
+      { message: "📋 Escalation report created", report },
     );
   }
 
@@ -803,8 +803,8 @@ export class PostProcessor {
     const delay = baseDelay * Math.pow(2, attempt - 1);
 
     await frameworkLogger.log(
-      "-post-processor",
-      "-waiting-delay-ms-before-retry-attempt-attempt-1-",
+      "postprocessor",
+      "wait-before-retry",
       "info",
       { message: `⏳ Waiting ${delay}ms before retry attempt ${attempt + 1}` },
     );

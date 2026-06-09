@@ -8,8 +8,8 @@ export class ArchitecturalComplianceChecker {
   ): Promise<boolean> {
     try {
       await frameworkLogger.log(
-        "-post-processor",
-        "-validating-architectural-compliance-",
+        "postprocessor",
+        "compliance-validate",
         "info",
         { message: "🏗️ Validating architectural compliance..." },
       );
@@ -18,8 +18,8 @@ export class ArchitecturalComplianceChecker {
       const integrityCheck = await this.checkSystemIntegrity(context);
       if (!integrityCheck.passed) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-system-integrity-violation-integritycheck-message",
+          "postprocessor",
+          "system-integrity-violation",
           "error",
           {
             message: `❌ System integrity violation: ${integrityCheck.message}`,
@@ -44,8 +44,8 @@ export class ArchitecturalComplianceChecker {
       const integrationCheck = await this.checkIntegrationTesting(context);
       if (!integrationCheck.passed) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-integration-testing-violation-integrationcheck-me",
+          "postprocessor",
+          "integration-testing-violation",
           "error",
           {
             message: `❌ Integration testing violation: ${integrationCheck.message}`,
@@ -70,8 +70,8 @@ export class ArchitecturalComplianceChecker {
       const pathCheck = await this.checkPathResolution(context);
       if (!pathCheck.passed) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-path-resolution-violation-pathcheck-message-",
+          "postprocessor",
+          "path-resolution-violation",
           "error",
           { message: `❌ Path resolution violation: ${pathCheck.message}` },
         );
@@ -94,8 +94,8 @@ export class ArchitecturalComplianceChecker {
       const completenessCheck = await this.checkFeatureCompleteness(context);
       if (!completenessCheck.passed) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-feature-completeness-violation-completenesscheck-",
+          "postprocessor",
+          "feature-completeness-violation",
           "error",
           {
             message: `❌ Feature completeness violation: ${completenessCheck.message}`,
@@ -121,8 +121,8 @@ export class ArchitecturalComplianceChecker {
         await this.checkPathAnalysisGuidelines(context);
       if (!pathGuidelinesCheck.passed) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-path-analysis-guidelines-violation-pathguidelines",
+          "postprocessor",
+          "path-analysis-guidelines-violation",
           "error",
           {
             message: `❌ Path analysis guidelines violation: ${pathGuidelinesCheck.message}`,
@@ -144,16 +144,16 @@ export class ArchitecturalComplianceChecker {
       }
 
       await frameworkLogger.log(
-        "-post-processor",
-        "-all-architectural-compliance-checks-passed-",
+        "postprocessor",
+        "compliance-all-passed",
         "success",
         { message: "✅ All architectural compliance checks passed" },
       );
       return true;
     } catch (error) {
       await frameworkLogger.log(
-        "-post-processor",
-        "-architectural-compliance-validation-failed-error-",
+        "postprocessor",
+        "compliance-validation-failed",
         "error",
         {
           message: `❌ Architectural compliance validation failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -387,7 +387,7 @@ All path violations will be automatically detected and blocked.
 `;
 
     // Log the comprehensive guidelines notification for AIs
-    await frameworkLogger.log("-post-processor", "guidelinesmessage", "info", {
+    await frameworkLogger.log("postprocessor", "guidelines-message", "info", {
       message: guidelinesMessage,
     });
 
@@ -416,8 +416,8 @@ All path violations will be automatically detected and blocked.
   ): Promise<boolean> {
     try {
       await frameworkLogger.log(
-        "-post-processor",
-        "-calling-agentname-skillname-to-fix-violationtype-",
+        "postprocessor",
+        "calling-agent-for-fix",
         "info",
         {
           message: `🔧 Calling ${agentName} (${skillName}) to fix: ${violationType}`,
@@ -447,8 +447,8 @@ All path violations will be automatically detected and blocked.
       );
 
       await frameworkLogger.log(
-        "-post-processor",
-        "-agent-agentname-completed-fix-attempt-for-violati",
+        "postprocessor",
+        "agent-fix-attempt-complete",
         "success",
         {
           message: `✅ Agent ${agentName} completed fix attempt for ${violationType}`,
@@ -459,16 +459,16 @@ All path violations will be automatically detected and blocked.
       const fixed = await this.revalidateAfterFix(violationType, context);
       if (fixed) {
         await frameworkLogger.log(
-          "-post-processor",
-          "-violationtype-violation-fixed-by-agentname-",
+          "postprocessor",
+          "violation-fixed",
           "info",
           { message: `🎉 ${violationType} violation fixed by ${agentName}` },
         );
         return true;
       } else {
         await frameworkLogger.log(
-          "-post-processor",
-          "-violationtype-violation-not-fixed-by-agentname-",
+          "postprocessor",
+          "violation-not-fixed",
           "error",
           {
             message: `❌ ${violationType} violation not fixed by ${agentName}`,
@@ -478,8 +478,8 @@ All path violations will be automatically detected and blocked.
       }
     } catch (error) {
       await frameworkLogger.log(
-        "-post-processor",
-        "-failed-to-call-agent-agentname-for-violationtype-",
+        "postprocessor",
+        "agent-call-failed",
         "error",
         {
           message: `❌ Failed to call agent ${agentName} for ${violationType}: ${error instanceof Error ? error.message : String(error)}`,
