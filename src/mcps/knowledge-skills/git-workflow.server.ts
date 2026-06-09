@@ -101,7 +101,7 @@ class XrayGitWorkflowServer extends XrayKnowledgeSkillBase {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayGitWorkflowServer();
-  server.run("git-workflow").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("git-workflow").catch((err) => { frameworkLogger.log("git-workflow", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export default XrayGitWorkflowServer;

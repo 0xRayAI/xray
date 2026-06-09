@@ -1013,7 +1013,7 @@ Sitemap: ${baseUrl}/sitemap.xml`;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new SEOSpecialistServer();
-  server.run("seo-consultant.server").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("seo-consultant.server").catch((err) => { frameworkLogger.log("seo-consultant", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { SEOSpecialistServer };

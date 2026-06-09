@@ -8,6 +8,7 @@
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 class MarketingExpertServer extends XrayKnowledgeSkillBase {
   constructor() {
@@ -369,7 +370,7 @@ class MarketingExpertServer extends XrayKnowledgeSkillBase {
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new MarketingExpertServer();
-  server.run("growth-strategist");
+  server.run("growth-strategist").catch((err) => { frameworkLogger.log("growth-strategist", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { MarketingExpertServer };

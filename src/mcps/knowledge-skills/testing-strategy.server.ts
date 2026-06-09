@@ -1080,7 +1080,7 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayTestingStrategyServer();
-  server.run("testing-strategy").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("testing-strategy").catch((err) => { frameworkLogger.log("testing-strategy", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export default XrayTestingStrategyServer;

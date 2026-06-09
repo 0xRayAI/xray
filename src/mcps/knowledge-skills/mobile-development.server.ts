@@ -532,7 +532,7 @@ class HomePage extends StatelessWidget {
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new XrayMobileDevelopmentServer();
-  server.run("mobile-development.server").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("mobile-development.server").catch((err) => { frameworkLogger.log("mobile-development", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { XrayMobileDevelopmentServer };

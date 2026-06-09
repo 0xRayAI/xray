@@ -1177,7 +1177,7 @@ class XrayTestingBestPracticesServer extends XrayKnowledgeSkillBase {
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayTestingBestPracticesServer();
-  server.run("testing-best-practices").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("testing-best-practices").catch((err) => { frameworkLogger.log("testing-best-practices", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { XrayTestingBestPracticesServer };

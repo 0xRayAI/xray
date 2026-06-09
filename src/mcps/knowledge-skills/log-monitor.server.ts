@@ -9,6 +9,7 @@
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface LogEntry {
   timestamp: string;
@@ -585,7 +586,7 @@ ${analysis.recommendations.map((r) => `- ${r}`).join("\n")}
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new LogMonitorServer();
-  server.run("log-monitor");
+  server.run("log-monitor").catch((err) => { frameworkLogger.log("log-monitor", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { LogMonitorServer };

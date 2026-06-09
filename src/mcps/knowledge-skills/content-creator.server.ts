@@ -8,6 +8,7 @@
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 class SEOCopywriterServer extends XrayKnowledgeSkillBase {
   constructor() {
@@ -256,7 +257,7 @@ class SEOCopywriterServer extends XrayKnowledgeSkillBase {
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new SEOCopywriterServer();
-  server.run("content-creator");
+  server.run("content-creator").catch((err) => { frameworkLogger.log("content-creator", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { SEOCopywriterServer };

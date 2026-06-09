@@ -1366,7 +1366,7 @@ class XrayDocumentationGenerationServer extends XrayKnowledgeSkillBase {
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayDocumentationGenerationServer();
-  server.run("documentation-generation.server").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("documentation-generation.server").catch((err) => { frameworkLogger.log("tech-writer", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { XrayDocumentationGenerationServer };
