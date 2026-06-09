@@ -6,6 +6,7 @@
  */
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -1078,7 +1079,7 @@ class XrayCodeReviewServer extends XrayKnowledgeSkillBase {
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayCodeReviewServer();
-  server.run("code-review").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("code-review").catch((err) => { frameworkLogger.log("code-review", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { XrayCodeReviewServer };

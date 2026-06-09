@@ -90,12 +90,7 @@ vi.mock("../../security/security-headers.js", () => ({
   },
 }));
 
-// Mock security auditor (used by finalizeSecurityIntegration)
-vi.mock("../../security/security-auditor.js", () => ({
-  SecurityAuditor: vi.fn().mockImplementation(() => ({
-    auditProject: vi.fn().mockResolvedValue({ score: 95, issues: [] }),
-  })),
-}));
+// Security auditor consolidated to MCP; no longer direct import (mock removed)
 
 // Mock codex injector (used by activateCodexCompliance)
 vi.mock("../../core/codex-injector.js", () => ({

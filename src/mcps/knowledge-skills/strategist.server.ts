@@ -1,4 +1,5 @@
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
@@ -188,9 +189,7 @@ const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new StrategistServer();
   server.run("mcp-strategist").catch((error) => {
-    if (typeof error === "object" && error !== null && "message" in error) {
-      console.error(error);
-    }
+    frameworkLogger.log("strategist", "run", "error", { error: error instanceof Error ? error.message : String(error) });
   });
 }
 

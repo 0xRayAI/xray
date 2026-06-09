@@ -10,6 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface BugReport {
   id: string;
@@ -589,7 +590,7 @@ class BugTriageSpecialistServer extends XrayKnowledgeSkillBase {
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new BugTriageSpecialistServer();
-  server.run("bug-triage-specialist");
+  server.run("bug-triage-specialist").catch((err) => { frameworkLogger.log("bug-triage-specialist", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { BugTriageSpecialistServer };

@@ -6,9 +6,9 @@
  */
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface DatabaseSchema {
   tables: TableSchema[];
@@ -1147,7 +1147,7 @@ class XrayDatabaseDesignServer extends XrayKnowledgeSkillBase {
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayDatabaseDesignServer();
-  server.run("database-design").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("database-design").catch((err) => { frameworkLogger.log("database-design", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { XrayDatabaseDesignServer };

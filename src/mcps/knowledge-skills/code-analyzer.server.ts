@@ -11,6 +11,7 @@
  */
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -551,5 +552,5 @@ class CodeAnalyzerServer extends XrayKnowledgeSkillBase {
 
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) { new CodeAnalyzerServer().run("code-analyzer.server").catch((err) => { console.error("MCP server failed:", err); }); }
+if (import.meta.url === `file://${process.argv[1]}`) { new CodeAnalyzerServer().run("code-analyzer.server").catch((err) => { frameworkLogger.log("code-analyzer", "run", "error", { error: err instanceof Error ? err.message : String(err) }); }); }
 export default CodeAnalyzerServer;

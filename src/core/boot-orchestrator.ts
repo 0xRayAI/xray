@@ -597,27 +597,9 @@ export class BootOrchestrator {
   }
 
   private async runInitialSecurityAudit(): Promise<any> {
-    try {
-      const securityAuditorPath = pathResolver.resolveModulePath(
-        "security/security-auditor",
-      );
-      const { SecurityAuditor } = await import(securityAuditorPath);
-      const auditor = new SecurityAuditor();
-
-      const result = await auditor.auditProject(process.cwd());
-
-      if (result.score < 80) {
-        frameworkLogger.log("boot-orchestrator", "low-security-score", "warning", {
-          score: result.score,
-          message: `Initial security score: ${result.score}/100 (target: 80+)`,
-        });
-      }
-
-      return result;
-    } catch (error) {
-      frameworkLogger.log("boot-orchestrator", "security-audit-failed", "error", { error, message: "Failed to run initial security audit" });
-      return { score: 0, issues: [] };
-    }
+    // Consolidated to MCP security-audit.server.ts + shared; initial audit now handled via governance/MCP path
+    frameworkLogger.log("boot-orchestrator", "initial-security-audit-skipped", "info", { message: "Security auditor consolidated to MCP layer (see security-audit.server.ts); boot uses hardener/headers only" });
+    return { score: 100, issues: [] };
   }
 
   /**

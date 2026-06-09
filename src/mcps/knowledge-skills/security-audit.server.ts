@@ -6,6 +6,7 @@
  */
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -1139,7 +1140,7 @@ class XraySecurityAuditServer extends XrayKnowledgeSkillBase {
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XraySecurityAuditServer();
-  server.run("security-audit").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("security-audit").catch((err) => { frameworkLogger.log("security-audit", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { XraySecurityAuditServer };

@@ -6,6 +6,7 @@
  */
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface RefactoringOpportunity {
   type:
@@ -973,7 +974,7 @@ class XrayRefactoringStrategiesServer extends XrayKnowledgeSkillBase {
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayRefactoringStrategiesServer();
-  server.run("refactoring-strategies").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("refactoring-strategies").catch((err) => { frameworkLogger.log("refactoring-strategies", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export { XrayRefactoringStrategiesServer };

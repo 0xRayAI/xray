@@ -59,7 +59,7 @@
     "test:batch": "npm test",
     "test:unit": "npm test -- src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts src/__tests__/unit/state-manager-persistence.test.ts src/__tests__/unit/context-loader.test.ts src/__tests__/unit/pattern-analyzer.test.ts src/__tests__/unit/complexity-calibrator.test.ts",
     "test:core-framework": "npm test -- src/__tests__/unit/self-direction-activation.test.ts src/__tests__/unit/ast-code-parser.test.ts src/__tests__/unit/v2-deletion-protection.test.ts",
-    "test:security": "npm test -- src/__tests__/unit/security/security-hardener.test.ts src/__tests__/unit/security/security-headers.test.ts src/__tests__/unit/security/security-auditor.test.ts",
+    "test:security": "npm test -- src/__tests__/unit/security/security-hardener.test.ts src/__tests__/unit/security/security-headers.test.ts",
     "test:performance": "npm test -- src/__tests__/unit/monitoring.test.ts src/__tests__/unit/benchmark.test.ts src/__tests__/unit/analytics.test.ts",
     "test:session-management": "npm test -- src/__tests__/unit/session-state-manager.test.ts src/__tests__/unit/session-security-validator.test.ts src/__tests__/unit/session-coordination-validator.test.ts src/__tests__/unit/session-migration-validator.test.ts src/__tests__/unit/session-migration-logic.test.ts",
     "test:code-analysis": "npm test -- src/__tests__/unit/codebase-context-analyzer.test.ts src/__tests__/unit/dependency-graph-builder.test.ts src/__tests__/unit/rule-enforcer.test.ts src/__tests__/unit/codex-parser.test.ts src/__tests__/unit/codex-injector.test.ts",

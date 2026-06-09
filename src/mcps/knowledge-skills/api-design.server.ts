@@ -109,7 +109,7 @@ class XrayApiDesignServer extends XrayKnowledgeSkillBase {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayApiDesignServer();
-  server.run("api-design").catch((err) => { console.error("MCP server failed:", err); });
+  server.run("api-design").catch((err) => { frameworkLogger.log("api-design", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
 }
 
 export default XrayApiDesignServer;
