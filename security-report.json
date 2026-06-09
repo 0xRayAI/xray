@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-06-09T13:42:06.471Z",
+  "duration": 751,
+  "tools": {
+    "npmAudit": [],
+    "trivy": [],
+    "eslintSecurity": [],
+    "dependencyCheck": []
+  },
+  "summary": {
+    "totalVulnerabilities": 0,
+    "bySeverity": {},
+    "byTool": {
+      "npmAudit": 0,
+      "trivy": 0,
+      "eslintSecurity": 0,
+      "dependencyCheck": 0
+    }
+  },
+  "recommendations": [
+    "🔍 Run regular security scans and keep dependencies updated",
+    "📋 Review security policies and implement security headers"
+  ],
+  "compliant": true
+}
