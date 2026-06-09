@@ -23,7 +23,6 @@ beforeAll(() => {
   // Set up test environment
   process.env.NODE_ENV = "test";
   process.env.XRAY_TEST_MODE = "true";
-   = "true";
 
   // Create required directories for tests
   const fs = require("fs");
