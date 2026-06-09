@@ -75,40 +75,285 @@ v3 Nucleus ───────────────────────
 - **Codex** — 68 terms, SSOT, enforced.
 - **Consumer verification loop** — fresh tmp dir + real published `npm i 0xray@X.Y.Z` (not tgz from cwd) + per-plugin installs + the exact shipped E2E scripts + persistent activity.log monitoring + sub-agent triage. Proven at 2.1.4 for all 4 bridges. Every v3 piece must pass this gate with zero tolerance (harden remaining parse tolerances in Phase 0).
 
-## Roadmap
+## Build Plan
 
-### Phase 0 — Foundation (current)
-**Recommended first attack (Phase 0.1): Extract / surface the pure kernel call as the shared `handleGovernRequest` (done) + align surfaces to the standards.**
+Worktree: `../xray-v3` (branch `v3-nucleus`)
 
-MCP is the new standard (parallel to Dynamo as the governance standard). The canonical way to call the nucleus is therefore via the existing first-class MCP tools in the governance MCP server (`govern_proposals`, `govern_reflection`). That server already delegates directly to `getGovernanceService()` and already supports both stdio *and* Streamable HTTP (`/mcp` endpoint via the MCP SDK).
+### Dependency Graph
 
-The thin semantic `POST /govern` (direct `GovernanceResponse` JSON, no full MCP protocol) is the valuable *convenience adapter* for non-MCP callers (curl, CI, simple agents, the 4 bridges in some paths). We landed the pure handler + small Express adapter in `src/nucleus/govern-http.ts` as the smallest validating slice — it reuses the exact same service/types and follows the APITrigger pattern.
+```
+Phase 0 ───────────────────────────────────
+  0.1 ──[x] POST /govern convenience adapter
+  0.2 ──[ ] Tests for handleGovernRequest ──────────────┐
+  0.3 ──[ ] MCP surface audit (governance.server.ts)    │
+  0.4 ──[ ] E2E tolerance hardening (Grok/Hermes) ──────┤
+  0.5 ──[ ] PostProcessor MetamorphosisEngine interface  │
+  0.6 ──[ ] Self-proposal pipeline spec                  │
+  ├──────────────────────────────────────────────────────┘
+  ▼
+Phase 1 ───────────────────────────────────
+  1.1 ──[ ] Kernel facade (src/nucleus/kernel.ts)
+  1.2 ──[ ] Dynamic skill loading (in-process-skill-registry)
+  1.3 ──[ ] MCP Streamable HTTP migration
+  1.4 ──[ ] CLI collapse to xray govern
+  ├──────────────────────────────────────────────────────┘
+  ▼
+Phase 2 ───────────────────────────────────
+  2.1 ──[ ] Metamorphosis resonance scoring
+  2.2 ──[ ] First self-proposal (activity.log → proposal)
+  2.3 ──[ ] Verification substrate gate
+  ├──────────────────────────────────────────────────────┘
+  ▼
+Phase 3 ───────────────────────────────────
+  3.1-3.4 Release
+```
 
-- [x] Prototype direct semantic `POST /govern` convenience (handler + adapter in `src/nucleus/govern-http.ts`)
-- [ ] Align / extract a minimal "nucleus governance MCP" (or keep the existing governance.server.ts as the standard bearer) so the kernel is obviously callable as MCP
-- [ ] Harden e2e tolerances to zero (no skips in clean install)
-- [ ] Generalize PostProcessor as metamorphosis engine skeleton
-- [ ] Pipe activity.log into inference-cycle for self-proposals
+### Phase 0 — Foundation
 
-(The MCP surface is the standard; the direct HTTP is the ergonomic adapter. Both must stay green under the consumer verification loop.)
+**Theme**: Validate the nucleus concept with real code. Zero risk to the federation. No architectural changes to existing subsystems.
+
+---
+
+#### 0.1 [x] `POST /govern` semantic convenience adapter
+
+- **Files**: `src/nucleus/govern-http.ts`
+- **Contents**: `handleGovernRequest()` pure handler + `GovernHTTPAdapter` Express wrapper
+- **Integration**: Standalone file, not wired into any process yet. Compiles, zero consumers.
+- **Done when**: Compiles, imports are clean, no lint errors. ✓
+
+---
+
+#### 0.2 [ ] Unit tests for `handleGovernRequest`
+
+- **Files**: `src/nucleus/__tests__/govern-http.test.ts`
+- **What to test**:
+  - Rejects missing/null/empty body with `"proposals" array is required`
+  - Rejects body with non-array proposals
+  - Calls `getGovernanceService().govern()` with correctly merged options
+  - Caller-supplied `requireExternalDynamo` overrides request-level option
+  - Logs `govern-request-received` and `govern-response` via frameworkLogger
+- **What NOT to test**: Express listener, HTTP integration, health endpoint (those are integration-level)
+- **Done when**: `npx vitest run src/nucleus/` passes, handler coverage > 80%
+- **Estimate**: 0.5 day
+
+---
+
+#### 0.3 [ ] MCP surface audit
+
+- **Files**: `src/mcps/governance.server.ts` (read-only audit)
+- **Task**: Confirm the governance MCP server already exposes `govern_proposals` / `govern_reflection` tools that delegate to `getGovernanceService()`. Document the existing surface as the canonical MCP path.
+- **If confirmed**: No code change. Mark done.
+- **If gap found**: Extract shared handler or align import.
+- **Done when**: A comment or doc note confirms the MCP surface is the standard, and the checklist item links to the relevant lines in `governance.server.ts`.
+- **Estimate**: 0.25 day (audit only)
+
+---
+
+#### 0.4 [ ] E2E tolerance hardening
+
+- **Files**:
+  - `scripts/test/test-grok-cli-e2e.mjs` (fix skip conditions)
+  - `scripts/test/test-hermes-e2e.mjs` (fix skip conditions)
+- **Task**: Identify and fix the parse tolerances that cause skips in fresh consumer envs. The Grok/Hermes E2Es have minor env-specific parse issues that prevent 100% pass rate.
+- **Done when**: All 4 bridge E2Es pass 100% with 0 skips in a fresh `npm i 0xray@latest` in an isolated tmp dir.
+- **Estimate**: 1-2 days
+
+---
+
+#### 0.5 [ ] PostProcessor MetamorphosisEngine interface
+
+- **Files**:
+  - `src/postprocessor/metamorphosis/MetamorphosisEngine.ts`
+  - `src/postprocessor/metamorphosis/index.ts`
+  - `src/postprocessor/PostProcessor.ts` (amend constructor, optional engine param)
+- **Interface**:
+  ```ts
+  export interface MetamorphosisEngine {
+    name: string;
+    onPhase?(phase: string, context: unknown): Promise<void>;
+    onProposal?(proposal: MetamorphosisProposal): Promise<void>;
+  }
+  ```
+- **Integration**: PostProcessor accepts optional `MetamorphosisEngine[]` in constructor. Each engine gets lifecycle hooks (`onPhase`, `onProposal`). No-op when none configured.
+- **Done when**: Interface exists, PostProcessor compiles with optional engine array, no behavioral change.
+- **Estimate**: 0.5 day
+
+---
+
+#### 0.6 [ ] Self-proposal pipeline spec
+
+- **Files**: `docs/architecture/self-proposal-pipeline.md`
+- **What it defines**:
+  - **Reader**: How activity.log entries are consumed (tail, batch, interval?)
+  - **Analyzer**: How entries map to semantic patterns (existing `semantic-patterns.ts`? New?)
+  - **Generator**: How patterns become GovernanceProposals (format, metadata)
+  - **Governance gate**: Full 3-agent + Dynamo deliberation
+  - **Apply**: Deploy-verifier applies approved self-changes
+  - **Safety**: Rollback strategy, max-change-rate limits, human override
+- **Done when**: Spec filed and reviewed by at least one other developer
+- **Estimate**: 1 day
+
+---
 
 ### Phase 1 — Nucleus Extraction
-- [ ] Extract kernel: governance-service + governance-core + thinDispatch + enforcer as standalone importable core
-- [ ] Make skills load dynamically (leverage in-process skill registry + knowledge-skill-base)
-- [ ] Promote the semantic HTTP convenience (`/govern`) and ensure the MCP (Streamable HTTP + stdio) surface is the obvious first-class standard for the nucleus
-- [ ] Collapse CLI to `xray govern` as primary command
+
+**Theme**: Make the kernel importable as a standalone unit. Surfaces become adapters. Federation becomes plugin set.
+
+**Pre-requisite**: All Phase 0 items closed. Consumer E2Es green at 100%.
+
+---
+
+#### 1.1 [ ] Kernel facade (`src/nucleus/kernel.ts`)
+
+- **Goal**: A single entry point that exports the kernel's capabilities without pulling in the federation.
+- **Challenge**: `governance-service.ts` directly imports `mcpClientManager`, `callInProcessSkill`, and `getGovernanceIntegration` — all federation-coupled.
+- **Approach**: Create `src/nucleus/kernel.ts` that wraps the facade pattern:
+  ```ts
+  // src/nucleus/kernel.ts
+  export async function govern(req: GovernanceRequest): Promise<GovernanceResponse>
+  export async function orchestrate(task: OrchestrationRequest): Promise<OrchestrationResult>
+  export async function enforce(code: EnforcementRequest): Promise<EnforcementResult>
+  ```
+  Initially delegates to existing services. Later, extract dependencies behind interfaces.
+- **Done when**: `src/nucleus/kernel.ts` exports these three functions with clean types, can be imported without pulling in `src/mcps/` tree.
+- **Estimate**: 2-3 days (dependency untangling is the work)
+
+---
+
+#### 1.2 [ ] Dynamic skill loading
+
+- **Files**: `src/mcps/in-process-skill-registry.ts` (refactor), `src/nucleus/plugin-registry.ts` (new)
+- **Goal**: Skills can be registered after boot, loaded from config, or discovered at runtime.
+- **Current state**: 3 skills hard-coded (code-review, security-audit, researcher). Lazy singleton pattern. Fixed at compile time.
+- **Target state**:
+  - `PluginRegistry` class with `register(skill: SkillPlugin)`, `load(path: string)`, `get(name: string)`
+  - Default plugin set loaded from config (the 25 knowledge-skill servers)
+  - Skills are discoverable by the thinDispatch orchestrator without importing server constructors
+- **Done when**: A new skill can be registered post-boot, and the default set loads from a config file instead of hard-coded imports.
+- **Estimate**: 3-5 days
+
+---
+
+#### 1.3 [ ] MCP Streamable HTTP migration
+
+- **Files**: `src/mcps/governance.server.ts`
+- **Goal**: Serve the governance MCP tools via MCP StreamableHTTP transport as the primary surface, Express as secondary.
+- **Current state**: Uses `runHttp()` with custom Express app and API key middleware.
+- **Target state**: Uses `@modelcontextprotocol/sdk` StreamableHTTPServerTransport on `/mcp`, Express adapter as fallback.
+- **Done when**: `governance.server.ts` serves on `/mcp` via Streamable HTTP, `govern_proposals`/`govern_reflection` work over both transports.
+- **Estimate**: 2-3 days
+
+---
+
+#### 1.4 [ ] CLI collapse to `xray govern`
+
+- **Files**:
+  - `src/cli/commands/govern.ts` (new, primary command)
+  - `src/cli/index.ts` (amend to add `govern` as primary, existing commands as aliases)
+- **Alias map**:
+  - `xray govern` → runs governance pipeline
+  - `xray govern --status` → `xray status`
+  - `xray govern --audit` → `xray security-audit`
+  - `xray govern --plugin-install` → `xray skill-install` / `xray mcp-install`
+  - Old commands still work directly (backward compat)
+- **Done when**: `xray govern --help` shows available subcommands, all old commands work as both direct calls and `--flag` aliases.
+- **Estimate**: 1-2 days
+
+---
 
 ### Phase 2 — Closed Loop
-- [ ] Metamorphosis resonance scoring on Dynamo
-- [ ] First self-proposal: inference-cycle reads activity.log, proposes processor change
-- [ ] Full governance pipeline gates self-evolution
-- [ ] Verification substrate blocks any change that breaks the loop
+
+**Theme**: The system proposes and applies its own evolution under full governance.
+
+**Pre-requisite**: Phase 1 complete. Kernel facade, dynamic skills, Streamable HTTP, collapsed CLI all shipping.
+
+---
+
+#### 2.1 [ ] Metamorphosis resonance scoring
+
+- **Files**: `src/governance/governance-service.ts` (amend), `src/governance/governance-core.ts` (amend)
+- **What it adds**: When `GovernanceRequest.proposals[i].metamorphosis: true`, Dynamo evaluates a new dimension: "Does this change increase the system's ability to govern complex future states?"
+- **Score**: `metamorphosisScore?: number` (0-1) added to `GovernanceResult`
+- **Threshold**: Only proposals with `metamorphosisScore >= 0.7` AND `overallDecision === 'approve'` can proceed to self-apply
+- **Done when**: A metamorphosis proposal receives a score, and low-scored proposals are rejected even if they pass the standard governance vote.
+- **Estimate**: 3-5 days (Dynamo integration is the variable)
+
+---
+
+#### 2.2 [ ] First self-proposal
+
+- **Files**: `src/inference/inference-cycle.ts` (amend), `src/postprocessor/metamorphosis/` (use skeleton from 0.5)
+- **Flow**:
+  1. Inference cycle reads recent activity.log entries via `MetamorphosisEngine.onPhase`
+  2. Maps entries to existing semantic patterns (`semantic-patterns.ts`)
+  3. Generates a `GovernanceProposal` (e.g., "add processor type X", "modify Y timeout")
+  4. Submits through full `govern()` pipeline with `metamorphosis: true`
+  5. If approved + score >= 0.7, applies via deploy-verifier
+- **Done when**: A real self-proposal is generated, passes governance, and is applied (or correctly rejected).
+- **Estimate**: 5-10 days (first-of-its-kind, discovery-driven)
+
+---
+
+#### 2.3 [ ] Verification substrate gate
+
+- **Files**: `scripts/verify-consumer.sh` (new), `xray/features.json` or similar config
+- **What it does**: Pre-commit / CI script that runs the full consumer verification loop:
+  1. `npm pack`
+  2. Fresh tmp dir
+  3. `npm i <tarball>`
+  4. Install all 4 bridges
+  5. Run all 4 E2E suites
+  6. Check activity.log for expected entries
+  7. Exit non-zero if any step fails
+- **Done when**: `npm run verify:consumer` exists, runs in < 5 min, blocks commits/E2Es that break the consumer gate.
+- **Estimate**: 1-2 days
+
+---
 
 ### Phase 3 — v3 Kernel Release
-- [ ] New docs, new Codex section on self-evolution
-- [ ] Long-running governed agent session verification
-- [ ] Third-party plugin API stable
-- [ ] v2 ←→ v3 migration path documented
+
+**Theme**: Ship v3 as the stable kernel release. New docs, new verification, migration path.
+
+**Pre-requisite**: Phase 2 complete. Self-evolution loop running under governance in production-like conditions for ≥ 2 weeks.
+
+#### 3.1 [ ] Codex section on self-evolution
+- Add Codex terms 69-72 covering self-evolution constraints
+- **Done when**: `xray/codex.json` has 72 terms, AGENTS.md references them
+
+#### 3.2 [ ] Long-running governed agent session verification
+- New E2E suite: run a governed agent session for 60+ minutes, verify the self-evolution loop produces valid proposals
+- **Done when**: Suite exists, passes in CI
+
+#### 3.3 [ ] Third-party plugin API stable
+- Document and freeze `PluginRegistry`, `SkillPlugin`, `MetamorphosisEngine` interfaces
+- **Done when**: Interfaces documented, changelog notes API stability
+
+#### 3.4 [ ] v2 → v3 migration path documented
+- What breaks: removed CLI commands, MCP server renames, config path changes
+- How to migrate: npm update, config migration script, deprecated command aliases
+- **Done when**: Migration guide filed at `docs/migration/v2-to-v3.md`
+
+---
+
+## Integration Points Summary
+
+| Component | Connects to | Mechanism |
+|-----------|-------------|-----------|
+| `src/nucleus/kernel.ts` | `governance-service.ts`, `thinDispatch`, `enforcer` | Direct import (Phase 1.1) |
+| `src/nucleus/govern-http.ts` | `getGovernanceService()` singleton | Direct import |
+| `governance.server.ts` (MCP) | `getGovernanceService()` singleton | Direct import (already wired) |
+| `MetamorphosisEngine[]` | `PostProcessor` lifecycle hooks | Constructor injection (Phase 0.5) |
+| `self-proposal pipeline` | `inference-cycle.ts` + `govern()` | Full governance flow (Phase 2.2) |
+| Plugin registry | `in-process-skill-registry.ts` + config | Dynamic registration (Phase 1.2) |
+| Consumer verification | All 4 bridges + E2Es + activity.log | Shell script + CI (Phase 2.3) |
+
+## What We Are NOT Doing (Anti-Goals)
+
+- Not rewriting the 25 knowledge-skill servers — they become the default plugin set
+- Not removing MCP — it becomes the standard surface
+- Not changing the Dynamo integration — it stays the external moat
+- Not breaking backward compat until Phase 3 (and even then, aliases)
+- Not adding a new process or daemon — the nucleus is a library you import
 
 ## Guiding Constraints (Codex-Compliant)
 - Every new capability must delete at least as much as it adds
