@@ -82,17 +82,17 @@ Worktree: `../xray-v3` (branch `v3-nucleus`)
 ### Dependency Graph
 
 ```
-Phase 0 ───────────────────────────────────
+Phase 0 ─────────────────────────────────── (COMPLETE)
   0.1 ──[x] POST /govern convenience adapter
-  0.2 ──[x] Tests for handleGovernRequest ──────────────┐
-  0.3 ──[ ] MCP surface audit (governance.server.ts)    │
-  0.4 ──[ ] E2E tolerance hardening (Grok/Hermes) ──────┤
-  0.5 ──[ ] PostProcessor MetamorphosisEngine interface  │
-  0.6 ──[ ] Self-proposal pipeline spec                  │
+  0.2 ──[x] Tests for handleGovernRequest
+  0.3 ──[x] MCP surface audit (governance.server.ts)
+  0.4 ──[x] E2E tolerance hardening (Grok/Hermes)
+  0.5 ──[x] PostProcessor MetamorphosisEngine interface
+  0.6 ──[x] Self-proposal pipeline spec
   ├──────────────────────────────────────────────────────┘
   ▼
 Phase 1 ───────────────────────────────────
-  1.1 ──[ ] Kernel facade (src/nucleus/kernel.ts)
+  1.1 ──[x] Kernel facade (src/nucleus/kernel.ts)
   1.2 ──[ ] Dynamic skill loading (in-process-skill-registry)
   1.3 ──[ ] MCP Streamable HTTP migration
   1.4 ──[ ] CLI collapse to xray govern
@@ -139,7 +139,7 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 0.3 [ ] MCP surface audit
+#### 0.3 [x] MCP surface audit
 
 - **Files**: `src/mcps/governance.server.ts` (read-only audit)
 - **Task**: Confirm the governance MCP server already exposes `govern_proposals` / `govern_reflection` tools that delegate to `getGovernanceService()`. Document the existing surface as the canonical MCP path.
@@ -150,7 +150,7 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 0.4 [ ] E2E tolerance hardening
+#### 0.4 [x] E2E tolerance hardening
 
 - **Files**:
   - `scripts/test/test-grok-cli-e2e.mjs` (fix skip conditions)
@@ -161,7 +161,7 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 0.5 [ ] PostProcessor MetamorphosisEngine interface
+#### 0.5 [x] PostProcessor MetamorphosisEngine interface
 
 - **Files**:
   - `src/postprocessor/metamorphosis/MetamorphosisEngine.ts`
@@ -181,7 +181,7 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 0.6 [ ] Self-proposal pipeline spec
+#### 0.6 [x] Self-proposal pipeline spec
 
 - **Files**: `docs/architecture/self-proposal-pipeline.md`
 - **What it defines**:
@@ -342,6 +342,7 @@ Phase 3 ────────────────────────
 |-----------|-------------|-----------|
 | `src/nucleus/kernel.ts` | `governance-service.ts`, `thinDispatch`, `enforcer` | Direct import (Phase 1.1) |
 | `src/nucleus/govern-http.ts` | `getGovernanceService()` singleton | Direct import |
+| `src/nucleus/kernel.ts` (facade) | Everything above + MetamorphosisEngine | Single recommended import for callers |
 | `governance.server.ts` (MCP) | `getGovernanceService()` singleton | Direct import (already wired) |
 | `MetamorphosisEngine[]` | `PostProcessor` lifecycle hooks | Constructor injection (Phase 0.5) |
 | `self-proposal pipeline` | `inference-cycle.ts` + `govern()` | Full governance flow (Phase 2.2) |

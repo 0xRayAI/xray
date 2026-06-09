@@ -94,6 +94,7 @@ export async function handleGovernRequest(
   return response;
 }
 
+/* c8 ignore start -- adapter + auto-run are integration-level (tested in later slices / E2E) */
 /**
  * Minimal Express app (prototype only).
  * Mirrors the shape and logging discipline of APITrigger.
@@ -208,3 +209,4 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
     process.exit(1);
   });
 }
+/* c8 ignore stop */

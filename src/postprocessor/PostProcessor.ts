@@ -34,6 +34,7 @@ import { PostProcessorReporter } from "./reporting/PostProcessorReporter.js";
 import { RegressionAnalysisService } from "./services/RegressionAnalysisService.js";
 import { ProcessorConfigLoader } from "./config/ProcessorConfigLoader.js";
 import { ArchitecturalComplianceChecker } from "./compliance/ArchitecturalComplianceChecker.js";
+import type { MetamorphosisEngine, MetamorphosisProposal } from "./metamorphosis/MetamorphosisEngine.js";
 
 export class PostProcessor {
   private config: PostProcessorConfig;
@@ -55,13 +56,16 @@ export class PostProcessor {
     api: APITrigger;
   };
   private complianceChecker: ArchitecturalComplianceChecker;
+  private metamorphosisEngines: MetamorphosisEngine[];
 
   constructor(
     private stateManager: XrayStateManager,
     private sessionMonitor: SessionMonitor | null = null,
     config: Partial<PostProcessorConfig> = {},
+    metamorphosisEngines?: MetamorphosisEngine[],
   ) {
     this.config = { ...defaultConfig, ...config };
+    this.metamorphosisEngines = metamorphosisEngines ?? [];
 
     // Initialize monitoring engine
     this.monitoringEngine = new PostProcessorMonitoringEngine(
@@ -97,6 +101,42 @@ export class PostProcessor {
 
     // Initialize architectural compliance checker
     this.complianceChecker = new ArchitecturalComplianceChecker();
+  }
+
+  /**
+   * Notify metamorphosis engines of a lifecycle phase.
+   * No-op when no engines are configured.
+   */
+  private async notifyPhase(phase: string, context: unknown): Promise<void> {
+    for (const engine of this.metamorphosisEngines) {
+      try {
+        await engine.onPhase?.(phase, context);
+      } catch (err) {
+        await frameworkLogger.log("postprocessor", "metamorphosis-phase-error", "error", {
+          engine: engine.name,
+          phase,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+  }
+
+  /**
+   * Notify metamorphosis engines of a generated proposal.
+   * No-op when no engines are configured.
+   */
+  private async notifyProposal(proposal: MetamorphosisProposal): Promise<void> {
+    for (const engine of this.metamorphosisEngines) {
+      try {
+        await engine.onProposal?.(proposal);
+      } catch (err) {
+        await frameworkLogger.log("postprocessor", "metamorphosis-proposal-error", "error", {
+          engine: engine.name,
+          proposalId: proposal.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
   }
 
   /**

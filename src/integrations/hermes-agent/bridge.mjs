@@ -42,6 +42,15 @@ import { homedir } from "os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Redirect console methods to stderr so only the final JSON result goes to stdout.
+// Any dynamically loaded module using console.log/info/debug/warn will then
+// write diagnostic output to stderr, keeping stdout clean for JSON.parse.
+const _stderrWrite = process.stderr.write.bind(process.stderr);
+console.log = (...args) => { _stderrWrite(args.join(' ') + '\n'); };
+console.info = (...args) => { _stderrWrite('[INFO] ' + args.join(' ') + '\n'); };
+console.debug = (...args) => { _stderrWrite('[DEBUG] ' + args.join(' ') + '\n'); };
+console.warn = (...args) => { _stderrWrite('[WARN] ' + args.join(' ') + '\n'); };
+
 // ── Framework components (lazy-loaded) ───────────────────────
 let ProcessorManager = null;
 let StrRayStateManager = null;
