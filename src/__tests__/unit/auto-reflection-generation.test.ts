@@ -112,7 +112,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
       },
       sinceRef: "v1.22.29",
       untilRef: "HEAD",
-      version: "2.0.1",
+      version: "2.1.1",
     });
 
     expect(content).toContain("Release Reflection");

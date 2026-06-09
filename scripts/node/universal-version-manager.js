@@ -147,7 +147,7 @@ function detectCodexInfo() {
       return { version: cver.startsWith("v") ? cver : `v${cver}`, termsCount: termCount, lastUpdated: new Date().toISOString().split("T")[0] };
     } catch {}
   }
-  return { version: "v2.0.0", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
+  return { version: "v2.1.1", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
 }
 
 const detectedCodex = detectCodexInfo();
@@ -155,9 +155,9 @@ const detectedCodex = detectCodexInfo();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "2.1.1",
+    version: "2.1.3",
       displayName: "xray: Self-Healing AI Governance OS",
-      lastUpdated: "2026-06-08",
+      lastUpdated: "2026-06-09",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },
@@ -346,29 +346,29 @@ const UPDATE_PATTERNS = [
     },
 
     // === BADGE AND COUNT PATTERNS ===
-    // Test count in docs badge (e.g., tests-2290-brightgreen)
+    // Test count in docs badge (e.g., tests-2282-brightgreen)
     {
       pattern: /tests-[0-9]+(?=-brightgreen)/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}`,
     },
-    // Test count in npm badge (e.g., tests-2290%20passed-brightgreen)
+    // Test count in npm badge (e.g., tests-2282%20passed-brightgreen)
     {
       pattern: /tests-[0-9,]+%20passed/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}%20passed`,
     },
-    // Test count in prose (e.g., "2,2290 Tests" or "2290 Tests" but NOT in badge URLs)
+    // Test count in prose (e.g., "2,2282 Tests" or "2282 Tests" but NOT in badge URLs)
     {
       pattern: /(\*\s*✅\s*)([0-9]{1,3},?[0-9]{3})(\s*Tests)/g,
       replacement: (match, p1, p2, p3) => {
         return `${p1}${OFFICIAL_VERSIONS.framework.tests}${p3}`;
       },
     },
-    // Test count in feature bullets (e.g., "✅ 2290 Tests")
+    // Test count in feature bullets (e.g., "✅ 2282 Tests")
     {
       pattern: /[0-9]+ Tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} Tests`,
     },
-    // Test count in config tree (e.g., "2290 tests")
+    // Test count in config tree (e.g., "2282 tests")
     {
       pattern: /[0-9]+ tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} tests`,
@@ -403,7 +403,7 @@ const UPDATE_PATTERNS = [
       pattern: /xray AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `xray AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 2.0.1")
+    // Footer bare version (e.g., "**Version**: 2.1.1")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,

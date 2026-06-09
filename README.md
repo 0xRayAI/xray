@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v2.1.2** — 42 agents · 44 skills · 16 MCPs servers · 68 codex terms · ~2,900 tests
+**v2.1.3** — 42 agents · 46 skills · 41 MCP servers · 68 codex terms · ~2,900 tests
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -24,6 +24,7 @@ npx 0xray status
 npx 0xray opencode install      # OpenCode (most common)
 npx 0xray grok install          # Grok CLI
 npx 0xray hermes install        # Hermes Agent
+npx 0xray openclaw install      # OpenClaw
 
 # Install starter skills (recommended)
 npx 0xray skill:install
@@ -61,7 +62,7 @@ AI coding assistants are powerful but unreliable. They hallucinate APIs, introdu
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Multi-agent review · SSOT  │
-│  16 MCPs skill servers deliberate proposals       │
+│  41 MCP servers (governance + knowledge skills) deliberate proposals │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  Task routing · Multi-agent coordination        │
@@ -87,7 +88,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | Platform | Install Command | What It Does |
 |----------|----------------|--------------|
 | **OpenCode** | `npx 0xray opencode install` | Installs as native plugin, seeds YML agent surfaces, merges configuration |
-| **Grok CLI** | `npx 0xray grok install` | Registers plugin + 16 MCPs servers (governance, skills, orchestrator, enforcer) |
+| **Grok CLI** | `npx 0xray grok install` | Registers plugin + full MCP surface (governance, skills, orchestrator, enforcer + knowledge skills) |
 | **Hermes Agent** | `npx 0xray hermes install` | Copies bridge plugin to `~/.hermes/plugins/` |
 | **OpenClaw** | `npx 0xray openclaw install` | Creates integration config at `.xray/config/openclaw.json` |
 
@@ -178,7 +179,7 @@ Every subsystem is configurable via `features.json` (located at `.opencode/xray/
 
 ```json
 {
-  "version": "2.0.1",
+  "version": "2.1.1",
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,
@@ -276,7 +277,7 @@ Install more skills anytime: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-0xRay is battle-tested with **~2,900 tests** across every subsystem:
+0xRay is battle-tested with **~2,2282 tests** across every subsystem:
 
 | Suite | Tests | Status |
 |-------|-------|--------|

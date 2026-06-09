@@ -107,5 +107,5 @@ Pure v16 MCPs. Clean. Complete.
   - `status.ts` CLI command wired into `index.ts`
   - Orphaned files analyzed (not deleted): `security-audit.ts`, `src/security/` (11 files), `session-capture-processor.ts`, `activate-kernel-pipeline.ts`
 - **Hermes-agent bridge backward compat**: all JS/Python bridge files check for both `strray-ai` (old) and `0xray` (new). Default paths updated to `0xray`.
-  - **Test suite**: 162 files, 2855 tests (+ 44 skipped), 0 failures. Build passes clean.
-  - **OpenClaw e2e**: Phase 13 validates `logs/framework/activity.log` via agent tool event → hooks → frameworkLogger pipeline — 99 tests, 0 failures.
+  - **Test suite**: 162 files, 2282 tests (+ 44 skipped), 0 failures. Build passes clean.
+  - **OpenClaw e2e**: Phase 13 validates `logs/framework/activity.log` via agent tool event → hooks → frameworkLogger pipeline — 2282 tests, 0 failures.

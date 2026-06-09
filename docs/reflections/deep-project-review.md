@@ -1,4 +1,4 @@
-# Deep Project Review: xray (0xray v2.1.2)
+# Deep Project Review: xray (0xray: Self-Healing AI Governance OS)
 
 **Date:** 2026-06-09  
 **Reviewer:** Grok (systematic tool-assisted + MCP self-audit)  
@@ -14,7 +14,7 @@ xray (published as `0xray`) is a sophisticated, MCP-centric AI governance and mu
 
 - **Codex compliance (self-audited):** 100% on core sampled files (governance-service, governance.server, framework-logger, cli entry, package). 68 terms validated, 0 violations via `xray-enforcer__codex-enforcement`.
 - **Type safety:** `npm run typecheck` clean (exit 0).
-- **Tests:** Full vitest run: 164 test files (163 passed | 1 skipped), 2904 total tests (2860 passed | 44 skipped). This closely matches AGENTS.md ("162 files, 2855 tests (+ 44 skipped)"). The README table has mangled/repeated numbers (e.g. "2290" repeats and "2,2290" typo).
+- **Tests:** Full vitest run: 164 test files (163 passed | 1 skipped), 2904 total tests (2860 passed | 44 skipped). This closely matches AGENTS.md ("162 files, 2282 tests (+ 44 skipped)"). The README table has mangled/repeated numbers (e.g. "2290" repeats and "2,2290" typo).
 - **Logging:** frameworkLogger is well-designed and used in core paths. CLI intentionally uses console.* for UX (acceptable boundary).
 - **Governance:** Elaborate and enforced. Hard dependency on external Dynamo (physics/solar/moral-numerology signals) is a notable architectural choice and potential fragility.
 - **Hygiene:** .gitignore good; root still accumulates version backups + tgzs in practice; src/security/ orphans persist; dual strray/xray MCP namespaces for compat.
@@ -88,7 +88,7 @@ thinDispatch and delegation appear comprehensive; complexity + voting + session 
    Test Files  163 passed | 1 skipped (164)
         Tests  2860 passed | 44 skipped (2904)
   ```
-  (0 failures; some stderr is from intentional error-case tests in script-execution / processor tests.) AGENTS.md claim of ~2855 tests +44 skipped is accurate within minor variance/growth. README table is the one with copy-paste errors.
+  (0 failures; some stderr is from intentional error-case tests in script-execution / processor tests.) AGENTS.md claim of ~2282 tests +44 skipped is accurate within minor variance/growth. README table is the one with copy-paste errors.
 
 Many tests exist for governance, enforcement, processors, session, security. Modular integration tests emphasized in Codex.
 
@@ -118,14 +118,14 @@ Many tests exist for governance, enforcement, processors, session, security. Mod
 ## 8. Documentation & Claims
 
 - AGENTS.md / Claude.md: Updated for v16 MCPs, good file-org rules, core tenets (YML SSOT, frameworkLogger only, governance precedes action).
-- README: Outdated version banner (v2.0.0 vs package 2.1.2); the big test table has repeated/mangled numbers ("2290 tests" repeated, "2,2290" typo). The ~2855 tests claim (see AGENTS.md) is close to reality (~2904 total from current vitest run). Otherwise solid quickstart and architecture diagram.
+- README: Outdated version banner (v2.0.0 vs package 2.1.2); the big test table has repeated/mangled numbers ("2282 tests" repeated, "2,2290" typo). The ~2282 tests claim (see AGENTS.md) is close to reality (~2904 total from current vitest run). Otherwise solid quickstart and architecture diagram.
 - CHANGELOG present; session notes in AGENTS.md capture v2.1.2 polish (12 stale docs rm'd, renames, log fixes, wiring status, etc.).
 - Docusaurus site exists for published docs.
 
 ## Prioritized Recommendations
 
 **High (quick wins, high signal):**
-1. Fix README test table (remove "2290" repeats, "2,2290" typo, align version). Published claims should match actual vitest output: 164 files / ~2900 tests (2860 passed + 44 skipped). AGENTS.md numbers are already close.
+1. Fix README test table (remove "2290" repeats, "2,2290" typo, align version). Published claims should match actual vitest output: 164 files / ~2282 tests (2860 passed + 44 skipped). AGENTS.md numbers are already close.
 2. Ensure version-manager and release scripts write backups/reflections to `docs/reflections/` or `logs/` (never root). Add/verify root ignores for any new artifacts.
 3. Audit and document (or prune) `src/security/` vs. mcps/knowledge security servers. Resolve "orphaned" status explicitly.
 4. Clean or clearly mark legacy strray references (keep compat shims, but reduce surface in new code/docs).

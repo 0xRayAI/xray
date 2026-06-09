@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [2.1.3] - 2026-06-09
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: normalize PostProcessor and related log keys/IDs to clean frameworkLogger pattern (postprocessor/*, no leading -, no strray remnants); aligns with codex/AGENTS 'frameworkLogger structured logging ONLY' (742a207da)
+- fix: add missing frameworkLogger imports to seo-consultant and tech-writer (post previous console fixes) (af8f7dc86)
+- fix: replace remaining console.error with frameworkLogger in MCP run catches for Codex compliance (6 + 3 no-catch cases) (cdabdeb15)
+
+### ♻️ Refactoring
+- refactor: wire security-audit CLI, port encryption into security-hardener, delete 5 orphaned files (1c9f41ef5)
+
+### 🧪 Tests
+- test: add openclaw e2e Phase 13 for agent tool event → frameworkLogger → activity.log (c4e30e853)
+
+### 🔧 Maintenance
+- chore: final post-fix normalization and verification pass (MCP, security, PostProcessor, logs) - all tests green, no regressions (8262754fe)
+- chore: ensure clean state post-subtract fixes and push verification (a16557a6a)
+
+### 🔎 Other Changes
+- docs(reflection): 4-plugin isolated npm-pack + tmp-dir + per-plugin npx install + e2e + subagent + log-monitor verification (grok/hermes/opencode/openclaw) (982aa8434)
+- subtract/simplify phase: MCP base class (39 servers) + fixes (console->frameworkLogger, stale refs in boot/test/package), security consolidation, PostProcessor decomposition, reflection update (0bd3b07a0)
+- v2.1.3 subtract & simplify phase (cdaefe2ed)
+
+---
+
 ## [2.1.1] - 2026-06-08
 
 ### 🔄 Changes
