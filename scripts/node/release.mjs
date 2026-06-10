@@ -154,9 +154,19 @@ async function main() {
   // Step 7: Publish (prepublishOnly runs prepare-consumer + build)
   step(7, 'Publish to npm');
   if (!dryRun) {
-    if (!run('npm publish --access public', `Publish 0xray@${newVersion}`)) {
-      log(`  ✗`, 'Publish failed — trying without scripts', RED);
-      if (!run('npm publish --access public --ignore-scripts', `Publish 0xray@${newVersion} (fallback)`)) {
+    const publishResult = run('npm publish --access public', `Publish 0xray@${newVersion}`);
+    if (!publishResult) {
+      // Check if the version was already published (non-fatal — previous attempt may have timed out)
+      try {
+        const published = execSync(`npm view 0xray@${newVersion} version`, { encoding: 'utf-8', timeout: 15000 }).trim();
+        if (published === newVersion) {
+          log(`  ✓`, `Already published 0xray@${newVersion}`, GREEN);
+        } else {
+          log(`  ✗`, 'Publish failed', RED);
+          process.exit(1);
+        }
+      } catch {
+        log(`  ✗`, 'Publish failed — cannot verify', RED);
         process.exit(1);
       }
     }
