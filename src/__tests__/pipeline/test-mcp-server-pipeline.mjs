@@ -33,7 +33,7 @@ console.log('=== MCP SERVER PIPELINE TEST ===\n');
 const MCP_SERVERS = [
   { name: 'AgentResolver', file: 'agent-resolver.ts' },
   { name: 'EnforcerTools', file: 'enforcer-tools.server.ts' },
-  { name: 'Orchestrator', file: 'orchestrator.server.ts' },
+  { name: 'Orchestrator', file: 'orchestrator/server.ts' },
   { name: 'ProcessorPipeline', file: 'processor-pipeline.server.ts' },
   { name: 'ArchitectTools', file: 'architect-tools.server.ts' },
   { name: 'Researcher', file: 'researcher.server.ts' },

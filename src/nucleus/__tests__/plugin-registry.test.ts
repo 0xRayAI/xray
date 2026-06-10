@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { pluginRegistry } from '../plugin-registry.js';
-import type { SkillPlugin } from '../plugin-registry.js';
+import type { SkillPlugin, SkillToolPlugin } from '../plugin-registry.js';
 
 vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: { log: vi.fn().mockResolvedValue(undefined) },
@@ -76,5 +76,53 @@ describe('PluginRegistry', () => {
     });
     expect(result).toBeDefined();
     expect(result.content).toBeDefined();
+  });
+
+  // --- Phase 3: SkillToolPlugin tests ---
+
+  it('registers and dispatches a multi-tool skill plugin', async () => {
+    const toolHandler = vi.fn().mockResolvedValue({ result: 'analyzed' });
+    const toolPlugin: SkillToolPlugin = {
+      name: 'test-analyzer',
+      callTool: toolHandler,
+    };
+
+    pluginRegistry.registerToolPlugin(toolPlugin);
+    expect(pluginRegistry.hasToolPlugin('test-analyzer')).toBe(true);
+    expect(pluginRegistry.listToolPlugins()).toContain('test-analyzer');
+
+    const result = await pluginRegistry.callSkillTool('test-analyzer', 'analyze-code', { file: 'test.ts' });
+    expect(toolHandler).toHaveBeenCalledWith('analyze-code', { file: 'test.ts' });
+    expect(result).toEqual({ result: 'analyzed' });
+  });
+
+  it('throws when calling an unregistered tool plugin', async () => {
+    await expect(
+      pluginRegistry.callSkillTool('nonexistent', 'tool', {}),
+    ).rejects.toThrow('No tool plugin registered: nonexistent');
+  });
+
+  it('lists multiple registered tool plugins', () => {
+    const alpha: SkillToolPlugin = { name: 'alpha', callTool: vi.fn() };
+    const beta: SkillToolPlugin = { name: 'beta', callTool: vi.fn() };
+
+    pluginRegistry.registerToolPlugin(alpha);
+    pluginRegistry.registerToolPlugin(beta);
+
+    const names = pluginRegistry.listToolPlugins();
+    expect(names).toContain('alpha');
+    expect(names).toContain('beta');
+  });
+
+  it('overwrites tool plugins on re-registration', () => {
+    const first: SkillToolPlugin = { name: 'overwrite-me', callTool: vi.fn().mockResolvedValue('first') };
+    const second: SkillToolPlugin = { name: 'overwrite-me', callTool: vi.fn().mockResolvedValue('second') };
+
+    pluginRegistry.registerToolPlugin(first);
+    pluginRegistry.registerToolPlugin(second);
+
+    // The latest registration wins
+    const result = pluginRegistry.callSkillTool('overwrite-me', 'tool', {});
+    expect(result).resolves.toBe('second');
   });
 });

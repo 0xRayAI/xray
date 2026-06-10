@@ -342,7 +342,7 @@ async function main() {
     }
 
     // Content inspection of the hook implementation (like OpenClaw/Hermes inspect hook code and logs)
-    assertContains(hookImpl, 'applyDecisionMatrix', 'pre-tool-use.js calls real Solar decision matrix');
+    assertContains(hookImpl, 'deriveResonance', 'pre-tool-use.js derives resonance locally');
     assertContains(hookImpl, 'Solar', 'pre-tool-use.js aware of Solar / decision matrix');
   }
 
@@ -356,7 +356,7 @@ async function main() {
   assertFileExists(govCore, 'governance-core.js (Dynamo Solar SSOT logic)');
 
   // Extra content validation (parity with other E2Es that inspect file contents)
-  assertContains(govCore, 'applyDecisionMatrix', 'governance-core contains applyDecisionMatrix (Solar decision matrix)');
+  assertContains(govCore, 'mergeVotes', 'governance-core contains mergeVotes (vote merging)');
   assertContains(govCore, 'Solar', 'governance-core references Solar SSOT');
 
   const researcherDir = path.join(distDir, 'skills', 'researcher');
@@ -520,8 +520,8 @@ async function main() {
     // Import governance-core directly to exercise the decision matrix (Solar SSOT)
     const corePath = path.join(distDir, 'governance', 'governance-core.js');
     const coreMod = await import(`file://${corePath}`);
-    if (typeof coreMod.applyDecisionMatrix === 'function' || coreMod.applyDecisionMatrix) {
-      pass('applyDecisionMatrix (Dynamo Solar SSOT) reachable from installed package');
+    if (typeof coreMod.mergeVotes === 'function' || coreMod.mergeVotes) {
+      pass('mergeVotes (Dynamo vote merging) reachable from installed package');
     }
   } catch (e) {
     skip('governance-core smoke', `import issue (non-blocking): ${e.message}`);
@@ -549,7 +549,7 @@ async function main() {
     const last = lines[lines.length - 1] || badResult.stdout;
     const badJson = JSON.parse(last);
     if (badJson.resonance < 0.75) pass('Hook derived low resonance on dangerous code');
-    if (badJson.solar_recommendation) pass(`Hook ran real applyDecisionMatrix → ${badJson.solar_recommendation}`);
+    if (badJson.solar_recommendation) pass(`Hook produced solar_recommendation → ${badJson.solar_recommendation}`);
     if (badJson.gov && badJson.gov.recommendation) pass('Hook produced full Solar decision object from core');
   } catch (e) { fail('bad hook parse', e.message + ' stdout=' + badResult.stdout.substring(0,120)); }
 

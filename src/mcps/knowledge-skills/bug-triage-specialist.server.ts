@@ -11,6 +11,7 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface BugReport {
   id: string;
@@ -254,6 +255,14 @@ class BugTriageSpecialistServer extends XrayKnowledgeSkillBase {
       },
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "bug-triage-specialist",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private triageBugs(errorLogs: string[], context: Record<string, unknown>): TriageResult {

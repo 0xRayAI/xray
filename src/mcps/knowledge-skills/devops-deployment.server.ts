@@ -7,6 +7,7 @@
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface DeploymentStrategy {
   name: string;
@@ -282,6 +283,14 @@ class XrayDevOpsDeploymentServer extends XrayKnowledgeSkillBase {
       "optimize_deployment_performance": async (args) => this.optimizeDeploymentPerformance(args as unknown as DeploymentPerformanceArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "devops-deployment",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async analyzeCICDPipeline(args: CICDPipelineArgs) {

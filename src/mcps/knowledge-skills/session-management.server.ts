@@ -7,6 +7,7 @@
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 // In-memory session store for MCP server context
 interface SessionData {

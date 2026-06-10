@@ -1,13 +1,18 @@
 /**
- * PluginRegistry — Phase 1.2 dynamic skill loading
+ * PluginRegistry — Phase 1.2 dynamic skill loading + Phase 3 generic tool dispatch
  *
  * Allows skills to be registered after boot, loaded from config, or discovered
  * at runtime. Wraps the existing in-process-skill-registry for backward compat.
+ *
+ * Phase 3 extension: SkillToolPlugin interface for multi-tool skills (knowledge-skill
+ * servers). Each server registers as a SkillToolPlugin, exposing arbitrary tools
+ * that can be dispatched via callSkillTool().
  *
  * Goals:
  * - New skills can be registered post-boot via register()
  * - Skills are discoverable by name without importing server constructors
  * - Default set loads automatically from the existing 3 governance skills
+ * - Multi-tool skills can be registered and dispatched via callSkillTool()
  * - Backward compatible: callInProcessSkill still works as before
  */
 
@@ -19,6 +24,17 @@ export interface SkillPlugin {
   name: string;
   /** Handler that processes proposals */
   analyzeProposal(args: SkillProposalArgs): Promise<SkillPluginResult>;
+}
+
+/**
+ * Extended plugin interface for knowledge-skill servers that expose multiple tools.
+ * Each tool is a named function that accepts arbitrary args.
+ */
+export interface SkillToolPlugin {
+  /** Unique skill name (e.g. "code-review", "api-design") */
+  name: string;
+  /** Dispatch a named tool with arbitrary args */
+  callTool(toolName: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
 export interface SkillProposalArgs {
@@ -33,9 +49,12 @@ export interface SkillPluginResult {
 }
 
 type SkillHandler = (args: SkillProposalArgs) => Promise<SkillPluginResult>;
+type ToolHandler = (toolName: string, args: Record<string, unknown>) => Promise<unknown>;
 
 class PluginRegistryImpl {
   private skills = new Map<string, SkillHandler>();
+  /** Phase 3: multi-tool skill plugins (knowledge-skill servers) */
+  private toolPlugins = new Map<string, ToolHandler>();
   private initialized = false;
 
   /**
@@ -53,6 +72,49 @@ class PluginRegistryImpl {
       skillName: skill.name,
       totalSkills: this.skills.size,
     });
+  }
+
+  /**
+   * Register a multi-tool skill plugin (knowledge-skill server).
+   * Tools can be dispatched via callSkillTool().
+   */
+  registerToolPlugin(skill: SkillToolPlugin): void {
+    if (this.toolPlugins.has(skill.name)) {
+      frameworkLogger.log('plugin-registry', 'register-tool-overwrite', 'warning', {
+        skillName: skill.name,
+        message: 'Overwriting existing tool plugin registration',
+      });
+    }
+    this.toolPlugins.set(skill.name, (toolName, args) => skill.callTool(toolName, args));
+    frameworkLogger.log('plugin-registry', 'register-tool', 'info', {
+      skillName: skill.name,
+      totalToolPlugins: this.toolPlugins.size,
+    });
+  }
+
+  /**
+   * Call a named tool on a registered multi-tool skill plugin.
+   */
+  async callSkillTool(skillName: string, toolName: string, args: Record<string, unknown>): Promise<unknown> {
+    const handler = this.toolPlugins.get(skillName);
+    if (!handler) {
+      throw new Error(`No tool plugin registered: ${skillName}. Available: ${Array.from(this.toolPlugins.keys()).join(', ')}`);
+    }
+    return handler(toolName, args);
+  }
+
+  /**
+   * Check if a tool plugin is registered.
+   */
+  hasToolPlugin(name: string): boolean {
+    return this.toolPlugins.has(name);
+  }
+
+  /**
+   * List all registered tool plugin names.
+   */
+  listToolPlugins(): string[] {
+    return Array.from(this.toolPlugins.keys());
   }
 
   /**
@@ -122,6 +184,7 @@ class PluginRegistryImpl {
    */
   resetForTest(): void {
     this.skills.clear();
+    this.toolPlugins.clear();
     this.initialized = false;
   }
 }

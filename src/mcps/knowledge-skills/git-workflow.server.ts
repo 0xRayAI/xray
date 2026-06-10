@@ -7,6 +7,7 @@
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface AnalyzeGitHistoryArgs {
   projectRoot: string;
@@ -57,6 +58,14 @@ class XrayGitWorkflowServer extends XrayKnowledgeSkillBase {
       "recommend-branching-strategy": async (args) => this.recommendBranchingStrategy(args as unknown as RecommendBranchingStrategyArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "git-workflow",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async analyzeGitHistory(args: AnalyzeGitHistoryArgs) {

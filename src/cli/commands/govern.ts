@@ -2,13 +2,9 @@
  * xray govern — the primary CLI command for the v3 nucleus
  *
  * Usage:
- *   xray govern                       Run the governance pipeline (interactive)
- *   xray govern --status              Show framework status (alias: xray status)
- *   xray govern --audit               Run security audit (alias: xray security-audit)
- *   xray govern --mcp <server>       Run an MCP server subprocess
- *   xray govern --plugin-install <n>  Install a plugin (alias: xray plugin install)
+ *   xray govern [options]
  *
- * All existing commands still work directly (backward compat).
+ * All existing direct commands still work (backward compat with deprecation notice).
  */
 
 import { resolve, join } from 'path';
@@ -21,7 +17,18 @@ interface GovernOptions {
   mcp?: string;
   pluginInstall?: string;
   proposals?: string;
-  help?: boolean;
+  skillInstall?: string;
+  skillRegistry?: string;
+  storyteller?: string;
+  mcpList?: boolean;
+  mcpStatus?: boolean;
+  mcpInstall?: string;
+  mcpRemove?: string;
+  publishAgent?: boolean;
+  archiveLogs?: boolean;
+  credibleInit?: string;
+  antigravityStatus?: boolean;
+  [key: string]: unknown;
 }
 
 export async function governCommand(options: GovernOptions): Promise<void> {
@@ -85,15 +92,98 @@ export async function governCommand(options: GovernOptions): Promise<void> {
     return;
   }
 
-  // Default: show governance status + help
+  if (options.skillInstall !== undefined) {
+    const { skillInstallCommand } = await import('./skill-install.js');
+    await skillInstallCommand(options.skillInstall || undefined);
+    return;
+  }
+
+  if (options.skillRegistry !== undefined) {
+    const { skillRegistryCommand } = await import('./skill-install.js');
+    await skillRegistryCommand(options.skillRegistry || undefined);
+    return;
+  }
+
+  if (options.storyteller) {
+    const { storytellerCommand } = await import('./storyteller.js');
+    await storytellerCommand(options.storyteller);
+    return;
+  }
+
+  if (options.mcpList) {
+    const { listMCPsCommand } = await import('./mcp-install.js');
+    listMCPsCommand();
+    return;
+  }
+
+  if (options.mcpStatus) {
+    const { showMCPStatusCommand } = await import('./mcp-install.js');
+    showMCPStatusCommand();
+    return;
+  }
+
+  if (options.mcpInstall) {
+    const { installMCPCommand } = await import('./mcp-install.js');
+    await installMCPCommand(options.mcpInstall);
+    return;
+  }
+
+  if (options.mcpRemove) {
+    const { removeMCPCommand } = await import('./mcp-install.js');
+    removeMCPCommand(options.mcpRemove);
+    return;
+  }
+
+  if (options.publishAgent) {
+    const { publishAgentCommand } = await import('./publish-agent.js');
+    await publishAgentCommand();
+    return;
+  }
+
+  if (options.archiveLogs) {
+    const { archiveLogFiles } = await import('./archive-logs.js');
+    const result = await archiveLogFiles(undefined, `govern-${Date.now()}`);
+    console.log(`\nResults:`);
+    console.log(`  Archived: ${result.archived} files`);
+    if (result.errors.length > 0) {
+      console.log(`  Errors: ${result.errors.length}`);
+      result.errors.forEach((e: string) => console.log(`    - ${e}`));
+      process.exit(1);
+    }
+    return;
+  }
+
+  if (options.credibleInit !== undefined) {
+    const { credibleInitCommand } = await import('./credible-init.js');
+    await credibleInitCommand();
+    return;
+  }
+
+  if (options.antigravityStatus) {
+    const { antigravityStatusCommand } = await import('./antigravity-status.js');
+    await antigravityStatusCommand();
+    return;
+  }
+
   console.log('xray govern — the governance kernel\n');
   console.log('Usage: xray govern [options]\n');
   console.log('Options:');
-  console.log('  --status           Show framework status');
-  console.log('  --audit            Run security audit');
-  console.log('  --mcp <server>     Run an MCP server (governance, skills)');
-  console.log('  --plugin-install   Install a plugin by name');
-  console.log('  --proposals <json> Run governance on JSON proposals');
-  console.log('  -h, --help         Show this help\n');
+  console.log('  --status                   Show framework status');
+  console.log('  --audit                    Run security audit');
+  console.log('  --mcp <server>             Run an MCP server (governance, skills)');
+  console.log('  --plugin-install <name>    Install a plugin');
+  console.log('  --proposals <json>         Run governance on JSON proposals');
+  console.log('  --skill-install [source]   Install skills from registry');
+  console.log('  --skill-registry [action]   Manage skill registry sources');
+  console.log('  --storyteller <type>       Write a story (reflection, saga, journey, narrative)');
+  console.log('  --mcp-list                 List available MCP servers');
+  console.log('  --mcp-status               Show installed MCP servers');
+  console.log('  --mcp-install <name>       Install an MCP server');
+  console.log('  --mcp-remove <name>        Remove an MCP server');
+  console.log('  --publish-agent            Publish an agent to AgentStore');
+  console.log('  --archive-logs             Archive log files');
+  console.log('  --credible-init [name]     Initialize Credible Pod');
+  console.log('  --antigravity-status       Show installed skills status');
+  console.log('  -h, --help                 Show this help\n');
   console.log('All existing commands still work: xray status, xray security-audit, etc.');
 }

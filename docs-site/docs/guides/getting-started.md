@@ -53,5 +53,5 @@ Every code change is reviewed by 3 specialized AI servers before it executes. Ba
 ## Version Info
 
 - **Framework**: v2.0.0
-- **Codex**: v1.8.0 (68 terms)
+- **Codex**: v3.0.0 (72 terms)
 - **OpenCode**: v2.14.0

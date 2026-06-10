@@ -9,6 +9,7 @@ import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 import {
   detectProjectLanguage,
   LANGUAGE_CONFIGS,
@@ -206,6 +207,14 @@ class XrayTestingStrategyServer extends XrayKnowledgeSkillBase {
       "generate-test-file": async (args) => this.generateTestFile(args as unknown as GenerateTestFileArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "testing-strategy",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async analyzeTestCoverage(args: AnalyzeTestCoverageArgs) {

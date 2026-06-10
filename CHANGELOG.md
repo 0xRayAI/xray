@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.0.0] - 2026-06-09
+
+### 🚀 Features
+- feat: add Codex terms 69-72 covering self-evolution constraints (proposal governance, metamorphosis threshold, safety controls, traceability) (codex.json)
+- feat: long-running governed agent session verification E2E (11 tests, self-evolution-e2e.test.ts)
+- feat: Plugin API documentation frozen at v3 — SkillPlugin, MetamorphosisEngine, SelfProposalEngine interfaces made stable (docs/api/plugin-api.md)
+
+### 🔄 Changes
+
+### ♻️ Refactoring
+- refactor: update Codex references from 68 to 72 terms across AGENTS.md, CLAUDE.md, v3-nucleus.md, getting-started.md
+
+---
+
 ## [2.1.4] - 2026-06-09
 
 ### 🔄 Changes

@@ -32,11 +32,20 @@ export type {
 } from '../postprocessor/metamorphosis/MetamorphosisEngine.js';
 
 export {
+  SelfProposalEngine,
+} from '../postprocessor/metamorphosis/SelfProposalEngine.js';
+
+export type {
+  SelfProposalConfig,
+} from '../postprocessor/metamorphosis/SelfProposalEngine.js';
+
+export {
   pluginRegistry,
 } from './plugin-registry.js';
 
 export type {
   SkillPlugin,
+  SkillToolPlugin,
   SkillProposalArgs,
   SkillPluginResult,
 } from './plugin-registry.js';

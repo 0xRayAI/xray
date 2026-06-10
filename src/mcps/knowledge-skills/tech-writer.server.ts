@@ -7,6 +7,7 @@
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -221,6 +222,14 @@ class XrayDocumentationGenerationServer extends XrayKnowledgeSkillBase {
       "generate_readme": async (args) => this.generateReadme(args as unknown as GenerateReadmeArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "documentation-generation",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async analyzeDocumentation(args: AnalyzeDocumentationArgs) {

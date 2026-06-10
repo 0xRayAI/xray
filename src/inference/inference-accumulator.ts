@@ -144,7 +144,7 @@ function loadLastCycleDate(filePath: string): string | null {
   if (!fs.existsSync(filePath)) return null;
   try {
     const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    return data.completedAt || data.timestamp || null;
+    return data.completedAt || data.cycleState?.completedAt || data.timestamp || null;
   } catch {
     return null;
   }

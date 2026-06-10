@@ -7,6 +7,7 @@
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger, generateJobId } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -306,6 +307,14 @@ class XrayPerformanceOptimizationServer extends XrayKnowledgeSkillBase {
       "measure-core-web-vitals": async (args) => this.handleMeasureCoreWebVitals(args as unknown as MeasureCoreWebVitalsArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "performance-optimization",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async handleProfileApplication(args: ProfileApplicationArgs): Promise<McpToolResponse> {

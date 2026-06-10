@@ -1,6 +1,6 @@
 /**
  * Pure governance decision logic.
- * This module contains the PHI/TAU matrix and merging rules.
+ * This module contains the merging rules and metamorphosis scoring.
  * It has no side effects and does not call any MCPs.
  *
  * This is the shared "pure logic" that both the Governance MCP
@@ -8,36 +8,6 @@
  */
 
 import type { GovernanceVote, GovernanceResult } from './governance-types.js';
-
-// Blurrn constants (from chrono-warp-drive)
-const PHI = 1.666;
-const TAU = 0.865;
-
-export interface DecisionMatrixInput {
-  resonance: number;
-  isotopicRatio: number;
-  vortexVolume?: number;
-  historicalCoherence?: number;
-  solarActivity?: 'quiet' | 'moderate' | 'active' | 'storm';
-  moralTension?: 'Aligned' | 'Mild' | 'Significant' | 'Critical';
-  moralScore?: number;
-  moralFusion?: number;
-}
-
-export interface DecisionMatrixOutput {
-  recommendation: 'PASS' | 'NEEDS_REVISION' | 'REJECT';
-  confidence: number;
-  voteWeight: number;
-  reasons: string[];
-  moralOverride?: 'rejected_critical' | 'downgraded_significant' | 'none';
-}
-
-export const MORAL_OVERRIDE_LEVELS = {
-  Critical: 'rejected_critical' as const,
-  Significant: 'downgraded_significant' as const,
-  Mild: 'none' as const,
-  Aligned: 'none' as const,
-};
 
 /**
  * Calculate metamorphosis resonance score for self-evolution proposals.
@@ -85,120 +55,6 @@ export function calculateMetamorphosisScore(input: {
   }
 
   return Math.min(1.0, Math.max(0.0, Math.round(score * 100) / 100));
-}
-
-export type MoralOverrideThreshold = 'Critical' | 'Significant' | 'Mild' | 'Aligned' | 'disabled';
-
-/**
- * The core PHI/TAU decision matrix.
- * Extracted so it can be shared between local MCP and deployed HTTP versions.
- */
-export function applyDecisionMatrix(input: DecisionMatrixInput): DecisionMatrixOutput {
-  const {
-    resonance,
-    isotopicRatio,
-    vortexVolume = Number.MAX_VALUE, // large default so the low-mass check only triggers on explicit small values
-    historicalCoherence = 0.8,
-    solarActivity = 'quiet',
-    moralTension,
-    moralScore,
-    moralFusion,
-  } = input;
-
-  const reasons: string[] = [];
-  let recommendation: DecisionMatrixOutput['recommendation'] = 'NEEDS_REVISION';
-  let confidence = 0.75;
-  let voteWeight = 1.0;
-  let moralOverride: DecisionMatrixOutput['moralOverride'] = 'none';
-
-  // Log moral fusion if present — weighted signal for transparency
-  if (moralFusion != null) {
-    reasons.push(`Moral-numerological fusion: ${(moralFusion * 100).toFixed(0)}%`);
-  }
-
-  // Trinitarium Moral Overlay override
-  // Critical tension always rejects — proposal violates moral alignment regardless of physics
-  if (moralTension === 'Critical') {
-    recommendation = 'REJECT';
-    confidence = 0.92;
-    voteWeight = 1.6;
-    moralOverride = 'rejected_critical';
-    reasons.push(`Critical moral tension — proposal violates moral alignment (score: ${moralScore != null ? (moralScore * 100).toFixed(0) + '%' : 'unknown'})`);
-    return {
-      recommendation,
-      confidence: Math.min(0.99, Math.max(0.5, confidence)),
-      voteWeight: Math.max(0.5, Math.min(1.8, voteWeight)),
-      reasons,
-      moralOverride,
-    };
-  }
-
-  // Significant tension downgrades PASS → NEEDS_REVISION
-  let moralDowngrade = false;
-  if (moralTension === 'Significant') {
-    moralDowngrade = true;
-    moralOverride = 'downgraded_significant';
-    voteWeight *= 0.85;
-    reasons.push(`Significant moral tension — proceed with caution (score: ${moralScore != null ? (moralScore * 100).toFixed(0) + '%' : 'unknown'})`);
-  }
-
-  // Aligned tension boosts confidence slightly
-  if (moralTension === 'Aligned' && moralScore != null) {
-    confidence += 0.03;
-    voteWeight *= 1.05;
-    reasons.push(`Moral alignment confirmed (score: ${(moralScore * 100).toFixed(0)}%)`);
-  }
-
-  if (resonance >= 0.92 && isotopicRatio >= 0.95) {
-    recommendation = 'PASS';
-    confidence = 0.97;
-    voteWeight = 1.4;
-    reasons.push('High symbiotic resonance (PHI-aligned)');
-  } else if (resonance >= 0.82 && isotopicRatio >= 0.88) {
-    recommendation = 'PASS';
-    confidence = 0.89;
-    voteWeight = 1.15;
-    reasons.push('Solid alignment above TAU threshold');
-  } else if (resonance < 0.75 || isotopicRatio < 0.80) {
-    recommendation = 'REJECT';
-    confidence = 0.84;
-    reasons.push('Signal below critical threshold (1 - TAU)');
-  } else {
-    reasons.push('Moderate resonance - requires refinement');
-  }
-
-  // Moral downgrade: Significant tension demotes PASS → NEEDS_REVISION
-  if (moralDowngrade && recommendation === 'PASS') {
-    recommendation = 'NEEDS_REVISION';
-    reasons.push('Moral tension downgraded recommendation from PASS to NEEDS_REVISION');
-  }
-
-  if (vortexVolume < 2.5e25) {
-    reasons.push('Low inertial mass (W x M = V)');
-    if (recommendation === 'PASS') recommendation = 'NEEDS_REVISION';
-  }
-
-  if (historicalCoherence < 0.70) {
-    reasons.push('Weak historical alignment with past decisions');
-    if (recommendation === 'PASS') recommendation = 'NEEDS_REVISION';
-  } else if (historicalCoherence > 0.90) {
-    reasons.push('Strong continuity with previous governance');
-    voteWeight *= 1.1;
-  }
-
-  // Solar adjustment (from chrono-warp-drive)
-  if (solarActivity === 'active' || solarActivity === 'storm') {
-    voteWeight *= 0.92;
-    reasons.push('Elevated solar activity - increased caution applied');
-  }
-
-  return {
-    recommendation,
-    confidence: Math.min(0.99, Math.max(0.5, confidence)),
-    voteWeight: Math.max(0.5, Math.min(1.8, voteWeight)),
-    reasons,
-    moralOverride,
-  };
 }
 
 /**

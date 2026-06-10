@@ -87,13 +87,11 @@ describe("opencode-cli-invoker", () => {
 
   afterEach(() => {
     delete process.env.XRAY_FORCE_MCP_GOVERNANCE;
-    delete ;
   });
 
   describe("XRAY_FORCE_MCP_GOVERNANCE guard", () => {
     it("throws when XRAY_FORCE_MCP_GOVERNANCE is true", async () => {
       process.env.XRAY_FORCE_MCP_GOVERNANCE = "true";
-       = "true";
       await expect(invokeViaOpencode("architect", "test")).rejects.toThrow(
         `[PURE MCP] invokeViaOpencode called for "architect"`,
       );

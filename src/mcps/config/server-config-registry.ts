@@ -180,7 +180,7 @@ export class ServerConfigRegistry {
     this.register({
       serverName: 'orchestrator',
       command: 'node',
-      args: [`${basePath}/orchestrator.server.js`],
+      args: [`${basePath}/orchestrator/server.js`],
       timeout: 60000,
     });
 

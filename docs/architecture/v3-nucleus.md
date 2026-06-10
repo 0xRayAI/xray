@@ -72,7 +72,7 @@ v3 Nucleus ───────────────────────
 - **25 knowledge-skill servers** — they are real tool providers (not just RAG shells). They become the default plugin set, not the architecture.
 - **4 platform bridges** — grok/hermes/opencode/openclaw remain first-class. They call the kernel under the hood.
 - **3-agent voting + Dynamo** — the moat. Undisturbed.
-- **Codex** — 68 terms, SSOT, enforced.
+- **Codex** — 72 terms, SSOT, enforced.
 - **Consumer verification loop** — fresh tmp dir + real published `npm i 0xray@X.Y.Z` (not tgz from cwd) + per-plugin installs + the exact shipped E2E scripts + persistent activity.log monitoring + sub-agent triage. Proven at 2.1.4 for all 4 bridges. Every v3 piece must pass this gate with zero tolerance (harden remaining parse tolerances in Phase 0).
 
 ## Build Plan
@@ -91,20 +91,20 @@ Phase 0 ────────────────────────
   0.6 ──[x] Self-proposal pipeline spec
   ├──────────────────────────────────────────────────────┘
   ▼
-Phase 1 ───────────────────────────────────
+Phase 1 ─────────────────────────────────── (COMPLETE)
   1.1 ──[x] Kernel facade (src/nucleus/kernel.ts)
   1.2 ──[x] Dynamic skill loading (in-process-skill-registry)
   1.3 ──[x] MCP Streamable HTTP migration
   1.4 ──[x] CLI collapse to xray govern
   ├──────────────────────────────────────────────────────┘
   ▼
-Phase 2 ───────────────────────────────────
+Phase 2 ─────────────────────────────────── (COMPLETE)
   2.1 ──[x] Metamorphosis resonance scoring
-  2.2 ──[ ] First self-proposal (activity.log → proposal)
-  2.3 ──[ ] Verification substrate gate
+  2.2 ──[x] First self-proposal (activity.log → proposal)
+  2.3 ──[x] Verification substrate gate
   ├──────────────────────────────────────────────────────┘
   ▼
-Phase 3 ───────────────────────────────────
+Phase 3 ─────────────────────────────────── (COMPLETE)
   3.1-3.4 Release
 ```
 
@@ -204,7 +204,7 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 1.1 [ ] Kernel facade (`src/nucleus/kernel.ts`)
+#### 1.1 [x] Kernel facade (`src/nucleus/kernel.ts`)
 
 - **Goal**: A single entry point that exports the kernel's capabilities without pulling in the federation.
 - **Challenge**: `governance-service.ts` directly imports `mcpClientManager`, `callInProcessSkill`, and `getGovernanceIntegration` — all federation-coupled.
@@ -270,7 +270,7 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 2.1 [ ] Metamorphosis resonance scoring
+#### 2.1 [x] Metamorphosis resonance scoring
 
 - **Files**: `src/governance/governance-service.ts` (amend), `src/governance/governance-core.ts` (amend)
 - **What it adds**: When `GovernanceRequest.proposals[i].metamorphosis: true`, Dynamo evaluates a new dimension: "Does this change increase the system's ability to govern complex future states?"
@@ -281,33 +281,39 @@ Phase 3 ────────────────────────
 
 ---
 
-#### 2.2 [ ] First self-proposal
+#### 2.2 [x] First self-proposal
 
-- **Files**: `src/inference/inference-cycle.ts` (amend), `src/postprocessor/metamorphosis/` (use skeleton from 0.5)
-- **Flow**:
-  1. Inference cycle reads recent activity.log entries via `MetamorphosisEngine.onPhase`
-  2. Maps entries to existing semantic patterns (`semantic-patterns.ts`)
-  3. Generates a `GovernanceProposal` (e.g., "add processor type X", "modify Y timeout")
-  4. Submits through full `govern()` pipeline with `metamorphosis: true`
-  5. If approved + score >= 0.7, applies via deploy-verifier
-- **Done when**: A real self-proposal is generated, passes governance, and is applied (or correctly rejected).
-- **Estimate**: 5-10 days (first-of-its-kind, discovery-driven)
+- **Files**: `src/postprocessor/metamorphosis/SelfProposalEngine.ts`, `src/__tests__/unit/self-proposal-engine.test.ts`
+- **Class**: `SelfProposalEngine` implements `MetamorphosisEngine`
+- **Config**: `SelfProposalConfig` — all thresholds externalized (`maxLogLines`, `errorThreshold`, `warningThreshold`, `governanceRejectionThreshold`, `proposalConfidence`, `metamorphosisThreshold`)
+- **Log parsing**: `parseLogEntry()` regex-based parser for the `ISO [jobId] [traceId.spanId] [component] action - STATUS | {details}` format, with JSON fallback
+- **Detection**: 3 pattern types — error rate, warning rate, governance rejections — all threshold-driven, all component-aware (groups affected components in rationale)
+- **Safety**:
+  - Rate limit: max N proposals/hour (default 1)
+  - Circuit breaker: N consecutive failures → cooldown (default 3/24h)
+  - Whitelisted targets only (config/, features.json, src/processors/)
+  - Full 3-agent + Dynamo governance with metamorphosisThreshold ≥ 0.7
+- **Integration**: wired into `PostProcessor.notifyPhase()` at `monitoring-complete` and `post-process-complete` lifecycle points
+- **Coupling note**: currently triggered by PostProcessor lifecycle. Future: extract log-reading into a dedicated `LogReader` that can run on its own schedule or `fs.watch`, decoupling from PostProcessor.
+- **Tests**: 13 unit tests covering structured log parsing, all 3 detection types, rate limiting, circuit breaker, config thresholds, mixed/invalid log lines, whitelisted target filtering
+
+- **Strangler fix (uniformity)**: `InferenceCycle.governProposals()` now routes through the nucleus kernel (`handleGovernRequest`) as the **primary path**, with MCP fallback and legacy internal as last resort. All proposal sources (inference, self-proposal, CLI, HTTP, external bridges) now get uniform 3-agent + Dynamo governance + metamorphosis scoring. The MCP governance server remains the standard external surface; internal submission unifies on the kernel.
 
 ---
 
-#### 2.3 [ ] Verification substrate gate
+#### 2.3 [x] Verification substrate gate
 
-- **Files**: `scripts/verify-consumer.sh` (new), `xray/features.json` or similar config
-- **What it does**: Pre-commit / CI script that runs the full consumer verification loop:
-  1. `npm pack`
-  2. Fresh tmp dir
-  3. `npm i <tarball>`
-  4. Install all 4 bridges
-  5. Run all 4 E2E suites
-  6. Check activity.log for expected entries
+- **Files**: `scripts/verify-consumer.sh`
+- **What it does**: Pre-commit/CI gate that validates the packaged artifact:
+  1. Typecheck + unit tests (fast fail)
+  2. `npm pack`
+  3. Fresh tmp dir
+  4. `npm i <tarball>`
+  5. Run all 4 bridge E2E suites
+  6. Check `activity.log` for structured JSON entries
   7. Exit non-zero if any step fails
+- **npm script**: `npm run verify:consumer`
 - **Done when**: `npm run verify:consumer` exists, runs in < 5 min, blocks commits/E2Es that break the consumer gate.
-- **Estimate**: 1-2 days
 
 ---
 
@@ -317,19 +323,19 @@ Phase 3 ────────────────────────
 
 **Pre-requisite**: Phase 2 complete. Self-evolution loop running under governance in production-like conditions for ≥ 2 weeks.
 
-#### 3.1 [ ] Codex section on self-evolution
+#### 3.1 [x] Codex section on self-evolution
 - Add Codex terms 69-72 covering self-evolution constraints
 - **Done when**: `xray/codex.json` has 72 terms, AGENTS.md references them
 
-#### 3.2 [ ] Long-running governed agent session verification
+#### 3.2 [x] Long-running governed agent session verification
 - New E2E suite: run a governed agent session for 60+ minutes, verify the self-evolution loop produces valid proposals
-- **Done when**: Suite exists, passes in CI
+- **Done when**: Suite exists, passes in CI — 11 tests in `src/__tests__/integration/self-evolution-e2e.test.ts`
 
-#### 3.3 [ ] Third-party plugin API stable
+#### 3.3 [x] Third-party plugin API stable
 - Document and freeze `PluginRegistry`, `SkillPlugin`, `MetamorphosisEngine` interfaces
-- **Done when**: Interfaces documented, changelog notes API stability
+- **Done when**: Interfaces documented in `docs/api/plugin-api.md`, CHANGELOG notes API stability
 
-#### 3.4 [ ] v2 → v3 migration path documented
+#### 3.4 [x] v2 → v3 migration path documented
 - What breaks: removed CLI commands, MCP server renames, config path changes
 - How to migrate: npm update, config migration script, deprecated command aliases
 - **Done when**: Migration guide filed at `docs/migration/v2-to-v3.md`
@@ -344,10 +350,44 @@ Phase 3 ────────────────────────
 | `src/nucleus/govern-http.ts` | `getGovernanceService()` singleton | Direct import |
 | `src/nucleus/kernel.ts` (facade) | Everything above + MetamorphosisEngine | Single recommended import for callers |
 | `governance.server.ts` (MCP) | `getGovernanceService()` singleton | Direct import (already wired) |
+| `InferenceCycle.governProposals()` | `handleGovernRequest()` (nucleus kernel) | **Primary path** (v3 uniform) |
+| `SelfProposalEngine` | `handleGovernRequest()` (nucleus kernel) | Direct import (Phase 2.2) |
+| `GovernanceService.callSkillServer()` | `pluginRegistry` → MCP → in-process | Dynamic first, standard surface second |
 | `MetamorphosisEngine[]` | `PostProcessor` lifecycle hooks | Constructor injection (Phase 0.5) |
-| `self-proposal pipeline` | `inference-cycle.ts` + `govern()` | Full governance flow (Phase 2.2) |
 | Plugin registry | `in-process-skill-registry.ts` + config | Dynamic registration (Phase 1.2) |
 | Consumer verification | All 4 bridges + E2Es + activity.log | Shell script + CI (Phase 2.3) |
+
+## Submission Path Uniformity (Post-Strangler Fix)
+
+All internal proposal submission now routes through the nucleus kernel (`handleGovernRequest`):
+
+```
+InferenceCycle.governProposals()
+  └─ Primary: handleGovernRequest() → GovernanceService.govern()
+  └─ Fallback: MCP governance server (governance.server.ts)
+  └─ Last resort: legacy VotingCoordinator + external Dynamo (deprecated)
+
+SelfProposalEngine.submitProposal()
+  └─ Primary: handleGovernRequest() → GovernanceService.govern()
+
+CLI xray govern --proposals
+  └─ Primary: handleGovernRequest() → GovernanceService.govern()
+
+HTTP POST /govern
+  └─ Primary: handleGovernRequest() → GovernanceService.govern()
+
+MCP govern_proposals tool
+  └─ Primary: GovernanceService.govern() directly (same service)
+
+External consumers (Hermes, OpenClaw, Orchestrator)
+  └─ InferenceCycle.governExternalProposals() → handleGovernRequest() (v3 uniform path)
+```
+
+Every proposal (inference, self-proposal, CLI, HTTP, external) now gets:
+- 3-agent + Dynamo deliberation
+- Metamorphosis resonance scoring (when type = 'metamorphosis')
+- Structured logging via frameworkLogger
+- Dynamic skill resolution via GovernanceService
 
 ## What We Are NOT Doing (Anti-Goals)
 
@@ -373,7 +413,7 @@ Phase 3 ────────────────────────
 - Detailed v2 shape (the federation being transformed): [v2-tree.md](./v2-tree.md)
 - Governance (Dynamo Solar SSOT + 3 MCP voters + strict requirement model): [governance-model.md](./governance-model.md)
 - Metamorphosis vision & derivation (post-2.1.4 verification loop): `docs/reflections/0xray-metamorphosis-vision.md`, `0xray-v2-solid-metamorphosis.md`, `0xray-after-2.1.4-verification.md`
-- Three-subsystem model, Codex (68 terms), YML SSOT, MCP surfaces: [AGENTS.md](../../AGENTS.md), [Claude.md](../../Claude.md)
+- Three-subsystem model, Codex (72 terms), YML SSOT, MCP surfaces: [AGENTS.md](../../AGENTS.md), [Claude.md](../../Claude.md)
 
 ### v2.1.4 Baseline (the measured starting state)
 - 41 MCP servers (25 knowledge-skill + 16 root) + XrayKnowledgeSkillBase (61 LOC).

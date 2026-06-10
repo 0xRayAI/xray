@@ -16,7 +16,7 @@ function findGovernanceCore() {
   const here = path.dirname(new URL(import.meta.url).pathname);
 
   // Priority: explicit dev root
-  const devRoot = ;
+  const devRoot = process.env.XRAY_DEV_ROOT || '';
   if (devRoot) {
     const devCandidate = path.resolve(devRoot, 'dist/governance/governance-core.js');
     if (fs.existsSync(devCandidate)) return devCandidate;
@@ -92,23 +92,9 @@ async function main() {
     let govDetails = null;
 
     if (corePath) {
-      try {
-        const core = await import(`file://${corePath}`);
-        if (typeof core.applyDecisionMatrix === 'function') {
-          const result = core.applyDecisionMatrix({
-            resonance,
-            isotopicRatio: resonance > 0.8 ? 0.96 : 0.7,
-            vortexVolume: 1_000_000,
-            historicalCoherence: 0.82,
-            solarActivity: 'active',
-          });
-          govDetails = result;
-          recommendation = result.recommendation || 'NEEDS_REVISION';
-          log(`Solar decision: ${recommendation} (resonance=${resonance.toFixed(2)})`);
-        }
-      } catch (e) {
-        log(`Governance core error: ${e.message}`);
-      }
+      // Governance core no longer exposes the legacy PHI/TAU matrix (purged in v3).
+      // Resonance is still derived locally for logging/decision notes.
+      log(`Using local resonance derivation (core matrix purged)`);
     } else {
       log('Governance core not located — using safe default');
     }

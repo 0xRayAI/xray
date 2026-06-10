@@ -159,7 +159,6 @@ class HookMetricsCollector {
   async printReport(): Promise<void> {
     const summary = this.getSummary();
 
-    // Hook metrics report header - kept as console.log for user visibility
     await frameworkLogger.log("hook-metrics-collector", "report-header", "info", {
       message: "================================",
     });

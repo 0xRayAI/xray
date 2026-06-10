@@ -9,6 +9,7 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 class MarketingExpertServer extends XrayKnowledgeSkillBase {
   constructor() {
@@ -364,6 +365,14 @@ class MarketingExpertServer extends XrayKnowledgeSkillBase {
       },
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "growth-strategist",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 }
 

@@ -9,6 +9,7 @@ import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface ProjectMetrics {
   totalFiles: number;
@@ -210,6 +211,14 @@ class ProjectAnalysisServer extends XrayKnowledgeSkillBase {
       "analyze_proposal": async (args) => this.analyzeProposal(args),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "project-analysis",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async analyzeProjectStructure(args: AnalyzeProjectStructureArgs): Promise<McpToolResponse> {

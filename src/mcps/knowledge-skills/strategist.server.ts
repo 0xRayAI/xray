@@ -1,5 +1,6 @@
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
@@ -92,6 +93,14 @@ class StrategistServer extends XrayKnowledgeSkillBase {
       architecture_review: async (args) => this.handleArchitectureReview(args as unknown as ArchitectureReviewArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "xray/strategist",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async handleStrategicGuidance(args: StrategicGuidanceArgs) {

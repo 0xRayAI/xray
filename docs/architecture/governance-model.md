@@ -39,7 +39,7 @@ Final Decision (approve / needs_revision / reject)
 
 - Governance service: Central orchestrator. Calls internal skill MCPs in parallel, then the external Dynamo filter.
 - InferenceGovernanceIntegration: Manages the Dynamo client, feature flags, retries, and lifecycle.
-- governance core: Contains pure logic (mergeVotes, applyDecisionMatrix).
+- governance core: Contains pure logic (mergeVotes, calculateMetamorphosisScore).
 - Governance MCP Server: Exposes govern_proposals and govern_reflection tools.
 
 ## Feature Flag

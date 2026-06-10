@@ -404,6 +404,9 @@ export class PostProcessor {
           message: `✅ Post-processor loop completed: ${result.success ? "SUCCESS" : "FAILED"}`,
         },
       );
+
+      await this.notifyPhase('post-process-complete', { context, result });
+
       return result;
     } catch (error) {
       await frameworkLogger.log(
@@ -471,6 +474,8 @@ export class PostProcessor {
           "success",
           { message: "✅ CI/CD pipeline successful - post-processor complete" },
         );
+
+        await this.notifyPhase('monitoring-complete', { context, monitoringResult });
 
         const result = {
           success: true,

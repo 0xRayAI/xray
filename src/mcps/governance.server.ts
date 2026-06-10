@@ -28,7 +28,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
-import { getGovernanceService } from "../governance/governance-service.js";
+import { handleGovernRequest } from "../nucleus/index.js";
 import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
 import { featuresConfigLoader } from "../core/features-config.js";
@@ -243,8 +243,6 @@ class GovernanceServer {
   }
 
   private async handleGovernProposals(args: GovernProposalsArgs): Promise<CallToolResult> {
-    const service = getGovernanceService();
-
     const request: GovernanceRequest = {
       proposals: args.proposals.map((p, i) => ({
         id: p.id || `prop-${Date.now()}-${i}`,
@@ -261,11 +259,11 @@ class GovernanceServer {
       },
     };
 
-    frameworkLogger.log("governance-mcp", "delegating-to-governance-service", "info", {
+    frameworkLogger.log("governance-mcp", "delegating-to-kernel", "info", {
       proposalCount: request.proposals.length,
     });
 
-    const response = await service.govern(request);
+    const response = await handleGovernRequest(request);
 
     return {
       content: [

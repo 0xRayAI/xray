@@ -7,6 +7,7 @@
 
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface UIDesignAnalysis {
   component: string;
@@ -262,6 +263,14 @@ class XrayUIUXDesignServer extends XrayKnowledgeSkillBase {
       "analyze_visual_hierarchy": async (args) => this.analyzeVisualHierarchy(args as unknown as AnalyzeVisualHierarchyArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "ui-ux-design",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async analyzeUIComponent(args: AnalyzeUIComponentArgs): Promise<ToolResponse> {

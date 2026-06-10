@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { mcpClientManager } from "../mcp-client.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface ListSkillsArgs {
   category?: "all" | "core" | "registry" | "knowledge";
@@ -262,6 +263,14 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "skill-storyteller": async (args) => this.handleSkillStoryteller(args as unknown as StorytellerArgs),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "xray/skill-invocation",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private skillMetrics: Map<string, { success: number; failure: number; avgDuration: number }> = new Map();
@@ -323,7 +332,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "bug-triage-specialist", "log-monitor",
       "mobile-development", "git-workflow", "session-management",
       "code-analyzer", "refactoring-strategies", "project-analysis",
-      "testing-best-practices", "database-design", "devops-deployment",
+      "database-design", "devops-deployment",
       "api-design", "ui-ux-design", "database-engineer",
     ];
 
@@ -349,6 +358,16 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
     ];
 
     return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+
+  /**
+   * Dispatch a skill tool call: prefer in-process pluginRegistry, fall back to external MCP process.
+   */
+  private async callSkillTool(skillName: string, toolName: string, args: Record<string, unknown>): Promise<unknown> {
+    if (pluginRegistry.hasToolPlugin(skillName)) {
+      return pluginRegistry.callSkillTool(skillName, toolName, args);
+    }
+    return mcpClientManager.callServerTool(skillName, toolName, args);
   }
 
   private async handleInvokeSkill(args: InvokeSkillArgs) {
@@ -384,7 +403,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "mobile-development", "seo-consultant",
       "git-workflow", "content-creator", "ui-ux-design",
       "multimodal-looker", "refactoring-strategies",
-      "project-analysis", "testing-best-practices",
+      "project-analysis",
       "architecture-patterns",
     ];
 
@@ -404,11 +423,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       // Track skill usage for adaptive learning
       const skillStartTime = Date.now();
 
-      const result = await mcpClientManager.callServerTool(
-        resolvedSkill,
-        toolName,
-        toolArgs,
-      );
+      const result = await this.callSkillTool(resolvedSkill, toolName, toolArgs);
 
       // Record outcome for adaptive learning (success = no error)
       const duration = Date.now() - skillStartTime;
@@ -443,10 +458,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillCodeReview(args: CodeReviewArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "code-review",
       "analyze_code_quality",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -464,10 +479,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillSecurityAudit(args: SecurityAuditArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "security-audit",
       "scan_vulnerabilities",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -485,10 +500,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillPerformanceOptimization(args: PerformanceOptimizationArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "performance-optimization",
       "analyze_performance",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -506,10 +521,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillTestingStrategy(args: TestingStrategyArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "testing-strategy",
       "analyze_test_coverage",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -527,10 +542,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillProjectAnalysis(args: ProjectAnalysisArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "researcher",
       "analyze-project-health",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -548,10 +563,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillDatabaseDesign(args: DatabaseDesignArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "database-design",
       "schema_analysis",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -569,10 +584,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillDevopsDeployment(args: DevopsDeploymentArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "devops-deployment",
       "pipeline_generation",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -590,10 +605,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillApiDesign(args: ApiDesignArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "api-design",
       "endpoint_design",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -611,10 +626,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillUiUxDesign(args: UiUxDesignArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "ui-ux-design",
       "design_component",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -632,10 +647,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillDocumentationGeneration(args: DocumentationGenerationArgs) {
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "documentation-generation",
       "generate_documentation",
-      args,
+      args as unknown as Record<string, unknown>,
     );
 
     return {
@@ -654,10 +669,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
 
   private async handleSkillStoryteller(args: StorytellerArgs) {
     const { storyType, title, context, framework } = args;
-    const result = await mcpClientManager.callServerTool(
+    const result = await this.callSkillTool(
       "storyteller",
       `write_${storyType}`,
-      { title, context, framework },
+      { title, context, framework } as Record<string, unknown>,
     );
 
     return {

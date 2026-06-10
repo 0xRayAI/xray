@@ -87,6 +87,7 @@
     "test:e2e": "node scripts/node/validate-mcp-connectivity.js && node scripts/node/validate-external-processes.js",
     "validate": "echo \"[xray] Use 'npm test' or 'npm run test:comprehensive'.\"",
     "validate:quick": "npm run validate",
+    "verify:consumer": "bash scripts/verify-consumer.sh",
     "debug:inference:force": "STRRAY_FORCE_MCP_GOVERNANCE=true XRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
     "validate:full": "npm run validate",
     "test:unified": "node scripts/test/test-unified-framework.mjs",

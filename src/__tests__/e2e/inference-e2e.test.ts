@@ -114,12 +114,12 @@ describe("Inference Layer E2E", () => {
         expect(vote.confidence).toBeGreaterThanOrEqual(0);
       }
 
-      expect(fs.existsSync(path.join(stateDir, "inference-cycle-state.json"))).toBe(true);
-      expect(fs.existsSync(path.join(stateDir, "inference-cycle-history.json"))).toBe(true);
+      expect(fs.existsSync(path.join(stateDir, "inference-state.json"))).toBe(true);
 
-      const history = JSON.parse(
-        fs.readFileSync(path.join(stateDir, "inference-cycle-history.json"), "utf-8"),
+      const stateData = JSON.parse(
+        fs.readFileSync(path.join(stateDir, "inference-state.json"), "utf-8"),
       );
+      const history = stateData.history;
       expect(history.length).toBe(1);
       expect(history[0].cycleId).toBe(result.cycleId);
     }

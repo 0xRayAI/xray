@@ -1,32 +1,15 @@
 /**
  * CodexPolicyService
  *
- * The initial Governance-owned Single Source of Truth (SSOT) for Codex / policy loading.
- * This is the V2-P1-S02-REAL first concrete migration slice.
+ * Governance-owned Single Source of Truth (SSOT) for Codex / policy loading.
  *
- * Role (per 3-subsystem architecture + researcher mapping):
- *   - External Governance (Decision Layer & SSOT) owns "what the policy is".
- *   - All consumers (enforcement CodexLoader, injectors, formatters, MCP surfaces, plugins)
- *     will eventually ask here instead of performing direct fs reads.
+ * Role: External Governance owns "what the policy is".
+ * Consumers (enforcers, injectors, formatters, MCPs, plugins) should ask here
+ * instead of direct fs reads or scattered loaders.
  *
- * Current scope (minimal safe skeleton):
- *   - Read-only query surface.
- *   - Uses canonical resolveCodexPath + async file load (no duplication of resolution logic).
- *   - Returns ActiveCodexSnapshot compatible with the existing get_active_codex MCP tool.
- *   - Provides getTermCount() with safe 60-term fallback (preserves prior behavior of bypasses).
- *   - Full frameworkLogger discipline on every load/decision/error.
- *   - No caching in v1 skeleton (additive later); no mutation; no enforcement.
- *
- * First wired consumer: src/mcps/enforcer-tools.server.ts (getCodexTermCount bypass removed;
- * now delegates through this service).
- *
- * Next recommended slices (documented in researcher mapping append):
- *   - Wire governance.server.ts handleGetActiveCodex to delegate (remove its direct read).
- *   - S02b/S02c follow-ups: update codex-injector, context-loader, codex-formatter, plugin.
- *   - Make CodexLoader delegate its raw data load here, then re-export from governance.
- *
- * @module governance/codex-policy.service
- * @version 2.0.0-s02-real
+ * Provides read-only ActiveCodexSnapshot and term count.
+ * Uses canonical resolveCodexPath.
+ * Full frameworkLogger on all paths.
  */
 
 import { frameworkLogger } from '../core/framework-logger.js';
@@ -129,7 +112,7 @@ export class CodexPolicyService implements ICodexPolicyProvider {
       is_fallback: isFallback,
       note: isFallback
         ? 'Governance CodexPolicyService — builtin fallback (no external codex.json resolved)'
-        : 'Returned via Governance CodexPolicyService — V2 Single Source of Truth (S02-REAL)',
+        : 'Returned via Governance CodexPolicyService',
       dynamo_required: true,
       ...(includeRaw ? { codex: data } : {}),
     };
@@ -178,4 +161,4 @@ export function getCodexPolicyService(): CodexPolicyService {
 }
 
 // Also export the class for direct construction in tests / advanced wiring
-export { CodexPolicyService as default };
+

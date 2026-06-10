@@ -30,7 +30,7 @@ const ROUTING_MAPPINGS = [
   // Core built-in skills (high confidence)
   { keywords: ["write", "file", "create"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
   { keywords: ["review", "audit", "assess", "evaluate", "check", "inspect", "quality", "validate", "code-review"], skill: "code-review", agent: "code-reviewer", confidence: 0.9 },
-  { keywords: ["test", "testing", "jest", "coverage", "unit", "e2e", "cypress", "spec", "verify"], skill: "testing-best-practices", agent: "testing-lead", confidence: 0.95 },
+  { keywords: ["test", "testing", "jest", "coverage", "unit", "e2e", "cypress", "spec", "verify"], skill: "testing-strategy", agent: "testing-lead", confidence: 0.95 },
   { keywords: ["fix", "debug", "triage", "broken", "error", "crash", "bug", "issue", "resolve"], skill: "bug-triage", agent: "bug-triage-specialist", confidence: 0.92 },
   { keywords: ["security", "vulnerability", "threat", "scan", "risk", "exploit", "secure", "pentest"], skill: "security-audit", agent: "security-auditor", confidence: 0.95 },
   { keywords: ["refactor", "cleanup", "improve", "restructure", "modernize", "debt"], skill: "refactoring-strategies", agent: "refactorer", confidence: 0.92 },

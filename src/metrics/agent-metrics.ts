@@ -48,7 +48,8 @@ export type AgentType =
   | "custom"
   | "unknown";
 
-export type ComplexityLevel = "simple" | "moderate" | "complex" | "enterprise";
+import type { ComplexityLevel } from "../delegation/complexity-core.js";
+export type { ComplexityLevel };
 
 export interface AgentInvocationSummary {
   agentName: string;

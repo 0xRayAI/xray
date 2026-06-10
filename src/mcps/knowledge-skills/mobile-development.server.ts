@@ -9,6 +9,7 @@ import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface IOSBlueprint {
   projectName: string;
@@ -199,6 +200,14 @@ class XrayMobileDevelopmentServer extends XrayKnowledgeSkillBase {
       "app_store_metadata": async (args) => this.generateAppStoreMetadata(args as Record<string, unknown>),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "mobile-development",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   private async generateIOSBlueprint(args: Record<string, unknown>) {

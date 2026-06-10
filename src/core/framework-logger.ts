@@ -1,8 +1,3 @@
-import {
-  isLoggingEnabled,
-  shouldLog,
-  getLoggingConfig,
-} from "./logging-config.js";
 import { promises as fs, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
@@ -116,6 +111,48 @@ export function withJobContext<T>(
 }
 
 export type LogStatus = "success" | "error" | "info" | "debug" | "warning";
+
+// Inlined from logging-config.ts (sole consumer)
+interface LoggingConfig {
+  enabled: boolean;
+  level: "debug" | "info" | "warn" | "error";
+  destinations: ("console" | "file" | "monitoring")[];
+  performanceMode: boolean;
+}
+
+const defaultLoggingConfig: LoggingConfig = {
+  enabled: (process.env.XRAY_LOGGING_ENABLED) !== "false",
+  level: ((process.env.XRAY_LOG_LEVEL) as any) || "info",
+  destinations: ["console", "file"],
+  performanceMode: (process.env.XRAY_PERFORMANCE_MODE) === "true",
+};
+
+const LOG_LEVELS = ["debug", "info", "warn", "error"];
+
+let globalLoggingConfig: LoggingConfig = { ...defaultLoggingConfig };
+
+function isLoggingEnabled(): boolean {
+  return globalLoggingConfig.enabled;
+}
+
+function shouldLog(level: LogStatus): boolean {
+  if (!globalLoggingConfig.enabled) return false;
+  const currentLevelIndex = LOG_LEVELS.indexOf(globalLoggingConfig.level);
+  const messageLevelIndex = LOG_LEVELS.indexOf(level);
+  if (currentLevelIndex === -1 || messageLevelIndex === -1) return true;
+  return messageLevelIndex >= currentLevelIndex;
+}
+
+// Module-level side effects for env var config (previously in logging-config.ts)
+if (process.env.XRAY_LOGGING_ENABLED === "false") {
+  globalLoggingConfig.enabled = false;
+}
+if (process.env.XRAY_LOG_LEVEL) {
+  globalLoggingConfig.level = process.env.XRAY_LOG_LEVEL as LoggingConfig["level"];
+}
+if (process.env.XRAY_PERFORMANCE_MODE === "true") {
+  globalLoggingConfig.performanceMode = true;
+}
 
 /**
  * Job context for tracking work sessions

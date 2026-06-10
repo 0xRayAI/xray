@@ -25,10 +25,6 @@ export { RoutingAnalytics } from "./analytics/index.js";
 export { LearningEngine, learningEngine } from "./analytics/index.js";
 
 export {
-  VotingCoordinator,
-  createVotingCoordinator,
-} from "./voting-coordinator.js";
-export {
   WeightedVotingAggregator,
   createWeightedVotingAggregator,
   createDetailedVotingResult,
@@ -44,8 +40,6 @@ export {
   getAgentExpertise,
   getAgentExpertiseLevel,
   getVotingWeight,
-  getAgentsWithExpertiseDomain,
-  getTopExpertsForDomain,
 } from "./agent-expertise.js";
 
 export type {

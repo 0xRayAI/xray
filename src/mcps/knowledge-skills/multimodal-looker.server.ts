@@ -11,6 +11,7 @@
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 /* ============================================================================
@@ -299,6 +300,14 @@ class MultimodalLookerServer extends XrayKnowledgeSkillBase {
       "compare-designs": async (args) => this.handleCompareDesigns(args as Record<string, unknown>),
     };
     this.setupToolHandlers();
+    pluginRegistry.registerToolPlugin({
+      name: "multimodal-looker",
+      callTool: async (toolName, args) => {
+        const handler = this.handlers[toolName];
+        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
+        return handler(args);
+      },
+    });
   }
 
   /* --------------------------------------------------------------------------

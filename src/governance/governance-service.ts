@@ -18,6 +18,7 @@
 
 import { mcpClientManager } from '../mcps/mcp-client.js';
 import { callInProcessSkill, type MCPToolResult } from '../mcps/in-process-skill-registry.js';
+import { pluginRegistry } from '../nucleus/plugin-registry.js';
 import {
   getGovernanceIntegration,
   type InferenceGovernanceIntegration,
@@ -199,6 +200,45 @@ export class GovernanceService {
     const votes: GovernanceVote[] = [];
     const useInProcess = process.env.VERCEL === '1';
 
+    // v3: Try pluginRegistry first for dynamically registered skills.
+    // Built-in skills (code-review, security-audit, researcher) fall through
+    // to MCP or in-process paths. Custom plugins registered via
+    // pluginRegistry.register() are resolved here.
+    if (pluginRegistry.has(serverName) && !this.isBuiltInSkill(serverName)) {
+      frameworkLogger.log('governance-service', 'plugin-skill-resolved', 'info', {
+        server: serverName,
+        mode: 'plugin-registry',
+      });
+      for (const proposal of proposals) {
+        try {
+          const result = await pluginRegistry.callSkill(serverName, {
+            proposalTitle: proposal.title,
+            proposalDescription: proposal.description,
+            evidence: proposal.evidence || [],
+            proposalType: proposal.type,
+          });
+          const text = result?.content?.[0]?.text || '';
+          const vote = this.parseVoteFromText(serverName, text);
+          votes.push(vote);
+        } catch (error) {
+          frameworkLogger.log('governance-service', 'plugin-skill-error', 'error', {
+            server: serverName,
+            proposal: proposal.title,
+            error: error instanceof Error ? error.message : String(error),
+            mode: 'plugin-registry',
+          });
+          votes.push({
+            server: serverName,
+            decision: 'abstain',
+            confidence: 0.3,
+            reasoning: `Plugin skill ${serverName} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          });
+        }
+      }
+      return votes;
+    }
+
+    // Built-in skills: use MCP (standard surface) or in-process (Vercel)
     for (const proposal of proposals) {
       try {
         let text = '';
@@ -360,6 +400,10 @@ export class GovernanceService {
       confidence: parseFloat(confidenceMatch?.[1] || '0.5'),
       reasoning: reasoningMatch?.[1]?.trim() || 'No reasoning provided',
     };
+  }
+
+  private isBuiltInSkill(name: string): boolean {
+    return name === 'code-review' || name === 'security-audit' || name === 'researcher';
   }
 }
 

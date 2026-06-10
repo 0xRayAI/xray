@@ -25,7 +25,7 @@
  * Anti-goals (for this file):
  * - No new business logic
  * - No side effects on import
- * - Does not pull in the full 25 knowledge-skill servers or thinDispatch yet
+ * - Does not pull in the full 25 knowledge-skill servers (dynamic via pluginRegistry only)
  */
 
 import type {
@@ -65,6 +65,10 @@ export type {
 // Convenience re-export of the HTTP adapter for anyone who wants the tiny Express wrapper
 // (still considered "convenience", not core kernel)
 export { GovernHTTPAdapter } from './govern-http.js';
+
+// Plugin registry — dynamic skill and tool dispatch
+export { pluginRegistry } from './plugin-registry.js';
+export type { SkillPlugin, SkillToolPlugin, SkillProposalArgs, SkillPluginResult } from './plugin-registry.js';
 
 /**
  * High-level kernel description for introspection / docs.
