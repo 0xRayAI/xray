@@ -6,7 +6,6 @@
  * InferenceCycle is pure sensing + proposal + governance orchestration.
  */
 
-import * as fs from "fs";
 import * as path from "path";
 import { execSync, spawn } from "child_process";
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -24,11 +23,6 @@ export async function invokeViaOpencode(
   prompt: string,
   projectRoot: string = process.cwd(),
 ): Promise<string> {
-  // In pure MCP mode we must never reach here
-  if ((process.env.XRAY_FORCE_MCP_GOVERNANCE) === "true") {
-    throw new Error(`[PURE MCP] invokeViaOpencode called for "${agentName}" — this path is forbidden.`);
-  }
-
   // GATE: Centralized spawn gate — blocks all agent spawning by default
   spawnGate.assertAllowed("opencode-cli-invoker");
 
@@ -76,8 +70,8 @@ export async function invokeViaOpencode(
     throw new Error("opencode CLI is not available in PATH");
   }
 
-  // Resolve the actual opencode project root (where .opencode/ config lives)
-  const opencodeRoot = resolveOpencodeRoot(projectRoot);
+  // Resolve project root via the canonical config-path resolver
+  const opencodeRoot = path.dirname(getConfigDir(projectRoot));
 
   frameworkLogger.log("inference-cycle", "opencode-spawn-start", "info", {
     agentName,
@@ -179,18 +173,7 @@ function extractTextFromNdjson(output: string): string {
   return texts.join("\n").trim();
 }
 
-function resolveOpencodeRoot(projectRoot: string): string {
-  const configDir = getConfigDir(projectRoot);
-  let dir = projectRoot;
-  for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, ".opencode"))) return dir;
-    const parent = path.dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-  const cwd = process.cwd();
-  if (fs.existsSync(path.join(cwd, ".opencode"))) return cwd;
-  return projectRoot;
-}
-
 // OpenCode execution owned by Autonomous Engine (thin fallback).
+// Kept as a standalone execution helper — InferenceCycle calls this directly
+// via invokeOpencodeFromEngine import. The separation is clean: this file owns
+// child_process spawn + lifecycle; InferenceCycle owns sensing + governance.

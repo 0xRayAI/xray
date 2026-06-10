@@ -27,6 +27,15 @@ export interface SkillPlugin {
 }
 
 /**
+ * Metadata describing a tool exposed by a SkillToolPlugin.
+ */
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  inputSchema?: Record<string, unknown>;
+}
+
+/**
  * Extended plugin interface for knowledge-skill servers that expose multiple tools.
  * Each tool is a named function that accepts arbitrary args.
  */
@@ -35,6 +44,8 @@ export interface SkillToolPlugin {
   name: string;
   /** Dispatch a named tool with arbitrary args */
   callTool(toolName: string, args: Record<string, unknown>): Promise<unknown>;
+  /** Optional: list tool definitions for dynamic discovery */
+  listTools?(): ToolDefinition[];
 }
 
 export interface SkillProposalArgs {
@@ -49,12 +60,11 @@ export interface SkillPluginResult {
 }
 
 type SkillHandler = (args: SkillProposalArgs) => Promise<SkillPluginResult>;
-type ToolHandler = (toolName: string, args: Record<string, unknown>) => Promise<unknown>;
 
 class PluginRegistryImpl {
   private skills = new Map<string, SkillHandler>();
   /** Phase 3: multi-tool skill plugins (knowledge-skill servers) */
-  private toolPlugins = new Map<string, ToolHandler>();
+  private toolPlugins = new Map<string, SkillToolPlugin>();
   private initialized = false;
 
   /**
@@ -85,7 +95,7 @@ class PluginRegistryImpl {
         message: 'Overwriting existing tool plugin registration',
       });
     }
-    this.toolPlugins.set(skill.name, (toolName, args) => skill.callTool(toolName, args));
+    this.toolPlugins.set(skill.name, skill);
     frameworkLogger.log('plugin-registry', 'register-tool', 'info', {
       skillName: skill.name,
       totalToolPlugins: this.toolPlugins.size,
@@ -96,11 +106,11 @@ class PluginRegistryImpl {
    * Call a named tool on a registered multi-tool skill plugin.
    */
   async callSkillTool(skillName: string, toolName: string, args: Record<string, unknown>): Promise<unknown> {
-    const handler = this.toolPlugins.get(skillName);
-    if (!handler) {
+    const plugin = this.toolPlugins.get(skillName);
+    if (!plugin) {
       throw new Error(`No tool plugin registered: ${skillName}. Available: ${Array.from(this.toolPlugins.keys()).join(', ')}`);
     }
-    return handler(toolName, args);
+    return plugin.callTool(toolName, args);
   }
 
   /**
@@ -115,6 +125,40 @@ class PluginRegistryImpl {
    */
   listToolPlugins(): string[] {
     return Array.from(this.toolPlugins.keys());
+  }
+
+  /**
+   * Get a registered tool plugin by name for introspection.
+   */
+  getToolPlugin(name: string): SkillToolPlugin | undefined {
+    return this.toolPlugins.get(name);
+  }
+
+  /**
+   * List tool definitions for a registered tool plugin.
+   * Returns empty array if plugin not found or does not expose listTools().
+   */
+  listSkillTools(skillName: string): ToolDefinition[] {
+    const plugin = this.toolPlugins.get(skillName);
+    if (!plugin || !plugin.listTools) return [];
+    return plugin.listTools();
+  }
+
+  /**
+   * Convenience: register a server as a SkillToolPlugin.
+   * Wraps a server with named tools into the SkillToolPlugin interface.
+   */
+  registerServer(server: {
+    name: string;
+    tools: ToolDefinition[];
+    callTool: (toolName: string, args: Record<string, unknown>) => Promise<unknown>;
+  }): void {
+    const plugin: SkillToolPlugin = {
+      name: server.name,
+      callTool: server.callTool,
+      listTools: () => server.tools,
+    };
+    this.registerToolPlugin(plugin);
   }
 
   /**

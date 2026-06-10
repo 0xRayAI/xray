@@ -5,8 +5,7 @@ import { EventEmitter } from 'node:events'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-// New clean governance core (src/governance/)
-import { getGovernanceService } from '../src/governance/governance-service.js'
+import { handleGovernRequest } from '../src/nucleus/index.js'
 import type { GovernanceRequest } from '../src/governance/governance-types.js'
 import { frameworkLogger } from '../src/core/framework-logger.js'
 
@@ -172,9 +171,8 @@ async function handleMCPMessage(_sessionId: string, msg: any): Promise<any> {
             // If Dynamo is unreachable, GovernanceService will handle it based on requireExternalDynamo
           }
 
-          // Use the shared GovernanceService (supports in-process on Vercel)
-          const service = getGovernanceService()
-          const response = await service.govern(request)
+          // Use the governance nucleus (supports in-process on Vercel)
+          const response = await handleGovernRequest(request)
 
           return mcpResult(id, {
             content: [{

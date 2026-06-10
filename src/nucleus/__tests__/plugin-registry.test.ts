@@ -125,4 +125,117 @@ describe('PluginRegistry', () => {
     const result = pluginRegistry.callSkillTool('overwrite-me', 'tool', {});
     expect(result).resolves.toBe('second');
   });
+
+  // --- Phase 2B: multi-tool dispatch extensions ---
+
+  it('returns tool definitions via listTools() on plugin', () => {
+    const tools = [
+      { name: 'tool-a', description: 'First tool', inputSchema: { type: 'object' } },
+      { name: 'tool-b', description: 'Second tool' },
+    ];
+    const plugin: SkillToolPlugin = {
+      name: 'discoverable',
+      callTool: vi.fn(),
+      listTools: () => tools,
+    };
+    pluginRegistry.registerToolPlugin(plugin);
+
+    const listed = pluginRegistry.listSkillTools('discoverable');
+    expect(listed).toEqual(tools);
+  });
+
+  it('returns empty tools list for plugin without listTools()', () => {
+    const plugin: SkillToolPlugin = {
+      name: 'no-list',
+      callTool: vi.fn(),
+    };
+    pluginRegistry.registerToolPlugin(plugin);
+
+    const listed = pluginRegistry.listSkillTools('no-list');
+    expect(listed).toEqual([]);
+  });
+
+  it('returns empty tools list for unknown plugin', () => {
+    const listed = pluginRegistry.listSkillTools('nonexistent');
+    expect(listed).toEqual([]);
+  });
+
+  it('getToolPlugin returns the full plugin for introspection', () => {
+    const plugin: SkillToolPlugin = {
+      name: 'introspect-me',
+      callTool: vi.fn().mockResolvedValue('ok'),
+      listTools: () => [{ name: 'x', description: 'X tool' }],
+    };
+    pluginRegistry.registerToolPlugin(plugin);
+
+    const retrieved = pluginRegistry.getToolPlugin('introspect-me');
+    expect(retrieved).toBeDefined();
+    expect(retrieved!.name).toBe('introspect-me');
+    expect(retrieved!.listTools).toBeDefined();
+    expect(retrieved!.listTools!()).toHaveLength(1);
+    expect(retrieved!.listTools!()[0].name).toBe('x');
+  });
+
+  it('getToolPlugin returns undefined for unknown plugin', () => {
+    expect(pluginRegistry.getToolPlugin('ghost')).toBeUndefined();
+  });
+
+  it('registerServer convenience wraps a server as SkillToolPlugin', async () => {
+    const callToolFn = vi.fn().mockResolvedValue('server-result');
+    const serverDef = {
+      name: 'my-server',
+      tools: [
+        { name: 'tool1', description: 'Tool one' },
+        { name: 'tool2', description: 'Tool two' },
+      ],
+      callTool: callToolFn,
+    };
+
+    pluginRegistry.registerServer(serverDef);
+    expect(pluginRegistry.hasToolPlugin('my-server')).toBe(true);
+
+    const result = await pluginRegistry.callSkillTool('my-server', 'tool1', { key: 'val' });
+    expect(callToolFn).toHaveBeenCalledWith('tool1', { key: 'val' });
+    expect(result).toBe('server-result');
+  });
+
+  it('registerServer exposes listTools via the registry', () => {
+    pluginRegistry.registerServer({
+      name: 'list-server',
+      tools: [
+        { name: 'a', description: 'Tool A' },
+        { name: 'b', description: 'Tool B', inputSchema: { type: 'object' } },
+      ],
+      callTool: vi.fn(),
+    });
+
+    const tools = pluginRegistry.listSkillTools('list-server');
+    expect(tools).toHaveLength(2);
+    expect(tools[0].name).toBe('a');
+    expect(tools[1].name).toBe('b');
+    expect(tools[1].inputSchema).toEqual({ type: 'object' });
+  });
+
+  it('dispatches multiple tools on a single registered server', async () => {
+    const handler = vi.fn((toolName: string, args: Record<string, unknown>) => {
+      if (toolName === 'analyze') return Promise.resolve({ result: 'analysis' });
+      if (toolName === 'format') return Promise.resolve({ result: 'formatted' });
+      return Promise.resolve({ result: 'unknown' });
+    });
+
+    pluginRegistry.registerServer({
+      name: 'multi-tool',
+      tools: [
+        { name: 'analyze', description: 'Analyze' },
+        { name: 'format', description: 'Format' },
+      ],
+      callTool: handler,
+    });
+
+    const r1 = await pluginRegistry.callSkillTool('multi-tool', 'analyze', { code: 'x' });
+    expect(r1).toEqual({ result: 'analysis' });
+
+    const r2 = await pluginRegistry.callSkillTool('multi-tool', 'format', { code: 'y' });
+    expect(r2).toEqual({ result: 'formatted' });
+  });
 });

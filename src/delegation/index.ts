@@ -63,6 +63,12 @@ export type {
   ComplexityThresholds,
 } from "./complexity-analyzer.js";
 
+export {
+  scoreComplexity,
+  routeToAgent,
+  scoreAndRoute,
+} from "../nucleus/thin-dispatch.js";
+
 export type {
   DelegationRequest,
   DelegationResult,

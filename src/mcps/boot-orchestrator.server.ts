@@ -1,64 +1,18 @@
 /**
  * 0xRay Boot Orchestrator MCP Server
  *
- * Advanced initialization orchestration with dependency management and health monitoring
+ * Thin MCP surface over NucleusOrchestrator.
+ * All orchestration logic lives in src/nucleus/orchestrator.ts.
  */
 
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { resolveLogDir, resolveStateDir } from "../core/config-paths.js";
 import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
-
-interface ComponentInitResult {
-  success: boolean;
-  duration: number;
-  message?: string;
-  error?: string;
-}
-
-interface BootResults {
-  success: boolean;
-  initializedComponents: string[];
-  failedComponents: string[];
-  duration: number;
-  errors: string[];
-  warnings: string[];
-}
-
-interface ComponentStatus {
-  initialized: boolean;
-  healthy: boolean;
-  info: ComponentInitResult | undefined;
-  dependencies: string[];
-}
-
-interface OverallBootStatus {
-  initialized: boolean;
-  uptime: number;
-  totalComponents: number;
-  initializedComponents: number;
-  healthyComponents: number;
-  failedComponents: number;
-}
-
-interface DependencyValidationResult {
-  total: number;
-  valid: number;
-  missing: number;
-  circular: number;
-  issues: string[];
-  fixes: string[];
-}
-
-interface ShutdownResult {
-  success: boolean;
-  shutDown: number;
-  stateSaved: boolean;
-  errors: string[];
-  duration: number;
-}
+import {
+  NucleusOrchestrator,
+  type BootResults,
+  type ComponentStatus,
+  type OverallBootStatus,
+} from "../nucleus/orchestrator.js";
 
 interface ExecuteBootSequenceArgs {
   config?: Record<string, unknown>;
@@ -87,42 +41,12 @@ interface ShutdownFrameworkArgs {
 }
 
 class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
-  private bootStatus: {
-    initialized: boolean;
-    startTime: number;
-    components: Map<string, ComponentInitResult>;
-    dependencies: Map<string, string[]>;
-    health: Map<string, boolean>;
-  };
-
-  // Boot sequence in dependency order
-  private bootSequence = [
-    "configuration",
-    "logging",
-    "state-management",
-    "security",
-    "codex-loader",
-    "context-loader",
-    "processor-pipeline",
-    "agent-registry",
-    "orchestrator",
-    "mcp-servers",
-    "framework-hooks",
-  ];
+  private orchestrator: NucleusOrchestrator;
 
   constructor() {
     super("boot-orchestrator", "2.0.1");
 
-    this.bootStatus = {
-      initialized: false,
-      startTime: Date.now(),
-      components: new Map(),
-      dependencies: new Map(),
-      health: new Map(),
-    };
-
-    // Initialize dependency map
-    this.initializeDependencies();
+    this.orchestrator = new NucleusOrchestrator();
 
     this.tools = [
       {
@@ -158,11 +82,10 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
           properties: {
             component: {
               type: "string",
-              enum: this.bootSequence,
+              enum: this.orchestrator.bootSequence,
             },
             force: { type: "boolean", default: false },
           },
-          required: ["component"],
         },
       },
       {
@@ -188,6 +111,7 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
         },
       },
     ];
+
     this.handlers = {
       "execute-boot-sequence": async (args) => this.handleExecuteBootSequence(args as unknown as ExecuteBootSequenceArgs),
       "get-boot-status": async (args) => this.handleGetBootStatus(args as unknown as GetBootStatusArgs),
@@ -195,53 +119,12 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
       "validate-boot-dependencies": async (args) => this.handleValidateBootDependencies(args as unknown as ValidateBootDependenciesArgs),
       "shutdown-framework": async (args) => this.handleShutdownFramework(args as unknown as ShutdownFrameworkArgs),
     };
+
     this.setupToolHandlers();
     void frameworkLogger.log("mcps/boot-orchestrator", "initialize", "info");
   }
 
-  private initializeDependencies() {
-    // Define component dependencies
-    this.bootStatus.dependencies.set("configuration", []);
-    this.bootStatus.dependencies.set("logging", ["configuration"]);
-    this.bootStatus.dependencies.set("state-management", [
-      "configuration",
-      "logging",
-    ]);
-    this.bootStatus.dependencies.set("security", ["configuration"]);
-    this.bootStatus.dependencies.set("codex-loader", [
-      "configuration",
-      "logging",
-    ]);
-    this.bootStatus.dependencies.set("context-loader", [
-      "configuration",
-      "codex-loader",
-    ]);
-    this.bootStatus.dependencies.set("processor-pipeline", [
-      "state-management",
-      "security",
-      "codex-loader",
-    ]);
-    this.bootStatus.dependencies.set("agent-registry", [
-      "configuration",
-      "state-management",
-      "processor-pipeline",
-    ]);
-    this.bootStatus.dependencies.set("orchestrator", [
-      "agent-registry",
-      "processor-pipeline",
-    ]);
-    this.bootStatus.dependencies.set("mcp-servers", [
-      "orchestrator",
-      "agent-registry",
-    ]);
-    this.bootStatus.dependencies.set("framework-hooks", [
-      "mcp-servers",
-      "orchestrator",
-    ]);
-  }
-
   private async handleExecuteBootSequence(args: ExecuteBootSequenceArgs) {
-    const config = args.config || {};
     const skipHealthChecks = args.skipHealthChecks || false;
     const parallelInit = args.parallelInit !== false;
 
@@ -250,45 +133,21 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
       parallelInit,
     });
 
-    const results = {
-      success: true,
-      initializedComponents: [] as string[],
-      failedComponents: [] as string[],
-      duration: 0,
-      errors: [] as string[],
-      warnings: [] as string[],
-    };
-
-    const startTime = Date.now();
-
     try {
-      // Validate prerequisites
-      const validationResults = await this.validatePrerequisites();
-      if (!validationResults.valid) {
-        results.success = false;
-        results.errors.push(...validationResults.errors);
-        return this.formatBootResults(results);
-      }
-
-      // Execute boot sequence
-      if (parallelInit) {
-        await this.executeParallelBoot(skipHealthChecks, results);
-      } else {
-        await this.executeSequentialBoot(skipHealthChecks, results);
-      }
-
-      results.duration = Date.now() - startTime;
-      this.bootStatus.initialized = results.success;
-
+      const results = await this.orchestrator.executeBootSequence({
+        skipHealthChecks,
+        parallelInit,
+      });
       return this.formatBootResults(results);
     } catch (error) {
-      results.success = false;
-      results.duration = Date.now() - startTime;
-      results.errors.push(
-        `Boot sequence failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      return this.formatBootResults(results);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `❌ Boot sequence failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
     }
   }
 
@@ -300,8 +159,7 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
 
     try {
       if (component) {
-        // Get specific component status
-        const status = await this.getComponentStatus(component);
+        const status = await this.orchestrator.getComponentStatus(component);
         return {
           content: [
             {
@@ -311,8 +169,7 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
           ],
         };
       } else {
-        // Get overall boot status
-        const status = this.getOverallBootStatus();
+        const status = this.orchestrator.getOverallBootStatus();
         return {
           content: [
             {
@@ -341,19 +198,19 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
     frameworkLogger.log("mcp-boot-orchestrator", "initialize-component", "info", { component, force });
 
     try {
-      if (!this.bootSequence.includes(component)) {
+      if (!this.orchestrator.bootSequence.includes(component)) {
         return {
           content: [
             {
               type: "text",
-              text: `❌ Unknown component: ${component}\nAvailable: ${this.bootSequence.join(", ")}`,
+              text: `❌ Unknown component: ${component}\nAvailable: ${this.orchestrator.bootSequence.join(", ")}`,
             },
           ],
         };
       }
 
-      // Check if already initialized
-      if (this.bootStatus.components.has(component) && !force) {
+      const existing = this.orchestrator.getComponentResult(component);
+      if (existing && !force) {
         return {
           content: [
             {
@@ -364,25 +221,7 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
         };
       }
 
-      // Check dependencies
-      const deps = this.bootStatus.dependencies.get(component) || [];
-      for (const dep of deps) {
-        if (!this.bootStatus.components.has(dep)) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `❌ Dependency not met: ${component} requires ${dep}\nInitialize dependencies first`,
-              },
-            ],
-          };
-        }
-      }
-
-      // Initialize component
-      const result = await this.initializeComponent(component);
-      this.bootStatus.components.set(component, result);
-      this.bootStatus.health.set(component, result.success);
+      const result = await this.orchestrator.initializeSingleComponent(component, force);
 
       return {
         content: [
@@ -411,7 +250,7 @@ class XrayBootOrchestratorServer extends XrayKnowledgeSkillBase {
     frameworkLogger.log("mcp-boot-orchestrator", "validate-boot-dependencies", "info", { fix, verbose });
 
     try {
-      const results = await this.validateAllDependencies(fix, verbose);
+      const results = await this.orchestrator.validateAllDependencies(fix, verbose);
 
       const response = `🔍 Dependency Validation Results
 
@@ -447,7 +286,7 @@ ${results.fixes.length > 0 ? `**Fixes Applied:**\n${results.fixes.map((fix: stri
     frameworkLogger.log("mcps/boot-orchestrator", "shutdown", "info", { force, saveState });
 
     try {
-      const results = await this.executeShutdownSequence(force, saveState);
+      const results = await this.orchestrator.shutdown(force, saveState);
 
       return {
         content: [
@@ -478,503 +317,12 @@ ${results.errors.length > 0 ? `**Errors:**\n${results.errors.map((e: string) => 
     }
   }
 
-  private async validatePrerequisites(): Promise<{
-    valid: boolean;
-    errors: string[];
-  }> {
-    const errors: string[] = [];
-
-    // Check Node.js version
-    try {
-      const nodeVersionOutput =
-        execSync("node --version", { encoding: "utf8" })?.toString().trim() ||
-        "";
-      const nodeVersion = nodeVersionOutput || "v1.2.0";
-      const versionParts = nodeVersion.split(".");
-      const majorVersion =
-        versionParts.length > 0 && versionParts[0]
-          ? parseInt(versionParts[0].substring(1))
-          : 0;
-      if (majorVersion < 18) {
-        errors.push(`Node.js version ${nodeVersion} is too old. Requires 18+`);
-      }
-    } catch (error) {
-      errors.push("Cannot determine Node.js version");
-    }
-
-    // Check required directories
-    const requiredDirs = ["src", "src/agents", "src/mcps"];
-    for (const dir of requiredDirs) {
-      if (!fs.existsSync(dir)) {
-        errors.push(`Required directory missing: ${dir}`);
-      }
-    }
-
-    // Check package.json
-    if (!fs.existsSync("package.json")) {
-      errors.push("package.json not found");
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
-  }
-
-  private async executeParallelBoot(skipHealthChecks: boolean, results: BootResults) {
-    const componentPromises = this.bootSequence.map((component) =>
-      this.initializeComponent(component, skipHealthChecks),
-    );
-
-    const componentResults = await Promise.allSettled(componentPromises);
-
-    for (let i = 0; i < componentResults.length; i++) {
-      const component = this.bootSequence[i];
-      if (!component) continue;
-      const result = componentResults[i];
-      if (!result) continue;
-
-      if (result.status === "fulfilled") {
-        const fulfilledResult = result as PromiseFulfilledResult<ComponentInitResult>;
-        if (fulfilledResult.value.success) {
-          results.initializedComponents.push(component);
-          this.bootStatus.components.set(component, fulfilledResult.value);
-          this.bootStatus.health.set(component, true);
-        } else {
-          results.failedComponents.push(component);
-          results.errors.push(
-            `${component}: ${fulfilledResult.value.error || "Unknown error"}`,
-          );
-        }
-      } else {
-        results.failedComponents.push(component);
-        results.errors.push(
-          `${component}: ${(result as PromiseRejectedResult).reason}`,
-        );
-      }
-    }
-
-    results.success = results.failedComponents.length === 0;
-  }
-
-  private async executeSequentialBoot(skipHealthChecks: boolean, results: BootResults) {
-    for (const component of this.bootSequence) {
-      try {
-        const result = await this.initializeComponent(
-          component,
-          skipHealthChecks,
-        );
-
-        if (result.success) {
-          results.initializedComponents.push(component);
-          this.bootStatus.components.set(component, result);
-          this.bootStatus.health.set(component, true);
-        } else {
-          results.failedComponents.push(component);
-          results.errors.push(`${component}: ${result.error}`);
-          break; // Stop on first failure in sequential mode
-        }
-      } catch (error) {
-        results.failedComponents.push(component);
-        results.errors.push(
-          `${component}: ${error instanceof Error ? error.message : String(error)}`,
-        );
-        break;
-      }
-    }
-
-    results.success = results.failedComponents.length === 0;
-  }
-
-  private async initializeComponent(
-    component: string,
-    skipHealthChecks = false,
-  ): Promise<ComponentInitResult> {
-    const startTime = Date.now();
-
-    try {
-      switch (component) {
-        case "configuration":
-          return await this.initConfiguration();
-        case "logging":
-          return await this.initLogging();
-        case "state-management":
-          return await this.initStateManagement();
-        case "security":
-          return await this.initSecurity();
-        case "codex-loader":
-          return await this.initCodexLoader();
-        case "context-loader":
-          return await this.initContextLoader();
-        case "processor-pipeline":
-          return await this.initProcessorPipeline();
-        case "agent-registry":
-          return await this.initAgentRegistry();
-        case "orchestrator":
-          return await this.initOrchestrator();
-        case "mcp-servers":
-          return await this.initMCPServers();
-        case "framework-hooks":
-          return await this.initFrameworkHooks();
-        default:
-          throw new Error(`Unknown component: ${component}`);
-      }
-    } catch (error) {
-      return {
-        success: false,
-        duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  }
-
-  private async initConfiguration(): Promise<ComponentInitResult> {
-    return {
-      success: true,
-      duration: 10,
-      message: "Configuration initialized",
-    };
-  }
-
-  private async initLogging(): Promise<ComponentInitResult> {
-    // Initialize logging system
-    const logDir = resolveLogDir();
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
-    }
-
-    return {
-      success: true,
-      duration: 5,
-      message: "Logging system initialized",
-    };
-  }
-
-  private async initStateManagement(): Promise<ComponentInitResult> {
-    // Validate state management setup
-    const stateDir = resolveStateDir();
-    if (!fs.existsSync(stateDir)) {
-      fs.mkdirSync(stateDir, { recursive: true });
-    }
-
-    return {
-      success: true,
-      duration: 8,
-      message: "State management initialized",
-    };
-  }
-
-  private async initSecurity(): Promise<ComponentInitResult> {
-    // Basic security initialization
-    return {
-      success: true,
-      duration: 3,
-      message: "Security framework initialized",
-    };
-  }
-
-  private async initCodexLoader(): Promise<ComponentInitResult> {
-    return {
-      success: true,
-      duration: 12,
-      message: "Codex loader initialized",
-    };
-  }
-
-  private async initContextLoader(): Promise<ComponentInitResult> {
-    return {
-      success: true,
-      duration: 8,
-      message: "Context loader initialized",
-    };
-  }
-
-  private async initProcessorPipeline(): Promise<ComponentInitResult> {
-    // Validate processor pipeline
-    return {
-      success: true,
-      duration: 15,
-      message: "Processor pipeline initialized",
-    };
-  }
-
-  private async initAgentRegistry(): Promise<ComponentInitResult> {
-    // Check agent files exist
-    const agentCount = this.countAgentFiles();
-    if (agentCount < 5) {
-      throw new Error(`Insufficient agents found: ${agentCount}`);
-    }
-
-    return {
-      success: true,
-      duration: 10,
-      message: `Agent registry initialized with ${agentCount} agents`,
-    };
-  }
-
-  private async initOrchestrator(): Promise<ComponentInitResult> {
-    // Validate orchestrator setup
-    return {
-      success: true,
-      duration: 20,
-      message: "Orchestrator initialized",
-    };
-  }
-
-  private async initMCPServers(): Promise<ComponentInitResult> {
-    // Check MCP servers
-    const mcpCount = this.countMCPFiles();
-    if (mcpCount < 3) {
-      throw new Error(`Insufficient MCP servers found: ${mcpCount}`);
-    }
-
-    return {
-      success: true,
-      duration: 15,
-      message: `MCP servers initialized (${mcpCount} servers)`,
-    };
-  }
-
-  private async initFrameworkHooks(): Promise<ComponentInitResult> {
-    // Initialize framework hooks
-    return {
-      success: true,
-      duration: 5,
-      message: "Framework hooks initialized",
-    };
-  }
-
-  private countAgentFiles(): number {
-    try {
-      const files = fs.readdirSync("src/agents");
-      return files.filter(
-        (f) => f.endsWith(".ts") && f !== "types.ts" && f !== "index.ts",
-      ).length;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  private countMCPFiles(): number {
-    try {
-      const files = fs.readdirSync("src/mcps");
-      return files.filter((f) => f.endsWith(".server.ts")).length;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  private async getComponentStatus(component: string) {
-    const initialized = this.bootStatus.components.has(component);
-    const healthy = this.bootStatus.health.get(component) || false;
-    const info = this.bootStatus.components.get(component);
-
-    return {
-      initialized,
-      healthy,
-      info,
-      dependencies: this.bootStatus.dependencies.get(component) || [],
-    };
-  }
-
-  private getOverallBootStatus() {
-    const totalComponents = this.bootSequence.length;
-    const initializedComponents = Array.from(this.bootStatus.components.keys());
-    const healthyComponents = Array.from(
-      this.bootStatus.health.values(),
-    ).filter((h) => h).length;
-
-    return {
-      initialized: this.bootStatus.initialized,
-      uptime: Date.now() - this.bootStatus.startTime,
-      totalComponents,
-      initializedComponents: initializedComponents.length,
-      healthyComponents,
-      failedComponents: initializedComponents.length - healthyComponents,
-    };
-  }
-
-  private async validateAllDependencies(
-    fix: boolean,
-    verbose: boolean,
-  ): Promise<DependencyValidationResult> {
-    const results = {
-      total: this.bootSequence.length,
-      valid: 0,
-      missing: 0,
-      circular: 0,
-      issues: [] as string[],
-      fixes: [] as string[],
-    };
-
-    // Check for missing dependencies
-    for (const component of this.bootSequence) {
-      const deps = this.bootStatus.dependencies.get(component) || [];
-      const missingDeps = deps.filter((dep) => !this.checkComponentExists(dep));
-
-      if (missingDeps.length > 0) {
-        results.missing++;
-        results.issues.push(
-          `${component} missing dependencies: ${missingDeps.join(", ")}`,
-        );
-      } else {
-        results.valid++;
-      }
-    }
-
-    // Check for circular dependencies (simplified)
-    const circularDeps = this.detectCircularDependencies();
-    if (circularDeps.length > 0) {
-      results.circular = circularDeps.length;
-      results.issues.push(
-        `Circular dependencies detected: ${circularDeps.join(", ")}`,
-      );
-    }
-
-    // Apply fixes if requested
-    if (fix && results.issues.length > 0) {
-      results.fixes = await this.applyDependencyFixes(results.issues);
-    }
-
-    return results;
-  }
-
-  private checkComponentExists(component: string): boolean {
-    // Simplified check - in real implementation this would be more thorough
-    switch (component) {
-      case "configuration":
-        return fs.existsSync("opencode.json");
-      case "logging":
-        return fs.existsSync("src/framework-logger.ts");
-      case "state-management":
-        return fs.existsSync("src/state/state-manager.ts");
-      case "security":
-        return true;
-      case "codex-loader":
-        return true;
-      case "context-loader":
-        return true;
-      case "processor-pipeline":
-        return fs.existsSync("src/processors/processor-manager.ts");
-      case "agent-registry":
-        return fs.existsSync("src/agents");
-      case "orchestrator":
-        return fs.existsSync("src/delegation/agent-delegator.ts");
-      case "mcp-servers":
-        return fs.existsSync("src/mcps");
-      case "framework-hooks":
-        return fs.existsSync("src/core/xray-activation.ts");
-      default:
-        return false;
-    }
-  }
-
-  private detectCircularDependencies(): string[] {
-    // Simplified circular dependency detection
-    const circular: string[] = [];
-
-    for (const [component, deps] of this.bootStatus.dependencies) {
-      for (const dep of deps) {
-        const depDeps = this.bootStatus.dependencies.get(dep) || [];
-        if (depDeps.includes(component)) {
-          circular.push(`${component} ↔ ${dep}`);
-        }
-      }
-    }
-
-    return [...new Set(circular)]; // Remove duplicates
-  }
-
-  private async applyDependencyFixes(issues: string[]): Promise<string[]> {
-    const fixes: string[] = [];
-
-    // Simplified fix application
-    for (const issue of issues) {
-      if (issue.includes("missing dependencies")) {
-        fixes.push(
-          "Dependency validation completed - manual fixes may be required",
-        );
-      }
-    }
-
-    return fixes;
-  }
-
-  private async executeShutdownSequence(
-    force: boolean,
-    saveState: boolean,
-  ): Promise<ShutdownResult> {
-    const results: ShutdownResult = {
-      success: true,
-      shutDown: 0,
-      stateSaved: saveState,
-      errors: [] as string[],
-      duration: 0,
-    };
-
-    const startTime = Date.now();
-
-    try {
-      // Shutdown in reverse order
-      const reverseSequence = [...this.bootSequence].reverse();
-
-      for (const component of reverseSequence) {
-        try {
-          await this.shutdownComponent(component, force);
-          results.shutDown++;
-        } catch (error) {
-          results.errors.push(
-            `${component}: ${error instanceof Error ? error.message : String(error)}`,
-          );
-          if (!force) {
-            results.success = false;
-          }
-        }
-      }
-
-      // Save state if requested
-      if (saveState) {
-        await this.saveShutdownState();
-      }
-    } catch (error) {
-      results.success = false;
-      results.errors.push(
-        `Shutdown error: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-
-    results.duration = Date.now() - startTime;
-    return results;
-  }
-
-  private async shutdownComponent(
-    component: string,
-    force: boolean,
-  ): Promise<void> {
-    // Simplified shutdown logic
-    frameworkLogger.log("mcps/boot-orchestrator", "shutdown-component", "info", { component });
-    // In real implementation, this would properly shut down each component
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-
-  private async saveShutdownState(): Promise<void> {
-    // Save shutdown state
-    const shutdownState = {
-      timestamp: Date.now(),
-      components: Array.from(this.bootStatus.components.keys()),
-      health: Object.fromEntries(this.bootStatus.health),
-    };
-
-    const stateFile = path.join(".opencode", "state", "shutdown-state.json");
-    fs.writeFileSync(stateFile, JSON.stringify(shutdownState, null, 2));
-  }
-
   private formatBootResults(results: BootResults) {
     const response = `🚀 Boot Sequence Results
 
 **Success:** ${results.success ? "✅ COMPLETE" : "❌ FAILED"}
 **Duration:** ${results.duration}ms
-**Components Initialized:** ${results.initializedComponents.length}/${this.bootSequence.length}
+**Components Initialized:** ${results.initializedComponents.length}/${this.orchestrator.bootSequence.length}
 **Components Failed:** ${results.failedComponents.length}
 
 **Initialized Components:**
@@ -1017,9 +365,9 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w: strin
 
     if (detailed) {
       response += `\n\n**Component Details:**`;
-      for (const component of this.bootSequence) {
-        const compStatus = this.bootStatus.health.get(component);
-        response += `\n• ${component}: ${compStatus ? "✅" : "❌"}`;
+      for (const component of this.orchestrator.bootSequence) {
+        const compHealth = this.orchestrator.getComponentHealth(component);
+        response += `\n• ${component}: ${compHealth ? "✅" : "❌"}`;
       }
     }
 

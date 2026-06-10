@@ -254,7 +254,12 @@ export class GovernanceService {
           });
           text = (result as MCPToolResult)?.content?.[0]?.text || '';
         } else {
-          // Normal path — real MCP transport
+          // Normal path — real MCP transport (deprecated, prefer registry)
+          frameworkLogger.log('governance-service', 'mcp-fallback', 'warning', {
+            server: serverName,
+            proposal: proposal.title,
+            message: 'Using direct MCP call instead of pluginRegistry — this path is deprecated',
+          });
           const result = await mcpClientManager.callServerTool(serverName, 'analyze_proposal', {
             proposalTitle: proposal.title,
             proposalDescription: proposal.description,
@@ -410,6 +415,14 @@ export class GovernanceService {
 // Singleton for convenience
 let governanceServiceInstance: GovernanceService | null = null;
 
+/**
+ * Get the singleton GovernanceService instance.
+ *
+ * @deprecated Use `handleGovernRequest` from `src/nucleus/index.js` instead.
+ * All callers should go through the nucleus surface. Direct use of
+ * GovernanceService bypasses nucleus lifecycle, logging, and future
+ * governance pipeline enhancements.
+ */
 export function getGovernanceService(): GovernanceService {
   if (!governanceServiceInstance) {
     governanceServiceInstance = new GovernanceService();

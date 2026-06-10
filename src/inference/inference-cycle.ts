@@ -4,9 +4,6 @@ import { shouldTriggerCycle, accumulateCorpus, InferenceCorpus, RecurringPattern
 import { DeployVerifier, DeployVerificationResult } from "./deploy-verifier.js";
 import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { featuresConfigLoader } from "../core/features-config.js";
-import { mcpClientManager } from "../mcps/mcp-client.js";
-import { getConfigDir } from "../core/config-paths.js";
 import { invokeViaOpencode as invokeOpencodeFromEngine } from "../execution/opencode-cli-invoker.js";
 import { ProposalApplier } from "../execution/proposal-applier.js";
 import { handleGovernRequest } from "../nucleus/govern-http.js";
@@ -403,14 +400,9 @@ export class InferenceCycle {
     });
 
     try {
-      let agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
+      const agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
 
-      // In pure MCP mode, use real skill server names so the orchestrator dispatches to actual MCP tools
-      if ((process.env.XRAY_FORCE_MCP_GOVERNANCE) === 'true') {
-        agentName = p.type === "refactor" ? "refactoring-strategies" : "code-review";
-      }
-
-      await this.invokeAgentInternal(agentName, prompt);
+      await invokeOpencodeFromEngine(agentName, prompt, this.projectRoot);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-agent-failed", "warning", {
@@ -437,10 +429,7 @@ export class InferenceCycle {
     ].join("\n");
 
     try {
-      const agentName = (process.env.XRAY_FORCE_MCP_GOVERNANCE) === 'true' 
-        ? "code-review" 
-        : "code-reviewer";
-      await this.invokeAgentInternal(agentName, prompt);
+      await invokeOpencodeFromEngine("code-reviewer", prompt, this.projectRoot);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-guard-failed", "warning", {
@@ -469,10 +458,7 @@ export class InferenceCycle {
     ].join("\n");
 
     try {
-      const agentName = (process.env.XRAY_FORCE_MCP_GOVERNANCE) === 'true' 
-        ? "architecture-patterns" 
-        : "architect";
-      await this.invokeAgentInternal(agentName, prompt);
+      await invokeOpencodeFromEngine("architect", prompt, this.projectRoot);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-automation-failed", "warning", {
@@ -524,7 +510,7 @@ Respond with EXACTLY one of:
 - MODIFY: <specific changes needed>`;
 
     try {
-      const result = await this.invokeAgentInternal("researcher", prompt);
+      const result = await invokeOpencodeFromEngine("researcher", prompt, this.projectRoot);
 
       const output = result.toLowerCase();
       if (output.includes("no-go")) return "no-go";
@@ -537,78 +523,14 @@ Respond with EXACTLY one of:
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
-    // v3: Primary path through the nucleus kernel (handleGovernRequest)
-    // This gives ALL proposals the same contract: 3-agent + Dynamo governance,
-    // metamorphosis scoring, dynamic skills, and structured logging.
-    // The MCP governance server remains the standard external surface; this is the
-    // internal uniform path that the MCP server also delegates to.
-    try {
-      const governanceResponse = await this.governViaNucleus(proposals);
+    const governanceResponse = await this.governViaNucleus(proposals);
 
-      frameworkLogger.log("inference-cycle", "governance-nucleus-success", "info", {
-        proposalCount: proposals.length,
-        overall: governanceResponse.overallDecision,
-      });
+    frameworkLogger.log("inference-cycle", "governance-nucleus-success", "info", {
+      proposalCount: proposals.length,
+      overall: governanceResponse.overallDecision,
+    });
 
-      return this.convertNucleusResponse(governanceResponse, proposals);
-    } catch (err) {
-      frameworkLogger.log("inference-cycle", "governance-nucleus-failed", "warning", {
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-      });
-
-      // In forced pure MCP mode we must not silently fall back
-      if (process.env.XRAY_FORCE_MCP_GOVERNANCE === 'true') {
-        throw err;
-      }
-
-      // Fallback: try the Governance MCP directly (the standard external surface)
-      frameworkLogger.log("inference-cycle", "governance-mcp-fallback", "warning", {
-        message: "Nucleus path failed; falling back to Governance MCP.",
-        originalError: err instanceof Error ? err.message : String(err),
-      });
-    }
-
-    // Fallback: MCP governance server
-    const useGovernanceMcp = process.env.XRAY_FORCE_MCP_GOVERNANCE === 'true' ||
-      this.isGovernanceMcpPreferred();
-
-    if (useGovernanceMcp) {
-      try {
-        const result = await Promise.race([
-          mcpClientManager.callServerTool("governance", "govern_proposals", {
-            proposals: proposals.map(p => ({
-              id: p.id,
-              type: p.type,
-              title: p.title,
-              description: p.description,
-              evidence: p.evidence || [],
-              source: p.source || "inference",
-              confidence: p.confidence || 0.8,
-            })),
-            context: { source: "inference-cycle" },
-            options: { require_external: true },
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("Governance MCP timed out after 8s")), 8000)
-          ),
-        ]);
-
-        const text = (result as any)?.content?.[0]?.text || "";
-        const parsed = this.parseGovernanceMcpResponse(text, proposals);
-        frameworkLogger.log("inference-cycle", "governance-mcp-fallback-success", "info", {
-          proposalCount: proposals.length,
-          overall: parsed.overallDecision,
-        });
-        return parsed.votes;
-      } catch (err) {
-        frameworkLogger.log("inference-cycle", "governance-mcp-fallback-failed", "error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-
-    throw new Error("All governance paths exhausted: nucleus and MCP fallback both failed");
+    return this.convertNucleusResponse(governanceResponse, proposals);
   }
 
   /**
@@ -679,211 +601,6 @@ Respond with EXACTLY one of:
     });
   }
 
-  private isGovernanceMcpPreferred(): boolean {
-    try {
-      const config = featuresConfigLoader.loadConfig();
-      const inferenceGov = (config as { inference_governance?: { enabled?: boolean } }).inference_governance;
-      return inferenceGov?.enabled ?? true;
-    } catch {
-      return true;
-    }
-  }
-
-  private parseGovernanceMcpResponse(text: string, proposals: InferenceProposal[]): {
-    votes: InferenceCycleResult["votes"];
-    overallDecision: string;
-  } {
-    // The governance MCP returns a GovernanceResponse JSON
-    try {
-      const data = JSON.parse(text);
-      const results = data.results || [];
-      const votes = proposals.map((p, i) => {
-        const r = results[i] || {};
-        return {
-          proposalId: p.id,
-          decision: (r.finalDecision === 'approve' ? 'approve' : r.finalDecision === 'reject' ? 'reject' : 'needs_revision') as any,
-          confidence: r.averageConfidence || 0.75,
-          details: (r.votes || []).map((v: any) => `${v.server}: ${v.decision} (${v.confidence})`),
-        };
-      });
-      return { votes, overallDecision: data.overallDecision || "needs_revision" };
-    } catch {
-      frameworkLogger.log('inference-cycle', 'governance-mcp-parse-failed', 'warning', {
-        textPreview: text.substring(0, 200),
-        proposalCount: proposals.length,
-      });
-      const votes = proposals.map(p => ({
-        proposalId: p.id,
-        decision: "abstain" as any,
-        confidence: 0.5,
-        details: ["governance-mcp: parse-failed"],
-      }));
-      return { votes, overallDecision: "needs_revision" };
-    }
-  }
-
-
-  private async invokeAgentInternal(agentName: string, prompt: string): Promise<string> {
-    frameworkLogger.log("inference-cycle", "invoke-agent-internal", "info", {
-      agentName,
-      promptLength: prompt.length,
-    });
-
-    try {
-      const { mcpClientManager } = await import("../mcps/mcp-client.js");
-      const MCP_TIMEOUT_MS = 8000;
-      const result = await Promise.race([
-        mcpClientManager.callServerTool("orchestrator", "orchestrate-task", {
-          description: prompt,
-          tasks: [{
-            id: `task-${Date.now()}`,
-            description: prompt,
-            type: agentName,
-            priority: "high",
-          }],
-          executionMode: "sequential",
-        }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Orchestrator MCP timed out after ${MCP_TIMEOUT_MS}ms`)), MCP_TIMEOUT_MS)
-        ),
-      ]);
-      const content = (result as { content?: Array<{ text?: string }> }).content;
-      let responseText = "";
-      if (content && Array.isArray(content)) {
-        responseText = content.map((c: { text?: string }) => c.text ?? "").join("");
-      } else {
-        responseText = JSON.stringify(result);
-      }
-      // In pure MCP governance mode, trust the orchestrator response (it now does real work)
-      const isPureMcp = (process.env.XRAY_FORCE_MCP_GOVERNANCE) === 'true';
-
-      const hasRealContent = /PROPOSAL:\s*\d+/i.test(responseText) ||
-                             /DECISION:\s*(approve|reject|abstain)/i.test(responseText) ||
-                             /Agent Outputs \(real MCP responses\):/i.test(responseText);
-
-      if (hasRealContent || isPureMcp) {
-        if (isPureMcp && !hasRealContent) {
-          frameworkLogger.log("inference-cycle", "pure-mcp-orchestrator-response", "info", {
-            agentName,
-            responsePreview: responseText.substring(0, 300),
-          });
-        }
-        return responseText;
-      }
-
-      frameworkLogger.log("inference-cycle", "mcp-no-useful-content", "info", {
-        agentName,
-        responsePreview: responseText.substring(0, 200),
-      });
-    } catch (mcpError) {
-      frameworkLogger.log("inference-cycle", "mcp-invocation-failed", "info", {
-        agentName,
-        error: String(mcpError),
-      });
-    }
-
-    if (this.agentInvoker) {
-      frameworkLogger.log("inference-cycle", "invoke-via-callback", "info", { agentName });
-      return this.agentInvoker(agentName, prompt);
-    }
-
-    // Only fall back to OpenCode if not in forced pure MCP mode
-    if ((process.env.XRAY_FORCE_MCP_GOVERNANCE) === 'true') {
-      throw new Error(`[PURE MCP] Orchestrator returned no usable response for agent "${agentName}" and OpenCode fallback is disabled`);
-    }
-
-    return this.invokeViaOpencode(agentName, prompt);
-  }
-
-  private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
-    return invokeOpencodeFromEngine(agentName, prompt, this.projectRoot);
-  }
-
-  private parseSubagentVotes(
-    jsonOutput: string,
-    proposals: InferenceProposal[],
-  ): Array<{ proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }> {
-    const votes: Array<{ proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }> = [];
-
-    const lines = jsonOutput.split("\n").filter((l) => l.trim());
-
-    for (const line of lines) {
-      try {
-        const obj = JSON.parse(line);
-        if (obj.type === "tool_use" && obj.part?.type === "tool" && obj.part.tool === "task") {
-          const agentName = obj.part.state?.input?.subagent_type || "";
-          const output = obj.part.state?.output || "";
-
-          // Each task output may contain multiple PROPOSAL blocks
-          const blocks = output.split(/PROPOSAL:\s*/).filter((b: string) => b.trim().length > 0);
-
-          for (const block of blocks) {
-            const numMatch = block.match(/^(\d+)/);
-            if (!numMatch) continue;
-            const proposalIdx = parseInt(numMatch[1], 10) - 1;
-            if (proposalIdx < 0 || proposalIdx >= proposals.length) continue;
-
-            const decisionMatch = block.match(/DECISION:\s*(\w+)/i);
-            const confMatch = block.match(/CONFIDENCE:\s*(0?\.\d+|1\.0|1|0)/i);
-            const reasonMatch = block.match(/REASONING:\s*(.+)/i);
-
-            if (decisionMatch) {
-              const proposal = proposals[proposalIdx];
-              if (proposal) {
-                votes.push({
-                  proposalId: proposal.id,
-                  agentName,
-                  decision: decisionMatch[1]!.toLowerCase(),
-                  confidence: confMatch ? Math.min(1, Math.max(0, parseFloat(confMatch[1]!))) : 0.5,
-                  reasoning: reasonMatch ? reasonMatch[1]!.trim() : "",
-                });
-              }
-            }
-          }
-        }
-      } catch {
-        // Not JSON, skip
-      }
-    }
-
-    // Fallback: if no votes found from JSON format, try parsing plain-text
-    // PROPOSAL/DECISION blocks directly (e.g. from opencode CLI fallback path)
-    if (votes.length === 0 && /PROPOSAL:\s*\d+/i.test(jsonOutput)) {
-      const blocks = jsonOutput.split(/PROPOSAL:\s*/).filter((b: string) => b.trim().length > 0);
-      for (const block of blocks) {
-        const numMatch = block.match(/^(\d+)/);
-        if (!numMatch) continue;
-        const numStr = numMatch[1];
-        if (!numStr) continue;
-        const proposalIdx = parseInt(numStr, 10) - 1;
-        if (proposalIdx < 0 || proposalIdx >= proposals.length) continue;
-
-        const agentMatch = block.match(/AGENT:\s*(\w[\w-]*)/i);
-        const decisionMatch = block.match(/DECISION:\s*(\w+)/i);
-        const confMatch = block.match(/CONFIDENCE:\s*(0?\.\d+|1\.0|1|0)/i);
-        const reasonMatch = block.match(/REASONING:\s*(.+)/i);
-
-        if (decisionMatch) {
-          const proposal = proposals[proposalIdx];
-          if (proposal) {
-            let decision = decisionMatch[1]!.toLowerCase();
-            if (decision === "yes") decision = "approve";
-            if (decision === "no") decision = "reject";
-            votes.push({
-              proposalId: proposal.id,
-              agentName: agentMatch?.[1] ?? "architect",
-              decision,
-              confidence: confMatch ? Math.min(1, Math.max(0, parseFloat(confMatch[1]!))) : 0.5,
-              reasoning: reasonMatch ? reasonMatch[1]!.trim() : "",
-            });
-          }
-        }
-      }
-    }
-
-    return votes;
-  }
-
   private getGovernanceStateManager(): XrayStateManager {
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
@@ -920,12 +637,6 @@ Respond with EXACTLY one of:
       }
     }
     return texts.join("\n").trim();
-  }
-
-  private resolveOpencodeRoot(): string {
-    // Use the provider-agnostic config path resolver (prefers .xray/ over legacy .opencode)
-    const configDir = getConfigDir(this.projectRoot);
-    return path.dirname(configDir);
   }
 
   private rejectNoQuorum(proposal: InferenceProposal, reason: string): InferenceCycleResult["votes"][0] {

@@ -83,9 +83,11 @@ interface StorytellerArgs {
 }
 
 class SkillInvocationServer extends XrayKnowledgeSkillBase {
+  private readonly pluginFirst: boolean;
 
   constructor() {
     super("xray/skill-invocation", "2.0.1");
+    this.pluginFirst = process.argv.includes('--plugin-first');
     this.tools = [
       {
         name: "list-skills",
@@ -364,7 +366,17 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
    * Dispatch a skill tool call: prefer in-process pluginRegistry, fall back to external MCP process.
    */
   private async callSkillTool(skillName: string, toolName: string, args: Record<string, unknown>): Promise<unknown> {
-    if (pluginRegistry.hasToolPlugin(skillName)) {
+    if (this.pluginFirst) {
+      try {
+        return await pluginRegistry.callSkillTool(skillName, toolName, args);
+      } catch {
+        frameworkLogger.log('skill-invocation', 'plugin-first-fallback', 'info', {
+          skill: skillName,
+          tool: toolName,
+          message: 'Plugin-first dispatch failed, falling back to MCP transport',
+        });
+      }
+    } else if (pluginRegistry.hasToolPlugin(skillName)) {
       return pluginRegistry.callSkillTool(skillName, toolName, args);
     }
     return mcpClientManager.callServerTool(skillName, toolName, args);

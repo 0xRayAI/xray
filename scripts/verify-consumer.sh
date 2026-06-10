@@ -127,8 +127,65 @@ FAILED_BRIDGES=""
 echo ""
 echo "[verify] Bridge results: $PASSED/4 passed"
 
-# 6. Check activity.log for expected entries
-step "Phase 5: activity.log verification"
+# 6. Consumer-side plugin registration verification
+step "Phase 5: Consumer plugin verification"
+
+PLUGIN_TEST_DIR="$CONSUMER_DIR/plugin-test"
+mkdir -p "$PLUGIN_TEST_DIR"
+
+cat > "$PLUGIN_TEST_DIR/test-plugin.mjs" << 'EOF'
+import { pluginRegistry } from '0xray/dist/nucleus/plugin-registry.js';
+
+// Register a mock server
+pluginRegistry.registerServer({
+  name: 'test-consumer-plugin',
+  tools: [
+    { name: 'greet', description: 'Say hello' },
+  ],
+  callTool: async (toolName, args) => {
+    if (toolName === 'greet') {
+      return { result: `Hello, ${args.name || 'world'}!` };
+    }
+    throw new Error(`Unknown tool: ${toolName}`);
+  },
+});
+
+// Verify registration worked
+const hasPlugin = pluginRegistry.hasToolPlugin('test-consumer-plugin');
+if (!hasPlugin) {
+  console.error('FAIL: plugin not registered');
+  process.exit(1);
+}
+
+// Dispatch tool
+const result = await pluginRegistry.callSkillTool('test-consumer-plugin', 'greet', { name: 'Consumer' });
+const text = result.result;
+if (text !== 'Hello, Consumer!') {
+  console.error(`FAIL: unexpected result: ${text}`);
+  process.exit(1);
+}
+
+// List tools
+const tools = pluginRegistry.listSkillTools('test-consumer-plugin');
+if (tools.length !== 1 || tools[0].name !== 'greet') {
+  console.error('FAIL: tools not listed correctly');
+  process.exit(1);
+}
+
+console.log('Consumer plugin test PASSED');
+EOF
+
+cd "$PLUGIN_TEST_DIR"
+if node test-plugin.mjs 2>&1; then
+  echo "[verify] Consumer plugin verification PASSED"
+else
+  echo "[verify] Consumer plugin verification FAILED" >&2
+  FAILED=1
+fi
+cd "$CONSUMER_DIR"
+
+# 7. Check activity.log for expected entries
+step "Phase 6: activity.log verification"
 
 ACTIVITY_LOG="$CONSUMER_DIR/logs/framework/activity.log"
 
