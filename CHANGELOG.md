@@ -12,6 +12,30 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [2.2.2] - 2026-06-10
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [2.2.2] - 2026-06-10
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [2.2.2] - 2026-06-10
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
 ## [2.2.1] - 2026-06-10
 
 ### 🔄 Changes

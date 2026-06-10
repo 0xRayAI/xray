@@ -155,7 +155,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
           filesChanged: 3,
           insertions: 100,
           deletions: 200,
-          fileNames: ["scripts/node/release.js", "scripts/node/pre-publish-guard.js"],
+          fileNames: ["scripts/node/pre-publish-guard.js"],
         },
       ],
       diff: {
@@ -164,7 +164,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
         totalInsertions: 100,
         totalDeletions: 200,
         filesAdded: [],
-        filesModified: ["scripts/node/release.js"],
+        filesModified: [],
         filesDeleted: [],
         uniqueDirs: ["scripts/node"],
         commitSubjects: ["fix: version compliance loop"],
@@ -175,7 +175,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
 
     expect(content).toContain("Commit Cadence Reflection");
     expect(content).toContain("fix: version compliance loop");
-    expect(content).toContain("scripts/node/release.js");
+    expect(content).not.toContain("scripts/node/release.js");
     expect(content).not.toContain("*(Fill in");
   });
 });

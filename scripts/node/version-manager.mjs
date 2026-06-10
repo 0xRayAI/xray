@@ -158,6 +158,22 @@ function generateChangelogFromCommits(commits) {
   return sections.join('\n\n') || '- Version bump';
 }
 
+function findTestFiles(dir) {
+  let count = 0;
+  try {
+    for (const entry of fs.readdirSync(dir)) {
+      const full = path.join(dir, entry);
+      const stat = fs.statSync(full);
+      if (stat.isDirectory()) {
+        count += findTestFiles(full);
+      } else if (entry.endsWith('.test.ts') || entry.endsWith('.spec.ts')) {
+        count++;
+      }
+    }
+  } catch {}
+  return count;
+}
+
 /**
  * Count actual framework components
  */
@@ -165,7 +181,9 @@ function getFrameworkCounts() {
   const counts = {
     agents: 0,
     mcps: 0,
-    skills: 0
+    skills: 0,
+    codexTerms: 0,
+    tests: 0
   };
   
   // Count agents (.yml files in src/opencode/agents/ — source of truth)
@@ -199,6 +217,27 @@ function getFrameworkCounts() {
       .filter(f => fs.statSync(path.join(skillsDir, f)).isDirectory())
       .filter(f => fs.existsSync(path.join(skillsDir, f, 'SKILL.md')))
       .length;
+  }
+
+  // Count codex terms (xray/codex.json is SSOT)
+  const codexPath = path.join(rootDir, 'xray/codex.json');
+  if (fs.existsSync(codexPath)) {
+    try {
+      const codex = JSON.parse(fs.readFileSync(codexPath, 'utf-8'));
+      counts.codexTerms = Object.keys(codex.terms || codex.rules || codex).length;
+    } catch {
+      counts.codexTerms = 0;
+    }
+  }
+
+  // Count test files across all of src/
+  try {
+    const srcDir = path.join(rootDir, 'src');
+    if (fs.existsSync(srcDir)) {
+      counts.tests = findTestFiles(srcDir);
+    }
+  } catch {
+    counts.tests = 0;
   }
   
   return counts;
@@ -290,8 +329,16 @@ function updateReadme(counts, newVersion) {
     `${counts.agents} agents, ${counts.mcps} MCP servers`
   );
   
+  // Update version summary line: **vX.Y.Z** — N agents · N skills · N MCPs servers · N codex terms · N test files
+  const testStr = counts.tests > 0 ? ` · ${counts.tests} test files` : '';
+  const codexStr = counts.codexTerms > 0 ? ` · ${counts.codexTerms} codex terms` : '';
+  readme = readme.replace(
+    /\*\*v[\d.]+?\*\*\s*—\s*\d+\s+agents\s*·\s*\d+\s+skills\s*·\s*\d+\s+MCPs servers(\s*·\s*\d+\s+codex terms)?(\s*·\s*~?[\d,]+ tests?)?/,
+    `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCPs servers${codexStr}${testStr}`
+  );
+  
   fs.writeFileSync(readmePath, readme);
-  console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills})`);
+  console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills}, codex: ${counts.codexTerms}, tests: ${counts.tests})`);
 }
 
 /**
