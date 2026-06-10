@@ -11,6 +11,7 @@ import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveLogDir, resolveStateDir } from "../core/config-paths.js";
+import { registerDefaultPlugins } from "./default-plugins.js";
 
 export interface ComponentInitResult {
   success: boolean;
@@ -77,6 +78,7 @@ export class NucleusOrchestrator {
   readonly bootSequence = [
     "configuration",
     "logging",
+    "plugin-registration",
     "state-management",
     "security",
     "codex-loader",
@@ -407,6 +409,8 @@ export class NucleusOrchestrator {
           return this.initConfiguration();
         case "logging":
           return this.initLogging();
+        case "plugin-registration":
+          return this.initPluginRegistration();
         case "state-management":
           return this.initStateManagement();
         case "security":
@@ -447,6 +451,23 @@ export class NucleusOrchestrator {
       fs.mkdirSync(logDir, { recursive: true });
     }
     return { success: true, duration: 5, message: "Logging system initialized" };
+  }
+
+  private initPluginRegistration(): ComponentInitResult {
+    const start = Date.now();
+    const r = registerDefaultPlugins();
+    if (r.registered === 0) {
+      return {
+        success: false,
+        duration: Date.now() - start,
+        error: "No plugins registered",
+      };
+    }
+    return {
+      success: true,
+      duration: Date.now() - start,
+      message: `Plugin registration: ${r.registered} registered, ${r.failed.length} failed`,
+    };
   }
 
   private initStateManagement(): ComponentInitResult {

@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.0.0] - 2026-06-10
+
+### 🚀 Major: Nucleus Architecture (v3)
+
+The callable core is now `src/nucleus/` — governance, orchestration, dispatch, and default plugins live here. MCP is the standard external surface; nucleus is the library beneath it.
+
+- **Phase 1 (Nucleus Primary)**: Governance call site audit (29 sites), MCP fallback chain removed from inference-cycle.ts (287 lines, 9 methods, 7 `XRAY_FORCE_MCP_GOVERNANCE` checks), opencode-cli-invoker.ts cleaned, boot-orchestrator.server.ts slimmed ~80%, `src/nucleus/orchestrator.ts` + `thin-dispatch.ts` created, 50 nucleus-primary tests
+- **Phase 2 (Plugin System)**: 24 knowledge-skill servers audited, pluginRegistry extended with listTools/registerServer/getToolPlugin/listSkillTools, `src/nucleus/default-plugins.ts` registers all 24 servers as plugins, MCP bypass paths deprecated, root MCP server audit
+- **Phase 3 (Self-Evolution)**: SelfProposalEngine auto-wired into PostProcessor as default metamorphosis engine, safe apply with backup/rollback, circuit breaker, `scripts/run-self-evolution.sh`
+- **Phase 4 (Legacy Cleanup)**: `XRAY_FORCE_MCP_GOVERNANCE` removed from CLI/govern/.mcp.json/grok-cli, MCP+in-process fallback removed from governance-service, legacy `.grok/plugins/strray-ai/` deleted, `STRRAY_HOME` removed
+
+### 🔧 Changes
+- `registerDefaultPlugins()` now called during NucleusOrchestrator boot sequence (plugin-registration step)
+- FrameworkLogger discipline enforced across all production paths
+- ~17,000 LOC net removed across subtract pass + v3 refactoring
+
+### ✅ Verification
+- 2846 tests passed (2890 total, 44 skipped), 163 test files — 0 failures
+- Consumer verification gate: 4/4 bridge E2Es (Hermes 46, OpenCode 34, OpenClaw 101, Grok 53+2 skipped)
+- npm pack → fresh consumer install → plugin dispatch → activity.log (728 entries)
+- tsc --noEmit clean
+
+### 🏷️ Package
+- Renamed: `strray-ai` → `0xray` across all source files, CLI, bridges, docs
+- Published to npm as `0xray@3.0.0`
+
+---
+
 ## [2.2.4] - 2026-06-10
 
 ### 🐛 Bug Fixes

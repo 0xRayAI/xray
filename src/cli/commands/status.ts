@@ -14,6 +14,7 @@
 import { readdirSync, existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { getConfigDir } from "../../core/config-paths.js";
+import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface StatusReport {
   opencode: {
@@ -41,7 +42,20 @@ interface StatusReport {
   };
 }
 
-function getSkillsList(cwd: string): { count: number; names: string[] } {
+function getSkillsList(cwd: string = process.cwd()): { count: number; names: string[] } {
+  // Prefer runtime loaded plugins from the v3 nucleus (listToolPlugins + list for full picture)
+  try {
+    const toolPlugins = pluginRegistry.listToolPlugins();
+    const skills = pluginRegistry.list();
+    const runtimeLoaded = [...new Set([...toolPlugins, ...skills])];
+    if (runtimeLoaded.length > 0) {
+      return { count: runtimeLoaded.length, names: runtimeLoaded.sort() };
+    }
+  } catch {
+    // registry not initialized yet — fall back to disk discovery
+  }
+
+  // Fallback: filesystem discovery of installed user skills (SKILL.md)
   const skills: string[] = [];
   const configDir = getConfigDir(cwd);
 
@@ -172,7 +186,7 @@ function getInferenceStatus(cwd: string): {
 
 export function getStatusReport(cwd: string = process.cwd()): StatusReport {
   const opencodeConfigPath = join(cwd, "opencode.json");
-  const cwdSkills = getSkillsList(cwd);
+  const cwdSkills = getSkillsList();
   const agents = getAgentsList(cwd);
   const health = getHealthMetrics(cwd);
   const inference = getInferenceStatus(cwd);
