@@ -319,7 +319,7 @@ npx 0xray health
 - **[CHANGELOG.md](CHANGELOG.md)** — Version history and release notes
 - **[docs/](docs/)** — Architecture docs, governance model, integration guides
 - **[Docs](https://0xrayai.github.io/xray/)** — Full documentation site
-- **[Dynamo Governance](https://dynamo.rippel.ai/vortex)** — Mint governance proposals for donations
+- **[Dynamo Governance](https://dynamo.rippel.ai/vortex)** — External governance service (fork & self-host; MCP server at `src/mcps/governance.server.ts`)
 - **[GitHub](https://github.com/0xRayAI/xray)** — Source code, issues, discussions
 - **[npm](https://www.npmjs.com/package/0xray)** — Package registry
 

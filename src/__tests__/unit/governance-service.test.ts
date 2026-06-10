@@ -159,7 +159,7 @@ describe('GovernanceService', () => {
     it('throws when requireExternal is true and integration is unavailable', async () => {
       mockIntegration.isAvailable.mockReturnValue(false);
 
-      await expect(service.govern({ proposals: mockProposals }))
+      await expect(service.govern({ proposals: mockProposals, options: { requireExternalDynamo: true } }))
         .rejects.toThrow('Dynamo Solar SSOT is required but InferenceGovernanceIntegration is not available');
     });
 
@@ -179,7 +179,7 @@ describe('GovernanceService', () => {
     it('still fails external call when requireExternal is true and integration throws', async () => {
       mockIntegration.checkProposal.mockRejectedValue(new Error('Dynamo unavailable'));
 
-      await expect(service.govern({ proposals: mockProposals }))
+      await expect(service.govern({ proposals: mockProposals, options: { requireExternalDynamo: true } }))
         .rejects.toThrow('External Dynamo governance is required but failed: Dynamo unavailable');
     });
 
