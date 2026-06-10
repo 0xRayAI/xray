@@ -277,7 +277,7 @@ Install more skills anytime: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-0xRay is battle-tested with **~2,2196 tests** across every subsystem:
+0xRay is battle-tested with **160 test files** (2,778+ individual tests) across every subsystem:
 
 | Suite | Tests | Status |
 |-------|-------|--------|

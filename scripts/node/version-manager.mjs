@@ -329,16 +329,15 @@ function updateReadme(counts, newVersion) {
     `${counts.agents} agents, ${counts.mcps} MCP servers`
   );
   
-  // Update version summary line: **vX.Y.Z** — N agents · N skills · N MCPs servers · N codex terms · N test files
-  const testStr = counts.tests > 0 ? ` · ${counts.tests} test files` : '';
-  const codexStr = counts.codexTerms > 0 ? ` · ${counts.codexTerms} codex terms` : '';
+  // Update only the version in the summary line.
+  // Counts are marketing copy — not auto-mutated on release (see audit:counts for observability).
   readme = readme.replace(
-    /\*\*v[\d.]+?\*\*\s*—\s*\d+\s+agents\s*·\s*\d+\s+skills\s*·\s*\d+\s+MCPs servers(\s*·\s*\d+\s+codex terms)?(\s*·\s*~?[\d,]+ tests?)?/,
-    `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCPs servers${codexStr}${testStr}`
+    /\*\*v[\d.]+?\*\*/,
+    `**v${newVersion}**`
   );
   
   fs.writeFileSync(readmePath, readme);
-  console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills}, codex: ${counts.codexTerms}, tests: ${counts.tests})`);
+  console.log(`✅ Updated README.md (version only: ${newVersion})`);
 }
 
 /**

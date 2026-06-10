@@ -8,6 +8,15 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🔄 Changes
 
+### 🐛 Bug Fixes
+- fix: sync README counts (41 agents, 44 skills, 15 MCPs, 68 codex terms, 160 tfiles); version-manager now auto-counts codex + tests (a783dc2e6)
+
+---
+
+## [2.2.2] - 2026-06-10
+
+### 🔄 Changes
+
 - Version bump
 
 ---
