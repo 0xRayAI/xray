@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v2.2.2** — 41 agents · 44 skills · 15 MCPs servers · 68 codex terms · 160 test files
+**v2.2.3** — 41 agents · 44 skills · 15 MCPs servers · 9 codex terms · 160 test files
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -179,7 +179,7 @@ Every subsystem is configurable via `features.json` (located at `.opencode/xray/
 
 ```json
 {
-  "version": "2.2.1",
+  "version": "2.2.2",
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,

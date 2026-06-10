@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [2.2.3] - 2026-06-10
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: make hermes E2E tolerant to model response variance; soft-fail Phase 3/6, keep hard gates on bridge + activity.log (a290fb9ec)
+- fix: sync README counts (41 agents, 44 skills, 15 MCPs, 68 codex terms, 160 tfiles); version-manager now auto-counts codex + tests (a783dc2e6)
+
+---
+
+## [2.2.2] - 2026-06-10
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: make hermes E2E tolerant to model response variance; soft-fail Phase 3/6, keep hard gates on bridge + activity.log (a290fb9ec)
+- fix: sync README counts (41 agents, 44 skills, 15 MCPs, 68 codex terms, 160 tfiles); version-manager now auto-counts codex + tests (a783dc2e6)
+
+---
+
 ## [2.2.2] - 2026-06-10
 
 ### 🔄 Changes

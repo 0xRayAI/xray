@@ -99,7 +99,7 @@ describe("Codex Enforcement Integration", () => {
       loadCodexContext: vi.fn().mockResolvedValue({
         success: true,
         context: {
-          version: "2.2.1",
+          version: "2.2.2",
           terms: new Map(),
           interweaves: [],
           lenses: [],
@@ -144,7 +144,7 @@ describe("Codex Enforcement Integration", () => {
       loadCodexContext: vi.fn().mockResolvedValue({
         success: true,
         context: {
-          version: "2.2.1",
+          version: "2.2.2",
           terms: new Map(),
           interweaves: [],
           lenses: [],
@@ -198,7 +198,7 @@ describe("Codex Enforcement Integration", () => {
       loadCodexContext: vi.fn().mockResolvedValue({
         success: true,
         context: {
-          version: "2.2.1",
+          version: "2.2.2",
           terms: new Map(),
           interweaves: [],
           lenses: [],
