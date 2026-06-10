@@ -35,6 +35,7 @@ import { RegressionAnalysisService } from "./services/RegressionAnalysisService.
 import { ProcessorConfigLoader } from "./config/ProcessorConfigLoader.js";
 import { ArchitecturalComplianceChecker } from "./compliance/ArchitecturalComplianceChecker.js";
 import type { MetamorphosisEngine, MetamorphosisProposal } from "./metamorphosis/MetamorphosisEngine.js";
+import { SelfProposalEngine } from "./metamorphosis/SelfProposalEngine.js";
 
 export class PostProcessor {
   private config: PostProcessorConfig;
@@ -65,7 +66,7 @@ export class PostProcessor {
     metamorphosisEngines?: MetamorphosisEngine[],
   ) {
     this.config = { ...defaultConfig, ...config };
-    this.metamorphosisEngines = metamorphosisEngines ?? [];
+    this.metamorphosisEngines = metamorphosisEngines ?? [new SelfProposalEngine()];
 
     // Initialize monitoring engine
     this.monitoringEngine = new PostProcessorMonitoringEngine(

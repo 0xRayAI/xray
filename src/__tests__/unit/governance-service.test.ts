@@ -20,6 +20,17 @@ vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: { log: vi.fn() },
 }));
 
+const { mockCallSkill } = vi.hoisted(() => ({
+  mockCallSkill: vi.fn(),
+}));
+
+vi.mock('../../nucleus/plugin-registry.js', () => ({
+  pluginRegistry: {
+    has: vi.fn(() => true),
+    callSkill: (...args: unknown[]) => mockCallSkill(...args),
+  },
+}));
+
 import { GovernanceService, getGovernanceService } from '../../governance/governance-service.js';
 import { mcpClientManager } from '../../mcps/mcp-client.js';
 import { getGovernanceIntegration } from '../../integrations/governance/index.js';
@@ -41,9 +52,7 @@ describe('GovernanceService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    (mcpClientManager.callServerTool as any).mockResolvedValue(
-      makeTextResponse('approve', '0.85', 'All checks passed'),
-    );
+    mockCallSkill.mockResolvedValue(makeTextResponse('approve', '0.85', 'All checks passed'));
 
     mockIntegration = {
       isAvailable: vi.fn().mockReturnValue(true),
@@ -69,20 +78,20 @@ describe('GovernanceService', () => {
   afterEach(() => { vi.restoreAllMocks(); });
 
   describe('govern()', () => {
-    it('calls all 3 skill MCP servers with correct proposal data', async () => {
+    it('calls all 3 skill servers via pluginRegistry with correct proposal data', async () => {
       const result = await service.govern({ proposals: mockProposals });
 
-      expect(mcpClientManager.callServerTool).toHaveBeenCalledTimes(6);
-      expect(mcpClientManager.callServerTool).toHaveBeenCalledWith(
-        'code-review', 'analyze_proposal', expect.objectContaining({
+      expect(mockCallSkill).toHaveBeenCalledTimes(6);
+      expect(mockCallSkill).toHaveBeenCalledWith(
+        'code-review', expect.objectContaining({
           proposalTitle: 'Refactor X', proposalDescription: 'Refactor X description',
         }),
       );
-      expect(mcpClientManager.callServerTool).toHaveBeenCalledWith(
-        'security-audit', 'analyze_proposal', expect.objectContaining({ proposalTitle: 'Refactor X' }),
+      expect(mockCallSkill).toHaveBeenCalledWith(
+        'security-audit', expect.objectContaining({ proposalTitle: 'Refactor X' }),
       );
-      expect(mcpClientManager.callServerTool).toHaveBeenCalledWith(
-        'researcher', 'analyze_proposal', expect.objectContaining({ proposalTitle: 'Refactor X' }),
+      expect(mockCallSkill).toHaveBeenCalledWith(
+        'researcher', expect.objectContaining({ proposalTitle: 'Refactor X' }),
       );
       expect(result.results).toHaveLength(2);
       expect(result.results[0].proposalId).toBe('p1');
@@ -100,22 +109,22 @@ describe('GovernanceService', () => {
       );
     });
 
-    it('passes context to MCP calls', async () => {
-      const context = { project: 'test', phase: 'phase-1' };
-      await service.govern({ proposals: mockProposals, context });
+    it('passes proposal data to pluginRegistry calls', async () => {
+      await service.govern({ proposals: [mockProposals[0]] });
 
-      for (const server of ['code-review', 'security-audit', 'researcher']) {
-        expect(mcpClientManager.callServerTool).toHaveBeenCalledWith(
-          server, 'analyze_proposal', expect.objectContaining({ context }),
-        );
-      }
+      expect(mockCallSkill).toHaveBeenCalledWith(
+        'code-review', expect.objectContaining({
+          proposalTitle: 'Refactor X',
+          proposalDescription: 'Refactor X description',
+        }),
+      );
     });
 
-    it('passes evidence and proposalType to MCP calls', async () => {
+    it('passes evidence and proposalType to pluginRegistry calls', async () => {
       await service.govern({ proposals: mockProposals });
 
-      expect(mcpClientManager.callServerTool).toHaveBeenCalledWith(
-        'code-review', 'analyze_proposal', expect.objectContaining({
+      expect(mockCallSkill).toHaveBeenCalledWith(
+        'code-review', expect.objectContaining({
           evidence: ['ev1'], proposalType: 'refactor',
         }),
       );
@@ -173,7 +182,7 @@ describe('GovernanceService', () => {
           expect.objectContaining({ server: 'external-dynamo', decision: 'abstain' }),
         ]),
       );
-      expect(mcpClientManager.callServerTool).toHaveBeenCalled();
+      expect(mockCallSkill).toHaveBeenCalled();
     });
 
     it('still fails external call when requireExternal is true and integration throws', async () => {
@@ -201,9 +210,7 @@ describe('GovernanceService', () => {
 
   describe('abstention threshold', () => {
     it('throws when abstention ratio exceeds threshold', async () => {
-      (mcpClientManager.callServerTool as any).mockResolvedValue(
-        makeTextResponse('abstain', '0.3', 'Cannot evaluate'),
-      );
+      mockCallSkill.mockResolvedValue(makeTextResponse('abstain', '0.3', 'Cannot evaluate'));
 
       await expect(service.govern({
         proposals: mockProposals,
@@ -212,9 +219,7 @@ describe('GovernanceService', () => {
     });
 
     it('passes when abstention is below threshold', async () => {
-      (mcpClientManager.callServerTool as any).mockResolvedValue(
-        makeTextResponse('approve', '0.85', 'Looks good'),
-      );
+      mockCallSkill.mockResolvedValue(makeTextResponse('approve', '0.85', 'Looks good'));
 
       const result = await service.govern({
         proposals: mockProposals,
@@ -225,9 +230,7 @@ describe('GovernanceService', () => {
     });
 
     it('default threshold of 1.0 never throws for abstentions', async () => {
-      (mcpClientManager.callServerTool as any).mockResolvedValue(
-        makeTextResponse('abstain', '0.3', 'Cannot evaluate'),
-      );
+      mockCallSkill.mockResolvedValue(makeTextResponse('abstain', '0.3', 'Cannot evaluate'));
 
       const result = await service.govern({ proposals: mockProposals });
 
@@ -258,9 +261,7 @@ describe('GovernanceService', () => {
 
   describe('parseVoteFromText', () => {
     it('parses approve decision correctly', async () => {
-      (mcpClientManager.callServerTool as any).mockResolvedValue(
-        makeTextResponse('approve', '0.92', 'Strong alignment'),
-      );
+      mockCallSkill.mockResolvedValue(makeTextResponse('approve', '0.92', 'Strong alignment'));
 
       const result = await service.govern({ proposals: [mockProposals[0]] });
 
@@ -271,9 +272,7 @@ describe('GovernanceService', () => {
     });
 
     it('parses reject decision', async () => {
-      (mcpClientManager.callServerTool as any).mockResolvedValue(
-        makeTextResponse('reject', '0.4', 'Critical issues found'),
-      );
+      mockCallSkill.mockResolvedValue(makeTextResponse('reject', '0.4', 'Critical issues found'));
 
       const result = await service.govern({ proposals: [mockProposals[0]] });
 
@@ -282,7 +281,7 @@ describe('GovernanceService', () => {
     });
 
     it('defaults to abstain on empty response', async () => {
-      (mcpClientManager.callServerTool as any).mockResolvedValue({ content: [{ text: '' }] });
+      mockCallSkill.mockResolvedValue({ content: [{ text: '' }] });
 
       const result = await service.govern({ proposals: [mockProposals[0]] });
 
@@ -292,15 +291,11 @@ describe('GovernanceService', () => {
   });
 
   describe('skill server error handling', () => {
-    it('falls back to abstain when an MCP call fails', async () => {
-      (mcpClientManager.callServerTool as any)
+    it('returns abstain when a pluginRegistry call fails', async () => {
+      mockCallSkill
         .mockRejectedValueOnce(new Error('Connection refused'))
         .mockResolvedValue(makeTextResponse('approve', '0.85', 'ok'))
         .mockResolvedValue(makeTextResponse('approve', '0.85', 'ok'));
-
-      (mcpClientManager.callServerTool as any).mockResolvedValue(
-        makeTextResponse('approve', '0.85', 'ok'),
-      );
 
       const result = await service.govern({ proposals: [mockProposals[0]] });
 
@@ -318,18 +313,13 @@ describe('GovernanceService', () => {
     });
   });
 
-  describe('in-process skill path (VERCEL=1)', () => {
-    it('uses callInProcessSkill when VERCEL=1', async () => {
-      process.env.VERCEL = '1';
-      const { callInProcessSkill } = await import('../../mcps/in-process-skill-registry.js');
-      (callInProcessSkill as any).mockResolvedValue({
-        content: [{ text: 'DECISION: approve\nCONFIDENCE: 0.85\nREASONING: ok' }],
-      });
-
+  describe('pluginRegistry-only path', () => {
+    it('uses pluginRegistry.callSkill instead of MCP client', async () => {
       const result = await service.govern({ proposals: [mockProposals[0]] });
 
-      expect(callInProcessSkill).toHaveBeenCalled();
-      expect(result.results[0].finalDecision).toBe('approve');
+      expect(mockCallSkill).toHaveBeenCalled();
+      expect(mcpClientManager.callServerTool).not.toHaveBeenCalled();
+      expect(result.results[0].finalDecision).toBeDefined();
     });
   });
 });

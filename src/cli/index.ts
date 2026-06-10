@@ -860,10 +860,6 @@ program
       process.exit(1);
     }
     const env: Record<string, string> = { ...process.env as Record<string, string> };
-    if (server === 'governance') {
-      env.XRAY_FORCE_MCP_GOVERNANCE = 'true';
-      // legacy STRRAY_FORCE removed for v2.1.3 clean publish; only XRAY_FORCE_MCP_GOVERNANCE
-    }
     const child = spawn(process.execPath, [serverPath], { stdio: 'inherit', env });
     child.on('exit', (code) => process.exit(code ?? 0));
   });

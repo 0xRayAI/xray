@@ -16,8 +16,6 @@
  * Dynamo Solar SSOT is treated as a mandatory external filter (not optional, not a fallback).
  */
 
-import { mcpClientManager } from '../mcps/mcp-client.js';
-import { callInProcessSkill, type MCPToolResult } from '../mcps/in-process-skill-registry.js';
 import { pluginRegistry } from '../nucleus/plugin-registry.js';
 import {
   getGovernanceIntegration,
@@ -198,93 +196,47 @@ export class GovernanceService {
     context?: GovernanceContext
   ): Promise<GovernanceVote[]> {
     const votes: GovernanceVote[] = [];
-    const useInProcess = process.env.VERCEL === '1';
 
-    // v3: Try pluginRegistry first for dynamically registered skills.
-    // Built-in skills (code-review, security-audit, researcher) fall through
-    // to MCP or in-process paths. Custom plugins registered via
-    // pluginRegistry.register() are resolved here.
-    if (pluginRegistry.has(serverName) && !this.isBuiltInSkill(serverName)) {
-      frameworkLogger.log('governance-service', 'plugin-skill-resolved', 'info', {
+    // Phase 4: all skills go through pluginRegistry. No MCP fallback.
+    if (!pluginRegistry.has(serverName)) {
+      frameworkLogger.log('governance-service', 'skill-not-registered', 'warning', {
         server: serverName,
-        mode: 'plugin-registry',
+        message: 'Skill not found in pluginRegistry — returning abstain',
       });
       for (const proposal of proposals) {
-        try {
-          const result = await pluginRegistry.callSkill(serverName, {
-            proposalTitle: proposal.title,
-            proposalDescription: proposal.description,
-            evidence: proposal.evidence || [],
-            proposalType: proposal.type,
-          });
-          const text = result?.content?.[0]?.text || '';
-          const vote = this.parseVoteFromText(serverName, text);
-          votes.push(vote);
-        } catch (error) {
-          frameworkLogger.log('governance-service', 'plugin-skill-error', 'error', {
-            server: serverName,
-            proposal: proposal.title,
-            error: error instanceof Error ? error.message : String(error),
-            mode: 'plugin-registry',
-          });
-          votes.push({
-            server: serverName,
-            decision: 'abstain',
-            confidence: 0.3,
-            reasoning: `Plugin skill ${serverName} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          });
-        }
-      }
-      return votes;
-    }
-
-    // Built-in skills: use MCP (standard surface) or in-process (Vercel)
-    for (const proposal of proposals) {
-      try {
-        let text = '';
-
-        if (useInProcess) {
-          // Vercel / serverless path — use in-process skill instances (no child processes)
-          const result = await this.callInProcessSkillWithTimeout(serverName, {
-            proposalTitle: proposal.title,
-            proposalDescription: proposal.description,
-            evidence: proposal.evidence || [],
-            proposalType: proposal.type,
-            context,
-          });
-          text = (result as MCPToolResult)?.content?.[0]?.text || '';
-        } else {
-          // Normal path — real MCP transport (deprecated, prefer registry)
-          frameworkLogger.log('governance-service', 'mcp-fallback', 'warning', {
-            server: serverName,
-            proposal: proposal.title,
-            message: 'Using direct MCP call instead of pluginRegistry — this path is deprecated',
-          });
-          const result = await mcpClientManager.callServerTool(serverName, 'analyze_proposal', {
-            proposalTitle: proposal.title,
-            proposalDescription: proposal.description,
-            evidence: proposal.evidence || [],
-            proposalType: proposal.type,
-            context,
-          });
-          text = (result as MCPToolResult)?.content?.[0]?.text || '';
-        }
-
-        const vote = this.parseVoteFromText(serverName, text);
-        votes.push(vote);
-      } catch (error) {
-        frameworkLogger.log('governance-service', 'skill-call-error', 'error', {
-          server: serverName,
-          proposal: proposal.title,
-          error: error instanceof Error ? error.message : String(error),
-          mode: useInProcess ? 'in-process' : 'mcp',
-        });
-
         votes.push({
           server: serverName,
           decision: 'abstain',
           confidence: 0.3,
-          reasoning: `Call to ${serverName} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          reasoning: `No plugin registered for ${serverName}`,
+        });
+      }
+      return votes;
+    }
+
+    for (const proposal of proposals) {
+      try {
+        const result = await pluginRegistry.callSkill(serverName, {
+          proposalTitle: proposal.title,
+          proposalDescription: proposal.description,
+          evidence: proposal.evidence || [],
+          proposalType: proposal.type,
+        });
+        const text = result?.content?.[0]?.text || '';
+        const vote = this.parseVoteFromText(serverName, text);
+        votes.push(vote);
+      } catch (error) {
+        frameworkLogger.log('governance-service', 'plugin-skill-error', 'error', {
+          server: serverName,
+          proposal: proposal.title,
+          error: error instanceof Error ? error.message : String(error),
+          mode: 'plugin-registry',
+        });
+        votes.push({
+          server: serverName,
+          decision: 'abstain',
+          confidence: 0.3,
+          reasoning: `Plugin skill ${serverName} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
     }
@@ -380,20 +332,6 @@ export class GovernanceService {
     return results;
   }
 
-  private async callInProcessSkillWithTimeout(
-    serverName: string,
-    args: Record<string, unknown>,
-    timeoutMs = 30000,
-  ): Promise<unknown> {
-    const result = await Promise.race([
-      callInProcessSkill(serverName, 'analyze_proposal', args),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`In-process skill ${serverName} timed out after ${timeoutMs}ms`)), timeoutMs),
-      ),
-    ]);
-    return result;
-  }
-
   private parseVoteFromText(server: string, text: string): GovernanceVote {
     const decisionMatch = text.match(/DECISION:\s*(approve|reject|abstain|needs_revision)/i);
     const confidenceMatch = text.match(/CONFIDENCE:\s*([0-9.]+)/);
@@ -407,9 +345,6 @@ export class GovernanceService {
     };
   }
 
-  private isBuiltInSkill(name: string): boolean {
-    return name === 'code-review' || name === 'security-audit' || name === 'researcher';
-  }
 }
 
 // Singleton for convenience

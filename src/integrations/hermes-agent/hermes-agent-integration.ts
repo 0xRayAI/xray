@@ -197,7 +197,6 @@ export class HermesAgentIntegration extends BaseIntegration {
         env: {
           ...process.env,
           XRAY_HOME: this.projectRoot,
-          STRRAY_HOME: this.projectRoot,
         },
       };
 

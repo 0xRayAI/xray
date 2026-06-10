@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "2.2.4",
+  "version": "3.0.0",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "license": "MIT",
   "repository": {
@@ -88,7 +88,7 @@
     "validate": "echo \"[xray] Use 'npm test' or 'npm run test:comprehensive'.\"",
     "validate:quick": "npm run validate",
     "verify:consumer": "bash scripts/verify-consumer.sh",
-    "debug:inference:force": "STRRAY_FORCE_MCP_GOVERNANCE=true XRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
+    "debug:inference": "XRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
     "validate:full": "npm run validate",
     "test:unified": "node scripts/test/test-unified-framework.mjs",
     "test:consumer": "node scripts/test/test-consumer-readiness.cjs",

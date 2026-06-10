@@ -18,8 +18,8 @@
  * run on its own schedule or fs.watch, decoupling from PostProcessor lifecycle.
  */
 
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { promises as fs, existsSync } from 'fs';
+import { join, dirname } from 'path';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import type { MetamorphosisEngine, MetamorphosisProposal } from './MetamorphosisEngine.js';
 import type { GovernanceRequest } from '../../governance/governance-types.js';
@@ -45,6 +45,15 @@ export interface SelfProposalConfig {
   metamorphosisThreshold?: number;
   /** Project root for resolving whitelisted target paths (default: process.cwd()) */
   projectRoot?: string;
+}
+
+export interface SelfEvolutionMetrics {
+  totalProposals: number;
+  recentProposals: number;
+  consecutiveFailures: number;
+  circuitBreakerActive: boolean;
+  circuitBreakerUntil: number;
+  successRate: number;
 }
 
 interface ParsedLogEntry {
@@ -187,6 +196,21 @@ export class SelfProposalEngine implements MetamorphosisEngine {
     return recentProposals.length >= this.config.maxProposalsPerHour;
   }
 
+  getMetrics(): SelfEvolutionMetrics {
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    const recentProposals = this.proposalHistory.filter(a => a.timestamp > oneHourAgo);
+    return {
+      totalProposals: this.proposalHistory.length,
+      recentProposals: recentProposals.length,
+      consecutiveFailures: this.consecutiveFailures,
+      circuitBreakerActive: this.isCircuitBreakerActive(),
+      circuitBreakerUntil: this.circuitBreakerUntil,
+      successRate: this.proposalHistory.length > 0
+        ? this.proposalHistory.filter(a => a.result === 'approved').length / this.proposalHistory.length
+        : 0,
+    };
+  }
+
   private async evaluateAndPropose(): Promise<void> {
     let logEntries: string[] = [];
     try {
@@ -312,11 +336,42 @@ export class SelfProposalEngine implements MetamorphosisEngine {
 
     try {
       await fs.mkdir(stateDir, { recursive: true });
-      await fs.writeFile(statePath, JSON.stringify({ applied }, null, 2), 'utf-8');
+
+      // Backup existing state file before overwriting
+      const backupDir = join(root, '.xray', 'metamorphosis', 'backups');
+      let backupPath: string | null = null;
+      if (existsSync(statePath)) {
+        await fs.mkdir(backupDir, { recursive: true });
+        backupPath = join(backupDir, `self-evolution-state-${Date.now()}.json`);
+        await fs.copyFile(statePath, backupPath);
+        await frameworkLogger.log('self-proposal', 'backup-created', 'info', {
+          proposalId: pattern.id,
+          backupPath,
+        });
+      }
+
+      try {
+        await fs.writeFile(statePath, JSON.stringify({ applied }, null, 2), 'utf-8');
+      } catch (writeError) {
+        // Restore from backup on write failure
+        if (backupPath && existsSync(backupPath)) {
+          await fs.copyFile(backupPath, statePath);
+          await frameworkLogger.log('self-proposal', 'restored-from-backup', 'warning', {
+            proposalId: pattern.id,
+            backupPath,
+            error: writeError instanceof Error ? writeError.message : String(writeError),
+          });
+        }
+        await frameworkLogger.log('self-proposal', 'apply-write-error', 'error', {
+          proposalId: pattern.id,
+          path: statePath,
+          error: writeError instanceof Error ? writeError.message : String(writeError),
+        });
+        return false;
+      }
     } catch (writeError) {
-      await frameworkLogger.log('self-proposal', 'apply-write-error', 'error', {
+      await frameworkLogger.log('self-proposal', 'apply-mkdir-error', 'error', {
         proposalId: pattern.id,
-        path: statePath,
         error: writeError instanceof Error ? writeError.message : String(writeError),
       });
       return false;

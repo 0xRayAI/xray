@@ -63,9 +63,6 @@ export async function governCommand(options: GovernOptions): Promise<void> {
       process.exit(1);
     }
     const env: Record<string, string> = { ...process.env as Record<string, string> };
-    if (options.mcp === 'governance') {
-      env.XRAY_FORCE_MCP_GOVERNANCE = 'true';
-    }
     const child = spawn(process.execPath, [serverPath], { stdio: 'inherit', env });
     child.on('exit', (code) => process.exit(code ?? 0));
     return;

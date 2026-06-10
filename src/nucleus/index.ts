@@ -37,6 +37,7 @@ export {
 
 export type {
   SelfProposalConfig,
+  SelfEvolutionMetrics,
 } from '../postprocessor/metamorphosis/SelfProposalEngine.js';
 
 export {
