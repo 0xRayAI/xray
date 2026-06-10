@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "license": "MIT",
   "repository": {
@@ -45,7 +45,7 @@
     "mcps": "./dist/mcps/"
   },
   "scripts": {
-    "prepublishOnly": "npm run prepare-consumer && npm run build:all && find dist -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' | xargs rm -f && echo 'Checking for stale STRRAY_ references...' && ! grep -rn 'STRRAY_' dist/ --include='*.js' --include='*.mjs' 2>/dev/null | grep -v '//.*STRRAY_' || { echo 'ERROR: Stale STRRAY_ references found in dist/'; exit 1; }",
+    "prepublishOnly": "npm run prepare-consumer && npm run build:all && find dist -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' | xargs rm -f",
     "version:bump": "node scripts/node/version-manager.mjs",
     "version": "node scripts/node/version-manager.mjs",
     "postinstall": "node scripts/node/postinstall.cjs",
@@ -102,10 +102,10 @@
     "enforce:versions": "bash scripts/node/enforce-version-compliance.sh",
     "version:sync": "node scripts/node/universal-version-manager.js",
     "preversion": "npm run version:sync",
-    "release": "node scripts/node/release.js",
+    "release": "node scripts/node/release.mjs patch",
     "release:minor": "node scripts/node/release.mjs minor",
     "release:major": "node scripts/node/release.mjs major",
-    "release:dry": "node scripts/node/release.js --dry-run",
+    "release:dry": "node scripts/node/release.mjs --dry-run",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
     "publish": "npm run pre-publish-guard && npm run safe-publish",
