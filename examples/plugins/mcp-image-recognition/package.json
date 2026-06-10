@@ -1,6 +1,6 @@
 {
   "name": "mcp-image-recognition",
-  "version": "2.1.3",
+  "version": "2.2.0",
   "description": "Image recognition plugin for StringRay",
   "type": "module",
   "main": "index.js",

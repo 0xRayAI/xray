@@ -62,7 +62,7 @@ const getMockCodexStats = (sessionId: string) => {
     loaded: true,
     fileCount: 1,
     totalTerms: 3,
-    version: "2.1.3",
+    version: "2.2.0",
   };
 };
 
@@ -256,7 +256,7 @@ describe("0xRay Codex Injector (Mock-Based)", () => {
         loaded: true,
         fileCount: 1,
         totalTerms: 3,
-        version: "2.1.3",
+        version: "2.2.0",
       });
     });
 

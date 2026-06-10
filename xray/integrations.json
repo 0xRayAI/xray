@@ -4,19 +4,19 @@
     "openclaw": {
       "enabled": false,
       "type": "external-service",
-      "version": "2.1.3",
+      "version": "2.2.0",
       "config": {}
     },
     "python-bridge": {
       "enabled": false,
       "type": "protocol-bridge",
-      "version": "2.1.3",
+      "version": "2.2.0",
       "config": {}
     },
     "react": {
       "enabled": false,
       "type": "framework-adapter",
-      "version": "2.1.3",
+      "version": "2.2.0",
       "config": {}
     }
   }

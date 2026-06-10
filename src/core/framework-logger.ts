@@ -1,4 +1,4 @@
-import { promises as fs, existsSync, mkdirSync } from "fs";
+import { promises as fs, existsSync, mkdirSync, appendFileSync } from "fs";
 import { join } from "path";
 
 /**
@@ -391,9 +391,34 @@ export class FrameworkUsageLogger {
   printRundown() {
     // Framework usage analytics placeholder
   }
+
+  flushSync(): void {
+    if (this.flushing || this.buffer.length === 0) return;
+    const toWrite = this.buffer.splice(0, this.buffer.length);
+    const data = toWrite.join("");
+    try {
+      const cwd = process.cwd();
+      if (!cwd) return;
+      const logDir = join(cwd, "logs", "framework");
+      const logFile = join(logDir, "activity.log");
+      if (!existsSync(logDir)) {
+        mkdirSync(logDir, { recursive: true });
+      }
+      appendFileSync(logFile, data);
+    } catch {
+      // flush failure is non-fatal
+    }
+  }
 }
 
 export const frameworkLogger = new FrameworkUsageLogger();
+
+// Flush buffer synchronously on exit so CLI commands don't lose log entries
+if (typeof process !== "undefined" && process.env?.NODE_ENV !== "test") {
+  process.on("exit", () => {
+    frameworkLogger.flushSync();
+  });
+}
 
 // Startup self-test: verify logger works
 if (typeof process !== "undefined" && process.env?.NODE_ENV !== "test") {

@@ -4,7 +4,7 @@ The v3 nucleus was never planned as a rewrite. It emerged from a contradiction.
 
 ## The Contradiction
 
-xray began as a straightforward orchestration layer — a thin dispatch surface routing requests to agents, skills, and MCP servers. It worked. The 41-server federation was stable, the 4 bridges (Hermes, OpenCode, OpenClaw, Grok) were passing, and the test suite ran green at 2282 tests.
+xray began as a straightforward orchestration layer — a thin dispatch surface routing requests to agents, skills, and MCP servers. It worked. The 41-server federation was stable, the 4 bridges (Hermes, OpenCode, OpenClaw, Grok) were passing, and the test suite ran green at 2196 tests.
 
 But there was a fundamental asymmetry: xray governed other systems but could not govern itself. The system that enforced Codex compliance for every proposal, every tool call, every agent interaction had no introspection into its own evolution. It could analyze, orchestrate, and enforce across the federation — yet it could not propose changes to its own configuration, could not detect its own degradation patterns, could not heal itself.
 

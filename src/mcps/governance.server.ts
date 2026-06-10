@@ -68,7 +68,7 @@ class GovernanceServer {
   constructor() {
     this.server = new Server(
       {
-        name: "governance", version: "2.1.3",
+        name: "governance", version: "2.2.0",
       },
       {
         capabilities: {
