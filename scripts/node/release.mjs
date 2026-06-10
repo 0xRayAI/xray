@@ -8,9 +8,10 @@
  *   2. npm version (bumps package.json, triggers preversion → version scripts)
  *   3. Build
  *   4. Consumer verification (npm pack + fresh install + 4 bridge E2Es)
- *   5. Commit + tag
- *   6. npm publish (triggers prepublishOnly → prepare-consumer + build)
- *   7. Push commit + tag
+ *   5. Commit
+ *   6. Tag
+ *   7. Push commit + tag to remote
+ *   8. npm publish (triggers prepublishOnly → prepare-consumer + build)
  *
  * Usage:
  *   npm run release:patch           # patch bump (default)
@@ -151,8 +152,17 @@ async function main() {
     }
   }
 
-  // Step 7: Publish (prepublishOnly runs prepare-consumer + build)
-  step(7, 'Publish to npm');
+  // Step 7: Push (git state before registry)
+  step(7, 'Push to remote');
+  if (!dryRun) {
+    if (!run('git push', 'Push commits')) process.exit(1);
+    if (!run(`git push origin v${newVersion}`, 'Push tag')) process.exit(1);
+  } else {
+    log(`  ~`, 'Would push commits + tag', YELLOW);
+  }
+
+  // Step 8: Publish (prepublishOnly runs prepare-consumer + build)
+  step(8, 'Publish to npm');
   if (!dryRun) {
     const publishResult = run('npm publish --access public', `Publish 0xray@${newVersion}`);
     if (!publishResult) {
@@ -172,15 +182,6 @@ async function main() {
     }
   } else {
     log(`  ~`, 'Would publish: npm publish --access public', YELLOW);
-  }
-
-  // Step 8: Push
-  step(8, 'Push to remote');
-  if (!dryRun) {
-    if (!run('git push', 'Push commits')) process.exit(1);
-    if (!run(`git push origin v${newVersion}`, 'Push tag')) process.exit(1);
-  } else {
-    log(`  ~`, 'Would push commits + tag', YELLOW);
   }
 
   console.log(`\n${BOLD}${GREEN}✅ Released 0xray@${newVersion}${RESET}\n`);
