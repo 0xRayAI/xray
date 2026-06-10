@@ -51,6 +51,6 @@ Every code change is checked against a **68-term Codex** (coding constitution), 
 
 - [Full Reference](full-reference) — Complete documentation, CLI reference, configuration
 - [Docs](https://0xrayai.github.io/xray/) — Full documentation site (you are here)
-- [Dynamo Governance](https://dynamo.rippel.ai/vortex) — External governance service (self-host via the chrono-warp-drive MCP server)
+- [Self-Hosting Dynamo Governance](guides/self-hosting-dynamo) — External governance service (fork, deploy, and configure your own instance)
 - [GitHub](https://github.com/0xRayAI/xray) — Source code, issues, discussions
 - [npm](https://www.npmjs.com/package/0xray) — Package registry
