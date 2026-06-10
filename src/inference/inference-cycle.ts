@@ -643,7 +643,7 @@ Respond with EXACTLY one of:
         source: 'inference-cycle',
       },
       options: {
-        requireExternalDynamo: true,
+        requireExternalDynamo: !process.env.XRAY_LOCAL_MODE,
       },
     };
 

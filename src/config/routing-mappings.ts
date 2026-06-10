@@ -29,7 +29,7 @@ export const ROUTING_MAPPINGS: RoutingMappingEntry[] = [
   { keywords: ["mobile", "ios", "android", "react-native", "flutter"], skill: "mobile-development", agent: "mobile-developer", confidence: 0.95 },
   { keywords: ["enforce", "compliance", "rule", "standard", "codex", "block", "prevent"], skill: "code-review", agent: "code-reviewer", confidence: 0.95 },
   { keywords: ["design", "architect", "plan", "system", "model", "pattern", "architecture"], skill: "architecture-patterns", agent: "architect", confidence: 0.95 },
-  { keywords: ["codebase", "explore", "research", "discover", "implementation"], skill: "git-workflow", agent: "researcher", confidence: 0.88 },
+  { keywords: ["codebase", "explore", "research", "discover", "implementation"], skill: "researcher", agent: "researcher", confidence: 0.92 },
   // Additional built-in skill mappings
   { keywords: ["api", "rest", "graphql", "openapi", "endpoint", "swagger"], skill: "api-design", agent: "backend-engineer", confidence: 0.9 },
   { keywords: ["strategy", "roadmap", "planning", "technical", "decision", "architecture"], skill: "architecture-patterns", agent: "strategist", confidence: 0.88 },

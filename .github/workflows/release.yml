@@ -40,6 +40,9 @@ jobs:
       - name: Build project
         run: npm run build:all
 
+      - name: Consumer verification (4 bridges + activity.log)
+        run: bash scripts/verify-consumer.sh
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
