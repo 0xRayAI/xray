@@ -4,17 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [3.0.0] - 2026-06-09
+## [2.2.0] - 2026-06-10
 
 ### 🚀 Features
 - feat: add Codex terms 69-72 covering self-evolution constraints (proposal governance, metamorphosis threshold, safety controls, traceability) (codex.json)
 - feat: long-running governed agent session verification E2E (11 tests, self-evolution-e2e.test.ts)
-- feat: Plugin API documentation frozen at v3 — SkillPlugin, MetamorphosisEngine, SelfProposalEngine interfaces made stable (docs/api/plugin-api.md)
-
-### 🔄 Changes
+- feat: Plugin API documentation — SkillPlugin, MetamorphosisEngine, SelfProposalEngine interfaces (docs/api/plugin-api.md)
+- feat: SelfProposalEngine with unit + E2E tests (postprocessor/metamorphosis/SelfProposalEngine.ts)
+- feat: nucleus kernel facade — handleGovernRequest, governViaNucleus, pluginRegistry (src/nucleus/)
+- feat: CLI govern command — status, audit, proposals, MCP management, storyteller (src/cli/commands/govern.ts)
+- feat: consumer verification script (scripts/verify-consumer.sh)
 
 ### ♻️ Refactoring
-- refactor: update Codex references from 68 to 72 terms across AGENTS.md, CLAUDE.md, v3-nucleus.md, getting-started.md
+- refactor: 12-review subtract pass across all subsystems — ~16k LOC removed (Core, Nucleus, Governance, MCP, Inference, Orchestration, Delegation, Processors, Postprocessor, Enforcement, Integrations, CLI, Supporting)
+- refactor: delete trace-context.ts, errors.ts, logging-config.ts (inlined into framework-logger)
+- refactor: delete applyDecisionMatrix dead PHI/TAU matrix from governance-core
+- refactor: delete testing-best-practices.server.ts (1,183 LOC unregistered MCP bloat), orchestrator.server.ts shim
+- refactor: delete 4 dead orchestrator/delegation files (universal-registry-bridge, universal-librarian-consultation, self-direction-activation, task-skill-router.d.ts)
+- refactor: delete RetryHandler.ts, ComprehensiveValidator.ts from postprocessor
+- refactor: delete test-auto-healing.ts, cross-language-bridge.ts
+- refactor: delete 5 CLI dead files (4 analytics commands, server.ts)
+- refactor: delete 19 dead source + 6 stale test files across analytics, infrastructure, performance, reporting, utils, validation, state
+- refactor: delete dead expertise barrel exports (getAgentsWithExpertiseDomain, getTopExpertsForDomain)
+- refactor: update Codex references from 68 to 72 terms across docs
+- refactor: clean dead test script references in package.json
+
+### 🐛 Bug Fixes
+- fix: repair syntax from STRRAY_ cleanup (setup.ts, hermes bridge) so tests and release guard pass (87f3613ad)
+- fix: E2E test references to applyDecisionMatrix updated to mergeVotes
 
 ---
 
