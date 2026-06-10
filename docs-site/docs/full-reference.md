@@ -313,7 +313,7 @@ npx 0xray health
 ## Resources
 
 - **[Docs](https://0xrayai.github.io/xray/)** — Full documentation site
-- **[Dynamo Governance](https://dynamo.rippel.ai/vortex)** — External governance service (fork & self-host; MCP server at `src/mcps/governance.server.ts`)
+- **[Dynamo Governance](https://dynamo.rippel.ai/vortex)** — External governance service (self-host via the chrono-warp-drive MCP server)
 - **[GitHub](https://github.com/0xRayAI/xray)** — Source code, issues, discussions
 - **[npm](https://www.npmjs.com/package/0xray)** — Package registry
 
