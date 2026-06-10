@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [2.2.4] - 2026-06-10
+
+### 🐛 Bug Fixes
+- fix: Dynamo SSOT local-mode for inference cycles (requireExternalDynamo: !XRAY_LOCAL_MODE to prevent silent needs_revision fallback in dev/CI) (5e0746665)
+- ci: add verify:consumer as hard gate in release.yml before GitHub release (5e0746665)
+- fix: routing cleanup — dedup availableServers list, correct research/explore mapping to "researcher" skill directly (prior + 5e0746665)
+- fix: release.mjs publish timeout handling (npm view check for "already published") and step order (push before publish) (b444b6ac8, b1f9c6cdd)
+
+### 🔄 Changes
+- Scope 2.2.4 to the 5 blocking items only (Dynamo, CI gate, routing hygiene). All Phase 1-4 deferred to v3 per v3-architecture-plan.md.
+
+---
+
 ## [2.2.3] - 2026-06-10
 
 ### 🔄 Changes
