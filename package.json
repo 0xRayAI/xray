@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "3.0.0",
+  "version": "3.4.0",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "license": "MIT",
   "repository": {
@@ -36,6 +36,28 @@
   "type": "module",
   "main": "./dist/plugin/xray-codex-injection.js",
   "types": "./dist/plugin/xray-codex-injection.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./integration": {
+      "import": "./dist/integrations/enforcement-gate.js",
+      "types": "./dist/integrations/enforcement-gate.d.ts"
+    },
+    "./public": {
+      "import": "./dist/public/index.js",
+      "types": "./dist/public/index.d.ts"
+    },
+    "./nucleus": {
+      "import": "./dist/nucleus/index.js",
+      "types": "./dist/nucleus/index.d.ts"
+    },
+    "./nucleus/*": {
+      "import": "./dist/nucleus/*.js",
+      "types": "./dist/nucleus/*.d.ts"
+    }
+  },
   "bin": {
     "0xray": "dist/cli/index.js",
     "0xray-integration": "dist/scripts/integration.js"
@@ -51,7 +73,7 @@
     "postinstall": "node scripts/node/postinstall.cjs",
     "prepare": "npm run build",
     "prebuild": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",
-    "build": "tsc && mkdir -p dist/public dist/scripts && cp -r public/* dist/public/ && cp scripts/hooks/pre-command dist/scripts/ && cp scripts/hooks/pre-command.mjs dist/scripts/ && cp README.md AGENTS.md CHANGELOG.md LICENSE dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done && mkdir -p dist/plugin && (find dist/plugin -name '*codex-injection*.js' -exec cp {} dist/plugin/xray-codex-injection.js \\; 2>/dev/null || true) && cp -r src/opencode/ .opencode/ && echo 'build artifacts in .opencode/xray/ removed — runtime reads from xray/ directly'",
+    "build": "tsc && tsc -p tsconfig.full.json 2>/dev/null || true && mkdir -p dist/public dist/scripts && cp -r public/* dist/public/ && cp scripts/hooks/pre-command dist/scripts/ && cp scripts/hooks/pre-command.mjs dist/scripts/ && cp README.md AGENTS.md CHANGELOG.md LICENSE dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && find dist -name '*.d.ts' -path '*/__tests__/*' -delete; find dist -name '*.js' -path '*/__tests__/*' -delete; for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done && mkdir -p dist/plugin && (find dist/plugin -name '*codex-injection*.js' -exec cp {} dist/plugin/xray-codex-injection.js \\; 2>/dev/null || true) && cp -r src/opencode/ .opencode/ && echo 'build artifacts in .opencode/xray/ removed — runtime reads from xray/ directly'",
     "build:all": "npm run build",
     "ci-install": "npm ci",
     "clean": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",

@@ -31,7 +31,7 @@ Every code change is checked against a **68-term Codex** (coding constitution), 
 │  Reasoning · Pattern learning · Execution       │
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
-│  Codex enforcement · Multi-agent review · SSOT  │
+│  Codex enforcement · v3 gate (TUI/CLI hooks for 4 plugins) + CI script (full 29-validator) · SSOT (codex.json matrix)  │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  Task routing · Multi-agent coordination        │
@@ -43,7 +43,7 @@ Every code change is checked against a **68-term Codex** (coding constitution), 
 | Problem | Solution |
 |---------|----------|
 | AI hallucinates bad code | Governance gate blocks non-compliant proposals |
-| No quality enforcement | 68-rule Codex checks every change |
+| No quality enforcement | v3 Enforcement Pipeline: enforcement-gate.ts (hooks) + enforce-validators.mjs (CI) + PostProcessor loop (escalation/metamorphosis) for full 29 + terms 69-81 |
 | Single-agent blindspots | 3 specialized reviewers debate each proposal |
 | Scattered edits | Multi-agent orchestrator coordinates work |
 

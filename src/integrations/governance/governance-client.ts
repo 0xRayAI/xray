@@ -32,7 +32,7 @@ export class GovernanceClient {
 
   constructor(config: Partial<GovernanceClientConfig> = {}) {
     this.config = {
-      baseUrl: process.env.GOVERNANCE_ENDPOINT || '',
+      baseUrl: process.env.GOVERNANCE_ENDPOINT || 'https://mcp-production-80e2.up.railway.app',
       timeoutMs: 10000,
       retryAttempts: 3,
       retryDelayMs: 1000,

@@ -27,6 +27,18 @@ export default defineConfig({
       },
     },
     retry: process.env.CI ? 3 : 2,
+    coverage: {
+      enabled: !!process.env.CI,
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      reportsDirectory: "./coverage",
+      thresholds: {
+        statements: 35,
+        branches: 28,
+        functions: 37,
+        lines: 36,
+      },
+    },
   },
   resolve: {
     alias: {

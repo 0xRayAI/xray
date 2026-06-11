@@ -43,7 +43,7 @@ AI coding assistants are powerful but unreliable. They hallucinate APIs, introdu
 | Problem | How 0xRay Fixes It |
 |---------|-------------------|
 | AI hallucinates bad code | **Governance gate** blocks non-compliant proposals before execution |
-| No code quality enforcement | **68-rule Codex** checks every change against your standards |
+| No code quality enforcement | **v3 Enforcement**: gate for OpenCode/Hermes/Grok/OpenClaw hooks + CI enforce-validators (all 29, no filter) + explicit PostProcessor wiring (7/8/74/77) + codex matrix (3.2.1) |
 | Single-agent blindspots | **3 specialized reviewers** (code, security, research) debate each proposal |
 | Scattered, conflicting edits | **Multi-agent orchestrator** coordinates work across specialists |
 | Repeating the same mistakes | **Inference engine** learns patterns and prevents regressions |

@@ -33,12 +33,13 @@ function updatePathsInFile(filePath) {
     let content = fs.readFileSync(filePath, 'utf-8');
     let updated = false;
 
-    // Transform development paths back to consumer paths (plain xray; legacy @0xray/xray removed)
-    // Only transform if it's not already a consumer path
-    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/xray/dist/plugin/mcps/')) {
+    // Transform development paths back to consumer paths.
+    // Use 0xray (current published name). Keep xray for any legacy consumer configs.
+    // Only transform if it's not already a consumer path.
+    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/0xray/dist/plugin/mcps/') && !content.includes('node_modules/xray/dist/plugin/mcps/')) {
       content = content.replace(
         /dist\/plugin\/mcps\//g,
-        'node_modules/xray/dist/plugin/mcps/'
+        'node_modules/0xray/dist/plugin/mcps/'
       );
       updated = true;
     }
@@ -47,7 +48,7 @@ function updatePathsInFile(filePath) {
     if (content.includes('../../../dist/plugin/')) {
       content = content.replace(
         /\.\.\/\.\.\/\.\.\/dist\/plugin\//g,
-        'node_modules/xray/dist/plugin/'
+        'node_modules/0xray/dist/plugin/'
       );
       updated = true;
     }

@@ -26,6 +26,7 @@ import { mcpClientManager } from "../mcps/mcp-client.js";
 import { RedeployCoordinator } from "./redeploy/RedeployCoordinator.js";
 import { EscalationEngine } from "./escalation/EscalationEngine.js";
 import { SuccessHandler } from "./success/SuccessHandler.js";
+import type { RuleValidationContext } from "../enforcement/types.js";
 import { PostProcessorConfig, PostProcessorResult, PostProcessorContext, MonitoringResult, FixResult, FailureAnalysis } from "./types.js";
 import { defaultConfig } from "./config.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
@@ -234,6 +235,26 @@ export class PostProcessor {
       };
     }
 
+    // Gate-sourced critical violations escalation
+    const critical = context.criticalViolations ?? [];
+    if (critical.length > 0) {
+      await frameworkLogger.log("postprocessor", "gate-critical-violations", "error", {
+        count: critical.length,
+        violations: critical.map(v => `${v.ruleId}[${v.severity}]: ${v.message}`).join("; "),
+      });
+      const escalationResult = await this.escalationEngine.evaluateEscalation(
+        context, 0,
+        `Gate reported ${critical.length} critical violation(s): ${critical[0]!.message}`,
+        [],
+      );
+      if (escalationResult) {
+        await frameworkLogger.log("postprocessor", "gate-escalation-triggered", "error", {
+          level: escalationResult.level,
+          reason: escalationResult.reason,
+        });
+      }
+    }
+
     // Codex compliance validation: Use processor-manager for proper rule enforcement and agent delegation
     // IMPROVED: Analyze actual code changes and pass meaningful context to processors
     const processorContext = await this.codeAnalyzer.analyzeCodeChanges(context);
@@ -362,6 +383,72 @@ export class PostProcessor {
               "⚠️ Codex compliance violations detected - processor-manager handled automated fixes",
           },
         );
+      }
+
+      // Per-pipeline explicit validation wiring for PostProcessor claimed terms: 7,8,74,77
+      // Convert PostProcessor context (Map-based newCode) to RuleValidationContext (string-based)
+      const joinedNewCode = processorContext.newCode.size > 0
+        ? Array.from(processorContext.newCode.values()).join("\n")
+        : undefined;
+      const validationContext: RuleValidationContext = {
+        operation: processorContext.operation,
+        files: processorContext.files,
+        ...(joinedNewCode ? { newCode: joinedNewCode } : {}),
+        existingCode: processorContext.existingCode,
+        dependencies: processorContext.dependencies,
+        tests: processorContext.tests,
+      };
+
+      try {
+        const { globalValidatorRegistry } = await import("../enforcement/validators/validator-registry.js");
+
+        const term7 = globalValidatorRegistry.getValidator("error-resolution");
+        if (term7) {
+          const res = await term7.validate(validationContext);
+          if (!res.passed) {
+            await frameworkLogger.log("postprocessor", "term-7-validation-failed", "error", {
+              message: res.message,
+              suggestions: res.suggestions,
+            });
+          }
+        }
+
+        const term8 = globalValidatorRegistry.getValidator("loop-safety");
+        if (term8) {
+          const res = await term8.validate(validationContext);
+          if (!res.passed) {
+            await frameworkLogger.log("postprocessor", "term-8-validation-failed", "error", {
+              message: res.message,
+              suggestions: res.suggestions,
+            });
+          }
+        }
+
+        const term74 = globalValidatorRegistry.getValidator("boot-wiring");
+        if (term74) {
+          const res = await term74.validate(validationContext);
+          if (!res.passed) {
+            await frameworkLogger.log("postprocessor", "term-74-validation-failed", "warning", {
+              message: res.message,
+              suggestions: res.suggestions,
+            });
+          }
+        }
+
+        const term77 = globalValidatorRegistry.getValidator("console-log-usage");
+        if (term77) {
+          const res = await term77.validate(validationContext);
+          if (!res.passed) {
+            await frameworkLogger.log("postprocessor", "term-77-validation-failed", "error", {
+              message: res.message,
+              suggestions: res.suggestions,
+            });
+          }
+        }
+      } catch (e) {
+        await frameworkLogger.log("postprocessor", "per-pipeline-validation-error", "warning", {
+          error: String(e),
+        });
       }
     } catch (error) {
       await frameworkLogger.log(

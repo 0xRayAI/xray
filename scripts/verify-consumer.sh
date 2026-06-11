@@ -134,7 +134,7 @@ PLUGIN_TEST_DIR="$CONSUMER_DIR/plugin-test"
 mkdir -p "$PLUGIN_TEST_DIR"
 
 cat > "$PLUGIN_TEST_DIR/test-plugin.mjs" << 'EOF'
-import { pluginRegistry } from '0xray/dist/nucleus/plugin-registry.js';
+import { pluginRegistry } from '0xray/nucleus/plugin-registry';
 
 // Register a mock server
 pluginRegistry.registerServer({
@@ -204,6 +204,38 @@ if [[ -f "$ACTIVITY_LOG" ]]; then
 else
   echo "[verify] WARNING: activity.log not found at $ACTIVITY_LOG"
   echo "[verify] (This is non-fatal — some bridge E2Es may not produce logs)"
+fi
+
+# 5b. Consumer-side enforcement check (full 29-validator registry + gate loading)
+step "Phase 5b: Consumer enforcement check (full registry + gate)"
+
+ENFORCEMENT_FAILED=0
+
+echo "--- ValidatorRegistry load test ---"
+node --input-type=module -e "
+const mod = await import('$PKG_DIR/dist/enforcement/validators/validator-registry.js');
+const reg = mod.globalValidatorRegistry;
+if (!reg) { console.error('FAIL: no globalValidatorRegistry'); process.exit(1); }
+const v = reg.getAllValidators();
+console.log('OK: ' + v.length + ' validators loaded');
+if (v.length !== 29) { console.error('FAIL: expected 29, got ' + v.length); process.exit(1); }
+console.log('ALL 29 VALIDATORS PRESENT');
+" 2>&1 || ENFORCEMENT_FAILED=1
+
+echo "--- Enforcement gate load test ---"
+node --input-type=module -e "
+const { beforeToolHook, afterToolHook } = await import('$PKG_DIR/dist/integrations/enforcement-gate.js');
+const r1 = await beforeToolHook('write', { filePath: 'test.ts', content: 'const x = 1;' });
+console.log('beforeToolHook: allowed=' + r1.allowed + ' resonance=' + r1.resonance);
+if (!r1.allowed || r1.resonance <= 0) { console.error('FAIL: beforeToolHook returned unexpected'); process.exit(1); }
+const r2 = await afterToolHook('write', { filePath: 'test.ts', content: 'const x = 1;' }, null, null);
+console.log('afterToolHook: processed=' + r2.processed + ' violations=' + r2.violations.length);
+if (r2.processed !== true || r2.violations.length > 0) { console.error('FAIL: afterToolHook unexpected'); process.exit(1); }
+console.log('Consumer gate verification PASSED');
+" 2>&1 || ENFORCEMENT_FAILED=1
+
+if [[ $ENFORCEMENT_FAILED -eq 1 ]]; then
+  die "Consumer enforcement verification failed"
 fi
 
 # 7. Cleanup tarball

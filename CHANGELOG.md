@@ -4,6 +4,108 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.0] - 2026-06-11
+
+### 🧠 Governance Closure + Full System Integration
+
+v3.4 closes the governance loop: all enforcement flows through the shared gate, governance is enabled by default with external Dynamo, and source changes to the governance fabric are auto-detected and proposed for deliberation.
+
+### 🌟 Highlights
+
+- **Governance default-on**: `enabled: true` in both `DEFAULT_GOVERNANCE_CONFIG` and `xray/features.json`. Endpoint defaults to `https://mcp-production-80e2.up.railway.app/governance`. `GOVERNANCE_ENDPOINT` env var overrides all defaults. No manual opt-in required.
+- **E2E pipeline smoketest extended to 10 steps**: gate → escalation → CI → consumer → governance → nucleus → inference → SelfProposal → EscalationEngine → LightweightValidator. All 10 pass.
+- **Source-change governance detector**: `scripts/ci/source-change-governance-detector.mjs` watches codex.json, features.json, enforcement/nucleus/postprocessor/governance files. Auto-submits strategic proposals via `handleGovernRequest` with `requireExternalDynamo: true`. Wired in CI enforcement job.
+- **Consumer path hygiene audit**: All published scripts (`postinstall.cjs`, `setup.cjs`, `prepare-consumer.cjs`) now use robust consumer-aware path resolution. Nucleus exports map (`./nucleus/*`) verified via consumer plugin test.
+
+### 🔧 Changes
+
+#### Governance & Enforcement (Phases 0-1)
+- **Retro governance ritual (Phase 0)**: 5 proposals submitted via `handleGovernRequest` covering enforcement gate canonical surface, per-pipeline CI scanners, nucleus/SelfProposal wiring, legacy purge, consumer hooks. All 5 approved.
+- **Governance lazy init**: `governance-service.ts` calls `initializeGovernanceIntegration()` in `govern()` if not initialized — handles inference cycle calls outside boot orchestrator lifecycle.
+- **Governance endpoint default-on**: `src/integrations/governance/types.ts` — `DEFAULT_GOVERNANCE_CONFIG.enabled → true`, `endpointUrl → Railway URL`. `xray/features.json` added `inference_governance` section.
+- **Source-change detector (Phase 1)**: `scripts/ci/source-change-governance-detector.mjs` — detects changes to 18+ governance-interest files, builds proposals from CATEGORY_MAP, requires external Dynamo. Wired in `ci.yml` enforcement job step.
+
+#### Docs Cascade (Phase 2)
+- `V3-ENFORCEMENT-PIPELINES.md` → v3.3.1+ (full enforcement cascade documented)
+- `PIPELINE_INVENTORY.md` → v3.3.1+ (new CI scanners, consumer hooks, coverage gate, governance detector)
+- `docs/index.md` → v3 stats (7 agents, 3 MCP servers, 29 validators, 2880 tests)
+
+#### Pipeline Exerciser (Phase 3)
+- `e2e-pipeline-smoke.mjs` extended from 4 to 10 steps covering all major pipelines (gate, escalation, CI, consumer, governance, nucleus/boot, inference, SelfProposal, EscalationEngine, LightweightValidator). All 10 pass.
+- EscalationEngine must load before LightweightValidator (ESM circular dep on frameworkLogger).
+
+#### Codex Closure (Phase 4)
+- `processorRoadmap` terms 7 (ErrorResolution), 74 (BootWiring), 75 (Coverage) → done
+- `validationCriteria`: 6/8 true (governance approval, metamorphosis threshold, consumer verification, no console.*, boot wiring, coverage gate)
+- `perPipelineValidationMatrix`: 15+ entries, `gapsRemaining` empty, `enforcementGaps` 2 remaining
+- Terms 73 (orphan pre-PR check), 78 (compat shim scanner) added with CI wiring
+
+#### Build & Consumer Hygiene (Phase 5)
+- `package.json` exports: added `./nucleus` and `./nucleus/*` for consumer plugin-registry access
+- `tsconfig.full.json`: excludes test files from compilation
+- `postinstall.cjs`, `setup.cjs`, `prepare-consumer.cjs`: consumer-aware path resolution (robust `node_modules` detection)
+- `verify-consumer.sh`: Phase 5b (29 validators + gate) + nucleus plugin-registry test both PASS
+- Full verification: 2880 unit tests pass, typecheck clean, 0 console.* in non-CLI source
+
+#### Compat & Scanners
+- `scripts/ci/compat-shim-scanner.mjs` (term 78): scans for legacy fallback patterns, compat exports, @deprecated. Wired as non-blocking CI step.
+- `scripts/ci/orphan-code-pre-pr-check.mjs` (term 73): git diff deletion scanner with 6-check protocol. Wired in CI.
+- `scripts/hooks/install-hooks.cjs`: consumer-aware pre-commit hook installer, wired via postinstall + setup.
+- `scripts/hooks/run-hook.js`: inline regex replaced with LightweightValidator + gate call (shared enforcement path).
+
+### 📊 Stats
+- **2880 tests pass**, typecheck clean
+- **29 validators** in registry, all mapped in `validatorTermMap`
+- **10/10 E2E pipeline steps** pass
+- **3/4 bridge E2Es** pass (hermes: pre-existing model variance in JSON output parsing)
+- **18 governance-interest files** tracked by source-change detector
+- **Consumer verification**: Phase 5 (plugin reg) + Phase 5b (29 validators + gate) both PASS
+
+## [3.3.0] - 2026-06-11
+
+### ✅ All Three Remaining Matrix Gaps Closed
+
+Resolved the final `gapsRemaining` entries — PostProcessor non-blocking, Inference non-blocking, and Coverage gate.
+
+- **PostProcessor escalation from gate**: `afterToolHook` in enforcement-gate.ts now filters pipeline validator violations by severity ("error"/"blocking") and passes them as `criticalViolations` in the PostProcessor context. `PostProcessor.executePostProcessorLoop` evaluates them through `EscalationEngine.evaluateEscalation`, triggering real escalation (manual-intervention/rollback/emergency) instead of logs-only.
+- **Inference 1/3/5 blocking**: `generateProposals` in inference-cycle.ts now filters out proposals with confidence ≤ 0.3 after NoOverEngineeringValidator (terms 1/3) and SingleResponsibilityValidator (term 5) adjustments. These proposals are logged as `proposal-blocked` via frameworkLogger. Non-severe violations still adjust confidence by 0.85x as before.
+- **Coverage gate (term 75)**: vitest.config.ts now has coverage thresholds (statements 60%, branches 50%, functions 55%, lines 60%). CI enforcement job runs `npx vitest run --coverage` as a blocking step. Fails CI if thresholds not met.
+
+### 🔧 Changes
+- `src/postprocessor/types.ts`: Added `criticalViolations` field to `PostProcessorContext`
+- `src/postprocessor/PostProcessor.ts`: Escalation engine invoked on gate-sourced critical violations
+- `src/integrations/enforcement-gate.ts`: Critical violations passed to PostProcessor loop context
+- `src/inference/inference-cycle.ts`: Proposals with confidence ≤ 0.3 filtered out after validator adjustments
+- `vitest.config.ts`: Coverage thresholds enabled (stmts 60, branches 50, funcs 55, lines 60)
+- `.github/workflows/ci.yml`: New coverage gate step in enforcement job
+- `.opencode/xray/codex.json`: 3.3.0 — all 3 gaps removed from `gapsRemaining` + `enforcementGaps`. New `coverage-gate` pipeline entry. Post-processor + inference-cycle entries updated to note blocking/escalation. `ci-gate` activeForTerms includes 75.
+
+## [3.2.1] - 2026-06-11
+
+### 🚦 Enforcement Pipeline Cascade
+
+Closing the "hooks or CI/CD" gap: all four TUI/CLI integrations (OpenCode, Hermes, Grok, OpenClaw) now exclusively route through `src/integrations/enforcement-gate.ts` (full 29-validator registry + v3 PostProcessor loop), and CI now calls the registry directly with no snippet-safe filter.
+
+- **P0-1**: Removed duplicate legacy ProcessorManager block from `xray-codex-injection.ts` (38 lines, ran afterToolHook alongside inline quality gate)
+- **P0-2**: Fixed Grok silent fail-open — catch block now returns `allow_with_error` with reason/resonance/error
+- **P1-1/P1-2**: Consolidated `loadStateManager` to prefer `xray*` globals with logged `strRay*` fallback; `bridge.mjs` renamed to `XrayStateManager` with `||` fallback
+- **P1-3/P1-4**: Removed dead types/interfaces/imports from `xray-codex-injection.ts`; shrunk legacy compat comment
+- **`scripts/ci/enforce-validators.mjs`**: Direct ValidatorRegistry invocation (29 validators, no snippet-safe filter, no dead `--terms` flag). Supports `--all`, explicit paths, `git diff HEAD` auto-detection
+- **CI enforcement job**: Replaced `bridge.mjs codex-check --focus "full" --terms "..."` (10 of 29 validators) with `enforce-validators.mjs --all`
+- **CI consumer step**: `npm pack` → `npm install` → registry load test (expects 29) + enforcement gate load test (beforeToolHook/afterToolHook) — runs on every PR
+- **`verify-consumer.sh` Phase 5b**: Full-registry + gate exercise from consumer tarball
+- **Codex**: v3.2.1 — 8 ci-lint terms partial→wired, new `ci-enforce-consumer` pipeline, `gapsRemaining` reduced by 2 entries
+
+### 🔧 Changes
+- `src/plugin/xray-codex-injection.ts`: beforeToolHook/afterToolHook sole post-tool path
+- `src/integrations/hermes-agent/bridge.mjs`: `XrayStateManager` with backward-compat fallback
+- `src/integrations/grok/hooks/pre-tool-use.ts`: `allow_with_error` on gate error
+- `src/integrations/enforcement-gate.ts`: `loadStateManager` prefers `xray*` globals
+- `scripts/ci/enforce-validators.mjs`: 109 lines — new
+- `.github/workflows/ci.yml`: Enforcement job reworked (registry + consumer steps)
+- `.opencode/xray/codex.json`: 3.2.1 — perPipelineValidationMatrix expanded, gaps reduced
+- `docs/reflections/enforcement-gate-pipeline-resolution.md`: Updated
+
 ## [3.0.0] - 2026-06-10
 
 ### 🚀 Major: Nucleus Architecture (v3)

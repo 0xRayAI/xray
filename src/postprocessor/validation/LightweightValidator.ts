@@ -21,9 +21,9 @@ class LightweightValidator {
   private startTime: number;
   private files: string[];
 
-  constructor() {
+  constructor(files?: string[]) {
     this.startTime = Date.now();
-    this.files = this.getChangedFiles();
+    this.files = files ?? this.getChangedFiles();
   }
 
   /**
@@ -145,9 +145,20 @@ class LightweightValidator {
       );
     }
 
-    // Check for TODO comments
-    if (content.includes("TODO") || content.includes("FIXME")) {
+    // Check for TODO/FIXME comments
+    if (/\/\/\s*(TODO|FIXME|HACK|XXX)\b/i.test(content)) {
       warnings.push(`TODO/FIXME comments found in ${file}`);
+    }
+
+    // Check for @ts-ignore / @ts-nocheck / @ts-expect-error
+    if (/@ts-ignore|@ts-nocheck|@ts-expect-error/.test(content)) {
+      warnings.push(`@ts-ignore/@ts-nocheck found in ${file}`);
+    }
+
+    // Check for excessive 'any' type usage (>3 occurrences)
+    const anyMatches = content.match(/\bany\b/g);
+    if (anyMatches && anyMatches.length > 3) {
+      warnings.push(`${anyMatches.length} uses of 'any' type in ${file}`);
     }
 
     // Check for debugger statements
@@ -348,3 +359,12 @@ main().catch((error) => {
   frameworkLogger.log("lightweight-validator", "validation-error", "error", { error: error instanceof Error ? error.message : String(error) });
   process.exit(1);
 });
+
+export { LightweightValidator };
+export async function runLightweightPreCommitValidation(
+  files: string[],
+): Promise<{ passed: boolean; errors: string[]; warnings: string[] }> {
+  const validator = new LightweightValidator(files);
+  const result = await validator.validate();
+  return { passed: result.passed, errors: result.errors, warnings: result.warnings };
+}

@@ -195,7 +195,7 @@ export class InferenceCycle {
       const corpus = accumulateCorpus(this.inferenceDir);
 
       this.setPhase("proposing");
-      const proposals = this.generateProposals(corpus);
+      const proposals = await this.generateProposals(corpus);
       this.adjustFromHistory(proposals);
 
       if (proposals.length === 0) {
@@ -274,7 +274,7 @@ export class InferenceCycle {
     }
   }
 
-  private generateProposals(corpus: InferenceCorpus): InferenceProposal[] {
+  private async generateProposals(corpus: InferenceCorpus): Promise<InferenceProposal[]> {
     const proposals: InferenceProposal[] = [];
 
     for (const problem of corpus.recurringProblems) {
@@ -343,7 +343,58 @@ export class InferenceCycle {
       });
     }
 
-    return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+    // Validate proposals against codex terms 1/3/5 (ai-reasoning terms made auditable)
+    // Adjusts confidence down when validators flag concerns, making the inference
+    // pipeline explicit about architecture/product quality validation.
+    try {
+      const { globalValidatorRegistry } = await import("../enforcement/validators/validator-registry.js");
+
+      const noOverEngineer = globalValidatorRegistry.getValidator("no-over-engineering");
+      const singleResponsibility = globalValidatorRegistry.getValidator("single-responsibility");
+
+      for (const p of proposals) {
+        // Term 1/3 validation: flag over-engineered proposals
+        if (noOverEngineer) {
+          const res = await noOverEngineer.validate({
+            operation: "inference",
+            files: [],
+            newCode: p.description,
+          });
+          if (!res.passed) {
+            p.confidence *= 0.85;
+            p.evidence.push(`Term 1/3: NoOverEngineeringValidator flagged: ${res.message}`);
+          }
+        }
+
+        // Term 5 validation: flag proposals violating single responsibility
+        if (singleResponsibility) {
+          const res = await singleResponsibility.validate({
+            operation: "inference",
+            files: [],
+            newCode: p.description,
+          });
+          if (!res.passed) {
+            p.confidence *= 0.85;
+            p.evidence.push(`Term 5: SingleResponsibilityValidator flagged: ${res.message}`);
+          }
+        }
+
+        // Block proposals that fail both validators severely (confidence <= 0.3 after adjustments)
+        if (p.confidence <= 0.3) {
+          await frameworkLogger.log("inference-cycle", "proposal-blocked", "warning", {
+            proposalId: p.id,
+            title: p.title,
+            confidence: p.confidence,
+            reason: "Confidence below 0.3 threshold after validator adjustments",
+          });
+        }
+      }
+    } catch {
+      // Validator check is non-blocking for inference — log and continue
+    }
+
+    const actionable = proposals.filter(p => p.confidence > 0.3);
+    return actionable.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
   }
 
   private adjustFromHistory(proposals: InferenceProposal[]): void {

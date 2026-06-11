@@ -40,6 +40,13 @@ export interface XrayToolEvent {
   timestamp: number;
   sessionId?: string;
   agent?: string;
+  enforcement?: {
+    allowed?: boolean;
+    blocked?: boolean;
+    violations: Array<{ ruleId: string; severity: string; message: string }>;
+    processed?: boolean;
+    governanceTriggered?: boolean;
+  };
 }
 
 /**

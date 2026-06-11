@@ -11,14 +11,18 @@ function structuredLog(component, action, status, details) {
   console.log(`${ts} [${component}] ${action} - ${String(status).toUpperCase()}${detailsPart}`);
 }
 
-const packageRoot = path.join(__dirname, "..", "..");
+const packageRoot = path.resolve(__dirname, "..", "..");
 
-let targetDir;
-if (__dirname.includes("node_modules/xray")) {
-  // plain xray (final identity)
-  targetDir = path.join(__dirname, "..", "..", "..", "..");
-} else {
-  targetDir = process.env.PWD || process.cwd();
+// Consumer-friendly targetDir resolution:
+// - In node_modules/0xray (or legacy xray): walk up until outside node_modules to reach consumer project root.
+// - Otherwise (dev): use cwd.
+let targetDir = process.env.PWD || process.cwd();
+if (packageRoot.includes("node_modules")) {
+  let current = packageRoot;
+  while (current.includes("node_modules")) {
+    current = path.dirname(current);
+  }
+  targetDir = current;
 }
 
 const resolvedPackage = path.resolve(packageRoot);
@@ -71,6 +75,16 @@ if (resolvedPackage !== resolvedTarget) {
   } catch (_e) {
     // grok not on PATH or registration failed — skip gracefully
   }
+}
+
+// Install pre-commit hook (LightweightValidator + gate, if git repo)
+try {
+  const installHooks = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
+  if (fs.existsSync(installHooks)) {
+    execSync(`node "${installHooks}"`, { stdio: 'pipe' });
+  }
+} catch (_e) {
+  // Non-git or install failure — not blocking
 }
 
 if (resolvedPackage !== resolvedTarget) {

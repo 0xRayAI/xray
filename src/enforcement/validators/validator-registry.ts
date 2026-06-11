@@ -48,6 +48,7 @@ import {
   SubstrateExternalizationValidator,
   FrameworkSelfValidationValidator,
   EmergentImprovementValidator,
+  BootWiringValidator,
 } from "./architecture-validators.js";
 
 /**
@@ -111,6 +112,7 @@ export class ValidatorRegistry implements IValidatorRegistry {
     this.register(new SubstrateExternalizationValidator());
     this.register(new FrameworkSelfValidationValidator());
     this.register(new EmergentImprovementValidator());
+    this.register(new BootWiringValidator());
 
     // Reporting Validators
     this.register(new PerformanceRegressionReportingValidator());

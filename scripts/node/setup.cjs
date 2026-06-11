@@ -3,14 +3,17 @@
 const fs = require("fs");
 const path = require("path");
 
-const packageRoot = path.join(__dirname, "..", "..");
+const packageRoot = path.resolve(__dirname, "..", "..");
 const homeDir = require("os").homedir();
 
-let targetDir;
-if (__dirname.includes("node_modules/xray")) {
-  targetDir = path.join(__dirname, "..", "..", "..", "..");
-} else {
-  targetDir = process.env.PWD || process.cwd();
+// Consumer-friendly targetDir (same logic as postinstall)
+let targetDir = process.env.PWD || process.cwd();
+if (packageRoot.includes("node_modules")) {
+  let current = packageRoot;
+  while (current.includes("node_modules")) {
+    current = path.dirname(current);
+  }
+  targetDir = current;
 }
 
 console.log("🔧 xray Setup: Full configuration...\n");
@@ -241,6 +244,16 @@ if (fs.existsSync(hermesSkillSource)) {
       }
     }
   } catch (e) { console.warn(`⚠️ Hermes skill: ${e.message}`); }
+}
+
+// 8. Install pre-commit hook (LightweightValidator + gate + registry)
+const installHooksPath = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
+if (fs.existsSync(installHooksPath)) {
+  try {
+    require("child_process").execSync(`node "${installHooksPath}"`, { stdio: "inherit" });
+  } catch (e) {
+    console.warn(`⚠️ Hook installation: ${e.message}`);
+  }
 }
 
 console.log("\n✅ xray setup complete.\n");

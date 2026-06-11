@@ -84,6 +84,8 @@ export interface PostProcessorContext {
   directory?: string;
   filePath?: string;
   args?: Record<string, unknown>;
+  /** Critical violations from enforcement gate's afterToolHook pipeline validators */
+  criticalViolations?: Array<{ ruleId: string; severity: string; message: string }>;
 }
 
 export interface PostProcessorResult {

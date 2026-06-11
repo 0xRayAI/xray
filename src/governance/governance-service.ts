@@ -19,6 +19,7 @@
 import { pluginRegistry } from '../nucleus/plugin-registry.js';
 import {
   getGovernanceIntegration,
+  initializeGovernanceIntegration,
   type InferenceGovernanceIntegration,
 } from '../integrations/governance/index.js';
 import type { InferenceProposal } from '../inference/inference-cycle.js';
@@ -64,6 +65,23 @@ export class GovernanceService {
       requireExternalDynamo: requireExternal,
       timeoutMs,
     });
+
+    // Lazy init: seed the governance integration if not already initialized.
+    // This handles the case where govern() is called outside the full boot-orchestrator
+    // lifecycle (e.g., inference cycle triggered by CLI or session monitor).
+    if (!getGovernanceIntegration()) {
+      try {
+        await initializeGovernanceIntegration();
+        frameworkLogger.log('governance-service', 'governance-integration-lazy-init', 'info', {
+          message: 'Governance integration initialized lazily during govern() call',
+        });
+      } catch (initError) {
+        frameworkLogger.log('governance-service', 'governance-integration-lazy-init-failed', 'warning', {
+          message: 'Failed to lazily initialize governance integration — proceeding without external Dynamo',
+          error: initError instanceof Error ? initError.message : String(initError),
+        });
+      }
+    }
 
     // Early validation: Dynamo Solar SSOT is a hard requirement
     if (requireExternal) {

@@ -53,8 +53,9 @@ console.warn = (...args) => { _stderrWrite('[WARN] ' + args.join(' ') + '\n'); }
 
 // ── Framework components (lazy-loaded) ───────────────────────
 let ProcessorManager = null;
-let StrRayStateManager = null;
+let XrayStateManager = null;
 let featuresConfigLoader = null;
+let runQualityGateWithLogging = null;
 let runQualityGateWithLogging = null;
 let enforcerValidators = null;
 let frameworkReady = false;
@@ -158,11 +159,11 @@ async function loadFramework(projectRoot) {
         }
       }
 
-      if (!StrRayStateManager) {
+      if (!XrayStateManager) {
         const smPath = join(distDir, "state", "state-manager.js");
         if (existsSync(smPath)) {
           const sm = await import(smPath);
-          StrRayStateManager = sm.StrRayStateManager;
+          XrayStateManager = sm.XrayStateManager || sm.StrRayStateManager;
         }
       }
 
@@ -239,7 +240,7 @@ async function runQualityGateCheck(context, projectRoot, logDir) {
 
 // ── Processor Pipeline ───────────────────────────────────────
 async function runProcessors(tool, args, phase, projectRoot, logDir) {
-  if (!ProcessorManager || !StrRayStateManager) {
+    if (!ProcessorManager || !XrayStateManager) {
     return { ran: false, reason: "framework modules not loaded" };
   }
 
@@ -247,7 +248,7 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
 
   try {
     const stateDir = join(projectRoot, ".xray", "state");
-    const stateManager = new StrRayStateManager(stateDir);
+    const stateManager = new XrayStateManager(stateDir);
     const processorManager = new ProcessorManager(stateManager);
 
     // Register processors matching OpenCode plugin
@@ -368,7 +369,7 @@ async function handleHealth(input) {
   const components = {
     qualityGate: !!runQualityGateWithLogging,
     processorManager: !!ProcessorManager,
-    stateManager: !!StrRayStateManager,
+    stateManager: !!XrayStateManager,
     featuresConfig: !!featuresConfigLoader,
   };
 
@@ -507,21 +508,7 @@ async function handleCodexCheck(input, projectRoot, logDir) {
   // Phase 2: Enforcement validators (deep code analysis — security, quality, architecture)
   //    Use ValidatorRegistry directly instead of RuleEnforcer.validateOperation()
   //    to avoid the dependency chain cascade that blocks validators on snippet analysis.
-  //    Only run content-analysis validators — skip project-level validators that
-  //    require full context (docs, tests, CI, package.json) and always fail on snippets.
-  const SNIPPET_SAFE_RULES = new Set([
-    "security-by-design",
-    "input-validation",
-    "clean-debug-logs",
-    "console-log-usage",
-    "no-duplicate-code",
-    "loop-safety",
-    "no-over-engineering",
-    "single-responsibility",
-    "error-resolution",
-    "module-system-consistency",
-  ]);
-
+  //    Run all registered validators — v3: full registry
   if (enforcerValidators && codeLen > 0) {
     try {
       const ctx = { operation: "write", newCode: code, files: [] };
@@ -529,18 +516,9 @@ async function handleCodexCheck(input, projectRoot, logDir) {
       let enforcerViolations = 0;
 
       for (const v of validators) {
-        // Only run snippet-safe validators, or respect focus areas
-        if (!SNIPPET_SAFE_RULES.has(v.ruleId)) {
-          // Still run if focus area explicitly requests this category
-          if (focusAreas && focusAreas !== "all" && Array.isArray(focusAreas)) {
-            if (focusAreas.includes(v.category)) {
-              // Fall through to validate
-            } else {
-              continue;
-            }
-          } else {
-            continue;
-          }
+        // Run all registered validators — v3: full registry
+        if (focusAreas && focusAreas !== "all" && Array.isArray(focusAreas) && focusAreas.length > 0) {
+          if (!focusAreas.includes(v.category)) continue;
         }
 
         try {
@@ -561,7 +539,7 @@ async function handleCodexCheck(input, projectRoot, logDir) {
       }
 
       enforcerRan = true;
-      logToActivity(logDir, `codex-check: Validators ran against ${validators.length} rules (${SNIPPET_SAFE_RULES.size} snippet-safe), ${enforcerViolations} violations`);
+      logToActivity(logDir, `codex-check: Validators ran against ${validators.length} rules, ${enforcerViolations} violations`);
     } catch (e) {
       logToActivity(logDir, `codex-check: Validator error: ${e.message}`);
     }

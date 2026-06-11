@@ -12,6 +12,7 @@
  */
 
 import { frameworkLogger } from '../../../core/framework-logger.js';
+import { beforeToolHook } from '../../enforcement-gate.js';
 
 interface PreToolUseInput {
   tool: string;
@@ -25,26 +26,56 @@ function safeLog(component: string, action: string, status: string, details?: Re
 }
 
 export async function handlePreToolUse(input: PreToolUseInput, output: any): Promise<void> {
-  try {
-    safeLog('grok-hook', 'pre-tool-use', 'info', {
-      tool: input.tool,
-      message: '0xRay PreToolUse hook triggered'
-    });
+  safeLog('grok-hook', 'pre-tool-use', 'info', {
+    tool: input.tool,
+    message: '0xRay v3 enforcement gate triggered',
+  });
 
-    if (input.tool === 'Bash' && input.args?.command?.includes('rm -rf /')) {
-      output.decision = 'block';
-      output.reason = 'Blocked by 0xRay governance (dangerous command)';
-      safeLog('grok-hook', 'pre-tool-use-blocked', 'warning', {
-        tool: input.tool,
-        command: input.args?.command
-      });
-    }
-  } catch {
-    safeLog('grok-hook', 'pre-tool-use-error', 'error', { tool: input.tool });
+  // Dangerous command guard (keep existing RM safeguard)
+  if (input.tool === 'bash' && input.args?.command?.includes('rm -rf /')) {
+    output.decision = 'block';
+    output.reason = 'Prohibited: dangerous command';
+    return;
   }
 
-  if (!output.decision) {
+  // Only enforce on code-producing tools
+  const codeTools = /^(write|edit|create|modify|patch|insert|replace|apply_diff|overwrite_file|write_file)$/i;
+  if (!codeTools.test(input.tool)) {
     output.decision = 'allow';
+    output.resonance = 1.0;
+    return;
+  }
+
+  try {
+    const gateResult = await beforeToolHook(input.tool, input.args || {});
+
+    if (gateResult.blocked) {
+      output.decision = 'block';
+      output.reason = gateResult.violations
+        .filter(v => v.severity === 'error' || v.severity === 'blocking')
+        .map(v => `[${v.ruleId}] ${v.message}`)
+        .join('; ');
+      output.resonance = gateResult.resonance;
+      output.violations = gateResult.violations;
+
+      safeLog('grok-hook', 'pre-tool-use-blocked', 'warning', {
+        tool: input.tool,
+        reason: output.reason,
+        violations: gateResult.violations.length,
+      });
+      return;
+    }
+
+    output.decision = 'allow';
+    output.resonance = gateResult.resonance;
+    output.violations = gateResult.violations;
+    output.governance = '0xray-v3';
+  } catch (e) {
+    safeLog('grok-hook', 'pre-tool-use-error', 'error', { tool: input.tool, error: String(e) });
+    output.decision = 'allow_with_error';
+    output.reason = `0xRay enforcement gate error: ${String(e)}`;
+    output.resonance = 0.3;
+    output.error = String(e);
   }
 }
 
@@ -76,9 +107,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       decision: output.decision || 'allow',
       resonance: output.resonance ?? 0.5,
       reason: output.reason || '',
-      reasoning: output.reasoning || 'no context available, defaulting to allow',
-      solar_recommendation: output.solar_recommendation || 'approve',
-      gov: { recommendation: output.solar_recommendation || 'approve' },
+      violations: output.violations || [],
+      governance: output.governance || 'none',
       timestamp: Date.now(),
     };
     process.stdout.write(JSON.stringify(decision) + '\n');

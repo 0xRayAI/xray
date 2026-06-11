@@ -460,6 +460,7 @@ export class CleanDebugLogsValidator extends BaseValidator {
  * Validates console log usage restrictions.
  * Console.log must be used only for debugging in dev mode.
  * Retained logs must use framework logger.
+ * CLI command files (src/cli/) are exempt as console.* provides user-facing output.
  */
 export class ConsoleLogUsageValidator extends BaseValidator {
   readonly id = "console-log-usage-validator";
@@ -468,23 +469,53 @@ export class ConsoleLogUsageValidator extends BaseValidator {
   readonly severity = "error" as const;
 
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
-    const { newCode } = context;
+    const { newCode, files } = context;
 
-    // Skip validation if no code to check
     if (!newCode) {
-      return this.createSuccessResult(
-        "No code to validate for console.log usage",
-      );
+      return this.createSuccessResult("No code to validate for console.log usage");
     }
 
-    // Check for console.log usage
-    if (
-      newCode.includes(
-        "await frameworkLogger.log('rule-enforcer', '-return-passed-false-message-console-log-', 'info', { message: ",
-      )
-    ) {
+    // Check if ALL affected files are CLI-command files (exempt)
+    const allFilesAreCLI = files && files.length > 0 && files.every(
+      (f) => f.includes("/cli/") || f.includes("src\\cli\\"),
+    );
+
+    // Remove comments before checking for console usage
+    const codeWithoutComments = newCode
+      .replace(/\/\/.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+
+    // Check for console.log/warn/error patterns (not console.debug/info which have other validators)
+    const consolePatterns = [
+      { pattern: /\bconsole\.log\s*\(/g, name: "console.log" },
+      { pattern: /\bconsole\.warn\s*\(/g, name: "console.warn" },
+      { pattern: /\bconsole\.error\s*\(/g, name: "console.error" },
+    ];
+
+    const violations: string[] = [];
+    for (const { pattern, name } of consolePatterns) {
+      pattern.lastIndex = 0;
+      const matches = codeWithoutComments.match(pattern);
+      if (matches && matches.length > 0) {
+        violations.push(`${matches.length} use(s) of ${name}`);
+      }
+    }
+
+    // Also check for process.stderr.write / process.stdout.write
+    const writePattern = /\bprocess\.(stderr|stdout)\.write\s*\(/g;
+    const writeMatches = codeWithoutComments.match(writePattern);
+    if (writeMatches && writeMatches.length > 0) {
+      violations.push(`${writeMatches.length} use(s) of process.stderr/stdout.write`);
+    }
+
+    if (violations.length > 0 && !allFilesAreCLI) {
       return this.createFailureResult(
-        "await frameworkLogger.log('rule-enforcer', '-', 'info', { message:  } }); detected - use frameworkLogger for production logs or remove for debugging",
+        `Console/log usage in non-CLI code: ${violations.join("; ")}`,
+        [
+          "Use frameworkLogger.log / frameworkLogger.error instead of console.* in production code",
+          "CLI command files (src/cli/) are exempt and may use console.* for user-facing output",
+          "For hooks/scripts use the internal log()/logError() pattern",
+        ],
       );
     }
 

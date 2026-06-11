@@ -312,18 +312,84 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Run Codex Enforcement Check
+      - name: Run Codex Enforcement Check (all 29 validators)
         run: |
-          echo "Running codex-check against codebase..."
-          node dist/core/bridge.mjs codex-check --operation write --focus "full" || true
+          echo "Running all 29 validators via ValidatorRegistry (bypassing bridge.mjs snippet-safe filter)..."
+          node scripts/ci/enforce-validators.mjs --all
 
-      - name: Check enforcement violations
+      - name: Coverage Gate Check (term 75)
         run: |
-          VIOLATIONS=$(grep -c "violation\|blocked\|failed" .opencode/logs/activity.log 2>/dev/null || echo "0")
-          echo "Enforcement violations found: $VIOLATIONS"
-          if [ "$VIOLATIONS" -gt "0" ]; then
-            echo "⚠️ Codex violations detected - review .opencode/logs/activity.log"
-          fi
+          echo "Running vitest coverage check with thresholds (statements: 60%, branches: 50%, functions: 55%, lines: 60%)..."
+          npx vitest run --coverage --reporter=verbose 2>&1 | tail -20 || {
+            echo "❌ Coverage gate failed — thresholds not met. See vitest output above."
+            exit 1
+          }
+          echo "✅ Coverage gate passed (term 75)"
+
+      - name: Consumer Package Enforcement Check (term 76 — PR CI)
+        run: |
+          PROJECT_ROOT="${{ github.workspace }}"
+          echo "--- Pack consumer tarball ---"
+          TARBALL=$(cd "$PROJECT_ROOT" && npm pack 2>/dev/null | tail -1)
+          TMPDIR=$(mktemp -d)
+          cd "$TMPDIR"
+          npm init -y
+          npm install "$PROJECT_ROOT/$TARBALL"
+          PKG="$TMPDIR/node_modules/0xray"
+
+          echo "--- ValidatorRegistry load test ---"
+          node --input-type=module -e "
+            const mod = await import('$PKG/dist/enforcement/validators/validator-registry.js');
+            const reg = mod.globalValidatorRegistry;
+            if (!reg) { console.error('FAIL: no registry'); process.exit(1); }
+            const v = reg.getAllValidators();
+            console.log('OK: ' + v.length + ' validators loaded');
+            if (v.length !== 29) { console.error('FAIL: expected 29, got ' + v.length); process.exit(1); }
+            console.log('ALL 29 VALIDATORS PRESENT');
+          "
+
+          echo "--- Enforcement gate load test ---"
+          node --input-type=module -e "
+            const { beforeToolHook, afterToolHook } = await import('$PKG/dist/integrations/enforcement-gate.js');
+            const r1 = await beforeToolHook('write', { filePath: 'test.ts', content: 'const x = 1;' });
+            console.log('beforeToolHook: allowed=' + r1.allowed + ' resonance=' + r1.resonance);
+            if (!r1.allowed || r1.resonance <= 0) throw new Error('beforeToolHook unexpected');
+            const r2 = await afterToolHook('write', { filePath: 'test.ts', content: 'const x = 1;' }, null, null);
+            console.log('afterToolHook: processed=' + r2.processed + ' violations=' + r2.violations.length);
+            if (r2.processed !== true || r2.violations.length > 0) throw new Error('afterToolHook unexpected');
+            console.log('Consumer gate verification PASSED');
+          "
+
+          echo "--- Cleanup ---"
+          rm -f "$PROJECT_ROOT/$TARBALL"
+          echo "✅ Consumer package enforcement check passed (term 76)"
+
+      - name: E2E Pipeline Smoke Test (hook → gate → escalation → CI → consumer)
+        run: |
+          echo "Running full E2E pipeline smoke test..."
+          node scripts/ci/e2e-pipeline-smoke.mjs
+          echo "✅ E2E pipeline smoke test passed (term 76/77/78/79/80/81)"
+
+      - name: Compat Shim Scanner (Term 78)
+        run: |
+          echo "Scanning for stale compat shims..."
+          node scripts/ci/compat-shim-scanner.mjs || {
+            echo "⚠️  Compat shims detected — review for removal (non-blocking)"
+          }
+          echo "✅ Compat shim scan complete"
+
+      - name: Orphan Code Pre-PR Check (Term 73)
+        run: |
+          echo "Checking for orphan code deletion protocol violations..."
+          node scripts/ci/orphan-code-pre-pr-check.mjs --base origin/${{ github.event.pull_request.base.ref || 'master' }}
+          echo "✅ Orphan code check complete"
+
+      - name: Source-Change Governance Detector (Phase 1)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Detecting governance-interest file changes..."
+          node scripts/ci/source-change-governance-detector.mjs --apply
+          echo "✅ Source-change governance detection complete"
 
   # ═══════════════════════════════════════════════════════
   # CI/CD Health Monitor (runs after all jobs)

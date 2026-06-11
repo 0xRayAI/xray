@@ -23,6 +23,7 @@ import {
   type HealthResult,
 } from "../base/index.js";
 import { frameworkLogger, generateJobId } from "../../core/framework-logger.js";
+import { beforeToolHook, afterToolHook } from '../enforcement-gate.js';
 import type {
   HermesAgentConfig,
   HermesAgentStatistics,
@@ -321,12 +322,21 @@ export class HermesAgentIntegration extends BaseIntegration {
       return { allowed: true, nudge };
     }
 
-    // Code-producing tools — run bridge
+    // Code-producing tools — run enforcement gate then bridge
     if (CODE_TOOLS.has(tool)) {
       this.hermesStats.codeOperations++;
       this.hermesStats.qualityGateRuns++;
 
       try {
+        const gateResult = await beforeToolHook(tool, args);
+        if (gateResult.blocked) {
+          const msgs = gateResult.violations.map(v => `[${v.severity}] ${v.message}`).join("; ");
+          await frameworkLogger.log('hermes-agent', 'pre-tool-blocked', 'warning', {
+            tool, violations: msgs, resonance: gateResult.resonance,
+          });
+          return { allowed: false, nudge: `Enforcement blocked: ${msgs}` };
+        }
+
         const result =
           await this.sendToBridge<BridgePreProcessResponse>({
             command: "pre-process",
@@ -413,6 +423,15 @@ export class HermesAgentIntegration extends BaseIntegration {
 
       if (postResult.processors?.ran) {
         this.hermesStats.postProcessorRuns++;
+      }
+
+      try {
+        const afterResult = await afterToolHook(tool, args, result, error || null);
+        if (afterResult.governanceTriggered) {
+          await frameworkLogger.log('hermes-agent', 'post-tool-governance-triggered', 'info', { tool });
+        }
+      } catch (e) {
+        // Non-blocking — enforcement hook must never crash the tool call
       }
     } catch {
       // Bridge failure — silent
