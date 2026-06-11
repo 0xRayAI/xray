@@ -65,6 +65,28 @@ This bypasses the external Dynamo requirement, allowing governance to proceed wi
 - `src/inference/inference-cycle.ts:646` — `requireExternalDynamo: !XRAY_LOCAL_MODE`
 - `src/mcps/governance.server.ts:258` — `require_external ?? !XRAY_LOCAL_MODE`
 
+## Public Disclosure & On-Chain Storage
+
+All proposals submitted to the governance endpoint are **public by default**. They are **not persisted on-chain** unless the `onChain: true` flag is explicitly set.
+
+- **0xRay framework**: Self-governance proposals (tagged `0xray`) save on-chain by default
+- **Project proposals**: Do not save on-chain unless `onChain: true` is set in the governance context
+- **Override**: Set `onChain: false` or omit the field for non-public governance checks
+
+This behavior is configured in `features.json` under `inference_governance.proposal_defaults`:
+
+```json
+{
+  "inference_governance": {
+    "proposal_defaults": {
+      "source": "agent",
+      "on_chain": false,
+      "tags": []
+    }
+  }
+}
+```
+
 ## Architecture Context
 
 Dynamo runs as the middle layer of the three-subsystem architecture:

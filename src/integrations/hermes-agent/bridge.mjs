@@ -56,7 +56,6 @@ let ProcessorManager = null;
 let XrayStateManager = null;
 let featuresConfigLoader = null;
 let runQualityGateWithLogging = null;
-let runQualityGateWithLogging = null;
 let enforcerValidators = null;
 let frameworkReady = false;
 let frameworkLoadAttempted = false;

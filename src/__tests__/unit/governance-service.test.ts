@@ -103,9 +103,11 @@ describe('GovernanceService', () => {
       expect(mockIntegration.checkProposal).toHaveBeenCalledTimes(2);
       expect(mockIntegration.checkProposal).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'p1', type: 'refactor' }),
+        [], [], expect.any(String), expect.any(Array), expect.any(Boolean),
       );
       expect(mockIntegration.checkProposal).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'p2', type: 'fix' }),
+        [], [], expect.any(String), expect.any(Array), expect.any(Boolean),
       );
     });
 

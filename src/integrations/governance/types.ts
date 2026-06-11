@@ -24,6 +24,12 @@ export interface GovernanceCheckRequest {
   codeDiff?: string;
   agentReviews: string[];
   historicalSignalIds?: string[];
+  /** Source classification for grouping/correlation */
+  source?: DynamoProposalSource;
+  /** Freeform tags for filtering/grouping */
+  tags?: string[];
+  /** Whether to persist this proposal on-chain */
+  onChain?: boolean;
 }
 
 /**
@@ -68,6 +74,15 @@ export interface GovernanceIntegrationConfig {
     /** Multiplier for vote weight from governance */
     voteWeightMultiplier: number;
   };
+  /** Default proposal metadata sent to Dynamo */
+  proposalDefaults: {
+    /** Default source classification (default: 'agent') */
+    source: DynamoProposalSource;
+    /** Whether to persist on-chain by default (default: false) */
+    onChain: boolean;
+    /** Default tags applied to every proposal */
+    tags: string[];
+  };
 }
 
 /**
@@ -82,6 +97,11 @@ export const DEFAULT_GOVERNANCE_CONFIG: GovernanceIntegrationConfig = {
     passConfidenceMin: 0.7,
     revisionConfidenceMax: 0.4,
     voteWeightMultiplier: 1.0,
+  },
+  proposalDefaults: {
+    source: 'agent',
+    onChain: false,
+    tags: [],
   },
 };
 
@@ -111,6 +131,12 @@ export interface SolarContext {
 }
 
 /**
+ * Dynamo source classification — labels where a proposal originated.
+ * Not a computational seed; purely for grouping/correlation.
+ */
+export type DynamoProposalSource = 'human' | 'agent' | 'ambient' | 'system';
+
+/**
  * Solar-enhanced governance check request
  */
 export interface SolarGovernanceCheckRequest {
@@ -122,6 +148,12 @@ export interface SolarGovernanceCheckRequest {
   sharePublicly?: boolean;
   /** Spectral quality score for resonance analysis */
   spectralQuality?: number;
+  /** Source classification for grouping/correlation */
+  source?: DynamoProposalSource;
+  /** Freeform tags for filtering/grouping (e.g. ["0xray"], ["my-project"]) */
+  tags?: string[];
+  /** Whether to persist this proposal on-chain */
+  onChain?: boolean;
 }
 
 /**

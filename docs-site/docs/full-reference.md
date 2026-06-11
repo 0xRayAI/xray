@@ -219,6 +219,8 @@ The governance pipeline works in three stages:
 2. **Dynamo** cross-checks against the 68-term Codex for compliance, security, and coherence
 3. **Weighted voting** (PHI/TAU matrix) produces a final decision: approve, revise, or reject
 
+> ⚠️ **Privacy Notice**: All proposals submitted to the governance endpoint are **public by default**. They are **not persisted on-chain** unless the `onChain: true` flag is set. 0xRay framework self-governance proposals (tagged `0xray`) save on-chain by default; project proposals do not. Set `onChain: false` or omit the field for non-public governance checks.
+
 ---
 
 ## Included Agents (42)

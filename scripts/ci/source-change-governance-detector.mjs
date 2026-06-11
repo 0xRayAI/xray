@@ -108,6 +108,7 @@ function buildProposals(changedFiles) {
     source: "source-change-governance-detector",
     confidence: 0.65,
     evidence: [...files, `Auto-detected by source-change-governance-detector at ${new Date().toISOString()}`],
+    tags: ["0xray"],
   }));
 }
 
@@ -152,12 +153,14 @@ async function main() {
           source: proposal.source,
           confidence: proposal.confidence,
           evidence: proposal.evidence,
+          tags: proposal.tags,
         }],
         context: {
           project: "xray",
           phase: "ci-auto-governance",
           source: "source-change-governance-detector",
           prTimestamp: new Date().toISOString(),
+          tags: ["0xray"],
         },
         options: { requireExternalDynamo: true, timeoutMs: 30000 },
       });

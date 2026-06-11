@@ -124,11 +124,11 @@ PR → CI enforcement (full 29 via script) → coverage gate → consumer pack/i
 ## Testing + Known-Good Status
 - Gate + CI script + consumer: 2880 tests, tsc clean.
 - Matrix now reflects reality (no assumed).
-- Codex: Progress on 2/73-74/78 (no bridge/dead-ends/shims in hook surfaces); continue to close non-blocking gaps.
+- Codex: Progress on 2/73-74/78 (no bridge/dead-ends/shims in hook surfaces); continue to close non-blocking gaps. (Diagrams added in v3.4 to PIPELINE_ARCHITECTURES.md V3 section.)
 
 ## Recommendations (for docusaurus + cascade)
 - This doc + updated INVENTORY.md = SSOT.
-- Add diagrams (from PIPELINE_ARCHITECTURES.md) for gate flow.
+- ()
 - Maintain: On every enforcement change, update here + docusaurus equivalent + codex matrix + reflection.
 
 *Part of v3 cascade to complete, integrated, known-good system.*

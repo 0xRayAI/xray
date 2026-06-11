@@ -407,11 +407,13 @@ export class SelfProposalEngine implements MetamorphosisEngine {
         evidence: [pattern.rationale],
         source: 'metamorphosis',
         confidence: this.config.proposalConfidence,
+        tags: ['0xray'],
       }],
       context: {
         project: 'xray-self',
         phase: 'self-evolution',
         source: 'self-proposal-engine',
+        tags: ['0xray'],
       },
       options: {
         requireExternalDynamo: true,
@@ -452,7 +454,11 @@ export class SelfProposalEngine implements MetamorphosisEngine {
         await frameworkLogger.log('self-proposal', 'approved', 'success', {
           proposalId: pattern.id,
           metamorphosisScore: result.metamorphosisScore,
+          finalDecision: decision,
+          averageConfidence: (result as any).averageConfidence,
+          voteSummary: (result as any).votes ? (result as any).votes.map((v: any) => ({ server: v.server, decision: v.decision })) : undefined,
           message: 'Self-evolution proposal approved by governance — applying change',
+          tags: ['0xray'],
         });
 
         const applied = await this.applySelfProposal(pattern, result.metamorphosisScore, decision);
@@ -460,8 +466,12 @@ export class SelfProposalEngine implements MetamorphosisEngine {
           await frameworkLogger.log('self-proposal', 'applied', 'success', {
             proposalId: pattern.id,
             target: pattern.target,
+            metamorphosisScore: result.metamorphosisScore,
+            decision,
             message: 'Self-evolution change applied and verified',
+            tags: ['0xray'],
           });
+          await this.audit0xrayProposalTraceability(pattern.id, decision, result.metamorphosisScore);
         } else {
           this.consecutiveFailures++;
           if (this.consecutiveFailures >= this.config.circuitBreakerThreshold) {
@@ -492,6 +502,62 @@ export class SelfProposalEngine implements MetamorphosisEngine {
       await frameworkLogger.log('self-proposal', 'submission-error', 'error', {
         proposalId: pattern.id,
         error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Post-apply audit for Term 72 (Self-Evolution Traceability).
+   * For 0xray-tagged proposals (framework self-evolution), asserts that
+   * frameworkLogger entries exist with full provenance:
+   *   - source proposal ID
+   *   - governance vote results / finalDecision / averageConfidence
+   *   - metamorphosisScore
+   * Logs the audit outcome via frameworkLogger.
+   */
+  private async audit0xrayProposalTraceability(proposalId: string, decision: string, score?: number): Promise<void> {
+    if (!proposalId) {
+      return;
+    }
+
+    try {
+      const logContent = await fs.readFile(this.config.activityLogPath, 'utf-8');
+      const lines = logContent.trim().split('\n').filter(l => l.trim().length > 0);
+      const recentLines = lines.slice(-this.config.maxLogLines);
+
+      // Look for entries tied to this proposalId that carry the required provenance.
+      // We expect 'approved' (with vote info) and 'applied' (with score/decision) for 0xray self-proposals.
+      const relevant = recentLines.filter(line =>
+        line.includes(proposalId) &&
+        (line.includes('approved') || line.includes('applied') || line.includes('submitting'))
+      );
+
+      const hasProposalId = relevant.length > 0;
+      const hasGovernanceVote = relevant.some(l =>
+        l.includes('finalDecision') || l.includes('averageConfidence') || l.includes('voteSummary')
+      );
+      const hasMetamorphosisScore = relevant.some(l => l.includes('metamorphosisScore'));
+      const has0xrayTag = relevant.some(l => l.includes('0xray') || l.includes('"tags"') && l.includes('0xray'));
+
+      const auditPassed = hasProposalId && hasGovernanceVote && hasMetamorphosisScore && has0xrayTag;
+
+      await frameworkLogger.log('self-proposal', 'post-apply-audit', auditPassed ? 'success' : 'warning', {
+        proposalId,
+        decision,
+        metamorphosisScore: score,
+        hasProposalId,
+        hasGovernanceVote,
+        hasMetamorphosisScore,
+        has0xrayTag,
+        relevantEntryCount: relevant.length,
+        message: auditPassed
+          ? 'Term 72 traceability audit passed: frameworkLogger entries with full provenance (proposalId, governance votes, metamorphosisScore, 0xray tag) verified for self-evolution proposal.'
+          : 'Term 72 traceability audit warning: missing or incomplete frameworkLogger provenance for 0xray-tagged self-evolution proposal.',
+      });
+    } catch (auditError) {
+      await frameworkLogger.log('self-proposal', 'post-apply-audit-error', 'error', {
+        proposalId,
+        error: auditError instanceof Error ? auditError.message : String(auditError),
       });
     }
   }

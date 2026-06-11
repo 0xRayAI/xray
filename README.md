@@ -222,6 +222,8 @@ The governance pipeline works in three stages:
 
 **Options:** `requireExternalDynamo`, `minConfidence`, `enableSolarAdjustment`, `timeoutMs`, `maxAbstentionThreshold`.
 
+> ⚠️ **Privacy Notice**: All proposals submitted to the governance endpoint are **public by default**. They are **not persisted on-chain** unless the `onChain: true` flag is set. 0xRay framework self-governance proposals (tagged `0xray`) save on-chain by default; project proposals do not. Set `onChain: false` or omit the field for non-public governance checks.
+
 ---
 
 ## Included Agents (42)

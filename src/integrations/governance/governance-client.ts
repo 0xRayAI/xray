@@ -14,6 +14,7 @@ import type {
   SolarGovernanceCheckResponse,
   GovernanceClientConfig,
   GovernanceClientStats,
+  DynamoProposalSource,
 } from './types.js';
 import {
   GovernanceError,
@@ -87,6 +88,9 @@ export class GovernanceClient {
         baseVoteWeight: request.baseVoteWeight ?? 1.0,
         ...(request.sharePublicly !== undefined && { sharePublicly: request.sharePublicly }),
         ...(request.spectralQuality !== undefined && { spectralQuality: request.spectralQuality }),
+        ...(request.source !== undefined && { source: request.source }),
+        ...(request.tags !== undefined && { tags: request.tags }),
+        ...(request.onChain !== undefined && { onChain: request.onChain }),
       });
       const result = raw.result as Record<string, unknown>;
 
@@ -179,6 +183,9 @@ export class GovernanceClient {
       agentReviews: string[];
       codeDiff?: string;
       historicalSignalIds?: string[];
+      source?: DynamoProposalSource;
+      tags?: string[];
+      onChain?: boolean;
     },
   ): Promise<GovernanceCheckResponse> {
     const startTime = Date.now();
@@ -202,6 +209,9 @@ export class GovernanceClient {
         agentReviews: params.agentReviews,
         ...(params.codeDiff ? { codeDiff: params.codeDiff } : {}),
         ...(params.historicalSignalIds ? { historicalSignalIds: params.historicalSignalIds } : {}),
+        ...(params.source !== undefined && { source: params.source }),
+        ...(params.tags !== undefined && { tags: params.tags }),
+        ...(params.onChain !== undefined && { onChain: params.onChain }),
       });
       const result = raw.result as Record<string, unknown>;
       const diagnostics = result.diagnostics as Record<string, unknown> | undefined;

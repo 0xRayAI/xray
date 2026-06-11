@@ -98,7 +98,19 @@ Detailed architecture diagrams for each pipeline at the same level of detail.
 ### Routing Pipeline Components
 
 | Layer | Component | File |
-|-------|-----------|------|
+
+## V3 Enforcement, Governance & Self-Evolution (no additional diagrams)
+
+Core implementation is in:
+- src/integrations/enforcement-gate.ts + PostProcessor + validators (29)
+- scripts/ci/source-change-governance-detector.mjs (GOVERNANCE_INTEREST_FILES + --apply to handleGovernRequest)
+- src/postprocessor/metamorphosis/SelfProposalEngine.ts (audit0xrayProposalTraceability for Term 72 + 0xray paths)
+- src/inference/inference-cycle.ts + src/governance/governance-service.ts (0xray tagging, requireExternalDynamo logic, onChain distinction)
+- verify-consumer.sh (nucleus exports test + full consumer tarball gate)
+
+See V3-ENFORCEMENT-PIPELINES.md and PIPELINE_INVENTORY.md for pipeline details. 
+
+Ruthless cut: the detailed Mermaid section added for "expand diagrams" / v3.4 closure polish was removed (see reflection for cut rationale). No further diagram work. Code and logs are the source of truth.
 | Input | TaskSkillRouter | `src/delegation/task-skill-router.ts` |
 | Routing | RouterCore | `src/delegation/routing/router-core.ts` |
 | Routing | KeywordMatcher | `src/delegation/routing/keyword-matcher.ts` |

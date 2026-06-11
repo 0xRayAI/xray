@@ -344,7 +344,9 @@ CI: load reg → files (diff/--all) → for each file + each v: validate → cou
 
 **Codex Coverage Overall**: 60+ terms via validators (29), PP explicit, gov (69-71 + spawn 52+), CI (11/16/24/26/34/36/41/46/47/76), hooks (8/74/77/79-81 + matrix), PP chain 58, process (61/62), etc. SSOT xray/codex.json.
 
-**Gaps Common**: Non-blocking on warnings; legacy inside gate/PP for compat (documented, no external); some E2E full cross (hook→gate→PP→gov→CI) exercised in CI/verify but not all unit; diagrams in ARCHITECTURES.md need v3 refresh (gate flows); auto hook install in consumer postinstall partial; coverage term 75?; pre-commit Lightweight vs full 29.
+**Gaps Common**: Non-blocking on warnings; legacy inside gate/PP for compat (documented, no external); some E2E full cross exercised in CI/verify; auto hook install partial; pre-commit Lightweight vs full 29 (v3.4 scope). Diagrams added to PIPELINE_ARCHITECTURES.md (v3 refresh for gate/self-evo flows per recommendations); coverage/term 75 wired in CI. 
+
+**V3.4 Diagrams Added**: See new "V3 Enforcement, Governance & Self-Evolution Diagrams" section in PIPELINE_ARCHITECTURES.md (gate→PP→gov with 0xray distinction + Term 72 audit; detector self-gov flow; onChain 0xray vs project). Cross-ref in V3-ENFORCEMENT-PIPELINES.md and reflections.
 
 **All Integrations Summary**: Gate is central hub for plugins (before/after → reg + PP + gov); PP is post-intel hub (triggers/gate → loop → meta/gov/inference/report); Nucleus thin for gov + dispatch + boot; Logger is nervous system; CI/verify close the consumer loop (exercise published gate/reg); MCPs (gov/enforcer/processor) + pluginRegistry provide skill surfaces; thinDispatch + delegator for routing/orch; SelfProp closes self-evo loop via logs → gov.
 

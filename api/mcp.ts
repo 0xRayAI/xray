@@ -158,8 +158,9 @@ async function handleMCPMessage(_sessionId: string, msg: any): Promise<any> {
               evidence: p.evidence || [],
               source: 'vercel-http',
               confidence: p.confidence || 0.8,
+              tags: p.tags || ['vercel-http'],
             })),
-            context: { source: 'vercel-governance-mcp' },
+            context: { source: 'vercel-governance-mcp', tags: ['vercel-http'] },
             options: { requireExternalDynamo: true },
           }
 

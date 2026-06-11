@@ -600,6 +600,17 @@ Respond with EXACTLY one of:
    * the nucleus kernel (handleGovernRequest). This is the v3 uniform path.
    */
   private async governViaNucleus(proposals: InferenceProposal[]): Promise<GovernanceResponse> {
+    // Auto-detect project identity from package.json for tagging
+    let projectName = 'unknown';
+    let projectTags: string[] = [];
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8'));
+      projectName = pkg.name || 'unknown';
+      projectTags = projectName === '0xray' ? ['0xray'] : [projectName];
+    } catch {
+      projectTags = [];
+    }
+
     const governanceRequest: GovernanceRequest = {
       proposals: proposals.map(p => ({
         id: p.id,
@@ -609,11 +620,13 @@ Respond with EXACTLY one of:
         evidence: p.evidence,
         source: InferenceCycle.SOURCE_MAP[p.source] || 'inference',
         confidence: p.confidence,
+        tags: projectTags,
       })),
       context: {
-        project: 'xray',
+        project: projectName,
         phase: 'inference-cycle',
         source: 'inference-cycle',
+        tags: projectTags,
       },
       options: {
         requireExternalDynamo: !process.env.XRAY_LOCAL_MODE,

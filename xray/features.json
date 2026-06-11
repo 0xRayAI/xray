@@ -138,6 +138,11 @@
       "pass_confidence_min": 0.7,
       "revision_confidence_max": 0.4,
       "vote_weight_multiplier": 1.0
+    },
+    "proposal_defaults": {
+      "source": "agent",
+      "on_chain": false,
+      "tags": []
     }
   }
 }

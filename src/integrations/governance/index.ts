@@ -15,6 +15,7 @@ import type {
   GovernanceVoteResult,
   SolarGovernanceVoteResult,
   BatchGovernanceCheck,
+  DynamoProposalSource,
 } from './types.js';
 import { DEFAULT_GOVERNANCE_CONFIG } from './types.js';
 import { GovernanceClient } from './governance-client.js';
@@ -125,6 +126,9 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
     proposal: InferenceProposal,
     agentReviews: string[] = [],
     historicalIds: string[] = [],
+    source?: DynamoProposalSource,
+    tags?: string[],
+    onChain?: boolean,
   ): Promise<GovernanceVoteResult> {
     if (!this.isAvailable()) {
       throw new Error('Governance integration not available');
@@ -132,9 +136,9 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
 
     const isTechnical = proposal.type === 'fix' || proposal.type === 'guard';
     if (isTechnical) {
-      return this.evaluateProposal(proposal, agentReviews, historicalIds);
+      return this.evaluateProposal(proposal, agentReviews, historicalIds, source, tags, onChain);
     }
-    return this.governWithSolarProposal(proposal);
+    return this.governWithSolarProposal(proposal, source, tags, onChain);
   }
 
   /**
@@ -144,12 +148,22 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
     proposal: InferenceProposal,
     agentReviews: string[],
     historicalIds: string[],
+    source?: DynamoProposalSource,
+    tags?: string[],
+    onChain?: boolean,
   ): Promise<GovernanceVoteResult> {
+    const defaults = this.configData.proposalDefaults ?? { source: 'agent' as const, onChain: false, tags: [] };
+    const finalSource = source ?? defaults.source;
+    const finalTags = tags ?? defaults.tags;
+    const finalOnChain = onChain ?? defaults.onChain;
     const response = await this.client!.evaluateGovernance({
       proposalId: proposal.id,
       proposalText: `${proposal.title}\n\n${proposal.description}`,
       agentReviews,
       historicalSignalIds: historicalIds,
+      source: finalSource,
+      tags: finalTags,
+      onChain: finalOnChain,
     });
     return this.applyDecisionLogic(response);
   }
@@ -162,6 +176,9 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
    */
   private async governWithSolarProposal(
     proposal: InferenceProposal,
+    source?: DynamoProposalSource,
+    tags?: string[],
+    onChain?: boolean,
   ): Promise<SolarGovernanceVoteResult> {
     frameworkLogger.log(
       'inference-governance',
@@ -173,9 +190,16 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       },
     );
 
+    const defaults = this.configData.proposalDefaults ?? { source: 'agent' as const, onChain: false, tags: [] };
+    const finalSource = source ?? defaults.source;
+    const finalTags = tags ?? defaults.tags;
+    const finalOnChain = onChain ?? defaults.onChain;
     const solarResponse = await this.client!.governWithSolar({
       proposal: `${proposal.title}\n\n${proposal.description}`,
       baseVoteWeight: this.configData.decisionLogic.voteWeightMultiplier,
+      source: finalSource,
+      tags: finalTags,
+      onChain: finalOnChain,
     });
 
     const adjustment = solarResponse.confidenceAdjustment;
@@ -389,6 +413,7 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       const features = JSON.parse(content);
 
       if (features.inference_governance) {
+        const defaults = features.inference_governance.proposal_defaults;
         this.configData = {
           ...DEFAULT_GOVERNANCE_CONFIG,
           enabled: features.inference_governance.enabled ?? false,
@@ -399,6 +424,11 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
             passConfidenceMin: features.inference_governance.decision_logic?.pass_confidence_min ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.passConfidenceMin,
             revisionConfidenceMax: features.inference_governance.decision_logic?.revision_confidence_max ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.revisionConfidenceMax,
             voteWeightMultiplier: features.inference_governance.decision_logic?.vote_weight_multiplier ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.voteWeightMultiplier,
+          },
+          proposalDefaults: {
+            source: defaults?.source ?? DEFAULT_GOVERNANCE_CONFIG.proposalDefaults.source,
+            onChain: defaults?.on_chain ?? DEFAULT_GOVERNANCE_CONFIG.proposalDefaults.onChain,
+            tags: defaults?.tags ?? DEFAULT_GOVERNANCE_CONFIG.proposalDefaults.tags,
           },
         };
       }

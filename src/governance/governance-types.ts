@@ -23,6 +23,8 @@ export interface GovernanceProposal {
   source?: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning' | 'metamorphosis';
   confidence?: number; // 0-1
   metadata?: Record<string, unknown>;
+  /** Freeform tags for Dynamo grouping/correlation (e.g. ["0xray"], ["my-project"]) */
+  tags?: string[];
 }
 
 export interface GovernanceVote {
@@ -57,6 +59,8 @@ export interface GovernanceContext {
   source?: string;
   reflectionId?: string;
   inferenceCycleId?: string;
+  tags?: string[];
+  onChain?: boolean;
 }
 
 export interface GovernOptions {

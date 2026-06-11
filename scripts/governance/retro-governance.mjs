@@ -131,12 +131,14 @@ async function main() {
           confidence: 0.85,
           evidence: proposal.evidence,
           options: { requireExternalDynamo: false },
+          tags: ["0xray"],
         }],
         context: {
           project: "xray",
           phase: "v3-pipeline-cascade",
           source: "architect-review",
           reflectionRef: "docs/reflections/enforcement-gate-pipeline-resolution.md",
+          tags: ["0xray"],
         },
         options: { requireExternalDynamo: false, timeoutMs: 30000 },
       });

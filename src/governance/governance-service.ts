@@ -157,7 +157,7 @@ export class GovernanceService {
       ]);
 
       // 2. Always call external Dynamo (required) - returns array of arrays (one inner array per proposal)
-      const externalVotes = await this.callExternalDynamo(proposals, requireExternal);
+      const externalVotes = await this.callExternalDynamo(proposals, requireExternal, context);
 
       // 3. Merge everything
       const results: GovernanceResult[] = proposals.map((proposal, index) => {
@@ -264,7 +264,8 @@ export class GovernanceService {
 
   private async callExternalDynamo(
     proposals: GovernanceProposal[],
-    requireExternal: boolean
+    requireExternal: boolean,
+    context?: GovernanceContext,
   ): Promise<GovernanceVote[][]> {
     const results: GovernanceVote[][] = [];
     const integration = getGovernanceIntegration();
@@ -297,6 +298,16 @@ export class GovernanceService {
       return results;
     }
 
+    // Derive Dynamo source classification from internal proposal source
+    function toDynamoSource(s?: string): 'system' | 'agent' | 'human' {
+      if (s === 'metamorphosis') return 'system';
+      if (s === 'manual') return 'human';
+      return 'agent';
+    }
+
+    // Merge tags from context and per-proposal tags
+    const contextTags = context?.tags ?? [];
+
     // Integration is available — use it exclusively (no fallback)
     for (const proposal of proposals) {
       try {
@@ -316,7 +327,14 @@ export class GovernanceService {
           status: 'pending',
         };
 
-        const result = await integration!.checkProposal(inferenceProposal);
+        const dynamoSource = toDynamoSource(proposal.source);
+        const mergedTags = [...contextTags, ...(proposal.tags ?? [])];
+        // onChain: explicit context flag wins, otherwise true if tags include '0xray' (framework proposals), else false
+        const onChain = context?.onChain ?? mergedTags.includes('0xray');
+
+        const result = await integration!.checkProposal(
+          inferenceProposal, [], [], dynamoSource, mergedTags, onChain,
+        );
 
         results.push([{
           server: 'external-dynamo',
