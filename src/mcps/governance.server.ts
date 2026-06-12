@@ -480,11 +480,7 @@ class GovernanceServer {
     await this.initializeGovernance();
 
     const app = createMcpExpressApp({ host: '0.0.0.0' });
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-    });
-
-    await this.server.connect(transport as any);
+    const transports: Record<string, StreamableHTTPServerTransport> = {};
 
     const apiKey = process.env.GOVERNANCE_API_KEY;
     if (apiKey) {
@@ -508,7 +504,31 @@ class GovernanceServer {
 
     app.post("/mcp", async (req: any, res: any) => {
       try {
-        await transport.handleRequest(req, res, req.body);
+        const sessionId = req.headers["mcp-session-id"] as string | undefined;
+
+        if (sessionId && transports[sessionId]) {
+          await transports[sessionId].handleRequest(req, res, req.body);
+          return;
+        }
+
+        if (!sessionId && req.body?.method === "initialize") {
+          const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: () => randomUUID(),
+            enableJsonResponse: true,
+            onsessioninitialized: (newId: string) => {
+              transports[newId] = transport;
+              frameworkLogger.log("governance-mcp", "session-created", "info", { sessionId: newId });
+            },
+          });
+          const server = this.createServer();
+          await server.connect(transport as any);
+          await transport.handleRequest(req, res, req.body);
+          return;
+        }
+
+        res.status(400).json({
+          jsonrpc: "2.0", error: { code: -32000, message: "Bad Request: No valid session ID provided" }, id: null,
+        });
       } catch (error) {
         frameworkLogger.log("governance-mcp", "http-handler-error", "error", { error: String(error) });
         if (!res.headersSent) {
@@ -525,8 +545,8 @@ class GovernanceServer {
       frameworkLogger.log("governance-mcp", "http-listening", "info", { port });
     });
 
-    process.on("SIGINT", () => { transport.close(); process.exit(0); });
-    process.on("SIGTERM", () => { transport.close(); process.exit(0); });
+    process.on("SIGINT", () => { process.exit(0); });
+    process.on("SIGTERM", () => { process.exit(0); });
   }
 }
 
