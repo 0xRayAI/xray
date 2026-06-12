@@ -6,9 +6,6 @@
   "author": "0xRay AI",
   "homepage": "https://github.com/0xRayAI/xray",
   "components": {
-    "mcpServers": [".mcp.json"],
-    "skills": ["src/skills"],
-    "commands": ["commands"],
-    "hooks": ["src/integrations/grok/plugin/0xray/hooks/hooks.json"]
+    "mcpServers": [".mcp.json"]
   }
 }
