@@ -145,7 +145,7 @@ describe("Rule Loaders", () => {
 
     it("should load codex rules from valid codex.json", async () => {
       const mockCodexData = {
-        version: "3.0.0",
+        version: "3.0.1",
         lastUpdated: "2024-01-01",
         errorPreventionTarget: 0.99,
         terms: {
@@ -181,7 +181,7 @@ describe("Rule Loaders", () => {
 
     it("should skip invalid terms", async () => {
       const mockCodexData = {
-        version: "3.0.0",
+        version: "3.0.1",
         terms: {
           "1": {
             number: 1,
