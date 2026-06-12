@@ -502,7 +502,7 @@ class GovernanceServer {
       next();
     });
 
-    app.post("/mcp", async (req: any, res: any) => {
+    const handlePost = async (req: any, res: any) => {
       try {
         const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
@@ -535,7 +535,38 @@ class GovernanceServer {
           res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
         }
       }
-    });
+    };
+
+    const handleGet = async (req: any, res: any) => {
+      try {
+        const sessionId = req.headers["mcp-session-id"] as string | undefined;
+
+        if (sessionId && transports[sessionId]) {
+          await transports[sessionId].handleRequest(req, res);
+          return;
+        }
+
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          enableJsonResponse: true,
+          onsessioninitialized: (newId: string) => {
+            transports[newId] = transport;
+            frameworkLogger.log("governance-mcp", "session-created", "info", { sessionId: newId });
+          },
+        });
+        const server = this.createServer();
+        await server.connect(transport as any);
+        await transport.handleRequest(req, res);
+      } catch (error) {
+        frameworkLogger.log("governance-mcp", "http-get-error", "error", { error: String(error) });
+        if (!res.headersSent) {
+          res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
+        }
+      }
+    };
+
+    app.post("/mcp", handlePost);
+    app.get("/mcp", handleGet);
 
     app.get("/health", (_req: any, res: any) => {
       res.json({ status: "ok", server: "governance" });

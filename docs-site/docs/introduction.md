@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v2.0.0** — 42 agents · 44 skills · 41 MCP servers · 68 codex terms · 2,822 tests
+**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms · 2,196 tests
 
 0xRay prevents AI coding mistakes before they happen. It's an intelligent governance layer that sits between you and your AI coding tools — intercepting bad proposals, enforcing code quality rules, and orchestrating multi-agent workflows automatically.
 

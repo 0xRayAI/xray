@@ -155,9 +155,9 @@ const detectedCodex = detectCodexInfo();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "2.2.3",
+    version: "3.0.0",
       displayName: "xray: Self-Healing AI Governance OS",
-      lastUpdated: "2026-06-10",
+      lastUpdated: "2026-06-12",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },

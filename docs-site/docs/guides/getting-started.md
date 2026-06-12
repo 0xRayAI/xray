@@ -1,6 +1,6 @@
 # Getting Started with 0xRay
 
-**v2.0.0** — 42 agents · 44 skills · 41 MCP servers · 68 codex terms
+**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms
 
 Welcome to 0xRay — the self-healing AI governance OS that prevents coding mistakes before they ship.
 
@@ -26,9 +26,9 @@ npx 0xray skill:install
 
 0xRay provides intelligent multi-agent orchestration with automatic governance:
 
-- **42 specialized agents** for different development tasks
+- **41 specialized agents** for different development tasks
 - **68 Codex terms** for systematic error prevention
-- **41 MCP servers** for extended capabilities
+- **15 MCP servers** for extended capabilities
 - **44 framework skills** for common operations
 
 Every code change is reviewed by 3 specialized AI servers before it executes. Bad proposals are blocked automatically.
@@ -47,11 +47,7 @@ Every code change is reviewed by 3 specialized AI servers before it executes. Ba
 
 - [Architecture Overview](../architecture/) — Understand the system design
 - [Agent Documentation](../agents/) — See all available agents
-- [MCP Servers](../mcp/) — Explore server capabilities
+- [MCP Servers](../mcp/) — xray-skills and xray-governance MCP servers
 - [Full Reference](../full-reference) — Complete documentation
 
-## Version Info
 
-- **Framework**: v2.0.0
-- **Codex**: v3.0.0 (72 terms)
-- **OpenCode**: v2.14.0

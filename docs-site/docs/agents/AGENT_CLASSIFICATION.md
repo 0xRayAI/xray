@@ -2,7 +2,7 @@
 
 ## Overview
 
-0xRay Framework implements a sophisticated multi-agent architecture with 25 specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
+0xRay Framework implements a sophisticated multi-agent architecture with specialized AI agents, each designed for specific roles in the development lifecycle. This document provides a comprehensive classification system that helps users understand when and how to use each agent effectively.
 
 ## Agent Classification Framework
 
@@ -142,7 +142,7 @@ These agents focus on analysis, design, coordination, and strategic planning. Th
 **Primary Role**: Coordinates testing efforts, validates test coverage, and ensures quality gates are met before deployment.
 
 **Documentation Requirements**:
-- Validates 87% test coverage (v2.0.0)
+- Validates test coverage
 - Documents testing strategies and results
 - Cross-references with Test Architect for strategy alignment
 
@@ -246,7 +246,7 @@ These agents include implementation capabilities in their workflow, performing s
 **Integration Requirements**:
 - Validates against Codex Term 25 (Code Rot Prevention)
 - Cross-references with Architect for refactoring strategies
-- Ensures 87% code reduction patterns (Facade Pattern)
+- Ensures code reduction patterns
 - Documents refactoring rationale and impact
 
 ### Additional Implementation Agents

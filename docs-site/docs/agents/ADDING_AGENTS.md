@@ -1,19 +1,8 @@
-# How to Add an Agent to 0xRay AI v2.0.0
+# How to Add an Agent to 0xRay AI v3.0.0
 
-This guide documents how to add agents to 0xRay v2.0.0 and lists **every single file** that needs to be updated.
+This guide documents how to add agents to 0xRay v3.0.0 and lists **every single file** that needs to be updated.
 
----
-
-## Architecture Overview
-
-0xRay v2.0.0 uses a **Facade Pattern** architecture with modular internal structure:
-
-**Facade Components:**
-- **RuleEnforcer Facade**: 416 lines (was 2,714) - 6 internal modules for codex enforcement
-- **TaskSkillRouter Facade**: 490 lines (was 1,933) - 12 mapping + analytics + routing modules
-- **MCP Client Facade**: 312 lines (was 1,413) - 8 internal modules for server communication
-
-When adding agents, you'll primarily interact with the facades' clean APIs rather than monolithic files.
+When adding agents, you'll primarily interact with clean APIs rather than monolithic files.
 
 ---
 
@@ -50,7 +39,7 @@ When adding a new agent, you MUST update these files:
 
 ---
 
-## Current Agents List (27 Total)
+## Current Agents List
 
 | Agent | Mode | Description |
 |-------|------|-------------|
@@ -108,7 +97,7 @@ Create the agent YAML file:
 ```yaml
 name: my-agent
 description: "What this agent does"
-version: "2.0.0"
+version: "3.0.0"
 mode: subagent
 ```
 
@@ -140,7 +129,7 @@ Add to model routing config (around line 155):
 
 ### 6. src/mcps/mcp-client.ts
 
-**Note:** In v2.0.0, this is now a facade. Add to the facade's serverConfigs:
+**Note:** Add to the facade's serverConfigs:
 
 ```typescript
 "my-agent": {
@@ -173,7 +162,7 @@ Add to the skills enum (around line 71):
 
 ### 8. src/delegation/task-skill-router.ts
 
-**Note:** In v2.0.0, this is now a facade with 12 mapping modules.
+**Note:** This module handles routing across agents.
 
 Add routing rules (around line 401):
 
@@ -185,7 +174,7 @@ Search for other agents to see the pattern - there are multiple routing location
 
 ### 9. src/enforcement/rule-enforcer.ts
 
-**Note:** In v2.0.0, this is now a facade with 6 internal modules.
+**Note:** This module handles codex enforcement.
 
 Add enforcement mapping (around line 1008):
 
@@ -389,31 +378,8 @@ This preserves the configuration for future reference while preventing the agent
 
 ---
 
-## Architecture Notes (v2.0.0 Facade Pattern)
-
-### Facade Benefits
-
-- **Simpler Integration**: Clean APIs hide internal complexity
-- **Better Testing**: Each module can be tested independently
-- **Easier Maintenance**: Changes are localized to specific modules
-- **Performance**: Optimized internal routing without public API changes
-
-### Key Files in Facade Architecture
-
-**RuleEnforcer Facade:**
-- Facade: `src/enforcement/rule-enforcer.ts` (416 lines)
-- Internal Modules: 6 focused modules for specific enforcement tasks
-
-**TaskSkillRouter Facade:**
-- Facade: `src/delegation/task-skill-router.ts` (490 lines)
-- Internal Modules: 12 mapping modules + analytics + routing
-
-**MCP Client Facade:**
-- Facade: `src/mcps/mcp-client.ts` (312 lines)
-- Internal Modules: 8 specialized modules for MCP operations
-
 ---
 
-**Version:** 1.9.0  
-**Architecture:** Facade Pattern (87% code reduction)  
+**Version:** 3.0.0  
+**Architecture:** v3 Three-Subsystem  
 **Last Updated:** 2026-03-12

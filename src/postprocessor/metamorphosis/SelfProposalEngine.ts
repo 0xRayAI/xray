@@ -21,7 +21,7 @@
 import { promises as fs, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { frameworkLogger } from '../../core/framework-logger.js';
-import type { MetamorphosisEngine, MetamorphosisProposal } from './MetamorphosisEngine.js';
+import type { MetamorphosisEngine, MetamorphosisProposal } from '../../types/metamorphosis.js';
 import type { GovernanceRequest } from '../../governance/governance-types.js';
 import { handleGovernRequest } from '../../nucleus/govern-http.js';
 

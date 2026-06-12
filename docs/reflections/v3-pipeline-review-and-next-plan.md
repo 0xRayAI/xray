@@ -69,11 +69,11 @@
 - Self-audit: load codex via policy, run sample validators, assert matrix truthful.
 - Exit: processorRoadmap 80%+ done or explicitly deferred; no new enforcementGaps; tsc/tests green.
 
-**Phase 5: v3.4.0 Readiness + Precondition Note (P2)**
-- Bump (after phases 0-2 minimum): package + codex internal to 3.4.0.
+**Phase 5: v3.0.0 Readiness + Precondition Note (P2)**
+- Bump (after phases 0-2 minimum): package + codex internal to 3.0.0.
 - Full verify-consumer.sh (4 bridges + Phase5b gate + activity.log).
 - Note: Self-evolution "precondition" (v3 plan) partially met — inference cycle runs autonomously and governs (log evidence); formal 2-week prod-like with bridges + no un-governed self-changes tracked separately if needed.
-- Tag v3.4.0 (or v3.0.0 final if version aligns) only after retro + detector + consumer.
+- Tag v3.0.0 only after retro + detector + consumer.
 - Update CHANGELOG + top-level reflection.
 
 **Cross-Cutting + Risks**:
@@ -83,7 +83,7 @@
 - Risks: Dynamo init in CI/dev (document fallback approve path); inference apply side-effects (markers); bridge fragility (pin?); over-automation of subjective terms.
 - Metrics: Track % proposals via nucleus vs legacy (0 legacy now); SelfProp success/breaker rate; CI enforcement pass %; governance decision latency.
 
-**Success Definition**: v3.4 = pipelines fully exercised + matrix maintained + governance *precedes and records* all significant changes (retro + detector) + docs complete + roadmap closed or accepted. System "rebooted" with active, known-good, governed enforcement everywhere. Ready for production self-evolution under full codex.
+**Success Definition**: v3.0.0 = pipelines fully exercised + matrix maintained + governance *precedes and records* all significant changes (retro + detector) + docs complete + roadmap closed or accepted. System "rebooted" with active, known-good, governed enforcement everywhere. Ready for production self-evolution under full codex.
 
 **Immediate Next Action (after this doc)**: Phase 0 retro via MCP govern_reflection on this file (or extracted proposals). Then implement detector.
 
@@ -103,7 +103,7 @@ MCP `xray-governance__govern_reflection` (and `get_active_codex`) returned "MCP 
 1. `retro-v3-pipeline-gate-...` — Codify enforcement-gate.ts as the canonical hook surface for the 4 plugins (terms 8/74/77/79-81 + matrix).
 2. `retro-v3-pipeline-matrix-...` — Establish/maintain per-pipeline validation matrix + close enforcement gaps in codex.json SSOT (pre-commit, CI jobs, post-processor, inference, coverage, scanners, etc.).
 3. `retro-v3-nucleus-governance-...` — Activate nucleus handleGovernRequest + SelfProposalEngine as primary paths (terms 69-71); confirm dist/runtime live + logs.
-4. `retro-v3-closure-plan-...` — Adopt the v3.4 Governance Closure + Full System Integration plan (retro, source-change detector, docusaurus cascade, full E2E exerciser, roadmap/hygiene, v3.4.0 readiness).
+4. `retro-v3-closure-plan-...` — Adopt the v3 Governance Closure + Full System Integration plan (retro, source-change detector, docusaurus cascade, full E2E exerciser, roadmap/hygiene, v3.0.0 readiness).
 
 **Governance Response** (verbatim key structure):
 ```json
@@ -135,7 +135,7 @@ MCP `xray-governance__govern_reflection` (and `get_active_codex`) returned "MCP 
 - `[nucleus-http] govern-response` — SUCCESS {overallDecision:"approve", total:4, approved:4}
 - `[architect-retro] retro-governance-ritual-complete` — SUCCESS (echoed proposalCount + overall + summary + timestamp)
 
-**Outcome**: The architecture review (confirmed accurate, pipelines closed, governance live, gaps documented), the enforcement/nucleus work, and the full v3.4 5-phase plan have now been deliberated and recorded retroactively through the governance pipeline. Dynamo (via the 3-skill internal path) has "seen" these changes. This directly addresses the prior questions on missing proposals for the work and "reboot is governance".
+**Outcome**: The architecture review (confirmed accurate, pipelines closed, governance live, gaps documented), the enforcement/nucleus work, and the full v3 5-phase plan have now been deliberated and recorded retroactively through the governance pipeline. Dynamo (via the 3-skill internal path) has "seen" these changes. This directly addresses the prior questions on missing proposals for the work and "reboot is governance".
 
 **Notes**: 3 internal skills approved all proposals; external abstained (as in live inference cycles). No rejections. The ritual itself emitted frameworkLogger entries (no console.*). Reflection + plan now governed.
 

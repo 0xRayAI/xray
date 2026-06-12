@@ -1,45 +1,50 @@
-# MCP Server Overview
+# MCP Servers
 
-**Version**: 2.0.0
+0xRay ships two MCP (Model Context Protocol) servers. The primary user-facing one runs standalone with zero configuration.
 
-0xRay provides 39 MCP (Model Context Protocol) servers that expose agent capabilities as tools for the OpenCode framework.
+## xray-skills (public)
 
-## Server Categories
+13 tools for code review, security audit, API design, database design, testing strategy, and more. Runs via `npx`:
 
-| Category | Count | Description |
-|----------|-------|-------------|
-| Infrastructure | 15 | Core framework operations |
-| Knowledge Skills | 25 | Specialized domain expertise |
+```json
+{
+  "mcpServers": {
+    "xray-skills": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "skills"]
+    }
+  }
+}
+```
 
-## Quick Reference
+**13 tools**: skill-code-review, skill-security-audit, skill-api-design, skill-database-design, skill-project-analysis, skill-testing-strategy, skill-performance-optimization, skill-ui-ux-design, skill-devops-deployment, skill-documentation-generation, skill-storyteller, list-skills, invoke-skill
 
-| Server | Category | Purpose |
-|--------|----------|---------|
-| `orchestrator.server.ts` | Infrastructure | Multi-agent workflow coordination |
-| `boot-orchestrator.server.ts` | Infrastructure | Framework initialization |
-| `processor-pipeline.server.ts` | Infrastructure | Pre/post processor execution |
-| `enforcer-tools.server.ts` | Infrastructure | Codex compliance enforcement |
-| `architect-tools.server.ts` | Infrastructure | System design tools |
-| `researcher.server.ts` | Infrastructure | Codebase exploration |
-| `security-scan.server.ts` | Infrastructure | Security vulnerability detection |
-| `code-analyzer.server.ts` | Knowledge | Deep code analysis |
-| `api-design.server.ts` | Knowledge | REST/GraphQL API design |
-| `devops-deployment.server.ts` | Knowledge | CI/CD and deployment |
-| `database-design.server.ts` | Knowledge | Schema and optimization |
-| `frontend-ui-ux-engineer.server.ts` | Knowledge | UI/UX design |
-| `mobile-development.server.ts` | Knowledge | iOS/Android/React Native |
-| `performance-optimization.server.ts` | Knowledge | Performance profiling |
-| `testing-strategy.server.ts` | Knowledge | Test architecture |
+**44 knowledge skills** (SKILL.md) for chat-based development assistance.
 
-## Detailed Documentation
+No external services, no API keys, no configuration needed.
 
-- [Infrastructure MCP Servers](./infrastructure.md) - 15 core framework servers
-- [Knowledge Skills MCP Servers](./knowledge-skills.md) - 24 specialized skill servers
+## xray-governance (advanced)
 
-## Usage
+Orchestrates proposals through code-review + security-audit + researcher + external Dynamo SSOT. Requires additional setup.
 
-MCP servers are automatically loaded by the framework and exposed as tools to agents. Each server provides specific capabilities that can be invoked through the OpenCode tool interface.
+```json
+{
+  "mcpServers": {
+    "xray-governance": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "governance"]
+    }
+  }
+}
+```
 
-## Server Status
+Or connect to the hosted Railway endpoint:
+`https://governance-production-69c3.up.railway.app/mcp`
 
-All 41 MCP servers are active and operational in v2.0.0.
+## Internal MCP Servers (framework)
+
+The framework also includes 15 internal `.server.js` files loaded at runtime for orchestration, enforcement, linting, state management, etc. See [MCP Server Reference](./infrastructure.md).
+
+## Marketplace
+
+0xRay is listed on the [xAI Plugin Marketplace](https://github.com/xai-org/plugin-marketplace) (PR #23) — one-click install for Grok users.

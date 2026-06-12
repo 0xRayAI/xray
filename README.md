@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v2.2.3** — 41 agents · 44 skills · 15 MCPs servers · 9 codex terms · 160 test files
+**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms · 160 test files
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -62,7 +62,7 @@ AI coding assistants are powerful but unreliable. They hallucinate APIs, introdu
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Multi-agent review · SSOT  │
-│  15 MCPs servers (governance + knowledge skills) deliberate proposals │
+│  15 MCP servers deliberate proposals via 3-skill governance │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  Task routing · Multi-agent coordination        │
@@ -88,7 +88,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | Platform | Install Command | What It Does |
 |----------|----------------|--------------|
 | **OpenCode** | `npx 0xray opencode install` | Installs as native plugin, seeds YML agent surfaces, merges configuration |
-| **Grok CLI** | `npx 0xray grok install` | Registers plugin + full MCP surface (governance, skills, orchestrator, enforcer + knowledge skills) |
+| **Grok CLI** | `npx 0xray grok install` | Registers plugin + xray-skills MCP server (13 tools, 44 skills) |
 | **Hermes Agent** | `npx 0xray hermes install` | Copies bridge plugin to `~/.hermes/plugins/` |
 | **OpenClaw** | `npx 0xray openclaw install` | Creates integration config at `.xray/config/openclaw.json` |
 
@@ -127,6 +127,8 @@ Postinstall automatically registers MCP servers with Grok CLI when `grok` is ava
 
 | Command | Description |
 |---------|-------------|
+| `mcp skills` | Run the xray-skills MCP server (stdio, 13 tools) |
+| `mcp governance` | Run the xray-governance MCP server (stdio, advanced) |
 | `mcp:list` | Browse available community MCP servers |
 | `mcp:status` | Show installed MCP servers |
 | `mcp:install <name>` | Install an MCP server from the registry |
@@ -175,11 +177,11 @@ Postinstall automatically registers MCP servers with Grok CLI when `grok` is ava
 
 ### Feature Flags (`features.json`)
 
-Every subsystem is configurable via `features.json` (located at `.opencode/xray/features.json` or `xray/features.json` after installation):
+Every subsystem is configurable via `features.json` (located at `xray/features.json`):
 
 ```json
 {
-  "version": "2.2.2",
+  "version": "3.0.0",
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,
@@ -198,13 +200,13 @@ Toggle any feature on/off with `enabled: true/false`. The framework reloads conf
 
 ### Governance Setup
 
-Governance is your quality gate. Configure it under `inference_governance` in `features.json`:
+Governance is your quality gate. Configure it under `inference_governance` in `features.json`. The hosted Railway endpoint is available at `https://governance-production-69c3.up.railway.app/mcp`:
 
 ```json
 {
   "inference_governance": {
     "enabled": true,
-    "endpoint_url": "https://your-governance-endpoint/governance",
+    "endpoint_url": "https://governance-production-69c3.up.railway.app/mcp",
     "request_timeout_ms": 10000,
     "min_confidence_threshold": 0.5,
     "decision_logic": {
@@ -226,7 +228,7 @@ The governance pipeline works in three stages:
 
 ---
 
-## Included Agents (42)
+## Included Agents (41)
 
 0xRay ships with specialized agents for every engineering domain:
 
@@ -253,19 +255,50 @@ The governance pipeline works in three stages:
 | **Code Analyzer** | Code metrics, complexity analysis |
 | **Log Monitor** | Diagnostics, error pattern detection |
 
-Plus 22 domain-specialist subagents for full-stack, database, mobile, UI/UX, and more. All agents are declared declaratively in `.opencode/agents/*.yml` — add or customize without touching code.
+Plus 22 domain-specialist subagents for full-stack, database, mobile, UI/UX, and more. All agents are declared declaratively in `src/opencode/agents/*.yml` — add or customize without touching code.
 
 ---
 
-## Included MCP Servers (41)
+## MCP Servers
 
-Model Context Protocol servers provide the skill infrastructure:
+0xRay ships two MCP servers. The primary user-facing one runs standalone with zero configuration:
 
-**Governance & Review (5):** code-review, security-audit, researcher, enforcer-tools, governance
+### xray-skills (public)
+13 tools for code review, security audit, API design, database design, testing strategy, and more. Runs via `npx`:
 
-**Core Framework (12):** architect-tools, boot-orchestrator, estimation, framework-compliance-audit, framework-help, lint, model-health-check, orchestrator, performance-analysis, processor-pipeline, state-manager, auto-format
+```json
+{
+  "mcpServers": {
+    "xray-skills": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "skills"]
+    }
+  }
+}
+```
 
-**Knowledge Skills (24):** api-design, architecture-patterns, bug-triage-specialist, code-analyzer, content-creator, database-design, devops-deployment, git-workflow, growth-strategist, log-monitor, mobile-development, multimodal-looker, performance-optimization, project-analysis, refactoring-strategies, security-scan, seo-consultant, session-management, skill-invocation, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
+- **13 tools**: skill-code-review, skill-security-audit, skill-api-design, skill-database-design, skill-project-analysis, skill-testing-strategy, skill-performance-optimization, skill-ui-ux-design, skill-devops-deployment, skill-documentation-generation, skill-storyteller, list-skills, invoke-skill
+- **44 knowledge skills** (SKILL.md) for chat-based development assistance
+- No external services, no API keys, no configuration needed
+
+### xray-governance (advanced)
+Orchestrates proposals through code-review + security-audit + researcher + external Dynamo SSOT. Requires additional setup.
+
+```json
+{
+  "mcpServers": {
+    "xray-governance": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "governance"]
+    }
+  }
+}
+```
+
+Or connect to the hosted Railway endpoint:
+`https://governance-production-69c3.up.railway.app/mcp`
+
+> **Marketplace**: 0xRay is listed on the [xAI Plugin Marketplace](https://github.com/xai-org/plugin-marketplace) (PR #23) — one-click install for Grok users.
 
 ---
 
@@ -304,7 +337,7 @@ npx 0xray status
 npx 0xray skill:install
 
 # 3. Configure governance (optional)
-# Edit .opencode/xray/features.json
+# Edit xray/features.json
 
 # 4. View full agent documentation
 less AGENTS.md

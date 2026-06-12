@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [3.4.0] - 2026-06-11
+## [3.0.0] - 2026-06-12
 
 ### 🧠 Governance Closure + Full System Integration
 
-v3.4 closes the governance loop: all enforcement flows through the shared gate, governance is enabled by default with external Dynamo, and source changes to the governance fabric are auto-detected and proposed for deliberation.
+v3.0 closes the governance loop: all enforcement flows through the shared gate, governance is enabled by default with external Dynamo, and source changes to the governance fabric are auto-detected and proposed for deliberation.
 
 ### 🌟 Highlights
 
@@ -16,6 +16,15 @@ v3.4 closes the governance loop: all enforcement flows through the shared gate, 
 - **E2E pipeline smoketest extended to 10 steps**: gate → escalation → CI → consumer → governance → nucleus → inference → SelfProposal → EscalationEngine → LightweightValidator. All 10 pass.
 - **Source-change governance detector**: `scripts/ci/source-change-governance-detector.mjs` watches codex.json, features.json, enforcement/nucleus/postprocessor/governance files. Auto-submits strategic proposals via `handleGovernRequest` with `requireExternalDynamo: true`. Wired in CI enforcement job.
 - **Consumer path hygiene audit**: All published scripts (`postinstall.cjs`, `setup.cjs`, `prepare-consumer.cjs`) now use robust consumer-aware path resolution. Nucleus exports map (`./nucleus/*`) verified via consumer plugin test.
+
+### 🏪 Marketplace & Polish
+
+- **Marketplace PR #23** submitted to `xai-org/plugin-marketplace` — 13 xray-skills tools, 44 skills, 2 MCP servers
+- **xray-skills MCP server**: 13 tools via `npx -y 0xray mcp skills` — standalone, zero config
+- **Railway governance HTTP MCP**: multi-client session support, JSON response mode, GET `/mcp` SSE endpoint
+- **`.mcp.json`**: xray-skills (public) + xray-governance (advanced) declared
+- **`.plugin/plugin.json`**: Marketplace manifest with correct tool/skill counts
+- **skills/ symlink** → `src/skills/` for marketplace scanner discovery
 
 ### 🔧 Changes
 

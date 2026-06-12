@@ -153,7 +153,7 @@ export class MCPClient extends EventEmitter {
    * Pure MCP mode — simulation and generic fallbacks are disabled.
    */
   private get isPureMcpMode(): boolean {
-    return (process.env.XRAY_FORCE_MCP_GOVERNANCE) === 'true';
+    return (process.env.XRAY_PURE_MCP_MODE) === 'true';
   }
 
   /**
@@ -470,7 +470,7 @@ export class MCPClient extends EventEmitter {
       if (this.isPureMcpMode) {
         throw new Error(
           `[PURE MCP] No real response for ${serverName}/${toolName}. ` +
-          `All fallbacks are disabled when XRAY_FORCE_MCP_GOVERNANCE=true.`
+          `All fallbacks are disabled when XRAY_PURE_MCP_MODE=true.`
         );
       }
 

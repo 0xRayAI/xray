@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-xray is a pure v2 three-subsystem AI orchestration framework with MCP-centric governance.
+xray is a pure v3 three-subsystem AI orchestration framework with MCP-centric governance.
 
 ## Commands
 
@@ -12,7 +12,7 @@ xray is a pure v2 three-subsystem AI orchestration framework with MCP-centric go
 
 ## Codex
 
-This project enforces the Universal Development Codex (72 terms) via Dynamo governance.
+This project enforces the Universal Development Codex (68 terms) via Dynamo governance.
 
 Rules live in `xray/codex.json`. Key rules:
 

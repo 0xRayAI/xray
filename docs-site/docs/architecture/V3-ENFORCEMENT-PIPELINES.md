@@ -1,6 +1,5 @@
 # V3 Enforcement Pipelines (Hooks + CI + PostProcessor)
 
-**Version**: 3.3.1  
 **Date**: 2026-06-11  
 **Status**: Full enforcement cascade — all TUI/CLI integrations, CI (29 validators, coverage gate, consumer check, E2E smoke, scanners, governance detector), pre-commit (LightweightValidator), and consumer postinstall. Zero assumed enforcement.
 

@@ -119,12 +119,12 @@ These tests use some real components with mocked dependencies.
 - Isolating component behavior
 - Testing error conditions and edge cases
 
-### Facade Module Testing Strategy
+### Module Testing Strategy
 
-Each of the 26 facade modules is tested independently to ensure isolation and reliability:
+Components are tested independently to ensure isolation and reliability:
 
 ```typescript
-// Example: Testing a single facade module
+// Example: Testing a single module
 // File: src/__tests__/facades/TaskSkillRouter/skill-mapper.test.ts
 
 import { SkillMapper } from '../../../src/facades/TaskSkillRouter/modules/skill-mapper';
@@ -135,13 +135,11 @@ describe('SkillMapper Module (Independent Testing)', () => {
   let taskAnalyzer: TaskAnalyzer;
   
   beforeEach(() => {
-    // Initialize module in isolation
     skillMapper = new SkillMapper({
       enableCache: true,
       cacheTTL: 300000
     });
     
-    // Mock dependencies for isolated testing
     taskAnalyzer = {
       analyze: jest.fn().mockResolvedValue({
         complexity: 'medium',
@@ -169,7 +167,6 @@ describe('SkillMapper Module (Independent Testing)', () => {
   it('should validate rule compliance before routing', async () => {
     const task = { description: 'Implement complex feature', complexity: 'high' };
     
-    // Module validates against codex rules
     const validation = await skillMapper.validateAgainstRules(task, [
       { id: 'codex-1', maxComplexity: 75 }
     ]);
@@ -179,23 +176,22 @@ describe('SkillMapper Module (Independent Testing)', () => {
 });
 ```
 
-### Facade Integration Testing
+### Integration Testing
 
-Tests validate interaction between facades:
+Tests validate interaction between components:
 
 ```typescript
 // Example: Testing RuleEnforcer + TaskSkillRouter integration
 // File: src/__tests__/integration/facade-integration.test.ts
 
-describe('Facade Integration: RuleEnforcer + TaskSkillRouter', () => {
+describe('Integration: RuleEnforcer + TaskSkillRouter', () => {
   it('should validate rules before routing complex tasks', async () => {
     const enforcer = new RuleEnforcer();
     const router = new TaskSkillRouter();
     
-    // Step 1: Enforcer validates task complexity
     const task = {
       description: 'Refactor authentication system',
-      complexity: 85, // High complexity
+      complexity: 85,
       estimatedFiles: 15
     };
     
@@ -203,14 +199,13 @@ describe('Facade Integration: RuleEnforcer + TaskSkillRouter', () => {
     expect(validation.passed).toBe(true);
     expect(validation.warnings).toContain('high-complexity-task');
     
-    // Step 2: Router uses validation to determine agent selection
     const routing = await router.route(task, {
       validationResults: validation,
       maxAgents: validation.recommendedAgentCount
     });
     
     expect(routing.agents).toContain('architect');
-    expect(routing.agents.length).toBeLessThanOrEqual(3); // Codex term 54
+    expect(routing.agents.length).toBeLessThanOrEqual(3);
   });
 });
 ```
@@ -220,41 +215,30 @@ describe('Facade Integration: RuleEnforcer + TaskSkillRouter', () => {
 - **🟡 Important**: Mock-based integration tests (must pass for commits)
 - **🟢 Supporting**: Unit tests with mocks (should pass for development)
 
-## Framework Test Status Summary (v2.0.0)
+## Framework Test Status Summary
 
-- **Total Tests**: N tests
 - **Test Files**: 145+ test files
-- **Facade Module Tests**: 112 files (26 modules, component isolation)
-- **Integration Tests**: 420 tests (cross-facade validation)
-- **E2E Tests**: 280 tests (Real framework workflows)
-- **Agent Tests**: 420 tests (N specialized agents)
-- **Unit Tests**: 580 tests (Individual components)
-- **Performance Tests**: 280 tests (Facade performance, regression detection)
-- **Test Coverage**: 87% behavioral coverage
+- **Module Tests**: 112 files (component isolation)
+- **Test Coverage**: High behavioral coverage
 - **Execution Time**: ~3-5 minutes for full suite (parallel execution)
-- **Code Reduction**: 87% via facade pattern (3,170 lines removed)
 
 ### Modular Testing Architecture
 
-0xRay v2.0.0's testing strategy is built around the facade pattern, enabling comprehensive testing of 26 internal modules across 3 main facades:
+Testing strategy enables comprehensive testing across all components:
 
 ```
 Test Architecture:
-├── Facade Module Tests (112 files, 668 tests)
+├── Module Tests (112 files, 668 tests)
 │   ├── RuleEnforcer Modules (6 modules, 180 tests)
 │   ├── TaskSkillRouter Modules (14 modules, 420 tests)
 │   └── MCP Client Modules (8 modules, 280 tests)
 ├── Integration Tests (420 tests)
-│   ├── Facade-to-Facade Integration
-│   ├── Agent-Facade Integration
+│   ├── Component Integration
 │   └── Full Workflow Validation
 ├── E2E Tests (280 tests)
 │   ├── Multi-Agent Workflows
 │   ├── Framework Boot Sequences
 │   └── Real-world Scenarios
 └── Performance Tests (280 tests)
-    ├── Facade Performance
-    ├── Memory Optimization
-    └── 87% Code Reduction Validation
 ```</content>
 <parameter name="filePath">TEST_CLASSIFICATION_GUIDE.md

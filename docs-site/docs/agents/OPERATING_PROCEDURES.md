@@ -1,10 +1,10 @@
-# 0xRay Framework - Agent Operating Procedures (v2.0.0)
+# 0xRay Framework - Agent Operating Procedures
 
 ## Overview
 
-This document provides comprehensive operating procedures for all 27 0xRay Framework agents, including workflow execution, inter-agent communication, error handling, and integration patterns. These procedures ensure effective utilization of the multi-agent system for development workflow enhancement with proper documentation and cross-reference validation.
+This document provides comprehensive operating procedures for all 0xRay Framework agents, including workflow execution, inter-agent communication, error handling, and integration patterns. These procedures ensure effective utilization of the multi-agent system for development workflow enhancement with proper documentation and cross-reference validation.
 
-### Agent Count: 25 Specialized Agents
+### Agent Count
 
 | Category | Count | Agents |
 |----------|-------|--------|
@@ -72,7 +72,7 @@ This document provides comprehensive operating procedures for all 27 0xRay Frame
 **Expected Outputs**:
 
 - Detailed workflow execution plan
-- Agent assignments with responsibilities for up to 25 specialized agents
+- Agent assignments with responsibilities for specialized agents
 - Progress tracking dashboard
 - Consolidated results with conflict resolutions
 - **Documentation Requirements**: All agent coordination must be documented
@@ -139,9 +139,9 @@ This document provides comprehensive operating procedures for all 27 0xRay Frame
 
 ## Inter-Agent Communication
 
-### Agent Coordination Architecture (v2.0.0)
+### Agent Coordination Architecture
 
-The 25 specialized agents communicate through the orchestrator using the following patterns:
+The specialized agents communicate through the orchestrator using the following patterns:
 
 #### Direct Agent-to-Agent Messaging
 

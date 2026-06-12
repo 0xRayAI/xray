@@ -60,7 +60,7 @@ export type {
 export type {
   MetamorphosisEngine,
   MetamorphosisProposal,
-} from '../postprocessor/metamorphosis/MetamorphosisEngine.js';
+} from '../types/metamorphosis.js';
 
 // Convenience re-export of the HTTP adapter for anyone who wants the tiny Express wrapper
 // (still considered "convenience", not core kernel)

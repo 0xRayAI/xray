@@ -35,7 +35,7 @@ import { PostProcessorReporter } from "./reporting/PostProcessorReporter.js";
 import { RegressionAnalysisService } from "./services/RegressionAnalysisService.js";
 import { ProcessorConfigLoader } from "./config/ProcessorConfigLoader.js";
 import { ArchitecturalComplianceChecker } from "./compliance/ArchitecturalComplianceChecker.js";
-import type { MetamorphosisEngine, MetamorphosisProposal } from "./metamorphosis/MetamorphosisEngine.js";
+import type { MetamorphosisEngine, MetamorphosisProposal } from "../types/metamorphosis.js";
 import { SelfProposalEngine } from "./metamorphosis/SelfProposalEngine.js";
 
 export class PostProcessor {

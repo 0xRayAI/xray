@@ -4,7 +4,7 @@ sidebar_label: Overview
 
 # 0xRay Documentation
 
-**v3.0.0** — 7 agents · 3 MCP skill servers · 21 codex terms · 29 validators · 2,880 tests
+**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms · 2,196 tests
 
 Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with the [Introduction](./introduction).
 

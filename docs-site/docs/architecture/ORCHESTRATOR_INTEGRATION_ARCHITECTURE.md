@@ -1,86 +1,29 @@
-# 0xRay Orchestrator Integration Architecture v2.0.0
+# 0xRay Orchestrator Integration Architecture
 
 ## Overview
 
-The 0xRay Orchestrator v2.0.0 provides intelligent multi-agent coordination and task delegation based on operation complexity analysis. This document describes the architectural design, integration patterns, and the new Facade Pattern implementation.
-
-## What's New in v2.0.0
-
-### Facade Pattern Integration
-
-The orchestrator now utilizes the Facade Pattern for improved modularity and maintainability:
-
-- **TaskSkillRouter Facade (490 lines)**: Central routing and complexity analysis
-- **RuleEnforcer Facade (416 lines)**: Compliance validation and rule enforcement
-- **MCP Client Facade (312 lines)**: Unified MCP server access
-
-### Key Improvements
-
-- **87% Code Reduction**: 8,230 → 1,218 total lines
-- **Better Modularity**: 26 focused modules across 3 facades
-- **Improved Performance**: Faster agent spawning and routing
-- **Enhanced Reliability**: Better error isolation and recovery
+The 0xRay Orchestrator provides intelligent multi-agent coordination and task delegation based on operation complexity analysis. This document describes the architectural design and integration patterns.
 
 ## Core Architecture
-
-### Facade Layer Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ORCHESTRATOR FACADE LAYER                         │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                   TaskSkillRouter Facade                      │  │
-│  │                      (490 lines)                              │  │
-│  │                                                               │  │
-│  │  ┌─────────────┐  ┌───────────────┐  ┌───────────────────┐   │  │
-│  │  │ Complexity  │  │   Agent       │  │   Task            │   │  │
-│  │  │ Analyzer    │  │   Delegator   │  │   Scheduler       │   │  │
-│  │  └─────────────┘  └───────────────┘  └───────────────────┘   │  │
-│  └────────────────────┬───────────────────────────────────────────┘  │
-│                       │                                               │
-│                       ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                     MODULE LAYER                              │  │
-│  │                                                               │  │
-│  │  Mappings (12)    Analytics    Routing    Patterns            │  │
-│  │  • Validation     • Tracking   • Scoring  • Recognition       │  │
-│  │  • Security       • Metrics    • Selection • Matching         │  │
-│  │  • Testing        • Success    • Load      • Learning         │  │
-│  │  • Architecture   • Patterns   • Balancing                   │  │
-│  │  • Refactoring                                                │  │
-│  │  • Performance                                                │  │
-│  │  • Documentation                                              │  │
-│  │  • Bug Fix                                                    │  │
-│  │  • Feature                                                    │  │
-│  │  • Analysis                                                   │  │
-│  │  • Review                                                     │  │
-│  │  • Integration                                                │  │
-│  │                                                               │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                                                       │
-└─────────────────────────────────────────────────────────────────────┘
-```
 
 ### Orchestrator Components
 
 ```
-0xRay Orchestrator v2.0.0
-├── TaskSkillRouter Facade (490 lines)
-│   ├── ComplexityAnalyzer (via Routing Module)
-│   ├── AgentDelegator (via Routing Module)
-│   └── TaskScheduler (via Routing Module)
-├── RuleEnforcer Facade (416 lines)
+0xRay Orchestrator
+├── TaskSkillRouter
+│   ├── ComplexityAnalyzer
+│   ├── AgentDelegator
+│   └── TaskScheduler
+├── RuleEnforcer
 │   ├── Validation Module
 │   ├── Metrics Module
 │   └── Integration Module
-├── StateManager Facade
+├── StateManager
 │   ├── State Persistence Module
 │   ├── Context Management Module
 │   └── Session Coordination Module
-├── FrameworkLogger (via Logger Module)
-└── MCP Client Facade (312 lines)
+├── FrameworkLogger
+└── MCP Client
     ├── Connection Module
     ├── Tools Module
     └── Resources Module
@@ -128,7 +71,6 @@ The orchestrator uses a 6-metric complexity analysis system implemented in the R
 ### Single-Agent Execution
 
 ```typescript
-// Simple operations through TaskSkillRouter Facade
 import { TaskSkillRouter } from './task-skill-router';
 
 const router = new TaskSkillRouter();
@@ -138,14 +80,11 @@ const result = await router.route({
   context: { files: ["src/main.ts"] },
   priority: "medium"
 });
-
-// → Routes to: enforcer (via Mapping Module)
 ```
 
 ### Multi-Agent Coordination
 
 ```typescript
-// Complex operations through orchestrator
 import { TaskSkillRouter } from './task-skill-router';
 
 const router = new TaskSkillRouter();
@@ -159,15 +98,11 @@ const result = await router.route({
   },
   priority: "high"
 });
-
-// → Routes to: architect → code-reviewer → testing-lead
-// Coordinated through Routing Module
 ```
 
 ### Orchestrator-Led Workflows
 
 ```typescript
-// Enterprise operations
 import { TaskSkillRouter } from './task-skill-router';
 
 const router = new TaskSkillRouter();
@@ -182,9 +117,6 @@ const result = await router.route({
   },
   priority: "critical"
 });
-
-// → Coordinator manages: architect → security-auditor → refactorer → testing-lead
-// Full workflow managed through facade + modules
 ```
 
 ## State Management
@@ -202,10 +134,9 @@ interface SessionState {
 }
 ```
 
-State is managed through the StateManager Facade with modular persistence:
+State is managed through the StateManager:
 
 ```typescript
-// State management through facade
 import { StateManager } from './state';
 
 const stateManager = new StateManager();
@@ -231,33 +162,10 @@ const session = await stateManager.getSession(sessionId);
 - **State Synchronization**: Real-time state sharing
 - **Error Propagation**: Cascading failure handling
 
-### Facade-to-Module Communication
-
-```typescript
-// TaskSkillRouter Facade delegates to modules
-class TaskSkillRouter {
-  private routingModule: RoutingModule;
-  private analyticsModule: AnalyticsModule;
-  private mappingModules: MappingModule[];
-  
-  async route(request: RoutingRequest): Promise<RoutingResult> {
-    // Facade coordinates modules
-    const complexity = await this.routingModule.analyzeComplexity(request);
-    const agent = await this.routingModule.selectAgent(complexity, request);
-    const mapping = await this.getMappingModule(agent).getMapping(request);
-    
-    // Track analytics
-    await this.analyticsModule.trackRouting(agent, complexity);
-    
-    return { agent, complexity, mapping };
-  }
-}
-```
-
 ### External Integration
 
 - **OpenCode**: Plugin-based integration
-- **MCP Servers**: Tool execution delegation via MCP Client Facade
+- **MCP Servers**: Tool execution delegation via MCP Client
 - **File System**: Persistent state storage
 
 ## Performance Optimization
@@ -265,7 +173,7 @@ class TaskSkillRouter {
 ### Lazy Loading
 
 - **Agent Initialization**: Load on demand
-- **Tool Activation**: Runtime tool discovery via MCP Client Facade
+- **Tool Activation**: Runtime tool discovery via MCP Client
 - **Resource Pooling**: Memory-efficient object reuse
 
 ### Caching Strategies
@@ -274,11 +182,10 @@ class TaskSkillRouter {
 - **Agent Capabilities**: Cached capability matrices (Analytics Module)
 - **File Analysis**: Incremental parsing (Mapping Modules)
 
-### Facade Pattern Performance Benefits
+### Performance Benefits
 
 ```
-Performance Improvements in v2.0.0:
-├── 87% code reduction (8,230 → 1,218 lines)
+Performance Improvements:
 ├── Faster agent spawning (modular initialization)
 ├── Reduced memory footprint
 ├── Better caching efficiency
@@ -410,17 +317,11 @@ describe('RoutingModule', () => {
 - **Storage**: SSD for fast state persistence
 - **Network**: Low-latency for inter-agent communication
 
-## Migration from v1.8.x to v2.0.0
+## Framework Updates
 
 ### Breaking Changes
 
-**NONE** - v2.0.0 maintains 100% backward compatibility.
-
-### Internal Changes
-
-- **Facade Implementation**: Internal components refactored to facades + modules
-- **Improved Routing**: TaskSkillRouter now uses modular architecture
-- **Better Performance**: 87% code reduction, faster execution
+**NONE** - Framework maintains backward compatibility.
 
 ### What Stayed the Same
 
@@ -429,16 +330,13 @@ describe('RoutingModule', () => {
 - ✅ Configuration file formats unchanged
 - ✅ Public APIs unchanged
 
-### Migration Steps
+### Update Steps
 
 ```bash
-# Update to v2.0.0
 npm install 0xray@latest
 
 # Verify installation
 npx 0xray health
-
-# No code changes needed!
 ```
 
 ## Future Enhancements
@@ -482,7 +380,7 @@ Solution: Check network connectivity and message queue configuration
 ```
 Problem: Inconsistent state across agents
 Solution: Review conflict resolution strategy settings
-         (via StateManager Facade configuration)
+         (via StateManager configuration)
 ```
 
 ## API Reference
@@ -511,7 +409,7 @@ interface TaskDefinition {
 }
 ```
 
-### TaskSkillRouter Facade
+### TaskSkillRouter
 
 ```typescript
 interface TaskSkillRouter {
@@ -526,14 +424,7 @@ interface TaskSkillRouter {
 
 | Metric | Value |
 |--------|-------|
-| **Framework Version** | 1.9.0 |
-| **Orchestrator Facades** | 3 |
-| **Total Modules** | 26 |
-| **Mapping Modules** | 12 |
-| **Code Reduction** | 87% |
-| **Agents Supported** | 27 |
-| **Complexity Metrics** | 6 |
-| **Error Prevention** | 99.6% |
+| **Error Prevention** | Systematic |
 
 ---
 
@@ -545,5 +436,3 @@ For architectural questions and integration support:
 - Technical Support: support@stringray.dev
 
 ---
-
-*0xRay Orchestrator v2.0.0 - Facade Pattern Integration Architecture*

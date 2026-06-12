@@ -31,7 +31,7 @@ XRAY_FORCE_MCP_GOVERNANCE purged from CLI, .mcp.json, grok-cli. MCP + in-process
 - All 4 bridge E2Es pass against the packaged artifact (Hermes 46, OpenCode 34, OpenClaw 101, Grok 53)
 - Consumer plugin registration + tool dispatch works end-to-end
 - activity.log captures 728 entries with 608 structured frameworkLogger records
-- ~17,000 LOC net removed
+- ~16,438 LOC removed, 5,979 added (-11,751 net)
 
 ## Loose ends
 

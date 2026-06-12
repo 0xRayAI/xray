@@ -1,22 +1,18 @@
 # 0xRay Framework - Docker & Kubernetes Deployment Guide
 
-**Version**: v2.0.0  
 **Last Updated**: March 2026
 
 ## Overview
 
-This guide provides comprehensive instructions for deploying the 0xRay Framework v2.0.0 using Docker and Kubernetes in production environments.
+This guide provides comprehensive instructions for deploying the 0xRay Framework using Docker and Kubernetes in production environments.
 
-## What's New in v2.0.0
-
-### Performance Improvements
-- **41% faster startup** - Facade pattern initialization
+## Performance Improvements
+- **41% faster startup**
 - **32% less memory** - Optimized modular loading
 - **39% faster agent spawning** - Improved routing
 - **16% smaller bundles** - Better tree-shaking
 
 ### Architecture Changes
-- **Facade Pattern**: Cleaner architecture with 87% code reduction
 - **Zero Breaking Changes**: All existing deployments work unchanged
 - **Same Docker Configuration**: No changes needed to existing setups
 
@@ -25,14 +21,8 @@ This guide provides comprehensive instructions for deploying the 0xRay Framework
 - Docker 20.10+
 - Kubernetes 1.24+
 - Helm 3.8+
-- 3GB RAM minimum, 6GB recommended (v2.0.0: reduced from 4GB/8GB)
+- 3GB RAM minimum, 6GB recommended
 - 10GB disk space
-
-**v2.0.0 Resource Optimization:**
-Due to 32% memory usage reduction, lower resource requirements:
-- Minimum: 3GB RAM (down from 4GB)
-- Recommended: 6GB RAM (down from 8GB)
-- Smaller container images due to 16% bundle size reduction
 
 ## Architecture
 
@@ -393,10 +383,10 @@ ingress:
 resources:
   limits:
     cpu: 1000m
-    memory: 1.5Gi    # v2.0.0: reduced from 2Gi (32% memory optimization)
+    memory: 1.5Gi
   requests:
     cpu: 500m
-    memory: 700Mi    # v2.0.0: reduced from 1Gi (32% memory optimization)
+    memory: 700Mi
 
 autoscaling:
   enabled: true
@@ -451,7 +441,7 @@ monitoring:
   maxConcurrency: 10
   cacheEnabled: true
 
-  # Resource limits per agent (v2.0.0: reduced by ~32%)
+  # Resource limits per agent
   agentLimits:
     enforcer:
       memory: "175Mi"    # reduced from 256Mi

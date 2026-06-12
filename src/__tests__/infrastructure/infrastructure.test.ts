@@ -228,8 +228,8 @@ describe("0xRay Infrastructure Tests", () => {
 
   describe("Performance Infrastructure", () => {
     it("should have performance monitoring setup", () => {
-      // Check for performance-related directories/files
-      expect(fs.existsSync("src/performance")).toBe(true);
+      // Check for performance analysis MCP server
+      expect(fs.existsSync("src/mcps/performance-analysis.server.ts")).toBe(true);
       expect(fs.existsSync("performance-baselines.json")).toBe(false);
     });
   });

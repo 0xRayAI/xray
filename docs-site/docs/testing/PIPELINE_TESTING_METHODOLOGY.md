@@ -1,6 +1,5 @@
 # Pipeline Testing Methodology
 
-**Version**: 2.0.0  
 **Date**: 2026-03-22  
 **Purpose**: Formalize pipeline testing as a core 0xRay practice
 
@@ -345,7 +344,7 @@ Use this checklist:
 
 ## The Inference Pipeline Test (Reference)
 
-This is what we created during v2.0.0:
+This is what we created:
 
 ```javascript
 // test-inference-pipeline.mjs
@@ -399,7 +398,7 @@ console.log('\n✅ Pipeline complete');
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ GOVERNANCE PIPELINE (TESTED v2.0.0)            │
+│ GOVERNANCE PIPELINE (TESTED)                   │
 │                                                  │
 │ Input: Operation + Context                      │
 │   ↓                                             │

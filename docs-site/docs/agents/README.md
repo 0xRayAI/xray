@@ -1,8 +1,8 @@
 # Agents
 
-**Version**: 2.0.0
+**Version**: 3.0.0
 
-0xRay provides 42 specialized agents for AI governance, code quality, and automation. Each agent has a specific role and set of capabilities.
+0xRay provides 41 specialized agents for AI governance, code quality, and automation. Each agent has a specific role and set of capabilities.
 
 ## Agent Types
 
@@ -57,5 +57,5 @@ The Autonomous Engine routes tasks by complexity:
 ## Related
 
 - [Architecture](../architecture/) — Three-subsystem model
-- [MCP Servers](../mcp/) — MCP skill servers
+- [MCP Servers](../mcp/) — xray-skills and xray-governance
 - [Agent Configuration](./AGENT_CONFIG) — Configuration reference

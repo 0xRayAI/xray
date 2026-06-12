@@ -1,4 +1,4 @@
-# 0xRay Framework v2.0.0 - Enterprise Architecture Documentation
+# 0xRay Framework - Enterprise Architecture Documentation
 
 ## Table of Contents
 
@@ -13,19 +13,19 @@
 9. [Deployment Architecture](#deployment-architecture)
 10. [Scalability Design](#scalability-design)
 11. [Integration Points](#integration-points)
-12. [Facade Pattern Architecture](#facade-pattern-architecture)
+12. [Architecture Overview](#architecture-overview)
 
 ---
 
 ## System Overview
 
-The 0xRay Framework v2.0.0 implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles and the **Facade Pattern architecture**. It provides systematic error prevention and production-ready code generation through a multi-layered, modular architecture.
+The 0xRay Framework implements an enterprise-grade AI agent coordination platform built on the Universal Development Codex principles. It provides systematic error prevention and production-ready code generation through a multi-layered, modular architecture.
 
 ### Key Architectural Characteristics
 
-- **Multi-Agent Coordination**: N specialized agents working in concert
-- **Facade Pattern**: Simplified public APIs with modular internal implementation
-- **Codex-Driven Development**: 60 mandatory terms enforcing quality standards
+- **Multi-Agent Coordination**: Specialized agents working in concert
+- **Modular Architecture**: Simplified public APIs with modular internal implementation
+- **Codex-Driven Development**: 68 codex terms enforcing quality standards
 - **Plugin Ecosystem**: Secure, sandboxed third-party extensions
 - **Enterprise Monitoring**: Comprehensive observability and alerting
 - **Performance Optimization**: Sub-millisecond operation with resource constraints
@@ -37,7 +37,7 @@ The 0xRay Framework v2.0.0 implements an enterprise-grade AI agent coordination 
 
 ### 1. Universal Development Codex
 
-All framework operations are governed by 60 mandatory codex terms divided into:
+All framework operations are governed by 68 codex terms divided into:
 
 - **Core Terms (1-10)**: Progressive prod-ready code, surgical fixes, single source of truth
 - **Extended Terms (11-20)**: Type safety first, error boundaries, separation of concerns
@@ -59,65 +59,16 @@ All framework operations are governed by 60 mandatory codex terms divided into:
 - **Lifecycle Management**: Automated plugin discovery and updates
 - **Version Compatibility**: Semantic versioning for plugin contracts
 
-### 4. Facade Pattern Implementation
-
-- **Simplified Interfaces**: Clean public APIs hide complex internal logic
-- **Modular Internals**: Logic separated into focused, testable modules
-- **Dependency Injection**: Dependencies passed for flexibility and testing
-- **Registry Management**: Component registration and discovery
-- **Backward Compatibility**: 100% compatible with existing code
-
 ---
 
 ## Core Components Overview
 
 The 0xRay Framework consists of **28 key components** providing enterprise-grade AI agent coordination with systematic error prevention and production-ready development.
 
-### Facade Layer Components
+### Core Components
 
-| # | Component | Type | Lines | Purpose | Critical Level |
-|---|-----------|------|-------|---------|----------------|
-| 1 | **RuleEnforcer** | Facade | 416 | Compliance monitoring facade | CRITICAL |
-| 2 | **TaskSkillRouter** | Facade | 490 | Task routing and skill mapping | CRITICAL |
-| 3 | **MCPClient** | Facade | 312 | MCP server access facade | HIGH |
-
-### Module Layer Components
-
-#### RuleEnforcer Modules (6 modules)
-
-| Module | Lines | Purpose |
-|--------|-------|---------|
-| Core | ~70 | Rule validation engine, violation detection |
-| Config | ~50 | Configuration loading, threshold management |
-| Logger | ~60 | Structured logging, audit trails |
-| Metrics | ~80 | Performance tracking, statistics |
-| Validation | ~90 | Input validation, schema checking |
-| Integration | ~66 | External hooks, plugin integration |
-
-#### TaskSkillRouter Modules (14 modules)
-
-| Module | Lines | Purpose |
-|--------|-------|---------|
-| Mappings (12) | ~25 each | Specialized skill-to-task mappings |
-| Analytics | ~70 | Pattern tracking, success metrics |
-| Routing | ~100 | Complexity scoring, agent selection |
-| Patterns | ~80 | Pattern recognition and matching |
-| Validation | ~60 | Input/output validation |
-
-#### MCPClient Modules (8 modules)
-
-| Module | Lines | Purpose |
-|--------|-------|---------|
-| Connection | ~40 | Server connection management |
-| Registry | ~50 | Server registration and discovery |
-| Tools | ~45 | Tool discovery and execution |
-| Resources | ~40 | Resource access and caching |
-| Prompts | ~35 | Prompt template management |
-| Sampling | ~35 | Sampling strategies |
-| Notifications | ~37 | Event subscription and routing |
-| Root | ~30 | Initialization and lifecycle |
-
-### Complete Component Table
+| # | Component | Purpose | Critical Level | Validation in Script |
+|----|-----------|---------|----------------|---------------------|
 
 | # | Component | Purpose | Critical Level | Validation in Script |
 |----|-----------|---------|----------------|---------------------|
@@ -137,7 +88,7 @@ The 0xRay Framework consists of **28 key components** providing enterprise-grade
 | 14 | **Codex Compliance Enforcement** | Validates code against Universal Development Codex | **CRITICAL** | Plugin hook tests (Step 4), Codex injection verification |
 | 15 | **Security Hardening** | Implements security headers and validation | **HIGH** | Security integration tests (integrated) |
 | 16 | **Input Sanitization** | Prevents malicious input | **HIGH** | Security component validation (integrated) |
-| 17 | **Error Prevention System** | 99.6% systematic error prevention | **CRITICAL** | Comprehensive test suite (all steps), **Step 24** (Regression prevention) |
+| 17 | **Error Prevention System** | Systematic error prevention | **CRITICAL** | Comprehensive test suite (all steps), **Step 24** (Regression prevention) |
 | 18 | **Performance Monitoring** | Tracks system performance metrics | **MEDIUM** | Performance benchmark tests (integrated) |
 | 19 | **Activity Logging** | Comprehensive framework activity tracking | **LOW** | Log validation (implied in plugin tests) |
 | 20 | **Health Monitoring** | System health and anomaly detection | **MEDIUM** | Step 18 (Framework stability tests) |
@@ -198,7 +149,7 @@ export const loadHooks = () => import("./hooks");
 **Architecture:**
 
 ```
-StateManager (Central coordinator - Facade)
+StateManager (Central coordinator)
 ├── ContextProviders (React context integration)
 ├── StateTypes (TypeScript definitions)
 ├── StateManager Core (Core state logic)
@@ -209,64 +160,10 @@ StateManager (Central coordinator - Facade)
 
 **Features:**
 
-- Centralized state management through facade
+- Centralized state management
 - Session isolation and lifecycle
 - Cross-agent state sharing
 - Persistence and recovery
-
----
-
-## Facade Pattern Architecture
-
-### Facade Layer Design
-
-The v2.0.0 architecture implements the Facade Pattern to provide simplified interfaces to complex subsystems:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    PUBLIC API LAYER                           │
-├──────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐        │
-│  │ RuleEnforcer│  │TaskSkillRouter│  │  MCPClient   │        │
-│  │  (416 loc)  │  │  (490 loc)   │  │  (312 loc)   │        │
-│  │   Facade    │  │    Facade    │  │    Facade    │        │
-│  └──────┬──────┘  └──────┬───────┘  └──────┬───────┘        │
-└─────────┼────────────────┼────────────────┼─────────────────┘
-          │                │                │
-          ▼                ▼                ▼
-┌──────────────────────────────────────────────────────────────┐
-│                     MODULE LAYER                              │
-├──────────────────┬──────────────────┬────────────────────────┤
-│ RuleEnforcer     │ TaskSkillRouter  │ MCPClient              │
-│ Modules:         │ Modules:         │ Modules:               │
-│ • Core (~70)     │ • Mappings x12   │ • Connection (~40)     │
-│ • Config (~50)   │ • Analytics (~70)│ • Registry (~50)       │
-│ • Logger (~60)   │ • Routing (~100) │ • Tools (~45)          │
-│ • Metrics (~80)  │ • Patterns (~80) │ • Resources (~40)      │
-│ • Validation (~90)│ • Validation (~60)│ • Prompts (~35)       │
-│ • Integration (~66)│                │ • Sampling (~35)       │
-│                  │                  │ • Notifications (~37)  │
-│                  │                  │ • Root (~30)           │
-└──────────────────┴──────────────────┴────────────────────────┘
-```
-
-### Facade Benefits
-
-1. **Simplified Public API**: Users interact with clean, consistent interfaces
-2. **Internal Modularity**: Complex logic separated into focused modules
-3. **Dependency Injection**: Dependencies passed for testability and flexibility
-4. **Registry Pattern**: Component management through registries
-5. **100% Backward Compatible**: Public APIs unchanged from v1.8.x
-
-### Code Metrics Comparison
-
-| Component | v1.8.x | v2.0.0 | Reduction |
-|-----------|--------|--------|-----------|
-| RuleEnforcer | 2,714 lines | 416 lines | 85% |
-| TaskSkillRouter | 1,933 lines | 490 lines | 75% |
-| MCP Client | 1,413 lines | 312 lines | 78% |
-| Dead Code | 3,170 lines | 0 lines | 100% |
-| **Total** | **8,230 lines** | **1,218 lines** | **87%** |
 
 ---
 
@@ -340,11 +237,11 @@ Boot Orchestrator
     ↓
 Session Coordinator
     ↓
-TaskSkillRouter Facade (Complexity Analysis)
+TaskSkillRouter (Complexity Analysis)
     ↓
 Agent Selection (via Routing Module)
     ↓
-Agent Processing (via MCP Client Facade)
+Agent Processing (via MCP Client)
     ↓
 Result Aggregation
     ↓
@@ -360,7 +257,7 @@ UI Component
     ↓
 State Provider
     ↓
-StateManager Facade
+StateManager
     ↓
 Agent Notification (via Integration Module)
     ↓
@@ -448,25 +345,24 @@ const PERFORMANCE_BUDGET = {
 };
 ```
 
-### Facade Pattern Performance Benefits
+### Performance Benefits
 
-- **Reduced Bundle Size**: 87% code reduction improves load times
-- **Faster Agent Spawning**: Modular initialization is more efficient
-- **Better Memory Usage**: Smaller memory footprint
-- **Improved Caching**: Focused modules cache more effectively
+- **Modular Initialization**: Faster component loading
+- **Better Memory Usage**: Optimized memory footprint
+- **Improved Caching**: Efficient cache management
 
 ### Optimization Strategies
 
 #### Bundle Optimization
 
 - **Lazy Loading**: Dynamic imports for advanced features
-- **Tree Shaking**: Dead code elimination (3,170 lines removed)
+- **Tree Shaking**: Dead code eliminated
 - **Code Splitting**: Route-based and feature-based splitting
 
 #### Runtime Optimization
 
 - **Memory Pooling**: Object reuse and garbage collection optimization
-- **Caching Strategy**: LRU/LFU eviction with high hit rates (85%+)
+- **Caching Strategy**: LRU/LFU eviction with high hit rates
 - **Parallel Processing**: Concurrent task execution
 
 #### Database Optimization
@@ -544,7 +440,7 @@ spec:
     spec:
       containers:
         - name: 0xray
-          image: 0xray/0xray:v2.0.0
+          image: 0xray/0xray:v3.0.0
           ports:
             - containerPort: 3000
           env:
@@ -629,11 +525,11 @@ The framework integrates seamlessly with OpenCode:
   },
   "framework": {
     "name": "0xray",
-    "version": "2.0.0"
+    "version": "3.0.0"
   }
 }
 ```
-
+ 
 ### MCP Server Integration
 
 The framework exposes 38 MCP servers for AI integration:
@@ -657,7 +553,7 @@ The framework exposes 38 MCP servers for AI integration:
 - **GitHub Actions**: Automated testing and deployment with Node.js 20.19.6
 - **Jenkins**: Pipeline orchestration
 - **GitLab CI**: Integrated DevOps workflows
-- **Error Prevention**: 99.6% systematic validation across all operations
+- **Error Prevention**: Systematic validation across all operations
 
 #### Cloud Platforms
 
@@ -711,7 +607,7 @@ query GetSystemStatus {
 
 #### Code Quality
 
-- **Test Coverage**: >85% behavioral test coverage
+- **Test Coverage**: High behavioral test coverage
 - **Type Safety**: Zero TypeScript errors
 - **Linting**: ESLint compliance across all files
 
@@ -747,18 +643,11 @@ query GetSystemStatus {
 
 ---
 
-## Migration from v1.8.x to v2.0.0
+## Framework Updates
 
 ### Breaking Changes
 
-**NONE** - v2.0.0 maintains 100% backward compatibility.
-
-### What Changed
-
-- **Internal Architecture**: Refactored to Facade Pattern
-- **Code Organization**: Monolithic components split into facades + modules
-- **Performance**: 87% code reduction, faster execution
-- **Maintainability**: Better separation of concerns
+**NONE** - Framework maintains backward compatibility.
 
 ### What Stayed the Same
 
@@ -768,16 +657,13 @@ query GetSystemStatus {
 - ✅ Custom agent creation process unchanged
 - ✅ Public APIs unchanged
 
-### Migration Steps
+### Update Steps
 
 ```bash
-# Update to v2.0.0
 npm install 0xray@latest
 
 # Verify installation
 npx 0xray health
-
-# No code changes needed!
 ```
 
 ---
@@ -786,18 +672,8 @@ npx 0xray health
 
 | Metric | Value |
 |--------|-------|
-| **Framework Version** | 1.9.0 |
-| **Architecture Pattern** | Facade Pattern |
-| **Specialized Agents** | 27 |
-| **MCP Servers** | 28 |
-| **Tests** | 2,368 |
-| **Code Reduction** | 87% |
-| **Facade Components** | 3 |
-| **Total Modules** | 26 |
-| **Error Prevention** | 99.6% |
+| **Error Prevention** | Systematic |
 
 This architecture provides a solid foundation for enterprise-grade AI agent coordination with comprehensive monitoring, security, and scalability features.
 
 ---
-
-*0xRay AI v2.0.0 - Enterprise Facade Pattern Architecture*

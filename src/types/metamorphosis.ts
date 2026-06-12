@@ -1,11 +1,7 @@
 /**
- * MetamorphosisEngine — Phase 0.5 skeleton
+ * MetamorphosisEngine interface — lifecycle hooks for self-evolution proposals.
  *
- * Plug into PostProcessor lifecycle hooks to observe phases and proposals.
- * No-op when none configured. Concrete engines will be built in Phase 2.
- *
- * Integration: PostProcessor accepts optional MetamorphosisEngine[] in constructor.
- * Each engine receives onPhase/onProposal lifecycle notifications.
+ * Extracted from postprocessor/metamorphosis/ for neutral access by kernel.
  */
 
 export interface MetamorphosisProposal {

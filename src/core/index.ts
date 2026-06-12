@@ -11,7 +11,7 @@ export {
   resolveLogDir,
   resetConfigDirCache,
   XRAY_CONFIG_DIR_ENV,
-  // STRRAY_CONFIG_DIR_ENV (legacy export for compat shims)
+  // Legacy export for compat shims
 } from "./config-paths.js";
 
 // Standalone codex formatter (Layer 2)

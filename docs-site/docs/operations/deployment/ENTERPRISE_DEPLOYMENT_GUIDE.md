@@ -1,23 +1,15 @@
 # 0xRay Framework - Enterprise Deployment Guide
 
-**Version**: v2.0.0  
 **Last Updated**: March 2026  
 **Status**: Production Ready
 
-## What's New in v2.0.0
-
-### Performance Improvements
-- **41% faster startup** - Facade pattern initialization
+## Performance Improvements
+- **41% faster startup**
 - **32% less memory** - Optimized modular loading
 - **39% faster agent spawning** - Improved routing architecture
 - **16% smaller bundle** - Better tree-shaking
-- **87% code reduction** - Cleaner architecture (8,230 → 1,218 lines)
 
-### Architecture Refactoring
-- **Facade Pattern**: Core components refactored for maintainability
-  - RuleEnforcer: 2,714 → 416 lines
-  - TaskSkillRouter: 1,933 → 490 lines
-  - MCP Client: 1,413 → 312 lines
+### Architecture
 - **Zero Breaking Changes**: 100% backward compatible
 - **Same Deployment Process**: All existing deployment methods work unchanged
 
@@ -86,16 +78,16 @@ The 0xRay Framework supports multiple deployment strategies for enterprise envir
 - **Storage**: 5GB available disk space
 - **Network**: Stable internet connection
 
-#### Recommended for Production (v2.0.0)
+#### Recommended for Production
 
 - **Node.js**: 18.17.0+ LTS
-- **Memory**: 3GB RAM per instance (reduced from 4GB due to 32% memory optimization)
+- **Memory**: 3GB RAM per instance
 - **Storage**: 20GB SSD storage
 - **CPU**: 2+ cores per instance
 - **Network**: 1Gbps connection
 
-**v2.0.0 Resource Optimization:**
-- Lower memory requirements due to facade pattern efficiency
+**Resource Optimization:**
+- Lower memory requirements
 - Faster startup reduces initialization time
 - Smaller bundle size improves deployment speed
 
@@ -174,10 +166,9 @@ npm install
   },
         "framework": {
         "name": "0xray",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "performance_mode": "optimized",
-        "monitoring_enabled": true,
-        "facade_pattern": true
+        "monitoring_enabled": true
       }
 }
 ```
@@ -418,10 +409,9 @@ data:
     {
       "framework": {
         "name": "0xray",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "performance_mode": "optimized",
-        "monitoring_enabled": true,
-        "facade_pattern": true
+        "monitoring_enabled": true
       },
       "model_routing": {
         "enforcer": "openrouter/xai-grok-2-1212-fast-1",
@@ -501,10 +491,10 @@ spec:
             periodSeconds: 5
           resources:
             requests:
-              memory: "350Mi"    # v2.0.0: reduced from 512Mi (32% memory optimization)
+              memory: "350Mi"
               cpu: "250m"
             limits:
-              memory: "700Mi"    # v2.0.0: reduced from 1Gi (32% memory optimization)
+              memory: "700Mi"
               cpu: "500m"
       volumes:
         - name: config

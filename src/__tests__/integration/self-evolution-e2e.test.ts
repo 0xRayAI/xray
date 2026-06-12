@@ -14,7 +14,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { SelfProposalEngine } from '../../postprocessor/metamorphosis/SelfProposalEngine.js';
-import type { MetamorphosisProposal } from '../../postprocessor/metamorphosis/MetamorphosisEngine.js';
+import type { MetamorphosisProposal } from '../../types/metamorphosis.js';
 
 vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: { log: vi.fn().mockResolvedValue(undefined) },

@@ -1,4 +1,4 @@
-// Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .xray fallbacks)
+// Consumer runtime compat shim (primary xray paths)
 
 import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";

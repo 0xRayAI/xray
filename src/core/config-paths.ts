@@ -24,7 +24,7 @@ import { join, resolve } from "path";
 export const XRAY_CONFIG_DIR_ENV = "XRAY_CONFIG_DIR";
 
 /** Legacy env var name (backward compat) */
-// STRRAY_CONFIG_DIR_ENV kept for legacy consumer compat (see bridge and tests)
+// Legacy consumer compat (see bridge and tests)
 
 /** Resolved config directories, cached per projectRoot */
 const _resolvedConfigDirs = new Map<string, string>();

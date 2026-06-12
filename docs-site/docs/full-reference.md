@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v2.0.0** — 42 agents · 44 skills · 41 MCP servers · 68 codex terms · 2,822 tests
+**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms · 2,196 tests
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -87,7 +87,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | Platform | Install Command | What It Does |
 |----------|----------------|--------------|
 | **OpenCode** | `npx 0xray opencode install` | Installs as native plugin, seeds YML agent surfaces, merges configuration |
-| **Grok CLI** | `npx 0xray grok install` | Registers plugin + 4 MCP servers (governance, skills, orchestrator, enforcer) |
+| **Grok CLI** | `npx 0xray grok install` | Registers plugin + xray-skills MCP server (13 tools, 44 skills) |
 | **Hermes Agent** | `npx 0xray hermes install` | Copies bridge plugin to `~/.hermes/plugins/` |
 | **OpenClaw** | `npx 0xray openclaw install` | Creates integration config at `.xray/config/openclaw.json` |
 
@@ -126,6 +126,8 @@ Postinstall automatically registers MCP servers with Grok CLI when `grok` is ava
 
 | Command | Description |
 |---------|-------------|
+| `mcp skills` | Run the xray-skills MCP server (stdio, 13 tools) |
+| `mcp governance` | Run the xray-governance MCP server (stdio, advanced) |
 | `mcp:list` | Browse available community MCP servers |
 | `mcp:status` | Show installed MCP servers |
 | `mcp:install <name>` | Install an MCP server from the registry |
@@ -174,11 +176,11 @@ Postinstall automatically registers MCP servers with Grok CLI when `grok` is ava
 
 ### Feature Flags (`features.json`)
 
-Every subsystem is configurable via `features.json` (located at `.opencode/xray/features.json` or `xray/features.json` after installation):
+Every subsystem is configurable via `features.json` (located at `xray/features.json`):
 
 ```json
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,
@@ -223,7 +225,7 @@ The governance pipeline works in three stages:
 
 ---
 
-## Included Agents (42)
+## Included Agents (41)
 
 0xRay ships with specialized agents for every engineering domain:
 
@@ -250,33 +252,34 @@ The governance pipeline works in three stages:
 | **Code Analyzer** | Code metrics, complexity analysis |
 | **Log Monitor** | Diagnostics, error pattern detection |
 
-Plus 22 domain-specialist subagents. All agents are declared declaratively in `.opencode/agents/*.yml` — add or customize without touching code.
+Plus 22 domain-specialist subagents. All agents are declared declaratively in `src/opencode/agents/*.yml` — add or customize without touching code.
 
 ---
 
-## Included MCP Servers (41)
+## MCP Servers
 
-Model Context Protocol servers provide the skill infrastructure:
+0xRay ships two MCP servers you can use directly:
 
-**Governance & Review (5):** code-review, security-audit, researcher, enforcer-tools, governance
+- **xray-skills** (public, 13 tools) — `npx -y 0xray mcp skills`
+- **xray-governance** (advanced) — `npx -y 0xray mcp governance`
 
-**Core Framework (12):** architect-tools, boot-orchestrator, estimation, framework-compliance-audit, framework-help, lint, model-health-check, orchestrator, performance-analysis, processor-pipeline, state-manager, auto-format
+Plus 15 internal framework MCP servers (`dist/mcps/*.server.js`) loaded at runtime.
 
-**Knowledge Skills (24):** api-design, architecture-patterns, bug-triage-specialist, code-analyzer, content-creator, database-design, devops-deployment, git-workflow, growth-strategist, log-monitor, mobile-development, multimodal-looker, performance-optimization, project-analysis, refactoring-strategies, security-scan, seo-consultant, session-management, skill-invocation, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
+See [MCP Servers docs](./mcp/) for details.
 
----
+## Skills (44)
 
-## Included Skills (44)
+Knowledge skills (SKILL.md files) loaded at runtime by the skill-invocation server:
 
 api-design, architect-tools, architecture-patterns, auto-format, backend-engineer, boot-orchestrator, bug-triage, code-analyzer, code-review, content-creator, database-engineer, devops-engineer, enforcer, framework-compliance-audit, frontend-engineer, frontend-ui-ux-engineer, git-workflow, growth-strategist, hermes-agent, inference-improve, lint, log-monitor, mobile-developer, model-health-check, multimodal-looker, orchestrator, performance-analysis, performance-engineer, performance-optimization, processor-pipeline, project-analysis, refactoring-strategies, researcher, security-audit, security-scan, seo-consultant, session-management, state-manager, storyteller, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
 
-Install more skills anytime: `npx 0xray skill:install`
+Install more skills: `npx 0xray skill:install`
 
 ---
 
 ## Testing & Reliability
 
-0xRay is battle-tested with **2,822 tests** across every subsystem:
+0xRay is battle-tested with **2,196 tests** across every subsystem:
 
 | Suite | Tests | Status |
 |-------|-------|--------|
@@ -301,7 +304,7 @@ npx 0xray status
 npx 0xray skill:install
 
 # 3. Configure governance (optional)
-# Edit .opencode/xray/features.json
+# Edit xray/features.json
 
 # 4. View full agent documentation
 less AGENTS.md

@@ -26,20 +26,6 @@ export type {
   ProposalType,
 } from '../governance/governance-types.js';
 
-export type {
-  MetamorphosisEngine,
-  MetamorphosisProposal,
-} from '../postprocessor/metamorphosis/MetamorphosisEngine.js';
-
-export {
-  SelfProposalEngine,
-} from '../postprocessor/metamorphosis/SelfProposalEngine.js';
-
-export type {
-  SelfProposalConfig,
-  SelfEvolutionMetrics,
-} from '../postprocessor/metamorphosis/SelfProposalEngine.js';
-
 export {
   pluginRegistry,
 } from './plugin-registry.js';

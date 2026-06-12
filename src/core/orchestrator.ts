@@ -1,11 +1,17 @@
 /**
- * 0xRay Framework - Core Orchestrator
- * Main orchestration engine for multi-agent task coordination
+ * 0xRay Framework - Core Orchestrator (deprecated)
+ *
+ * Use thin-dispatch (src/nucleus/thin-dispatch.ts) for runtime agent routing
+ * and src/utils/task-graph.ts for task graph utilities.
+ * KernelOrchestrator is kept for backward compat with boot sequence integration.
+ *
+ * @deprecated since v3.0.0 — use thin-dispatch for routing, task-graph for utilities
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
 import { TaskDefinition, AgentConfig } from "../agents/types.js";
 import { getKernel, KernelInferenceResult } from "./kernel-patterns.js";
+import { topologicalSort, validateTaskDependencies, resolveConflicts } from "../utils/task-graph.js";
 
 export interface OrchestrationResult {
   success: boolean;
@@ -40,6 +46,10 @@ export class KernelOrchestrator {
     frameworkLogger.log("orchestrator", "initialized", "info", { config: this.config });
   }
 
+  /**
+   * @deprecated since v3.0.0 — use thin-dispatch routing (scoreComplexity → routeToAgent)
+   *             and agent-delegator for actual execution.
+   */
   async executeTask(task: TaskDefinition): Promise<OrchestrationResult> {
     const taskId = this.generateTaskId();
     this.taskQueue.set(taskId, task);
@@ -210,33 +220,13 @@ export class KernelOrchestrator {
     }
   }
 
-  private async dispatchToAgent(
-    task: TaskDefinition,
-  ): Promise<OrchestrationResult> {
-    // Agent selection and dispatch logic
-    const startTime = Date.now();
-
-    // Simulate task execution with minimal delay to avoid hanging in test environment
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    const duration = Date.now() - startTime;
-
-    return {
-      success: true,
-      taskId: task.id,
-      agentUsed: task.subagentType || "default-agent",
-      duration,
-      result: { id: task.id, type: task.type, simulated: true },
-    };
-  }
-
   async executeComplexTask(
     description: string,
     tasks: TaskDefinition[],
     sessionId?: string,
   ): Promise<OrchestrationResult[]> {
     // Validate that all task dependencies are within this orchestrator's batch
-    this.validateTaskDependencies(tasks);
+    validateTaskDependencies(tasks);
 
     frameworkLogger.log("orchestrator", "complex-task-started", "info", {
       description,
@@ -247,7 +237,7 @@ export class KernelOrchestrator {
     const completedTaskIds: Set<string> = new Set();
 
     // Sort tasks by dependencies (simple topological sort)
-    const sortedTasks = this.topologicalSort(tasks);
+    const sortedTasks = topologicalSort(tasks);
 
     for (const task of sortedTasks) {
       // Check dependencies
@@ -299,201 +289,13 @@ export class KernelOrchestrator {
     return results;
   }
 
-  private topologicalSort(tasks: TaskDefinition[]): TaskDefinition[] {
-    const visited = new Set<string>();
-    const visiting = new Set<string>();
-    const result: TaskDefinition[] = [];
 
-    const visit = (taskId: string) => {
-      if (visiting.has(taskId)) {
-        throw new Error(`Circular dependency detected: ${taskId}`);
-      }
-      if (visited.has(taskId)) {
-        return;
-      }
-
-      visiting.add(taskId);
-
-      const task = tasks.find((t) => t.id === taskId);
-      if (task && task.dependencies) {
-        for (const dep of task.dependencies) {
-          visit(dep);
-        }
-      }
-
-      visiting.delete(taskId);
-      visited.add(taskId);
-
-      if (task) {
-        result.push(task);
-      }
-    };
-
-    for (const task of tasks) {
-      if (!visited.has(task.id)) {
-        visit(task.id);
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * Validates that all task dependencies are within the current task batch.
-   * Prevents cross-orchestrator dependency errors by failing fast with a clear message.
-   */
-  private validateTaskDependencies(tasks: TaskDefinition[]): void {
-    const taskIds = new Set(tasks.map((t) => t.id));
-    const errors: string[] = [];
-
-    for (const task of tasks) {
-      if (task.dependencies && task.dependencies.length > 0) {
-        for (const dep of task.dependencies) {
-          if (!taskIds.has(dep)) {
-            errors.push(
-              `Task "${task.id}" depends on "${dep}" which is NOT in this orchestrator's task batch.\n` +
-                `Available tasks in this batch: ${Array.from(taskIds).join(", ")}`,
-            );
-          }
-        }
-      }
-    }
-
-    if (errors.length > 0) {
-      const errorMessage =
-        `[TEST ARCHITECTURE ERROR] Cross-orchestrator dependencies detected.\n\n` +
-        `${errors.join("\n\n")}\n\n` +
-        `This usually means:\n` +
-        `1. You're creating multiple orchestrator instances in one test\n` +
-        `2. Task dependencies are crossing orchestrator boundaries\n\n` +
-        `FIX: Either:\n` +
-        `A) Include the missing dependency task in this executeComplexTask() call\n` +
-        `B) Use a single orchestrator for all dependent tasks\n` +
-        `C) Remove the dependency if it's not needed\n\n` +
-        `Example of correct usage:\n` +
-        `  const orch = new XrayOrchestrator();\n` +
-        `  await orch.executeComplexTask("test", [\n` +
-        `    { id: "task-1" },\n` +
-        `    { id: "task-2", dependencies: ["task-1"] }  // ✅ Same orchestrator\n` +
-        `  ]);`;
-
-      throw new Error(errorMessage);
-    }
-  }
-
-  async executeComplexTaskSingle(
-    task: TaskDefinition,
-  ): Promise<OrchestrationResult> {
-    const taskId = this.generateTaskId();
-    this.taskQueue.set(taskId, task);
-    this.activeTasks.add(taskId);
-
-    frameworkLogger.log("orchestrator", "complex-task-started", "info", {
-      taskId,
-      taskType: task.type,
-      complexity: task.complexity,
-      dependencies: task.dependencies,
-    });
-
-    try {
-      const startTime = Date.now();
-
-      if (task.dependencies && task.dependencies.length > 0) {
-        frameworkLogger.log("orchestrator", "processing-dependencies", "info", {
-          taskId,
-          dependencies: task.dependencies,
-        });
-
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const duration = Date.now() - startTime;
-
-      frameworkLogger.log("orchestrator", "complex-task-completed", "success", {
-        taskId,
-        duration,
-        dependenciesResolved: task.dependencies?.length || 0,
-      });
-
-      return {
-        success: true,
-        taskId,
-        agentUsed: task.subagentType || "default-agent",
-        duration,
-        result: {
-          complexTask: true,
-          taskType: task.type,
-          dependenciesProcessed: task.dependencies?.length || 0,
-        },
-      };
-    } catch (error) {
-      frameworkLogger.log("orchestrator", "complex-task-failed", "error", {
-        taskId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-
-      return {
-        success: false,
-        taskId,
-        agentUsed: task.subagentType || "default-agent",
-        duration: 0,
-        result: null,
-        errors: [error instanceof Error ? error.message : String(error)],
-      };
-    } finally {
-      this.activeTasks.delete(taskId);
-      this.taskQueue.delete(taskId);
-    }
-  }
 
   resolveConflicts(conflicts: Array<{ response?: unknown; proposed?: unknown; expertiseScore?: number }>): {
     response: string;
     expertiseScore: number;
   } {
-    if (conflicts.length === 0) {
-      return { response: "", expertiseScore: 0 };
-    }
-
-    if (this.config.conflictResolutionStrategy === "majority_vote") {
-      const votes: Record<string, number> = {};
-
-      conflicts.forEach((conflict) => {
-        const response = String(conflict.response ?? conflict.proposed ?? '');
-        votes[response] = (votes[response] || 0) + 1;
-      });
-
-      const maxVotes = Math.max(...Object.values(votes));
-      const winner = Object.entries(votes).find(
-        ([_, voteCount]) => voteCount === maxVotes,
-      );
-
-      if (winner) {
-        const winningConflicts = conflicts.filter(
-          (c) => String(c.response ?? c.proposed ?? '') === winner[0],
-        );
-        const avgExpertise =
-          winningConflicts.reduce(
-            (sum: number, c: { expertiseScore?: number }) => sum + (c.expertiseScore || 0),
-            0,
-          ) / winningConflicts.length;
-
-        return { response: winner[0], expertiseScore: avgExpertise };
-      }
-    }
-
-    // Fallback to highest expertise score
-    const bestConflict = conflicts.reduce((best, current) =>
-      (current.expertiseScore || 0) > (best.expertiseScore || 0)
-        ? current
-        : best,
-    );
-
-    return {
-      response: String(bestConflict.response ?? bestConflict.proposed ?? ''),
-      expertiseScore: bestConflict.expertiseScore || 0,
-    };
+    return resolveConflicts(conflicts, this.config.conflictResolutionStrategy);
   }
 
   private generateTaskId(): string {
@@ -531,13 +333,21 @@ export class KernelOrchestrator {
   }
 
   private async performDelegation(agentName: string, task: TaskDefinition): Promise<{ success: boolean; result: unknown; agentName: string; executionTime: number }> {
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    const { scoreAndRoute } = await import("../nucleus/thin-dispatch.js");
+    const routing = scoreAndRoute(task.description, { taskType: task.type, agentName });
+
+    frameworkLogger.log("orchestrator", "thin-dispatch-routing", "info", {
+      requestedAgent: agentName,
+      routedAgent: routing.agent,
+      score: routing.score.score,
+      level: routing.score.level,
+    });
 
     return {
       success: true,
-      result: `Task completed successfully by ${agentName}`,
-      agentName,
-      executionTime: 50,
+      result: `Task routed to ${routing.agent} via thin-dispatch`,
+      agentName: routing.agent,
+      executionTime: 0,
     };
   }
 

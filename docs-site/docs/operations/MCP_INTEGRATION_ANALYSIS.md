@@ -1,16 +1,14 @@
 # 0xRay MCP Integration Analysis
 
-**Version**: 1.9.0 | **Architecture**: Facade Pattern | **Framework**: 0xRay AI
-
 ## Overview
 
-This document analyzes the MCP (Model Context Protocol) integration architecture in 0xRay v2.0.0. With the introduction of the **Facade Pattern**, MCP integration has been significantly improved, providing cleaner interfaces and better separation of concerns.
+This document analyzes the MCP (Model Context Protocol) integration architecture in 0xRay, providing cleaner interfaces and better separation of concerns.
 
 ---
 
 ## Architecture Evolution
 
-### Before v2.0.0: Agent-Side Only
+### Before: Agent-Side Only
 
 **❌ Previous Reality:**
 - Contextual awareness was **purely agent-side**
@@ -29,17 +27,14 @@ export const architectTools = {
 };
 ```
 
-### After v2.0.0: Facade-Based MCP Integration
+### Current MCP Integration
 
-**✅ New Architecture:**
-- Full MCP integration through **MCP Client Facade**
-- **26 internal modules** accessible via facade
+**✅ Architecture:**
+- Full MCP integration through **MCP Client**
 - Knowledge skills properly exposed as MCP servers
-- **TaskSkillRouter facade** routes to appropriate MCP skills
 - Standardized MCP protocol throughout
 
 ```typescript
-// NEW: MCP Client Facade
 import { MCPClient } from "@0xray/framework";
 
 const mcpClient = new MCPClient(orchestrator);
@@ -55,24 +50,23 @@ const result = await mcpClient.callSkill("project-analysis", {
 
 ---
 
-## Current MCP Architecture (v2.0.0)
+## Current MCP Architecture
 
-### Facade Layer
+### MCP Client Layer
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                  MCP Client Facade                          │
-│                  (312 lines)                                │
-│                                                             │
-│  Methods:                                                   │
-│   - discoverSkills()                                        │
-│   - callSkill(name, params)                                 │
-│   - batchCall(skills[])                                     │
-│   - getServerHealth()                                       │
-└──────────────────────┬──────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│               MCP Client                    │
+│                                             │
+│  Methods:                                   │
+│   - discoverSkills()                        │
+│   - callSkill(name, params)                 │
+│   - batchCall(skills[])                     │
+│   - getServerHealth()                       │
+└──────────────────────┬──────────────────────┘
                        │
-        ┌──────────────┼──────────────┐
-        │              │              │
+         ┌──────────────┼──────────────┐
+         │              │              │
 ┌───────▼──────┐ ┌─────▼──────┐ ┌─────▼──────┐
 │  Server      │ │ Connection │ │  Protocol  │
 │  Discovery   │ │   Pool     │ │  Handler   │
@@ -93,9 +87,9 @@ const result = await mcpClient.callSkill("project-analysis", {
 
 ### Available MCP Servers
 
-#### Infrastructure MCP Servers (10)
+#### Internal MCP Servers (10)
 
-✅ **Implemented and Active:**
+✅ **Implemented and Active (historical — v3 consolidated to 15 framework servers):**
 1. `orchestrator.server.ts` - Multi-agent coordination
 2. `enforcer.server.ts` - Validation and compliance
 3. `architect.server.ts` - System design
@@ -107,11 +101,11 @@ const result = await mcpClient.callSkill("project-analysis", {
 9. `lint.server.ts` - Code linting
 10. `auto-format.server.ts` - Code formatting
 
-#### Knowledge Skills MCP Servers (6+)
+#### Skill Servers (6+)
 
-✅ **Implemented via Facade (v2.0.0):**
+✅ **Implemented (now loaded via skill-invocation.server.js — 44 skills total):**
 
-**Core Knowledge Skills (6):**
+**Core Skills (6):**
 1. `project-analysis.server.ts` - Project structure analysis
 2. `testing-strategy.server.ts` - Testing methodologies
 3. `architecture-patterns.server.ts` - Design patterns
@@ -119,23 +113,13 @@ const result = await mcpClient.callSkill("project-analysis", {
 5. `git-workflow.server.ts` - Version control
 6. `api-design.server.ts` - API design
 
-**Additional Skills via TaskSkillRouter (17+):**
-- `typescript-expert` - TypeScript expertise
-- `python-patterns` - Python patterns
-- `react-patterns` - React patterns
-- `docker-expert` - Docker expertise
-- `security-auditor` - Security auditing
-- And 12+ more via Antigravity integration
-
-**Total: 26+ MCP servers available through facades**
+**Total: 15 MCP servers + 44 skills (v3 architecture)**
 
 ---
 
 ## MCP Integration Patterns
 
-### Pattern 1: Direct Facade Usage
-
-For most use cases, use the MCP Client facade:
+### Pattern 1: Direct MCP Client Usage
 
 ```typescript
 import { MCPClient } from "@0xray/framework";
@@ -158,7 +142,7 @@ const results = await mcpClient.batchCall([
 
 ### Pattern 2: TaskSkillRouter Integration
 
-The TaskSkillRouter facade automatically routes to appropriate MCP skills:
+Router automatically routes to appropriate MCP skills:
 
 ```typescript
 import { TaskSkillRouter, MCPClient } from "@0xray/framework";
@@ -172,7 +156,6 @@ const route = await router.routeTask({
   context: { framework: "react" }
 });
 
-// Route.skill contains the MCP skill name
 const result = await mcpClient.callSkill(route.skill, {
   task: route.task,
   context: route.context
@@ -188,12 +171,10 @@ import { MCPClient } from "@0xray/framework";
 
 const mcpClient = new MCPClient(orchestrator);
 
-// Access specific modules
 const discovery = mcpClient.getModule("server-discovery");
 const pool = mcpClient.getModule("connection-pool");
 const cache = mcpClient.getModule("cache-manager");
 
-// Use modules directly
 const servers = await discovery.findAvailableServers();
 const connection = await pool.acquire(servers[0]);
 const cached = await cache.get(cacheKey);
@@ -201,7 +182,7 @@ const cached = await cache.get(cacheKey);
 
 ### Pattern 4: Custom MCP Server Creation
 
-Create custom MCP servers using the facade infrastructure:
+Create custom MCP servers:
 
 ```typescript
 import { MCPServer, MCPClient } from "@0xray/framework";
@@ -257,7 +238,7 @@ export class CustomAnalysisServer implements MCPServer {
 
 ### Standard MCP Protocol
 
-0xRay v2.0.0 follows the standard MCP protocol:
+0xRay follows the standard MCP protocol:
 
 ```typescript
 // MCP Request
@@ -420,10 +401,10 @@ import { architectTools } from "./architect-tools";
 const result = await architectTools.contextAnalysis(projectRoot);
 ```
 
-### After (MCP via Facade)
+### After (MCP)
 
 ```typescript
-// NEW: MCP protocol via facade
+// NEW: MCP protocol
 import { MCPClient } from "@0xray/framework";
 
 const mcpClient = new MCPClient(orchestrator);
@@ -513,18 +494,13 @@ console.log(`
 
 ## Summary
 
-0xRay v2.0.0's MCP integration represents a complete transformation from agent-side-only tools to a full **Facade-based MCP architecture**:
+0xRay's MCP integration provides:
 
 ✅ **Full MCP Protocol**: Standardized communication
-✅ **Facade APIs**: Simplified interfaces (312 lines vs 1,413)
-✅ **26+ MCP Servers**: Infrastructure + Knowledge skills
+✅ **15 MCP Servers + 44 Skills**: Consolidated v3 architecture
 ✅ **Module Access**: 8 focused modules for advanced use
 ✅ **Performance**: Connection pooling, caching, batching
 ✅ **Reliability**: Error recovery, health monitoring
 ✅ **Scalability**: Easy to add new MCP servers
 
-The facade pattern makes MCP integration accessible to all developers while providing module-level access for advanced customization.
-
 ---
-
-_Framework Version: 1.9.0 | Architecture: Facade Pattern | Last Updated: 2026-03-12_

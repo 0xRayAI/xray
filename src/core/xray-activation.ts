@@ -23,7 +23,7 @@ export const defaultXrayConfig: XrayActivationConfig = {
   enableHooks: true,
   enableCodexInjection: true,
   enableProcessors: true,
-  enablePostProcessor: true,
+  enablePostProcessor: false,
 };
 
 export async function activateXrayFramework(

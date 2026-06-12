@@ -68,6 +68,18 @@ export {
   routeToAgent,
   scoreAndRoute,
 } from "../nucleus/thin-dispatch.js";
+export {
+  assessComplexity,
+  shouldDelegate,
+  getDelegationStrategy,
+  type AssessmentInput,
+  type AssessmentResult,
+} from "../tools/assess-complexity-tool.js";
+export {
+  queryRouting,
+  listAllRoutes,
+  type AgentRoutingDetail,
+} from "../tools/query-routing-tool.js";
 
 export type {
   DelegationRequest,

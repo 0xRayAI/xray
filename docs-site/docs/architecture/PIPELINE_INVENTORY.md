@@ -1,6 +1,5 @@
 # 0xRay Pipeline Inventory
 
-**Version**: 3.3.1 (v3 exhaustive trace)  
 **Date**: 2026-06-11  
 **Author**: 0xRay AI Team (via @researcher agent comprehensive source tracing)
 
@@ -1049,10 +1048,10 @@ Cross-ref old sections below for continuity (Boot/Inference/Orchestration/Proces
 
 ## Pipeline Testing Status
 
-> **Important Discovery (v2.0.0)**: Unit tests passing ≠ Pipeline working.
+> **Important Discovery**: Unit tests passing ≠ Pipeline working.
 > See [Pipeline Testing Methodology](../testing/PIPELINE_TESTING_METHODOLOGY) for details.
 
-## Complete Sub-Pipeline Inventory (v1.15.41)
+## Complete Sub-Pipeline Inventory
 
 ### Main Pipelines (7)
 | Pipeline | Description | Test File |
@@ -1065,7 +1064,7 @@ Cross-ref old sections below for continuity (Boot/Inference/Orchestration/Proces
 | **CLI** | CLI command validation | test-cli-pipeline.mjs |
 | **Reporting** | Analytics & insights | test-reporting-pipeline.mjs |
 
-### Sub-Pipelines (Discovered v1.15.41)
+### Sub-Pipelines (Discovered)
 
 | Sub-Pipeline | Components | Status |
 |-------------|------------|--------|

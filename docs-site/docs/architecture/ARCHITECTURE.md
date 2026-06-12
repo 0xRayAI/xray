@@ -1,55 +1,8 @@
-# 0xRay Framework v2.0.0 - Technical Architecture and Data Flows
+# 0xRay Framework - Technical Architecture and Data Flows
 
 ## Overview
 
-0xRay Framework v2.0.0 implements a comprehensive multi-agent AI system with a modern **Facade Pattern architecture**. The framework provides 25 specialized AI agents for systematic error prevention and enhanced development capabilities.
-
-## What's New in v2.0.0
-
-### Major Architecture Refactoring: Facade Pattern Implementation
-
-0xRay v2.0.0 underwent a significant architectural refactoring implementing the **Facade Pattern** for improved maintainability, performance, and reliability.
-
-**Code Reduction:** 87% (8,230 → 1,218 lines)
-- RuleEnforcer: 2,714 → 416 lines (85% reduction)
-- TaskSkillRouter: 1,933 → 490 lines (75% reduction)
-- MCP Client: 1,413 → 312 lines (78% reduction)
-- Dead Code Removed: 3,170 lines
-
-### Facade Pattern Benefits
-
-- **Simplified Public API**: Clean, consistent interfaces maintained
-- **Internal Modularity**: Logic separated into focused modules
-- **Dependency Injection**: Dependencies passed for testability
-- **Registry Pattern**: Component management through registries
-- **100% Backward Compatible**: Public APIs unchanged
-
-### Facade Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      PUBLIC API LAYER                        │
-├─────────────────────────────────────────────────────────────┤
-│  RuleEnforcer    TaskSkillRouter    MCPClient               │
-│  (416 lines)     (490 lines)        (312 lines)             │
-│  Facade          Facade             Facade                  │
-└────────────────────┬────────────────────┬───────────────────┘
-                     │                    │
-┌────────────────────┴────────────────────┴───────────────────┐
-│                    MODULE LAYER                              │
-├─────────────────┬─────────────────────┬─────────────────────┤
-│ RuleEnforcer    │ TaskSkillRouter     │ MCPClient           │
-│ Modules:        │ Modules:            │ Modules:            │
-│ - Core          │ - Mappings (12)     │ - Connection        │
-│ - Config        │ - Analytics         │ - Registry          │
-│ - Logger        │ - Routing           │ - Tools             │
-│ - Metrics       │ - Patterns          │ - Resources         │
-│ - Validation    │ - Validation        │ - Prompts           │
-│ - Integration   │ - Utilities         │ - Sampling          │
-│                 │                     │ - Notifications     │
-│                 │                     │ - Root              │
-└─────────────────┴─────────────────────┴─────────────────────┘
-```
+0xRay Framework implements a comprehensive multi-agent AI system with specialized AI agents for systematic error prevention and enhanced development capabilities.
 
 ## Core Architecture Principles
 
@@ -81,15 +34,14 @@
 #### Hybrid Architecture Diagram
 
 ```
-0xRay Framework v2.0.0 - Enterprise AI Orchestration Architecture
-════════════════════════════════════════════════════════════════
+0xRay Framework - Enterprise AI Orchestration Architecture
+═════════════════════════════════════════════════════════
 
 ┌──────────────────────────────────────────────────────────────┐
 │                    TypeScript Layer                           │
 │                    (Primary Framework)                        │
 ├──────────────────────────────────────────────────────────────┤
 │ • Multi-Agent Orchestration & Complexity Analysis            │
-│ • Facade Pattern Implementation (3 Facades, 26 Modules)      │
 │ • Configuration-based agents (AgentConfig)                   │
 │ • Plugin system & MCP protocol integration                   │
 │ • Build system & bundling (Node.js/TypeScript)               │
@@ -188,193 +140,7 @@
 - **YAGNI Compliance**: Avoid speculative features
 - **Pragmatic Solutions**: Balance between perfection and practicality
 
-## Facade Pattern Deep Dive
 
-### RuleEnforcer Facade (416 lines)
-
-The RuleEnforcer provides a simplified interface to the complex rule enforcement subsystem.
-
-**Facade Responsibilities:**
-- Public API for rule validation
-- Result aggregation and formatting
-- Error handling and recovery
-
-**Module Structure:**
-
-```
-RuleEnforcer Facade (416 lines)
-├── Core Module
-│   ├── Rule validation engine
-│   ├── Violation detection
-│   └── Fix attempt coordination
-├── Config Module
-│   ├── Configuration loading
-│   ├── Rule definitions
-│   └── Threshold management
-├── Logger Module
-│   ├── Structured logging
-│   ├── Audit trails
-│   └── Debug output
-├── Metrics Module
-│   ├── Performance tracking
-│   ├── Success rate calculation
-│   └── Violation statistics
-├── Validation Module
-│   ├── Input validation
-│   ├── Schema checking
-│   └── Type guards
-└── Integration Module
-    ├── External service hooks
-    ├── Plugin integration
-    └── Event publishing
-```
-
-**Usage Example:**
-
-```typescript
-// Simplified public API through facade
-import { RuleEnforcer } from './rule-enforcer';
-
-const enforcer = new RuleEnforcer({
-  strictMode: true,
-  autoFix: true
-});
-
-// Single method call triggers complex validation logic
-const result = await enforcer.validate({
-  files: ['src/main.ts'],
-  rules: ['type-safety', 'no-any']
-});
-```
-
-### TaskSkillRouter Facade (490 lines)
-
-The TaskSkillRouter facade provides unified task routing and skill mapping capabilities.
-
-**Facade Responsibilities:**
-- Task complexity analysis
-- Agent selection and routing
-- Skill-to-task mapping
-- Result coordination
-
-**Module Structure:**
-
-```
-TaskSkillRouter Facade (490 lines)
-├── Mapping Modules (12 specialized)
-│   ├── Validation mapping
-│   ├── Security mapping
-│   ├── Testing mapping
-│   ├── Architecture mapping
-│   ├── Refactoring mapping
-│   ├── Performance mapping
-│   ├── Documentation mapping
-│   ├── Bug fix mapping
-│   ├── Feature mapping
-│   ├── Analysis mapping
-│   ├── Review mapping
-│   └── Integration mapping
-├── Analytics Module
-│   ├── Pattern tracking
-│   ├── Success metrics
-│   └── Routing optimization
-├── Routing Module
-│   ├── Complexity scoring
-│   ├── Agent selection
-│   └── Load balancing
-├── Patterns Module
-│   ├── Pattern recognition
-│   ├── Pattern matching
-│   └── Pattern learning
-└── Validation Module
-    ├── Input sanitization
-    ├── Output validation
-    └── Error recovery
-```
-
-**Usage Example:**
-
-```typescript
-// Simplified routing through facade
-import { TaskSkillRouter } from './task-skill-router';
-
-const router = new TaskSkillRouter();
-
-// Single call triggers complex routing logic
-const route = await router.route({
-  task: 'implement authentication',
-  context: { complexity: 75, risk: 'high' }
-});
-
-// Returns optimal agent and strategy
-console.log(route.agent);      // 'orchestrator'
-console.log(route.strategy);   // 'multi-agent'
-```
-
-### MCP Client Facade (312 lines)
-
-The MCP Client facade provides unified access to Model Context Protocol servers.
-
-**Facade Responsibilities:**
-- Connection management
-- Tool/resource/prompt access
-- Error handling and retry
-- Registry coordination
-
-**Module Structure:**
-
-```
-MCP Client Facade (312 lines)
-├── Connection Module
-│   ├── Server connections
-│   ├── Connection pooling
-│   └── Health monitoring
-├── Registry Module
-│   ├── Server registration
-│   ├── Capability discovery
-│   └── Service catalog
-├── Tools Module
-│   ├── Tool discovery
-│   ├── Tool execution
-│   └── Result formatting
-├── Resources Module
-│   ├── Resource access
-│   ├── Resource caching
-│   └── Resource updates
-├── Prompts Module
-│   ├── Prompt templates
-│   ├── Prompt rendering
-│   └── Context injection
-├── Sampling Module
-│   ├── Sampling strategies
-│   ├── Distribution tracking
-│   └── Quality metrics
-├── Notifications Module
-│   ├── Event subscriptions
-│   ├── Notification routing
-│   └── Alert management
-└── Root Module
-    ├── Initialization
-    ├── Configuration
-    └── Lifecycle management
-```
-
-**Usage Example:**
-
-```typescript
-// Simplified MCP access through facade
-import { MCPClient } from './mcp-client';
-
-const client = new MCPClient({
-  servers: ['testing-strategy', 'code-review']
-});
-
-// Single call accesses multiple MCP servers
-const result = await client.execute('testing-strategy', {
-  tool: 'generate-tests',
-  parameters: { file: 'src/auth.ts' }
-});
-```
 
 ## System Components
 
@@ -428,8 +194,8 @@ const result = await client.execute('testing-strategy', {
 │              Framework Core                   │
 │                                               │
 │ ┌──────────────┬──────────────┬─────────────┐ │
-│ │ Task Router  │ State Manager│ MCP Client  │ │
-│ │  (Facade)    │   (Facade)   │  (Facade)   │ │
+ │ │ Task Router  │ State Manager│ MCP Client  │ │
+│ │              │              │             │ │
 │ └──────────────┴──────────────┴─────────────┘ │
 │ ┌──────────────┬──────────────┬─────────────┐ │
 │ │   Config     │   Security   │   Logger    │ │
@@ -440,7 +206,7 @@ const result = await client.execute('testing-strategy', {
 
 **Functions:**
 
-- Request routing and dispatch (via TaskSkillRouter facade)
+- Request routing and dispatch
 - Global state coordination
 - Configuration management
 - Security enforcement
@@ -452,11 +218,11 @@ const result = await client.execute('testing-strategy', {
 ```
 User Request
       ↓
-Task Analysis (TaskSkillRouter Facade)
+Task Analysis
       ↓
 Agent Selection (via Routing Module)
       ↓
-Tool Execution (via MCP Client Facade)
+Tool Execution
       ↓
 Result Processing
       ↓
@@ -468,7 +234,7 @@ Response Formatting
 ```
 Component Update
       ↓
-State Mutation (StateManager Facade)
+State Mutation
       ↓
 Validation Layer (via Validation Module)
       ↓
@@ -484,7 +250,7 @@ UI Synchronization
 ```
 Error Detection
       ↓
-Error Classification (RuleEnforcer Facade)
+Error Classification
       ↓
 Recovery Strategy (via Core Module)
       ↓
@@ -516,26 +282,6 @@ interface ToolCall {
   parameters: Record<string, any>;
   timeout?: number;
   async?: boolean;
-}
-```
-
-### Facade-to-Module Communication
-
-```typescript
-// Facade delegates to specialized modules
-class RuleEnforcer {
-  private core: CoreModule;
-  private validation: ValidationModule;
-  private metrics: MetricsModule;
-  
-  async validate(input: ValidationInput): Promise<ValidationResult> {
-    // Facade coordinates modules
-    const sanitized = await this.validation.sanitize(input);
-    const violations = await this.core.detectViolations(sanitized);
-    const metrics = await this.metrics.record(violations);
-    
-    return { violations, metrics };
-  }
 }
 ```
 
@@ -584,7 +330,7 @@ interface StateUpdate {
 - **Parallel Execution**: Concurrent tool operations
 - **Resource Pooling**: Efficient resource management
 
-### Performance Metrics (v2.0.0)
+### Performance Metrics
 
 ```
 Framework Performance Budget:
@@ -592,12 +338,6 @@ Framework Performance Budget:
 ├── Boot Time: <500ms cold start, <100ms warm start
 ├── Response Time: <1ms average task processing
 └── Memory Usage: <100MB baseline
-
-Facade Pattern Benefits:
-├── 87% code reduction (8,230 → 1,218 lines)
-├── Faster agent spawning
-├── Reduced memory overhead
-└── Improved error handling
 ```
 
 ### Monitoring Points
@@ -655,7 +395,7 @@ Custom Plugins
 ### Containerized Deployment
 
 ```dockerfile
-FROM 0xray/base:v2.0.0
+FROM 0xray/base:v3.0.0
 
 COPY . /app
 RUN 0xray build
@@ -694,18 +434,11 @@ Alerting System
 Dashboard Visualization
 ```
 
-## Migration from v1.8.x to v2.0.0
+## Framework Updates
 
 ### Breaking Changes
 
-**NONE** - v2.0.0 maintains 100% backward compatibility.
-
-### What Changed (Internal Only)
-
-- Internal component structure refactored to Facade Pattern
-- Modules extracted from monolithic components
-- Improved error handling and recovery
-- Better performance through optimized routing
+**NONE** - All releases maintain backward compatibility.
 
 ### What Stayed the Same
 
@@ -715,10 +448,9 @@ Dashboard Visualization
 - ✅ Custom agent creation process unchanged
 - ✅ Public APIs unchanged
 
-### Migration Steps
+### Update Steps
 
 ```bash
-# Simply update to v2.0.0
 npm update 0xray
 
 # Or install fresh
@@ -726,8 +458,6 @@ npm install 0xray@latest
 
 # Verify installation
 npx 0xray health
-
-# No code changes needed!
 ```
 
 ## Future Architecture Considerations
@@ -750,26 +480,6 @@ npx 0xray health
 
 | Metric | Value |
 |--------|-------|
-| **Framework Version** | 1.9.0 |
-| **Architecture Pattern** | Facade Pattern |
-| **Specialized Agents** | 27 |
-| **MCP Servers** | 28 |
-| **Tests** | 2,368 |
-| **Code Reduction** | 87% |
-| **Facade Components** | 3 |
-| **Total Modules** | 26 |
-| **Error Prevention** | 99.6% |
-
-### Code Metrics (v2.0.0)
-
-| Component | Before | After | Reduction |
-|-----------|--------|-------|-----------|
-| RuleEnforcer | 2,714 lines | 416 lines | 85% |
-| TaskSkillRouter | 1,933 lines | 490 lines | 75% |
-| MCP Client | 1,413 lines | 312 lines | 78% |
-| Dead Code | 3,170 lines | 0 lines | 100% |
-| **Total** | **8,230 lines** | **1,218 lines** | **87%** |
+| **Error Prevention** | Systematic |
 
 ---
-
-*0xRay AI v2.0.0 - Facade Pattern Architecture*
