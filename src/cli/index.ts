@@ -953,4 +953,11 @@ For more information, visit: https://github.com/0xRayAI/xray
 
 // Parse command line arguments
 program.exitOverride();
-program.parse();
+try {
+  program.parse();
+} catch (err: unknown) {
+  if (err instanceof Error && 'code' in err && (err as { code: string }).code === 'commander.help') {
+    process.exit(0);
+  }
+  throw err;
+}

@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms · 160 test files
+**v3.0.1** — 41 agents · 44 skills · 15 MCPs servers · 20 codex terms · 160 test files
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -62,7 +62,7 @@ AI coding assistants are powerful but unreliable. They hallucinate APIs, introdu
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Multi-agent review · SSOT  │
-│  15 MCP servers deliberate proposals via 3-skill governance │
+│  15 MCPs servers deliberate proposals via 3-skill governance │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  Task routing · Multi-agent coordination        │

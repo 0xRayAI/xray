@@ -4,9 +4,9 @@
 
 xray is the external governance kernel your AI agents call for a decision — not a platform they have to live inside.
 
-v2 proved the federation works (2,2196 tests, 4 plugin E2Es in isolated tmp dirs, 0 failures). v3 crystallizes it into its true shape: the **nucleus** (Dynamo pipeline + orchestrator routing + enforcer) surrounded by **dynamic adapters**.
+v2 proved the federation works (2,2290 tests, 4 plugin E2Es in isolated tmp dirs, 0 failures). v3 crystallizes it into its true shape: the **nucleus** (Dynamo pipeline + orchestrator routing + enforcer) surrounded by **dynamic adapters**.
 
-v2.1.4 is the measured starting state (39 MCP servers / 25 knowledge-skill + XrayKnowledgeSkillBase, 162 files / 2,2196 tests, 4 bridges proven via fresh published-package consumer verification in isolated tmp dirs). The federation is solid; v3 extracts the callable kernel from it.
+v2.1.4 is the measured starting state (39 MCP servers / 25 knowledge-skill + XrayKnowledgeSkillBase, 162 files / 2,2290 tests, 4 bridges proven via fresh published-package consumer verification in isolated tmp dirs). The federation is solid; v3 extracts the callable kernel from it.
 
 ## Architecture
 
@@ -135,7 +135,7 @@ Phase 3 ────────────────────────
 - **What NOT to test**: Express listener, HTTP integration, health endpoint (those are integration-level)
 - **Done when**: `npx vitest run src/nucleus/` passes, handler coverage > 80% (pure handler paths fully exercised; adapter class excluded per plan)
 - **Estimate**: 0.5 day
-- **Status**: 2196 tests pass. All specified rejection, call, merge, override, and logging cases covered. `npx vitest run src/nucleus/` ✅
+- **Status**: 2290 tests pass. All specified rejection, call, merge, override, and logging cases covered. `npx vitest run src/nucleus/` ✅
 
 ---
 
@@ -329,7 +329,7 @@ Phase 3 ────────────────────────
 
 #### 3.2 [x] Long-running governed agent session verification
 - New E2E suite: run a governed agent session for 60+ minutes, verify the self-evolution loop produces valid proposals
-- **Done when**: Suite exists, passes in CI — 2196 tests in `src/__tests__/integration/self-evolution-e2e.test.ts`
+- **Done when**: Suite exists, passes in CI — 2290 tests in `src/__tests__/integration/self-evolution-e2e.test.ts`
 
 #### 3.3 [x] Third-party plugin API stable
 - Document and freeze `PluginRegistry`, `SkillPlugin`, `MetamorphosisEngine` interfaces
@@ -417,7 +417,7 @@ Every proposal (inference, self-proposal, CLI, HTTP, external) now gets:
 
 ### v2.1.4 Baseline (the measured starting state)
 - 39 MCP servers (25 knowledge-skill + 16 root) + XrayKnowledgeSkillBase (61 LOC).
-- 162 test files, 2,2196 tests, 0 failures at release.
+- 162 test files, 2,2290 tests, 0 failures at release.
 - 4 platform bridges (grok, hermes, opencode, openclaw) verified via the exact procedure: `npm pack` → 4 isolated `/tmp` dirs → real published `npm i 0xray@2.1.4` (not local tgz) → per-plugin `npx 0xray <p> install` → run the shipped `scripts/test/test-*-e2e.mjs` → persistent `logs/framework/activity.log` monitoring + sub-agents → triage/fix/retest until green.
 - Opencode + OpenClaw: 100% green in fresh consumer trees. Grok/Hermes: core governance, hooks, processors, and activity.log paths solid (minor parse tolerances for consumer envs hardened post-verification).
 - activity.log, pre/post processors, quality-gates, 3-agent + Dynamo, and frameworkLogger-only discipline all observed live.

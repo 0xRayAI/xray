@@ -134,4 +134,4 @@ If v3 is an operating system for AI agents, then:
 
 An OS is not defined by what it can do. It is defined by what it prevents user space from doing, and how it enforces those boundaries. v3 is the first version of xray that has real boundaries between subsystems. That is why it feels like an OS. That is why calling it a library or a framework no longer fits.
 
-v3 is an operating system for the AI layer. Not for hardware. For agents.
+v3 is an operating system for the AI layer.

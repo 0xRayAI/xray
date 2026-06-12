@@ -46,7 +46,7 @@ Nothing. Tool schemas, tool names, handler bodies, exports, and guard patterns a
 
 ### What we did
 
-- **Deleted `security-auditor.ts`** (722 LOC) — zero production callers, only test code (2196 tests + 2 integration tests)
+- **Deleted `security-auditor.ts`** (722 LOC) — zero production callers, only test code (2290 tests + 2 integration tests)
 - **Moved 2 files** to `src/mcps/shared/` — `security-scanner.ts` + `prompt-security-validator.ts` (consolidated with their only production consumer `enforcer-tools.server.ts`)
 - **Updated 3 import paths** across `enforcer-tools.server.ts`, `processor-manager.ts`, and `security-hardener.ts`
 - **Inlined `SecurityIssue` type** into `security-hardener.ts` (the only real consumer)
@@ -120,7 +120,7 @@ this.complianceChecker = new ArchitecturalComplianceChecker();
 
 - Before: 2,860 passed, 44 skipped
 - After: 2,847 passed, 44 skipped
-- 2196 tests removed (11 `security-auditor.test.ts` + 2 `security-integration.test.ts`)
+- 2290 tests removed (11 `security-auditor.test.ts` + 2 `security-integration.test.ts`)
 - Zero regressions
 
 ---

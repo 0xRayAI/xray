@@ -59,6 +59,7 @@ describe('ConfigLoader', () => {
         },
       ];
       fs.writeFileSync(testConfigPath, JSON.stringify(testConfigs));
+      loader.resetConfigPaths();
       loader.addConfigPath(testConfigPath);
 
       const result = await loader.load();
@@ -79,6 +80,7 @@ describe('ConfigLoader', () => {
         ],
       };
       fs.writeFileSync(testConfigPath, JSON.stringify(testConfig));
+      loader.resetConfigPaths();
       loader.addConfigPath(testConfigPath);
 
       const result = await loader.load();
@@ -89,6 +91,7 @@ describe('ConfigLoader', () => {
 
     it('should return error for invalid JSON', async () => {
       fs.writeFileSync(testConfigPath, 'invalid json{');
+      loader.resetConfigPaths();
       loader.addConfigPath(testConfigPath);
 
       const result = await loader.load();
@@ -118,6 +121,7 @@ describe('ConfigLoader', () => {
       fs.mkdirSync(testDir, { recursive: true });
       fs.writeFileSync(testConfigPath2, JSON.stringify(testConfigs2));
       
+      loader.resetConfigPaths();
       loader.addConfigPath(testConfigPath);
       loader.addConfigPath(testConfigPath2);
 
@@ -154,6 +158,7 @@ describe('ConfigLoader', () => {
         },
       ];
       fs.writeFileSync(testConfigPath, JSON.stringify(testConfigs));
+      loader.resetConfigPaths();
       loader.addConfigPath(testConfigPath);
 
       const result = await loader.load();
@@ -266,7 +271,9 @@ describe('ConfigLoader', () => {
 
   describe('hasConfigFile', () => {
     it('should return false when no config file exists', () => {
-      expect(loader.hasConfigFile()).toBe(false);
+      const emptyLoader = new ConfigLoader();
+      emptyLoader.resetConfigPaths();
+      expect(emptyLoader.hasConfigFile()).toBe(false);
     });
 
     it('should return true when default config file exists', () => {
