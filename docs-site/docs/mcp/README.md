@@ -48,3 +48,7 @@ The framework also includes 15 internal `.server.js` files loaded at runtime for
 ## Marketplace
 
 0xRay is listed on the [xAI Plugin Marketplace](https://github.com/xai-org/plugin-marketplace) (PR #23) — one-click install for Grok users.
+
+## Deploy Your Own
+
+See the [custom MCP server guide](./deploy-custom) for creating, registering, and deploying custom MCP servers — either as local stdio tools or as HTTP services on Railway.

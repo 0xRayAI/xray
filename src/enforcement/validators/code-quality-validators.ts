@@ -180,6 +180,13 @@ export class DocumentationRequiredValidator extends BaseValidator {
     const violations: string[] = [];
     const suggestions: string[] = [];
 
+    const isSimple =
+      (newCode.split("\n").length < 5 &&
+        !newCode.includes("async") &&
+        !newCode.includes("class")) ||
+      newCode.includes("get ") ||
+      newCode.includes("set ");
+
     // 1. Check for exported functions/classes without JSDoc
     const exportedItems = newCode.match(
       /export\s+(?:function|class|const|let)\s+(\w+)/g,
@@ -194,13 +201,6 @@ export class DocumentationRequiredValidator extends BaseValidator {
             .trim();
           const hasJSDoc =
             beforeExport.endsWith("*/") && beforeExport.includes("/**");
-
-          const isSimple =
-            (newCode.split("\n").length < 5 &&
-              !newCode.includes("async") &&
-              !newCode.includes("class")) ||
-            newCode.includes("get ") ||
-            newCode.includes("set ");
 
           if (
             !hasJSDoc &&
@@ -247,16 +247,18 @@ export class DocumentationRequiredValidator extends BaseValidator {
       suggestions.push("Update version fields in package.json and codex.json");
     }
 
-    // 5. Universal researcher consultation requirement
-    violations.push(
-      "Universal researcher consultation required for all code changes",
-    );
-    suggestions.push(
-      "Consult researcher for documentation review and version updates",
-    );
-    suggestions.push(
-      "Ensure README.md, architecture docs, and API docs are current",
-    );
+    // 5. Universal researcher consultation requirement (skip for trivial changes)
+    if (!isSimple) {
+      violations.push(
+        "Universal researcher consultation required for code changes",
+      );
+      suggestions.push(
+        "Consult researcher for documentation review and version updates",
+      );
+      suggestions.push(
+        "Ensure README.md, architecture docs, and API docs are current",
+      );
+    }
 
     if (violations.length > 0) {
       return this.createFailureResult(

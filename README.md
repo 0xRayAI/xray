@@ -299,6 +299,8 @@ Or connect to the hosted Railway endpoint:
 `https://governance-production-69c3.up.railway.app/mcp`
 
 > **Marketplace**: 0xRay is listed on the [xAI Plugin Marketplace](https://github.com/xai-org/plugin-marketplace) (PR #23) — one-click install for Grok users.
+>
+> **Deploy your own**: see the [custom MCP server guide](https://0xrayai.github.io/xray/docs/mcp/deploy-custom) for stdio and Railway HTTP deployment patterns.
 
 ---
 
@@ -355,6 +357,7 @@ npx 0xray health
 - **[docs/](docs/)** — Architecture docs, governance model, integration guides
 - **[Docs](https://0xrayai.github.io/xray/)** — Full documentation site
 - **[Dynamo Governance](https://0xrayai.github.io/xray/docs/guides/self-hosting-dynamo)** — External governance service (self-host your own instance — see docs)
+- **[Deploy a Custom MCP Server](https://0xrayai.github.io/xray/docs/mcp/deploy-custom)** — Create, register, and deploy your own MCP server (stdio or Railway HTTP)
 - **[GitHub](https://github.com/0xRayAI/xray)** — Source code, issues, discussions
 - **[npm](https://www.npmjs.com/package/0xray)** — Package registry
 

@@ -78,3 +78,60 @@ v3.0.0 is not perfect. The agent stubs still exist (they populate `builtinAgents
 These are not compromises. They are the difference between a cleanup and a rewrite. A rewrite would burn it all down and start fresh. A cleanup makes the architecture honest while keeping everything that still works. v3 is a cleanup — the hardest kind of work, because it requires understanding what every piece does before deciding whether to keep it.
 
 That is what v3 is: the architecture after the questions were asked and answered honestly. Not a perfect system. An *honest* one.
+
+---
+
+## Is v3 an Operating System?
+
+In a literal sense, no — xray does not manage CPU, memory, or hardware interrupts.
+
+In the sense that matters: **yes, v3 is an operating system for AI agents.** The three subsystems map directly to OS concerns:
+
+| OS concept | xray v3 |
+|-----------|---------|
+| **Kernel** (policy, security, arbitration) | **Governance** — Dynamo SSOT enforces the codex; 3 MCP skill servers debate every proposal; weighted voting resolves conflicts before execution |
+| **Scheduler** (resource allocation, routing) | **Autonomous Engine** — thinDispatch scores complexity; `routeToAgent` assigns work; the orchestrator coordinates multi-agent flows |
+| **User space** (produces work, unaware of kernel internals) | **Inference** — generates proposals from context; calls MCP tools; drives the generation loop without knowing how governance will judge the output |
+| **System calls** (the interface between layers) | **MCP protocol** — every subsystem communicates through MCP, not direct imports. Governance never imports inference. The engine never imports governance. They talk across a protocol boundary. |
+| **Process isolation** (one subsystem cannot corrupt another) | **MCP boundary** — each skill server runs as a separate process. Governance failure does not crash inference. Inference memory does not leak into the engine. |
+| **Policy enforcement** (the kernel decides what is allowed) | **Codex** — 68 terms enforced by Dynamo before any proposal becomes an action. The kernel (governance) is the only authority on policy. |
+| **Sysadmin** (observing and operating the system) | **CLI** (`npx 0xray` + `govern` command) + **frameworkLogger** (`activity.log` + `.opencode/logs/`) |
+
+### Why This Matters
+
+The OS analogy is not a metaphor. It is a design constraint that explains every decision in v3:
+
+**Before v3**, xray was a library. You imported `AgentDelegator` and called `delegateTask()`. You imported `PostProcessor` and called `executePostProcessorLoop()`. Every consumer talked directly to every subsystem. There was no kernel — just a collection of modules that happened to be in the same package. This is why there were four routing paths: because a library has no authority to say "there is one way to route." A library just exports what it has.
+
+**After v3**, xray is an operating system. You send a proposal through MCP to governance. Governance debates it with three specialized skill servers. If approved, it goes to thinDispatch for routing. The caller never talks to the router directly. The caller never imports the governance kernel. The caller sends a message and waits for a response.
+
+The difference between a library and an OS is not size. It is **authority**. A library serves its caller. An OS serves its own policies. The governance subsystem can reject a proposal even if the inference subsystem is sure it should pass — because governance is the kernel, and the kernel decides.
+
+This is what made `performDelegation` with `setTimeout(50)` not just wrong but architecturally incoherent. An OS does not schedule processes with a timer and a hardcoded agent name. It schedules based on policy, priority, and resource availability — which is exactly what thinDispatch + governance does.
+
+### The MCP as syscall interface
+
+Every OS has a syscall interface — the boundary where user space asks the kernel to do something privileged. In v3, that boundary is MCP.
+
+| Traditional OS | xray v3 |
+|---------------|---------|
+| User program calls `open()` | Plugin calls `propose_action` MCP tool |
+| Kernel validates permissions | Governance checks codex terms |
+| Kernel schedules disk access | Engine routes to appropriate agent |
+| Result returned via syscall | Result returned via MCP response |
+| User program never accesses disk directly | Plugin never routes directly |
+
+Before v3, plugins imported routing functions. They *were* the kernel — or at least, they shared address space with it. After v3, plugins call MCP tools. They are user space. The kernel is governance. The syscall interface is MCP. The boundary is enforced.
+
+### What This Means for the Future
+
+If v3 is an operating system for AI agents, then:
+
+- **The kernel (governance) should be the smallest, most audited code in the system.** It is. It fits in `src/governance/` and `src/mcps/governance.server.ts` — under 2,000 lines total.
+- **New capabilities should be added as MCP tools, not as imports.** This is already the pattern. The MCP manifest at `src/mcps/index.ts` lists 40 servers — each one is a syscall, not a function call.
+- **Breaking the kernel should be impossible from user space.** This is not fully achieved — some plugins still import internal modules — but it is the direction.
+- **The CLI should be the sysadmin interface**, not a collection of scripts. The `govern` command is the start of this.
+
+An OS is not defined by what it can do. It is defined by what it prevents user space from doing, and how it enforces those boundaries. v3 is the first version of xray that has real boundaries between subsystems. That is why it feels like an OS. That is why calling it a library or a framework no longer fits.
+
+v3 is an operating system for the AI layer. Not for hardware. For agents.
