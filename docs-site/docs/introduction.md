@@ -43,7 +43,7 @@ Every code change is checked against a **68-term Codex** (coding constitution), 
 | Problem | Solution |
 |---------|----------|
 | AI hallucinates bad code | Governance gate blocks non-compliant proposals |
-| No quality enforcement | v3 Enforcement Pipeline: enforcement-gate.ts (hooks) + enforce-validators.mjs (CI) + PostProcessor loop (escalation/metamorphosis) for full 29 + terms 69-81 |
+| No quality enforcement | v3 Enforcement Pipeline: enforcement-gate.ts (hooks) + enforce-validators.mjs (CI) + governance MCP pipeline (governance-service.ts + Dynamo) for full 29 + terms 69-81 |
 | Single-agent blindspots | 3 specialized reviewers debate each proposal |
 | Scattered edits | Multi-agent orchestrator coordinates work |
 

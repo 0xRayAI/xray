@@ -1,7 +1,12 @@
-# V3 Enforcement Pipelines (Hooks + CI + PostProcessor)
+# V3 Enforcement Pipelines (Hooks + CI + Governance)
 
-**Date**: 2026-06-11  
+**Date**: 2026-06-12  
 **Status**: Full enforcement cascade — all TUI/CLI integrations, CI (29 validators, coverage gate, consumer check, E2E smoke, scanners, governance detector), pre-commit (LightweightValidator), and consumer postinstall. Zero assumed enforcement.
+
+> **Note (v3.0.0)**: PostProcessor is soft-deprecated (`enablePostProcessor: false` by default).
+> The canonical enforcement path is: enforcement-gate → governance MCP pipeline
+> (governance-service.ts + Dynamo Solar SSOT + 3 skill MCPs). PostProcessor code
+> remains for opt-in but is no longer activated at boot.
 
 ## Overview
 v3 enforcement is the "how the 4 plugins actually leverage the system" (per original hard discussion). No more assumed enforcement or dead-end hooks.
@@ -82,8 +87,12 @@ PR → CI enforcement (full 29 via script) → coverage gate → consumer pack/i
 
 **Notes**: Bypasses old bridge filter entirely. Script uses console for CI output (acceptable like run-hook; hygiene maintained elsewhere).
 
-## 3. PostProcessor Pipeline (v3 Core, Now Reachable from Hooks/CI)
+## 3. PostProcessor Pipeline (Soft-Deprecated)
 **Purpose**: Post-action intelligence (monitoring → analysis → fix → escalate → redeploy → self-evolve).
+
+> **Note**: PostProcessor is soft-deprecated since v3.0.0. The canonical enforcement
+> path is the governance MCP pipeline. PostProcessor code is preserved for backward
+> compat and opt-in use via `enablePostProcessor: true`.
 
 **v3 Components** (`src/postprocessor/PostProcessor.ts` + subdirs):
 - `executePostProcessorLoop`: Explicit validator wiring (globalValidatorRegistry for 7/8/74/77 + context conversion from Map to string for RuleValidationContext).
@@ -110,11 +119,11 @@ PR → CI enforcement (full 29 via script) → coverage gate → consumer pack/i
 ## Cross-Cutting + Other Pipelines (Summary Updates to Inventory)
 - **Inference + Governance**: generateProposals (async, validators 1/3/5), handleGovernRequest (nucleus + 3 MCPs + Dynamo), SelfProposalEngine. Triggered from gate on proposals.
 - **MCP/Tool Events**: mcp-client.ts events → gate (OpenClaw) + servers (enforcer-tools, governance, processor-pipeline).
-- **Pre-commit/Git Hooks**: run-hook.js (TS + Codex/Console validator dynamic + inline) + log maintenance via PostProcessor triggers. Partially enhanced via gate for plugins.
+- **Pre-commit/Git Hooks**: run-hook.js (TS + Codex/Console validator dynamic + inline) + log maintenance. Partially enhanced via gate for plugins.
 - **CI/CD Consumer**: verify-consumer.sh (packaging + 4 E2E bridges + now gate/registry + plugin test + activity.log).
 - **Logging**: frameworkLogger (all enforcement/gate/PostProcessor decisions → activity.log + .opencode/logs).
-- **Boot/Nucleus**: v3 thin (kernel, orchestrator, plugin-registry, thin-dispatch) replaces old boot. Gate/PostProcessor activated here.
-- **Orchestration/Routing/Reporting/Session/Security**: As in old inventory, but now integrated with enforcement (e.g., outcome tracking feeds inference/governance; compliance in PostProcessor).
+- **Boot/Nucleus**: v3 thin (kernel, orchestrator, plugin-registry, thin-dispatch) replaces old boot. Gate activated here; PostProcessor disabled by default.
+- **Orchestration/Routing/Reporting/Session/Security**: As in old inventory, but now integrated with enforcement (e.g., outcome tracking feeds inference/governance; compliance via governance MCP pipeline).
 
 **Undocumented/Partial (Cascade Focus)**:
 - Interweaves/lenses processor implementations (enforcementGaps #1)
