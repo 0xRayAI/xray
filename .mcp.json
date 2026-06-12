@@ -3,7 +3,7 @@
     "xray-skills": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "skills"],
-      "description": "15 developer tools: code review, security audit, API design, database design, project analysis, testing strategy, performance optimization, UI/UX design, DevOps deployment, documentation generation, storyteller, and more. Works standalone — no configuration needed."
+      "description": "13 developer tools: code review, security audit, API design, database design, project analysis, testing strategy, performance optimization, UI/UX design, DevOps deployment, documentation generation, storyteller, and more. Works standalone — no configuration needed."
     },
     "xray-governance": {
       "command": "npx",
