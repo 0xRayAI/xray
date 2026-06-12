@@ -12,6 +12,7 @@
  * and the Dynamo Solar SSOT filter (required by default).
  */
 
+import { randomUUID } from "crypto";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -27,7 +28,6 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { randomUUID } from "crypto";
 import { handleGovernRequest } from "../nucleus/index.js";
 import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
@@ -66,7 +66,11 @@ class GovernanceServer {
   private server: Server;
 
   constructor() {
-    this.server = new Server(
+    this.server = this.createServer();
+  }
+
+  private createServer(): Server {
+    const server = new Server(
       {
         name: "governance", version: "2.2.2",
       },
@@ -77,7 +81,9 @@ class GovernanceServer {
       }
     );
 
-    this.setupToolHandlers();
+    this.setupToolHandlersOn(server);
+
+    return server;
   }
 
   private validateGovernProposalsArgs(value: unknown): GovernProposalsArgs {
@@ -113,8 +119,8 @@ class GovernanceServer {
     return value as GovernReflectionArgs;
   }
 
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+  private setupToolHandlersOn(server: Server) {
+    server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: [
           {
@@ -209,7 +215,7 @@ class GovernanceServer {
       };
     });
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -473,7 +479,7 @@ class GovernanceServer {
   async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3100", 10)): Promise<void> {
     await this.initializeGovernance();
 
-    const app = createMcpExpressApp();
+    const app = createMcpExpressApp({ host: '0.0.0.0' });
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
     });
