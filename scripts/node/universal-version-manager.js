@@ -147,7 +147,7 @@ function detectCodexInfo() {
       return { version: cver.startsWith("v") ? cver : `v${cver}`, termsCount: termCount, lastUpdated: new Date().toISOString().split("T")[0] };
     } catch {}
   }
-  return { version: "v3.0.2", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
+  return { version: "v3.0.3", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
 }
 
 const detectedCodex = detectCodexInfo();
@@ -155,7 +155,7 @@ const detectedCodex = detectCodexInfo();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "3.0.3",
+    version: "3.0.4",
       displayName: "xray: Self-Healing AI Governance OS",
       lastUpdated: "2026-06-13",
     // Counts (auto-calculated, but can be overridden)

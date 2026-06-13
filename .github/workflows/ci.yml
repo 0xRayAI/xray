@@ -177,8 +177,11 @@ jobs:
           CI: "true"
         run: |
           cd test-install
-          # Skip full validation in CI - just verify package was installed
+          # Verify package was installed
           ls node_modules/0xray/package.json || exit 1
+          # Verify postinstall output contains correct version string
+          POST_OUTPUT=$(node node_modules/0xray/scripts/node/postinstall.cjs 2>/dev/null || true)
+          echo "$POST_OUTPUT" | grep -q "xray v3 framework installed" || { echo "❌ postinstall shows wrong version"; echo "$POST_OUTPUT"; exit 1; }
           echo "✅ Package installed successfully"
 
       - name: Validate MCP

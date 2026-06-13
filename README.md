@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.0.3** — 41 agents · 44 skills · 15 MCPs servers · 20 codex terms · 160 test files
+**v3.0.4** — 41 agents · 44 skills · 15 MCPs servers · 20 codex terms · 160 test files
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -14,24 +14,23 @@ Think of it as an **AI supervisor for your AI coders**: catch hallucinations, pr
 
 ## Quick Start
 
+Pick your AI coding tool and run **one command**:
+
 ```bash
-npm install 0xray
+# OpenCode (most common)
+npx -y 0xray opencode install
 
-# Verify installation
-npx 0xray status
+# Grok CLI
+npx -y 0xray grok install
 
-# Install for your AI coding platform
-npx 0xray opencode install      # OpenCode (most common)
-npx 0xray grok install          # Grok CLI
-npx 0xray hermes install        # Hermes Agent
-npx 0xray openclaw install      # OpenClaw
+# Hermes Agent
+npx -y 0xray hermes install
 
-# Install starter skills (recommended)
-npx 0xray skill:install
-
-# See all available commands
-npx 0xray --help
+# OpenClaw
+npx -y 0xray openclaw install
 ```
+
+That's it — 0xRay installs as a native plugin with agents, governance, and MCP servers for your platform. Run `npx 0xray --help` to see all commands.
 
 **Requirements:** Node.js 18+, npm 9+, macOS or Linux.
 
