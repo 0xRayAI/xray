@@ -158,10 +158,8 @@ describe("0xRay Infrastructure Tests", () => {
       expect(content).toContain("export");
     });
 
-    it("should not have MCP server configuration (.mcp.json) - servers configured in OpenCode.json", () => {
-      // MCP servers are now configured directly in OpenCode.json
-      // .mcp.json is no longer used for server configuration
-      expect(fs.existsSync(".mcp.json")).toBe(false);
+    it("should have MCP server configuration (.mcp.json)", () => {
+      expect(fs.existsSync(".mcp.json")).toBe(true);
     });
   });
 

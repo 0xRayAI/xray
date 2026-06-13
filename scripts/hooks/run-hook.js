@@ -521,7 +521,7 @@ async function handlePreCommit() {
     process.stderr.write("\n❌ Codex validation failed:\n");
     codexResult.errors.slice(0, 10).forEach((e) => process.stderr.write(`   ${e}\n`));
     process.stderr.write("\nFix Codex violations before committing.\n");
-    process.stderr.write("Run: npx xray validate\n\n");
+    process.stderr.write("Run: npx 0xray validate\n\n");
     process.exit(1);
   }
 
@@ -590,7 +590,7 @@ async function handlePrePush() {
     }
 
     process.stderr.write("Fix all errors before pushing.\n");
-    process.stderr.write("Run: npx tsc --noEmit && npx xray validate\n\n");
+    process.stderr.write("Run: npx tsc --noEmit && npx 0xray validate\n\n");
     process.exit(1);
   }
 

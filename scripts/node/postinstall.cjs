@@ -88,5 +88,5 @@ try {
 }
 
 if (resolvedPackage !== resolvedTarget) {
-  structuredLog('postinstall', 'xray v2 framework installed. Run `npx xray setup` for full configuration (hooks, Hermes, symlinks).', 'success');
+  structuredLog('postinstall', 'xray v3 framework installed. Run `npx 0xray setup` for full configuration (hooks, Hermes, symlinks).', 'success');
 }

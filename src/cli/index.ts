@@ -75,7 +75,7 @@ program
       frameworkLogger.log('cli', 'install-success', 'info', { message: 'xray framework installed' });
       // UX banner kept for user visibility post-install (non-removable per exception)
       console.log("✅ xray framework installed!");
-      console.log("💡 Run 'npx xray setup' for full configuration (hooks, Hermes, symlinks)");
+      console.log("💡 Run 'npx 0xray setup' for full configuration (hooks, Hermes, symlinks)");
     } catch (error) {
       frameworkLogger.log('cli', 'install-error', 'error', { error: error instanceof Error ? error.message : String(error) });
       console.error("❌ Installation failed:", error instanceof Error ? error.message : String(error));
@@ -236,7 +236,7 @@ program
     console.log("  3. Access skills for specialized capabilities");
     console.log("  4. Check framework-reporting-system for activity reports");
     console.log(
-      '  5. Run "npx xray capabilities" anytime for this overview',
+      '  5. Run "npx 0xray capabilities" anytime for this overview',
     );
   });
 
@@ -310,7 +310,7 @@ console.log("  • @security-auditor scan this project");
         console.log("  • framework-reporting-system");
       } else {
         console.log(
-          '⚠️ Some components need attention. Run "npx xray install" to fix.',
+          '⚠️ Some components need attention. Run "npx 0xray install" to fix.',
         );
       }
     } catch (error) {
@@ -404,7 +404,7 @@ program
       console.log("");
       console.log("💡 Troubleshooting:");
       console.log("  • Make sure OpenCode is running");
-      console.log("  • Check framework installation: npx xray status");
+      console.log("  • Check framework installation: npx 0xray status");
       console.log(
         "  • Try manual report: framework-reporting-system generate-report",
       );
@@ -446,7 +446,7 @@ program
       console.log("");
       console.log("💡 Next steps:");
       console.log("  • Restart OpenCode to load the restored configuration");
-      console.log("  • Run: npx xray health (to verify everything works)");
+      console.log("  • Run: npx 0xray health (to verify everything works)");
       console.log("  • Try: @security-auditor scan this project");
     } catch (error) {
       console.error(
@@ -456,7 +456,7 @@ program
       console.log("");
       console.log("💡 Manual fix options:");
       console.log("  • Delete .opencode/ and .xray/ directories");
-      console.log("  • Run: npx xray install");
+      console.log("  • Run: npx 0xray install");
       console.log("  • Or manually restore missing configuration files");
       process.exit(1);
     }
@@ -510,7 +510,7 @@ program
       } else if (xrayDirExists) {
         console.log(`✅ Configuration directory found: ${xrayDir}`);
       } else {
-        console.log("ℹ️  No opencode.json or config directory found (run: npx xray fix to create)");
+        console.log("ℹ️  No opencode.json or config directory found (run: npx 0xray fix to create)");
       }
 
       // Check for common issues
@@ -531,8 +531,8 @@ program
         console.log("");
         console.log("💡 Pro tips:");
         console.log("  • Use @security-auditor for code quality checks");
-        console.log("  • Run reports regularly: npx xray report");
-        console.log("  • Check health anytime: npx xray health");
+        console.log("  • Run reports regularly: npx 0xray report");
+        console.log("  • Check health anytime: npx 0xray health");
       } else {
         console.log("⚠️ Issues found:");
         issues.forEach((issue, i) => {
@@ -541,7 +541,7 @@ program
 
         console.log("");
         console.log(
-          '🔧 Run "npx xray fix" to automatically fix these issues',
+          '🔧 Run "npx 0xray fix" to automatically fix these issues',
         );
       }
     } catch (error) {
@@ -675,7 +675,7 @@ program
       return;
     }
     
-    console.log('Usage: npx xray inference:tuner [options]');
+    console.log('Usage: npx 0xray inference:tuner [options]');
     console.log('  --start     Start the tuner service');
     console.log('  --stop      Stop the tuner service');
     console.log('  --run-once  Run a single tuning cycle');

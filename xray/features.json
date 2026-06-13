@@ -1,6 +1,6 @@
 {
   "$schema": "./features.schema.json",
-  "version": "3.0.1",
+  "version": "3.0.3",
   "description": "0xRay Framework - Unified Feature Configuration",
   "token_optimization": {
     "enabled": true,

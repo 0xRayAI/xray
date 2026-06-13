@@ -140,5 +140,5 @@ function addJsExtensionsToDist() {
 // Run the dist transformation
 addJsExtensionsToDist();
 
-structuredLog('prepare-consumer', 'xray v2 Consumer Preparation: Complete!', 'success');
+structuredLog('prepare-consumer', 'xray v3 Consumer Preparation: Complete!', 'success');
 structuredLog('prepare-consumer', 'Package is now ready for consumer installation (plain xray technical identity).', 'info');
