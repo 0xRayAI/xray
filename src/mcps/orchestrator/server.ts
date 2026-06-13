@@ -5,6 +5,8 @@
  * Provides a clean API while hiding internal complexity
  */
 
+import { realpathSync } from "fs";
+import { fileURLToPath } from "url";
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -376,8 +378,8 @@ export function createOrchestratorServer(): OrchestratorServer {
   return serverInstance;
 }
 
-// Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run if called directly (realpath handles /var → /private/var on macOS)
+if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])) {
   const server = createOrchestratorServer();
   server.start().catch((error) => {
     frameworkLogger.log('orchestrator.server', 'fatal-error', 'error', {

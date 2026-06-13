@@ -843,15 +843,17 @@ program
 program
   .command('mcp')
   .description('Run an MCP server subprocess (used by Grok/OpenCode .mcp.json)')
-  .argument('<server>', 'Server name: governance or skills')
+  .argument('<server>', 'Server name: governance, skills, enforcer, orchestrator')
   .action(async (server: string) => {
     const serverMap: Record<string, string> = {
       governance: 'dist/mcps/governance.server.js',
       skills: 'dist/mcps/knowledge-skills/skill-invocation.server.js',
+      enforcer: 'dist/mcps/enforcer-tools.server.js',
+      orchestrator: 'dist/mcps/orchestrator/server.js',
     };
     const relPath = serverMap[server];
     if (!relPath) {
-      console.error(`Unknown MCP server: ${server}. Use: governance, skills`);
+      console.error(`Unknown MCP server: ${server}. Use: governance, skills, enforcer, orchestrator`);
       process.exit(1);
     }
     const serverPath = resolve(join(packageRoot, relPath));

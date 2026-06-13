@@ -74,22 +74,30 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     }
 
     // Register MCP servers via grok mcp add (most reliable mechanism)
-    const govMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/governance.server.js');
-    const skillsMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/knowledge-skills/skill-invocation.server.js');
+    const xrayRoot = path.resolve(__dirname, '..', '..', '..');
+    const govMcpPath = path.join(xrayRoot, 'dist/mcps/governance.server.js');
+    const skillsMcpPath = path.join(xrayRoot, 'dist/mcps/knowledge-skills/skill-invocation.server.js');
+    const enforcerMcpPath = path.join(xrayRoot, 'dist/mcps/enforcer-tools.server.js');
+    const orchestratorMcpPath = path.join(xrayRoot, 'dist/mcps/orchestrator/server.js');
+    const mcpServers = [
+      { name: 'xray-governance', path: govMcpPath },
+      { name: 'xray-skills', path: skillsMcpPath },
+      { name: 'xray-enforcer', path: enforcerMcpPath },
+      { name: 'xray-orchestrator', path: orchestratorMcpPath },
+    ];
     try {
-      execSync(
-        `grok mcp add xray-governance --command node --args "${govMcpPath}" --env "XRAY_ROOT=${process.cwd()}"`,
-        { stdio: 'pipe' }
-      );
-      execSync(
-        `grok mcp add xray-skills --command node --args "${skillsMcpPath}" --env "XRAY_ROOT=${process.cwd()}"`,
-        { stdio: 'pipe' }
-      );
+      for (const server of mcpServers) {
+        execSync(
+          `grok mcp add ${server.name} --command node --args "${server.path}" --env "XRAY_ROOT=${xrayRoot}"`,
+          { stdio: 'pipe' }
+        );
+      }
       frameworkLogger.log('grok-cli', 'Registered xray MCP servers with Grok CLI', 'info', {});
     } catch {
       frameworkLogger.log('grok-cli', 'Could not auto-register MCP servers. Run manually:', 'info', {});
-      frameworkLogger.log('grok-cli', `  grok mcp add xray-governance --command node --args "${govMcpPath}"`, 'info', {});
-      frameworkLogger.log('grok-cli', `  grok mcp add xray-skills --command node --args "${skillsMcpPath}"`, 'info', {});
+      for (const server of mcpServers) {
+        frameworkLogger.log('grok-cli', `  grok mcp add ${server.name} --command node --args "${server.path}"`, 'info', {});
+      }
     }
 
     frameworkLogger.log('grok-cli', '0xRay is now installed as a first-class Grok CLI plugin!', 'info', {});

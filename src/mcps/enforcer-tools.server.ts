@@ -7,6 +7,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 
@@ -1000,7 +1001,7 @@ class XrayEnforcerToolsServer extends XrayKnowledgeSkillBase {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
   const server = new XrayEnforcerToolsServer();
   server.run("enforcer").catch((error) => frameworkLogger.log("mcps/enforcer", "run", "error", { error: String(error) }));
 }

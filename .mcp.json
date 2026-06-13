@@ -9,6 +9,16 @@
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "governance"],
       "description": "[Advanced] Multi-skill governance orchestrator — runs proposals through code-review, security-audit, researcher + external Dynamo Solar SSOT. Requires additional setup (see docs)."
+    },
+    "xray-enforcer": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "enforcer"],
+      "description": "Codex compliance enforcement — validates proposals against Codex policy rules (tests-required, type-safety, security, etc.)"
+    },
+    "xray-orchestrator": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "orchestrator"],
+      "description": "Multi-agent orchestration via thinDispatch 7-flow routing (simple/moderate/complex/enterprise delegation)"
     }
   }
 }

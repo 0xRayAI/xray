@@ -194,6 +194,178 @@ async function main() {
     ['--keep']
   );
 
+  // ── Plugin 4: Opencode Install (auto npm-init) ─────────
+  section('Plugin: Opencode Install');
+  const opencodeInstallDir = path.join(os.tmpdir(), `xray-opencode-install-${Date.now()}`);
+  fs.mkdirSync(opencodeInstallDir, { recursive: true });
+  getStdout('git init -q && git config user.email "t@t.com" && git config user.name "T"', { cwd: opencodeInstallDir, timeout: 15000 });
+  result(`consumer dir (no package.json): ${path.basename(opencodeInstallDir)}`, true);
+
+  // Pack tarball (same as plugin flow)
+  const packOut = getStdout('npm pack', { cwd: ROOT, timeout: 60000 });
+  const tbMatch = packOut.match(/((?:0xray)-\d+\.\d+\.\d+)\.tgz/);
+  if (!tbMatch) { result('npm pack', false, 'no tarball'); } else {
+    const tarball = path.join(ROOT, tbMatch[0]);
+    result(`npm pack: ${tbMatch[0]}`, true);
+
+    // Install tarball into consumer dir
+    getStdout(`npm install "${tarball}"`, { cwd: opencodeInstallDir, timeout: 180000 });
+    const xrayPkgPath = path.join(opencodeInstallDir, 'node_modules', '0xray', 'package.json');
+    if (!fs.existsSync(xrayPkgPath)) {
+      result('0xray install into consumer dir', false);
+    } else {
+      const pkgInfo = JSON.parse(fs.readFileSync(xrayPkgPath, 'utf-8'));
+      result(`0xray v${pkgInfo.version} installed`, true);
+    }
+
+    // Delete the auto-created package.json to test the auto-init flow
+    const existingPkg = path.join(opencodeInstallDir, 'package.json');
+    const hadPkgBefore = fs.existsSync(existingPkg);
+    if (hadPkgBefore) {
+      fs.unlinkSync(existingPkg);
+      result('removed existing package.json to test auto-init', true);
+    } else {
+      result('no existing package.json (expected)', true);
+    }
+
+    // Run opencode install
+    const installResult = getStdout(`node node_modules/0xray/dist/cli/index.js opencode install`, { cwd: opencodeInstallDir, timeout: 60000 });
+
+    // Verify package.json was auto-created
+    const pkgExists = fs.existsSync(existingPkg);
+    if (!pkgExists) { result('package.json auto-created', false, 'not found'); }
+    else {
+      result('package.json auto-created', true);
+      const consumerPkg = JSON.parse(fs.readFileSync(existingPkg, 'utf-8'));
+      const has0xray = consumerPkg.dependencies && consumerPkg.dependencies['0xray'];
+      result('0xray dependency in package.json', !!has0xray, has0xray ? '' : 'missing 0xray dep');
+      if (has0xray) result(`0xray dep: ${consumerPkg.dependencies['0xray']}`, true);
+    }
+
+    // Verify .opencode/ was created
+    const opencodeDir = path.join(opencodeInstallDir, '.opencode');
+    result('.opencode/ directory created', fs.existsSync(opencodeDir), 'not found');
+    const initSh = path.join(opencodeDir, 'init.sh');
+    result('.opencode/init.sh present', fs.existsSync(initSh), 'not found');
+
+    // Verify node_modules/0xray still intact after opencode install's npm install
+    result('node_modules/0xray still resolves after install', fs.existsSync(xrayPkgPath), 'unresolved');
+  }
+
+  if (!KEEP) { try { fs.rmSync(opencodeInstallDir, { recursive: true, force: true }); } catch {} }
+  else { console.log(`  \x1b[33mKept: ${opencodeInstallDir}\x1b[0m`); }
+
+  // ── Infrastructure Validation ───────────────────────────
+  section('Infrastructure: MCP Servers + Config Paths');
+  const infraDir = path.join(os.tmpdir(), `xray-infra-${Date.now()}`);
+  fs.mkdirSync(infraDir, { recursive: true });
+  getStdout('git init -q && git config user.email "t@t.com" && git config user.name "T"', { cwd: infraDir, timeout: 15000 });
+  result(`consumer dir: ${path.basename(infraDir)}`, true);
+
+  const infraTb = getStdout('npm pack', { cwd: ROOT, timeout: 60000 });
+  const infraTbMatch = infraTb.match(/((?:0xray)-\d+\.\d+\.\d+)\.tgz/);
+  let infraOk = true;
+  if (!infraTbMatch) { result('npm pack', false, 'no tarball'); infraOk = false; }
+  if (infraOk) {
+    const tarball = path.join(ROOT, infraTbMatch[0]);
+    getStdout(`npm install "${tarball}"`, { cwd: infraDir, timeout: 180000 });
+    const distRoot = path.join(infraDir, 'node_modules', '0xray', 'dist');
+    const pkgInfo = JSON.parse(fs.readFileSync(path.join(infraDir, 'node_modules', '0xray', 'package.json'), 'utf-8'));
+    result(`0xray v${pkgInfo.version} installed`, true);
+
+    // 1. CLI mcp server map — all 4 servers registered in dist
+    const cliDist = fs.readFileSync(path.join(distRoot, 'cli', 'index.js'), 'utf-8');
+    const cliServers = ['governance', 'skills', 'enforcer', 'orchestrator'];
+    for (const srv of cliServers) {
+      result(`CLI mcp server "${srv}" registered`, cliDist.includes(srv), `not found in CLI dist`);
+    }
+
+    // 2. Server binaries exist
+    const serverBinaries = [
+      'dist/mcps/governance.server.js',
+      'dist/mcps/knowledge-skills/skill-invocation.server.js',
+      'dist/mcps/enforcer-tools.server.js',
+      'dist/mcps/orchestrator/server.js',
+    ];
+    for (const bin of serverBinaries) {
+      const binPath = path.join(infraDir, 'node_modules', '0xray', bin);
+      result(`binary exists: ${bin}`, fs.existsSync(binPath), 'not found');
+    }
+
+    // 3. MCP server startup — each server responds to initialize
+    const serversArr = [
+      { name: 'governance', path: path.join(infraDir, 'node_modules/0xray/dist/mcps/governance.server.js') },
+      { name: 'skills', path: path.join(infraDir, 'node_modules/0xray/dist/mcps/knowledge-skills/skill-invocation.server.js') },
+      { name: 'enforcer', path: path.join(infraDir, 'node_modules/0xray/dist/mcps/enforcer-tools.server.js') },
+      { name: 'orchestrator', path: path.join(infraDir, 'node_modules/0xray/dist/mcps/orchestrator/server.js') },
+    ];
+    // Check binaries exist first
+    const validServers = serversArr.filter(s => {
+      const ok = fs.existsSync(s.path);
+      result(`server binary: ${s.name}`, ok, ok ? '' : 'not found at ' + s.path);
+      return ok;
+    });
+    // Spawn each server inline using the subprocess helper (spawn, not execSync)
+    for (const srv of validServers) {
+      const child = require('child_process').spawn(process.execPath, [srv.path], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, XRAY_ROOT: ROOT, NODE_ENV: 'production' }
+      });
+      const startupOk = await new Promise(resolve => {
+        let output = '';
+        child.stdout.on('data', d => { output += d.toString(); });
+        child.stderr.on('data', () => {});
+        const timer = setTimeout(() => { child.kill(); resolve({ output }); }, 10000);
+        child.on('close', () => { clearTimeout(timer); resolve({ output }); });
+        child.stdin.write(JSON.stringify({
+          jsonrpc: '2.0', id: 1, method: 'initialize',
+          params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'e2e-test', version: '1' } }
+        }) + '\n');
+      });
+      const hasResult = startupOk.output.includes('"result"');
+      result(`server starts: ${srv.name}`, hasResult, hasResult ? '' : (startupOk.output.trim() || '(empty)'));
+    }
+
+    // 4. .mcp.json includes all 4 servers
+    const mcpJsonPaths = [
+      path.join(ROOT, '.mcp.json'),
+      path.join(ROOT, 'src/integrations/grok/plugin/0xray/.mcp.json'),
+    ];
+    for (const mcpPath of mcpJsonPaths) {
+      if (!fs.existsSync(mcpPath)) { result(`.mcp.json exists: ${path.basename(path.dirname(mcpPath))}`, false, 'file not found'); continue; }
+      result(`.mcp.json exists: ${path.basename(path.dirname(mcpPath))}`, true);
+      try {
+        const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf-8'));
+        const mcpServers = Object.keys(mcp.mcpServers || {});
+        for (const expected of ['xray-governance', 'xray-skills', 'xray-enforcer', 'xray-orchestrator']) {
+          result(`  ${expected} in ${path.basename(mcpPath)}`, mcpServers.includes(expected), 'missing');
+        }
+      } catch (e) {
+        result(`parse ${path.basename(mcpPath)}`, false, e.message);
+      }
+    }
+
+    // 5. Config-path resolution respects XRAY_ROOT
+    const configPathsMod = path.join(infraDir, 'node_modules', '0xray', 'dist/core/config-paths.js');
+    const configTest = getStdout(
+      `node -e "import('${configPathsMod}').then(m => { console.log('has resolveProjectRoot:', typeof m.resolveProjectRoot); process.env.XRAY_ROOT = '/test/root'; console.log('with XRAY_ROOT:', m.resolveProjectRoot()); delete process.env.XRAY_ROOT; console.log('default:', m.resolveProjectRoot()); })"`,
+      { cwd: infraDir, timeout: 10000 }
+    );
+    result('config-paths exports resolveProjectRoot', configTest.includes('resolveProjectRoot'), 'missing export');
+    result('XRAY_ROOT used as project root', configTest.includes('/test/root'), 'env var not respected');
+
+    // 6. Codex resolution with XRAY_ROOT
+    const codexTest = getStdout(
+      `XRAY_ROOT=${ROOT} node -e "import('fs').then(async (fsMod) => { const m = await import('${configPathsMod}'); const candidates = m.resolveCodexPath(); for (const c of candidates) { if (fsMod.existsSync(c)) { console.log('FOUND:', c); break; } } })"`,
+      { cwd: infraDir, timeout: 10000 }
+    );
+    const foundCodex = codexTest.includes('FOUND:') && codexTest.includes('xray/codex.json');
+    result('codex.json found via XRAY_ROOT', foundCodex, `expected xray/codex.json in candidates. Got: ${codexTest.substring(0, 300)}`);
+  }
+
+  if (!KEEP) { try { fs.rmSync(infraDir, { recursive: true, force: true }); } catch {} }
+  else { console.log(`  \x1b[33mKept: ${infraDir}\x1b[0m`); }
+
   // ── Summary ──────────────────────────────────────────
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   section('Plugin Validation Summary');

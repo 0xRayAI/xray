@@ -23,6 +23,17 @@ import { join, resolve } from "path";
 /** Environment variable name for custom config root */
 export const XRAY_CONFIG_DIR_ENV = "XRAY_CONFIG_DIR";
 
+/** Environment variable name for project root override (set by Grok MCP registration) */
+const XRAY_ROOT_ENV = "XRAY_ROOT";
+
+/**
+ * Resolve the effective project root.
+ * Priority: explicit projectRoot param > XRAY_ROOT env var > process.cwd()
+ */
+export function resolveProjectRoot(projectRoot?: string): string {
+  return projectRoot || process.env[XRAY_ROOT_ENV] || process.cwd();
+}
+
 /** Legacy env var name (backward compat) */
 // Legacy consumer compat (see bridge and tests)
 
@@ -34,7 +45,7 @@ const _resolvedConfigDirs = new Map<string, string>();
  * Scans in priority order and caches the first one that exists (or the first default).
  */
 export function getConfigDir(projectRoot?: string): string {
-  const root = projectRoot || process.cwd();
+  const root = resolveProjectRoot(projectRoot);
   const cached = _resolvedConfigDirs.get(root);
   if (cached) return cached;
   const envDir = process.env[XRAY_CONFIG_DIR_ENV];
@@ -73,7 +84,7 @@ export function getConfigDir(projectRoot?: string): string {
  * @param projectRoot  - Optional project root override
  */
 export function resolveConfigPath(relativePath: string, projectRoot?: string): string | null {
-  const root = projectRoot || process.cwd();
+  const root = resolveProjectRoot(projectRoot);
   const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
@@ -100,7 +111,7 @@ export function resolveConfigPath(relativePath: string, projectRoot?: string): s
  * Similar logic to resolveConfigPath but for the state/ subdirectory.
  */
 export function resolveStateDir(projectRoot?: string): string {
-  const root = projectRoot || process.cwd();
+  const root = resolveProjectRoot(projectRoot);
   const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
@@ -132,7 +143,7 @@ export function resolveStateFilePath(projectRoot?: string): string {
  * Get the profiles storage directory.
  */
 export function resolveProfilesDir(projectRoot?: string): string {
-  const root = projectRoot || process.cwd();
+  const root = resolveProjectRoot(projectRoot);
   const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
@@ -156,7 +167,7 @@ export function resolveProfilesDir(projectRoot?: string): string {
  * Has additional fallback locations beyond the standard config dir.
  */
 export function resolveCodexPath(projectRoot?: string): string[] {
-  const root = projectRoot || process.cwd();
+  const root = resolveProjectRoot(projectRoot);
   const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
@@ -177,7 +188,7 @@ export function resolveCodexPath(projectRoot?: string): string[] {
  * Get the logs directory for framework logging.
  */
 export function resolveLogDir(projectRoot?: string): string {
-  const root = projectRoot || process.cwd();
+  const root = resolveProjectRoot(projectRoot);
 
   // Logs always go to logs/framework/ regardless of config dir
   return join(root, "logs", "framework");

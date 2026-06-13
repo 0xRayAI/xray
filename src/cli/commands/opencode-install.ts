@@ -109,6 +109,13 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
     // Ensure 0xray is an npm dependency so plugin imports resolve
     const pkgPath = path.join(process.cwd(), 'package.json');
     let needsInstall = false;
+
+    if (!fs.existsSync(pkgPath)) {
+      console.log('No package.json found — running npm init -y...');
+      execSync('npm init -y', { cwd: process.cwd(), stdio: 'inherit' });
+      needsInstall = true;
+    }
+
     if (fs.existsSync(pkgPath)) {
       const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
       const has0xray = pkg.dependencies?.['0xray'] || pkg.devDependencies?.['0xray'];

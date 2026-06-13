@@ -72,7 +72,7 @@ class GovernanceServer {
   private createServer(): Server {
     const server = new Server(
       {
-        name: "governance", version: "3.0.7",
+        name: "governance", version: "3.0.8",
       },
       {
         capabilities: {
@@ -581,9 +581,8 @@ class GovernanceServer {
   }
 }
 
-// Start the server if this file is run directly
-const entryPoint = path.resolve(process.argv[1] ?? "");
-if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+// Start the server if this file is run directly (realpath handles /var → /private/var on macOS)
+if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
   // If --port or MCP_PORT is set, use HTTP transport (for Grok CLI compatibility)
   const cliPort = process.argv.find((a) => a.startsWith("--port="))?.split("=")[1];
   const port = parseInt(cliPort ?? process.env.MCP_PORT ?? "", 10);

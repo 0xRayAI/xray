@@ -5,6 +5,7 @@ import {
   ErrorCode,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
+import { realpathSync } from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
@@ -735,9 +736,8 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 }
 
-// Start the server if this file is run directly
-const entryPoint = path.resolve(process.argv[1] ?? "");
-if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
+// Start the server if this file is run directly (realpath handles /var → /private/var on macOS)
+if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])) {
   // If --port or MCP_PORT is set, use HTTP transport (for Grok CLI compatibility)
   const cliPort = process.argv.find((a) => a.startsWith("--port="))?.split("=")[1];
   const port = parseInt(cliPort ?? process.env.MCP_PORT ?? "", 10);

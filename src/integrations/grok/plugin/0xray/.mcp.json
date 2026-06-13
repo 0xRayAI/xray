@@ -7,6 +7,14 @@
     "xray-skills": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "skills"]
+    },
+    "xray-enforcer": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "enforcer"]
+    },
+    "xray-orchestrator": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "orchestrator"]
     }
   }
 }
