@@ -273,11 +273,13 @@ describe('ConfigLoader', () => {
 
     it('should return true when default config file exists', () => {
       const testConfigs = [{ serverName: 'test', command: 'node', args: ['test.js'], timeout: 30000 }];
-      fs.writeFileSync('.mcp.json', JSON.stringify(testConfigs));
+      const tmpConfig = '.test-mcp-default.json';
+      fs.writeFileSync(tmpConfig, JSON.stringify(testConfigs));
+      loader.addConfigPath(tmpConfig);
       
       expect(loader.hasConfigFile()).toBe(true);
       
-      fs.unlinkSync('.mcp.json');
+      fs.unlinkSync(tmpConfig);
     });
 
     it('should return true when added config file exists', () => {
