@@ -9,20 +9,17 @@ else
     PROJECT_ROOT=$(realpath "$SCRIPT_DIR/..")
 fi
 
-# Try to find framework package.json - check source first (dev), then node_modules (consumer)
-# For development, prefer the source version over node_modules
-# Need to handle both root-level and .opencode/ subdirectory runs
-SOURCE_PACKAGE_JSON="$SCRIPT_DIR/package.json"
-if [ ! -f "$SOURCE_PACKAGE_JSON" ] && [ -f "$PROJECT_ROOT/package.json" ]; then
-    SOURCE_PACKAGE_JSON="$PROJECT_ROOT/package.json"
-fi
+# Detect mode: dev (xray repo) vs consumer (npm dependency)
+# - Dev: PROJECT_ROOT has src/core/boot-orchestrator.ts (xray source)
+# - Consumer: node_modules/0xray/package.json exists
+# - Fallback: no xray found at all
 NODE_MODULES_PACKAGE_JSON="$PROJECT_ROOT/node_modules/0xray/package.json"
 
-if [ -f "$SOURCE_PACKAGE_JSON" ]; then
-    # Development mode: use source version (project root)
+if [ -f "$PROJECT_ROOT/src/core/boot-orchestrator.ts" ]; then
+    # Development mode: running inside the xray repo itself
     FRAMEWORK_ROOT="$PROJECT_ROOT"
 elif [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
-    # Consumer mode: use installed version
+    # Consumer mode: 0xray installed as npm dependency
     FRAMEWORK_ROOT="$PROJECT_ROOT/node_modules/0xray"
 else
     FRAMEWORK_ROOT="$PROJECT_ROOT"
