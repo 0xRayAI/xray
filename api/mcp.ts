@@ -83,7 +83,7 @@ const TOOLS: ToolDefinition[] = [
               source: { type: 'string' },
               confidence: { type: 'number' },
             },
-            required: ['type', 'title', 'description'],
+            required: ['type', 'title', 'description', 'source'],
           },
         },
         context: { type: 'object', description: 'Optional context (project, phase, etc.)' },
@@ -148,6 +148,13 @@ async function handleMCPMessage(_sessionId: string, msg: any): Promise<any> {
         if (name === 'govern_proposals') {
           const inputProposals = args?.proposals || []
 
+          // Validate source on every proposal
+          for (let i = 0; i < inputProposals.length; i++) {
+            if (typeof inputProposals[i].source !== 'string' || !inputProposals[i].source) {
+              return mcpError(id, -32602, `proposals[${i}].source is required — set to "inference", "reflection", "manual", "ci", "phase-planning", or "metamorphosis"`)
+            }
+          }
+
           // Map to the canonical GovernanceRequest shape
           const request: GovernanceRequest = {
             proposals: inputProposals.map((p: any, i: number) => ({
@@ -156,7 +163,7 @@ async function handleMCPMessage(_sessionId: string, msg: any): Promise<any> {
               title: p.title || 'Untitled Proposal',
               description: p.description || p.details || '',
               evidence: p.evidence || [],
-              source: 'vercel-http',
+              source: p.source,
               confidence: p.confidence || 0.8,
               tags: p.tags || ['vercel-http'],
             })),

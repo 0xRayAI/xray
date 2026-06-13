@@ -70,7 +70,7 @@ describe('handleGovernRequest (pure kernel handler)', () => {
 
   it('calls getGovernanceService().govern() with correctly merged options (request-level)', async () => {
     const body = {
-      proposals: [{ id: 'p1', type: 'fix', title: 't', description: 'd' }],
+      proposals: [{ id: 'p1', type: 'fix', title: 't', description: 'd', source: 'manual' }],
       options: { requireExternalDynamo: true },
       context: { project: 'test' },
     };
@@ -86,7 +86,7 @@ describe('handleGovernRequest (pure kernel handler)', () => {
 
   it('caller-supplied requireExternalDynamo overrides request-level option', async () => {
     const body = {
-      proposals: [{ id: 'p1', type: 'fix', title: 't', description: 'd' }],
+      proposals: [{ id: 'p1', type: 'fix', title: 't', description: 'd', source: 'manual' }],
       options: { requireExternalDynamo: false },
     };
 
@@ -99,8 +99,8 @@ describe('handleGovernRequest (pure kernel handler)', () => {
   it('logs govern-request-received and govern-response via frameworkLogger', async () => {
     const body = {
       proposals: [
-        { id: 'p1', type: 'fix', title: 't1', description: 'd1' },
-        { id: 'p2', type: 'refactor', title: 't2', description: 'd2' },
+        { id: 'p1', type: 'fix', title: 't1', description: 'd1', source: 'manual' },
+        { id: 'p2', type: 'refactor', title: 't2', description: 'd2', source: 'manual' },
       ],
     };
 
@@ -139,7 +139,7 @@ describe('handleGovernRequest (pure kernel handler)', () => {
     mockGovern.mockResolvedValue(customResponse);
 
     const result = await handleGovernRequest({
-      proposals: [{ id: 'p1', type: 'fix', title: 't', description: 'd' }],
+      proposals: [{ id: 'p1', type: 'fix', title: 't', description: 'd', source: 'manual' }],
     });
 
     expect(result).toEqual(customResponse);

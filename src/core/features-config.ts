@@ -733,7 +733,7 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
    */
   private getDefaultConfig(): FeaturesConfig {
     return {
-      version: "3.0.10",
+      version: "3.0.11",
       description: "0xRay Framework - Unified Feature Configuration",
 
       token_optimization: {

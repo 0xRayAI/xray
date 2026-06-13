@@ -41,8 +41,8 @@ function makeTextResponse(decision: string, confidence: string, reasoning: strin
 }
 
 const mockProposals = [
-  { id: 'p1', type: 'refactor' as const, title: 'Refactor X', description: 'Refactor X description', evidence: ['ev1'] },
-  { id: 'p2', type: 'fix' as const, title: 'Fix Y', description: 'Fix Y description' },
+  { id: 'p1', type: 'refactor' as const, title: 'Refactor X', description: 'Refactor X description', evidence: ['ev1'], source: 'manual' as const },
+  { id: 'p2', type: 'fix' as const, title: 'Fix Y', description: 'Fix Y description', source: 'manual' as const },
 ];
 
 describe('GovernanceService', () => {

@@ -302,7 +302,11 @@ export class GovernanceService {
     function toDynamoSource(s?: string): 'system' | 'agent' | 'human' {
       if (s === 'metamorphosis') return 'system';
       if (s === 'manual') return 'human';
-      return 'agent';
+      if (s === 'inference' || s === 'reflection' || s === 'ci' || s === 'phase-planning') return 'agent';
+      throw new Error(
+        `proposal.source="${s}" is not recognized. ` +
+        'Must be "inference", "reflection", "manual", "ci", "phase-planning", or "metamorphosis".',
+      );
     }
 
     // Merge tags from context and per-proposal tags

@@ -94,8 +94,8 @@ function httpReq(
 }
 
 const TEST_PROPOSALS = [
-  { id: "e2e-1", title: "E2E test fix", description: "Test fix proposal", type: "fix", confidence: 0.8, evidence: ["e2e evidence"] },
-  { id: "e2e-2", title: "E2E test codify", description: "Test codify proposal", type: "codify", confidence: 0.9, evidence: ["e2e evidence"] },
+  { id: "e2e-1", title: "E2E test fix", description: "Test fix proposal", type: "fix", source: "manual", confidence: 0.8, evidence: ["e2e evidence"] },
+  { id: "e2e-2", title: "E2E test codify", description: "Test codify proposal", type: "codify", source: "manual", confidence: 0.9, evidence: ["e2e evidence"] },
 ];
 
 describe.skipIf(!RUN_HERMES_BRIDGE)("Hermes Bridge E2E", { timeout: 180000 }, () => {

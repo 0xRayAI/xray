@@ -36,6 +36,9 @@ import type {
   GovernanceRequest,
   GovernanceResponse,
 } from '../governance/governance-types.js';
+import {
+  normalizeProposalWithSource,
+} from '../governance/governance-types.js';
 import { frameworkLogger } from '../core/framework-logger.js';
 
 export interface GovernHTTPConfig {
@@ -75,6 +78,9 @@ export async function handleGovernRequest(
     ...request,
     options: mergedOptions,
   };
+
+  // Normalize each proposal to ensure source is present and valid
+  mergedRequest.proposals = mergedRequest.proposals.map((p) => normalizeProposalWithSource(p));
 
   await frameworkLogger.log('nucleus-http', 'govern-request-received', 'info', {
     proposalCount: mergedRequest.proposals.length,

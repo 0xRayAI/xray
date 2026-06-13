@@ -20,7 +20,7 @@ export interface GovernanceProposal {
   title: string;
   description: string;
   evidence?: string[];
-  source?: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning' | 'metamorphosis';
+  source: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning' | 'metamorphosis';
   confidence?: number; // 0-1
   metadata?: Record<string, unknown>;
   /** Freeform tags for Dynamo grouping/correlation (e.g. ["0xray"], ["my-project"]) */
@@ -100,6 +100,34 @@ export interface ActiveCodexSnapshot {
   note: string;
   dynamo_required: boolean;
   codex?: Record<string, unknown>;
+}
+
+export function normalizeProposalWithSource(
+  input: Partial<GovernanceProposal> & { title: string; description: string; type: ProposalType },
+): GovernanceProposal {
+  if (!input.source) {
+    throw new Error(
+      'All proposals must identify their source. ' +
+      'Set source to "inference", "reflection", "manual", "ci", "phase-planning", or "metamorphosis".',
+    );
+  }
+  const validSources = ['inference', 'reflection', 'manual', 'ci', 'phase-planning', 'metamorphosis'] as const;
+  if (!validSources.includes(input.source as any)) {
+    throw new Error(
+      `Invalid source "${input.source}". Must be one of: ${validSources.join(', ')}`,
+    );
+  }
+  return {
+    id: input.id || `prop-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: input.type,
+    title: input.title,
+    description: input.description,
+    evidence: input.evidence || [],
+    source: input.source as GovernanceProposal['source'],
+    confidence: input.confidence ?? 0.8,
+    ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+    ...(input.tags !== undefined ? { tags: input.tags } : {}),
+  };
 }
 
 export interface ICodexPolicyProvider {

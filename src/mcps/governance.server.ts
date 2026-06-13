@@ -40,7 +40,7 @@ interface GovernanceProposalInput {
   title: string;
   description: string;
   evidence?: string[];
-  source?: string;
+  source: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning' | 'metamorphosis';
   confidence?: number;
 }
 
@@ -72,7 +72,7 @@ class GovernanceServer {
   private createServer(): Server {
     const server = new Server(
       {
-        name: "governance", version: "3.0.10",
+        name: "governance", version: "3.0.11",
       },
       {
         capabilities: {
@@ -108,8 +108,17 @@ class GovernanceServer {
       if (typeof p.description !== 'string') {
         throw new Error(`proposals[${i}].description must be a string`);
       }
+      if (typeof p.source !== 'string' || !p.source) {
+        throw new Error(`proposals[${i}].source is required — set to "inference", "reflection", "manual", "ci", "phase-planning", or "metamorphosis"`);
+      }
     }
-    return value as GovernProposalsArgs;
+    return {
+      ...(value as Omit<GovernProposalsArgs, 'proposals'>),
+      proposals: (obj.proposals as any[]).map((p: any) => ({
+        ...p,
+        source: p.source as GovernanceProposalInput['source'],
+      })),
+    } as GovernProposalsArgs;
   }
 
   private validateGovernReflectionArgs(value: unknown): GovernReflectionArgs {
@@ -150,7 +159,7 @@ class GovernanceServer {
                       source: { type: "string" },
                       confidence: { type: "number" },
                     },
-                    required: ["type", "title", "description"],
+                    required: ["type", "title", "description", "source"],
                   },
                   description: "List of proposals to govern",
                 },
@@ -256,7 +265,7 @@ class GovernanceServer {
         title: p.title,
         description: p.description,
         evidence: p.evidence || [],
-        source: "manual",
+        source: p.source,
         confidence: p.confidence || 0.8,
       })),
       context: args.context || {},

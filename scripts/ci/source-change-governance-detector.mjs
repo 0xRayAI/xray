@@ -105,7 +105,7 @@ function buildProposals(changedFiles) {
     title: `Governance: ${category} files changed in PR`,
     description: `Detected changes to ${files.length} ${category} file(s): ${files.join(", ")}. Auto-submitting governance proposal for review.`,
     type: "strategic",
-    source: "source-change-governance-detector",
+    source: "ci",
     confidence: 0.65,
     evidence: [...files, `Auto-detected by source-change-governance-detector at ${new Date().toISOString()}`],
     tags: ["0xray"],
@@ -158,7 +158,7 @@ async function main() {
         context: {
           project: "xray",
           phase: "ci-auto-governance",
-          source: "source-change-governance-detector",
+    source: "ci",
           prTimestamp: new Date().toISOString(),
           tags: ["0xray"],
         },

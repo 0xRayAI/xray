@@ -17,7 +17,7 @@ export const regulatoryProposals: GovernanceProposalInput[] = [
       "EU AML Directive 2025/1234 Article 17 requirements",
       "Pattern: 5+ rapid transfers between unrelated accounts",
     ],
-    source: "compliance-review",
+    source: "manual",
     confidence: 0.92,
   },
   {
@@ -36,7 +36,7 @@ export const regulatoryProposals: GovernanceProposalInput[] = [
       "SCA exemption thresholds: <30 EUR contactless, recurring transactions",
       "EBA Guidelines on authentication and communication",
     ],
-    source: "compliance-review",
+    source: "manual",
     confidence: 0.95,
   },
   {
@@ -55,7 +55,7 @@ export const regulatoryProposals: GovernanceProposalInput[] = [
       "Data categories: identity, financial, behavioral, communications",
       "Cross-system purge: PostgreSQL, Redis, S3, BigQuery, logs",
     ],
-    source: "compliance-review",
+    source: "manual",
     confidence: 0.93,
   },
   {
@@ -75,7 +75,7 @@ export const regulatoryProposals: GovernanceProposalInput[] = [
       "EU Beneficial Ownership Register interconnection system (BORIS)",
       "PEP list from World Bank/OECD consolidated database",
     ],
-    source: "compliance-review",
+    source: "manual",
     confidence: 0.88,
   },
   {
@@ -95,7 +95,7 @@ export const regulatoryProposals: GovernanceProposalInput[] = [
       "Processing 'likely to result in high risk' criteria",
       "DPO mandatory consultation Article 36 for high residual risk",
     ],
-    source: "compliance-review",
+    source: "manual",
     confidence: 0.90,
   },
   {
@@ -115,7 +115,7 @@ export const regulatoryProposals: GovernanceProposalInput[] = [
       "EBA RTS on strong customer authentication and secure communication",
       "Berlin Group NextGenPSD2 implementation standards",
     ],
-    source: "compliance-review",
+    source: "manual",
     confidence: 0.91,
   },
 ];
