@@ -87,7 +87,7 @@ function checkGitStatus() {
       'CHANGELOG.md',
       'AGENTS.md',
       'AGENTS-full.md',
-      'AGENTS-consumer.md',
+      'xray/agents_template.md',
       'README.md',
       'logs/',
       'backups/',

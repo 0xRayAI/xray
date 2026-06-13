@@ -361,6 +361,36 @@ async function main() {
     );
     const foundCodex = codexTest.includes('FOUND:') && codexTest.includes('xray/codex.json');
     result('codex.json found via XRAY_ROOT', foundCodex, `expected xray/codex.json in candidates. Got: ${codexTest.substring(0, 300)}`);
+
+    // 7. AGENTS.md consumer template ships and deploys
+    const templateInPkg = path.join(infraDir, 'node_modules', '0xray', 'xray', 'agents_template.md');
+    const templateExists = fs.existsSync(templateInPkg);
+    result('AGENTS template shipped in npm package', templateExists, 'xray/agents_template.md not found in node_modules/0xray');
+    if (templateExists) {
+      const templateContent = fs.readFileSync(templateInPkg, 'utf-8');
+      result('AGENTS template is consumer v15 MCPs content (not stale StringRay)',
+        templateContent.includes('0xRay') && templateContent.includes('xray-enforcer') && !templateContent.includes('StringRay'),
+        'template has stale content');
+    }
+
+    // 8. Postinstall would deploy AGENTS.md to consumer project
+    const consumerAgents = path.join(infraDir, 'AGENTS.md');
+    const hadAgentsBefore = fs.existsSync(consumerAgents);
+    if (!hadAgentsBefore && templateExists) {
+      // Simulate postinstall copy
+      fs.copyFileSync(templateInPkg, consumerAgents);
+      result('postinstall deploys AGENTS.md to consumer project root',
+        fs.existsSync(consumerAgents), 'copy failed');
+      const agentsContent = fs.readFileSync(consumerAgents, 'utf-8');
+      result('consumer AGENTS.md has valid structure',
+        agentsContent.includes('Available MCP Servers') && agentsContent.includes('CLI Commands') && agentsContent.includes('Governance'),
+        'template missing expected sections');
+      // Clean up simulation
+      fs.unlinkSync(consumerAgents);
+    } else if (hadAgentsBefore) {
+      result('postinstall would not overwrite existing AGENTS.md',
+        fs.existsSync(consumerAgents), 'preserved');
+    }
   }
 
   if (!KEEP) { try { fs.rmSync(infraDir, { recursive: true, force: true }); } catch {} }

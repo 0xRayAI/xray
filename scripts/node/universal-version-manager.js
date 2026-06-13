@@ -147,7 +147,7 @@ function detectCodexInfo() {
       return { version: cver.startsWith("v") ? cver : `v${cver}`, termsCount: termCount, lastUpdated: new Date().toISOString().split("T")[0] };
     } catch {}
   }
-  return { version: "v3.0.7", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
+  return { version: "v3.0.8", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
 }
 
 const detectedCodex = detectCodexInfo();
@@ -155,7 +155,7 @@ const detectedCodex = detectCodexInfo();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "3.0.9",
+    version: "3.0.10",
       displayName: "xray: Self-Healing AI Governance OS",
       lastUpdated: "2026-06-13",
     // Counts (auto-calculated, but can be overridden)
@@ -403,7 +403,7 @@ const UPDATE_PATTERNS = [
       pattern: /xray AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `xray AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 3.0.8")
+    // Footer bare version (e.g., "**Version**: 3.0.9")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,
@@ -702,8 +702,8 @@ const UPDATE_PATTERNS = [
   const documentationFiles = [
     "README.md",
     "AGENTS.md",
-    "src/opencode/AGENTS-consumer.md",
-    rcp("agents_template.md") || "src/opencode/agents_template.md",
+    "xray/agents_template.md",
+    "xray/agents_template.md",
     "docs/reference/templates/agents_template.md",
     "docs/reference/templates/master-agent-template.md",
     "docs/reference/templates/agent-template-dev.md",
@@ -982,7 +982,7 @@ const UPDATE_PATTERNS = [
  * =====================================
  *
  * ✅ COMPLETED FEATURES:
- * - Comprehensive documentation management (AGENTS.md, AGENTS-consumer.md, etc.)
+ * - Comprehensive documentation management (AGENTS.md, xray/agents_template.md, etc.)
  * - File categorization (critical, documentation, historical, test assertions)
  * - Validation step for consistency checking
  * - Changelog generation
@@ -998,7 +998,7 @@ const UPDATE_PATTERNS = [
  *
  * 📋 FILE CATEGORIES:
  * - Critical: src/opencode/codex.codex, etc.
- * - Documentation: AGENTS.md, AGENTS-consumer.md, docs/*.md
+ * - Documentation: AGENTS.md, xray/agents_template.md, docs/*.md
  * - Historical: docs/reflections/, docs/archive/
  * - Test Assertions: context-loader.test.ts, codex-parser.test.ts
  *

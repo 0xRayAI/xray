@@ -30,7 +30,7 @@ When adding a new agent, you MUST update these files:
 | 16 | `src/processors/processor-manager.ts` | Processor routing |
 | 17 | `src/processors/agents-md-validation-processor.ts` | Validation |
 | 18 | `AGENTS-full.md` | Full agent documentation |
-| 19 | `AGENTS-consumer.md` | Consumer agent documentation |
+| 19 | `xray/agents_template.md` | Consumer agent documentation template |
 | 20 | `src/scripts/profiling-demo.ts` | Profiling support |
 | 21 | `tests/validation/config-loader.sh` | Config validation |
 | 22 | `tests/validation/config-integration-tests.sh` | Integration tests |
@@ -256,9 +256,9 @@ Add comprehensive agent documentation:
 - Model routing config
 - Skill routing
 
-### 19. AGENTS-consumer.md
+### 19. xray/agents_template.md
 
-Add consumer-facing agent documentation (mirrors AGENTS.md).
+Consumer-facing AGENTS.md template deployed via `npx 0xray setup`.
 
 ### 20. src/scripts/profiling-demo.ts
 
@@ -349,7 +349,7 @@ When removing an agent, you MUST update these files (reverse of adding):
 | 16 | `src/processors/processor-manager.ts` | Processor routing |
 | 17 | `src/processors/agents-md-validation-processor.ts` | Validation |
 | 18 | `AGENTS-full.md` | Full agent documentation |
-| 19 | `AGENTS-consumer.md` | Consumer agent documentation |
+| 19 | `xray/agents_template.md` | Consumer agent documentation template |
 | 20 | `src/scripts/profiling-demo.ts` | Profiling support |
 | 21 | `tests/validation/config-loader.sh` | Config validation |
 | 22 | `tests/validation/config-integration-tests.sh` | Integration tests |

@@ -31,11 +31,11 @@ const resolvedTarget = path.resolve(targetDir);
 
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 
-// Copy AGENTS-consumer.md → AGENTS.md
-const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
+// Copy xray/agents_template.md → AGENTS.md (consumer only)
+const agentsTemplate = path.join(packageRoot, "xray", "agents_template.md");
 const agentsDest = path.join(targetDir, "AGENTS.md");
-if (fs.existsSync(agentsConsumer) && resolvedPackage !== resolvedTarget) {
-  fs.copyFileSync(agentsConsumer, agentsDest);
+if (fs.existsSync(agentsTemplate) && resolvedPackage !== resolvedTarget && !fs.existsSync(agentsDest)) {
+  fs.copyFileSync(agentsTemplate, agentsDest);
 }
 
 // Register MCP servers with Grok CLI (if available) using absolute paths to installed dist

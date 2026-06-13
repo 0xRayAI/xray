@@ -72,7 +72,7 @@ class GovernanceServer {
   private createServer(): Server {
     const server = new Server(
       {
-        name: "governance", version: "3.0.8",
+        name: "governance", version: "3.0.9",
       },
       {
         capabilities: {

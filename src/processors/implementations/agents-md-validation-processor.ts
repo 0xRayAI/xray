@@ -179,7 +179,7 @@ export class AgentsMdValidationProcessor {
       result.errors.push("AGENTS.md not found in project root");
       result.fixes = result.fixes || [];
       result.fixes.push(
-        "Create AGENTS.md using template from docs/AGENTS_TEMPLATE.md",
+        "Create AGENTS.md using template from xray/agents_template.md",
       );
       return result;
     }

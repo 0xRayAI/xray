@@ -76,7 +76,7 @@ TaskSkillRouter (Complexity Analysis)
     ↓
 Agent Selection
     ↓
-Context Loading (AGENTS.md, AGENTS_TEMPLATE.md)
+Context Loading (AGENTS.md, xray/agents_template.md)
     ↓
 Task Execution
     ↓
