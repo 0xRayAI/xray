@@ -13,7 +13,11 @@ if (packageRoot.includes("node_modules")) {
   while (current.includes("node_modules")) {
     current = path.dirname(current);
   }
-  targetDir = current;
+  // Only override if resolved dir is a parent of (or same as) cwd.
+  // This prevents npx temp cache dirs from hijacking targetDir.
+  if (process.cwd().startsWith(current)) {
+    targetDir = current;
+  }
 }
 
 console.log("🔧 xray Setup: Full configuration...\n");

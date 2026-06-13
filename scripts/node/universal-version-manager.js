@@ -147,7 +147,7 @@ function detectCodexInfo() {
       return { version: cver.startsWith("v") ? cver : `v${cver}`, termsCount: termCount, lastUpdated: new Date().toISOString().split("T")[0] };
     } catch {}
   }
-  return { version: "v3.0.8", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
+  return { version: "v3.0.9", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
 }
 
 const detectedCodex = detectCodexInfo();
@@ -155,7 +155,7 @@ const detectedCodex = detectCodexInfo();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "3.0.10",
+    version: "3.0.11",
       displayName: "xray: Self-Healing AI Governance OS",
       lastUpdated: "2026-06-13",
     // Counts (auto-calculated, but can be overridden)
@@ -403,7 +403,7 @@ const UPDATE_PATTERNS = [
       pattern: /xray AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `xray AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 3.0.9")
+    // Footer bare version (e.g., "**Version**: 3.0.10")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,
@@ -702,7 +702,6 @@ const UPDATE_PATTERNS = [
   const documentationFiles = [
     "README.md",
     "AGENTS.md",
-    "xray/agents_template.md",
     "xray/agents_template.md",
     "docs/reference/templates/agents_template.md",
     "docs/reference/templates/master-agent-template.md",

@@ -22,7 +22,11 @@ if (packageRoot.includes("node_modules")) {
   while (current.includes("node_modules")) {
     current = path.dirname(current);
   }
-  targetDir = current;
+  // Only override if resolved dir is a parent of (or same as) cwd.
+  // This prevents npx temp cache dirs from hijacking targetDir.
+  if (process.cwd().startsWith(current)) {
+    targetDir = current;
+  }
 }
 
 const resolvedPackage = path.resolve(packageRoot);
@@ -36,6 +40,7 @@ const agentsTemplate = path.join(packageRoot, "xray", "agents_template.md");
 const agentsDest = path.join(targetDir, "AGENTS.md");
 if (fs.existsSync(agentsTemplate) && resolvedPackage !== resolvedTarget && !fs.existsSync(agentsDest)) {
   fs.copyFileSync(agentsTemplate, agentsDest);
+  structuredLog('postinstall', 'AGENTS.md', 'info', { message: 'consumer template deployed' });
 }
 
 // Register MCP servers with Grok CLI (if available) using absolute paths to installed dist
