@@ -121,7 +121,7 @@ Phase 4 was the road back and the final resurrection.
 
 4D: The last MCP fallback inside governance-service itself was cut.
 
-The resurrection test was brutal and beautiful: 2290 tests, zero failures. tsc clean. The commit 3d23b6cea landed on main.
+The resurrection test was brutal and beautiful: 2527 tests, zero failures. tsc clean. The commit 3d23b6cea landed on main.
 
 In that moment, the heavy v2 scaffolding had been transmuted. What remained was the nucleus — thin, callable, complete.
 

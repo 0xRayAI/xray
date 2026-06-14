@@ -3,7 +3,7 @@
 **Version:** 3.0.0
 **Commit:** 3d23b6cea
 **Date:** 2026-06-10
-**Verification:** 2290 tests passed, 4/4 bridge E2Es, consumer gate green
+**Verification:** 2527 tests passed, 4/4 bridge E2Es, consumer gate green
 
 ## What was done
 

@@ -28,7 +28,7 @@ This document turns the aspirational v3-nucleus.md into an executable, phase-gat
   - scripts/verify-consumer.sh as hard gate.
 - Major v2 surfaces still dominant: boot-orchestrator.ts, inference-cycle.ts (with MCP fallbacks), direct MCP for core skills in governance-service.ts, full 15+ root + 24 knowledge-skill servers.
 - Many "dead" items from the 12 reviews already removed (VotingCoordinator, orchestrator.server.ts shim, testing-best-practices.server.ts, RetryHandler, ComprehensiveValidator, cross-language-bridge, 4 analytics CLI commands, cli/server.ts, universal-* in orchestrator, self-direction-activation, task-skill-router.d.ts, etc.).
-- README/AGENTS counts now accurate (41 agents, 44 skills, 15 MCPs, 20 codex terms, 160 test files) but no longer auto-mutated on every release (per architect recommendation).
+- README/AGENTS counts now accurate (41 agents, 44 skills, 15 MCPs, 60 codex terms, 160 test files) but no longer auto-mutated on every release (per architect recommendation).
 
 ## Phase Plan
 
@@ -174,7 +174,7 @@ This is the plan. Execute phase by phase. Release v2.2.x first (already in progr
 
 ## Researcher Review (2026-06-10)
 
-Codebase verification performed against v2.2.3 post-subtract baseline. 2290 tests passed (matches claim). tsc clean.
+Codebase verification performed against v2.2.3 post-subtract baseline. 2527 tests passed (matches claim). tsc clean.
 
 ### Claims Verification
 

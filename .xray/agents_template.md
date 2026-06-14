@@ -1,6 +1,6 @@
 # AGENTS.md — 0xRay Consumer Template
 
-**Version**: 3.0.11
+**Version**: 1.22.67
 **Updated**: 2026-06-13
 
 ## What is 0xRay?

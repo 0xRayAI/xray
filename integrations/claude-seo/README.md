@@ -74,4 +74,4 @@ node scripts/integrations/install-claude-seo.js --full
 ```
 
 ---
-*Integrated into 0xray v1.7.5*
+*Integrated into 0xray: Self-Healing AI Governance OS*

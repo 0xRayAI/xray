@@ -1,7 +1,7 @@
 # PSA: Governance `source` Enforcement (Breaking Change)
 
 **Date**: 2026-06-13
-**Version**: 3.0.11
+**Version**: 1.22.67
 **Author**: 0xRay Governance Team
 
 ## Summary

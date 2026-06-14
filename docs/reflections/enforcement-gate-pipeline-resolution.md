@@ -48,7 +48,7 @@ The hook surface audits (programmatic + import/call) diagnosed a systemic discon
 | File | Purpose |
 |------|---------|
 | `src/integrations/enforcement-gate.ts` | Core gate: `beforeToolHook` + `afterToolHook` |
-| `src/integrations/__tests__/enforcement-gate.test.ts` | 2290 tests (7 before + 5 after) |
+| `src/integrations/__tests__/enforcement-gate.test.ts` | 2527 tests (7 before + 5 after) |
 | `src/plugin/xray-codex-injection.ts` | OpenCode wiring |
 | `src/integrations/hermes-agent/hermes-agent-integration.ts` | Hermes TS wiring |
 | `src/integrations/hermes-agent/bridge.mjs` | Hermes bridge — full registry |

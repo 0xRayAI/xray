@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.0.14] - 2026-06-14
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: grok plugin dir naming, broken symlink, stale validate script refs (7bbee499c)
+- fix: update integrations-e2e test for XrayAPIServer rename (b68eeb845)
+- fix: exports map, openclaw XrayAPIServer rename, validator count 29→28 (035ba4986)
+- fix: rename StringRay* class names to Xray* across server files and update strray-codex- internal IDs (ec1182bfb)
+
+### 🔎 Other Changes
+- v3.0.13 release fixes: main/types, files cleanup, testing-best-practices registration, e2e guards (c26e1ec28)
+- v3.0.13 release: rename, test fixes, E2E postinstall config tests (177fa12c5)
+
+---
+
 ## [3.0.13] - 2026-06-14
 
 ### 🚀 Major Release — v3 MCP-Centric Pure v2 Three-Subsystem

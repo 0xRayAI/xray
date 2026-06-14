@@ -120,7 +120,7 @@ function calculateCounts() {
       } catch {}
     }
   } catch (e) {
-    console.warn("⚠️  Could not calculate counts:", e.message);
+    process.stderr.write("⚠️  Could not calculate counts: " + e.message + "\n");
   }
 
   return counts;
@@ -136,9 +136,9 @@ const CALCULATED_COUNTS = calculateCounts();
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "1.22.67",
+    version: "3.0.14",
       displayName: "xray: Self-Healing AI Governance OS",
-      lastUpdated: "2026-05-19",
+      lastUpdated: "2026-06-14",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },
@@ -158,13 +158,13 @@ const OFFICIAL_VERSIONS = {
   },
 };
 
-console.log("📊 Auto-calculated counts:");
-console.log(`   Agents: ${OFFICIAL_VERSIONS.framework.agents}`);
-console.log(`   Skills: ${OFFICIAL_VERSIONS.framework.skills}`);
-console.log(`   MCP Servers: ${OFFICIAL_VERSIONS.framework.mcpServers}`);
-console.log(`   Tests: ${OFFICIAL_VERSIONS.framework.tests}`);
-console.log(`   Codex Terms: ${OFFICIAL_VERSIONS.codex.termsCount}`);
-console.log("");
+process.stdout.write("📊 Auto-calculated counts:\n");
+process.stdout.write("   Agents: " + OFFICIAL_VERSIONS.framework.agents + "\n");
+process.stdout.write("   Skills: " + OFFICIAL_VERSIONS.framework.skills + "\n");
+process.stdout.write("   MCP Servers: " + OFFICIAL_VERSIONS.framework.mcpServers + "\n");
+process.stdout.write("   Tests: " + OFFICIAL_VERSIONS.framework.tests + "\n");
+process.stdout.write("   Codex Terms: " + OFFICIAL_VERSIONS.codex.termsCount + "\n");
+process.stdout.write("\n");
 
 // Simple recursive file finder - necessary for explaining complex directory traversal logic
 function findFiles(
@@ -327,29 +327,29 @@ const UPDATE_PATTERNS = [
     },
 
     // === BADGE AND COUNT PATTERNS ===
-    // Test count in docs badge (e.g., tests-2229-brightgreen)
+    // Test count in docs badge (e.g., tests-2527-brightgreen)
     {
       pattern: /tests-[0-9]+(?=-brightgreen)/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}`,
     },
-    // Test count in npm badge (e.g., tests-2229%20passed-brightgreen)
+    // Test count in npm badge (e.g., tests-2527%20passed-brightgreen)
     {
       pattern: /tests-[0-9,]+%20passed/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}%20passed`,
     },
-    // Test count in prose (e.g., "2,2229 Tests" or "2229 Tests" but NOT in badge URLs)
+    // Test count in prose (e.g., "2,2527 Tests" or "2527 Tests" but NOT in badge URLs)
     {
       pattern: /(\*\s*✅\s*)([0-9]{1,3},?[0-9]{3})(\s*Tests)/g,
       replacement: (match, p1, p2, p3) => {
         return `${p1}${OFFICIAL_VERSIONS.framework.tests}${p3}`;
       },
     },
-    // Test count in feature bullets (e.g., "✅ 2229 Tests")
+    // Test count in feature bullets (e.g., "✅ 2527 Tests")
     {
       pattern: /[0-9]+ Tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} Tests`,
     },
-    // Test count in config tree (e.g., "2229 tests")
+    // Test count in config tree (e.g., "2527 tests")
     {
       pattern: /[0-9]+ tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} tests`,

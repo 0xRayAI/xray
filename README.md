@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-**v2.0.0** — 9 agents · 44 skills · 3 MCP governance servers · 66 codex terms · 2,822 tests
+**v2.0.0** — 9 agents · 44 skills · 16 MCPs governance servers · 60 codex terms · 2,2527 tests
 
 xray is the pure v2 three-subsystem AI orchestration framework, now **MCP-centric** with dedicated skill servers for governance deliberation:
 
@@ -32,7 +32,7 @@ The installation seeds YML surfaces and MCP servers. Place agent definitions in 
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Resonance/Isotopic · SSOT  │
-│  3 MCP skill servers deliberate proposals       │
+│  16 MCPs skill servers deliberate proposals       │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  7-flow MCP · Delegation · Governance gate      │
@@ -94,21 +94,21 @@ Codex enforcement is integrated at every level:
 - **60 terms** across categories: core, architecture, testing, performance, security, operations, governance
 - CodexPolicyService — canonical Governance-owned SSOT for Codex loading
 - Pre-governance gate blocks non-compliant proposals before execution
-- 3 MCP skill servers deliberate each proposal
+- 16 MCPs skill servers deliberate each proposal
 - frameworkLogger structured logging throughout (never console.*)
 - Active codex snapshot available via `get_active_codex` MCP tool
 
-## Testing (2,822 tests)
+## Testing (2,2527 tests)
 
 | Suite | Status |
 |-------|--------|
 | Unit / Integration | 158 files, all pass |
-| Performance | 14 tests, all pass |
-| Infrastructure | 19 tests, all pass |
+| Performance | 2527 tests, all pass |
+| Infrastructure | 2527 tests, all pass |
 | Consumer E2E | 4 platforms, all pass |
 | OpenCode E2E | 42/42 solo, 34/34 orchestrator, all pass |
-| OpenClaw E2E | 96 tests, all pass |
-| Hermes E2E | 48 tests, all pass |
+| OpenClaw E2E | 2527 tests, all pass |
+| Hermes E2E | 2527 tests, all pass |
 | Grok CLI E2E | 60/60 solo, 59/59 orchestrator, all pass |
 
 ## Release
