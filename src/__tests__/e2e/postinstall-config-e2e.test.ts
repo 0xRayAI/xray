@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 const PROJECT_ROOT = path.resolve(process.cwd());
+const HAS_DIST = ["dist/plugin/xray-codex-injection.js", "dist/index.js"].every(f => fs.existsSync(path.join(PROJECT_ROOT, f)));
 
 const { frameworkLoggerMock } = vi.hoisted(() => ({
   frameworkLoggerMock: { log: vi.fn() },
@@ -18,6 +19,30 @@ describe("build artifacts", () => {
   const distMcpDir = path.join(PROJECT_ROOT, "dist", "mcps");
   const distPluginDir = path.join(PROJECT_ROOT, "dist", "plugin");
   const dotOpencodeDir = path.join(PROJECT_ROOT, ".opencode");
+
+  test("dist/ available — prerequisite", () => {
+    expect(HAS_DIST).toBe(true);
+  });
+
+  test("dist/plugin/xray-codex-injection.js exists", () => {
+    if (!HAS_DIST) return;
+    const pluginPath = path.join(distPluginDir, "xray-codex-injection.js");
+    expect(fs.existsSync(pluginPath)).toBe(true);
+  });
+
+  test("dist/mcps/knowledge-skills/ has skill server files", () => {
+    if (!HAS_DIST) return;
+    const skillsDir = path.join(distMcpDir, "knowledge-skills");
+    expect(fs.existsSync(skillsDir)).toBe(true);
+    const files = fs.readdirSync(skillsDir).filter(f => f.endsWith(".server.js"));
+    expect(files.length).toBeGreaterThanOrEqual(25);
+  });
+
+  test("dist/mcps/ has core server files", () => {
+    if (!HAS_DIST) return;
+    const files = fs.readdirSync(distMcpDir).filter(f => f.endsWith(".server.js"));
+    expect(files.length).toBeGreaterThanOrEqual(5);
+  });
 
   test("dist/plugin/xray-codex-injection.js exists", () => {
     const pluginPath = path.join(distPluginDir, "xray-codex-injection.js");
@@ -120,11 +145,11 @@ describe("AGENTS.md configuration", () => {
 // ── Plugin registration E2E ──────────────────────────────────────────────
 
 describe("default plugins registration", () => {
-  test("all 25 servers register successfully", async () => {
+  test("all 26 servers register successfully", async () => {
     const { registerDefaultPlugins } = await import("../../nucleus/default-plugins.js");
     const result = await registerDefaultPlugins();
     expect(result.failed).toEqual([]);
-    expect(result.registered).toBe(25);
+    expect(result.registered).toBe(26);
   });
 
   test("batch counts match expected totals", async () => {
@@ -132,7 +157,7 @@ describe("default plugins registration", () => {
     const { pluginRegistry } = await import("../../nucleus/plugin-registry.js");
     pluginRegistry.resetForTest?.();
     const result = await registerDefaultPlugins();
-    expect(result.registered).toBe(25);
+    expect(result.registered).toBe(26);
     expect(result.failed).toEqual([]);
   });
 });
@@ -166,6 +191,7 @@ describe("each skill server instantiates and lists tools", () => {
     { name: "documentation-generation", path: "../../mcps/knowledge-skills/tech-writer.server.js" },
     { name: "bug-triage-specialist",  path: "../../mcps/knowledge-skills/bug-triage-specialist.server.js" },
     { name: "skill-invocation",       path: "../../mcps/knowledge-skills/skill-invocation.server.js" },
+    { name: "testing-best-practices", path: "../../mcps/knowledge-skills/testing-best-practices.server.js" },
   ];
 
   test.each(servers)("$name instantiates and exposes tools", async ({ name, path: serverPath }) => {

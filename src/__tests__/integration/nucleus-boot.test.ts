@@ -35,7 +35,7 @@ describe('NucleusOrchestrator — full boot integration', () => {
     expect(result.failedComponents).toHaveLength(0);
   });
 
-  it('should record plugin-registration with 25 plugins', async () => {
+  it('should record plugin-registration with 26 plugins', async () => {
     const { NucleusOrchestrator } = await import('../../nucleus/orchestrator.js');
     const orch = new NucleusOrchestrator();
     await orch.executeBootSequence({ parallelInit: false });
@@ -43,7 +43,7 @@ describe('NucleusOrchestrator — full boot integration', () => {
     const pluginResult = orch.getComponentResult('plugin-registration');
     expect(pluginResult).toBeDefined();
     expect(pluginResult!.success).toBe(true);
-    expect(pluginResult!.message).toMatch(/25 registered/);
+    expect(pluginResult!.message).toMatch(/26 registered/);
   });
 
   it('should set initialized=true after successful boot', async () => {

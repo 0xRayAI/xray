@@ -55,6 +55,9 @@ import XrayApiDesignServer from '../mcps/knowledge-skills/api-design.server.js';
 import XrayGitWorkflowServer from '../mcps/knowledge-skills/git-workflow.server.js';
 import XrayArchitecturePatternsServer from '../mcps/knowledge-skills/architecture-patterns.server.js';
 
+// ── Named exports (additional servers) ──────────────────────────────────────
+import { XrayTestingBestPracticesServer } from '../mcps/knowledge-skills/testing-best-practices.server.js';
+
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export interface DefaultPluginsResult {
@@ -216,8 +219,9 @@ export async function registerDefaultPlugins(): Promise<DefaultPluginsResult> {
 
   // ── Batch 6: Specialized ──
   const batch6Count = await registerBatch('specialized', [
-    { label: 'bug-triage-specialist', create: () => new BugTriageSpecialistServer() as any, serverName: 'bug-triage-specialist' },
-    { label: 'skill-invocation',      create: () => new SkillInvocationServer() as any,     serverName: 'xray/skill-invocation' },
+    { label: 'bug-triage-specialist',    create: () => new BugTriageSpecialistServer() as any,        serverName: 'bug-triage-specialist' },
+    { label: 'skill-invocation',         create: () => new SkillInvocationServer() as any,           serverName: 'xray/skill-invocation' },
+    { label: 'testing-best-practices',   create: () => new XrayTestingBestPracticesServer(),    serverName: 'testing-best-practices' },
   ]);
 
   const registered = batch1Count + batch2Count + batch3Count + batch4Count + batch5Count + batch6Count;

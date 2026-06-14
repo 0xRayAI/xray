@@ -1494,7 +1494,7 @@ class MultimodalLookerServer {
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new MultimodalLookerServer();
-  server.run().catch(console.error);
+  server.run().catch((err) => frameworkLogger.log('multimodal-looker', 'run-error', 'error', { error: String(err) }));
 }
 
 export { MultimodalLookerServer };

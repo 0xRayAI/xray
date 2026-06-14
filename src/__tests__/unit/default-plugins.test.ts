@@ -17,10 +17,10 @@ describe('registerDefaultPlugins — smoke', () => {
     pluginRegistry.resetForTest();
   });
 
-  it('should register 25 plugins when called', async () => {
+  it('should register 26 plugins when called', async () => {
     const { registerDefaultPlugins } = await import('../../nucleus/default-plugins.js');
     const result = await registerDefaultPlugins();
-    expect(result.registered).toBe(25);
+    expect(result.registered).toBe(26);
     expect(result.failed).toEqual([]);
   });
 

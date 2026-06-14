@@ -35,8 +35,8 @@
     "plugin-system"
   ],
   "type": "module",
-  "main": "./dist/plugin/xray-codex-injection.js",
-  "types": "./dist/plugin/xray-codex-injection.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
     "0xray": "dist/cli/index.js",
     "0xray-integration": "dist/scripts/integration.js"
@@ -119,9 +119,7 @@
     "scripts/mjs/test-mcp-functionality.mjs",
     "scripts/mjs/validate-mcp-connectivity.cjs",
     "scripts/mjs/validate-postinstall-config.mjs",
-    "scripts/validate-stringray-comprehensive.js",
     "src/opencode/",
-    "src/opencode/AGENTS-consumer.md",
     "src/opencode/codex.codex",
     "src/opencode/commands/",
     "src/opencode/enforcer-config.json",
@@ -134,7 +132,6 @@
     ".opencode/commands/",
     ".opencode/hooks/",
     ".opencode/skills/",
-    ".opencode/integrations/",
     ".opencode/init.sh",
     ".opencode/workflows/",
     ".opencode/codex.codex",
@@ -142,9 +139,7 @@
     "opencode.json",
     "README.md",
     "AGENTS.md",
-    "LICENSE",
-    "LICENSE.claude-seo",
-    "LICENSE.antigravity"
+    "LICENSE"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
