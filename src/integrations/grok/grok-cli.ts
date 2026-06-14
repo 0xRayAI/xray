@@ -1,5 +1,5 @@
 /**
- * Grok CLI Integration for 0xRay
+ * Grok CLI Integration for StringRay / 0xRay
  *
  * This module provides the integration points for using 0xRay with the official Grok CLI.
  *
@@ -43,69 +43,61 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
   let sourceDir = possibleSources.find(p => fs.existsSync(p));
 
   if (!sourceDir) {
-    frameworkLogger.log('grok-cli', 'Could not locate the 0xray Grok plugin inside the package.', 'error', {});
+    console.error('[Grok] Could not locate the 0xray Grok plugin inside the package.');
     return;
   }
 
   if (options.dryRun) {
-    frameworkLogger.log('grok-cli', `Dry run: Would copy plugin from ${sourceDir} → ${targetPluginDir}`, 'info', {});
+    console.log(`[Grok] Dry run: Would copy plugin from ${sourceDir} → ${targetPluginDir}`);
     return;
   }
 
   try {
     if (fs.existsSync(targetPluginDir) && !options.force) {
-      frameworkLogger.log('grok-cli', '0xray Grok plugin is already installed.', 'info', {});
-      frameworkLogger.log('grok-cli', 'Use --force to reinstall.', 'info', {});
+      console.log('[Grok] 0xray Grok plugin is already installed.');
+      console.log('Use --force to reinstall.');
       return;
     }
 
     fs.cpSync(sourceDir, targetPluginDir, { recursive: true, force: true });
     frameworkLogger.log('grok-integration', 'plugin-copied', 'info', { destination: targetPluginDir });
 
-    frameworkLogger.log('grok-cli', `Copied Grok plugin to ${targetPluginDir}`, 'info', {});
+    console.log(`\x1b[32m✓ Copied Grok plugin to ${targetPluginDir}\x1b[0m`);
 
     // Attempt auto-trust (best effort)
     try {
       execSync(`grok plugins trust "${targetPluginDir}"`, { stdio: 'ignore' });
-      frameworkLogger.log('grok-cli', 'Auto-trusted the 0xray plugin with Grok CLI', 'info', {});
+      console.log('\x1b[32m✓ Auto-trusted the 0xray plugin with Grok CLI\x1b[0m');
     } catch {
-      frameworkLogger.log('grok-cli', 'Please run this command to fully trust the plugin:', 'info', {});
-      frameworkLogger.log('grok-cli', `  grok plugins trust "${targetPluginDir}"`, 'info', {});
+      console.log('\nPlease run this command to fully trust the plugin:');
+      console.log(`  grok plugins trust "${targetPluginDir}"`);
     }
 
     // Register MCP servers via grok mcp add (most reliable mechanism)
-    const xrayRoot = path.resolve(__dirname, '..', '..', '..');
-    const govMcpPath = path.join(xrayRoot, 'dist/mcps/governance.server.js');
-    const skillsMcpPath = path.join(xrayRoot, 'dist/mcps/knowledge-skills/skill-invocation.server.js');
-    const enforcerMcpPath = path.join(xrayRoot, 'dist/mcps/enforcer-tools.server.js');
-    const orchestratorMcpPath = path.join(xrayRoot, 'dist/mcps/orchestrator/server.js');
-    const mcpServers = [
-      { name: 'xray-governance', path: govMcpPath },
-      { name: 'xray-skills', path: skillsMcpPath },
-      { name: 'xray-enforcer', path: enforcerMcpPath },
-      { name: 'xray-orchestrator', path: orchestratorMcpPath },
-    ];
+    const govMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/governance.server.js');
+    const skillsMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/knowledge-skills/skill-invocation.server.js');
     try {
-      for (const server of mcpServers) {
-        execSync(
-          `grok mcp add ${server.name} --command node --args "${server.path}" --env "XRAY_ROOT=${xrayRoot}"`,
-          { stdio: 'pipe' }
-        );
-      }
-      frameworkLogger.log('grok-cli', 'Registered xray MCP servers with Grok CLI', 'info', {});
+      execSync(
+        `grok mcp add strray-governance --command node --args "${govMcpPath}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "STRRAY_ROOT=${process.cwd()}"`,
+        { stdio: 'pipe' }
+      );
+      execSync(
+        `grok mcp add strray-skills --command node --args "${skillsMcpPath}" --env "STRRAY_ROOT=${process.cwd()}"`,
+        { stdio: 'pipe' }
+      );
+      console.log('\x1b[32m✓ Registered strray MCP servers with Grok CLI\x1b[0m');
     } catch {
-      frameworkLogger.log('grok-cli', 'Could not auto-register MCP servers. Run manually:', 'info', {});
-      for (const server of mcpServers) {
-        frameworkLogger.log('grok-cli', `  grok mcp add ${server.name} --command node --args "${server.path}"`, 'info', {});
-      }
+      console.log('\nCould not auto-register MCP servers. Run manually:');
+      console.log(`  grok mcp add strray-governance --command node --args "${govMcpPath}"`);
+      console.log(`  grok mcp add strray-skills --command node --args "${skillsMcpPath}"`);
     }
 
-    frameworkLogger.log('grok-cli', '0xRay is now installed as a first-class Grok CLI plugin!', 'info', {});
-    frameworkLogger.log('grok-cli', 'Restart Grok or run `grok` to load the new hooks and MCP servers.', 'info', {});
+    console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');
+    console.log('Restart Grok or run `grok` to load the new hooks and MCP servers.');
 
   } catch (err: any) {
     frameworkLogger.log('grok-integration', 'install-error', 'error', { error: err.message });
-    frameworkLogger.log('grok-cli', 'Failed to install Grok plugin:', 'error', { error: err.message });
+    console.error('Failed to install Grok plugin:', err.message);
   }
 
   frameworkLogger.log('grok-integration', 'install-complete', 'info', {});

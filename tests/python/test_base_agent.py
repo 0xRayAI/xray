@@ -1,5 +1,5 @@
 """
-0xRay Framework - Base Agent Test Suite
+StrRay Framework - Base Agent Test Suite
 
 Comprehensive test suite for BaseAgent functionality including:
 - Agent initialization and state management
@@ -19,8 +19,8 @@ from concurrent.futures import ThreadPoolExecutor
 import psutil
 import os
 
-from xray.core.agent import BaseAgent
-from xray.config import ConfigManager
+from strray.core.agent import BaseAgent
+from strray.config import ConfigManager
 
 
 class TestBaseAgent:
@@ -56,7 +56,7 @@ class TestBaseAgent:
         assert agent.model == agent.config_manager.get_value("model_default")
         # Model is set from config_manager
 
-    @patch("xray.ai.service.MockAIService")
+    @patch("strray.ai.service.MockAIService")
     def test_ai_service_lazy_loading(self, mock_ai_service_class):
         """Test AI service is loaded lazily on first use."""
         # AI service should not be initialized yet
@@ -91,7 +91,7 @@ class TestBaseAgent:
             "mock": True,
         }
 
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.analyze = AsyncMock(return_value=expected_response)
 
@@ -109,7 +109,7 @@ class TestBaseAgent:
         prompt = "Write a function to calculate fibonacci"
         kwargs = {"temperature": 0.7, "max_tokens": 100}
 
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.generate = AsyncMock(return_value="def fib(n): ...")
 
@@ -124,7 +124,7 @@ class TestBaseAgent:
         """Test basic task execution functionality."""
         task = "Analyze this code"
 
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.analyze = AsyncMock(
                 return_value={
@@ -210,7 +210,7 @@ class TestBaseAgent:
         # Perform memory-intensive operation
         large_data = "x" * 1000000  # 1MB string
 
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.analyze = AsyncMock(return_value="analysis_result")
             asyncio.run(self.agent.analyze_with_ai(large_data, "analysis"))
@@ -224,7 +224,7 @@ class TestBaseAgent:
 
     def test_timeout_handling(self):
         """Test timeout handling for long-running operations."""
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.analyze = AsyncMock(side_effect=asyncio.TimeoutError())
 
@@ -267,7 +267,7 @@ class TestBaseAgent:
         """Test performance metrics collection."""
         start_time = time.time()
 
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.analyze = AsyncMock(return_value="result")
             asyncio.run(self.agent.analyze_with_ai("test content", "analysis"))
@@ -283,7 +283,7 @@ class TestBaseAgent:
 
     def test_error_recovery(self):
         """Test error recovery mechanisms."""
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.analyze = AsyncMock(side_effect=Exception("AI service error"))
 
@@ -298,7 +298,7 @@ class TestBaseAgent:
         agent = BaseAgent(name="test_agent", config_manager=config_manager)
 
         # Simulate resource usage
-        with patch("xray.ai.service.MockAIService") as mock_service_class:
+        with patch("strray.ai.service.MockAIService") as mock_service_class:
             mock_service = mock_service_class.return_value
             mock_service.analyze = AsyncMock(return_value="test result")
             asyncio.run(agent.analyze_with_ai("test", "analysis"))

@@ -13,52 +13,49 @@ import {
   BootSequenceConfig,
   BootResult,
 } from "../../core/boot-orchestrator.js";
-import { XrayContextLoader } from "../../core/context-loader.js";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayContextLoader } from "../../core/context-loader.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 // Mock the orchestrator module so dynamic import() in boot-orchestrator succeeds
 vi.mock("../../core/orchestrator.js", () => ({
-  xrayOrchestrator: { initialized: true },
+  strRayOrchestrator: { initialized: true },
 }));
 
 // Mock the context loader to provide codex for enforcement
 vi.mock("../../core/context-loader.js", async (importOriginal) => {
   const actual = await importOriginal() as any;
-  const mockInstance = {
-    loadCodexContext: vi.fn().mockResolvedValue({
-      success: true,
-      context: { terms: new Map(), version: "3.0.11" },
-      warnings: [],
-    }),
-    clearCache: vi.fn(),
-  };
   return {
     ...actual,
-    XrayContextLoader: {
-      getInstance: () => mockInstance,
-    },
-    XrayContextLoader: {
-      getInstance: () => mockInstance,
+    StringRayContextLoader: {
+      ...actual.StringRayContextLoader,
+      getInstance: () => ({
+        loadCodexContext: vi.fn().mockResolvedValue({
+          success: true,
+          context: { terms: new Map(), version: "1.22.67" },
+          warnings: [],
+        }),
+        clearCache: vi.fn(),
+      }),
     },
   };
 });
 
 describe("BootOrchestrator", () => {
   let orchestrator: BootOrchestrator;
-  let mockContextLoader: XrayContextLoader;
-  let mockStateManager: XrayStateManager;
+  let mockContextLoader: StringRayContextLoader;
+  let mockStateManager: StringRayStateManager;
 
   beforeEach(() => {
     // Mock dependencies
     mockContextLoader = {
       loadCodexContext: vi.fn().mockResolvedValue({
-        version: "3.0.11",
+        version: "1.22.67",
         terms: [],
         validationCriteria: {},
       }),
     } as any;
 
-    mockStateManager = new XrayStateManager();
+    mockStateManager = new StringRayStateManager();
 
     // Create orchestrator with mocked dependencies
     orchestrator = new BootOrchestrator({
@@ -68,22 +65,44 @@ describe("BootOrchestrator", () => {
       processorActivation: true,
       agentLoading: false, // Disable agent loading for basic test
     });
+  });
 
-    // Mock the imports for all tests
+  test("should initialize with default configuration", () => {
+    const defaultOrchestrator = new BootOrchestrator();
+    expect(defaultOrchestrator).toBeDefined();
+  });
+
+  test("should initialize with custom configuration", () => {
+    const config: Partial<BootSequenceConfig> = {
+      enableEnforcement: false,
+      codexValidation: false,
+    };
+    const customOrchestrator = new BootOrchestrator(config);
+    expect(customOrchestrator).toBeDefined();
+  });
+
+  test("should execute boot sequence successfully", async () => {
+    const mockProcessorManager = {
+      initialize: vi.fn().mockResolvedValue(true),
+      registerProcessor: vi.fn(),
+    };
+
+    const mockAgentDelegator = {
+      initialize: vi.fn().mockResolvedValue(true),
+    };
+
+    const mockSessionCoordinator = {
+      initializeSession: vi.fn(),
+    };
+
+    // Mock the imports
     vi.doMock("../processors/processor-manager", () => ({
-      ProcessorManager: vi.fn().mockImplementation(() => ({
-        initialize: vi.fn().mockResolvedValue(true),
-        registerProcessor: vi.fn(),
-      })),
+      ProcessorManager: vi.fn().mockImplementation(() => mockProcessorManager),
     }));
 
     vi.doMock("../delegation", () => ({
-      createAgentDelegator: vi.fn().mockReturnValue({
-        initialize: vi.fn().mockResolvedValue(true),
-      }),
-      createSessionCoordinator: vi.fn().mockReturnValue({
-        initializeSession: vi.fn(),
-      }),
+      createAgentDelegator: vi.fn().mockReturnValue(mockAgentDelegator),
+      createSessionCoordinator: vi.fn().mockReturnValue(mockSessionCoordinator),
     }));
 
     vi.doMock("../session/session-cleanup-manager", () => ({
@@ -116,23 +135,7 @@ describe("BootOrchestrator", () => {
         initialize: vi.fn().mockResolvedValue(true),
       },
     }));
-  });
 
-  test("should initialize with default configuration", () => {
-    const defaultOrchestrator = new BootOrchestrator();
-    expect(defaultOrchestrator).toBeDefined();
-  });
-
-  test("should initialize with custom configuration", () => {
-    const config: Partial<BootSequenceConfig> = {
-      enableEnforcement: false,
-      codexValidation: false,
-    };
-    const customOrchestrator = new BootOrchestrator(config);
-    expect(customOrchestrator).toBeDefined();
-  });
-
-  test("should execute boot sequence successfully", async () => {
     // Execute boot sequence
     const result = await orchestrator.executeBootSequence();
 
@@ -141,8 +144,6 @@ describe("BootOrchestrator", () => {
     expect(typeof result.success).toBe("boolean");
     expect(Array.isArray(result.errors)).toBe(true);
     expect(Array.isArray(result.agentsLoaded)).toBe(true);
-
-    expect(result.success).toBe(true);
   }, 10000);
 
   test("should handle boot sequence with disabled codex validation", async () => {

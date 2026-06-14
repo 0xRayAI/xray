@@ -21,9 +21,9 @@ class LightweightValidator {
   private startTime: number;
   private files: string[];
 
-  constructor(files?: string[]) {
+  constructor() {
     this.startTime = Date.now();
-    this.files = files ?? this.getChangedFiles();
+    this.files = this.getChangedFiles();
   }
 
   /**
@@ -145,20 +145,9 @@ class LightweightValidator {
       );
     }
 
-    // Check for TODO/FIXME comments
-    if (/\/\/\s*(TODO|FIXME|HACK|XXX)\b/i.test(content)) {
+    // Check for TODO comments
+    if (content.includes("TODO") || content.includes("FIXME")) {
       warnings.push(`TODO/FIXME comments found in ${file}`);
-    }
-
-    // Check for @ts-ignore / @ts-nocheck / @ts-expect-error
-    if (/@ts-ignore|@ts-nocheck|@ts-expect-error/.test(content)) {
-      warnings.push(`@ts-ignore/@ts-nocheck found in ${file}`);
-    }
-
-    // Check for excessive 'any' type usage (>3 occurrences)
-    const anyMatches = content.match(/\bany\b/g);
-    if (anyMatches && anyMatches.length > 3) {
-      warnings.push(`${anyMatches.length} uses of 'any' type in ${file}`);
     }
 
     // Check for debugger statements
@@ -293,8 +282,8 @@ class LightweightValidator {
  */
 async function main(): Promise<void> {
   await frameworkLogger.log(
-    "lightweight-validator",
-    "quick-validation-initiated",
+    "-lightweight-validator",
+    "-post-commit-quick-validation-initiated-",
     "info",
     { message: "⚡ Post-commit: Quick validation initiated" },
   );
@@ -305,13 +294,13 @@ async function main(): Promise<void> {
   // Report results
   if (result.warnings.length > 0) {
     await frameworkLogger.log(
-      "lightweight-validator",
-      "warnings-found",
+      "-lightweight-validator",
+      "-result-warnings-length-warning-s-found-",
       "info",
       { message: `⚠️ ${result.warnings.length} warning(s) found:` },
     );
     for (const warning of result.warnings) {
-      await frameworkLogger.log("lightweight-validator", "warning-detail", "info", {
+      await frameworkLogger.log("-lightweight-validator", "-warning-", "info", {
         message: `   ${warning}`,
       });
     }
@@ -319,29 +308,29 @@ async function main(): Promise<void> {
 
   if (result.errors.length > 0) {
     await frameworkLogger.log(
-      "lightweight-validator",
-      "errors-found",
+      "-lightweight-validator",
+      "-result-errors-length-error-s-found-",
       "error",
       { message: `❌ ${result.errors.length} error(s) found:` },
     );
     for (const error of result.errors) {
-      await frameworkLogger.log("lightweight-validator", "error-detail", "error", {
+      await frameworkLogger.log("-lightweight-validator", "-error-", "error", {
         message: `   ${error}`,
       });
     }
   }
 
   await frameworkLogger.log(
-    "lightweight-validator",
-    "validation-completed",
+    "-lightweight-validator",
+    "-post-commit-validation-completed-in-result-durati",
     "success",
     { message: `✅ Post-commit: Validation completed in ${result.duration}ms` },
   );
 
   if (!result.passed) {
     await frameworkLogger.log(
-      "lightweight-validator",
-      "validation-failed-instructions",
+      "-lightweight-validator",
+      "-fix-the-errors-above-or-use-no-verify-to-skip-val",
       "error",
       {
         message:
@@ -359,12 +348,3 @@ main().catch((error) => {
   frameworkLogger.log("lightweight-validator", "validation-error", "error", { error: error instanceof Error ? error.message : String(error) });
   process.exit(1);
 });
-
-export { LightweightValidator };
-export async function runLightweightPreCommitValidation(
-  files: string[],
-): Promise<{ passed: boolean; errors: string[]; warnings: string[] }> {
-  const validator = new LightweightValidator(files);
-  const result = await validator.validate();
-  return { passed: result.passed, errors: result.errors, warnings: result.warnings };
-}

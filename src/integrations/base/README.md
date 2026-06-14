@@ -1,6 +1,6 @@
 # Integration Base System
 
-The Integration Base System provides a standardized foundation for creating and managing Xray integrations. It includes the `BaseIntegration` class, `IntegrationRegistry`, and supporting types that ensure consistent lifecycle management, event handling, and configuration across all integrations.
+The Integration Base System provides a standardized foundation for creating and managing 0xray integrations. It includes the `BaseIntegration` class, `IntegrationRegistry`, and supporting types that ensure consistent lifecycle management, event handling, and configuration across all integrations.
 
 ## Overview
 
@@ -21,7 +21,7 @@ src/integrations/
 │   ├── ExampleIntegration.ts  # Example implementation
 │   └── index.ts           # Module exports
 ├── core/                  # Core framework integrations
-│   └── xray-integration.ts  # Cross-framework integration
+│   └── strray-integration.ts  # Cross-framework integration
 └── openclaw/              # External service integrations
     ├── index.ts
     ├── client.ts

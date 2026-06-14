@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 0xRay Git Hook Runner
+ * StringRay Git Hook Runner
  *
  * Called by git hooks (pre-commit, post-commit, pre-push, post-push)
  * to perform validation, logging, and monitoring.
@@ -168,129 +168,10 @@ function runTypeScriptCheck(files) {
 
 // ── Codex validation ─────────────────────────────────────────
 
-/**
- * Try to load the framework's ConsoleLogUsageValidator.
- * Falls back gracefully if the framework dist is not available.
- */
-async function tryLoadConsoleValidator() {
-  const distPaths = [
-    join(projectRoot, "dist", "enforcement", "validators", "code-quality-validators.js"),
-    join(projectRoot, "node_modules", "xray", "dist", "enforcement", "validators", "code-quality-validators.js"),
-  ];
-  for (const distPath of distPaths) {
-    if (existsSync(distPath)) {
-      try {
-        const mod = await import(distPath);
-        if (mod.ConsoleLogUsageValidator) {
-          return new mod.ConsoleLogUsageValidator();
-        }
-      } catch {
-        // Fall through to next dist path
-      }
-    }
-  }
-  return null;
-}
-
-/**
- * Try to load the framework's LightweightValidator.
- * Falls back gracefully if the framework dist is not available.
- */
-async function tryLoadLightweightValidator() {
-  const distPaths = [
-    join(projectRoot, "dist", "postprocessor", "validation", "LightweightValidator.js"),
-    join(projectRoot, "node_modules", "0xray", "dist", "postprocessor", "validation", "LightweightValidator.js"),
-  ];
-  for (const distPath of distPaths) {
-    if (existsSync(distPath)) {
-      try {
-        const mod = await import(distPath);
-        if (mod.runLightweightPreCommitValidation) {
-          return mod.runLightweightPreCommitValidation;
-        }
-      } catch {}
-    }
-  }
-  return null;
-}
-
-/**
- * Try to load the enforcement gate's beforeToolHook.
- * Falls back gracefully if the framework dist is not available.
- */
-async function tryLoadGate() {
-  const distPaths = [
-    join(projectRoot, "dist", "integrations", "enforcement-gate.js"),
-    join(projectRoot, "node_modules", "0xray", "dist", "integrations", "enforcement-gate.js"),
-  ];
-  for (const distPath of distPaths) {
-    if (existsSync(distPath)) {
-      try {
-        const mod = await import(distPath);
-        if (mod.beforeToolHook) {
-          return mod.beforeToolHook;
-        }
-      } catch {}
-    }
-  }
-  return null;
-}
-
-/**
- * Check a single file for console.log/warn/error violations using the
- * framework validator when available, falling back to inline regex.
- *
- * Delegates to ConsoleLogUsageValidator (from dist/) when available to
- * ensure consistent CLI-exemption logic with the framework's registry.
- */
-async function checkConsoleViolations(filePath, content) {
-  const frameworkValidator = await tryLoadConsoleValidator();
-  if (frameworkValidator) {
-    try {
-      const result = await frameworkValidator.validate({
-        operation: "write",
-        files: [filePath],
-        newCode: content,
-      });
-      if (!result.passed) {
-        return { errors: [`${filePath}: ${result.message}`], warnings: [] };
-      }
-      return { errors: [], warnings: [] };
-    } catch {
-      // Fall through to inline check
-    }
-  }
-
-  // Inline fallback (same logic as framework validator for consistency)
-  const codeWithoutComments = content
-    .replace(/\/\/.*$/gm, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "");
-
-  const isCLIFile = filePath.includes("/cli/") || filePath.includes("src\\cli\\");
-  const violations = [];
-
-  const consolePatterns = [
-    { pattern: /\bconsole\.log\s*\(/g, name: "console.log" },
-    { pattern: /\bconsole\.warn\s*\(/g, name: "console.warn" },
-    { pattern: /\bconsole\.error\s*\(/g, name: "console.error" },
-  ];
-  for (const { pattern, name } of consolePatterns) {
-    const matches = codeWithoutComments.match(pattern);
-    if (matches && matches.length > 0) {
-      violations.push(`${matches.length} use(s) of ${name}`);
-    }
-  }
-
-  if (violations.length > 0 && !isCLIFile) {
-    return { errors: [`${filePath}: ${violations.join("; ")}`], warnings: [] };
-  }
-  return { errors: [], warnings: [] };
-}
-
 async function runCodexValidation(files) {
   /**
    * Run lightweight codex validation on files.
-   * Uses dynamic import of ConsoleLogUsageValidator from framework when available.
+   * Uses dynamic import of framework modules when available.
    */
   log("Running Codex validation...");
 
@@ -301,6 +182,7 @@ async function runCodexValidation(files) {
     return { passed: true, warnings: [], errors: [] };
   }
 
+  // Quick static checks without framework dependency
   const errors = [];
   const warnings = [];
 
@@ -312,36 +194,49 @@ async function runCodexValidation(files) {
       const content = readFileSync(filePath, "utf-8");
       const lines = content.split("\n");
 
-      // Console check via framework validator (with inline fallback)
-      const consoleResult = await checkConsoleViolations(file, content);
-      errors.push(...consoleResult.errors);
-      warnings.push(...consoleResult.warnings);
-
-      // LightweightValidator for TODO/@ts-ignore/any/security/syntax (replaces inline regex)
-      const lwValidate = await tryLoadLightweightValidator();
-      if (lwValidate) {
-        const lwResult = await lwValidate([filePath]);
-        errors.push(...lwResult.errors);
-        warnings.push(...lwResult.warnings);
+      // Check for console.log (codex violation)
+      const consoleLogLines = lines.reduce((acc, line, i) => {
+        if (/\bconsole\.(log|warn|error)\b/.test(line) && !line.includes("NOSONAR")) {
+          acc.push(i + 1);
+        }
+        return acc;
+      }, []);
+      if (consoleLogLines.length > 0) {
+        errors.push(`${file}: console.log/warn/error found at lines ${consoleLogLines.slice(0, 3).join(", ")}`);
       }
 
-      // Full registry gate call (same path as TUI/CLI hooks)
-      const beforeHook = await tryLoadGate();
-      if (beforeHook) {
-        try {
-          const gateResult = await beforeHook("write", { filePath, content });
-          if (!gateResult.allowed && gateResult.violations) {
-            for (const v of gateResult.violations) {
-              const msg = `${file}: ${v.message || v.ruleId}`;
-              if (v.severity === "error" || v.severity === "blocking") {
-                errors.push(msg);
-              } else {
-                warnings.push(msg);
-              }
-            }
+      // Check for TODO/FIXME
+      const todoLines = lines.reduce((acc, line, i) => {
+        if (/\/\/\s*(TODO|FIXME|HACK|XXX)\b/i.test(line)) {
+          acc.push(i + 1);
+        }
+        return acc;
+      }, []);
+      if (todoLines.length > 0) {
+        warnings.push(`${file}: ${todoLines.length} TODO/FIXME comment(s) found`);
+      }
+
+      // Check for @ts-ignore
+      const tsIgnoreLines = lines.reduce((acc, line, i) => {
+        if (/@ts-ignore|@ts-nocheck|@ts-expect-error/.test(line)) {
+          acc.push(i + 1);
+        }
+        return acc;
+      }, []);
+      if (tsIgnoreLines.length > 0) {
+        warnings.push(`${file}: ${tsIgnoreLines.length} @ts-ignore/@ts-nocheck found`);
+      }
+
+      // Check for any type
+      if (/\bany\b/.test(content)) {
+        const anyLines = lines.reduce((acc, line, i) => {
+          if (/\bany\b/.test(line) && !line.includes("//") && !line.includes("*")) {
+            acc.push(i + 1);
           }
-        } catch (gateErr) {
-          logError(`Gate call failed for ${file}: ${gateErr.message}`);
+          return acc;
+        }, []);
+        if (anyLines.length > 3) {
+          warnings.push(`${file}: ${anyLines.length} uses of 'any' type`);
         }
       }
     } catch {
@@ -503,38 +398,34 @@ async function handlePreCommit() {
   // TypeScript check (blocking)
   const tsResult = runTypeScriptCheck(stagedFiles);
   if (!tsResult.passed) {
-    process.stderr.write("\n❌ TypeScript validation failed:\n");
-    tsResult.errors.slice(0, 10).forEach((e) => process.stderr.write(`   ${e}\n`));
+    console.error("\n❌ TypeScript validation failed:");
+    tsResult.errors.slice(0, 10).forEach((e) => console.error(`   ${e}`));
     if (tsResult.errors.length > 10) {
-      process.stderr.write(`   ... and ${tsResult.errors.length - 10} more\n`);
+      console.error(`   ... and ${tsResult.errors.length - 10} more`);
     }
-    process.stderr.write("\nFix TypeScript errors before committing.\n");
-    process.stderr.write("Run: npx tsc --noEmit\n");
+    console.error("\nFix TypeScript errors before committing.");
+    console.error("Run: npx tsc --noEmit\n");
     process.exit(1);
   }
 
   // Codex validation (blocking)
   const codexResult = await runCodexValidation(stagedFiles);
   if (!codexResult.passed) {
-    logError("Codex validation failed:");
-    codexResult.errors.slice(0, 10).forEach((e) => logError(`   ${e}`));
-    process.stderr.write("\n❌ Codex validation failed:\n");
-    codexResult.errors.slice(0, 10).forEach((e) => process.stderr.write(`   ${e}\n`));
-    process.stderr.write("\nFix Codex violations before committing.\n");
-    process.stderr.write("Run: npx 0xray validate\n\n");
+    console.error("\n❌ Codex validation failed:");
+    codexResult.errors.slice(0, 10).forEach((e) => console.error(`   ${e}`));
+    console.error("\nFix Codex violations before committing.");
+    console.error("Run: npx xray validate\n");
     process.exit(1);
   }
 
   // Warnings (non-blocking)
   if (codexResult.warnings.length > 0) {
-    log("Codex warnings:");
-    codexResult.warnings.slice(0, 5).forEach((w) => log(`   ${w}`));
-    process.stderr.write("\n⚠️  Codex warnings:\n");
-    codexResult.warnings.slice(0, 5).forEach((w) => process.stderr.write(`   ${w}\n`));
-    process.stderr.write("\n");
+    console.warn("\n⚠️  Codex warnings:");
+    codexResult.warnings.slice(0, 5).forEach((w) => console.warn(`   ${w}`));
+    console.warn();
   }
 
-  log(`\n✅ Pre-commit validation passed (${stagedFiles.length} files)\n`);
+  console.log(`\n✅ Pre-commit validation passed (${stagedFiles.length} files)\n`);
   process.exit(0);
 }
 
@@ -570,45 +461,41 @@ async function handlePrePush() {
   const result = await runFullValidation(changedFiles);
 
   if (!result.passed) {
-    logError("Pre-push validation failed:");
-    process.stderr.write("\n❌ Pre-push validation failed:\n");
+    console.error("\n❌ Pre-push validation failed:\n");
 
     if (!result.typescript.passed) {
-      process.stderr.write("TypeScript errors:\n");
+      console.error("TypeScript errors:");
       result.typescript.errors.slice(0, 10).forEach((e) =>
-        process.stderr.write(`   ${e}\n`)
+        console.error(`   ${e}`)
       );
-      process.stderr.write("\n");
+      console.error();
     }
 
     if (!result.codex.passed) {
-      process.stderr.write("Codex violations:\n");
+      console.error("Codex violations:");
       result.codex.errors.slice(0, 10).forEach((e) =>
-        process.stderr.write(`   ${e}\n`)
+        console.error(`   ${e}`)
       );
-      process.stderr.write("\n");
+      console.error();
     }
 
-    process.stderr.write("Fix all errors before pushing.\n");
-    process.stderr.write("Run: npx tsc --noEmit && npx 0xray validate\n\n");
+    console.error("Fix all errors before pushing.");
+    console.error("Run: npx tsc --noEmit && npx xray validate\n");
     process.exit(1);
   }
 
   // Warnings
   if (result.codex.warnings.length > 0) {
-    log("Codex warnings:");
-    result.codex.warnings.slice(0, 5).forEach((w) => log(`   ${w}`));
-    process.stderr.write("\n⚠️  Codex warnings:\n");
-    result.codex.warnings.slice(0, 5).forEach((w) => process.stderr.write(`   ${w}\n`));
-    process.stderr.write("\n");
+    console.warn("\n⚠️  Codex warnings:");
+    result.codex.warnings.slice(0, 5).forEach((w) => console.warn(`   ${w}`));
+    console.warn();
   }
 
   if (result.testWarning) {
-    log(`Pre-push test warning: ${result.testWarning}`);
-    process.stderr.write(`\n⚠️  ${result.testWarning}\n\n`);
+    console.warn(`\n⚠️  ${result.testWarning}\n`);
   }
 
-  log(`\n✅ Pre-push validation passed (${changedFiles.length} files)\n`);
+  console.log(`\n✅ Pre-push validation passed (${changedFiles.length} files)\n`);
   process.exit(0);
 }
 
@@ -664,8 +551,8 @@ const handlers = {
 
 const handler = handlers[hookType];
 if (!handler) {
-  process.stderr.write(`Unknown hook type: ${hookType}\n`);
-  process.stderr.write(`Valid types: ${Object.keys(handlers).join(", ")}\n`);
+  console.error(`Unknown hook type: ${hookType}`);
+  console.error(`Valid types: ${Object.keys(handlers).join(", ")}`);
   process.exit(1);
 }
 
@@ -678,6 +565,6 @@ handler()
   })
   .catch((err) => {
     logError(`Hook crashed: ${err.message}`);
-    process.stderr.write(`0xRay hook error: ${err.message}\n`);
+    console.error(`StringRay hook error: ${err.message}`);
     process.exit(1);
   });

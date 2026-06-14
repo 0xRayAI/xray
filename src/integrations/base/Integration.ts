@@ -401,7 +401,6 @@ export abstract class BaseIntegration
           status: this._status,
           jobId: this.jobId,
         },
-        undefined,
         this.jobId,
       );
     } catch {

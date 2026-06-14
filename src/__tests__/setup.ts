@@ -22,8 +22,7 @@ declare global {
 beforeAll(() => {
   // Set up test environment
   process.env.NODE_ENV = "test";
-  process.env.XRAY_TEST_MODE = "true";
-  process.env.XRAY_LOCAL_MODE = "true";
+  process.env.STRRAY_TEST_MODE = "true";
 
   // Create required directories for tests
   const fs = require("fs");
@@ -58,8 +57,7 @@ beforeAll(() => {
 
 afterAll(() => {
   // Clean up test environment
-  delete process.env.XRAY_TEST_MODE;
-  // Legacy env cleanup removed for clean publish
+  delete process.env.STRRAY_TEST_MODE;
 });
 
   // Reset console methods after each test
@@ -115,7 +113,7 @@ global.testUtils = {
     const path = require("path");
     return path.join(
       os.tmpdir(),
-      `xray-test-${crypto.randomBytes(8).toString("hex")}`,
+      `strray-test-${crypto.randomBytes(8).toString("hex")}`,
     );
   },
 

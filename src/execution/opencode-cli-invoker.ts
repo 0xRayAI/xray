@@ -6,6 +6,7 @@
  * InferenceCycle is pure sensing + proposal + governance orchestration.
  */
 
+import * as fs from "fs";
 import * as path from "path";
 import { execSync, spawn } from "child_process";
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -23,6 +24,11 @@ export async function invokeViaOpencode(
   prompt: string,
   projectRoot: string = process.cwd(),
 ): Promise<string> {
+  // In pure MCP mode we must never reach here
+  if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === "true") {
+    throw new Error(`[PURE MCP] invokeViaOpencode called for "${agentName}" — this path is forbidden.`);
+  }
+
   // GATE: Centralized spawn gate — blocks all agent spawning by default
   spawnGate.assertAllowed("opencode-cli-invoker");
 
@@ -70,8 +76,8 @@ export async function invokeViaOpencode(
     throw new Error("opencode CLI is not available in PATH");
   }
 
-  // Resolve project root via the canonical config-path resolver
-  const opencodeRoot = path.dirname(getConfigDir(projectRoot));
+  // Resolve the actual opencode project root (where .opencode/ config lives)
+  const opencodeRoot = resolveOpencodeRoot(projectRoot);
 
   frameworkLogger.log("inference-cycle", "opencode-spawn-start", "info", {
     agentName,
@@ -93,7 +99,7 @@ export async function invokeViaOpencode(
         settled = true;
         child.kill("SIGKILL");
         if (trackingId) {
-          agentSpawnGovernor.failSpawn(trackingId, new Error(`opencode ${agentName} timed out`)).catch((err) => frameworkLogger.log("opencode-cli-invoker", "spawn-governor-error", "error", { error: String(err) }));
+          agentSpawnGovernor.failSpawn(trackingId, new Error(`opencode ${agentName} timed out`)).catch(() => {});
         }
         reject(new Error(`opencode ${agentName} timed out`));
       }
@@ -123,7 +129,7 @@ export async function invokeViaOpencode(
       settled = true;
       if (code === 0 && stdout.trim()) {
         if (trackingId) {
-          await agentSpawnGovernor.completeSpawn(trackingId, true).catch((err) => frameworkLogger.log("opencode-cli-invoker", "spawn-governor-error", "error", { error: String(err) }));
+          await agentSpawnGovernor.completeSpawn(trackingId, true).catch(() => {});
         }
         frameworkLogger.log("inference-cycle", "opencode-spawn-success", "info", { agentName, trackingId });
         const textResponse = extractTextFromNdjson(stdout.trim());
@@ -135,7 +141,7 @@ export async function invokeViaOpencode(
       } else {
         const error = new Error(`${agentName} exited ${code}`);
         if (trackingId) {
-          await agentSpawnGovernor.failSpawn(trackingId, error).catch((err) => frameworkLogger.log("opencode-cli-invoker", "spawn-governor-error", "error", { error: String(err) }));
+          await agentSpawnGovernor.failSpawn(trackingId, error).catch(() => {});
         }
         frameworkLogger.log("inference-cycle", "opencode-spawn-failed", "error", { agentName, trackingId, code });
         reject(error);
@@ -147,7 +153,7 @@ export async function invokeViaOpencode(
       if (!settled) {
         settled = true;
         if (trackingId) {
-          await agentSpawnGovernor.failSpawn(trackingId, err).catch((e) => frameworkLogger.log("opencode-cli-invoker", "spawn-governor-error", "error", { error: String(e) }));
+          await agentSpawnGovernor.failSpawn(trackingId, err).catch(() => {});
         }
         frameworkLogger.log("inference-cycle", "opencode-spawn-error", "error", { agentName, trackingId, error: err.message });
         reject(err);
@@ -173,7 +179,18 @@ function extractTextFromNdjson(output: string): string {
   return texts.join("\n").trim();
 }
 
+function resolveOpencodeRoot(projectRoot: string): string {
+  const configDir = getConfigDir(projectRoot);
+  let dir = projectRoot;
+  for (let i = 0; i < 10; i++) {
+    if (fs.existsSync(path.join(dir, ".opencode"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  const cwd = process.cwd();
+  if (fs.existsSync(path.join(cwd, ".opencode"))) return cwd;
+  return projectRoot;
+}
+
 // OpenCode execution owned by Autonomous Engine (thin fallback).
-// Kept as a standalone execution helper — InferenceCycle calls this directly
-// via invokeOpencodeFromEngine import. The separation is clean: this file owns
-// child_process spawn + lifecycle; InferenceCycle owns sensing + governance.

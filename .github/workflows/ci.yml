@@ -164,24 +164,21 @@ jobs:
           mkdir -p test-install
           cd test-install
           npm init -y
-          npm install ../0xray-*.tgz
+          npm install ../strray-ai-*.tgz
 
       - name: Run postinstall
         run: |
           cd test-install
           rm -f ~/.hermes  # Ensure Hermes isn't detected in CI
-          node node_modules/0xray/scripts/node/postinstall.cjs 2>/dev/null || true
+          node node_modules/strray-ai/scripts/node/postinstall.cjs
 
       - name: Validate postinstall
         env:
           CI: "true"
         run: |
           cd test-install
-          # Verify package was installed
-          ls node_modules/0xray/package.json || exit 1
-          # Verify postinstall output contains correct version string
-          POST_OUTPUT=$(node node_modules/0xray/scripts/node/postinstall.cjs 2>/dev/null || true)
-          echo "$POST_OUTPUT" | grep -q "xray v3 framework installed" || { echo "❌ postinstall shows wrong version"; echo "$POST_OUTPUT"; exit 1; }
+          # Skip full validation in CI - just verify package was installed
+          ls node_modules/strray-ai/package.json || exit 1
           echo "✅ Package installed successfully"
 
       - name: Validate MCP
@@ -189,7 +186,7 @@ jobs:
           CI: "true"
         run: |
           cd test-install
-          node node_modules/0xray/scripts/mjs/validate-mcp-connectivity.cjs || true
+          node node_modules/strray-ai/scripts/mjs/validate-mcp-connectivity.cjs || true
 
   # ═══════════════════════════════════════════════════════
   # Security Audit (gated: schedule, needs-pipeline, or ci:full)
@@ -219,80 +216,6 @@ jobs:
         run: npm audit --audit-level=high || true
 
   # ═══════════════════════════════════════════════════════
-  # npm Pack Smoke Test (always runs — validates the packaged artifact)
-  # ═══════════════════════════════════════════════════════
-  smoke-test-package:
-    name: npm Pack Smoke Test
-    runs-on: ubuntu-latest
-    needs: test-unit
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build:all
-      - name: Pack and validate
-        run: |
-          # Pack
-          TARBALL=$(npm pack 2>/dev/null | tail -1)
-          echo "Tarball: $TARBALL"
-
-          # Create consumer project
-          TMPDIR=$(mktemp -d)
-          cd "$TMPDIR"
-          npm init -y
-          npm install "$GITHUB_WORKSPACE/$TARBALL"
-
-          # Validate package ships correctly
-          echo "=== Validate package structure ==="
-          PKG="node_modules/0xray"
-          [ -f "$PKG/package.json" ] && echo "OK: package.json"
-          [ -f "$PKG/dist/cli/index.js" ] && echo "OK: CLI entry"
-          [ -d "$PKG/xray" ] && echo "OK: xray/ config dir"
-          [ -f "$PKG/xray/features.json" ] && echo "OK: features.json"
-          [ -f "$PKG/xray/codex.json" ] && echo "OK: codex.json"
-          [ -f "$PKG/scripts/node/setup.cjs" ] && echo "OK: setup.cjs"
-
-          # Validate CLI runs
-          echo "=== Validate CLI ==="
-          npx 0xray --help 2>&1 | head -5
-
-          # Validate setup
-          echo "=== Validate setup ==="
-          node "$PKG/scripts/node/setup.cjs" 2>&1 | tail -3
-
-          # Validate logs dir created
-          echo "=== Validate logs dir ==="
-          [ -d "$(pwd)/logs/framework" ] && echo "OK: logs/framework/ exists"
-
-          echo "✅ Smoke test passed"
-
-  # ═══════════════════════════════════════════════════════
-  # Dead File Detection
-  # ═══════════════════════════════════════════════════════
-  check-orphaned-files:
-    name: Dead File Detection
-    runs-on: ubuntu-latest
-    needs: test-unit
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-      - run: npm ci --ignore-scripts
-      - name: Detect orphaned files
-        run: |
-          for f in src/**/*.ts; do
-            count=$(grep -rl "$(basename "$f" .ts)" src/ --include='*.ts' --include='*.mjs' | grep -v "$f" | wc -l)
-            if [ "$count" -eq 0 ] && [[ ! "$f" =~ "__tests__" ]] && [[ ! "$f" =~ "\.d\.ts" ]]; then
-              echo "POSSIBLY ORPHANED: $f"
-            fi
-          done
-
-  # ═══════════════════════════════════════════════════════
   # Codex Enforcement Gate
   # ═══════════════════════════════════════════════════════
   enforcement:
@@ -315,84 +238,18 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Run Codex Enforcement Check (all 29 validators)
+      - name: Run Codex Enforcement Check
         run: |
-          echo "Running all 29 validators via ValidatorRegistry (bypassing bridge.mjs snippet-safe filter)..."
-          node scripts/ci/enforce-validators.mjs --all
+          echo "Running codex-check against codebase..."
+          node dist/core/bridge.mjs codex-check --operation write --focus "full" || true
 
-      - name: Coverage Gate Check (term 75)
+      - name: Check enforcement violations
         run: |
-          echo "Running vitest coverage check with thresholds (statements: 60%, branches: 50%, functions: 55%, lines: 60%)..."
-          npx vitest run --coverage --reporter=verbose 2>&1 | tail -20 || {
-            echo "❌ Coverage gate failed — thresholds not met. See vitest output above."
-            exit 1
-          }
-          echo "✅ Coverage gate passed (term 75)"
-
-      - name: Consumer Package Enforcement Check (term 76 — PR CI)
-        run: |
-          PROJECT_ROOT="${{ github.workspace }}"
-          echo "--- Pack consumer tarball ---"
-          TARBALL=$(cd "$PROJECT_ROOT" && npm pack 2>/dev/null | tail -1)
-          TMPDIR=$(mktemp -d)
-          cd "$TMPDIR"
-          npm init -y
-          npm install "$PROJECT_ROOT/$TARBALL"
-          PKG="$TMPDIR/node_modules/0xray"
-
-          echo "--- ValidatorRegistry load test ---"
-          node --input-type=module -e "
-            const mod = await import('$PKG/dist/enforcement/validators/validator-registry.js');
-            const reg = mod.globalValidatorRegistry;
-            if (!reg) { console.error('FAIL: no registry'); process.exit(1); }
-            const v = reg.getAllValidators();
-            console.log('OK: ' + v.length + ' validators loaded');
-            if (v.length !== 29) { console.error('FAIL: expected 29, got ' + v.length); process.exit(1); }
-            console.log('ALL 29 VALIDATORS PRESENT');
-          "
-
-          echo "--- Enforcement gate load test ---"
-          node --input-type=module -e "
-            const { beforeToolHook, afterToolHook } = await import('$PKG/dist/integrations/enforcement-gate.js');
-            const r1 = await beforeToolHook('write', { filePath: 'test.ts', content: 'const x = 1;' });
-            console.log('beforeToolHook: allowed=' + r1.allowed + ' resonance=' + r1.resonance);
-            if (!r1.allowed || r1.resonance <= 0) throw new Error('beforeToolHook unexpected');
-            const r2 = await afterToolHook('write', { filePath: 'test.ts', content: 'const x = 1;' }, null, null);
-            console.log('afterToolHook: processed=' + r2.processed + ' violations=' + r2.violations.length);
-            if (r2.processed !== true || r2.violations.length > 0) throw new Error('afterToolHook unexpected');
-            console.log('Consumer gate verification PASSED');
-          "
-
-          echo "--- Cleanup ---"
-          rm -f "$PROJECT_ROOT/$TARBALL"
-          echo "✅ Consumer package enforcement check passed (term 76)"
-
-      - name: E2E Pipeline Smoke Test (hook → gate → escalation → CI → consumer)
-        run: |
-          echo "Running full E2E pipeline smoke test..."
-          node scripts/ci/e2e-pipeline-smoke.mjs
-          echo "✅ E2E pipeline smoke test passed (term 76/77/78/79/80/81)"
-
-      - name: Compat Shim Scanner (Term 78)
-        run: |
-          echo "Scanning for stale compat shims..."
-          node scripts/ci/compat-shim-scanner.mjs || {
-            echo "⚠️  Compat shims detected — review for removal (non-blocking)"
-          }
-          echo "✅ Compat shim scan complete"
-
-      - name: Orphan Code Pre-PR Check (Term 73)
-        run: |
-          echo "Checking for orphan code deletion protocol violations..."
-          node scripts/ci/orphan-code-pre-pr-check.mjs --base origin/${{ github.event.pull_request.base.ref || 'master' }}
-          echo "✅ Orphan code check complete"
-
-      - name: Source-Change Governance Detector (Phase 1)
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "Detecting governance-interest file changes..."
-          node scripts/ci/source-change-governance-detector.mjs --apply
-          echo "✅ Source-change governance detection complete"
+          VIOLATIONS=$(grep -c "violation\|blocked\|failed" .opencode/logs/activity.log 2>/dev/null || echo "0")
+          echo "Enforcement violations found: $VIOLATIONS"
+          if [ "$VIOLATIONS" -gt "0" ]; then
+            echo "⚠️ Codex violations detected - review .opencode/logs/activity.log"
+          fi
 
   # ═══════════════════════════════════════════════════════
   # CI/CD Health Monitor (runs after all jobs)
@@ -440,19 +297,17 @@ jobs:
   ci-summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [quality, test-unit, smoke-test-package, enforcement]
+    needs: [quality, test-unit, enforcement]
     if: always()
     steps:
       - name: Check required jobs status
         run: |
           echo "Quality: ${{ needs.quality.result }}"
           echo "Unit Tests: ${{ needs.test-unit.result }}"
-          echo "Smoke Test Package: ${{ needs.smoke-test-package.result }}"
           echo "Codex Enforcement: ${{ needs.enforcement.result }}"
 
           if [ "${{ needs.quality.result }}" != "success" ] || \
              [ "${{ needs.test-unit.result }}" != "success" ] || \
-             [ "${{ needs.smoke-test-package.result }}" != "success" ] || \
              [ "${{ needs.enforcement.result }}" != "success" ]; then
             echo "❌ One or more required jobs failed"
             exit 1

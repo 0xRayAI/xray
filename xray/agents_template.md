@@ -1,49 +1,109 @@
-# AGENTS.md — 0xRay Consumer Template
+# StringRay AI v1.15.1 – Agent Context & Universal Development Codex
 
-**Version**: 3.0.11
-**Updated**: 2026-06-13
+**Framework Version**: 1.14.0  
+**Codex Version**: 1.7.5 (condensed)  
+**Last Updated**: 2026-03-23  
+**Purpose**: Systematic error prevention and production-ready AI-assisted development
 
-## What is 0xRay?
+## 🎯 CRITICAL RULES – ZERO TOLERANCE (MANDATORY)
 
-0xRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in MCP orchestrator). Agents operate via YML surfaces and MCP skill servers.
+1. **Full File Reading Before Edit**  
+   ALWAYS read the ENTIRE file using the `read` tool before ANY edit, refactor, or write.  
+   Understand complete structure, imports, dependencies, and context.  
+   Partial/contextual edits are strictly forbidden.
 
-## Available MCP Servers
+2. **Verify Changes Actually Applied**  
+   After every edit/write: use `read` to confirm the exact changes are present.  
+   Check for regressions and unintended modifications.  
+   NEVER declare success without observable verification.
 
-| Server | Purpose |
-|--------|---------|
-| `xray-enforcer` | Codex compliance & error prevention |
-| `xray-governance` | Proposal governance, codex snapshot |
-| `xray-orchestrator` | thinDispatch 7-flow delegation routing |
-| `xray-skills` | Skill invocation (code-review, security-audit, researcher, etc.) |
+3. **Command & Tool Output Review**  
+   Immediately review ALL command/tool outputs.  
+   Identify errors, warnings, or anomalies.  
+   Add TODO for course correction if issues found.  
+   Do not proceed until critical problems are resolved.
 
-## CLI Commands
+4. **No False Success Claims**  
+   Only report "completed", "edited", or "fixed" after verification steps confirm success.  
+   Prohibited: assuming success, subjective "looks correct", skipping checks for "trivial" changes.
 
-```
-npx 0xray setup          Full framework configuration
-npx 0xray validate        Run Codex compliance validation
-npx 0xray status          Show framework status
-npx 0xray install <mcp>   Install MCP server (groks)
-```
+5. **Surgical & Progressive Fixes**  
+   Fix root causes minimally – no patches, stubs, or over-engineering.  
+   All code must be production-ready from first commit.
 
-## Governance
+6. **Error & Loop Prevention**  
+   Resolve all errors before continuing (90%+ runtime prevention target).  
+   Every loop/async must have clear termination/timeout.
 
-All actions are governed by the Universal Development Codex via Dynamo (External Governance SSOT). Governance precedes action.
+7. **Type Safety & Immutability First**  
+   No `any`, `@ts-ignore`. Prefer immutable patterns and early returns/guards.
 
-## Logging
+8. **DRY, YAGNI, Separation of Concerns**  
+   No duplication. No unnecessary features. One responsibility per module/function.
 
-Use `fwLogger` / `frameworkLogger` structured logging only (never `console.*`). Logs go to `logs/framework/activity.log` + `.opencode/logs/`.
+9. **Test & Performance Awareness**  
+   >85% behavioral coverage target. Respect bundle <2MB, FCP <2s budgets.
 
-## Architecture
+10. **Security & Input Validation**  
+    Validate/sanitize all inputs. Security by design.
 
-- **Inference**: Session capture, pattern accumulation, governance triggers
-- **External Governance**: Dynamo Solar SSOT via codex.json
-- **Autonomous Engine**: thinDispatch 7-flow in MCP orchestrator
+## Core Codex Terms (Top 20 – Enforced)
 
-## Complexity Routing
+1. Progressive production-ready code  
+2. No patches/stubs/bridge code  
+3. Avoid over-engineering  
+4. Fit-for-purpose prod-level code  
+5. Surgical root-cause fixes  
+6. Batched introspection cycles  
+7. Resolve all errors (90% prevention)  
+8. Prevent infinite loops/timeouts  
+9. Shared global state / single source of truth  
+10. Type safety first (no `any`)  
+11. Early returns & guard clauses  
+12. Error boundaries & graceful degradation  
+13. Immutability preferred  
+14. Separation of concerns  
+15. DRY – eliminate duplication  
+16. YAGNI – no speculative features  
+17. Meaningful, self-documenting names  
+18. Small, focused functions (<30 lines ideal)  
+19. Consistent style (linter enforced)  
+20. Test coverage >85% (behavioral focus)
 
-| Complexity | Score | Strategy |
-|-----------|-------|----------|
-| Simple | ≤15 | Single agent |
-| Moderate | ≤25 | Single agent with tools |
-| Complex | ≤50 | Multi-agent coordination |
-| Enterprise | >50 | Orchestrator-led team |
+## Agent Capabilities Matrix
+
+| Agent                     | Role                              | Complexity | Key Tools                              | Strategy          |
+|---------------------------|-----------------------------------|------------|----------------------------------------|-------------------|
+| enforcer                  | Codex & error prevention          | All        | read, grep, lsp_*, bash                | Block violations  |
+| orchestrator              | Workflow coordination             | Enterprise | read, grep, call_omo_agent, session_*  | Consensus         |
+| architect                 | Design & decisions                | High       | read, grep, lsp_*, background_task     | Expert priority   |
+| bug-triage-specialist     | Error investigation & fixes       | Debug      | read, grep, ast_grep_*                 | Majority vote     |
+| code-reviewer             | Quality & standards               | Changes    | read, grep, lsp_diagnostics            | Expert priority   |
+| security-auditor          | Vulnerabilities & compliance      | Security   | read, grep, grep_app_searchGitHub      | Block critical    |
+| refactorer                | Debt & consolidation              | Refactor   | read, grep, lsp_rename, ast_grep_*     | Majority vote     |
+| testing-lead              | Testing strategy & coverage       | Tests      | read, grep, lsp_*                      | Expert priority   |
+| storyteller               | Narrative deep reflections       | Narrative  | read, grep, write                      | Expert priority   |
+| researcher                | Codebase exploration              | Research   | read, grep, codesearch, websearch       | Expert priority   |
+
+## Complexity Routing Summary
+
+Score = (files×2 + change/10 + deps×3 + duration/10) × operation_weight × risk_mult  
+- Operation weights: debug 2.0, refactor 1.8, analyze 1.5, modify 1.2, others 1.0  
+- Risk multipliers: critical 1.6, high 1.3, medium 1.0, low 0.8  
+Thresholds:  
+- ≤15 → single agent  
+- 16–50 → multi-agent possible  
+- 51+ → orchestrator-led
+
+## Operational Guidelines
+
+- Evaluate complexity before execution  
+- Always verify: read full file → apply change → read again → confirm no regressions  
+- Use `call_omo_agent` or `task()` for delegation  
+- Log JobId for traceability  
+- Enforce codex compliance on every operation
+
+**Codex Enforcement**: All actions validated against these rules. Violations block progress until resolved.  
+**Target**: 99.6% systematic error prevention through verification-first behavior.
+
+(End of file - total 105 lines)

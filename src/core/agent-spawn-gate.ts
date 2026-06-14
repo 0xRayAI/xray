@@ -1,7 +1,7 @@
 /**
  * Agent Spawn Gate — Singleton (provider-agnostic)
  *
- * CENTRALIZED CONTROL for all agent process spawning across Xray
+ * CENTRALIZED CONTROL for all agent process spawning across StringRay
  * (OpenCode, Hermes, or any other MCP-compatible host).
  *
  * Purpose:

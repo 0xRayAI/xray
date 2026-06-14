@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { XrayStateManager } from "../state/state-manager.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import { SessionCoordinator } from "../delegation/session-coordinator.js";
 import { SessionCleanupManager } from "./session-cleanup-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -71,7 +71,7 @@ export interface Alert {
 }
 
 export class SessionMonitor {
-  private stateManager: XrayStateManager;
+  private stateManager: StringRayStateManager;
   private sessionCoordinator: SessionCoordinator;
   private cleanupManager: SessionCleanupManager | undefined;
   private config: MonitorConfig;
@@ -85,7 +85,7 @@ export class SessionMonitor {
   private sessionErrors = new Map<string, number>();
 
   constructor(
-    stateManager: XrayStateManager,
+    stateManager: StringRayStateManager,
     sessionCoordinator: SessionCoordinator,
     cleanupManager: SessionCleanupManager,
     config: Partial<MonitorConfig> = {},
@@ -696,7 +696,7 @@ export class SessionMonitor {
 }
 
 export const createSessionMonitor = (
-  stateManager: XrayStateManager,
+  stateManager: StringRayStateManager,
   sessionCoordinator: SessionCoordinator,
   cleanupManager: SessionCleanupManager,
   config?: Partial<MonitorConfig>,

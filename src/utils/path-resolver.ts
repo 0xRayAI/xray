@@ -61,7 +61,7 @@ export class PathResolver {
     return (
       this.currentDir.includes("/dist/") ||
       this.currentDir.includes("\\dist\\") ||
-      (this.currentDir.includes("xray") && !this.detectDevelopment())
+      (this.currentDir.includes("strray") && !this.detectDevelopment())
     );
   }
 
@@ -72,7 +72,7 @@ export class PathResolver {
     return (
       this.currentDir.includes("/node_modules/") ||
       this.currentDir.includes("\\node_modules\\") ||
-      (this.currentDir.includes("xray") && this.detectBuilt())
+      (this.currentDir.includes("strray") && this.detectBuilt())
     );
   }
 

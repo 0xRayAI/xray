@@ -15,14 +15,14 @@ vi.mock("../../governance/codex-policy.service.js", () => ({
   })),
 }));
 
-import XrayEnforcerToolsServer from "../../mcps/enforcer-tools.server.js";
+import StringRayEnforcerToolsServer from "../../mcps/enforcer-tools.server.js";
 
-describe("XrayEnforcerToolsServer - getCodexTermCount", () => {
-  let server: InstanceType<typeof XrayEnforcerToolsServer>;
+describe("StringRayEnforcerToolsServer - getCodexTermCount", () => {
+  let server: InstanceType<typeof StringRayEnforcerToolsServer>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    server = new XrayEnforcerToolsServer();
+    server = new StringRayEnforcerToolsServer();
   });
 
   it("should delegate to getCodexPolicyService().getTermCount()", async () => {

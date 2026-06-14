@@ -1,8 +1,25 @@
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
+/**
+ * Strategist MCP Server
+ *
+ * Strategic guidance and complex problem-solving for architectural decisions.
+ * Provides strategic planning, risk assessment, and technical strategy tools.
+ */
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { frameworkLogger } from "../../core/framework-logger.js";
+
+interface Tool {
+  name: string;
+  description: string;
+  inputSchema: object;
+}
 
 interface StrategicGuidanceArgs {
   context: string;
@@ -20,86 +37,127 @@ interface ArchitectureReviewArgs {
   requirements?: string[];
 }
 
-class StrategistServer extends XrayKnowledgeSkillBase {
+class StrategistServer {
+  private server: Server;
+  private tools: Tool[] = [
+    {
+      name: "strategic_guidance",
+      description:
+        "Provide strategic guidance for complex technical decisions, architectural choices, and high-level planning",
+      inputSchema: {
+        type: "object",
+        properties: {
+          context: {
+            type: "string",
+            description: "Technical context or situation requiring strategic analysis",
+          },
+          options: {
+            type: "array",
+            items: { type: "string" },
+            description: "Available options or choices to evaluate",
+          },
+          criteria: {
+            type: "array",
+            items: { type: "string" },
+            description: "Evaluation criteria (e.g., scalability, cost, maintainability)",
+          },
+        },
+        required: ["context"],
+      },
+    },
+    {
+      name: "risk_assessment",
+      description:
+        "Analyze technical decisions for potential risks, vulnerabilities, and failure modes",
+      inputSchema: {
+        type: "object",
+        properties: {
+          decision: {
+            type: "string",
+            description: "Technical decision or change to assess",
+          },
+          scope: {
+            type: "string",
+            enum: ["low", "medium", "high", "critical"],
+            description: "Scope/impact level of the decision",
+          },
+        },
+        required: ["decision"],
+      },
+    },
+    {
+      name: "architecture_review",
+      description:
+        "Review architectural decisions against best practices, patterns, and trade-offs",
+      inputSchema: {
+        type: "object",
+        properties: {
+          architecture: {
+            type: "string",
+            description: "Architecture or design pattern being used",
+          },
+          requirements: {
+            type: "array",
+            items: { type: "string" },
+            description: "Key requirements to satisfy",
+          },
+        },
+        required: ["architecture"],
+      },
+    },
+  ];
+
   constructor() {
-    super("xray/strategist", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "strategic_guidance",
-        description: "Provide strategic guidance for complex technical decisions, architectural choices, and high-level planning",
-        inputSchema: {
-          type: "object",
-          properties: {
-            context: {
-              type: "string",
-              description: "Technical context or situation requiring strategic analysis",
-            },
-            options: {
-              type: "array",
-              items: { type: "string" },
-              description: "Available options or choices to evaluate",
-            },
-            criteria: {
-              type: "array",
-              items: { type: "string" },
-              description: "Evaluation criteria (e.g., scalability, cost, maintainability)",
-            },
-          },
-          required: ["context"],
-        },
+        name: "xray/strategist", version: "1.22.67",
       },
       {
-        name: "risk_assessment",
-        description: "Analyze technical decisions for potential risks, vulnerabilities, and failure modes",
-        inputSchema: {
-          type: "object",
-          properties: {
-            decision: {
-              type: "string",
-              description: "Technical decision or change to assess",
-            },
-            scope: {
-              type: "string",
-              enum: ["low", "medium", "high", "critical"],
-              description: "Scope/impact level of the decision",
-            },
-          },
-          required: ["decision"],
+        capabilities: {
+          tools: {},
         },
       },
-      {
-        name: "architecture_review",
-        description: "Review architectural decisions against best practices, patterns, and trade-offs",
-        inputSchema: {
-          type: "object",
-          properties: {
-            architecture: {
-              type: "string",
-              description: "Architecture or design pattern being used",
-            },
-            requirements: {
-              type: "array",
-              items: { type: "string" },
-              description: "Key requirements to satisfy",
-            },
-          },
-          required: ["architecture"],
-        },
-      },
-    ];
-    this.handlers = {
-      strategic_guidance: async (args) => this.handleStrategicGuidance(args as unknown as StrategicGuidanceArgs),
-      risk_assessment: async (args) => this.handleRiskAssessment(args as unknown as RiskAssessmentArgs),
-      architecture_review: async (args) => this.handleArchitectureReview(args as unknown as ArchitectureReviewArgs),
-    };
+    );
+
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "xray/strategist",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: this.tools.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+        })),
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      try {
+        switch (name) {
+          case "strategic_guidance":
+            return await this.handleStrategicGuidance(args as unknown as StrategicGuidanceArgs);
+          case "risk_assessment":
+            return await this.handleRiskAssessment(args as unknown as RiskAssessmentArgs);
+          case "architecture_review":
+            return await this.handleArchitectureReview(args as unknown as ArchitectureReviewArgs);
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
     });
   }
 
@@ -134,10 +192,10 @@ class StrategistServer extends XrayKnowledgeSkillBase {
     const { decision, scope = "medium" } = args;
 
     const riskLevels: Record<string, string> = {
-      low: "Low Risk",
-      medium: "Medium Risk",
-      high: "High Risk",
-      critical: "Critical Risk",
+      low: "🔵 Low Risk",
+      medium: "🟡 Medium Risk",
+      high: "🟠 High Risk",
+      critical: "🔴 Critical Risk",
     };
 
     const analysis = [
@@ -192,14 +250,18 @@ class StrategistServer extends XrayKnowledgeSkillBase {
       content: [{ type: "text", text: analysis.join("\n") }],
     };
   }
+
+  async start() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    await frameworkLogger.log("mcp-strategist", "server-started", "success");
+  }
 }
 
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new StrategistServer();
-  server.run("mcp-strategist").catch((error) => {
-    frameworkLogger.log("strategist", "run", "error", { error: error instanceof Error ? error.message : String(error) });
-  });
+  server.start().catch((error) => frameworkLogger.log("mcps/strategist", "run", "error", { error: String(error) }));
 }
 
 export { StrategistServer };

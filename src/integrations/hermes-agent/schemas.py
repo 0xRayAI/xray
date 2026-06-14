@@ -1,9 +1,9 @@
 """Tool schemas — what the LLM sees."""
 
-XRAY_VALIDATE = {
-    "name": "xray_validate",
+STRRAY_VALIDATE = {
+    "name": "strray_validate",
     "description": (
-        "Run Xray pre-commit validation on specified files. "
+        "Run StringRay pre-commit validation on specified files. "
         "Checks codex compliance, rule validation, and quality gates. "
         "Use this before committing any code changes. Returns pass/fail "
         "with actionable remediation for any violations."
@@ -26,8 +26,8 @@ XRAY_VALIDATE = {
     },
 }
 
-XRAY_CODEX_CHECK = {
-    "name": "xray_codex_check",
+STRRAY_CODEX_CHECK = {
+    "name": "strray_codex_check",
     "description": (
         "Validate code against the Universal Development Codex (60 error-prevention terms). "
         "Checks error-handling, type-safety, performance, security, and architecture patterns. "
@@ -57,12 +57,12 @@ XRAY_CODEX_CHECK = {
     },
 }
 
-XRAY_HEALTH = {
-    "name": "xray_health",
+STRRAY_HEALTH = {
+    "name": "strray_health",
     "description": (
-        "Run Xray framework health check. Returns version, agent count, "
+        "Run StringRay framework health check. Returns version, agent count, "
         "MCP server status, and enforcement statistics. Use to verify the "
-        "Xray integration is working correctly."
+        "StringRay integration is working correctly."
     ),
     "parameters": {
         "type": "object",
@@ -70,10 +70,10 @@ XRAY_HEALTH = {
     },
 }
 
-XRAY_HOOKS = {
-    "name": "xray_hooks",
+STRRAY_HOOKS = {
+    "name": "strray_hooks",
     "description": (
-        "Manage Xray git hooks (install, uninstall, list, status). "
+        "Manage StringRay git hooks (install, uninstall, list, status). "
         "Installs pre-commit, post-commit, pre-push, and post-push hooks "
         "that run TypeScript validation, Codex checks, and monitoring. "
         "Use 'install' to set up all hooks, 'list' to see current status."

@@ -87,8 +87,8 @@ describe("Features Config Interfaces", () => {
       const config = {
         description: "Inference system",
         enabled: true,
-        workflow_dir: ".xray/inference",
-        reports_dir: ".xray/reports",
+        workflow_dir: ".strray/inference",
+        reports_dir: ".strray/reports",
         pattern_matching: {
           enabled: true,
           confidence_threshold: 0.7,
@@ -96,7 +96,7 @@ describe("Features Config Interfaces", () => {
       };
       
       expect(config.enabled).toBe(true);
-      expect(config.workflow_dir).toBe(".xray/inference");
+      expect(config.workflow_dir).toBe(".strray/inference");
       expect(config.pattern_matching.confidence_threshold).toBe(0.7);
     });
 
@@ -104,8 +104,8 @@ describe("Features Config Interfaces", () => {
       const config = {
         description: "Inference disabled",
         enabled: false,
-        workflow_dir: ".xray/inference",
-        reports_dir: ".xray/reports",
+        workflow_dir: ".strray/inference",
+        reports_dir: ".strray/reports",
         pattern_matching: {
           enabled: false,
           confidence_threshold: 0.5,
@@ -220,7 +220,7 @@ describe("Features Config Interfaces", () => {
 });
 
 describe("Config Loading", () => {
-  const testDir = join(tmpdir(), `xray-test-${Date.now()}`);
+  const testDir = join(tmpdir(), `strray-test-${Date.now()}`);
   
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true });

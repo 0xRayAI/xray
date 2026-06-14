@@ -4,11 +4,17 @@
  * Automated code formatting hook with Prettier and framework-specific formatters
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  type CallToolRequest,
+} from "@modelcontextprotocol/sdk/types.js";
 import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface AutoFormatArgs {
   files?: string[];
@@ -28,63 +34,111 @@ interface FormatResults {
   changes: Record<string, string[]>;
 }
 
-class XrayAutoFormatServer extends XrayKnowledgeSkillBase {
+class StringRayAutoFormatServer {
+  private server: Server;
 
   constructor() {
-    super("auto-format", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "auto-format",
-        description:
-          "Automated code formatting hook with Prettier and framework-specific formatters",
-        inputSchema: {
-          type: "object",
-          properties: {
-            files: {
-              type: "array",
-              items: { type: "string" },
-              description:
-                "Specific files to format (optional - formats all if empty)",
-            },
-            formatters: {
-              type: "array",
-              items: {
-                type: "string",
-                enum: ["prettier", "eslint", "typescript", "all"],
-              },
-              default: ["all"],
-              description: "Formatters to apply",
-            },
-            checkOnly: {
-              type: "boolean",
-              default: false,
-              description: "Only check formatting without applying changes",
-            },
-          },
-        },
+        name: "auto-format", version: "1.22.67",
       },
       {
-        name: "format-check",
-        description:
-          "Check if code is properly formatted without making changes",
-        inputSchema: {
-          type: "object",
-          properties: {
-            files: {
-              type: "array",
-              items: { type: "string" },
-              description: "Files to check formatting for",
-            },
-          },
+        capabilities: {
+          tools: {},
         },
       },
-    ];
-    this.handlers = {
-      "auto-format": async (args) => this.handleAutoFormat(args as unknown as AutoFormatArgs),
-      "format-check": async (args) => this.handleFormatCheck(args as unknown as FormatCheckArgs),
-    };
+    );
+
     this.setupToolHandlers();
     frameworkLogger.log("mcps/auto-format", "initialize", "info");
+  }
+
+  private setupToolHandlers() {
+    // List available tools
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "auto-format",
+            description:
+              "Automated code formatting hook with Prettier and framework-specific formatters",
+            inputSchema: {
+              type: "object",
+              properties: {
+                files: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "Specific files to format (optional - formats all if empty)",
+                },
+                formatters: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                    enum: ["prettier", "eslint", "typescript", "all"],
+                  },
+                  default: ["all"],
+                  description: "Formatters to apply",
+                },
+                checkOnly: {
+                  type: "boolean",
+                  default: false,
+                  description: "Only check formatting without applying changes",
+                },
+              },
+            },
+          },
+          {
+            name: "format-check",
+            description:
+              "Check if code is properly formatted without making changes",
+            inputSchema: {
+              type: "object",
+              properties: {
+                files: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Files to check formatting for",
+                },
+              },
+            },
+          },
+        ],
+      };
+    });
+
+    // Handle tool calls
+    this.server.setRequestHandler(
+      CallToolRequestSchema,
+      async (request: CallToolRequest) => {
+        const { name, arguments: args } = request.params;
+
+        try {
+          switch (name) {
+            case "auto-format":
+              return await this.handleAutoFormat(args as unknown as AutoFormatArgs);
+            case "format-check":
+              return await this.handleFormatCheck(args as unknown as FormatCheckArgs);
+            default:
+              throw new Error(`Unknown tool: ${name}`);
+          }
+        } catch (error) {
+          frameworkLogger.log("mcps/auto-format", "tool-call", "error", {
+            tool: name,
+            error: String(error),
+          });
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error executing tool '${name}': ${error instanceof Error ? error.message : String(error)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      },
+    );
   }
 
   private async handleAutoFormat(args: AutoFormatArgs) {
@@ -458,12 +512,18 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 - Errors: ${errorCount}
 - Formatters Applied: ${Object.keys(results.changes).length}`;
   }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    frameworkLogger.log("mcps/auto-format", "start", "info");
+  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new XrayAutoFormatServer();
-  server.run("auto-format").catch((error) => frameworkLogger.log("mcps/auto-format", "run", "error", { error: String(error) }));
+  const server = new StringRayAutoFormatServer();
+  server.run().catch((error) => frameworkLogger.log("mcps/auto-format", "run", "error", { error: String(error) }));
 }
 
-export { XrayAutoFormatServer };
+export { StringRayAutoFormatServer };

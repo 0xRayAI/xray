@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Grok CLI PreToolUse Hook Handler for 0xRay — First Class Citizen
+ * Grok CLI PreToolUse Hook Handler for StringRay (0xRay) — First Class Citizen
  *
  * Real governance enforcement hook.
  * When Grok is about to execute a tool (write_file, edit, terminal cmd, etc.),
@@ -10,34 +10,13 @@
 import fs from 'fs';
 import path from 'path';
 
-let fLogger = null;
-
-function safeLog(component, action, details = {}) {
-  if (!fLogger) return;
-  try { fLogger.log(component, action, 'info', details).catch(() => {}); } catch {}
-}
-
-function flushLog() {
-  if (!fLogger) return;
-  try { fLogger.flushSync(); } catch {}
-}
-
-async function initLogger() {
-  try {
-    const here = path.dirname(new URL(import.meta.url).pathname);
-    const loggerPath = path.resolve(here, '../../../core/framework-logger.js');
-    const mod = await import(`file://${loggerPath}`);
-    fLogger = mod.frameworkLogger || mod.default?.frameworkLogger;
-  } catch {}
-}
-
 const log = (msg) => { try { console.error(`[0xRay:GrokHook] ${msg}`); } catch { /* noop */ } };
 
 function findGovernanceCore() {
   const here = path.dirname(new URL(import.meta.url).pathname);
 
   // Priority: explicit dev root
-  const devRoot = process.env.XRAY_DEV_ROOT || '';
+  const devRoot = process.env.STRRAY_ROOT;
   if (devRoot) {
     const devCandidate = path.resolve(devRoot, 'dist/governance/governance-core.js');
     if (fs.existsSync(devCandidate)) return devCandidate;
@@ -100,15 +79,12 @@ function deriveResonance(toolName, extra = '') {
 }
 
 async function main() {
-  await initLogger();
-
   try {
     const toolName = process.env.TOOL_NAME || process.env.HOOK_TOOL || 'unknown_tool';
     const cwd = process.env.PWD || process.cwd();
     const extraContext = process.env.HOOK_ARGS || process.env.TOOL_ARGS || '';
 
     log(`PreToolUse: ${toolName}`);
-    safeLog('grok-hook', 'pre-tool-use', { tool: toolName, cwd });
 
     const corePath = findGovernanceCore();
     let recommendation = 'ALLOW';
@@ -116,13 +92,25 @@ async function main() {
     let govDetails = null;
 
     if (corePath) {
-      // Governance core no longer exposes the legacy PHI/TAU matrix (purged in v3).
-      // Resonance is still derived locally for logging/decision notes.
-      log(`Using local resonance derivation (core matrix purged)`);
-      safeLog('grok-hook', 'governance-core-found', { corePath });
+      try {
+        const core = await import(`file://${corePath}`);
+        if (typeof core.applyDecisionMatrix === 'function') {
+          const result = core.applyDecisionMatrix({
+            resonance,
+            isotopicRatio: resonance > 0.8 ? 0.96 : 0.7,
+            vortexVolume: 1_000_000,
+            historicalCoherence: 0.82,
+            solarActivity: 'active',
+          });
+          govDetails = result;
+          recommendation = result.recommendation || 'NEEDS_REVISION';
+          log(`Solar decision: ${recommendation} (resonance=${resonance.toFixed(2)})`);
+        }
+      } catch (e) {
+        log(`Governance core error: ${e.message}`);
+      }
     } else {
       log('Governance core not located — using safe default');
-      safeLog('grok-hook', 'governance-core-not-found', {});
     }
 
     const decision = {
@@ -135,14 +123,10 @@ async function main() {
       source: '0xray/grok-pre-tool-use',
     };
 
-    safeLog('grok-hook', 'decision', { tool: toolName, decision: decision.decision, resonance: decision.resonance });
-    flushLog();
     console.log(JSON.stringify(decision));
     process.exit(0); // non-blocking rollout; future versions can exit(1) on strong reject
   } catch (err) {
     log(`Hook failure (non-fatal): ${err.message}`);
-    safeLog('grok-hook', 'hook-failure', { error: err.message });
-    flushLog();
     process.exit(0);
   }
 }

@@ -35,9 +35,9 @@ describe("Inference Pipeline Integration", () => {
   let stateDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-pipeline-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-pipeline-"));
     inferenceDir = path.join(tmpDir, "docs", "inference");
-    stateDir = path.join(tmpDir, ".xray", "inference");
+    stateDir = path.join(tmpDir, ".strray", "inference");
     fs.mkdirSync(inferenceDir, { recursive: true });
     fs.mkdirSync(stateDir, { recursive: true });
   });
@@ -89,10 +89,10 @@ describe("Inference Pipeline Integration", () => {
     expect(result.votes.length).toBeGreaterThan(0);
     expect(result.duration).toBeGreaterThan(0);
 
-    expect(fs.existsSync(path.join(stateDir, "inference-state.json"))).toBe(true);
+    expect(fs.existsSync(path.join(stateDir, "inference-cycle-state.json"))).toBe(true);
+    expect(fs.existsSync(path.join(stateDir, "inference-cycle-history.json"))).toBe(true);
 
-    const stateData = JSON.parse(fs.readFileSync(path.join(stateDir, "inference-state.json"), "utf-8"));
-    const history = stateData.history;
+    const history = JSON.parse(fs.readFileSync(path.join(stateDir, "inference-cycle-history.json"), "utf-8"));
     expect(history.length).toBe(1);
     expect(history[0].cycleId).toBe(result.cycleId);
   });

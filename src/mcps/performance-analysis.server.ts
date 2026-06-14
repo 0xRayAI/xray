@@ -4,12 +4,17 @@
  * Comprehensive metrics analysis for framework integration and optimization
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { frameworkLogger, generateJobId } from "../core/framework-logger.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { execSync } from "child_process";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface AnalysisMetrics {
   runtime?: RuntimeMetrics;
@@ -52,79 +57,104 @@ interface ResourceMetrics {
   recommendations: string[];
 }
 
-class XrayPerformanceAnalysisServer extends XrayKnowledgeSkillBase {
+class StringRayPerformanceAnalysisServer {
+  private server: Server;
   private startTime: number;
 
   constructor() {
-    super("performance-analysis", "2.0.1");
+    this.server = new Server(
+      {
+        name: "performance-analysis", version: "1.22.67",
+      },
+      {
+        capabilities: {
+          tools: {},
+        },
+      },
+    );
 
     this.startTime = Date.now();
-
-    this.tools = [
-      {
-        name: "performance-analysis",
-        description:
-          "Comprehensive metrics analysis for framework integration and optimization",
-        inputSchema: {
-          type: "object",
-          properties: {
-            scope: {
-              type: "string",
-              enum: [
-                "full",
-                "runtime",
-                "build",
-                "resources",
-                "bottlenecks",
-              ],
-              default: "full",
-              description: "Scope of performance analysis",
-            },
-            duration: {
-              type: "number",
-              default: 30,
-              description: "Analysis duration in seconds",
-            },
-            detailed: {
-              type: "boolean",
-              default: false,
-              description: "Include detailed metrics and recommendations",
-            },
-          },
-        },
-      },
-      {
-        name: "bottleneck-detection",
-        description:
-          "Identify performance bottlenecks in framework operations",
-        inputSchema: {
-          type: "object",
-          properties: {
-            operation: {
-              type: "string",
-              description: "Specific operation to analyze",
-            },
-            threshold: {
-              type: "number",
-              default: 1000,
-              description: "Performance threshold in milliseconds",
-            },
-          },
-        },
-      },
-    ];
-
-    this.handlers = {
-      "performance-analysis": async (args) => this.handlePerformanceAnalysis(args as Record<string, unknown> | undefined),
-      "bottleneck-detection": async (args) => this.handleBottleneckDetection(args as Record<string, unknown> | undefined),
-    };
-
     this.setupToolHandlers();
     frameworkLogger.log(
       "mcp-performance-analysis",
       "server-initialized",
       "info",
     );
+  }
+
+  private setupToolHandlers() {
+    // List available tools
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "performance-analysis",
+            description:
+              "Comprehensive metrics analysis for framework integration and optimization",
+            inputSchema: {
+              type: "object",
+              properties: {
+                scope: {
+                  type: "string",
+                  enum: [
+                    "full",
+                    "runtime",
+                    "build",
+                    "resources",
+                    "bottlenecks",
+                  ],
+                  default: "full",
+                  description: "Scope of performance analysis",
+                },
+                duration: {
+                  type: "number",
+                  default: 30,
+                  description: "Analysis duration in seconds",
+                },
+                detailed: {
+                  type: "boolean",
+                  default: false,
+                  description: "Include detailed metrics and recommendations",
+                },
+              },
+            },
+          },
+          {
+            name: "bottleneck-detection",
+            description:
+              "Identify performance bottlenecks in framework operations",
+            inputSchema: {
+              type: "object",
+              properties: {
+                operation: {
+                  type: "string",
+                  description: "Specific operation to analyze",
+                },
+                threshold: {
+                  type: "number",
+                  default: 1000,
+                  description: "Performance threshold in milliseconds",
+                },
+              },
+            },
+          },
+        ],
+      };
+    });
+
+    // Handle tool calls
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "performance-analysis":
+          return await this.handlePerformanceAnalysis(args);
+        case "bottleneck-detection":
+          return await this.handleBottleneckDetection(args);
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
+    });
   }
 
   private async handlePerformanceAnalysis(args: Record<string, unknown> | undefined) {
@@ -660,12 +690,26 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
 
     return report;
   }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    const jobId = generateJobId("mcp-performance-analysis-server");
+    await frameworkLogger.log(
+      "mcp-performance-analysis",
+      "server-started",
+      "success",
+      {},
+      undefined, // sessionId
+      jobId,
+    );
+  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new XrayPerformanceAnalysisServer();
-  server.run("performance-analysis").catch((error) => frameworkLogger.log("mcps/performance-analysis", "run", "error", { error: String(error) }));
+  const server = new StringRayPerformanceAnalysisServer();
+  server.run().catch((error) => frameworkLogger.log("mcps/performance-analysis", "run", "error", { error: String(error) }));
 }
 
-export { XrayPerformanceAnalysisServer };
+export { StringRayPerformanceAnalysisServer };

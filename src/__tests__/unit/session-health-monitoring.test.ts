@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { SessionMonitor } from "../../session/session-monitor.js";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("Session Health Monitoring - Real Metrics", () => {
-  let stateManager: XrayStateManager;
+  let stateManager: StringRayStateManager;
   let sessionMonitor: SessionMonitor;
 
   beforeEach(async () => {
-    stateManager = new XrayStateManager();
+    stateManager = new StringRayStateManager();
     await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for initialization
 
     // Mock session coordinator with realistic data

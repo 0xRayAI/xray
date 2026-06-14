@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 0xRay OpenClaw Integration Tests
+ * StringRay OpenClaw Integration Tests
  *
  * Tests that the OpenClaw integration can be loaded, instantiated,
  * and exports the expected types, client, and hooks.
@@ -161,9 +161,9 @@ async function runTests() {
   if (fs.existsSync(srcApiServer)) {
     const content = fs.readFileSync(srcApiServer, 'utf-8');
     if (content.includes('StringRayAPIServer') || content.includes('class APIServer')) {
-      pass('API server module (source) defines APIServer');
+      pass('API server module (source) defines StringRayAPIServer');
     } else {
-      fail('API server module defines APIServer', 'Class not found in api-server.ts');
+      fail('API server module defines StringRayAPIServer', 'Class not found in api-server.ts');
     }
   } else if (fs.existsSync(distApiServer)) {
     const result = await checkSyntax(distApiServer);
@@ -187,17 +187,17 @@ async function runTests() {
     }
   }
 
-  // Test 6: Hooks (xray-hooks) can be loaded
-  console.log('\nTest 6: Hooks (xray-hooks) can be loaded');
-  const srcHooks = path.join(SRC_OPENCLAW, 'hooks', 'xray-hooks.ts');
-  const distHooks = path.join(DIST_OPENCLAW, 'hooks', 'xray-hooks.js');
+  // Test 6: Hooks (strray-hooks) can be loaded
+  console.log('\nTest 6: Hooks (strray-hooks) can be loaded');
+  const srcHooks = path.join(SRC_OPENCLAW, 'hooks', 'strray-hooks.ts');
+  const distHooks = path.join(DIST_OPENCLAW, 'hooks', 'strray-hooks.js');
 
   if (fs.existsSync(srcHooks)) {
     const content = fs.readFileSync(srcHooks, 'utf-8');
     if (content.includes('OpenClawHooksManager')) {
       pass('Hooks module (source) defines OpenClawHooksManager');
     } else {
-      fail('Hooks module defines OpenClawHooksManager', 'Class not found in xray-hooks.ts');
+      fail('Hooks module defines OpenClawHooksManager', 'Class not found in strray-hooks.ts');
     }
   } else if (fs.existsSync(distHooks)) {
     const result = await checkSyntax(distHooks);
@@ -207,7 +207,7 @@ async function runTests() {
       fail('Hooks module (dist) has valid JS syntax', result.error.trim());
     }
   } else {
-    skip('Hooks module (xray-hooks)', 'Not compiled to dist; source module not found');
+    skip('Hooks module (strray-hooks)', 'Not compiled to dist; source module not found');
   }
 
   // Test 7: Config module exists

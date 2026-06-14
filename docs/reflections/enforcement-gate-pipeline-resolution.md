@@ -229,7 +229,7 @@ The pre-commit hook is now automatically installed for consumer projects via `po
 
 - **`scripts/hooks/install-hooks.cjs`** — installs/updates `.git/hooks/pre-commit` with a consumer-aware template. Handles both dev (relative `scripts/hooks/`) and consumer (`node_modules/0xray/scripts/hooks/`) paths. Idempotent — skips if xray hook already present.
 - **`scripts/node/postinstall.cjs`** — calls install-hooks.cjs during `npm install` (non-blocking, graceful failure on non-git repos)
-- **`scripts/node/setup.cjs`** — step 8 calls install-hooks.cjs during `npx xray setup`
+- **`scripts/node/setup.cjs`** — step 8 calls install-hooks.cjs during postinstall (auto-runs on `npm install 0xray`)
 - **codex.json**: `pre-commit-hook` enforcement layer description and implementation list updated to reference install-hooks.cjs
 
 ## Enforcement Gaps Status

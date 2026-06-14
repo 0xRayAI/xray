@@ -38,15 +38,15 @@ export interface AutonomousReportingConfig {
   notification_channels: string[]; // ["console", "file", "webhook"]
 }
 
-export interface XrayConfig {
+export interface StringRayConfig {
   multi_agent_orchestration: MultiAgentOrchestrationConfig;
   autonomous_reporting: AutonomousReportingConfig;
   disabled_agents: string[];
 }
 
-export class XrayConfigLoader {
+export class StringRayConfigLoader {
   private configPath: string;
-  private cachedConfig: XrayConfig | null = null;
+  private cachedConfig: StringRayConfig | null = null;
   private cacheExpiry: number = 30000; // 30 seconds
   private lastLoadTime: number = 0;
 
@@ -57,7 +57,7 @@ export class XrayConfigLoader {
   /**
    * Load 0xRay configuration from the resolved config directory
    */
-  public loadConfig(): XrayConfig {
+  public loadConfig(): StringRayConfig {
     const now = Date.now();
 
     // Return cached config if still valid
@@ -88,7 +88,7 @@ export class XrayConfigLoader {
   /**
    * Parse configuration data with validation
    */
-  private parseConfig(configData: unknown): XrayConfig {
+  private parseConfig(configData: unknown): StringRayConfig {
     // Handle null/undefined config data
     if (!configData || typeof configData !== 'object') {
       return this.getDefaultConfig();
@@ -180,7 +180,7 @@ export class XrayConfigLoader {
   /**
    * Get default configuration
    */
-  private getDefaultConfig(): XrayConfig {
+  private getDefaultConfig(): StringRayConfig {
     return {
       multi_agent_orchestration: {
         enabled: true,
@@ -224,6 +224,4 @@ export class XrayConfigLoader {
 }
 
 // Export singleton instance
-export const xrayConfigLoader = new XrayConfigLoader();
-// Backward compat alias
-export { xrayConfigLoader as strRayConfigLoader };
+export const strRayConfigLoader = new StringRayConfigLoader();

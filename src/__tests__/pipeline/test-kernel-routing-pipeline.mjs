@@ -25,12 +25,12 @@
 
 import { AgentDelegator } from '../../../dist/delegation/agent-delegator.js';
 import { KernelAnalyzer } from '../../../dist/core/kernel-patterns.js';
-import { XrayStateManager } from '../../../dist/state/state-manager.js';
-import { xrayConfigLoader } from '../../../dist/core/config-loader.js';
+import { StringRayStateManager } from '../../../dist/state/state-manager.js';
+import { strRayConfigLoader } from '../../../dist/core/config-loader.js';
 
 console.log('=== KERNEL-TO-ROUTING PIPELINE TEST ===\n');
 
-const baselineDelegator = new AgentDelegator(new XrayStateManager(), xrayConfigLoader);
+const baselineDelegator = new AgentDelegator(new StringRayStateManager(), strRayConfigLoader);
 let passed = 0;
 let failed = 0;
 

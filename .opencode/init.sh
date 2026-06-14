@@ -9,17 +9,20 @@ else
     PROJECT_ROOT=$(realpath "$SCRIPT_DIR/..")
 fi
 
-# Detect mode: dev (xray repo) vs consumer (npm dependency)
-# - Dev: PROJECT_ROOT has src/core/boot-orchestrator.ts (xray source)
-# - Consumer: node_modules/0xray/package.json exists
-# - Fallback: no xray found at all
+# Try to find framework package.json - check source first (dev), then node_modules (consumer)
+# For development, prefer the source version over node_modules
+# Need to handle both root-level and .opencode/ subdirectory runs
+SOURCE_PACKAGE_JSON="$SCRIPT_DIR/package.json"
+if [ ! -f "$SOURCE_PACKAGE_JSON" ] && [ -f "$PROJECT_ROOT/package.json" ]; then
+    SOURCE_PACKAGE_JSON="$PROJECT_ROOT/package.json"
+fi
 NODE_MODULES_PACKAGE_JSON="$PROJECT_ROOT/node_modules/0xray/package.json"
 
-if [ -f "$PROJECT_ROOT/src/core/boot-orchestrator.ts" ]; then
-    # Development mode: running inside the xray repo itself
+if [ -f "$SOURCE_PACKAGE_JSON" ]; then
+    # Development mode: use source version (project root)
     FRAMEWORK_ROOT="$PROJECT_ROOT"
 elif [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
-    # Consumer mode: 0xray installed as npm dependency
+    # Consumer mode: use installed version
     FRAMEWORK_ROOT="$PROJECT_ROOT/node_modules/0xray"
 else
     FRAMEWORK_ROOT="$PROJECT_ROOT"
@@ -27,7 +30,7 @@ fi
 
 # 0xRay Framework Version - read from FRAMEWORK_ROOT (already resolved above)
 # FRAMEWORK_ROOT correctly picks source in dev mode, node_modules in consumer mode
-FRAMEWORK_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)" 2>/dev/null || echo "unknown")
+STRRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)" 2>/dev/null || echo "unknown")
 
 # Dedup guard — prevent duplicate runs during startup
 # Uses a TTL lockfile (10s window) since OpenCode may trigger config hook
@@ -67,7 +70,7 @@ echo -e "${PURPLE}//      ╚█████╔╝██╔╝ ██╗██�
 echo -e "${PURPLE}//       ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝           //${NC}" && sleep 0.1
 echo -e "${PURPLE}//                                                       //${NC}" && sleep 0.1
 echo -e "${PURPLE}//      ⚡ 0xRay: Self-Healing AI Governance OS          //${NC}" && sleep 0.1
-echo -e "${PURPLE}//      42 agents · 44 skills · 39 MCP servers           //${NC}" && sleep 0.1
+echo -e "${PURPLE}//          Platform • 99.6% Error Prevention            //${NC}" && sleep 0.1
 echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}" && sleep 0.2
 echo -e "${PURPLE}//              🚀 Initializing...                          //${NC}" && sleep 0.3
 echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}" && sleep 0.2
@@ -87,27 +90,24 @@ if [ "$AGENTS_COUNT" -eq 0 ]; then
     AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/0xray/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Skills - check .opencode/skills, then .xray/skills (Hermes), then node_modules
+# Skills - check .opencode/skills, then .strray/skills (Hermes), then node_modules
 SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 if [ "$SKILLS_COUNT" -eq 0 ]; then
-    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.xray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
+    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.strray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
 if [ "$SKILLS_COUNT" -eq 0 ]; then
     SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/node_modules/0xray/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Plugin status (check dev dist, then .opencode, then consumer)
-PLUGIN_DEV_DIST="$PROJECT_ROOT/dist/plugin/xray-codex-injection.js"
-PLUGIN_DEV_OPENCODE="$PROJECT_ROOT/.opencode/plugin/xray-codex-injection.js"
-PLUGIN_DEV_OPENCODE_PLURAL="$PROJECT_ROOT/.opencode/plugins/xray-codex-injection.js"
+# Plugin status (check both dev and consumer paths)
+PLUGIN_DEV="$PROJECT_ROOT/.opencode/plugin/xray-codex-injection.js"
+PLUGIN_DEV_PLURAL="$PROJECT_ROOT/.opencode/plugins/xray-codex-injection.js"
 PLUGIN_CONSUMER="$PROJECT_ROOT/node_modules/0xray/.opencode/plugin/xray-codex-injection.js"
 PLUGIN_CONSUMER_PLURAL="$PROJECT_ROOT/node_modules/0xray/.opencode/plugins/xray-codex-injection.js"
 
-if [ -f "$PLUGIN_DEV_DIST" ]; then
+if [ -f "$PLUGIN_DEV" ]; then
     PLUGIN_STATUS="✅"
-elif [ -f "$PLUGIN_DEV_OPENCODE" ]; then
-    PLUGIN_STATUS="✅"
-elif [ -f "$PLUGIN_DEV_OPENCODE_PLURAL" ]; then
+elif [ -f "$PLUGIN_DEV_PLURAL" ]; then
     PLUGIN_STATUS="✅"
 elif [ -f "$PLUGIN_CONSUMER" ]; then
     PLUGIN_STATUS="✅"
@@ -124,7 +124,7 @@ if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ]; then
 fi
 
 echo ""
-echo "⚡ 0xRay v$FRAMEWORK_VERSION"
+echo "⚡ 0xRay v$STRRAY_VERSION"
 echo "🤖 Agents: $AGENTS_COUNT | ⚙️ MCPs: $MCPS_COUNT | 💡 Skills: $SKILLS_COUNT"
 
 # BootOrchestrator check (check dev and consumer paths)

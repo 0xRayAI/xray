@@ -13,7 +13,7 @@ import { getKernel } from '../../core/kernel-patterns.js';
 import { createAgentDelegator } from '../../delegation/agent-delegator.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { PostProcessorContext } from '../types.js';
-import { XrayStateManager } from '../../state/state-manager.js';
+import { StringRayStateManager } from '../../state/state-manager.js';
 import { strRayConfigLoader } from '../../core/config-loader.js';
 
 export interface AnalysisDecision {
@@ -122,7 +122,7 @@ export class RegressionAnalysisService {
     };
 
     // Create agent delegator for this operation
-    const stateManager = new XrayStateManager();
+    const stateManager = new StringRayStateManager();
     const agentDelegator = createAgentDelegator(stateManager, strRayConfigLoader);
 
     // Analyze delegation strategy

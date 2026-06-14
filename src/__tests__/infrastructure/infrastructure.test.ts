@@ -12,7 +12,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("0xRay Infrastructure Tests", () => {
   // Get project root (two levels up from this test file)
@@ -33,7 +33,7 @@ describe("0xRay Infrastructure Tests", () => {
     it("should have required configuration files", () => {
       // Use files that actually exist in the project
       const requiredFiles = [
-        "xray/codex.json",
+        ".opencode/xray/codex.json",
         "package.json",
         "tests/config/vitest.config.ts",
       ].map((f) => path.join(projectRoot, f));
@@ -46,7 +46,7 @@ describe("0xRay Infrastructure Tests", () => {
 
     it("should have readable configuration files", () => {
       // Use files that actually exist
-      const configFiles = ["xray/codex.json", "package.json"].map(
+      const configFiles = [".opencode/xray/codex.json", "package.json"].map(
         (f) => path.join(projectRoot, f),
       );
 
@@ -61,10 +61,10 @@ describe("0xRay Infrastructure Tests", () => {
   });
 
   describe("State Management Infrastructure", () => {
-    let stateManager: XrayStateManager;
+    let stateManager: StringRayStateManager;
 
     beforeAll(() => {
-      stateManager = new XrayStateManager();
+      stateManager = new StringRayStateManager();
     });
 
     it("should initialize state manager", () => {
@@ -158,12 +158,10 @@ describe("0xRay Infrastructure Tests", () => {
       expect(content).toContain("export");
     });
 
-    it("should have MCP server configuration (.mcp.json)", () => {
-      // .mcp.json may be present in the working tree or only in the npm tarball
-      // (build steps may remove it from the working tree). Check either location.
-      const inTree = fs.existsSync(".mcp.json");
-      const inPackage = fs.existsSync("node_modules/0xray/.mcp.json") || fs.existsSync("package/.mcp.json");
-      expect(inTree || inPackage).toBe(true);
+    it("should not have MCP server configuration (.mcp.json) - servers configured in OpenCode.json", () => {
+      // MCP servers are now configured directly in OpenCode.json
+      // .mcp.json is no longer used for server configuration
+      expect(fs.existsSync(".mcp.json")).toBe(false);
     });
   });
 
@@ -230,9 +228,9 @@ describe("0xRay Infrastructure Tests", () => {
 
   describe("Performance Infrastructure", () => {
     it("should have performance monitoring setup", () => {
-      // Check for performance analysis MCP server
-      expect(fs.existsSync("src/mcps/performance-analysis.server.ts")).toBe(true);
-      expect(fs.existsSync("performance-baselines.json")).toBe(false);
+      // Check for performance-related directories/files
+      expect(fs.existsSync("src/performance")).toBe(true);
+      expect(fs.existsSync("performance-baselines.json")).toBe(true);
     });
   });
 });

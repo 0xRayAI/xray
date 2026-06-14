@@ -100,11 +100,21 @@ vi.mock("../../../enforcement/rule-enforcer.js", () => ({
 }));
 
 vi.mock("../../../state/state-manager.js", () => ({
-  XrayStateManager: vi.fn().mockImplementation(() => ({
+  StringRayStateManager: vi.fn().mockImplementation(() => ({
     get: vi.fn().mockReturnValue(undefined),
     set: vi.fn(),
     clear: vi.fn(),
   })),
+}));
+
+vi.mock("../../../processors/implementations/refactoring-logging-processor.js", () => ({
+  RefactoringLoggingProcessor: vi.fn().mockImplementation(function() {
+    this.execute = vi.fn().mockResolvedValue({
+      logged: true,
+      success: true,
+      message: "Agent completion logged",
+    });
+  }),
 }));
 
 import { PreValidateProcessor } from "../../../processors/implementations/pre-validate-processor.js";
@@ -344,10 +354,10 @@ describe("LogProtectionProcessor", () => {
     expect(data).toHaveProperty("isArchiveCleanup", true);
   });
 
-  it("should allow deletion of archived plugin logs (xray-plugin-*.log.gz)", async () => {
+  it("should allow deletion of archived plugin logs (strray-plugin-*.log.gz)", async () => {
     const result = await processor.execute({
       operation: "delete",
-      toolInput: { args: { filePath: ".opencode/logs/xray-plugin-2026-01-01.log.gz" } },
+      toolInput: { args: { filePath: ".opencode/logs/strray-plugin-2026-01-01.log.gz" } },
     });
     const data = result.data as Record<string, unknown>;
     expect(data.allowed).toBe(true);
@@ -1119,9 +1129,11 @@ describe("RefactoringLoggingProcessorWrapper", () => {
   });
 
   it("should handle errors from wrapped processor gracefully", async () => {
-    const { RefactoringLoggingProcessor } = await import("../../../processors/implementations/refactoring-logging-processor-wrapper.js");
-    vi.spyOn(RefactoringLoggingProcessor.prototype, "execute").mockImplementationOnce(
-      () => Promise.reject(new Error("wrapped failure")),
+    const { RefactoringLoggingProcessor } = await import("../../../processors/implementations/refactoring-logging-processor.js");
+    vi.mocked(RefactoringLoggingProcessor).mockImplementationOnce(
+      function() {
+        this.execute = vi.fn().mockRejectedValue(new Error("wrapped failure"));
+      } as any,
     );
 
     const failingProcessor = new RefactoringLoggingProcessorWrapper();

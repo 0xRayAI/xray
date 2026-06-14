@@ -10,11 +10,16 @@
  * Use project-analysis for project-level (structure, health).
  */
 
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
 interface Tool {
   name: string;
@@ -59,8 +64,9 @@ interface FileTreeNode {
   size?: number;
 }
 
-class CodeAnalyzerServer extends XrayKnowledgeSkillBase {
-  private toolDefinitions: Tool[] = [
+class CodeAnalyzerServer {
+  private server: Server;
+  private tools: Tool[] = [
     // ===== CODE ANALYSIS =====
     {
       name: "analyze_code",
@@ -296,28 +302,38 @@ class CodeAnalyzerServer extends XrayKnowledgeSkillBase {
   ];
 
   constructor() {
-    super("code-analyzer", "2.0.1");
-    this.tools = this.toolDefinitions;
-    this.handlers = {
-      "analyze_code": async (args) => this.handleAnalyzeCode(args),
-      "calculate_complexity": async (args) => this.handleCalculateComplexity(args),
-      "detect_code_smells": async (args) => this.handleDetectCodeSmells(args),
-      "extract_metrics": async (args) => this.handleExtractMetrics(args),
-      "explore_codebase": async (args) => this.handleExploreCodebase(args),
-      "find_patterns": async (args) => this.handleFindPatterns(args),
-      "find_function": async (args) => this.handleFindFunction(args),
-      "get_file_structure": async (args) => this.handleGetFileStructure(args),
-      "analyze_dependencies": async (args) => this.handleAnalyzeDependencies(args),
-      "find_duplicates": async (args) => this.handleFindDuplicates(args),
-    };
-    this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "code-analyzer",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+    this.server = new Server(
+      { name: "code-analyzer", version: "1.22.67" },
+      { capabilities: { tools: {} } },
+    );
+
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: this.tools,
+    }));
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args = {} } = request.params;
+
+      try {
+        switch (name) {
+          case "analyze_code": return this.handleAnalyzeCode(args);
+          case "calculate_complexity": return this.handleCalculateComplexity(args);
+          case "detect_code_smells": return this.handleDetectCodeSmells(args);
+          case "extract_metrics": return this.handleExtractMetrics(args);
+          case "explore_codebase": return this.handleExploreCodebase(args);
+          case "find_patterns": return this.handleFindPatterns(args);
+          case "find_function": return this.handleFindFunction(args);
+          case "get_file_structure": return this.handleGetFileStructure(args);
+          case "analyze_dependencies": return this.handleAnalyzeDependencies(args);
+          case "find_duplicates": return this.handleFindDuplicates(args);
+          default: throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
     });
   }
 
@@ -559,7 +575,17 @@ class CodeAnalyzerServer extends XrayKnowledgeSkillBase {
     return { content: [{ type: "text", text: JSON.stringify({ totalDuplicates: duplicates.length, duplicates }, null, 2) }] };
   }
 
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    
+    // Use centralized shutdown handler
+    createGracefulShutdown({
+      serverName: "code-analyzer.server",
+      server: this.server,
+    });
+  }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) { new CodeAnalyzerServer().run("code-analyzer.server").catch((err) => { frameworkLogger.log("code-analyzer", "run", "error", { error: err instanceof Error ? err.message : String(err) }); }); }
+if (import.meta.url === `file://${process.argv[1]}`) { new CodeAnalyzerServer().run().catch(() => {}); }
 export default CodeAnalyzerServer;

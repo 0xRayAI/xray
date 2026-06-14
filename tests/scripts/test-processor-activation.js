@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 0xRay v2.0.0 - Processor Activation Test Script
+ * StringRay AI v1.3.4 - Processor Activation Test Script
  *
  * Manual test script to verify processor activation functionality.
  *

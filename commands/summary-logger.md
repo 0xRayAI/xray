@@ -1,4 +1,4 @@
-# 0xRay Framework - Summary Logger
+# StrRay Framework - Summary Logger
 
 # Automatically logs AI-generated summaries and analysis to REFACTORING_LOG.md
 
@@ -38,7 +38,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "📝 0xRay Framework - Summary Logger" >&2
+echo "📝 StrRay Framework - Summary Logger" >&2
 echo "====================================" >&2
 
 # Get script directory and project root

@@ -16,7 +16,7 @@
 
 ### 1. Core (`src/core/` — 23 files, ~8606 LOC)
 
-**Files:** boot-orchestrator.ts, xray-activation.ts, framework-logger.ts, activity-logger.ts, config-loader.ts, config-paths.ts, features-config.ts, codex-formatter.ts, codex-injector.ts, model-router.ts, adaptive-kernel.ts, kernel-patterns.ts, context-loader.ts, context-validator.ts, agent-spawn-gate.ts, orchestrator.ts, system-prompt-generator.ts, bridge.mjs, etc.
+**Files:** boot-orchestrator.ts, xray-activation.ts, framework-logger.ts, activity-logger.ts, config-loader.ts, config-paths.ts, features-config.ts, codex-formatter.ts, codex-injector.ts, model-router.ts, adaptive-kernel.ts, kernel-patterns.ts, context-loader.ts, context-validator.ts, agent-spawn-gate.ts, orchestrator.ts, system-prompt-generator.ts, etc.
 
 **Role:** Foundation layer — boot, config, structured logging (activity.log is sacred), Codex compliance, model routing, kernel patterns, context management.
 
@@ -111,7 +111,7 @@ Feeds GovernanceRequest → GovernanceResponse (votes, finalDecision, metamorpho
 
 ### 10. Integrations (`src/integrations/` — 32 files)
 
-**Files:** grok/ (hooks/pre-tool-use.ts), hermes-agent/ (bridge.mjs + .ts), openclaw/, plugins/, governance/, base/, cross-language-bridge.ts
+**Files:** grok/ (hooks/pre-tool-use.ts), hermes-agent/ (.ts + .py), openclaw/, plugins/, governance/, base/, cross-language-bridge.ts
 
 **Role:** 4 first-class platforms (Grok, Hermes, OpenCode, OpenClaw). Consumer verification gate. Hooks, bridges, plugin install.
 

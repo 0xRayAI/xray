@@ -15,3 +15,6 @@ export * from "./Integration.js";
 
 // Re-export registry
 export * from "./registry.js";
+
+// Re-export example (for documentation/testing)
+export * from "./ExampleIntegration.js";

@@ -85,6 +85,19 @@ describe("opencode-cli-invoker", () => {
     mockExecSync.mockReturnValue("/usr/local/bin/opencode");
   });
 
+  afterEach(() => {
+    delete process.env.STRRAY_FORCE_MCP_GOVERNANCE;
+  });
+
+  describe("STRRAY_FORCE_MCP_GOVERNANCE guard", () => {
+    it("throws when STRRAY_FORCE_MCP_GOVERNANCE is true", async () => {
+      process.env.STRRAY_FORCE_MCP_GOVERNANCE = "true";
+      await expect(invokeViaOpencode("architect", "test")).rejects.toThrow(
+        `[PURE MCP] invokeViaOpencode called for "architect"`,
+      );
+    });
+  });
+
   describe("test environment guard", () => {
     it("throws when NODE_ENV is test", async () => {
       process.env.NODE_ENV = "test";

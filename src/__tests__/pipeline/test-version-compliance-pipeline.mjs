@@ -51,7 +51,7 @@ test('should verify versionCompliance in BootOrchestrator', () => {
 });
 
 test('should verify publish config has require_documentation', () => {
-  const configPath = process.cwd() + '/.xray/features.json';
+  const configPath = process.cwd() + '/.strray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.publish?.require_documentation?.readme_version_sync) {

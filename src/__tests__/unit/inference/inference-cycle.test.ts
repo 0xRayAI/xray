@@ -41,7 +41,7 @@ describe("Inference Cycle", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-cycle-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-cycle-test-"));
   });
 
   afterEach(() => {

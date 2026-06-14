@@ -8,10 +8,10 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { createXrayCodexInjectorHook } from "../../core/codex-injector.js";
+import { createStringRayCodexInjectorHook } from "../../core/codex-injector.js";
 
 interface CodexInjectorHook {
-  name: "xray-codex-injector";
+  name: "strray-codex-injector";
   hooks: {
     "agent.start": (sessionId: string) => void;
     "tool.execute.before": (
@@ -32,7 +32,7 @@ describe("Codex Enforcement Integration", () => {
 
   beforeEach(() => {
     // Create a fresh hook instance for each test
-    hook = createXrayCodexInjectorHook();
+    hook = createStringRayCodexInjectorHook();
     mockSessionId = "test-session-enforcement";
 
     // Clear any cached contexts
@@ -61,7 +61,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      xrayContextLoader: mockContextLoader,
+      strRayContextLoader: mockContextLoader,
     }));
 
     // Should allow action when no codex is available
@@ -99,7 +99,7 @@ describe("Codex Enforcement Integration", () => {
       loadCodexContext: vi.fn().mockResolvedValue({
         success: true,
         context: {
-          version: "3.0.11",
+          version: "1.22.67",
           terms: new Map(),
           interweaves: [],
           lenses: [],
@@ -124,7 +124,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      xrayContextLoader: mockContextLoader,
+      strRayContextLoader: mockContextLoader,
     }));
 
     // Should allow action but log warnings for non-blocking violations
@@ -144,7 +144,7 @@ describe("Codex Enforcement Integration", () => {
       loadCodexContext: vi.fn().mockResolvedValue({
         success: true,
         context: {
-          version: "3.0.11",
+          version: "1.22.67",
           terms: new Map(),
           interweaves: [],
           lenses: [],
@@ -159,7 +159,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      xrayContextLoader: mockContextLoader,
+      strRayContextLoader: mockContextLoader,
     }));
 
     // Should allow compliant actions
@@ -180,7 +180,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      xrayContextLoader: mockContextLoader,
+      strRayContextLoader: mockContextLoader,
     }));
 
     // Should handle errors gracefully and allow action to prevent breaking workflow
@@ -198,7 +198,7 @@ describe("Codex Enforcement Integration", () => {
       loadCodexContext: vi.fn().mockResolvedValue({
         success: true,
         context: {
-          version: "3.0.11",
+          version: "1.22.67",
           terms: new Map(),
           interweaves: [],
           lenses: [],
@@ -213,7 +213,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      xrayContextLoader: mockContextLoader,
+      strRayContextLoader: mockContextLoader,
     }));
 
     // Test critical tools (should be validated)

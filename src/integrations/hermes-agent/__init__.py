@@ -1,4 +1,4 @@
-"""Xray Hermes Plugin — full framework pipeline integration.
+"""StringRay Hermes Plugin — full framework pipeline integration.
 
 Mirrors the OpenCode xray-codex-injection.ts behavior:
   1. Captures ALL tool calls and logs to disk
@@ -29,30 +29,24 @@ except ImportError:
     schemas = importlib.import_module("schemas")
     tools = importlib.import_module("tools")
 
-logger = logging.getLogger("xray-hermes")
+logger = logging.getLogger("strray-hermes")
 
 # ── Paths ─────────────────────────────────────────────────────
 
 PLUGIN_DIR = Path(__file__).resolve().parent
 BRIDGE_PATH = PLUGIN_DIR / "bridge.mjs"
 
-# Project root: find the Xray project directory
+# Project root: find the StringRay project directory
 # The plugin lives at ~/.hermes/plugins/ which is NOT inside any project tree,
 # so walking up from PLUGIN_DIR will never find the project. Instead:
-#   1. Check XRAY_PROJECT_ROOT env var (explicit override)
-#   2. Walk up from cwd looking for node_modules/0xray (consumer install)
-
-def _find_project_root():
-    cwd = os.getcwd()
-    home = Path.home()
-    d = Path(cwd).resolve()
-    while True:
+#   1. Check STRRAY_PROJECT_ROOT env var (explicit override)
+#   2. Walk up from cwd looking for node_modules/0xray or strray-ai (consumer install)
         ...
         # node_modules/0xray — consumer install marker
-        if (d / "node_modules" / "0xray" / "package.json").exists():
+        if (d / "node_modules" / "0xray" / "package.json").exists() or (d / "node_modules" / "strray-ai" / "package.json").exists():
             return d
-        # .opencode/xray — dev repo marker
-        if (d / ".opencode" / "xray" / "features.json").exists():
+        # .opencode/strray — dev repo marker
+        if (d / ".opencode" / "strray" / "features.json").exists():
             return d
         # package.json but not home dir
         if d != home and (d / "package.json").exists():
@@ -85,20 +79,20 @@ _TOOL_AGENT_MAP = {
     "delegate_task": ("orchestrator",  "delegation"),
 }
 
-# Tools where Xray has a better alternative
+# Tools where StringRay has a better alternative
 # terminal: only nudge when the command looks lint/security/search related
-_BETTER_WITH_XRAY = {
-    "search_files": "Use mcp_xray_researcher_search_codebase for code pattern searches",
+_BETTER_WITH_STRRAY = {
+    "search_files": "Use mcp_strray_researcher_search_codebase for code pattern searches",
 }
 
 # Patterns that suggest the terminal command should use an MCP tool instead
 _TERMINAL_NUDGE_PATTERNS = {
-    "grep": "Use mcp_xray_researcher_search_codebase instead of grep",
-    "rg ": "Use mcp_xray_researcher_search_codebase instead of ripgrep",
-    "eslint": "Use mcp_xray_lint_lint instead of raw eslint",
-    "npx eslint": "Use mcp_xray_lint_lint instead of raw eslint",
-    "npm audit": "Use mcp_xray_security_scan_security_scan instead of npm audit",
-    "yarn audit": "Use mcp_xray_security_scan_security_scan instead of yarn audit",
+    "grep": "Use mcp_strray_researcher_search_codebase instead of grep",
+    "rg ": "Use mcp_strray_researcher_search_codebase instead of ripgrep",
+    "eslint": "Use mcp_strray_lint_lint instead of raw eslint",
+    "npx eslint": "Use mcp_strray_lint_lint instead of raw eslint",
+    "npm audit": "Use mcp_strray_security_scan_security_scan instead of npm audit",
+    "yarn audit": "Use mcp_strray_security_scan_security_scan instead of yarn audit",
     "find ": "Use search_files(target='files') instead of find",
     "sed ": "Use patch tool instead of sed",
     "awk ": "Use patch tool instead of awk",
@@ -114,7 +108,7 @@ _session_stats = {
     "session_id": None,
     "code_operations": 0,
     "total_tool_calls": 0,
-    "xray_mcp_calls": 0,
+    "strray_mcp_calls": 0,
     "native_tool_calls": 0,
     "quality_gate_runs": 0,
     "quality_gate_blocks": 0,
@@ -190,8 +184,8 @@ def _call_bridge(command: dict, timeout: int = 10) -> dict:
 
 # ── Hook: pre_tool_call ───────────────────────────────────────
 
-def _is_xray_mcp(tool_name: str) -> bool:
-    return tool_name.startswith("mcp_xray_")
+def _is_strray_mcp(tool_name: str) -> bool:
+    return tool_name.startswith("mcp_strray_")
 
 
 def _on_pre_tool_call(tool_name: str, args: dict, task_id: str, **kwargs):
@@ -201,17 +195,17 @@ def _on_pre_tool_call(tool_name: str, args: dict, task_id: str, **kwargs):
       1. Track stats
       2. Log tool-start event to disk
       3. For code-producing tools: run quality gate + pre-processors via bridge
-      4. For non-code tools: nudge if Xray alternative exists
+      4. For non-code tools: nudge if StringRay alternative exists
     """
     _session_stats["total_tool_calls"] += 1
 
     # Log start event
     _log_tool_event("start", tool_name, args)
 
-    # Xray MCP tools — track but don't interfere
-    if _is_xray_mcp(tool_name):
-        _session_stats["xray_mcp_calls"] += 1
-        _log_to_file("activity.log", f"[quality-gate] SKIP (xray-mcp): {tool_name}")
+    # StringRay MCP tools — track but don't interfere
+    if _is_strray_mcp(tool_name):
+        _session_stats["strray_mcp_calls"] += 1
+        _log_to_file("activity.log", f"[quality-gate] SKIP (strray-mcp): {tool_name}")
         return
 
     # delegate_task: snapshot working tree so post_hook can validate changes
@@ -258,7 +252,7 @@ def _on_pre_tool_call(tool_name: str, args: dict, task_id: str, **kwargs):
                 _log_to_file("activity.log",
                     f"[quality-gate] BLOCKED: tool={tool_name} violations={violation_msg}")
                 logger.warning(
-                    "[xray] Quality gate BLOCKED %s: %s",
+                    "[strray] Quality gate BLOCKED %s: %s",
                     tool_name, violation_msg,
                 )
             else:
@@ -283,10 +277,10 @@ def _on_pre_tool_call(tool_name: str, args: dict, task_id: str, **kwargs):
                 f"[bridge] ERROR in pre-process: {bridge_result.get('error', 'unknown')}")
         return
 
-    # Non-code tools: nudge for Xray alternatives
-    if tool_name in _BETTER_WITH_XRAY:
-        tip = _BETTER_WITH_XRAY[tool_name]
-        logger.info("[xray] Tip: %s — %s", tool_name, tip)
+    # Non-code tools: nudge for StringRay alternatives
+    if tool_name in _BETTER_WITH_STRRAY:
+        tip = _BETTER_WITH_STRRAY[tool_name]
+        logger.info("[strray] Tip: %s — %s", tool_name, tip)
         _log_to_file("activity.log",
             f"[nudge] {tool_name}: {tip}")
 
@@ -296,7 +290,7 @@ def _on_pre_tool_call(tool_name: str, args: dict, task_id: str, **kwargs):
         if isinstance(cmd, str):
             for pattern, tip in _TERMINAL_NUDGE_PATTERNS.items():
                 if pattern in cmd:
-                    logger.info(                    "[xray] Tip: %s — %s", tool_name, tip)
+                    logger.info("[strray] Tip: %s — %s", tool_name, tip)
                     _log_to_file("activity.log",
                         f"[nudge] {tool_name}: {tip}")
                     break
@@ -384,14 +378,14 @@ def _on_post_tool_call(tool_name: str, args: dict, result, task_id: str, **kwarg
     if calls - _last_tune_tool_call_count >= _INFERENCE_TUNE_INTERVAL:
         _last_tune_tool_call_count = calls
         logger.info(
-            "[xray] Triggering inference tuning cycle (tool call #%d)", calls
+            "[strray] Triggering inference tuning cycle (tool call #%d)", calls
         )
         _log_to_file("activity.log",
             f"[inference-tune] auto-cycle at tool call #{calls}")
         try:
             _run_inference_tune()
         except Exception as e:
-            logger.warning("[xray] Inference tuning failed: %s", e)
+            logger.warning("[strray] Inference tuning failed: %s", e)
 
 
 # ── Hook: session_start ───────────────────────────────────────
@@ -400,7 +394,7 @@ def _on_session_start(session_id: str, platform: str, **kwargs):
     """Fires when a new session starts. Resets stats, logs to disk."""
     _session_stats["started_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     _session_stats["session_id"] = session_id
-    for key in ("code_operations", "total_tool_calls", "xray_mcp_calls",
+    for key in ("code_operations", "total_tool_calls", "strray_mcp_calls",
                 "native_tool_calls", "quality_gate_runs", "quality_gate_blocks",
                 "pre_processor_runs", "post_processor_runs",
                 "bridge_calls", "bridge_errors",
@@ -412,23 +406,23 @@ def _on_session_start(session_id: str, platform: str, **kwargs):
     _ensure_log_dir()
     _log_to_file("activity.log",
         f"[session-start] session={session_id} platform={platform}")
-    logger.info("[xray] Session %s started on %s", session_id, platform)
+    logger.info("[strray] Session %s started on %s", session_id, platform)
 
 
 # ── Slash command ─────────────────────────────────────────────
 
-def _xray_command(args: str) -> str:
-    """Slash command handler: /xray [status|stats|help]"""
+def _strray_command(args: str) -> str:
+    """Slash command handler: /strray [status|stats|help]"""
     cmd = (args or "status").strip().lower()
 
     if cmd == "stats":
         return (
-            f"Xray Session Stats\n"
+            f"StringRay Session Stats\n"
             f"  Session: {_session_stats['session_id'] or 'N/A'}\n"
             f"  Started: {_session_stats['started_at'] or 'N/A'}\n"
             f"  Tool calls: {_session_stats['total_tool_calls']}\n"
             f"  Code operations: {_session_stats['code_operations']}\n"
-            f"  Xray MCP: {_session_stats['xray_mcp_calls']}\n"
+            f"  StringRay MCP: {_session_stats['strray_mcp_calls']}\n"
             f"  Native tools: {_session_stats['native_tool_calls']}\n"
             f"  Quality gate runs: {_session_stats['quality_gate_runs']}\n"
             f"  Quality gate blocks: {_session_stats['quality_gate_blocks']}\n"
@@ -443,19 +437,19 @@ def _xray_command(args: str) -> str:
 
     if cmd == "help":
         return (
-            "Xray Commands:\n"
-            "  /xray status — Plugin and framework health\n"
-            "  /xray stats  — Session pipeline statistics\n"
-            "  /xray help   — This message"
+            "StringRay Commands:\n"
+            "  /strray status — Plugin and framework health\n"
+            "  /strray stats  — Session pipeline statistics\n"
+            "  /strray help   — This message"
         )
 
     # Default: status (calls bridge health)
     bridge_result = _call_bridge({"command": "health"}, timeout=10)
     if "error" in bridge_result:
-        return f"Xray plugin loaded. Bridge: {bridge_result['error']}"
+        return f"StringRay plugin loaded. Bridge: {bridge_result['error']}"
 
     return (
-        f"Xray Hermes Plugin Status\n"
+        f"StringRay Hermes Plugin Status\n"
         f"  Framework: {bridge_result.get('framework', 'unknown')}\n"
         f"  Version: {bridge_result.get('version', 'unknown')}\n"
         f"  Quality Gate: {'ready' if bridge_result.get('components', {}).get('qualityGate') else 'not loaded'}\n"
@@ -524,13 +518,13 @@ def _record_tool_outcome(tool_name: str, args: dict, success: bool):
         with open(_OUTCOMES_PATH, "w") as f:
             json.dump(outcomes, f, indent=2)
     except Exception as e:
-        logger.debug("[xray] outcome recording failed: %s", e)
+        logger.debug("[strray] outcome recording failed: %s", e)
 
 
 # ── Inference tuning (auto-calibration) ────────────────────────
 
 def _run_inference_tune():
-    """Shell out to 0xray inference:tuner --run-once.
+    """Shell out to strray-ai inference:tuner --run-once.
 
     Runs in a background thread so it doesn't block the tool call pipeline.
     The tuner reads routing outcomes, runs the analytics pipeline, and
@@ -566,7 +560,7 @@ def _run_inference_tune():
 # ── Registration ──────────────────────────────────────────────
 
 # ── Subagent (delegate_task) enforcement ────────────────────
-# Subagents bypass all Xray hooks because they run in isolated
+# Subagents bypass all StringRay hooks because they run in isolated
 # contexts. We enforce by snapshotting the working tree before dispatch
 # and validating all changed files after return.
 
@@ -653,7 +647,7 @@ def _validate_subagent_changes(task_id: str, **kwargs):
                 f"[subagent-validate] BLOCKED: {rel_path} "
                 f"violations={'; '.join(str(v) for v in violations[:3])}")
             logger.warning(
-                "[xray] Subagent BLOCKED %s: %s",
+                "[strray] Subagent BLOCKED %s: %s",
                 rel_path, violations[:3],
             )
         else:
@@ -665,28 +659,28 @@ def register(ctx):
     """Wire schemas to handlers and register lifecycle hooks."""
     # ── Register tools ────────────────────────────────────────
     ctx.register_tool(
-        name="xray_validate",
-        toolset="0xray-hermes",
-        schema=schemas.XRAY_VALIDATE,
-        handler=tools.xray_validate,
+        name="strray_validate",
+        toolset="strray-hermes",
+        schema=schemas.STRRAY_VALIDATE,
+        handler=tools.strray_validate,
     )
     ctx.register_tool(
-        name="xray_codex_check",
-        toolset="0xray-hermes",
-        schema=schemas.XRAY_CODEX_CHECK,
-        handler=tools.xray_codex_check,
+        name="strray_codex_check",
+        toolset="strray-hermes",
+        schema=schemas.STRRAY_CODEX_CHECK,
+        handler=tools.strray_codex_check,
     )
     ctx.register_tool(
-        name="xray_health",
-        toolset="0xray-hermes",
-        schema=schemas.XRAY_HEALTH,
-        handler=tools.xray_health,
+        name="strray_health",
+        toolset="strray-hermes",
+        schema=schemas.STRRAY_HEALTH,
+        handler=tools.strray_health,
     )
     ctx.register_tool(
-        name="xray_hooks",
-        toolset="0xray-hermes",
-        schema=schemas.XRAY_HOOKS,
-        handler=tools.xray_hooks,
+        name="strray_hooks",
+        toolset="strray-hermes",
+        schema=schemas.STRRAY_HOOKS,
+        handler=tools.strray_hooks,
     )
 
     # ── Register hooks ────────────────────────────────────────
@@ -697,28 +691,28 @@ def register(ctx):
     try:
         ctx.register_hook("on_session_start", _on_session_start)
     except (AttributeError, TypeError):
-        logger.debug("[xray] on_session_start hook not yet available")
+        logger.debug("[strray] on_session_start hook not yet available")
 
     # ── Register slash command ────────────────────────────────
     try:
         ctx.register_command(
-            name="xray",
-            handler=_xray_command,
-            description="Xray status, stats, hooks, and enforcement info",
+            name="strray",
+            handler=_strray_command,
+            description="StringRay status, stats, hooks, and enforcement info",
             args_hint="[status|stats|help]",
             aliases=("sr",),
         )
     except (AttributeError, TypeError):
-        logger.debug("[xray] Slash command registration not yet available")
+        logger.debug("[strray] Slash command registration not yet available")
 
     # ── Bootstrap ─────────────────────────────────────────────
     _ensure_log_dir()
     _log_to_file("activity.log",
-        f"[plugin-loaded] Xray Hermes Plugin v2.2 — "
+        f"[plugin-loaded] StringRay Hermes Plugin v2.2 — "
         f"4 tools, 2 hooks, subagent enforcement, bridge={BRIDGE_PATH.exists()}")
 
     logger.info(
-        "[xray] Plugin v2.2 loaded: 4 tools, 2 hooks, "
+        "[strray] Plugin v2.2 loaded: 4 tools, 2 hooks, "
         "subagent enforcement active, bridge=%s",
         BRIDGE_PATH.exists(),
     )

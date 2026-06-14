@@ -15,7 +15,7 @@ dependencies: []
 mcp:
   orchestrator:
     command: node
-    args: [node_modules/0xray/dist/mcps/orchestrator/server.js]
+    args: [node_modules/0xray/dist/mcps/orchestrator.server.js]
 ---
 
 # Orchestrator Skill

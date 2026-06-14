@@ -5,9 +5,15 @@
  * modernization, and code improvement patterns
  */
 
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
+import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  type CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 
 interface RefactoringOpportunity {
   type:
@@ -148,79 +154,166 @@ interface RollbackPlan {
   emergencyProcedures: string[];
 }
 
-class XrayRefactoringStrategiesServer extends XrayKnowledgeSkillBase {
+class XrayRefactoringStrategiesServer {
+  private server: Server;
 
   constructor() {
-    super("refactoring-strategies", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "analyze_technical_debt",
-        description: "Analyze codebase for technical debt and refactoring opportunities",
-        inputSchema: {
-          type: "object",
-          properties: {
-            codePath: { type: "string", description: "Path to code directory to analyze" },
-            includeModernization: { type: "boolean", description: "Include technology modernization suggestions", default: true },
-            debtThreshold: { type: "number", description: "Minimum debt score to report (0-100)", default: 20 },
-          },
-          required: ["codePath"],
-        },
+        name: "refactoring-strategies", version: "1.22.67",
       },
       {
-        name: "suggest_refactoring",
-        description: "Suggest specific refactoring opportunities for improved code quality",
-        inputSchema: {
-          type: "object",
-          properties: {
-            filePath: { type: "string", description: "Path to specific file to analyze" },
-            refactoringTypes: { type: "array", items: { type: "string", enum: ["extract-method", "rename-variable", "remove-duplicate", "simplify-condition", "extract-class", "move-method"] }, description: "Types of refactoring to focus on" },
-            maxSuggestions: { type: "number", description: "Maximum number of suggestions to return", default: 10 },
-          },
-          required: ["filePath"],
+        capabilities: {
+          tools: {},
         },
       },
-      {
-        name: "generate_refactoring_plan",
-        description: "Generate a comprehensive refactoring plan with prioritization",
-        inputSchema: {
-          type: "object",
-          properties: {
-            codePath: { type: "string", description: "Path to codebase for refactoring analysis" },
-            timeBudget: { type: "string", enum: ["1-week", "1-month", "3-months", "6-months"], description: "Available time for refactoring" },
-            riskTolerance: { type: "string", enum: ["low", "medium", "high"], description: "Risk tolerance for changes" },
-            priorities: { type: "array", items: { type: "string" }, description: "Specific priorities (performance, maintainability, security)", default: ["maintainability", "performance"] },
-          },
-          required: ["codePath", "timeBudget"],
-        },
-      },
-      {
-        name: "modernize_codebase",
-        description: "Suggest modernization strategies for outdated code and dependencies",
-        inputSchema: {
-          type: "object",
-          properties: {
-            codePath: { type: "string", description: "Path to codebase to analyze" },
-            technologies: { type: "array", items: { type: "string" }, description: "Specific technologies to focus on (node, react, etc.)" },
-            safeMode: { type: "boolean", description: "Only suggest low-risk modernization options", default: true },
-          },
-          required: ["codePath"],
-        },
-      },
-    ];
-    this.handlers = {
-      "analyze_technical_debt": async (args) => this.analyzeTechnicalDebt(args as unknown as AnalyzeTechnicalDebtArgs),
-      "suggest_refactoring": async (args) => this.suggestRefactoring(args as unknown as SuggestRefactoringArgs),
-      "generate_refactoring_plan": async (args) => this.generateRefactoringPlan(args as unknown as GenerateRefactoringPlanArgs),
-      "modernize_codebase": async (args) => this.modernizeCodebase(args as unknown as ModernizeCodebaseArgs),
-    };
+    );
+
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "refactoring-strategies",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+    // Server initialization - removed unnecessary startup logging
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "analyze_technical_debt",
+            description:
+              "Analyze codebase for technical debt and refactoring opportunities",
+            inputSchema: {
+              type: "object",
+              properties: {
+                codePath: {
+                  type: "string",
+                  description: "Path to code directory to analyze",
+                },
+                includeModernization: {
+                  type: "boolean",
+                  description: "Include technology modernization suggestions",
+                  default: true,
+                },
+                debtThreshold: {
+                  type: "number",
+                  description: "Minimum debt score to report (0-100)",
+                  default: 20,
+                },
+              },
+              required: ["codePath"],
+            },
+          },
+          {
+            name: "suggest_refactoring",
+            description:
+              "Suggest specific refactoring opportunities for improved code quality",
+            inputSchema: {
+              type: "object",
+              properties: {
+                filePath: {
+                  type: "string",
+                  description: "Path to specific file to analyze",
+                },
+                refactoringTypes: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                    enum: [
+                      "extract-method",
+                      "rename-variable",
+                      "remove-duplicate",
+                      "simplify-condition",
+                      "extract-class",
+                      "move-method",
+                    ],
+                  },
+                  description: "Types of refactoring to focus on",
+                },
+                maxSuggestions: {
+                  type: "number",
+                  description: "Maximum number of suggestions to return",
+                  default: 10,
+                },
+              },
+              required: ["filePath"],
+            },
+          },
+          {
+            name: "generate_refactoring_plan",
+            description:
+              "Generate a comprehensive refactoring plan with prioritization",
+            inputSchema: {
+              type: "object",
+              properties: {
+                codePath: {
+                  type: "string",
+                  description: "Path to codebase for refactoring analysis",
+                },
+                timeBudget: {
+                  type: "string",
+                  enum: ["1-week", "1-month", "3-months", "6-months"],
+                  description: "Available time for refactoring",
+                },
+                riskTolerance: {
+                  type: "string",
+                  enum: ["low", "medium", "high"],
+                  description: "Risk tolerance for changes",
+                },
+                priorities: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "Specific priorities (performance, maintainability, security)",
+                  default: ["maintainability", "performance"],
+                },
+              },
+              required: ["codePath", "timeBudget"],
+            },
+          },
+          {
+            name: "modernize_codebase",
+            description:
+              "Suggest modernization strategies for outdated code and dependencies",
+            inputSchema: {
+              type: "object",
+              properties: {
+                codePath: {
+                  type: "string",
+                  description: "Path to codebase to analyze",
+                },
+                technologies: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "Specific technologies to focus on (node, react, etc.)",
+                },
+                safeMode: {
+                  type: "boolean",
+                  description: "Only suggest low-risk modernization options",
+                  default: true,
+                },
+              },
+              required: ["codePath"],
+            },
+          },
+        ],
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "analyze_technical_debt":
+          return await this.analyzeTechnicalDebt(args as unknown as AnalyzeTechnicalDebtArgs) as CallToolResult;
+        case "suggest_refactoring":
+          return await this.suggestRefactoring(args as unknown as SuggestRefactoringArgs) as CallToolResult;
+        case "generate_refactoring_plan":
+          return await this.generateRefactoringPlan(args as unknown as GenerateRefactoringPlanArgs) as CallToolResult;
+        case "modernize_codebase":
+          return await this.modernizeCodebase(args as unknown as ModernizeCodebaseArgs) as CallToolResult;
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
     });
   }
 
@@ -978,12 +1071,22 @@ class XrayRefactoringStrategiesServer extends XrayKnowledgeSkillBase {
     return icons[effort as keyof typeof icons] || "❓";
   }
 
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    
+    // Use centralized shutdown handler
+    createGracefulShutdown({
+      serverName: "refactoring-strategies.server",
+      server: this.server,
+    });
+  }
 }
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayRefactoringStrategiesServer();
-  server.run("refactoring-strategies").catch((err) => { frameworkLogger.log("refactoring-strategies", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
+  server.run().catch(() => {});
 }
 
 export { XrayRefactoringStrategiesServer };

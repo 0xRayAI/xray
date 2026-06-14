@@ -179,7 +179,7 @@ export class AgentsMdValidationProcessor {
       result.errors.push("AGENTS.md not found in project root");
       result.fixes = result.fixes || [];
       result.fixes.push(
-        "Create AGENTS.md using template from xray/agents_template.md",
+        "Create AGENTS.md using template from docs/AGENTS_TEMPLATE.md",
       );
       return result;
     }
@@ -288,7 +288,7 @@ export class AgentsMdValidationProcessor {
         "",
         "## Available Skills",
         "",
-        "Xray ships with 30 framework skills and provides a registry of 10 curated community sources.",
+        "StringRay ships with 30 framework skills and provides a registry of 10 curated community sources.",
         "",
         "```bash",
         "npx 0xray skill:install              # Show starter packs + available sources",
@@ -301,7 +301,7 @@ export class AgentsMdValidationProcessor {
         "",
         "## Codex",
         "",
-        `Xray enforces Universal Development Codex (60 terms) for systematic error prevention.`,
+        `StringRay enforces Universal Development Codex (60 terms) for systematic error prevention.`,
         "",
       ].join("\n"),
       "## CLI Commands": [

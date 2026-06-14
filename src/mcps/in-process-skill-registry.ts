@@ -1,8 +1,6 @@
 import { XrayCodeReviewServer } from "./knowledge-skills/code-review.server.js";
 import { XraySecurityAuditServer } from "./knowledge-skills/security-audit.server.js";
 import { XrayLibrarianServer } from "./researcher.server.js";
-import { pluginRegistry } from "../nucleus/plugin-registry.js";
-import { frameworkLogger } from "../core/framework-logger.js";
 
 interface AnalyzeProposalArgs {
   proposalTitle?: string;
@@ -66,20 +64,6 @@ export async function callInProcessSkill(
   toolName: string,
   args: Record<string, unknown>,
 ): Promise<AnalyzeProposalResult> {
-  // Phase 2D: try pluginRegistry first for any registered tool plugin
-  if (pluginRegistry.hasToolPlugin(serverName)) {
-    try {
-      const result = await pluginRegistry.callSkillTool(serverName, toolName, args);
-      return result as AnalyzeProposalResult;
-    } catch {
-      frameworkLogger.log('in-process-skill-registry', 'plugin-fallback', 'info', {
-        server: serverName,
-        tool: toolName,
-        message: 'Plugin dispatch failed, falling back to in-process handler',
-      });
-    }
-  }
-
   const factory = registry[serverName];
   if (!factory) {
     throw new Error(`No in-process handler registered for server: ${serverName}`);

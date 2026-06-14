@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 import { BootOrchestrator } from "../../core/boot-orchestrator.js";
 
 // Mock ProcessorManager for E2E tests
@@ -90,7 +90,12 @@ vi.mock("../../security/security-headers.js", () => ({
   },
 }));
 
-// Security auditor consolidated to MCP; no longer direct import (mock removed)
+// Mock security auditor (used by finalizeSecurityIntegration)
+vi.mock("../../security/security-auditor.js", () => ({
+  SecurityAuditor: vi.fn().mockImplementation(() => ({
+    auditProject: vi.fn().mockResolvedValue({ score: 95, issues: [] }),
+  })),
+}));
 
 // Mock codex injector (used by activateCodexCompliance)
 vi.mock("../../core/codex-injector.js", () => ({
@@ -98,8 +103,8 @@ vi.mock("../../core/codex-injector.js", () => ({
 }));
 
 describe("E2E Orchestration Flow", () => {
-  const testDir = "/tmp/xray-e2e-test";
-  let stateManager: XrayStateManager;
+  const testDir = "/tmp/strray-e2e-test";
+  let stateManager: StringRayStateManager;
   let bootOrchestrator: BootOrchestrator;
 
   beforeAll(async () => {
@@ -117,7 +122,7 @@ describe("E2E Orchestration Flow", () => {
       fs.rmSync(testDir, { recursive: true });
     }
     // Clear global state
-    delete globalThis.xrayStateManager;
+    delete globalThis.strRayStateManager;
   });
 
   it("should boot framework and register all processors", async () => {
@@ -130,7 +135,7 @@ describe("E2E Orchestration Flow", () => {
         processorActivation: true,
         agentLoading: false,
       },
-      new XrayStateManager(path.join(testDir, ".opencode", "state")),
+      new StringRayStateManager(path.join(testDir, ".opencode", "state")),
     );
 
     // Execute boot sequence (no .boot() method exists; use executeBootSequence)
@@ -159,11 +164,11 @@ describe("E2E Orchestration Flow", () => {
     expect(storedProcessorManager).toBe(processorManager);
 
     // Store state manager globally (like plugin would find it)
-    globalThis.xrayStateManager = stateManager;
+    globalThis.strRayStateManager = stateManager;
   });
 
   it("should reuse booted framework from plugin context", () => {
-    const globalState = globalThis.xrayStateManager;
+    const globalState = globalThis.strRayStateManager;
     expect(globalState).toBeDefined();
 
     // Simulate plugin getting processor manager
@@ -182,7 +187,7 @@ describe("E2E Orchestration Flow", () => {
   });
 
   it("should execute pre-processors on write operation", async () => {
-    const processorManager = globalThis.xrayStateManager!.get(
+    const processorManager = globalThis.strRayStateManager!.get(
       "processor:manager",
     );
 
@@ -214,7 +219,7 @@ describe("E2E Orchestration Flow", () => {
   });
 
   it("should auto-create test file for new source file", async () => {
-    const processorManager = globalThis.xrayStateManager!.get(
+    const processorManager = globalThis.strRayStateManager!.get(
       "processor:manager",
     );
 
@@ -292,7 +297,7 @@ export function newFeature() {
   });
 
   it("should execute post-processors after operation", async () => {
-    const processorManager = globalThis.xrayStateManager!.get(
+    const processorManager = globalThis.strRayStateManager!.get(
       "processor:manager",
     );
 
@@ -318,7 +323,7 @@ export function newFeature() {
   });
 
   it("should maintain processor state across multiple operations", () => {
-    const globalState = globalThis.xrayStateManager;
+    const globalState = globalThis.strRayStateManager;
     const processorManager1 = globalState!.get("processor:manager");
 
     // Simulate another operation

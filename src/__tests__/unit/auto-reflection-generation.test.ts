@@ -7,7 +7,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-storytelling-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-storytelling-test-"));
     const origCwd = process.cwd;
     process.cwd = () => tmpDir;
     fs.mkdirSync(path.join(tmpDir, "docs", "reflections", "deep"), { recursive: true });
@@ -112,7 +112,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
       },
       sinceRef: "v1.22.29",
       untilRef: "HEAD",
-      version: "3.0.11",
+      version: "1.22.67",
     });
 
     expect(content).toContain("Release Reflection");
@@ -155,7 +155,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
           filesChanged: 3,
           insertions: 100,
           deletions: 200,
-          fileNames: ["scripts/node/pre-publish-guard.js"],
+          fileNames: ["scripts/node/release.js", "scripts/node/pre-publish-guard.js"],
         },
       ],
       diff: {
@@ -164,7 +164,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
         totalInsertions: 100,
         totalDeletions: 200,
         filesAdded: [],
-        filesModified: [],
+        filesModified: ["scripts/node/release.js"],
         filesDeleted: [],
         uniqueDirs: ["scripts/node"],
         commitSubjects: ["fix: version compliance loop"],
@@ -175,7 +175,7 @@ describe("Storytelling Trigger Processor — Two Cadences", () => {
 
     expect(content).toContain("Commit Cadence Reflection");
     expect(content).toContain("fix: version compliance loop");
-    expect(content).not.toContain("scripts/node/release.js");
+    expect(content).toContain("scripts/node/release.js");
     expect(content).not.toContain("*(Fill in");
   });
 });

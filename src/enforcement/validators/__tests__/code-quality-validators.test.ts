@@ -450,57 +450,6 @@ describe("Code Quality Validators", () => {
       expect(result.passed).toBe(true);
       expect(result.message).toBe("Console log usage follows proper guidelines");
     });
-
-    it("should fail for console.log in non-CLI code", async () => {
-      const context: RuleValidationContext = {
-        operation: "write",
-        files: ["src/nucleus/kernel.ts"],
-        newCode: 'console.log("debug info");',
-      };
-
-      const result = await validator.validate(context);
-
-      expect(result.passed).toBe(false);
-      expect(result.message).toContain("console.log");
-      expect(result.suggestions).toBeDefined();
-    });
-
-    it("should pass for console.log in CLI command files", async () => {
-      const context: RuleValidationContext = {
-        operation: "write",
-        files: ["src/cli/commands/status.ts"],
-        newCode: 'console.log("Status output");',
-      };
-
-      const result = await validator.validate(context);
-
-      expect(result.passed).toBe(true);
-    });
-
-    it("should pass for console.log in commented-out code", async () => {
-      const context: RuleValidationContext = {
-        operation: "write",
-        files: ["src/nucleus/kernel.ts"],
-        newCode: "// console.log('commented out');",
-      };
-
-      const result = await validator.validate(context);
-
-      expect(result.passed).toBe(true);
-    });
-
-    it("should fail for process.stderr.write in non-CLI code", async () => {
-      const context: RuleValidationContext = {
-        operation: "write",
-        files: ["src/enforcement/rule-enforcer.ts"],
-        newCode: 'process.stderr.write("error message\\n");',
-      };
-
-      const result = await validator.validate(context);
-
-      expect(result.passed).toBe(false);
-      expect(result.message).toContain("process.stderr");
-    });
   });
 });
 

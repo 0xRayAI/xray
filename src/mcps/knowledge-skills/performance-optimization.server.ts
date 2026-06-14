@@ -5,9 +5,14 @@
  * profiling, benchmarking, memory analysis, and Core Web Vitals measurement
  */
 
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger, generateJobId } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
+import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -212,108 +217,143 @@ interface McpToolResponse {
   data?: Record<string, unknown>;
 }
 
-class XrayPerformanceOptimizationServer extends XrayKnowledgeSkillBase {
+class XrayPerformanceOptimizationServer {
+  private server: Server;
+  private startTime: number;
+
   constructor() {
-    super("performance-optimization", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "profile-application",
-        description: "Run comprehensive performance profiling on the codebase to identify bottlenecks and hot paths",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectRoot: { type: "string", description: "Path to the project root directory" },
-            scope: {
-              type: "string",
-              enum: ["full", "runtime", "build", "memory"],
-              default: "full",
-              description: "Scope of profiling analysis"
-            },
-            duration: { type: "number", default: 30, description: "Profiling duration in seconds" },
-            includeHotPaths: { type: "boolean", default: true, description: "Include hot path analysis" }
-          },
-          required: ["projectRoot"]
-        }
+        name: "performance-optimization", version: "1.22.67",
       },
       {
-        name: "analyze-memory",
-        description: "Perform memory leak detection and heap analysis to identify memory issues",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectRoot: { type: "string", description: "Path to the project root directory" },
-            heapSnapshot: { type: "boolean", default: true, description: "Generate heap snapshot analysis" },
-            gcAnalysis: { type: "boolean", default: true, description: "Analyze garbage collection patterns" },
-            leakDetection: { type: "boolean", default: true, description: "Detect potential memory leaks" }
-          },
-          required: ["projectRoot"]
-        }
+        capabilities: {
+          tools: {},
+        },
       },
-      {
-        name: "benchmark-code",
-        description: "Execute and compare benchmark results for code performance measurement",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectRoot: { type: "string", description: "Path to the project root directory" },
-            testFile: { type: "string", description: "Specific benchmark test file to run" },
-            iterations: { type: "number", default: 100, description: "Number of benchmark iterations" },
-            warmupRuns: { type: "number", default: 10, description: "Number of warmup runs" },
-            compareBaseline: { type: "boolean", default: false, description: "Compare results against baseline" }
-          },
-          required: ["projectRoot"]
-        }
-      },
-      {
-        name: "suggest-optimizations",
-        description: "Generate specific, actionable optimization suggestions based on code analysis",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectRoot: { type: "string", description: "Path to the project root directory" },
-            focus: {
-              type: "string",
-              enum: ["cpu", "memory", "network", "io", "all"],
-              default: "all",
-              description: "Focus area for optimizations"
-            },
-            threshold: { type: "number", default: 100, description: "Performance threshold in ms" }
-          },
-          required: ["projectRoot"]
-        }
-      },
-      {
-        name: "measure-core-web-vitals",
-        description: "Analyze Core Web Vitals metrics (LCP, INP, CLS) for web application performance",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectRoot: { type: "string", description: "Path to the project root directory" },
-            analyzeBundle: { type: "boolean", default: true, description: "Analyze JavaScript bundle" },
-            checkAccessibility: { type: "boolean", default: true, description: "Check accessibility factors affecting CLS" },
-            measureLCP: { type: "boolean", default: true, description: "Measure Largest Contentful Paint" },
-            measureINP: { type: "boolean", default: true, description: "Measure Interaction to Next Paint" },
-            measureCLS: { type: "boolean", default: true, description: "Measure Cumulative Layout Shift" }
-          },
-          required: ["projectRoot"]
-        }
-      }
-    ];
-    this.handlers = {
-      "profile-application": async (args) => this.handleProfileApplication(args as unknown as ProfileApplicationArgs),
-      "analyze-memory": async (args) => this.handleAnalyzeMemory(args as unknown as AnalyzeMemoryArgs),
-      "benchmark-code": async (args) => this.handleBenchmarkCode(args as unknown as BenchmarkCodeArgs),
-      "suggest-optimizations": async (args) => this.handleSuggestOptimizations(args as unknown as SuggestOptimizationsArgs),
-      "measure-core-web-vitals": async (args) => this.handleMeasureCoreWebVitals(args as unknown as MeasureCoreWebVitalsArgs),
-    };
+    );
+
+    this.startTime = Date.now();
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "performance-optimization",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "profile-application",
+            description: "Run comprehensive performance profiling on the codebase to identify bottlenecks and hot paths",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectRoot: { type: "string", description: "Path to the project root directory" },
+                scope: {
+                  type: "string",
+                  enum: ["full", "runtime", "build", "memory"],
+                  default: "full",
+                  description: "Scope of profiling analysis"
+                },
+                duration: { type: "number", default: 30, description: "Profiling duration in seconds" },
+                includeHotPaths: { type: "boolean", default: true, description: "Include hot path analysis" }
+              },
+              required: ["projectRoot"]
+            }
+          },
+          {
+            name: "analyze-memory",
+            description: "Perform memory leak detection and heap analysis to identify memory issues",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectRoot: { type: "string", description: "Path to the project root directory" },
+                heapSnapshot: { type: "boolean", default: true, description: "Generate heap snapshot analysis" },
+                gcAnalysis: { type: "boolean", default: true, description: "Analyze garbage collection patterns" },
+                leakDetection: { type: "boolean", default: true, description: "Detect potential memory leaks" }
+              },
+              required: ["projectRoot"]
+            }
+          },
+          {
+            name: "benchmark-code",
+            description: "Execute and compare benchmark results for code performance measurement",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectRoot: { type: "string", description: "Path to the project root directory" },
+                testFile: { type: "string", description: "Specific benchmark test file to run" },
+                iterations: { type: "number", default: 100, description: "Number of benchmark iterations" },
+                warmupRuns: { type: "number", default: 10, description: "Number of warmup runs" },
+                compareBaseline: { type: "boolean", default: false, description: "Compare results against baseline" }
+              },
+              required: ["projectRoot"]
+            }
+          },
+          {
+            name: "suggest-optimizations",
+            description: "Generate specific, actionable optimization suggestions based on code analysis",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectRoot: { type: "string", description: "Path to the project root directory" },
+                focus: {
+                  type: "string",
+                  enum: ["cpu", "memory", "network", "io", "all"],
+                  default: "all",
+                  description: "Focus area for optimizations"
+                },
+                threshold: { type: "number", default: 100, description: "Performance threshold in ms" }
+              },
+              required: ["projectRoot"]
+            }
+          },
+          {
+            name: "measure-core-web-vitals",
+            description: "Analyze Core Web Vitals metrics (LCP, INP, CLS) for web application performance",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectRoot: { type: "string", description: "Path to the project root directory" },
+                analyzeBundle: { type: "boolean", default: true, description: "Analyze JavaScript bundle" },
+                checkAccessibility: { type: "boolean", default: true, description: "Check accessibility factors affecting CLS" },
+                measureLCP: { type: "boolean", default: true, description: "Measure Largest Contentful Paint" },
+                measureINP: { type: "boolean", default: true, description: "Measure Interaction to Next Paint" },
+                measureCLS: { type: "boolean", default: true, description: "Measure Cumulative Layout Shift" }
+              },
+              required: ["projectRoot"]
+            }
+          }
+        ]
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      try {
+        switch (name) {
+          case "profile-application":
+            return await this.handleProfileApplication(args as unknown as ProfileApplicationArgs) as never;
+          case "analyze-memory":
+            return await this.handleAnalyzeMemory(args as unknown as AnalyzeMemoryArgs) as never;
+          case "benchmark-code":
+            return await this.handleBenchmarkCode(args as unknown as BenchmarkCodeArgs) as never;
+          case "suggest-optimizations":
+            return await this.handleSuggestOptimizations(args as unknown as SuggestOptimizationsArgs) as never;
+          case "measure-core-web-vitals":
+            return await this.handleMeasureCoreWebVitals(args as unknown as MeasureCoreWebVitalsArgs) as never;
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        frameworkLogger.log("mcp/performance-optimization", "tool-handler", "error", { tool: name, error: String(error) });
+        return {
+          content: [{
+            type: "text",
+            text: `Error executing tool "${name}": ${error instanceof Error ? error.message : String(error)}`
+          }]
+        };
+      }
     });
   }
 
@@ -576,24 +616,32 @@ class XrayPerformanceOptimizationServer extends XrayKnowledgeSkillBase {
   }
 
   private formatProfilingResult(result: ProfilingResult): string {
-    const { metrics, hotPaths, functionCallCounts, bottlenecks, recommendations } = result;
-    return `📊 Performance Profiling
+    return `📊 Performance Profiling Results
 
-**METRICS** Functions:${metrics.totalFunctions} Hot:${metrics.hotFunctions} Avg:${metrics.avgExecutionTime}ms Mem:${metrics.peakMemory}MB GC:${metrics.gcPauses}
+**PROFILING METRICS**
+- Total Functions Analyzed: ${result.metrics.totalFunctions}
+- Hot Functions (>1000 calls): ${result.metrics.hotFunctions}
+- Average Execution Time: ${result.metrics.avgExecutionTime}ms
+- Peak Memory: ${result.metrics.peakMemory}MB
+- GC Pauses: ${result.metrics.gcPauses}
 
-**HOT PATHS** (${hotPaths.length})
-${hotPaths.slice(0, 10).map(p => `  🔥 ${p}`).join("\n") || "  None"}
+**HOT PATHS** (${result.hotPaths.length} identified)
+${result.hotPaths.slice(0, 10).map(p => `• 🔥 ${p}`).join("\n") || "None detected"}
 
-**TOP FUNCTIONS**
-${Object.entries(functionCallCounts).sort(([, a], [, b]) => b - a).slice(0, 5).map(([n, c]) => `  ${n}: ${c.toLocaleString()} calls`).join("\n") || "  None"}
+**TOP FUNCTIONS BY CALL COUNT**
+${Object.entries(result.functionCallCounts)
+  .sort(([, a], [, b]) => b - a)
+  .slice(0, 5)
+  .map(([name, count]) => `• ${name}: ${count.toLocaleString()} calls`)
+  .join("\n") || "None"}
 
-**BOTTLENECKS** (${bottlenecks.length})
-${bottlenecks.slice(0, 5).map(b => `  🚧 ${b}`).join("\n") || "  None"}
+**BOTTLENECKS** (${result.bottlenecks.length} detected)
+${result.bottlenecks.slice(0, 5).map(b => `• 🚧 ${b}`).join("\n") || "None detected"}
 
 **RECOMMENDATIONS**
-${recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "  None"}
+${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "No specific recommendations"}
 
-**Status** ${metrics.hotFunctions > 10 ? "❌ HIGH OPTIMIZATION NEEDED" : metrics.hotFunctions > 5 ? "⚠️ MODERATE OPTIMIZATION NEEDED" : "✅ ACCEPTABLE"}`;
+**Status:** ${result.metrics.hotFunctions > 10 ? "❌ HIGH OPTIMIZATION NEEDED" : result.metrics.hotFunctions > 5 ? "⚠️ MODERATE OPTIMIZATION NEEDED" : "✅ PERFORMANCE ACCEPTABLE"}`;
   }
 
   private async handleAnalyzeMemory(args: AnalyzeMemoryArgs): Promise<McpToolResponse> {
@@ -752,16 +800,18 @@ ${recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "  N
   }
 
   private analyzeGCActivity(heapUsedMB: number): GCEvent[] {
-    const count = Math.min(Math.floor(heapUsedMB / 100), 5);
     const events: GCEvent[] = [];
-    for (let i = 0; i < count; i++) {
+    const eventCount = Math.floor(heapUsedMB / 50);
+
+    for (let i = 0; i < Math.min(eventCount, 10); i++) {
       events.push({
-        type: heapUsedMB > 200 && i % 3 === 0 ? "major" : "minor",
-        duration: 3 + i * 2,
-        timestamp: Date.now() - (count - i) * 60000,
-        reclaimedBytes: 512 * 1024
+        type: heapUsedMB > 200 ? (i % 3 === 0 ? "major" : "minor") : "minor",
+        duration: Math.round(Math.random() * 10 + 2),
+        timestamp: Date.now() - (eventCount - i) * 60000,
+        reclaimedBytes: Math.round(Math.random() * 1024 * 1024 * 10)
       });
     }
+
     return events;
   }
 
@@ -936,25 +986,43 @@ ${recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "  N
   }
 
   private formatMemoryAnalysis(result: MemoryAnalysisResult): string {
-    const { heapUsed, heapTotal, external, rss, memoryLeaks, gcEvents, heapBreakdown, allocationsByType, recommendations } = result;
-    return `🧠 Memory Analysis
+    return `🧠 Memory Analysis Results
 
-**HEAP** Used:${heapUsed}MB Total:${heapTotal}MB Ext:${external}MB RSS:${rss}MB (${(heapUsed / heapTotal * 100).toFixed(1)}%)
+**HEAP USAGE**
+- Heap Used: ${result.heapUsed}MB
+- Heap Total: ${result.heapTotal}MB
+- External: ${result.external}MB
+- RSS: ${result.rss}MB
+- Usage: ${((result.heapUsed / result.heapTotal) * 100).toFixed(1)}%
 
-**BREAKDOWN** Str:${(heapBreakdown.strings / 1024).toFixed(1)}KB Arr:${(heapBreakdown.arrays / 1024).toFixed(1)}KB Obj:${(heapBreakdown.objects / 1024).toFixed(1)}KB Fn:${(heapBreakdown.functions / 1024).toFixed(1)}KB Cls:${(heapBreakdown.closures / 1024).toFixed(1)}KB
+**HEAP BREAKDOWN**
+- Strings: ${(result.heapBreakdown.strings / 1024).toFixed(1)}KB
+- Arrays: ${(result.heapBreakdown.arrays / 1024).toFixed(1)}KB
+- Objects: ${(result.heapBreakdown.objects / 1024).toFixed(1)}KB
+- Functions: ${(result.heapBreakdown.functions / 1024).toFixed(1)}KB
+- Closures: ${(result.heapBreakdown.closures / 1024).toFixed(1)}KB
 
-**LEAKS** (${memoryLeaks.length})
-${memoryLeaks.slice(0, 5).map(l => `  ${l.severity === "critical" || l.severity === "high" ? "🔴" : "🟡"} ${l.location}\n    Cause: ${l.suspectedCause}\n    Fix: ${l.fixSuggestion}`).join("\n") || "  None"}
+**MEMORY LEAKS** (${result.memoryLeaks.length} detected)
+${result.memoryLeaks.slice(0, 5).map(leak =>
+  `• ${leak.severity === "critical" || leak.severity === "high" ? "🔴" : "🟡"} ${leak.location}\n  Cause: ${leak.suspectedCause}\n  Fix: ${leak.fixSuggestion}`
+).join("\n\n") || "None detected"}
 
-**GC** (${gcEvents.length}) Minor:${gcEvents.filter(e => e.type === "minor").length} Major:${gcEvents.filter(e => e.type === "major").length} Full:${gcEvents.filter(e => e.type === "full").length}
+**GC ACTIVITY** (${result.gcEvents.length} events)
+- Minor GC: ${result.gcEvents.filter(e => e.type === "minor").length}
+- Major GC: ${result.gcEvents.filter(e => e.type === "major").length}
+- Full GC: ${result.gcEvents.filter(e => e.type === "full").length}
 
-**ALLOCATIONS**
-${Object.entries(allocationsByType).sort(([, a], [, b]) => b - a).slice(0, 5).map(([t, c]) => `  ${t}: ${c.toLocaleString()}`).join("\n")}
+**ALLOCATIONS BY TYPE**
+${Object.entries(result.allocationsByType)
+  .sort(([, a], [, b]) => b - a)
+  .slice(0, 5)
+  .map(([type, count]) => `• ${type}: ${count.toLocaleString()}`)
+  .join("\n")}
 
 **RECOMMENDATIONS**
-${recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "  None"}
+${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "No specific recommendations"}
 
-**Status** ${memoryLeaks.some(l => l.severity === "critical" || l.severity === "high") ? "❌ CRITICAL" : memoryLeaks.length > 3 ? "⚠️ OPTIMIZATION NEEDED" : "✅ HEALTHY"}`;
+**Status:** ${result.memoryLeaks.some(l => l.severity === "critical" || l.severity === "high") ? "❌ CRITICAL MEMORY ISSUES" : result.memoryLeaks.length > 3 ? "⚠️ MEMORY OPTIMIZATION NEEDED" : "✅ MEMORY HEALTH ACCEPTABLE"}`;
   }
 
   private async handleBenchmarkCode(args: BenchmarkCodeArgs): Promise<McpToolResponse> {
@@ -1068,9 +1136,20 @@ ${recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "  N
   }
 
   private simulateBenchmarkWorkload(filePath: string): void {
-    // Stub: synthetic math workload for benchmarking
-    const iterations = Math.max(10, Math.min(100, Math.floor((fs.existsSync(filePath) ? fs.statSync(filePath).size : 1000) / 100)));
-    for (let i = 0; i < iterations; i++) Math.sqrt(i) * Math.log(i + 1);
+    const fileSize = fs.existsSync(filePath) ? fs.statSync(filePath).size : 1000;
+    const iterations = Math.max(10, Math.floor(fileSize / 100));
+
+    let result = 0;
+    for (let i = 0; i < iterations; i++) {
+      result += Math.sqrt(i) * Math.log(i + 1);
+    }
+
+    const arr = new Array(100).fill(0).map((_, i) => i * 2);
+    arr.sort((a, b) => b - a);
+
+    const obj = { a: 1, b: 2, c: 3, d: 4 };
+    const serialized = JSON.stringify(obj);
+    JSON.parse(serialized);
   }
 
   private calculateVariance(values: number[]): number {
@@ -1101,20 +1180,44 @@ ${recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "  N
   }
 
   private formatBenchmarkResult(result: BenchmarkResult): string {
-    const { benchmarks, comparison, statistics, recommendations } = result;
-    let text = `⚡ Benchmark Results (${benchmarks.length} benchmarks)
+    let text = `⚡ Benchmark Results (${result.benchmarks.length} benchmarks)
 
-**STATS** Total:${statistics.totalBenchmarks} Fastest:${statistics.fastest} Slowest:${statistics.slowest} Avg:${statistics.averageOpsPerSecond.toLocaleString()} ops/s Var:${statistics.variance.toFixed(2)}
+**STATISTICS**
+- Total Benchmarks: ${result.statistics.totalBenchmarks}
+- Fastest: ${result.statistics.fastest}
+- Slowest: ${result.statistics.slowest}
+- Average Ops/Sec: ${result.statistics.averageOpsPerSecond.toLocaleString()}
+- Variance: ${result.statistics.variance.toFixed(2)}
 
-**DETAILS**
+**BENCHMARK DETAILS**
 `;
-    for (const b of benchmarks) {
-      text += `  ${b.name} — ${b.opsPerSecond.toLocaleString()} ops/s | Mean:${b.meanMs}ms Med:${b.medianMs}ms Min:${b.minMs}ms Max:${b.maxMs}ms P95:${b.p95Ms}ms P99:${b.p99Ms}ms SD:${b.stdDevMs}ms\n`;
+
+    for (const benchmark of result.benchmarks) {
+      text += `
+📊 ${benchmark.name}
+- Ops/sec: ${benchmark.opsPerSecond.toLocaleString()}
+- Mean: ${benchmark.meanMs}ms | Median: ${benchmark.medianMs}ms
+- Min: ${benchmark.minMs}ms | Max: ${benchmark.maxMs}ms
+- P95: ${benchmark.p95Ms}ms | P99: ${benchmark.p99Ms}ms
+- Std Dev: ${benchmark.stdDevMs}ms
+`;
     }
-    if (comparison) {
-      text += `**vs BASELINE** ${comparison.improvement > 0 ? "📈" : "📉"} ${comparison.improvement > 0 ? "+" : ""}${comparison.improvement.toFixed(1)}% ${comparison.significant ? "⚠️ Significant" : "✓ Not significant"}\n`;
+
+    if (result.comparison) {
+      const c = result.comparison;
+      const direction = c.improvement > 0 ? "📈" : "📉";
+      text += `
+**COMPARISON vs BASELINE**
+${direction} Change: ${c.improvement > 0 ? "+" : ""}${c.improvement.toFixed(1)}%
+${c.significant ? "⚠️" : "✓"} Statistically Significant: ${c.significant ? "Yes" : "No"}
+`;
     }
-    text += `**RECOMMENDATIONS**\n${recommendations.slice(0, 5).map((r, i) => `  ${i + 1}. ${r}`).join("\n") || "  None"}\n`;
+
+    text += `
+**RECOMMENDATIONS**
+${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "No specific recommendations"}
+`;
+
     return text;
   }
 
@@ -1386,25 +1489,36 @@ return {
 
   private formatOptimizationSuggestions(suggestions: OptimizationSuggestion[]): string {
     const byCategory = suggestions.reduce((acc, s) => {
-      (acc[s.category] ??= []).push(s);
+      if (!acc[s.category]) acc[s.category] = [];
+      acc[s.category]!.push(s);
       return acc;
     }, {} as Record<string, OptimizationSuggestion[]>);
 
-    const critical = suggestions.filter(s => s.impact === "critical").length;
-    const high = suggestions.filter(s => s.impact === "high").length;
-    const medium = suggestions.filter(s => s.impact === "medium").length;
-    const low = suggestions.filter(s => s.impact === "low").length;
-    let text = `💡 Optimization Suggestions (${suggestions.length})
+    let text = `💡 Performance Optimization Suggestions (${suggestions.length} found)
 
-**IMPACT** Crit:${critical} High:${high} Med:${medium} Low:${low}
+**SUMMARY BY IMPACT**
+- Critical: ${suggestions.filter(s => s.impact === "critical").length}
+- High: ${suggestions.filter(s => s.impact === "high").length}
+- Medium: ${suggestions.filter(s => s.impact === "medium").length}
+- Low: ${suggestions.filter(s => s.impact === "low").length}
 `;
+
     for (const [category, items] of Object.entries(byCategory)) {
-      text += `\n## ${category.toUpperCase()} (${items.length})\n`;
-      for (const s of items.slice(0, 5)) {
-        const icon = s.impact === "critical" ? "🔴" : s.impact === "high" ? "🟠" : s.impact === "medium" ? "🟡" : "🟢";
-        text += `${icon} ${s.title} (${s.impact}, ${s.effort})\n   ${s.description} | Fix: ${s.suggestedFix}\n`;
+      text += `\n## ${category.toUpperCase()} Optimizations (${items.length})\n`;
+      for (const suggestion of items.slice(0, 5)) {
+        const icon = suggestion.impact === "critical" ? "🔴" :
+                     suggestion.impact === "high" ? "🟠" :
+                     suggestion.impact === "medium" ? "🟡" : "🟢";
+        text += `
+${icon} **${suggestion.title}** (${suggestion.impact} impact, ${suggestion.effort} effort)
+   ${suggestion.description}
+   📁 Files: ${suggestion.files.join(", ")}
+   💡 Fix: ${suggestion.suggestedFix}
+   📈 Expected: ${suggestion.expectedImprovement}
+`;
       }
     }
+
     return text;
   }
 
@@ -1820,28 +1934,65 @@ return {
   }
 
   private formatCoreWebVitalsResult(result: CoreWebVitalsResult): string {
-    const statusIcon = result.status === "good" ? "✅" : result.status === "needs-improvement" ? "⚠️" : "❌";
-    let text = `${statusIcon} Core Web Vitals — ${result.score}/100 (${result.status.toUpperCase()})\n`;
+    const statusIcon = result.status === "good" ? "✅" :
+                       result.status === "needs-improvement" ? "⚠️" : "❌";
+
+    let text = `${statusIcon} Core Web Vitals Analysis
+
+**OVERALL SCORE:** ${result.score}/100 (${result.status.toUpperCase()})
+`;
 
     if (result.bundleAnalysis) {
-      const b = result.bundleAnalysis;
-      text += `**BUNDLE** ${(b.totalSize / 1024 / 1024).toFixed(2)}MB (gz:${(b.gzippedSize / 1024 / 1024).toFixed(2)}MB)\n`;
-      const top = b.largestModules.slice(0, 3).map(m => `${m.name} (${m.size}KB)`).join(", ");
-      if (top) text += `  Largest: ${top}\n`;
+      const bundle = result.bundleAnalysis;
+      text += `
+**BUNDLE ANALYSIS**
+- Total Size: ${(bundle.totalSize / 1024 / 1024).toFixed(2)}MB
+- Gzipped Size: ${(bundle.gzippedSize / 1024 / 1024).toFixed(2)}MB
+- Largest Modules: ${bundle.largestModules.slice(0, 3).map(m => `${m.name} (${m.size}KB)`).join(", ") || "None"}
+`;
     }
+
     if (result.LCP) {
-      const l = result.LCP;
-      text += `**LCP** ${l.value <= 2500 ? "✅" : l.value <= 4000 ? "⚠️" : "❌"} ${(l.value / 1000).toFixed(2)}s (score:${l.score}/100 load:${(l.resourceLoadTime / 1000).toFixed(2)}s render:${(l.renderDelay / 1000).toFixed(2)}s)\n`;
+      const lcp = result.LCP;
+      const lcpStatus = lcp.value <= 2500 ? "✅" : lcp.value <= 4000 ? "⚠️" : "❌";
+      text += `
+**LCP (Largest Contentful Paint)** ${lcpStatus}
+- Value: ${(lcp.value / 1000).toFixed(2)}s
+- Score: ${lcp.score}/100
+- Resource Load: ${(lcp.resourceLoadTime / 1000).toFixed(2)}s
+- Render Delay: ${(lcp.renderDelay / 1000).toFixed(2)}s
+`;
     }
+
     if (result.INP) {
-      const i = result.INP;
-      text += `**INP** ${i.value <= 200 ? "✅" : i.value <= 500 ? "⚠️" : "❌"} ${i.value}ms (score:${i.score}/100 proc:${i.processingTime}ms delay:${i.presentationDelay}ms)\n`;
+      const inp = result.INP;
+      const inpStatus = inp.value <= 200 ? "✅" : inp.value <= 500 ? "⚠️" : "❌";
+      text += `
+**INP (Interaction to Next Paint)** ${inpStatus}
+- Value: ${inp.value}ms
+- Score: ${inp.score}/100
+- Processing Time: ${inp.processingTime}ms
+- Presentation Delay: ${inp.presentationDelay}ms
+`;
     }
+
     if (result.CLS) {
-      const c = result.CLS;
-      text += `**CLS** ${c.value <= 0.1 ? "✅" : c.value <= 0.25 ? "⚠️" : "❌"} ${c.value} (score:${c.score}/100 shifts:${c.layoutShifts} sources:${c.sources.slice(0, 3).join(", ") || "None"})\n`;
+      const cls = result.CLS;
+      const clsStatus = cls.value <= 0.1 ? "✅" : cls.value <= 0.25 ? "⚠️" : "❌";
+      text += `
+**CLS (Cumulative Layout Shift)** ${clsStatus}
+- Value: ${cls.value}
+- Score: ${cls.score}/100
+- Layout Shifts: ${cls.layoutShifts}
+- Sources: ${cls.sources.slice(0, 3).join(", ") || "None"}
+`;
     }
-    text += `**RECOMMENDATIONS**\n${result.recommendations.slice(0, 5).map((r, i) => `  ${i + 1}. ${r}`).join("\n") || "  None"}\n`;
+
+    text += `
+**RECOMMENDATIONS**
+${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") || "No specific recommendations"}
+`;
+
     return text;
   }
 
@@ -1889,11 +2040,24 @@ return {
     return files.slice(0, 100);
   }
 
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+
+    createGracefulShutdown({
+      serverName: "performance-optimization.server",
+      server: this.server,
+    });
+
+    frameworkLogger.log("mcp/performance-optimization", "server-started", "info", {
+      uptime: Date.now() - this.startTime
+    });
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayPerformanceOptimizationServer();
-  server.run("performance-optimization.server").catch((error) => {
+  server.run().catch((error) => {
     frameworkLogger.log("mcp/performance-optimization", "run", "error", { error: String(error) });
   });
 }

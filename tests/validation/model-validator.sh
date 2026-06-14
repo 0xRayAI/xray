@@ -155,7 +155,7 @@ echo "=================="
 if python3 -c "
 import sys
 sys.path.append('${PROJECT_ROOT}/.opencode/src')
-from xray.model_router import ModelRouter
+from strray.model_router import ModelRouter
 
 try:
     router = ModelRouter('${PROJECT_ROOT}/.opencode/OpenCode.json')

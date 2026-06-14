@@ -12,7 +12,7 @@
  *   - Real MCP/tool reachability checks
  *   - Deep payload + runtime validation after npm pack + tarball install
  *
- * Validates the complete first-class Grok CLI integration (hooks + full governed MCP surface: governance + skills; orchestrator + enforcer available via CLI).
+ * Validates the complete first-class Grok CLI integration (hooks + full governed MCP surface: governance + skills + orchestrator + enforcer).
  */
 
 import { execSync, spawn } from 'child_process';
@@ -125,13 +125,13 @@ async function runHookScript(hookPath, envOverrides = {}) {
 function printGrokIntegrationTree() {
   const tree = `
 ┌─────────────────────────────────────────────────────────────────────┐
-│  GROK CLI — FIRST CLASS CITIZEN (0xRay)                           │
+│  GROK CLI — FIRST CLASS CITIZEN (0xRay)                                 │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  .grok/plugins/0xray/          (Grok discovers at project+user) │
+│  .grok/plugins/0xray/               (Grok discovers at project+user) │
 │   ├── hooks/hooks.json             PreToolUse + SessionStart        │
 │   │    └── command → pre-tool-use.js                               │
-│   └── .mcp.json                    xray-governance + skills + orchestrator + enforcer (full v2) │
+│   └── .mcp.json                    0xray-governance + skills + orchestrator + enforcer (full v2) │
 │                                                                     │
 │  dist/integrations/grok/hooks/pre-tool-use.js   (real hook)         │
 │       └── robust resolver → applyDecisionMatrix()                    │
@@ -142,7 +142,7 @@ function printGrokIntegrationTree() {
 │                                                                     │
 │  dist/mcps/ (governance.server, orchestrator/server.js, enforcer-tools.server.js, skill-invocation...) │
 │                                                                     │
-│  CLI:  npx 0xray grok install   (postinstall also seeds it)     │
+│  CLI:  npx 0xray grok install   (postinstall also seeds it)          │
 │                                                                     │
 │  HOOK FLOW (actual enforcement):                                    │
 │    Grok Tool Call (write/edit/terminal)                             │
@@ -173,7 +173,7 @@ async function main() {
     testDir = CUSTOM_DIR;
     pass('Using provided consumer directory');
   } else {
-    testDir = path.join(os.tmpdir(), `grok-xray-e2e-${Date.now()}`);
+    testDir = path.join(os.tmpdir(), `grok-0xray-e2e-${Date.now()}`);
     fs.mkdirSync(testDir, { recursive: true });
     pass('Created temporary consumer directory');
 
@@ -258,7 +258,7 @@ async function main() {
       }
       const preTool = JSON.stringify(hooks);
       if (preTool.includes('PreToolUse')) pass('PreToolUse event declared for governance');
-      if (preTool.includes('pre-tool-use.js') || preTool.includes('STRRAY_AI_PATH')) {
+      if (preTool.includes('pre-tool-use.js') || preTool.includes('STRRAY_AI_PATH') || preTool.includes('0XRAY_PATH')) {
         pass('PreToolUse references the hook implementation');
       }
     } catch (e) {
@@ -268,42 +268,44 @@ async function main() {
     // ── Phase 3: .mcp.json Deep Validation ─────────────────────
     section('Phase 3: .mcp.json Deep Validation (MCP Server Registration)');
 
-    assertJsonValid(mcpJson, '.mcp.json');
+    const packagedMcpJson = path.join(nodeModules0xray, 'src', 'integrations', 'grok', 'plugin', '0xray', '.mcp.json');
+    const mcpJsonPath = fs.existsSync(packagedMcpJson) ? packagedMcpJson : mcpJson;
+    assertJsonValid(mcpJsonPath, '.mcp.json (from package)');
     try {
-      const mcp = JSON.parse(fs.readFileSync(mcpJson, 'utf8'));
+      const mcp = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf8'));
       const servers = mcp.mcpServers || {};
-      if (servers['xray-governance']) {
-        pass('xray-governance MCP server declared');
-        const gov = servers['xray-governance'];
+      if (servers['0xray-governance']) {
+        pass('0xray-governance MCP server declared');
+        const gov = servers['0xray-governance'];
         if (gov.command === 'npx' && gov.args?.includes('mcp') && gov.args?.includes('governance')) {
-          pass('xray-governance uses correct npx 0xray mcp governance');
+          pass('0xray-governance uses correct npx 0xray mcp governance');
         }
-        if (gov.env?.XRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
+        if (gov.env?.STRRAY_FORCE_MCP_GOVERNANCE || gov.env?.XRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
       } else {
-        fail('xray-governance', 'missing from .mcp.json');
+        fail('0xray-governance', 'missing from .mcp.json');
       }
-      if (servers['xray-skills']) {
-        pass('xray-skills MCP server declared (researcher + all skills)');
+      if (servers['0xray-skills']) {
+        pass('0xray-skills MCP server declared (researcher + all skills)');
       } else {
-        fail('xray-skills', 'missing from .mcp.json');
+        fail('0xray-skills', 'missing from .mcp.json');
       }
-      if (servers['xray-orchestrator']) {
-        pass('xray-orchestrator MCP server declared');
-        const orch = servers['xray-orchestrator'];
+      if (servers['0xray-orchestrator']) {
+        pass('0xray-orchestrator MCP server declared');
+        const orch = servers['0xray-orchestrator'];
         if (orch.command === 'npx' && orch.args?.includes('mcp') && orch.args?.includes('orchestrator')) {
-          pass('xray-orchestrator uses correct npx 0xray mcp orchestrator');
+          pass('0xray-orchestrator uses correct npx 0xray mcp orchestrator');
         }
       } else {
-        skip('xray-orchestrator', 'available via CLI but not registered in Grok plugin .mcp.json');
+        fail('0xray-orchestrator', 'missing from .mcp.json');
       }
-      if (servers['xray-enforcer']) {
-        pass('xray-enforcer MCP server declared');
-        const enf = servers['xray-enforcer'];
+      if (servers['0xray-enforcer']) {
+        pass('0xray-enforcer MCP server declared');
+        const enf = servers['0xray-enforcer'];
         if (enf.command === 'npx' && enf.args?.includes('mcp') && enf.args?.includes('enforcer')) {
-          pass('xray-enforcer uses correct npx 0xray mcp enforcer');
+          pass('0xray-enforcer uses correct npx 0xray mcp enforcer');
         }
       } else {
-        skip('xray-enforcer', 'available via CLI but not registered in Grok plugin .mcp.json');
+        fail('0xray-enforcer', 'missing from .mcp.json');
       }
     } catch (e) {
       fail('.mcp.json deep validation', e.message);
@@ -342,7 +344,7 @@ async function main() {
     }
 
     // Content inspection of the hook implementation (like OpenClaw/Hermes inspect hook code and logs)
-    assertContains(hookImpl, 'deriveResonance', 'pre-tool-use.js derives resonance locally');
+    assertContains(hookImpl, 'applyDecisionMatrix', 'pre-tool-use.js calls real Solar decision matrix');
     assertContains(hookImpl, 'Solar', 'pre-tool-use.js aware of Solar / decision matrix');
   }
 
@@ -356,7 +358,7 @@ async function main() {
   assertFileExists(govCore, 'governance-core.js (Dynamo Solar SSOT logic)');
 
   // Extra content validation (parity with other E2Es that inspect file contents)
-  assertContains(govCore, 'mergeVotes', 'governance-core contains mergeVotes (vote merging)');
+  assertContains(govCore, 'applyDecisionMatrix', 'governance-core contains applyDecisionMatrix (Solar decision matrix)');
   assertContains(govCore, 'Solar', 'governance-core references Solar SSOT');
 
   const researcherDir = path.join(distDir, 'skills', 'researcher');
@@ -367,8 +369,13 @@ async function main() {
 
   // ── Phase 6: 0xray grok CLI Subcommand ─────────────────
   section('Phase 6: 0xray grok CLI Subcommand');
-  if (typeof runCommand === 'function') {
+
+  const grokHelp = run(`node "${path.join(distDir, 'cli', 'index.js')}" grok --help`, { ignoreError: true, cwd: testDir });
+  if (grokHelp.includes('grok') || grokHelp.includes('Grok')) {
     pass('`0xray grok` subcommand registered');
+  }
+  const grokInstallHelp = run(`node "${path.join(distDir, 'cli', 'index.js')}" grok install --help`, { ignoreError: true, cwd: testDir });
+  if (grokInstallHelp.includes('install') || grokInstallHelp.includes('force')) {
     pass('`0xray grok install` command available');
   }
 
@@ -520,8 +527,8 @@ async function main() {
     // Import governance-core directly to exercise the decision matrix (Solar SSOT)
     const corePath = path.join(distDir, 'governance', 'governance-core.js');
     const coreMod = await import(`file://${corePath}`);
-    if (typeof coreMod.mergeVotes === 'function' || coreMod.mergeVotes) {
-      pass('mergeVotes (Dynamo vote merging) reachable from installed package');
+    if (typeof coreMod.applyDecisionMatrix === 'function' || coreMod.applyDecisionMatrix) {
+      pass('applyDecisionMatrix (Dynamo Solar SSOT) reachable from installed package');
     }
   } catch (e) {
     skip('governance-core smoke', `import issue (non-blocking): ${e.message}`);
@@ -549,7 +556,7 @@ async function main() {
     const last = lines[lines.length - 1] || badResult.stdout;
     const badJson = JSON.parse(last);
     if (badJson.resonance < 0.75) pass('Hook derived low resonance on dangerous code');
-    if (badJson.solar_recommendation) pass(`Hook produced solar_recommendation → ${badJson.solar_recommendation}`);
+    if (badJson.solar_recommendation) pass(`Hook ran real applyDecisionMatrix → ${badJson.solar_recommendation}`);
     if (badJson.gov && badJson.gov.recommendation) pass('Hook produced full Solar decision object from core');
   } catch (e) { fail('bad hook parse', e.message + ' stdout=' + badResult.stdout.substring(0,120)); }
 

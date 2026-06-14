@@ -5,9 +5,14 @@
  * GraphQL schema design, and API documentation standards
  */
 
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
+import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
 interface DesignApiEndpointsArgs {
   resource: string;
@@ -20,50 +25,71 @@ interface ValidateApiDesignArgs {
   standards?: string[];
 }
 
-class XrayApiDesignServer extends XrayKnowledgeSkillBase {
+class StringRayApiDesignServer {
+  private server: Server;
+
   constructor() {
-    super("api-design", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "design-api-endpoints",
-        description:
-          "Design RESTful API endpoints with proper resource modeling",
-        inputSchema: {
-          type: "object",
-          properties: {
-            resource: { type: "string" },
-            operations: { type: "array", items: { type: "string" } },
-            relationships: { type: "array", items: { type: "string" } },
-          },
-          required: ["resource"],
-        },
+        name: "api-design", version: "1.22.67",
       },
       {
-        name: "validate-api-design",
-        description:
-          "Validate API design against RESTful principles and best practices",
-        inputSchema: {
-          type: "object",
-          properties: {
-            endpoints: { type: "array", items: { type: "string" } },
-            standards: { type: "array", items: { type: "string" } },
-          },
-          required: ["endpoints"],
+        capabilities: {
+          tools: {},
         },
       },
-    ];
-    this.handlers = {
-      "design-api-endpoints": async (args) => this.designApiEndpoints(args as unknown as DesignApiEndpointsArgs),
-      "validate-api-design": async (args) => this.validateApiDesign(args as unknown as ValidateApiDesignArgs),
-    };
+    );
+
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "api-design",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+    // Server initialization - removed unnecessary startup logging
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "design-api-endpoints",
+            description:
+              "Design RESTful API endpoints with proper resource modeling",
+            inputSchema: {
+              type: "object",
+              properties: {
+                resource: { type: "string" },
+                operations: { type: "array", items: { type: "string" } },
+                relationships: { type: "array", items: { type: "string" } },
+              },
+              required: ["resource"],
+            },
+          },
+          {
+            name: "validate-api-design",
+            description:
+              "Validate API design against RESTful principles and best practices",
+            inputSchema: {
+              type: "object",
+              properties: {
+                endpoints: { type: "array", items: { type: "string" } },
+                standards: { type: "array", items: { type: "string" } },
+              },
+              required: ["endpoints"],
+            },
+          },
+        ],
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "design-api-endpoints":
+          return await this.designApiEndpoints(args as unknown as DesignApiEndpointsArgs);
+        case "validate-api-design":
+          return await this.validateApiDesign(args as unknown as ValidateApiDesignArgs);
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
     });
   }
 
@@ -114,11 +140,21 @@ class XrayApiDesignServer extends XrayKnowledgeSkillBase {
     };
   }
 
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    
+    // Use centralized shutdown handler
+    createGracefulShutdown({
+      serverName: "api-design.server",
+      server: this.server,
+    });
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new XrayApiDesignServer();
-  server.run("api-design").catch((err) => { frameworkLogger.log("api-design", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
+  const server = new StringRayApiDesignServer();
+  server.run().catch(() => {});
 }
 
-export default XrayApiDesignServer;
+export default StringRayApiDesignServer;

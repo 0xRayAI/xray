@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# 0xRay 1.0.0 - Interactive Session Validator
+# StringRay 1.0.0 - Interactive Session Validator
 
 # Real-time agent cross-checking during coding sessions
 
-echo "🔍 0xRay 1.0.0 - Interactive Session Validation"
+echo "🔍 StringRay 1.0.0 - Interactive Session Validation"
 echo "=================================================================="
 
 # Check if this is an interactive coding session

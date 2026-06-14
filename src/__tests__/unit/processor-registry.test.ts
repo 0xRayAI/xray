@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { ProcessorManager } from "../../processors/processor-manager.js";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("Processor Registry Pattern", () => {
   let pm: ProcessorManager;
-  let sm: XrayStateManager;
+  let sm: StringRayStateManager;
 
   beforeEach(() => {
-    sm = new XrayStateManager(`/test/registry-${Date.now()}.json`);
+    sm = new StringRayStateManager(`/test/registry-${Date.now()}.json`);
     pm = new ProcessorManager(sm);
   });
 
@@ -155,7 +155,7 @@ describe("Processor Registry Pattern", () => {
 
   describe("Factory isolation", () => {
     it("should isolate factories between ProcessorManager instances", async () => {
-      const sm2 = new XrayStateManager(`/test/registry-2-${Date.now()}.json`);
+      const sm2 = new StringRayStateManager(`/test/registry-2-${Date.now()}.json`);
       const pm2 = new ProcessorManager(sm2);
 
       let pm2Executed = false;

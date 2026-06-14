@@ -166,7 +166,7 @@ export class AgentsMdValidationLoader extends BaseLoader {
           passed: false,
           message: "AGENTS.md not found in project root",
           suggestions: [
-            "Create AGENTS.md using template from xray/agents_template.md",
+            "Create AGENTS.md using template from docs/AGENTS_TEMPLATE.md",
             "Run: node scripts/node/enforce-agents-md.js --generate",
             "See AGENTS.md for agent triage rules and codex compliance",
           ],
@@ -291,7 +291,7 @@ export class AgentsMdValidationLoader extends BaseLoader {
           message: `AGENTS.md missing required sections: ${missingSections.join(", ")}`,
           suggestions: [
             "Add missing sections to AGENTS.md",
-            "Reference xray/agents_template.md for structure",
+            "Reference docs/AGENTS_TEMPLATE.md for structure",
           ],
         };
       }

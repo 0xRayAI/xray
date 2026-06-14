@@ -1,5 +1,5 @@
 /**
- * 0xRay v2.0.0 - Integration Testing Configuration
+ * StringRay AI v1.3.4 - Integration Testing Configuration
  *
  * Comprehensive integration testing setup with parallel execution,
  * thread pooling, and multi-component testing capabilities.
@@ -14,7 +14,7 @@ import { resolve } from "path";
 export default defineConfig({
   test: {
     // Integration test configuration
-    name: "Xray Integration Tests",
+    name: "StrRay Integration Tests",
     environment: "node",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],

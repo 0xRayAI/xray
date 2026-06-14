@@ -12,10 +12,10 @@ import { KernelOrchestrator, OrchestrationResult as KernelOrchestrationResult } 
 import { TaskDefinition } from "../agents/types.js";
 import { EnhancedMultiAgentOrchestrator, enhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
 import { createAgentDelegator, AgentDelegator, AgentCapability } from "../delegation/agent-delegator.js";
-import { XrayStateManager } from "../state/state-manager.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { ComplexityAnalyzer } from "../delegation/complexity-analyzer.js";
-import { xrayConfigLoader } from "../core/config-loader.js";
+import { strRayConfigLoader } from "../core/config-loader.js";
 
 export interface OrchestrationWorkflow {
   id: string;
@@ -82,20 +82,20 @@ export interface CoordinatedWorkflowResult {
 }
 
 export class MultiAgentOrchestrationCoordinator {
-  private xrayOrchestrator: KernelOrchestrator;
+  private strRayOrchestrator: KernelOrchestrator;
   private enhancedOrchestrator: EnhancedMultiAgentOrchestrator;
   private agentDelegator: AgentDelegator;
-  private stateManager: XrayStateManager;
+  private stateManager: StringRayStateManager;
   private complexityAnalyzer: ComplexityAnalyzer;
   private coordinationMetrics: CoordinationMetrics;
 
-  constructor(stateManager?: XrayStateManager) {
-    this.stateManager = stateManager || new XrayStateManager();
-    this.xrayOrchestrator = new KernelOrchestrator();
+  constructor(stateManager?: StringRayStateManager) {
+    this.stateManager = stateManager || new StringRayStateManager();
+    this.strRayOrchestrator = new KernelOrchestrator();
     this.enhancedOrchestrator = enhancedMultiAgentOrchestrator;
     this.agentDelegator = createAgentDelegator(
       this.stateManager,
-      xrayConfigLoader,
+      strRayConfigLoader,
     );
     this.complexityAnalyzer = new ComplexityAnalyzer();
 
@@ -118,8 +118,8 @@ export class MultiAgentOrchestrationCoordinator {
     // Register coordination components in state manager
     this.stateManager.set("coordination:main_coordinator", this);
     this.stateManager.set(
-      "coordination:xray_orchestrator",
-      this.xrayOrchestrator,
+      "coordination:strray_orchestrator",
+      this.strRayOrchestrator,
     );
     this.stateManager.set(
       "coordination:enhanced_orchestrator",
@@ -349,7 +349,7 @@ export class MultiAgentOrchestrationCoordinator {
         subagentType: "orchestrator",
       };
 
-      const result = await this.xrayOrchestrator.executeComplexTask(
+      const result = await this.strRayOrchestrator.executeComplexTask(
         task.description,
         [task],
       );
@@ -686,7 +686,7 @@ export class MultiAgentOrchestrationCoordinator {
     );
 
     await this.enhancedOrchestrator.shutdown();
-    await this.xrayOrchestrator.getStatus(); // Just get status, no actual shutdown method
+    await this.strRayOrchestrator.getStatus(); // Just get status, no actual shutdown method
 
     frameworkLogger.log(
       "orchestration-coordinator",

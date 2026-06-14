@@ -1,6 +1,6 @@
 {
-  "framework": "xray 3.0",
-  "version": "3.0.11",
+  "framework": "xray 2.0",
+  "version": "1.22.67",
   "description": "Codex-compliant framework configuration for Credible UI project",
   "thresholds": {
     "bundleSize": {
@@ -220,7 +220,7 @@
       }
     },
     "codex": {
-      "version": "3.0.11",
+      "version": "1.22.67",
       "terms": [
         1,
         2,

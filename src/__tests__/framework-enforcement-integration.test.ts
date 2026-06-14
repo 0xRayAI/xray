@@ -67,9 +67,9 @@ describe("Framework Enforcement Integration", () => {
 
   it("should integrate codex-injector with framework system", async () => {
     // Test direct integration with codex-injector
-    const { createXrayCodexInjectorHook } =
+    const { createStringRayCodexInjectorHook } =
       await import("../core/codex-injector");
-    const hook = createXrayCodexInjectorHook();
+    const hook = createStringRayCodexInjectorHook();
 
     // Verify hook structure
     expect(hook).toHaveProperty("hooks");

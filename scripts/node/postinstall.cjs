@@ -11,22 +11,14 @@ function structuredLog(component, action, status, details) {
   console.log(`${ts} [${component}] ${action} - ${String(status).toUpperCase()}${detailsPart}`);
 }
 
-const packageRoot = path.resolve(__dirname, "..", "..");
+const packageRoot = path.join(__dirname, "..", "..");
 
-// Consumer-friendly targetDir resolution:
-// - In node_modules/0xray (or legacy xray): walk up until outside node_modules to reach consumer project root.
-// - Otherwise (dev): use cwd.
-let targetDir = process.env.PWD || process.cwd();
-if (packageRoot.includes("node_modules")) {
-  let current = packageRoot;
-  while (current.includes("node_modules")) {
-    current = path.dirname(current);
-  }
-  // Only override if resolved dir is a parent of (or same as) cwd.
-  // This prevents npx temp cache dirs from hijacking targetDir.
-  if (process.cwd().startsWith(current)) {
-    targetDir = current;
-  }
+let targetDir;
+if (__dirname.includes("node_modules/xray")) {
+  // plain xray (final identity)
+  targetDir = path.join(__dirname, "..", "..", "..", "..");
+} else {
+  targetDir = process.env.PWD || process.cwd();
 }
 
 const resolvedPackage = path.resolve(packageRoot);
@@ -35,12 +27,11 @@ const resolvedTarget = path.resolve(targetDir);
 
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 
-// Copy xray/agents_template.md → AGENTS.md (consumer only)
-const agentsTemplate = path.join(packageRoot, "xray", "agents_template.md");
+// Copy AGENTS-consumer.md → AGENTS.md
+const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
 const agentsDest = path.join(targetDir, "AGENTS.md");
-if (fs.existsSync(agentsTemplate) && resolvedPackage !== resolvedTarget && !fs.existsSync(agentsDest)) {
-  fs.copyFileSync(agentsTemplate, agentsDest);
-  structuredLog('postinstall', 'AGENTS.md', 'info', { message: 'consumer template deployed' });
+if (fs.existsSync(agentsConsumer) && resolvedPackage !== resolvedTarget) {
+  fs.copyFileSync(agentsConsumer, agentsDest);
 }
 
 // Register MCP servers with Grok CLI (if available) using absolute paths to installed dist
@@ -55,7 +46,7 @@ if (resolvedPackage !== resolvedTarget) {
     const xrayRoot = targetDir;
 
     execSync(
-      `grok mcp add xray-governance --command node --args "${govServer}" --env "XRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${xrayRoot}"`,
+      `grok mcp add xray-governance --command node --args "${govServer}" --env "STRRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${xrayRoot}"`,
       { stdio: 'pipe' }
     );
     structuredLog('postinstall', 'Registered xray-governance with Grok CLI', 'info');
@@ -82,16 +73,6 @@ if (resolvedPackage !== resolvedTarget) {
   }
 }
 
-// Install pre-commit hook (LightweightValidator + gate, if git repo)
-try {
-  const installHooks = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
-  if (fs.existsSync(installHooks)) {
-    execSync(`node "${installHooks}"`, { stdio: 'pipe' });
-  }
-} catch (_e) {
-  // Non-git or install failure — not blocking
-}
-
 if (resolvedPackage !== resolvedTarget) {
-  structuredLog('postinstall', 'xray v3 framework installed. Run `npx 0xray setup` for full configuration (hooks, Hermes, symlinks).', 'success');
+  structuredLog('postinstall', 'xray v2 framework installed. Run `npx xray setup` for full configuration (hooks, Hermes, symlinks).', 'success');
 }

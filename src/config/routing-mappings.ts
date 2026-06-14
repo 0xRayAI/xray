@@ -150,3 +150,23 @@ export function queryRoutingMappings(keywords: string[]): RoutingMatch[] {
 export function getAllRoutingMappings(): RoutingMappingEntry[] {
   return ROUTING_MAPPINGS;
 }
+
+/**
+ * Validate that all agent names in routing mappings exist in the SSOT.
+ * Call at boot to detect drift.
+ */
+export function validateRoutingMappings(validAgents: string[]): string[] {
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const mapping of ROUTING_MAPPINGS) {
+    if (!validAgents.includes(mapping.agent)) {
+      errors.push(`Routing mapping references unknown agent "${mapping.agent}" (keywords: ${mapping.keywords.slice(0, 2).join(", ")})`);
+    }
+    const key = `${mapping.agent}:${mapping.skill}`;
+    if (seen.has(key)) {
+      errors.push(`Duplicate routing mapping: agent="${mapping.agent}" skill="${mapping.skill}"`);
+    }
+    seen.add(key);
+  }
+  return errors;
+}

@@ -98,72 +98,72 @@ describe("nucleus kernel re-exports over delegation/index.ts bridge", () => {
   });
 });
 
-describe("inference-cycle — no MCP governance paths", () => {
+describe("inference-cycle — MCP governance paths present", () => {
   const source = readSource("src/inference/inference-cycle.ts");
 
-  test("does not export useGovernanceMcp", () => {
-    expect(source).not.toMatch(/\buseGovernanceMcp\b/);
+  test("exports useGovernanceMcp", () => {
+    expect(source).toMatch(/\buseGovernanceMcp\b/);
   });
 
-  test("does not export parseGovernanceMcpResponse", () => {
-    expect(source).not.toMatch(/\bparseGovernanceMcpResponse\b/);
+  test("exports parseGovernanceMcpResponse", () => {
+    expect(source).toMatch(/\bparseGovernanceMcpResponse\b/);
   });
 
-  test("does not export invokeAgentInternal", () => {
-    expect(source).not.toMatch(/\binvokeAgentInternal\b/);
+  test("exports invokeAgentInternal", () => {
+    expect(source).toMatch(/\binvokeAgentInternal\b/);
   });
 
   test("does not reference XRAY_FORCE_MCP_GOVERNANCE", () => {
     expect(source).not.toMatch(/XRAY_FORCE_MCP_GOVERNANCE/);
   });
 
-  test("does not reference isGovernanceMcpPreferred", () => {
-    expect(source).not.toMatch(/\bisGovernanceMcpPreferred\b/);
+  test("references isGovernanceMcpPreferred", () => {
+    expect(source).toMatch(/\bisGovernanceMcpPreferred\b/);
   });
 
-  test("uses handleGovernRequest from nucleus", () => {
-    expect(source).toMatch(/import.*handleGovernRequest.*nucleus/);
+  test("uses getGovernanceIntegration from integrations/governance", () => {
+    expect(source).toMatch(/import.*getGovernanceIntegration.*integrations\/governance/);
   });
 });
 
-describe("boot-orchestrator.server.ts — delegates to nucleus", () => {
+describe("boot-orchestrator.server.ts — monolithic class", () => {
   const source = readSource("src/mcps/boot-orchestrator.server.ts");
 
-  test("imports NucleusOrchestrator from nucleus", () => {
-    expect(source).toMatch(/import[\s\S]*?NucleusOrchestrator[\s\S]*?nucleus\/orchestrator/);
+  test("exports StringRayBootOrchestratorServer", () => {
+    expect(source).toMatch(/export\s*\{\s*StringRayBootOrchestratorServer\s*\}/);
   });
 
-  test("does not define independent boot state fields", () => {
-    expect(source).not.toMatch(/private\s+bootStatus/);
-    expect(source).not.toMatch(/private\s+bootSequence\s*=/);
+  test("defines independent boot state fields", () => {
+    expect(source).toMatch(/private\s+bootStatus/);
+    expect(source).toMatch(/private\s+bootSequence\s*=/);
   });
 
-  test("does not contain validatePrerequisites method", () => {
-    expect(source).not.toMatch(/validatePrerequisites/);
+  test("contains validatePrerequisites method", () => {
+    expect(source).toMatch(/validatePrerequisites/);
   });
 
-  test("does not contain executeParallelBoot method", () => {
-    expect(source).not.toMatch(/executeParallelBoot/);
+  test("contains executeParallelBoot method", () => {
+    expect(source).toMatch(/executeParallelBoot/);
   });
 
-  test("does not contain executeSequentialBoot method", () => {
-    expect(source).not.toMatch(/executeSequentialBoot/);
+  test("contains executeSequentialBoot method", () => {
+    expect(source).toMatch(/executeSequentialBoot/);
   });
 
-  test("does not contain initConfiguration method", () => {
-    expect(source).not.toMatch(/initConfiguration/);
+  test("contains initConfiguration method", () => {
+    expect(source).toMatch(/initConfiguration/);
   });
 
-  test("does not contain initLogging method", () => {
-    expect(source).not.toMatch(/initLogging/);
+  test("contains initLogging method", () => {
+    expect(source).toMatch(/initLogging/);
   });
 
-  test("does not contain saveShutdownState method", () => {
-    expect(source).not.toMatch(/saveShutdownState/);
+  test("contains saveShutdownState method", () => {
+    expect(source).toMatch(/saveShutdownState/);
   });
 
-  test("references orchestrator for bootSequence", () => {
-    expect(source).toMatch(/this\.orchestrator\.bootSequence/);
+  test("references this.bootSequence", () => {
+    expect(source).toMatch(/this\.bootSequence/);
   });
 });
 

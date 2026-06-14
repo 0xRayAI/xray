@@ -16,10 +16,10 @@
  * Dynamo Solar SSOT is treated as a mandatory external filter (not optional, not a fallback).
  */
 
-import { pluginRegistry } from '../nucleus/plugin-registry.js';
+import { mcpClientManager } from '../mcps/mcp-client.js';
+import { callInProcessSkill, type MCPToolResult } from '../mcps/in-process-skill-registry.js';
 import {
   getGovernanceIntegration,
-  initializeGovernanceIntegration,
   type InferenceGovernanceIntegration,
 } from '../integrations/governance/index.js';
 import type { InferenceProposal } from '../inference/inference-cycle.js';
@@ -32,7 +32,7 @@ import {
   GovernanceRequest,
   GovernanceResponse,
 } from './governance-types.js';
-import { mergeVotes, calculateMetamorphosisScore } from './governance-core.js';
+import { mergeVotes } from './governance-core.js';
 import { frameworkLogger } from '../core/framework-logger.js';
 
 export class GovernanceService {
@@ -55,7 +55,7 @@ export class GovernanceService {
    */
   async govern(request: GovernanceRequest): Promise<GovernanceResponse> {
     const { proposals, context, options } = request;
-    const requireExternal = options?.requireExternalDynamo ?? !process.env.XRAY_LOCAL_MODE;
+    const requireExternal = options?.requireExternalDynamo ?? true;
     const timeoutMs = options?.timeoutMs ?? 90000;
     const maxAbstentionThreshold = options?.maxAbstentionThreshold ?? 1.0;
 
@@ -65,23 +65,6 @@ export class GovernanceService {
       requireExternalDynamo: requireExternal,
       timeoutMs,
     });
-
-    // Lazy init: seed the governance integration if not already initialized.
-    // This handles the case where govern() is called outside the full boot-orchestrator
-    // lifecycle (e.g., inference cycle triggered by CLI or session monitor).
-    if (!getGovernanceIntegration()) {
-      try {
-        await initializeGovernanceIntegration();
-        frameworkLogger.log('governance-service', 'governance-integration-lazy-init', 'info', {
-          message: 'Governance integration initialized lazily during govern() call',
-        });
-      } catch (initError) {
-        frameworkLogger.log('governance-service', 'governance-integration-lazy-init-failed', 'warning', {
-          message: 'Failed to lazily initialize governance integration — proceeding without external Dynamo',
-          error: initError instanceof Error ? initError.message : String(initError),
-        });
-      }
-    }
 
     // Early validation: Dynamo Solar SSOT is a hard requirement
     if (requireExternal) {
@@ -98,7 +81,7 @@ export class GovernanceService {
 
     // Run governance with end-to-end timeout
     const result = await this.runGovernanceWithTimeout(
-      proposals, context, requireExternal, timeoutMs, options?.metamorphosisThreshold,
+      proposals, context, requireExternal, timeoutMs,
     );
 
     // Check abstention threshold
@@ -143,7 +126,6 @@ export class GovernanceService {
     context: GovernanceContext | undefined,
     requireExternal: boolean,
     timeoutMs: number,
-    metamorphosisThreshold?: number,
   ): Promise<{ results: GovernanceResult[] }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -157,7 +139,7 @@ export class GovernanceService {
       ]);
 
       // 2. Always call external Dynamo (required) - returns array of arrays (one inner array per proposal)
-      const externalVotes = await this.callExternalDynamo(proposals, requireExternal, context);
+      const externalVotes = await this.callExternalDynamo(proposals, requireExternal);
 
       // 3. Merge everything
       const results: GovernanceResult[] = proposals.map((proposal, index) => {
@@ -169,37 +151,14 @@ export class GovernanceService {
         ];
 
         const merged = mergeVotes(votes);
-        const isMetamorphosis = proposal.type === 'metamorphosis' || proposal.source === 'metamorphosis';
 
-        const result: GovernanceResult = {
+        return {
           proposalId: proposal.id,
           finalDecision: merged.finalDecision,
           averageConfidence: merged.averageConfidence,
           votes,
           reasoningSummary: merged.reasoningSummary,
         };
-
-        // Metamorphosis resonance scoring: only for self-evolution proposals
-        if (isMetamorphosis) {
-          const threshold = metamorphosisThreshold ?? 0.7;
-          const metaInput: { averageConfidence: number; proposalType: string; historicalCoherence?: number; resonanceScore?: number } = {
-            averageConfidence: merged.averageConfidence,
-            proposalType: proposal.type,
-          };
-          const externalConfidence = externalVotes[index]?.[0]?.confidence;
-          if (externalConfidence !== undefined) {
-            metaInput.historicalCoherence = externalConfidence;
-          }
-          result.metamorphosisScore = calculateMetamorphosisScore(metaInput);
-
-          // Reject metamorphosis proposals that don't meet the threshold
-          if (result.metamorphosisScore < threshold && result.finalDecision === 'approve') {
-            result.finalDecision = 'needs_revision';
-            result.reasoningSummary += ` | Metamorphosis score ${result.metamorphosisScore} below threshold ${threshold}`;
-          }
-        }
-
-        return result;
       });
 
       return { results };
@@ -214,47 +173,49 @@ export class GovernanceService {
     context?: GovernanceContext
   ): Promise<GovernanceVote[]> {
     const votes: GovernanceVote[] = [];
-
-    // Phase 4: all skills go through pluginRegistry. No MCP fallback.
-    if (!pluginRegistry.has(serverName)) {
-      frameworkLogger.log('governance-service', 'skill-not-registered', 'warning', {
-        server: serverName,
-        message: 'Skill not found in pluginRegistry — returning abstain',
-      });
-      for (const proposal of proposals) {
-        votes.push({
-          server: serverName,
-          decision: 'abstain',
-          confidence: 0.3,
-          reasoning: `No plugin registered for ${serverName}`,
-        });
-      }
-      return votes;
-    }
+    const useInProcess = process.env.VERCEL === '1';
 
     for (const proposal of proposals) {
       try {
-        const result = await pluginRegistry.callSkill(serverName, {
-          proposalTitle: proposal.title,
-          proposalDescription: proposal.description,
-          evidence: proposal.evidence || [],
-          proposalType: proposal.type,
-        });
-        const text = result?.content?.[0]?.text || '';
+        let text = '';
+
+        if (useInProcess) {
+          // Vercel / serverless path — use in-process skill instances (no child processes)
+          const result = await this.callInProcessSkillWithTimeout(serverName, {
+            proposalTitle: proposal.title,
+            proposalDescription: proposal.description,
+            evidence: proposal.evidence || [],
+            proposalType: proposal.type,
+            context,
+          });
+          text = (result as MCPToolResult)?.content?.[0]?.text || '';
+        } else {
+          // Normal path — real MCP transport
+          const result = await mcpClientManager.callServerTool(serverName, 'analyze_proposal', {
+            proposalTitle: proposal.title,
+            proposalDescription: proposal.description,
+            evidence: proposal.evidence || [],
+            proposalType: proposal.type,
+            context,
+          });
+          text = (result as MCPToolResult)?.content?.[0]?.text || '';
+        }
+
         const vote = this.parseVoteFromText(serverName, text);
         votes.push(vote);
       } catch (error) {
-        frameworkLogger.log('governance-service', 'plugin-skill-error', 'error', {
+        frameworkLogger.log('governance-service', 'skill-call-error', 'error', {
           server: serverName,
           proposal: proposal.title,
           error: error instanceof Error ? error.message : String(error),
-          mode: 'plugin-registry',
+          mode: useInProcess ? 'in-process' : 'mcp',
         });
+
         votes.push({
           server: serverName,
           decision: 'abstain',
           confidence: 0.3,
-          reasoning: `Plugin skill ${serverName} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          reasoning: `Call to ${serverName} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
     }
@@ -264,8 +225,7 @@ export class GovernanceService {
 
   private async callExternalDynamo(
     proposals: GovernanceProposal[],
-    requireExternal: boolean,
-    context?: GovernanceContext,
+    requireExternal: boolean
   ): Promise<GovernanceVote[][]> {
     const results: GovernanceVote[][] = [];
     const integration = getGovernanceIntegration();
@@ -298,20 +258,6 @@ export class GovernanceService {
       return results;
     }
 
-    // Derive Dynamo source classification from internal proposal source
-    function toDynamoSource(s?: string): 'system' | 'agent' | 'human' {
-      if (s === 'metamorphosis') return 'system';
-      if (s === 'manual') return 'human';
-      if (s === 'inference' || s === 'reflection' || s === 'ci' || s === 'phase-planning') return 'agent';
-      throw new Error(
-        `proposal.source="${s}" is not recognized. ` +
-        'Must be "inference", "reflection", "manual", "ci", "phase-planning", or "metamorphosis".',
-      );
-    }
-
-    // Merge tags from context and per-proposal tags
-    const contextTags = context?.tags ?? [];
-
     // Integration is available — use it exclusively (no fallback)
     for (const proposal of proposals) {
       try {
@@ -331,14 +277,7 @@ export class GovernanceService {
           status: 'pending',
         };
 
-        const dynamoSource = toDynamoSource(proposal.source);
-        const mergedTags = [...contextTags, ...(proposal.tags ?? [])];
-        // onChain: explicit context flag wins, otherwise true if tags include '0xray' (framework proposals), else false
-        const onChain = context?.onChain ?? mergedTags.includes('0xray');
-
-        const result = await integration!.checkProposal(
-          inferenceProposal, [], [], dynamoSource, mergedTags, onChain,
-        );
+        const result = await integration!.checkProposal(inferenceProposal);
 
         results.push([{
           server: 'external-dynamo',
@@ -372,6 +311,20 @@ export class GovernanceService {
     return results;
   }
 
+  private async callInProcessSkillWithTimeout(
+    serverName: string,
+    args: Record<string, unknown>,
+    timeoutMs = 30000,
+  ): Promise<unknown> {
+    const result = await Promise.race([
+      callInProcessSkill(serverName, 'analyze_proposal', args),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`In-process skill ${serverName} timed out after ${timeoutMs}ms`)), timeoutMs),
+      ),
+    ]);
+    return result;
+  }
+
   private parseVoteFromText(server: string, text: string): GovernanceVote {
     const decisionMatch = text.match(/DECISION:\s*(approve|reject|abstain|needs_revision)/i);
     const confidenceMatch = text.match(/CONFIDENCE:\s*([0-9.]+)/);
@@ -384,20 +337,11 @@ export class GovernanceService {
       reasoning: reasoningMatch?.[1]?.trim() || 'No reasoning provided',
     };
   }
-
 }
 
 // Singleton for convenience
 let governanceServiceInstance: GovernanceService | null = null;
 
-/**
- * Get the singleton GovernanceService instance.
- *
- * @deprecated Use `handleGovernRequest` from `src/nucleus/index.js` instead.
- * All callers should go through the nucleus surface. Direct use of
- * GovernanceService bypasses nucleus lifecycle, logging, and future
- * governance pipeline enhancements.
- */
 export function getGovernanceService(): GovernanceService {
   if (!governanceServiceInstance) {
     governanceServiceInstance = new GovernanceService();

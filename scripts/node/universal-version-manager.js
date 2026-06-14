@@ -133,42 +133,23 @@ const CALCULATED_COUNTS = calculateCounts();
  * Framework version information - SINGLE SOURCE OF TRUTH
  * Version manager updates this, then propagates to all files
  */
-
-/** Auto-detect codex version/terms from codex.json */
-function detectCodexInfo() {
-  const codexPaths = [".opencode/xray/codex.json", "src/opencode/codex.codex"];
-  for (const p of codexPaths) {
-    try {
-      const raw = JSON.parse(fs.readFileSync(p, "utf8"));
-      const terms = raw.terms || {};
-      const termsArr = raw.terms || [];
-      const termCount = Array.isArray(termsArr) ? termsArr.length : Object.keys(terms).length;
-      const cver = raw.version || "2.0.0";
-      return { version: cver.startsWith("v") ? cver : `v${cver}`, termsCount: termCount, lastUpdated: new Date().toISOString().split("T")[0] };
-    } catch {}
-  }
-  return { version: "v3.0.10", termsCount: 68, lastUpdated: new Date().toISOString().split("T")[0] };
-}
-
-const detectedCodex = detectCodexInfo();
-
 const OFFICIAL_VERSIONS = {
   // Framework version
   framework: {
-    version: "3.0.12",
+    version: "1.22.67",
       displayName: "xray: Self-Healing AI Governance OS",
-      lastUpdated: "2026-06-13",
+      lastUpdated: "2026-05-19",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },
 
-  // Codex version (auto-detected from codex.json)
+  // Codex version
   codex: {
-    version: detectedCodex.version,
-    termsCount: detectedCodex.termsCount,
-    termsDefined: detectedCodex.termsCount,
-    termsTarget: detectedCodex.termsCount,
-    lastUpdated: detectedCodex.lastUpdated,
+    version: "v1.7.5",
+    termsCount: 60,        // Total terms defined (including new governance terms 46-60)
+    termsDefined: 60,       // All terms in codex.json
+    termsTarget: 60,       // Future goal (now achieved)
+    lastUpdated: "2026-03-23",
   },
 
   // External dependencies
@@ -346,29 +327,29 @@ const UPDATE_PATTERNS = [
     },
 
     // === BADGE AND COUNT PATTERNS ===
-    // Test count in docs badge (e.g., tests-2290-brightgreen)
+    // Test count in docs badge (e.g., tests-2229-brightgreen)
     {
       pattern: /tests-[0-9]+(?=-brightgreen)/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}`,
     },
-    // Test count in npm badge (e.g., tests-2290%20passed-brightgreen)
+    // Test count in npm badge (e.g., tests-2229%20passed-brightgreen)
     {
       pattern: /tests-[0-9,]+%20passed/g,
       replacement: `tests-${OFFICIAL_VERSIONS.framework.tests}%20passed`,
     },
-    // Test count in prose (e.g., "2,2290 Tests" or "2290 Tests" but NOT in badge URLs)
+    // Test count in prose (e.g., "2,2229 Tests" or "2229 Tests" but NOT in badge URLs)
     {
       pattern: /(\*\s*✅\s*)([0-9]{1,3},?[0-9]{3})(\s*Tests)/g,
       replacement: (match, p1, p2, p3) => {
         return `${p1}${OFFICIAL_VERSIONS.framework.tests}${p3}`;
       },
     },
-    // Test count in feature bullets (e.g., "✅ 2290 Tests")
+    // Test count in feature bullets (e.g., "✅ 2229 Tests")
     {
       pattern: /[0-9]+ Tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} Tests`,
     },
-    // Test count in config tree (e.g., "2290 tests")
+    // Test count in config tree (e.g., "2229 tests")
     {
       pattern: /[0-9]+ tests/g,
       replacement: `${OFFICIAL_VERSIONS.framework.tests} tests`,
@@ -403,7 +384,7 @@ const UPDATE_PATTERNS = [
       pattern: /xray AI v[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `xray AI v${OFFICIAL_VERSIONS.framework.version}`,
     },
-    // Footer bare version (e.g., "**Version**: 3.0.11")
+    // Footer bare version (e.g., "**Version**: 1.22.67")
     {
       pattern: /\*\*Version\*\*:\s*[0-9]+\.[0-9]+\.[0-9]+/g,
       replacement: `**Version**: ${OFFICIAL_VERSIONS.framework.version}`,
@@ -438,7 +419,7 @@ const UPDATE_PATTERNS = [
   async function createBackup() {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      backupDir = `docs/reflections/backups/version-manager-${timestamp}`;
+      backupDir = `backups/version-manager-backup-${timestamp}`;
 
       // Create backup directory
       fs.mkdirSync(backupDir, { recursive: true });
@@ -506,16 +487,17 @@ const UPDATE_PATTERNS = [
     let validationErrors = [];
     let warnings = [];
 
-    // 1. Check codex.json matches OFFICIAL_VERSIONS.codex.termsCount
+    // 1. Check codex.json has exactly 60 terms
     const { resolveConfigPath } = require("../helpers/resolve-config-path.cjs");
     const codexJsonPath = resolveConfigPath("codex.json") || "src/opencode/codex.codex";
     if (fs.existsSync(codexJsonPath)) {
       try {
         const codexContent = JSON.parse(fs.readFileSync(codexJsonPath, "utf8"));
+        // Check if codexContent.terms is an object (dictionary) with entries
         const termCount = Object.keys(codexContent.terms || {}).length;
-        if (termCount !== OFFICIAL_VERSIONS.codex.termsCount) {
-          warnings.push(
-            `codex.json has ${termCount} terms, expected ${OFFICIAL_VERSIONS.codex.termsCount}`
+        if (termCount !== 60) {
+          validationErrors.push(
+            `codex.json should have 60 terms, but has ${termCount}`
           );
         }
       } catch (e) {
@@ -528,38 +510,52 @@ const UPDATE_PATTERNS = [
     if (fs.existsSync(codexCodexPath)) {
       try {
         const codexContent = JSON.parse(fs.readFileSync(codexCodexPath, "utf8"));
+        // Check if terms is an array with 60 elements
         if (!Array.isArray(codexContent.terms)) {
           warnings.push(
             `codex.codex terms should be an array, but is ${typeof codexContent.terms}`
           );
-        } else if (codexContent.terms.length !== OFFICIAL_VERSIONS.codex.termsCount) {
+        } else if (codexContent.terms.length !== 60) {
           warnings.push(
             `codex.codex terms should have 60 elements, but has ${codexContent.terms.length}`
           );
         }
-        // Version can be framework version or codex version — both are fine, skip noisy warning
+        // Version can be framework version or codex version - both are acceptable
+        if (codexContent.version) {
+          warnings.push(
+            `codex.codex version is ${codexContent.version} (framework version)`
+          );
+        }
       } catch (e) {
         validationErrors.push(`Error parsing codex.codex: ${e.message}`);
       }
     }
 
-    // 3. Check README.md has correct counts — soft warning only
+    // 3. Check README.md has correct counts
     const readmePath = "README.md";
     if (fs.existsSync(readmePath)) {
       const readmeContent = fs.readFileSync(readmePath, "utf8");
-      const expected = `${OFFICIAL_VERSIONS.codex.termsCount} codex terms`;
-      if (!readmeContent.includes(expected)) {
-        warnings.push(`README.md should reference '${expected}'`);
+      if (!readmeContent.includes("60 terms")) {
+        validationErrors.push(
+          "README.md should reference '60 terms' but doesn't"
+        );
+      }
+      if (!readmeContent.includes("1.7.5")) {
+        warnings.push("README.md should reference framework version 1.7.5");
       }
     }
 
-    // 4. Check AGENTS.md has correct information — soft warning only
+    // 4. Check AGENTS.md has correct information
     const agentsPath = "AGENTS.md";
     if (fs.existsSync(agentsPath)) {
       const agentsContent = fs.readFileSync(agentsPath, "utf8");
-      const expected = `${OFFICIAL_VERSIONS.codex.termsCount} terms`;
-      if (!agentsContent.includes(expected)) {
-        warnings.push(`AGENTS.md should reference '${expected}'`);
+      if (!agentsContent.includes("60 terms")) {
+        validationErrors.push(
+          "AGENTS.md should reference '60 terms' but doesn't"
+        );
+      }
+      if (!agentsContent.includes("1.7.5")) {
+        warnings.push("AGENTS.md should reference framework version 1.7.5");
       }
     }
 
@@ -589,15 +585,20 @@ const UPDATE_PATTERNS = [
       try {
         const content = fs.readFileSync(file, "utf8");
 
-        // Check for old framework version (v1.x — pre-v2)
-        if (/version:\s*"1\.\d+\.\d+"/.test(content)) {
+        // Check for old codex version (v1.2.25 or earlier)
+        if (/version:\s*"v1\.[01]\./.test(content)) {
           oldVersionCount++;
-          warnings.push(`${file} references v1.x framework version`);
+          warnings.push(`${file} references old codex version`);
         }
 
-        // Check for old term counts (less than OFFICIAL_VERSIONS.codex.termsCount)
-        if (/\((\d{1,2})\)\s*terms/.test(content) && parseInt(RegExp.$1) < OFFICIAL_VERSIONS.codex.termsCount) {
-          warnings.push(`${file} references term count < ${OFFICIAL_VERSIONS.codex.termsCount}`);
+        // Check for old term counts (less than 60)
+        if (/\((\d{1,2})\)\s*terms/.test(content) && parseInt(RegExp.$1) < 60) {
+          warnings.push(`${file} references term count < 60`);
+        }
+
+        // Check for old framework version (< 1.7.5)
+        if (/version:\s*"1\.[0-6]\./.test(content)) {
+          warnings.push(`${file} references old framework version`);
         }
       } catch (e) {
         // Skip files that can't be read
@@ -702,7 +703,8 @@ const UPDATE_PATTERNS = [
   const documentationFiles = [
     "README.md",
     "AGENTS.md",
-    "xray/agents_template.md",
+    "src/opencode/AGENTS-consumer.md",
+    rcp("agents_template.md") || "src/opencode/agents_template.md",
     "docs/reference/templates/agents_template.md",
     "docs/reference/templates/master-agent-template.md",
     "docs/reference/templates/agent-template-dev.md",
@@ -981,7 +983,7 @@ const UPDATE_PATTERNS = [
  * =====================================
  *
  * ✅ COMPLETED FEATURES:
- * - Comprehensive documentation management (AGENTS.md, xray/agents_template.md, etc.)
+ * - Comprehensive documentation management (AGENTS.md, AGENTS-consumer.md, etc.)
  * - File categorization (critical, documentation, historical, test assertions)
  * - Validation step for consistency checking
  * - Changelog generation
@@ -997,7 +999,7 @@ const UPDATE_PATTERNS = [
  *
  * 📋 FILE CATEGORIES:
  * - Critical: src/opencode/codex.codex, etc.
- * - Documentation: AGENTS.md, xray/agents_template.md, docs/*.md
+ * - Documentation: AGENTS.md, AGENTS-consumer.md, docs/*.md
  * - Historical: docs/reflections/, docs/archive/
  * - Test Assertions: context-loader.test.ts, codex-parser.test.ts
  *
@@ -1013,7 +1015,7 @@ const UPDATE_PATTERNS = [
  * - No files reference old versions
  *
  * 💾 BACKUP LOCATION:
- * - Created in 'docs/reflections/backups/version-manager-[timestamp]/'
+ * - Created in 'backups/version-manager-backup-[timestamp]/'
  * - Includes changelog.md with all changes
  *
  * 📝 TO ROLLBACK:

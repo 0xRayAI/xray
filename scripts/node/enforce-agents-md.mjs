@@ -297,7 +297,7 @@ class AgentsMdEnforcer {
       console.log('❌ AGENTS.md is MISSING');
       console.log('\n💡 To fix:');
       console.log('  1. Create AGENTS.md in project root');
-      console.log('  2. Copy template from xray/agents_template.md');
+      console.log('  2. Copy template from docs/AGENTS_TEMPLATE.md');
       console.log('  3. Customize for your project');
     } else {
       console.log('❌ AGENTS.md validation FAILED');
@@ -328,7 +328,7 @@ class AgentsMdEnforcer {
    * Load template file
    */
   async loadTemplate() {
-    const templatePath = path.join(__dirname, '..', '..', 'xray', 'agents_template.md');
+    const templatePath = path.join(__dirname, '..', '..', '..', 'docs', 'AGENTS_TEMPLATE.md');
     if (fs.existsSync(templatePath)) {
       return fs.readFileSync(templatePath, 'utf-8');
     }

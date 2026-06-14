@@ -258,7 +258,7 @@ Add comprehensive agent documentation:
 
 ### 19. xray/agents_template.md
 
-Consumer-facing AGENTS.md template deployed via `npx 0xray setup`.
+Consumer-facing AGENTS.md template deployed by `postinstall.cjs` (runs automatically on `npm install 0xray` or `npx 0xray install`).
 
 ### 20. src/scripts/profiling-demo.ts
 

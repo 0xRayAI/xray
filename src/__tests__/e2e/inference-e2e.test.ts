@@ -23,9 +23,9 @@ describe("Inference Layer E2E", () => {
   let stateDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-e2e-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-e2e-"));
     inferenceDir = path.join(tmpDir, "docs", "inference");
-    stateDir = path.join(tmpDir, ".xray", "inference");
+    stateDir = path.join(tmpDir, ".strray", "inference");
     fs.mkdirSync(inferenceDir, { recursive: true });
     fs.mkdirSync(stateDir, { recursive: true });
   });
@@ -114,12 +114,12 @@ describe("Inference Layer E2E", () => {
         expect(vote.confidence).toBeGreaterThanOrEqual(0);
       }
 
-      expect(fs.existsSync(path.join(stateDir, "inference-state.json"))).toBe(true);
+      expect(fs.existsSync(path.join(stateDir, "inference-cycle-state.json"))).toBe(true);
+      expect(fs.existsSync(path.join(stateDir, "inference-cycle-history.json"))).toBe(true);
 
-      const stateData = JSON.parse(
-        fs.readFileSync(path.join(stateDir, "inference-state.json"), "utf-8"),
+      const history = JSON.parse(
+        fs.readFileSync(path.join(stateDir, "inference-cycle-history.json"), "utf-8"),
       );
-      const history = stateData.history;
       expect(history.length).toBe(1);
       expect(history[0].cycleId).toBe(result.cycleId);
     }

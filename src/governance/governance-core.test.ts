@@ -1,8 +1,33 @@
 import { describe, it, expect } from 'vitest';
-import { mergeVotes } from './governance-core.js';
+import { applyDecisionMatrix, mergeVotes } from './governance-core.js';
 import type { GovernanceVote } from './governance-types.js';
 
 describe('governance-core', () => {
+  describe('applyDecisionMatrix', () => {
+    it('returns PASS for high resonance and isotopic ratio', () => {
+      const result = applyDecisionMatrix({
+        resonance: 0.95,
+        isotopicRatio: 0.97,
+      });
+      expect(result.recommendation).toBe('PASS');
+      expect(result.confidence).toBeGreaterThan(0.9);
+    });
+
+    it('returns REJECT for low resonance', () => {
+      const result = applyDecisionMatrix({
+        resonance: 0.6,
+        isotopicRatio: 0.9,
+      });
+      expect(result.recommendation).toBe('REJECT');
+    });
+
+    it('applies solar activity caution', () => {
+      const normal = applyDecisionMatrix({ resonance: 0.88, isotopicRatio: 0.90, solarActivity: 'quiet' });
+      const storm = applyDecisionMatrix({ resonance: 0.88, isotopicRatio: 0.90, solarActivity: 'storm' });
+      expect(storm.voteWeight).toBeLessThan(normal.voteWeight);
+    });
+  });
+
   describe('mergeVotes', () => {
     it('approves when majority approve with good weight', () => {
       const votes: GovernanceVote[] = [

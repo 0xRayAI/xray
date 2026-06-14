@@ -1,20 +1,23 @@
 {
   "mcpServers": {
-    "xray-governance": {
+    "0xray-governance": {
       "command": "npx",
-      "args": ["-y", "0xray", "mcp", "governance"]
+      "args": ["-y", "0xray", "mcp", "governance"],
+      "env": {
+        "XRAY_FORCE_MCP_GOVERNANCE": "true"
+      }
     },
-    "xray-skills": {
+    "0xray-skills": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "skills"]
     },
-    "xray-enforcer": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "enforcer"]
-    },
-    "xray-orchestrator": {
+    "0xray-orchestrator": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "orchestrator"]
+    },
+    "0xray-enforcer": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "enforcer"]
     }
   }
 }

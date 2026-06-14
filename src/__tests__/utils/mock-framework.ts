@@ -100,7 +100,7 @@ export class MockCodexInjectorHook {
 
   getHook() {
     return {
-      name: "mock-xray-codex-injector",
+      name: "mock-strray-codex-injector",
       hooks: {
         "agent.start": (sessionId: string) => {
           this.hookCalls.push({ type: "agent.start", sessionId });
@@ -241,7 +241,7 @@ export class FrameworkSpies {
 
     return {
       hook: {
-        name: "spy-xray-codex-injector",
+        name: "spy-strray-codex-injector",
         hooks: {
           "agent.start": agentStartSpy,
           "tool.execute.after": toolExecuteSpy,

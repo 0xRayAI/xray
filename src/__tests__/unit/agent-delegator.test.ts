@@ -13,18 +13,18 @@ import {
   DelegationRequest,
   createAgentDelegator,
 } from "../../delegation/agent-delegator.js";
-import { XrayStateManager } from "../../state/state-manager.js";
-import { xrayConfigLoader } from "../../core/config-loader.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
+import { strRayConfigLoader } from "../../core/config-loader.js";
 
 describe("AgentDelegator", () => {
-  let stateManager: XrayStateManager;
+  let stateManager: StringRayStateManager;
   let agentDelegator: AgentDelegator;
 
   beforeEach(() => {
     // Note: Using default config which enables multi-agent orchestration
     vi.clearAllMocks();
-    stateManager = new XrayStateManager();
-    agentDelegator = createAgentDelegator(stateManager, xrayConfigLoader);
+    stateManager = new StringRayStateManager();
+    agentDelegator = createAgentDelegator(stateManager, strRayConfigLoader);
 
     // Set up default agents for all tests to avoid "agent not found" errors
     stateManager.set("agent:code-reviewer", {

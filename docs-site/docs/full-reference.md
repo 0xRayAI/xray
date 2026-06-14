@@ -101,9 +101,9 @@ Postinstall automatically registers MCP servers with Grok CLI when `grok` is ava
 
 | Command | Description |
 |---------|-------------|
-| `install` | Install 0xRay framework in current project |
-| `setup` | Full setup: hooks, Hermes, symlinks, MCP paths |
-| `init` | Install + setup (one command) |
+| `install` | Install & configure (auto-detects opencode, Grok, Hermes, git) |
+| `setup` | Re-run full configuration if needed |
+| `init` | Alias for install |
 | `status` | Show framework health and configuration |
 | `health` / `check` | Run health checks on all subsystems |
 | `validate` | Verify installation is complete |

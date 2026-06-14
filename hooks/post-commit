@@ -1,5 +1,5 @@
 #!/bin/bash
-# 0xRay Post-Commit Hook
+# StringRay Post-Commit Hook
 # Runs activity logging, analytics, log cleanup, and auto-reflection after commit
 # Does NOT block — runs in background
 
@@ -21,7 +21,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ) &
 
 # Load auto_reflection config from features.json
-CONFIG_FILE="$PROJECT_ROOT/.opencode/xray/features.json"
+CONFIG_FILE="$PROJECT_ROOT/.opencode/strray/features.json"
 MODE="minimal"
 COMMIT_THRESHOLD=25
 DAYS_THRESHOLD=14

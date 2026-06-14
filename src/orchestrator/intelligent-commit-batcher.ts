@@ -2,7 +2,7 @@
  * Intelligent Commit Batcher - Batches related changes for optimal commit history
  * Implements configurable thresholds for file count, time windows, and risk levels
  *
- * Configuration is read from .xray/features.json -> commit_cycle
+ * Configuration is read from .strray/features.json -> commit_cycle
  */
 
 import * as fs from "fs";
@@ -93,8 +93,8 @@ export class IntelligentCommitBatcher {
   private loadFeaturesConfig(): { commit_cycle?: { auto_commit?: { min_changes_to_commit?: number; force_commit_after_minutes?: number; enabled?: boolean }; require_reflection?: { max_commits_since_reflection?: number; enabled?: boolean } } } | null {
     try {
       const configPaths = [
-        path.join(process.cwd(), ".xray", "features.json"),
-        path.join(process.cwd(), ".opencode", "xray", "features.json"),
+        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".opencode", "strray", "features.json"),
       ];
 
       for (const configPath of configPaths) {

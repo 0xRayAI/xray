@@ -167,15 +167,15 @@ export class ArchitecturalComplianceChecker {
     context: PostProcessorContext,
   ): Promise<{ passed: boolean; message: string }> {
     // Check if all critical framework components are active
-    const stateManager = globalThis.strRayStateManager;
-    const postProcessor = globalThis.strRayPostProcessor;
+    const stateManager = globalThis.xrayStateManager;
+    const postProcessor = globalThis.xrayPostProcessor;
 
     if (!stateManager) {
       try {
-        const { StrRayStateManager } =
+        const { XrayStateManager } =
           await import("../../state/state-manager.js");
-        const tempStateManager = new StrRayStateManager();
-        globalThis.strRayStateManager = tempStateManager;
+        const tempStateManager = new XrayStateManager();
+        globalThis.xrayStateManager = tempStateManager;
         return {
           passed: true,
           message: "System integrity verified (graceful mode)",
@@ -215,7 +215,7 @@ export class ArchitecturalComplianceChecker {
     // Check for path resolution issues in committed files
     // This would require reading the actual file contents from git
     // For now, we verify that the framework's path resolution is working
-    const pathResolver = globalThis.strRayPathResolver;
+    const pathResolver = globalThis.xrayPathResolver;
     if (!pathResolver) {
       return {
         passed: true,

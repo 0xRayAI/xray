@@ -108,7 +108,7 @@ ${data.recommendations.map((rec) => `- ${rec}`).join("\n")}
 4. **Performance Monitoring**: Track rule enforcement effectiveness metrics
 
 ---
-*Consumer runtime compat (XRAY_ env + .xray fallbacks)*
+*Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)*
 *Framework Status: Operational*
     `;
 }

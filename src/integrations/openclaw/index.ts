@@ -16,13 +16,12 @@ import type {
 } from './types.js';
 import { OpenClawConfigLoader } from './config.js';
 import { OpenClawClient } from './client.js';
-import { XrayAPIServer } from './api-server.js';
+import { StringRayAPIServer } from './api-server.js';
 import { initializeGovernanceIntegration } from '../governance/index.js';
 import { featuresConfigLoader } from '../../core/features-config.js';
-import { OpenClawHooksManager, XrayToolEvent } from './hooks/xray-hooks.js';
+import { OpenClawHooksManager, StringRayToolEvent } from './hooks/strray-hooks.js';
 import { mcpClientManager, ToolBeforeEvent, ToolAfterEvent } from '../../mcps/mcp-client.js';
 import type { AgentInvoker } from './api-server.js';
-import { beforeToolHook, afterToolHook } from '../enforcement-gate.js';
 
 /**
  * Main OpenClaw Integration class
@@ -31,7 +30,7 @@ import { beforeToolHook, afterToolHook } from '../enforcement-gate.js';
 export class OpenClawIntegration extends BaseIntegration {
   private configLoader: OpenClawConfigLoader;
   private client: OpenClawClient | null = null;
-  private apiServer: XrayAPIServer | null = null;
+  private apiServer: StringRayAPIServer | null = null;
   private hooksManager: OpenClawHooksManager | null = null;
   private agentInvoker: AgentInvoker | null = null;
   
@@ -74,7 +73,7 @@ export class OpenClawIntegration extends BaseIntegration {
     // Initialize API server if enabled
     if (config.apiServer?.enabled) {
       await this.log('info', 'Starting API server...');
-      this.apiServer = new XrayAPIServer(config.apiServer);
+      this.apiServer = new StringRayAPIServer(config.apiServer);
       
       if (this.agentInvoker) {
         this.apiServer.setAgentInvoker(this.agentInvoker);
@@ -154,12 +153,6 @@ export class OpenClawIntegration extends BaseIntegration {
     this.mcpToolBeforeUnsubscribe = await mcpClientManager.onToolEvent('tool.before', async (event) => {
       const toolEvent = event as ToolBeforeEvent;
       try {
-        // Run enforcement gate
-        const gateResult = await beforeToolHook(toolEvent.toolName, toolEvent.args as Record<string, unknown>);
-        if (gateResult.blocked) {
-          await this.log('warning', `Enforcement blocked: ${toolEvent.toolName} (${gateResult.violations.length} violations)`);
-        }
-        // Forward to OpenClaw hook manager (existing behavior)
         await this.hooksManager!.onToolBefore({
           toolName: toolEvent.toolName,
           toolId: `${toolEvent.serverName}:${toolEvent.toolName}`,
@@ -167,13 +160,6 @@ export class OpenClawIntegration extends BaseIntegration {
           duration: 0,
           timestamp: toolEvent.timestamp,
           agent: toolEvent.serverName,
-          enforcement: {
-            allowed: gateResult.allowed,
-            blocked: gateResult.blocked,
-            violations: gateResult.violations,
-            processed: false,
-            governanceTriggered: false,
-          },
         });
       } catch (error) {
         await this.log('error', `Error in tool.before handler: ${error}`);
@@ -184,15 +170,7 @@ export class OpenClawIntegration extends BaseIntegration {
     this.mcpToolAfterUnsubscribe = await mcpClientManager.onToolEvent('tool.after', async (event) => {
       const toolEvent = event as ToolAfterEvent;
       try {
-        // Run enforcement after-hook
-        const afterResult = await afterToolHook(
-          toolEvent.toolName,
-          toolEvent.args as Record<string, unknown>,
-          toolEvent.result,
-          toolEvent.error || null,
-        );
-
-        const afterEvent: any = {
+        const afterEvent: StringRayToolEvent = {
           toolName: toolEvent.toolName,
           toolId: `${toolEvent.serverName}:${toolEvent.toolName}`,
           args: toolEvent.args as Record<string, unknown>,
@@ -202,14 +180,6 @@ export class OpenClawIntegration extends BaseIntegration {
         };
         if (toolEvent.result !== undefined) afterEvent.result = toolEvent.result;
         if (toolEvent.error !== undefined) afterEvent.error = toolEvent.error;
-        afterEvent.enforcement = {
-          allowed: !afterResult.governanceTriggered || true,
-          blocked: false,
-          violations: afterResult.violations,
-          processed: afterResult.processed,
-          governanceTriggered: afterResult.governanceTriggered,
-        };
-
         await this.hooksManager!.onToolAfter(afterEvent);
       } catch (error) {
         await this.log('error', `Error in tool.after handler: ${error}`);
@@ -325,7 +295,7 @@ export class OpenClawIntegration extends BaseIntegration {
   /**
    * Get the API server instance
    */
-  getAPIServer(): XrayAPIServer | null {
+  getAPIServer(): StringRayAPIServer | null {
     return this.apiServer;
   }
 
@@ -437,4 +407,4 @@ export * from './types.js';
 export * from './config.js';
 export * from './client.js';
 export * from './api-server.js';
-export { OpenClawHooksManager } from './hooks/xray-hooks.js';
+export { OpenClawHooksManager } from './hooks/strray-hooks.js';

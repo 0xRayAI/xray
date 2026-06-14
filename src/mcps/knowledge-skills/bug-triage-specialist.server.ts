@@ -6,12 +6,15 @@
  * and actionable debugging recommendations.
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface BugReport {
   id: string;
@@ -73,195 +76,207 @@ interface PrioritizedBug {
   [key: string]: unknown;
 }
 
-class BugTriageSpecialistServer extends XrayKnowledgeSkillBase {
+class BugTriageSpecialistServer {
+  private server: Server;
+
   constructor() {
-    super("bug-triage-specialist", "2.0.1");
-    this.tools = [
-      {
-        name: "triage_bugs",
-        description:
-          "Analyze and triage bug reports, errors, or crash logs to identify root causes and prioritize fixes",
-        inputSchema: {
-          type: "object",
-          properties: {
-            errorLogs: {
-              type: "array",
-              items: { type: "string" },
-              description:
-                "Error messages, stack traces, or bug descriptions to analyze",
-            },
-            context: {
-              type: "object",
-              properties: {
-                projectType: {
-                  type: "string",
-                  description: "Type of project (node, browser, etc.)",
-                },
-                framework: {
-                  type: "string",
-                  description: "Framework being used",
-                },
-                recentChanges: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Recent code changes",
-                },
-              },
-              description: "Additional context about the project",
-            },
-          },
-          required: ["errorLogs"],
-        },
-      },
-      {
-        name: "analyze_stack_trace",
-        description:
-          "Parse and analyze stack traces to identify the exact location and cause of errors",
-        inputSchema: {
-          type: "object",
-          properties: {
-            stackTrace: {
-              type: "string",
-              description: "Stack trace to analyze",
-            },
-            sourceMap: {
-              type: "object",
-              description: "Optional source map for minified code",
-            },
-          },
-          required: ["stackTrace"],
-        },
-      },
-      {
-        name: "suggest_fixes",
-        description:
-          "Generate specific code fixes for identified bugs with explanations",
-        inputSchema: {
-          type: "object",
-          properties: {
-            bugId: { type: "string", description: "ID of the bug to fix" },
-            language: {
-              type: "string",
-              description: "Programming language",
-              default: "typescript",
-            },
-            existingCode: {
-              type: "string",
-              description: "The buggy code snippet",
-            },
-          },
-          required: ["bugId", "existingCode"],
-        },
-      },
-      {
-        name: "prioritize_issues",
-        description:
-          "Prioritize bug fixes based on severity, impact, and effort",
-        inputSchema: {
-          type: "object",
-          properties: {
-            bugs: {
-              type: "array",
-              items: { type: "object" },
-              description: "Array of bug objects to prioritize",
-            },
-            sprintVelocity: {
-              type: "number",
-              description: "Available story points",
-            },
-          },
-          required: ["bugs"],
-        },
-      },
-      {
-        name: "find_related_issues",
-        description:
-          "Find related or duplicate bugs based on error patterns and symptoms",
-        inputSchema: {
-          type: "object",
-          properties: {
-            newBug: { type: "string", description: "Description of new bug" },
-            existingBugs: {
-              type: "array",
-              items: { type: "string" },
-              description: "List of existing bug IDs",
-            },
-          },
-          required: ["newBug"],
-        },
-      },
-    ];
-    this.handlers = {
-      "triage_bugs": async (args) => {
-        const params = args as Record<string, unknown>;
-        const result = this.triageBugs(
-          (params.errorLogs as string[]) || [],
-          (params.context as Record<string, unknown>) || {},
-        );
-        return {
-          content: [
-            { type: "text", text: JSON.stringify(result, null, 2) },
-          ],
-        };
-      },
-      "analyze_stack_trace": async (args) => {
-        const params = args as Record<string, unknown>;
-        const result = this.analyzeStackTrace(
-          (params.stackTrace as string) || "",
-          params.sourceMap as Record<string, unknown> | undefined,
-        );
-        return {
-          content: [
-            { type: "text", text: JSON.stringify(result, null, 2) },
-          ],
-        };
-      },
-      "suggest_fixes": async (args) => {
-        const params = args as Record<string, unknown>;
-        const result = this.suggestFixes(
-          (params.bugId as string) || "",
-          (params.language as string) || "typescript",
-          (params.existingCode as string) || "",
-        );
-        return {
-          content: [
-            { type: "text", text: JSON.stringify(result, null, 2) },
-          ],
-        };
-      },
-      "prioritize_issues": async (args) => {
-        const params = args as Record<string, unknown>;
-        const result = this.prioritizeIssues(
-          (params.bugs as Array<Record<string, unknown>>) || [],
-          (params.sprintVelocity as number) || 20,
-        );
-        return {
-          content: [
-            { type: "text", text: JSON.stringify(result, null, 2) },
-          ],
-        };
-      },
-      "find_related_issues": async (args) => {
-        const params = args as Record<string, unknown>;
-        const result = this.findRelatedIssues(
-          (params.newBug as string) || "",
-          (params.existingBugs as string[]) || [],
-        );
-        return {
-          content: [
-            { type: "text", text: JSON.stringify(result, null, 2) },
-          ],
-        };
-      },
-    };
+    this.server = new Server(
+      { name: "bug-triage-specialist", version: "1.22.67" },
+      { capabilities: { tools: {} } },
+    );
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "bug-triage-specialist",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: [
+        {
+          name: "triage_bugs",
+          description:
+            "Analyze and triage bug reports, errors, or crash logs to identify root causes and prioritize fixes",
+          inputSchema: {
+            type: "object",
+            properties: {
+              errorLogs: {
+                type: "array",
+                items: { type: "string" },
+                description:
+                  "Error messages, stack traces, or bug descriptions to analyze",
+              },
+              context: {
+                type: "object",
+                properties: {
+                  projectType: {
+                    type: "string",
+                    description: "Type of project (node, browser, etc.)",
+                  },
+                  framework: {
+                    type: "string",
+                    description: "Framework being used",
+                  },
+                  recentChanges: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Recent code changes",
+                  },
+                },
+                description: "Additional context about the project",
+              },
+            },
+            required: ["errorLogs"],
+          },
+        },
+        {
+          name: "analyze_stack_trace",
+          description:
+            "Parse and analyze stack traces to identify the exact location and cause of errors",
+          inputSchema: {
+            type: "object",
+            properties: {
+              stackTrace: {
+                type: "string",
+                description: "Stack trace to analyze",
+              },
+              sourceMap: {
+                type: "object",
+                description: "Optional source map for minified code",
+              },
+            },
+            required: ["stackTrace"],
+          },
+        },
+        {
+          name: "suggest_fixes",
+          description:
+            "Generate specific code fixes for identified bugs with explanations",
+          inputSchema: {
+            type: "object",
+            properties: {
+              bugId: { type: "string", description: "ID of the bug to fix" },
+              language: {
+                type: "string",
+                description: "Programming language",
+                default: "typescript",
+              },
+              existingCode: {
+                type: "string",
+                description: "The buggy code snippet",
+              },
+            },
+            required: ["bugId", "existingCode"],
+          },
+        },
+        {
+          name: "prioritize_issues",
+          description:
+            "Prioritize bug fixes based on severity, impact, and effort",
+          inputSchema: {
+            type: "object",
+            properties: {
+              bugs: {
+                type: "array",
+                items: { type: "object" },
+                description: "Array of bug objects to prioritize",
+              },
+              sprintVelocity: {
+                type: "number",
+                description: "Available story points",
+              },
+            },
+            required: ["bugs"],
+          },
+        },
+        {
+          name: "find_related_issues",
+          description:
+            "Find related or duplicate bugs based on error patterns and symptoms",
+          inputSchema: {
+            type: "object",
+            properties: {
+              newBug: { type: "string", description: "Description of new bug" },
+              existingBugs: {
+                type: "array",
+                items: { type: "string" },
+                description: "List of existing bug IDs",
+              },
+            },
+            required: ["newBug"],
+          },
+        },
+      ],
+    }));
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args = {} } = request.params;
+      const params = args as Record<string, unknown>;
+
+      try {
+        switch (name) {
+          case "triage_bugs": {
+            const result = this.triageBugs(
+              (params.errorLogs as string[]) || [],
+              (params.context as Record<string, unknown>) || {},
+            );
+            return {
+              content: [
+                { type: "text", text: JSON.stringify(result, null, 2) },
+              ],
+            };
+          }
+          case "analyze_stack_trace": {
+            const result = this.analyzeStackTrace(
+              (params.stackTrace as string) || "",
+              params.sourceMap as Record<string, unknown> | undefined,
+            );
+            return {
+              content: [
+                { type: "text", text: JSON.stringify(result, null, 2) },
+              ],
+            };
+          }
+          case "suggest_fixes": {
+            const result = this.suggestFixes(
+              (params.bugId as string) || "",
+              (params.language as string) || "typescript",
+              (params.existingCode as string) || "",
+            );
+            return {
+              content: [
+                { type: "text", text: JSON.stringify(result, null, 2) },
+              ],
+            };
+          }
+          case "prioritize_issues": {
+            const result = this.prioritizeIssues(
+              (params.bugs as Array<Record<string, unknown>>) || [],
+              (params.sprintVelocity as number) || 20,
+            );
+            return {
+              content: [
+                { type: "text", text: JSON.stringify(result, null, 2) },
+              ],
+            };
+          }
+          case "find_related_issues": {
+            const result = this.findRelatedIssues(
+              (params.newBug as string) || "",
+              (params.existingBugs as string[]) || [],
+            );
+            return {
+              content: [
+                { type: "text", text: JSON.stringify(result, null, 2) },
+              ],
+            };
+          }
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error}` }],
+          isError: true,
+        };
+      }
     });
   }
 
@@ -594,12 +609,16 @@ class BugTriageSpecialistServer extends XrayKnowledgeSkillBase {
     return effortMap[bug.fixComplexity as string] || 3;
   }
 
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+  }
 }
 
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new BugTriageSpecialistServer();
-  server.run("bug-triage-specialist").catch((err) => { frameworkLogger.log("bug-triage-specialist", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
+  server.run();
 }
 
 export { BugTriageSpecialistServer };

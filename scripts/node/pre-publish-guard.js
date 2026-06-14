@@ -87,7 +87,7 @@ function checkGitStatus() {
       'CHANGELOG.md',
       'AGENTS.md',
       'AGENTS-full.md',
-      'xray/agents_template.md',
+      'AGENTS-consumer.md',
       'README.md',
       'logs/',
       'backups/',
@@ -165,22 +165,16 @@ function checkVersionManagerRan() {
   const vmContent = fs.readFileSync(vmPath, 'utf-8');
   
   // Check that files have been updated (look for recent timestamps or version)
-  try {
-    const { resolveConfigPath } = require('../helpers/resolve-config-path.cjs');
-    const featuresPath = resolveConfigPath('features.json', rootDir);
-    if (fs.existsSync(featuresPath)) {
-      const features = JSON.parse(fs.readFileSync(featuresPath, 'utf-8'));
-      if (!features.version && !features.xray_version) {
-        warnings.push('features.json may not have been synced by version manager');
-        log('features.json may need version sync', 'warn');
-      } else {
-        log('Version manager appears to have run', 'success');
-      }
-    } else {
-      log('features.json not found — skipping check (non-blocking)', 'warn');
-    }
-  } catch (e) {
-    log('Could not check features.json — non-blocking', 'warn');
+  const { resolveConfigPath } = require('../helpers/resolve-config-path.cjs');
+  const featuresPath = resolveConfigPath('features.json', rootDir);
+  const features = JSON.parse(fs.readFileSync(featuresPath, 'utf-8'));
+  
+  // Version manager should have updated version fields
+  if (!features.version && !features.xray_version) {
+    warnings.push('features.json may not have been synced by version manager');
+    log('features.json may need version sync', 'warn');
+  } else {
+    log('Version manager appears to have run', 'success');
   }
   
   return true;

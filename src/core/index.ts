@@ -1,5 +1,5 @@
 export { KernelOrchestrator } from "./orchestrator.js";
-export { defaultXrayConfig } from "./xray-activation.js";
+export { defaultStringRayConfig } from "./xray-activation.js"; // consumer runtime compat from prior StringRay releases (1-line min per Scope Rule)
 
 // Decoupled config path resolution (Layer 1)
 export {
@@ -10,8 +10,7 @@ export {
   resolveCodexPath,
   resolveLogDir,
   resetConfigDirCache,
-  XRAY_CONFIG_DIR_ENV,
-  // Legacy export for compat shims
+  STRRAY_CONFIG_DIR_ENV,
 } from "./config-paths.js";
 
 // Standalone codex formatter (Layer 2)

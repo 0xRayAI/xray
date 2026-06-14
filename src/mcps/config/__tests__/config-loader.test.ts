@@ -206,7 +206,7 @@ describe('ConfigLoader', () => {
       fs.writeFileSync(testConfigPath, JSON.stringify(testConfigs));
       loader.addConfigPath(testConfigPath);
       
-      loader.clearConfigPaths();
+      loader.resetConfigPaths();
       
       const result = await loader.load();
       expect(result.success).toBe(true);
@@ -266,20 +266,16 @@ describe('ConfigLoader', () => {
 
   describe('hasConfigFile', () => {
     it('should return false when no config file exists', () => {
-      const emptyLoader = new ConfigLoader();
-      emptyLoader.clearConfigPaths();
-      expect(emptyLoader.hasConfigFile()).toBe(false);
+      expect(loader.hasConfigFile()).toBe(false);
     });
 
     it('should return true when default config file exists', () => {
       const testConfigs = [{ serverName: 'test', command: 'node', args: ['test.js'], timeout: 30000 }];
-      const tmpConfig = '.test-mcp-default.json';
-      fs.writeFileSync(tmpConfig, JSON.stringify(testConfigs));
-      loader.addConfigPath(tmpConfig);
+      fs.writeFileSync('.mcp.json', JSON.stringify(testConfigs));
       
       expect(loader.hasConfigFile()).toBe(true);
       
-      fs.unlinkSync(tmpConfig);
+      fs.unlinkSync('.mcp.json');
     });
 
     it('should return true when added config file exists', () => {

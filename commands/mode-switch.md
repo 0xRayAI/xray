@@ -5,7 +5,7 @@ description: Switch between full (25 agents) and lite (25 agents) modes dynamica
 
 #!/bin/bash
 
-# 0xRay 1.0.0 - Mode Switch Command
+# StringRay 1.0.0 - Mode Switch Command
 
 # Dynamically switches between full and lite agent configurations
 

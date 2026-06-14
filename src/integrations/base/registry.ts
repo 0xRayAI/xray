@@ -173,7 +173,8 @@ export class IntegrationRegistry extends EventEmitter {
       `Registered integration: ${name} v${integration.version}`,
       "info",
       { name, version: integration.version },
-    );
+      this.jobId,
+    ).catch(() => {});
   }
 
   /**
@@ -197,7 +198,8 @@ export class IntegrationRegistry extends EventEmitter {
           `Error unloading integration '${name}' during unregister: ${error}`,
           "error",
           { name, error: String(error) },
-        );
+          this.jobId,
+        ).catch(() => {});
       });
     }
 
@@ -210,7 +212,8 @@ export class IntegrationRegistry extends EventEmitter {
       `Unregistered integration: ${name}`,
       "info",
       { name },
-    );
+      this.jobId,
+    ).catch(() => {});
   }
 
   // ==========================================================================
@@ -294,7 +297,8 @@ export class IntegrationRegistry extends EventEmitter {
         `Integration '${name}' already loaded`,
         "warning",
         { name },
-      );
+        this.jobId,
+      ).catch(() => {});
       return;
     }
 
@@ -333,7 +337,8 @@ export class IntegrationRegistry extends EventEmitter {
         `Loaded integration: ${name}`,
         "success",
         { name, version: integration.version },
-      );
+        this.jobId,
+      ).catch(() => {});
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -378,7 +383,8 @@ export class IntegrationRegistry extends EventEmitter {
         `Unloaded integration: ${name}`,
         "success",
         { name },
-      );
+        this.jobId,
+      ).catch(() => {});
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -396,7 +402,8 @@ export class IntegrationRegistry extends EventEmitter {
         `Error unloading integration '${name}': ${errorMessage}`,
         "error",
         { name, error: errorMessage },
-      );
+        this.jobId,
+      ).catch(() => {});
     }
   }
 
@@ -414,7 +421,8 @@ export class IntegrationRegistry extends EventEmitter {
       `Loading ${enabledEntries.length} enabled integrations...`,
       "info",
       { total: entries.length, enabled: enabledEntries.length },
-    );
+      this.jobId,
+    ).catch(() => {});
 
     const results: Array<{ name: string; success: boolean; error?: string }> = [];
 
@@ -428,7 +436,8 @@ export class IntegrationRegistry extends EventEmitter {
             `Skipping '${name}': not registered`,
             "warning",
             { name },
-          );
+            this.jobId,
+          ).catch(() => {});
           results.push({ name, success: false, error: "Not registered" });
           continue;
         }
@@ -449,7 +458,8 @@ export class IntegrationRegistry extends EventEmitter {
           `Failed to load integration '${name}': ${errorMessage}`,
           "error",
           { name, error: errorMessage },
-        );
+          this.jobId,
+        ).catch(() => {});
       }
     }
 
@@ -468,7 +478,8 @@ export class IntegrationRegistry extends EventEmitter {
       `Load complete: ${succeeded} succeeded, ${failed} failed`,
       failed > 0 ? "warning" : "success",
       { succeeded, failed },
-    );
+      this.jobId,
+    ).catch(() => {});
   }
 
   /**
@@ -482,7 +493,8 @@ export class IntegrationRegistry extends EventEmitter {
       `Unloading ${loadedNames.length} integrations...`,
       "info",
       { count: loadedNames.length },
-    );
+      this.jobId,
+    ).catch(() => {});
 
     const results: Array<{ name: string; success: boolean; error?: string }> = [];
 
@@ -512,7 +524,8 @@ export class IntegrationRegistry extends EventEmitter {
       `Unload complete: ${succeeded} succeeded, ${failed} failed`,
       failed > 0 ? "warning" : "success",
       { succeeded, failed },
-    );
+      this.jobId,
+    ).catch(() => {});
   }
 
   // ==========================================================================
@@ -644,7 +657,8 @@ export class IntegrationRegistry extends EventEmitter {
       "Cleared non-loaded integrations",
       "info",
       { cleared: names.length - this.loadedIntegrations.size },
-    );
+      this.jobId,
+    ).catch(() => {});
   }
 
   /**
@@ -748,7 +762,7 @@ export async function discoverIntegrations(
         `Integrations directory not found: ${integrationsPath}`,
         "warning",
         { path: integrationsPath },
-      );
+      ).catch(() => {});
       return discovered;
     }
 
@@ -801,7 +815,7 @@ export async function discoverIntegrations(
             `Discovered integration: ${name}`,
             "info",
             { name, path: indexPath },
-          );
+          ).catch(() => {});
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           frameworkLogger.log(
@@ -809,7 +823,7 @@ export async function discoverIntegrations(
             `Failed to load integration from ${indexPath}: ${errorMessage}`,
             "warning",
             { path: indexPath, error: errorMessage },
-          );
+          ).catch(() => {});
         }
       }
     }
@@ -820,7 +834,7 @@ export async function discoverIntegrations(
       `Error during integration discovery: ${errorMessage}`,
       "error",
       { error: errorMessage },
-    );
+    ).catch(() => {});
   }
 
   return discovered;
@@ -884,7 +898,7 @@ export async function autoRegisterIntegrations(
         `Failed to register integration '${d.name}': ${errorMessage}`,
         "warning",
         { name: d.name, error: errorMessage },
-      );
+      ).catch(() => {});
     }
   }
 

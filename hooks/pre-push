@@ -1,5 +1,5 @@
 #!/bin/bash
-# 0xRay Pre-Push Hook
+# StringRay Pre-Push Hook
 # Runs full validation suite before push
 # This hook BLOCKS the push if validation fails
 

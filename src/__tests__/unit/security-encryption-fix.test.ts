@@ -1,62 +1,95 @@
 /**
- * Encryption test: verifies AES-256-GCM encrypt/decrypt on SecurityHardener
+ * Quick test for H-001: Broken Encryption fix
+ * This verifies that AES-256-GCM encryption works correctly
  */
 
 import { describe, it, expect } from "vitest";
-import { SecurityHardener } from "../../security/security-hardener.js";
+import { SecurityHardeningSystem } from "../../security/security-hardening-system.js";
 
-describe("AES-256-GCM Encryption", () => {
-  const hardener = new SecurityHardener();
-  hardener.initEncryption("test-encryption-key-12345");
+describe("H-001: Broken Encryption Fix", () => {
+  const securitySystem = new SecurityHardeningSystem("test-encryption-key-12345");
+  securitySystem.start();
 
   it("should encrypt and decrypt data correctly", () => {
-    const original = "Hello, 0xRay!";
-    const encrypted = hardener.encryptData(original);
-    const decrypted = hardener.decryptData(encrypted);
-    expect(decrypted).toBe(original);
+    const originalData = "Hello, 0xRay!";
+    const encrypted = securitySystem.encryptData(originalData);
+    const decrypted = securitySystem.decryptData(encrypted);
+
+    expect(decrypted).toBe(originalData);
   });
 
   it("should produce different ciphertexts for same plaintext (random IV)", () => {
-    const original = "Hello, 0xRay!";
-    const e1 = hardener.encryptData(original);
-    const e2 = hardener.encryptData(original);
-    expect(e1).not.toBe(e2);
+    const originalData = "Hello, 0xRay!";
+    const encrypted1 = securitySystem.encryptData(originalData);
+    const encrypted2 = securitySystem.encryptData(originalData);
+
+    // Same plaintext should produce different ciphertext due to random IV
+    expect(encrypted1).not.toBe(encrypted2);
   });
 
   it("should detect tampering (wrong auth tag)", () => {
-    const encrypted = hardener.encryptData("test");
-    const buf = Buffer.from(encrypted, "base64");
-    buf[20] = buf[20] ^ 0xFF;
-    const result = hardener.decryptData(buf.toString("base64"));
+    const originalData = "Hello, 0xRay!";
+    const encrypted = securitySystem.encryptData(originalData);
+
+    const encryptedBuffer = Buffer.from(encrypted, "base64");
+
+    encryptedBuffer[20] = encryptedBuffer[20] ^ 0xFF;
+
+    const tamperedData = encryptedBuffer.toString("base64");
+
+    const result = securitySystem.decryptData(tamperedData);
     expect(result).toBeNull();
   });
 
   it("should reject decryption with wrong key", () => {
-    const encrypted = hardener.encryptData("test");
-    const wrong = new SecurityHardener();
-    wrong.initEncryption("different-key-67890");
-    expect(wrong.decryptData(encrypted)).toBeNull();
+    const originalData = "Hello, 0xRay!";
+    const encrypted = securitySystem.encryptData(originalData);
+
+    const wrongKeySystem = new SecurityHardeningSystem("different-key-67890");
+    wrongKeySystem.start();
+
+    const result = wrongKeySystem.decryptData(encrypted);
+    expect(result).toBeNull();
   });
 
   it("should handle empty string", () => {
-    const encrypted = hardener.encryptData("");
-    expect(hardener.decryptData(encrypted)).toBe("");
+    const emptyEncrypted = securitySystem.encryptData("");
+    const emptyDecrypted = securitySystem.decryptData(emptyEncrypted);
+
+    expect(emptyDecrypted).toBe("");
   });
 
   it("should handle long strings", () => {
-    const long = "a".repeat(1000);
-    const encrypted = hardener.encryptData(long);
-    expect(hardener.decryptData(encrypted)).toBe(long);
+    const longString = "a".repeat(1000);
+    const longEncrypted = securitySystem.encryptData(longString);
+    const longDecrypted = securitySystem.decryptData(longEncrypted);
+
+    expect(longDecrypted).toBe(longString);
   });
 
   it("should handle unicode characters", () => {
-    const unicode = "Hello 世界 🌍 Ñoño";
-    const encrypted = hardener.encryptData(unicode);
-    expect(hardener.decryptData(encrypted)).toBe(unicode);
+    const unicodeString = "Hello 世界 🌍 Ñoño";
+    const unicodeEncrypted = securitySystem.encryptData(unicodeString);
+    const unicodeDecrypted = securitySystem.decryptData(unicodeEncrypted);
+
+    expect(unicodeDecrypted).toBe(unicodeString);
   });
 
   it("should produce longer ciphertext than plaintext (IV + auth tag overhead)", () => {
-    const encrypted = hardener.encryptData("Hi");
-    expect(encrypted.length).toBeGreaterThan("Hi".length);
+    const shortData = "Hi";
+    const encrypted = securitySystem.encryptData(shortData);
+
+    // Ciphertext should be longer due to IV (16 bytes) + auth tag (16 bytes)
+    expect(encrypted.length).toBeGreaterThan(shortData.length);
+  });
+
+  it("should use Base64 encoding for ciphertext", () => {
+    const data = "Hello, 0xRay!";
+    const encrypted = securitySystem.encryptData(data);
+
+    // Should be valid Base64
+    expect(() => {
+      Buffer.from(encrypted, "base64");
+    }).not.toThrow();
   });
 });

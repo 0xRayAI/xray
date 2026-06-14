@@ -5,7 +5,8 @@ import { EventEmitter } from 'node:events'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { handleGovernRequest } from '../src/nucleus/index.js'
+// New clean governance core (src/governance/)
+import { getGovernanceService } from '../src/governance/governance-service.js'
 import type { GovernanceRequest } from '../src/governance/governance-types.js'
 import { frameworkLogger } from '../src/core/framework-logger.js'
 
@@ -83,7 +84,7 @@ const TOOLS: ToolDefinition[] = [
               source: { type: 'string' },
               confidence: { type: 'number' },
             },
-            required: ['type', 'title', 'description', 'source'],
+            required: ['type', 'title', 'description'],
           },
         },
         context: { type: 'object', description: 'Optional context (project, phase, etc.)' },
@@ -148,13 +149,6 @@ async function handleMCPMessage(_sessionId: string, msg: any): Promise<any> {
         if (name === 'govern_proposals') {
           const inputProposals = args?.proposals || []
 
-          // Validate source on every proposal
-          for (let i = 0; i < inputProposals.length; i++) {
-            if (typeof inputProposals[i].source !== 'string' || !inputProposals[i].source) {
-              return mcpError(id, -32602, `proposals[${i}].source is required — set to "inference", "reflection", "manual", "ci", "phase-planning", or "metamorphosis"`)
-            }
-          }
-
           // Map to the canonical GovernanceRequest shape
           const request: GovernanceRequest = {
             proposals: inputProposals.map((p: any, i: number) => ({
@@ -163,11 +157,10 @@ async function handleMCPMessage(_sessionId: string, msg: any): Promise<any> {
               title: p.title || 'Untitled Proposal',
               description: p.description || p.details || '',
               evidence: p.evidence || [],
-              source: p.source,
+              source: 'vercel-http',
               confidence: p.confidence || 0.8,
-              tags: p.tags || ['vercel-http'],
             })),
-            context: { source: 'vercel-governance-mcp', tags: ['vercel-http'] },
+            context: { source: 'vercel-governance-mcp' },
             options: { requireExternalDynamo: true },
           }
 
@@ -179,8 +172,9 @@ async function handleMCPMessage(_sessionId: string, msg: any): Promise<any> {
             // If Dynamo is unreachable, GovernanceService will handle it based on requireExternalDynamo
           }
 
-          // Use the governance nucleus (supports in-process on Vercel)
-          const response = await handleGovernRequest(request)
+          // Use the shared GovernanceService (supports in-process on Vercel)
+          const service = getGovernanceService()
+          const response = await service.govern(request)
 
           return mcpResult(id, {
             content: [{
@@ -236,7 +230,7 @@ async function governanceGate(c: Context, next: () => Promise<void>) {
     return c.json({
       status: 'disabled',
       reason: governanceReason,
-      doc: 'Set governance.enabled=true in .opencode/xray/features.json',
+      doc: 'Set governance.enabled=true in .opencode/strray/features.json',
     })
   }
   return next()

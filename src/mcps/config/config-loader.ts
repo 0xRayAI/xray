@@ -24,16 +24,11 @@ export interface ConfigLoadResult {
  * Loads MCP server configurations from files
  */
 export class ConfigLoader {
-  private defaultPaths: string[] = [
+  private configPaths: string[] = [
     '.mcp.json',
     '.opencode/mcp.json',
     'mcp.config.json',
   ];
-  private customPaths: string[] = [];
-
-  private get configPaths(): string[] {
-    return [...this.customPaths, ...this.defaultPaths];
-  }
 
   /**
    * Load configurations from available config files
@@ -66,10 +61,10 @@ export class ConfigLoader {
   }
 
   /**
-   * Add a custom config path to search before defaults
+   * Add a custom config path to search
    */
   addConfigPath(configPath: string): void {
-    this.customPaths.push(configPath);
+    this.configPaths.push(configPath);
   }
 
   /**
@@ -80,18 +75,14 @@ export class ConfigLoader {
   }
 
   /**
-   * Reset config paths to defaults, clearing custom paths
+   * Reset config paths to defaults
    */
   resetConfigPaths(): void {
-    this.customPaths = [];
-  }
-
-  /**
-   * Clear all config paths (both default and custom)
-   */
-  clearConfigPaths(): void {
-    this.customPaths = [];
-    this.defaultPaths = [];
+    this.configPaths = [
+      '.mcp.json',
+      '.opencode/mcp.json',
+      'mcp.config.json',
+    ];
   }
 
   /**

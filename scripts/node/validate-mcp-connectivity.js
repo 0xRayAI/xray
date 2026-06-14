@@ -3,7 +3,7 @@
 /**
  * MCP Server Connectivity Validator
  *
- * Tests all xray v39 MCP servers for proper startup and protocol compliance
+ * Tests all xray v41 MCP servers for proper startup and protocol compliance
  * Validates external integration points that internal tests miss
  * 
  * FIXED: Converted to ES module syntax

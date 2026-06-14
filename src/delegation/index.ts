@@ -25,6 +25,10 @@ export { RoutingAnalytics } from "./analytics/index.js";
 export { LearningEngine, learningEngine } from "./analytics/index.js";
 
 export {
+  VotingCoordinator,
+  createVotingCoordinator,
+} from "./voting-coordinator.js";
+export {
   WeightedVotingAggregator,
   createWeightedVotingAggregator,
   createDetailedVotingResult,
@@ -40,6 +44,8 @@ export {
   getAgentExpertise,
   getAgentExpertiseLevel,
   getVotingWeight,
+  getAgentsWithExpertiseDomain,
+  getTopExpertsForDomain,
 } from "./agent-expertise.js";
 
 export type {
@@ -60,26 +66,9 @@ export type {
 export type {
   ComplexityMetrics,
   ComplexityScore,
+  ComplexityLevel,
   ComplexityThresholds,
-} from "./complexity-analyzer.js";
-
-export {
-  scoreComplexity,
-  routeToAgent,
-  scoreAndRoute,
 } from "../nucleus/thin-dispatch.js";
-export {
-  assessComplexity,
-  shouldDelegate,
-  getDelegationStrategy,
-  type AssessmentInput,
-  type AssessmentResult,
-} from "../tools/assess-complexity-tool.js";
-export {
-  queryRouting,
-  listAllRoutes,
-  type AgentRoutingDetail,
-} from "../tools/query-routing-tool.js";
 
 export type {
   DelegationRequest,
@@ -104,10 +93,11 @@ export {
   resetAgentMetricsSystem,
 } from "../metrics/agent-metrics.js";
 
+export { scoreComplexity, routeToAgent, scoreAndRoute } from "../nucleus/thin-dispatch.js";
+
 export type {
   AgentInvocation,
   AgentType,
-  ComplexityLevel,
   AgentInvocationSummary,
   TimePeriodSummary,
   ComplexitySummary,

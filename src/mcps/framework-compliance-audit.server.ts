@@ -4,10 +4,15 @@
  * Comprehensive validation of all framework components and Universal Development Codex compliance
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import fs from "fs";
 import path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface FrameworkComplianceAuditArgs {
   scope?: string;
@@ -28,63 +33,21 @@ interface AuditResults {
   summary: string;
 }
 
-class XrayFrameworkComplianceAuditServer extends XrayKnowledgeSkillBase {
+class XrayFrameworkComplianceAuditServer {
+  private server: Server;
 
   constructor() {
-    super("framework-compliance-audit", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "framework-compliance-audit",
-        description:
-          "Comprehensive validation of all framework components and Universal Development Codex compliance",
-        inputSchema: {
-          type: "object",
-          properties: {
-            scope: {
-              type: "string",
-              enum: [
-                "full",
-                "codex",
-                "configuration",
-                "agents",
-                "performance",
-              ],
-              default: "full",
-              description: "Scope of compliance audit",
-            },
-            detailed: {
-              type: "boolean",
-              default: false,
-              description: "Include detailed findings and recommendations",
-            },
-          },
-        },
+        name: "framework-compliance-audit", version: "1.22.67",
       },
       {
-        name: "codex-validation",
-        description:
-          "Validate compliance with Universal Development Codex v1.2.0",
-        inputSchema: {
-          type: "object",
-          properties: {
-            terms: {
-              type: "array",
-              items: { type: "number", minimum: 1, maximum: 43 },
-              description: "Specific codex terms to validate (1-43)",
-            },
-            strict: {
-              type: "boolean",
-              default: true,
-              description: "Enforce strict compliance",
-            },
-          },
+        capabilities: {
+          tools: {},
         },
       },
-    ];
-    this.handlers = {
-      "framework-compliance-audit": async (args) => this.handleFrameworkComplianceAudit(args as unknown as FrameworkComplianceAuditArgs),
-      "codex-validation": async (args) => this.handleCodexValidation(args as unknown as CodexValidationArgs),
-    };
+    );
+
     this.setupToolHandlers();
     void frameworkLogger.log(
       "framework-compliance-audit.server",
@@ -92,6 +55,77 @@ class XrayFrameworkComplianceAuditServer extends XrayKnowledgeSkillBase {
       "info",
       { message: "0xRay Framework Compliance Audit MCP Server initialized" },
     );
+  }
+
+  private setupToolHandlers() {
+    // List available tools
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "framework-compliance-audit",
+            description:
+              "Comprehensive validation of all framework components and Universal Development Codex compliance",
+            inputSchema: {
+              type: "object",
+              properties: {
+                scope: {
+                  type: "string",
+                  enum: [
+                    "full",
+                    "codex",
+                    "configuration",
+                    "agents",
+                    "performance",
+                  ],
+                  default: "full",
+                  description: "Scope of compliance audit",
+                },
+                detailed: {
+                  type: "boolean",
+                  default: false,
+                  description: "Include detailed findings and recommendations",
+                },
+              },
+            },
+          },
+          {
+            name: "codex-validation",
+            description:
+              "Validate compliance with Universal Development Codex v1.2.0",
+            inputSchema: {
+              type: "object",
+              properties: {
+                terms: {
+                  type: "array",
+                  items: { type: "number", minimum: 1, maximum: 43 },
+                  description: "Specific codex terms to validate (1-43)",
+                },
+                strict: {
+                  type: "boolean",
+                  default: true,
+                  description: "Enforce strict compliance",
+                },
+              },
+            },
+          },
+        ],
+      };
+    });
+
+    // Handle tool calls
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "framework-compliance-audit":
+          return await this.handleFrameworkComplianceAudit(args as unknown as FrameworkComplianceAuditArgs);
+        case "codex-validation":
+          return await this.handleCodexValidation(args as unknown as CodexValidationArgs);
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
+    });
   }
 
   private async handleFrameworkComplianceAudit(args: FrameworkComplianceAuditArgs) {
@@ -579,12 +613,23 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n")}
 
     return details;
   }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    void frameworkLogger.log(
+      "framework-compliance-audit.server",
+      "compliance-audit-startup",
+      "info",
+      { message: "0xRay Framework Compliance Audit MCP Server started" },
+    );
+  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XrayFrameworkComplianceAuditServer();
-  server.run("framework-compliance-audit").catch((error) => frameworkLogger.log("mcps/framework-compliance-audit", "run", "error", { error: String(error) }));
+  server.run().catch((error) => frameworkLogger.log("mcps/framework-compliance-audit", "run", "error", { error: String(error) }));
 }
 
 export { XrayFrameworkComplianceAuditServer };

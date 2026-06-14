@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { SecurityAuditor } from "../../../security/security-auditor.js";
 import { SecurityHardener } from "../../../security/security-hardener.js";
 import { SecurityHeadersMiddleware } from "../../../security/security-headers.js";
 
@@ -27,12 +28,14 @@ import { readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
 
 describe("Security Module Integration", () => {
+  let auditor: SecurityAuditor;
   let hardener: SecurityHardener;
   let headersMiddleware: SecurityHeadersMiddleware;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
+    auditor = new SecurityAuditor();
     hardener = new SecurityHardener();
     headersMiddleware = new SecurityHeadersMiddleware();
 
@@ -61,6 +64,50 @@ describe("Security Module Integration", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("Complete Security Workflow", () => {
+    it("should perform full security audit and apply automatic fixes", async () => {
+      // Setup test files with security issues
+      vi.mocked(readFileSync).mockReturnValueOnce(`
+          function dangerous() {
+            eval('malicious code');
+            const password = "secret123";
+          }
+        `).mockReturnValueOnce(`
+          {
+            "name": "test-app"
+          }
+        `);
+
+      const auditResult = await auditor.auditProject("./test");
+      expect(auditResult.issues.length).toBeGreaterThan(0);
+      expect(auditResult.score).toBeLessThan(100);
+
+      const hardenResult = await hardener.hardenSecurity(auditResult);
+      expect(hardenResult.appliedFixes).toBeDefined();
+      expect(hardenResult.remainingIssues).toBeDefined();
+
+      const report = auditor.generateReport(auditResult);
+      expect(report).toContain("0xRay Framework Security Audit Report");
+    });
+
+    it("should handle secure codebase with no issues", async () => {
+      // Setup clean files
+      vi.mocked(readFileSync)
+        .mockReturnValueOnce('console.log("Hello, world!");')
+        .mockReturnValueOnce('{"name": "safe-app", "dependencies": {}}')
+        .mockReturnValueOnce('{"name": "safe-app"}');
+
+      const auditResult = await auditor.auditProject("./test");
+      expect(auditResult.score).toBeGreaterThanOrEqual(90); // Good security score
+      expect(auditResult.issues.length).toBeLessThanOrEqual(5); // Allow for test environment issues
+
+      const report = auditor.generateReport(auditResult);
+      expect(report).toContain("0xRay Framework Security Audit Report");
+      expect(report).toContain("Security Score:");
+      expect(report).toContain("/100");
+    });
   });
 
   describe("Security Headers Integration", () => {

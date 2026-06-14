@@ -158,22 +158,6 @@ function generateChangelogFromCommits(commits) {
   return sections.join('\n\n') || '- Version bump';
 }
 
-function findTestFiles(dir) {
-  let count = 0;
-  try {
-    for (const entry of fs.readdirSync(dir)) {
-      const full = path.join(dir, entry);
-      const stat = fs.statSync(full);
-      if (stat.isDirectory()) {
-        count += findTestFiles(full);
-      } else if (entry.endsWith('.test.ts') || entry.endsWith('.spec.ts')) {
-        count++;
-      }
-    }
-  } catch {}
-  return count;
-}
-
 /**
  * Count actual framework components
  */
@@ -181,9 +165,7 @@ function getFrameworkCounts() {
   const counts = {
     agents: 0,
     mcps: 0,
-    skills: 0,
-    codexTerms: 0,
-    tests: 0
+    skills: 0
   };
   
   // Count agents (.yml files in src/opencode/agents/ — source of truth)
@@ -217,27 +199,6 @@ function getFrameworkCounts() {
       .filter(f => fs.statSync(path.join(skillsDir, f)).isDirectory())
       .filter(f => fs.existsSync(path.join(skillsDir, f, 'SKILL.md')))
       .length;
-  }
-
-  // Count codex terms (xray/codex.json is SSOT)
-  const codexPath = path.join(rootDir, 'xray/codex.json');
-  if (fs.existsSync(codexPath)) {
-    try {
-      const codex = JSON.parse(fs.readFileSync(codexPath, 'utf-8'));
-      counts.codexTerms = Object.keys(codex.terms || codex.rules || codex).length;
-    } catch {
-      counts.codexTerms = 0;
-    }
-  }
-
-  // Count test files across all of src/
-  try {
-    const srcDir = path.join(rootDir, 'src');
-    if (fs.existsSync(srcDir)) {
-      counts.tests = findTestFiles(srcDir);
-    }
-  } catch {
-    counts.tests = 0;
   }
   
   return counts;
@@ -329,15 +290,8 @@ function updateReadme(counts, newVersion) {
     `${counts.agents} agents, ${counts.mcps} MCP servers`
   );
   
-  // Update only the version in the summary line.
-  // Counts are marketing copy — not auto-mutated on release (see audit:counts for observability).
-  readme = readme.replace(
-    /\*\*v[\d.]+?\*\*/,
-    `**v${newVersion}**`
-  );
-  
   fs.writeFileSync(readmePath, readme);
-  console.log(`✅ Updated README.md (version only: ${newVersion})`);
+  console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills})`);
 }
 
 /**
@@ -354,8 +308,8 @@ function updateAgentsMd(counts) {
   
   // Legacy header count update (min compat for old consumer AGENTS.md files only; xray v2 YML SSOT primary)
   agentsMd = agentsMd.replace(
-    /0xRay\s*2\.0\s*-\s*\d+\s+Agents|xray\s*v2\s*-\s*\d+\s+Agents/,
-    `xray v3 - ${counts.agents} Agents`
+    /0xRay\s*2\.0\s*-\s*\d+\s+Agents|StringRay\s*-\s*\d+\s+Agents/,
+    `xray v2 - ${counts.agents} Agents`
   );
   
   agentsMd = agentsMd.replace(

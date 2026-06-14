@@ -8,11 +8,14 @@
  * Production-ready implementation with real analysis logic.
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 /* ============================================================================
  * Type Definitions
@@ -158,155 +161,181 @@ interface VisualComparison {
  * Analysis Engine
  * ============================================================================ */
 
-class MultimodalLookerServer extends XrayKnowledgeSkillBase {
+class MultimodalLookerServer {
+  private server: Server;
+
   constructor() {
-    super("multimodal-looker", "2.0.1");
-    this.tools = [
-      {
-        name: "analyze-screenshot",
-        description:
-          "Extract UI elements from screenshots. Identifies components, layout structure, and provides detailed element analysis for code generation.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            imageData: {
-              type: "string",
-              description: "Base64 encoded image or detailed visual description",
-            },
-            extractComponents: {
-              type: "boolean",
-              default: true,
-              description: "Extract individual UI components",
-            },
-            checkAccessibility: {
-              type: "boolean",
-              default: true,
-              description: "Check for accessibility issues",
-            },
-            analyzeLayout: {
-              type: "boolean",
-              default: true,
-              description: "Analyze layout structure and grid",
-            },
-          },
-          required: ["imageData"],
-        },
-      },
-      {
-        name: "describe-diagram",
-        description:
-          "Parse architecture and flow diagrams. Extracts nodes, edges, relationships for understanding system design.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            imageData: {
-              type: "string",
-              description: "Diagram image or description",
-            },
-            diagramType: {
-              type: "string",
-              enum: ["auto", "flowchart", "sequence", "class", "architecture", "erd", "state"],
-              default: "auto",
-            },
-            extractMetadata: {
-              type: "boolean",
-              default: true,
-              description: "Extract additional metadata about the diagram",
-            },
-          },
-          required: ["imageData"],
-        },
-      },
-      {
-        name: "review-ui-mockup",
-        description:
-          "Evaluate UI mockups against best practices. Checks consistency, accessibility, and provides improvement suggestions.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            imageData: {
-              type: "string",
-              description: "UI mockup image or description",
-            },
-            framework: {
-              type: "string",
-              enum: ["react", "vue", "angular", "svelte", "html"],
-              default: "react",
-            },
-            checkResponsive: {
-              type: "boolean",
-              default: true,
-              description: "Check for responsive design patterns",
-            },
-          },
-          required: ["imageData"],
-        },
-      },
-      {
-        name: "extract-visual-specs",
-        description:
-          "Convert visual content to design specifications. Extracts colors, spacing, typography, and other design tokens.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            imageData: {
-              type: "string",
-              description: "Visual content to analyze",
-            },
-            includeValues: {
-              type: "boolean",
-              default: true,
-              description: "Include actual CSS values",
-            },
-            format: {
-              type: "string",
-              enum: ["css", "tailwind", "json"],
-              default: "css",
-            },
-          },
-          required: ["imageData"],
-        },
-      },
-      {
-        name: "compare-designs",
-        description:
-          "Compare two designs for consistency. Identifies differences in colors, layout, typography, and components.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            imageA: {
-              type: "string",
-              description: "Reference design",
-            },
-            imageB: {
-              type: "string",
-              description: "Design to compare",
-            },
-            tolerance: {
-              type: "number",
-              default: 5,
-              description: "Difference tolerance threshold (0-100)",
-            },
-          },
-          required: ["imageA", "imageB"],
-        },
-      },
-    ];
-    this.handlers = {
-      "analyze-screenshot": async (args) => this.handleAnalyzeScreenshot(args as Record<string, unknown>),
-      "describe-diagram": async (args) => this.handleDescribeDiagram(args as Record<string, unknown>),
-      "review-ui-mockup": async (args) => this.handleReviewUIMockup(args as Record<string, unknown>),
-      "extract-visual-specs": async (args) => this.handleExtractVisualSpecs(args as Record<string, unknown>),
-      "compare-designs": async (args) => this.handleCompareDesigns(args as Record<string, unknown>),
-    };
+    this.server = new Server(
+      { name: "multimodal-looker", version: "1.22.67" },
+      { capabilities: { tools: {} } },
+    );
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "multimodal-looker",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+  }
+
+  /* --------------------------------------------------------------------------
+   * Tool Registration
+   * -------------------------------------------------------------------------- */
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: [
+        {
+          name: "analyze-screenshot",
+          description:
+            "Extract UI elements from screenshots. Identifies components, layout structure, and provides detailed element analysis for code generation.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              imageData: {
+                type: "string",
+                description: "Base64 encoded image or detailed visual description",
+              },
+              extractComponents: {
+                type: "boolean",
+                default: true,
+                description: "Extract individual UI components",
+              },
+              checkAccessibility: {
+                type: "boolean",
+                default: true,
+                description: "Check for accessibility issues",
+              },
+              analyzeLayout: {
+                type: "boolean",
+                default: true,
+                description: "Analyze layout structure and grid",
+              },
+            },
+            required: ["imageData"],
+          },
+        },
+        {
+          name: "describe-diagram",
+          description:
+            "Parse architecture and flow diagrams. Extracts nodes, edges, relationships for understanding system design.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              imageData: {
+                type: "string",
+                description: "Diagram image or description",
+              },
+              diagramType: {
+                type: "string",
+                enum: ["auto", "flowchart", "sequence", "class", "architecture", "erd", "state"],
+                default: "auto",
+              },
+              extractMetadata: {
+                type: "boolean",
+                default: true,
+                description: "Extract additional metadata about the diagram",
+              },
+            },
+            required: ["imageData"],
+          },
+        },
+        {
+          name: "review-ui-mockup",
+          description:
+            "Evaluate UI mockups against best practices. Checks consistency, accessibility, and provides improvement suggestions.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              imageData: {
+                type: "string",
+                description: "UI mockup image or description",
+              },
+              framework: {
+                type: "string",
+                enum: ["react", "vue", "angular", "svelte", "html"],
+                default: "react",
+              },
+              checkResponsive: {
+                type: "boolean",
+                default: true,
+                description: "Check for responsive design patterns",
+              },
+            },
+            required: ["imageData"],
+          },
+        },
+        {
+          name: "extract-visual-specs",
+          description:
+            "Convert visual content to design specifications. Extracts colors, spacing, typography, and other design tokens.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              imageData: {
+                type: "string",
+                description: "Visual content to analyze",
+              },
+              includeValues: {
+                type: "boolean",
+                default: true,
+                description: "Include actual CSS values",
+              },
+              format: {
+                type: "string",
+                enum: ["css", "tailwind", "json"],
+                default: "css",
+              },
+            },
+            required: ["imageData"],
+          },
+        },
+        {
+          name: "compare-designs",
+          description:
+            "Compare two designs for consistency. Identifies differences in colors, layout, typography, and components.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              imageA: {
+                type: "string",
+                description: "Reference design",
+              },
+              imageB: {
+                type: "string",
+                description: "Design to compare",
+              },
+              tolerance: {
+                type: "number",
+                default: 5,
+                description: "Difference tolerance threshold (0-100)",
+              },
+            },
+            required: ["imageA", "imageB"],
+          },
+        },
+      ],
+    }));
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args = {} } = request.params;
+      const params = args as Record<string, unknown>;
+
+      try {
+        switch (name) {
+          case "analyze-screenshot":
+            return this.handleAnalyzeScreenshot(params);
+          case "describe-diagram":
+            return this.handleDescribeDiagram(params);
+          case "review-ui-mockup":
+            return this.handleReviewUIMockup(params);
+          case "extract-visual-specs":
+            return this.handleExtractVisualSpecs(params);
+          case "compare-designs":
+            return this.handleCompareDesigns(params);
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error}` }],
+          isError: true,
+        };
+      }
     });
   }
 
@@ -1452,12 +1481,20 @@ class MultimodalLookerServer extends XrayKnowledgeSkillBase {
     return recommendations;
   }
 
+  /* --------------------------------------------------------------------------
+   * Server Lifecycle
+   * -------------------------------------------------------------------------- */
+
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+  }
 }
 
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new MultimodalLookerServer();
-  server.run("multimodal-looker").catch((error) => frameworkLogger.log("mcps/multimodal-looker", "run", "error", { error: String(error) }));
+  server.run().catch(console.error);
 }
 
 export { MultimodalLookerServer };

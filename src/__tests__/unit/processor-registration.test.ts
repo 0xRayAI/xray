@@ -28,12 +28,12 @@ describe("Processor Factory Registration", () => {
   const content = fs.readFileSync(processorManagerPath, "utf-8");
 
   it("should register nudge factory in registerBuiltInFactories", () => {
-    expect(content).toContain('name: "nudge"');
+    expect(content).toContain('f.set("nudge"');
     expect(content).toContain('import("./implementations/nudge-processor.js")');
   });
 
   it("should register commitBatcher factory in registerBuiltInFactories", () => {
-    expect(content).toContain('name: "commitBatcher"');
+    expect(content).toContain('f.set("commitBatcher"');
     expect(content).toContain('import("./implementations/commit-batcher-processor.js")');
   });
 });

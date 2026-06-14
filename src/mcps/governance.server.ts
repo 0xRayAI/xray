@@ -12,7 +12,6 @@
  * and the Dynamo Solar SSOT filter (required by default).
  */
 
-import { randomUUID } from "crypto";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -28,7 +27,8 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { handleGovernRequest } from "../nucleus/index.js";
+import { randomUUID } from "crypto";
+import { getGovernanceService } from "../governance/governance-service.js";
 import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
 import { featuresConfigLoader } from "../core/features-config.js";
@@ -40,7 +40,7 @@ interface GovernanceProposalInput {
   title: string;
   description: string;
   evidence?: string[];
-  source: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning' | 'metamorphosis';
+  source?: string;
   confidence?: number;
 }
 
@@ -66,13 +66,9 @@ class GovernanceServer {
   private server: Server;
 
   constructor() {
-    this.server = this.createServer();
-  }
-
-  private createServer(): Server {
-    const server = new Server(
+    this.server = new Server(
       {
-        name: "governance", version: "3.0.11",
+        name: "governance", version: "2.0.0",
       },
       {
         capabilities: {
@@ -81,9 +77,7 @@ class GovernanceServer {
       }
     );
 
-    this.setupToolHandlersOn(server);
-
-    return server;
+    this.setupToolHandlers();
   }
 
   private validateGovernProposalsArgs(value: unknown): GovernProposalsArgs {
@@ -108,17 +102,8 @@ class GovernanceServer {
       if (typeof p.description !== 'string') {
         throw new Error(`proposals[${i}].description must be a string`);
       }
-      if (typeof p.source !== 'string' || !p.source) {
-        throw new Error(`proposals[${i}].source is required — set to "inference", "reflection", "manual", "ci", "phase-planning", or "metamorphosis"`);
-      }
     }
-    return {
-      ...(value as Omit<GovernProposalsArgs, 'proposals'>),
-      proposals: (obj.proposals as any[]).map((p: any) => ({
-        ...p,
-        source: p.source as GovernanceProposalInput['source'],
-      })),
-    } as GovernProposalsArgs;
+    return value as GovernProposalsArgs;
   }
 
   private validateGovernReflectionArgs(value: unknown): GovernReflectionArgs {
@@ -128,8 +113,8 @@ class GovernanceServer {
     return value as GovernReflectionArgs;
   }
 
-  private setupToolHandlersOn(server: Server) {
-    server.setRequestHandler(ListToolsRequestSchema, async () => {
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: [
           {
@@ -159,7 +144,7 @@ class GovernanceServer {
                       source: { type: "string" },
                       confidence: { type: "number" },
                     },
-                    required: ["type", "title", "description", "source"],
+                    required: ["type", "title", "description"],
                   },
                   description: "List of proposals to govern",
                 },
@@ -224,7 +209,7 @@ class GovernanceServer {
       };
     });
 
-    server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -258,6 +243,8 @@ class GovernanceServer {
   }
 
   private async handleGovernProposals(args: GovernProposalsArgs): Promise<CallToolResult> {
+    const service = getGovernanceService();
+
     const request: GovernanceRequest = {
       proposals: args.proposals.map((p, i) => ({
         id: p.id || `prop-${Date.now()}-${i}`,
@@ -265,20 +252,20 @@ class GovernanceServer {
         title: p.title,
         description: p.description,
         evidence: p.evidence || [],
-        source: p.source,
+        source: "manual",
         confidence: p.confidence || 0.8,
       })),
       context: args.context || {},
       options: {
-        requireExternalDynamo: args.options?.require_external ?? !process.env.XRAY_LOCAL_MODE,
+        requireExternalDynamo: args.options?.require_external ?? true,
       },
     };
 
-    frameworkLogger.log("governance-mcp", "delegating-to-kernel", "info", {
+    frameworkLogger.log("governance-mcp", "delegating-to-governance-service", "info", {
       proposalCount: request.proposals.length,
     });
 
-    const response = await handleGovernRequest(request);
+    const response = await service.govern(request);
 
     return {
       content: [
@@ -488,8 +475,12 @@ class GovernanceServer {
   async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3100", 10)): Promise<void> {
     await this.initializeGovernance();
 
-    const app = createMcpExpressApp({ host: '0.0.0.0' });
-    const transports: Record<string, StreamableHTTPServerTransport> = {};
+    const app = createMcpExpressApp();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+    });
+
+    await this.server.connect(transport as any);
 
     const apiKey = process.env.GOVERNANCE_API_KEY;
     if (apiKey) {
@@ -511,71 +502,16 @@ class GovernanceServer {
       next();
     });
 
-    const handlePost = async (req: any, res: any) => {
+    app.post("/mcp", async (req: any, res: any) => {
       try {
-        const sessionId = req.headers["mcp-session-id"] as string | undefined;
-
-        if (sessionId && transports[sessionId]) {
-          await transports[sessionId].handleRequest(req, res, req.body);
-          return;
-        }
-
-        if (!sessionId && req.body?.method === "initialize") {
-          const transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => randomUUID(),
-            enableJsonResponse: true,
-            onsessioninitialized: (newId: string) => {
-              transports[newId] = transport;
-              frameworkLogger.log("governance-mcp", "session-created", "info", { sessionId: newId });
-            },
-          });
-          const server = this.createServer();
-          await server.connect(transport as any);
-          await transport.handleRequest(req, res, req.body);
-          return;
-        }
-
-        res.status(400).json({
-          jsonrpc: "2.0", error: { code: -32000, message: "Bad Request: No valid session ID provided" }, id: null,
-        });
+        await transport.handleRequest(req, res, req.body);
       } catch (error) {
         frameworkLogger.log("governance-mcp", "http-handler-error", "error", { error: String(error) });
         if (!res.headersSent) {
           res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
         }
       }
-    };
-
-    const handleGet = async (req: any, res: any) => {
-      try {
-        const sessionId = req.headers["mcp-session-id"] as string | undefined;
-
-        if (sessionId && transports[sessionId]) {
-          await transports[sessionId].handleRequest(req, res);
-          return;
-        }
-
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: () => randomUUID(),
-          enableJsonResponse: true,
-          onsessioninitialized: (newId: string) => {
-            transports[newId] = transport;
-            frameworkLogger.log("governance-mcp", "session-created", "info", { sessionId: newId });
-          },
-        });
-        const server = this.createServer();
-        await server.connect(transport as any);
-        await transport.handleRequest(req, res);
-      } catch (error) {
-        frameworkLogger.log("governance-mcp", "http-get-error", "error", { error: String(error) });
-        if (!res.headersSent) {
-          res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
-        }
-      }
-    };
-
-    app.post("/mcp", handlePost);
-    app.get("/mcp", handleGet);
+    });
 
     app.get("/health", (_req: any, res: any) => {
       res.json({ status: "ok", server: "governance" });
@@ -585,13 +521,14 @@ class GovernanceServer {
       frameworkLogger.log("governance-mcp", "http-listening", "info", { port });
     });
 
-    process.on("SIGINT", () => { process.exit(0); });
-    process.on("SIGTERM", () => { process.exit(0); });
+    process.on("SIGINT", () => { transport.close(); process.exit(0); });
+    process.on("SIGTERM", () => { transport.close(); process.exit(0); });
   }
 }
 
-// Start the server if this file is run directly (realpath handles /var → /private/var on macOS)
-if (process.argv[1] && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(process.argv[1])) {
+// Start the server if this file is run directly
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   // If --port or MCP_PORT is set, use HTTP transport (for Grok CLI compatibility)
   const cliPort = process.argv.find((a) => a.startsWith("--port="))?.split("=")[1];
   const port = parseInt(cliPort ?? process.env.MCP_PORT ?? "", 10);

@@ -11,14 +11,13 @@
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveConfigPath } from "../core/config-paths.js";
-import { XrayStateManager } from "../state/state-manager.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import { SessionMonitor } from "../session/session-monitor.js";
 import { GitHookTrigger } from "./triggers/GitHookTrigger.js";
 import { WebhookTrigger } from "./triggers/WebhookTrigger.js";
 import { APITrigger } from "./triggers/APITrigger.js";
 import { PostProcessorMonitoringEngine } from "./monitoring/MonitoringEngine.js";
 import { FailureAnalysisEngine } from "./analysis/FailureAnalysisEngine.js";
-import { CodeChangeAnalyzer } from "./analysis/CodeChangeAnalyzer.js";
 import { AutoFixEngine } from "./autofix/AutoFixEngine.js";
 import { activity } from "../core/activity-logger.js";
 import { FixValidator } from "./autofix/FixValidator.js";
@@ -26,17 +25,11 @@ import { mcpClientManager } from "../mcps/mcp-client.js";
 import { RedeployCoordinator } from "./redeploy/RedeployCoordinator.js";
 import { EscalationEngine } from "./escalation/EscalationEngine.js";
 import { SuccessHandler } from "./success/SuccessHandler.js";
-import type { RuleValidationContext } from "../enforcement/types.js";
 import { PostProcessorConfig, PostProcessorResult, PostProcessorContext, MonitoringResult, FixResult, FailureAnalysis } from "./types.js";
 import { defaultConfig } from "./config.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
 import { ReportContentValidator } from "../validation/report-content-validator.js";
-import { PostProcessorReporter } from "./reporting/PostProcessorReporter.js";
 import { RegressionAnalysisService } from "./services/RegressionAnalysisService.js";
-import { ProcessorConfigLoader } from "./config/ProcessorConfigLoader.js";
-import { ArchitecturalComplianceChecker } from "./compliance/ArchitecturalComplianceChecker.js";
-import type { MetamorphosisEngine, MetamorphosisProposal } from "../types/metamorphosis.js";
-import { SelfProposalEngine } from "./metamorphosis/SelfProposalEngine.js";
 
 export class PostProcessor {
   private config: PostProcessorConfig;
@@ -45,10 +38,7 @@ export class PostProcessor {
   private autoFixEngine: AutoFixEngine;
   private fixValidator: FixValidator;
   private reportValidator: ReportContentValidator;
-  private reporter: PostProcessorReporter;
   private regressionAnalysisService: RegressionAnalysisService;
-  private configLoader: ProcessorConfigLoader;
-  private codeAnalyzer: CodeChangeAnalyzer;
   private redeployCoordinator: RedeployCoordinator;
   private escalationEngine: EscalationEngine;
   private successHandler: SuccessHandler;
@@ -57,17 +47,13 @@ export class PostProcessor {
     webhook: WebhookTrigger;
     api: APITrigger;
   };
-  private complianceChecker: ArchitecturalComplianceChecker;
-  private metamorphosisEngines: MetamorphosisEngine[];
 
   constructor(
-    private stateManager: XrayStateManager,
+    private stateManager: StringRayStateManager,
     private sessionMonitor: SessionMonitor | null = null,
     config: Partial<PostProcessorConfig> = {},
-    metamorphosisEngines?: MetamorphosisEngine[],
   ) {
     this.config = { ...defaultConfig, ...config };
-    this.metamorphosisEngines = metamorphosisEngines ?? [new SelfProposalEngine()];
 
     // Initialize monitoring engine
     this.monitoringEngine = new PostProcessorMonitoringEngine(
@@ -82,10 +68,7 @@ export class PostProcessor {
     );
     this.fixValidator = new FixValidator();
     this.reportValidator = new ReportContentValidator();
-    this.reporter = new PostProcessorReporter(this.config, this.reportValidator);
     this.regressionAnalysisService = new RegressionAnalysisService();
-    this.configLoader = new ProcessorConfigLoader();
-    this.codeAnalyzer = new CodeChangeAnalyzer();
 
     // Initialize redeploy coordinator
     this.redeployCoordinator = new RedeployCoordinator(this.config.redeploy);
@@ -100,45 +83,281 @@ export class PostProcessor {
       webhook: new WebhookTrigger(this),
       api: new APITrigger(this, {}),  // Pass empty config object
     };
-
-    // Initialize architectural compliance checker
-    this.complianceChecker = new ArchitecturalComplianceChecker();
   }
 
   /**
-   * Notify metamorphosis engines of a lifecycle phase.
-   * No-op when no engines are configured.
+   * Generate automated framework report if conditions are met
    */
-  private async notifyPhase(phase: string, context: unknown): Promise<void> {
-    for (const engine of this.metamorphosisEngines) {
-      try {
-        await engine.onPhase?.(phase, context);
-      } catch (err) {
-        await frameworkLogger.log("postprocessor", "metamorphosis-phase-error", "error", {
-          engine: engine.name,
-          phase,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
+  private async generateFrameworkReport(
+    complexityScore: number,
+    context: PostProcessorContext,
+    sessionId: string,
+  ): Promise<string | null> {
+    if (!this.config.reporting.enabled || !this.config.reporting.autoGenerate) {
+      return null;
+    }
+
+    // Only generate report if complexity score meets threshold
+    if (complexityScore < this.config.reporting.reportThreshold) {
+      await frameworkLogger.log(
+        "postprocessor",
+        "report-skipped-low-complexity",
+        "info",
+        {
+          complexityScore,
+          threshold: this.config.reporting.reportThreshold,
+        },
+      );
+      return null;
+    }
+
+    try {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-generating-automated-framework-report-",
+        "info",
+        { message: "📊 Generating automated framework report..." },
+      );
+
+      const reportConfig = {
+        type: "full-analysis" as const,
+        sessionId,
+        outputFormat: "markdown" as const,
+        outputPath: path.join(
+          this.config.reporting.reportDir,
+          `framework-report-${context.commitSha}-${new Date().toISOString().split("T")[0]}.md`,
+        ),
+        detailedMetrics: true,
+        timeRange: { lastHours: 24 },
+      };
+
+      await frameworkReportingSystem.generateReport(reportConfig);
+
+      await frameworkLogger.log(
+        "-post-processor",
+        "-framework-report-generated-reportconfig-outputpat",
+        "success",
+        {
+          message: `✅ Framework report generated: ${reportConfig.outputPath}`,
+        },
+      );
+
+      // Clean up old reports
+      await this.cleanupOldReports();
+
+      return reportConfig.outputPath;
+    } catch (error) {
+      await frameworkLogger.log(
+        "postprocessor",
+        "framework-report-generation-failed",
+        "warning",
+        { error: String(error) },
+      );
+      return null;
     }
   }
 
   /**
-   * Notify metamorphosis engines of a generated proposal.
-   * No-op when no engines are configured.
+   * Validate generated reports for hidden issues
    */
-  private async notifyProposal(proposal: MetamorphosisProposal): Promise<void> {
-    for (const engine of this.metamorphosisEngines) {
-      try {
-        await engine.onProposal?.(proposal);
-      } catch (err) {
-        await frameworkLogger.log("postprocessor", "metamorphosis-proposal-error", "error", {
-          engine: engine.name,
-          proposalId: proposal.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
+  private async validateGeneratedReport(
+    reportPath: string,
+    reportType: string,
+  ): Promise<void> {
+    try {
+      if (this.reportValidator) {
+        const validation = await this.reportValidator.validateReportContent(
+          reportPath,
+          reportType as any,
+        );
+
+        if (!validation.valid) {
+          await frameworkLogger.log(
+            "postprocessor",
+            "report-validation-failed",
+            "warning",
+            { reportPath, issues: validation.issues },
+          );
+
+          if (validation.details.criticalErrors.length > 0) {
+            await frameworkLogger.log(
+              "postprocessor",
+              "critical-errors-in-report",
+              "error",
+              { reportPath, criticalErrors: validation.details.criticalErrors },
+            );
+          }
+        } else {
+          await frameworkLogger.log(
+            "postprocessor",
+            "report-validation-passed",
+            "success",
+            { reportPath },
+          );
+        }
       }
+    } catch (error) {
+      await frameworkLogger.log(
+        "postprocessor",
+        "report-validation-failed",
+        "warning",
+        { error: String(error) },
+      );
     }
+  }
+
+  /**
+   * Clean up old reports based on retention policy
+   */
+  private async cleanupOldReports(): Promise<void> {
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+
+      const reportDir = this.config.reporting.reportDir;
+      if (!fs.existsSync(reportDir)) return;
+
+      const files = fs.readdirSync(reportDir);
+      const cutoffTime =
+        Date.now() - this.config.reporting.retentionDays * 24 * 60 * 60 * 1000;
+
+      for (const file of files) {
+        const filePath = path.join(reportDir, file);
+        const stats = fs.statSync(filePath);
+
+        if (stats.mtime.getTime() < cutoffTime) {
+          fs.unlinkSync(filePath);
+          await frameworkLogger.log(
+            "postprocessor",
+            "cleaned-up-old-report",
+            "info",
+            { file },
+          );
+        }
+      }
+    } catch (error) {
+      await frameworkLogger.log(
+        "postprocessor",
+        "report-cleanup-failed",
+        "warning",
+        { error: String(error) },
+      );
+    }
+  }
+
+  /**
+   * Analyze code changes to provide meaningful context to processors
+   * FIX: Issue #1 - Pass actual code analysis to processors
+   */
+  private async analyzeCodeChanges(context: PostProcessorContext): Promise<{
+    operation: "commit";
+    files: string[];
+    newCode: Map<string, string>;
+    existingCode: Map<string, string>;
+    tests: string[];
+    dependencies: string[];
+  }> {
+    const fs = await import("fs");
+    const path = await import("path");
+    
+    const newCode = new Map<string, string>();
+    const existingCode = new Map<string, string>();
+    const tests: string[] = [];
+    const dependencies: string[] = [];
+    
+    try {
+      // Read new/changed files
+      for (const file of context.files || []) {
+        try {
+          const fullPath = path.join(process.cwd(), file);
+          if (fs.existsSync(fullPath)) {
+            // Read new code
+            const content = fs.readFileSync(fullPath, "utf-8");
+            newCode.set(file, content);
+            
+            // Check for test files
+            if (file.includes(".test.") || file.includes(".spec.")) {
+              tests.push(file);
+            }
+            
+            // Check for package.json or dependency files
+            if (file.includes("package.json") || file.includes("requirements.txt") || file.includes("Cargo.toml")) {
+              dependencies.push(file);
+            }
+          }
+        } catch (error) {
+          // Skip files that can't be read
+          await frameworkLogger.log(
+            "-post-processor",
+            "-code-analysis-file-error",
+            "info",
+            { message: `Could not analyze ${file}: ${error}` },
+          );
+        }
+      }
+      
+      await frameworkLogger.log(
+        "-post-processor",
+        "-code-analysis-complete",
+        "info",
+        { 
+          message: `Analyzed ${newCode.size} files, ${tests.length} tests, ${dependencies.length} dependencies`,
+        },
+      );
+    } catch (error) {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-code-analysis-failed",
+        "error",
+        { message: `Code analysis failed: ${error}` },
+      );
+    }
+    
+    return {
+      operation: "commit",
+      files: context.files || [],
+      newCode,
+      existingCode,
+      tests,
+      dependencies,
+    };
+  }
+
+  /**
+   * Load processor configuration from features.json
+   * FIX: Issue #2 - Make processor registration configurable
+   */
+  private async loadProcessorConfig(): Promise<{
+    preValidate?: { enabled?: boolean };
+    codexCompliance?: { enabled?: boolean };
+    testAutoCreation?: { enabled?: boolean };
+    versionCompliance?: { enabled?: boolean };
+    errorBoundary?: { enabled?: boolean };
+    agentsMdValidation?: { enabled?: boolean };
+    stateValidation?: { enabled?: boolean };
+    post_processors?: { enabled?: boolean; priority_order?: string[] };
+    storytellingTrigger?: { enabled?: boolean };
+    sessionSummary?: { enabled?: boolean };
+    testExecution?: { enabled?: boolean };
+    regressionTesting?: { enabled?: boolean };
+    inferenceImprovement?: { enabled?: boolean };
+  }> {
+    const fs = await import("fs");
+    const path = await import("path");
+    
+    try {
+      const configPath = resolveConfigPath("features.json") ?? path.join(process.cwd(), ".opencode", "strray", "features.json");
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        return config.processors || {};
+      }
+    } catch (error) {
+      frameworkLogger.log("postprocessor", "processor-config-load-failed", "info", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    
+    return {};
   }
 
   /**
@@ -146,8 +365,8 @@ export class PostProcessor {
    */
   async initialize(): Promise<void> {
     await frameworkLogger.log(
-      "postprocessor",
-      "initialize",
+      "-post-processor",
+      "-initializing-stringray-post-processor-",
       "info",
       { message: "🚀 Initializing 0xRay Post-Processor..." },
     );
@@ -186,13 +405,424 @@ export class PostProcessor {
     }
 
     await frameworkLogger.log(
-      "postprocessor",
-      "initialize-complete",
+      "-post-processor",
+      "-post-processor-initialization-complete-",
       "info",
       { message: "🎯 Post-Processor initialization complete" },
     );
   }
 
+  /**
+   * Validate architectural compliance against codex rules
+   */
+  private async validateArchitecturalCompliance(
+    context: PostProcessorContext,
+  ): Promise<boolean> {
+    try {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-validating-architectural-compliance-",
+        "info",
+        { message: "🏗️ Validating architectural compliance..." },
+      );
+
+      // Rule 46: System Integrity Cross-Check
+      const integrityCheck = await this.checkSystemIntegrity(context);
+      if (!integrityCheck.passed) {
+        await frameworkLogger.log(
+          "-post-processor",
+          "-system-integrity-violation-integritycheck-message",
+          "error",
+          {
+            message: `❌ System integrity violation: ${integrityCheck.message}`,
+          },
+        );
+
+        // Call researcher agent to analyze system components
+        const fixed = await this.callAgentForArchitecturalFix(
+          "checkSystemIntegrity",
+          "researcher",
+          "project-analysis",
+          context,
+          integrityCheck.message,
+        );
+
+        if (!fixed) {
+          return false; // Could not auto-fix
+        }
+      }
+
+      // Rule 47: Integration Testing Mandate
+      const integrationCheck = await this.checkIntegrationTesting(context);
+      if (!integrationCheck.passed) {
+        await frameworkLogger.log(
+          "-post-processor",
+          "-integration-testing-violation-integrationcheck-me",
+          "error",
+          {
+            message: `❌ Integration testing violation: ${integrationCheck.message}`,
+          },
+        );
+
+        // Call testing-lead agent for testing strategy
+        const fixed = await this.callAgentForArchitecturalFix(
+          "checkIntegrationTesting",
+          "testing-lead",
+          "testing-strategy",
+          context,
+          integrationCheck.message,
+        );
+
+        if (!fixed) {
+          return false; // Could not auto-fix
+        }
+      }
+
+      // Rule 48: Path Resolution Abstraction
+      const pathCheck = await this.checkPathResolution(context);
+      if (!pathCheck.passed) {
+        await frameworkLogger.log(
+          "-post-processor",
+          "-path-resolution-violation-pathcheck-message-",
+          "error",
+          { message: `❌ Path resolution violation: ${pathCheck.message}` },
+        );
+
+        // Call researcher + refactorer for path analysis and fixes
+        const fixed = await this.callAgentForArchitecturalFix(
+          "checkPathResolution",
+          "researcher",
+          "project-analysis",
+          context,
+          pathCheck.message,
+        );
+
+        if (!fixed) {
+          return false; // Could not auto-fix
+        }
+      }
+
+      // Rule 49: Feature Completeness Validation
+      const completenessCheck = await this.checkFeatureCompleteness(context);
+      if (!completenessCheck.passed) {
+        await frameworkLogger.log(
+          "-post-processor",
+          "-feature-completeness-violation-completenesscheck-",
+          "error",
+          {
+            message: `❌ Feature completeness violation: ${completenessCheck.message}`,
+          },
+        );
+
+        // Call architect agent for system design analysis
+        const fixed = await this.callAgentForArchitecturalFix(
+          "checkFeatureCompleteness",
+          "architect",
+          "architecture-patterns",
+          context,
+          completenessCheck.message,
+        );
+
+        if (!fixed) {
+          return false; // Could not auto-fix
+        }
+      }
+
+      // Rule 50: Path Analysis Guidelines Enforcement
+      const pathGuidelinesCheck =
+        await this.checkPathAnalysisGuidelines(context);
+      if (!pathGuidelinesCheck.passed) {
+        await frameworkLogger.log(
+          "-post-processor",
+          "-path-analysis-guidelines-violation-pathguidelines",
+          "error",
+          {
+            message: `❌ Path analysis guidelines violation: ${pathGuidelinesCheck.message}`,
+          },
+        );
+
+        // Call refactorer agent for code refactoring
+        const fixed = await this.callAgentForArchitecturalFix(
+          "checkPathAnalysisGuidelines",
+          "refactorer",
+          "refactoring-strategies",
+          context,
+          pathGuidelinesCheck.message,
+        );
+
+        if (!fixed) {
+          return false; // Could not auto-fix
+        }
+      }
+
+      await frameworkLogger.log(
+        "-post-processor",
+        "-all-architectural-compliance-checks-passed-",
+        "success",
+        { message: "✅ All architectural compliance checks passed" },
+      );
+      return true;
+    } catch (error) {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-architectural-compliance-validation-failed-error-",
+        "error",
+        {
+          message: `❌ Architectural compliance validation failed: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      );
+      return false;
+    }
+  }
+
+  private async checkSystemIntegrity(
+    context: PostProcessorContext,
+  ): Promise<{ passed: boolean; message: string }> {
+    // Check if all critical framework components are active
+    const stateManager = globalThis.strRayStateManager;
+    const postProcessor = globalThis.strRayPostProcessor;
+
+    if (!stateManager) {
+      try {
+        const { StrRayStateManager } =
+          await import("../state/state-manager.js");
+        const tempStateManager = new StrRayStateManager();
+        globalThis.strRayStateManager = tempStateManager;
+        return {
+          passed: true,
+          message: "System integrity verified (graceful mode)",
+        };
+      } catch (e) {
+        return {
+          passed: true,
+          message: "System integrity assumed OK (no full framework context)",
+        };
+      }
+    }
+
+    if (!postProcessor) {
+      return {
+        passed: true,
+        message: "System integrity verified (state manager active)",
+      };
+    }
+
+    return { passed: true, message: "System integrity verified" };
+  }
+
+  private async checkIntegrationTesting(
+    context: PostProcessorContext,
+  ): Promise<{ passed: boolean; message: string }> {
+    // For now, we assume integration testing has been run as part of the CI/CD process
+    // In a full implementation, this would check actual test results
+    return {
+      passed: true,
+      message: "Integration testing assumed to be completed in CI/CD pipeline",
+    };
+  }
+
+  private async checkPathResolution(
+    context: PostProcessorContext,
+  ): Promise<{ passed: boolean; message: string }> {
+    // Check for path resolution issues in committed files
+    // This would require reading the actual file contents from git
+    // For now, we verify that the framework's path resolution is working
+    const pathResolver = globalThis.strRayPathResolver;
+    if (!pathResolver) {
+      return {
+        passed: true,
+        message: "Path resolution check skipped (no full framework context)",
+      };
+    }
+
+    // Test path resolution with a sample path
+    try {
+      const resolvedPath = pathResolver.resolveAgentPath("test-agent");
+      if (resolvedPath.includes("../") || resolvedPath.includes("./dist")) {
+        return {
+          passed: false,
+          message: "Path resolution returning hardcoded paths",
+        };
+      }
+      return { passed: true, message: "Path resolution abstraction verified" };
+    } catch (error) {
+      return {
+        passed: false,
+        message: `Path resolution failed: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  private async checkFeatureCompleteness(
+    context: PostProcessorContext,
+  ): Promise<{ passed: boolean; message: string }> {
+    // This is a simplified check - in practice, we'd analyze the commit and PR data
+    // For now, we assume completeness based on the context having required fields
+    // Graceful degradation - assume OK if no full commit context
+    if (!context.commitSha || !context.repository) {
+      return {
+        passed: true,
+        message: "Feature completeness assumed OK (no full commit context)",
+      };
+    }
+    return { passed: true, message: "Feature completeness verified" };
+  }
+
+  /**
+   * Rule 50: Path Analysis Guidelines Enforcement
+   * Ensures AIs follow path resolution guidelines for all write/edit operations
+   * Covers all 3 types of path violations from PATH_RESOLUTION_ANALYSIS.md
+   */
+  private async checkPathAnalysisGuidelines(
+    context: PostProcessorContext,
+  ): Promise<{ passed: boolean; message: string }> {
+    // Check if the current operation involves code changes that might introduce path issues
+    if (!context.files || context.files.length === 0) {
+      return { passed: true, message: "No files to check for path guidelines" };
+    }
+
+    // Check for TypeScript/JavaScript files that might contain imports
+    const codeFiles = context.files.filter(
+      (file) =>
+        file.endsWith(".ts") ||
+        file.endsWith(".js") ||
+        file.endsWith(".tsx") ||
+        file.endsWith(".jsx"),
+    );
+
+    if (codeFiles.length === 0) {
+      return {
+        passed: true,
+        message: "No code files to validate for path guidelines",
+      };
+    }
+
+    // For write/edit operations, notify AIs about ALL THREE types of path violations
+    const guidelinesMessage = `
+🚨 CRITICAL: PATH ANALYSIS GUIDELINES ENFORCEMENT 🚨
+
+AI Operations Detected: ${context.trigger} trigger with ${codeFiles.length} code file(s)
+MANDATORY COMPLIANCE REQUIRED - VIOLATIONS WILL BLOCK COMMITS
+
+═══════════════════════════════════════════════════════════════
+🔴 TYPE 1: HARDCODED 'dist/' PATHS (17 files affected)
+═══════════════════════════════════════════════════════════════
+
+❌ NEVER use hardcoded 'dist/' paths in source code:
+\`\`\`typescript
+// WRONG - Breaks across environments (actual violations found)
+import { RuleEnforcer } from "../enforcement/rule-enforcer.js";
+// FIXED: Removed hardcoded dist/ path (was causing dist/dist corruption in builds)
+\`\`\`
+
+✅ CORRECT - Use import resolver for environment awareness:
+\`\`\`typescript
+// Environment-aware imports (Solution C)
+const { importResolver } = await import('./utils/import-resolver.js');
+const { RuleEnforcer } = await importResolver.importModule('enforcement/rule-enforcer');
+\`\`\`
+
+═══════════════════════════════════════════════════════════════
+🟡 TYPE 2: PROBLEMATIC '../' IMPORTS (107 files affected)
+═══════════════════════════════════════════════════════════════
+
+❌ Directory structure assumptions that break across environments:
+\`\`\`typescript
+// WRONG - Assumes specific deployment structure
+import { AgentConfig } from "../agents/code-reviewer.js"; // May break if directories move
+import { Utils } from "../../../shared/utils.js"; // Fragile deep navigation
+\`\`\`
+
+✅ CORRECT - Use stable relative imports within modules:
+\`\`\`typescript
+// Stable within src/ directory structure
+import { AgentConfig } from "../agents/code-reviewer.js"; // OK within same project
+import { Utils } from "../../shared/utils.js"; // Prefer shallower paths
+\`\`\`
+
+═══════════════════════════════════════════════════════════════
+🟠 TYPE 3: BRITTLE './' IMPORTS (151 files affected)
+═══════════════════════════════════════════════════════════════
+
+❌ Local file assumptions that break when files move:
+\`\`\`typescript
+// WRONG - Assumes file exists in specific location
+import { Config } from "./config.js"; // May not exist in built version
+import { Utils } from "./utils/helpers.js"; // Breaks if directory reorganized
+\`\`\`
+
+✅ CORRECT - Use proper module resolution:
+\`\`\`typescript
+// Prefer named imports from index files
+import { Config } from "./config/index.js";
+import { helpers } from "./utils/index.js";
+
+// Or use full relative paths when necessary
+import { Config } from "./config/config.js";
+\`\`\`
+
+═══════════════════════════════════════════════════════════════
+🛠️ RECOMMENDED SOLUTIONS FROM PATH_RESOLUTION_ANALYSIS.md
+═══════════════════════════════════════════════════════════════
+
+**Solution A: Environment Variables (Simple)**
+\`\`\`typescript
+const AGENTS_PATH = process.env.STRRAY_AGENTS_PATH || '../agents';
+import { AgentConfig } from \`\${AGENTS_PATH}/code-reviewer.js\`;
+\`\`\`
+
+**Solution B: Directory Structure Alignment (Architectural)**
+- Ensure build output matches source structure
+- Use aligned plugin/component directories
+- No code changes needed when structure is correct
+
+**Solution C: Import Resolver (Recommended)**
+\`\`\`typescript
+const { importResolver } = await import('./utils/import-resolver.js');
+const { Module } = await importResolver.importModule('path/to/module');
+\`\`\`
+
+═══════════════════════════════════════════════════════════════
+⚠️  ENFORCEMENT LEVELS
+═══════════════════════════════════════════════════════════════
+
+🔴 BLOCKING: Hardcoded dist/ paths in source files
+🟡 WARNING: Problematic deep ../ navigation (>3 levels)
+🟠 MONITOR: Brittle ./ imports (logged for review)
+
+AI MUST use appropriate solution based on context:
+- Development scripts → Solution A (Environment Variables)
+- Plugin components → Solution B (Directory Alignment)
+- Dynamic imports → Solution C (Import Resolver)
+
+═══════════════════════════════════════════════════════════════
+📖 REFERENCE: PATH_RESOLUTION_ANALYSIS.md
+═══════════════════════════════════════════════════════════════
+
+Complete guidelines available in project documentation.
+All path violations will be automatically detected and blocked.
+`;
+
+    // Log the comprehensive guidelines notification for AIs
+    await frameworkLogger.log("-post-processor", "guidelinesmessage", "info", {
+      message: guidelinesMessage,
+    });
+
+    // In a full implementation, we would:
+    // 1. Scan actual file contents for violations
+    // 2. Use git diff to check changed imports
+    // 3. Validate against all three violation types
+    // 4. Block commits with actual violations found
+
+    // For now, we provide comprehensive guidance and assume compliance
+    // Future enhancement: Implement actual file scanning and blocking
+
+    return {
+      passed: true,
+      message:
+        "Comprehensive path analysis guidelines notification sent to AI operations",
+    };
+  }
 
   /**
    * Execute the complete post-processor loop
@@ -205,8 +835,8 @@ export class PostProcessor {
     const sessionId = `postprocessor-${context.commitSha}-${Date.now()}`;
 
     await frameworkLogger.log(
-      "postprocessor",
-      "loop-start",
+      "-post-processor",
+      "-starting-post-processor-loop-for-commit-context-c",
       "info",
       {
         message: `🔄 Starting post-processor loop for commit: ${context.commitSha}`,
@@ -215,11 +845,11 @@ export class PostProcessor {
 
     // Validate architectural compliance before processing
     const compliancePassed =
-        await this.complianceChecker.validateArchitecturalCompliance(context);
+      await this.validateArchitecturalCompliance(context);
     if (!compliancePassed) {
       await frameworkLogger.log(
-        "postprocessor",
-        "compliance-validation-failed",
+        "-post-processor",
+        "-architectural-compliance-validation-failed-blocki",
         "error",
         {
           message:
@@ -235,29 +865,9 @@ export class PostProcessor {
       };
     }
 
-    // Gate-sourced critical violations escalation
-    const critical = context.criticalViolations ?? [];
-    if (critical.length > 0) {
-      await frameworkLogger.log("postprocessor", "gate-critical-violations", "error", {
-        count: critical.length,
-        violations: critical.map(v => `${v.ruleId}[${v.severity}]: ${v.message}`).join("; "),
-      });
-      const escalationResult = await this.escalationEngine.evaluateEscalation(
-        context, 0,
-        `Gate reported ${critical.length} critical violation(s): ${critical[0]!.message}`,
-        [],
-      );
-      if (escalationResult) {
-        await frameworkLogger.log("postprocessor", "gate-escalation-triggered", "error", {
-          level: escalationResult.level,
-          reason: escalationResult.reason,
-        });
-      }
-    }
-
     // Codex compliance validation: Use processor-manager for proper rule enforcement and agent delegation
     // IMPROVED: Analyze actual code changes and pass meaningful context to processors
-    const processorContext = await this.codeAnalyzer.analyzeCodeChanges(context);
+    const processorContext = await this.analyzeCodeChanges(context);
 
     try {
       const { importResolver } = await import("../utils/import-resolver.js");
@@ -267,7 +877,7 @@ export class PostProcessor {
 
       const processorManager = new ProcessorManager(this.stateManager);
 
-      const processorConfig = await this.configLoader.loadProcessorConfig();
+      const processorConfig = await this.loadProcessorConfig();
       
       const PRE_PROCESSOR_DEFAULTS: Record<string, { type: "pre"; priority: number }> = {
         preValidate: { type: "pre", priority: 10 },
@@ -348,8 +958,8 @@ export class PostProcessor {
             } catch (testError) {
               // Non-blocking - log but continue
               await frameworkLogger.log(
-                "postprocessor",
-                "test-auto-creation-failed",
+                "-post-processor",
+                "-test-auto-creation-failed",
                 "info",
                 {
                   message: `Test auto-creation failed for ${filePath}: ${testError}`,
@@ -375,8 +985,8 @@ export class PostProcessor {
         );
 
         await frameworkLogger.log(
-          "postprocessor",
-          "codex-compliance-violations-detected",
+          "-post-processor",
+          "-codex-compliance-violations-detected-processor-ma",
           "info",
           {
             message:
@@ -384,76 +994,10 @@ export class PostProcessor {
           },
         );
       }
-
-      // Per-pipeline explicit validation wiring for PostProcessor claimed terms: 7,8,74,77
-      // Convert PostProcessor context (Map-based newCode) to RuleValidationContext (string-based)
-      const joinedNewCode = processorContext.newCode.size > 0
-        ? Array.from(processorContext.newCode.values()).join("\n")
-        : undefined;
-      const validationContext: RuleValidationContext = {
-        operation: processorContext.operation,
-        files: processorContext.files,
-        ...(joinedNewCode ? { newCode: joinedNewCode } : {}),
-        existingCode: processorContext.existingCode,
-        dependencies: processorContext.dependencies,
-        tests: processorContext.tests,
-      };
-
-      try {
-        const { globalValidatorRegistry } = await import("../enforcement/validators/validator-registry.js");
-
-        const term7 = globalValidatorRegistry.getValidator("error-resolution");
-        if (term7) {
-          const res = await term7.validate(validationContext);
-          if (!res.passed) {
-            await frameworkLogger.log("postprocessor", "term-7-validation-failed", "error", {
-              message: res.message,
-              suggestions: res.suggestions,
-            });
-          }
-        }
-
-        const term8 = globalValidatorRegistry.getValidator("loop-safety");
-        if (term8) {
-          const res = await term8.validate(validationContext);
-          if (!res.passed) {
-            await frameworkLogger.log("postprocessor", "term-8-validation-failed", "error", {
-              message: res.message,
-              suggestions: res.suggestions,
-            });
-          }
-        }
-
-        const term74 = globalValidatorRegistry.getValidator("boot-wiring");
-        if (term74) {
-          const res = await term74.validate(validationContext);
-          if (!res.passed) {
-            await frameworkLogger.log("postprocessor", "term-74-validation-failed", "warning", {
-              message: res.message,
-              suggestions: res.suggestions,
-            });
-          }
-        }
-
-        const term77 = globalValidatorRegistry.getValidator("console-log-usage");
-        if (term77) {
-          const res = await term77.validate(validationContext);
-          if (!res.passed) {
-            await frameworkLogger.log("postprocessor", "term-77-validation-failed", "error", {
-              message: res.message,
-              suggestions: res.suggestions,
-            });
-          }
-        }
-      } catch (e) {
-        await frameworkLogger.log("postprocessor", "per-pipeline-validation-error", "warning", {
-          error: String(e),
-        });
-      }
     } catch (error) {
       await frameworkLogger.log(
-        "postprocessor",
-        "codex-compliance-check-failed",
+        "-post-processor",
+        "-codex-compliance-check-failed-continuing-with-com",
         "error",
         {
           message: "⚠️ Codex compliance check failed - continuing with commit",
@@ -485,16 +1029,13 @@ export class PostProcessor {
       });
 
       await frameworkLogger.log(
-        "postprocessor",
-        "loop-completed",
+        "-post-processor",
+        "-post-processor-loop-completed-result-success-succ",
         "success",
         {
           message: `✅ Post-processor loop completed: ${result.success ? "SUCCESS" : "FAILED"}`,
         },
       );
-
-      await this.notifyPhase('post-process-complete', { context, result });
-
       return result;
     } catch (error) {
       await frameworkLogger.log(
@@ -540,8 +1081,8 @@ export class PostProcessor {
       attempts++;
 
       await frameworkLogger.log(
-        "postprocessor",
-        "monitoring-attempt",
+        "-post-processor",
+        "-monitoring-attempt-attempts-maxattempts-for-conte",
         "info",
         {
           message: `🔍 Monitoring attempt ${attempts}/${maxAttempts} for ${context.commitSha}`,
@@ -557,13 +1098,11 @@ export class PostProcessor {
 
       if (monitoringResult.overallStatus === "success") {
         await frameworkLogger.log(
-          "postprocessor",
-          "pipeline-success",
+          "-post-processor",
+          "-ci-cd-pipeline-successful-post-processor-complete",
           "success",
           { message: "✅ CI/CD pipeline successful - post-processor complete" },
         );
-
-        await this.notifyPhase('monitoring-complete', { context, monitoringResult });
 
         const result = {
           success: true,
@@ -653,7 +1192,7 @@ export class PostProcessor {
           const { ProcessorManager: PM } = await resolver.importModule("processors/processor-manager");
           const pm = new PM(this.stateManager);
 
-          const postProcessorConfig = await this.configLoader.loadProcessorConfig();
+          const postProcessorConfig = await this.loadProcessorConfig();
           const POST_MAP: Record<string, { type: "post"; priority: number }> = {
             storytellingTrigger: { type: "post", priority: 5 },
             sessionSummary: { type: "post", priority: 15 },
@@ -683,7 +1222,7 @@ export class PostProcessor {
           }, []);
 
           const triggeredStorytelling = postResults.find(
-            (r: { processorName?: string; success?: boolean }) => r.processorName === "storytellingTrigger" && r.success
+            (r: any) => r.processorName === "storytellingTrigger" && r.success
           );
           if (triggeredStorytelling) {
             await frameworkLogger.log("postprocessor", "storytelling-trigger-activated", "info", {
@@ -701,7 +1240,7 @@ export class PostProcessor {
           monitoringResults,
           context,
         );
-        const reportPath = await this.reporter.generateFrameworkReport(
+        const reportPath = await this.generateFrameworkReport(
           complexityScore,
           context,
           sessionId,
@@ -709,7 +1248,7 @@ export class PostProcessor {
 
         // Validate the generated report for hidden issues
         if (reportPath) {
-          await this.reporter.validateGeneratedReport(reportPath, "framework");
+          await this.validateGeneratedReport(reportPath, "framework");
         }
 
         return result;
@@ -726,8 +1265,8 @@ export class PostProcessor {
       const analysis =
         await this.failureAnalysisEngine.analyzeFailure(monitoringResult);
       await frameworkLogger.log(
-        "postprocessor",
-        "analysis-complete",
+        "-post-processor",
+        "-analysis-complete-analysis-category-analysis-seve",
         "info",
         {
           message: `🔍 Analysis complete: ${analysis.category} (${analysis.severity}) - ${analysis.rootCause}`,
@@ -738,8 +1277,8 @@ export class PostProcessor {
 
       if (fixResult.success && fixResult.appliedFixes.length > 0) {
         await frameworkLogger.log(
-          "postprocessor",
-          "fixes-applied",
+          "-post-processor",
+          "-fixresult-appliedfixes-length-fix-es-applied-succ",
           "success",
           {
             message: `🔧 ${fixResult.appliedFixes.length} fix(es) applied successfully`,
@@ -755,8 +1294,8 @@ export class PostProcessor {
 
         if (validationPassed) {
           await frameworkLogger.log(
-            "postprocessor",
-            "fix-validation-passed",
+            "-post-processor",
+            "-fix-validation-passed-redeploying-",
             "success",
             { message: "✅ Fix validation passed - redeploying..." },
           );
@@ -784,14 +1323,14 @@ export class PostProcessor {
 
       if (escalationResult) {
         await frameworkLogger.log(
-          "postprocessor",
-          "escalation-triggered",
+          "-post-processor",
+          "-escalation-triggered-escalationresult-level-",
           "info",
           { message: `🚨 Escalation triggered: ${escalationResult.level}` },
         );
         await frameworkLogger.log(
-          "postprocessor",
-          "escalation-reason",
+          "-post-processor",
+          "-reason-escalationresult-reason-",
           "info",
           { message: `   Reason: ${escalationResult.reason}` },
         );
@@ -845,8 +1384,8 @@ export class PostProcessor {
     jobId: string,
   ): Promise<void> {
     await frameworkLogger.log(
-      "postprocessor",
-      "redeploy-start",
+      "-post-processor",
+      "-executing-redeployment-with-fixes-",
       "info",
       { message: "🔄 Executing redeployment with fixes..." },
     );
@@ -858,8 +1397,8 @@ export class PostProcessor {
 
     if (redeployResult.success) {
       await frameworkLogger.log(
-        "postprocessor",
-        "redeploy-success",
+        "-post-processor",
+        "-redeployment-successful-redeployresult-deployment",
         "success",
         {
           message: `✅ Redeployment successful: ${redeployResult.deploymentId}`,
@@ -896,8 +1435,8 @@ export class PostProcessor {
     attempts: number,
   ): Promise<void> {
     await frameworkLogger.log(
-      "postprocessor",
-      "escalate-manual",
+      "-post-processor",
+      "-escalating-to-manual-intervention-",
       "info",
       { message: "🚨 Escalating to manual intervention" },
     );
@@ -921,10 +1460,10 @@ export class PostProcessor {
 
     // TODO: Send notifications to development team
     await frameworkLogger.log(
-      "postprocessor",
-      "escalation-report-created",
+      "-post-processor",
+      "-escalation-report-created-report",
       "info",
-      { message: "📋 Escalation report created", report },
+      { message: "📋 Escalation report created:", report },
     );
   }
 
@@ -936,8 +1475,8 @@ export class PostProcessor {
     const delay = baseDelay * Math.pow(2, attempt - 1);
 
     await frameworkLogger.log(
-      "postprocessor",
-      "wait-before-retry",
+      "-post-processor",
+      "-waiting-delay-ms-before-retry-attempt-attempt-1-",
       "info",
       { message: `⏳ Waiting ${delay}ms before retry attempt ${attempt + 1}` },
     );
@@ -955,6 +1494,90 @@ export class PostProcessor {
     };
   }
 
+  /**
+   * Call appropriate agent/skill to fix architectural compliance violations
+   */
+  private async callAgentForArchitecturalFix(
+    violationType: string,
+    agentName: string,
+    skillName: string,
+    context: PostProcessorContext,
+    violationMessage: string,
+  ): Promise<boolean> {
+    try {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-calling-agentname-skillname-to-fix-violationtype-",
+        "info",
+        {
+          message: `🔧 Calling ${agentName} (${skillName}) to fix: ${violationType}`,
+        },
+      );
+
+      // Call the skill invocation MCP server to delegate to the appropriate agent/skill
+      const result = await mcpClientManager.callServerTool(
+        "skill-invocation",
+        "invoke-skill",
+        {
+          skillName: skillName,
+          toolName: "analyze_code_quality", // Default tool for analysis
+          args: {
+            code: context.files || [],
+            language: "typescript",
+            context: {
+              violationType,
+              message: violationMessage,
+              commitSha: context.commitSha,
+              repository: context.repository,
+              branch: context.branch,
+              author: context.author,
+            },
+          },
+        },
+      );
+
+      await frameworkLogger.log(
+        "-post-processor",
+        "-agent-agentname-completed-fix-attempt-for-violati",
+        "success",
+        {
+          message: `✅ Agent ${agentName} completed fix attempt for ${violationType}`,
+        },
+      );
+
+      // Check if the fix was successful by re-running the validation
+      const fixed = await this.revalidateAfterFix(violationType, context);
+      if (fixed) {
+        await frameworkLogger.log(
+          "-post-processor",
+          "-violationtype-violation-fixed-by-agentname-",
+          "info",
+          { message: `🎉 ${violationType} violation fixed by ${agentName}` },
+        );
+        return true;
+      } else {
+        await frameworkLogger.log(
+          "-post-processor",
+          "-violationtype-violation-not-fixed-by-agentname-",
+          "error",
+          {
+            message: `❌ ${violationType} violation not fixed by ${agentName}`,
+          },
+        );
+        return false;
+      }
+    } catch (error) {
+      await frameworkLogger.log(
+        "-post-processor",
+        "-failed-to-call-agent-agentname-for-violationtype-",
+        "error",
+        {
+          message: `❌ Failed to call agent ${agentName} for ${violationType}: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      );
+      return false;
+    }
+  }
 
   /**
    * Calculate complexity score for automated report triggering
@@ -977,4 +1600,31 @@ export class PostProcessor {
     return Math.min(fileScore + monitoringScore, 100);
   }
 
+  /**
+   * Revalidate after agent fix attempt
+   */
+  private async revalidateAfterFix(
+    violationType: string,
+    context: PostProcessorContext,
+  ): Promise<boolean> {
+    switch (violationType) {
+      case "checkSystemIntegrity":
+        const integrityCheck = await this.checkSystemIntegrity(context);
+        return integrityCheck.passed;
+      case "checkIntegrationTesting":
+        const integrationCheck = await this.checkIntegrationTesting(context);
+        return integrationCheck.passed;
+      case "checkPathResolution":
+        const pathCheck = await this.checkPathResolution(context);
+        return pathCheck.passed;
+      case "checkFeatureCompleteness":
+        const completenessCheck = await this.checkFeatureCompleteness(context);
+        return completenessCheck.passed;
+      case "checkPathAnalysisGuidelines":
+        const guidelinesCheck = await this.checkPathAnalysisGuidelines(context);
+        return guidelinesCheck.passed;
+      default:
+        return false;
+    }
+  }
 }

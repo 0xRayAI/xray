@@ -5,11 +5,14 @@
  * React Native, Flutter, and mobile performance optimization
  */
 
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface IOSBlueprint {
   projectName: string;
@@ -104,109 +107,227 @@ interface AppStoreMetadataArgs {
   features?: string[];
 }
 
-class XrayMobileDevelopmentServer extends XrayKnowledgeSkillBase {
+class XrayMobileDevelopmentServer {
+  private server: Server;
+
   constructor() {
-    super("mobile-development", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "ios_blueprint",
-        description: "Generate iOS project structure with Swift/SwiftUI or UIKit",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectName: { type: "string", description: "Name of the iOS project" },
-            language: { type: "string", enum: ["swift", "swiftui", "uikit"], description: "Programming language/framework" },
-            architecture: { type: "string", enum: ["mvvm", "mvi", "vip", "clean"], description: "Architecture pattern" },
-            features: { type: "array", items: { type: "string" }, description: "Features to include (auth, database, notifications, etc.)" },
-          },
-          required: ["projectName", "language"],
-        },
+        name: "mobile-development", version: "1.22.67",
       },
       {
-        name: "android_blueprint",
-        description: "Generate Android project structure with Kotlin/Jetpack Compose",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectName: { type: "string", description: "Name of the Android project" },
-            uiFramework: { type: "string", enum: ["compose", "xml", "hybrid"], description: "UI framework to use" },
-            architecture: { type: "string", enum: ["mvvm", "mvi", "clean"], description: "Architecture pattern" },
-            features: { type: "array", items: { type: "string" }, description: "Features to include (auth, database, notifications, etc.)" },
-          },
-          required: ["projectName", "uiFramework"],
+        capabilities: {
+          tools: {},
         },
       },
-      {
-        name: "react_native_boilerplate",
-        description: "Generate React Native project with Expo or CLI setup",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectName: { type: "string", description: "Name of the React Native project" },
-            expo: { type: "boolean", description: "Use Expo for development", default: true },
-            navigation: { type: "string", enum: ["react-navigation", "wix", "native-stack"], description: "Navigation library" },
-            stateManagement: { type: "string", enum: ["redux", "zustand", "context", "recoil", "mobx"], description: "State management solution" },
-            typescript: { type: "boolean", description: "Use TypeScript", default: true },
-          },
-          required: ["projectName"],
-        },
-      },
-      {
-        name: "flutter_boilerplate",
-        description: "Generate Flutter project with best practices",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectName: { type: "string", description: "Name of the Flutter project" },
-            stateManagement: { type: "string", enum: ["provider", "riverpod", "bloc", "getx", "setstate"], description: "State management solution" },
-            architecture: { type: "string", enum: ["clean", "feature-first", "layered"], description: "Project architecture" },
-          },
-          required: ["projectName"],
-        },
-      },
-      {
-        name: "mobile_performance_profile",
-        description: "Analyze mobile app performance and provide optimization recommendations",
-        inputSchema: {
-          type: "object",
-          properties: {
-            platform: { type: "string", enum: ["ios", "android", "react-native", "flutter"], description: "Mobile platform" },
-            metrics: { type: "object", properties: { appLaunchTime: { type: "number" }, memoryUsage: { type: "number" }, batteryDrain: { type: "number" }, networkRequests: { type: "number" }, uiFrameRate: { type: "number" } }, description: "Current performance metrics" },
-          },
-          required: ["platform"],
-        },
-      },
-      {
-        name: "app_store_metadata",
-        description: "Generate app store listing metadata for iOS and Android",
-        inputSchema: {
-          type: "object",
-          properties: {
-            appName: { type: "string", description: "Name of the app" },
-            platform: { type: "string", enum: ["ios", "android", "both"], description: "Target platform(s)" },
-            category: { type: "string", description: "App category" },
-            features: { type: "array", items: { type: "string" }, description: "Key features to highlight" },
-          },
-          required: ["appName", "platform"],
-        },
-      },
-    ];
-    this.handlers = {
-      "ios_blueprint": async (args) => this.generateIOSBlueprint(args as Record<string, unknown>),
-      "android_blueprint": async (args) => this.generateAndroidBlueprint(args as Record<string, unknown>),
-      "react_native_boilerplate": async (args) => this.generateReactNativeBlueprint(args as Record<string, unknown>),
-      "flutter_boilerplate": async (args) => this.generateFlutterBlueprint(args as Record<string, unknown>),
-      "mobile_performance_profile": async (args) => this.analyzeMobilePerformance(args as Record<string, unknown>),
-      "app_store_metadata": async (args) => this.generateAppStoreMetadata(args as Record<string, unknown>),
-    };
+    );
+
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "mobile-development",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "ios_blueprint",
+            description:
+              "Generate iOS project structure with Swift/SwiftUI or UIKit",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectName: {
+                  type: "string",
+                  description: "Name of the iOS project",
+                },
+                language: {
+                  type: "string",
+                  enum: ["swift", "swiftui", "uikit"],
+                  description: "Programming language/framework",
+                },
+                architecture: {
+                  type: "string",
+                  enum: ["mvvm", "mvi", "vip", "clean"],
+                  description: "Architecture pattern",
+                },
+                features: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "Features to include (auth, database, notifications, etc.)",
+                },
+              },
+              required: ["projectName", "language"],
+            },
+          },
+          {
+            name: "android_blueprint",
+            description:
+              "Generate Android project structure with Kotlin/Jetpack Compose",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectName: {
+                  type: "string",
+                  description: "Name of the Android project",
+                },
+                uiFramework: {
+                  type: "string",
+                  enum: ["compose", "xml", "hybrid"],
+                  description: "UI framework to use",
+                },
+                architecture: {
+                  type: "string",
+                  enum: ["mvvm", "mvi", "clean"],
+                  description: "Architecture pattern",
+                },
+                features: {
+                  type: "array",
+                  items: { type: "string" },
+                  description:
+                    "Features to include (auth, database, notifications, etc.)",
+                },
+              },
+              required: ["projectName", "uiFramework"],
+            },
+          },
+          {
+            name: "react_native_boilerplate",
+            description: "Generate React Native project with Expo or CLI setup",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectName: {
+                  type: "string",
+                  description: "Name of the React Native project",
+                },
+                expo: {
+                  type: "boolean",
+                  description: "Use Expo for development",
+                  default: true,
+                },
+                navigation: {
+                  type: "string",
+                  enum: ["react-navigation", "wix", "native-stack"],
+                  description: "Navigation library",
+                },
+                stateManagement: {
+                  type: "string",
+                  enum: ["redux", "zustand", "context", "recoil", "mobx"],
+                  description: "State management solution",
+                },
+                typescript: {
+                  type: "boolean",
+                  description: "Use TypeScript",
+                  default: true,
+                },
+              },
+              required: ["projectName"],
+            },
+          },
+          {
+            name: "flutter_boilerplate",
+            description: "Generate Flutter project with best practices",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectName: {
+                  type: "string",
+                  description: "Name of the Flutter project",
+                },
+                stateManagement: {
+                  type: "string",
+                  enum: ["provider", "riverpod", "bloc", "getx", "setstate"],
+                  description: "State management solution",
+                },
+                architecture: {
+                  type: "string",
+                  enum: ["clean", "feature-first", "layered"],
+                  description: "Project architecture",
+                },
+              },
+              required: ["projectName"],
+            },
+          },
+          {
+            name: "mobile_performance_profile",
+            description:
+              "Analyze mobile app performance and provide optimization recommendations",
+            inputSchema: {
+              type: "object",
+              properties: {
+                platform: {
+                  type: "string",
+                  enum: ["ios", "android", "react-native", "flutter"],
+                  description: "Mobile platform",
+                },
+                metrics: {
+                  type: "object",
+                  properties: {
+                    appLaunchTime: { type: "number" },
+                    memoryUsage: { type: "number" },
+                    batteryDrain: { type: "number" },
+                    networkRequests: { type: "number" },
+                    uiFrameRate: { type: "number" },
+                  },
+                  description: "Current performance metrics",
+                },
+              },
+              required: ["platform"],
+            },
+          },
+          {
+            name: "app_store_metadata",
+            description:
+              "Generate app store listing metadata for iOS and Android",
+            inputSchema: {
+              type: "object",
+              properties: {
+                appName: {
+                  type: "string",
+                  description: "Name of the app",
+                },
+                platform: {
+                  type: "string",
+                  enum: ["ios", "android", "both"],
+                  description: "Target platform(s)",
+                },
+                category: {
+                  type: "string",
+                  description: "App category",
+                },
+                features: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Key features to highlight",
+                },
+              },
+              required: ["appName", "platform"],
+            },
+          },
+        ],
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "ios_blueprint":
+          return await this.generateIOSBlueprint(args ?? {});
+        case "android_blueprint":
+          return await this.generateAndroidBlueprint(args ?? {});
+        case "react_native_boilerplate":
+          return await this.generateReactNativeBlueprint(args ?? {});
+        case "flutter_boilerplate":
+          return await this.generateFlutterBlueprint(args ?? {});
+        case "mobile_performance_profile":
+          return await this.analyzeMobilePerformance(args ?? {});
+        case "app_store_metadata":
+          return await this.generateAppStoreMetadata(args ?? {});
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
     });
   }
 
@@ -536,12 +657,16 @@ class HomePage extends StatelessWidget {
     };
   }
 
+  async start() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+  }
 }
 
 const entryPoint = path.resolve(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new XrayMobileDevelopmentServer();
-  server.run("mobile-development.server").catch((err) => { frameworkLogger.log("mobile-development", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
+  server.start().catch(() => {});
 }
 
 export { XrayMobileDevelopmentServer };

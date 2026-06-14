@@ -1,5 +1,5 @@
 #!/bin/bash
-# 0xRay Pre-Commit Hook
+# StringRay Pre-Commit Hook
 # Runs TypeScript check, linting, and Codex validation before commit
 # This hook BLOCKS the commit if validation fails
 
@@ -23,6 +23,6 @@ if command -v node >/dev/null 2>&1; then
   node "$PROJECT_ROOT/scripts/hooks/run-hook.js" pre-commit
   exit $?
 else
-  echo "Warning: Node.js not found, skipping 0xRay pre-commit validation"
+  echo "Warning: Node.js not found, skipping StringRay pre-commit validation"
   exit 0
 fi

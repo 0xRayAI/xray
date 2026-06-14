@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-xray is a pure v3 three-subsystem AI orchestration framework with MCP-centric governance.
+xray is a pure v2 three-subsystem AI orchestration framework with MCP-centric governance.
 
 ## Commands
 

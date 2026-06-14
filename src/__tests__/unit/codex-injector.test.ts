@@ -10,7 +10,7 @@ import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 // Mock the codex injection plugin behavior
 const createMock0xRayCodexInjectorHook = () => {
   return {
-    name: "xray-codex-injector",
+    name: "strray-codex-injector",
     hooks: {
       "agent.start": async (sessionId: string) => {
         // Mock implementation of codex loading and startup message
@@ -62,7 +62,7 @@ const getMockCodexStats = (sessionId: string) => {
     loaded: true,
     fileCount: 1,
     totalTerms: 3,
-    version: "3.0.11",
+    version: "1.22.67",
   };
 };
 
@@ -89,7 +89,7 @@ describe("0xRay Codex Injector (Mock-Based)", () => {
     test("should return a valid hook object", () => {
       const hook = createMock0xRayCodexInjectorHook();
 
-      expect(hook).toHaveProperty("name", "xray-codex-injector");
+      expect(hook).toHaveProperty("name", "strray-codex-injector");
       expect(hook).toHaveProperty("hooks");
       expect(hook.hooks).toHaveProperty("agent.start");
       expect(hook.hooks).toHaveProperty("tool.execute.before");
@@ -256,7 +256,7 @@ describe("0xRay Codex Injector (Mock-Based)", () => {
         loaded: true,
         fileCount: 1,
         totalTerms: 3,
-        version: "3.0.11",
+        version: "1.22.67",
       });
     });
 

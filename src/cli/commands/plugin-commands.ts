@@ -16,8 +16,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { spawnSync } from "child_process";
 
-const PLUGINS_DIR = ".xray/plugins";
-const CONFIG_PATH = ".xray/config/plugin-config.json";
+const PLUGINS_DIR = ".strray/plugins";
+const CONFIG_PATH = ".strray/config/plugin-config.json";
 
 export async function pluginListCommand(): Promise<void> {
   console.log("\n📦 0xRay Plugins\n");

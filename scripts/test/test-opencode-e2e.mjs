@@ -151,7 +151,7 @@ async function main() {
   // ── Phase 1: npm pack + install into temp dir ─────────
   section('Phase 1: npm pack + install into temp dir');
 
-  const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `opencode-xray-e2e-${Date.now()}`);
+  const testDir = CUSTOM_DIR || path.join(os.tmpdir(), `opencode-0xray-e2e-${Date.now()}`);
   console.log(`  Test directory: ${testDir}`);
 
   if (!CUSTOM_DIR || !fs.existsSync(path.join(testDir, 'node_modules', '0xray'))) {
@@ -163,7 +163,7 @@ async function main() {
     }
 
     const packResult = run(`cd "${projectRoot}" && npm pack`, { timeout: 30000 });
-    const tarballMatch = packResult.match(/((?:0xray)-\d+\.\d+\.\d+\.tgz)/);
+    const tarballMatch = packResult.match(/(0xray-\d+\.\d+\.\d+\.tgz)/);
     if (!tarballMatch) {
       fail('npm pack', `could not find tarball in: ${packResult.substring(0, 200)}`);
       process.exit(1);
@@ -196,7 +196,7 @@ async function main() {
       fail('opencode.json', 'not found in installed package');
     }
 
-    const pluginPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'plugin', 'xray-codex-injection.js');
+const pluginPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'plugin', 'xray-codex-injection.js');
     if (fs.existsSync(pluginPath)) {
       pass('xray-codex-injection.js exists in dist');
     } else {

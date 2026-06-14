@@ -69,7 +69,7 @@ export class DeployVerifier {
       return this.result(false, version, tarballPath, installDir, checks, startTime);
     }
 
-    installDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-deploy-verify-"));
+    installDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-deploy-verify-"));
 
     const installCheck = this.runCheck("npm-install-fresh", () => {
       this.exec(`npm install ${tarballPath} --no-save`, installDir, 60000);

@@ -1,6 +1,6 @@
 # Claude SEO Integration
 
-This directory contains the Claude SEO skill integrated into 0xRay.
+This directory contains the Claude SEO skill integrated into 0xray.
 
 ## Source
 
@@ -47,11 +47,11 @@ After installation, use these commands in Claude Code:
 /seo sitemap generate    - Generate sitemap
 ```
 
-## Integration with 0xRay
+## Integration with 0xray
 
-This integration works alongside 0xRay's built-in SEO tools:
+This integration works alongside 0xray's built-in SEO tools:
 
-| Feature | 0xRay | Claude SEO |
+| Feature | 0xray | Claude SEO |
 |---------|-----------|------------|
 | Technical SEO | Basic | Advanced (8 cats) |
 | Schema | 6 types | 10+ types |
@@ -74,4 +74,4 @@ node scripts/integrations/install-claude-seo.js --full
 ```
 
 ---
-*Integrated into 0xRay v1.7.5*
+*Integrated into 0xray v1.7.5*

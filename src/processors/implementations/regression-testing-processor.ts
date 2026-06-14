@@ -34,7 +34,7 @@ export class RegressionTestingProcessor extends PostProcessor {
       const testCountPath = path.join(
         projectRoot,
         ".opencode",
-        "xray",
+        "strray",
         "test-count.json",
       );
 
@@ -100,7 +100,7 @@ export class RegressionTestingProcessor extends PostProcessor {
       const testCountPath = path.join(
         projectRoot,
         ".opencode",
-        "xray",
+        "strray",
         "test-count.json",
       );
       if (!fs.existsSync(testCountPath)) return 0;

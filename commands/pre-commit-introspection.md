@@ -5,11 +5,11 @@ description: Batched code quality and architecture introspection before commits
 
 #!/bin/bash
 
-# 0xRay v1.3.4 - Pre-commit Introspection
+# StringRay AI v1.3.4 - Pre-commit Introspection
 
 # Comprehensive code quality and architecture validation
 
-echo "🔬 0xRay v1.3.4 - Pre-commit Introspection"
+echo "🔬 StringRay AI v1.3.4 - Pre-commit Introspection"
 echo "============================================================"
 
 # Initialize analysis status
@@ -181,5 +181,5 @@ done
 fi
 
 echo ""
-echo "🎯 0xRay 1.0.0: INTROSPECTION COMPLETE"
+echo "🎯 StringRay 1.0.0: INTROSPECTION COMPLETE"
 echo "Commit ready for integration"

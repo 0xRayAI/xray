@@ -4,7 +4,7 @@
  */
 
 import { ProcessorManager } from '../../../dist/processors/processor-manager.js';
-import { XrayStateManager } from '../../../dist/state/state-manager.js';
+import { StringRayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== POST-PROCESSOR PIPELINE TEST ===\n');
 
@@ -49,7 +49,7 @@ test('should verify post-processors are defined', () => {
 });
 
 test('should execute post-processors in priority order', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   for (const proc of POST_PROCESSORS) {
@@ -78,7 +78,7 @@ test('should verify stateValidation post-processor exists', () => {
 });
 
 test('should verify post-processor result structure', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'stateValidation', type: 'post', priority: 130, enabled: true });

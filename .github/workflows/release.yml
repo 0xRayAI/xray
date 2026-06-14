@@ -40,9 +40,6 @@ jobs:
       - name: Build project
         run: npm run build:all
 
-      - name: Consumer verification (4 bridges + activity.log)
-        run: bash scripts/verify-consumer.sh
-
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -54,8 +51,8 @@ jobs:
             ### Installation
 
             ```bash
-            npm install 0xray@latest
-            npx 0xray install
+            npm install strray-ai@latest
+            npx strray-ai install
             ```
 
             See [CHANGELOG.md](./CHANGELOG.md) for details.

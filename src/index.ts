@@ -1,19 +1,30 @@
-export { XrayOrchestrator } from "./orchestrator/orchestrator.js";
-export { XrayStateManager } from "./state/index.js";
+/**
+ * 0xRay Framework - Main Entry Point
+ *
+ * This is the main entry point for the 0xRay framework.
+ * It exports the core initialization function and key components.
+ */
+
+export { StringRayOrchestrator } from "./orchestrator/orchestrator.js";
+export { StringRayStateManager } from "./state/index.js";
 export { AgentDelegator } from "./delegation/index.js";
 export { frameworkLogger } from "./core/framework-logger.js";
 export { BUILTIN_CODEX } from "./core/codex-formatter.js";
-import { defaultXrayConfig } from "./core/index.js";
-export { defaultXrayConfig };
+
+import { defaultStringRayConfig } from "./core/index.js";
+export { defaultStringRayConfig };
+
 export { OpenClawIntegration, initializeOpenClawIntegration, getOpenClawIntegration, shutdownOpenClawIntegration } from "./integrations/openclaw/index.js";
 export type { OpenClawIntegrationConfig } from "./integrations/openclaw/types.js";
 
-export { XrayService } from "./public/XrayService.js";
-export type { XrayServiceConfig } from "./public/XrayService.js";
-export { beforeToolHook, afterToolHook } from "./integrations/enforcement-gate.js";
-export type { BeforeHookResult, AfterHookResult, GateViolation } from "./integrations/enforcement-gate.js";
+// Main initialization function
+export function initializeStringRay(config = {}) {
+  const mergedConfig = { ...defaultStringRayConfig, ...config };
 
-export function initializeXray(config = {}) {
-  const mergedConfig = { ...defaultXrayConfig, ...config };
-  return { success: true, config: mergedConfig, message: "0xRay framework initialized successfully" };
+  // Return a standardized initialization result
+  return {
+    success: true,
+    config: mergedConfig,
+    message: "0xRay framework initialized successfully",
+  };
 }

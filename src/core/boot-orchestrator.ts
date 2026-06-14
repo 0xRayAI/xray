@@ -1,16 +1,16 @@
 /**
- * Boot Orchestrator (consumer runtime compat; primary XRAY_ env + .xray fallbacks).
+ * Boot Orchestrator (min documented consumer runtime compat shim from prior StringRay releases; primary Xray* paths + XRAY_||STRRAY_ env + .strray fallbacks only; 1-line per Scope Rule).
  */
 
-import { XrayContextLoader } from "./context-loader.js";
-import { XrayStateManager } from "../state/state-manager.js";
+import { StringRayContextLoader } from "./context-loader.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import { ProcessorManager } from "../processors/processor-manager.js";
 import { pathResolver } from "../utils/path-resolver.js";
 import * as fs from "fs";
 import * as path from "path";
 const { existsSync, readFileSync } = fs;
 // Path configuration - can be overridden by environment or use path resolver
-const AGENTS_BASE_PATH = process.env.XRAY_AGENTS_PATH || "../agents";
+const AGENTS_BASE_PATH = process.env.STRRAY_AGENTS_PATH || "../agents";
 import {
   createAgentDelegator,
   createSessionCoordinator,
@@ -24,7 +24,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { featuresConfigLoader } from "../core/features-config.js";
 import { memoryMonitor, type MemoryLeakAlert, type MemoryStats } from "../monitoring/memory-monitor.js";
 import { advancedProfiler } from "../monitoring/advanced-profiler.js";
-import { xrayConfigLoader } from "./config-loader.js";
+import { strRayConfigLoader } from "./config-loader.js";
 import { PluginRegistry } from "../integrations/plugins/index.js";
 import { PluginServerConfigRegistry } from "../mcps/config/index.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
@@ -35,10 +35,10 @@ import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "
  */
 function setupGracefulShutdown(): void {
   // Prevent duplicate listeners
-  if ((process as any)._xrayShutdownSetup) {
+  if ((process as any)._strrayShutdownSetup) {
     return;
   }
-  (process as any)._xrayShutdownSetup = true;
+  (process as any)._strrayShutdownSetup = true;
 
   let isShuttingDown = false;
 
@@ -59,7 +59,7 @@ function setupGracefulShutdown(): void {
     } catch (error) {
       // Suppress error output in CLI mode to avoid breaking interface
       if (
-        process.env.XRAY_CLI_MODE !== "true" &&
+        process.env.STRRAY_CLI_MODE !== "true" &&
         process.env.OPENCODE_CLI !== "true"
       ) {
         frameworkLogger.log("boot-orchestrator", "shutdown-error", "error", { error, message: "Error during graceful shutdown" });
@@ -85,7 +85,7 @@ function setupGracefulShutdown(): void {
   process.on("uncaughtException", (error) => {
     // Suppress error output in CLI mode to avoid breaking interface
     if (
-      (process.env.XRAY_CLI_MODE) !== "true" &&
+      process.env.STRRAY_CLI_MODE !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
       frameworkLogger.log("boot-orchestrator", "uncaught-exception", "error", { error, message: "Uncaught Exception" });
@@ -98,7 +98,7 @@ function setupGracefulShutdown(): void {
   process.on("unhandledRejection", (reason, promise) => {
     // Suppress error output in CLI mode to avoid breaking interface
     if (
-      (process.env.XRAY_CLI_MODE) !== "true" &&
+      process.env.STRRAY_CLI_MODE !== "true" &&
       process.env.OPENCODE_CLI !== "true"
     ) {
       frameworkLogger.log("boot-orchestrator", "unhandled-rejection", "error", { promise, reason, message: "Unhandled Rejection" });
@@ -129,8 +129,8 @@ export interface BootResult {
 }
 
 export class BootOrchestrator {
-  private contextLoader: XrayContextLoader;
-  private stateManager: XrayStateManager;
+  private contextLoader: StringRayContextLoader;
+  private stateManager: StringRayStateManager;
   private processorManager: ProcessorManager;
   private config: BootSequenceConfig;
   private pluginRegistry?: PluginRegistry;
@@ -140,11 +140,11 @@ export class BootOrchestrator {
 
   constructor(
     config: Partial<BootSequenceConfig> = {},
-    stateManager?: XrayStateManager,
+    stateManager?: StringRayStateManager,
   ) {
     // Initialize components first for state management
-    this.contextLoader = XrayContextLoader.getInstance();
-    this.stateManager = stateManager || new XrayStateManager();
+    this.contextLoader = StringRayContextLoader.getInstance();
+    this.stateManager = stateManager || new StringRayStateManager();
     this.processorManager = new ProcessorManager(this.stateManager);
 
     this.config = {
@@ -164,7 +164,7 @@ export class BootOrchestrator {
     try {
       const agentDelegator = createAgentDelegator(
         this.stateManager,
-        xrayConfigLoader,
+        strRayConfigLoader,
       );
       this.stateManager.set("delegation:agent_delegator", agentDelegator);
 
@@ -187,8 +187,8 @@ export class BootOrchestrator {
   private loadProcessorsConfig(): { pre_processors?: { priority_order?: string[] }; post_processors?: { priority_order?: string[] } } | null {
     try {
       const configPaths = [
-        path.join(process.cwd(), ".xray", "features.json"),
-        path.join(process.cwd(), ".opencode", "xray", "features.json"),
+        path.join(process.cwd(), ".strray", "features.json"),
+        path.join(process.cwd(), ".opencode", "strray", "features.json"),
       ];
       for (const configPath of configPaths) {
         if (existsSync(configPath)) {
@@ -214,7 +214,7 @@ export class BootOrchestrator {
         { jobId },
       );
 
-      const pluginsDir = path.join(process.cwd(), ".xray", "plugins");
+      const pluginsDir = path.join(process.cwd(), ".strray", "plugins");
 
       this.pluginRegistry = new PluginRegistry({
         pluginsDir,
@@ -271,7 +271,7 @@ export class BootOrchestrator {
         return false;
       }
 
-      const orchestratorInstance = orchestratorModule.xrayOrchestrator || orchestratorModule.strRayOrchestrator;
+      const orchestratorInstance = orchestratorModule.strRayOrchestrator;
 
       if (!orchestratorInstance) {
         frameworkLogger.log("boot-orchestrator", "orchestrator-not-found", "error", { message: "Orchestrator instance not found in module" });
@@ -597,9 +597,27 @@ export class BootOrchestrator {
   }
 
   private async runInitialSecurityAudit(): Promise<any> {
-    // Consolidated to MCP security-audit.server.ts + shared; initial audit now handled via governance/MCP path
-    frameworkLogger.log("boot-orchestrator", "initial-security-audit-skipped", "info", { message: "Security auditor consolidated to MCP layer (see security-audit.server.ts); boot uses hardener/headers only" });
-    return { score: 100, issues: [] };
+    try {
+      const securityAuditorPath = pathResolver.resolveModulePath(
+        "security/security-auditor",
+      );
+      const { SecurityAuditor } = await import(securityAuditorPath);
+      const auditor = new SecurityAuditor();
+
+      const result = await auditor.auditProject(process.cwd());
+
+      if (result.score < 80) {
+        frameworkLogger.log("boot-orchestrator", "low-security-score", "warning", {
+          score: result.score,
+          message: `Initial security score: ${result.score}/100 (target: 80+)`,
+        });
+      }
+
+      return result;
+    } catch (error) {
+      frameworkLogger.log("boot-orchestrator", "security-audit-failed", "error", { error, message: "Failed to run initial security audit" });
+      return { score: 0, issues: [] };
+    }
   }
 
   /**
@@ -817,8 +835,8 @@ export class BootOrchestrator {
         "info",
         { jobId },
       );
-      // Consumer runtime compat (XRAY_ env + .xray fallbacks)
-      await this.loadXrayConfiguration(jobId);
+      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
+      await this.loadStringRayConfiguration(jobId);
       frameworkLogger.log(
         "boot-orchestrator",
         "xray configuration loaded",
@@ -1071,14 +1089,14 @@ export class BootOrchestrator {
     return result;
   }
 
-  // Consumer runtime compat (XRAY_ env + .xray fallbacks)
-  private async loadXrayConfiguration(jobId: string): Promise<void> {
+  // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
+  private async loadStringRayConfiguration(jobId: string): Promise<void> {
     try {
-      // Consumer runtime compat (XRAY_ env + .xray fallbacks)
-      const xrayConfig = {
-        version: "3.0.11",
+      // Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
+      const stringRayConfig = {
+        version: "1.22.67",
         codex_enabled: true,
-        codex_version: "v3.0.10",
+        codex_version: "v1.7.5",
         codex_terms: [
           1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
           21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
@@ -1138,24 +1156,24 @@ export class BootOrchestrator {
       };
 
       // Store configuration in state manager for use by other components
-      this.stateManager.set("xray:config", xrayConfig);
-      this.stateManager.set("xray:version", xrayConfig.version);
+      this.stateManager.set("strray:config", stringRayConfig);
+      this.stateManager.set("strray:version", stringRayConfig.version);
       this.stateManager.set(
-        "xray:codex_enabled",
-        xrayConfig.codex_enabled,
+        "strray:codex_enabled",
+        stringRayConfig.codex_enabled,
       );
-      this.stateManager.set("xray:codex_terms", xrayConfig.codex_terms);
+      this.stateManager.set("strray:codex_terms", stringRayConfig.codex_terms);
       this.stateManager.set(
-        "xray:monitoring_metrics",
-        xrayConfig.monitoring_metrics,
-      );
-      this.stateManager.set(
-        "xray:monitoring_alerts",
-        xrayConfig.monitoring_alerts,
+        "strray:monitoring_metrics",
+        stringRayConfig.monitoring_metrics,
       );
       this.stateManager.set(
-        "xray:agent_capabilities",
-        xrayConfig.agent_capabilities,
+        "strray:monitoring_alerts",
+        stringRayConfig.monitoring_alerts,
+      );
+      this.stateManager.set(
+        "strray:agent_capabilities",
+        stringRayConfig.agent_capabilities,
       );
 
       await frameworkLogger.log(

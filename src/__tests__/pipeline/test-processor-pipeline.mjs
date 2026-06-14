@@ -40,7 +40,7 @@
  */
 
 import { ProcessorManager } from '../../../dist/processors/processor-manager.js';
-import { XrayStateManager } from '../../../dist/state/state-manager.js';
+import { StringRayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== PROCESSOR PIPELINE TEST ===\n');
 
@@ -76,21 +76,21 @@ console.log('📍 Layer 1: Processor Registry (ProcessorRegistry) - REAL');
 console.log('   Component: src/processors/processor-registry.ts\n');
 
 test('should create REAL ProcessorManager instance', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   if (!manager) throw new Error('Failed to create ProcessorManager - REAL');
   console.log(`   (ProcessorManager created - REAL)`);
 });
 
 test('should have REAL ProcessorManager with getProcessors API', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   if (typeof manager.getProcessors !== 'function') throw new Error('getProcessors not accessible - REAL');
   console.log(`   (getProcessors API accessible - REAL)`);
 });
 
 test('should verify processor registration pipeline', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   manager.registerProcessor({ name: 'test-p1', type: 'pre', priority: 10, enabled: true });
   const processors = Array.from(manager.getProcessors().values());
@@ -102,7 +102,7 @@ test('should verify processor registration pipeline', () => {
 });
 
 test('should register processors and verify they can be executed', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });
@@ -130,7 +130,7 @@ console.log('\n📍 Layer 2: Pre-Processors (5 processors, priority-ordered) - R
 console.log('   Priority order from tree:\n');
 
 test('should execute REAL executePreProcessors with registered processors', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });
@@ -150,7 +150,7 @@ test('should execute REAL executePreProcessors with registered processors', asyn
 });
 
 test('should verify pre-processors are registered and executable', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });
   manager.registerProcessor({ name: 'codexCompliance', type: 'pre', priority: 20, enabled: true });
@@ -165,7 +165,7 @@ test('should verify pre-processors are registered and executable', async () => {
 });
 
 test('should verify pre-processors are sorted by priority', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });
@@ -183,7 +183,7 @@ test('should verify pre-processors are sorted by priority', async () => {
 console.log('\n📍 Layer 3: Main Operation\n');
 
 test('should verify executePreProcessors returns proper structure', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });
@@ -209,7 +209,7 @@ test('should verify executePreProcessors returns proper structure', async () => 
 console.log('\n📍 Layer 4: Post-Processors (8 processors, priority-ordered) - REAL');
 
 test('should execute REAL executePostProcessors with registered processors', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'stateValidation', type: 'post', priority: 50, enabled: true });
@@ -226,7 +226,7 @@ test('should execute REAL executePostProcessors with registered processors', asy
 });
 
 test('should verify post-processors are registered and executable', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   manager.registerProcessor({ name: 'stateValidation', type: 'post', priority: 50, enabled: true });
   manager.registerProcessor({ name: 'testAutoCreation', type: 'post', priority: 60, enabled: true });
@@ -241,7 +241,7 @@ test('should verify post-processors are registered and executable', async () => 
 });
 
 test('should verify post-processors are sorted by priority', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'stateValidation', type: 'post', priority: 50, enabled: true });
@@ -253,7 +253,7 @@ test('should verify post-processors are sorted by priority', async () => {
 });
 
 test('should verify post-processor result has processorName property', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'stateValidation', type: 'post', priority: 50, enabled: true });
@@ -274,7 +274,7 @@ test('should verify post-processor result has processorName property', async () 
 console.log('\n📍 Layer 5: Health Monitoring (ProcessorHealth) - REAL');
 
 test('should verify ProcessorManager tracks registered processors', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   manager.registerProcessor({ name: 'testProcessor', type: 'pre', priority: 10, enabled: true });
   
@@ -294,7 +294,7 @@ console.log('   - executePreProcessors(): processor-manager.ts');
 console.log('   - executePostProcessors(): processor-manager.ts\n');
 
 test('should have REAL executePreProcessors entry point', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   if (typeof manager.executePreProcessors !== 'function') {
@@ -304,7 +304,7 @@ test('should have REAL executePreProcessors entry point', () => {
 });
 
 test('should have REAL executePostProcessors entry point', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   if (typeof manager.executePostProcessors !== 'function') {
@@ -321,7 +321,7 @@ console.log('   - Success: PostProcessorResult[]');
 console.log('   - Failure: Error thrown\n');
 
 test('should return PostProcessorResult[] with proper structure', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   manager.registerProcessor({ name: 'stateValidation', type: 'post', priority: 50, enabled: true });
   const results = await manager.executePostProcessors('test', {}, []);
@@ -344,7 +344,7 @@ console.log('   - ProcessorMetrics: { totalExecutions, successRate, avgDuration 
 console.log('   - ProcessorHealth: { healthy | degraded | failed }\n');
 
 test('should track processor execution via REAL ProcessorManager', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   manager.registerProcessor({ name: 'testProcessor', type: 'pre', priority: 10, enabled: true });
   
@@ -371,7 +371,7 @@ console.log('   3. Metrics recorded');
 console.log('   4. Health status updated\n');
 
 test('should complete full processor pipeline with REAL execution', async () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });
@@ -395,7 +395,7 @@ test('should complete full processor pipeline with REAL execution', async () => 
 });
 
 test('should verify all processors from tree are accessible', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const manager = new ProcessorManager(stateManager);
   // Register test processors to verify the pipeline (real processors registered by BootOrchestrator)
   manager.registerProcessor({ name: 'test-1', type: 'pre', priority: 10, enabled: true });

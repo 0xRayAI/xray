@@ -87,13 +87,7 @@ async function loadV3PostProcessor(): Promise<{ executePostProcessorLoop: (ctx: 
   if (global.xrayPostProcessor && typeof global.xrayPostProcessor.executePostProcessorLoop === "function") {
     return global.xrayPostProcessor;
   }
-  if (global.strRayPostProcessor && typeof global.strRayPostProcessor.executePostProcessorLoop === "function") {
-    await frameworkLogger.log("enforcement-gate", "deprecated-global", "warning", {
-      global: "strRayPostProcessor",
-      replacement: "xrayPostProcessor",
-    });
-    return global.strRayPostProcessor;
-  }
+  // strRayPostProcessor fallback removed in v2.2
   return null;
 }
 
@@ -378,13 +372,7 @@ export async function afterToolHook(
 async function loadStateManager(): Promise<any> {
   const global = globalThis as any;
   if (global.xrayStateManager) return global.xrayStateManager;
-  if (global.strRayStateManager) {
-    await frameworkLogger.log("enforcement-gate", "deprecated-global", "warning", {
-      global: "strRayStateManager",
-      replacement: "xrayStateManager",
-    });
-    return global.strRayStateManager;
-  }
+  // strRayStateManager fallback removed in v2.2
 
   const candidatePaths = [
     () => import("../state/state-manager.js"),
@@ -393,7 +381,7 @@ async function loadStateManager(): Promise<any> {
   for (const load of candidatePaths) {
     try {
       const mod = await (load() as Promise<Record<string, any>>);
-      const SM = mod.XrayStateManager || mod.StrRayStateManager;
+      const SM = mod.XrayStateManager;
       if (SM) return SM;
     } catch { continue; }
   }

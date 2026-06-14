@@ -1,8 +1,20 @@
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
+/**
+ * xray Architecture Patterns MCP Server
+ *
+ * Knowledge skill for architectural pattern recognition,
+ * design pattern recommendations, and system architecture guidance
+ */
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
 interface AnalyzeArchitectureArgs {
   projectRoot: string;
@@ -15,54 +27,78 @@ interface RecommendPatternsArgs {
   scale?: string;
 }
 
-class XrayArchitecturePatternsServer extends XrayKnowledgeSkillBase {
+class StringRayArchitecturePatternsServer {
+  private server: Server;
+
   constructor() {
-    super("architecture-patterns", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "analyze-architecture",
-        description: "Analyze current system architecture and identify patterns",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectRoot: { type: "string" },
-            focusPatterns: { type: "array", items: { type: "string" } },
-          },
-          required: ["projectRoot"],
-        },
+        name: "architecture-patterns", version: "1.22.67",
       },
       {
-        name: "recommend-patterns",
-        description: "Recommend architectural patterns for specific use cases",
-        inputSchema: {
-          type: "object",
-          properties: {
-            useCase: { type: "string" },
-            constraints: { type: "array", items: { type: "string" } },
-            scale: { type: "string", enum: ["small", "medium", "large"] },
-          },
-          required: ["useCase"],
+        capabilities: {
+          tools: {},
         },
       },
-    ];
-    this.handlers = {
-      "analyze-architecture": async (args) => this.analyzeArchitecture(args as unknown as AnalyzeArchitectureArgs),
-      "recommend-patterns": async (args) => this.recommendPatterns(args as unknown as RecommendPatternsArgs),
-    };
+    );
+
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "architecture-patterns",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+    // Server initialization - removed unnecessary startup logging
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "analyze-architecture",
+            description:
+              "Analyze current system architecture and identify patterns",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectRoot: { type: "string" },
+                focusPatterns: { type: "array", items: { type: "string" } },
+              },
+              required: ["projectRoot"],
+            },
+          },
+          {
+            name: "recommend-patterns",
+            description:
+              "Recommend architectural patterns for specific use cases",
+            inputSchema: {
+              type: "object",
+              properties: {
+                useCase: { type: "string" },
+                constraints: { type: "array", items: { type: "string" } },
+                scale: { type: "string", enum: ["small", "medium", "large"] },
+              },
+              required: ["useCase"],
+            },
+          },
+        ],
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "analyze-architecture":
+          return await this.analyzeArchitecture(args as unknown as AnalyzeArchitectureArgs);
+        case "recommend-patterns":
+          return await this.recommendPatterns(args as unknown as RecommendPatternsArgs);
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
     });
   }
 
   private async analyzeArchitecture(args: AnalyzeArchitectureArgs) {
     const { projectRoot, focusPatterns } = args;
 
+    // Simplified architecture analysis
     const analysis = {
       patterns: ["MVC", "Repository"],
       recommendations: ["Consider microservices for scaling"],
@@ -95,11 +131,22 @@ class XrayArchitecturePatternsServer extends XrayKnowledgeSkillBase {
       ],
     };
   }
+
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    
+    // Use centralized shutdown handler
+    createGracefulShutdown({
+      serverName: "architecture-patterns.server",
+      server: this.server,
+    });
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new XrayArchitecturePatternsServer();
-  server.run("architecture-patterns.server").catch((err) => { frameworkLogger.log("architecture-patterns", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
+  const server = new StringRayArchitecturePatternsServer();
+  server.run().catch(() => {});
 }
 
-export default XrayArchitecturePatternsServer;
+export default StringRayArchitecturePatternsServer;

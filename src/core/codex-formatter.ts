@@ -139,15 +139,15 @@ export const BUILTIN_CODEX: CodexConfig = {
  */
 export function findCodexPath(projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
-  const envDir = process.env.XRAY_CONFIG_DIR;
+  const envDir = process.env.STRRAY_CONFIG_DIR;
 
   const candidates: string[] = [];
 
   if (envDir) {
     candidates.push(resolve(root, envDir, "codex.json"));
   }
-  candidates.push(join(root, ".xray", "codex.json"));
-  candidates.push(join(root, "xray", "codex.json"));
+  candidates.push(join(root, ".strray", "codex.json"));
+  candidates.push(join(root, ".opencode", "strray", "codex.json"));
   // Additional fallback locations (for standalone usage)
   candidates.push(join(root, "codex.json"));
   candidates.push(join(root, "src", "codex.json"));

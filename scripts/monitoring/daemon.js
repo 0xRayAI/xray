@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * 0xRay Framework Monitoring System
+ * StringRay Framework Monitoring System
  * Real-time monitoring and performance analysis
- * Author: 0xRay Enforcer Agent
+ * Author: StringRay Enforcer Agent
  * Version: 1.1.1
  */
 
@@ -36,7 +36,7 @@ class MonitoringSystem {
   }
 
   startMonitoring() {
-    this.log('Starting 0xRay monitoring system...', 'monitor');
+    this.log('Starting StringRay monitoring system...', 'monitor');
     this.isMonitoring = true;
     
     this.monitoringInterval = setInterval(() => {
@@ -203,7 +203,7 @@ class MonitoringSystem {
       fs.readFileSync(path.join(metricsDir, metricsFiles[metricsFiles.length - 1]), 'utf8')
     );
     
-    console.log('0xRay Monitoring Report');
+    console.log('StringRay Monitoring Report');
     console.log('========================');
     console.log(`Report Period: Latest available metrics`);
     console.log(`Generated At: ${new Date().toISOString()}`);
@@ -276,7 +276,7 @@ switch (command) {
     break;
     
   default:
-    console.log('0xRay Monitoring System');
+    console.log('StringRay Monitoring System');
     console.log('===============================');
     console.log('Available commands:');
     console.log('  start   - Start real-time monitoring');

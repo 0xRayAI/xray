@@ -2,12 +2,15 @@ import * as fs from "fs";
 import * as path from "path";
 import { shouldTriggerCycle, accumulateCorpus, InferenceCorpus, RecurringPattern, RecurringProblem } from "./inference-accumulator.js";
 import { DeployVerifier, DeployVerificationResult } from "./deploy-verifier.js";
-import { XrayStateManager } from "../state/state-manager.js";
+import { VotingCoordinator } from "../delegation/voting-coordinator.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { getGovernanceIntegration, type GovernanceVoteResult } from "../integrations/governance/index.js";
+import { featuresConfigLoader } from "../core/features-config.js";
+import { mcpClientManager } from "../mcps/mcp-client.js";
+import { getConfigDir } from "../core/config-paths.js";
 import { invokeViaOpencode as invokeOpencodeFromEngine } from "../execution/opencode-cli-invoker.js";
 import { ProposalApplier } from "../execution/proposal-applier.js";
-import { handleGovernRequest } from "../nucleus/govern-http.js";
-import type { GovernanceRequest, GovernanceResponse } from "../governance/governance-types.js";
 
 export interface InferenceProposal {
   id: string;
@@ -54,7 +57,17 @@ export type CyclePhase =
   | "complete"
   | "failed";
 
-const CONSOLIDATED_STATE_FILE = "inference-state.json";
+const CYCLE_STATE_FILE = "inference-cycle-state.json";
+const CYCLE_HISTORY_FILE = "inference-cycle-history.json";
+const GOVERNANCE_AGENTS: Record<string, string[]> = {
+  // Real individual knowledge-skill MCP servers (have analyze_proposal handlers)
+  fix: ["code-review", "security-audit", "researcher"],
+  refactor: ["code-review", "security-audit", "researcher"],
+  guard: ["code-review", "security-audit", "researcher"],
+  automate: ["code-review", "security-audit", "researcher"],
+  codify: ["code-review", "security-audit", "researcher"],
+};
+
 export type AgentInvoker = (agentName: string, prompt: string) => Promise<string>;
 
 export interface InferenceCycleOptions {
@@ -69,6 +82,7 @@ export class InferenceCycle {
   private static instances = new Map<string, InferenceCycle>();
   private static reEntryLock = false;
   private static governedProposalIds = new Set<string>();
+  private static votingCoordinator: VotingCoordinator | null = null;
 
   static getInstance(projectRoot?: string, options?: InferenceCycleOptions): InferenceCycle {
     const root = path.resolve(projectRoot || process.cwd());
@@ -82,6 +96,7 @@ export class InferenceCycle {
     InferenceCycle.instances.clear();
     InferenceCycle.reEntryLock = false;
     InferenceCycle.governedProposalIds.clear();
+    InferenceCycle.votingCoordinator = null;
   }
 
   private inferenceDir: string;
@@ -95,7 +110,7 @@ export class InferenceCycle {
   constructor(projectRoot?: string, agentInvoker?: AgentInvoker, options?: InferenceCycleOptions) {
     this.projectRoot = projectRoot || process.cwd();
     this.inferenceDir = path.join(this.projectRoot, "docs", "inference");
-    this.stateDir = path.join(this.projectRoot, ".xray", "inference");
+    this.stateDir = path.join(this.projectRoot, ".strray", "inference");
     this.agentInvoker = agentInvoker ?? null;
     this.options = options ?? {};
   }
@@ -148,6 +163,7 @@ export class InferenceCycle {
 
       this.setPhase("complete");
       this.saveCycleState(cycleId);
+      this.saveGovernanceState(this.getCoordinator());
 
       const result = this.buildResult(cycleId, true, "external proposals", startTime, undefined, proposals, votes);
       this.appendHistory(result);
@@ -179,7 +195,7 @@ export class InferenceCycle {
     try {
       this.setPhase("collecting");
 
-      const lastCycleFile = path.join(this.stateDir, CONSOLIDATED_STATE_FILE);
+      const lastCycleFile = path.join(this.stateDir, CYCLE_STATE_FILE);
       const threshold = this.options.force ? { trigger: true, reason: "force flag set" } : shouldTriggerCycle(this.inferenceDir, lastCycleFile);
 
       if (!threshold.trigger) {
@@ -195,7 +211,7 @@ export class InferenceCycle {
       const corpus = accumulateCorpus(this.inferenceDir);
 
       this.setPhase("proposing");
-      const proposals = await this.generateProposals(corpus);
+      const proposals = this.generateProposals(corpus);
       this.adjustFromHistory(proposals);
 
       if (proposals.length === 0) {
@@ -258,7 +274,7 @@ export class InferenceCycle {
 
         this.setPhase("complete");
         this.saveCycleState(cycleId);
-
+        this.saveGovernanceState(this.getCoordinator());
         this.appendHistory(this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult));
 
         return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes, deployResult);
@@ -274,7 +290,7 @@ export class InferenceCycle {
     }
   }
 
-  private async generateProposals(corpus: InferenceCorpus): Promise<InferenceProposal[]> {
+  private generateProposals(corpus: InferenceCorpus): InferenceProposal[] {
     const proposals: InferenceProposal[] = [];
 
     for (const problem of corpus.recurringProblems) {
@@ -343,58 +359,7 @@ export class InferenceCycle {
       });
     }
 
-    // Validate proposals against codex terms 1/3/5 (ai-reasoning terms made auditable)
-    // Adjusts confidence down when validators flag concerns, making the inference
-    // pipeline explicit about architecture/product quality validation.
-    try {
-      const { globalValidatorRegistry } = await import("../enforcement/validators/validator-registry.js");
-
-      const noOverEngineer = globalValidatorRegistry.getValidator("no-over-engineering");
-      const singleResponsibility = globalValidatorRegistry.getValidator("single-responsibility");
-
-      for (const p of proposals) {
-        // Term 1/3 validation: flag over-engineered proposals
-        if (noOverEngineer) {
-          const res = await noOverEngineer.validate({
-            operation: "inference",
-            files: [],
-            newCode: p.description,
-          });
-          if (!res.passed) {
-            p.confidence *= 0.85;
-            p.evidence.push(`Term 1/3: NoOverEngineeringValidator flagged: ${res.message}`);
-          }
-        }
-
-        // Term 5 validation: flag proposals violating single responsibility
-        if (singleResponsibility) {
-          const res = await singleResponsibility.validate({
-            operation: "inference",
-            files: [],
-            newCode: p.description,
-          });
-          if (!res.passed) {
-            p.confidence *= 0.85;
-            p.evidence.push(`Term 5: SingleResponsibilityValidator flagged: ${res.message}`);
-          }
-        }
-
-        // Block proposals that fail both validators severely (confidence <= 0.3 after adjustments)
-        if (p.confidence <= 0.3) {
-          await frameworkLogger.log("inference-cycle", "proposal-blocked", "warning", {
-            proposalId: p.id,
-            title: p.title,
-            confidence: p.confidence,
-            reason: "Confidence below 0.3 threshold after validator adjustments",
-          });
-        }
-      }
-    } catch {
-      // Validator check is non-blocking for inference — log and continue
-    }
-
-    const actionable = proposals.filter(p => p.confidence > 0.3);
-    return actionable.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+    return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
   }
 
   private adjustFromHistory(proposals: InferenceProposal[]): void {
@@ -402,8 +367,24 @@ export class InferenceCycle {
     proposals.sort((a, b) => b.confidence - a.confidence);
   }
 
+  private getCoordinator(): VotingCoordinator {
+    if (!InferenceCycle.votingCoordinator) {
+      const stateManager = this.getGovernanceStateManager();
+      InferenceCycle.votingCoordinator = new VotingCoordinator(stateManager);
+    }
+    return InferenceCycle.votingCoordinator;
+  }
+
+
   private async applyProposals(proposals: InferenceProposal[]): Promise<void> {
-    const applier = new ProposalApplier(this.projectRoot);
+    const applier = new ProposalApplier(
+      this.projectRoot,
+      async (p) => this.applyProposalWork(p),
+      async (p, prUrl) => {
+        if (this.options.skipResearcherReview) return "go";
+        return this.researcherReview(p, prUrl);
+      },
+    );
     const results = await applier.applyProposals(proposals);
     for (const r of results) {
       const p = proposals.find(pr => pr.id === r.proposalId);
@@ -451,9 +432,14 @@ export class InferenceCycle {
     });
 
     try {
-      const agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
+      let agentName = p.type === "refactor" ? "refactorer" : "code-reviewer";
 
-      await invokeOpencodeFromEngine(agentName, prompt, this.projectRoot);
+      // In pure MCP mode, use real skill server names so the orchestrator dispatches to actual MCP tools
+      if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+        agentName = p.type === "refactor" ? "refactoring-strategies" : "code-review";
+      }
+
+      await this.invokeAgentInternal(agentName, prompt);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-agent-failed", "warning", {
@@ -475,12 +461,15 @@ export class InferenceCycle {
       ``,
       `1. Read the relevant source files`,
       `2. Add the missing guard, validation, or edge case handling`,
-       `3. If this is a codex rule, add the term to xray/codex.json`,
+      `3. If this is a codex rule, add the term to .opencode/strray/codex.json`,
       `4. Make minimal, surgical changes`,
     ].join("\n");
 
     try {
-      await invokeOpencodeFromEngine("code-reviewer", prompt, this.projectRoot);
+      const agentName = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' 
+        ? "code-review" 
+        : "code-reviewer";
+      await this.invokeAgentInternal(agentName, prompt);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-guard-failed", "warning", {
@@ -509,7 +498,10 @@ export class InferenceCycle {
     ].join("\n");
 
     try {
-      await invokeOpencodeFromEngine("architect", prompt, this.projectRoot);
+      const agentName = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' 
+        ? "architecture-patterns" 
+        : "architect";
+      await this.invokeAgentInternal(agentName, prompt);
       return true;
     } catch (err) {
       frameworkLogger.log("inference-cycle", "apply-automation-failed", "warning", {
@@ -561,7 +553,7 @@ Respond with EXACTLY one of:
 - MODIFY: <specific changes needed>`;
 
     try {
-      const result = await invokeOpencodeFromEngine("researcher", prompt, this.projectRoot);
+      const result = await this.invokeAgentInternal("researcher", prompt);
 
       const output = result.toLowerCase();
       if (output.includes("no-go")) return "no-go";
@@ -574,116 +566,597 @@ Respond with EXACTLY one of:
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
-    const governanceResponse = await this.governViaNucleus(proposals);
+    // Primary path: Use the first-class Governance MCP (real skill servers + required Dynamo)
+    // This is the clean, centralized path (governance.server.ts + GovernanceService)
+    const useGovernanceMcp = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true' ||
+      this.isGovernanceMcpPreferred();
 
-    frameworkLogger.log("inference-cycle", "governance-nucleus-success", "info", {
-      proposalCount: proposals.length,
-      overall: governanceResponse.overallDecision,
-    });
+    if (useGovernanceMcp) {
+      try {
+        const result = await Promise.race([
+          mcpClientManager.callServerTool("governance", "govern_proposals", {
+            proposals: proposals.map(p => ({
+              id: p.id,
+              type: p.type,
+              title: p.title,
+              description: p.description,
+              evidence: p.evidence || [],
+              source: p.source || "inference",
+              confidence: p.confidence || 0.8,
+            })),
+            context: { source: "inference-cycle" },
+            options: { require_external: true },
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Governance MCP timed out after 8s")), 8000)
+          ),
+        ]);
 
-    return this.convertNucleusResponse(governanceResponse, proposals);
-  }
-
-  /**
-   * Map InferenceProposal.source to GovernanceProposal.source.
-   * Inference-specific sources (recurring_problem, recurring_pattern, wrong_turn)
-   * all normalize to 'inference'. Future tuning/mod-specific sources can be added here.
-   */
-  private static readonly SOURCE_MAP: Record<string, GovernanceRequest['proposals'][0]['source']> = {
-    'recurring_problem': 'inference',
-    'recurring_pattern': 'inference',
-    'wrong_turn': 'inference',
-  };
-
-  /**
-   * Convert InferenceProposal[] to GovernanceRequest and route through
-   * the nucleus kernel (handleGovernRequest). This is the v3 uniform path.
-   */
-  private async governViaNucleus(proposals: InferenceProposal[]): Promise<GovernanceResponse> {
-    // Auto-detect project identity from package.json for tagging
-    let projectName = 'unknown';
-    let projectTags: string[] = [];
-    try {
-      const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8'));
-      projectName = pkg.name || 'unknown';
-      projectTags = projectName === '0xray' ? ['0xray'] : [projectName];
-    } catch {
-      projectTags = [];
+        const text = (result as any)?.content?.[0]?.text || "";
+        const parsed = this.parseGovernanceMcpResponse(text, proposals);
+        frameworkLogger.log("inference-cycle", "governance-mcp-primary-path", "info", {
+          proposalCount: proposals.length,
+          overall: parsed.overallDecision,
+        });
+        return parsed.votes;
+      } catch (err) {
+        frameworkLogger.log("inference-cycle", "governance-mcp-failed", "error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // In forced pure MCP mode we must not silently fall back
+        if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+          throw err;
+        }
+        // In normal mode, fall back to legacy path with deprecation warning.
+        // The legacy path will be removed once all consumers have migrated to the Governance MCP + Dynamo Solar SSOT model.
+        frameworkLogger.log("inference-cycle", "governance-legacy-fallback", "warning", {
+          message: "Falling back to legacy governance path. This path is deprecated and will be removed in a future version.",
+        });
+      }
     }
 
-    const governanceRequest: GovernanceRequest = {
-      proposals: proposals.map(p => ({
-        id: p.id,
-        type: p.type as GovernanceRequest['proposals'][0]['type'],
-        title: p.title,
-        description: p.description,
-        evidence: p.evidence,
-        source: InferenceCycle.SOURCE_MAP[p.source] || 'inference',
-        confidence: p.confidence,
-        tags: projectTags,
-      })),
-      context: {
-        project: projectName,
-        phase: 'inference-cycle',
-        source: 'inference-cycle',
-        tags: projectTags,
-      },
-      options: {
-        requireExternalDynamo: !process.env.XRAY_LOCAL_MODE,
-      },
-    };
+    // Legacy internal path (deprecated)
+    const internalVotes = await this.governProposalsInternal(proposals);
 
-    return handleGovernRequest(governanceRequest);
+    const governanceIntegration = getGovernanceIntegration();
+    if (governanceIntegration?.isAvailable()) {
+      const externalVotes = await this.governProposalsExternal(proposals);
+      return this.mergeGovernanceVotes(internalVotes, externalVotes, proposals);
+    }
+
+    return internalVotes;
+  }
+
+  private isGovernanceMcpPreferred(): boolean {
+    try {
+      const config = featuresConfigLoader.loadConfig();
+      const inferenceGov = (config as { inference_governance?: { enabled?: boolean } }).inference_governance;
+      return inferenceGov?.enabled ?? true;
+    } catch {
+      return true;
+    }
+  }
+
+  private parseGovernanceMcpResponse(text: string, proposals: InferenceProposal[]): {
+    votes: InferenceCycleResult["votes"];
+    overallDecision: string;
+  } {
+    // The governance MCP returns a GovernanceResponse JSON
+    try {
+      const data = JSON.parse(text);
+      const results = data.results || [];
+      const votes = proposals.map((p, i) => {
+        const r = results[i] || {};
+        return {
+          proposalId: p.id,
+          decision: (r.finalDecision === 'approve' ? 'approve' : r.finalDecision === 'reject' ? 'reject' : 'needs_revision') as any,
+          confidence: r.averageConfidence || 0.75,
+          details: (r.votes || []).map((v: any) => `${v.server}: ${v.decision} (${v.confidence})`),
+        };
+      });
+      return { votes, overallDecision: data.overallDecision || "needs_revision" };
+    } catch {
+      frameworkLogger.log('inference-cycle', 'governance-mcp-parse-failed', 'warning', {
+        textPreview: text.substring(0, 200),
+        proposalCount: proposals.length,
+      });
+      const votes = proposals.map(p => ({
+        proposalId: p.id,
+        decision: "abstain" as any,
+        confidence: 0.5,
+        details: ["governance-mcp: parse-failed"],
+      }));
+      return { votes, overallDecision: "needs_revision" };
+    }
   }
 
   /**
-   * Convert a GovernanceResponse (nucleus kernel format) back to the
-   * InferenceCycleResult["votes"] format that the rest of the cycle expects.
+   * Oscillator 1: Internal VotingCoordinator-based governance
    */
-  private convertNucleusResponse(
-    response: GovernanceResponse,
+  private async governProposalsInternal(
     proposals: InferenceProposal[],
-  ): InferenceCycleResult["votes"] {
-    return proposals.map((p, i) => {
-      const result = response.results[i];
-      if (!result) {
-        return {
-          proposalId: p.id,
-          decision: 'reject' as const,
-          confidence: 0,
-          details: ['nucleus: no result returned'],
-        };
-      }
+  ): Promise<InferenceCycleResult["votes"]> {
+    // Defensive: if pure MCP mode is forced, use individual skill servers only
+    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+      return this.governProposalsWithIndividualSkills(proposals);
+    }
 
-      const decision = result.finalDecision === 'approve' ? 'approve' : result.finalDecision === 'reject' ? 'reject' : 'abstain';
-      return {
-        proposalId: p.id,
-        decision,
-        confidence: result.averageConfidence,
-        details: result.votes?.map((v: any) => `${v.server || v.agentName || 'agent'}: ${v.decision} (${v.confidence})`) || [result.reasoningSummary],
-      };
+    const coordinator = this.getCoordinator();
+    const sessionId = `inference-governance-${Date.now()}`;
+    const results: InferenceCycleResult["votes"] = [];
+
+    const todoPrompt = [
+      `Vote on ${proposals.length} inference proposals. Output EXACTLY one PROPOSAL block per proposal.`,
+      ``,
+      `FORMAT (exact, no extra text, no markdown):`,
+      `PROPOSAL: <number>`,
+      `  AGENT: architect`,
+      `  DECISION: approve|reject|abstain`,
+      `  CONFIDENCE: 0.XX`,
+      `  REASONING: <brief reason>`,
+      ``,
+      `Example:`,
+      `PROPOSAL: 1`,
+      `  AGENT: architect`,
+      `  DECISION: approve`,
+      `  CONFIDENCE: 0.85`,
+      `  REASONING: Cleanup reduces maintenance burden`,
+      ``,
+      `PROPOSALS:`,
+    ];
+
+    for (let i = 0; i < proposals.length; i++) {
+      const p = proposals[i]!;
+      todoPrompt.push(`${i + 1}. [${p.type}] "${p.title}"`);
+    }
+
+    try {
+      const jsonOutput = await this.invokeAgentInternal("architect", todoPrompt.join("\n"));
+
+      const allVotes = this.parseSubagentVotes(jsonOutput, proposals);
+
+      for (const proposal of proposals) {
+        const agents = GOVERNANCE_AGENTS[proposal.type] ?? ["code-reviewer"];
+        const participants = ["architect", ...agents];
+        const voteId = await coordinator.initiateVoting(
+          sessionId,
+          proposal.title,
+          proposal.description,
+          participants,
+          {
+            complexity: Math.min(50, 10 + proposal.evidence.length * 5 + (proposal.confidence > 0.8 ? 10 : 0)),
+            riskLevel: proposal.type === "fix" ? "low" : proposal.type === "guard" ? "high" : "medium",
+            hasSecurityConcerns: proposal.type === "guard" || proposal.type === "fix",
+            hasArchitecturalImpact: proposal.type === "codify" || proposal.type === "automate",
+            participantCount: participants.length,
+          },
+        );
+
+        const proposalVotes = allVotes.filter((v: { proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }) => v.proposalId === proposal.id);
+        for (const v of proposalVotes) {
+          coordinator.submitVote(voteId, v.agentName, v.decision, v.confidence, v.reasoning);
+        }
+
+        const resolved = coordinator.resolveVoting(voteId);
+        if (resolved) {
+          results.push({
+            proposalId: proposal.id,
+            decision: resolved.decision === "approve" ? "approve" : "reject",
+            confidence: resolved.confidence,
+            details: resolved.details?.map((d) => `${d.agentName}: vote=${d.vote}, weight=${d.weight.toFixed(2)}`) || [],
+          });
+
+          if (resolved.details) {
+            for (const detail of resolved.details) {
+              this.getCoordinator().getAggregator().updateAgentPerformance(
+                detail.agentName,
+                resolved.decision,
+                detail.vote,
+                detail.vote === resolved.decision,
+                proposal.confidence,
+              );
+            }
+          }
+        } else {
+          results.push(this.rejectNoQuorum(proposal, "agents did not vote (no quorum)"));
+        }
+      }
+    } catch (error) {
+      frameworkLogger.log("inference-cycle", "architect-governance-failed", "error", { error: String(error) });
+      for (const proposal of proposals) {
+        results.push(this.rejectNoQuorum(proposal, `agent invocation failed: ${error instanceof Error ? error.message : String(error)}`));
+      }
+    }
+
+    const metrics = coordinator.getMetrics();
+    frameworkLogger.log("inference-cycle", "governance-metrics", "info", {
+      totalVotes: metrics.totalVotes,
+      avgConfidence: metrics.averageConfidence.toFixed(2),
+      strategyUsage: metrics.strategyUsage,
     });
+
+    return results;
   }
 
-  private getGovernanceStateManager(): XrayStateManager {
+  /**
+   * Pure individual knowledge-skill MCP path for governance.
+   * Used when STRRAY_FORCE_MCP_GOVERNANCE=true.
+   * Each proposal is evaluated directly by the relevant skill servers using analyze_proposal.
+   */
+  private async governProposalsWithIndividualSkills(
+    proposals: InferenceProposal[],
+  ): Promise<InferenceCycleResult["votes"]> {
+    const results: InferenceCycleResult["votes"] = [];
+
+    const GOVERNANCE_AGENTS: Record<string, string[]> = {
+      fix: ["code-review", "security-audit", "researcher"],
+      refactor: ["code-review", "security-audit", "researcher"],
+      guard: ["code-review", "security-audit", "researcher"],
+      automate: ["code-review", "security-audit", "researcher"],
+      codify: ["code-review", "security-audit", "researcher"],
+    };
+
+    for (const proposal of proposals) {
+      const agents = GOVERNANCE_AGENTS[proposal.type] ?? ["code-review", "security-audit"];
+      const skillVotes: any[] = [];
+
+      for (const agent of agents) {
+        try {
+          const skillResult = await mcpClientManager.callServerTool(agent, "analyze_proposal", {
+            proposalTitle: proposal.title,
+            proposalDescription: proposal.description,
+            evidence: proposal.evidence,
+            proposalType: proposal.type,
+          });
+
+          let structured = "";
+          const contents = (skillResult as any)?.content || [];
+          for (const c of contents) {
+            if (c?.text && c.text.includes("DECISION:")) {
+              structured = c.text.trim();
+              break;
+            }
+          }
+          if (!structured) {
+            const full = JSON.stringify(skillResult);
+            const m = full.match(/DECISION:\s*(approve|reject|abstain)[\s\S]{0,300}?REASONING:[^\n"]*/i);
+            if (m) structured = m[0].trim();
+          }
+
+          skillVotes.push({
+            agent,
+            toolUsed: "analyze_proposal",
+            rawResponse: structured || JSON.stringify(skillResult),
+            structuredVote: structured || null,
+          });
+        } catch (err) {
+          skillVotes.push({
+            agent,
+            toolUsed: "analyze_proposal",
+            rawResponse: `error: ${err}`,
+            structuredVote: null,
+          });
+        }
+      }
+
+      const approves = skillVotes.filter((v: any) => v.structuredVote && v.structuredVote.includes("DECISION: approve")).length;
+      const rejects = skillVotes.filter((v: any) => v.structuredVote && v.structuredVote.includes("DECISION: reject")).length;
+      const decision = approves > rejects ? "approve" : (rejects > approves ? "reject" : "abstain");
+
+      let avgConf = 0.75;
+      const confMatches = skillVotes.map((v: any) => {
+        if (!v.structuredVote) return 0.75;
+        const m = v.structuredVote.match(/CONFIDENCE:\s*([0-9.]+)/);
+        return m ? parseFloat(m[1]) : 0.75;
+      });
+      if (confMatches.length > 0) avgConf = confMatches.reduce((a, b) => a + b, 0) / confMatches.length;
+
+      results.push({
+        proposalId: proposal.id,
+        decision: decision as any,
+        confidence: Math.round(avgConf * 100) / 100,
+        details: skillVotes.map((v: any) => `${v.agent}: ${v.structuredVote?.split('\n')[0] || 'no structured vote'}`),
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Merge internal and external governance votes.
+   * A proposal passes both oscillators — must be approved by internal AND external.
+   */
+  private mergeGovernanceVotes(
+    internalVotes: InferenceCycleResult["votes"],
+    externalVotes: InferenceCycleResult["votes"],
+    proposals: InferenceProposal[],
+  ): InferenceCycleResult["votes"] {
+    const merged: InferenceCycleResult["votes"] = [];
+
+    for (const proposal of proposals) {
+      const internal = internalVotes.find((v) => v.proposalId === proposal.id);
+      const external = externalVotes.find((v) => v.proposalId === proposal.id);
+
+      if (!internal) {
+        merged.push(this.rejectNoQuorum(proposal, "internal governance vote missing"));
+        continue;
+      }
+
+      const internalApproved = internal.decision === "approve";
+      const externalApproved = external?.decision === "approve";
+
+      const bothApproved = internalApproved && (!external || externalApproved);
+
+      merged.push({
+        proposalId: proposal.id,
+        decision: bothApproved ? "approve" : "reject",
+        confidence: internal.confidence * (external ? external.confidence : 1.0),
+        details: [
+          ...internal.details,
+          ...(external ? [`External governance: ${external.decision} (conf: ${external.confidence.toFixed(2)})`, ...external.details] : []),
+        ],
+      });
+    }
+
+    return merged;
+  }
+
+  // Removed: buildOrchestratorGovernancePrompt (replaced by inline TODO prompt in governProposals)
+
+  /**
+   * Govern proposals using external chrono-warp-drive Dynamo endpoint
+   */
+  private async governProposalsExternal(
+    proposals: InferenceProposal[],
+  ): Promise<InferenceCycleResult["votes"]> {
+    const governanceIntegration = getGovernanceIntegration();
+    if (!governanceIntegration) {
+      throw new Error("Governance integration not available");
+    }
+
+    // Build agent reviews from proposal evidence
+    const agentReviews = proposals.flatMap((p) =>
+      p.evidence.slice(0, 2).map((e) => `[${p.type}] ${e}`),
+    );
+
+    try {
+      const batchResult = await governanceIntegration.checkProposals(
+        proposals,
+        agentReviews,
+        [],
+      );
+
+      const votes: InferenceCycleResult["votes"] = batchResult.results.map(
+        (result: GovernanceVoteResult) => ({
+          proposalId: result.governanceResponse.proposalId,
+          decision: result.vote.toLowerCase() === "yes" ? "approve" : "reject",
+          confidence: result.governanceResponse.confidence,
+          details: [
+            `Governance: ${result.governanceResponse.recommendation}`,
+            `Isotope: ${result.governanceResponse.governanceIsotopeId}`,
+            ...result.governanceResponse.reasons.slice(0, 2),
+          ],
+        }),
+      );
+
+      frameworkLogger.log("inference-cycle", "external-governance-complete", "info", {
+        proposalCount: proposals.length,
+        passedCount: batchResult.results.filter((r) => r.passed).length,
+      });
+
+      return votes;
+    } catch (error) {
+      frameworkLogger.log(
+        "inference-cycle",
+        "external-governance-failed",
+        "error",
+        {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+
+      return proposals.map((p) => this.rejectNoQuorum(p, "external governance endpoint failed"));
+    }
+  }
+
+  private async invokeAgentInternal(agentName: string, prompt: string): Promise<string> {
+    frameworkLogger.log("inference-cycle", "invoke-agent-internal", "info", {
+      agentName,
+      promptLength: prompt.length,
+    });
+
+    try {
+      const { mcpClientManager } = await import("../mcps/mcp-client.js");
+      const MCP_TIMEOUT_MS = 8000;
+      const result = await Promise.race([
+        mcpClientManager.callServerTool("orchestrator", "orchestrate-task", {
+          description: prompt,
+          tasks: [{
+            id: `task-${Date.now()}`,
+            description: prompt,
+            type: agentName,
+            priority: "high",
+          }],
+          executionMode: "sequential",
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Orchestrator MCP timed out after ${MCP_TIMEOUT_MS}ms`)), MCP_TIMEOUT_MS)
+        ),
+      ]);
+      const content = (result as { content?: Array<{ text?: string }> }).content;
+      let responseText = "";
+      if (content && Array.isArray(content)) {
+        responseText = content.map((c: { text?: string }) => c.text ?? "").join("");
+      } else {
+        responseText = JSON.stringify(result);
+      }
+      // In pure MCP governance mode, trust the orchestrator response (it now does real work)
+      const isPureMcp = process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true';
+
+      const hasRealContent = /PROPOSAL:\s*\d+/i.test(responseText) ||
+                             /DECISION:\s*(approve|reject|abstain)/i.test(responseText) ||
+                             /Agent Outputs \(real MCP responses\):/i.test(responseText);
+
+      if (hasRealContent || isPureMcp) {
+        if (isPureMcp && !hasRealContent) {
+          frameworkLogger.log("inference-cycle", "pure-mcp-orchestrator-response", "info", {
+            agentName,
+            responsePreview: responseText.substring(0, 300),
+          });
+        }
+        return responseText;
+      }
+
+      frameworkLogger.log("inference-cycle", "mcp-no-useful-content", "info", {
+        agentName,
+        responsePreview: responseText.substring(0, 200),
+      });
+    } catch (mcpError) {
+      frameworkLogger.log("inference-cycle", "mcp-invocation-failed", "info", {
+        agentName,
+        error: String(mcpError),
+      });
+    }
+
+    if (this.agentInvoker) {
+      frameworkLogger.log("inference-cycle", "invoke-via-callback", "info", { agentName });
+      return this.agentInvoker(agentName, prompt);
+    }
+
+    // Only fall back to OpenCode if not in forced pure MCP mode
+    if (process.env.STRRAY_FORCE_MCP_GOVERNANCE === 'true') {
+      throw new Error(`[PURE MCP] Orchestrator returned no usable response for agent "${agentName}" and OpenCode fallback is disabled`);
+    }
+
+    return this.invokeViaOpencode(agentName, prompt);
+  }
+
+  private async invokeViaOpencode(agentName: string, prompt: string): Promise<string> {
+    return invokeOpencodeFromEngine(agentName, prompt, this.projectRoot);
+  }
+
+  private parseSubagentVotes(
+    jsonOutput: string,
+    proposals: InferenceProposal[],
+  ): Array<{ proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }> {
+    const votes: Array<{ proposalId: string; agentName: string; decision: string; confidence: number; reasoning: string }> = [];
+
+    const lines = jsonOutput.split("\n").filter((l) => l.trim());
+
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        if (obj.type === "tool_use" && obj.part?.type === "tool" && obj.part.tool === "task") {
+          const agentName = obj.part.state?.input?.subagent_type || "";
+          const output = obj.part.state?.output || "";
+
+          // Each task output may contain multiple PROPOSAL blocks
+          const blocks = output.split(/PROPOSAL:\s*/).filter((b: string) => b.trim().length > 0);
+
+          for (const block of blocks) {
+            const numMatch = block.match(/^(\d+)/);
+            if (!numMatch) continue;
+            const proposalIdx = parseInt(numMatch[1], 10) - 1;
+            if (proposalIdx < 0 || proposalIdx >= proposals.length) continue;
+
+            const decisionMatch = block.match(/DECISION:\s*(\w+)/i);
+            const confMatch = block.match(/CONFIDENCE:\s*(0?\.\d+|1\.0|1|0)/i);
+            const reasonMatch = block.match(/REASONING:\s*(.+)/i);
+
+            if (decisionMatch) {
+              const proposal = proposals[proposalIdx];
+              if (proposal) {
+                votes.push({
+                  proposalId: proposal.id,
+                  agentName,
+                  decision: decisionMatch[1]!.toLowerCase(),
+                  confidence: confMatch ? Math.min(1, Math.max(0, parseFloat(confMatch[1]!))) : 0.5,
+                  reasoning: reasonMatch ? reasonMatch[1]!.trim() : "",
+                });
+              }
+            }
+          }
+        }
+      } catch {
+        // Not JSON, skip
+      }
+    }
+
+    // Fallback: if no votes found from JSON format, try parsing plain-text
+    // PROPOSAL/DECISION blocks directly (e.g. from opencode CLI fallback path)
+    if (votes.length === 0 && /PROPOSAL:\s*\d+/i.test(jsonOutput)) {
+      const blocks = jsonOutput.split(/PROPOSAL:\s*/).filter((b: string) => b.trim().length > 0);
+      for (const block of blocks) {
+        const numMatch = block.match(/^(\d+)/);
+        if (!numMatch) continue;
+        const numStr = numMatch[1];
+        if (!numStr) continue;
+        const proposalIdx = parseInt(numStr, 10) - 1;
+        if (proposalIdx < 0 || proposalIdx >= proposals.length) continue;
+
+        const agentMatch = block.match(/AGENT:\s*(\w[\w-]*)/i);
+        const decisionMatch = block.match(/DECISION:\s*(\w+)/i);
+        const confMatch = block.match(/CONFIDENCE:\s*(0?\.\d+|1\.0|1|0)/i);
+        const reasonMatch = block.match(/REASONING:\s*(.+)/i);
+
+        if (decisionMatch) {
+          const proposal = proposals[proposalIdx];
+          if (proposal) {
+            let decision = decisionMatch[1]!.toLowerCase();
+            if (decision === "yes") decision = "approve";
+            if (decision === "no") decision = "reject";
+            votes.push({
+              proposalId: proposal.id,
+              agentName: agentMatch?.[1] ?? "architect",
+              decision,
+              confidence: confMatch ? Math.min(1, Math.max(0, parseFloat(confMatch[1]!))) : 0.5,
+              reasoning: reasonMatch ? reasonMatch[1]!.trim() : "",
+            });
+          }
+        }
+      }
+    }
+
+    return votes;
+  }
+
+  private getGovernanceStateManager(): StringRayStateManager {
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
     }
-    const statePath = path.join(this.stateDir, CONSOLIDATED_STATE_FILE);
-    const stateManager = new XrayStateManager();
-    if (fs.existsSync(statePath)) {
+    const stateFile = path.join(this.stateDir, "governance-state.json");
+    const stateManager = new StringRayStateManager();
+    if (fs.existsSync(stateFile)) {
       try {
-        const data = JSON.parse(fs.readFileSync(statePath, "utf-8"));
-        if (data.governanceState) {
-          for (const [key, value] of Object.entries(data.governanceState)) {
-            stateManager.set(key, value);
-          }
+        const data = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
+        for (const [key, value] of Object.entries(data)) {
+          stateManager.set(key, value);
         }
       } catch {
         frameworkLogger.log("inference-cycle", "governance-state-load-failed", "warning", {});
       }
     }
     return stateManager;
+  }
+
+  private saveGovernanceState(coordinator: VotingCoordinator): void {
+    const stateFile = path.join(this.stateDir, "governance-state.json");
+    try {
+      // Export the coordinator's internal state (voting history, metrics, etc.)
+      const history = coordinator.getVotingHistory();
+      const metrics = coordinator.getMetrics();
+      const exportData = {
+        votingHistory: history,
+        metrics,
+        exportedAt: new Date().toISOString(),
+      };
+      if (!fs.existsSync(this.stateDir)) {
+        fs.mkdirSync(this.stateDir, { recursive: true });
+      }
+      fs.writeFileSync(stateFile, JSON.stringify(exportData, null, 2));
+    } catch (error) {
+      frameworkLogger.log("inference-cycle", "governance-state-save-failed", "warning", { error: String(error) });
+    }
   }
 
   private extractTextFromNdjson(output: string): string {
@@ -701,6 +1174,26 @@ Respond with EXACTLY one of:
       }
     }
     return texts.join("\n").trim();
+  }
+
+  private resolveOpencodeRoot(): string {
+    // Use the provider-agnostic config path resolver (prefers .strray/, falls back to .opencode/strray/)
+    const configDir = getConfigDir(this.projectRoot);
+    // If we resolved to a .strray or custom dir, use its parent as the "root"
+    if (configDir.includes(".strray") || configDir.includes("strray")) {
+      return path.dirname(configDir);
+    }
+    // Legacy fallback
+    let dir = this.projectRoot;
+    for (let i = 0; i < 10; i++) {
+      if (fs.existsSync(path.join(dir, ".opencode"))) return dir;
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+    const cwd = process.cwd();
+    if (fs.existsSync(path.join(cwd, ".opencode"))) return cwd;
+    return this.projectRoot;
   }
 
   private rejectNoQuorum(proposal: InferenceProposal, reason: string): InferenceCycleResult["votes"][0] {
@@ -770,35 +1263,39 @@ Respond with EXACTLY one of:
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
     }
-    const statePath = path.join(this.stateDir, CONSOLIDATED_STATE_FILE);
-    const existing = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, "utf-8")) : {};
-    existing.cycleState = {
-      cycleId,
-      completedAt: new Date().toISOString(),
-      phase: this.phase,
-    };
-    fs.writeFileSync(statePath, JSON.stringify(existing, null, 2));
+    fs.writeFileSync(
+      path.join(this.stateDir, CYCLE_STATE_FILE),
+      JSON.stringify({
+        cycleId,
+        completedAt: new Date().toISOString(),
+        phase: this.phase,
+      }),
+    );
   }
 
   private appendHistory(result: InferenceCycleResult): void {
     if (!fs.existsSync(this.stateDir)) {
       fs.mkdirSync(this.stateDir, { recursive: true });
     }
-    const statePath = path.join(this.stateDir, CONSOLIDATED_STATE_FILE);
-    const existing = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, "utf-8")) : {};
-    let history: InferenceCycleResult[] = existing.history || [];
+    const historyPath = path.join(this.stateDir, CYCLE_HISTORY_FILE);
+    let history: InferenceCycleResult[] = [];
+    if (fs.existsSync(historyPath)) {
+      try {
+        history = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
+      } catch {
+        history = [];
+      }
+    }
     history.push(result);
     if (history.length > 50) history = history.slice(-50);
-    existing.history = history;
-    fs.writeFileSync(statePath, JSON.stringify(existing, null, 2));
+    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
   }
 
   private loadHistory(): InferenceCycleResult[] {
-    const statePath = path.join(this.stateDir, CONSOLIDATED_STATE_FILE);
-    if (!fs.existsSync(statePath)) return [];
+    const historyPath = path.join(this.stateDir, CYCLE_HISTORY_FILE);
+    if (!fs.existsSync(historyPath)) return [];
     try {
-      const data = JSON.parse(fs.readFileSync(statePath, "utf-8"));
-      return data.history || [];
+      return JSON.parse(fs.readFileSync(historyPath, "utf-8"));
     } catch {
       return [];
     }

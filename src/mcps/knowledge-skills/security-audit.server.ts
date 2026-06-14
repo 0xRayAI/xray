@@ -5,11 +5,16 @@
  * and compliance validation - ensures production-ready security posture
  */
 
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  type CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
 interface SecurityVulnerability {
   id: string;
@@ -79,126 +84,149 @@ interface AnalyzeProposalArgs {
   proposalType?: string;
 }
 
-class XraySecurityAuditServer extends XrayKnowledgeSkillBase {
+class XraySecurityAuditServer {
+  private server: Server;
+
   constructor() {
-    super("security-audit", "2.0.1");
-    this.tools = [
+    this.server = new Server(
       {
-        name: "audit_security",
-        description:
-          "Perform comprehensive security audit on codebase files",
-        inputSchema: {
-          type: "object",
-          properties: {
-            files: {
-              type: "array",
-              items: { type: "string" },
-              description: "List of file paths to audit",
-            },
-            includeDependencies: {
-              type: "boolean",
-              description: "Include dependency vulnerability analysis",
-              default: true,
-            },
-            complianceFrameworks: {
-              type: "array",
-              items: {
-                type: "string",
-                enum: ["owasp-top-10", "nist", "iso-27001", "pci-dss"],
-              },
-              description: "Compliance frameworks to check against",
-            },
-          },
-          required: ["files"],
-        },
+        name: "security-audit", version: "1.22.67",
       },
       {
-        name: "check_vulnerability",
-        description:
-          "Check specific security vulnerability patterns in a file",
-        inputSchema: {
-          type: "object",
-          properties: {
-            filePath: {
-              type: "string",
-              description: "Path to the file to check",
-            },
-            vulnerabilityType: {
-              type: "string",
-              enum: [
-                "injection",
-                "authentication",
-                "authorization",
-                "cryptography",
-                "xss",
-                "csrf",
-                "secrets",
-                "configuration",
-              ],
-            },
-            severity: {
-              type: "string",
-              enum: ["critical", "high", "medium", "low", "info"],
-              description: "Minimum severity level to report",
-            },
-          },
-          required: ["filePath", "vulnerabilityType"],
+        capabilities: {
+          tools: {},
         },
       },
-      {
-        name: "generate_security_report",
-        description:
-          "Generate comprehensive security report with remediation steps",
-        inputSchema: {
-          type: "object",
-          properties: {
-            auditResults: {
-              type: "object",
-              description: "Results from audit_security tool",
-            },
-            format: {
-              type: "string",
-              enum: ["markdown", "json", "html"],
-              default: "markdown",
-            },
-            includeRemediation: {
-              type: "boolean",
-              default: true,
-            },
-          },
-          required: ["auditResults"],
-        },
-      },
-      {
-        name: "analyze_proposal",
-        description:
-          "Analyze an inference proposal (pattern/bug/refactor) from a security perspective and return a structured governance decision",
-        inputSchema: {
-          type: "object",
-          properties: {
-            proposalTitle: { type: "string" },
-            proposalDescription: { type: "string" },
-            evidence: { type: "array", items: { type: "string" } },
-            proposalType: { type: "string" },
-          },
-          required: ["proposalTitle", "proposalDescription"],
-        },
-      },
-    ];
-    this.handlers = {
-      "audit_security": async (args) => this.auditSecurity(args as unknown as AuditSecurityArgs),
-      "check_vulnerability": async (args) => this.checkVulnerability(args as unknown as CheckVulnerabilityArgs),
-      "generate_security_report": async (args) => this.generateSecurityReport(args as unknown as GenerateSecurityReportArgs),
-      "analyze_proposal": async (args) => this.analyzeProposal(args as AnalyzeProposalArgs),
-    };
+    );
+
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "security-audit",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+    // Server initialization - removed unnecessary startup logging
+  }
+
+  private setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "audit_security",
+            description:
+              "Perform comprehensive security audit on codebase files",
+            inputSchema: {
+              type: "object",
+              properties: {
+                files: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "List of file paths to audit",
+                },
+                includeDependencies: {
+                  type: "boolean",
+                  description: "Include dependency vulnerability analysis",
+                  default: true,
+                },
+                complianceFrameworks: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                    enum: ["owasp-top-10", "nist", "iso-27001", "pci-dss"],
+                  },
+                  description: "Compliance frameworks to check against",
+                },
+              },
+              required: ["files"],
+            },
+          },
+          {
+            name: "check_vulnerability",
+            description:
+              "Check specific security vulnerability patterns in a file",
+            inputSchema: {
+              type: "object",
+              properties: {
+                filePath: {
+                  type: "string",
+                  description: "Path to the file to check",
+                },
+                vulnerabilityType: {
+                  type: "string",
+                  enum: [
+                    "injection",
+                    "authentication",
+                    "authorization",
+                    "cryptography",
+                    "xss",
+                    "csrf",
+                    "secrets",
+                    "configuration",
+                  ],
+                },
+                severity: {
+                  type: "string",
+                  enum: ["critical", "high", "medium", "low", "info"],
+                  description: "Minimum severity level to report",
+                },
+              },
+              required: ["filePath", "vulnerabilityType"],
+            },
+          },
+          {
+            name: "generate_security_report",
+            description:
+              "Generate comprehensive security report with remediation steps",
+            inputSchema: {
+              type: "object",
+              properties: {
+                auditResults: {
+                  type: "object",
+                  description: "Results from audit_security tool",
+                },
+                format: {
+                  type: "string",
+                  enum: ["markdown", "json", "html"],
+                  default: "markdown",
+                },
+                includeRemediation: {
+                  type: "boolean",
+                  default: true,
+                },
+              },
+              required: ["auditResults"],
+            },
+          },
+          {
+            name: "analyze_proposal",
+            description:
+              "Analyze an inference proposal (pattern/bug/refactor) from a security perspective and return a structured governance decision",
+            inputSchema: {
+              type: "object",
+              properties: {
+                proposalTitle: { type: "string" },
+                proposalDescription: { type: "string" },
+                evidence: { type: "array", items: { type: "string" } },
+                proposalType: { type: "string" },
+              },
+              required: ["proposalTitle", "proposalDescription"],
+            },
+          },
+        ],
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "audit_security":
+          return await this.auditSecurity(args as unknown as AuditSecurityArgs);
+        case "check_vulnerability":
+          return await this.checkVulnerability(args as unknown as CheckVulnerabilityArgs);
+        case "generate_security_report":
+          return await this.generateSecurityReport(args as unknown as GenerateSecurityReportArgs);
+        case "analyze_proposal":
+          return await this.analyzeProposal(args as AnalyzeProposalArgs) as CallToolResult;
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
     });
   }
 
@@ -1144,12 +1172,22 @@ class XraySecurityAuditServer extends XrayKnowledgeSkillBase {
     };
   }
 
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    
+    // Use centralized shutdown handler
+    createGracefulShutdown({
+      serverName: "security-audit.server",
+      server: this.server,
+    });
+  }
 }
 
 // Run the server if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new XraySecurityAuditServer();
-  server.run("security-audit").catch((err) => { frameworkLogger.log("security-audit", "run", "error", { error: err instanceof Error ? err.message : String(err) }); });
+  server.run().catch(() => {});
 }
 
 export { XraySecurityAuditServer };

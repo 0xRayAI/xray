@@ -8,7 +8,7 @@
  * @since 2026-01-07
  */
 
-import { XrayStateManager } from "../state/state-manager.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import { DelegationResult } from "./agent-delegator.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import * as crypto from "crypto";
@@ -72,10 +72,10 @@ export interface SessionMetrics {
 }
 
 export class SessionCoordinator {
-  private stateManager: XrayStateManager;
+  private stateManager: StringRayStateManager;
   private sessions = new Map<string, SessionContext>();
 
-  constructor(stateManager: XrayStateManager) {
+  constructor(stateManager: StringRayStateManager) {
     this.stateManager = stateManager;
   }
 
@@ -544,7 +544,7 @@ export class SessionCoordinator {
 
 // Export singleton instance factory
 export const createSessionCoordinator = (
-  stateManager: XrayStateManager,
+  stateManager: StringRayStateManager,
 ): SessionCoordinator => {
   return new SessionCoordinator(stateManager);
 };

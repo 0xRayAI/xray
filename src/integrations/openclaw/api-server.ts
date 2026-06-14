@@ -8,11 +8,10 @@
  * @since 2026-03-14
  */
 
-import { frameworkLogger } from '../../core/framework-logger.js';
 import * as crypto from 'crypto';
 import * as http from 'http';
 import {
-  XrayAPIServerConfig,
+  StringRayAPIServerConfig,
   AgentInvokeRequest,
   AgentInvokeResponse,
   HealthCheckResponse,
@@ -30,9 +29,9 @@ export interface AgentInvoker {
 /**
  * 0xRay API Server
  */
-export class XrayAPIServer {
+export class StringRayAPIServer {
   private server: http.Server | null = null;
-  private config: Required<XrayAPIServerConfig>;
+  private config: Required<StringRayAPIServerConfig>;
   private agentInvoker: AgentInvoker | null = null;
   private apiKey: string = '';
   private stats: APIServerStatistics = {
@@ -44,7 +43,9 @@ export class XrayAPIServer {
     errors: 0,
   };
   private responseTimes: number[] = [];
-  constructor(config: XrayAPIServerConfig) {
+  private logger: Console;
+
+  constructor(config: StringRayAPIServerConfig) {
     this.config = {
       port: config.port || 18431,
       host: config.host || '127.0.0.1',
@@ -55,6 +56,8 @@ export class XrayAPIServer {
         maxRequests: 100,
       },
     };
+
+    this.logger = console;
   }
 
   /**
@@ -69,7 +72,7 @@ export class XrayAPIServer {
    */
   async start(): Promise<void> {
     if (this.server) {
-      frameworkLogger.log('openclaw-api-server', 'Server already running', 'warning', {});
+      this.logger.warn('[StringRayAPIServer] Server already running');
       return;
     }
 
@@ -79,14 +82,14 @@ export class XrayAPIServer {
       });
 
       this.server.on('error', (error: Error) => {
-        frameworkLogger.log('openclaw-api-server', 'Server error:', 'error', { error });
+        this.logger.error('[StringRayAPIServer] Server error:', error);
         this.stats.errors++;
         reject(error);
       });
 
       this.server.listen(this.config.port, this.config.host, () => {
         this.stats.startedAt = Date.now();
-        frameworkLogger.log('openclaw-api-server', `Listening on http://${this.config.host}:${this.config.port}`, 'info', {});
+        this.logger.info(`[StringRayAPIServer] Listening on http://${this.config.host}:${this.config.port}`);
         resolve();
       });
     });
@@ -99,7 +102,7 @@ export class XrayAPIServer {
     return new Promise((resolve) => {
       if (this.server) {
         this.server.close(() => {
-          frameworkLogger.log('openclaw-api-server', 'Server stopped', 'info', {});
+          this.logger.info('[StringRayAPIServer] Server stopped');
           this.server = null;
           resolve();
         });
@@ -150,7 +153,11 @@ export class XrayAPIServer {
       // to prevent cross-origin attacks where a malicious site could make
       // authenticated requests using the API key from a victim's browser.
       if (this.config.apiKey) {
-        frameworkLogger.log('openclaw-api-server', 'Security: API key is set with CORS enabled. Restricting Access-Control-Allow-Origin to localhost only. Configure explicit allowed origins if cross-origin access is needed.', 'warning', {});
+        this.logger.warn(
+          '[StringRayAPIServer] Security: API key is set with CORS enabled. ' +
+          'Restricting Access-Control-Allow-Origin to localhost only. ' +
+          'Configure explicit allowed origins if cross-origin access is needed.'
+        );
         const origin = req.headers.origin;
         if (origin && ['http://localhost', 'http://127.0.0.1', 'http://localhost:3000',
             'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'].includes(origin)) {
@@ -237,7 +244,7 @@ export class XrayAPIServer {
           this.sendResponse(res, 404, { error: 'Not found' });
       }
     } catch (error) {
-      frameworkLogger.log('openclaw-api-server', 'Error handling request:', 'error', { error });
+      this.logger.error(`[StringRayAPIServer] Error handling request:`, error);
       this.stats.errors++;
       
       const errorMessage = error instanceof Error ? error.message : 'Internal server error';
@@ -435,6 +442,6 @@ export class XrayAPIServer {
 /**
  * Factory function to create API server
  */
-export function createXrayAPIServer(config: XrayAPIServerConfig): XrayAPIServer {
-  return new XrayAPIServer(config);
+export function createStringRayAPIServer(config: StringRayAPIServerConfig): StringRayAPIServer {
+  return new StringRayAPIServer(config);
 }

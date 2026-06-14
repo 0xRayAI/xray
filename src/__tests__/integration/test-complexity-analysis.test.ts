@@ -6,13 +6,13 @@
 
 import { describe, test, expect, beforeEach } from "vitest";
 import { complexityAnalyzer } from "../../delegation/complexity-analyzer.js";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 
 describe("Complexity Analysis Integration", () => {
-  let stateManager: XrayStateManager;
+  let stateManager: StringRayStateManager;
 
   beforeEach(() => {
-    stateManager = new XrayStateManager("/tmp/test-state");
+    stateManager = new StringRayStateManager("/tmp/test-state");
   });
 
   test("should analyze simple file complexity correctly", () => {

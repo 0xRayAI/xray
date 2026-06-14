@@ -1,85 +1,81 @@
-
-__pycache__/
-.ci-reports/
-.opencode/.strrayrc.json
-.opencode/**/*.d.ts
-.opencode/**/*.d.ts.map
-.opencode/activity-report.json
-.opencode/activity.log
-.opencode/AGENTS-consumer.md
-.opencode/agents/.gitkeep
-.opencode/agents/*.yml
-.opencode/bun.lock
-.opencode/codex.codex
-.opencode/command/*.md
-.opencode/commands/*.md
-.opencode/commands/*.sh
-.opencode/commands/tree
-.opencode/core/
-.opencode/enforcement/
-.opencode/enforcer-config.json
-.opencode/hooks/hook-metrics.json
-.opencode/logs/
-.opencode/openclaw/config.json
-.opencode/package-lock.json
-.opencode/package.json
-.opencode/scripts/
-.opencode/skills/
-.opencode/strray/
-.opencode/triage/
-.opencode/validation/
-.opencode/workflows/*.yml
-.opencode/xray/*.json
-.opencode/xray/agents_template.md
-.tmp/
-.vercel
-.xray/
-*.log
-*.tgz
-*.tmp
-/command/
-/skills/
-# Accidental macOS temp/resolved paths
-# Build artifacts
-# CI test environment (generated)
-# Compiled TypeScript output in .opencode/
-# Consumer package artifacts
-# Copied/generated directories
-# Dependencies
-# Docs inference (generated at runtime)
 # Docusaurus build artifacts
-# Generated config files (source in src/opencode/)
-# Generated runtime data at root (not part of package source)
-# Generated runtime files
-# Python cache
-# Runtime state
-# Runtime-generated files
-# Stale root duplicates (canonical copy lives in src/)
-# Stray test artifacts
-# StringRay runtime artifacts
-# Temp files
-# Version-manager auto-backups
-0xray-*.tgz
-ci-test-env/
-coverage/
-dist/
-docs-site/.docusaurus/
 docs-site/build/
+docs-site/.docusaurus/
 docs-site/node_modules/
-docs/inference/
-docs/reflections/backups/
+
+# Generated runtime files
+performance-reports/
+logs/performance-reports/
 logs/framework/activity-report.json
 logs/framework/pattern-metrics.json
 logs/framework/routing-outcomes.json
-logs/performance-reports/
-node_modules/
-performance-baselines.json
-performance-reports/
-src/integrations/hermes-agent/logs/
-state
-test-debug.mjs
-test-edit-tracking.ts
-test-skill.json
-tsconfig.tsbuildinfo
-var/
+*.tgz
+
+# Runtime state
+.strray/
+.opencode/.strrayrc.json
 xray/inference/
+
+# Temp files
+*.log
+0xray-*.tgz
+*.tmp
+
+# StringRay runtime artifacts
+.opencode/**/*.d.ts
+.opencode/**/*.d.ts.map
+
+# Generated config files (source in src/opencode/)
+.opencode/agents/*.yml
+.opencode/xray/*.json
+.opencode/xray/agents_template.md
+.opencode/strray/
+.opencode/commands/*.md
+.opencode/commands/*.sh
+.opencode/command/*.md
+.opencode/codex.codex
+.opencode/enforcer-config.json
+.opencode/AGENTS-consumer.md
+
+.opencode/workflows/*.yml
+.opencode/openclaw/config.json
+
+# Consumer package artifacts
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/bun.lock
+
+# Compiled TypeScript output in .opencode/
+.opencode/core/
+.opencode/enforcement/
+
+# Copied/generated directories
+.opencode/skills/
+.opencode/scripts/
+.opencode/logs/
+.opencode/validation/
+.opencode/triage/
+
+# Runtime-generated files
+.opencode/activity-report.json
+.opencode/activity.log
+.opencode/hooks/hook-metrics.json
+.opencode/agents/.gitkeep
+.opencode/commands/tree
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+tsconfig.tsbuildinfo
+
+# Docs inference (generated at runtime)
+docs/inference/
+.vercel
+
+# CI test environment (generated)
+ci-test-env/
+
+# Version-manager auto-backups
+backups/

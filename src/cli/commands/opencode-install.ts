@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { frameworkLogger } from '../../core/framework-logger.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
@@ -83,14 +82,6 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
 
   if (options.dryRun) {
     console.log(`[Opencode] Dry run: Would copy ${opencodeSource} → ${opencodeDest}`);
-    const pkgPath = path.join(process.cwd(), 'package.json');
-    if (fs.existsSync(pkgPath)) {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-      const has0xray = pkg.dependencies?.['0xray'] || pkg.devDependencies?.['0xray'];
-      if (!has0xray) {
-        console.log(`[Opencode] Dry run: Would add "0xray" dependency to package.json`);
-      }
-    }
     return;
   }
 
@@ -105,33 +96,6 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
     frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
 
     console.log(`\x1b[32m✓ Copied OpenCode config to .opencode/\x1b[0m`);
-
-    // Ensure 0xray is an npm dependency so plugin imports resolve
-    const pkgPath = path.join(process.cwd(), 'package.json');
-    let needsInstall = false;
-
-    if (!fs.existsSync(pkgPath)) {
-      console.log('No package.json found — running npm init -y...');
-      execSync('npm init -y', { cwd: process.cwd(), stdio: 'inherit' });
-      needsInstall = true;
-    }
-
-    if (fs.existsSync(pkgPath)) {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-      const has0xray = pkg.dependencies?.['0xray'] || pkg.devDependencies?.['0xray'];
-      if (!has0xray) {
-        pkg.dependencies = pkg.dependencies || {};
-        pkg.dependencies['0xray'] = '*';
-        fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
-        console.log(`\x1b[32m✓ Added 0xray dependency to package.json\x1b[0m`);
-        needsInstall = true;
-      }
-    }
-    if (needsInstall) {
-      console.log('Installing 0xray...');
-      execSync('npm install', { cwd: process.cwd(), stdio: 'inherit' });
-    }
-
     console.log('\n✅ 0xRay OpenCode plugin installed!');
     console.log('Restart OpenCode or run `opencode` to load the plugin.');
 

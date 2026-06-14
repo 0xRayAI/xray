@@ -18,7 +18,7 @@ import {
   ComplexityMetrics,
   ComplexityScore,
 } from "./complexity-analyzer.js";
-import { XrayStateManager } from "../state/state-manager.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import { strRayConfigLoader } from "../core/config-loader.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getKernel, KernelInferenceResult } from "../core/kernel-patterns.js";
@@ -140,7 +140,7 @@ export interface DelegationMetrics extends PerformanceMetrics {
  */
 export class AgentDelegator {
   private complexityAnalyzer: ComplexityAnalyzer;
-  private stateManager: XrayStateManager;
+  private stateManager: StringRayStateManager;
   private configLoader: typeof strRayConfigLoader;
   private kernel: ReturnType<typeof getKernel>;
   private agentMetrics: AgentMetricsSystem;
@@ -149,7 +149,7 @@ export class AgentDelegator {
   private static readonly MAPPING_CONFIDENCE_THRESHOLD = 0.7;
 
   constructor(
-    stateManager: XrayStateManager,
+    stateManager: StringRayStateManager,
     configLoader: typeof strRayConfigLoader,
   ) {
     this.stateManager = stateManager;
@@ -165,9 +165,9 @@ export class AgentDelegator {
    */
   private loadRoutingMappings(): RoutingMapping[] {
     const candidates = [
-      path.resolve(process.cwd(), ".xray/routing-mappings.json"),
+      path.resolve(process.cwd(), ".strray/routing-mappings.json"),
       path.resolve(process.cwd(), "xray/routing-mappings.json"),
-      path.resolve(process.cwd(), ".opencode/xray/routing-mappings.json"),
+      path.resolve(process.cwd(), ".opencode/strray/routing-mappings.json"),
       path.resolve(process.cwd(), "routing-mappings.json"),
     ];
     for (const p of candidates) {
@@ -695,7 +695,7 @@ export class AgentDelegator {
   private resolveProjectDirectory(): string {
     const root = process.cwd();
     
-    if (fs.existsSync(`${root}/package.json`) || fs.existsSync(`${root}/xray.config.json`)) {
+    if (fs.existsSync(`${root}/package.json`) || fs.existsSync(`${root}/strray.config.json`)) {
       return root;
     }
     
@@ -1135,7 +1135,7 @@ export class AgentDelegator {
 }
 
 export function createAgentDelegator(
-  stateManager: XrayStateManager,
+  stateManager: StringRayStateManager,
   configLoader: typeof strRayConfigLoader,
 ): AgentDelegator {
   return new AgentDelegator(stateManager, configLoader);

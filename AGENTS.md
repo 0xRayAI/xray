@@ -1,14 +1,14 @@
 # xray Agents
 
-Quick reference for xray AI orchestration framework (v15 MCPs-centric three-subsystem).
+Quick reference for xray AI orchestration framework (v2 MCP-centric three-subsystem).
 
 ## What is xray?
 
-xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v3 three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in MCP orchestrator). Agents operate via `src/opencode/agents/*.yml` YML surfaces and 3 dedicated MCP skill servers — no manual setup needed.
+xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in MCP orchestrator). Agents operate via `.opencode/agents/*.yml` YML surfaces and 3 dedicated MCP skill servers — no manual setup needed.
 
-## v15 MCPs-Centric Architecture
+## v2 MCP-Centric Architecture
 
-The v3 release centers on **MCP (Model Context Protocol)** as the primary surface for agent skills. Three agent MCP servers handle governance deliberation:
+The v2 release centers on **MCP (Model Context Protocol)** as the primary surface for agent skills. Three agent MCP servers handle governance deliberation:
 
 - `code-review` — Proposal quality, code analysis, best practices
 - `security-audit` — Vulnerability detection, threat modeling
@@ -18,7 +18,7 @@ These MCP servers integrate with the three-subsystem pipeline for governance-gat
 
 ## xray Three-Subsystem Operation
 
-xray operates under the pure three-subsystem model: Inference + External Governance (Dynamo Solar SSOT) + Autonomous Engine (thinDispatch 7-flow in MCP orchestrator). Agents are declared in `src/opencode/agents/*.yml` YML surfaces with zero manual setup.
+xray operates under the pure three-subsystem model: Inference + External Governance (Dynamo Solar SSOT) + Autonomous Engine (thinDispatch 7-flow in MCP orchestrator). Agents are declared in `.opencode/agents/*.yml` YML surfaces with zero manual setup.
 
 ### Core Tenets
 - YML declarations are the SSOT
@@ -39,7 +39,7 @@ xray operates under the pure three-subsystem model: Inference + External Governa
 | **Scripts** | `scripts/` or `scripts/bash/` | `scripts/bash/my-script.sh` |
 | **Test Files** | `src/__tests__/` | `src/__tests__/unit/my-test.test.ts` |
 | **Source Code** | `src/` | `src/my-module.ts` |
-| **Config** | `config/` or `xray/` | `xray/config.json` |
+| **Config** | `config/` or `.opencode/xray/` | `.opencode/xray/config.json` |
 
 **Never save to root** - Root directory is for essential files only:
 - `README.md`, `CHANGELOG.md`, `package.json`, `tsconfig.json`
@@ -82,30 +82,16 @@ The Autonomous Engine routes via complexity:
 
 ## Codex
 
-xray enforces the Universal Development Codex (68 terms) via Dynamo governance. The codex lives in `xray/codex.json`.
+xray enforces the Universal Development Codex (60 terms) via Dynamo governance. The codex lives in `.opencode/xray/codex.json`.
 
-Pure v15 MCPs. Clean. Complete.
+Pure v2 MCP. Clean. Complete.
 
-## Session: v2.1.2 Release Polish
+## Session: v3.0.13 Release Polish
 
-- Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `2.0.0`.
-- Renamed `strray-ai` → `0xray` across 60+ source files, CLI help text, grok plugin, hermes-agent bridge (Python + JS), docusaurus config.
-- **12 stale docs git-rm'd**: AGENTS-consumer.md, AGENTS-full.md, CHANGELOG-v1.15.x.md, 7 docs/ files.
-- **AGENTS.md + README.md**: Rewritten v15 MCPs-centric.
-- **CLI help text**: `npx 0xray` — removed dead `dashboard` command, stale examples.
-- `.npmignore`: removed `src/` (conflicted with `files` field — was silently dropping published sources).
-- `.gitignore`: cleaned stale `.strray/` entries, `strray-ai-*.tgz` → `0xray-*.tgz`.
-- **Deep review fixes via 4 parallel agents**:
-  - `researcher/SKILL.md`: MCP path fixed → `researcher.server.js`
-  - `security-audit/SKILL.md`: tool list fixed to match actual 4 tools
-  - `governance-service.ts`: `overallDecision` now returns `'reject'` when appropriate; ProposalType mapping fixed
-  - `governance.server.ts`: `process.stderr.write` → `frameworkLogger.log`
-  - `boot-orchestrator.server.ts`: `console.log` → `frameworkLogger.log`
-  - `ui-ux-design.server.ts`: duplicate import removed
-  - `testing-strategy.server.ts`: 7 malformed log keys fixed
-  - `framework-compliance-audit.server.ts`: 2 malformed log IDs fixed
-  - `status.ts` CLI command wired into `index.ts`
-  - Orphaned files analyzed (not deleted): `security-audit.ts`, `src/security/` (11 files), `session-capture-processor.ts`, `activate-kernel-pipeline.ts`
-- **Hermes-agent bridge backward compat**: all JS/Python bridge files check for both `strray-ai` (old) and `0xray` (new). Default paths updated to `0xray`.
-  - **Test suite**: 162 files, 2290 tests (+ 44 skipped), 0 failures. Build passes clean.
-  - **OpenClaw e2e**: Phase 13 validates `logs/framework/activity.log` via agent tool event → hooks → frameworkLogger pipeline — 2290 tests, 0 failures.
+- Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `3.0.13`.
+- **All 182 test files pass**: 3113 tests, 0 failures, 36 skipped.
+- **Build fix**: removed stale `.opencode/plugin/` copy; `package.json` → `dist/plugin/xray-codex-injection.js`.
+- **default-plugins.ts**: monkey-patch `Server.prototype.setRequestHandler` to capture tool definitions from MCP Server instances; all registration functions async.
+- **8 failing test files fixed**: class name references (`StringRaySecurityAuditServer` → `XraySecurityAuditServer`, `XrayStateManager` → `StringRayStateManager`); added `calculateMetamorphosisScore`; delegation re-exports; source-inspection tests updated; infrastructure path fix; antigravity registry removed.
+- **CHANGELOG.md**: added v3.0.13 entry.
+- **Stale READMEs**: updated `StringRay` → `0xray` in 4 subdirectory READMEs.

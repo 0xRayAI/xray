@@ -441,7 +441,7 @@ if [ -z "$COMMIT_SHA" ]; then
 fi
 
 # Get repository info
-REPO="0xRayAI/xray"  # Placeholder for now
+REPO="strray-framework/stringray"  # Placeholder for now
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 AUTHOR=$(git log -1 --pretty=format:'%an <%ae>')
 
@@ -457,25 +457,25 @@ fi
   cd "$(dirname "$0")/../.." # Navigate to project root
 
   # Find the 0xRay plugin in node_modules or current project (development)
-  XRAY_PLUGIN=""
-  if [ -d "node_modules/0xray" ]; then
-    XRAY_PLUGIN="node_modules/0xray"
-  elif [ -d "node_modules/@0xray/xray" ]; then
-    XRAY_PLUGIN="node_modules/@0xray/xray"
-  elif [ -d "node_modules/OpenCode/plugins/0xray" ]; then
-    XRAY_PLUGIN="node_modules/OpenCode/plugins/0xray"
+  STRRAY_PLUGIN=""
+  if [ -d "node_modules/strray-framework" ]; then
+    STRRAY_PLUGIN="node_modules/strray-framework"
+  elif [ -d "node_modules/@strray/strray-framework" ]; then
+    STRRAY_PLUGIN="node_modules/@strray/strray-framework"
+  elif [ -d "node_modules/OpenCode/plugins/strray-framework" ]; then
+    STRRAY_PLUGIN="node_modules/OpenCode/plugins/strray-framework"
   elif [ -f "dist/postprocessor/PostProcessor.js" ]; then
     # Development mode - use current project
-    XRAY_PLUGIN="."
+    STRRAY_PLUGIN="."
   fi
 
-  if command -v node >/dev/null 2>&1 && [ -n "$XRAY_PLUGIN" ]; then
+  if command -v node >/dev/null 2>&1 && [ -n "$STRRAY_PLUGIN" ]; then
     # Call a separate script to avoid bash variable issues
     export COMMIT_SHA="$COMMIT_SHA"
     export REPO="$REPO"
     export BRANCH="$BRANCH"
     export AUTHOR="$AUTHOR"
-    export XRAY_PLUGIN="$XRAY_PLUGIN"
+    export STRRAY_PLUGIN="$STRRAY_PLUGIN"
     export MONITORING_LEVEL="$MONITORING_LEVEL"
     export IS_FULL_MONITORING="$([ "$MONITORING_LEVEL" = "full" ] && echo "true" || echo "false")"
 
@@ -495,17 +495,17 @@ fi
           const result = await validator.validate();
 
           if (result.warnings.length > 0) {
-            await frameworkLogger.log('git-hook-trigger', 'validation-warnings', 'info', { message: '⚠️ ' + result.warnings.length + ' warning(s) found:' });
-            result.warnings.forEach(w => await frameworkLogger.log('git-hook-trigger', 'warning-detail', 'info', { message: '   ' + w) });
+            await frameworkLogger.log('-git-hook-trigger', '-result-warnings-length-warning-s-found-', 'info', { message: '⚠️ ' + result.warnings.length + ' warning(s) found:' });
+            result.warnings.forEach(w => await frameworkLogger.log('-git-hook-trigger', '-w-', 'info', { message: '   ' + w) });
           }
 
           if (!result.passed) {
-            await frameworkLogger.log('git-hook-trigger', 'validation-errors', 'error', { message: '❌ ' + result.errors.length + ' error(s) found:' });
-            result.errors.forEach(e => await frameworkLogger.log('git-hook-trigger', 'error-detail', 'info', { message: '   ' + e) });
+            await frameworkLogger.log('-git-hook-trigger', '-result-errors-length-error-s-found-', 'error', { message: '❌ ' + result.errors.length + ' error(s) found:' });
+            result.errors.forEach(e => await frameworkLogger.log('-git-hook-trigger', '-e-', 'info', { message: '   ' + e) });
             process.exit(1);
           }
 
-          await frameworkLogger.log('git-hook-trigger', 'post-commit-validation-passed', 'success', { message: '✅ Post-commit: Validation passed in ' + result.duration + 'ms' });
+          await frameworkLogger.log('-git-hook-trigger', '-post-commit-validation-passed-in-result-duration-', 'success', { message: '✅ Post-commit: Validation passed in ' + result.duration + 'ms' });
         } catch (error) {
           await frameworkLogger.log('git-hook-trigger', 'post-commit-validation-failed', 'error', { error: error instanceof Error ? error.message : String(error) });
           process.exit(1);
@@ -524,8 +524,8 @@ fi
       (async () => {
         try {
           // Use dynamic import that works in both dev and consumer
-          const basePath = process.env.XRAY_BASE_PATH || '.';
-          const distPath = process.env.XRAY_DIST_PATH || 'dist';
+          const basePath = process.env.STRRAY_BASE_PATH || '.';
+          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
           // First archive logs (compress and rotate) before cleanup
           const { archiveLogFiles } = await import(basePath + '/' + distPath + '/postprocessor/triggers/GitHookTrigger.js');
           const archiveResult = await archiveLogFiles({
@@ -538,7 +538,7 @@ fi
             excludePatterns: []
           });
           if (archiveResult.archived > 0) {
-            await frameworkLogger.log('git-hook-trigger', 'archived-log-files', 'info', { message: \`📦 Archived \${archiveResult.archived} log files\` });
+            await frameworkLogger.log('-git-hook-trigger', '-archived-log-files-', 'info', { message: \`📦 Archived \${archiveResult.archived} log files\` });
           }
 
           // Then cleanup old files
@@ -549,7 +549,7 @@ fi
               // Core inference/logging - NEVER DELETE
               'activity.log',           
               'framework-activity-',
-              'xray-plugin-',
+              'strray-plugin-',
               
               // Analysis & reflections - Contains inference data
               'kernel-',
@@ -568,8 +568,8 @@ fi
               'reflections/',
               
               // Init logs can be cleaned but keep recent
-              'xray-init-2026-01-2',   // Keep Jan 20s
-              'xray-init-2026-01-3',   // Keep Jan 30s
+              'strray-init-2026-01-2',   // Keep Jan 20s
+              'strray-init-2026-01-3',   // Keep Jan 30s
               
               // Other important files
               'current-session.log',
@@ -584,7 +584,7 @@ fi
             enabled: true
           });
           if (result.cleaned > 0) {
-            await frameworkLogger.log('git-hook-trigger', 'cleaned-old-log-files', 'info', { message: '🧹 Cleaned ' + result.cleaned + ' old log files' });
+            await frameworkLogger.log('-git-hook-trigger', '-cleaned-result-cleaned-old-log-files-', 'info', { message: '🧹 Cleaned ' + result.cleaned + ' old log files' });
           }
           if (result.errors.length > 0) {
             await frameworkLogger.log('git-hook-trigger', 'log-cleanup-errors', 'error', { errors: result.errors });
@@ -611,8 +611,8 @@ fi
       node -e "
       (async () => {
         try {
-          const basePath = process.env.XRAY_BASE_PATH || '.';
-          const distPath = process.env.XRAY_DIST_PATH || 'dist';
+          const basePath = process.env.STRRAY_BASE_PATH || '.';
+          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
           const { HookMetricsCollector } = await import(basePath + '/' + distPath + '/postprocessor/validation/HookMetricsCollector.js');
           const collector = new HookMetricsCollector();
           collector.recordMetrics('post-push', \${DURATION_MS}, \${EXIT_CODE});

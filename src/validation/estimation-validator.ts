@@ -31,7 +31,7 @@ interface CalibrationFactor {
 export class EstimationValidator {
   private estimations: Map<string, EstimationRecord> = new Map();
   private calibrations: Map<string, CalibrationFactor> = new Map();
-  private readonly STORAGE_KEY = 'xray-estimations';
+  private readonly STORAGE_KEY = 'strray-estimations';
 
   constructor() {
     this.loadFromStorage();

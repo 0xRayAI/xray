@@ -15,26 +15,28 @@ vi.mock("../../src/orchestrator", () => ({
 }));
 
 // Import from the correct path
-vi.mock("../../src/core/xray-activation", () => ({
-  activateXrayFramework: vi.fn().mockResolvedValue(undefined),
-  defaultXrayConfig: {},
+vi.mock("../../src/core/strray-activation", () => ({
+  activateStringRayFramework: vi.fn().mockResolvedValue(undefined),
+  defaultStringRayConfig: {},
 }));
 
 describe("Framework Activation", () => {
   it("should activate framework components without errors", async () => {
     // The module is properly mocked above - test verifies mock works
-    const mockModule = await import("../../src/core/xray-activation");
+    const mockModule = await import("../../src/core/strray-activation");
 
     // Call the mocked function
-    const result = await mockModule.activateXrayFramework();
+    const result = await mockModule.activateStringRayFramework();
 
     expect(result).toBeUndefined();
   });
 
   it("should handle activation failures gracefully", async () => {
-    const mockModule = await import("../../src/core/xray-activation");
+    // Test with config that enables disabled components
+    const mockModule = await import("../../src/core/strray-activation");
     
-    const result = await mockModule.activateXrayFramework({
+    // Test with config that enables disabled components
+    const result = await mockModule.activateStringRayFramework({
       enableBootOrchestrator: true,
       enableStateManagement: true,
       enableProcessors: true,

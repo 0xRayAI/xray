@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { XrayStateManager } from '../../../dist/state/state-manager.js';
+import { StringRayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== GOVERNANCE DETAIL PIPELINE TEST ===\n');
 
@@ -35,13 +35,13 @@ function test(name, fn) {
 console.log('Testing Governance Detail Pipeline\n');
 
 test('should verify SpawnGovernanceProcessor is registered in processor-manager', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   if (!stateManager) throw new Error('StateManager not created');
-  console.log('   (XrayStateManager created)');
+  console.log('   (StringRayStateManager created)');
 });
 
 test('should verify agent_spawn config exists in features.json', () => {
-  const configPath = process.cwd() + '/.xray/features.json';
+  const configPath = process.cwd() + '/.strray/features.json';
   if (!existsSync(configPath)) {
     throw new Error('features.json not found');
   }
@@ -63,7 +63,7 @@ test('should verify spawnGovernance pre-processor in BootOrchestrator', () => {
 });
 
 test('should verify agent spawn limits from features.json', () => {
-  const configPath = process.cwd() + '/.xray/features.json';
+  const configPath = process.cwd() + '/.strray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.agent_spawn?.max_concurrent) {
@@ -73,7 +73,7 @@ test('should verify agent spawn limits from features.json', () => {
 });
 
 test('should verify rate limiting config from features.json', () => {
-  const configPath = process.cwd() + '/.xray/features.json';
+  const configPath = process.cwd() + '/.strray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.agent_spawn?.rate_limit_per_minute) {

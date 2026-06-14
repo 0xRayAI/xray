@@ -94,11 +94,11 @@ function httpReq(
 }
 
 const TEST_PROPOSALS = [
-  { id: "e2e-1", title: "E2E test fix", description: "Test fix proposal", type: "fix", source: "manual", confidence: 0.8, evidence: ["e2e evidence"] },
-  { id: "e2e-2", title: "E2E test codify", description: "Test codify proposal", type: "codify", source: "manual", confidence: 0.9, evidence: ["e2e evidence"] },
+  { id: "e2e-1", title: "E2E test fix", description: "Test fix proposal", type: "fix", confidence: 0.8, evidence: ["e2e evidence"] },
+  { id: "e2e-2", title: "E2E test codify", description: "Test codify proposal", type: "codify", confidence: 0.9, evidence: ["e2e evidence"] },
 ];
 
-describe.skipIf(!RUN_HERMES_BRIDGE)("Hermes Bridge E2E", { timeout: 180000 }, () => {
+describe.skip("Hermes Bridge E2E (bridge.mjs removed in v2.2)", { timeout: 180000 }, () => {
   test("bridge health command via positional arg", async () => {
     const raw = await bridgeExec([BRIDGE_PATH, "health", "--cwd", PROJECT_ROOT]);
     const result = JSON.parse(raw);
@@ -171,15 +171,15 @@ describe.skipIf(!RUN_HERMES_BRIDGE)("Hermes Bridge E2E", { timeout: 180000 }, ()
   });
 });
 
-describe.skip("OpenClaw API Server E2E (needs dist rebuild - references XrayAPIServer)", { timeout: 30000 }, () => {
+describe("OpenClaw API Server E2E", { timeout: 30000 }, () => {
   let serverProcess: ReturnType<typeof spawn>;
   const PORT = 18432;
   let serverReady = false;
 
   beforeAll(async () => {
     serverProcess = spawn("node", ["-e", `
-      const { XrayAPIServer } = require("${API_SERVER_PATH}");
-      const server = new XrayAPIServer({ port: ${PORT}, host: "127.0.0.1" });
+      const { StringRayAPIServer } = require("${API_SERVER_PATH}");
+      const server = new StringRayAPIServer({ port: ${PORT}, host: "127.0.0.1" });
       server.start().then(() => {
         process.stdout.write("READY\\n");
       }).catch((e) => {

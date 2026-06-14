@@ -51,7 +51,7 @@ test('should verify consoleLogGuard in BootOrchestrator', () => {
 });
 
 test('should verify log protection config exists', () => {
-  const configPath = process.cwd() + '/.xray/features.json';
+  const configPath = process.cwd() + '/.strray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.activity_logging) {

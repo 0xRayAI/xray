@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -25,15 +25,15 @@ vi.mock("../framework-logger", () => ({
 }));
 
 // Helper to wait for initialization without arbitrary setTimeout
-async function waitForInit(manager: XrayStateManager, timeout = 100): Promise<void> {
+async function waitForInit(manager: StringRayStateManager, timeout = 100): Promise<void> {
   const start = Date.now();
   while (!(manager as any).initialized && Date.now() - start < timeout) {
     await new Promise(resolve => setTimeout(resolve, 5));
   }
 }
 
-describe("XrayStateManager - Persistence Features", () => {
-  let stateManager: XrayStateManager;
+describe("StringRayStateManager - Persistence Features", () => {
+  let stateManager: StringRayStateManager;
   let mockFs: any;
   let mockPath: any;
 
@@ -53,7 +53,7 @@ describe("XrayStateManager - Persistence Features", () => {
     mockPath.dirname.mockReturnValue("/test/dir");
 
     // Create fresh state manager for each test
-    stateManager = new XrayStateManager("/test/state.json", true);
+    stateManager = new StringRayStateManager("/test/state.json", true);
 
     // Wait for async initialization using helper instead of arbitrary timeout
     await waitForInit(stateManager);
@@ -65,7 +65,7 @@ describe("XrayStateManager - Persistence Features", () => {
 
   describe("Persistence Initialization", () => {
     it("should handle persistence disabled", async () => {
-      const noPersistManager = new XrayStateManager(
+      const noPersistManager = new StringRayStateManager(
         "/test/state.json",
         false,
       );
@@ -83,7 +83,7 @@ describe("XrayStateManager - Persistence Features", () => {
     it("should create persistence directory if it doesn't exist", async () => {
       vi.mocked(mockFs.existsSync).mockReturnValue(false);
 
-      const newManager = new XrayStateManager("/test/state.json", true);
+      const newManager = new StringRayStateManager("/test/state.json", true);
       await waitForInit(newManager);
 
       expect(mockFs.mkdirSync).toHaveBeenCalledWith("/test/dir", {
@@ -99,7 +99,7 @@ describe("XrayStateManager - Persistence Features", () => {
         JSON.stringify(existingState),
       );
 
-      const newManager = new XrayStateManager("/test/state.json", true);
+      const newManager = new StringRayStateManager("/test/state.json", true);
       await waitForInit(newManager);
 
       expect(newManager.get("test-key")).toBe("test-value");
@@ -110,7 +110,7 @@ describe("XrayStateManager - Persistence Features", () => {
       vi.mocked(mockFs.existsSync).mockReturnValue(true);
       vi.mocked(mockFs.readFileSync).mockReturnValue("{ invalid json");
 
-      const newManager = new XrayStateManager("/test/state.json", true);
+      const newManager = new StringRayStateManager("/test/state.json", true);
       await waitForInit(newManager);
 
       // Should disable persistence on corruption
@@ -272,7 +272,7 @@ describe("XrayStateManager - Persistence Features", () => {
     });
 
     it("should report correct stats when persistence disabled", async () => {
-      const noPersistManager = new XrayStateManager(
+      const noPersistManager = new StringRayStateManager(
         "/test/state.json",
         false,
       );
@@ -313,7 +313,7 @@ describe("XrayStateManager - Persistence Features", () => {
         throw new Error("Permission denied");
       });
 
-      const failingManager = new XrayStateManager(
+      const failingManager = new StringRayStateManager(
         "/test/state.json",
         true,
       );
@@ -326,7 +326,7 @@ describe("XrayStateManager - Persistence Features", () => {
   describe("Early Access Handling", () => {
     it("should handle get operations before initialization", () => {
       // Create manager without waiting for initialization
-      const earlyManager = new XrayStateManager("/test/state.json", true);
+      const earlyManager = new StringRayStateManager("/test/state.json", true);
 
       // Should return undefined for early access
       expect(earlyManager.get("early-key")).toBeUndefined();
@@ -335,7 +335,7 @@ describe("XrayStateManager - Persistence Features", () => {
     it("should queue set operations before initialization", async () => {
       vi.useFakeTimers();
       
-      const earlyManager = new XrayStateManager("/test/state.json", true);
+      const earlyManager = new StringRayStateManager("/test/state.json", true);
 
       // Set before initialization completes
       earlyManager.set("early-key", "early-value");

@@ -1,17 +1,18 @@
-import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import {
+  CallToolRequestSchema,
   ErrorCode,
+  ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { realpathSync } from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { mcpClientManager } from "../mcp-client.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { pluginRegistry } from "../../nucleus/plugin-registry.js";
 
 interface ListSkillsArgs {
   category?: "all" | "core" | "registry" | "knowledge";
@@ -83,196 +84,333 @@ interface StorytellerArgs {
   framework?: "three_act_structure" | "hero_journey" | "spiral";
 }
 
-class SkillInvocationServer extends XrayKnowledgeSkillBase {
-  private readonly pluginFirst: boolean;
+class SkillInvocationServer {
+  private server: Server;
 
   constructor() {
-    super("xray/skill-invocation", "2.0.1");
-    this.pluginFirst = process.argv.includes('--plugin-first');
-    this.tools = [
+    this.server = new Server(
       {
-        name: "list-skills",
-        description: "List all available skills with descriptions",
-        inputSchema: {
-          type: "object",
-          properties: {
-            category: { type: "string", enum: ["all", "core", "registry", "knowledge"], description: "Filter by category" },
-          },
-        },
+        name: "xray/skill-invocation", version: "1.22.67",
       },
       {
-        name: "invoke-skill",
-        description: "Generic skill invocation tool for calling any MCP skill server",
-        inputSchema: {
-          type: "object",
-          properties: {
-            skillName: { type: "string", description: "Name of the skill to invoke (use list-skills to see available)" },
-            toolName: { type: "string", description: "Name of the tool within the skill to execute" },
-            args: { type: "object", description: "Arguments to pass to the skill tool" },
-          },
-          required: ["skillName", "toolName"],
+        capabilities: {
+          tools: {},
         },
       },
-      {
-        name: "skill-code-review",
-        description: "Invoke code review skill for comprehensive code analysis",
-        inputSchema: {
-          type: "object",
-          properties: {
-            code: { type: "string", description: "Code to analyze" },
-            language: { type: "string", description: "Programming language" },
-            context: { type: "object", description: "Additional context" },
-          },
-          required: ["code"],
-        },
-      },
-      {
-        name: "skill-security-audit",
-        description: "Invoke security audit skill for vulnerability scanning",
-        inputSchema: {
-          type: "object",
-          properties: {
-            files: { type: "array", items: { type: "string" }, description: "Files to audit" },
-            severity: { type: "string", enum: ["low", "medium", "high", "critical"], description: "Minimum severity level" },
-          },
-          required: ["files"],
-        },
-      },
-      {
-        name: "skill-performance-optimization",
-        description: "Invoke performance optimization skill for bottleneck analysis",
-        inputSchema: {
-          type: "object",
-          properties: {
-            code: { type: "string", description: "Code to analyze" },
-            language: { type: "string", description: "Programming language" },
-            metrics: { type: "array", items: { type: "string" }, description: "Performance metrics to analyze" },
-          },
-          required: ["code"],
-        },
-      },
-      {
-        name: "skill-testing-strategy",
-        description: "Invoke testing strategy skill for test planning",
-        inputSchema: {
-          type: "object",
-          properties: {
-            code: { type: "string", description: "Code to analyze for testing" },
-            existingTests: { type: "array", items: { type: "string" }, description: "Existing test files" },
-            requirements: { type: "object", description: "Testing requirements and constraints" },
-          },
-          required: ["code"],
-        },
-      },
-      {
-        name: "skill-project-analysis",
-        description: "Invoke project analysis skill for codebase insights",
-        inputSchema: {
-          type: "object",
-          properties: {
-            scope: { type: "string", enum: ["full", "directory", "file"], description: "Analysis scope" },
-            analysis: { type: "array", items: { type: "string" }, description: "Types of analysis to perform" },
-          },
-        },
-      },
-      {
-        name: "skill-database-design",
-        description: "Invoke database design skill for schema design and query optimization",
-        inputSchema: {
-          type: "object",
-          properties: {
-            schema: { type: "string", description: "Database schema or entities" },
-            databaseType: { type: "string", enum: ["postgresql", "mysql", "mongodb", "dynamodb"], description: "Target database type" },
-          },
-          required: ["schema"],
-        },
-      },
-      {
-        name: "skill-devops-deployment",
-        description: "Invoke DevOps deployment skill for CI/CD and infrastructure",
-        inputSchema: {
-          type: "object",
-          properties: {
-            projectType: { type: "string", description: "Type of project" },
-            cloudProvider: { type: "string", enum: ["aws", "gcp", "azure"], description: "Target cloud provider" },
-          },
-          required: ["projectType"],
-        },
-      },
-      {
-        name: "skill-api-design",
-        description: "Invoke API design skill for REST/GraphQL endpoints",
-        inputSchema: {
-          type: "object",
-          properties: {
-            resources: { type: "array", items: { type: "string" }, description: "API resources" },
-            style: { type: "string", enum: ["rest", "graphql"], description: "API style" },
-          },
-          required: ["resources"],
-        },
-      },
-      {
-        name: "skill-ui-ux-design",
-        description: "Invoke UI/UX design skill for component design",
-        inputSchema: {
-          type: "object",
-          properties: {
-            component: { type: "string", description: "Component to design" },
-            framework: { type: "string", enum: ["react", "vue", "angular", "svelte"], description: "Target framework" },
-          },
-          required: ["component"],
-        },
-      },
-      {
-        name: "skill-documentation-generation",
-        description: "Invoke documentation skill for API docs and README",
-        inputSchema: {
-          type: "object",
-          properties: {
-            type: { type: "string", enum: ["api", "readme", "guide"], description: "Documentation type" },
-            code: { type: "string", description: "Code to document" },
-          },
-          required: ["type"],
-        },
-      },
-      {
-        name: "skill-storyteller",
-        description: "Invoke storyteller skill for writing reflections, sagas, and journeys",
-        inputSchema: {
-          type: "object",
-          properties: {
-            storyType: { type: "string", enum: ["reflection", "saga", "journey", "narrative"], description: "Type of story to write" },
-            title: { type: "string", description: "Title for the story" },
-            context: { type: "object", description: "Context including commits, changes, metadata" },
-            framework: { type: "string", enum: ["three_act_structure", "hero_journey", "spiral"], description: "Storytelling framework to use" },
-          },
-          required: ["storyType"],
-        },
-      },
-    ];
-    this.handlers = {
-      "list-skills": async (args) => this.handleListSkills(args as unknown as ListSkillsArgs),
-      "invoke-skill": async (args) => this.handleInvokeSkill(args as unknown as InvokeSkillArgs),
-      "skill-code-review": async (args) => this.handleSkillCodeReview(args as unknown as CodeReviewArgs),
-      "skill-security-audit": async (args) => this.handleSkillSecurityAudit(args as unknown as SecurityAuditArgs),
-      "skill-performance-optimization": async (args) => this.handleSkillPerformanceOptimization(args as unknown as PerformanceOptimizationArgs),
-      "skill-testing-strategy": async (args) => this.handleSkillTestingStrategy(args as unknown as TestingStrategyArgs),
-      "skill-project-analysis": async (args) => this.handleSkillProjectAnalysis(args as unknown as ProjectAnalysisArgs),
-      "skill-database-design": async (args) => this.handleSkillDatabaseDesign(args as unknown as DatabaseDesignArgs),
-      "skill-devops-deployment": async (args) => this.handleSkillDevopsDeployment(args as unknown as DevopsDeploymentArgs),
-      "skill-api-design": async (args) => this.handleSkillApiDesign(args as unknown as ApiDesignArgs),
-      "skill-ui-ux-design": async (args) => this.handleSkillUiUxDesign(args as unknown as UiUxDesignArgs),
-      "skill-documentation-generation": async (args) => this.handleSkillDocumentationGeneration(args as unknown as DocumentationGenerationArgs),
-      "skill-storyteller": async (args) => this.handleSkillStoryteller(args as unknown as StorytellerArgs),
-    };
+    );
+
     this.setupToolHandlers();
-    pluginRegistry.registerToolPlugin({
-      name: "xray/skill-invocation",
-      callTool: async (toolName, args) => {
-        const handler = this.handlers[toolName];
-        if (!handler) throw new Error(`Unknown tool: ${toolName}`);
-        return handler(args);
-      },
+  }
+
+  private setupToolHandlers() {
+    // List available tools
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "list-skills",
+            description: "List all available skills with descriptions",
+            inputSchema: {
+              type: "object",
+              properties: {
+                category: {
+                  type: "string",
+                  enum: ["all", "core", "registry", "knowledge"],
+                  description: "Filter by category",
+                },
+              },
+            },
+          },
+          {
+            name: "invoke-skill",
+            description:
+              "Generic skill invocation tool for calling any MCP skill server",
+            inputSchema: {
+              type: "object",
+              properties: {
+                skillName: {
+                  type: "string",
+                  description: "Name of the skill to invoke (use list-skills to see available)",
+                },
+                toolName: {
+                  type: "string",
+                  description: "Name of the tool within the skill to execute",
+                },
+                args: {
+                  type: "object",
+                  description: "Arguments to pass to the skill tool",
+                },
+              },
+              required: ["skillName", "toolName"],
+            },
+          },
+          {
+            name: "skill-code-review",
+            description:
+              "Invoke code review skill for comprehensive code analysis",
+            inputSchema: {
+              type: "object",
+              properties: {
+                code: { type: "string", description: "Code to analyze" },
+                language: {
+                  type: "string",
+                  description: "Programming language",
+                },
+                context: { type: "object", description: "Additional context" },
+              },
+              required: ["code"],
+            },
+          },
+          {
+            name: "skill-security-audit",
+            description:
+              "Invoke security audit skill for vulnerability scanning",
+            inputSchema: {
+              type: "object",
+              properties: {
+                files: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Files to audit",
+                },
+                severity: {
+                  type: "string",
+                  enum: ["low", "medium", "high", "critical"],
+                  description: "Minimum severity level",
+                },
+              },
+              required: ["files"],
+            },
+          },
+          {
+            name: "skill-performance-optimization",
+            description:
+              "Invoke performance optimization skill for bottleneck analysis",
+            inputSchema: {
+              type: "object",
+              properties: {
+                code: { type: "string", description: "Code to analyze" },
+                language: {
+                  type: "string",
+                  description: "Programming language",
+                },
+                metrics: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Performance metrics to analyze",
+                },
+              },
+              required: ["code"],
+            },
+          },
+          {
+            name: "skill-testing-strategy",
+            description: "Invoke testing strategy skill for test planning",
+            inputSchema: {
+              type: "object",
+              properties: {
+                code: {
+                  type: "string",
+                  description: "Code to analyze for testing",
+                },
+                existingTests: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Existing test files",
+                },
+                requirements: {
+                  type: "object",
+                  description: "Testing requirements and constraints",
+                },
+              },
+              required: ["code"],
+            },
+          },
+          {
+            name: "skill-project-analysis",
+            description: "Invoke project analysis skill for codebase insights",
+            inputSchema: {
+              type: "object",
+              properties: {
+                scope: {
+                  type: "string",
+                  enum: ["full", "directory", "file"],
+                  description: "Analysis scope",
+                },
+                analysis: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Types of analysis to perform",
+                },
+              },
+            },
+          },
+          {
+            name: "skill-database-design",
+            description:
+              "Invoke database design skill for schema design and query optimization",
+            inputSchema: {
+              type: "object",
+              properties: {
+                schema: {
+                  type: "string",
+                  description: "Database schema or entities",
+                },
+                databaseType: {
+                  type: "string",
+                  enum: ["postgresql", "mysql", "mongodb", "dynamodb"],
+                  description: "Target database type",
+                },
+              },
+              required: ["schema"],
+            },
+          },
+          {
+            name: "skill-devops-deployment",
+            description:
+              "Invoke DevOps deployment skill for CI/CD and infrastructure",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectType: { type: "string", description: "Type of project" },
+                cloudProvider: {
+                  type: "string",
+                  enum: ["aws", "gcp", "azure"],
+                  description: "Target cloud provider",
+                },
+              },
+              required: ["projectType"],
+            },
+          },
+          {
+            name: "skill-api-design",
+            description: "Invoke API design skill for REST/GraphQL endpoints",
+            inputSchema: {
+              type: "object",
+              properties: {
+                resources: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "API resources",
+                },
+                style: {
+                  type: "string",
+                  enum: ["rest", "graphql"],
+                  description: "API style",
+                },
+              },
+              required: ["resources"],
+            },
+          },
+          {
+            name: "skill-ui-ux-design",
+            description: "Invoke UI/UX design skill for component design",
+            inputSchema: {
+              type: "object",
+              properties: {
+                component: {
+                  type: "string",
+                  description: "Component to design",
+                },
+                framework: {
+                  type: "string",
+                  enum: ["react", "vue", "angular", "svelte"],
+                  description: "Target framework",
+                },
+              },
+              required: ["component"],
+            },
+          },
+          {
+            name: "skill-documentation-generation",
+            description: "Invoke documentation skill for API docs and README",
+            inputSchema: {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  enum: ["api", "readme", "guide"],
+                  description: "Documentation type",
+                },
+                code: { type: "string", description: "Code to document" },
+              },
+              required: ["type"],
+            },
+          },
+          {
+            name: "skill-storyteller",
+            description:
+              "Invoke storyteller skill for writing reflections, sagas, and journeys",
+            inputSchema: {
+              type: "object",
+              properties: {
+                storyType: {
+                  type: "string",
+                  enum: ["reflection", "saga", "journey", "narrative"],
+                  description: "Type of story to write",
+                },
+                title: { type: "string", description: "Title for the story" },
+                context: {
+                  type: "object",
+                  description: "Context including commits, changes, metadata",
+                },
+                framework: {
+                  type: "string",
+                  enum: ["three_act_structure", "hero_journey", "spiral"],
+                  description: "Storytelling framework to use",
+                },
+              },
+              required: ["storyType"],
+            },
+          },
+        ],
+      };
+    });
+
+    // Handle tool calls
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      try {
+        switch (name) {
+          case "list-skills":
+            return await this.handleListSkills(args as unknown as ListSkillsArgs);
+          case "invoke-skill":
+            return await this.handleInvokeSkill(args as unknown as InvokeSkillArgs);
+          case "skill-code-review":
+            return await this.handleSkillCodeReview(args as unknown as CodeReviewArgs);
+          case "skill-security-audit":
+            return await this.handleSkillSecurityAudit(args as unknown as SecurityAuditArgs);
+          case "skill-performance-optimization":
+            return await this.handleSkillPerformanceOptimization(args as unknown as PerformanceOptimizationArgs);
+          case "skill-testing-strategy":
+            return await this.handleSkillTestingStrategy(args as unknown as TestingStrategyArgs);
+          case "skill-project-analysis":
+            return await this.handleSkillProjectAnalysis(args as unknown as ProjectAnalysisArgs);
+          case "skill-database-design":
+            return await this.handleSkillDatabaseDesign(args as unknown as DatabaseDesignArgs);
+          case "skill-devops-deployment":
+            return await this.handleSkillDevopsDeployment(args as unknown as DevopsDeploymentArgs);
+          case "skill-api-design":
+            return await this.handleSkillApiDesign(args as unknown as ApiDesignArgs);
+          case "skill-ui-ux-design":
+            return await this.handleSkillUiUxDesign(args as unknown as UiUxDesignArgs);
+          case "skill-documentation-generation":
+            return await this.handleSkillDocumentationGeneration(args as unknown as DocumentationGenerationArgs);
+          case "skill-storyteller":
+            return await this.handleSkillStoryteller(args as unknown as StorytellerArgs);
+          default:
+            throw new McpError(
+              ErrorCode.MethodNotFound,
+              `Unknown tool: ${name}`,
+            );
+        }
+      } catch (error) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
     });
   }
 
@@ -335,7 +473,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "bug-triage-specialist", "log-monitor",
       "mobile-development", "git-workflow", "session-management",
       "code-analyzer", "refactoring-strategies", "project-analysis",
-      "database-design", "devops-deployment",
+      "testing-best-practices", "database-design", "devops-deployment",
       "api-design", "ui-ux-design", "database-engineer",
     ];
 
@@ -363,26 +501,6 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
     return { content: [{ type: "text", text: lines.join("\n") }] };
   }
 
-  /**
-   * Dispatch a skill tool call: prefer in-process pluginRegistry, fall back to external MCP process.
-   */
-  private async callSkillTool(skillName: string, toolName: string, args: Record<string, unknown>): Promise<unknown> {
-    if (this.pluginFirst) {
-      try {
-        return await pluginRegistry.callSkillTool(skillName, toolName, args);
-      } catch {
-        frameworkLogger.log('skill-invocation', 'plugin-first-fallback', 'info', {
-          skill: skillName,
-          tool: toolName,
-          message: 'Plugin-first dispatch failed, falling back to MCP transport',
-        });
-      }
-    } else if (pluginRegistry.hasToolPlugin(skillName)) {
-      return pluginRegistry.callSkillTool(skillName, toolName, args);
-    }
-    return mcpClientManager.callServerTool(skillName, toolName, args);
-  }
-
   private async handleInvokeSkill(args: InvokeSkillArgs) {
     const { skillName, toolName, args: toolArgs = {} } = args;
 
@@ -408,14 +526,15 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "code-review", "security-audit", "performance-optimization",
       "testing-strategy", "researcher", "skill-invocation",
       "framework-help", "session-management", "code-analyzer",
-      "code-reviewer", "architect", "bug-triage-specialist", "log-monitor",
-      "security-auditor", "refactorer",
+      "code-reviewer", "architect", "researcher",
+      "architect", "bug-triage-specialist", "log-monitor",
+      "code-reviewer", "security-auditor", "refactorer",
       "growth-strategist", "strategist", "devops-deployment",
       "database-design", "tech-writer", "documentation-generation",
       "mobile-development", "seo-consultant",
       "git-workflow", "content-creator", "ui-ux-design",
       "multimodal-looker", "refactoring-strategies",
-      "project-analysis",
+      "project-analysis", "testing-best-practices",
       "architecture-patterns",
     ];
 
@@ -435,7 +554,11 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       // Track skill usage for adaptive learning
       const skillStartTime = Date.now();
 
-      const result = await this.callSkillTool(resolvedSkill, toolName, toolArgs);
+      const result = await mcpClientManager.callServerTool(
+        resolvedSkill,
+        toolName,
+        toolArgs,
+      );
 
       // Record outcome for adaptive learning (success = no error)
       const duration = Date.now() - skillStartTime;
@@ -470,10 +593,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillCodeReview(args: CodeReviewArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "code-review",
       "analyze_code_quality",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -491,10 +614,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillSecurityAudit(args: SecurityAuditArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "security-audit",
       "scan_vulnerabilities",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -512,10 +635,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillPerformanceOptimization(args: PerformanceOptimizationArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "performance-optimization",
       "analyze_performance",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -533,10 +656,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillTestingStrategy(args: TestingStrategyArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "testing-strategy",
       "analyze_test_coverage",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -554,10 +677,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillProjectAnalysis(args: ProjectAnalysisArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "researcher",
       "analyze-project-health",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -575,10 +698,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillDatabaseDesign(args: DatabaseDesignArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "database-design",
       "schema_analysis",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -596,10 +719,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillDevopsDeployment(args: DevopsDeploymentArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "devops-deployment",
       "pipeline_generation",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -617,10 +740,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillApiDesign(args: ApiDesignArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "api-design",
       "endpoint_design",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -638,10 +761,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillUiUxDesign(args: UiUxDesignArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "ui-ux-design",
       "design_component",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -659,10 +782,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 
   private async handleSkillDocumentationGeneration(args: DocumentationGenerationArgs) {
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "documentation-generation",
       "generate_documentation",
-      args as unknown as Record<string, unknown>,
+      args,
     );
 
     return {
@@ -681,10 +804,10 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
 
   private async handleSkillStoryteller(args: StorytellerArgs) {
     const { storyType, title, context, framework } = args;
-    const result = await this.callSkillTool(
+    const result = await mcpClientManager.callServerTool(
       "storyteller",
       `write_${storyType}`,
-      { title, context, framework } as Record<string, unknown>,
+      { title, context, framework },
     );
 
     return {
@@ -699,6 +822,63 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
         },
       ],
     };
+  }
+
+  async run(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+
+    let parentCheckTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = async (signal: string) => {
+      if (parentCheckTimer !== null) {
+        clearTimeout(parentCheckTimer);
+        parentCheckTimer = null;
+      }
+
+      const timeout = setTimeout(() => {
+        frameworkLogger.log("mcps/skill-invocation", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
+        process.exit(1);
+      }, 5000);
+
+      try {
+        if (this.server && typeof this.server.close === "function") {
+          await this.server.close();
+        }
+        clearTimeout(timeout);
+        process.exit(0);
+      } catch (error) {
+        clearTimeout(timeout);
+        frameworkLogger.log("mcps/skill-invocation", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
+        process.exit(1);
+      }
+    };
+
+    process.on("SIGINT", () => cleanup("SIGINT"));
+    process.on("SIGTERM", () => cleanup("SIGTERM"));
+    process.on("SIGHUP", () => cleanup("SIGHUP"));
+
+    const checkParent = () => {
+      try {
+        process.kill(process.ppid, 0);
+        parentCheckTimer = setTimeout(checkParent, 1000);
+      } catch (error) {
+        parentCheckTimer = null;
+        cleanup("parent-process-death");
+      }
+    };
+
+    parentCheckTimer = setTimeout(checkParent, 2000);
+
+    process.on("uncaughtException", (error) => {
+      frameworkLogger.log("mcps/skill-invocation", "uncaughtException", "error", { message: `Uncaught Exception: ${String(error)}` });
+      cleanup("uncaughtException");
+    });
+
+    process.on("unhandledRejection", (reason) => {
+      frameworkLogger.log("mcps/skill-invocation", "unhandledRejection", "error", { message: `Unhandled Rejection: ${String(reason)}` });
+      cleanup("unhandledRejection");
+    });
   }
 
   /**
@@ -736,8 +916,9 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
   }
 }
 
-// Start the server if this file is run directly (realpath handles /var → /private/var on macOS)
-if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1])) {
+// Start the server if this file is run directly
+const entryPoint = path.resolve(process.argv[1] ?? "");
+if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   // If --port or MCP_PORT is set, use HTTP transport (for Grok CLI compatibility)
   const cliPort = process.argv.find((a) => a.startsWith("--port="))?.split("=")[1];
   const port = parseInt(cliPort ?? process.env.MCP_PORT ?? "", 10);
@@ -750,7 +931,7 @@ if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpath
     });
   } else {
     const server = new SkillInvocationServer();
-    server.run("skill-invocation").catch((error) => {
+    server.run().catch((error) => {
       frameworkLogger.log("skill-invocation", "fatal-startup-error", "error", { error: String(error) });
       process.exit(1);
     });

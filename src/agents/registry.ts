@@ -369,3 +369,6 @@ export function validateRegistryConsistency(): { valid: boolean; errors: string[
 
   return { valid: errors.length === 0, errors };
 }
+
+export const AGENT_KEYS = Object.keys(AGENT_REGISTRY) as readonly string[];
+export type AgentKey = keyof typeof AGENT_REGISTRY;

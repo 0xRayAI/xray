@@ -98,5 +98,5 @@ jobs:
               repo: context.repo.repo,
               ref: context.sha,
               environment: 'npm',
-              description: 'Published 0xray to npm registry'
+              description: 'Published strray-ai to npm registry'
             });

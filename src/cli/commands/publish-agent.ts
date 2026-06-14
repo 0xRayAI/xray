@@ -81,10 +81,10 @@ function getPackageVersion(cwd: string): string {
     }
   } catch { /* ignore */ }
 
-  const xrayPkgPath = join(cwd, ".opencode", "package.json");
+  const strrayPkgPath = join(cwd, ".opencode", "package.json");
   try {
-    if (existsSync(xrayPkgPath)) {
-      const pkg = JSON.parse(readFileSync(xrayPkgPath, "utf-8"));
+    if (existsSync(strrayPkgPath)) {
+      const pkg = JSON.parse(readFileSync(strrayPkgPath, "utf-8"));
       if (pkg.version) return pkg.version;
     }
   } catch { /* ignore */ }
@@ -107,7 +107,7 @@ function createAgentManifest(
     author: extractYamlField(content, "author") || extractYamlField(content, "maintainer") || "0xRay User",
     license: extractYamlField(content, "license") || "MIT",
     source: extractYamlField(content, "source") || "custom",
-    framework: "xray",
+    framework: "stringray",
     frameworkVersion: getPackageVersion(cwd),
     publishedAt: new Date().toISOString(),
     skills: [],
@@ -122,7 +122,7 @@ function packageAgent(
   version: string,
   cwd: string
 ): string {
-  const outputDir = join(cwd, ".xray", "publish", agentName);
+  const outputDir = join(cwd, ".strray", "publish", agentName);
   mkdirSync(outputDir, { recursive: true });
 
   const manifest = createAgentManifest(agentName, configPath, version, cwd);

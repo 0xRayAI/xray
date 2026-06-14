@@ -35,7 +35,7 @@ fi
 echo -e "${GREEN}✓ Configuration file loaded successfully${NC}"
 
 # Validate required sections
-REQUIRED_SECTIONS=("xray_agents" "dynamic_models" "ai_logging" "python_backend")
+REQUIRED_SECTIONS=("strray_agents" "dynamic_models" "ai_logging" "python_backend")
 
 for section in "${REQUIRED_SECTIONS[@]}"; do
     if ! python3 -c "
@@ -56,7 +56,7 @@ echo -e "${GREEN}✓ All required configuration sections present${NC}"
 if ! python3 -c "
 import json
 config = json.load(open('$CONFIG_FILE'))
-agents = config.get('xray_agents', {})
+agents = config.get('strray_agents', {})
 enabled = agents.get('enabled', [])
 disabled = agents.get('disabled', [])
 

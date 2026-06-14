@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pre-Command Hook for 0xRay
+# Pre-Command Hook for StringRay
 # 
 # Checks context window usage before each command.
 # If context is at 95%+ (configurable), auto-generates a reflection.

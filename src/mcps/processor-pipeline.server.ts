@@ -4,10 +4,15 @@
  * Advanced processor pipeline with codex validation, compliance monitoring, and framework enforcement
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { CodexLoader } from "../enforcement/loaders/codex-loader.js";
 import type { RuleDefinition, RuleValidationContext } from "../enforcement/types.js";
-import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface PreProcessorArgs {
   content: string;
@@ -82,7 +87,8 @@ interface FrameworkComplianceResult {
   approved: boolean;
 }
 
-class XrayProcessorPipelineServer extends XrayKnowledgeSkillBase {
+class StringRayProcessorPipelineServer {
+  private server: Server;
   private codexLoader: CodexLoader;
   private codexRules: RuleDefinition[] = [];
   private codexTerms: string[] = [
@@ -98,81 +104,17 @@ class XrayProcessorPipelineServer extends XrayKnowledgeSkillBase {
   ];
 
   constructor() {
-    super("processor-pipeline", "2.0.1");
-
     this.codexLoader = new CodexLoader();
-
-    this.tools = [
+    this.server = new Server(
       {
-        name: "execute-pre-processors",
-        description:
-          "Run pre-execution processors on content with codex validation",
-        inputSchema: {
-          type: "object",
-          properties: {
-            content: { type: "string" },
-            context: { type: "object" },
-            validateCodex: { type: "boolean", default: true },
-            strictMode: { type: "boolean", default: false },
-          },
-          required: ["content"],
-        },
+        name: "processor-pipeline", version: "1.22.67",
       },
       {
-        name: "execute-post-processors",
-        description:
-          "Run post-execution processors on results with compliance monitoring",
-        inputSchema: {
-          type: "object",
-          properties: {
-            content: { type: "string" },
-            results: { type: "object" },
-            enforceCompliance: { type: "boolean", default: true },
-            auditTrail: { type: "boolean", default: true },
-          },
-          required: ["content"],
+        capabilities: {
+          tools: {},
         },
       },
-      {
-        name: "codex-validation",
-        description:
-          "Validate content against Universal Development Codex terms",
-        inputSchema: {
-          type: "object",
-          properties: {
-            content: { type: "string" },
-            terms: {
-              type: "array",
-              items: { type: "string" },
-              default: ["all"],
-            },
-            strict: { type: "boolean", default: false },
-          },
-          required: ["content"],
-        },
-      },
-      {
-        name: "framework-compliance-check",
-        description:
-          "Check framework compliance and generate enforcement actions",
-        inputSchema: {
-          type: "object",
-          properties: {
-            content: { type: "string" },
-            operation: { type: "string" },
-            context: { type: "object" },
-          },
-          required: ["content", "operation"],
-        },
-      },
-    ];
-
-    this.handlers = {
-      "execute-pre-processors": async (args) => this.handlePreProcessors(args as unknown as PreProcessorArgs),
-      "execute-post-processors": async (args) => this.handlePostProcessors(args as unknown as PostProcessorArgs),
-      "codex-validation": async (args) => this.handleCodexValidation(args as unknown as CodexValidationArgs),
-      "framework-compliance-check": async (args) => this.handleComplianceCheck(args as unknown as ComplianceCheckArgs),
-    };
+    );
 
     this.setupToolHandlers();
     this.loadCodexRules();
@@ -198,6 +140,96 @@ class XrayProcessorPipelineServer extends XrayKnowledgeSkillBase {
         { message: `Failed to load codex rules: ${error instanceof Error ? error.message : String(error)}` }
       );
     }
+  }
+
+  private setupToolHandlers() {
+    // List available tools
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: "execute-pre-processors",
+            description:
+              "Run pre-execution processors on content with codex validation",
+            inputSchema: {
+              type: "object",
+              properties: {
+                content: { type: "string" },
+                context: { type: "object" },
+                validateCodex: { type: "boolean", default: true },
+                strictMode: { type: "boolean", default: false },
+              },
+              required: ["content"],
+            },
+          },
+          {
+            name: "execute-post-processors",
+            description:
+              "Run post-execution processors on results with compliance monitoring",
+            inputSchema: {
+              type: "object",
+              properties: {
+                content: { type: "string" },
+                results: { type: "object" },
+                enforceCompliance: { type: "boolean", default: true },
+                auditTrail: { type: "boolean", default: true },
+              },
+              required: ["content"],
+            },
+          },
+          {
+            name: "codex-validation",
+            description:
+              "Validate content against Universal Development Codex terms",
+            inputSchema: {
+              type: "object",
+              properties: {
+                content: { type: "string" },
+                terms: {
+                  type: "array",
+                  items: { type: "string" },
+                  default: ["all"],
+                },
+                strict: { type: "boolean", default: false },
+              },
+              required: ["content"],
+            },
+          },
+          {
+            name: "framework-compliance-check",
+            description:
+              "Check framework compliance and generate enforcement actions",
+            inputSchema: {
+              type: "object",
+              properties: {
+                content: { type: "string" },
+                operation: { type: "string" },
+                context: { type: "object" },
+              },
+              required: ["content", "operation"],
+            },
+          },
+        ],
+      };
+    });
+
+    // Handle tool calls
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case "execute-pre-processors":
+          return await this.handlePreProcessors(args as unknown as PreProcessorArgs);
+        case "execute-post-processors":
+          return await this.handlePostProcessors(args as unknown as PostProcessorArgs);
+        case "codex-validation":
+          return await this.handleCodexValidation(args as unknown as CodexValidationArgs);
+        case "framework-compliance-check":
+          return await this.handleComplianceCheck(args as unknown as ComplianceCheckArgs);
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
+    });
   }
 
   private async handlePreProcessors(args: PreProcessorArgs) {
@@ -729,12 +761,18 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
 
     return results;
   }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    // Silent start - no console output
+  }
 }
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new XrayProcessorPipelineServer();
-  server.run("processor-pipeline").catch((error) => frameworkLogger.log("mcps/processor-pipeline", "run", "error", { error: String(error) }));
+  const server = new StringRayProcessorPipelineServer();
+  server.run().catch((error) => frameworkLogger.log("mcps/processor-pipeline", "run", "error", { error: String(error) }));
 }
 
-export { XrayProcessorPipelineServer };
+export { StringRayProcessorPipelineServer };

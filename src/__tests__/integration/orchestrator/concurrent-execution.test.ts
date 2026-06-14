@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
-  XrayOrchestrator,
+  StringRayOrchestrator,
   TaskDefinition,
 } from "../../../orchestrator/orchestrator.js";
 
 describe("Orchestrator Concurrent Execution", () => {
-  let orchestrator: XrayOrchestrator;
+  let orchestrator: StringRayOrchestrator;
   
   // Use fake timers for predictable timing
   beforeEach(() => {
@@ -38,7 +38,7 @@ describe("Orchestrator Concurrent Execution", () => {
   };
   
   beforeEach(() => {
-    orchestrator = new XrayOrchestrator({
+    orchestrator = new StringRayOrchestrator({
       maxConcurrentTasks: 3,
       taskTimeout: 10000,
     });
@@ -97,7 +97,7 @@ describe("Orchestrator Concurrent Execution", () => {
 
   it("should respect maxConcurrentTasks configuration", async () => {
     // Test with maxConcurrentTasks = 1 (should execute sequentially)
-    const sequentialOrchestrator = new XrayOrchestrator({
+    const sequentialOrchestrator = new StringRayOrchestrator({
       maxConcurrentTasks: 1,
       taskTimeout: 10000,
     });

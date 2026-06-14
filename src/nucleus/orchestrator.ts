@@ -410,7 +410,7 @@ export class NucleusOrchestrator {
         case "logging":
           return this.initLogging();
         case "plugin-registration":
-          return this.initPluginRegistration();
+          return await this.initPluginRegistration();
         case "state-management":
           return this.initStateManagement();
         case "security":
@@ -453,9 +453,9 @@ export class NucleusOrchestrator {
     return { success: true, duration: 5, message: "Logging system initialized" };
   }
 
-  private initPluginRegistration(): ComponentInitResult {
+  private async initPluginRegistration(): Promise<ComponentInitResult> {
     const start = Date.now();
-    const r = registerDefaultPlugins();
+    const r = await registerDefaultPlugins();
     if (r.registered === 0) {
       return {
         success: false,

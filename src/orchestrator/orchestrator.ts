@@ -10,10 +10,16 @@
 
 import { EnhancedMultiAgentOrchestrator, enhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import {
+  universalLibrarianConsultation,
+  SystemAction,
+} from "./universal-librarian-consultation.js";
 import { routingOutcomeTracker } from "../delegation/analytics/outcome-tracker.js";
 import { patternPerformanceTracker } from "../analytics/pattern-performance-tracker.js";
 import type { ProcessorManager } from "../processors/processor-manager.js";
+import { VotingCoordinator } from "../delegation/voting-coordinator.js";
 import { getAgentExpertiseLevel } from "../delegation/agent-expertise.js";
+import { StringRayStateManager } from "../state/state-manager.js";
 import fs from "fs";
 
 export interface OrchestratorConfig {
@@ -76,11 +82,11 @@ export interface ConsolidationResult {
   summary: string;
 }
 
-export class XrayOrchestrator {
+export class StringRayOrchestrator {
   private config: OrchestratorConfig;
   private activeTasks: Map<string, Promise<TaskResult>> = new Map();
   private taskToAgentMap: Map<string, string> = new Map();
-
+  private votingCoordinator: VotingCoordinator;
 
   constructor(config: Partial<OrchestratorConfig> = {}) {
     const loadedConfig = this.loadOrchestratorConfig();
@@ -92,6 +98,7 @@ export class XrayOrchestrator {
       ...config,
     };
 
+    this.votingCoordinator = new VotingCoordinator(new StringRayStateManager());
   }
 
   /**
@@ -100,8 +107,8 @@ export class XrayOrchestrator {
   private loadOrchestratorConfig(): Partial<OrchestratorConfig> | null {
     try {
       const configPaths = [
-        ".xray/features.json",
-        ".opencode/xray/features.json",
+        ".strray/features.json",
+        ".opencode/strray/features.json",
       ];
       
       for (const configPath of configPaths) {
@@ -758,6 +765,31 @@ export class XrayOrchestrator {
 
     if (agents.length < 2) return conflicts[0];
 
+    const voteId = this.votingCoordinator.initiateVoting(
+      `orchestrator-conflict-${Date.now()}`,
+      "conflict-resolution",
+      "Resolve conflicting agent responses",
+      agents,
+      {
+        complexity: 30,
+        riskLevel: "medium",
+        hasSecurityConcerns: false,
+        hasArchitecturalImpact: false,
+        participantCount: agents.length,
+      },
+    );
+
+    void voteId.then((id) => {
+      for (const conflict of conflicts) {
+        if (conflict.agentType) {
+          const vote = conflict.response ? "approve" : "reject";
+          const confidence = (conflict.expertiseScore ?? 5) / 10;
+          this.votingCoordinator.submitVote(id, conflict.agentType, vote, confidence);
+        }
+      }
+      this.votingCoordinator.resolveVoting(id);
+    });
+
     return this.resolveByExpertPriority(conflicts);
   }
 
@@ -915,6 +947,4 @@ export class XrayOrchestrator {
 }
 
 // Export singleton instance
-export const xrayOrchestrator = new XrayOrchestrator();
-// Backward compat alias
-export { xrayOrchestrator as strRayOrchestrator };
+export const strRayOrchestrator = new StringRayOrchestrator();

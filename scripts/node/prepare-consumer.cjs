@@ -33,13 +33,12 @@ function updatePathsInFile(filePath) {
     let content = fs.readFileSync(filePath, 'utf-8');
     let updated = false;
 
-    // Transform development paths back to consumer paths.
-    // Use 0xray (current published name). Keep xray for any legacy consumer configs.
-    // Only transform if it's not already a consumer path.
-    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/0xray/dist/plugin/mcps/') && !content.includes('node_modules/xray/dist/plugin/mcps/')) {
+    // Transform development paths back to consumer paths (plain xray; legacy @0xray/xray removed)
+    // Only transform if it's not already a consumer path
+    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/xray/dist/plugin/mcps/')) {
       content = content.replace(
         /dist\/plugin\/mcps\//g,
-        'node_modules/0xray/dist/plugin/mcps/'
+        'node_modules/xray/dist/plugin/mcps/'
       );
       updated = true;
     }
@@ -48,7 +47,7 @@ function updatePathsInFile(filePath) {
     if (content.includes('../../../dist/plugin/')) {
       content = content.replace(
         /\.\.\/\.\.\/\.\.\/dist\/plugin\//g,
-        'node_modules/0xray/dist/plugin/'
+        'node_modules/xray/dist/plugin/'
       );
       updated = true;
     }
@@ -140,5 +139,5 @@ function addJsExtensionsToDist() {
 // Run the dist transformation
 addJsExtensionsToDist();
 
-structuredLog('prepare-consumer', 'xray v3 Consumer Preparation: Complete!', 'success');
+structuredLog('prepare-consumer', 'xray v2 Consumer Preparation: Complete!', 'success');
 structuredLog('prepare-consumer', 'Package is now ready for consumer installation (plain xray technical identity).', 'info');

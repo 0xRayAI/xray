@@ -7,7 +7,7 @@
  * Protected files:
  * - routing-outcomes.json (routing analytics - NEVER delete)
  * - activity.log (framework activity - NEVER delete)
- * - xray-plugin-*.log (plugin logs)
+ * - strray-plugin-*.log (plugin logs)
  *
  * Archival flow is ALLOWED:
  * - framework-activity-*.log.gz (archived/compressed logs)
@@ -35,7 +35,7 @@ const ACTIVE_LOG_PATTERNS = [
  */
 const ARCHIVE_PATTERNS = [
   /framework-activity-.+\.log\.gz$/,
-  /xray-plugin-.+\.log\.gz$/,
+  /strray-plugin-.+\.log\.gz$/,
 ];
 
 /**

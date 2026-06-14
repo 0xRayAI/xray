@@ -75,7 +75,7 @@ program
       frameworkLogger.log('cli', 'install-success', 'info', { message: 'xray framework installed' });
       // UX banner kept for user visibility post-install (non-removable per exception)
       console.log("✅ xray framework installed!");
-      console.log("💡 Run 'npx 0xray setup' for full configuration (hooks, Hermes, symlinks)");
+      console.log("💡 Run 'npx xray setup' for full configuration (hooks, Hermes, symlinks)");
     } catch (error) {
       frameworkLogger.log('cli', 'install-error', 'error', { error: error instanceof Error ? error.message : String(error) });
       console.error("❌ Installation failed:", error instanceof Error ? error.message : String(error));
@@ -236,7 +236,7 @@ program
     console.log("  3. Access skills for specialized capabilities");
     console.log("  4. Check framework-reporting-system for activity reports");
     console.log(
-      '  5. Run "npx 0xray capabilities" anytime for this overview',
+      '  5. Run "npx xray capabilities" anytime for this overview',
     );
   });
 
@@ -310,7 +310,7 @@ console.log("  • @security-auditor scan this project");
         console.log("  • framework-reporting-system");
       } else {
         console.log(
-          '⚠️ Some components need attention. Run "npx 0xray install" to fix.',
+          '⚠️ Some components need attention. Run "npx xray install" to fix.',
         );
       }
     } catch (error) {
@@ -404,7 +404,7 @@ program
       console.log("");
       console.log("💡 Troubleshooting:");
       console.log("  • Make sure OpenCode is running");
-      console.log("  • Check framework installation: npx 0xray status");
+      console.log("  • Check framework installation: npx xray status");
       console.log(
         "  • Try manual report: framework-reporting-system generate-report",
       );
@@ -446,7 +446,7 @@ program
       console.log("");
       console.log("💡 Next steps:");
       console.log("  • Restart OpenCode to load the restored configuration");
-      console.log("  • Run: npx 0xray health (to verify everything works)");
+      console.log("  • Run: npx xray health (to verify everything works)");
       console.log("  • Try: @security-auditor scan this project");
     } catch (error) {
       console.error(
@@ -456,11 +456,79 @@ program
       console.log("");
       console.log("💡 Manual fix options:");
       console.log("  • Delete .opencode/ and .xray/ directories");
-      console.log("  • Run: npx 0xray install");
+      console.log("  • Run: npx xray install");
       console.log("  • Or manually restore missing configuration files");
       process.exit(1);
     }
   });
+
+// Analytics command - pattern analysis, insights, and consent management
+program
+  .command("analytics")
+  .description("xray Central Analytics - Pattern analysis, insights, and consent management\n" +
+               "  In v1.7.2+: Includes consent management with granular control\n" +
+               "  Use 'npx xray analytics enable' to opt-in to data sharing\n" +
+               "  Core classes: ConsentManager, AnonymizationEngine available programmatically")
+  .option("-l, --limit <number>", "Limit analysis to last N task completions")
+  .option("-o, --output <file>", "Save report to file")
+  .action(async (opts) => {
+    console.log("📊 xray Pattern Analytics");
+    console.log("==============================");
+    console.log("");
+
+    try {
+      // Dynamic import to avoid loading analytics module unless needed
+      const { SimplePatternAnalyzer } =
+        await import("../analytics/simple-pattern-analyzer.js");
+
+      // Get default limit from features.json
+      const fs = await import("fs");
+      const path = await import("path");
+      let defaultLimit = 500;
+      try {
+        const featuresPath = path.join(process.cwd(), ".opencode", "plugins", "features.json"); // plain xray primary (min compat .strray/ handled in getConfigDir per Scope Rule)
+        if (fs.existsSync(featuresPath)) {
+          const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
+          defaultLimit = features.analytics?.default_limit || 500;
+        }
+      } catch { /* use default */ }
+
+      const analyzer = new SimplePatternAnalyzer();
+      const limit = parseInt(opts.limit) || defaultLimit;
+
+      console.log(`Analyzing last ${limit} task completions...`);
+      console.log("");
+
+      const insights = await analyzer.analyze(limit);
+      const insightsLines = analyzer.generateInsights(insights);
+
+      // Print insights
+      insightsLines.forEach((line) => {
+        console.log(line);
+      });
+
+      // Save to file if requested
+      if (opts.output) {
+        const fs = await import("fs");
+        const report = await analyzer.generateReport();
+        fs.writeFileSync(opts.output, report);
+        console.log("");
+        console.log(`✅ Report saved to: ${opts.output}`);
+      }
+
+      console.log("");
+      console.log(
+        "💡 Run regularly to track agent performance and complexity accuracy",
+      );
+    } catch (error) {
+      console.error(
+        "❌ Analytics failed:",
+        error instanceof Error ? error.message : String(error),
+      );
+      process.exit(1);
+    }
+  });
+
 
 program
   .command("doctor")
@@ -499,18 +567,18 @@ program
         console.log("✅ xray package installed");
       }
 
-      // Check configuration - check for opencode.json or .xray/ (min compat .xray/ fallback for prior StringRay consumer runtime per Scope Rule; plain xray primary)
+      // Check configuration - check for opencode.json or .strray/ (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule; plain xray primary)
       const cwd = process.cwd();
       const opencodeConfigPath = path.join(cwd, "opencode.json");
-      const xrayDir = getConfigDir(cwd);
+      const strrayDir = getConfigDir(cwd);
       const opencodeExists = fs.existsSync(opencodeConfigPath);
-      const xrayDirExists = fs.existsSync(xrayDir);
+      const strrayDirExists = fs.existsSync(strrayDir);
       if (opencodeExists) {
         console.log("✅ opencode configuration found");
-      } else if (xrayDirExists) {
-        console.log(`✅ Configuration directory found: ${xrayDir}`);
+      } else if (strrayDirExists) {
+        console.log(`✅ Configuration directory found: ${strrayDir}`);
       } else {
-        console.log("ℹ️  No opencode.json or config directory found (run: npx 0xray fix to create)");
+        console.log("ℹ️  No opencode.json or config directory found (run: npx xray fix to create)");
       }
 
       // Check for common issues
@@ -531,8 +599,8 @@ program
         console.log("");
         console.log("💡 Pro tips:");
         console.log("  • Use @security-auditor for code quality checks");
-        console.log("  • Run reports regularly: npx 0xray report");
-        console.log("  • Check health anytime: npx 0xray health");
+        console.log("  • Run reports regularly: npx xray report");
+        console.log("  • Check health anytime: npx xray health");
       } else {
         console.log("⚠️ Issues found:");
         issues.forEach((issue, i) => {
@@ -541,7 +609,7 @@ program
 
         console.log("");
         console.log(
-          '🔧 Run "npx 0xray fix" to automatically fix these issues',
+          '🔧 Run "npx xray fix" to automatically fix these issues',
         );
       }
     } catch (error) {
@@ -549,6 +617,46 @@ program
         "❌ Doctor check failed:",
         error instanceof Error ? error.message : String(error),
       );
+      process.exit(1);
+    }
+  });
+
+// Archive logs command - standalone, no framework boot required
+program
+  .command("archive-logs")
+  .description("Archive log files without framework boot (for git hooks)")
+  .option("--dry-run", "Show what would be archived without making changes")
+  .option("-v, --verbose", "Verbose output")
+  .action(async (opts) => {
+    console.log("📦 xray Log Archive");
+    console.log("========================");
+    
+    if (opts.dryRun) {
+      console.log("(Dry run mode - no changes will be made)");
+    }
+    
+    try {
+      // Import and run standalone archiver
+      const archiveModule = await import("./commands/archive-logs.js");
+      const result = await archiveModule.archiveLogFiles(
+        {
+          maxFileSizeMB: 10,
+          rotationIntervalHours: 24,
+          compressionEnabled: true,
+          maxArchives: 10,
+        },
+        `cli-${Date.now()}`
+      );
+      
+      console.log(`\n📊 Results:`);
+      console.log(`  Archived: ${result.archived} files`);
+      if (result.errors.length > 0) {
+        console.log(`  Errors: ${result.errors.length}`);
+        result.errors.forEach((e: string) => console.log(`    - ${e}`));
+        process.exit(1);
+      }
+    } catch (error) {
+      console.error("Archive failed:", error);
       process.exit(1);
     }
   });
@@ -675,7 +783,7 @@ program
       return;
     }
     
-    console.log('Usage: npx 0xray inference:tuner [options]');
+    console.log('Usage: npx xray inference:tuner [options]');
     console.log('  --start     Start the tuner service');
     console.log('  --stop      Stop the tuner service');
     console.log('  --run-once  Run a single tuning cycle');
@@ -725,15 +833,15 @@ program
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
       } else {
         console.log('Inference feature is disabled in features.json.');
-        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .xray/ fallback for prior StringRay consumer runtime per Scope Rule)');
+        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule)');
       }
       return;
     }
 
     const projectRoot = process.cwd();
     const inferenceDir = `${projectRoot}/docs/inference`;
-    const stateDir = `${projectRoot}/.xray/inference`;
-    const stateFile = `${stateDir}/inference-state.json`;
+    const stateDir = `${projectRoot}/.strray/inference`;
+    const stateFile = `${stateDir}/inference-cycle-state.json`;
 
     if (!options.json) {
       console.log('xray Inference Cycle');
@@ -815,6 +923,38 @@ program
     }
   });
 
+// Publish agent command
+program
+  .command('publish-agent')
+  .description('Package and publish agents to AgentStore')
+  .option('-a, --agent <name>', 'Agent name to publish')
+  .option('-v, --version <version>', 'Version to publish (default: 1.0.0)')
+  .option('-d, --dry-run', 'Show what would be published without publishing')
+  .action(async () => {
+    const { publishAgentCommand } = await import('./commands/publish-agent.js');
+    await publishAgentCommand();
+  });
+
+// Antigravity status command
+program
+  .command('antigravity status')
+  .description('Show status of all installed skills')
+  .action(async () => {
+    const { antigravityStatusCommand } = await import('./commands/antigravity-status.js');
+    await antigravityStatusCommand();
+  });
+
+// Credible init command
+program
+  .command('credible init')
+  .description('Initialize Credible Pod infrastructure')
+  .option('-n, --name <name>', 'Pod name')
+  .option('-t, --template <template>', 'Pod template to use')
+  .action(async () => {
+    const { credibleInitCommand } = await import('./commands/credible-init.js');
+    await credibleInitCommand();
+  });
+
 // Skill registry command
 program
   .command('skill:registry [action]')
@@ -839,21 +979,69 @@ program
     await skillInstallCommand(sourceArg, options);
   });
 
+// Storyteller command
+program
+  .command('storyteller [type]')
+  .description('Write reflections, sagas, journeys, or narratives')
+  .option('-t, --title <title>', 'Title for the story')
+  .option('-f, --framework <framework>', 'Storytelling framework (three_act_structure, hero_journey, spiral)')
+  .option('-o, --output <file>', 'Output file path')
+  .option('--dry-run', 'Show prompt without creating file')
+  .action(async (type, options) => {
+    const { storytellerCommand } = await import('./commands/storyteller.js');
+    await storytellerCommand(type, options);
+  });
+
+// MCP install commands - support both hyphen and colon formats
+program
+  .command('mcp-list')
+  .alias('mcp:list')
+  .description('List available community MCP servers')
+  .action(async () => {
+    const { listMCPsCommand } = await import('./commands/mcp-install.js');
+    listMCPsCommand();
+  });
+
+program
+  .command('mcp-status')
+  .alias('mcp:status')
+  .description('Show installed MCP servers')
+  .action(async () => {
+    const { showMCPStatusCommand } = await import('./commands/mcp-install.js');
+    showMCPStatusCommand();
+  });
+
+program
+  .command('mcp-install <name>')
+  .alias('mcp:install')
+  .description('Install an MCP server from the registry')
+  .action(async (name) => {
+    const { installMCPCommand } = await import('./commands/mcp-install.js');
+    await installMCPCommand(name);
+  });
+
+program
+  .command('mcp-remove <name>')
+  .alias('mcp:remove')
+  .description('Remove an installed MCP server')
+  .action(async (name) => {
+    const { removeMCPCommand } = await import('./commands/mcp-install.js');
+    removeMCPCommand(name);
+  });
+
 // MCP server subprocess launchers (used by Grok plugin .mcp.json via npx)
 program
   .command('mcp')
   .description('Run an MCP server subprocess (used by Grok/OpenCode .mcp.json)')
-  .argument('<server>', 'Server name: governance, skills, enforcer, orchestrator')
+  .argument('<server>', 'Server name: governance or skills')
   .action(async (server: string) => {
     const serverMap: Record<string, string> = {
       governance: 'dist/mcps/governance.server.js',
       skills: 'dist/mcps/knowledge-skills/skill-invocation.server.js',
-      enforcer: 'dist/mcps/enforcer-tools.server.js',
-      orchestrator: 'dist/mcps/orchestrator/server.js',
     };
     const relPath = serverMap[server];
     if (!relPath) {
-      console.error(`Unknown MCP server: ${server}. Use: governance, skills, enforcer, orchestrator`);
+      console.error(`Unknown MCP server: ${server}. Use: governance, skills`);
       process.exit(1);
     }
     const serverPath = resolve(join(packageRoot, relPath));
@@ -862,6 +1050,9 @@ program
       process.exit(1);
     }
     const env: Record<string, string> = { ...process.env as Record<string, string> };
+    if (server === 'governance') {
+      env.STRRAY_FORCE_MCP_GOVERNANCE = 'true';
+    }
     const child = spawn(process.execPath, [serverPath], { stdio: 'inherit', env });
     child.on('exit', (code) => process.exit(code ?? 0));
   });
@@ -886,38 +1077,58 @@ const opencodeCmd = program.command('opencode').description('OpenCode integratio
 const { registerOpencodeCommands } = await import('./commands/opencode-install.js');
 registerOpencodeCommands(opencodeCmd);
 
-// Security audit command
-program
-  .command("security-audit")
-  .description("Run comprehensive security audit with vulnerability scanning, compliance checking, and architectural decisions")
+// Analytics enable command
+
+
+// Plugin subcommands
+const pluginCmd = program.command('plugin').description('Manage plugins');
+
+pluginCmd
+  .command('list')
+  .description('List installed plugins')
   .action(async () => {
-    const { securityAuditCommand } = await import("./commands/security-audit.js");
-    await securityAuditCommand();
+    const { pluginListCommand } = await import('./commands/plugin-commands.js');
+    await pluginListCommand();
   });
 
-// v3 nucleus: primary governance command
-program
-  .command("govern")
-  .description("Run the xray governance kernel")
-  .option("--status", "Show framework status")
-  .option("--audit", "Run security audit")
-  .option("--mcp <server>", "Run an MCP server subprocess (governance, skills)")
-  .option("--plugin-install <name>", "Install a plugin")
-  .option("--proposals <json>", "Run governance on JSON proposals")
-  .option("--skill-install [source]", "Install skills from registry")
-  .option("--skill-registry [action]", "Manage skill registry sources")
-  .option("--storyteller <type>", "Write a story (reflection|saga|journey|narrative)")
-  .option("--mcp-list", "List available MCP servers")
-  .option("--mcp-status", "Show installed MCP servers")
-  .option("--mcp-install <name>", "Install an MCP server")
-  .option("--mcp-remove <name>", "Remove an MCP server")
-  .option("--publish-agent", "Publish an agent to AgentStore")
-  .option("--archive-logs", "Archive log files")
-  .option("--credible-init [name]", "Initialize Credible Pod")
-  .option("--antigravity-status", "Show installed skills status")
-  .action(async (options) => {
-    const { governCommand } = await import("./commands/govern.js");
-    await governCommand(options);
+pluginCmd
+  .command('install <name>')
+  .description('Install a plugin')
+  .action(async (name) => {
+    const { pluginInstallCommand } = await import('./commands/plugin-commands.js');
+    await pluginInstallCommand(name);
+  });
+
+pluginCmd
+  .command('enable <name>')
+  .description('Enable a plugin')
+  .action(async (name) => {
+    const { pluginEnableCommand } = await import('./commands/plugin-commands.js');
+    await pluginEnableCommand(name);
+  });
+
+pluginCmd
+  .command('disable <name>')
+  .description('Disable a plugin')
+  .action(async (name) => {
+    const { pluginDisableCommand } = await import('./commands/plugin-commands.js');
+    await pluginDisableCommand(name);
+  });
+
+pluginCmd
+  .command('status <name>')
+  .description('Show plugin details')
+  .action(async (name) => {
+    const { pluginStatusCommand } = await import('./commands/plugin-commands.js');
+    await pluginStatusCommand(name);
+  });
+
+pluginCmd
+  .command('uninstall <name>')
+  .description('Uninstall a plugin')
+  .action(async (name) => {
+    const { pluginUninstallCommand } = await import('./commands/plugin-commands.js');
+    await pluginUninstallCommand(name);
   });
 
 // Add help text
@@ -935,11 +1146,13 @@ Examples:
     $ npx 0xray report        # Generate activity and health reports
     $ npx 0xray fix           # Automatically restore missing config files
     $ npx 0xray doctor        # Diagnose issues (does not fix them)
+    $ npx 0xray analytics     # Pattern analytics and insights
     $ npx 0xray inference:improve  # Run autonomous inference improvement
-    $ npx 0xray security-audit --deep  # Run deep security audit
-    $ npx 0xray govern                  # Run the governance kernel
-    $ npx 0xray govern --status        # Show status (v3 nucleus)
-    $ npx 0xray govern --proposals '[{"type":"fix","title":"Test","description":"A test"}]'
+    $ npx 0xray skill:install agency-agents  # Install 170+ agency agent skills
+    $ npx 0xray skill:install superpowers      # Install 14 agentic workflow skills
+    $ npx 0xray skill:install <github-url>     # Install from any repo
+    $ npx 0xray storyteller saga "v1.18.0 Journey"  # Write a saga
+    $ npx 0xray storyteller reflection "API Fix"     # Write a reflection
 
 Quick Start:
    1. Install: npx 0xray install
@@ -947,7 +1160,8 @@ Quick Start:
    3. Use agents: @security-auditor scan
    4. Generate reports: npx 0xray report
    5. Fix issues: npx 0xray fix
-   6. Add skills: npx 0xray skill:install agency-agents
+   6. View analytics: npx 0xray analytics
+   7. Add skills: npx 0xray skill:install agency-agents
 
 For more information, visit: https://github.com/0xRayAI/xray
 `,
@@ -955,11 +1169,4 @@ For more information, visit: https://github.com/0xRayAI/xray
 
 // Parse command line arguments
 program.exitOverride();
-try {
-  program.parse();
-} catch (err: unknown) {
-  if (err instanceof Error && 'code' in err && (err as { code: string }).code === 'commander.help') {
-    process.exit(0);
-  }
-  throw err;
-}
+program.parse();

@@ -10,8 +10,8 @@
  * BootOrchestrator constructor()
  *     │
  *     ├─► setupGracefulShutdown()
- *     ├─► XrayContextLoader.getInstance()
- *     ├─► XrayStateManager()
+ *     ├─► StringRayContextLoader.getInstance()
+ *     ├─► StringRayStateManager()
  *     ├─► ProcessorManager(stateManager)
  *     ├─► createAgentDelegator()
  *     ├─► createSessionCoordinator()
@@ -25,8 +25,8 @@
  * BootResult { success, orchestratorLoaded, ... }
  */
 
-import { XrayStateManager } from '../../../dist/state/state-manager.js';
-import { XrayContextLoader } from '../../../dist/core/context-loader.js';
+import { StringRayStateManager } from '../../../dist/state/state-manager.js';
+import { StringRayContextLoader } from '../../../dist/core/context-loader.js';
 import { ProcessorManager } from '../../../dist/processors/processor-manager.js';
 import { SecurityHardener } from '../../../dist/security/security-hardener.js';
 import { InferenceTuner } from '../../../dist/services/inference-tuner.js';
@@ -60,41 +60,41 @@ function test(name, fn) {
 }
 
 // ============================================
-// LAYER 1: Configuration (XrayContextLoader) - REAL
+// LAYER 1: Configuration (StringRayContextLoader) - REAL
 // Reference: BOOT_PIPELINE_TREE.md#layer-1
 // ============================================
-console.log('📍 Layer 1: Configuration (XrayContextLoader) - REAL');
+console.log('📍 Layer 1: Configuration (StringRayContextLoader) - REAL');
 console.log('   Component: src/core/context-loader.ts\n');
 
 test('should create REAL context loader instance', () => {
-  const contextLoader = new XrayContextLoader();
+  const contextLoader = new StringRayContextLoader();
   if (!contextLoader) throw new Error('Failed to create context loader - REAL');
   console.log(`   (context loader created - REAL)`);
 });
 
 test('should getInstance() returns same instance (singleton) - REAL', () => {
-  const instance1 = XrayContextLoader.getInstance();
-  const instance2 = XrayContextLoader.getInstance();
+  const instance1 = StringRayContextLoader.getInstance();
+  const instance2 = StringRayContextLoader.getInstance();
   if (!instance1) throw new Error('Failed to get instance - REAL');
   if (instance1 !== instance2) throw new Error('Singleton contract violated - REAL');
   console.log(`   (singleton verified - REAL)`);
 });
 
 // ============================================
-// LAYER 2: State Management (XrayStateManager) - REAL
+// LAYER 2: State Management (StringRayStateManager) - REAL
 // Reference: BOOT_PIPELINE_TREE.md#layer-2
 // ============================================
-console.log('\n📍 Layer 2: State Management (XrayStateManager) - REAL');
+console.log('\n📍 Layer 2: State Management (StringRayStateManager) - REAL');
 console.log('   Component: src/state/state-manager.ts\n');
 
 test('should create REAL state manager instance', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   if (!stateManager) throw new Error('Failed to create state manager - REAL');
   console.log(`   (state manager created - REAL)`);
 });
 
 test('should set and retrieve state (REAL)', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const testKey = `boot:test:${Date.now()}`;
   stateManager.set(testKey, { value: 'test-value' });
   const value = stateManager.get(testKey);
@@ -111,21 +111,21 @@ console.log('\n📍 Layer 3: Delegation System - REAL');
 console.log('   Components: AgentDelegator, SessionCoordinator\n');
 
 test('should create REAL AgentDelegator instance', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const delegator = createAgentDelegator(stateManager);
   if (!delegator) throw new Error('Failed to create AgentDelegator - REAL');
   console.log(`   (AgentDelegator created - REAL)`);
 });
 
 test('should create REAL SessionCoordinator instance', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const coordinator = createSessionCoordinator(stateManager);
   if (!coordinator) throw new Error('Failed to create SessionCoordinator - REAL');
   console.log(`   (SessionCoordinator created - REAL)`);
 });
 
 test('should initialize session via REAL SessionCoordinator', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const coordinator = createSessionCoordinator(stateManager);
   const session = coordinator.initializeSession('test-boot-session');
   if (!session) throw new Error('Failed to initialize session - REAL');
@@ -141,7 +141,7 @@ console.log('\n📍 Layer 4: Session Management - REAL');
 console.log('   Components: SessionMonitor, SessionStateManager, SessionCleanupManager\n');
 
 test('should create REAL SessionMonitor instance', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const sessionCoordinator = createSessionCoordinator(stateManager);
   const monitor = createSessionMonitor(stateManager, sessionCoordinator, undefined);
   if (!monitor) throw new Error('Failed to create SessionMonitor - REAL');
@@ -149,14 +149,14 @@ test('should create REAL SessionMonitor instance', () => {
 });
 
 test('should create REAL SessionCleanupManager instance', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const cleanupManager = createSessionCleanupManager(stateManager, {});
   if (!cleanupManager) throw new Error('Failed to create SessionCleanupManager - REAL');
   console.log(`   (SessionCleanupManager created - REAL)`);
 });
 
 test('should create REAL SessionStateManager instance', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const sessionCoordinator = createSessionCoordinator(stateManager);
   const sessionStateManager = createSessionStateManager(stateManager, sessionCoordinator);
   if (!sessionStateManager) throw new Error('Failed to create SessionStateManager - REAL');
@@ -164,7 +164,7 @@ test('should create REAL SessionStateManager instance', () => {
 });
 
 test('should share state via REAL SessionStateManager', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const sessionCoordinator = createSessionCoordinator(stateManager);
   const sessionStateManager = createSessionStateManager(stateManager, sessionCoordinator);
   const session1 = sessionCoordinator.initializeSession('test-session-share-1');
@@ -189,7 +189,7 @@ console.log('\n📍 Layer 5: Processors (ProcessorManager) - REAL');
 console.log('   Component: src/processors/processor-manager.ts\n');
 
 test('should create REAL ProcessorManager and verify registration pipeline', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const processorManager = new ProcessorManager(stateManager);
   
   if (!processorManager) throw new Error('Failed to create ProcessorManager - REAL');
@@ -208,7 +208,7 @@ test('should create REAL ProcessorManager and verify registration pipeline', () 
 });
 
 test('should verify pre/post processor type filtering', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const processorManager = new ProcessorManager(stateManager);
   
   processorManager.registerProcessor({ name: 'test-pre-1', type: 'pre', priority: 10, enabled: true });
@@ -226,7 +226,7 @@ test('should verify pre/post processor type filtering', () => {
 });
 
 test('should verify post-processor registration and filtering', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   const processorManager = new ProcessorManager(stateManager);
   
   processorManager.registerProcessor({ name: 'test-post-1', type: 'post', priority: 10, enabled: true });
@@ -342,9 +342,9 @@ console.log('   3. State entries created');
 console.log('   4. 13 processors registered\n');
 
 test('should verify full boot sequence with REAL components', () => {
-  const stateManager = new XrayStateManager();
+  const stateManager = new StringRayStateManager();
   
-  const contextLoader = XrayContextLoader.getInstance();
+  const contextLoader = StringRayContextLoader.getInstance();
   if (!contextLoader) throw new Error('ContextLoader init failed - REAL');
   
   const processorManager = new ProcessorManager(stateManager);
@@ -365,8 +365,8 @@ test('should verify full boot sequence with REAL components', () => {
 });
 
 test('should verify all 10 components from tree can be initialized', () => {
-  const stateManager = new XrayStateManager();
-  const contextLoader = XrayContextLoader.getInstance();
+  const stateManager = new StringRayStateManager();
+  const contextLoader = StringRayContextLoader.getInstance();
   const processorManager = new ProcessorManager(stateManager);
   const agentDelegator = createAgentDelegator(stateManager);
   const sessionCoordinator = createSessionCoordinator(stateManager);
@@ -376,7 +376,7 @@ test('should verify all 10 components from tree can be initialized', () => {
   const hardener = new SecurityHardener();
   const tuner = new InferenceTuner({ autoStartInferenceTuner: false });
   
-  if (!contextLoader) throw new Error('XrayContextLoader not created');
+  if (!contextLoader) throw new Error('StringRayContextLoader not created');
   if (!processorManager) throw new Error('ProcessorManager not created');
   if (!agentDelegator) throw new Error('AgentDelegator not created');
   if (!sessionCoordinator) throw new Error('SessionCoordinator not created');

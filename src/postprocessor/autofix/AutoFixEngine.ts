@@ -296,6 +296,98 @@ export class AutoFixEngine {
   }
 
   /**
+   * Validate that applied fixes resolve the issue
+   */
+  async validateFixes(
+    fixes: AppliedFixRecord[],
+    originalFailure: FailureAnalysis,
+    context: PostProcessorContext,
+  ): Promise<boolean> {
+    const jobId = `fix-validation-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    await frameworkLogger.log(
+      "-auto-fix-engine",
+      "-validating-applied-fixes-",
+      "success",
+      { message: "✅ Validating applied fixes..." },
+    );
+
+    try {
+      // Run relevant tests based on failure type
+      switch (originalFailure.category) {
+        case "test-failure":
+          execSync("npm test", { stdio: "pipe", timeout: 120000 });
+          break;
+
+        case "build-failure":
+          execSync("npm run build", { stdio: "pipe", timeout: 120000 });
+          break;
+
+        case "code-quality-failure":
+          execSync("npm run lint", { stdio: "pipe", timeout: 60000 });
+          break;
+
+        case "security-failure":
+          execSync("npm run security-audit", { stdio: "pipe", timeout: 60000 });
+          break;
+
+        case "performance-regression":
+          execSync("npm run test:performance", {
+            stdio: "pipe",
+            timeout: 120000,
+          });
+          break;
+
+        default:
+          // Run a basic validation
+          execSync("npm run typecheck", { stdio: "pipe", timeout: 60000 });
+      }
+
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-fix-validation-passed-",
+        "success",
+        { message: "✅ Fix validation passed" },
+      );
+      return true;
+    } catch (error) {
+      await frameworkLogger.log(
+        "auto-fix-engine",
+        "validation-failed",
+        "error",
+        { jobId },
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Rollback applied fixes if validation fails
+   */
+  async rollbackFixes(fixes: AppliedFixRecord[]): Promise<void> {
+    await frameworkLogger.log(
+      "-auto-fix-engine",
+      "-rolling-back-applied-fixes-",
+      "info",
+      { message: "🔄 Rolling back applied fixes..." },
+    );
+
+    try {
+      // Simple git reset for now
+      execSync("git reset --hard HEAD~1", { stdio: "inherit" });
+      await frameworkLogger.log(
+        "-auto-fix-engine",
+        "-fixes-rolled-back-",
+        "success",
+        { message: "✅ Fixes rolled back" },
+      );
+    } catch (error) {
+      await frameworkLogger.log("autofix-engine", "rollback-failed", "error", { error: error instanceof Error ? error.message : String(error) });
+      throw error;
+    }
+  }
+
+  /**
    * Get the list of applied fixes
    */
   getAppliedFixes(): AppliedFixRecord[] {

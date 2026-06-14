@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 0xRay Consumer E2E Unified Runner
+ * StringRay Consumer E2E Unified Runner
  *
  * Single pre-merge gate that validates the packaged artifact across all platforms.
  *
@@ -50,20 +50,14 @@ async function main() {
 
   section('Phase 0: Pack the package');
 
-  const packOutput = execSync(`cd "${projectRoot}" && npm pack`, { encoding: 'utf-8', timeout: 60000 });
-  const tarballMatch = packOutput.match(/(?:0xray)-(\d+\.\d+\.\d+)\.tgz/);
-  if (!tarballMatch) {
-    // Fallback: find the newest .tgz in the project root
-    const files = fs.readdirSync(projectRoot).filter(f => f.endsWith('.tgz'));
-    if (files.length === 0) {
-      console.error('Failed to find packed tarball');
-      process.exit(1);
-    }
-    const latest = files.sort().pop();
-    var tarball = path.join(projectRoot, latest);
-  } else {
-    var tarball = path.join(projectRoot, tarballMatch[0]);
+  execSync(`cd "${projectRoot}" && npm pack`, { encoding: 'utf-8', timeout: 60000 });
+  const tgzFiles = fs.readdirSync(projectRoot).filter(f => f.endsWith('.tgz'));
+  if (tgzFiles.length === 0) {
+    console.error('Failed to find packed tarball');
+    process.exit(1);
   }
+  const latest = tgzFiles.sort().pop();
+  const tarball = path.join(projectRoot, latest);
 
   console.log(`Tarball: ${tarball}`);
 
@@ -135,8 +129,8 @@ async function main() {
 
   section('Summary');
 
-  console.log(`Platforms passed: ${passedPlatforms}/3`);
-  console.log(`Platforms failed: ${failedPlatforms}/3`);
+  console.log(`Platforms passed: ${passedPlatforms}/4`);
+  console.log(`Platforms failed: ${failedPlatforms}/4`);
 
   if (!KEEP) {
     try {

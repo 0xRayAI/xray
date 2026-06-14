@@ -23,7 +23,7 @@ interface OpenClawInstallOptions {
 async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise<void> {
   frameworkLogger.log('openclaw-integration', 'install-start', 'info', { options });
 
-  const configPath = path.join(process.cwd(), '.xray', 'config', 'openclaw.json');
+  const configPath = path.join(process.cwd(), '.strray', 'config', 'openclaw.json');
 
   if (options.dryRun) {
     console.log(`[OpenClaw] Dry run: Would create config at ${configPath}`);

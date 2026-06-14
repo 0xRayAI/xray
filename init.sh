@@ -29,15 +29,15 @@ else
 fi
 
 # 0xRay Framework Version — check source name first (dev), then node_modules (consumer)
-FRAMEWORK_VERSION="unknown"
+STRRAY_VERSION="unknown"
 if [ -f "$SOURCE_PACKAGE_JSON" ]; then
     PKG_NAME=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').name || '')" 2>/dev/null)
-    if [ "$PKG_NAME" = "0xray" ] || [ "$PKG_NAME" = "0xray" ]; then
-        FRAMEWORK_VERSION=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
+    if [ "$PKG_NAME" = "0xray" ]; then
+        STRRAY_VERSION=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
     fi
 fi
-if [ "$FRAMEWORK_VERSION" = "unknown" ] && [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
-    FRAMEWORK_VERSION=$(node -e "console.log(require('$NODE_MODULES_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
+if [ "$STRRAY_VERSION" = "unknown" ] && [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
+    STRRAY_VERSION=$(node -e "console.log(require('$NODE_MODULES_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
 fi
 
 # Dedup guard — prevent duplicate runs during startup
@@ -78,7 +78,7 @@ echo -e "${PURPLE}//      ╚█████╔╝██╔╝ ██╗██�
 echo -e "${PURPLE}//       ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝           //${NC}" && sleep 0.1
 echo -e "${PURPLE}//                                                       //${NC}" && sleep 0.1
 echo -e "${PURPLE}//      ⚡ 0xRay: Self-Healing AI Governance OS          //${NC}" && sleep 0.1
-echo -e "${PURPLE}//      42 agents · 44 skills · 39 MCP servers           //${NC}" && sleep 0.1
+echo -e "${PURPLE}//          Platform • 99.6% Error Prevention            //${NC}" && sleep 0.1
 echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}" && sleep 0.2
 echo -e "${PURPLE}//              🚀 Initializing...                          //${NC}" && sleep 0.3
 echo -e "${PURPLE}//═══════════════════════════════════════════════════════//${NC}" && sleep 0.2
@@ -98,27 +98,24 @@ if [ "$AGENTS_COUNT" -eq 0 ]; then
     AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/0xray/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Skills - check .opencode/skills, then .xray/skills (Hermes), then node_modules
+# Skills - check .opencode/skills, then .strray/skills (Hermes), then node_modules
 SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 if [ "$SKILLS_COUNT" -eq 0 ]; then
-    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.xray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
+    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.strray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
 if [ "$SKILLS_COUNT" -eq 0 ]; then
     SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/node_modules/0xray/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Plugin status (check dev dist, then .opencode, then consumer)
-PLUGIN_DEV_DIST="$PROJECT_ROOT/dist/plugin/xray-codex-injection.js"
-PLUGIN_DEV_OPENCODE="$PROJECT_ROOT/.opencode/plugin/xray-codex-injection.js"
-PLUGIN_DEV_OPENCODE_PLURAL="$PROJECT_ROOT/.opencode/plugins/xray-codex-injection.js"
+# Plugin status (check both dev and consumer paths)
+PLUGIN_DEV="$PROJECT_ROOT/.opencode/plugin/xray-codex-injection.js"
+PLUGIN_DEV_PLURAL="$PROJECT_ROOT/.opencode/plugins/xray-codex-injection.js"
 PLUGIN_CONSUMER="$PROJECT_ROOT/node_modules/0xray/.opencode/plugin/xray-codex-injection.js"
 PLUGIN_CONSUMER_PLURAL="$PROJECT_ROOT/node_modules/0xray/.opencode/plugins/xray-codex-injection.js"
 
-if [ -f "$PLUGIN_DEV_DIST" ]; then
+if [ -f "$PLUGIN_DEV" ]; then
     PLUGIN_STATUS="✅"
-elif [ -f "$PLUGIN_DEV_OPENCODE" ]; then
-    PLUGIN_STATUS="✅"
-elif [ -f "$PLUGIN_DEV_OPENCODE_PLURAL" ]; then
+elif [ -f "$PLUGIN_DEV_PLURAL" ]; then
     PLUGIN_STATUS="✅"
 elif [ -f "$PLUGIN_CONSUMER" ]; then
     PLUGIN_STATUS="✅"
@@ -135,8 +132,8 @@ if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ]; then
 fi
 
 echo ""
-echo "DEBUG: VERSION=$FRAMEWORK_VERSION PROJECT_ROOT=$PROJECT_ROOT"
-echo "⚡ 0xRay v$FRAMEWORK_VERSION"
+echo "DEBUG: VERSION=$STRRAY_VERSION PROJECT_ROOT=$PROJECT_ROOT"
+echo "⚡ 0xRay v$STRRAY_VERSION"
 echo "🤖 Agents: $AGENTS_COUNT | ⚙️ MCPs: $MCPS_COUNT | 💡 Skills: $SKILLS_COUNT"
 
 # BootOrchestrator check (check dev and consumer paths)

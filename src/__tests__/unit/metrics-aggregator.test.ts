@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { XrayStateManager } from "../../state/state-manager.js";
+import { StringRayStateManager } from "../../state/state-manager.js";
 import {
   getDelegationMetrics,
   getOrchestrationMetrics,
@@ -23,10 +23,10 @@ import {
 } from "../../delegation/metrics-aggregator.js";
 
 describe("MetricsAggregator", () => {
-  let stateManager: XrayStateManager;
+  let stateManager: StringRayStateManager;
 
   beforeEach(() => {
-    stateManager = new XrayStateManager();
+    stateManager = new StringRayStateManager();
   });
 
   describe("getDelegationMetrics", () => {

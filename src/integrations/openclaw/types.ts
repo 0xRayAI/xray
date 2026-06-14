@@ -137,7 +137,7 @@ export interface OpenClawClientConfig {
 /**
  * 0xRay API server configuration
  */
-export interface XrayAPIServerConfig {
+export interface StringRayAPIServerConfig {
   port: number;
   host?: string;
   apiKey?: string;

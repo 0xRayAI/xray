@@ -54,7 +54,7 @@ jobs:
           - Session management protocols
           - Rule enforcement guidelines
 
-          See xray/agents_template.md for reference.`
+          See docs/AGENTS_TEMPLATE.md for reference.`
           })
     
     - name: Generate AGENTS.md (if missing)

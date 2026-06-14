@@ -6,7 +6,7 @@ describe("enforcement-gate", () => {
   beforeEach(() => {
     (globalThis as any).xrayValidatorRegistry = undefined;
     (globalThis as any).xrayPostProcessor = undefined;
-    (globalThis as any).strRayPostProcessor = undefined;
+    (globalThis as any).xrayPostProcessor = undefined;
     vi.restoreAllMocks();
   });
 
@@ -83,7 +83,7 @@ describe("enforcement-gate", () => {
     beforeEach(() => {
       (globalThis as any).xrayValidatorRegistry = undefined;
       (globalThis as any).xrayPostProcessor = undefined;
-      (globalThis as any).strRayPostProcessor = undefined;
+      (globalThis as any).xrayPostProcessor = undefined;
       (globalThis as any).xrayStateManager = undefined;
       vi.restoreAllMocks();
     });

@@ -19,7 +19,7 @@ describe('registerDefaultPlugins — smoke', () => {
 
   it('should register 25 plugins when called', async () => {
     const { registerDefaultPlugins } = await import('../../nucleus/default-plugins.js');
-    const result = registerDefaultPlugins();
+    const result = await registerDefaultPlugins();
     expect(result.registered).toBe(25);
     expect(result.failed).toEqual([]);
   });
@@ -27,7 +27,7 @@ describe('registerDefaultPlugins — smoke', () => {
   it('should register governance-critical plugins first', async () => {
     const { registerDefaultPlugins } = await import('../../nucleus/default-plugins.js');
     pluginRegistry.resetForTest();
-    registerDefaultPlugins();
+    await registerDefaultPlugins();
 
     expect(pluginRegistry.hasToolPlugin('code-review')).toBe(true);
     expect(pluginRegistry.hasToolPlugin('security-audit')).toBe(true);
@@ -37,7 +37,7 @@ describe('registerDefaultPlugins — smoke', () => {
   it('should register all 6 batch categories', async () => {
     const { registerDefaultPlugins } = await import('../../nucleus/default-plugins.js');
     pluginRegistry.resetForTest();
-    const result = registerDefaultPlugins();
+    const result = await registerDefaultPlugins();
 
     const names = pluginRegistry.listToolPlugins();
     expect(result.registered).toBe(names.length);
@@ -52,7 +52,7 @@ describe('registerDefaultPlugins — smoke', () => {
   it('each registered plugin should expose tools', async () => {
     const { registerDefaultPlugins } = await import('../../nucleus/default-plugins.js');
     pluginRegistry.resetForTest();
-    registerDefaultPlugins();
+    await registerDefaultPlugins();
 
     const names = pluginRegistry.listToolPlugins();
     for (const name of names) {
@@ -64,7 +64,7 @@ describe('registerDefaultPlugins — smoke', () => {
   it('code-review should have 4 tools', async () => {
     const { registerDefaultPlugins } = await import('../../nucleus/default-plugins.js');
     pluginRegistry.resetForTest();
-    registerDefaultPlugins();
+    await registerDefaultPlugins();
 
     const tools = pluginRegistry.listSkillTools('code-review');
     const toolNames = tools.map((t) => t.name);
@@ -77,7 +77,7 @@ describe('registerDefaultPlugins — smoke', () => {
   it('researcher should have codebase exploration tools', async () => {
     const { registerDefaultPlugins } = await import('../../nucleus/default-plugins.js');
     pluginRegistry.resetForTest();
-    registerDefaultPlugins();
+    await registerDefaultPlugins();
 
     const tools = pluginRegistry.listSkillTools('researcher');
     expect(tools.length).toBeGreaterThan(0);
