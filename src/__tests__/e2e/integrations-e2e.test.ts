@@ -178,8 +178,8 @@ describe("OpenClaw API Server E2E", { timeout: 30000 }, () => {
 
   beforeAll(async () => {
     serverProcess = spawn("node", ["-e", `
-      const { StringRayAPIServer } = require("${API_SERVER_PATH}");
-      const server = new StringRayAPIServer({ port: ${PORT}, host: "127.0.0.1" });
+      const { XrayAPIServer } = require("${API_SERVER_PATH}");
+      const server = new XrayAPIServer({ port: ${PORT}, host: "127.0.0.1" });
       server.start().then(() => {
         process.stdout.write("READY\\n");
       }).catch((e) => {
