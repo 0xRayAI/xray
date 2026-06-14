@@ -71,7 +71,7 @@ const mockOhMyOpenCode = {
         };
       },
     };
-    mockOhMyOpenCode.plugins.set("strray-codex-injector", mockPlugin);
+    mockOhMyOpenCode.plugins.set("xray-codex-injector", mockPlugin);
     return mockPlugin;
   },
 
@@ -81,7 +81,7 @@ const mockOhMyOpenCode = {
     mockOhMyOpenCode.toolCalls.push(toolCall);
 
     // Check if 0xRay plugin has tool.execute.before hook
-    const strrayPlugin = mockOhMyOpenCode.plugins.get("strray-codex-injector");
+    const strrayPlugin = mockOhMyOpenCode.plugins.get("xray-codex-injector");
     if (strrayPlugin && strrayPlugin["tool.execute.before"]) {
       try {
         await strrayPlugin["tool.execute.before"]({ tool: toolName, args }, {});
@@ -108,14 +108,14 @@ describe("Oh-My-OpenCode Integration", () => {
   });
 
   test("should load 0xRay plugin successfully", () => {
-    const plugin = mockOhMyOpenCode.plugins.get("strray-codex-injector");
+    const plugin = mockOhMyOpenCode.plugins.get("xray-codex-injector");
     expect(plugin).toBeDefined();
     expect(plugin["experimental.chat.system.transform"]).toBeDefined();
     expect(plugin["tool.execute.before"]).toBeDefined();
   });
 
   test("should inject codex into system prompts", async () => {
-    const plugin = mockOhMyOpenCode.plugins.get("strray-codex-injector");
+    const plugin = mockOhMyOpenCode.plugins.get("xray-codex-injector");
 
     const output = { system: [] };
     await plugin["experimental.chat.system.transform"]({}, output);
@@ -175,7 +175,7 @@ describe("Oh-My-OpenCode Integration", () => {
 
   test("should handle plugin errors gracefully", async () => {
     // Mock a plugin error
-    const plugin = mockOhMyOpenCode.plugins.get("strray-codex-injector");
+    const plugin = mockOhMyOpenCode.plugins.get("xray-codex-injector");
     const originalHook = plugin["tool.execute.before"];
     plugin["tool.execute.before"] = async () => {
       throw new Error("Plugin internal error");
@@ -205,7 +205,7 @@ describe("Oh-My-OpenCode Integration", () => {
   });
 
   test("should validate plugin configuration", () => {
-    const plugin = mockOhMyOpenCode.plugins.get("strray-codex-injector");
+    const plugin = mockOhMyOpenCode.plugins.get("xray-codex-injector");
 
     // Plugin should have required configuration
     expect(plugin.config).toBeDefined();

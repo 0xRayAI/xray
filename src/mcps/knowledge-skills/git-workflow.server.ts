@@ -26,7 +26,7 @@ interface RecommendBranchingStrategyArgs {
   releaseFrequency?: string;
 }
 
-class StringRayGitWorkflowServer {
+class XrayGitWorkflowServer {
   private server: Server;
 
   constructor() {
@@ -145,8 +145,8 @@ class StringRayGitWorkflowServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayGitWorkflowServer();
+  const server = new XrayGitWorkflowServer();
   server.run().catch(() => {});
 }
 
-export default StringRayGitWorkflowServer;
+export default XrayGitWorkflowServer;

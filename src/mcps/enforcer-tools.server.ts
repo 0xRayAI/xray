@@ -138,7 +138,7 @@ interface SecurityScanResults {
   promptValidation?: { isSafe: boolean; riskLevel: string; violations: string[] } | { error: string };
 }
 
-class StringRayEnforcerToolsServer {
+class XrayEnforcerToolsServer {
   private server: Server;
 
   constructor() {
@@ -1099,8 +1099,8 @@ class StringRayEnforcerToolsServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayEnforcerToolsServer();
+  const server = new XrayEnforcerToolsServer();
   server.run().catch((error) => frameworkLogger.log("mcps/enforcer", "run", "error", { error: String(error) }));
 }
 
-export default StringRayEnforcerToolsServer;
+export default XrayEnforcerToolsServer;

@@ -8,10 +8,10 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { createStringRayCodexInjectorHook } from "../../core/codex-injector.js";
+import { createXrayCodexInjectorHook } from "../../core/codex-injector.js";
 
 interface CodexInjectorHook {
-  name: "strray-codex-injector";
+  name: "xray-codex-injector";
   hooks: {
     "agent.start": (sessionId: string) => void;
     "tool.execute.before": (
@@ -32,7 +32,7 @@ describe("Codex Enforcement Integration", () => {
 
   beforeEach(() => {
     // Create a fresh hook instance for each test
-    hook = createStringRayCodexInjectorHook();
+    hook = createXrayCodexInjectorHook();
     mockSessionId = "test-session-enforcement";
 
     // Clear any cached contexts

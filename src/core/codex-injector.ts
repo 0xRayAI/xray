@@ -92,7 +92,7 @@ async function createCodexContextEntry(
   const metadata = extractCodexMetadata(content);
 
   return {
-    id: `strray-codex-${path.basename(filePath)}`,
+    id: `xray-codex-${path.basename(filePath)}`,
     source: filePath,
     content,
     priority: "critical",
@@ -160,15 +160,15 @@ function formatCodexContext(
 }
 
 /**
- * Create strray-codex-injector hook
+ * Create xray-codex-injector hook
  *
  * This hook injects codex context into tool outputs and displays
  * a welcome message on agent startup, following the production-tested
  * pattern from OpenCode's rules-injector.
  */
-export function createStringRayCodexInjectorHook() {
+export function createXrayCodexInjectorHook() {
   return {
-    name: "strray-codex-injector" as const,
+    name: "xray-codex-injector" as const,
     hooks: {
       "agent.start": async (sessionId: string) => {
         const jobId = `agent-start-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -187,7 +187,7 @@ export function createStringRayCodexInjectorHook() {
           if (stats.loaded) {
             await frameworkLogger.log(
               "codex-injector",
-              "-stringray-codex-loaded-stats-totalterms-terms-sta",
+              "-xray-codex-loaded-stats-totalterms-terms-sta",
               "success",
               {
                 message: `✅ 0xRay Codex loaded: ${stats.totalTerms} terms, ${stats.fileCount} sources`,
@@ -202,7 +202,7 @@ export function createStringRayCodexInjectorHook() {
           } else {
             await frameworkLogger.log(
               "codex-injector",
-              "-no-codex-files-found-checked-strray-codex-json-co",
+              "-no-codex-files-found-checked-xray-codex-json-co",
               "info",
               {
                 message:
@@ -484,7 +484,7 @@ export function createStringRayCodexInjectorHook() {
 
           await frameworkLogger.log(
             "codex-injector",
-            "-stringray-tool-execution-hook-triggered-for-input",
+            "-xray-tool-execution-hook-triggered-for-input",
             "info",
             {
               message: `🔧 0xRay: Tool execution hook triggered for ${input.tool}`,
@@ -493,7 +493,7 @@ export function createStringRayCodexInjectorHook() {
           const codexContexts = await loadCodexContext(sessionId);
           await frameworkLogger.log(
             "codex-injector",
-            "-stringray-loaded-codexcontexts-length-codex-conte",
+            "-xray-loaded-codexcontexts-length-codex-conte",
             "info",
             {
               message: `📚 0xRay: Loaded ${codexContexts.length} codex contexts`,

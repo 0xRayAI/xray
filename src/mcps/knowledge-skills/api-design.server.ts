@@ -25,7 +25,7 @@ interface ValidateApiDesignArgs {
   standards?: string[];
 }
 
-class StringRayApiDesignServer {
+class XrayApiDesignServer {
   private server: Server;
 
   constructor() {
@@ -153,8 +153,8 @@ class StringRayApiDesignServer {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayApiDesignServer();
+  const server = new XrayApiDesignServer();
   server.run().catch(() => {});
 }
 
-export default StringRayApiDesignServer;
+export default XrayApiDesignServer;

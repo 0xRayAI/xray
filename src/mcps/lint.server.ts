@@ -33,7 +33,7 @@ interface LintResults {
   details: string[];
 }
 
-class StringRayLintServer {
+class XrayLintServer {
   private server: Server;
 
   constructor() {
@@ -476,8 +476,8 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayLintServer();
+  const server = new XrayLintServer();
   server.run().catch((error) => frameworkLogger.log("mcps/lint", "run", "error", { error: String(error) }));
 }
 
-export { StringRayLintServer };
+export { XrayLintServer };

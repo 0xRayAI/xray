@@ -163,7 +163,7 @@ async function loadConfigPaths(): Promise<void> {
     }
   }
   const logger = await loadFrameworkLogger();
-  logger.log("strray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
+  logger.log("xray-codex-plugin", "config-paths-load-failed", "warning", { warning: "Failed to load config-paths module from any location" });
 }
 
 async function resolveCodexPath(root: string): Promise<string[]> {
@@ -195,7 +195,7 @@ async function importSystemPromptGenerator(): Promise<void> {
     }
   }
   const logger = await loadFrameworkLogger();
-  logger.log("strray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
+  logger.log("xray-codex-plugin", "system-prompt-generator-load-failed", "warning", { warning: "Failed to load lean system prompt generator, using fallback" });
 }
 
 function validateModulePath(resolvedPath: string, allowedPrefix: string): void {
@@ -548,7 +548,7 @@ function createCodexContextEntry(filePath: string, content: string): CodexContex
   const metadata = extractCodexMetadata(content);
 
   return {
-    id: `strray-codex-${path.basename(filePath)}`,
+    id: `xray-codex-${path.basename(filePath)}`,
     source: filePath,
     content,
     priority: "critical",

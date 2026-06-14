@@ -129,7 +129,7 @@ interface BaseTestCounts {
   security: number;
 }
 
-class StringRayTestingStrategyServer {
+class XrayTestingStrategyServer {
   private server: Server;
 
   constructor() {
@@ -1165,8 +1165,8 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayTestingStrategyServer();
+  const server = new XrayTestingStrategyServer();
   server.run().catch(() => {});
 }
 
-export default StringRayTestingStrategyServer;
+export default XrayTestingStrategyServer;

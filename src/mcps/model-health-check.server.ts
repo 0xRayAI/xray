@@ -36,7 +36,7 @@ interface ModelHealthReportData {
   summary: { total: number; healthy: number; issues: number };
 }
 
-class StringRayModelHealthCheckServer {
+class XrayModelHealthCheckServer {
   private server: Server;
 
   constructor() {
@@ -285,8 +285,8 @@ class StringRayModelHealthCheckServer {
 
 // Start the server if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayModelHealthCheckServer();
+  const server = new XrayModelHealthCheckServer();
   server.start().catch((error) => frameworkLogger.log("mcps/model-health-check", "run", "error", { error: String(error) }));
 }
 
-export default StringRayModelHealthCheckServer;
+export default XrayModelHealthCheckServer;

@@ -87,7 +87,7 @@ interface FrameworkComplianceResult {
   approved: boolean;
 }
 
-class StringRayProcessorPipelineServer {
+class XrayProcessorPipelineServer {
   private server: Server;
   private codexLoader: CodexLoader;
   private codexRules: RuleDefinition[] = [];
@@ -771,8 +771,8 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayProcessorPipelineServer();
+  const server = new XrayProcessorPipelineServer();
   server.run().catch((error) => frameworkLogger.log("mcps/processor-pipeline", "run", "error", { error: String(error) }));
 }
 
-export { StringRayProcessorPipelineServer };
+export { XrayProcessorPipelineServer };

@@ -92,7 +92,7 @@ interface ShutdownFrameworkArgs {
   saveState?: boolean;
 }
 
-class StringRayBootOrchestratorServer {
+class XrayBootOrchestratorServer {
   private server: Server;
   private bootStatus: {
     initialized: boolean;
@@ -1075,8 +1075,8 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w: strin
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StringRayBootOrchestratorServer();
+  const server = new XrayBootOrchestratorServer();
   server.run().catch((error) => frameworkLogger.log("mcps/boot-orchestrator", "run", "error", { error: String(error) }));
 }
 
-export { StringRayBootOrchestratorServer };
+export { XrayBootOrchestratorServer };

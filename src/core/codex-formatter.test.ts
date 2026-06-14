@@ -433,7 +433,7 @@ describe("codex-formatter", () => {
     let tempDir: string;
 
     beforeEach(() => {
-      tempDir = mkdtempSync(join(tmpdir(), "strray-codex-"));
+      tempDir = mkdtempSync(join(tmpdir(), "xray-codex-"));
     });
 
     afterEach(() => {

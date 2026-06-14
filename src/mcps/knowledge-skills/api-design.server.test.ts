@@ -3,35 +3,35 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import StringRayApiDesignServer from "./api-design.server";
+import XrayApiDesignServer from "./api-design.server";
 
 describe("api-design.server integration", () => {
   describe("module exports", () => {
     it("should export a server class", () => {
-      expect(StringRayApiDesignServer).toBeDefined();
-      expect(typeof StringRayApiDesignServer).toBe("function");
+      expect(XrayApiDesignServer).toBeDefined();
+      expect(typeof XrayApiDesignServer).toBe("function");
     });
 
     it("should be able to instantiate the server", () => {
-      const server = new StringRayApiDesignServer();
+      const server = new XrayApiDesignServer();
       expect(server).toBeDefined();
     });
 
     it("should have run method", () => {
-      const server = new StringRayApiDesignServer();
+      const server = new XrayApiDesignServer();
       expect(typeof server.run).toBe("function");
     });
   });
 
   describe("server structure", () => {
-    let server: StringRayApiDesignServer;
+    let server: XrayApiDesignServer;
 
     beforeEach(() => {
-      server = new StringRayApiDesignServer();
+      server = new XrayApiDesignServer();
     });
 
     it("should instantiate correctly", () => {
-      expect(server).toBeInstanceOf(StringRayApiDesignServer);
+      expect(server).toBeInstanceOf(XrayApiDesignServer);
     });
 
     it("should have run async method", () => {

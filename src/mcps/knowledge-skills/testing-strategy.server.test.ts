@@ -5,35 +5,35 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import StringRayTestingStrategyServer from "./testing-strategy.server";
+import XrayTestingStrategyServer from "./testing-strategy.server";
 
 describe("testing-strategy.server integration", () => {
   describe("module exports", () => {
     it("should export a server class", () => {
-      expect(StringRayTestingStrategyServer).toBeDefined();
-      expect(typeof StringRayTestingStrategyServer).toBe("function");
+      expect(XrayTestingStrategyServer).toBeDefined();
+      expect(typeof XrayTestingStrategyServer).toBe("function");
     });
 
     it("should be able to instantiate the server", () => {
-      const server = new StringRayTestingStrategyServer();
+      const server = new XrayTestingStrategyServer();
       expect(server).toBeDefined();
     });
 
     it("should have run method", () => {
-      const server = new StringRayTestingStrategyServer();
+      const server = new XrayTestingStrategyServer();
       expect(typeof server.run).toBe("function");
     });
   });
 
   describe("server structure", () => {
-    let server: StringRayTestingStrategyServer;
+    let server: XrayTestingStrategyServer;
 
     beforeEach(() => {
-      server = new StringRayTestingStrategyServer();
+      server = new XrayTestingStrategyServer();
     });
 
     it("should instantiate correctly", () => {
-      expect(server).toBeInstanceOf(StringRayTestingStrategyServer);
+      expect(server).toBeInstanceOf(XrayTestingStrategyServer);
     });
 
     it("should have run async method", () => {
@@ -42,10 +42,10 @@ describe("testing-strategy.server integration", () => {
   });
 
   describe("test analysis functionality", () => {
-    let server: StringRayTestingStrategyServer;
+    let server: XrayTestingStrategyServer;
 
     beforeEach(() => {
-      server = new StringRayTestingStrategyServer();
+      server = new XrayTestingStrategyServer();
     });
 
     it("should analyze test coverage for project", () => {
@@ -63,38 +63,38 @@ describe("testing-strategy.server integration", () => {
   });
 
   describe("test strategy generation", () => {
-    let server: StringRayTestingStrategyServer;
+    let server: XrayTestingStrategyServer;
 
     beforeEach(() => {
-      server = new StringRayTestingStrategyServer();
+      server = new XrayTestingStrategyServer();
     });
 
     it("should handle web project type", () => {
-      expect(server).toBeInstanceOf(StringRayTestingStrategyServer);
+      expect(server).toBeInstanceOf(XrayTestingStrategyServer);
     });
 
     it("should handle api project type", () => {
-      expect(server).toBeInstanceOf(StringRayTestingStrategyServer);
+      expect(server).toBeInstanceOf(XrayTestingStrategyServer);
     });
 
     it("should handle mobile project type", () => {
-      expect(server).toBeInstanceOf(StringRayTestingStrategyServer);
+      expect(server).toBeInstanceOf(XrayTestingStrategyServer);
     });
   });
 
   describe("test gap identification", () => {
-    let server: StringRayTestingStrategyServer;
+    let server: XrayTestingStrategyServer;
 
     beforeEach(() => {
-      server = new StringRayTestingStrategyServer();
+      server = new XrayTestingStrategyServer();
     });
 
     it("should accept source files array", () => {
-      expect(server).toBeInstanceOf(StringRayTestingStrategyServer);
+      expect(server).toBeInstanceOf(XrayTestingStrategyServer);
     });
 
     it("should accept existing tests array", () => {
-      expect(server).toBeInstanceOf(StringRayTestingStrategyServer);
+      expect(server).toBeInstanceOf(XrayTestingStrategyServer);
     });
   });
 });

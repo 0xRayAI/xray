@@ -129,8 +129,8 @@ describe("inference-cycle — MCP governance paths present", () => {
 describe("boot-orchestrator.server.ts — monolithic class", () => {
   const source = readSource("src/mcps/boot-orchestrator.server.ts");
 
-  test("exports StringRayBootOrchestratorServer", () => {
-    expect(source).toMatch(/export\s*\{\s*StringRayBootOrchestratorServer\s*\}/);
+  test("exports XrayBootOrchestratorServer", () => {
+    expect(source).toMatch(/export\s*\{\s*XrayBootOrchestratorServer\s*\}/);
   });
 
   test("defines independent boot state fields", () => {
