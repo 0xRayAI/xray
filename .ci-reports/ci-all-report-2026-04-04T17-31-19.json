@@ -1,0 +1,90 @@
+{
+  "generatedAt": "2026-04-04T17:31:19.439Z",
+  "logFile": "/Users/blaze/dev/stringray/logs/framework/activity.log",
+  "totalLogLines": 1174,
+  "agent": {
+    "totalSpawns": 41,
+    "byType": {
+      "researcher": 28,
+      "orchestrator": 4,
+      "enforcer": 1,
+      "customAgent": 5,
+      "invalid-agent-type": 1,
+      "agent-0": 1,
+      "agent-1": 1
+    },
+    "completed": 17,
+    "failures": 0,
+    "successes": 17,
+    "failureRate": "0.0%",
+    "breakdown": {
+      "withResult": {
+        "completed": 9,
+        "failures": 0,
+        "successes": 9
+      },
+      "governance": {
+        "completed": 8
+      }
+    }
+  },
+  "processor": {
+    "preProcessors": {
+      "count": 32,
+      "byName": {
+        "versionCompliance": 7,
+        "errorBoundary": 7,
+        "logProtection": 6,
+        "preValidate": 6,
+        "codexCompliance": 6
+      },
+      "avgDuration": {
+        "versionCompliance": "385.9ms",
+        "errorBoundary": "0.1ms",
+        "logProtection": "0.2ms",
+        "preValidate": "0.0ms",
+        "codexCompliance": "9.5ms"
+      }
+    },
+    "postProcessors": {
+      "count": 12,
+      "byName": {
+        "refactoringLogging": 2,
+        "stateValidation": 2,
+        "agentsMdValidation": 2,
+        "regressionTesting": 2,
+        "testAutoCreation": 2,
+        "coverageAnalysis": 2
+      }
+    },
+    "failures": 0,
+    "successRate": "100.0%"
+  },
+  "error": {
+    "totalErrors": 13,
+    "bySource": {},
+    "recentErrors": [
+      {
+        "timestamp": "2026-04-04T17:30:46.828Z",
+        "message": "Failed to run initial security audit"
+      },
+      {
+        "timestamp": "2026-04-04T17:30:46.835Z",
+        "message": "Failed to run initial security audit"
+      }
+    ]
+  },
+  "tool": {
+    "totalToolCalls": 60,
+    "byTool": {
+      "edit": 33,
+      "read": 9,
+      "write": 8,
+      "multiedit": 2,
+      "batch": 2,
+      "grep": 2,
+      "glob": 2,
+      "bash": 2
+    }
+  }
+}

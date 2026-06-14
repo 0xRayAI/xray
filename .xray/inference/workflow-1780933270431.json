@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-06-08T15:41:10.430Z",
+  "dataLocations": {
+    "reflections": [
+      "/Users/blaze/dev/xray/docs/reflections/hermes-bridge-processor-logging-fix.md"
+    ],
+    "logs": [
+      "/Users/blaze/dev/xray/logs/framework/activity-report.json",
+      "/Users/blaze/dev/xray/logs/framework/activity.log",
+      "/Users/blaze/dev/xray/logs/framework/activity.log.orig",
+      "/Users/blaze/dev/xray/logs/framework/routing-outcomes.json",
+      "/Users/blaze/dev/xray/logs/framework/session-routing.json"
+    ],
+    "reports": []
+  },
+  "workflow": {
+    "phase": "pending",
+    "triggered": false
+  },
+  "pendingAdjustments": []
+}

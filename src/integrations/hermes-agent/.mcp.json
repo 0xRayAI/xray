@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "xray-governance": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "governance"]
+    },
+    "xray-skills": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "skills"]
+    },
+    "xray-researcher": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "researcher"]
+    },
+    "xray-code-review": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "code-review"]
+    },
+    "xray-architect-tools": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "architect-tools"]
+    },
+    "xray-enforcer": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "enforcer"]
+    },
+    "xray-orchestrator": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "orchestrator"]
+    }
+  }
+}

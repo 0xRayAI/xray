@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${XRAY_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/pre-tool-use.js"
+            ],
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo",
+            "args": ["[0xRay] Grok session started with xray governance enabled"]
+          }
+        ]
+      }
+    ]
+  }
+}

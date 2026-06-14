@@ -1,0 +1,13 @@
+🚀 StringRay v1.7.2 is LIVE! Major update with Kernel v2.0 integration and Privacy-First Analytics!
+
+🔥 Key Features:
+• Full Kernel v2.0 with P9 adaptive learning
+• Privacy-first analytics with AnonymizationEngine + ConsentManager
+• Direct @agent resolution - now supports @architect, @code-reviewer, @security-auditor, @enforcer, @orchestrator, @refactorer, @testing-lead, @bug-triage-specialist, @strategist, @tech-writer
+• 2229 tests passing, 0 failures
+
+📦 npm install -g strray-ai
+
+Full release notes: https://github.com/htafolla/stringray/releases
+
+#StringRay #AI #TypeScript #DevelopmentTools #DevOps

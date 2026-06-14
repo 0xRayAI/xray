@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-06-10T12:25:38.998Z",
+  "dataLocations": {
+    "reflections": [
+      "/Users/blaze/dev/xray/docs/reflections/0xray-after-2.1.4-verification.md",
+      "/Users/blaze/dev/xray/docs/reflections/4-plugin-isolated-tmp-e2e-verification.md",
+      "/Users/blaze/dev/xray/docs/reflections/codebase-quality-assessment.md",
+      "/Users/blaze/dev/xray/docs/reflections/hermes-bridge-processor-logging-fix.md",
+      "/Users/blaze/dev/xray/docs/reflections/journey-to-v3.md",
+      "/Users/blaze/dev/xray/docs/reflections/subtract-simplify-phase-reflection.md",
+      "/Users/blaze/dev/xray/docs/reflections/testing-verification-phase-reflection.md",
+      "/Users/blaze/dev/xray/docs/reflections/v2.1.2-release-journey.md"
+    ],
+    "logs": [
+      "/Users/blaze/dev/xray/logs/framework/activity-report.json",
+      "/Users/blaze/dev/xray/logs/framework/activity.log",
+      "/Users/blaze/dev/xray/logs/framework/activity.log.orig",
+      "/Users/blaze/dev/xray/logs/framework/routing-outcomes.json",
+      "/Users/blaze/dev/xray/logs/framework/session-routing.json"
+    ],
+    "reports": []
+  },
+  "workflow": {
+    "phase": "pending",
+    "triggered": false
+  },
+  "pendingAdjustments": []
+}
