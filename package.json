@@ -37,6 +37,16 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./nucleus/*": {
+      "import": "./dist/nucleus/*.js",
+      "types": "./dist/nucleus/*.d.ts"
+    }
+  },
   "bin": {
     "0xray": "dist/cli/index.js",
     "0xray-integration": "dist/scripts/integration.js"

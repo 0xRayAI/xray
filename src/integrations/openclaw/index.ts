@@ -16,10 +16,10 @@ import type {
 } from './types.js';
 import { OpenClawConfigLoader } from './config.js';
 import { OpenClawClient } from './client.js';
-import { StringRayAPIServer } from './api-server.js';
+import { XrayAPIServer } from './api-server.js';
 import { initializeGovernanceIntegration } from '../governance/index.js';
 import { featuresConfigLoader } from '../../core/features-config.js';
-import { OpenClawHooksManager, StringRayToolEvent } from './hooks/strray-hooks.js';
+import { OpenClawHooksManager, XrayToolEvent } from './hooks/strray-hooks.js';
 import { mcpClientManager, ToolBeforeEvent, ToolAfterEvent } from '../../mcps/mcp-client.js';
 import type { AgentInvoker } from './api-server.js';
 
@@ -30,7 +30,7 @@ import type { AgentInvoker } from './api-server.js';
 export class OpenClawIntegration extends BaseIntegration {
   private configLoader: OpenClawConfigLoader;
   private client: OpenClawClient | null = null;
-  private apiServer: StringRayAPIServer | null = null;
+  private apiServer: XrayAPIServer | null = null;
   private hooksManager: OpenClawHooksManager | null = null;
   private agentInvoker: AgentInvoker | null = null;
   
@@ -73,7 +73,7 @@ export class OpenClawIntegration extends BaseIntegration {
     // Initialize API server if enabled
     if (config.apiServer?.enabled) {
       await this.log('info', 'Starting API server...');
-      this.apiServer = new StringRayAPIServer(config.apiServer);
+      this.apiServer = new XrayAPIServer(config.apiServer);
       
       if (this.agentInvoker) {
         this.apiServer.setAgentInvoker(this.agentInvoker);
@@ -170,7 +170,7 @@ export class OpenClawIntegration extends BaseIntegration {
     this.mcpToolAfterUnsubscribe = await mcpClientManager.onToolEvent('tool.after', async (event) => {
       const toolEvent = event as ToolAfterEvent;
       try {
-        const afterEvent: StringRayToolEvent = {
+        const afterEvent: XrayToolEvent = {
           toolName: toolEvent.toolName,
           toolId: `${toolEvent.serverName}:${toolEvent.toolName}`,
           args: toolEvent.args as Record<string, unknown>,
@@ -295,7 +295,7 @@ export class OpenClawIntegration extends BaseIntegration {
   /**
    * Get the API server instance
    */
-  getAPIServer(): StringRayAPIServer | null {
+  getAPIServer(): XrayAPIServer | null {
     return this.apiServer;
   }
 

@@ -431,7 +431,7 @@ async function main() {
     else fail(`${name}.js`, `not found: ${p}`);
   }
 
-  let OpenClawClient, OpenClawConfigLoader, StringRayAPIServer, OpenClawHooksManager, OpenClawIntegration;
+  let OpenClawClient, OpenClawConfigLoader, XrayAPIServer, OpenClawHooksManager, OpenClawIntegration;
   let typesModule;
 
   try {
@@ -450,10 +450,10 @@ async function main() {
 
   try {
     const apiMod = await import(`file://${modules.apiServer}`);
-    StringRayAPIServer = apiMod.StringRayAPIServer;
-    if (StringRayAPIServer) pass('StringRayAPIServer class imported');
-    else fail('StringRayAPIServer', 'not exported');
-  } catch (e) { fail('StringRayAPIServer import', e.message); }
+    XrayAPIServer = apiMod.XrayAPIServer;
+    if (XrayAPIServer) pass('XrayAPIServer class imported');
+    else fail('XrayAPIServer', 'not exported');
+  } catch (e) { fail('XrayAPIServer import', e.message); }
 
   try {
     const hooksMod = await import(`file://${modules.hooks}`);
@@ -525,12 +525,12 @@ async function main() {
   // ── Phase 7: API Server ─────────────────────────────────
   section('Phase 7: API Server (HTTP)');
 
-  if (StringRayAPIServer) {
+  if (XrayAPIServer) {
     const testPort = 19876;
     let server;
 
     try {
-      server = new StringRayAPIServer({ port: testPort, host: '127.0.0.1', apiKey: 'test-key-123' });
+      server = new XrayAPIServer({ port: testPort, host: '127.0.0.1', apiKey: 'test-key-123' });
       await server.start();
       pass(`API server started on :${testPort}`);
     } catch (e) {
@@ -721,7 +721,7 @@ async function main() {
       pass('API server stopped');
     }
   } else {
-    skip('API server tests', 'StringRayAPIServer not available');
+    skip('API server tests', 'XrayAPIServer not available');
   }
 
   // ── Phase 8: Hooks Manager ──────────────────────────────

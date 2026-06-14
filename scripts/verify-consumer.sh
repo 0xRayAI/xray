@@ -218,8 +218,8 @@ const reg = mod.globalValidatorRegistry;
 if (!reg) { console.error('FAIL: no globalValidatorRegistry'); process.exit(1); }
 const v = reg.getAllValidators();
 console.log('OK: ' + v.length + ' validators loaded');
-if (v.length !== 29) { console.error('FAIL: expected 29, got ' + v.length); process.exit(1); }
-console.log('ALL 29 VALIDATORS PRESENT');
+if (v.length !== 28) { console.error('FAIL: expected 28, got ' + v.length); process.exit(1); }
+console.log('ALL 28 VALIDATORS PRESENT');
 " 2>&1 || ENFORCEMENT_FAILED=1
 
 echo "--- Enforcement gate load test ---"

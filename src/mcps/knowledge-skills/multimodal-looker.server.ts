@@ -16,6 +16,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { frameworkLogger } from "../../core/framework-logger.js";
 
 /* ============================================================================
  * Type Definitions
