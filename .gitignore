@@ -79,3 +79,10 @@ ci-test-env/
 
 # Version-manager auto-backups
 backups/
+
+# Secrets & credentials
+.hermes/
+.env
+.env.*
+*.local
+**/auth.json

@@ -173,7 +173,7 @@ export class GovernanceService {
     context?: GovernanceContext
   ): Promise<GovernanceVote[]> {
     const votes: GovernanceVote[] = [];
-    const useInProcess = process.env.VERCEL === '1';
+    const useInProcess = process.env.VERCEL === '1' || !!process.env.RAILWAY_ENVIRONMENT;
 
     for (const proposal of proposals) {
       try {

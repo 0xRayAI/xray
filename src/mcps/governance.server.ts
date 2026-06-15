@@ -475,7 +475,12 @@ class GovernanceServer {
   async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3100", 10)): Promise<void> {
     await this.initializeGovernance();
 
-    const app = createMcpExpressApp();
+    const mcpHost = process.env.MCP_HOST || "127.0.0.1";
+    const allowedHosts = process.env.MCP_ALLOWED_HOSTS?.split(",");
+    const app = createMcpExpressApp({
+      host: mcpHost,
+      ...(allowedHosts ? { allowedHosts } : {}),
+    });
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
     });
