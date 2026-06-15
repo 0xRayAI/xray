@@ -34,6 +34,14 @@ if (fs.existsSync(agentsConsumer) && resolvedPackage !== resolvedTarget) {
   fs.copyFileSync(agentsConsumer, agentsDest);
 }
 
+// Copy .gitignore.default → .gitignore (never overwrite existing)
+const gitignoreSource = path.join(packageRoot, ".gitignore.default");
+const gitignoreDest = path.join(targetDir, ".gitignore");
+if (!fs.existsSync(gitignoreDest) && resolvedPackage !== resolvedTarget) {
+  fs.copyFileSync(gitignoreSource, gitignoreDest);
+  structuredLog('postinstall', 'Created .gitignore from template', 'info');
+}
+
 // Register MCP servers with Grok CLI (if available) using absolute paths to installed dist
 // Full v2 surface: governance + skills + orchestrator + enforcer (additive, preserves prior behavior)
 if (resolvedPackage !== resolvedTarget) {
