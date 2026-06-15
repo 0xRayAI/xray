@@ -18,6 +18,18 @@
     "0xray-enforcer": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "enforcer"]
+    },
+    "0xray-researcher": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "researcher"]
+    },
+    "0xray-code-review": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "code-review"]
+    },
+    "0xray-architect-tools": {
+      "command": "npx",
+      "args": ["-y", "0xray", "mcp", "architect-tools"]
     }
   }
 }

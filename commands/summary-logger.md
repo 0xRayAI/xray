@@ -1,4 +1,4 @@
-# StrRay Framework - Summary Logger
+# Xray Framework - Summary Logger
 
 # Automatically logs AI-generated summaries and analysis to REFACTORING_LOG.md
 
@@ -38,7 +38,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "📝 StrRay Framework - Summary Logger" >&2
+echo "📝 Xray Framework - Summary Logger" >&2
 echo "====================================" >&2
 
 # Get script directory and project root
@@ -49,16 +49,16 @@ REFACTORING_LOG="${PROJECT_ROOT}/docs/REFACTORING_LOG.md"
 
 # Check if summary content is provided via environment variable or stdin
 
-if [ -n "$STRRAY_SUMMARY_CONTENT" ]; then
-SUMMARY_CONTENT="$STRRAY_SUMMARY_CONTENT"
+if [ -n "$XRAY_SUMMARY_CONTENT" ]; then
+SUMMARY_CONTENT="$XRAY_SUMMARY_CONTENT"
 elif [ ! -t 0 ]; then
     # Read from stdin
     SUMMARY_CONTENT=$(cat)
 else
-echo "❌ No summary content provided. Use STRRAY_SUMMARY_CONTENT environment variable or pipe content."
+echo "❌ No summary content provided. Use XRAY_SUMMARY_CONTENT environment variable or pipe content."
 echo "Usage:"
-echo " export STRRAY_SUMMARY_CONTENT='summary content' && bash strray/commands/summary-logger.md"
-echo " echo 'summary content' | bash strray/commands/summary-logger.md"
+echo " export XRAY_SUMMARY_CONTENT='summary content' && bash xray/commands/summary-logger.md"
+echo " echo 'summary content' | bash xray/commands/summary-logger.md"
 exit 1
 fi
 

@@ -19,7 +19,7 @@ import { patternPerformanceTracker } from "../analytics/pattern-performance-trac
 import type { ProcessorManager } from "../processors/processor-manager.js";
 import { VotingCoordinator } from "../delegation/voting-coordinator.js";
 import { getAgentExpertiseLevel } from "../delegation/agent-expertise.js";
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import fs from "fs";
 
 export interface OrchestratorConfig {
@@ -82,7 +82,7 @@ export interface ConsolidationResult {
   summary: string;
 }
 
-export class StringRayOrchestrator {
+export class XrayOrchestrator {
   private config: OrchestratorConfig;
   private activeTasks: Map<string, Promise<TaskResult>> = new Map();
   private taskToAgentMap: Map<string, string> = new Map();
@@ -98,7 +98,7 @@ export class StringRayOrchestrator {
       ...config,
     };
 
-    this.votingCoordinator = new VotingCoordinator(new StringRayStateManager());
+    this.votingCoordinator = new VotingCoordinator(new XrayStateManager());
   }
 
   /**
@@ -106,9 +106,9 @@ export class StringRayOrchestrator {
    */
   private loadOrchestratorConfig(): Partial<OrchestratorConfig> | null {
     try {
-      const configPaths = [
-        ".strray/features.json",
-        ".opencode/strray/features.json",
+const configPaths = [
+        ".xray/features.json",
+        ".xray/features.json",
       ];
       
       for (const configPath of configPaths) {
@@ -278,7 +278,7 @@ export class StringRayOrchestrator {
       // Execute post-processors for agent task completion logging
       try {
         // Get processor manager from global state
-        const globalStateManager = globalThis.strRayStateManager;
+        const globalStateManager = globalThis.xrayStateManager;
         frameworkLogger.log("orchestrator", "global-state-check", "debug", {
           jobId,
           exists: !!globalStateManager,
@@ -350,7 +350,7 @@ export class StringRayOrchestrator {
 
       // Execute post-processors even on failure for error logging
       try {
-        const globalStateManager = globalThis.strRayStateManager;
+        const globalStateManager = globalThis.xrayStateManager;
         const processorManager = globalStateManager?.get<ProcessorManager>("processor:manager");
 
         if (processorManager) {
@@ -947,4 +947,7 @@ export class StringRayOrchestrator {
 }
 
 // Export singleton instance
-export const strRayOrchestrator = new StringRayOrchestrator();
+export const xrayOrchestrator = new XrayOrchestrator();
+
+// Backward compatibility alias
+

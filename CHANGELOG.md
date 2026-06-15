@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.1.0] - 2026-06-15
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: pre-publish-guard handles missing features.json (855e3cfdb)
+
+---
+
 ## [3.0.14] - 2026-06-14
 
 ### 🔄 Changes

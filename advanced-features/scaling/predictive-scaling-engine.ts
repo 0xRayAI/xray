@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Predictive Scaling Engine
+ * 0xRay AI v1.3.4 - Predictive Scaling Engine
  *
  * ML-based predictive scaling for distributed systems with auto-scaling capabilities.
  *

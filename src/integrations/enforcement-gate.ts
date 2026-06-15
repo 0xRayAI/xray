@@ -87,7 +87,7 @@ async function loadV3PostProcessor(): Promise<{ executePostProcessorLoop: (ctx: 
   if (global.xrayPostProcessor && typeof global.xrayPostProcessor.executePostProcessorLoop === "function") {
     return global.xrayPostProcessor;
   }
-  // strRayPostProcessor fallback removed in v2.2
+  // xrayPostProcessor fallback removed in v2.2
   return null;
 }
 
@@ -372,7 +372,7 @@ export async function afterToolHook(
 async function loadStateManager(): Promise<any> {
   const global = globalThis as any;
   if (global.xrayStateManager) return global.xrayStateManager;
-  // strRayStateManager fallback removed in v2.2
+  // xrayStateManager fallback removed in v2.2
 
   const candidatePaths = [
     () => import("../state/state-manager.js"),

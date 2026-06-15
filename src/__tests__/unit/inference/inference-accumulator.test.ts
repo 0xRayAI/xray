@@ -43,7 +43,7 @@ describe("Inference Accumulator", () => {
   let stateDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-accum-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-accum-test-"));
     inferenceDir = path.join(tmpDir, "inference");
     stateDir = path.join(tmpDir, "state");
     fs.mkdirSync(inferenceDir, { recursive: true });

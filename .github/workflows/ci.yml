@@ -1,4 +1,4 @@
-name: StringRay CI/CD
+name: 0xRay CI/CD
 
 on:
   push:
@@ -164,13 +164,13 @@ jobs:
           mkdir -p test-install
           cd test-install
           npm init -y
-          npm install ../strray-ai-*.tgz
+          npm install ../0xray-*.tgz
 
       - name: Run postinstall
         run: |
           cd test-install
           rm -f ~/.hermes  # Ensure Hermes isn't detected in CI
-          node node_modules/strray-ai/scripts/node/postinstall.cjs
+          node node_modules/0xray/scripts/node/postinstall.cjs
 
       - name: Validate postinstall
         env:
@@ -178,7 +178,7 @@ jobs:
         run: |
           cd test-install
           # Skip full validation in CI - just verify package was installed
-          ls node_modules/strray-ai/package.json || exit 1
+          ls node_modules/0xray/package.json || exit 1
           echo "✅ Package installed successfully"
 
       - name: Validate MCP
@@ -186,7 +186,7 @@ jobs:
           CI: "true"
         run: |
           cd test-install
-          node node_modules/strray-ai/scripts/mjs/validate-mcp-connectivity.cjs || true
+          node node_modules/0xray/scripts/mjs/validate-mcp-connectivity.cjs || true
 
   # ═══════════════════════════════════════════════════════
   # Security Audit (gated: schedule, needs-pipeline, or ci:full)

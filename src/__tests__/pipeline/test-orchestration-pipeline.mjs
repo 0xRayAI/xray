@@ -22,7 +22,7 @@
  * Return TaskResult[]
  */
 
-import { StringRayOrchestrator } from '../../../dist/orchestrator/orchestrator.js';
+import { XrayOrchestrator } from '../../../dist/orchestrator/orchestrator.js';
 import { routingOutcomeTracker } from '../../../dist/delegation/analytics/outcome-tracker.js';
 
 console.log('=== ORCHESTRATION PIPELINE TEST ===\n');
@@ -62,7 +62,7 @@ console.log('📍 Layer 1: Task Definition (TaskDefinition) - REAL');
 console.log('   Component: src/orchestrator/orchestrator.ts\n');
 
 test('should create REAL orchestrator instance', () => {
-  const orchestrator = new StringRayOrchestrator();
+  const orchestrator = new XrayOrchestrator();
   if (!orchestrator) throw new Error('Failed to create orchestrator - REAL');
   console.log(`   (orchestrator created - REAL)`);
 });
@@ -90,7 +90,7 @@ console.log('\n📍 Layer 2: Dependency Resolution (Task graph) - REAL');
 console.log('   Component: Build Task Dependency Graph\n');
 
 test('should build task dependency graph via REAL executeComplexTask', async () => {
-  const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 2 });
+  const orchestrator = new XrayOrchestrator({ maxConcurrentTasks: 2 });
   const tasks = [
     { id: 'setup', description: 'Setup task', subagentType: 'researcher', dependencies: [] },
     { id: 'implement', description: 'Implement task', subagentType: 'backend-engineer', dependencies: ['setup'] },
@@ -110,7 +110,7 @@ test('should build task dependency graph via REAL executeComplexTask', async () 
 });
 
 test('should resolve linear dependencies correctly', async () => {
-  const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 1 });
+  const orchestrator = new XrayOrchestrator({ maxConcurrentTasks: 1 });
   const tasks = [
     { id: 'a', description: 'Task A', subagentType: 'researcher', dependencies: [] },
     { id: 'b', description: 'Task B', subagentType: 'backend-engineer', dependencies: ['a'] },
@@ -138,7 +138,7 @@ console.log('\n📍 Layer 3: Task Execution (executeSingleTask) - VERIFIED');
 console.log('   Component: src/orchestrator/orchestrator.ts:134\n');
 
 test('should verify executeComplexTask is callable with valid tasks', async () => {
-  const orchestrator = new StringRayOrchestrator();
+  const orchestrator = new XrayOrchestrator();
   const tasks = [
     { id: 'test-task', description: 'Test task', subagentType: 'researcher', dependencies: [] },
   ];
@@ -163,7 +163,7 @@ console.log('\n📍 Layer 4: Agent Delegation (delegateToSubagent) - VERIFIED');
 console.log('   Component: src/delegation/agent-delegator.ts\n');
 
 test('should verify delegateToSubagent is invoked during task execution', async () => {
-  const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 1 });
+  const orchestrator = new XrayOrchestrator({ maxConcurrentTasks: 1 });
   const beforeOutcomes = routingOutcomeTracker.getOutcomes().length;
   
   const tasks = [
@@ -221,7 +221,7 @@ console.log('   - executeComplexTask(): orchestrator.ts:69');
 console.log('   - executeSingleTask(): orchestrator.ts:134\n');
 
 test('should have REAL executeComplexTask entry point', () => {
-  const orchestrator = new StringRayOrchestrator();
+  const orchestrator = new XrayOrchestrator();
   if (typeof orchestrator.executeComplexTask !== 'function') {
     throw new Error('executeComplexTask not available');
   }
@@ -236,7 +236,7 @@ console.log('   - Success: TaskResult[] with results');
 console.log('   - Failure: TaskResult[] with errors\n');
 
 test('should verify TaskResult structure', async () => {
-  const orchestrator = new StringRayOrchestrator();
+  const orchestrator = new XrayOrchestrator();
   const tasks = [{ id: 'result-test', description: 'Test', subagentType: 'researcher', dependencies: [] }];
   
   try {
@@ -263,13 +263,13 @@ console.log('   - taskTimeout: 300000ms (5 minutes)');
 console.log('   - conflictResolutionStrategy: majority_vote\n');
 
 test('should use default configuration via REAL orchestrator', () => {
-  const orchestrator = new StringRayOrchestrator();
+  const orchestrator = new XrayOrchestrator();
   if (!orchestrator) throw new Error('Failed to create with default config - REAL');
   console.log(`   (default config: maxConcurrent=5, timeout=300000)`);
 });
 
 test('should accept custom configuration via REAL orchestrator', () => {
-  const orchestrator = new StringRayOrchestrator({
+  const orchestrator = new XrayOrchestrator({
     maxConcurrentTasks: 3,
     taskTimeout: 60000,
     conflictResolutionStrategy: 'majority_vote'
@@ -291,7 +291,7 @@ console.log('   3. Outcomes tracked');
 console.log('   4. Results collected correctly\n');
 
 test('should verify full orchestration flow with outcome tracking', async () => {
-  const orchestrator = new StringRayOrchestrator({ maxConcurrentTasks: 2 });
+  const orchestrator = new XrayOrchestrator({ maxConcurrentTasks: 2 });
   const beforeOutcomes = routingOutcomeTracker.getOutcomes().length;
   
   const tasks = [
@@ -313,14 +313,14 @@ test('should verify full orchestration flow with outcome tracking', async () => 
 
 test('should verify all components from tree are accessible', () => {
   const components = [
-    'StringRayOrchestrator',
+    'XrayOrchestrator',
     'executeComplexTask',
     'delegateToSubagent',
     'routingOutcomeTracker'
   ];
   
-  const orchestrator = new StringRayOrchestrator();
-  if (!orchestrator) throw new Error('StringRayOrchestrator not accessible');
+  const orchestrator = new XrayOrchestrator();
+  if (!orchestrator) throw new Error('XrayOrchestrator not accessible');
   if (typeof orchestrator.executeComplexTask !== 'function') throw new Error('executeComplexTask not accessible');
   if (typeof routingOutcomeTracker?.getOutcomes !== 'function') throw new Error('routingOutcomeTracker not accessible');
   

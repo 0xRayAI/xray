@@ -8,7 +8,6 @@
  * @since 2026-03-14
  */
 
-import { frameworkLogger } from '../../../core/framework-logger.js';
 import {
   ToolBeforeEvent,
   ToolAfterEvent,
@@ -40,13 +39,6 @@ export interface XrayToolEvent {
   timestamp: number;
   sessionId?: string;
   agent?: string;
-  enforcement?: {
-    allowed?: boolean;
-    blocked?: boolean;
-    violations: Array<{ ruleId: string; severity: string; message: string }>;
-    processed?: boolean;
-    governanceTriggered?: boolean;
-  };
 }
 
 /**
@@ -63,6 +55,8 @@ export class OpenClawHooksManager {
   private initialized = false;
   private toolBeforeCallbacks: Set<ToolEventCallback> = new Set();
   private toolAfterCallbacks: Set<ToolEventCallback> = new Set();
+  private logger: Console;
+  
   // Offline event buffering
   private eventQueue: Array<{ type: string; event: ToolBeforeEvent | ToolAfterEvent }> = [];
   private maxQueueSize = 100;
@@ -77,6 +71,7 @@ export class OpenClawHooksManager {
       includeResult: config.includeResult ?? true,
       ...(config.toolFilter ? { toolFilter: config.toolFilter } : {}),
     };
+    this.logger = console;
   }
 
   /**
@@ -91,23 +86,23 @@ export class OpenClawHooksManager {
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
-      frameworkLogger.log('openclaw-hooks', 'Already initialized', 'warning', {});
+      this.logger.warn('[OpenClawHooks] Already initialized');
       return;
     }
 
     if (!this.config.enabled) {
-      frameworkLogger.log('openclaw-hooks', 'Hooks disabled in configuration', 'info', {});
+      this.logger.info('[OpenClawHooks] Hooks disabled in configuration');
       return;
     }
 
-    frameworkLogger.log('openclaw-hooks', 'Initializing 0xRay tool hooks...', 'info', {});
+    this.logger.info('[OpenClawHooks] Initializing 0xRay tool hooks...');
     
     // Register with 0xRay's event system
     // The integration should call registerToolBefore and registerToolAfter
     // to connect to 0xRay's actual tool execution events
     
     this.initialized = true;
-    frameworkLogger.log('openclaw-hooks', 'Hooks initialized successfully', 'info', {});
+    this.logger.info('[OpenClawHooks] Hooks initialized successfully');
   }
 
   /**
@@ -180,13 +175,13 @@ export class OpenClawHooksManager {
         try {
           await callback(event);
         } catch (error) {
-          frameworkLogger.log('openclaw-hooks', 'Callback error in tool.before:', 'error', { error });
+          this.logger.error('[OpenClawHooks] Callback error in tool.before:', error);
         }
       }
 
-      frameworkLogger.log('openclaw-hooks', `tool.before: ${event.toolName}`, 'debug', {});
+      this.logger.debug(`[OpenClawHooks] tool.before: ${event.toolName}`);
     } catch (error) {
-      frameworkLogger.log('openclaw-hooks', 'Error handling tool.before:', 'error', { error });
+      this.logger.error('[OpenClawHooks] Error handling tool.before:', error);
     }
   }
 
@@ -233,13 +228,13 @@ export class OpenClawHooksManager {
         try {
           await callback(event);
         } catch (error) {
-          frameworkLogger.log('openclaw-hooks', 'Callback error in tool.after:', 'error', { error });
+          this.logger.error('[OpenClawHooks] Callback error in tool.after:', error);
         }
       }
 
-      frameworkLogger.log('openclaw-hooks', `tool.after: ${event.toolName} (${event.error ? 'error' : 'success'})`, 'debug', {});
+      this.logger.debug(`[OpenClawHooks] tool.after: ${event.toolName} (${event.error ? 'error' : 'success'})`);
     } catch (error) {
-      frameworkLogger.log('openclaw-hooks', 'Error handling tool.after:', 'error', { error });
+      this.logger.error('[OpenClawHooks] Error handling tool.after:', error);
     }
   }
 
@@ -250,10 +245,10 @@ export class OpenClawHooksManager {
     if (this.eventQueue.length >= this.maxQueueSize) {
       // Remove oldest event to make room
       this.eventQueue.shift();
-      frameworkLogger.log('openclaw-hooks', 'Event queue full, dropping oldest event', 'warning', {});
+      this.logger.warn('[OpenClawHooks] Event queue full, dropping oldest event');
     }
     this.eventQueue.push({ type, event });
-    frameworkLogger.log('openclaw-hooks', `Queued ${type} event (queue size: ${this.eventQueue.length})`, 'debug', {});
+    this.logger.debug(`[OpenClawHooks] Queued ${type} event (queue size: ${this.eventQueue.length})`);
   }
 
   /**
@@ -277,12 +272,12 @@ export class OpenClawHooksManager {
             await this.client.sendRequest('event.tool.after', item.event as unknown as Record<string, unknown>);
           }
         } catch (error) {
-          frameworkLogger.log('openclaw-hooks', `Failed to send queued ${item.type} event:`, 'error', { error });
+          this.logger.error(`[OpenClawHooks] Failed to send queued ${item.type} event:`, error);
           // Re-queue failed events
           this.eventQueue.push(item);
         }
       }
-      frameworkLogger.log('openclaw-hooks', `Flushed ${queue.length} queued events`, 'info', {});
+      this.logger.info(`[OpenClawHooks] Flushed ${queue.length} queued events`);
     } finally {
       this.isFlushing = false;
     }
@@ -300,7 +295,7 @@ export class OpenClawHooksManager {
    */
   async handleReconnect(): Promise<void> {
     if (this.eventQueue.length > 0) {
-      frameworkLogger.log('openclaw-hooks', `Client reconnected, flushing ${this.eventQueue.length} queued events...`, 'info', {});
+      this.logger.info(`[OpenClawHooks] Client reconnected, flushing ${this.eventQueue.length} queued events...`);
       await this.flushEventQueue();
     }
   }
@@ -315,7 +310,7 @@ export class OpenClawHooksManager {
     
     this.initialized = false;
     this.client = null;
-    frameworkLogger.log('openclaw-hooks', `Hooks shutdown complete (${queuedCount} queued events dropped)`, 'info', {});
+    this.logger.info(`[OpenClawHooks] Hooks shutdown complete (${queuedCount} queued events dropped)`);
   }
 
   /**

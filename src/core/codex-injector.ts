@@ -14,7 +14,7 @@ import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveCodexPath } from "./config-paths.js";
 // Dynamic imports for cross-environment compatibility
 let extractCodexMetadata: ((content: string) => { version: string; termCount: number }) | undefined;
-let StringRayContextLoader: new () => unknown;
+let XrayContextLoaderClass: new () => unknown;
 let importsInitialized = false;
 
 async function initializeImports() {
@@ -24,12 +24,12 @@ async function initializeImports() {
     const codexParser = await import("../utils/codex-parser.js");
     const contextLoaderModule = await import("./context-loader.js");
     extractCodexMetadata = codexParser.extractCodexMetadata;
-    StringRayContextLoader = contextLoaderModule.StringRayContextLoader as unknown as new () => unknown;
+    XrayContextLoaderClass = contextLoaderModule.XrayContextLoader as unknown as new () => unknown;
   } catch {
     const codexParser = await import("../utils/codex-parser");
     const contextLoaderModule = await import("./context-loader");
     extractCodexMetadata = codexParser.extractCodexMetadata;
-    StringRayContextLoader = contextLoaderModule.StringRayContextLoader as unknown as new () => unknown;
+    XrayContextLoaderClass = contextLoaderModule.XrayContextLoader as unknown as new () => unknown;
   }
 
   importsInitialized = true;
@@ -57,7 +57,7 @@ const codexCache = new Map<string, CodexContextEntry[]>();
 
 /**
  * Codex file locations resolved through the standard priority chain.
- * Uses config-paths.ts resolver so STRRAY_CONFIG_DIR and .strray/ work.
+ * Uses config-paths.ts resolver so XRAY_CONFIG_DIR and .xray/ work.
  */
 function getCodexFileLocations(projectRoot?: string): string[] {
   const root = projectRoot || process.cwd();
@@ -257,7 +257,7 @@ export function createXrayCodexInjectorHook() {
           // Skip codex enforcement during testing
           if (
             process.env.NODE_ENV === "test" ||
-            process.env.STRRAY_TEST_MODE === "true"
+            process.env.XRAY_TEST_MODE === "true"
           ) {
             await frameworkLogger.log(
               "codex-injector",
@@ -317,7 +317,7 @@ export function createXrayCodexInjectorHook() {
 
           // Use the initialized context loader
           await initializeImports();
-          const ContextLoaderClass = StringRayContextLoader as new () => {
+          const ContextLoaderClass = XrayContextLoaderClass as new () => {
             loadCodexContext: (sessionId: string) => Promise<{ success: boolean; context?: unknown }>;
             validateAgainstCodex: (
               context: unknown,
@@ -458,7 +458,7 @@ export function createXrayCodexInjectorHook() {
           // Skip codex enforcement during testing
           if (
             process.env.NODE_ENV === "test" ||
-            process.env.STRRAY_TEST_MODE === "true"
+            process.env.XRAY_TEST_MODE === "true"
           ) {
             frameworkLogger.log(
               "codex-injector",

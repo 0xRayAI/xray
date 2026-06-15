@@ -2,7 +2,7 @@ name: CI/CD Health Monitor & Auto-Fix
 
 on:
   workflow_run:
-    workflows: ["StrRay Framework CI/CD v1.0.0", "lint", "security-audit"]
+    workflows: ["xray Framework CI/CD v3.0.0", "lint", "security-audit"]
     types:
       - completed
   schedule:

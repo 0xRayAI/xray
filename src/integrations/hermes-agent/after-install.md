@@ -1,4 +1,4 @@
-# StringRay Hermes Plugin Installed
+# Xray Hermes Plugin Installed
 
 **Restart your Hermes session** for the plugin to take effect.
 
@@ -6,10 +6,10 @@
 
 | Component | Description |
 |-----------|-------------|
-| `strray_validate` | Pre-commit validation with quality gates |
-| `strray_codex_check` | Code review against 60 Codex error-prevention rules |
-| `strray_health` | Framework health check |
-| `strray_hooks` | Git hooks management (install, uninstall, list, status) |
+| `xray_validate` | Pre-commit validation with quality gates |
+| `xray_codex_check` | Code review against 60 Codex error-prevention rules |
+| `xray_health` | Framework health check |
+| `xray_hooks` | Git hooks management (install, uninstall, list, status) |
 | `pre_tool_call` hook | Quality gates + nudges before every tool call |
 | `post_tool_call` hook | Post-processors after every tool call |
 
@@ -27,24 +27,24 @@ The plugin can install git hooks for automated validation:
 ### Install Hooks
 
 ```
-/strray hooks install
+/xray hooks install
 ```
 
 Or use the tool directly:
 ```
-strray_hooks(action="install")
+xray_hooks(action="install")
 ```
 
 ### Check Hook Status
 
 ```
-/strray hooks status
+/xray hooks status
 ```
 
 ### Uninstall Hooks
 
 ```
-/strray hooks uninstall
+/xray hooks uninstall
 ```
 
 ## Quick Test
@@ -52,20 +52,20 @@ strray_hooks(action="install")
 After restarting Hermes, try:
 
 ```
-/strray status
-/strray stats
+/xray status
+/xray stats
 ```
 
-Or use the tools directly — `strray_health` will confirm the bridge is connected.
+Or use the tools directly — `xray_health` will confirm the bridge is connected.
 
 ## MCP Servers
 
-The plugin works alongside StringRay's MCP servers (if configured in your
+The plugin works alongside Xray's MCP servers (if configured in your
 Hermes config). The plugin's native tools provide offline/offline-first
 validation, while MCP servers offer deeper framework integration.
 
 ## Files
 
-The plugin lives at `~/.hermes/plugins/strray-hermes/`. It is auto-updated
+The plugin lives at `~/.hermes/plugins/xray-hermes/`. It is auto-updated
 when you run `npm install` or `npm update` in a project with `0xray`
 as a dependency.

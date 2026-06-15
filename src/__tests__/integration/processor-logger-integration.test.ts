@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ProcessorManager } from "../../processors/processor-manager.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
 
 describe("Processor ↔ frameworkLogger Integration", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
 
   beforeEach(() => {
-    stateManager = new StringRayStateManager("/tmp/test-processor-logger");
+    stateManager = new XrayStateManager("/tmp/test-processor-logger");
   });
 
   afterEach(() => {

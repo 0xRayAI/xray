@@ -56,7 +56,7 @@ run_test "Config JSON syntax" "python3 -c \"import json; json.load(open('./.open
 run_test "Required properties present" "python3 -c \"
 import json
 config = json.load(open('./.opencode/OpenCode.json'))
-required = ['strray_agents', 'dynamic_models', 'ai_logging', 'python_backend']
+required = ['xray_agents', 'dynamic_models', 'ai_logging', 'python_backend']
 missing = [k for k in required if k not in config]
 if not missing:
     exit(0)
@@ -69,7 +69,7 @@ else:
 run_test "Agent config structure" "python3 -c \"
 import json
 config = json.load(open('./.opencode/OpenCode.json'))
-agents = config.get('strray_agents', {})
+agents = config.get('xray_agents', {})
 if 'enabled' in agents and 'disabled' in agents:
     if isinstance(agents['enabled'], list) and isinstance(agents['disabled'], list):
         exit(0)
@@ -131,7 +131,7 @@ exit(1)
 run_test "Agent count validation" "python3 -c \"
 import json
 config = json.load(open('./.opencode/OpenCode.json'))
-agents = config.get('strray_agents', {}).get('enabled', [])
+agents = config.get('xray_agents', {}).get('enabled', [])
 expected_agents = ['enforcer', 'architect', 'orchestrator', 'bug-triage-specialist', 'code-reviewer', 'security-auditor', 'refactorer', 'testing-lead']
 if set(agents) == set(expected_agents):
     exit(0)

@@ -29,15 +29,15 @@ else
 fi
 
 # 0xRay Framework Version — check source name first (dev), then node_modules (consumer)
-STRRAY_VERSION="unknown"
+XRAY_VERSION="unknown"
 if [ -f "$SOURCE_PACKAGE_JSON" ]; then
     PKG_NAME=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').name || '')" 2>/dev/null)
     if [ "$PKG_NAME" = "0xray" ]; then
-        STRRAY_VERSION=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
+        XRAY_VERSION=$(node -e "console.log(require('$SOURCE_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
     fi
 fi
-if [ "$STRRAY_VERSION" = "unknown" ] && [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
-    STRRAY_VERSION=$(node -e "console.log(require('$NODE_MODULES_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
+if [ "$XRAY_VERSION" = "unknown" ] && [ -f "$NODE_MODULES_PACKAGE_JSON" ]; then
+    XRAY_VERSION=$(node -e "console.log(require('$NODE_MODULES_PACKAGE_JSON').version)" 2>/dev/null || echo "unknown")
 fi
 
 # Dedup guard — prevent duplicate runs during startup
@@ -98,10 +98,10 @@ if [ "$AGENTS_COUNT" -eq 0 ]; then
     AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/0xray/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Skills - check .opencode/skills, then .strray/skills (Hermes), then node_modules
+# Skills - check .opencode/skills, then .xray/skills (Hermes), then node_modules
 SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 if [ "$SKILLS_COUNT" -eq 0 ]; then
-    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.strray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
+    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.xray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
 if [ "$SKILLS_COUNT" -eq 0 ]; then
     SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/node_modules/0xray/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
@@ -132,8 +132,8 @@ if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ]; then
 fi
 
 echo ""
-echo "DEBUG: VERSION=$STRRAY_VERSION PROJECT_ROOT=$PROJECT_ROOT"
-echo "⚡ 0xRay v$STRRAY_VERSION"
+echo "DEBUG: VERSION=$XRAY_VERSION PROJECT_ROOT=$PROJECT_ROOT"
+echo "⚡ 0xRay v$XRAY_VERSION"
 echo "🤖 Agents: $AGENTS_COUNT | ⚙️ MCPs: $MCPS_COUNT | 💡 Skills: $SKILLS_COUNT"
 
 # BootOrchestrator check (check dev and consumer paths)

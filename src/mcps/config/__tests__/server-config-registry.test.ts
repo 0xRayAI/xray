@@ -164,38 +164,38 @@ describe('ServerConfigRegistry', () => {
       expect(config.timeout).toBe(30000);
     });
 
-    it('should use STRRAY_DEV_PATH env var in dynamic config', () => {
-      const originalEnv = process.env.STRRAY_DEV_PATH;
-      process.env.STRRAY_DEV_PATH = 'custom-dist';
+    it('should use XRAY_DEV_PATH env var in dynamic config', () => {
+      const originalEnv = process.env.XRAY_DEV_PATH;
+      process.env.XRAY_DEV_PATH = 'custom-dist';
       
       const config = registry.createDynamicConfig('test-server');
       expect(config.args[0]).toContain('custom-dist');
       
-      process.env.STRRAY_DEV_PATH = originalEnv;
+      process.env.XRAY_DEV_PATH = originalEnv;
     });
   });
 
   describe('environment path handling', () => {
-    it('should use resolved framework path when STRRAY_DEV_PATH is not set', () => {
-      const originalEnv = process.env.STRRAY_DEV_PATH;
-      delete process.env.STRRAY_DEV_PATH;
+    it('should use resolved framework path when XRAY_DEV_PATH is not set', () => {
+      const originalEnv = process.env.XRAY_DEV_PATH;
+      delete process.env.XRAY_DEV_PATH;
       
       const freshRegistry = new ServerConfigRegistry();
       const config = freshRegistry.get('code-review');
       expect(config?.args[0]).toContain('.server.js');
       
-      process.env.STRRAY_DEV_PATH = originalEnv;
+      process.env.XRAY_DEV_PATH = originalEnv;
     });
 
-    it('should use STRRAY_DEV_PATH when set', () => {
-      const originalEnv = process.env.STRRAY_DEV_PATH;
-      process.env.STRRAY_DEV_PATH = 'dist';
+    it('should use XRAY_DEV_PATH when set', () => {
+      const originalEnv = process.env.XRAY_DEV_PATH;
+      process.env.XRAY_DEV_PATH = 'dist';
       
       const freshRegistry = new ServerConfigRegistry();
       const config = freshRegistry.get('code-review');
       expect(config?.args[0]).toContain('dist/');
       
-      process.env.STRRAY_DEV_PATH = originalEnv;
+      process.env.XRAY_DEV_PATH = originalEnv;
     });
   });
 

@@ -1,5 +1,6 @@
-import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync, statSync, unlinkSync } from "fs";
+import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, cpSync, rmSync, statSync, unlinkSync, copyFileSync } from "fs";
 import { join, basename, dirname } from "path";
+import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import { getConfigDir } from "../../core/config-paths.js";
 
@@ -15,7 +16,7 @@ interface LocalRegistry {
 }
 
 function getLocalRegistryPath(): string {
-  return join(process.cwd(), ".opencode", "strray", "skill-registry.json");
+  return join(process.cwd(), ".xray", "skill-registry.json");
 }
 
 function getBundledRegistry(): LocalRegistry | null {
@@ -536,4 +537,35 @@ export async function skillRegistryCommand(
 
   console.log(`  Unknown action: ${action}`);
   console.log("  Usage: npx 0xray skill:registry [list|add|remove]");
+}
+
+// ── Cross-platform builtin skill sync ────────────────────────────────
+// Each platform's install command calls this to copy framework skills.
+export function syncBuiltinSkills(targetSkillsDir: string, packageRoot?: string): number {
+  const root = packageRoot ?? join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+  const candidateDirs = [
+    join(root, "dist", "skills"),
+    join(root, "src", "skills"),
+  ];
+  const sourceDir = candidateDirs.find(existsSync);
+  if (!sourceDir) return 0;
+
+  let copied = 0;
+  try {
+    if (!existsSync(targetSkillsDir)) mkdirSync(targetSkillsDir, { recursive: true });
+    for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const skillMd = join(sourceDir, entry.name, "SKILL.md");
+      if (!existsSync(skillMd)) continue;
+      const destMd = join(targetSkillsDir, entry.name, "SKILL.md");
+      const destDir = dirname(destMd);
+      if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
+      if (existsSync(destMd) && statSync(skillMd).mtime <= statSync(destMd).mtime) continue;
+      copyFileSync(skillMd, destMd);
+      copied++;
+    }
+  } catch {
+    // best-effort
+  }
+  return copied;
 }

@@ -81,10 +81,10 @@ const mockOhMyOpenCode = {
     mockOhMyOpenCode.toolCalls.push(toolCall);
 
     // Check if 0xRay plugin has tool.execute.before hook
-    const strrayPlugin = mockOhMyOpenCode.plugins.get("xray-codex-injector");
-    if (strrayPlugin && strrayPlugin["tool.execute.before"]) {
+    const xrayPlugin = mockOhMyOpenCode.plugins.get("xray-codex-injector");
+    if (xrayPlugin && xrayPlugin["tool.execute.before"]) {
       try {
-        await strrayPlugin["tool.execute.before"]({ tool: toolName, args }, {});
+        await xrayPlugin["tool.execute.before"]({ tool: toolName, args }, {});
       } catch (error: any) {
         // Check if this is a codex violation (should block) or plugin error (should allow)
         if (error.message.includes("Codex violation")) {

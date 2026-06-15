@@ -39,8 +39,8 @@ type StoryType = typeof STORY_TYPES[number];
 
 function loadConfig(cwd: string): StorytellingConfig | null {
   const candidates = [
-    join(cwd, ".opencode", "strray", "features.json"),
-    join(cwd, ".strray", "features.json"),
+    join(cwd, ".xray", "features.json"),
+    join(cwd, ".opencode", "xray", "features.json"),
   ];
 
   for (const path of candidates) {

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Framework Bridge for Hermes Agent
+ * Xray Framework Bridge for Hermes Agent
  *
- * Provides direct access to StringRay framework components
+ * Provides direct access to Xray framework components
  * (ProcessorManager, QualityGate, StateManager) from Python.
  * Uses JSON stdin/stdout protocol for IPC.
  *
@@ -44,7 +44,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Framework components (lazy-loaded) ───────────────────────
 let ProcessorManager = null;
-let StrRayStateManager = null;
+let XrayStateManager = null;
 let featuresConfigLoader = null;
 let runQualityGateWithLogging = null;
 let enforcerValidators = null;
@@ -53,12 +53,12 @@ let frameworkLoadAttempted = false;
 
 // ── Project root detection ───────────────────────────────────
 function findProjectRoot() {
-  const envHome = process.env.STRRAY_HOME;
+  const envHome = process.env.XRAY_HOME;
   if (envHome && existsSync(join(envHome, "package.json"))) return envHome;
 
   const candidates = [
     process.cwd(),
-    join(homedir(), "dev", "stringray"),
+    join(homedir(), "dev", "xray"),
     join(dirname(__dirname), "..", "..", "..", ".."), // plugin dir -> project root
   ];
 
@@ -67,7 +67,7 @@ function findProjectRoot() {
       const pkgPath = join(dir, "package.json");
       if (existsSync(pkgPath)) {
         const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-        if (pkg.name === "strray-ai" || pkg.dependencies?.["strray-ai"] || pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
+        if (pkg.name === "0xray" || pkg.dependencies?.["0xray"] || pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
           return dir;
         }
       }
@@ -149,11 +149,11 @@ async function loadFramework(projectRoot) {
         }
       }
 
-      if (!StrRayStateManager) {
+      if (!XrayStateManager) {
         const smPath = join(distDir, "state", "state-manager.js");
         if (existsSync(smPath)) {
           const sm = await import(smPath);
-          StrRayStateManager = sm.StrRayStateManager;
+          XrayStateManager = sm.XrayStateManager;
         }
       }
 
@@ -230,15 +230,15 @@ async function runQualityGateCheck(context, projectRoot, logDir) {
 
 // ── Processor Pipeline ───────────────────────────────────────
 async function runProcessors(tool, args, phase, projectRoot, logDir) {
-  if (!ProcessorManager || !StrRayStateManager) {
+  if (!ProcessorManager || !XrayStateManager) {
     return { ran: false, reason: "framework modules not loaded" };
   }
 
   const logger = new BridgeLogger(logDir);
 
   try {
-    const stateDir = join(projectRoot, ".strray", "state");
-    const stateManager = new StrRayStateManager(stateDir);
+    const stateDir = join(projectRoot, ".xray", "state");
+    const stateManager = new XrayStateManager(stateDir);
     const processorManager = new ProcessorManager(stateManager);
 
     // Register processors matching OpenCode plugin
@@ -353,7 +353,7 @@ async function handleHealth(input) {
   const components = {
     qualityGate: !!runQualityGateWithLogging,
     processorManager: !!ProcessorManager,
-    stateManager: !!StrRayStateManager,
+    stateManager: !!XrayStateManager,
     featuresConfig: !!featuresConfigLoader,
   };
 
@@ -563,7 +563,7 @@ function handleHooks(input, projectRoot) {
   const { action, hooks } = input;
   const hookTypes = hooks || ["pre-commit", "post-commit", "pre-push", "post-push"];
   const gitHooksDir = join(projectRoot, ".git", "hooks");
-  const strrayHooksDir = join(projectRoot, "hooks");
+  const xrayHooksDir = join(projectRoot, "hooks");
 
   if (!existsSync(gitHooksDir)) {
     return { error: "Not a git repository — no .git/hooks directory" };
@@ -575,14 +575,14 @@ function handleHooks(input, projectRoot) {
   if (action === "list" || action === "status") {
     for (const hookName of hookTypes) {
       const gitHook = join(gitHooksDir, hookName);
-      const strrayHook = join(strrayHooksDir, hookName);
+      const xrayHook = join(xrayHooksDir, hookName);
 
       if (!existsSync(gitHook)) {
         result.missing.push(hookName);
       } else {
         try {
           const content = readFileSync(gitHook, "utf-8");
-          if (content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js")) {
+          if (content.includes("Xray") || content.includes("xray") || false || content.includes("run-hook.js")) {
             result.managed.push(hookName);
           } else {
             result.external.push(hookName);
@@ -592,8 +592,8 @@ function handleHooks(input, projectRoot) {
         }
       }
 
-      // Check if strray source hook exists
-      if (!existsSync(strrayHook)) {
+      // Check if xray source hook exists
+      if (!existsSync(xrayHook)) {
         result.stale.push(hookName);
       }
     }
@@ -603,7 +603,7 @@ function handleHooks(input, projectRoot) {
       action,
       hooks: result,
       gitHooksDir,
-      strrayHooksDir,
+      xrayHooksDir,
     };
   }
 
@@ -614,7 +614,7 @@ function handleHooks(input, projectRoot) {
     const errors = [];
 
     for (const hookName of hookTypes) {
-      const src = join(strrayHooksDir, hookName);
+      const src = join(xrayHooksDir, hookName);
       const dst = join(gitHooksDir, hookName);
 
       if (!existsSync(src)) {
@@ -623,11 +623,11 @@ function handleHooks(input, projectRoot) {
       }
 
       try {
-        // Backup existing non-strray hooks
+        // Backup existing non-xray hooks
         if (existsSync(dst)) {
           const content = readFileSync(dst, "utf-8");
-          if (!content.includes("StringRay") && !content.includes("strray") && !content.includes("run-hook.js")) {
-            renameSync(dst, `${dst}.strray-backup`);
+          if (!content.includes("Xray") && !content.includes("xray") && !false && !content.includes("run-hook.js")) {
+            renameSync(dst, `${dst}.xray-backup`);
           } else {
             unlinkSync(dst);
           }
@@ -659,15 +659,15 @@ function handleHooks(input, projectRoot) {
 
     for (const hookName of hookTypes) {
       const dst = join(gitHooksDir, hookName);
-      const backup = `${dst}.strray-backup`;
+      const backup = `${dst}.xray-backup`;
 
       if (!existsSync(dst)) continue;
 
       try {
         const content = readFileSync(dst, "utf-8");
-        const isStrray = content.includes("StringRay") || content.includes("strray") || content.includes("run-hook.js");
+        const isXray = content.includes("Xray") || content.includes("xray") || false || content.includes("run-hook.js");
 
-        if (isStrray || lstatSync(dst).isSymbolicLink()) {
+        if (isXray || lstatSync(dst).isSymbolicLink()) {
           unlinkSync(dst);
 
           // Restore backup if exists
@@ -743,7 +743,36 @@ async function handleApply(input, projectRoot, logDir) {
 // ── Known commands for positional-arg mode ──────────────────
 const KNOWN_COMMANDS = new Set([
   "health", "stats", "pre-process", "post-process", "validate", "codex-check", "hooks", "govern", "apply",
+  "skill-install", "skill-registry",
 ]);
+
+// ── Skill management ──────────────────────────────────────────
+
+async function handleSkillInstall(command, projectRoot, logDir) {
+  try {
+    const source = command.source;
+    if (!source) {
+      return { error: "Missing 'source' — specify a source name or git URL" };
+    }
+    const { execSync } = await import("child_process");
+    const output = execSync(`npx 0xray skill:install "${source}"`, { cwd: projectRoot, timeout: 120000 }).toString();
+    return { status: "ok", output: output.trim() };
+  } catch (error) {
+    return { error: `Skill install failed: ${error.message || error}` };
+  }
+}
+
+async function handleSkillRegistry(command, projectRoot, logDir) {
+  try {
+    const action = command.action || "list";
+    const { execSync } = await import("child_process");
+    const args = command.source ? `"${command.source}"` : "";
+    const output = execSync(`npx 0xray skill:registry ${action} ${args}`, { cwd: projectRoot, timeout: 30000 }).toString();
+    return { status: "ok", output: output.trim() };
+  } catch (error) {
+    return { error: `Skill registry command failed: ${error.message || error}` };
+  }
+}
 
 // ── Main ─────────────────────────────────────────────────────
 async function main() {
@@ -835,6 +864,12 @@ async function main() {
       break;
     case "apply":
       response = await handleApply(command, projectRoot, logDir);
+      break;
+    case "skill-install":
+      response = await handleSkillInstall(command, projectRoot, logDir);
+      break;
+    case "skill-registry":
+      response = await handleSkillRegistry(command, projectRoot, logDir);
       break;
     default:
       response = { error: `Unknown command: ${cmd}` };

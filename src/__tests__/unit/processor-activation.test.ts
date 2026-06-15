@@ -16,16 +16,16 @@ import {
   ProcessorManager,
 } from "../../processors/processor-manager.js";
 import type { ProcessorResult } from "../../processors/processor-types.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 import { setupStandardMocks } from "../utils/test-utils.js";
 
 describe("Processor Activation", () => {
   let processorManager: ProcessorManager;
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
 
   beforeEach(() => {
     setupStandardMocks();
-    stateManager = new StringRayStateManager(
+    stateManager = new XrayStateManager(
       `/test/state-processor-${Date.now()}.json`,
     );
     processorManager = new ProcessorManager(stateManager);

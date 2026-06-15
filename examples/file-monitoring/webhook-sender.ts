@@ -164,7 +164,7 @@ export class WebhookSender {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'StringRay-FileMonitor/1.0.0',
+          'User-Agent': '0xRay-FileMonitor/1.0.0',
           ...(this.config.apiKey && { 'Authorization': `Bearer ${this.config.apiKey}` }),
           ...(signature && { 'X-Webhook-Signature': signature }),
         },

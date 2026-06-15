@@ -231,8 +231,8 @@ export class UniversalRegistryBridge {
       const pkg = await response.json();
 
       // Look for agent definitions in package exports
-      if (pkg.stringray?.agents) {
-        return pkg.stringray.agents;
+      if (pkg.xray?.agents) {
+        return pkg.xray.agents;
       }
 
       return [];
@@ -302,7 +302,7 @@ export async function createRegistryBridge(
 ): Promise<UniversalRegistryBridge> {
   const defaultPath = resolve(
     process.cwd(),
-    ".stringray/integration/registries.json",
+    ".xray/integration/registries.json",
   );
   const path = configPath || defaultPath;
 

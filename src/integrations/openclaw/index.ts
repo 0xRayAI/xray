@@ -19,7 +19,7 @@ import { OpenClawClient } from './client.js';
 import { XrayAPIServer } from './api-server.js';
 import { initializeGovernanceIntegration } from '../governance/index.js';
 import { featuresConfigLoader } from '../../core/features-config.js';
-import { OpenClawHooksManager, XrayToolEvent } from './hooks/strray-hooks.js';
+import { OpenClawHooksManager, XrayToolEvent } from './hooks/xray-hooks.js';
 import { mcpClientManager, ToolBeforeEvent, ToolAfterEvent } from '../../mcps/mcp-client.js';
 import type { AgentInvoker } from './api-server.js';
 
@@ -407,4 +407,4 @@ export * from './types.js';
 export * from './config.js';
 export * from './client.js';
 export * from './api-server.js';
-export { OpenClawHooksManager } from './hooks/strray-hooks.js';
+export { OpenClawHooksManager } from './hooks/xray-hooks.js';

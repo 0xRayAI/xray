@@ -37,7 +37,7 @@ npm install ws
 
 ### 2. Configure OpenClaw
 
-Create `.strray/config/openclaw.json`:
+Create `.xray/config/openclaw.json`:
 
 ```json
 {
@@ -82,11 +82,11 @@ const integration = await initializeOpenClawIntegration('/path/to/config.json', 
 
 After installation, use these commands in any OpenClaw channel:
 
-- `/strray` - Show status
-- `/strray-analyze <file>` - Analyze code
-- `/strray-code <file>` - Code review
-- `/strray-file <file>` - Read file
-- `/strray-exec <command>` - Execute command
+- `/xray` - Show status
+- `/xray-analyze <file>` - Analyze code
+- `/xray-code <file>` - Code review
+- `/xray-file <file>` - Read file
+- `/xray-exec <command>` - Execute command
 
 ## Configuration
 

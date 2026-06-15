@@ -1,9 +1,9 @@
 """Tool schemas — what the LLM sees."""
 
-STRRAY_VALIDATE = {
-    "name": "strray_validate",
+XRAY_VALIDATE = {
+    "name": "xray_validate",
     "description": (
-        "Run StringRay pre-commit validation on specified files. "
+        "Run Xray pre-commit validation on specified files. "
         "Checks codex compliance, rule validation, and quality gates. "
         "Use this before committing any code changes. Returns pass/fail "
         "with actionable remediation for any violations."
@@ -26,8 +26,8 @@ STRRAY_VALIDATE = {
     },
 }
 
-STRRAY_CODEX_CHECK = {
-    "name": "strray_codex_check",
+XRAY_CODEX_CHECK = {
+    "name": "xray_codex_check",
     "description": (
         "Validate code against the Universal Development Codex (60 error-prevention terms). "
         "Checks error-handling, type-safety, performance, security, and architecture patterns. "
@@ -57,12 +57,12 @@ STRRAY_CODEX_CHECK = {
     },
 }
 
-STRRAY_HEALTH = {
-    "name": "strray_health",
+XRAY_HEALTH = {
+    "name": "xray_health",
     "description": (
-        "Run StringRay framework health check. Returns version, agent count, "
+        "Run Xray framework health check. Returns version, agent count, "
         "MCP server status, and enforcement statistics. Use to verify the "
-        "StringRay integration is working correctly."
+        "Xray integration is working correctly."
     ),
     "parameters": {
         "type": "object",
@@ -70,10 +70,59 @@ STRRAY_HEALTH = {
     },
 }
 
-STRRAY_HOOKS = {
-    "name": "strray_hooks",
+XRAY_SKILL_INSTALL = {
+    "name": "xray_skill_install",
     "description": (
-        "Manage StringRay git hooks (install, uninstall, list, status). "
+        "Install skills from the registry or any git repo. "
+        "Downloads skill definitions for specialized capabilities "
+        "like UI/UX design, mobile development, security auditing, etc. "
+        "Use this to add new skills to your development environment."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "source": {
+                "type": "string",
+                "description": "Source name or git URL to install skills from",
+            },
+        },
+        "required": ["source"],
+    },
+}
+
+XRAY_SKILL_REGISTRY = {
+    "name": "xray_skill_registry",
+    "description": (
+        "Manage the skills registry — list available sources, "
+        "add new sources, or remove existing ones. Use 'list' to see "
+        "all available skill sources, 'add' to register a new source, "
+        "'remove' to unregister an existing source."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "string",
+                "enum": ["list", "add", "remove"],
+                "description": "Registry action to perform",
+            },
+            "name": {
+                "type": "string",
+                "description": "Source name (required for add/remove)",
+            },
+            "url": {
+                "type": "string",
+                "description": "Repository URL (required for add)",
+            },
+        },
+        "required": ["action"],
+    },
+}
+
+XRAY_HOOKS = {
+    "name": "xray_hooks",
+    "description": (
+        "Manage Xray git hooks (install, uninstall, list, status). "
         "Installs pre-commit, post-commit, pre-push, and post-push hooks "
         "that run TypeScript validation, Codex checks, and monitoring. "
         "Use 'install' to set up all hooks, 'list' to see current status."

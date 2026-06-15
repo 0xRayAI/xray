@@ -486,7 +486,7 @@ program
       const path = await import("path");
       let defaultLimit = 500;
       try {
-        const featuresPath = path.join(process.cwd(), ".opencode", "plugins", "features.json"); // plain xray primary (min compat .strray/ handled in getConfigDir per Scope Rule)
+        const featuresPath = path.join(process.cwd(), ".opencode", "plugins", "features.json"); // plain xray primary (min compat .xray/ handled in getConfigDir per Scope Rule)
         if (fs.existsSync(featuresPath)) {
           const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
           defaultLimit = features.analytics?.default_limit || 500;
@@ -567,16 +567,16 @@ program
         console.log("✅ xray package installed");
       }
 
-      // Check configuration - check for opencode.json or .strray/ (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule; plain xray primary)
+      // Check configuration - check for opencode.json or .xray/ (min compat .xray/ fallback for prior 0xRay consumer runtime per Scope Rule; plain xray primary)
       const cwd = process.cwd();
       const opencodeConfigPath = path.join(cwd, "opencode.json");
-      const strrayDir = getConfigDir(cwd);
+      const xrayDir = getConfigDir(cwd);
       const opencodeExists = fs.existsSync(opencodeConfigPath);
-      const strrayDirExists = fs.existsSync(strrayDir);
+      const configDirExists = fs.existsSync(xrayDir);
       if (opencodeExists) {
         console.log("✅ opencode configuration found");
-      } else if (strrayDirExists) {
-        console.log(`✅ Configuration directory found: ${strrayDir}`);
+      } else if (configDirExists) {
+        console.log(`✅ Configuration directory found: ${xrayDir}`);
       } else {
         console.log("ℹ️  No opencode.json or config directory found (run: npx xray fix to create)");
       }
@@ -833,14 +833,14 @@ program
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
       } else {
         console.log('Inference feature is disabled in features.json.');
-        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .strray/ fallback for prior StringRay consumer runtime per Scope Rule)');
+        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .xray/ fallback for prior 0xRay consumer runtime per Scope Rule)');
       }
       return;
     }
 
     const projectRoot = process.cwd();
     const inferenceDir = `${projectRoot}/docs/inference`;
-    const stateDir = `${projectRoot}/.strray/inference`;
+    const stateDir = `${projectRoot}/.xray/inference`;
     const stateFile = `${stateDir}/inference-cycle-state.json`;
 
     if (!options.json) {
@@ -1031,17 +1031,22 @@ program
 
 // MCP server subprocess launchers (used by Grok plugin .mcp.json via npx)
 program
-  .command('mcp')
+   .command('mcp')
   .description('Run an MCP server subprocess (used by Grok/OpenCode .mcp.json)')
-  .argument('<server>', 'Server name: governance or skills')
+  .argument('<server>', 'Server name: governance, skills, researcher, code-review, architect-tools, enforcer, orchestrator')
   .action(async (server: string) => {
     const serverMap: Record<string, string> = {
       governance: 'dist/mcps/governance.server.js',
       skills: 'dist/mcps/knowledge-skills/skill-invocation.server.js',
+      researcher: 'dist/mcps/researcher.server.js',
+      'code-review': 'dist/mcps/knowledge-skills/code-review.server.js',
+      'architect-tools': 'dist/mcps/architect-tools.server.js',
+      enforcer: 'dist/mcps/enforcer-tools.server.js',
+      orchestrator: 'dist/mcps/orchestrator.server.js',
     };
     const relPath = serverMap[server];
     if (!relPath) {
-      console.error(`Unknown MCP server: ${server}. Use: governance, skills`);
+      console.error(`Unknown MCP server: ${server}. Use: governance, skills, researcher, code-review, architect-tools, enforcer, orchestrator`);
       process.exit(1);
     }
     const serverPath = resolve(join(packageRoot, relPath));
@@ -1051,7 +1056,8 @@ program
     }
     const env: Record<string, string> = { ...process.env as Record<string, string> };
     if (server === 'governance') {
-      env.STRRAY_FORCE_MCP_GOVERNANCE = 'true';
+      env.XRAY_FORCE_MCP_GOVERNANCE = 'true';
+      env.XRAY_FORCE_MCP_GOVERNANCE = 'true';
     }
     const child = spawn(process.execPath, [serverPath], { stdio: 'inherit', env });
     child.on('exit', (code) => process.exit(code ?? 0));

@@ -13,7 +13,7 @@
 What is v3? It is not a feature release. It is a *subtraction* — the art of knowing what to remove.
 
 When we started, the codebase carried four generations of architecture simultaneously:
-- v1: StringRay prototype (strray references, setTimeout stubs, EventEmitter wiring)
+- v1: 0xRay prototype (strray references, setTimeout stubs, EventEmitter wiring)
 - v2: strray-ai package with CI/CD PostProcessor loop
 - v2.5: MCP skill servers bolted alongside legacy pipelines
 - v3.0: what it was *trying* to become but couldn't, because the old bones were still in the walls

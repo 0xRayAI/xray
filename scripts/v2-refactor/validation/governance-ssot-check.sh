@@ -48,7 +48,7 @@ ALLOWED_PATTERNS=(
   "governance/codex-policy.service"  # canonical SSOT owner (V2-P1-S02); self-load is the approved path
   "governance/"  # any future governance-owned policy surfaces
   "core/codex-injector"  # S02-PRUNE: Governance-only policy codex via CodexPolicyService (no transitional fallback blocks remain); helpers for messaging only
-  "plugin/strray-codex-injection"  # S02-PRUNE: Governance-only for policy codex via CodexPolicyService; extras load direct (intentional, non-policy)
+  "plugin/xray-codex-injection"  # S02-PRUNE: Governance-only for policy codex via CodexPolicyService; extras load direct (intentional, non-policy)
 )
 
 VIOLATION_COUNT=0
@@ -59,7 +59,7 @@ echo "(Looking for codex.json references combined with read/parse/exists actions
 echo ""
 
 # Find files mentioning codex file paths (broad), then filter for load actions + not allowed
-CANDIDATES=$(grep -l -r -E 'codex\.json|\.opencode/strray/codex|\.strray/codex|resolveCodexPath' "$SRC_DIR" \
+CANDIDATES=$(grep -l -r -E 'codex\.json|\.xray/codex|resolveCodexPath' "$SRC_DIR" \
   --include="*.ts" --include="*.js" --include="*.mjs" 2>/dev/null | head -200 || true)
 
 for file in $CANDIDATES; do

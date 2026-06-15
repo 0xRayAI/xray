@@ -1,4 +1,4 @@
-// Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; primary xray paths + XRAY_||STRRAY_ env + .strray fallbacks)
+// Consumer runtime compat shim from prior 0xRay releases (1-line min per Scope Rule; primary xray paths + .xray fallbacks)
 
 import { frameworkLogger } from "../core/framework-logger.js";
 import crypto from "crypto";
@@ -64,7 +64,7 @@ export interface SessionBenchmarkResult {
   concurrentSessionOperations: number;
 }
 
-export class StringRayPerformanceBenchmark {
+export class XrayPerformanceBenchmark {
   private results: BenchmarkResult[] = [];
   private activeBenchmarks = new Map<
     string,
@@ -558,4 +558,7 @@ export class StringRayPerformanceBenchmark {
 }
 
 // Export singleton instance
-export const performanceBenchmark = new StringRayPerformanceBenchmark();
+export const performanceBenchmark = new XrayPerformanceBenchmark();
+
+// Backward compat alias
+

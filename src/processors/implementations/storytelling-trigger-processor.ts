@@ -99,8 +99,7 @@ export class StorytellingTriggerProcessor extends PostProcessor {
 
   private resolveConfigPath(filename: string): string | null {
     const candidates = [
-      path.join(process.cwd(), ".strray", filename),
-      path.join(process.cwd(), ".opencode", "strray", filename),
+      path.join(process.cwd(), ".xray", filename),
     ];
     for (const candidate of candidates) {
       if (fs.existsSync(candidate)) return candidate;

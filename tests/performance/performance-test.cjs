@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StrRay Framework v1.0.0 - Performance Test Script
+ * Xray Framework v1.0.0 - Performance Test Script
  *
  * Measures startup time, memory usage, and bundle size performance.
  *
@@ -13,7 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-console.log("🚀 StrRay Framework - Performance Test Suite");
+console.log("🚀 Xray Framework - Performance Test Suite");
 console.log("==========================================\n");
 
 // Test 1: Bundle Size Analysis

@@ -47,17 +47,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 REFACTORING_LOG="${PROJECT_ROOT}/docs/REFACTORING_LOG.md"
 
-# Check if summary content is provided via environment variable or stdin (XRAY_ primary + STRRAY_ min compat fallback per Scope Rule)
+# Check if summary content is provided via environment variable or stdin (XRAY_ primary)
 
 if [ -n "$XRAY_SUMMARY_CONTENT" ]; then
 SUMMARY_CONTENT="$XRAY_SUMMARY_CONTENT"
-elif [ -n "$STRRAY_SUMMARY_CONTENT" ]; then
-SUMMARY_CONTENT="$STRRAY_SUMMARY_CONTENT"
+elif [ -n "$XRAY_SUMMARY_CONTENT" ]; then
+SUMMARY_CONTENT="$XRAY_SUMMARY_CONTENT"
 elif [ ! -t 0 ]; then
     # Read from stdin
     SUMMARY_CONTENT=$(cat)
 else
-echo "❌ No summary content provided. Use XRAY_SUMMARY_CONTENT (or STRRAY_ compat) environment variable or pipe content."
+echo "❌ No summary content provided. Use XRAY_SUMMARY_CONTENT environment variable or pipe content."
 echo "Usage:"
 echo " export XRAY_SUMMARY_CONTENT='summary content' && bash .opencode/commands/summary-logger.md"
 echo " echo 'summary content' | bash .opencode/commands/summary-logger.md"

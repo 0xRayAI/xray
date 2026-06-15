@@ -77,7 +77,7 @@ export class McpConnection extends EventEmitter implements IMcpConnection {
           protocolVersion: MCP_PROTOCOL_VERSION,
           capabilities: {},
           clientInfo: {
-            name: 'strray-mcp-client',
+            name: 'xray-mcp-client',
             version: '1.7.5',
           },
         },

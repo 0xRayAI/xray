@@ -39,7 +39,7 @@ xray operates under the pure three-subsystem model: Inference + External Governa
 | **Scripts** | `scripts/` or `scripts/bash/` | `scripts/bash/my-script.sh` |
 | **Test Files** | `src/__tests__/` | `src/__tests__/unit/my-test.test.ts` |
 | **Source Code** | `src/` | `src/my-module.ts` |
-| **Config** | `config/` or `.opencode/xray/` | `.opencode/xray/config.json` |
+| **Config** | `config/` or `.xray/` | `.xray/config.json` |
 
 **Never save to root** - Root directory is for essential files only:
 - `README.md`, `CHANGELOG.md`, `package.json`, `tsconfig.json`
@@ -82,16 +82,16 @@ The Autonomous Engine routes via complexity:
 
 ## Codex
 
-xray enforces the Universal Development Codex (60 terms) via Dynamo governance. The codex lives in `.opencode/xray/codex.json`.
+xray enforces the Universal Development Codex (60 terms) via Dynamo governance. The codex lives in `.xray/codex.json`.
 
 Pure v16 MCPs. Clean. Complete.
 
-## Session: v3.0.13 Release Polish
+## Session: v3.0.14 Rename Polish
 
-- Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `3.0.13`.
+- Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `3.0.14`.
 - **All 182 test files pass**: 2527 tests, 0 failures, 36 skipped.
 - **Build fix**: removed stale `.opencode/plugin/` copy; `package.json` → `dist/plugin/xray-codex-injection.js`.
 - **default-plugins.ts**: monkey-patch `Server.prototype.setRequestHandler` to capture tool definitions from MCP Server instances; all registration functions async.
-- **8 failing test files fixed**: class name references (`StringRaySecurityAuditServer` → `XraySecurityAuditServer`, `XrayStateManager` → `StringRayStateManager`); added `calculateMetamorphosisScore`; delegation re-exports; source-inspection tests updated; infrastructure path fix; antigravity registry removed.
+- **8 failing test files fixed**: class name references (`0xRaySecurityAuditServer` → `XraySecurityAuditServer`); added `calculateMetamorphosisScore`; delegation re-exports; source-inspection tests updated; infrastructure path fix; antigravity registry removed.
 - **CHANGELOG.md**: added v3.0.13 entry.
-- **Stale READMEs**: updated `StringRay` → `0xray` in 4 subdirectory READMEs.
+- **Stale READMEs**: updated `0xRay` → `0xRay` in 4 subdirectory READMEs.

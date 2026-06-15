@@ -13,7 +13,7 @@ Image recognition plugin for 0xray using AI vision capabilities.
 
 ```bash
 # Copy to your plugins directory
-cp -r examples/plugins/mcp-image-recognition .strray/plugins/
+cp -r examples/plugins/mcp-image-recognition .xray/plugins/
 
 # Or use the CLI
 npx 0xray plugin install mcp-image-recognition

@@ -15,6 +15,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
+import { tryLLMGovernance } from "../../governance/llm-governance-provider.js";
 
 interface SecurityVulnerability {
   id: string;
@@ -1122,51 +1123,31 @@ class XraySecurityAuditServer {
    */
   async analyzeProposal(args: AnalyzeProposalArgs) {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args;
-    const text = `${proposalTitle} ${proposalDescription} ${evidence.join(" ")}`.toLowerCase();
 
-    let decision: "approve" | "reject" | "abstain" = "approve";
-    let confidence = 0.82;
-    let reasoning = "The proposal does not appear to introduce significant new security surface area.";
+    const vote = await tryLLMGovernance(
+      "security-audit",
+      proposalTitle,
+      proposalDescription,
+      evidence,
+      proposalType,
+    );
 
-    if (text.includes("aml") || text.includes("kyc") || text.includes("anti-money")) {
-      decision = "approve";
-      confidence = 0.91;
-      reasoning = "AML/KYC compliance measures are critical for regulatory security posture. Automated transaction monitoring closes vulnerability gaps in financial crime detection and demonstrates due diligence for regulatory inspections.";
-    } else if (text.includes("psd2") || text.includes("strong customer authentication") || text.includes("payment initiation")) {
-      decision = "approve";
-      confidence = 0.93;
-      reasoning = "PSD2 SCA implementation is a mandatory security control for payment services. Multi-factor authentication with dynamic linking reduces unauthorized payment risk and satisfies EBA regulatory technical standards.";
-    } else if (text.includes("gdpr") || text.includes("right to erasure") || text.includes("data protection")) {
-      decision = "approve";
-      confidence = 0.94;
-      reasoning = "GDPR compliance controls are foundational to data security posture. Automated data erasure pipelines reduce data breach exposure windows and satisfy supervisory authority inspection requirements.";
-    } else if (text.includes("beneficial ownership") || text.includes("ubo") || text.includes("pep screening")) {
-      decision = "approve";
-      confidence = 0.87;
-      reasoning = "Beneficial ownership transparency and PEP screening are critical AML controls. Verifying ultimate beneficial owners reduces money laundering risk through corporate account structuring.";
-    } else if (text.includes("extract method")) {
-      decision = "approve";
-      confidence = 0.88;
-      reasoning = "Extract Method refactoring improves security posture by reducing attack surface in large monolithic files and enabling better isolation of sensitive logic.";
-    } else if (text.includes("test coverage")) {
-      decision = "approve";
-      confidence = 0.91;
-      reasoning = "Expanding test coverage is one of the highest-ROI security controls available — more tests surface regressions and boundary condition vulnerabilities earlier.";
-    } else if (text.includes("increase timeout") && text.includes("flaky")) {
-      decision = "reject";
-      confidence = 0.75;
-      reasoning = "Repeatedly increasing timeouts to hide flaky tests can mask timing attacks, race conditions, and resource exhaustion vulnerabilities. Root cause remediation is required.";
-    }
-
-    if (proposalType === "fix" && text.includes("timeout")) {
-      confidence = Math.max(0.65, confidence - 0.10);
+    if (!vote) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: No LLM governance provider configured. Set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT, or install Hermes and run: hermes auth add xai-oauth --no-browser",
+          },
+        ],
+      };
     }
 
     return {
       content: [
         {
           type: "text",
-          text: `DECISION: ${decision}\nCONFIDENCE: ${confidence.toFixed(2)}\nREASONING: ${reasoning}`,
+          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}`,
         },
       ],
     };

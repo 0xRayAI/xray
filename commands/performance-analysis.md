@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# StringRay 1.0.0 - Performance Analysis
+# 0xRay 1.0.0 - Performance Analysis
 
 # Comprehensive metrics analysis for framework integration
 
-echo "📊 StringRay 1.0.0 v1.1.1 - Performance Analysis"
+echo "📊 0xRay 1.0.0 v1.1.1 - Performance Analysis"
 echo "============================================================"
 
 # Initialize performance metrics

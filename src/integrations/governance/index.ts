@@ -378,7 +378,7 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
    */
   private async loadConfig(): Promise<void> {
     try {
-      const configPath = path.join(process.cwd(), '.opencode', 'strray', 'features.json');
+      const configPath = path.join(process.cwd(), '.xray', 'features.json');
       
       if (!fs.existsSync(configPath)) {
         await this.log('warning', 'features.json not found, using defaults');

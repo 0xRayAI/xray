@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "allowJs": true
-  },
-  "include": [
-    "scripts/test/consumer-readiness.cjs"
-  ]
-}

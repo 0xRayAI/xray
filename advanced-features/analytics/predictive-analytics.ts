@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Predictive Analytics System
+ * 0xRay AI v1.3.4 - Predictive Analytics System
  *
  * Analyzes agent performance patterns and predicts optimal delegation strategies.
  * Uses historical data to optimize task assignment and improve framework efficiency.
@@ -55,7 +55,7 @@ export interface AnalyticsReport {
   underutilizedAgents: string[];
 }
 
-export class StringRayPredictiveAnalytics {
+export class 0xRayPredictiveAnalytics {
   private agentMetrics = new Map<string, AgentPerformanceMetrics>();
   private taskHistory: Array<{
     taskId: string;
@@ -555,4 +555,4 @@ export class StringRayPredictiveAnalytics {
   }
 }
 
-export const predictiveAnalytics = new StringRayPredictiveAnalytics();
+export const predictiveAnalytics = new 0xRayPredictiveAnalytics();

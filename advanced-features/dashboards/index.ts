@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Real-Time Performance Dashboards
+ * 0xRay AI v1.3.4 - Real-Time Performance Dashboards
  *
  * Comprehensive real-time performance monitoring dashboard system
  * with live metrics collection, alert management, and WebSocket streaming.

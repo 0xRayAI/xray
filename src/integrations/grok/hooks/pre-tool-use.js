@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Grok CLI PreToolUse Hook Handler for StringRay (0xRay) — First Class Citizen
+ * Grok CLI PreToolUse Hook Handler for 0xRay — First Class Citizen
  *
  * Real governance enforcement hook.
  * When Grok is about to execute a tool (write_file, edit, terminal cmd, etc.),
@@ -16,7 +16,7 @@ function findGovernanceCore() {
   const here = path.dirname(new URL(import.meta.url).pathname);
 
   // Priority: explicit dev root
-  const devRoot = process.env.STRRAY_ROOT;
+  const devRoot = process.env.XRAY_ROOT;
   if (devRoot) {
     const devCandidate = path.resolve(devRoot, 'dist/governance/governance-core.js');
     if (fs.existsSync(devCandidate)) return devCandidate;
@@ -49,7 +49,7 @@ function walkUpForCore(startDir, maxLevels = 8) {
     if (fs.existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-        if (pkg.name === 'strray-ai' || pkg.name === 'stringray' || pkg.name === '0xray') {
+        if (pkg.name === '0xray') {
           results.push(path.resolve(current, 'dist/governance/governance-core.js'));
           results.push(path.resolve(current, 'governance/governance-core.js'));
         }

@@ -1,4 +1,4 @@
-"""Comprehensive tests for the StringRay Hermes Plugin v2.
+"""Comprehensive tests for the Xray Hermes Plugin v2.
 
 Tests all 3 tools, both hooks, the slash command, bridge integration,
 logging to disk, and the full register() wiring.
@@ -30,18 +30,18 @@ sys.path.insert(0, PLUGIN_DIR)
 
 # Force reimport
 for mod in list(sys.modules):
-    if "strray" in mod and ("schemas" in mod or "tools" in mod or "plugin" in mod):
+    if "xray" in mod and ("schemas" in mod or "tools" in mod or "plugin" in mod):
         del sys.modules[mod]
 
 schemas = importlib.import_module("schemas")
 tools_mod = importlib.import_module("tools")
 
 # Create a fake package for __init__.py execution
-pkg = types.ModuleType("strray_hermes_pkg")
+pkg = types.ModuleType("xray_hermes_pkg")
 pkg.__path__ = [PLUGIN_DIR]
 pkg.__dict__["schemas"] = schemas
 pkg.__dict__["tools"] = tools_mod
-sys.modules["strray_hermes_pkg"] = pkg
+sys.modules["xray_hermes_pkg"] = pkg
 
 init_path = os.path.join(PLUGIN_DIR, "__init__.py")
 with open(init_path) as f:
@@ -56,8 +56,8 @@ pi = pkg  # plugin init module
 
 class TestSchemas(unittest.TestCase):
     def test_validate_schema_has_required_fields(self):
-        s = schemas.STRRAY_VALIDATE
-        self.assertEqual(s["name"], "strray_validate")
+        s = schemas.XRAY_VALIDATE
+        self.assertEqual(s["name"], "xray_validate")
         params = s["parameters"]
         self.assertEqual(params["type"], "object")
         self.assertIn("files", params["properties"])
@@ -66,51 +66,51 @@ class TestSchemas(unittest.TestCase):
         self.assertEqual(params["properties"]["files"]["type"], "array")
 
     def test_codex_check_schema(self):
-        s = schemas.STRRAY_CODEX_CHECK
-        self.assertEqual(s["name"], "strray_codex_check")
+        s = schemas.XRAY_CODEX_CHECK
+        self.assertEqual(s["name"], "xray_codex_check")
         fa = s["parameters"]["properties"]["focus_areas"]
         self.assertIn("enum", fa["items"])
         self.assertIn("error-handling", fa["items"]["enum"])
 
     def test_health_schema_no_required(self):
-        s = schemas.STRRAY_HEALTH
+        s = schemas.XRAY_HEALTH
         self.assertEqual(len(s["parameters"].get("required", [])), 0)
 
     def test_descriptions_non_empty(self):
-        for name, schema in [("v", schemas.STRRAY_VALIDATE), ("c", schemas.STRRAY_CODEX_CHECK), ("h", schemas.STRRAY_HEALTH)]:
+        for name, schema in [("v", schemas.XRAY_VALIDATE), ("c", schemas.XRAY_CODEX_CHECK), ("h", schemas.XRAY_HEALTH)]:
             self.assertTrue(len(schema["description"]) > 20, f"{name}")
 
 
-class TestRunStrrayHelper(unittest.TestCase):
+class TestRunXrayHelper(unittest.TestCase):
     """Test the CLI fallback helper (still exists for bridge-less environments)."""
 
     def test_successful_command(self):
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=0, stdout="all good", stderr="")
-            r = json.loads(tools_mod._run_strray(["health"]))
+            r = json.loads(tools_mod._run_xray(["health"]))
             self.assertEqual(r["status"], "ok")
             self.assertEqual(m.call_args[0][0], ["npx", "0xray", "health"])
 
     def test_command_failure(self):
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=1, stdout="", stderr="broke")
-            r = json.loads(tools_mod._run_strray(["validate"]))
+            r = json.loads(tools_mod._run_xray(["validate"]))
             self.assertEqual(r["status"], "error")
 
     def test_file_not_found(self):
         with patch("subprocess.run", side_effect=FileNotFoundError):
-            r = json.loads(tools_mod._run_strray(["health"]))
+            r = json.loads(tools_mod._run_xray(["health"]))
             self.assertIn("not found", r["error"])
 
     def test_timeout(self):
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("c", 30)):
-            r = json.loads(tools_mod._run_strray(["health"], timeout=15))
+            r = json.loads(tools_mod._run_xray(["health"], timeout=15))
             self.assertIn("15s", r["error"])
 
     def test_custom_timeout(self):
         with patch("subprocess.run") as m:
             m.return_value = MagicMock(returncode=0, stdout="", stderr="")
-            tools_mod._run_strray(["health"], timeout=60)
+            tools_mod._run_xray(["health"], timeout=60)
             self.assertEqual(m.call_args[1]["timeout"], 60)
 
 
@@ -143,11 +143,11 @@ class TestBridgeHelper(unittest.TestCase):
             self.assertIn("timed out", r["error"])
 
 
-class TestStrrayHealth(unittest.TestCase):
+class TestXrayHealth(unittest.TestCase):
     def test_health_via_bridge(self):
         """v2: health uses bridge first."""
         with patch.object(tools_mod, "_bridge_call", return_value={"status": "ok", "framework": "loaded", "version": "1.15.0", "components": {}}) as m:
-            r = json.loads(tools_mod.strray_health({}))
+            r = json.loads(tools_mod.xray_health({}))
             self.assertEqual(r["status"], "ok")
             self.assertEqual(r["via"], "bridge")
             m.assert_called_once_with({"command": "health"}, timeout=10)
@@ -155,21 +155,21 @@ class TestStrrayHealth(unittest.TestCase):
     def test_health_fallback_to_cli(self):
         """v2: falls back to CLI when bridge fails."""
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
-            with patch.object(tools_mod, "_run_strray", return_value='{"status":"ok","output":"healthy"}') as cli:
-                r = json.loads(tools_mod.strray_health({}))
+            with patch.object(tools_mod, "_run_xray", return_value='{"status":"ok","output":"healthy"}') as cli:
+                r = json.loads(tools_mod.xray_health({}))
                 cli.assert_called_once()
 
     def test_health_ignores_extra_args(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"status": "ok", "framework": "loaded", "version": "1.0", "components": {}}):
-            r = json.loads(tools_mod.strray_health({"x": 1}))
+            r = json.loads(tools_mod.xray_health({"x": 1}))
             self.assertEqual(r["status"], "ok")
 
 
-class TestStrrayValidate(unittest.TestCase):
+class TestXrayValidate(unittest.TestCase):
     def test_with_files_via_bridge(self):
         """v2: validate uses bridge first."""
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "fileResults": []}) as m:
-            r = json.loads(tools_mod.strray_validate({"files": ["a.ts", "b.ts"], "operation": "commit"}))
+            r = json.loads(tools_mod.xray_validate({"files": ["a.ts", "b.ts"], "operation": "commit"}))
             self.assertEqual(r["status"], "passed")
             self.assertEqual(r["files_checked"], 2)
             self.assertEqual(r["via"], "bridge")
@@ -177,86 +177,86 @@ class TestStrrayValidate(unittest.TestCase):
 
     def test_bridge_violations(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": False, "fileResults": [{"file": "a.ts", "passed": False, "violations": ["tests-required"]}]}) as m:
-            r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
+            r = json.loads(tools_mod.xray_validate({"files": ["a.ts"]}))
             self.assertEqual(r["status"], "violations")
             self.assertEqual(r["file_results"][0]["violations"], ["tests-required"])
 
     def test_bridge_error_fallback_to_cli(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
-            with patch.object(tools_mod, "_run_strray", return_value='{"status":"ok","output":"valid"}') as cli:
-                r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
+            with patch.object(tools_mod, "_run_xray", return_value='{"status":"ok","output":"valid"}') as cli:
+                r = json.loads(tools_mod.xray_validate({"files": ["a.ts"]}))
                 self.assertEqual(r["via"], "cli")
                 cli.assert_called_once()
 
     def test_no_files_error(self):
-        r = json.loads(tools_mod.strray_validate({"files": []}))
+        r = json.loads(tools_mod.xray_validate({"files": []}))
         self.assertIn("No files", r["error"])
 
     def test_no_files_key_error(self):
-        r = json.loads(tools_mod.strray_validate({}))
+        r = json.loads(tools_mod.xray_validate({}))
         self.assertIn("error", r)
 
     def test_default_operation(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "fileResults": []}):
-            r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
+            r = json.loads(tools_mod.xray_validate({"files": ["a.ts"]}))
             self.assertEqual(r["operation"], "commit")
 
     def test_100_files(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "fileResults": []}) as m:
             fs = [f"f{i}.ts" for i in range(100)]
-            r = json.loads(tools_mod.strray_validate({"files": fs}))
+            r = json.loads(tools_mod.xray_validate({"files": fs}))
             self.assertEqual(r["files_checked"], 100)
 
 
-class TestStrrayCodexCheck(unittest.TestCase):
+class TestXrayCodexCheck(unittest.TestCase):
     def test_with_code_via_bridge(self):
         """v2: codex check uses bridge for real quality gate analysis."""
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}) as m:
-            r = json.loads(tools_mod.strray_codex_check({"code": "const x = null;", "operation": "create"}))
+            r = json.loads(tools_mod.xray_codex_check({"code": "const x = null;", "operation": "create"}))
             self.assertEqual(r["status"], "passed")
             self.assertEqual(r["via"], "bridge")
             m.assert_called_once()
 
     def test_with_code_bridge_violations(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": False, "violations": ["console.log found"], "checks": []}):
-            r = json.loads(tools_mod.strray_codex_check({"code": "console.log(x)", "operation": "create"}))
+            r = json.loads(tools_mod.xray_codex_check({"code": "console.log(x)", "operation": "create"}))
             self.assertEqual(r["status"], "violations")
             self.assertEqual(r["violations"], ["console.log found"])
 
     def test_with_focus_areas(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}) as m:
-            tools_mod.strray_codex_check({"code": "eval()", "operation": "modify", "focus_areas": ["security"]})
+            tools_mod.xray_codex_check({"code": "eval()", "operation": "modify", "focus_areas": ["security"]})
             self.assertEqual(m.call_args[0][0]["focusAreas"], ["security"])
 
     def test_empty_string_code_treated_as_code(self):
         """BUG FIX: empty string '' should still be treated as code (is not None)."""
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}) as m:
-            r = json.loads(tools_mod.strray_codex_check({"code": "", "operation": "create"}))
+            r = json.loads(tools_mod.xray_codex_check({"code": "", "operation": "create"}))
             self.assertEqual(r["status"], "passed")
             self.assertEqual(r["code_length"], 0)
 
     def test_no_code_bridge_health(self):
         """No code provided — bridge health check."""
         with patch.object(tools_mod, "_bridge_call", return_value={"framework": "loaded", "version": "1.15.0", "components": {}}) as m:
-            r = json.loads(tools_mod.strray_codex_check({"operation": "refactor"}))
+            r = json.loads(tools_mod.xray_codex_check({"operation": "refactor"}))
             self.assertEqual(r["status"], "ok")
             self.assertIn("Pass", r["note"])
 
     def test_no_code_bridge_error_fallback(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
-            with patch.object(tools_mod, "_run_strray", return_value='{"status":"ok","output":"healthy"}') as cli:
-                r = json.loads(tools_mod.strray_codex_check({"operation": "create"}))
+            with patch.object(tools_mod, "_run_xray", return_value='{"status":"ok","output":"healthy"}') as cli:
+                r = json.loads(tools_mod.xray_codex_check({"operation": "create"}))
                 cli.assert_called_once()
 
     def test_default_operation(self):
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}):
-            r = json.loads(tools_mod.strray_codex_check({"code": "x"}))
+            r = json.loads(tools_mod.xray_codex_check({"code": "x"}))
             self.assertEqual(r["operation"], "create")
 
     def test_multiline_code(self):
         code = "function foo() {\n  return null;\n}\n"
         with patch.object(tools_mod, "_bridge_call", return_value={"passed": True, "violations": [], "checks": []}):
-            r = json.loads(tools_mod.strray_codex_check({"code": code, "operation": "create"}))
+            r = json.loads(tools_mod.xray_codex_check({"code": code, "operation": "create"}))
             self.assertEqual(r["code_length"], len(code))
 
 
@@ -270,10 +270,10 @@ class TestPreToolCallHook(unittest.TestCase):
         pi._session_stats["session_id"] = None
 
     @patch.object(pi, "_call_bridge")
-    def test_strray_mcp_no_bridge(self, mock_bridge):
-        """StringRay MCP tools skip bridge entirely."""
-        pi._on_pre_tool_call("mcp_strray_lint_lint", {}, "t1")
-        self.assertEqual(pi._session_stats["strray_mcp_calls"], 1)
+    def test_xray_mcp_no_bridge(self, mock_bridge):
+        """Xray MCP tools skip bridge entirely."""
+        pi._on_pre_tool_call("mcp_xray_lint_lint", {}, "t1")
+        self.assertEqual(pi._session_stats["xray_mcp_calls"], 1)
         self.assertEqual(pi._session_stats["native_tool_calls"], 0)
         mock_bridge.assert_not_called()
 
@@ -316,26 +316,26 @@ class TestPreToolCallHook(unittest.TestCase):
         """Terminal nudge only fires when command matches a known pattern."""
         # No command arg — no nudge
         with self.assertRaises(AssertionError):
-            with self.assertLogs("strray-hermes", level="INFO"):
+            with self.assertLogs("xray-hermes", level="INFO"):
                 pi._on_pre_tool_call("terminal", {}, "t1")
 
         # Generic command (git, ls) — no nudge
         with self.assertRaises(AssertionError):
-            with self.assertLogs("strray-hermes", level="INFO"):
+            with self.assertLogs("xray-hermes", level="INFO"):
                 pi._on_pre_tool_call("terminal", {"command": "git status"}, "t1")
 
         # Grep command — should nudge
-        with self.assertLogs("strray-hermes", level="INFO") as cm:
+        with self.assertLogs("xray-hermes", level="INFO") as cm:
             pi._on_pre_tool_call("terminal", {"command": "grep -r 'pattern' src/"}, "t1")
         self.assertTrue(any("grep" in m for m in cm.output))
 
         # npm audit — should nudge
-        with self.assertLogs("strray-hermes", level="INFO") as cm:
+        with self.assertLogs("xray-hermes", level="INFO") as cm:
             pi._on_pre_tool_call("terminal", {"command": "npm audit"}, "t1")
         self.assertTrue(any("audit" in m for m in cm.output))
 
     def test_nudge_search_files(self):
-        with self.assertLogs("strray-hermes", level="INFO") as cm:
+        with self.assertLogs("xray-hermes", level="INFO") as cm:
             pi._on_pre_tool_call("search_files", {}, "t1")
         self.assertTrue(any("Tip" in m for m in cm.output))
 
@@ -343,7 +343,7 @@ class TestPreToolCallHook(unittest.TestCase):
         """write_file is a code tool — no nudge, gets bridge instead."""
         with patch.object(pi, "_call_bridge", return_value={"passed": True, "qualityGate": {"passed": True}, "processors": {"ran": False}}):
             with self.assertRaises(AssertionError):
-                with self.assertLogs("strray-hermes", level="INFO"):
+                with self.assertLogs("xray-hermes", level="INFO"):
                     pi._on_pre_tool_call("write_file", {}, "t1")
 
     def test_accumulates(self):
@@ -352,12 +352,12 @@ class TestPreToolCallHook(unittest.TestCase):
                 pi._on_pre_tool_call("terminal", {}, "t1")
         self.assertEqual(pi._session_stats["total_tool_calls"], 5)
 
-    def test_is_strray_mcp(self):
-        self.assertTrue(pi._is_strray_mcp("mcp_strray_lint_lint"))
-        self.assertTrue(pi._is_strray_mcp("mcp_strray_enforcer_codex_enforcement"))
-        self.assertFalse(pi._is_strray_mcp("terminal"))
-        self.assertFalse(pi._is_strray_mcp("strray_validate"))
-        self.assertFalse(pi._is_strray_mcp("mcp_other_tool"))
+    def test_is_xray_mcp(self):
+        self.assertTrue(pi._is_xray_mcp("mcp_xray_lint_lint"))
+        self.assertTrue(pi._is_xray_mcp("mcp_xray_enforcer_codex_enforcement"))
+        self.assertFalse(pi._is_xray_mcp("terminal"))
+        self.assertFalse(pi._is_xray_mcp("xray_validate"))
+        self.assertFalse(pi._is_xray_mcp("mcp_other_tool"))
 
 
 class TestPostToolCallHook(unittest.TestCase):
@@ -415,7 +415,7 @@ class TestSlashCommand(unittest.TestCase):
             "session_id": "test-session",
             "code_operations": 5,
             "total_tool_calls": 20,
-            "strray_mcp_calls": 12,
+            "xray_mcp_calls": 12,
             "native_tool_calls": 8,
             "quality_gate_runs": 10,
             "quality_gate_blocks": 2,
@@ -429,7 +429,7 @@ class TestSlashCommand(unittest.TestCase):
         }
 
     def test_stats(self):
-        o = pi._strray_command("stats")
+        o = pi._xray_command("stats")
         self.assertIn("20", o)
         self.assertIn("12", o)
         self.assertIn("8", o)
@@ -440,32 +440,32 @@ class TestSlashCommand(unittest.TestCase):
         self.assertIn("15", o)  # bridge_calls
 
     def test_help(self):
-        o = pi._strray_command("help")
+        o = pi._xray_command("help")
         self.assertIn("status", o)
         self.assertIn("help", o)
 
     def test_status_via_bridge(self):
-        """v2: status uses bridge, not tools.strray_health."""
+        """v2: status uses bridge, not tools.xray_health."""
         with patch.object(pi, "_call_bridge", return_value={"framework": "loaded", "version": "1.15.0", "components": {"qualityGate": True, "processorManager": True}}) as m:
-            o = pi._strray_command("status")
+            o = pi._xray_command("status")
             self.assertIn("loaded", o)
             self.assertIn("1.15.0", o)
             m.assert_called_once_with({"command": "health"}, timeout=10)
 
     def test_status_bridge_error(self):
         with patch.object(pi, "_call_bridge", return_value={"error": "node not found"}):
-            o = pi._strray_command("status")
+            o = pi._xray_command("status")
             self.assertIn("node not found", o)
 
     def test_default_status(self):
         with patch.object(pi, "_call_bridge", return_value={"framework": "loaded", "version": "1.0", "components": {}}):
-            o = pi._strray_command("")
+            o = pi._xray_command("")
             self.assertIn("loaded", o)
 
     def test_stats_null_started_at(self):
         pi._session_stats["started_at"] = None
         pi._session_stats["session_id"] = None
-        o = pi._strray_command("stats")
+        o = pi._xray_command("stats")
         self.assertIn("N/A", o)
 
 
@@ -484,7 +484,7 @@ class TestSessionStartHook(unittest.TestCase):
         self.assertEqual(pi._session_stats["session_id"], "s1")
 
     def test_logs(self):
-        with self.assertLogs("strray-hermes", level="INFO") as cm:
+        with self.assertLogs("xray-hermes", level="INFO") as cm:
             pi._on_session_start("s1", "telegram")
         self.assertTrue(any("s1" in m for m in cm.output))
         self.assertTrue(any("telegram" in m for m in cm.output))
@@ -495,29 +495,29 @@ class TestRegisterIntegration(unittest.TestCase):
         ctx = MagicMock()
         pi.register(ctx)
         names = [c[1]["name"] for c in ctx.register_tool.call_args_list]
-        self.assertEqual(set(names), {"strray_validate", "strray_codex_check", "strray_health", "strray_hooks"})
+        self.assertEqual(set(names), {"xray_validate", "xray_codex_check", "xray_health", "xray_hooks"})
 
     def test_toolset_name(self):
         ctx = MagicMock()
         pi.register(ctx)
         for c in ctx.register_tool.call_args_list:
-            self.assertEqual(c[1]["toolset"], "strray-hermes")
+            self.assertEqual(c[1]["toolset"], "xray-hermes")
 
     def test_schemas_wired(self):
         ctx = MagicMock()
         pi.register(ctx)
         sm = {c[1]["name"]: c[1]["schema"] for c in ctx.register_tool.call_args_list}
-        self.assertIs(sm["strray_validate"], schemas.STRRAY_VALIDATE)
-        self.assertIs(sm["strray_codex_check"], schemas.STRRAY_CODEX_CHECK)
-        self.assertIs(sm["strray_health"], schemas.STRRAY_HEALTH)
+        self.assertIs(sm["xray_validate"], schemas.XRAY_VALIDATE)
+        self.assertIs(sm["xray_codex_check"], schemas.XRAY_CODEX_CHECK)
+        self.assertIs(sm["xray_health"], schemas.XRAY_HEALTH)
 
     def test_handlers_wired(self):
         ctx = MagicMock()
         pi.register(ctx)
         hm = {c[1]["name"]: c[1]["handler"] for c in ctx.register_tool.call_args_list}
-        self.assertIs(hm["strray_validate"], tools_mod.strray_validate)
-        self.assertIs(hm["strray_codex_check"], tools_mod.strray_codex_check)
-        self.assertIs(hm["strray_health"], tools_mod.strray_health)
+        self.assertIs(hm["xray_validate"], tools_mod.xray_validate)
+        self.assertIs(hm["xray_codex_check"], tools_mod.xray_codex_check)
+        self.assertIs(hm["xray_health"], tools_mod.xray_health)
 
     def test_hooks_registered(self):
         ctx = MagicMock()
@@ -551,7 +551,7 @@ class TestRegisterIntegration(unittest.TestCase):
 
     def test_logs_on_load(self):
         ctx = MagicMock()
-        with self.assertLogs("strray-hermes", level="INFO") as cm:
+        with self.assertLogs("xray-hermes", level="INFO") as cm:
             pi.register(ctx)
         self.assertTrue(any("Plugin" in m and "loaded" in m for m in cm.output))
 
@@ -656,9 +656,9 @@ class TestLiveBridge(unittest.TestCase):
         if not bridge_path.exists():
             self.skipTest("bridge.mjs not built yet")
 
-        # Use stringray dev repo as project root (has package.json)
-        strray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "stringray")
-        cwd = strray_root if Path(strray_root).exists() else PLUGIN_DIR
+        # Use xray dev repo as project root (has package.json)
+        xray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "xray")
+        cwd = xray_root if Path(xray_root).exists() else PLUGIN_DIR
 
         r = subprocess.run(
             ["node", str(bridge_path), "health", "--cwd", cwd],
@@ -675,8 +675,8 @@ class TestLiveBridge(unittest.TestCase):
         if not bridge_path.exists():
             self.skipTest("bridge.mjs not built yet")
 
-        strray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "stringray")
-        cwd = strray_root if Path(strray_root).exists() else PLUGIN_DIR
+        xray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "xray")
+        cwd = xray_root if Path(xray_root).exists() else PLUGIN_DIR
 
         r = subprocess.run(
             ["node", str(bridge_path), "stats", "--cwd", cwd],
@@ -692,8 +692,8 @@ class TestLiveBridge(unittest.TestCase):
         if not bridge_path.exists():
             self.skipTest("bridge.mjs not built yet")
 
-        strray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "stringray")
-        cwd = strray_root if Path(strray_root).exists() else PLUGIN_DIR
+        xray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "xray")
+        cwd = xray_root if Path(xray_root).exists() else PLUGIN_DIR
 
         r = subprocess.run(
             ["node", str(bridge_path), "validate", "--cwd", cwd,
@@ -710,8 +710,8 @@ class TestLiveBridge(unittest.TestCase):
         if not bridge_path.exists():
             self.skipTest("bridge.mjs not built yet")
 
-        strray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "stringray")
-        cwd = strray_root if Path(strray_root).exists() else PLUGIN_DIR
+        xray_root = str(Path(PLUGIN_DIR).parent.parent.parent / "dev" / "xray")
+        cwd = xray_root if Path(xray_root).exists() else PLUGIN_DIR
 
         r = subprocess.run(
             ["node", str(bridge_path), "validate", "--cwd", cwd,
@@ -739,32 +739,32 @@ class TestBridgeErrorPaths(unittest.TestCase):
             r = tools_mod._bridge_call({"command": "health"})
             self.assertIn("error", r)
 
-    def test_bridge_generic_exception_in_run_strray(self):
-        """_run_strray catches non-standard exceptions."""
+    def test_bridge_generic_exception_in_run_xray(self):
+        """_run_xray catches non-standard exceptions."""
         with patch("subprocess.run", side_effect=RuntimeError("unexpected")):
-            r = json.loads(tools_mod._run_strray(["health"]))
+            r = json.loads(tools_mod._run_xray(["health"]))
             self.assertIn("unexpected", r["error"])
 
     def test_validate_cli_fallback_error(self):
-        """strray_validate CLI fallback when CLI returns an error JSON."""
+        """xray_validate CLI fallback when CLI returns an error JSON."""
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "bridge down"}):
-            with patch.object(tools_mod, "_run_strray", return_value='{"error": "validation failed"}'):
-                r = json.loads(tools_mod.strray_validate({"files": ["a.ts"]}))
+            with patch.object(tools_mod, "_run_xray", return_value='{"error": "validation failed"}'):
+                r = json.loads(tools_mod.xray_validate({"files": ["a.ts"]}))
                 # CLI error path returns raw result without "via" key
                 self.assertIn("error", r)
 
     def test_codex_check_static_fallback(self):
-        """strray_codex_check with code but bridge down falls back to static analysis."""
+        """xray_codex_check with code but bridge down falls back to static analysis."""
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "bridge down"}):
-            r = json.loads(tools_mod.strray_codex_check({"code": "console.log(1)", "operation": "create"}))
+            r = json.loads(tools_mod.xray_codex_check({"code": "console.log(1)", "operation": "create"}))
             self.assertEqual(r["via"], "static")
             self.assertIn("basic analysis", r["note"])
 
     def test_codex_check_cli_health_error(self):
-        """strray_codex_check no-code path: bridge error + CLI also errors."""
+        """xray_codex_check no-code path: bridge error + CLI also errors."""
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "no node"}):
-            with patch.object(tools_mod, "_run_strray", return_value='{"error": "0xray not found"}'):
-                r = json.loads(tools_mod.strray_codex_check({"operation": "create"}))
+            with patch.object(tools_mod, "_run_xray", return_value='{"error": "0xray not found"}'):
+                r = json.loads(tools_mod.xray_codex_check({"operation": "create"}))
                 self.assertIn("error", r)
 
 
@@ -850,17 +850,17 @@ class TestPreToolCallEdgeCases(unittest.TestCase):
             self.assertEqual(pi._session_stats["code_operations"], 1, f"{tool} should be a code tool")
 
     @patch.object(pi, "_call_bridge")
-    def test_unknown_tool_not_strray_mcp(self, mock_bridge):
+    def test_unknown_tool_not_xray_mcp(self, mock_bridge):
         """Unknown tools should be treated as native tools."""
         pi._on_pre_tool_call("some_random_tool", {}, "t1")
         self.assertEqual(pi._session_stats["native_tool_calls"], 1)
         mock_bridge.assert_not_called()
 
-    def test_strray_validate_tool_not_treated_as_mcp(self):
-        """strray_validate is a native tool, not an MCP tool."""
-        pi._on_pre_tool_call("strray_validate", {}, "t1")
+    def test_xray_validate_tool_not_treated_as_mcp(self):
+        """xray_validate is a native tool, not an MCP tool."""
+        pi._on_pre_tool_call("xray_validate", {}, "t1")
         self.assertEqual(pi._session_stats["native_tool_calls"], 1)
-        self.assertEqual(pi._session_stats["strray_mcp_calls"], 0)
+        self.assertEqual(pi._session_stats["xray_mcp_calls"], 0)
 
     @patch.object(pi, "_call_bridge", return_value={"passed": True, "qualityGate": {"passed": True, "violations": []}, "processors": {"ran": True, "success": True, "processorCount": 3, "details": [{"name": "p1", "success": True}, {"name": "p2", "success": True}, {"name": "p3", "success": False, "error": "failed"}]}})
     def test_pre_processor_partial_failure(self, mock_bridge):
@@ -875,12 +875,12 @@ class TestSlashCommandEdgeCases(unittest.TestCase):
     def test_unknown_command_defaults_to_status(self):
         """Unknown args default to status."""
         with patch.object(pi, "_call_bridge", return_value={"framework": "loaded", "version": "1.0", "components": {}}) as m:
-            pi._strray_command("something-random")
+            pi._xray_command("something-random")
             m.assert_called_once_with({"command": "health"}, timeout=10)
 
     def test_case_insensitive(self):
         """Command arg is lowercased."""
-        o = pi._strray_command(" STATS ")
+        o = pi._xray_command(" STATS ")
         self.assertIn("Session", o)
 
 
@@ -945,8 +945,8 @@ class TestBridgeHelperTimeoutDefault(unittest.TestCase):
             self.assertEqual(m.call_args[1]["timeout"], 5)
 
 
-class TestStrrayHooksTool(unittest.TestCase):
-    """Tests for the strray_hooks tool."""
+class TestXrayHooksTool(unittest.TestCase):
+    """Tests for the xray_hooks tool."""
 
     def test_list_via_bridge(self):
         """list action uses bridge when available."""
@@ -954,7 +954,7 @@ class TestStrrayHooksTool(unittest.TestCase):
             "status": "ok", "action": "list",
             "hooks": {"managed": ["pre-commit"], "missing": [], "external": [], "stale": []},
         }) as m:
-            r = json.loads(tools_mod.strray_hooks({"action": "list"}))
+            r = json.loads(tools_mod.xray_hooks({"action": "list"}))
             self.assertEqual(r["status"], "ok")
             self.assertEqual(r["via"], "bridge")
             m.assert_called_once()
@@ -968,7 +968,7 @@ class TestStrrayHooksTool(unittest.TestCase):
             "status": "ok", "action": "install", "installed": ["pre-commit", "post-commit"],
             "skipped": [], "errors": [],
         }) as m:
-            r = json.loads(tools_mod.strray_hooks({"action": "install"}))
+            r = json.loads(tools_mod.xray_hooks({"action": "install"}))
             self.assertEqual(r["via"], "bridge")
             self.assertEqual(len(r["result"]["installed"]), 2)
 
@@ -977,14 +977,14 @@ class TestStrrayHooksTool(unittest.TestCase):
         with patch.object(tools_mod, "_bridge_call", return_value={
             "status": "ok", "action": "uninstall", "removed": ["pre-commit"], "restored": [],
         }) as m:
-            r = json.loads(tools_mod.strray_hooks({"action": "uninstall"}))
+            r = json.loads(tools_mod.xray_hooks({"action": "uninstall"}))
             self.assertEqual(r["via"], "bridge")
 
     def test_bridge_error_fallback(self):
         """Falls back to file-based when bridge errors."""
         with patch.object(tools_mod, "_bridge_call", return_value={"error": "node not found"}):
             # Without a real git repo, should return error
-            r = json.loads(tools_mod.strray_hooks({"action": "list"}))
+            r = json.loads(tools_mod.xray_hooks({"action": "list"}))
             self.assertIn("via", r)
 
     def test_specific_hooks(self):
@@ -993,7 +993,7 @@ class TestStrrayHooksTool(unittest.TestCase):
             "status": "ok", "action": "list",
             "hooks": {"managed": [], "missing": ["pre-commit"], "external": [], "stale": []},
         }) as m:
-            tools_mod.strray_hooks({"action": "list", "hooks": ["pre-commit"]})
+            tools_mod.xray_hooks({"action": "list", "hooks": ["pre-commit"]})
             call_cmd = m.call_args[0][0]
             self.assertEqual(call_cmd["hooks"], ["pre-commit"])
 
@@ -1003,7 +1003,7 @@ class TestStrrayHooksTool(unittest.TestCase):
             "status": "ok", "action": "status",
             "hooks": {"managed": [], "missing": [], "external": [], "stale": []},
         }) as m:
-            r = json.loads(tools_mod.strray_hooks({"action": "status"}))
+            r = json.loads(tools_mod.xray_hooks({"action": "status"}))
             self.assertEqual(r["status"], "ok")
             m.assert_called_once()
 
@@ -1013,23 +1013,23 @@ class TestStrrayHooksTool(unittest.TestCase):
             "status": "ok", "action": "list",
             "hooks": {"managed": [], "missing": [], "external": [], "stale": []},
         }) as m:
-            tools_mod.strray_hooks({})
+            tools_mod.xray_hooks({})
             call_cmd = m.call_args[0][0]
             self.assertEqual(call_cmd["action"], "list")
 
 
-class TestStrrayHooksSchema(unittest.TestCase):
-    """Tests for the STRRAY_HOOKS schema."""
+class TestXrayHooksSchema(unittest.TestCase):
+    """Tests for the XRAY_HOOKS schema."""
 
     def test_schema_has_required_fields(self):
-        s = schemas.STRRAY_HOOKS
-        self.assertEqual(s["name"], "strray_hooks")
+        s = schemas.XRAY_HOOKS
+        self.assertEqual(s["name"], "xray_hooks")
         self.assertIn("action", s["parameters"]["properties"])
         self.assertIn("hooks", s["parameters"]["properties"])
         self.assertIn("action", s["parameters"]["required"])
 
     def test_action_enum(self):
-        s = schemas.STRRAY_HOOKS
+        s = schemas.XRAY_HOOKS
         action = s["parameters"]["properties"]["action"]
         self.assertIn("install", action["enum"])
         self.assertIn("uninstall", action["enum"])
@@ -1037,7 +1037,7 @@ class TestStrrayHooksSchema(unittest.TestCase):
         self.assertIn("status", action["enum"])
 
     def test_hooks_enum(self):
-        s = schemas.STRRAY_HOOKS
+        s = schemas.XRAY_HOOKS
         hooks = s["parameters"]["properties"]["hooks"]
         self.assertIn("pre-commit", hooks["items"]["enum"])
         self.assertIn("post-commit", hooks["items"]["enum"])
@@ -1045,7 +1045,7 @@ class TestStrrayHooksSchema(unittest.TestCase):
         self.assertIn("post-push", hooks["items"]["enum"])
 
     def test_description_mentions_hooks(self):
-        s = schemas.STRRAY_HOOKS
+        s = schemas.XRAY_HOOKS
         self.assertIn("git hooks", s["description"])
 
 
@@ -1057,21 +1057,21 @@ class TestRegisterIntegrationV2_1(unittest.TestCase):
         pi.register(ctx)
         names = [c[1]["name"] for c in ctx.register_tool.call_args_list]
         self.assertEqual(set(names), {
-            "strray_validate", "strray_codex_check",
-            "strray_health", "strray_hooks",
+            "xray_validate", "xray_codex_check",
+            "xray_health", "xray_hooks",
         })
 
-    def test_strray_hooks_schema_wired(self):
+    def test_xray_hooks_schema_wired(self):
         ctx = MagicMock()
         pi.register(ctx)
         sm = {c[1]["name"]: c[1]["schema"] for c in ctx.register_tool.call_args_list}
-        self.assertIs(sm["strray_hooks"], schemas.STRRAY_HOOKS)
+        self.assertIs(sm["xray_hooks"], schemas.XRAY_HOOKS)
 
-    def test_strray_hooks_handler_wired(self):
+    def test_xray_hooks_handler_wired(self):
         ctx = MagicMock()
         pi.register(ctx)
         hm = {c[1]["name"]: c[1]["handler"] for c in ctx.register_tool.call_args_list}
-        self.assertIs(hm["strray_hooks"], tools_mod.strray_hooks)
+        self.assertIs(hm["xray_hooks"], tools_mod.xray_hooks)
 
     def test_registers_two_hooks(self):
         ctx = MagicMock()
@@ -1090,7 +1090,7 @@ class TestRegisterIntegrationV2_1(unittest.TestCase):
 
     def test_v2_2_log_message(self):
         ctx = MagicMock()
-        with self.assertLogs("strray-hermes", level="INFO") as cm:
+        with self.assertLogs("xray-hermes", level="INFO") as cm:
             pi.register(ctx)
         self.assertTrue(any("v2.2" in m for m in cm.output))
         self.assertTrue(any("4 tools" in m for m in cm.output))

@@ -164,7 +164,7 @@ sys.path.insert(0, '${PROJECT_ROOT}/.opencode/src')
 
 try:
     # Try to import and initialize hook-related components
-    from strray.core.config import ConfigManager
+    from xray.core.config import ConfigManager
     config_manager = ConfigManager()
     config = config_manager.get_config()
 

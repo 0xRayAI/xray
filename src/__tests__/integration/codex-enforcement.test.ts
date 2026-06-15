@@ -61,7 +61,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      strRayContextLoader: mockContextLoader,
+      xrayContextLoader: mockContextLoader,
     }));
 
     // Should allow action when no codex is available
@@ -124,7 +124,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      strRayContextLoader: mockContextLoader,
+      xrayContextLoader: mockContextLoader,
     }));
 
     // Should allow action but log warnings for non-blocking violations
@@ -159,7 +159,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      strRayContextLoader: mockContextLoader,
+      xrayContextLoader: mockContextLoader,
     }));
 
     // Should allow compliant actions
@@ -180,7 +180,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      strRayContextLoader: mockContextLoader,
+      xrayContextLoader: mockContextLoader,
     }));
 
     // Should handle errors gracefully and allow action to prevent breaking workflow
@@ -213,7 +213,7 @@ describe("Codex Enforcement Integration", () => {
     };
 
     vi.doMock("../../context-loader", () => ({
-      strRayContextLoader: mockContextLoader,
+      xrayContextLoader: mockContextLoader,
     }));
 
     // Test critical tools (should be validated)

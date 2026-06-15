@@ -86,13 +86,13 @@ check_dir "dist/plugin/mcps" "MCP server binaries"
 check_dir ".opencode/logs" "Framework logs"
 check_dir "src" "Source code"
 check_dir "dist" "Compiled code"
-check_dir ".strray" "Framework configuration"
+check_dir ".xray" "Framework configuration"
 
 echo ""
 echo "📄 Configuration Validation:"
 check_json ".opencode/OpenCode.json" "OpenCode config"
 check_json ".mcp.json" "MCP server registry"
-check_json ".strray/codex.json" "Codex configuration"
+check_json ".xray/codex.json" "Codex configuration"
 
 echo ""
 echo "🤖 Agent System Validation:"
@@ -119,7 +119,7 @@ echo "⚙️ Framework Activation Validation:"
 LOG_FILE="logs/framework/activity.log"
 if [ -f "$LOG_FILE" ]; then
     # Check for activation success within last activation
-    if grep -q "strray-activation.*activation completed successfully" "$LOG_FILE" 2>/dev/null; then
+    if grep -q "xray-activation.*activation completed successfully" "$LOG_FILE" 2>/dev/null; then
         echo -e "${GREEN}✅ Framework activation: Completed successfully${NC}"
 
         # Check specific components
@@ -140,7 +140,7 @@ fi
 
 echo ""
 echo "🧠 Codex System Validation:"
-CODEX_FILE=".strray/codex.json"
+CODEX_FILE=".xray/codex.json"
 if [ -f "$CODEX_FILE" ]; then
     term_count=$(python3 -c "import json; data=json.load(open('$CODEX_FILE')); print(len(data.get('terms', {})))" 2>/dev/null || echo "0")
     if [ "$term_count" -ge 45 ]; then
@@ -182,7 +182,7 @@ fi
 echo ""
 echo "🔬 Framework Activation Test:"
 if node -e "
-import('./dist/strray-activation.js').then(m => m.activate0xRayFramework()).then(() => {
+import('./dist/xray-activation.js').then(m => m.activate0xRayFramework()).then(() => {
   console.log('✅ Framework activation: Operational');
   process.exit(0);
 }).catch(e => {

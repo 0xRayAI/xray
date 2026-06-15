@@ -7,10 +7,10 @@
  * check via enforce-validators.mjs or standalone.
  *
  * Patterns detected:
- *   - `||` fallback with known legacy name (e.g. XrayStateManager || StrRayStateManager)
+ *   - `||` fallback with known legacy name (e.g. XrayStateManager)
  *   - exported symbols suffixed `Compat`, `Legacy`, `Shim`, `Fallback`
  *   - `@deprecated` JSDoc on exported functions/classes
- *   - Known compat variables/imports from the old `strray-ai` package name
+ *   - Known compat variables/imports from the old `0xray` package name
  *
  * Usage:
  *   node scripts/ci/compat-shim-scanner.mjs
@@ -38,8 +38,8 @@ function scanFile(filePath) {
 
   // Pattern 1: || fallback with known legacy name
   const legacyNames = [
-    "StrRayStateManager", "StrRay", "strray",
-    "StringRay", "stringray",
+    "XrayStateManager", "Xray",
+    "0xRay", "stringray",
   ];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -89,7 +89,7 @@ function scanFile(filePath) {
 
   // Pattern 4: Known compat variable names
   const compatNames = [
-    "StrRayStateManager", "StrRayClient",
+    "XrayStateManager", "XrayClient",
     "LEGACY_", "COMPAT_",
   ];
   for (let i = 0; i < lines.length; i++) {

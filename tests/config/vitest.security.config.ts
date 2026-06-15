@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Security Testing Configuration
+ * 0xRay AI v1.3.4 - Security Testing Configuration
  *
  * Specialized testing configuration for security validation,
  * vulnerability testing, and OWASP compliance verification.
@@ -14,7 +14,7 @@ import { resolve } from "path";
 export default defineConfig({
   test: {
     // Security test configuration
-    name: "StrRay Security Tests",
+    name: "Xray Security Tests",
     environment: "node",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],

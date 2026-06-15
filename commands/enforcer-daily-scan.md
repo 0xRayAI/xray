@@ -5,9 +5,9 @@ description: Automated daily framework compliance monitoring with threshold vali
 
 #!/bin/bash
 
-# Daily compliance scan for StringRay 1.0.0
+# Daily compliance scan for 0xRay 1.0.0
 
-echo "🔍 StringRay 1.0.0 - Daily Compliance Scan"
+echo "🔍 0xRay 1.0.0 - Daily Compliance Scan"
 echo "========================================================="
 
 # Initialize compliance status
@@ -133,5 +133,5 @@ exit 1
 fi
 
 echo ""
-echo "🎯 StringRay 1.0.0 Status: OPERATIONAL"
+echo "🎯 0xRay 1.0.0 Status: OPERATIONAL"
 echo "Next scheduled scan: Tomorrow at 09:00"

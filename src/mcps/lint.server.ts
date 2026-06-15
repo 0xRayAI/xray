@@ -51,7 +51,7 @@ class XrayLintServer {
     this.setupToolHandlers();
     void frameworkLogger.log(
       "lint.server",
-      "-strray-lint-mcp-server-initialized-",
+      "-xray-lint-mcp-server-initialized-",
       "info",
       { message: "0xRay Lint MCP Server initialized" },
     );
@@ -467,7 +467,7 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
     await this.server.connect(transport);
     await frameworkLogger.log(
       "lint.server",
-      "-strray-lint-mcp-server-started-",
+      "-xray-lint-mcp-server-started-",
       "info",
       { message: "0xRay Lint MCP Server started" },
     );

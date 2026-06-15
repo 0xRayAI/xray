@@ -32,7 +32,7 @@ This is checked at `src/integrations/governance/governance-client.ts:35` and is 
 
 ### 2. Feature Flag (`features.json`)
 
-Add an `inference_governance` section to `.opencode/xray/features.json` (or `xray/features.json`):
+Add an `inference_governance` section to `.xray/features.json` (or `xray/features.json`):
 
 ```json
 {

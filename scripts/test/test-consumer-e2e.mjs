@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Consumer E2E Unified Runner
+ * 0xRay Consumer E2E Unified Runner
  *
  * Single pre-merge gate that validates the packaged artifact across all platforms.
  *

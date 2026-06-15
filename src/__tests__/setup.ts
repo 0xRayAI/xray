@@ -22,7 +22,7 @@ declare global {
 beforeAll(() => {
   // Set up test environment
   process.env.NODE_ENV = "test";
-  process.env.STRRAY_TEST_MODE = "true";
+  process.env.XRAY_TEST_MODE = "true";
 
   // Create required directories for tests
   const fs = require("fs");
@@ -32,7 +32,7 @@ beforeAll(() => {
     ".opencode",
     ".opencode/agents",
     ".opencode/logs",
-    ".opencode/xray",
+    ".xray",
     "src",
     "dist/plugin/mcps",
   ];
@@ -46,7 +46,7 @@ beforeAll(() => {
 
   // Create required config files for tests
   const codexContent = global.testUtils.createMockCodexContent();
-  const codexPath = path.resolve(".opencode/xray/codex.json");
+  const codexPath = path.resolve(".xray/codex.json");
   if (!fs.existsSync(codexPath)) {
     fs.writeFileSync(codexPath, codexContent);
   }
@@ -57,7 +57,7 @@ beforeAll(() => {
 
 afterAll(() => {
   // Clean up test environment
-  delete process.env.STRRAY_TEST_MODE;
+  delete process.env.XRAY_TEST_MODE;
 });
 
   // Reset console methods after each test
@@ -113,7 +113,7 @@ global.testUtils = {
     const path = require("path");
     return path.join(
       os.tmpdir(),
-      `strray-test-${crypto.randomBytes(8).toString("hex")}`,
+      `xray-test-${crypto.randomBytes(8).toString("hex")}`,
     );
   },
 

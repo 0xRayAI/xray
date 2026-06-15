@@ -79,7 +79,7 @@ Feeds GovernanceRequest → GovernanceResponse (votes, finalDecision, metamorpho
 
 ### 7. Enforcement / Codex (`src/enforcement/` + `src/core/` codex files — 34 files)
 
-**Files:** rule-enforcer.ts, core/, validators/ (11), loaders/ (9), types, enforcer-tools.server.ts. Plus src/core/codex-*.ts, src/core/codex-injector.ts. SSOT at .opencode/xray/codex.json (72 terms).
+**Files:** rule-enforcer.ts, core/, validators/ (11), loaders/ (9), types, enforcer-tools.server.ts. Plus src/core/codex-*.ts, src/core/codex-injector.ts. SSOT at .xray/codex.json (72 terms).
 
 **Role:** Pre-write validation, codex injection, rule enforcement. Zero-tolerance.
 

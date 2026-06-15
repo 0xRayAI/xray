@@ -15,21 +15,22 @@ logs/framework/routing-outcomes.json
 .strray/
 .opencode/.strrayrc.json
 xray/inference/
+.xray/inference/
+.opencode/xray/
 
 # Temp files
 *.log
 0xray-*.tgz
 *.tmp
 
-# StringRay runtime artifacts
+# 0xRay runtime artifacts
 .opencode/**/*.d.ts
 .opencode/**/*.d.ts.map
 
 # Generated config files (source in src/opencode/)
 .opencode/agents/*.yml
-.opencode/xray/*.json
-.opencode/xray/agents_template.md
-.opencode/strray/
+.xray/*.json
+.xray/agents_template.md
 .opencode/commands/*.md
 .opencode/commands/*.sh
 .opencode/command/*.md

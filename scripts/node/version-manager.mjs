@@ -308,7 +308,7 @@ function updateAgentsMd(counts) {
   
   // Legacy header count update (min compat for old consumer AGENTS.md files only; xray v2 YML SSOT primary)
   agentsMd = agentsMd.replace(
-    /0xRay\s*2\.0\s*-\s*\d+\s+Agents|StringRay\s*-\s*\d+\s+Agents/,
+    /0xRay\s*2\.0\s*-\s*\d+\s+Agents|0xRay\s*-\s*\d+\s+Agents/,
     `xray v2 - ${counts.agents} Agents`
   );
   

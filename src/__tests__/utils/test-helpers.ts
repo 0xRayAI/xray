@@ -250,7 +250,7 @@ export class MockCodexGenerator {
       },
       frameworkAlignment: {
         OpenCode: "v1.2.0",
-        "strray-framework": "v1.2.0",
+        "xray-framework": "v1.2.0",
       },
     });
   }

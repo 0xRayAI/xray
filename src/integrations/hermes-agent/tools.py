@@ -2,17 +2,44 @@
 
 v2.0: Now uses the Node.js bridge for real framework integration.
 Falls back to CLI (npx 0xray) when bridge is unavailable.
+"""
+
+import json
+import subprocess
+import shutil
+import os
+from pathlib import Path
+from . import schemas
+
+def _bridge_call(command: dict, timeout: int = 10) -> dict:
+    """Call the Hermes bridge via subprocess stdin."""
+    from . import _call_bridge
+    return _call_bridge(command, timeout)
+
+def _run_xray(args: list, timeout: int = 30) -> str:
+    """Fallback: run npx 0xray CLI command."""
+    try:
+        result = subprocess.run(
             ["npx", "0xray"] + args,
+            capture_output=True, text=True, timeout=timeout,
+        )
+        return result.stdout
+    except FileNotFoundError:
         return json.dumps({"error": "0xray not found. Run: npm install -g 0xray"})
     except subprocess.TimeoutExpired:
         return json.dumps({"error": f"Command timed out after {timeout}s"})
     except Exception as e:
         return json.dumps({"error": str(e)})
 
+def _get_project_root() -> str:
+    """Find project root (used in fallback mode)."""
+    from . import PROJECT_ROOT
+    return str(PROJECT_ROOT)
 
-# ── Tool: strray_validate ─────────────────────────────────────
 
-def strray_validate(args: dict, **kwargs) -> str:
+# ── Tool: xray_validate ─────────────────────────────────────
+
+def xray_validate(args: dict, **kwargs) -> str:
     """Run pre-commit validation on files using the framework.
 
     Uses bridge for real quality gate + processor pipeline.
@@ -41,7 +68,7 @@ def strray_validate(args: dict, **kwargs) -> str:
         })
 
     # Fallback to CLI
-    result = json.loads(_run_strray(["validate"], timeout=30))
+    result = json.loads(_run_xray(["validate"], timeout=30))
     if "error" in result:
         return json.dumps(result)
 
@@ -54,10 +81,10 @@ def strray_validate(args: dict, **kwargs) -> str:
     })
 
 
-# ── Tool: strray_codex_check ──────────────────────────────────
+# ── Tool: xray_codex_check ──────────────────────────────────
 
-def strray_codex_check(args: dict, **kwargs) -> str:
-    """Check code against StringRay codex rules.
+def xray_codex_check(args: dict, **kwargs) -> str:
+    """Check code against Xray codex rules.
 
     Uses bridge for real quality gate codex checks.
     Falls back to CLI if bridge unavailable.
@@ -93,7 +120,7 @@ def strray_codex_check(args: dict, **kwargs) -> str:
             "focus_areas": focus_areas or "all",
             "code_length": len(code),
             "note": "Bridge unavailable — basic analysis only. "
-                   "Full codex validation available via MCP: mcp_strray_enforcer_codex_enforcement",
+                   "Full codex validation available via MCP: mcp_xray_enforcer_codex_enforcement",
             "via": "static",
         })
 
@@ -109,7 +136,7 @@ def strray_codex_check(args: dict, **kwargs) -> str:
             "via": "bridge",
         })
 
-    result = json.loads(_run_strray(["health"], timeout=15))
+    result = json.loads(_run_xray(["health"], timeout=15))
     if "error" in result:
         return json.dumps(result)
 
@@ -121,10 +148,10 @@ def strray_codex_check(args: dict, **kwargs) -> str:
     })
 
 
-# ── Tool: strray_health ───────────────────────────────────────
+# ── Tool: xray_health ───────────────────────────────────────
 
-def strray_health(args: dict, **kwargs) -> str:
-    """Check StringRay framework health via bridge.
+def xray_health(args: dict, **kwargs) -> str:
+    """Check Xray framework health via bridge.
 
     Returns framework status, loaded components, version.
     """
@@ -141,13 +168,13 @@ def strray_health(args: dict, **kwargs) -> str:
         })
 
     # Fallback to CLI
-    return _run_strray(["health"], timeout=15)
+    return _run_xray(["health"], timeout=15)
 
 
-# ── Tool: strray_hooks ───────────────────────────────────────
+# ── Tool: xray_hooks ───────────────────────────────────────
 
-def strray_hooks(args: dict, **kwargs) -> str:
-    """Manage StringRay git hooks.
+def xray_hooks(args: dict, **kwargs) -> str:
+    """Manage Xray git hooks.
 
     Actions: install, uninstall, list, status
     Uses bridge for hook management when available.
@@ -174,7 +201,7 @@ def strray_hooks(args: dict, **kwargs) -> str:
 
     # Fallback: direct file-based hook management
     git_hooks_dir = Path(_get_project_root()) / ".git" / "hooks"
-    strray_hooks_dir = Path(_get_project_root()) / "hooks"
+    xray_hooks_dir = Path(_get_project_root()) / "hooks"
 
     if not git_hooks_dir.exists():
         return json.dumps({"error": "Not a git repository", "via": "fallback"})
@@ -183,19 +210,19 @@ def strray_hooks(args: dict, **kwargs) -> str:
         result = {"managed": [], "missing": [], "external": [], "stale": []}
         for hook_name in hooks:
             git_hook = git_hooks_dir / hook_name
-            strray_hook = strray_hooks_dir / hook_name
+            xray_hook = xray_hooks_dir / hook_name
             if not git_hook.exists():
                 result["missing"].append(hook_name)
             else:
                 try:
                     content = git_hook.read_text()[:500]
-                    if "StringRay" in content or "strray" in content or "run-hook.js" in content:
+                    if "Xray" in content or "xray" in content or False or "run-hook.js" in content:
                         result["managed"].append(hook_name)
                     else:
                         result["external"].append(hook_name)
                 except OSError:
                     result["external"].append(hook_name)
-            if not strray_hook.exists():
+            if not xray_hook.exists():
                 result["stale"].append(hook_name)
         return json.dumps({"status": "ok", "action": action, **result, "via": "fallback"})
 
@@ -203,7 +230,7 @@ def strray_hooks(args: dict, **kwargs) -> str:
         installed = []
         skipped = []
         for hook_name in hooks:
-            src = strray_hooks_dir / hook_name
+            src = xray_hooks_dir / hook_name
             dst = git_hooks_dir / hook_name
             if not src.exists():
                 skipped.append(hook_name)
@@ -212,8 +239,8 @@ def strray_hooks(args: dict, **kwargs) -> str:
                 if dst.exists():
                     try:
                         content = dst.read_text()[:500]
-                        if "StringRay" not in content and "strray" not in content:
-                            dst.rename(dst.with_suffix(".strray-backup"))
+                        if "Xray" not in content and "xray" not in content:
+                            dst.rename(dst.with_suffix(".xray-backup"))
                         else:
                             dst.unlink()
                     except OSError:
@@ -233,13 +260,13 @@ def strray_hooks(args: dict, **kwargs) -> str:
         restored = []
         for hook_name in hooks:
             dst = git_hooks_dir / hook_name
-            backup = dst.with_suffix(".strray-backup")
+            backup = dst.with_suffix(".xray-backup")
             if not dst.exists():
                 continue
             try:
                 content = dst.read_text()[:500]
-                is_strray = "StringRay" in content or "strray" in content or "run-hook.js" in content
-                if is_strray or dst.is_symlink():
+                is_xray = "Xray" in content or "xray" in content or False or "run-hook.js" in content
+                if is_xray or dst.is_symlink():
                     dst.unlink()
                     if backup.exists():
                         shutil.move(str(backup), str(dst))
@@ -251,3 +278,80 @@ def strray_hooks(args: dict, **kwargs) -> str:
         return json.dumps({"status": "ok", "action": "uninstall", "removed": removed, "restored": restored, "via": "fallback"})
 
     return json.dumps({"error": f"Unknown action: {action}", "via": "fallback"})
+
+
+# ── Tool: xray_skill_install ─────────────────────────────────
+
+def xray_skill_install(args: dict, **kwargs) -> str:
+    """Install skills from registry or git repo via bridge."""
+    source = args.get("source", "")
+
+    if not source:
+        return json.dumps({"error": "No source specified for skill install"})
+
+    bridge_result = _bridge_call({
+        "command": "skill-install",
+        "source": source,
+    }, timeout=120)
+
+    if "error" not in bridge_result:
+        return json.dumps({
+            "status": "ok",
+            "source": source,
+            "output": bridge_result.get("output", ""),
+            "via": "bridge",
+        })
+
+    # Fallback to CLI
+    result = _run_xray(["skill:install", source], timeout=120)
+    try:
+        parsed = json.loads(result)
+        if "error" in parsed:
+            return json.dumps(parsed)
+    except json.JSONDecodeError:
+        pass
+    return json.dumps({
+        "status": "ok",
+        "source": source,
+        "output": result.strip(),
+        "via": "cli",
+    })
+
+
+# ── Tool: xray_skill_registry ───────────────────────────────
+
+def xray_skill_registry(args: dict, **kwargs) -> str:
+    """Manage skill registry sources via bridge."""
+    action = args.get("action", "list")
+    name = args.get("name", "")
+    url = args.get("url", "")
+
+    bridge_args = {"command": "skill-registry", "action": action}
+    if name:
+        bridge_args["source"] = name
+    if url:
+        bridge_args["url"] = url
+
+    bridge_result = _bridge_call(bridge_args, timeout=30)
+
+    if "error" not in bridge_result:
+        return json.dumps({
+            "status": "ok",
+            "action": action,
+            "output": bridge_result.get("output", ""),
+            "via": "bridge",
+        })
+
+    # Fallback to CLI
+    cli_args = ["skill:registry", action]
+    if name:
+        cli_args.extend(["--name", name])
+    if url:
+        cli_args.extend(["--url", url])
+    result = _run_xray(cli_args, timeout=30)
+    return json.dumps({
+        "status": "ok",
+        "action": action,
+        "output": result.strip(),
+        "via": "cli",
+    })

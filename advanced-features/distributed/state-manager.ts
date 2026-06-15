@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Distributed State Management Layer
+ * 0xRay AI v1.3.4 - Distributed State Management Layer
  *
  * Enterprise-grade distributed state management with Redis/ETCD integration
  * for multi-instance deployments with strong consistency guarantees.
@@ -86,7 +86,7 @@ export class DistributedStateManager extends EventEmitter {
     this.config = {
       redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
       clusterMode: false,
-      keyPrefix: "strray:state:",
+      keyPrefix: "xray:state:",
       ttlSeconds: 3600,
       consistencyLevel: "strong",
       replicationFactor: 3,

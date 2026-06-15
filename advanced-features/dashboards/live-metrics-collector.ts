@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Live Metrics Collector
+ * 0xRay AI v1.3.4 - Live Metrics Collector
  *
  * Real-time metrics collection engine for performance dashboards.
  * Collects, aggregates, and streams metrics from multiple sources.

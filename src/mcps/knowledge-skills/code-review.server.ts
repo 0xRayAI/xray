@@ -15,6 +15,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
+import { tryLLMGovernance } from "../../governance/llm-governance-provider.js";
 
 interface CodeReviewResult {
   file: string;
@@ -465,47 +466,31 @@ class XrayCodeReviewServer {
    */
   async analyzeProposal(args: AnalyzeProposalArgs) {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args;
-    const text = `${proposalTitle} ${proposalDescription} ${evidence.join(" ")}`.toLowerCase();
 
-    let decision: "approve" | "reject" | "abstain" = "approve";
-    let confidence = 0.82;
-    let reasoning = "The proposal appears reasonable from a code quality and maintainability perspective.";
+    const vote = await tryLLMGovernance(
+      "code-review",
+      proposalTitle,
+      proposalDescription,
+      evidence,
+      proposalType,
+    );
 
-    if (text.includes("aml") || text.includes("kyc") || text.includes("anti-money")) {
-      decision = "approve";
-      confidence = 0.88;
-      reasoning = "AML/KYC compliance code requires rigorous review: transaction monitoring must handle edge cases, avoid false positives from legitimate patterns, and maintain audit trails for regulatory inspection.";
-    } else if (text.includes("psd2") || text.includes("strong customer authentication") || text.includes("payment initiation")) {
-      decision = "approve";
-      confidence = 0.90;
-      reasoning = "PSD2 SCA implementation must balance security with user experience. Code should use well-audited MFA libraries, avoid rolling custom authentication, and include comprehensive test coverage for all authentication flows.";
-    } else if (text.includes("gdpr") || text.includes("right to erasure") || text.includes("data protection")) {
-      decision = "approve";
-      confidence = 0.92;
-      reasoning = "GDPR erasure pipelines require careful code review: cascading deletes must be transactional, audit logs must be preserved, and the 30-day SLA demands observability and monitoring integration.";
-    } else if (text.includes("extract method")) {
-      decision = "approve";
-      confidence = 0.93;
-      reasoning = "Extract Method is a well-established refactoring pattern that improves readability and reduces cognitive load when applied consistently.";
-    } else if (text.includes("test coverage")) {
-      decision = "approve";
-      confidence = 0.90;
-      reasoning = "Expanding automated test coverage generally improves long-term code health and reduces regression risk.";
-    } else if (text.includes("increase timeout") && text.includes("flaky")) {
-      decision = "reject";
-      confidence = 0.72;
-      reasoning = "Repeatedly increasing timeouts to mask flaky tests is an anti-pattern that hides underlying race conditions or timing issues.";
-    }
-
-    if (proposalType === "fix" && text.includes("timeout")) {
-      confidence = Math.max(0.68, confidence - 0.08);
+    if (!vote) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: No LLM governance provider configured. Set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT, or install Hermes and run: hermes auth add xai-oauth --no-browser",
+          },
+        ],
+      };
     }
 
     return {
       content: [
         {
           type: "text",
-          text: `DECISION: ${decision}\nCONFIDENCE: ${confidence.toFixed(2)}\nREASONING: ${reasoning}`,
+          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}`,
         },
       ],
     };

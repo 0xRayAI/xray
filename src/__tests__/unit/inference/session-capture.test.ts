@@ -48,7 +48,7 @@ describe("Session Capture", () => {
   it("should save session inference to file", () => {
     if (!inference5) return;
 
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-inference-test-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-inference-test-"));
     const savedPath = saveSessionInference(inference5, tmpDir);
 
     expect(fs.existsSync(savedPath)).toBe(true);

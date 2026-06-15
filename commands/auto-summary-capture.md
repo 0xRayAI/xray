@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - Auto Summary Capture
+# Xray Framework - Auto Summary Capture
 
 # Monitors for 'job done print summary' signal and automatically logs summaries
 
@@ -40,7 +40,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "🤖 StrRay Auto-Summary Capture Active"
+echo "🤖 Xray Auto-Summary Capture Active"
 echo "======================================"
 echo "Monitoring for 'job done print summary' signals..."
 echo "All AI-generated summaries will be automatically logged to REFACTORING_LOG.md"
@@ -58,7 +58,7 @@ if [ -s "$TEMP_FILE" ]; then
 echo "📝 Captured AI summary - logging to REFACTORING_LOG.md..."
 
         # Log the captured content
-        export STRRAY_SUMMARY_CONTENT="$(cat "$TEMP_FILE")"
+        export XRAY_SUMMARY_CONTENT="$(cat "$TEMP_FILE")"
         tail -n +6 commands/summary-logger.md | bash
 
         # Clear temp file

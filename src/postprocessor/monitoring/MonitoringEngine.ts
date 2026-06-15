@@ -2,7 +2,7 @@
  * Post-Processor Monitoring Engine
  */
 
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { SessionMonitor } from "../../session/session-monitor.js";
 import { MonitoringResult } from "../types.js";
@@ -30,7 +30,7 @@ export interface SecurityStatus {
 
 export class PostProcessorMonitoringEngine {
   constructor(
-    private stateManager: StringRayStateManager,
+    private stateManager: XrayStateManager,
     private sessionMonitor?: SessionMonitor,
   ) {}
 

@@ -11,7 +11,7 @@
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { resolveConfigPath } from "../core/config-paths.js";
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { SessionMonitor } from "../session/session-monitor.js";
 import { GitHookTrigger } from "./triggers/GitHookTrigger.js";
 import { WebhookTrigger } from "./triggers/WebhookTrigger.js";
@@ -49,7 +49,7 @@ export class PostProcessor {
   };
 
   constructor(
-    private stateManager: StringRayStateManager,
+    private stateManager: XrayStateManager,
     private sessionMonitor: SessionMonitor | null = null,
     config: Partial<PostProcessorConfig> = {},
   ) {
@@ -346,7 +346,7 @@ export class PostProcessor {
     const path = await import("path");
     
     try {
-      const configPath = resolveConfigPath("features.json") ?? path.join(process.cwd(), ".opencode", "strray", "features.json");
+      const configPath = resolveConfigPath("features.json") ?? path.join(process.cwd(), ".xray", "features.json");
       if (fs.existsSync(configPath)) {
         const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
         return config.processors || {};
@@ -366,7 +366,7 @@ export class PostProcessor {
   async initialize(): Promise<void> {
     await frameworkLogger.log(
       "-post-processor",
-      "-initializing-stringray-post-processor-",
+      "-initializing-xray-post-processor-",
       "info",
       { message: "🚀 Initializing 0xRay Post-Processor..." },
     );
@@ -579,15 +579,15 @@ export class PostProcessor {
     context: PostProcessorContext,
   ): Promise<{ passed: boolean; message: string }> {
     // Check if all critical framework components are active
-    const stateManager = globalThis.strRayStateManager;
-    const postProcessor = globalThis.strRayPostProcessor;
+    const stateManager = globalThis.xrayStateManager;
+    const postProcessor = globalThis.xrayPostProcessor;
 
     if (!stateManager) {
       try {
-        const { StrRayStateManager } =
+        const { XrayStateManager } =
           await import("../state/state-manager.js");
-        const tempStateManager = new StrRayStateManager();
-        globalThis.strRayStateManager = tempStateManager;
+        const tempStateManager = new XrayStateManager();
+        globalThis.xrayStateManager = tempStateManager;
         return {
           passed: true,
           message: "System integrity verified (graceful mode)",
@@ -627,7 +627,7 @@ export class PostProcessor {
     // Check for path resolution issues in committed files
     // This would require reading the actual file contents from git
     // For now, we verify that the framework's path resolution is working
-    const pathResolver = globalThis.strRayPathResolver;
+    const pathResolver = globalThis.xrayPathResolver;
     if (!pathResolver) {
       return {
         passed: true,
@@ -767,7 +767,7 @@ import { Config } from "./config/config.js";
 
 **Solution A: Environment Variables (Simple)**
 \`\`\`typescript
-const AGENTS_PATH = process.env.STRRAY_AGENTS_PATH || '../agents';
+const AGENTS_PATH = process.env.XRAY_AGENTS_PATH || '../agents';
 import { AgentConfig } from \`\${AGENTS_PATH}/code-reviewer.js\`;
 \`\`\`
 

@@ -18,6 +18,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { tryLLMGovernance } from "../governance/llm-governance-provider.js";
 
 interface SearchResult {
   file: string;
@@ -482,47 +483,31 @@ class XrayLibrarianServer {
    */
   async analyzeProposal(args: AnalyzeProposalArgs): Promise<CallToolResult> {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args || {};
-    const text = `${proposalTitle} ${proposalDescription} ${(evidence || []).join(" ")}`.toLowerCase();
 
-    let decision: "approve" | "reject" | "abstain" = "approve";
-    let confidence = 0.80;
-    let reasoning = "From a project-wide analysis perspective, the proposal aligns with observed recurring patterns and has supporting evidence in the corpus.";
+    const vote = await tryLLMGovernance(
+      "researcher",
+      proposalTitle || "",
+      proposalDescription || "",
+      evidence || [],
+      proposalType || "",
+    );
 
-    if (text.includes("aml") || text.includes("kyc") || text.includes("anti-money")) {
-      decision = "approve";
-      confidence = 0.86;
-      reasoning = "AML/KYC compliance integration is a recurring pattern across financial services codebases. The corpus shows that automated transaction monitoring reduces regulatory incident frequency by approximately 60% when properly integrated with sanction list APIs.";
-    } else if (text.includes("psd2") || text.includes("strong customer authentication") || text.includes("payment initiation")) {
-      decision = "approve";
-      confidence = 0.88;
-      reasoning = "PSD2 SCA patterns are well-established in the corpus across multiple implementations. The Berlin Group standards provide a reliable reference architecture, and existing integrations show consistent compliance with EBA regulatory technical standards.";
-    } else if (text.includes("gdpr") || text.includes("right to erasure") || text.includes("data protection")) {
-      decision = "approve";
-      confidence = 0.91;
-      reasoning = "GDPR data erasure pipeline patterns appear in approximately 35% of enterprise codebases in the corpus. The most successful implementations use the saga pattern with compensating transactions for cross-system consistency.";
-    } else if (text.includes("extract method")) {
-      decision = "approve";
-      confidence = 0.89;
-      reasoning = "The Extract Method pattern is a core refactoring technique that improves modularity; the corpus shows consistent positive outcomes when applied to repeated logic across many sessions.";
-    } else if (text.includes("test coverage")) {
-      decision = "approve";
-      confidence = 0.94;
-      reasoning = "Test coverage expansion is one of the highest-leverage improvements for long-term project health, directly reducing regression incidents across 100+ sessions in the historical data.";
-    } else if (text.includes("technical debt")) {
-      decision = "approve";
-      confidence = 0.85;
-      reasoning = "Systematic technical debt reduction is strongly supported by historical data showing fewer critical violations and faster feature delivery in low-debt modules.";
-    }
-
-    if (proposalType === "fix" && !text.includes("pattern") && !text.includes("recurring")) {
-      confidence = Math.max(0.68, confidence - 0.10);
+    if (!vote) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: No LLM governance provider configured. Set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT, or install Hermes and run: hermes auth add xai-oauth --no-browser",
+          },
+        ],
+      };
     }
 
     return {
       content: [
         {
           type: "text",
-          text: `DECISION: ${decision}\nCONFIDENCE: ${confidence.toFixed(2)}\nREASONING: ${reasoning}`,
+          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}`,
         },
       ],
     };

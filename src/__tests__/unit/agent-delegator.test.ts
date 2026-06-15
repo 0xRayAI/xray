@@ -13,18 +13,18 @@ import {
   DelegationRequest,
   createAgentDelegator,
 } from "../../delegation/agent-delegator.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
-import { strRayConfigLoader } from "../../core/config-loader.js";
+import { XrayStateManager } from "../../state/state-manager.js";
+import { xrayConfigLoader } from "../../core/config-loader.js";
 
 describe("AgentDelegator", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
   let agentDelegator: AgentDelegator;
 
   beforeEach(() => {
     // Note: Using default config which enables multi-agent orchestration
     vi.clearAllMocks();
-    stateManager = new StringRayStateManager();
-    agentDelegator = createAgentDelegator(stateManager, strRayConfigLoader);
+    stateManager = new XrayStateManager();
+    agentDelegator = createAgentDelegator(stateManager, xrayConfigLoader);
 
     // Set up default agents for all tests to avoid "agent not found" errors
     stateManager.set("agent:code-reviewer", {
@@ -75,10 +75,10 @@ describe("AgentDelegator", () => {
 
     it("should initialize default agent capabilities", () => {
       const agents = agentDelegator.getAvailableAgents();
-      expect(agents).toHaveLength(21);
+      expect(agents).toHaveLength(22);
       expect(agents.some((a) => a.name === "code-reviewer")).toBe(true);
       expect(agents.some((a) => a.name === "architect")).toBe(true);
-      expect(agents.some((a) => a.name === "architect")).toBe(true);
+      expect(agents.some((a) => a.name === "multimodal-looker")).toBe(true);
       expect(agents.some((a) => a.name === "researcher")).toBe(true);
     });
   });

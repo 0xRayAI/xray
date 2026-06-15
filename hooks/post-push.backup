@@ -1,5 +1,5 @@
 #!/bin/bash
-# StringRay Post-Processor post-push Hook
+# 0xRay Post-Processor post-push Hook
 # Automatically triggers post-processor after post-push
 
 # Get hook type from script name
@@ -31,7 +31,7 @@ if [ -z "$COMMIT_SHA" ]; then
 fi
 
 # Get repository info
-REPO="strray-framework/stringray"  # Placeholder for now
+REPO="xray-framework/xray"  # Placeholder for now
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 AUTHOR=$(git log -1 --pretty=format:'%an <%ae>')
 
@@ -46,26 +46,26 @@ fi
 (
   cd "$(dirname "$0")/../.." # Navigate to project root
 
-  # Find the StringRay plugin in node_modules or current project (development)
-  STRRAY_PLUGIN=""
-  if [ -d "node_modules/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/strray-framework"
-  elif [ -d "node_modules/@strray/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/@strray/strray-framework"
-  elif [ -d "node_modules/OpenCode/plugins/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/OpenCode/plugins/strray-framework"
+  # Find the 0xRay plugin in node_modules or current project (development)
+  XRAY_PLUGIN=""
+  if [ -d "node_modules/xray-framework" ]; then
+    XRAY_PLUGIN="node_modules/xray-framework"
+  elif [ -d "node_modules/xray" ]; then
+    XRAY_PLUGIN="node_modules/xray"
+  elif [ -d "node_modules/OpenCode/plugins/xray-framework" ]; then
+    XRAY_PLUGIN="node_modules/OpenCode/plugins/xray-framework"
   elif [ -f "dist/postprocessor/PostProcessor.js" ]; then
     # Development mode - use current project
-    STRRAY_PLUGIN="."
+    XRAY_PLUGIN="."
   fi
 
-  if command -v node >/dev/null 2>&1 && [ -n "$STRRAY_PLUGIN" ]; then
+  if command -v node >/dev/null 2>&1 && [ -n "$XRAY_PLUGIN" ]; then
     # Call a separate script to avoid bash variable issues
     export COMMIT_SHA="$COMMIT_SHA"
     export REPO="$REPO"
     export BRANCH="$BRANCH"
     export AUTHOR="$AUTHOR"
-    export STRRAY_PLUGIN="$STRRAY_PLUGIN"
+    export XRAY_PLUGIN="$XRAY_PLUGIN"
     export MONITORING_LEVEL="$MONITORING_LEVEL"
     export IS_FULL_MONITORING="$([ "$MONITORING_LEVEL" = "full" ] && echo "true" || echo "false")"
 
@@ -114,7 +114,7 @@ fi
       (async () => {
         try {
           // Use dynamic import that works in both dev and consumer
-          const basePath = process.env.STRRAY_BASE_PATH || '.';
+          const basePath = process.env.XRAY_BASE_PATH || '.';
           const { cleanupLogFiles } = await import(basePath + '/dist/postprocessor/triggers/GitHookTrigger.js');
           const result = await cleanupLogFiles({
             maxAgeHours: 24,
@@ -150,8 +150,8 @@ fi
       node -e "
       (async () => {
         try {
-          const basePath = process.env.STRRAY_BASE_PATH || '.';
-          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
+          const basePath = process.env.XRAY_BASE_PATH || '.';
+          const distPath = process.env.XRAY_DIST_PATH || 'dist';
           const { HookMetricsCollector } = await import(basePath + '/' + distPath + '/postprocessor/validation/HookMetricsCollector.js');
           const collector = new HookMetricsCollector();
           collector.recordMetrics('post-push', ${DURATION_MS}, ${EXIT_CODE});
@@ -164,7 +164,7 @@ fi
       [ $EXIT_CODE -eq 0 ] && exit 0 || exit 1
     fi
   else
-    echo "Warning: StringRay plugin not found or Node.js not available, skipping post-processor"
+    echo "Warning: 0xRay plugin not found or Node.js not available, skipping post-processor"
   fi
 )
 

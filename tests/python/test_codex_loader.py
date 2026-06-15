@@ -1,5 +1,5 @@
 """
-StrRay Framework - Codex Loader Test Suite
+Xray Framework - Codex Loader Test Suite
 
 Comprehensive test suite for CodexLoader functionality including:
 - Codex term loading and validation
@@ -17,14 +17,14 @@ from unittest.mock import Mock, patch, MagicMock
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
 
-from strray.core.codex_loader import (
+from xray.core.codex_loader import (
     CodexLoader,
     CodexRule,
     CodexComplianceResult,
     CodexViolationError as CodexError,
     CodexTerm,
 )
-from strray.config.manager import ConfigManager
+from xray.config.manager import ConfigManager
 
 
 class TestCodexLoader:
@@ -425,7 +425,7 @@ class TestCodexLoader:
         assert len(result.recommendations) == 2
         assert result.metadata == {"test": "data"}
 
-    @patch("strray.core.codex_loader.logger")
+    @patch("xray.core.codex_loader.logger")
     def test_logging_on_term_load_failure(self, mock_logger):
         """Test logging when term loading fails."""
         with patch.object(
@@ -437,7 +437,7 @@ class TestCodexLoader:
 
         mock_logger.warning.assert_called()
 
-    @patch("strray.core.codex_loader.logger")
+    @patch("xray.core.codex_loader.logger")
     def test_logging_on_compliance_validation_failure(self, mock_logger):
         """Test logging when compliance validation fails."""
         self.loader.load_codex_terms([1])

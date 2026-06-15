@@ -1985,7 +1985,7 @@ Available: ${Object.keys(system.components).length} component types
     await this.server.connect(transport);
     await frameworkLogger.log(
       "ui-ux-design.server",
-      "-strray-ui-ux-design-mcp-server-running-",
+      "-xray-ui-ux-design-mcp-server-running-",
       "info",
       { message: "xray UI/UX Design MCP Server running..." },
     );
@@ -2011,7 +2011,7 @@ Available: ${Object.keys(system.components).length} component types
         clearTimeout(timeout);
         await frameworkLogger.log(
           "ui-ux-design.server",
-          "-strray-mcp-server-shut-down-gracefully-",
+          "-xray-mcp-server-shut-down-gracefully-",
           "info",
           { message: "xray MCP Server shut down gracefully" },
         );

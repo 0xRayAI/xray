@@ -368,8 +368,8 @@ async function main() {
     result('AGENTS template shipped in npm package', templateExists, 'xray/agents_template.md not found in node_modules/0xray');
     if (templateExists) {
       const templateContent = fs.readFileSync(templateInPkg, 'utf-8');
-      result('AGENTS template is consumer v15 MCPs content (not stale StringRay)',
-        templateContent.includes('0xRay') && templateContent.includes('xray-enforcer') && !templateContent.includes('StringRay'),
+      result('AGENTS template is consumer v15 MCPs content (not stale 0xRay)',
+        templateContent.includes('0xRay') && templateContent.includes('xray-enforcer') && !templateContent.includes('0xRay'),
         'template has stale content');
     }
 

@@ -11,8 +11,8 @@ import {
 import { frameworkLogger } from "../core/framework-logger.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
 import { AgentDelegator } from "../delegation/agent-delegator.js";
-import { StringRayStateManager } from "../state/state-manager.js";
-import { strRayConfigLoader } from "../core/config-loader.js";
+import { XrayStateManager } from "../state/state-manager.js";
+import { xrayConfigLoader } from "../core/config-loader.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -408,10 +408,10 @@ async function delegateToAgent(
 ): Promise<EnforcementResult> {
   try {
     // Create a minimal state manager and config loader for the delegator
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     
     // Create the delegator
-    const delegator = new AgentDelegator(stateManager, strRayConfigLoader);
+    const delegator = new AgentDelegator(stateManager, xrayConfigLoader);
     
     // Build task description for the delegated agent
     const taskDescription = buildTaskDescription(operation, context);

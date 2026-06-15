@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Dashboard UI Engine
+ * 0xRay AI v1.3.4 - Dashboard UI Engine
  *
  * Real-time dashboard UI engine for performance monitoring.
  * Handles UI rendering, updates, and user interactions with live data.

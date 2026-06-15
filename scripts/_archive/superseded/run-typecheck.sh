@@ -1,1 +1,0 @@
-npx tsc --project tsconfig.json --noEmit 2>&1 | head -30

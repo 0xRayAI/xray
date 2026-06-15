@@ -30,7 +30,7 @@ fi
 
 # 0xRay Framework Version - read from FRAMEWORK_ROOT (already resolved above)
 # FRAMEWORK_ROOT correctly picks source in dev mode, node_modules in consumer mode
-STRRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)" 2>/dev/null || echo "unknown")
+XRAY_VERSION=$(node -e "console.log(require('$FRAMEWORK_ROOT/package.json').version)" 2>/dev/null || echo "unknown")
 
 # Dedup guard — prevent duplicate runs during startup
 # Uses a TTL lockfile (10s window) since OpenCode may trigger config hook
@@ -90,10 +90,10 @@ if [ "$AGENTS_COUNT" -eq 0 ]; then
     AGENTS_COUNT=$(ls -1 "$PROJECT_ROOT/node_modules/0xray/.opencode/agents/"*.yml 2>/dev/null | wc -l | tr -d ' ')
 fi
 
-# Skills - check .opencode/skills, then .strray/skills (Hermes), then node_modules
+# Skills - check .opencode/skills, then .xray/skills (Hermes), then node_modules
 SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 if [ "$SKILLS_COUNT" -eq 0 ]; then
-    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.strray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
+    SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/.xray/skills/"* 2>/dev/null | wc -l | tr -d ' ')
 fi
 if [ "$SKILLS_COUNT" -eq 0 ]; then
     SKILLS_COUNT=$(ls -1d "$PROJECT_ROOT/node_modules/0xray/.opencode/skills/"* 2>/dev/null | wc -l | tr -d ' ')
@@ -124,7 +124,7 @@ if [ ! -f "$PROJECT_ROOT/.opencode/enforcer-config.json" ]; then
 fi
 
 echo ""
-echo "⚡ 0xRay v$STRRAY_VERSION"
+echo "⚡ 0xRay v$XRAY_VERSION"
 echo "🤖 Agents: $AGENTS_COUNT | ⚙️ MCPs: $MCPS_COUNT | 💡 Skills: $SKILLS_COUNT"
 
 # BootOrchestrator check (check dev and consumer paths)

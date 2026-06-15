@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Distributed Load Balancer
+ * 0xRay AI v1.3.4 - Distributed Load Balancer
  *
  * Enterprise-grade load balancer with session affinity, health checks,
  * and auto-scaling capabilities for multi-instance deployments.
@@ -55,7 +55,7 @@ export interface LoadBalancerStats {
 }
 
 /**
- * Distributed Load Balancer - Routes traffic across StringRay instances
+ * Distributed Load Balancer - Routes traffic across 0xRay instances
  */
 export class DistributedLoadBalancer extends EventEmitter {
   private config: LoadBalancerConfig;
@@ -80,7 +80,7 @@ export class DistributedLoadBalancer extends EventEmitter {
       algorithm: "session-affinity",
       healthCheckInterval: 5000,
       healthCheckTimeout: 3000,
-      sessionAffinityCookie: "strray-session",
+      sessionAffinityCookie: "xray-session",
       maxRetries: 3,
       failoverTimeout: 10000,
       enableAutoScaling: true,
@@ -415,7 +415,7 @@ export class DistributedLoadBalancer extends EventEmitter {
           const instance: BackendInstance = {
             id: health.instanceId,
             host: this.extractHostFromInstanceId(health.instanceId),
-            port: 3000, // Default StringRay port
+            port: 3000, // Default 0xRay port
             weight: 1,
             healthy: health.status === "healthy",
             connections: 0,

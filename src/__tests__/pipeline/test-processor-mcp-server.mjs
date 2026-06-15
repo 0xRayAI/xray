@@ -227,11 +227,11 @@ test('processor-pipeline.server.ts should exist', () => {
   }
 });
 
-test('should export StrRayProcessorPipelineServer', () => {
+test('should export XrayProcessorPipelineServer', () => {
   const serverPath = path.join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
   const content = fs.readFileSync(serverPath, 'utf-8');
-  if (!content.includes('StringRayProcessorPipelineServer')) {
-    throw new Error('StringRayProcessorPipelineServer not exported');
+  if (!content.includes('XrayProcessorPipelineServer')) {
+    throw new Error('XrayProcessorPipelineServer not exported');
   }
   if (!content.includes('export')) {
     throw new Error('No exports found');

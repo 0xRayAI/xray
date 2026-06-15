@@ -4,7 +4,7 @@
  */
 
 import { ProcessorManager } from '../../../dist/processors/processor-manager.js';
-import { StringRayStateManager } from '../../../dist/state/state-manager.js';
+import { XrayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== PRE-PROCESSOR PIPELINE TEST ===\n');
 
@@ -56,7 +56,7 @@ test('should verify all 11 pre-processors are defined in BootOrchestrator', () =
 });
 
 test('should execute pre-processors in priority order', async () => {
-  const stateManager = new StringRayStateManager();
+  const stateManager = new XrayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   for (const proc of PRE_PROCESSORS) {
@@ -73,7 +73,7 @@ test('should execute pre-processors in priority order', async () => {
 });
 
 test('should verify each pre-processor has execute method', () => {
-  const stateManager = new StringRayStateManager();
+  const stateManager = new XrayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   for (const proc of PRE_PROCESSORS) {
@@ -91,7 +91,7 @@ test('should verify each pre-processor has execute method', () => {
 });
 
 test('should verify processors are sorted by priority ascending', async () => {
-  const stateManager = new StringRayStateManager();
+  const stateManager = new XrayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   for (const proc of PRE_PROCESSORS) {
@@ -105,7 +105,7 @@ test('should verify processors are sorted by priority ascending', async () => {
 });
 
 test('should handle pre-processor failure gracefully', async () => {
-  const stateManager = new StringRayStateManager();
+  const stateManager = new XrayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });
@@ -120,7 +120,7 @@ test('should handle pre-processor failure gracefully', async () => {
 });
 
 test('should verify pre-processor result structure', async () => {
-  const stateManager = new StringRayStateManager();
+  const stateManager = new XrayStateManager();
   const manager = new ProcessorManager(stateManager);
   
   manager.registerProcessor({ name: 'preValidate', type: 'pre', priority: 10, enabled: true });

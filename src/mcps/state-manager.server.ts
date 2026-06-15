@@ -62,7 +62,7 @@ interface ValidationResult {
 
 type StateValue = string | number | boolean | object | null | undefined;
 
-class StrRayStateManagerServer {
+class XrayStateManagerServer {
   private server: Server;
   private state: Map<string, unknown> = new Map();
   private stateFile: string;
@@ -770,8 +770,8 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
 
 // Start the server if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new StrRayStateManagerServer();
+  const server = new XrayStateManagerServer();
   server.run().catch((error) => frameworkLogger.log("mcps/state-manager", "run", "error", { error: String(error) }));
 }
 
-export { StrRayStateManagerServer };
+export { XrayStateManagerServer };

@@ -1,5 +1,5 @@
 /**
- * Consumer runtime compat shim from prior StringRay releases (1-line min per Scope Rule; xray codex injection + XRAY_||STRRAY_ env + .strray fallbacks).
+ * Consumer runtime compat shim from prior 0xRay releases (1-line min per Scope Rule; xray codex injection + .xray fallbacks).
  */
 
 import * as fs from "fs";
@@ -104,7 +104,7 @@ let _frameworkLogger: FrameworkLoggerLike | null = null;
 let _systemPromptGenerator: SystemPromptGeneratorFn | null = null;
 
 let _ProcessorManager: any = null;
-let _StrRayStateManager: (new (persistencePath?: string) => StateManagerLike) | null = null;
+let _XrayStateManager: (new (persistencePath?: string) => StateManagerLike) | null = null;
 let _featuresConfigLoader: FeaturesConfigLoaderLike | null = null;
 let _detectTaskType: DetectTaskTypeFn | null = null;
 
@@ -117,7 +117,7 @@ interface ProcessorManagerLike {
 type DetectTaskTypeFn = (toolName: string, context?: { fileCount?: number; isComplex?: boolean }) => TaskType;
 
 type ModuleWithProcessorManager = { ProcessorManager: new (sm: StateManagerLike) => ProcessorManagerLike };
-type ModuleWithStateManager = { StrRayStateManager: new (persistencePath?: string) => StateManagerLike };
+type ModuleWithStateManager = { XrayStateManager: new (persistencePath?: string) => StateManagerLike };
 type ModuleWithFeaturesConfig = { featuresConfigLoader: FeaturesConfigLoaderLike; detectTaskType: DetectTaskTypeFn };
 type ModuleWithSystemPrompt = { generateLeanSystemPrompt: SystemPromptGeneratorFn };
 
@@ -208,8 +208,8 @@ function validateModulePath(resolvedPath: string, allowedPrefix: string): void {
   }
 }
 
-async function loadStringRayComponents(): Promise<void> {
-  if (_ProcessorManager && _StrRayStateManager && _featuresConfigLoader) return;
+async function loadXrayComponents(): Promise<void> {
+  if (_ProcessorManager && _XrayStateManager && _featuresConfigLoader) return;
 
   const logger = await getOrCreateLogger(process.cwd());
 
@@ -225,7 +225,7 @@ async function loadStringRayComponents(): Promise<void> {
     const stateModule = await import(`${root}/dist/state/state-manager.js`);
     const featuresModule = await import(`${root}/dist/core/features-config.js`);
     _ProcessorManager = procModule.ProcessorManager;
-    _StrRayStateManager = stateModule.StrRayStateManager;
+    _XrayStateManager = stateModule.XrayStateManager;
     _featuresConfigLoader = featuresModule.featuresConfigLoader;
     _detectTaskType = featuresModule.detectTaskType;
     logger.log(`✅ Loaded from cwd/dist/`);
@@ -235,7 +235,7 @@ async function loadStringRayComponents(): Promise<void> {
     logger.log(`❌ Failed to load from cwd/dist/: ${message}`);
   }
 
-  const pluginPaths = ["0xray", "strray-framework"];
+  const pluginPaths = ["0xray"];
 
   for (const pluginPath of pluginPaths) {
     try {
@@ -248,7 +248,7 @@ async function loadStringRayComponents(): Promise<void> {
       const sm = await import(`${process.cwd()}/node_modules/${pluginPath}/dist/state/state-manager.js`);
       const fm = await import(`${process.cwd()}/node_modules/${pluginPath}/dist/core/features-config.js`);
       _ProcessorManager = pm.ProcessorManager;
-      _StrRayStateManager = sm.StrRayStateManager;
+      _XrayStateManager = sm.XrayStateManager;
       _featuresConfigLoader = fm.featuresConfigLoader;
       _detectTaskType = fm.detectTaskType;
       logger.log(`✅ Loaded from node_modules/${pluginPath}/dist/`);
@@ -306,7 +306,7 @@ class PluginLogger {
     }
 
     const today = new Date().toISOString().split("T")[0];
-    this.logPath = path.join(logsDir, `strray-plugin-${today}.log`);
+    this.logPath = path.join(logsDir, `xray-plugin-${today}.log`);
   }
 
   async logAsync(message: string): Promise<void> {
@@ -505,8 +505,7 @@ async function getCodexFileLocations(directory?: string): Promise<string[]> {
   const resolved = await resolveCodexPath(root);
   resolved.push(
     path.join(root, ".opencode", "codex.codex"),
-    path.join(root, ".strray", "agents_template.md"),
-    path.join(root, ".opencode", "strray", "agents_template.md"),
+    path.join(root, ".xray", "agents_template.md"),
     path.join(root, "AGENTS.md"),
   );
   return resolved;
@@ -665,7 +664,7 @@ function isWriteEditOperation(tool: string): boolean {
 }
 
 function isPublishOperation(tool: string): boolean {
-  return tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "strray-release";
+  return tool === "publish" || tool === "release" || tool === "npm-publish" || tool === "xray-release";
 }
 
 function resolveAgentName(input: { agentType?: string } | undefined): string {
@@ -739,7 +738,7 @@ function logTestAutoCreationResult(results: ProcessorResult[], logger: PluginLog
 // Main plugin function
 // ---------------------------------------------------------------------------
 
-export default async function strrayCodexPlugin(input: {
+export default async function xrayCodexPlugin(input: {
   client?: string;
   directory?: string;
   worktree?: string;
@@ -791,7 +790,7 @@ export default async function strrayCodexPlugin(input: {
       const logger = await getOrCreateLogger(directory);
       logger.log(`🚀 TOOL EXECUTE BEFORE HOOK FIRED: ${input.tool}`);
       logger.log(`📥 Full input: ${JSON.stringify(input)}`);
-      await loadStringRayComponents();
+      await loadXrayComponents();
 
       if (_featuresConfigLoader && _detectTaskType) {
         try {
@@ -821,24 +820,24 @@ export default async function strrayCodexPlugin(input: {
       logger.log(`✅ Quality gate passed for ${tool}`);
 
       if (isWriteEditOperation(tool)) {
-        if (!_ProcessorManager || !_StrRayStateManager) {
-          logger.error("ProcessorManager or StrRayStateManager not loaded");
+        if (!_ProcessorManager || !_XrayStateManager) {
+          logger.error("ProcessorManager or XrayStateManager not loaded");
           return;
         }
 
         let stateManager: StateManagerLike;
         let processorManager: ProcessorManagerLike | null;
 
-        const globalState = globalThis.strRayStateManager;
+        const globalState = globalThis.xrayStateManager;
         if (globalState) {
           logger.log("🔗 Connecting to booted 0xRay framework");
           stateManager = globalState as StateManagerLike;
         } else {
           logger.log("🚀 0xRay framework not booted, initializing...");
-          stateManager = new _StrRayStateManager(
+          stateManager = new _XrayStateManager(
             await resolveStateDir(directory),
           );
-          globalThis.strRayStateManager = stateManager as typeof globalThis.strRayStateManager;
+          globalThis.xrayStateManager = stateManager as typeof globalThis.xrayStateManager;
         }
 
         processorManager = stateManager.get<ProcessorManagerLike>("processor:manager") ?? null;
@@ -910,7 +909,7 @@ export default async function strrayCodexPlugin(input: {
       _output: Record<string, unknown>,
     ) => {
       const logger = await getOrCreateLogger(directory);
-      await loadStringRayComponents();
+      await loadXrayComponents();
 
       const { tool, args, result } = input;
 
@@ -950,9 +949,9 @@ export default async function strrayCodexPlugin(input: {
       );
 
       if (isWriteEditOperation(tool)) {
-        if (!_ProcessorManager || !_StrRayStateManager) return;
+        if (!_ProcessorManager || !_XrayStateManager) return;
 
-        const stateManager = new _StrRayStateManager(
+        const stateManager = new _XrayStateManager(
           await resolveStateDir(directory),
         );
         const processorManager = new _ProcessorManager(stateManager);
@@ -1101,7 +1100,7 @@ export default async function strrayCodexPlugin(input: {
     },
 
     config: async (_config: Record<string, unknown>) => {
-      const lockFile = path.join(directory, ".opencode", "logs", ".strray-init.lock");
+      const lockFile = path.join(directory, ".opencode", "logs", ".xray-init.lock");
       const now = Date.now();
       try {
         if (fs.existsSync(lockFile)) {

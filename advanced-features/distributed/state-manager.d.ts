@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Distributed State Management Layer
+ * 0xRay AI v1.3.4 - Distributed State Management Layer
  *
  * Enterprise-grade distributed state management with Redis/ETCD integration
  * for multi-instance deployments with strong consistency guarantees.

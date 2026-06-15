@@ -3,7 +3,7 @@
  *
  * These tests can target:
  * - Local development: http://localhost:3000 (or whatever port api/mcp.ts runs on)
- * - Vercel preview / production: https://stringray.vercel.app or the dedicated governance subdomain
+ * - Vercel preview / production: https://xray.vercel.app or the dedicated governance subdomain
  *
  * Set GOVERNANCE_MCP_URL env var to override the target.
  *
@@ -27,7 +27,7 @@ describe('Remote Governance MCP Server E2E', () => {
 
     if (!serverReachable) {
       console.warn(`Governance MCP server not reachable at ${BASE_URL}. Skipping all remote MCP E2E tests.`);
-      console.warn('To run against production: GOVERNANCE_MCP_URL=https://stringray.vercel.app npx vitest run src/__tests__/e2e/governance-mcp-remote.test.ts');
+      console.warn('To run against production: GOVERNANCE_MCP_URL=https://xray.vercel.app npx vitest run src/__tests__/e2e/governance-mcp-remote.test.ts');
     }
   });
 

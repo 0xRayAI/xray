@@ -21,36 +21,35 @@ interface SkillInfo {
 
 function getSkillsFromSkills(cwd: string): SkillInfo[] {
   const skills: SkillInfo[] = [];
-  const skillsPath = join(getConfigDir(cwd), "skills");
 
-  if (!existsSync(skillsPath)) {
-    return skills;
-  }
+  for (const skillsPath of [join(getConfigDir(cwd), "skills"), join(cwd, ".opencode", "skills")]) {
+    if (!existsSync(skillsPath)) continue;
 
-  const dirs = readdirSync(skillsPath).filter((f) => {
-    const skillPath = join(skillsPath, f, "SKILL.md");
-    return existsSync(skillPath);
-  });
-
-  for (const dir of dirs) {
-    const skillPath = join(skillsPath, dir, "SKILL.md");
-    const content = readFileSync(skillPath, "utf-8");
-
-    const sourceMatch = content.match(/^source:\s*(.+)/m);
-    const sourceNameMatch = content.match(/^source_name:\s*(.+)/m);
-    const licenseMatch = content.match(/License:\s*(.+)/m);
-
-    const rawName = dir.includes("--") ? dir.split("--").slice(1).join("--") : dir;
-    const communitySource = sourceNameMatch ? sourceNameMatch[1]!.trim() : null;
-
-    skills.push({
-      name: rawName,
-      source: sourceMatch && sourceMatch[1] ? sourceMatch[1]!.trim() : "custom",
-      communitySource,
-      license: licenseMatch ? licenseMatch[1]!.trim() : "unknown",
-      category: extractCategory(content),
-      path: skillPath,
+    const dirs = readdirSync(skillsPath).filter((f) => {
+      const skillPath = join(skillsPath, f, "SKILL.md");
+      return existsSync(skillPath);
     });
+
+    for (const dir of dirs) {
+      const skillPath = join(skillsPath, dir, "SKILL.md");
+      const content = readFileSync(skillPath, "utf-8");
+
+      const sourceMatch = content.match(/^source:\s*(.+)/m);
+      const sourceNameMatch = content.match(/^source_name:\s*(.+)/m);
+      const licenseMatch = content.match(/License:\s*(.+)/m);
+
+      const rawName = dir.includes("--") ? dir.split("--").slice(1).join("--") : dir;
+      const communitySource = sourceNameMatch ? sourceNameMatch[1]!.trim() : null;
+
+      skills.push({
+        name: rawName,
+        source: sourceMatch && sourceMatch[1] ? sourceMatch[1]!.trim() : "custom",
+        communitySource,
+        license: licenseMatch ? licenseMatch[1]!.trim() : "unknown",
+        category: extractCategory(content),
+        path: skillPath,
+      });
+    }
   }
 
   return skills;

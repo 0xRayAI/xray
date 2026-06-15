@@ -113,8 +113,8 @@ describe("inference-cycle — MCP governance paths present", () => {
     expect(source).toMatch(/\binvokeAgentInternal\b/);
   });
 
-  test("does not reference XRAY_FORCE_MCP_GOVERNANCE", () => {
-    expect(source).not.toMatch(/XRAY_FORCE_MCP_GOVERNANCE/);
+  test("references XRAY_FORCE_MCP_GOVERNANCE", () => {
+    expect(source).toMatch(/XRAY_FORCE_MCP_GOVERNANCE/);
   });
 
   test("references isGovernanceMcpPreferred", () => {

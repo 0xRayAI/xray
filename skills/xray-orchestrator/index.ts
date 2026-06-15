@@ -66,7 +66,7 @@ export async function handleSkill(input: string): Promise<string> {
 
   try {
     switch (command.toLowerCase()) {
-      // xray primary (strray-* aliases removed; min STRINGRAY_* env only)
+      // xray primary (xray-* aliases only)
       case 'xray':
       case 'xray-status':
         return await handleStatus();

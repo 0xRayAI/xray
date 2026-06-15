@@ -20,6 +20,7 @@ import { performanceEngineer } from "./performance-engineer.js";
 import { seoConsultant } from "./seo-consultant.js";
 import { strategist } from "./strategist.js";
 import { techWriter } from "./tech-writer.js";
+import { multimodalLooker } from "./multimodal-looker.js";
 
 export const builtinAgents: Record<string, AgentConfig> = {
   architect,
@@ -43,6 +44,7 @@ export const builtinAgents: Record<string, AgentConfig> = {
   "seo-consultant": seoConsultant,
   strategist,
   "tech-writer": techWriter,
+  "multimodal-looker": multimodalLooker,
 };
 
 export {
@@ -67,4 +69,5 @@ export {
   seoConsultant,
   strategist,
   techWriter,
+  multimodalLooker,
 };

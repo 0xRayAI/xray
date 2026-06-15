@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { SessionStateManager } from "../../session/session-state-manager.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 
 describe("Session Migration and Failover Logic", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
   let sessionStateManager: SessionStateManager;
 
   beforeEach(async () => {
-    stateManager = new StringRayStateManager();
+    stateManager = new XrayStateManager();
     // Wait for state manager initialization
     await new Promise((resolve) => setTimeout(resolve, 10));
 

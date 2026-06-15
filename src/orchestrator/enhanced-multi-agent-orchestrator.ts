@@ -3,7 +3,7 @@
  * Integrates subagent spawning visibility and lifecycle management
  */
 
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import {
   ComplexityAnalyzer,
@@ -13,7 +13,7 @@ import {
   createAgentDelegator,
   AgentDelegator,
 } from "../delegation/agent-delegator.js";
-import { strRayConfigLoader } from "../core/config-loader.js";
+import { xrayConfigLoader } from "../core/config-loader.js";
 import { agentSpawnGovernor } from "./agent-spawn-governor.js";
 import { spawnGate } from "../core/agent-spawn-gate.js";
 
@@ -89,21 +89,21 @@ export interface OrchestrationDelegationResult {
 
 export class EnhancedMultiAgentOrchestrator {
   private state: AgentOrchestrationState;
-  private stateManager: StringRayStateManager;
+  private stateManager: XrayStateManager;
   private complexityAnalyzer: ComplexityAnalyzer;
   private agentDelegator: AgentDelegator;
   private executionContext: ExecutionContext;
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
-    stateManager?: StringRayStateManager,
+    stateManager?: XrayStateManager,
     isMainOrchestrator: boolean = false,
   ) {
-    this.stateManager = stateManager || new StringRayStateManager();
+    this.stateManager = stateManager || new XrayStateManager();
     this.complexityAnalyzer = new ComplexityAnalyzer();
     this.agentDelegator = createAgentDelegator(
       this.stateManager,
-      strRayConfigLoader,
+      xrayConfigLoader,
     );
 
     this.state = {

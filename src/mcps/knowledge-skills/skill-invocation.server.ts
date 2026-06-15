@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { mcpClientManager } from "../mcp-client.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { skillInstallCommand, skillRegistryCommand } from "../../cli/commands/skill-install.js";
 
 interface ListSkillsArgs {
   category?: "all" | "core" | "registry" | "knowledge";
@@ -363,6 +364,61 @@ class SkillInvocationServer {
               required: ["storyType"],
             },
           },
+          {
+            name: "install-skill",
+            description: "Install skills from the registry or any git repo",
+            inputSchema: {
+              type: "object",
+              properties: {
+                source: {
+                  type: "string",
+                  description: "Source name or git URL to install skills from",
+                },
+                path: {
+                  type: "string",
+                  description: "Subdirectory in repo containing skills",
+                },
+                force: {
+                  type: "boolean",
+                  description: "Reinstall even if already installed",
+                },
+              },
+              required: ["source"],
+            },
+          },
+          {
+            name: "skill-registry-list",
+            description: "List all available skill registry sources",
+            inputSchema: {
+              type: "object",
+              properties: {},
+            },
+          },
+          {
+            name: "skill-registry-add",
+            description: "Add a new source to the skills registry",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: { type: "string", description: "Unique source name" },
+                url: { type: "string", description: "Repository URL" },
+                desc: { type: "string", description: "Short description" },
+                license: { type: "string", description: "License type" },
+              },
+              required: ["name", "url"],
+            },
+          },
+          {
+            name: "skill-registry-remove",
+            description: "Remove a source from the skills registry",
+            inputSchema: {
+              type: "object",
+              properties: {
+                name: { type: "string", description: "Source name to remove" },
+              },
+              required: ["name"],
+            },
+          },
         ],
       };
     });
@@ -399,6 +455,14 @@ class SkillInvocationServer {
             return await this.handleSkillDocumentationGeneration(args as unknown as DocumentationGenerationArgs);
           case "skill-storyteller":
             return await this.handleSkillStoryteller(args as unknown as StorytellerArgs);
+          case "install-skill":
+            return await this.handleInstallSkill(args as unknown as { source: string; path?: string; force?: boolean });
+          case "skill-registry-list":
+            return await this.handleSkillRegistryList();
+          case "skill-registry-add":
+            return await this.handleSkillRegistryAdd(args as unknown as { name: string; url: string; desc?: string; license?: string });
+          case "skill-registry-remove":
+            return await this.handleSkillRegistryRemove(args as unknown as { name: string });
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -822,6 +886,52 @@ class SkillInvocationServer {
         },
       ],
     };
+  }
+
+  private async captureConsole(fn: () => Promise<void>): Promise<string> {
+    const chunks: string[] = [];
+    const origLog = console.log;
+    console.log = (...args: unknown[]) => chunks.push(args.map(String).join(" "));
+    try {
+      await fn();
+    } finally {
+      console.log = origLog;
+    }
+    return chunks.join("\n");
+  }
+
+  private async handleInstallSkill(args: { source: string; path?: string; force?: boolean }) {
+    const opts: { path?: string; force?: boolean } = {};
+    if (args.path !== undefined) opts.path = args.path;
+    if (args.force !== undefined) opts.force = args.force;
+    const output = await this.captureConsole(() =>
+      skillInstallCommand(args.source, opts)
+    );
+    return { content: [{ type: "text", text: output || "Skill installation completed." }] };
+  }
+
+  private async handleSkillRegistryList() {
+    const output = await this.captureConsole(() =>
+      skillRegistryCommand("list")
+    );
+    return { content: [{ type: "text", text: output || "No registry sources configured." }] };
+  }
+
+  private async handleSkillRegistryAdd(args: { name: string; url: string; desc?: string; license?: string }) {
+    const registryArgs: Record<string, string> = { name: args.name, url: args.url };
+    if (args.desc !== undefined) registryArgs.desc = args.desc;
+    if (args.license !== undefined) registryArgs.license = args.license;
+    const output = await this.captureConsole(() =>
+      skillRegistryCommand("add", registryArgs)
+    );
+    return { content: [{ type: "text", text: output || "Source added." }] };
+  }
+
+  private async handleSkillRegistryRemove(args: { name: string }) {
+    const output = await this.captureConsole(() =>
+      skillRegistryCommand("remove", { name: args.name })
+    );
+    return { content: [{ type: "text", text: output || "Source removed." }] };
   }
 
   async run(): Promise<void> {

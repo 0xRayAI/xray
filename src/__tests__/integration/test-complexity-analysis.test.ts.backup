@@ -1,18 +1,18 @@
 /**
  * Integration Test - Complexity Analysis
  * 
- * Tests complexity analysis integration with StringRay framework
+ * Tests complexity analysis integration with 0xRay framework
  */
 
 import { describe, test, expect, beforeEach } from "vitest";
 import { complexityAnalyzer } from "../../delegation/complexity-analyzer";
-import { StringRayStateManager } from "../../state/state-manager";
+import { 0xRayStateManager } from "../../state/state-manager";
 
 describe("Complexity Analysis Integration", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: 0xRayStateManager;
 
   beforeEach(() => {
-    stateManager = new StringRayStateManager("/tmp/test-state");
+    stateManager = new 0xRayStateManager("/tmp/test-state");
   });
 
 test("should analyze simple file complexity correctly", () => {

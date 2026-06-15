@@ -665,7 +665,7 @@ Resources:
       EnableDnsHostnames: true
       EnableDnsSupport: true
 
-  StrraySecurityGroup:
+  XraySecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for 0xRay Framework
@@ -693,7 +693,7 @@ Resources:
         InstanceType: !Ref InstanceType
         KeyName: !Ref KeyName
         SecurityGroupIds:
-          - !Ref StrraySecurityGroup
+          - !Ref XraySecurityGroup
         UserData:
           Fn::Base64: |
             #!/bin/bash
@@ -730,7 +730,7 @@ Resources:
       Type: application
       Scheme: internet-facing
       SecurityGroups:
-        - !Ref StrraySecurityGroup
+        - !Ref XraySecurityGroup
 
   0xRayTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup

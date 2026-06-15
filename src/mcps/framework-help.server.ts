@@ -40,7 +40,7 @@ class FrameworkHelpServer {
       return {
         tools: [
           {
-            name: "strray_get_capabilities",
+            name: "xray_get_capabilities",
             description:
               "Get comprehensive list of all 0xRay framework capabilities, commands, and available tools",
             inputSchema: {
@@ -63,7 +63,7 @@ class FrameworkHelpServer {
             },
           },
           {
-            name: "strray_get_commands",
+            name: "xray_get_commands",
             description:
               "Get list of available 0xRay commands and their usage",
             inputSchema: {
@@ -84,7 +84,7 @@ class FrameworkHelpServer {
             },
           },
           {
-            name: "strray_explain_capability",
+            name: "xray_explain_capability",
             description:
               "Get detailed explanation of a specific 0xRay capability",
             inputSchema: {
@@ -108,11 +108,11 @@ class FrameworkHelpServer {
 
       try {
         switch (name) {
-          case "strray_get_capabilities":
+          case "xray_get_capabilities":
             return this.handleGetCapabilities(args);
-          case "strray_get_commands":
+          case "xray_get_commands":
             return this.handleGetCommands(args);
-          case "strray_explain_capability":
+          case "xray_explain_capability":
             return this.handleExplainCapability(args);
           default:
             throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);

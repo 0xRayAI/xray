@@ -423,7 +423,7 @@ async function main() {
     types: path.join(distDir, 'types.js'),
     index: path.join(distDir, 'index.js'),
     apiServer: path.join(distDir, 'api-server.js'),
-    hooks: path.join(distDir, 'hooks', 'strray-hooks.js'),
+    hooks: path.join(distDir, 'hooks', 'xray-hooks.js'),
   };
 
   for (const [name, p] of Object.entries(modules)) {

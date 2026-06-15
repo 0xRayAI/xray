@@ -7,7 +7,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { spawn } from "child_process";
 import * as fs from "fs";
@@ -58,12 +58,12 @@ const mockSpawnPromise = (
 };
 
 describe("0xRay Framework Initialization Integration", () => {
-  let stateManager: StringRayStateManager;
+  let stateManager: XrayStateManager;
   const testSessionId = "test-framework-init-session";
 
   beforeEach(() => {
     // Reset state for each test
-    stateManager = new StringRayStateManager(".opencode/state", true);
+    stateManager = new XrayStateManager(".opencode/state", true);
     vi.clearAllMocks();
     vi.restoreAllMocks();
   });
@@ -152,7 +152,7 @@ describe("0xRay Framework Initialization Integration", () => {
 
   describe("Codex System Validation", () => {
     test("should validate codex file structure", () => {
-      const codexPath = ".opencode/xray/codex.json";
+      const codexPath = ".xray/codex.json";
       expect(checkFile(codexPath)).toBe(true);
 
       const codexContent = JSON.parse(fs.readFileSync(codexPath, "utf8"));
@@ -164,7 +164,7 @@ describe("0xRay Framework Initialization Integration", () => {
 
     test("should validate codex term structure", () => {
       const codexContent = JSON.parse(
-        fs.readFileSync(".opencode/xray/codex.json", "utf8"),
+        fs.readFileSync(".xray/codex.json", "utf8"),
       );
       const terms = codexContent.terms;
 
@@ -258,20 +258,20 @@ describe("0xRay Framework Initialization Integration", () => {
 
       // 4. Validate file system integration
       expect(checkDir(".opencode")).toBe(true);
-      expect(checkDir(".opencode/xray")).toBe(true);
-      expect(checkFile(".opencode/xray/codex.json")).toBe(true);
+      expect(checkDir(".xray")).toBe(true);
+      expect(checkFile(".xray/codex.json")).toBe(true);
     });
 
     test("should validate framework component dependencies", () => {
       // Skip in CI - .opencode populated by postinstall
-      if (!checkDir(".opencode/xray")) {
+      if (!checkDir(".xray")) {
         return;
       }
       
       // Test that all required directories exist
       expect(checkDir(".opencode")).toBe(true);
-      expect(checkDir(".opencode/xray")).toBe(true);
-      expect(checkFile(".opencode/xray/codex.json")).toBe(true);
+      expect(checkDir(".xray")).toBe(true);
+      expect(checkFile(".xray/codex.json")).toBe(true);
       expect(checkDir("src")).toBe(true);
     });
   });

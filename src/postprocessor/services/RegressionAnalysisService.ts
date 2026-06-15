@@ -13,8 +13,8 @@ import { getKernel } from '../../core/kernel-patterns.js';
 import { createAgentDelegator } from '../../delegation/agent-delegator.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { PostProcessorContext } from '../types.js';
-import { StringRayStateManager } from '../../state/state-manager.js';
-import { strRayConfigLoader } from '../../core/config-loader.js';
+import { XrayStateManager } from '../../state/state-manager.js';
+import { xrayConfigLoader } from '../../core/config-loader.js';
 
 export interface AnalysisDecision {
   required: boolean;
@@ -122,8 +122,8 @@ export class RegressionAnalysisService {
     };
 
     // Create agent delegator for this operation
-    const stateManager = new StringRayStateManager();
-    const agentDelegator = createAgentDelegator(stateManager, strRayConfigLoader);
+    const stateManager = new XrayStateManager();
+    const agentDelegator = createAgentDelegator(stateManager, xrayConfigLoader);
 
     // Analyze delegation strategy
     const analysis = await agentDelegator.analyzeDelegation(delegationRequest);

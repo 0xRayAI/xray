@@ -42,7 +42,7 @@ const proposals = [
     description: "codex.json perPipelineValidationMatrix with 15+ entries, all terms explicitly mapped. CI enforcement job: enforce-validators.mjs (29 validators), coverage gate (term 75), consumer check (term 76), E2E pipeline smoke (terms 76-81), compat-shim scanner (term 78), orphan-code pre-PR check (term 73). Pre-commit hook on shared enforcement infrastructure.",
     type: "strategic",
     evidence: [
-      ".opencode/xray/codex.json",
+      ".xray/codex.json",
       ".github/workflows/ci.yml",
       "scripts/ci/enforce-validators.mjs",
       "scripts/ci/e2e-pipeline-smoke.mjs",

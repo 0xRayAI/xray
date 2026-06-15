@@ -43,8 +43,8 @@ export class SessionSummaryProcessor extends PostProcessor {
 
   private loadConfig(): void {
     try {
-      const featuresPath = path.join(process.cwd(), ".opencode", "strray", "features.json");
-      const altPath = path.join(process.cwd(), ".strray", "features.json");
+      const featuresPath = path.join(process.cwd(), ".xray", "features.json");
+      const altPath = path.join(process.cwd(), ".opencode", "xray", "features.json");
       
       const configPath = fs.existsSync(featuresPath) ? featuresPath : 
                          fs.existsSync(altPath) ? altPath : null;

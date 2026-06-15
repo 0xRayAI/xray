@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Real-Time Data Streaming Service
+ * 0xRay AI v1.3.4 - Real-Time Data Streaming Service
  *
  * Enterprise-grade real-time data streaming with WebSocket support,
  * buffering, compression, and connection management for performance dashboards.

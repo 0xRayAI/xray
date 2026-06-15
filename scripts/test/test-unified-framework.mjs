@@ -183,7 +183,7 @@ class UnifiedTestFramework {
   }
 
   async runComprehensiveTest() {
-    this.log('🚀 StringRay Framework - Unified Test Framework', 'info');
+    this.log('🚀 0xRay Framework - Unified Test Framework', 'info');
     this.log('================================================', 'info');
     this.log(`Project Directory: ${projectDir}`, 'info');
     

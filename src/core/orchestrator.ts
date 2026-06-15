@@ -371,7 +371,7 @@ export class KernelOrchestrator {
         `B) Use a single orchestrator for all dependent tasks\n` +
         `C) Remove the dependency if it's not needed\n\n` +
         `Example of correct usage:\n` +
-        `  const orch = new StringRayOrchestrator();\n` +
+        `  const orch = new XrayOrchestrator();\n` +
         `  await orch.executeComplexTask("test", [\n` +
         `    { id: "task-1" },\n` +
         `    { id: "task-2", dependencies: ["task-1"] }  // ✅ Same orchestrator\n` +
@@ -551,4 +551,4 @@ export class KernelOrchestrator {
   }
 }
 
-export const strRayOrchestrator = new KernelOrchestrator();
+export const xrayOrchestrator = new KernelOrchestrator();

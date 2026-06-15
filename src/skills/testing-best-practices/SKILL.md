@@ -2,7 +2,7 @@
 source: framework
 name: testing-best-practices
 description: Testing best practices and quality assurance
-author: StrRay Framework
+author: Xray Framework
 version: 1.0.0
 schema_version: "1.0"
 tags: [testing, testing, best, practices]

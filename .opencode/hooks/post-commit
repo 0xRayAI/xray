@@ -21,7 +21,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ) &
 
 # Load auto_reflection config from features.json
-CONFIG_FILE="$PROJECT_ROOT/.opencode/strray/features.json"
+CONFIG_FILE="$PROJECT_ROOT/.xray/features.json"
 MODE="minimal"
 COMMIT_THRESHOLD=25
 DAYS_THRESHOLD=14

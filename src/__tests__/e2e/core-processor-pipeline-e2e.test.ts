@@ -11,10 +11,10 @@ describe("Core Processor Pipeline E2E", () => {
   });
 
   it("should execute pre-processors with frameworkLogger integration", async () => {
-    const { StringRayStateManager } = await import("../../state/state-manager.js");
+    const { XrayStateManager } = await import("../../state/state-manager.js");
     const { ProcessorManager } = await import("../../processors/processor-manager.js");
 
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const pm = new ProcessorManager(stateManager);
 
     pm.registerProcessor({ name: "codexCompliance", type: "pre", priority: 20, enabled: true });
@@ -44,10 +44,10 @@ describe("Core Processor Pipeline E2E", () => {
   });
 
   it("should execute post-processors with frameworkLogger integration", async () => {
-    const { StringRayStateManager } = await import("../../state/state-manager.js");
+    const { XrayStateManager } = await import("../../state/state-manager.js");
     const { ProcessorManager } = await import("../../processors/processor-manager.js");
 
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const pm = new ProcessorManager(stateManager);
 
     pm.registerProcessor({ name: "nudge", type: "post", priority: 78, enabled: true });
@@ -75,10 +75,10 @@ describe("Core Processor Pipeline E2E", () => {
   });
 
   it("should run pre-processors then post-processors in a complete pipeline cycle", async () => {
-    const { StringRayStateManager } = await import("../../state/state-manager.js");
+    const { XrayStateManager } = await import("../../state/state-manager.js");
     const { ProcessorManager } = await import("../../processors/processor-manager.js");
 
-    const stateManager = new StringRayStateManager();
+    const stateManager = new XrayStateManager();
     const pm = new ProcessorManager(stateManager);
 
     pm.registerProcessor({ name: "codexCompliance", type: "pre", priority: 20, enabled: true });

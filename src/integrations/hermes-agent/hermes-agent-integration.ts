@@ -80,7 +80,7 @@ export class HermesAgentIntegration extends BaseIntegration {
 
     this.bridgePath = config?.bridgePath || join(__dirname, "bridge.mjs");
     this.pluginDir =
-      config?.pluginDir || join(homedir(), ".hermes", "plugins", "strray-hermes");
+      config?.pluginDir || join(homedir(), ".hermes", "plugins", "xray-hermes");
     this.projectRoot = config?.projectRoot || process.cwd();
     this.bridgeTimeout = config?.bridgeTimeout || 15_000;
     this.hooksEnabled = config?.hooksEnabled ?? true;
@@ -196,7 +196,7 @@ export class HermesAgentIntegration extends BaseIntegration {
         maxBuffer: 1024 * 1024, // 1MB
         env: {
           ...process.env,
-          STRRAY_HOME: this.projectRoot,
+          XRAY_HOME: this.projectRoot,
         },
       };
 
@@ -309,8 +309,8 @@ export class HermesAgentIntegration extends BaseIntegration {
     this.getEventEmitter().emit("pre-tool-call", event);
 
     // 0xRay MCP tools — skip bridge entirely
-    if (this.isStrrayMcp(tool)) {
-      this.hermesStats.strrayMcpCalls++;
+    if (this.isXrayMcp(tool)) {
+      this.hermesStats.xrayMcpCalls++;
       return { allowed: true };
     }
 
@@ -397,7 +397,7 @@ export class HermesAgentIntegration extends BaseIntegration {
     this.getEventEmitter().emit("post-tool-call", event);
 
     // Skip non-code tools and 0xRay MCP tools
-    if (!CODE_TOOLS.has(tool) || this.isStrrayMcp(tool)) {
+    if (!CODE_TOOLS.has(tool) || this.isXrayMcp(tool)) {
       return;
     }
 
@@ -425,7 +425,7 @@ export class HermesAgentIntegration extends BaseIntegration {
   // ==========================================================================
 
   /**
-   * Run strray_validate — validate files against quality gate
+   * Run xray_validate — validate files against quality gate
    */
   async validate(
     files: string[],
@@ -439,7 +439,7 @@ export class HermesAgentIntegration extends BaseIntegration {
   }
 
   /**
-   * Run strray_codex_check — check code against codex rules
+   * Run xray_codex_check — check code against codex rules
    */
   async codexCheck(
     code: string | undefined,
@@ -464,7 +464,7 @@ export class HermesAgentIntegration extends BaseIntegration {
   }
 
   /**
-   * Run strray_health — framework health check
+   * Run xray_health — framework health check
    */
   async health(): Promise<BridgeHealthResponse> {
     return this.checkBridgeHealth();
@@ -477,8 +477,8 @@ export class HermesAgentIntegration extends BaseIntegration {
   /**
    * Check if a tool name belongs to a 0xRay MCP server
    */
-  isStrrayMcp(tool: string): boolean {
-    return tool.startsWith("mcp_strray_");
+  isXrayMcp(tool: string): boolean {
+    return tool.startsWith("mcp_xray_");
   }
 
   /**
@@ -505,7 +505,7 @@ export class HermesAgentIntegration extends BaseIntegration {
       qualityGateBlocks: 0,
       preProcessorRuns: 0,
       postProcessorRuns: 0,
-      strrayMcpCalls: 0,
+      xrayMcpCalls: 0,
       nativeToolCalls: 0,
       bridgeErrors: 0,
       sessionId: generateJobId("hermes-agent"),

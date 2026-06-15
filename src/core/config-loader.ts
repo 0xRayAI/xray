@@ -38,15 +38,15 @@ export interface AutonomousReportingConfig {
   notification_channels: string[]; // ["console", "file", "webhook"]
 }
 
-export interface StringRayConfig {
+export interface XrayConfig {
   multi_agent_orchestration: MultiAgentOrchestrationConfig;
   autonomous_reporting: AutonomousReportingConfig;
   disabled_agents: string[];
 }
 
-export class StringRayConfigLoader {
+export class XrayConfigLoader {
   private configPath: string;
-  private cachedConfig: StringRayConfig | null = null;
+  private cachedConfig: XrayConfig | null = null;
   private cacheExpiry: number = 30000; // 30 seconds
   private lastLoadTime: number = 0;
 
@@ -57,7 +57,7 @@ export class StringRayConfigLoader {
   /**
    * Load 0xRay configuration from the resolved config directory
    */
-  public loadConfig(): StringRayConfig {
+  public loadConfig(): XrayConfig {
     const now = Date.now();
 
     // Return cached config if still valid
@@ -88,7 +88,7 @@ export class StringRayConfigLoader {
   /**
    * Parse configuration data with validation
    */
-  private parseConfig(configData: unknown): StringRayConfig {
+  private parseConfig(configData: unknown): XrayConfig {
     // Handle null/undefined config data
     if (!configData || typeof configData !== 'object') {
       return this.getDefaultConfig();
@@ -180,7 +180,7 @@ export class StringRayConfigLoader {
   /**
    * Get default configuration
    */
-  private getDefaultConfig(): StringRayConfig {
+  private getDefaultConfig(): XrayConfig {
     return {
       multi_agent_orchestration: {
         enabled: true,
@@ -224,4 +224,8 @@ export class StringRayConfigLoader {
 }
 
 // Export singleton instance
-export const strRayConfigLoader = new StringRayConfigLoader();
+export const xrayConfigLoader = new XrayConfigLoader();
+
+// Backward compat aliases
+
+

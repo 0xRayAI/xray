@@ -29,7 +29,7 @@ function runTest(fullPath) {
   try {
     const result = execSync(`node ${fullPath}`, {
       encoding: 'utf-8',
-      cwd: '/Users/blaze/dev/stringray',
+      cwd: '/Users/blaze/dev/xray',
       timeout: 60000
     });
     return { success: true, output: result };
@@ -45,7 +45,7 @@ function runConsecutive(pipeline) {
   
   let consecutivePasses = 0;
   let iteration = 0;
-  const fullPath = `/Users/blaze/dev/stringray/src/__tests__/pipeline/${pipeline.path}`;
+  const fullPath = `/Users/blaze/dev/xray/src/__tests__/pipeline/${pipeline.path}`;
   
   while (consecutivePasses < CONSECUTIVE_PASSES_REQUIRED) {
     iteration++;
@@ -78,7 +78,7 @@ function main() {
   const results = [];
   
   for (const pipeline of PIPELINES) {
-    const fullPath = `/Users/blaze/dev/stringray/src/__tests__/pipeline/${pipeline.path}`;
+  const fullPath = `/Users/blaze/dev/xray/src/__tests__/pipeline/${pipeline.path}`;
     
     if (!existsSync(fullPath)) {
       console.log(`\n⚠️  Skipping ${pipeline.name}: test file not found`);

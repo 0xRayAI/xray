@@ -94,7 +94,7 @@ export interface PluginManifest {
   author?: string | undefined;
   homepage?: string | undefined;
   repository?: string | undefined;
-  minStringrayVersion?: string | undefined;
+  minXrayVersion?: string | undefined;
   runtime?: {
     command: string;
     args?: string[] | undefined;
@@ -384,7 +384,7 @@ export class PluginIntegration extends BaseIntegration {
       author: parsed.author ? String(parsed.author) : undefined,
       homepage: parsed.homepage ? String(parsed.homepage) : undefined,
       repository: parsed.repository ? String(parsed.repository) : undefined,
-      minStringrayVersion: parsed.minStringrayVersion ? String(parsed.minStringrayVersion) : undefined,
+      minXrayVersion: parsed.minXrayVersion ? String(parsed.minXrayVersion) : undefined,
       runtime: parsed.runtime as PluginManifest["runtime"],
       tools: parsed.tools as PluginManifest["tools"],
       capabilities: parsed.capabilities as string[],

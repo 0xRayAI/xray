@@ -23,9 +23,9 @@ describe("Inference Layer E2E", () => {
   let stateDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-e2e-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-e2e-"));
     inferenceDir = path.join(tmpDir, "docs", "inference");
-    stateDir = path.join(tmpDir, ".strray", "inference");
+    stateDir = path.join(tmpDir, ".xray", "inference");
     fs.mkdirSync(inferenceDir, { recursive: true });
     fs.mkdirSync(stateDir, { recursive: true });
   });

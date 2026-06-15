@@ -8,7 +8,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${STRRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/pre-tool-use.js"
+              "${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/pre-tool-use.js"
             ],
             "timeout": 30000
           }
@@ -21,7 +21,7 @@
           {
             "type": "command",
             "command": "echo",
-            "args": ["[0xRay] Grok session started with StringRay governance enabled"]
+            "args": ["[0xRay] Grok session started with 0xRay governance enabled"]
           }
         ]
       }

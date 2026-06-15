@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple codex validation script for StrRay framework.
+Simple codex validation script for Xray framework.
 Basic validation without complex imports.
 """
 
@@ -48,7 +48,7 @@ def validate_code_simple(code: str, file_path: str = "<unknown>") -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate code against StrRay codex")
+    parser = argparse.ArgumentParser(description="Validate code against Xray codex")
     parser.add_argument("--code", help="Code to validate")
     parser.add_argument("--file", help="File path being modified")
 
@@ -61,7 +61,7 @@ def main():
     result = validate_code_simple(args.code, args.file or "<unknown>")
 
     if result["compliant"]:
-        print("✅ Code is compliant with StrRay codex")
+        print("✅ Code is compliant with Xray codex")
         sys.exit(0)
     else:
         print(f"❌ Code has {result['violation_count']} codex violations:")

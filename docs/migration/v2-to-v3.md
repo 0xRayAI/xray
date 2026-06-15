@@ -13,7 +13,7 @@ xray v3 extracts the governance kernel (Dynamo pipeline + orchestrator routing +
 | 71 | Self-Evolution Safety Controls | Circuit breaker, rate limiting, whitelisted targets |
 | 72 | Self-Evolution Traceability | All proposals must be logged with full provenance |
 
-**Action**: None. Codex auto-loads from `.opencode/xray/codex.json`. The new terms are enforced by the kernel.
+**Action**: None. Codex auto-loads from `.xray/codex.json`. The new terms are enforced by the kernel.
 
 ### 2. Kernel Integration (Strangler Applied)
 
@@ -106,6 +106,6 @@ npm run verify:consumer  # consumer gate (all 4 bridges)
 
 v3 is purely additive to the v2 codebase. To revert:
 1. Remove `docs/api/plugin-api.md`
-2. Revert `.opencode/xray/codex.json` to the 68-term version
+2. Revert `.xray/codex.json` to the 68-term version
 3. Remove `src/__tests__/integration/self-evolution-e2e.test.ts`
 4. Remove CHANGELOG v3.0.0 entries

@@ -61,6 +61,14 @@ function getSkillsList(cwd: string): { count: number; names: string[] } {
     skills.push(...skillDirs);
   }
 
+  const opencodeSkillsPath = join(cwd, ".opencode", "skills");
+  if (existsSync(opencodeSkillsPath)) {
+    const skillDirs = readdirSync(opencodeSkillsPath).filter((f) =>
+      existsSync(join(opencodeSkillsPath, f, "SKILL.md"))
+    );
+    skills.push(...skillDirs);
+  }
+
   const uniqueSkills = [...new Set(skills)];
   return { count: uniqueSkills.length, names: uniqueSkills.sort() };
 }
@@ -78,7 +86,7 @@ function getAgentsList(cwd: string): { count: number; names: string[] } {
   const configuredAgents: string[] = [];
 
   const configDir = getConfigDir(cwd);
-  const agentsConfigPath = join(configDir, "strray", "agents.json");
+  const agentsConfigPath = join(configDir, "xray", "agents.json");
   if (existsSync(agentsConfigPath)) {
     try {
       const config = JSON.parse(readFileSync(agentsConfigPath, "utf-8"));
@@ -88,7 +96,7 @@ function getAgentsList(cwd: string): { count: number; names: string[] } {
     } catch { /* ignore */ }
   }
 
-  const featuresPath = join(configDir, "strray", "features.json");
+  const featuresPath = join(configDir, "xray", "features.json");
   if (existsSync(featuresPath)) {
     try {
       const features = JSON.parse(readFileSync(featuresPath, "utf-8"));
@@ -144,7 +152,7 @@ function getInferenceStatus(cwd: string): {
   let patternsCount = 0;
 
   try {
-    const inferenceDir = join(getConfigDir(cwd), "strray", "inference");
+    const inferenceDir = join(getConfigDir(cwd), "xray", "inference");
     const tunerStatusPath = join(inferenceDir, "tuner-status.json");
     if (existsSync(tunerStatusPath)) {
       const status = JSON.parse(readFileSync(tunerStatusPath, "utf-8"));

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
-  StringRayContextLoader,
-  strRayContextLoader,
+  XrayContextLoader,
+  xrayContextLoader,
   CodexContext,
   CodexTerm,
 } from "../../core/context-loader.js";
@@ -50,8 +50,8 @@ function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
   return dedented;
 }
 
-describe("StringRayContextLoader", () => {
-  let loader: StringRayContextLoader;
+describe("XrayContextLoader", () => {
+  let loader: XrayContextLoader;
   let mockFs: any;
   let mockPath: any;
 
@@ -132,8 +132,8 @@ describe("StringRayContextLoader", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset singleton instance for clean test state
-    (StringRayContextLoader as any).instance = null;
-    loader = StringRayContextLoader.getInstance();
+    (XrayContextLoader as any).instance = null;
+    loader = XrayContextLoader.getInstance();
     mockFs = vi.mocked(fs);
     mockPath = vi.mocked(path);
 
@@ -150,16 +150,16 @@ describe("StringRayContextLoader", () => {
 
   describe("singleton pattern", () => {
     it("should return the same instance", () => {
-      const instance1 = StringRayContextLoader.getInstance();
-      const instance2 = StringRayContextLoader.getInstance();
+      const instance1 = XrayContextLoader.getInstance();
+      const instance2 = XrayContextLoader.getInstance();
 
       expect(instance1).toBe(instance2);
     });
 
     it("should export singleton instance", () => {
-      const instance1 = StringRayContextLoader.getInstance();
-      expect(strRayContextLoader).toBeInstanceOf(StringRayContextLoader);
-      expect(instance1).toBeInstanceOf(StringRayContextLoader);
+      const instance1 = XrayContextLoader.getInstance();
+      expect(xrayContextLoader).toBeInstanceOf(XrayContextLoader);
+      expect(instance1).toBeInstanceOf(XrayContextLoader);
     });
   });
 
@@ -192,7 +192,7 @@ describe("StringRayContextLoader", () => {
 
     it("should load context from first available file", async () => {
       mockFs.existsSync.mockImplementation((path: string) =>
-        path.includes(".opencode/strray/codex.json"),
+        path.includes(".xray/codex.json"),
       );
 
       const result = await loader.loadCodexContext("/test/project");
@@ -233,7 +233,7 @@ describe("StringRayContextLoader", () => {
       const result = await loader.loadCodexContext("/test/project");
 
       expect(result.success).toBe(false);
-      expect(result.warnings).toHaveLength(6); // All codex file path candidates attempted
+      expect(result.warnings).toHaveLength(5); // All codex file path candidates attempted
       expect(result.warnings[0]).toContain("Failed to parse");
     });
 
@@ -301,7 +301,7 @@ describe("StringRayContextLoader", () => {
 
     it("should load context from first available file", async () => {
       mockFs.existsSync.mockImplementation((path: string) =>
-        path.includes(".opencode/strray/codex.json"),
+        path.includes(".xray/codex.json"),
       );
 
       const result = await loader.loadCodexContext("/test/project");
@@ -342,7 +342,7 @@ describe("StringRayContextLoader", () => {
       const result = await loader.loadCodexContext("/test/project");
 
       expect(result.success).toBe(false);
-      expect(result.warnings).toHaveLength(6); // All codex file path candidates attempted
+      expect(result.warnings).toHaveLength(5); // All codex file path candidates attempted
       expect(result.warnings[0]).toContain("Failed to parse");
     });
   });

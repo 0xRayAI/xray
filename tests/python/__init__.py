@@ -1,4 +1,4 @@
-"""Test fixtures and utilities for StrRay framework tests."""
+"""Test fixtures and utilities for Xray framework tests."""
 
 import pytest
 import os
@@ -6,8 +6,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
-from strray.core.agent import BaseAgent
-from strray.config.manager import ConfigManager
+from xray.core.agent import BaseAgent
+from xray.config.manager import ConfigManager
 
 
 @pytest.fixture

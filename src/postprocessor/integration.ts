@@ -35,10 +35,10 @@ export type { APIConfig, APIRequest } from './triggers/APITrigger.js';
  *
  * @example
  * ```typescript
- * import { createStringRayIntegration } from '0xray/integration';
+ * import { createXrayIntegration } from '0xray/integration';
  * 
  * const postProcessor = new PostProcessor(stateManager);
- * const integration = createStringRayIntegration(postProcessor);
+ * const integration = createXrayIntegration(postProcessor);
  * 
  * // Get Express app for mounting
  * app.use('/webhooks', integration.getWebhookApp());
@@ -49,7 +49,7 @@ export type { APIConfig, APIRequest } from './triggers/APITrigger.js';
  * const apiRouter = integration.getAPIRouter();
  * ```
  */
-export class StringRayIntegration {
+export class XrayIntegration {
   private webhookTrigger: WebhookTrigger | null = null;
   private apiTrigger: APITrigger | null = null;
 
@@ -199,14 +199,14 @@ export class StringRayIntegration {
  * 
  * @example
  * ```typescript
- * import { createStringRayIntegration } from '0xray/integration';
+ * import { createXrayIntegration } from '0xray/integration';
  * 
  * // With default configuration
- * const integration = createStringRayIntegration(postProcessor);
+ * const integration = createXrayIntegration(postProcessor);
  * await integration.initialize();
  * 
  * // With custom configuration
- * const integration = createStringRayIntegration(postProcessor);
+ * const integration = createXrayIntegration(postProcessor);
  * await integration.initialize({
  *   webhook: {
  *     provider: 'gitlab',
@@ -221,8 +221,11 @@ export class StringRayIntegration {
  * });
  * ```
  */
-export function createStringRayIntegration(
+export function createXrayIntegration(
   postProcessor: PostProcessor
-): StringRayIntegration {
-  return new StringRayIntegration(postProcessor);
+): XrayIntegration {
+  return new XrayIntegration(postProcessor);
 }
+
+// Backward compat aliases
+

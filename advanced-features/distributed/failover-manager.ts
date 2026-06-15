@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Distributed Failover Manager
+ * 0xRay AI v1.3.4 - Distributed Failover Manager
  *
  * Enterprise-grade failover mechanisms with automatic instance recovery,
  * state synchronization, and zero-downtime failovers for multi-instance deployments.

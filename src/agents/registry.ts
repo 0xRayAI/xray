@@ -300,6 +300,19 @@ export const AGENT_REGISTRY: Record<string, AgentRegistryEntry> = {
     performance: 85,
     expertise: "technical documentation and writing",
   },
+  "multimodal-looker": {
+    name: "multimodal-looker",
+    description: "Visual content analysis for images, diagrams, PDFs, and screenshots",
+    capabilities: ["visual-analysis", "image-processing", "document-analysis", "multimodal-data-processing"],
+    capacity: 60,
+    specialties: ["image", "visual", "diagram", "screenshot", "pdf"],
+    mode: "subagent",
+    maxComplexity: 35,
+    concurrentTasks: 2,
+    status: "active",
+    performance: 80,
+    expertise: "multimodal content analysis and interpretation",
+  },
 };
 
 export function getActiveAgents(): string[] {

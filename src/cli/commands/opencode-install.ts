@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import { frameworkLogger } from '../../core/framework-logger.js';
+import { syncBuiltinSkills } from './skill-install.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -94,6 +95,14 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
 
     copyDir(opencodeSource, opencodeDest);
     frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
+
+    // Sync builtin skills to .opencode/skills/
+    const opencodeSkillsDir = path.join(opencodeDest, 'skills');
+    const skillsCopied = syncBuiltinSkills(opencodeSkillsDir);
+    if (skillsCopied > 0) {
+      console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to .opencode/skills/\x1b[0m`);
+    }
+    frameworkLogger.log('opencode-integration', 'skills-synced', 'info', { count: skillsCopied });
 
     console.log(`\x1b[32m✓ Copied OpenCode config to .opencode/\x1b[0m`);
     console.log('\n✅ 0xRay OpenCode plugin installed!');

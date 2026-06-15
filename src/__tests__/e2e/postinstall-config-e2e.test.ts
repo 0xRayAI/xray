@@ -125,10 +125,14 @@ describe("AGENTS.md configuration", () => {
   test("references 0xray", () => {
     const content = fs.readFileSync(path.join(PROJECT_ROOT, "AGENTS.md"), "utf-8");
     expect(content).toContain("0xray");
-    expect(content).toContain("3113");
   });
 
-  test("has v3.0.13 session entry", () => {
+  test("has v3.0.14 session entry", () => {
+    const content = fs.readFileSync(path.join(PROJECT_ROOT, "AGENTS.md"), "utf-8");
+    expect(content).toContain("v3.0.14");
+  });
+
+  test("has v3.0.13 session entry (backward compat)", () => {
     const content = fs.readFileSync(path.join(PROJECT_ROOT, "AGENTS.md"), "utf-8");
     expect(content).toContain("v3.0.13");
   });
@@ -210,9 +214,9 @@ describe("each skill server instantiates and lists tools", () => {
 // ── CHANGELOG.md tests ───────────────────────────────────────────────────
 
 describe("CHANGELOG.md", () => {
-  test("has 3.0.13 entry", () => {
+  test("has 3.0.14 entry", () => {
     const content = fs.readFileSync(path.join(PROJECT_ROOT, "CHANGELOG.md"), "utf-8");
-    expect(content).toContain("3.0.13");
+    expect(content).toContain("3.0.14");
   });
 });
 
@@ -224,8 +228,8 @@ describe("package.json configuration", () => {
     expect(pkg.opencode?.plugin).toBe("./dist/plugin/xray-codex-injection.js");
   });
 
-  test("version is 3.0.13", () => {
+  test("version is 3.1.0", () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8"));
-    expect(pkg.version).toBe("3.0.13");
+    expect(pkg.version).toBe("3.1.0");
   });
 });

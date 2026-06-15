@@ -4,6 +4,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { homedir } from 'os';
 import { frameworkLogger } from '../../core/framework-logger.js';
+import { syncBuiltinSkills } from './skill-install.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -27,7 +28,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
   frameworkLogger.log('hermes-integration', 'install-start', 'info', { options });
 
   const home = homedir();
-  const targetPluginDir = path.join(home, '.hermes/plugins/strray-hermes');
+  const targetPluginDir = path.join(home, '.hermes/plugins/xray-hermes');
 
   const possibleSources = [
     path.join(__dirname, '..', '..', '..', 'dist/integrations/hermes-agent'),
@@ -36,7 +37,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
 
   let sourceDir = possibleSources.find(p => fs.existsSync(p));
   if (!sourceDir) {
-    console.error('[Hermes] Could not locate the strray-hermes plugin inside the package.');
+    console.error('[Hermes] Could not locate the xray-hermes plugin inside the package.');
     return;
   }
 
@@ -47,7 +48,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
 
   try {
     if (fs.existsSync(targetPluginDir) && !options.force) {
-      console.log('[Hermes] strray-hermes plugin is already installed.');
+      console.log('[Hermes] xray-hermes plugin is already installed.');
       console.log('Use --force to reinstall.');
       return;
     }
@@ -65,6 +66,14 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
     frameworkLogger.log('hermes-integration', 'plugin-copied', 'info', { destination: targetPluginDir });
     console.log(`\x1b[32m✓ Copied Hermes plugin to ${targetPluginDir}\x1b[0m`);
 
+    // Sync builtin skills to Hermes plugin skills dir
+    const hermesSkillsDir = path.join(targetPluginDir, 'skills');
+    const skillsCopied = syncBuiltinSkills(hermesSkillsDir);
+    if (skillsCopied > 0) {
+      console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to Hermes plugin\x1b[0m`);
+    }
+    frameworkLogger.log('hermes-integration', 'skills-synced', 'info', { count: skillsCopied });
+
     // Write after-install instructions
     const afterInstallPath = path.join(targetPluginDir, 'after-install.md');
     if (fs.existsSync(afterInstallPath)) {
@@ -73,7 +82,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
 
     console.log('\n✅ 0xRay is now installed as a Hermes Agent plugin!');
     console.log('Restart Hermes to load the plugin and its tools.');
-    console.log('  Run: /strray status  (to verify)');
+    console.log('  Run: /xray status  (to verify)');
 
   } catch (err: any) {
     frameworkLogger.log('hermes-integration', 'install-error', 'error', { error: err.message });

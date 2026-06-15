@@ -354,7 +354,7 @@ class XrayValidator {
     this.checkFile(path.join(PROJECT_DIR, 'src', 'opencode', 'enforcer-config.json'), 'Enforcer config (source)');
     this.checkFile(path.join(PROJECT_DIR, 'xray', 'config.json'), 'xray config (source)');
     // Generated/runtime configs (in .opencode/)
-    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'strray'), 'Strray config directory (generated)');
+    this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'xray'), 'Xray config directory (generated)');
     this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'commands'), 'OpenCode commands (generated)');
     this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'hooks'), 'OpenCode hooks');
     this.checkDirectory(path.join(PROJECT_DIR, '.opencode', 'workflows'), 'OpenCode workflows (generated)');

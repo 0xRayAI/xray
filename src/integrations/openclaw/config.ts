@@ -65,7 +65,7 @@ export class OpenClawConfigLoader {
 
   constructor(configPath?: string) {
     this.configPath = configPath || 
-      path.join(process.cwd(), '.strray', 'config', 'openclaw.json');
+      path.join(process.cwd(), '.xray', 'config', 'openclaw.json');
   }
 
   /**

@@ -26,7 +26,7 @@ const fullScan = process.argv.includes("--all");
 
 // Files whose changes trigger governance proposals
 const GOVERNANCE_INTEREST_FILES = [
-  ".opencode/xray/codex.json",
+  ".xray/codex.json",
   "xray/features.json",
   "src/integrations/enforcement-gate.ts",
   "src/integrations/governance/governance-client.ts",
@@ -48,7 +48,7 @@ const GOVERNANCE_INTEREST_FILES = [
 
 // Category groupings for proposal construction
 const CATEGORY_MAP = {
-  codex: [".opencode/xray/codex.json"],
+  codex: [".xray/codex.json"],
   features: ["xray/features.json"],
   enforcement: [
     "src/integrations/enforcement-gate.ts",

@@ -15,8 +15,8 @@ let governanceEnabled = true
 let governanceReason = ''
 try {
   const featuresPaths = [
-    path.join(process.cwd(), '.opencode', 'strray', 'features.json'),
-    path.join(process.cwd(), '.strray', 'features.json'),
+    path.join(process.cwd(), '.opencode', 'xray', 'features.json'),
+    path.join(process.cwd(), '.xray', 'features.json'),
   ]
   for (const fp of featuresPaths) {
     if (fs.existsSync(fp)) {
@@ -230,7 +230,7 @@ async function governanceGate(c: Context, next: () => Promise<void>) {
     return c.json({
       status: 'disabled',
       reason: governanceReason,
-      doc: 'Set governance.enabled=true in .opencode/strray/features.json',
+      doc: 'Set governance.enabled=true in .xray/features.json',
     })
   }
   return next()

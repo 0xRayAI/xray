@@ -324,9 +324,9 @@ describe('OpenClaw Error Codes', () => {
     expect(OpenClawErrorCode.SKILL_NOT_FOUND).toBe('SKILL_NOT_FOUND');
     expect(OpenClawErrorCode.SKILL_LOAD_FAILED).toBe('SKILL_LOAD_FAILED');
     expect(OpenClawErrorCode.SKILL_EXECUTION_FAILED).toBe('SKILL_EXECUTION_FAILED');
-    expect(OpenClawErrorCode.STRINGRAY_UNAVAILABLE).toBe('STRINGRAY_UNAVAILABLE');
-    expect(OpenClawErrorCode.STRINGRAY_TIMEOUT).toBe('STRINGRAY_TIMEOUT');
-    expect(OpenClawErrorCode.STRINGRAY_ERROR).toBe('STRINGRAY_ERROR');
+    expect(OpenClawErrorCode.XRAY_UNAVAILABLE).toBe('XRAY_UNAVAILABLE');
+    expect(OpenClawErrorCode.XRAY_TIMEOUT).toBe('XRAY_TIMEOUT');
+    expect(OpenClawErrorCode.XRAY_ERROR).toBe('XRAY_ERROR');
     expect(OpenClawErrorCode.CONFIG_INVALID).toBe('CONFIG_INVALID');
     expect(OpenClawErrorCode.CONFIG_MISSING).toBe('CONFIG_MISSING');
     expect(OpenClawErrorCode.UNKNOWN_ERROR).toBe('UNKNOWN_ERROR');

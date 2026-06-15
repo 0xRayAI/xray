@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { StringRayStateManager } from '../../../dist/state/state-manager.js';
+import { XrayStateManager } from '../../../dist/state/state-manager.js';
 
 console.log('=== PERFORMANCE PIPELINE TEST ===\n');
 
@@ -43,7 +43,7 @@ test('should verify PerformanceBudgetProcessor is defined', () => {
 });
 
 test('should verify performance_monitoring config in features.json', () => {
-  const configPath = process.cwd() + '/.strray/features.json';
+  const configPath = process.cwd() + '/.xray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.performance_monitoring) {
@@ -62,7 +62,7 @@ test('should verify performanceBudget pre-processor in BootOrchestrator', () => 
 });
 
 test('should verify alerting config exists', () => {
-  const configPath = process.cwd() + '/.strray/features.json';
+  const configPath = process.cwd() + '/.xray/features.json';
   const configData = readFileSync(configPath, 'utf-8');
   const config = JSON.parse(configData);
   if (!config.performance_monitoring?.alerting) {

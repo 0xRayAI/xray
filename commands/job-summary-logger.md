@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StrRay Framework - AI Summary Auto-Logger
+# Xray Framework - AI Summary Auto-Logger
 
 # Automatically captures and logs whatever AI outputs as final summary
 
@@ -40,7 +40,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "🤖 StrRay AI Summary Auto-Logger"
+echo "🤖 Xray AI Summary Auto-Logger"
 echo "==============================="
 
 # This script captures whatever content is piped to it and logs it automatically
@@ -53,7 +53,7 @@ if [ ! -t 0 ]; then
 SUMMARY_CONTENT=$(cat)
     if [ -n "$SUMMARY_CONTENT" ]; then
 echo "✅ Captured AI summary output - logging to REFACTORING_LOG.md..."
-export STRRAY_SUMMARY_CONTENT="$SUMMARY_CONTENT"
+export XRAY_SUMMARY_CONTENT="$SUMMARY_CONTENT"
 tail -n +6 commands/summary-logger.md | bash 2>/dev/null
 echo "✅ AI summary automatically logged!"
 else
@@ -62,7 +62,7 @@ exit 1
 fi
 else
 echo "❌ No piped input detected."
-echo "Usage: echo 'AI summary content' | bash strray/commands/job-summary-logger.md"
+echo "Usage: echo 'AI summary content' | bash xray/commands/job-summary-logger.md"
 echo "This will automatically log whatever AI outputs to REFACTORING_LOG.md"
 exit 1
 fi

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * StringRay Docs → Docusaurus Migration Script
+ * 0xRay Docs → Docusaurus Migration Script
  *
  * Converts 387 markdown files from the docs/ directory into a Docusaurus site.
  * Handles frontmatter injection, slug generation, internal link rewriting,
@@ -26,7 +26,7 @@ const EXCLUDE_DIRS = new Set([
   "archive/obsolete",
   "archive/operations",
   "archive/superseded",
-  "archive/legacy/strray-framework",
+  "archive/legacy/xray-framework",
   "archive/legacy",
   "archive/deployment",
   "debug-reports",
@@ -54,7 +54,7 @@ const EXCLUDE_PATTERNS = [
   /HONEST_KERNEL_/,
   /FINAL_KERNEL_/,
   /KERNEL_EXPERIENCE/,
-  /strray_v2_log\.md$/,
+  /xray_v2_log\.md$/,
   /master-agent-template\.md$/,
   /agent-template-dev\.md$/,
   /agents_template\.md$/,
@@ -462,7 +462,7 @@ export default sidebars;
 // ── Main Migration ─────────────────────────────────────────────────────────
 
 function migrate() {
-  console.log("🚀 StringRay Docs → Docusaurus Migration");
+  console.log("🚀 0xRay Docs → Docusaurus Migration");
   console.log("=".repeat(50));
 
   // Scan
@@ -551,7 +551,7 @@ function migrate() {
   writeFileSync(
     join(ROOT_DIR, "docs-site", "src", "css", "custom.css"),
     `/**
- * StringRay Docusaurus Custom CSS
+ * 0xRay Docusaurus Custom CSS
  */
 
 :root {
@@ -666,13 +666,13 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'StringRay',
+  title: '0xRay',
   tagline: 'Enterprise AI Orchestration Framework',
   favicon: 'img/favicon.ico',
   url: 'https://stringray.dev',
   baseUrl: '/',
   organizationName: 'htafolla',
-  projectName: 'StringRay',
+  projectName: '0xRay',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   i18n: {
@@ -685,7 +685,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/htafolla/StringRay/tree/master/',
+          editUrl: 'https://github.com/htafolla/0xRay/tree/master/',
           routeBasePath: 'docs',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
@@ -700,9 +700,9 @@ const config: Config = {
   themeConfig: {
     image: 'img/social-card.png',
     navbar: {
-      title: 'StringRay',
+      title: '0xRay',
       logo: {
-        alt: 'StringRay Logo',
+        alt: '0xRay Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -713,12 +713,12 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/htafolla/StringRay',
+          href: 'https://github.com/htafolla/0xRay',
           label: 'GitHub',
           position: 'right',
         },
         {
-          href: 'https://npmjs.com/package/strray-ai',
+          href: 'https://npmjs.com/package/0xray',
           label: 'npm',
           position: 'right',
         },
@@ -739,12 +739,12 @@ const config: Config = {
         {
           title: 'Community',
           items: [
-            { label: 'GitHub', href: 'https://github.com/htafolla/StringRay' },
-            { label: 'npm', href: 'https://npmjs.com/package/strray-ai' },
+            { label: 'GitHub', href: 'https://github.com/htafolla/0xRay' },
+            { label: 'npm', href: 'https://npmjs.com/package/0xray' },
           ],
         },
       ],
-      copyright: \`Copyright © \${new Date().getFullYear()} StringRay. Built with Docusaurus.\`,
+      copyright: \`Copyright © \${new Date().getFullYear()} 0xRay. Built with Docusaurus.\`,
     },
     prism: {
       theme: prismThemes.github,

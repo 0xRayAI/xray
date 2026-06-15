@@ -2,27 +2,25 @@
  * Config Path Resolver
  *
  * Centralizes all 0xRay config file path resolution.
- * Supports STRRAY_CONFIG_DIR env var for custom config roots,
- * making .opencode/ completely optional for environments like Hermes Agent.
+ * Supports XRAY_CONFIG_DIR env var for custom config roots.
  *
  * Resolution order (per file type):
- *   1. STRRAY_CONFIG_DIR/<relative_path>     (if env var set)
- *   2. .strray/<relative_path>                (preferred lightweight root)
- *   3. .opencode/strray/<relative_path>       (legacy OpenCode root)
- *   4. null                                   (callers fall back to built-in defaults)
+ *   1. XRAY_CONFIG_DIR/<relative_path>     (if env var set)
+ *   2. .xray/<relative_path>                 (preferred lightweight root)
+ *   3. null                                   (callers fall back to built-in defaults)
  *
  * For state/data directories, uses:
- *   1. STRRAY_CONFIG_DIR/state                 (if env var set)
- *   2. .strray/state
+ *   1. XRAY_CONFIG_DIR/state                 (if env var set)
+ *   2. .xray/state
  *   3. .opencode/state                         (legacy)
- *   4. .strray/state                           (default — always writable)
+ *   4. .xray/state                              (default — always writable)
  */
 
 import { existsSync } from "fs";
 import { join, resolve } from "path";
 
 /** Environment variable name for custom config root */
-export const STRRAY_CONFIG_DIR_ENV = "STRRAY_CONFIG_DIR";
+export const XRAY_CONFIG_DIR_ENV = "XRAY_CONFIG_DIR";
 
 /** Resolved config directories, cached per projectRoot */
 const _resolvedConfigDirs = new Map<string, string>();
@@ -35,7 +33,7 @@ export function getConfigDir(projectRoot?: string): string {
   const root = projectRoot || process.cwd();
   const cached = _resolvedConfigDirs.get(root);
   if (cached) return cached;
-  const envDir = process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   // Priority candidates
   const candidates: Array<{ dir: string; source: string }> = [];
@@ -46,8 +44,7 @@ export function getConfigDir(projectRoot?: string): string {
     candidates.push({ dir: resolved, source: "env" });
   }
 
-  candidates.push({ dir: join(root, ".strray"), source: "dot-strray" });
-  candidates.push({ dir: join(root, ".opencode", "strray"), source: "dot-opencode" });
+  candidates.push({ dir: join(root, ".xray"), source: "dot-xray" });
 
   // Return the first that exists, or the highest-priority default
   for (const c of candidates) {
@@ -57,7 +54,7 @@ export function getConfigDir(projectRoot?: string): string {
     }
   }
 
-  // Nothing exists — use highest priority default (env > .strray > .opencode)
+  // Nothing exists — use highest priority default (env > .xray)
   const defaultDir = candidates[0]!;
   _resolvedConfigDirs.set(root, defaultDir.dir);
   return defaultDir.dir;
@@ -72,15 +69,14 @@ export function getConfigDir(projectRoot?: string): string {
  */
 export function resolveConfigPath(relativePath: string, projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
 
   if (envDir) {
     candidates.push(resolve(root, envDir, relativePath));
   }
-  candidates.push(join(root, ".strray", relativePath));
-  candidates.push(join(root, ".opencode", "strray", relativePath));
+  candidates.push(join(root, ".xray", relativePath));
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
@@ -99,13 +95,13 @@ export function resolveConfigPath(relativePath: string, projectRoot?: string): s
  */
 export function resolveStateDir(projectRoot?: string): string {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
   if (envDir) {
     candidates.push(join(root, envDir, "state"));
   }
-  candidates.push(join(root, ".strray", "state"));
+  candidates.push(join(root, ".xray", "state"));
   candidates.push(join(root, ".opencode", "state"));
 
   for (const candidate of candidates) {
@@ -131,14 +127,13 @@ export function resolveStateFilePath(projectRoot?: string): string {
  */
 export function resolveProfilesDir(projectRoot?: string): string {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
   if (envDir) {
     candidates.push(join(root, envDir, "profiles"));
   }
-  candidates.push(join(root, ".strray", "profiles"));
-  candidates.push(join(root, ".opencode", "strray", "profiles"));
+  candidates.push(join(root, ".xray", "profiles"));
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
@@ -155,15 +150,14 @@ export function resolveProfilesDir(projectRoot?: string): string {
  */
 export function resolveCodexPath(projectRoot?: string): string[] {
   const root = projectRoot || process.cwd();
-  const envDir = process.env[STRRAY_CONFIG_DIR_ENV];
+  const envDir = process.env[XRAY_CONFIG_DIR_ENV];
 
   const candidates: string[] = [];
   if (envDir) {
     candidates.push(join(root, envDir, "codex.json"));
   }
-  candidates.push(join(root, ".strray", "codex.json"));
+  candidates.push(join(root, ".xray", "codex.json"));
   candidates.push(join(root, "xray", "codex.json"));
-  candidates.push(join(root, ".opencode", "strray", "codex.json"));
   // Additional fallback locations (for standalone usage)
   candidates.push(join(root, "codex.json"));
   candidates.push(join(root, "src", "codex.json"));

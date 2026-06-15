@@ -1,5 +1,5 @@
 /**
- * StringRay AI v1.3.4 - Raft Consensus Algorithm Implementation
+ * 0xRay AI v1.3.4 - Raft Consensus Algorithm Implementation
  *
  * Enterprise-grade Raft consensus algorithm for leader election and coordination
  * in distributed systems with strong consistency guarantees.

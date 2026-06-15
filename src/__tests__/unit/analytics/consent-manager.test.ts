@@ -15,7 +15,7 @@ describe("ConsentManager", () => {
 
   beforeEach(() => {
     // Use unique temp directory per test to ensure isolation
-    const testDir = path.join(os.tmpdir(), "strray-consent-tests", `test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const testDir = path.join(os.tmpdir(), "xray-consent-tests", `test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     if (!fsSync.existsSync(testDir)) {
       fsSync.mkdirSync(testDir, { recursive: true });
     }

@@ -3,12 +3,12 @@
  * Validates the complete end-to-end orchestration pipeline
  */
 
-import { StringRayOrchestrator } from "../orchestrator/orchestrator.js";
+import { XrayOrchestrator } from "../orchestrator/orchestrator.js";
 import { enhancedMultiAgentOrchestrator } from "../orchestrator/enhanced-multi-agent-orchestrator.js";
 import { createAgentDelegator } from "../delegation/agent-delegator.js";
-import { StringRayStateManager } from "../state/state-manager.js";
+import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { strRayConfigLoader } from "../core/config-loader.js";
+import { xrayConfigLoader } from "../core/config-loader.js";
 
 interface TestResult {
   testName: string;
@@ -36,15 +36,15 @@ import { createAgentDelegator, AgentDelegator } from "../delegation/agent-delega
 import type { SpawnedAgent } from "../orchestrator/enhanced-multi-agent-orchestrator.js";
 
 class OrchestrationFlowValidator {
-  private orchestrator: StringRayOrchestrator;
-  private stateManager: StringRayStateManager;
+  private orchestrator: XrayOrchestrator;
+  private stateManager: XrayStateManager;
   private agentDelegator: AgentDelegator;
   private testResults: Map<string, TestResult> = new Map();
 
   constructor() {
-    this.stateManager = new StringRayStateManager();
-    this.agentDelegator = createAgentDelegator(this.stateManager, strRayConfigLoader);
-    this.orchestrator = new StringRayOrchestrator({
+    this.stateManager = new XrayStateManager();
+    this.agentDelegator = createAgentDelegator(this.stateManager, xrayConfigLoader);
+    this.orchestrator = new XrayOrchestrator({
       maxConcurrentTasks: 5,
       conflictResolutionStrategy: "expert_priority",
     });
@@ -65,7 +65,7 @@ class OrchestrationFlowValidator {
         step: "Orchestrator Initialization",
         success: true,
         timestamp: Date.now(),
-        details: "StringRayOrchestrator created successfully",
+        details: "XrayOrchestrator created successfully",
       });
 
       // Step 2: Define simple task

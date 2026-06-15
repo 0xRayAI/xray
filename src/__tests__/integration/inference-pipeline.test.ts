@@ -35,9 +35,9 @@ describe("Inference Pipeline Integration", () => {
   let stateDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-pipeline-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-pipeline-"));
     inferenceDir = path.join(tmpDir, "docs", "inference");
-    stateDir = path.join(tmpDir, ".strray", "inference");
+    stateDir = path.join(tmpDir, ".xray", "inference");
     fs.mkdirSync(inferenceDir, { recursive: true });
     fs.mkdirSync(stateDir, { recursive: true });
   });

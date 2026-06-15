@@ -258,7 +258,7 @@ async function main() {
       }
       const preTool = JSON.stringify(hooks);
       if (preTool.includes('PreToolUse')) pass('PreToolUse event declared for governance');
-      if (preTool.includes('pre-tool-use.js') || preTool.includes('STRRAY_AI_PATH') || preTool.includes('0XRAY_PATH')) {
+      if (preTool.includes('pre-tool-use.js') || preTool.includes('XRAY_AI_PATH') || preTool.includes('0XRAY_PATH')) {
         pass('PreToolUse references the hook implementation');
       }
     } catch (e) {
@@ -280,7 +280,7 @@ async function main() {
         if (gov.command === 'npx' && gov.args?.includes('mcp') && gov.args?.includes('governance')) {
           pass('0xray-governance uses correct npx 0xray mcp governance');
         }
-        if (gov.env?.STRRAY_FORCE_MCP_GOVERNANCE || gov.env?.XRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
+        if (gov.env?.XRAY_FORCE_MCP_GOVERNANCE || gov.env?.XRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
       } else {
         fail('0xray-governance', 'missing from .mcp.json');
       }

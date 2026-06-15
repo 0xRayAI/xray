@@ -13,37 +13,39 @@ import {
   BootSequenceConfig,
   BootResult,
 } from "../../core/boot-orchestrator.js";
-import { StringRayContextLoader } from "../../core/context-loader.js";
-import { StringRayStateManager } from "../../state/state-manager.js";
+import { XrayContextLoader } from "../../core/context-loader.js";
+import { XrayStateManager } from "../../state/state-manager.js";
 
 // Mock the orchestrator module so dynamic import() in boot-orchestrator succeeds
 vi.mock("../../core/orchestrator.js", () => ({
-  strRayOrchestrator: { initialized: true },
+  xrayOrchestrator: { initialized: true },
 }));
 
 // Mock the context loader to provide codex for enforcement
 vi.mock("../../core/context-loader.js", async (importOriginal) => {
   const actual = await importOriginal() as any;
+  const mockInstance = {
+    loadCodexContext: vi.fn().mockResolvedValue({
+      success: true,
+      context: { terms: new Map(), version: "1.22.67" },
+      warnings: [],
+    }),
+    clearCache: vi.fn(),
+  };
+  const mockedLoader = {
+    ...actual.XrayContextLoader,
+    getInstance: () => mockInstance,
+  };
   return {
     ...actual,
-    StringRayContextLoader: {
-      ...actual.StringRayContextLoader,
-      getInstance: () => ({
-        loadCodexContext: vi.fn().mockResolvedValue({
-          success: true,
-          context: { terms: new Map(), version: "1.22.67" },
-          warnings: [],
-        }),
-        clearCache: vi.fn(),
-      }),
-    },
+    XrayContextLoader: mockedLoader,
   };
 });
 
 describe("BootOrchestrator", () => {
   let orchestrator: BootOrchestrator;
-  let mockContextLoader: StringRayContextLoader;
-  let mockStateManager: StringRayStateManager;
+  let mockContextLoader: XrayContextLoader;
+  let mockStateManager: XrayStateManager;
 
   beforeEach(() => {
     // Mock dependencies
@@ -55,7 +57,7 @@ describe("BootOrchestrator", () => {
       }),
     } as any;
 
-    mockStateManager = new StringRayStateManager();
+    mockStateManager = new XrayStateManager();
 
     // Create orchestrator with mocked dependencies
     orchestrator = new BootOrchestrator({

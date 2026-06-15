@@ -1,7 +1,7 @@
 /**
  * Unified Simulation Runner
  *
- * Central hub for running all StringRay simulations including:
+ * Central hub for running all 0xRay simulations including:
  * - Complete end-to-end pipeline simulation
  * - Codex rule validation simulations
  * - Session management simulations (recovery, persistence, distributed)

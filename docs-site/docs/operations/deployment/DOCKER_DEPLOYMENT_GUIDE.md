@@ -124,10 +124,10 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - STRRAY_PORT=3000
-      - STRRAY_HOST=0.0.0.0
+      - XRAY_PORT=3000
+      - XRAY_HOST=0.0.0.0
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - STRRAY_DATABASE_URL=${DATABASE_URL}
+      - XRAY_DATABASE_URL=${DATABASE_URL}
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
@@ -510,9 +510,9 @@ spec:
           env:
             - name: NODE_ENV
               value: "production"
-            - name: STRRAY_PORT
+            - name: XRAY_PORT
               value: "3000"
-            - name: STRRAY_DATABASE_URL
+            - name: XRAY_DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "0xray-framework.fullname" . }}
@@ -527,11 +527,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "0xray-framework.fullname" . }}
                   key: redis-url
-            - name: STRRAY_LOG_LEVEL
+            - name: XRAY_LOG_LEVEL
               value: {{ .Values.0xray.logLevel }}
-            - name: STRRAY_MAX_CONCURRENCY
+            - name: XRAY_MAX_CONCURRENCY
               value: {{ .Values.0xray.maxConcurrency | quote }}
-            - name: STRRAY_CACHE_ENABLED
+            - name: XRAY_CACHE_ENABLED
               value: {{ .Values.0xray.cacheEnabled | quote }}
           livenessProbe:
             httpGet:
@@ -687,9 +687,9 @@ Create a `.env.production` file:
 ```bash
 # Core Configuration
 NODE_ENV=production
-STRRAY_PORT=3000
-STRRAY_HOST=0.0.0.0
-STRRAY_LOG_LEVEL=info
+XRAY_PORT=3000
+XRAY_HOST=0.0.0.0
+XRAY_LOG_LEVEL=info
 
 # Database
 DATABASE_URL=postgresql://user:password@db-host:5432/0xray
@@ -700,28 +700,28 @@ OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_anthropic_key
 
 # Framework Settings
-STRRAY_MAX_CONCURRENCY=20
-STRRAY_CACHE_ENABLED=true
-STRRAY_CACHE_TTL=3600
-STRRAY_RATE_LIMIT_ENABLED=true
-STRRAY_RATE_LIMIT_REQUESTS=1000
-STRRAY_RATE_LIMIT_WINDOW=3600
+XRAY_MAX_CONCURRENCY=20
+XRAY_CACHE_ENABLED=true
+XRAY_CACHE_TTL=3600
+XRAY_RATE_LIMIT_ENABLED=true
+XRAY_RATE_LIMIT_REQUESTS=1000
+XRAY_RATE_LIMIT_WINDOW=3600
 
 # Security
-STRRAY_JWT_SECRET=your_jwt_secret
-STRRAY_ENCRYPTION_KEY=your_encryption_key
-STRRAY_CORS_ORIGINS=https://yourdomain.com
+XRAY_JWT_SECRET=your_jwt_secret
+XRAY_ENCRYPTION_KEY=your_encryption_key
+XRAY_CORS_ORIGINS=https://yourdomain.com
 
 # Monitoring
-STRRAY_METRICS_ENABLED=true
-STRRAY_METRICS_ENDPOINT=/metrics
-STRRAY_HEALTH_CHECK_ENABLED=true
-STRRAY_HEALTH_CHECK_PATH=/health
+XRAY_METRICS_ENABLED=true
+XRAY_METRICS_ENDPOINT=/metrics
+XRAY_HEALTH_CHECK_ENABLED=true
+XRAY_HEALTH_CHECK_PATH=/health
 
 # Resource Limits
-STRRAY_MEMORY_LIMIT=2GB
-STRRAY_CPU_LIMIT=2000m
-STRRAY_TIMEOUT_DEFAULT=30000
+XRAY_MEMORY_LIMIT=2GB
+XRAY_CPU_LIMIT=2000m
+XRAY_TIMEOUT_DEFAULT=30000
 ```
 
 ### Production Docker Compose
@@ -736,7 +736,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - STRRAY_PORT=3000
+      - XRAY_PORT=3000
     env_file:
       - .env.production
     volumes:

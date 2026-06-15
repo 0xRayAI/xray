@@ -31,7 +31,7 @@ All feed the full chain: ValidatorRegistry (29) → (governance deliberation if 
 - `src/integrations/enforcement-gate.ts` (single composed source):
   - `beforeToolHook(tool, args)`: Load full `globalValidatorRegistry` (29, no filter), validate, block on error/blocking severity, compute resonance, frameworkLogger.
   - `afterToolHook(...)`: Per-pipeline validators (error-resolution/7, loop-safety/8, boot-wiring/74, console-log-usage/77), legacy ProcessorManager compat (for test-auto-creation etc., documented), v3 `PostProcessor.executePostProcessorLoop` (monitoring/analysis/autofix/escalation/redeploy/compliance/SelfProposalEngine), governance routing via `handleGovernRequest` if proposal-like result, frameworkLogger.
-  - Fallbacks: Prefer `xray*` globals (with deprecation log for `strRay*`), dynamic imports for consumer/dist.
+  - Fallbacks: Prefer `xray*` globals (with deprecation log for `xray*`), dynamic imports for consumer/dist.
 - Wirings (exclusive calls, legacy excised):
   - OpenCode: `src/plugin/xray-codex-injection.ts` (tool.execute.before/after → gate; no more inline ProcessorManager post-path).
   - Hermes: `src/integrations/hermes-agent/hermes-agent-integration.ts` + `bridge.mjs` (onPreToolCall/onPostToolCall + pre/post-process → gate; full 29, no SNIPPET_SAFE).

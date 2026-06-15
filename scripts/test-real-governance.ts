@@ -31,7 +31,7 @@ function makeSession(id: string, commits: number, problems: string[]): SessionIn
 }
 
 async function main() {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "strray-governance-real-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-governance-real-"));
   const inferenceDir = path.join(tmpDir, "docs", "inference");
   fs.mkdirSync(inferenceDir, { recursive: true });
 

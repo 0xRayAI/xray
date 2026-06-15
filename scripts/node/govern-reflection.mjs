@@ -147,7 +147,7 @@ async function main() {
   console.log(`  Duration: ${(result.duration / 1000).toFixed(1)}s`);
   console.log("═══════════════════════════════════════\n");
 
-  // v2 path under logs/ (fwLogger discipline) + .opencode/xray/
+  // v2 path under logs/ (fwLogger discipline) + .xray/
   const outputPath = path.join(process.cwd(), "logs", "framework", "governance-result.json");
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));

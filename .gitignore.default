@@ -28,7 +28,7 @@ xray/inference/
 
 # Generated xray config files
 .opencode/agents/*.yml
-.opencode/xray/
+.opencode/agents/
 .opencode/commands/
 .opencode/workflows/
 .opencode/codex.codex

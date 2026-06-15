@@ -71,7 +71,7 @@ function showNotImplemented(): void {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("");
   console.log("💡 To be notified when this feature is available:");
-  console.log("   Track the evolution spec at docs/roadmap/STRINGRAY_EVOLUTION_SPEC.md");
+  console.log("   Track the evolution spec at docs/roadmap/XRAY_EVOLUTION_SPEC.md");
   console.log("");
   console.log("🔜 Roadmap: Phase 3 (Polishing & Release)");
   console.log("");

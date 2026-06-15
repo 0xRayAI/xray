@@ -2,7 +2,7 @@
 source: framework
 name: researcher
 description: Multi-repo analysis, documentation lookup, and implementation examples
-author: StrRay Framework
+author: Xray Framework
 version: 1.0.0
 schema_version: "1.0"
 tags: [research, researcher]

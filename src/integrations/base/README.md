@@ -21,7 +21,7 @@ src/integrations/
 │   ├── ExampleIntegration.ts  # Example implementation
 │   └── index.ts           # Module exports
 ├── core/                  # Core framework integrations
-│   └── strray-integration.ts  # Cross-framework integration
+│   └── xray-integration.ts  # Cross-framework integration
 └── openclaw/              # External service integrations
     ├── index.ts
     ├── client.ts

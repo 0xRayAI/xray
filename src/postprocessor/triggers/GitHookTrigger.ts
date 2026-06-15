@@ -441,7 +441,7 @@ if [ -z "$COMMIT_SHA" ]; then
 fi
 
 # Get repository info
-REPO="strray-framework/stringray"  # Placeholder for now
+REPO="0xRayAI/xray"  # Placeholder for now
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 AUTHOR=$(git log -1 --pretty=format:'%an <%ae>')
 
@@ -457,25 +457,25 @@ fi
   cd "$(dirname "$0")/../.." # Navigate to project root
 
   # Find the 0xRay plugin in node_modules or current project (development)
-  STRRAY_PLUGIN=""
-  if [ -d "node_modules/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/strray-framework"
-  elif [ -d "node_modules/@strray/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/@strray/strray-framework"
-  elif [ -d "node_modules/OpenCode/plugins/strray-framework" ]; then
-    STRRAY_PLUGIN="node_modules/OpenCode/plugins/strray-framework"
+  XRAY_PLUGIN=""
+  if [ -d "node_modules/0xray" ]; then
+    XRAY_PLUGIN="node_modules/0xray"
+  elif [ -d "node_modules/@0xray/xray" ]; then
+    XRAY_PLUGIN="node_modules/@0xray/xray"
+  elif [ -d "node_modules/OpenCode/plugins/0xray" ]; then
+    XRAY_PLUGIN="node_modules/OpenCode/plugins/0xray"
   elif [ -f "dist/postprocessor/PostProcessor.js" ]; then
     # Development mode - use current project
-    STRRAY_PLUGIN="."
+    XRAY_PLUGIN="."
   fi
 
-  if command -v node >/dev/null 2>&1 && [ -n "$STRRAY_PLUGIN" ]; then
+  if command -v node >/dev/null 2>&1 && [ -n "$XRAY_PLUGIN" ]; then
     # Call a separate script to avoid bash variable issues
     export COMMIT_SHA="$COMMIT_SHA"
     export REPO="$REPO"
     export BRANCH="$BRANCH"
     export AUTHOR="$AUTHOR"
-    export STRRAY_PLUGIN="$STRRAY_PLUGIN"
+    export XRAY_PLUGIN="$XRAY_PLUGIN"
     export MONITORING_LEVEL="$MONITORING_LEVEL"
     export IS_FULL_MONITORING="$([ "$MONITORING_LEVEL" = "full" ] && echo "true" || echo "false")"
 
@@ -524,8 +524,8 @@ fi
       (async () => {
         try {
           // Use dynamic import that works in both dev and consumer
-          const basePath = process.env.STRRAY_BASE_PATH || '.';
-          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
+          const basePath = process.env.XRAY_BASE_PATH || '.';
+          const distPath = process.env.XRAY_DIST_PATH || 'dist';
           // First archive logs (compress and rotate) before cleanup
           const { archiveLogFiles } = await import(basePath + '/' + distPath + '/postprocessor/triggers/GitHookTrigger.js');
           const archiveResult = await archiveLogFiles({
@@ -549,7 +549,7 @@ fi
               // Core inference/logging - NEVER DELETE
               'activity.log',           
               'framework-activity-',
-              'strray-plugin-',
+              'xray-plugin-',
               
               // Analysis & reflections - Contains inference data
               'kernel-',
@@ -568,8 +568,8 @@ fi
               'reflections/',
               
               // Init logs can be cleaned but keep recent
-              'strray-init-2026-01-2',   // Keep Jan 20s
-              'strray-init-2026-01-3',   // Keep Jan 30s
+              'xray-init-2026-01-2',   // Keep Jan 20s
+              'xray-init-2026-01-3',   // Keep Jan 30s
               
               // Other important files
               'current-session.log',
@@ -611,8 +611,8 @@ fi
       node -e "
       (async () => {
         try {
-          const basePath = process.env.STRRAY_BASE_PATH || '.';
-          const distPath = process.env.STRRAY_DIST_PATH || 'dist';
+          const basePath = process.env.XRAY_BASE_PATH || '.';
+          const distPath = process.env.XRAY_DIST_PATH || 'dist';
           const { HookMetricsCollector } = await import(basePath + '/' + distPath + '/postprocessor/validation/HookMetricsCollector.js');
           const collector = new HookMetricsCollector();
           collector.recordMetrics('post-push', \${DURATION_MS}, \${EXIT_CODE});

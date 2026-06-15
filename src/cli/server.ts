@@ -19,7 +19,7 @@ const { version } = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
 const app = express();
 const PORT = 3000;
 
-const API_KEY = process.env.STRRAY_API_KEY || undefined;
+const API_KEY = process.env.XRAY_API_KEY || undefined;
 
 function timingSafeCompare(a: string, b: string): boolean {
   const aBuf = Buffer.from(a, "utf-8");
@@ -31,14 +31,14 @@ function timingSafeCompare(a: string, b: string): boolean {
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!API_KEY) {
     frameworkLogger.log("cli-server", "auth-skipped", "warning", {
-      message: "No STRRAY_API_KEY set — API is unauthenticated. Set STRRAY_API_KEY in production.",
+      message: "No XRAY_API_KEY set — API is unauthenticated. Set XRAY_API_KEY in production.",
     });
     return next();
   }
 
   const providedKey = req.headers["x-api-key"];
   if (typeof providedKey !== "string") {
-    return res.status(401).json({ error: "API key required. Set STRRAY_API_KEY environment variable." });
+    return res.status(401).json({ error: "API key required. Set XRAY_API_KEY environment variable." });
   }
 
   if (!timingSafeCompare(providedKey, API_KEY)) {
@@ -128,7 +128,7 @@ app.get("/", (req: Request, res: Response) => {
 
 // Add route for refactoring logs
 app.get("/logs", requireAuth, async (req: Request, res: Response) => {
-  const logPath = resolveConfigPath("REFACTORING_LOG.md") || join(__dirname, "..", ".strray", "REFACTORING_LOG.md");
+  const logPath = resolveConfigPath("REFACTORING_LOG.md") || join(__dirname, "..", ".xray", "REFACTORING_LOG.md");
   // Server debug logging - remove for production
 
   try {
