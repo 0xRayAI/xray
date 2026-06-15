@@ -107,46 +107,41 @@ function getChangedFiles(count = 20) {
 }
 
 function loadConfig() {
-  // Primary: .xray/ SSOT; fallback .opencode/xray/ for legacy compat
   const configPath = join(process.cwd(), ".xray", "features.json");
-  const legacyPath = join(process.cwd(), ".opencode", "xray", "features.json");
-  
-  for (const p of [configPath, legacyPath]) {
-    if (existsSync(p)) {
-      try {
-        const content = readFileSync(p, "utf-8");
-        const parsed = JSON.parse(content);
-        if (parsed.auto_reflection) {
-          return parsed.auto_reflection;
-        }
-        if (parsed.storytelling?.reflection_triggers) {
-          // Legacy support - convert from storytelling config
-          const triggers = parsed.storytelling.reflection_triggers;
-          return {
-            mode: "minimal",
-            triggers: {
-              commit_threshold: {
-                enabled: triggers.commit_count?.enabled ?? true,
-                threshold: triggers.commit_count?.threshold ?? 10,
-              },
-              time_threshold: {
-                enabled: true,
-                days: 7,
-              },
-            },
-            thresholds: {
-              full: { commit_threshold: 10, days_threshold: 5 },
-              minimal: { commit_threshold: 25, days_threshold: 14 },
-              off: { commit_threshold: 999, days_threshold: 365 },
-            },
-          };
-        }
-      } catch {
-        // ignore
+
+  if (existsSync(configPath)) {
+    try {
+      const content = readFileSync(configPath, "utf-8");
+      const parsed = JSON.parse(content);
+      if (parsed.auto_reflection) {
+        return parsed.auto_reflection;
       }
+      if (parsed.storytelling?.reflection_triggers) {
+        const triggers = parsed.storytelling.reflection_triggers;
+        return {
+          mode: "minimal",
+          triggers: {
+            commit_threshold: {
+              enabled: triggers.commit_count?.enabled ?? true,
+              threshold: triggers.commit_count?.threshold ?? 10,
+            },
+            time_threshold: {
+              enabled: true,
+              days: 7,
+            },
+          },
+          thresholds: {
+            full: { commit_threshold: 10, days_threshold: 5 },
+            minimal: { commit_threshold: 25, days_threshold: 14 },
+            off: { commit_threshold: 999, days_threshold: 365 },
+          },
+        };
+      }
+    } catch {
+      // ignore
     }
   }
-  
+
   // Default config
   return {
     mode: "minimal",
