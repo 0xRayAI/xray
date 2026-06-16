@@ -41,12 +41,31 @@ export class ConfigLoader {
           const content = fs.readFileSync(configPath, 'utf-8');
           const parsed = JSON.parse(content);
           
-          // Handle both array format and object with servers property
-          const configs: IServerConfig[] = Array.isArray(parsed) 
-            ? parsed 
-            : parsed.servers || [];
-          
-          return { success: true, configs };
+          // Handle array format
+          if (Array.isArray(parsed)) {
+            return { success: true, configs: parsed };
+          }
+
+          // Handle standard MCP format (mcpServers object — Claude/OpenCode .mcp.json)
+          if (parsed.mcpServers && typeof parsed.mcpServers === 'object') {
+            const configs: IServerConfig[] = Object.entries(parsed.mcpServers).map(
+              ([serverName, config]: [string, any]) => ({
+                serverName,
+                command: config.command || '',
+                args: config.args || [],
+                timeout: config.timeout ?? 30000,
+                env: config.env,
+              }),
+            );
+            return { success: true, configs };
+          }
+
+          // Handle object with servers property
+          if (parsed.servers) {
+            return { success: true, configs: parsed.servers };
+          }
+
+          return { success: true, configs: [] };
         } catch (error) {
           return {
             success: false,
@@ -100,11 +119,31 @@ export class ConfigLoader {
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(content);
       
-      const configs: IServerConfig[] = Array.isArray(parsed) 
-        ? parsed 
-        : parsed.servers || [];
-      
-      return { success: true, configs };
+      // Handle array format
+      if (Array.isArray(parsed)) {
+        return { success: true, configs: parsed };
+      }
+
+      // Handle standard MCP format (mcpServers object)
+      if (parsed.mcpServers && typeof parsed.mcpServers === 'object') {
+        const configs: IServerConfig[] = Object.entries(parsed.mcpServers).map(
+          ([serverName, config]: [string, any]) => ({
+            serverName,
+            command: config.command || '',
+            args: config.args || [],
+            timeout: config.timeout ?? 30000,
+            env: config.env,
+          }),
+        );
+        return { success: true, configs };
+      }
+
+      // Handle object with servers property
+      if (parsed.servers) {
+        return { success: true, configs: parsed.servers };
+      }
+
+      return { success: true, configs: [] };
     } catch (error) {
       return {
         success: false,
