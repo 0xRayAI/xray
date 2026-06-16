@@ -105,6 +105,13 @@ export class ConfigLoader {
   }
 
   /**
+   * Clear all config paths
+   */
+  clearConfigPaths(): void {
+    this.configPaths = [];
+  }
+
+  /**
    * Load configuration from a specific file path
    */
   async loadFromPath(filePath: string): Promise<ConfigLoadResult> {

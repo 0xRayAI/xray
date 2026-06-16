@@ -17,8 +17,8 @@ describe('ConfigLoader', () => {
 
   beforeEach(() => {
     loader = new ConfigLoader();
-    // Remove default paths so tests don't pick up the real .mcp.json
-    loader.resetConfigPaths();
+    // Clear paths so tests don't pick up the real .mcp.json
+    loader.clearConfigPaths();
     // Clean up any existing test files
     for (const p of [testConfigPath, testConfigPath2]) {
       if (fs.existsSync(p)) fs.unlinkSync(p);
@@ -194,7 +194,7 @@ describe('ConfigLoader', () => {
       expect(paths).toContain('.mcp.json');
     });
 
-    it('should remove added paths after reset', async () => {
+    it('should remove added paths after reset', () => {
       const testConfigs = [
         {
           serverName: 'custom-server',
@@ -208,9 +208,9 @@ describe('ConfigLoader', () => {
       
       loader.resetConfigPaths();
       
-      const result = await loader.load();
-      expect(result.success).toBe(true);
-      expect(result.configs).toEqual([]);
+      const paths = loader.getConfigPaths();
+      expect(paths).not.toContain(testConfigPath);
+      expect(paths).toContain('.mcp.json');
     });
   });
 

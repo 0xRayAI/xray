@@ -19,15 +19,15 @@ let serverReachable = false;
 describe('Remote Governance MCP Server E2E', () => {
   beforeAll(async () => {
     try {
-      const res = await fetch(`${BASE_URL}/`, { signal: AbortSignal.timeout(4000) });
+      const res = await fetch(`${BASE_URL}/`, { signal: AbortSignal.timeout(2000) });
       serverReachable = res.ok;
     } catch {
       serverReachable = false;
     }
 
     if (!serverReachable) {
-      console.warn(`Governance MCP server not reachable at ${BASE_URL}. Skipping all remote MCP E2E tests.`);
-      console.warn('To run against production: GOVERNANCE_MCP_URL=https://xray.vercel.app npx vitest run src/__tests__/e2e/governance-mcp-remote.test.ts');
+      process.stderr.write(`[governance-mcp] Server not reachable at ${BASE_URL}. Skipping tests.\n`);
+      process.stderr.write(`[governance-mcp] Set GOVERNANCE_MCP_URL to override.\n`);
     }
   });
 
