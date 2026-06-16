@@ -120,7 +120,7 @@ class XrayBootOrchestratorServer {
   constructor() {
     this.server = new Server(
       {
-        name: "boot-orchestrator", version: "1.22.67",
+        name: "boot-orchestrator", version: "3.1.0",
       },
       {
         capabilities: {

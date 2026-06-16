@@ -45,7 +45,7 @@ class XraySecurityScanServer {
   constructor() {
     this.server = new Server(
       {
-        name: "security-scan", version: "1.22.67",
+        name: "security-scan", version: "3.1.0",
       },
       {
         capabilities: {

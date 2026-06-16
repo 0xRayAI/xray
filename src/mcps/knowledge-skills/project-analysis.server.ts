@@ -142,7 +142,7 @@ class ProjectAnalysisServer {
   constructor() {
     this.server = new Server(
       {
-        name: "project-analysis", version: "1.22.67",
+        name: "project-analysis", version: "3.1.0",
       },
       {
         capabilities: {

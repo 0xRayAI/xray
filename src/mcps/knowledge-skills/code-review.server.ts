@@ -81,7 +81,7 @@ class XrayCodeReviewServer {
   constructor() {
     this.server = new Server(
       {
-        name: "code-review", version: "1.22.67",
+        name: "code-review", version: "3.1.0",
       },
       {
         capabilities: {

@@ -429,7 +429,7 @@ mv src/integrations/hermes-agent/bridge.mjs.bak src/integrations/hermes-agent/br
 ### Regression: Run Full Test Suite
 
 ```bash
-npx vitest run  # 2527 tests must pass
+npx vitest run  # 2500 tests must pass
 ```
 
 ---

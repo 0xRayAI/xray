@@ -174,7 +174,7 @@ This is the plan. Execute phase by phase. Release v2.2.x first (already in progr
 
 ## Researcher Review (2026-06-10)
 
-Codebase verification performed against v2.2.3 post-subtract baseline. 2527 tests passed (matches claim). tsc clean.
+Codebase verification performed against v2.2.3 post-subtract baseline. 2500 tests passed (matches claim). tsc clean.
 
 ### Claims Verification
 

@@ -117,7 +117,7 @@ class XrayDatabaseDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "database-design", version: "1.22.67",
+        name: "database-design", version: "3.1.0",
       },
       {
         capabilities: {

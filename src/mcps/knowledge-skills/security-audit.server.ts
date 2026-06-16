@@ -91,7 +91,7 @@ class XraySecurityAuditServer {
   constructor() {
     this.server = new Server(
       {
-        name: "security-audit", version: "1.22.67",
+        name: "security-audit", version: "3.1.0",
       },
       {
         capabilities: {

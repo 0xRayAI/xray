@@ -39,7 +39,7 @@ class XrayLintServer {
   constructor() {
     this.server = new Server(
       {
-        name: "lint", version: "1.22.67",
+        name: "lint", version: "3.1.0",
       },
       {
         capabilities: {

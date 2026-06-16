@@ -41,7 +41,7 @@ class XrayArchitectToolsServer {
   constructor() {
     this.server = new Server(
       {
-        name: "architect-tools", version: "1.22.67",
+        name: "architect-tools", version: "3.1.0",
       },
       {
         capabilities: {

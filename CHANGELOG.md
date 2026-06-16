@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.1.1] - 2026-06-16
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: add root .mcp.json and .grok-plugin/plugin.json for marketplace discovery (f8d084cc0)
+- feat: ship .gitignore.default template + SKILLS.md to consumers via postinstall (44bba8c4c)
+
+### 🐛 Bug Fixes
+- fix: restore .mcp.json (deleted by test writing to same path) (e22202cfc)
+- fix: support mcpServers format in ConfigLoader, fix tests for real .mcp.json (a930aa034)
+- fix: add missing fs imports, process.argv[1]! assertions, and vitest v4 config (0dffc5683)
+- fix: remove .opencode/xray/ fallback from auto-reflection-generator.mjs (de7633152)
+- fix: Railway deployment - MCP host, in-process skills, Hermes OAuth decode, OAuth daemon mode (a519338c3)
+- fix: pre-publish-guard handles missing features.json (855e3cfdb)
+
+### ♻️ Refactoring
+- refactor: complete StringRay→0xRay rename, archive cleanup, skill syncing, MCP tools (d78bc3763)
+
+### 🔎 Other Changes
+- Revert "Add marketplace files: .grok-plugin/plugin.json and .mcp.json for xAI plugin catalog" (05feb6fba)
+- Add marketplace files: .grok-plugin/plugin.json and .mcp.json for xAI plugin catalog (5824d5776)
+
+---
+
 ## [3.1.0] - 2026-06-15
 
 ### 🔄 Changes

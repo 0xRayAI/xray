@@ -39,7 +39,7 @@ class XrayFrameworkComplianceAuditServer {
   constructor() {
     this.server = new Server(
       {
-        name: "framework-compliance-audit", version: "1.22.67",
+        name: "framework-compliance-audit", version: "3.1.0",
       },
       {
         capabilities: {

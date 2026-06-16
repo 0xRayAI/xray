@@ -23,7 +23,7 @@ class FrameworkHelpServer {
   constructor() {
     this.server = new Server(
       {
-        name: "xray/framework-help", version: "1.22.67",
+        name: "xray/framework-help", version: "3.1.0",
       },
       {
         capabilities: {

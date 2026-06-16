@@ -1093,7 +1093,7 @@ export class BootOrchestrator {
     try {
       // Consumer runtime compat shim from prior 0xRay releases (1-line min per Scope Rule; primary xray paths + .xray fallbacks)
       const xrayConfig = {
-        version: "1.22.67",
+        version: "3.1.0",
         codex_enabled: true,
         codex_version: "v1.7.5",
         codex_terms: [

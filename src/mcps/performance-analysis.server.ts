@@ -64,7 +64,7 @@ class XrayPerformanceAnalysisServer {
   constructor() {
     this.server = new Server(
       {
-        name: "performance-analysis", version: "1.22.67",
+        name: "performance-analysis", version: "3.1.0",
       },
       {
         capabilities: {

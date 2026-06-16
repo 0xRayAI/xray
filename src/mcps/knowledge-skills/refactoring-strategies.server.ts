@@ -161,7 +161,7 @@ class XrayRefactoringStrategiesServer {
   constructor() {
     this.server = new Server(
       {
-        name: "refactoring-strategies", version: "1.22.67",
+        name: "refactoring-strategies", version: "3.1.0",
       },
       {
         capabilities: {

@@ -193,7 +193,7 @@ class XrayUIUXDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "ui-ux-design", version: "1.22.67",
+        name: "ui-ux-design", version: "3.1.0",
       },
       {
         capabilities: {

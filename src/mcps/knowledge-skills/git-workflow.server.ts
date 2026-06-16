@@ -33,7 +33,7 @@ class XrayGitWorkflowServer {
   constructor() {
     this.server = new Server(
       {
-        name: "git-workflow", version: "1.22.67",
+        name: "git-workflow", version: "3.1.0",
       },
       {
         capabilities: {

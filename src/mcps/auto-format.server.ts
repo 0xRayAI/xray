@@ -40,7 +40,7 @@ class XrayAutoFormatServer {
   constructor() {
     this.server = new Server(
       {
-        name: "auto-format", version: "1.22.67",
+        name: "auto-format", version: "3.1.0",
       },
       {
         capabilities: {

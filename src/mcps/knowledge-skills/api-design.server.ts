@@ -32,7 +32,7 @@ class XrayApiDesignServer {
   constructor() {
     this.server = new Server(
       {
-        name: "api-design", version: "1.22.67",
+        name: "api-design", version: "3.1.0",
       },
       {
         capabilities: {

@@ -55,7 +55,7 @@ class XrayLibrarianServer {
   constructor() {
     this.server = new Server(
       {
-        name: "researcher", version: "1.22.67",
+        name: "researcher", version: "3.1.0",
       },
       {
         capabilities: {

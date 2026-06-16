@@ -81,7 +81,7 @@ class BugTriageSpecialistServer {
 
   constructor() {
     this.server = new Server(
-      { name: "bug-triage-specialist", version: "1.22.67" },
+      { name: "bug-triage-specialist", version: "3.1.0" },
       { capabilities: { tools: {} } },
     );
     this.setupToolHandlers();
