@@ -2055,7 +2055,7 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayPerformanceOptimizationServer();
   server.run().catch((error) => {
     frameworkLogger.log("mcp/performance-optimization", "run", "error", { error: String(error) });

@@ -1192,7 +1192,7 @@ class XrayDatabaseDesignServer {
 }
 
 // Run the server if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayDatabaseDesignServer();
   server.run().catch(() => {});
 }

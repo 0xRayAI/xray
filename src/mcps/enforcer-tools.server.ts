@@ -1098,7 +1098,7 @@ class XrayEnforcerToolsServer {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayEnforcerToolsServer();
   server.run().catch((error) => frameworkLogger.log("mcps/enforcer", "run", "error", { error: String(error) }));
 }

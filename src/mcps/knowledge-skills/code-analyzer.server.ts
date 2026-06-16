@@ -587,5 +587,5 @@ class CodeAnalyzerServer {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) { new CodeAnalyzerServer().run().catch(() => {}); }
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) { new CodeAnalyzerServer().run().catch(() => {}); }
 export default CodeAnalyzerServer;

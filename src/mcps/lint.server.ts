@@ -475,7 +475,7 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 }
 
 // Start the server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayLintServer();
   server.run().catch((error) => frameworkLogger.log("mcps/lint", "run", "error", { error: String(error) }));
 }

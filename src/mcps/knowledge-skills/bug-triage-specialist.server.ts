@@ -615,7 +615,7 @@ class BugTriageSpecialistServer {
   }
 }
 
-const entryPoint = path.resolve(process.argv[1] ?? "");
+const entryPoint = fs.realpathSync(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new BugTriageSpecialistServer();
   server.run();

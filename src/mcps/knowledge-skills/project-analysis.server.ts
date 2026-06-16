@@ -1103,7 +1103,7 @@ class ProjectAnalysisServer {
 }
 
 // Start the server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new ProjectAnalysisServer();
   server.run().catch((error: unknown) => frameworkLogger.log("mcps/project-analysis", "run", "error", { error: String(error) }));
 }

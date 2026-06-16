@@ -10,6 +10,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { getEstimationValidator } from "../validation/estimation-validator.js";
 
@@ -221,7 +222,7 @@ class EstimationServer {
 }
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new EstimationServer();
   server.start().catch((error) => frameworkLogger.log("mcps/estimation", "run", "error", { error: String(error) }));
 }

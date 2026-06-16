@@ -707,7 +707,7 @@ ${results.recommendations.map((r) => `• 💡 ${r}`).join("\n") || "No recommen
 }
 
 // Start the server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayPerformanceAnalysisServer();
   server.run().catch((error) => frameworkLogger.log("mcps/performance-analysis", "run", "error", { error: String(error) }));
 }

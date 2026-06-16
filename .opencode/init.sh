@@ -104,6 +104,8 @@ PLUGIN_DEV="$PROJECT_ROOT/.opencode/plugin/xray-codex-injection.js"
 PLUGIN_DEV_PLURAL="$PROJECT_ROOT/.opencode/plugins/xray-codex-injection.js"
 PLUGIN_CONSUMER="$PROJECT_ROOT/node_modules/0xray/.opencode/plugin/xray-codex-injection.js"
 PLUGIN_CONSUMER_PLURAL="$PROJECT_ROOT/node_modules/0xray/.opencode/plugins/xray-codex-injection.js"
+PLUGIN_DIST="$PROJECT_ROOT/dist/plugin/xray-codex-injection.js"
+PLUGIN_DIST_PLURAL="$PROJECT_ROOT/node_modules/0xray/dist/plugin/xray-codex-injection.js"
 
 if [ -f "$PLUGIN_DEV" ]; then
     PLUGIN_STATUS="✅"
@@ -112,6 +114,10 @@ elif [ -f "$PLUGIN_DEV_PLURAL" ]; then
 elif [ -f "$PLUGIN_CONSUMER" ]; then
     PLUGIN_STATUS="✅"
 elif [ -f "$PLUGIN_CONSUMER_PLURAL" ]; then
+    PLUGIN_STATUS="✅"
+elif [ -f "$PLUGIN_DIST" ]; then
+    PLUGIN_STATUS="✅"
+elif [ -f "$PLUGIN_DIST_PLURAL" ]; then
     PLUGIN_STATUS="✅"
 else
     PLUGIN_STATUS="❌"

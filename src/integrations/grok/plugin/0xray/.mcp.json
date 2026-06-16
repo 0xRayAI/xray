@@ -1,33 +1,33 @@
 {
   "mcpServers": {
-    "0xray-governance": {
+    "xray-governance": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "governance"],
       "env": {
         "XRAY_FORCE_MCP_GOVERNANCE": "true"
       }
     },
-    "0xray-skills": {
+    "xray-skills": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "skills"]
     },
-    "0xray-orchestrator": {
+    "xray-orchestrator": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "orchestrator"]
     },
-    "0xray-enforcer": {
+    "xray-enforcer": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "enforcer"]
     },
-    "0xray-researcher": {
+    "xray-researcher": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "researcher"]
     },
-    "0xray-code-review": {
+    "xray-code-review": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "code-review"]
     },
-    "0xray-architect-tools": {
+    "xray-architect-tools": {
       "command": "npx",
       "args": ["-y", "0xray", "mcp", "architect-tools"]
     }

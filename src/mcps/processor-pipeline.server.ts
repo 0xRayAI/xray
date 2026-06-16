@@ -10,6 +10,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { CodexLoader } from "../enforcement/loaders/codex-loader.js";
 import type { RuleDefinition, RuleValidationContext } from "../enforcement/types.js";
@@ -770,7 +771,7 @@ ${complianceResults.actions.map((a: string) => `• 🔧 ${a}`).join("\n") || "N
 }
 
 // Start the server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayProcessorPipelineServer();
   server.run().catch((error) => frameworkLogger.log("mcps/processor-pipeline", "run", "error", { error: String(error) }));
 }

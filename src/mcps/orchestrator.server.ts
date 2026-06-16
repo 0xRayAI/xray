@@ -7,6 +7,7 @@
  * @deprecated Use src/mcps/orchestrator/server.ts instead
  */
 
+import * as fs from 'fs';
 import { frameworkLogger } from '../core/framework-logger.js';
 
 export { OrchestratorServer, createOrchestratorServer } from './orchestrator/server.js';
@@ -24,7 +25,7 @@ export type {
 } from './orchestrator/types.js';
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const { createOrchestratorServer } = await import('./orchestrator/server.js');
   const server = createOrchestratorServer();
   server.start().catch((error) => {

@@ -769,7 +769,7 @@ ${results.repairedKeys.length > 0 ? `**Repaired Keys:**\n${results.repairedKeys.
 }
 
 // Start the server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayStateManagerServer();
   server.run().catch((error) => frameworkLogger.log("mcps/state-manager", "run", "error", { error: String(error) }));
 }

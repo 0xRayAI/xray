@@ -335,7 +335,7 @@ class XrayArchitectToolsServer {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayArchitectToolsServer();
   server.run().catch((error) => frameworkLogger.log("mcps/architect-tools", "run", "error", { error: String(error) }));
 }

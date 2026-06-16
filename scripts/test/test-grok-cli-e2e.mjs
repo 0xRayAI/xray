@@ -131,7 +131,7 @@ function printGrokIntegrationTree() {
 │  .grok/plugins/0xray/               (Grok discovers at project+user) │
 │   ├── hooks/hooks.json             PreToolUse + SessionStart        │
 │   │    └── command → pre-tool-use.js                               │
-│   └── .mcp.json                    0xray-governance + skills + orchestrator + enforcer (full v2) │
+│   └── .mcp.json                    xray-governance + skills + orchestrator + enforcer (full v2) │
 │                                                                     │
 │  dist/integrations/grok/hooks/pre-tool-use.js   (real hook)         │
 │       └── robust resolver → applyDecisionMatrix()                    │
@@ -274,38 +274,38 @@ async function main() {
     try {
       const mcp = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf8'));
       const servers = mcp.mcpServers || {};
-      if (servers['0xray-governance']) {
-        pass('0xray-governance MCP server declared');
-        const gov = servers['0xray-governance'];
+      if (servers['xray-governance']) {
+        pass('xray-governance MCP server declared');
+        const gov = servers['xray-governance'];
         if (gov.command === 'npx' && gov.args?.includes('mcp') && gov.args?.includes('governance')) {
-          pass('0xray-governance uses correct npx 0xray mcp governance');
+          pass('xray-governance uses correct npx 0xray mcp governance');
         }
         if (gov.env?.XRAY_FORCE_MCP_GOVERNANCE || gov.env?.XRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
       } else {
-        fail('0xray-governance', 'missing from .mcp.json');
+        fail('xray-governance', 'missing from .mcp.json');
       }
-      if (servers['0xray-skills']) {
-        pass('0xray-skills MCP server declared (researcher + all skills)');
+      if (servers['xray-skills']) {
+        pass('xray-skills MCP server declared (researcher + all skills)');
       } else {
-        fail('0xray-skills', 'missing from .mcp.json');
+        fail('xray-skills', 'missing from .mcp.json');
       }
-      if (servers['0xray-orchestrator']) {
-        pass('0xray-orchestrator MCP server declared');
-        const orch = servers['0xray-orchestrator'];
+      if (servers['xray-orchestrator']) {
+        pass('xray-orchestrator MCP server declared');
+        const orch = servers['xray-orchestrator'];
         if (orch.command === 'npx' && orch.args?.includes('mcp') && orch.args?.includes('orchestrator')) {
-          pass('0xray-orchestrator uses correct npx 0xray mcp orchestrator');
+          pass('xray-orchestrator uses correct npx 0xray mcp orchestrator');
         }
       } else {
-        fail('0xray-orchestrator', 'missing from .mcp.json');
+        fail('xray-orchestrator', 'missing from .mcp.json');
       }
-      if (servers['0xray-enforcer']) {
-        pass('0xray-enforcer MCP server declared');
-        const enf = servers['0xray-enforcer'];
+      if (servers['xray-enforcer']) {
+        pass('xray-enforcer MCP server declared');
+        const enf = servers['xray-enforcer'];
         if (enf.command === 'npx' && enf.args?.includes('mcp') && enf.args?.includes('enforcer')) {
-          pass('0xray-enforcer uses correct npx 0xray mcp enforcer');
+          pass('xray-enforcer uses correct npx 0xray mcp enforcer');
         }
       } else {
-        fail('0xray-enforcer', 'missing from .mcp.json');
+        fail('xray-enforcer', 'missing from .mcp.json');
       }
     } catch (e) {
       fail('.mcp.json deep validation', e.message);

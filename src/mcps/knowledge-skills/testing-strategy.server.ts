@@ -1164,7 +1164,7 @@ describe("${pathModule.basename(sourceFile, ".ts")}", () => {${testCases}
 }
 
 // Start the server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayTestingStrategyServer();
   server.run().catch(() => {});
 }

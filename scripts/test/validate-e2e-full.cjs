@@ -148,8 +148,13 @@ async function main() {
   // 2f: Plugin loadability
   const pluginPath = path.join(XRAY, 'dist', 'plugin', 'xray-codex-injection.js');
   if (fs.existsSync(pluginPath)) {
-    try { require(pluginPath); result('plugin require()', true); }
-    catch (e) { result('plugin require()', false, e.message); }
+    try {
+      const pluginUrl = new URL(`file://${pluginPath}`);
+      const m = await import(pluginUrl.href);
+      result('plugin import()', !!(m.default || m));
+    } catch (e) {
+      result('plugin import()', false, e.message.substring(0, 100));
+    }
   }
 
   // ── Phase 3: init.sh consumer detection ──────────────────
@@ -339,8 +344,9 @@ async function main() {
   section('Phase 10: Codex enforcement plugin');
   if (fs.existsSync(pluginPath)) {
     try {
-      const plugin = require(pluginPath);
-      const defaultExport = plugin.default || plugin;
+      const pluginUrl = new URL(`file://${pluginPath}`);
+      const m = await import(pluginUrl.href);
+      const defaultExport = m.default || m;
       if (typeof defaultExport === 'function') {
         result('plugin default export is function', true);
         const hooks = await defaultExport({ directory: TMP_DIR });
@@ -350,7 +356,7 @@ async function main() {
           result(`plugin hook: ${h}`, hookNames.includes(h), `missing: ${h}`);
         }
       } else { result('plugin default export', false, 'not a function'); }
-    } catch (e) { result('plugin load', false, e.message); }
+    } catch (e) { result('plugin load', false, e.message.substring(0, 100)); }
   }
 
   // ── Phase 11: MCP client manager ─────────────────────────

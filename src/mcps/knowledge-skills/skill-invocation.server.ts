@@ -8,7 +8,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import * as path from "path";
+import * as fs from "fs";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { mcpClientManager } from "../mcp-client.js";
@@ -1027,7 +1027,7 @@ class SkillInvocationServer {
 }
 
 // Start the server if this file is run directly
-const entryPoint = path.resolve(process.argv[1] ?? "");
+const entryPoint = fs.realpathSync(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   // If --port or MCP_PORT is set, use HTTP transport (for Grok CLI compatibility)
   const cliPort = process.argv.find((a) => a.startsWith("--port="))?.split("=")[1];

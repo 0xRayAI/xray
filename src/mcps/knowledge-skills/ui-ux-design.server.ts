@@ -12,6 +12,7 @@ import {
   ListToolsRequestSchema,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as fs from "fs";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
 interface UIDesignAnalysis {
@@ -2068,7 +2069,7 @@ Available: ${Object.keys(system.components).length} component types
 }
 
 // Run the server if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayUIUXDesignServer();
   server.run().catch((error) => frameworkLogger.log("mcps/ui-ux-design", "run", "error", { error: String(error) }));
 }

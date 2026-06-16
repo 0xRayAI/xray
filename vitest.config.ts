@@ -20,12 +20,8 @@ export default defineConfig({
     hookTimeout: 180000,
     bail: 0,
     pool: "forks",
-    poolOptions: {
-      forks: {
-        maxForks: 2,
-        minForks: 1,
-      },
-    },
+    maxWorkers: 2,
+    minWorkers: 1,
     retry: process.env.CI ? 3 : 2,
   },
   resolve: {

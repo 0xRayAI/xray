@@ -284,7 +284,7 @@ class XrayModelHealthCheckServer {
 }
 
 // Start the server if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayModelHealthCheckServer();
   server.start().catch((error) => frameworkLogger.log("mcps/model-health-check", "run", "error", { error: String(error) }));
 }

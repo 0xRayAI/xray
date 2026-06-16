@@ -12,6 +12,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as fs from "fs";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 
 interface SEOIssue {
@@ -1152,7 +1153,7 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new SEOSpecialistServer();
   server.run().catch(() => {});
 }

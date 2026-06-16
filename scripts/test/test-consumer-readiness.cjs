@@ -66,27 +66,37 @@ class ConsumerReadinessTest {
   async testMCPConnectivity() {
     log('Testing MCP Connectivity...', 'consumer');
     
+    const ROOT = path.resolve(__dirname, '..', '..');
+
+    // Check .mcp.json ships at root for consumer use
+    const mcpJsonPath = path.join(ROOT, '.mcp.json');
+    if (fs.existsSync(mcpJsonPath)) {
+      log('Found .mcp.json at root', 'consumer');
+      this.results.mcp = true;
+    } else {
+      log('Missing .mcp.json at root', 'consumer');
+    }
+
+    // Check AGENTS-consumer.md ships for postinstall
+    const agConsPath = path.join(ROOT, 'AGENTS-consumer.md');
+    if (fs.existsSync(agConsPath)) {
+      log('Found AGENTS-consumer.md', 'consumer');
+      this.results.mcp = true;
+    } else {
+      log('Missing AGENTS-consumer.md', 'consumer');
+    }
+
     const mcpServers = [
-      'enforcer-tools',
-      'orchestrator',
-      'enhanced-orchestrator',
-      'architect-tools',
-      'framework-compliance-audit',
-      'security-scan',
-      'performance-analysis',
-      'model-health-check',
-      'boot-orchestrator',
-      'framework-help',
-      'lint',
-      'auto-format',
-      'processor-pipeline',
-      'state-manager'
+      'architect-tools', 'auto-format', 'boot-orchestrator', 'enforcer-tools',
+      'estimation', 'framework-compliance-audit', 'framework-help', 'governance',
+      'lint', 'model-health-check', 'performance-analysis', 'processor-pipeline',
+      'researcher', 'security-scan', 'state-manager',
     ];
 
     let connectedServers = 0;
     
     for (const server of mcpServers) {
-      const serverPath = path.join(__dirname, '..', '..', 'dist/mcps/' + server + '.server.js');
+      const serverPath = path.join(ROOT, 'dist/mcps/' + server + '.server.js');
       if (fs.existsSync(serverPath)) {
         log('Found MCP Server: ' + server, 'consumer');
         connectedServers++;
@@ -96,7 +106,17 @@ class ConsumerReadinessTest {
       }
     }
     
-    const allServersConnected = connectedServers === mcpServers.length;
+    // Orchestrator lives in subdirectory
+    const orchPath = path.join(ROOT, 'dist/mcps/orchestrator/server.js');
+    if (fs.existsSync(orchPath)) {
+      log('Found MCP Server: orchestrator/server.js', 'consumer');
+      connectedServers++;
+      this.results.mcp = true;
+    } else {
+      log('Missing MCP Server: orchestrator/server.js', 'consumer');
+    }
+
+    const allServersConnected = connectedServers === mcpServers.length + 1;
     log('MCP Connectivity: ' + (allServersConnected ? 'ALL CONNECTED' : 'PARTIAL'), 'consumer');
     return allServersConnected;
   }
@@ -207,16 +227,25 @@ class ConsumerReadinessTest {
   async testIntegrationPoints() {
     log('Testing Integration Points...', 'consumer');
     
+    const ROOT = path.resolve(__dirname, '..', '..');
+
     const integrationPoints = [
       { name: 'OpenCode Configuration', check: () => {
         const fs = require('fs');
-        // Plugin config is in opencode.json at project root
-        return fs.existsSync(path.join(__dirname, '..', '..', 'opencode.json'));
+        return fs.existsSync(path.join(ROOT, 'opencode.json'));
       }},
       { name: 'Postinstall Script', check: () => {
         const fs = require('fs');
-        return fs.existsSync(path.join(__dirname, '..', '..', 'scripts/node/postinstall.cjs'));
-      }}
+        return fs.existsSync(path.join(ROOT, 'scripts/node/postinstall.cjs'));
+      }},
+      { name: '.mcp.json at Root', check: () => {
+        const fs = require('fs');
+        return fs.existsSync(path.join(ROOT, '.mcp.json'));
+      }},
+      { name: 'AGENTS-consumer.md', check: () => {
+        const fs = require('fs');
+        return fs.existsSync(path.join(ROOT, 'AGENTS-consumer.md'));
+      }},
     ];
 
     let allIntegrated = true;

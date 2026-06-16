@@ -11,7 +11,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import * as path from "path";
+import * as fs from "fs";
 import { fileURLToPath } from "url";
 
 interface Tool {
@@ -291,7 +291,7 @@ class SEOCopywriterServer {
   }
 }
 
-const entryPoint = path.resolve(process.argv[1] ?? "");
+const entryPoint = fs.realpathSync(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new SEOCopywriterServer();
   server.run();

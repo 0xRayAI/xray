@@ -36,25 +36,24 @@ logger = logging.getLogger("xray-hermes")
 PLUGIN_DIR = Path(__file__).resolve().parent
 BRIDGE_PATH = PLUGIN_DIR / "bridge.mjs"
 
-# Project root: find the Xray project directory
-# The plugin lives at ~/.hermes/plugins/ which is NOT inside any project tree,
-# so walking up from PLUGIN_DIR will never find the project. Instead:
-#   1. Check XRAY_PROJECT_ROOT env var (explicit override)
-#   2. Walk up from cwd looking for node_modules/0xray (consumer install)
-        ...
-        # node_modules/0xray — consumer install marker
-        if (d / "node_modules" / "0xray" / "package.json").exists() or (d / "node_modules" / "0xray" / "package.json").exists():
+def _find_project_root() -> Path:
+    """Walk up from cwd to find project root."""
+    cwd = Path.cwd()
+    home = Path.home()
+    override = os.environ.get("XRAY_PROJECT_ROOT")
+    if override:
+        return Path(override).resolve()
+    d = cwd
+    while True:
+        if (d / "node_modules" / "0xray" / "package.json").exists():
             return d
-        # .xray — dev repo marker
-        if (d / ".opencode" / "xray" / "features.json").exists():
+        if (d / ".xray" / "features.json").exists():
             return d
-        # package.json but not home dir
         if d != home and (d / "package.json").exists():
             return d
         d = d.parent
         if d == d.parent:
             break
-
     return cwd
 
 PROJECT_ROOT = _find_project_root()

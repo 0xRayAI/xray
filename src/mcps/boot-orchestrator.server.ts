@@ -1074,7 +1074,7 @@ ${results.warnings.length > 0 ? `**Warnings:**\n${results.warnings.map((w: strin
 }
 
 // Start the server if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new XrayBootOrchestratorServer();
   server.run().catch((error) => frameworkLogger.log("mcps/boot-orchestrator", "run", "error", { error: String(error) }));
 }

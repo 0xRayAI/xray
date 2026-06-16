@@ -87,6 +87,21 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
   }
 
   try {
+    // Auto-create package.json if missing (OpenCode requires it)
+    const consumerPkgPath = path.join(process.cwd(), 'package.json');
+    if (!fs.existsSync(consumerPkgPath)) {
+      const pkg = {
+        name: path.basename(process.cwd()),
+        version: '1.0.0',
+        private: true,
+        dependencies: {
+          '0xray': '*',
+        },
+      };
+      fs.writeFileSync(consumerPkgPath, JSON.stringify(pkg, null, 2) + '\n');
+      console.log(`\x1b[32m✓ Created package.json with 0xray dependency\x1b[0m`);
+    }
+
     if (fs.existsSync(opencodeDest) && !options.force) {
       console.log('[Opencode] .opencode/ directory already exists.');
       console.log('Use --force to reinstall.');

@@ -6,6 +6,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { AGENT_REGISTRY, getActiveAgents } from "../agents/registry.js";
 
@@ -459,7 +460,7 @@ ${items.map(([name, desc]) => `- **${name}**: ${desc}`).join("\n")}
 }
 
 // Auto-start if this file is run directly - conditional server initialization for development/testing
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new FrameworkHelpServer();
   server.start().catch((error) => frameworkLogger.log("mcps/framework-help", "run", "error", { error: String(error) }));
 }

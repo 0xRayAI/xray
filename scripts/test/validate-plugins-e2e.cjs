@@ -308,8 +308,9 @@ async function main() {
     // Spawn each server inline using the subprocess helper (spawn, not execSync)
     for (const srv of validServers) {
       const child = require('child_process').spawn(process.execPath, [srv.path], {
+        cwd: infraDir,
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, XRAY_ROOT: ROOT, NODE_ENV: 'production' }
+        env: { ...process.env, NODE_ENV: 'production' }
       });
       const startupOk = await new Promise(resolve => {
         let output = '';
@@ -317,6 +318,7 @@ async function main() {
         child.stderr.on('data', () => {});
         const timer = setTimeout(() => { child.kill(); resolve({ output }); }, 10000);
         child.on('close', () => { clearTimeout(timer); resolve({ output }); });
+        // Write immediately — the MCP SDK listens for messages on stdin via 'data' event
         child.stdin.write(JSON.stringify({
           jsonrpc: '2.0', id: 1, method: 'initialize',
           params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'e2e-test', version: '1' } }
@@ -337,7 +339,7 @@ async function main() {
       try {
         const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf-8'));
         const mcpServers = Object.keys(mcp.mcpServers || {});
-        for (const expected of ['xray-governance', 'xray-skills', 'xray-enforcer', 'xray-orchestrator']) {
+        for (const expected of ['xray-governance', 'xray-skills', 'xray-enforcer', 'xray-orchestrator', 'xray-researcher', 'xray-code-review', 'xray-architect-tools']) {
           result(`  ${expected} in ${path.basename(mcpPath)}`, mcpServers.includes(expected), 'missing');
         }
       } catch (e) {
@@ -368,8 +370,8 @@ async function main() {
     result('AGENTS template shipped in npm package', templateExists, 'xray/agents_template.md not found in node_modules/0xray');
     if (templateExists) {
       const templateContent = fs.readFileSync(templateInPkg, 'utf-8');
-      result('AGENTS template is consumer v15 MCPs content (not stale 0xRay)',
-        templateContent.includes('0xRay') && templateContent.includes('xray-enforcer') && !templateContent.includes('0xRay'),
+      result('AGENTS template has current 0xRay brand and MCP references',
+        templateContent.includes('0xRay') && templateContent.includes('xray-enforcer') && templateContent.includes('MCP'),
         'template has stale content');
     }
 
@@ -391,6 +393,69 @@ async function main() {
       result('postinstall would not overwrite existing AGENTS.md',
         fs.existsSync(consumerAgents), 'preserved');
     }
+  }
+
+  // ── Placement Validation: Skills, Agents, MCPs, Commands ──
+  section('Placement: Skills, Agents, MCPs, Commands');
+
+  // Skills: every dist/skills/ dir must have a SKILL.md
+  const skillsDir = path.join(ROOT, 'dist', 'skills');
+  if (fs.existsSync(skillsDir)) {
+    const skillDirs = fs.readdirSync(skillsDir, { withFileTypes: true }).filter(d => d.isDirectory() && d.name !== 'registry.json');
+    let skillsOk = 0;
+    for (const sd of skillDirs) {
+      const skillMd = path.join(skillsDir, sd.name, 'SKILL.md');
+      if (fs.existsSync(skillMd)) skillsOk++;
+      else result(`skill SKILL.md: ${sd.name}`, false, 'missing SKILL.md');
+    }
+    result(`skills: ${skillsOk}/${skillDirs.length} have SKILL.md`, skillsOk === skillDirs.length, `${skillDirs.length - skillsOk} missing`);
+  } else {
+    result('skills dir (dist/skills/)', false, 'not found');
+  }
+
+  // Agents: verify AGENT_REGISTRY keys against barrel exports
+  const registryPath = path.join(ROOT, 'src', 'agents', 'registry.ts');
+  const barrelPath = path.join(ROOT, 'src', 'agents', 'index.ts');
+  if (fs.existsSync(registryPath) && fs.existsSync(barrelPath)) {
+    const registryContent = fs.readFileSync(registryPath, 'utf-8');
+    const barrelContent = fs.readFileSync(barrelPath, 'utf-8');
+    const agentNames = [...registryContent.matchAll(/^\s{2}(?:"([^"]+)"|(\w+))\s*:\s*\{$/gm)].map(m => m[1] || m[2]);
+    let agentsOk = 0;
+    for (const agent of agentNames) {
+      if (barrelContent.includes(agent)) agentsOk++;
+      else result(`agent barrel: ${agent}`, false, 'missing from barrel export');
+    }
+    result(`agents: ${agentsOk}/${agentNames.length} in barrel`, agentsOk === agentNames.length, `${agentNames.length - agentsOk} missing from barrel`);
+  } else {
+    if (!fs.existsSync(registryPath)) result('agent registry', false, 'registry.ts not found');
+    if (!fs.existsSync(barrelPath)) result('agent barrel', false, 'index.ts not found');
+  }
+
+  // MCPs: all server map entries match dist binaries
+  const cliIndex = path.join(ROOT, 'src', 'cli', 'index.ts');
+  if (fs.existsSync(cliIndex)) {
+    const cliContent = fs.readFileSync(cliIndex, 'utf-8');
+    const serverMapEntries = [...cliContent.matchAll(/(\S+):\s+'dist\/mcps\/([^']+)'/g)].map(m => ({ name: m[1], path: 'dist/mcps/' + m[2] }));
+    let mcpsOk = 0;
+    for (const entry of serverMapEntries) {
+      const binPath = path.join(ROOT, entry.path);
+      if (fs.existsSync(binPath)) mcpsOk++;
+      else result(`MCP binary: ${entry.name}`, false, `not found at ${entry.path}`);
+    }
+    result(`MCP servers: ${mcpsOk}/${serverMapEntries.length} binaries exist`, mcpsOk === serverMapEntries.length, `${serverMapEntries.length - mcpsOk} missing`);
+  }
+
+  // Commands: all .command() registrations in cli/index.ts
+  if (fs.existsSync(cliIndex)) {
+    const cliContent = fs.readFileSync(cliIndex, 'utf-8');
+    const topCmds = [...cliContent.matchAll(/program\s*\.\s*command\(["']([\w-]+)["']/g)].map(m => m[1]);
+    const subCmds = [...cliContent.matchAll(/(\w+)Cmd\s*=\s*program\s*\.\s*command\(["']([\w-]+)["']/g)].map(m => m[1] + ':' + m[2]);
+    const allCmds = [...topCmds, ...subCmds];
+    result(`CLI commands: ${allCmds.length} registered`, allCmds.length > 0, 'no commands found');
+    // Verify full help output
+    const helpOut = getStdout('node dist/cli/index.js --help', { cwd: ROOT, timeout: 10000 });
+    const hasHelp = helpOut.includes('Usage:') || helpOut.includes('Commands:');
+    result('CLI --help responds', hasHelp, 'no usage output');
   }
 
   if (!KEEP) { try { fs.rmSync(infraDir, { recursive: true, force: true }); } catch {} }

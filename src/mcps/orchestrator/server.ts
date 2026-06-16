@@ -11,6 +11,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import * as fs from 'fs';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { XrayStateManager } from '../../state/state-manager.js';
 import { MultiAgentOrchestrationCoordinator } from '../../orchestrator/multi-agent-orchestration-coordinator.js';
@@ -377,7 +378,7 @@ export function createOrchestratorServer(): OrchestratorServer {
 }
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = createOrchestratorServer();
   server.start().catch((error) => {
     frameworkLogger.log('orchestrator.server', 'fatal-error', 'error', {
