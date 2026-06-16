@@ -1,0 +1,23 @@
+{
+  "name": "0xray",
+  "version": "1.22.67",
+  "description": "Multi-agent orchestration, Codex governance, and AI-powered development tools. 13 MCP tools (code review, security audit, API design, database design, project analysis, testing, performance, UI/UX, DevOps, documentation, storytelling) plus knowledge skills for best-practice guidance across the full software development lifecycle.",
+  "author": {
+    "name": "0xRay AI",
+    "url": "https://0xray.ai"
+  },
+  "homepage": "https://github.com/0xRayAI/xray",
+  "repository": "https://github.com/0xRayAI/xray",
+  "license": "MIT",
+  "keywords": [
+    "0xray",
+    "xray",
+    "governance",
+    "code-review",
+    "security-audit",
+    "mcp",
+    "orchestration",
+    "codex"
+  ],
+  "mcpServers": ".mcp.json"
+}
